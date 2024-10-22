@@ -7,6 +7,13 @@
 @stop
 
 @section('content')
+    <div class="row my-3">
+        <div class="col-md-3">
+            <a href="{{ route('brand.create') }}" class="btn btn-primary">
+                Add Brand
+            </a>
+        </div>
+    </div>
     <div class="card card-primary">
         <div class="card-header">
             <h3 class="card-title">Filters</h3>
@@ -19,14 +26,24 @@
         <tr>
             <th>Brand Name</th>
             <th>Order No</th>
-            <th>Notes 1</th>
-            <th>Notes 2</th>
-            <th>Notes 3</th>
             <th>Action</th>
         </tr>
         </thead>
         <tbody>
-
+        @foreach($brands as $brand)
+            <tr>
+                <td>{{ $brand->name }}</td>
+                <td>{{ $brand->order_no }}</td>
+                <td>
+                    <a href="{{ route('brand.edit', $brand->id) }}" class="btn btn-primary">
+                        Edit
+                    </a>
+                    <a href="{{ route('brand.delete', $brand->id) }}" class="btn btn-danger">
+                        Delete
+                    </a>
+                </td>
+            </tr>
+        @endforeach
         </tbody>
     </table>
 

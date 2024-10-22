@@ -9,7 +9,11 @@ class BrandController extends Controller
 {
     public function index()
     {
-        return view('brand.list');
+        // get the data in the pagination format for datatable to display
+        $brands = Brand::select('id', 'name', 'notes1', 'notes2', 'notes3', 'order_no')
+            ->orderBy('order_no')
+            ->get();
+        return view('brand.list', compact('brands'));
     }
 
     public function create()
