@@ -19,10 +19,11 @@ Route::post('/catalog/edit/{id}', [CatalogController::class, 'update'])->name('c
 Route::delete('/catalog/destroy/{id}', [CatalogController::class, 'destroy'])->name('catalog.delete');
 Route::get('/catalog/{id}', [CatalogController::class, 'show'])->name('catalog.show');
 
-Route::get('/brands', [BrandController::class, 'index'])->name('brand.list');
-Route::get('/brands/add', [BrandController::class, 'create'])->name('brand.create');
-Route::post('/brands/add', [BrandController::class, 'store'])->name('brand.store');
-Route::get('/brands/edit/{id}', [BrandController::class, 'edit'])->name('brand.edit');
-Route::post('/brands/edit/{id}', [BrandController::class, 'update'])->name('brand.update');
-Route::get('/brands/delete/{id}', [BrandController::class, 'destroy'])->name('brand.delete');
-Route::get('/brands/{id}', [BrandController::class, 'show'])->name('brand.show');
+Route::controller(BrandController::class)->group(function () {
+    Route::get('/brands', 'index')->name('brand.list');
+    Route::get('/brands/add', 'create')->name('brand.create');
+    Route::post('/brands/add', 'store')->name('brand.store');
+    Route::get('/brands/edit/{id}', 'edit')->name('brand.edit');
+    Route::post('/brands/edit/{id}', 'update')->name('brand.update');
+    Route::get('/brands/delete/{id}', 'destroy')->name('brand.delete');
+});
