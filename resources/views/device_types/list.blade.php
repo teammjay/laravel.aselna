@@ -1,0 +1,71 @@
+@extends('adminlte::page')
+
+@section('title', 'Catalog')
+
+@section('content_header')
+    <h1>Device Types</h1>
+@stop
+
+@section('content')
+    <div class="row my-3">
+        <div class="col-md-3">
+            <a href="{{ route('device_types.create') }}" class="btn btn-primary">
+                Add Device Type
+            </a>
+        </div>
+    </div>
+    <div class="card card-primary">
+        <div class="card-header">
+            <h3 class="card-title">Filters</h3>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-4">
+                    <div class="row">
+                        <div class="col-4">
+                            Name
+                        </div>
+                        <div class="col-2">
+                            {{--                            <select class="custom-select" id="product_code_operator" name="product_code_operator">--}}
+                            {{--                                <option value="=">=</option>--}}
+                            {{--                                <option value="contains">contains</option>--}}
+                            {{--                                <option value="starts_with">starts with</option>--}}
+                            {{--                                <option value="ends_with">ends with</option>--}}
+                            {{--                            </select>--}}
+                        </div>
+                        <div class="col-6">
+                            <input type="text" name="name" id="name" class="form-control">
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+    <table id="brandTable" class="table table-bordered table-striped">
+        <thead>
+        <tr>
+            <th>Device Type Name</th>
+            <th>Action</th>
+        </tr>
+        </thead>
+        <tbody>
+            @foreach($deviceTypes as $deviceType)
+                <tr>
+                    <td>{{ $deviceType->name }}</td>
+                    <td>
+                        <a href="{{ route('device_types.edit', $deviceType->id) }}" class="btn btn-primary">
+                            Edit
+                        </a>
+                        <a href="{{ route('device_types.delete', $deviceType->id) }}" class="btn btn-danger">
+                            Delete
+                        </a>
+                    </td>
+                </tr>
+            @endforeach
+        </tbody>
+
+    </table>
+
+@stop
+

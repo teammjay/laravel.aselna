@@ -331,6 +331,11 @@ return [
             'url' => '/brands',
             'icon' => 'far fa-fw fa-file'
         ],
+        [
+            'text' => 'Device Types',
+            'url' => '/device_types',
+            'icon' => 'far fa-fw fa-file'
+        ],
 //        [
 //            'text' => 'pages',
 //            'url' => 'admin/pages',

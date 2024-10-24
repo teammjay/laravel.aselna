@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\BrandController;
+use App\Http\Controllers\DeviceTypesController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\CatalogController;
 
@@ -19,10 +20,20 @@ Route::post('/catalog/edit/{id}', [CatalogController::class, 'update'])->name('c
 Route::delete('/catalog/destroy/{id}', [CatalogController::class, 'destroy'])->name('catalog.delete');
 Route::get('/catalog/{id}', [CatalogController::class, 'show'])->name('catalog.show');
 
-Route::get('/brands', [BrandController::class, 'index'])->name('brand.list');
-Route::get('/brands/add', [BrandController::class, 'create'])->name('brand.create');
-Route::post('/brands/add', [BrandController::class, 'store'])->name('brand.store');
-Route::get('/brands/edit/{id}', [BrandController::class, 'edit'])->name('brand.edit');
-Route::post('/brands/edit/{id}', [BrandController::class, 'update'])->name('brand.update');
-Route::get('/brands/delete/{id}', [BrandController::class, 'destroy'])->name('brand.delete');
-Route::get('/brands/{id}', [BrandController::class, 'show'])->name('brand.show');
+Route::controller(BrandController::class)->group(function () {
+    Route::get('/brands', 'index')->name('brand.list');
+    Route::get('/brands/add', 'create')->name('brand.create');
+    Route::post('/brands/add', 'store')->name('brand.store');
+    Route::get('/brands/edit/{id}', 'edit')->name('brand.edit');
+    Route::post('/brands/edit/{id}', 'update')->name('brand.update');
+    Route::get('/brands/delete/{id}', 'destroy')->name('brand.delete');
+});
+
+Route::controller(DeviceTypesController::class)->group(function () {
+    Route::get('/device_types', 'index')->name('device_types.list');
+    Route::get('/device_types/add', 'create')->name('device_types.create');
+    Route::post('/device_types/add', 'store')->name('device_types.store');
+    Route::get('/device_types/edit/{id}', 'edit')->name('device_types.edit');
+    Route::post('/device_types/edit/{id}', 'update')->name('device_types.update');
+    Route::get('/device_types/delete/{id}', 'destroy')->name('device_types.delete');
+});
