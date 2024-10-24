@@ -1,0 +1,81 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\DeviceSubTypes;
+use App\Models\DeviceTypes;
+use Illuminate\Http\Request;
+
+class DeviceSubTypesController extends Controller
+{
+    // create from model
+    public function index()
+    {
+        // get the data in the pagination format for datatable to display
+        $deviceSubTypes = DeviceSubTypes::select('id', 'name', 'notes1')
+            ->get();
+        return view('device_sub_types.list', compact('deviceSubTypes'));
+    }
+
+    public function create()
+    {
+        // get device types data for selecting the device type
+        $deviceTypes = DeviceTypes::all();
+        return view('device_sub_types.add', compact('deviceTypes'));
+    }
+
+    public function store(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|string|max:30',
+            'notes1' => 'nullable|string|max:255'
+        ]);
+
+        try {
+            // save the data to the database
+            DeviceSubTypes::create($request->all());
+            // redirect to the device sub types list with success message
+            return redirect()->route('device_sub_types.list')->with('success', 'Device sub type created successfully.');
+        } catch (\Exception $e) {
+            // handle any errors that may occur
+            return redirect()->back()->withErrors(['error' => 'An error occurred while creating the device sub type. Please try again.']);
+        }
+    }
+
+    public function edit($id)
+    {
+        $deviceSubType = DeviceSubTypes::findOrFail($id);
+        return view('device_sub_types.add', compact('deviceSubType'));
+    }
+
+    public function update(Request $request, $id)
+    {
+        $request->validate([
+            'name' => 'required|string|max:30',
+            'notes1' => 'nullable|string|max:255',
+        ]);
+
+        try {
+            // save the data to the database
+            DeviceSubTypes::findOrFail($id)->update($request->all());
+            // redirect to the device sub types list with success message
+            return redirect()->route('device_sub_types.list')->with('success', 'Device sub type updated successfully.');
+        } catch (\Exception $e) {
+            // handle any errors that may occur
+            return redirect()->back()->withErrors(['error' => 'An error occurred while updating the device sub type. Please try again.']);
+        }
+    }
+
+    public function destroy($id)
+    {
+        try {
+            // delete the record from the database
+            DeviceSubTypes::findOrFail($id)->delete();
+            // redirect to the device sub types list with success message
+            return redirect()->route('device_sub_types.list')->with('success', 'Device sub type deleted successfully.');
+        } catch (\Exception $e) {
+            // handle any errors that may occur
+            return redirect()->back()->withErrors(['error' => 'An error occurred while deleting the device sub type. Please try again.']);
+        }
+    }
+}

@@ -327,15 +327,26 @@ return [
             'icon' => 'far fa-fw fa-file'
         ],
         [
-            'text' => 'Brands',
-            'url' => '/brands',
-            'icon' => 'far fa-fw fa-file'
-        ],
-        [
-            'text' => 'Device Types',
-            'url' => '/device_types',
-            'icon' => 'far fa-fw fa-file'
-        ],
+            'text' => 'Master File Reports',
+            'icon' => 'fas fa-fw fa-share',
+            'submenu' => [
+                [
+                    'text' => 'Brands',
+                    'url' => '/brands',
+                    'icon' => 'far fa-fw fa-file'
+                ],
+                [
+                    'text' => 'Device Types',
+                    'url' => '/device_types',
+                    'icon' => 'far fa-fw fa-file'
+                ],
+                [
+                    'text' => 'Device Sub Types',
+                    'url' => '/device_sub_types',
+                    'icon' => 'far fa-fw fa-file'
+                ],
+            ],
+        ]
 //        [
 //            'text' => 'pages',
 //            'url' => 'admin/pages',
