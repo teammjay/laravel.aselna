@@ -135,6 +135,31 @@ class CatalogController extends Controller
     }
 
     /**
+     * Save the records from different tab.
+     */
+    public function saveTabData(Request $request)
+    {
+        $productId = $request->input('product_id');
+        $tabId = $request->input('tab');
+
+        // Logic to handle saving data based on $tabId
+        if ($tabId === 'tab1') {
+
+            if($productId){
+                $product = Catalog::findOrFail($productId);
+                $product->update($request->all());
+            }else {
+                Catalog::create($request->all());
+            }
+
+        } elseif ($tabId === 'tab2') {
+
+        }
+
+        return response()->json(['success' => true]);
+    }
+
+    /**
      * Update the specified resource in storage.
      */
     public function update(Request $request, string $id)

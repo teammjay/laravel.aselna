@@ -40,8 +40,38 @@
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" id="features-tab" data-toggle="pill" href="#tab5" role="tab" aria-controls="tab4" aria-selected="false">
+                        <a class="nav-link" id="features-tab" data-toggle="pill" href="#tab5" role="tab" aria-controls="tab5" aria-selected="false">
                             Key Features
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" id="search-terms-tab" data-toggle="pill" href="#tab6" role="tab" aria-controls="tab6" aria-selected="false">
+                            Search Terms
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" id="images-tab" data-toggle="pill" href="#tab7" role="tab" aria-controls="tab7" aria-selected="false">
+                            Images
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" id="tags-tab" data-toggle="pill" href="#tab8" role="tab" aria-controls="tab8" aria-selected="false">
+                            Tags
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" id="stores-tab" data-toggle="pill" href="#tab9" role="tab" aria-controls="tab9" aria-selected="false">
+                            Stores
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" id="channel-tab" data-toggle="pill" href="#tab10" role="tab" aria-controls="tab10" aria-selected="false">
+                            Channel
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" id="spintex-tab" data-toggle="pill" href="#tab11" role="tab" aria-controls="tab11" aria-selected="false">
+                            Spintex
                         </a>
                     </li>
                 </ul>
@@ -307,19 +337,165 @@
 
                                             </div>
                                         </div>
+                                        <div class="col-md-8">
+                                            <div class="form-group">
+                                                <label for="name">Issue Inventory Location</label>
+                                                <select class="form-control" name="issue_inventory_location" id="issue_inventory_location">
+                                                    <option></option>
+                                                </select>
+
+                                            </div>
+                                        </div>
+                                        <div class="col-md-8">
+                                            <div class="form-group">
+                                                <label for="name">Receive Inventory Location</label>
+                                                <select class="form-control" name="receive_inventory_location" id="receive_inventory_location">
+                                                    <option></option>
+                                                </select>
+
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row mt-3">
+                            <div class="col-md-12">
+                                <div class="card card-primary">
+                                    <div class="card-header">
+                                        Inventory
+                                    </div>
+                                    <div class="card-body">
+                                        <table class="table table-bordered">
+                                            <thead>
+                                            <tr>
+                                                <th>Code</th>
+                                                <th>Label</th>
+                                                <th>Quantity on hand</th>
+                                                <th>Quantity allocated</th>
+                                                <th>Quantity available</th>
+                                            </tr>
+                                            </thead>
+                                            <tbody>
+
+                                            </tbody>
+                                        </table>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                     <div class="tab-pane fade" id="tab3" role="tabpanel" aria-labelledby="tier-pricing-tab">
-                        <div class="card card-primary">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header">
+                                        Retail
+                                    </div>
+                                    <div class="card-body">
+                                        <button class="btn btn-secondary" type="button" id="add_retail"><i class="fa fa-plus-square"></i> Add</button>
+                                        <table class="table table-bordered mt-2" id="table_retail">
+                                            <thead>
+                                            <tr>
+                                                <th>Quantity</th>
+                                                <th>Price</th>
+                                                <th></th>
+                                            </tr>
+                                            </thead>
+                                            <tbody>
+                                            <tr>
+                                                <td><input type="text" class="form-control" name="retail_qty[]"></td>
+                                                <td><input type="text" class="form-control" name="retail_price[]"></td>
+                                                <td></td>
+                                            </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
 
+                                <div class="card">
+                                    <div class="card-header">
+                                        Wholesale
+                                    </div>
+                                    <div class="card-body">
+                                        <button class="btn btn-secondary" type="button" id="add_wholesale"><i class="fa fa-plus-square"></i> Add</button>
+                                        <table class="table table-bordered mt-2" id="table_wholesale">
+                                            <thead>
+                                            <tr>
+                                                <th>Quantity</th>
+                                                <th>Price</th>
+                                                <th></th>
+                                            </tr>
+                                            </thead>
+                                            <tbody>
+                                            <tr>
+                                                <td><input type="text" class="form-control" name="wholesale_qty[]"></td>
+                                                <td><input type="text" class="form-control" name="wholesale_price[]"></td>
+                                                <td></td>
+                                            </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <div class="tab-pane fade" id="tab4" role="tabpanel" aria-labelledby="compatibility-tab">
-                        <div class="card card-primary">
-
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="card">
+                                    <div class="card-header">
+                                        Retail
+                                    </div>
+                                    <div class="card-body">
+                                        <button class="btn btn-secondary" type="button" id="add_retail"><i class="fa fa-plus-square"></i> Add</button>
+                                        <table class="table table-bordered mt-2" id="table_retail">
+                                            <thead>
+                                            <tr>
+                                                <th>Quantity</th>
+                                                <th>Price</th>
+                                                <th></th>
+                                            </tr>
+                                            </thead>
+                                            <tbody>
+                                            <tr>
+                                                <td><input type="text" class="form-control" name="retail_qty[]"></td>
+                                                <td><input type="text" class="form-control" name="retail_price[]"></td>
+                                                <td></td>
+                                            </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="card">
+                                    <div class="card-header">
+                                        Incompatible Device
+                                    </div>
+                                    <div class="card-body">
+                                        <button class="btn btn-secondary" type="button" id="add_device"><i class="fa fa-plus-square"></i> Add</button>
+                                        <table class="table table-bordered mt-2" id="table_incompatible_device">
+                                            <thead>
+                                            <tr>
+                                                <th>Model Name</th>
+                                                <th>Name</th>
+                                                <th></th>
+                                            </tr>
+                                            </thead>
+                                            <tbody>
+                                            <tr>
+                                                <td><input type="text" class="form-control" name="model_name[]"></td>
+                                                <td><input type="text" class="form-control" name="device_name[]"></td>
+                                                <td></td>
+                                            </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <div class="tab-pane fade" id="tab5" role="tabpanel" aria-labelledby="features-tab">
@@ -343,6 +519,78 @@
                             </table>
                         </div>
                     </div>
+                    <div class="tab-pane fade" id="tab6" role="tabpanel" aria-labelledby="search-terms-tab">
+                        <button type="button" class="btn btn-secondary" id="add_search_terms"><i class="fa fa-plus-square"></i> Add</button>
+                        <div class="row  mt-3">
+                            <div class="col-md-6">
+                                <table class="table table-bordered">
+                                    <tbody>
+                                    <tr>
+                                        <td width="80%"><input type="text" class="form-control" name="search_term"></td>
+                                        <td width="20%"><input type="text" class="form-control" name="search_term_number"></td>
+                                    </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                        </div>
+                    </div>
+                    <div class="tab-pane fade" id="tab7" role="tabpanel" aria-labelledby="images-tab">
+                    </div>
+                    <div class="tab-pane fade" id="tab8" role="tabpanel" aria-labelledby="tags-tab">
+                        <button type="button" class="btn btn-secondary" id="add_tag"><i class="fa fa-plus-square"></i> Add</button>
+
+                        <div class="form-group mt-3">
+                            <textarea name="tags" class="form-control"  rows="10"></textarea>
+                        </div>
+                    </div>
+                    <div class="tab-pane fade" id="tab9" role="tabpanel" aria-labelledby="stores-tab">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <table class="table table-bordered">
+                                    <thead>
+                                    <th>Store</th>
+                                    <th>Active</th>
+                                    <th>Store Products, Store Category</th>
+                                    </thead>
+                                </table>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-body">
+
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="tab-pane fade" id="tab10" role="tabpanel" aria-labelledby="channel-tab">
+                        <button type="button" class="btn btn-secondary" id="create_channel"><i class="fa fa-plus-square"></i> Create</button>
+                        <table class="table table-bordered mt-2">
+                            <thead>
+                                <tr>
+                                    <th>Channel</th>
+                                    <th>Status</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                        </table>
+                    </div>
+                    <div class="tab-pane fade" id="tab11" role="tabpanel" aria-labelledby="spitex-tab">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="name">Title Template</label>
+                                    <textarea name="title_template" class="form-control"  rows="10"></textarea>
+                                </div>
+                                <div class="form-group">
+                                    <label for="name">Description Template</label>
+                                    <textarea name="description_template" class="form-control"  rows="10"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                 </div>
             </div>
             <div class="card-footer text-center">
@@ -372,6 +620,58 @@
 
             // Remove field group
             $(document).on('click', '.remove-feature', function() {
+                $(this).parents('tr.field-group').remove();
+            });
+
+            // Add new retail price
+            $('#add_retail').click(function() {
+                $('#table_retail tbody').append(`
+                    <tr class="field-group">
+                        <td><input type="text" class="form-control" name="retail_qty[]"></td>
+                        <td><input type="text" class="form-control" name="retail_price[]"></td>
+                        <td><button type="button" class="btn btn-danger remove-retail"> <i class="fas fa-fw fa-trash"></i></button></td>
+                    </tr>
+                `);
+
+            });
+
+            // Remove retail price group
+            $(document).on('click', '.remove-retail', function() {
+                $(this).parents('tr.field-group').remove();
+            });
+
+            // Add new retail price
+            $('#add_wholesale').click(function() {
+                $('#table_wholesale tbody').append(`
+                    <tr class="field-group">
+                        <td><input type="text" class="form-control" name="wholesale_qty[]"></td>
+                        <td><input type="text" class="form-control" name="wholesale_price[]"></td>
+                        <td><button type="button" class="btn btn-danger remove-wholesale"> <i class="fas fa-fw fa-trash"></i></button></td>
+                    </tr>
+                `);
+
+            });
+
+            // Remove retail price group
+            $(document).on('click', '.remove-wholesale', function() {
+                $(this).parents('tr.field-group').remove();
+            });
+
+
+            // Add new device
+            $('#add_device').click(function() {
+                $('#table_incompatible_device tbody').append(`
+                    <tr class="field-group">
+                        <td><input type="text" class="form-control" name="model_name[]"></td>
+                        <td><input type="text" class="form-control" name="device_name[]"></td>
+                        <td><button type="button" class="btn btn-danger remove-device"> <i class="fas fa-fw fa-trash"></i></button></td>
+                    </tr>
+                `);
+
+            });
+
+            // Remove retail price group
+            $(document).on('click', '.remove-device', function() {
                 $(this).parents('tr.field-group').remove();
             });
 
