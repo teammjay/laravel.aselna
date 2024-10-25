@@ -16,7 +16,7 @@ class CatalogController extends Controller
     public function index(Request $request)
     {
         // get the data in the pagination format for datatable to display
-        $products = Catalog::select('product_id','product_title', 'product_type', 'product_manufacturer', 'product_price', 'product_sku','product_description','product_status','product_stock_quantity','product_condition')
+        $products = Catalog::select('product_id','product_title', 'product_type', 'product_manufacturer', 'product_price', 'product_sku','product_description','product_status','product_condition')
             ->orderBy('product_id','desc')
             ->paginate($this->perPage);
 
@@ -91,7 +91,7 @@ class CatalogController extends Controller
 
         // save the data to the database
         try {
-            Catalog::create([
+            /*Catalog::create([
                 'product_title' => $request->product_title,
                 'product_type' => $request->product_type,
                 'product_manufacturer' => $request->product_manufacturer,
@@ -101,7 +101,9 @@ class CatalogController extends Controller
                 'product_status' => 'active',
                 'product_stock_quantity' => 10,
                 'product_condition' => 'New'
-            ]);
+            ]);*/
+
+            Catalog::create($request->all());
 
             return redirect()->route('catalog.list')->with('success', 'Product created successfully!');
 
@@ -133,6 +135,31 @@ class CatalogController extends Controller
     }
 
     /**
+     * Save the records from different tab.
+     */
+    public function saveTabData(Request $request)
+    {
+        $productId = $request->input('product_id');
+        $tabId = $request->input('tab');
+
+        // Logic to handle saving data based on $tabId
+        if ($tabId === 'tab1') {
+
+            if($productId){
+                $product = Catalog::findOrFail($productId);
+                $product->update($request->all());
+            }else {
+                Catalog::create($request->all());
+            }
+
+        } elseif ($tabId === 'tab2') {
+
+        }
+
+        return response()->json(['success' => true]);
+    }
+
+    /**
      * Update the specified resource in storage.
      */
     public function update(Request $request, string $id)
@@ -152,7 +179,7 @@ class CatalogController extends Controller
             $product = Catalog::findOrFail($id); // Retrieve the product by ID
 
             // Update the product details
-            $product->update([
+            /*$product->update([
                 'product_title' => $request->product_title,
                 'product_type' => $request->product_type,
                 'product_manufacturer' => $request->product_manufacturer,
@@ -162,7 +189,12 @@ class CatalogController extends Controller
                 'product_status' => 'active',
                 'product_stock_quantity' => 10,
                 'product_condition' => 'New'
-            ]);
+            ]);*/
+
+
+            $product->update($request->all());
+
+            //echo $product->toSql();die;
 
             return redirect()->route('catalog.list')->with('success', 'Product updated successfully!');
 
