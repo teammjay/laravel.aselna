@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('product_key_features', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('product_id');
-            $table->foreign('product_id')->references('id')->on('products')
+            $table->foreign('product_id')->references('product_id')->on('products')
                 ->onDelete('cascade');
             $table->string('value');
             $table->integer('sort_order');

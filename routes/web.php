@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\BrandController;
+use App\Http\Controllers\DeviceSubTypesController;
 use App\Http\Controllers\DeviceTypesController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\CatalogController;
@@ -37,4 +38,13 @@ Route::controller(DeviceTypesController::class)->group(function () {
     Route::get('/device_types/edit/{id}', 'edit')->name('device_types.edit');
     Route::post('/device_types/edit/{id}', 'update')->name('device_types.update');
     Route::get('/device_types/delete/{id}', 'destroy')->name('device_types.delete');
+});
+
+Route::controller(DeviceSubTypesController::class)->group(function () {
+    Route::get('/device_sub_types', 'index')->name('device_sub_types.list');
+    Route::get('/device_sub_types/add', 'create')->name('device_sub_types.create');
+    Route::post('/device_sub_types/add', 'store')->name('device_sub_types.store');
+    Route::get('/device_sub_types/edit/{id}', 'edit')->name('device_sub_types.edit');
+    Route::post('/device_sub_types/edit/{id}', 'update')->name('device_sub_types.update');
+    Route::get('/device_sub_types/delete/{id}', 'destroy')->name('device_sub_types.delete');
 });
