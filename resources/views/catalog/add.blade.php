@@ -681,7 +681,7 @@
         function saveTabData(tabId) {
             let formData = new FormData(document.getElementById('frmtab' + tabId));
 
-            fetch('{{ route('catelog.save') }}', {
+            fetch('{{ route('catalog.save') }}', {
                 method: 'POST',
                 headers: {
                     'X-CSRF-TOKEN': '{{ csrf_token() }}',

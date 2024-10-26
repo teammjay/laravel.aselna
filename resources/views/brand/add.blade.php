@@ -13,6 +13,17 @@
             <div class="card-body">
                 <div class="row">
                     <div class="col-md-6">
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input @error('code') is-invalid @enderror"  @if($brand->status === 'active') checked @endif name="status" id="status">
+                            <label class="form-check-label" for="status">Status</label>
+                            @error('status')
+                            <span class="text-danger">{{ $message }}</span>
+                            @enderror
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
                         <div class="form-group">
                             <label for="name">Brand Name</label>
                             <input type="text" class="form-control @error('name') is-invalid @enderror" id="name" name="name"
@@ -24,6 +35,18 @@
                     </div>
                     <div class="col-md-6">
                         <div class="form-group">
+                            <label for="code">Code</label>
+                            <input type="text" class="form-control @error('code') is-invalid @enderror" id="code" name="code"
+                                   placeholder="Enter code" value="{{ $brand['code'] ?? '' }}">
+                            @error('code')
+                            <span class="text-danger">{{ $message }}</span>
+                            @enderror
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
                             <label for="order_no">Order No</label>
                             <input type="text" class="form-control @error('order_no') is-invalid @enderror" id="order_no" name="order_no"
                                    placeholder="Enter order no" value="{{ $brand['order_no'] ?? '' }}">
@@ -33,6 +56,15 @@
                         </div>
                     </div>
                 </div>
+{{--                Add Image Upload Sectoin here--}}
+{{--                <div class="row">--}}
+{{--                    <div class="col-md-6">--}}
+{{--                        <div class="form-group">--}}
+{{--                            <label for="image">Image</label>--}}
+{{--                            <input type="file" class="form-control @error('image') is-invalid @enderror" id="image" name="image">--}}
+{{--                        </div>--}}
+{{--                    </div>--}}
+{{--                </div>--}}
                 <div class="row">
                     <div class="col-md-6">
                         <div class="form-group">
