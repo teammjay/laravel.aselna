@@ -116,6 +116,8 @@
         @endswitch
     @endif
 
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
+
     {{-- Extra Configured Plugins Scripts --}}
     @include('adminlte::plugins', ['type' => 'js'])
 

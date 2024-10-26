@@ -50,18 +50,35 @@
         </tr>
         </thead>
         <tbody>
-            @foreach($deviceSubTypes as $deviceSubType)
-                <tr>
-                    <td>{{ $deviceSubType->name }}</td>
-                    <td>
-                        <a href="{{ route('device_sub_types.edit', $deviceSubType->id) }}" class="btn btn-primary">
-                            Edit
-                        </a>
-                        <a href="{{ route('device_sub_types.delete', $deviceSubType->id) }}" class="btn btn-danger">
-                            Delete
-                        </a>
-                    </td>
-                </tr>
-            @endforeach
+        @foreach($deviceSubTypes as $deviceSubType)
+            <tr>
+                <td>{{ $deviceSubType->name }}</td>
+                <td>
+                    <a href="{{ route('device_sub_types.edit', $deviceSubType->id) }}" class="btn btn-primary">
+                        Edit
+                    </a>
+                    <a href="{{ route('device_sub_types.delete', $deviceSubType->id) }}" class="btn btn-danger">
+                        Delete
+                    </a>
+                </td>
+            </tr>
+        @endforeach
         </tbody>
-@endsection
+    </table>
+@stop
+
+
+
+@section('js')
+    <script>
+        $(document).ready(function () {
+            $('#deviceSubTypeTable').DataTable(
+                {
+                    "processing": true,
+                    'searching': false,
+                    "paging": true,
+                }
+            );
+        });
+    </script>
+@stop

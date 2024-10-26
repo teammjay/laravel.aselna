@@ -12,6 +12,8 @@
 
 @section('body_data', $layoutHelper->makeBodyData())
 
+@section('plugins.Datatables', true)
+
 @section('body')
     <div class="wrapper">
 

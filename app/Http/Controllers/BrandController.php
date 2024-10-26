@@ -14,6 +14,12 @@ class BrandController extends Controller
         return view('brand.list', compact('brands'));
     }
 
+    public function data()
+    {
+
+
+    }
+
     public function create()
     {
         return view('brand.add');
@@ -53,6 +59,8 @@ class BrandController extends Controller
     public function edit($id)
     {
         $brand = Brand::findOrFail($id);
+        $brand->imageUrl = $brand->getImage();
+        $brand->thumbnailImageUrl = $brand->getThumbnailImage();
         return view('brand.add', compact('brand'));
     }
 
@@ -64,8 +72,8 @@ class BrandController extends Controller
             'notes2' => 'nullable|string|max:255',
             'notes3' => 'nullable|string|max:255',
             'order_no' => 'nullable|integer',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
-            'thumbnail_image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'image' => 'nullable|string|max:255',
+            'thumbnail_image' => 'nullable|string|max:255',
             'code' => 'nullable|string|max:50',
             'status' => 'nullable|in:on,off'
         ]);

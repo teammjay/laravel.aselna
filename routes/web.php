@@ -24,6 +24,7 @@ Route::get('/catalog/{id}', [CatalogController::class, 'show'])->name('catalog.s
 
 Route::controller(BrandController::class)->group(function () {
     Route::get('/brands', 'index')->name('brand.list');
+    Route::get('/brands/filter', 'filter')->name('brand.filter');
     Route::get('/brands/add', 'create')->name('brand.create');
     Route::post('/brands/add', 'store')->name('brand.store');
     Route::get('/brands/edit/{id}', 'edit')->name('brand.edit');
