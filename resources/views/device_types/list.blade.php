@@ -42,7 +42,7 @@
             </div>
         </div>
     </div>
-    <table id="brandTable" class="table table-bordered table-striped">
+    <table id="deviceTypeTable" class="table table-bordered table-striped">
         <thead>
         <tr>
             <th>Device Type Name</th>
@@ -50,22 +50,35 @@
         </tr>
         </thead>
         <tbody>
-            @foreach($deviceTypes as $deviceType)
-                <tr>
-                    <td>{{ $deviceType->name }}</td>
-                    <td>
-                        <a href="{{ route('device_types.edit', $deviceType->id) }}" class="btn btn-primary">
-                            Edit
-                        </a>
-                        <a href="{{ route('device_types.delete', $deviceType->id) }}" class="btn btn-danger">
-                            Delete
-                        </a>
-                    </td>
-                </tr>
-            @endforeach
+        @foreach($deviceTypes as $deviceType)
+            <tr>
+                <td>{{ $deviceType->name }}</td>
+                <td>
+                    <a href="{{ route('device_types.edit', $deviceType->id) }}" class="btn btn-primary">
+                        Edit
+                    </a>
+                    <a href="{{ route('device_types.delete', $deviceType->id) }}" class="btn btn-danger">
+                        Delete
+                    </a>
+                </td>
+            </tr>
+        @endforeach
         </tbody>
 
     </table>
 
 @stop
 
+@section('js')
+    <script>
+        $(document).ready(function () {
+            $('#deviceTypeTable').DataTable(
+                {
+                    "processing": true,
+                    'searching': false,
+                    "paging": true,
+                }
+            );
+        });
+    </script>
+@stop

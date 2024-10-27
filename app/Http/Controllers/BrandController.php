@@ -10,9 +10,14 @@ class BrandController extends Controller
     public function index()
     {
         // get the data in the pagination format for datatable to display
-        $brands = Brand::select('id', 'name', 'notes1', 'notes2', 'notes3', 'order_no')
-            ->get();
+        $brands = Brand::all();
         return view('brand.list', compact('brands'));
+    }
+
+    public function data()
+    {
+
+
     }
 
     public function create()
@@ -27,8 +32,18 @@ class BrandController extends Controller
             'notes1' => 'nullable|string|max:255',
             'notes2' => 'nullable|string|max:255',
             'notes3' => 'nullable|string|max:255',
-            'order_no' => 'nullable|integer|min:1'
+            'order_no' => 'nullable|integer|min:1',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'thumbnail_image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'code' => 'nullable|number|max:50',
+            'status' => 'nullable|in:on,off'
         ]);
+
+        $status = $request->status ?? 'on';
+        $statusCode = $status === 'on' ? 'active' : 'inactive';
+
+        $created_by = auth()->user()->name ?? 'admin';
+        $request->merge(['created_by' => $created_by, 'status' => $statusCode]);
 
         try {
             // save the data to the database
@@ -44,6 +59,8 @@ class BrandController extends Controller
     public function edit($id)
     {
         $brand = Brand::findOrFail($id);
+        $brand->imageUrl = $brand->getImage();
+        $brand->thumbnailImageUrl = $brand->getThumbnailImage();
         return view('brand.add', compact('brand'));
     }
 
@@ -54,8 +71,18 @@ class BrandController extends Controller
             'notes1' => 'nullable|string|max:255',
             'notes2' => 'nullable|string|max:255',
             'notes3' => 'nullable|string|max:255',
-            'order_no' => 'nullable|integer'
+            'order_no' => 'nullable|integer',
+            'image' => 'nullable|string|max:255',
+            'thumbnail_image' => 'nullable|string|max:255',
+            'code' => 'nullable|string|max:50',
+            'status' => 'nullable|in:on,off'
         ]);
+
+        $status = $request->status ?? 'off';
+        $statusCode = $status === 'on' ? 'active' : 'inactive';
+
+        $updated_by = auth()->user()->name ?? 'admin';
+        $request->merge(['updated_by' => $updated_by, 'status' => $statusCode]);
 
         // save the data to the database
         Brand::findOrFail($id)->update($request->all());
