@@ -15,6 +15,18 @@
             <div class="card-body">
                 <div class="row">
                     <div class="col-md-6">
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input @error('code') is-invalid @enderror"
+                                   @if(isset($deviceSubType) && $deviceSubType->status === 'active') checked @endif name="status" id="status">
+                            <label class="form-check-label" for="status">Status</label>
+                            @error('status')
+                            <span class="text-danger">{{ $message }}</span>
+                            @enderror
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
                         <div class="form-group">
                             <label for="name">Device Sub Type Name</label>
                             <input type="text" class="form-control @error('name') is-invalid @enderror" id="name"
@@ -51,6 +63,16 @@
                                       placeholder="Enter Notes">{{ $deviceSubType['notes1'] ?? '' }}</textarea>
                             @if ($errors->has('notes1'))
                                 <span class="text-danger">{{ $errors->first('notes1') }}</span>
+                            @endif
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="name">Code</label>
+                            <input type="text" class="form-control @error('code') is-invalid @enderror" id="code" name="code"
+                                   placeholder="Enter code" value="{{ $deviceSubType['code'] ?? '' }}">
+                            @if ($errors->has('code'))
+                                <span class="text-danger">{{ $errors->first('name') }}</span>
                             @endif
                         </div>
                     </div>
