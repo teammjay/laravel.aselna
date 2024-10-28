@@ -27,7 +27,8 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('brands', function (Blueprint $table) {
-            //
+            // drop the above columns
+            $table->dropColumn(['created_by', 'updated_by', 'image', 'thumbnail_image', 'code', 'status']);
         });
     }
 };

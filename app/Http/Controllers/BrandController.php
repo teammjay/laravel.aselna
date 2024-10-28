@@ -39,7 +39,7 @@ class BrandController extends Controller
             'status' => 'nullable|in:on,off'
         ]);
 
-        $status = $request->status ?? 'on';
+        $status = $request->status ?? 'off';
         $statusCode = $status === 'on' ? 'active' : 'inactive';
 
         $created_by = auth()->user()->name ?? 'admin';

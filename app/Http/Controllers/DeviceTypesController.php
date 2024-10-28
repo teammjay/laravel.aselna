@@ -11,8 +11,7 @@ class DeviceTypesController extends Controller
     public function index()
     {
         // get the data in the pagination format for datatable to display
-        $deviceTypes = DeviceTypes::select('id', 'name', 'notes1')
-            ->get();
+        $deviceTypes = DeviceTypes::all();
         return view('device_types.list', compact('deviceTypes'));
     }
 
@@ -25,8 +24,16 @@ class DeviceTypesController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:30',
-            'notes1' => 'nullable|string|max:255'
+            'notes1' => 'nullable|string|max:255',
+            'status' => 'nullable|in:on,off',
+            'code' => 'nullable|string|max:50'
         ]);
+
+        $status = $request->status ?? 'off';
+        $statusCode = $status === 'on' ? 'active' : 'inactive';
+
+        $created_by = auth()->user()->name ?? 'admin';
+        $request->merge(['created_by' => $created_by, 'status' => $statusCode]);
 
         try {
             // save the data to the database
@@ -50,7 +57,15 @@ class DeviceTypesController extends Controller
         $request->validate([
             'name' => 'required|string|max:30',
             'notes1' => 'nullable|string|max:255',
+            'status' => 'nullable|in:on,off',
+            'code' => 'nullable|string|max:50'
         ]);
+
+        $status = $request->status ?? 'off';
+        $statusCode = $status === 'on' ? 'active' : 'inactive';
+
+        $updated_by = auth()->user()->name ?? 'admin';
+        $request->merge(['updated_by' => $updated_by, 'status' => $statusCode]);
 
         try {
             // save the data to the database
