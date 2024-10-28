@@ -327,7 +327,7 @@ return [
             'icon' => 'far fa-fw fa-file'
         ],
         [
-            'text' => 'Master File Reports',
+            'text' => 'Master File Settings',
             'icon' => 'fas fa-fw fa-share',
             'submenu' => [
                 [
