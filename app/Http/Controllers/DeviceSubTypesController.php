@@ -60,7 +60,7 @@ class DeviceSubTypesController extends Controller
     public function update(Request $request, $id)
     {
         $request->validate([
-            'name' => 'required|string|max:30',
+            'name' => 'required|string',
             'notes1' => 'nullable|string|max:255',
             'device_type_id' => 'required|integer',
             'status' => 'nullable|in:on,off',
