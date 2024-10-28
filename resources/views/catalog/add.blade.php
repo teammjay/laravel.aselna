@@ -80,7 +80,6 @@
                 <div class="tab-content" id="custom-tabs-one-tabContent">
                     <div class="tab-pane fade show active" id="tab1" role="tabpanel" aria-labelledby="general-tab">
                         <form method="POST" id="frmtab1">
-                            <input type="hidden" name="tab" value="1">
                             <div class="row">
                                 <div class="col-md-6">
                                     <div class="card-body border">
@@ -309,7 +308,7 @@
                             </div>
 
                             <div class="card-footer text-center mt-3">
-                                <button type="button" class="btn btn-success" onclick="saveTabData('1')">Submit</button>
+                                <button type="button" class="btn btn-success" onclick="saveTabData(1)">Submit</button>
                                 {{--<button type="reset" class="btn btn-primary">Reset</button>--}}
                                 <a href="{{ route('catalog.list') }}" class="btn btn-secondary">Cancel</a>
                             </div>
@@ -318,7 +317,6 @@
                     </div>
                     <div class="tab-pane fade" id="tab2" role="tabpanel" aria-labelledby="inventory-tab">
                         <form method="POST" id="frmtab2">
-                            <input type="hidden" name="tab" value="2">
                             <div class="row">
                                 <div class="col-md-4">
                                     <div class="card-body border">
@@ -396,7 +394,7 @@
                             </div>
 
                             <div class="card-footer text-center mt-3">
-                                <button type="button" class="btn btn-success" onclick="saveTabData('2')">Submit</button>
+                                <button type="button" class="btn btn-success" onclick="saveTabData(2)">Submit</button>
                                 {{--<button type="reset" class="btn btn-primary">Reset</button>--}}
                                 <a href="{{ route('catalog.list') }}" class="btn btn-secondary">Cancel</a>
                             </div>
@@ -404,7 +402,6 @@
                     </div>
                     <div class="tab-pane fade" id="tab3" role="tabpanel" aria-labelledby="tier-pricing-tab">
                         <form method="POST" id="frmtab3">
-                            <input type="hidden" name="tab" value="3">
                             <div class="row">
                                 <div class="col-md-6">
                                     <div class="card">
@@ -459,7 +456,7 @@
                                 </div>
                             </div>
                             <div class="card-footer text-center mt-3">
-                                <button type="button" class="btn btn-success" onclick="saveTabData('3')">Submit</button>
+                                <button type="button" class="btn btn-success" onclick="saveTabData(3)">Submit</button>
                                 {{--<button type="reset" class="btn btn-primary">Reset</button>--}}
                                 <a href="{{ route('catalog.list') }}" class="btn btn-secondary">Cancel</a>
                             </div>
@@ -467,7 +464,6 @@
                     </div>
                     <div class="tab-pane fade" id="tab4" role="tabpanel" aria-labelledby="compatibility-tab">
                         <form method="POST" id="frmtab4">
-                            <input type="hidden" name="tab" value="4">
                             <div class="row">
                                 <div class="col-md-12">
                                     <div class="card">
@@ -525,7 +521,7 @@
                                 </div>
                             </div>
                             <div class="card-footer text-center mt-3">
-                                <button type="button" class="btn btn-success" onclick="saveTabData('4')">Submit</button>
+                                <button type="button" class="btn btn-success" onclick="saveTabData(4)">Submit</button>
                                 {{--<button type="reset" class="btn btn-primary">Reset</button>--}}
                                 <a href="{{ route('catalog.list') }}" class="btn btn-secondary">Cancel</a>
                             </div>
@@ -533,7 +529,6 @@
                     </div>
                     <div class="tab-pane fade" id="tab5" role="tabpanel" aria-labelledby="features-tab">
                         <form method="POST" id="frmtab5">
-                            <input type="hidden" name="tab" value="5">
                             <button type="button" class="btn btn-secondary" id="add_feature"> <i class="fa fa-plus-square"></i> Add</button>
                             <div class="card card-body border mt-2">
                                 <table class="table table-bordered" id="features_table">
@@ -554,15 +549,14 @@
                                 </table>
                             </div>
                             <div class="card-footer text-center mt-3">
-                                <button type="button" class="btn btn-success" onclick="saveTabData('5')">Submit</button>
+                                <button type="button" class="btn btn-success" onclick="saveTabData(5)">Submit</button>
                                 {{--<button type="reset" class="btn btn-primary">Reset</button>--}}
                                 <a href="{{ route('catalog.list') }}" class="btn btn-secondary">Cancel</a>
                             </div>
                         </form>
                     </div>
                     <div class="tab-pane fade" id="tab6" role="tabpanel" aria-labelledby="search-terms-tab">
-                        <form method="POST" id="frmtab5">
-                            <input type="hidden" name="tab" value="6">
+                        <form method="POST" id="frmtab6">
                             <button type="button" class="btn btn-secondary" id="add_search_terms"><i class="fa fa-plus-square"></i> Add</button>
                             <div class="row mt-3">
                                 <div class="col-md-6">
@@ -577,7 +571,7 @@
                                 </div>
                             </div>
                             <div class="card-footer text-center mt-3">
-                                <button type="button" class="btn btn-success" onclick="saveTabData('6')">Submit</button>
+                                <button type="button" class="btn btn-success" onclick="saveTabData(6)">Submit</button>
                                 {{--<button type="reset" class="btn btn-primary">Reset</button>--}}
                                 <a href="{{ route('catalog.list') }}" class="btn btn-secondary">Cancel</a>
                             </div>
@@ -587,13 +581,12 @@
                     </div>
                     <div class="tab-pane fade" id="tab8" role="tabpanel" aria-labelledby="tags-tab">
                         <form method="POST" id="frmtab8">
-                            <input type="hidden" name="tab" value="8">
                             <button type="button" class="btn btn-secondary" id="add_tag"><i class="fa fa-plus-square"></i> Add</button>
                             <div class="form-group mt-3">
                                 <textarea name="tags" class="form-control"  rows="10"></textarea>
                             </div>
                             <div class="card-footer text-center mt-3">
-                                <button type="button" class="btn btn-success" onclick="saveTabData('7')">Submit</button>
+                                <button type="button" class="btn btn-success" onclick="saveTabData(8)">Submit</button>
                                 {{--<button type="reset" class="btn btn-primary">Reset</button>--}}
                                 <a href="{{ route('catalog.list') }}" class="btn btn-secondary">Cancel</a>
                             </div>
@@ -601,7 +594,6 @@
                     </div>
                     <div class="tab-pane fade" id="tab9" role="tabpanel" aria-labelledby="stores-tab">
                         <form method="POST" id="frmtab9">
-                            <input type="hidden" name="tab" value="9">
                             <div class="row">
                                 <div class="col-md-6">
                                     <table class="table table-bordered">
@@ -621,7 +613,7 @@
                                 </div>
                             </div>
                             <div class="card-footer text-center mt-3">
-                                <button type="button" class="btn btn-success" onclick="saveTabData('8')">Submit</button>
+                                <button type="button" class="btn btn-success" onclick="saveTabData(9)">Submit</button>
                                 {{--<button type="reset" class="btn btn-primary">Reset</button>--}}
                                 <a href="{{ route('catalog.list') }}" class="btn btn-secondary">Cancel</a>
                             </div>
@@ -629,7 +621,6 @@
                     </div>
                     <div class="tab-pane fade" id="tab10" role="tabpanel" aria-labelledby="channel-tab">
                         <form method="POST" id="frmtab10">
-                            <input type="hidden" name="tab" value="10">
                             <button type="button" class="btn btn-secondary" id="create_channel"><i class="fa fa-plus-square"></i> Create</button>
                             <table class="table table-bordered mt-2">
                                 <thead>
@@ -641,7 +632,7 @@
                                 </thead>
                             </table>
                             <div class="card-footer text-center mt-3">
-                                <button type="button" class="btn btn-success" onclick="saveTabData('9')">Submit</button>
+                                <button type="button" class="btn btn-success" onclick="saveTabData(10)">Submit</button>
                                 {{--<button type="reset" class="btn btn-primary">Reset</button>--}}
                                 <a href="{{ route('catalog.list') }}" class="btn btn-secondary">Cancel</a>
                             </div>
@@ -649,7 +640,6 @@
                     </div>
                     <div class="tab-pane fade" id="tab11" role="tabpanel" aria-labelledby="spitex-tab">
                         <form method="POST" id="frmtab10">
-                            <input type="hidden" name="tab" value="10">
                             <div class="row">
                                 <div class="col-md-6">
                                     <div class="form-group">
@@ -663,7 +653,7 @@
                                 </div>
                             </div>
                             <div class="card-footer text-center mt-3">
-                                <button type="button" class="btn btn-success" onclick="saveTabData('tab10')">Submit</button>
+                                <button type="button" class="btn btn-success" onclick="saveTabData(11)">Submit</button>
                                 {{--<button type="reset" class="btn btn-primary">Reset</button>--}}
                                 <a href="{{ route('catalog.list') }}" class="btn btn-secondary">Cancel</a>
                             </div>
@@ -676,10 +666,15 @@
 
 @section('adminlte_js')
 <script>
+
+    var product_id = "{{ $product_id ?? '' }}"; // Passed from controller
+
     $(document).ready(function() {
 
         function saveTabData(tabId) {
             let formData = new FormData(document.getElementById('frmtab' + tabId));
+            formData.append('product_id', product_id);
+            formData.append('tab', tabId);
 
             fetch('{{ route('catalog.save') }}', {
                 method: 'POST',
