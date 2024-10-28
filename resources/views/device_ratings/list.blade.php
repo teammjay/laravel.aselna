@@ -46,6 +46,7 @@
         <thead>
         <tr>
             <th>Device Rating</th>
+            <th>Status</th>
             <th>Last modified by</th>
             <th>Last modified at</th>
             <th>Action</th>
@@ -55,8 +56,9 @@
         @foreach($device_ratings as $deviceRating)
             <tr>
                 <td>{{ $deviceRating->value }}</td>
+                <td>{{ ucfirst($deviceRating->status) }}</td>
                 <td>{{ $deviceRating->updated_by }}</td>
-                <td>{{ $deviceRating->updated_at }}</td>
+                <td>{{ $deviceRating->updated_at->format('d M Y g:i A') }}</td>
                 <td>
                     <a href="{{ route('device_ratings.edit', $deviceRating->id) }}" class="btn btn-primary">
                         Edit

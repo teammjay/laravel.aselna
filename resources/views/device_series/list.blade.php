@@ -46,6 +46,7 @@
         <thead>
         <tr>
             <th>Device Series Name</th>
+            <th>Status</th>
             <th>Last modified by</th>
             <th>Last modified at</th>
             <th>Action</th>
@@ -55,8 +56,9 @@
         @foreach($device_series as $deviceSerie)
             <tr>
                 <td>{{ $deviceSerie->name }}</td>
+                <td>{{ ucfirst($deviceSerie->status) }}</td>
                 <td>{{ $deviceSerie->updated_by }}</td>
-                <td>{{ $deviceSerie->updated_at }}</td>
+                <td>{{ $deviceSerie->updated_at->format('d M Y g:i A') }}</td>
                 <td>
                     <a href="{{ route('device_series.edit', $deviceSerie->id) }}" class="btn btn-primary">
                         Edit

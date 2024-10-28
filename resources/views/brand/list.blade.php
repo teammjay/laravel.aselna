@@ -56,7 +56,8 @@
             <th>Brand Name</th>
             <th>Order No</th>
             <th>Status</th>
-            <th>Created At</th>
+            <th>Last modified by</th>
+            <th>Last modified at</th>
             <th>Action</th>
         </tr>
         </thead>
@@ -66,7 +67,8 @@
                 <td>{{ $brand->name }}</td>
                 <td>{{ $brand->order_no }}</td>
                 <td>{{ ucfirst($brand->status) }}</td>
-                <td>{{ $brand->created_at->format('d M Y g:i A') }}</td>
+                <td>{{ $brand->updated_by }}</td>
+                <td>{{ $brand->updated_at->format('d M Y g:i A') }}</td>
                 <td>
                     <a href="{{ route('brand.edit', $brand->id) }}" class="btn btn-primary">
                         Edit
