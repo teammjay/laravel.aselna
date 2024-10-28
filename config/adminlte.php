@@ -336,6 +336,16 @@ return [
                     'icon' => 'far fa-fw fa-file'
                 ],
                 [
+                    'text' => 'Devices Rating',
+                    'url' => '/device_ratings',
+                    'icon' => 'far fa-fw fa-file'
+                ],
+                [
+                    'text' => 'Devices Series',
+                    'url' => '/device_series',
+                    'icon' => 'far fa-fw fa-file'
+                ],
+                [
                     'text' => 'Device Types',
                     'url' => '/device_types',
                     'icon' => 'far fa-fw fa-file'
