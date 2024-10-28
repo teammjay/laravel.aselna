@@ -46,6 +46,9 @@
         <thead>
         <tr>
             <th>Device Type Name</th>
+            <th>Status</th>
+            <th>Last modified by</th>
+            <th>Last modified at</th>
             <th>Action</th>
         </tr>
         </thead>
@@ -53,6 +56,9 @@
         @foreach($deviceTypes as $deviceType)
             <tr>
                 <td>{{ $deviceType->name }}</td>
+                <td>{{ ucfirst($deviceType->status) }}</td>
+                <td>{{ $deviceType->updated_by }}</td>
+                <td>{{ $deviceType->updated_at->format('d M Y g:i A') }}</td>
                 <td>
                     <a href="{{ route('device_types.edit', $deviceType->id) }}" class="btn btn-primary">
                         Edit
