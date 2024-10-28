@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Catalog;
+use App\Models\ProductKeyFeatures;
+use App\Models\ProductTitleKeyword;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Config;
 
@@ -71,8 +73,20 @@ class CatalogController extends Controller
      */
     public function create()
     {
-        //
-        return view('catalog.add');
+        //session()->forget('pro_id');
+        if (!session()->has('pro_id')) {
+            $record = Catalog::create(['product_status' => 'draft']);
+            session(['pro_id' => $record->product_id]);
+            $pro_id = $record->product_id;
+        }else{
+            $pro_id = session('pro_id');
+        }
+        //return view('catalog.update', ['product_id' => $record->product_id]);
+
+        $product = Catalog::findOrFail($pro_id); // Retrieve the product by ID
+        $keyFeatures = ProductKeyFeatures::where('product_id', $pro_id)->orderBy('sort_order')->get();
+        $titleKeywords = ProductTitleKeyword::where('product_id', $pro_id)->orderBy('priority')->get();
+        return view('catalog.update', compact('product','keyFeatures','titleKeywords'));
     }
 
     /**
@@ -131,7 +145,9 @@ class CatalogController extends Controller
     public function edit(string $id)
     {
         $product = Catalog::findOrFail($id); // Retrieve the product by ID
-        return view('catalog.update', compact('product'));
+        $keyFeatures = ProductKeyFeatures::where('product_id', $id)->orderBy('sort_order')->get();
+        $titleKeywords = ProductTitleKeyword::where('product_id', $id)->orderBy('priority')->get();
+        return view('catalog.update', compact('product','keyFeatures','titleKeywords'));
     }
 
     /**
@@ -141,22 +157,102 @@ class CatalogController extends Controller
     {
         $productId = $request->input('product_id');
         $tabId = $request->input('tab');
+        $request->except('product_id', 'tab');
 
         // Logic to handle saving data based on $tabId
-        if ($tabId === 'tab1') {
+        if ($tabId == 1) {
 
-            if($productId){
-                $product = Catalog::findOrFail($productId);
+            try {
+
+                $request->validate([
+                    'product_title' => 'required|string|max:30',
+                    'product_type' => 'required|string',
+                    'product_manufacturer' => 'required|integer',
+                    'product_price' => 'required|decimal:2',
+                    'product_sku' => 'required|string|max:225',
+                    'product_description' => 'nullable|string'
+                ]);
+
+                $product = Catalog::findOrFail($productId); // Retrieve the product by ID
                 $product->update($request->all());
-            }else {
-                Catalog::create($request->all());
+                return response()->json(['success' => true, 'message' => 'Data saved successfully']);
+
+            }catch (QueryException $e) {
+                // Handle the exception and show an error message
+                return response()->json(['errors' => $e->getMessage()]);
             }
 
-        } elseif ($tabId === 'tab2') {
+        } elseif ($tabId == 2) {
 
+            try {
+                $product = Catalog::findOrFail($productId); // Retrieve the product by ID
+                $product->update($request->all());
+                return response()->json(['success' => true, 'message' => 'Data saved successfully']);
+
+            }catch (QueryException $e) {
+                // Handle the exception and show an error message
+                return response()->json(['errors' => $e->getMessage()]);
+            }
+        }elseif ($tabId == 3) {
+
+        }elseif ($tabId == 4) {
+
+        }elseif ($tabId == 5) {
+
+            try {
+                $data = [];
+                for($i=0; $i < count($request->features); $i++){
+                    $data[] = array(
+                        'product_id' => $productId,
+                        'value' => $request->features[$i],
+                        'sort_order' => $request->feature_sort_order[$i],
+                    );
+                }
+                ProductKeyFeatures::where('product_id', $productId)->delete();
+                ProductKeyFeatures::upsert($data, ['product_id','value'], ['sort_order']);
+
+                return response()->json(['success' => true, 'message' => 'Data saved successfully']);
+
+            }catch (QueryException $e) {
+                // Handle the exception and show an error message
+                return response()->json(['errors' => $e->getMessage()]);
+            }
+        }elseif ($tabId == 6){
+            $data = [];
+            for($i=0; $i < count($request->title_keyword); $i++){
+                $data[] = array(
+                    'product_id' => $productId,
+                    'keyword' => $request->title_keyword[$i],
+                    'priority' => $request->title_priority[$i],
+                );
+            }
+            ProductTitleKeyword::where('product_id', $productId)->delete();
+            ProductTitleKeyword::upsert($data, ['product_id','keyword'], ['priority']);
+
+            return response()->json(['success' => true, 'message' => 'Data saved successfully']);
+        }
+    }
+
+    /**
+     * Submit the records from different tab.
+     */
+    public function finalize(Request $request) {
+        $record = Catalog::find($request->input('product_id'));
+
+        $request->validate([
+            'product_title' => 'required|string|max:30',
+            'product_type' => 'required|string',
+            'product_manufacturer' => 'required|integer',
+            'product_price' => 'required|decimal:2',
+            'product_sku' => 'required|string|max:225',
+            'product_description' => 'nullable|string'
+        ]);
+
+        if ($record) {
+            $record->update(['product_status' => 'active']);
         }
 
-        return response()->json(['success' => true]);
+        return redirect()->route('catalog.list');
     }
 
     /**

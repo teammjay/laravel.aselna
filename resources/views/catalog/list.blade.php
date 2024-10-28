@@ -42,11 +42,12 @@
                     <div class="col-md-2">
                         <div class="form-group">
                             <label for="price_max">Status:</label>
-                            <select class="form-control" name="status" id="status">
+                            <select class="custom-select" name="status" id="status">
                                 <option> -- </option>
                                 <option value="active"> Active </option>
                                 <option value="discontinued"> Discontinued </option>
                                 <option value="out_of_stock"> Out of stock </option>
+                                <option value="draft"> Draft </option>
                             </select>
                         </div>
                     </div>
