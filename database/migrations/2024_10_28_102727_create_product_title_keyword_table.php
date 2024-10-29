@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('keyword');
             $table->unsignedBigInteger('product_id');
-            $table->foreign('product_id')->references('product_id')->on('product_title_keyword')
+            $table->foreign('product_id')->references('product_id')->on('products')
                 ->onDelete('cascade');
             $table->integer('priority')->default(0);
             $table->string('created_by')->nullable();
