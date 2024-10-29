@@ -67,12 +67,14 @@
     <table id="productsTable" class="table table-bordered table-striped">
         <thead>
         <tr>
-            <th>Name</th>
+            <th>Image</th>
             <th>Code</th>
             <th>Type</th>
-            <th>Manufacturer</th>
-            <th>Price</th>
+            <th>Title</th>
             <th>Status</th>
+            <th>Price</th>
+            <th>Manufacturer</th>
+            <th>Color</th>
         </tr>
         </thead>
         <tbody id="product-list">

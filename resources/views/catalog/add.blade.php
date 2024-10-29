@@ -689,6 +689,7 @@
                         // Switch to the next tab
                        /* let nextTab = new bootstrap.Tab(document.querySelector(`#${tabId}-tab`).nextElementSibling);
                         nextTab.show();*/
+                       location.reload();
                     } else {
                         alert('Error saving data for ' + tabId);
                     }

@@ -5,8 +5,10 @@ namespace App\Http\Controllers;
 use App\Models\Catalog;
 use App\Models\ProductKeyFeatures;
 use App\Models\ProductTitleKeyword;
+use App\Models\ProductImages;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Validator;
 
 class CatalogController extends Controller
 {
@@ -18,7 +20,7 @@ class CatalogController extends Controller
     public function index(Request $request)
     {
         // get the data in the pagination format for datatable to display
-        $products = Catalog::select('product_id','product_title', 'product_type', 'product_manufacturer', 'product_price', 'product_sku','product_description','product_status','product_condition')
+        $products = Catalog::select('*')
             ->orderBy('product_id','desc')
             ->paginate($this->perPage);
 
@@ -147,7 +149,8 @@ class CatalogController extends Controller
         $product = Catalog::findOrFail($id); // Retrieve the product by ID
         $keyFeatures = ProductKeyFeatures::where('product_id', $id)->orderBy('sort_order')->get();
         $titleKeywords = ProductTitleKeyword::where('product_id', $id)->orderBy('priority')->get();
-        return view('catalog.update', compact('product','keyFeatures','titleKeywords'));
+        $productImages = ProductImages::where('product_id', $id)->get();
+        return view('catalog.update', compact('product','keyFeatures','titleKeywords','productImages'));
     }
 
     /**
@@ -175,7 +178,7 @@ class CatalogController extends Controller
 
                 $product = Catalog::findOrFail($productId); // Retrieve the product by ID
                 $product->update($request->all());
-                return response()->json(['success' => true, 'message' => 'Data saved successfully']);
+                return response()->json(['success' => true, 'message' => 'Data saved successfully!']);
 
             }catch (QueryException $e) {
                 // Handle the exception and show an error message
@@ -187,7 +190,7 @@ class CatalogController extends Controller
             try {
                 $product = Catalog::findOrFail($productId); // Retrieve the product by ID
                 $product->update($request->all());
-                return response()->json(['success' => true, 'message' => 'Data saved successfully']);
+                return response()->json(['success' => true, 'message' => 'Data saved successfully!']);
 
             }catch (QueryException $e) {
                 // Handle the exception and show an error message
@@ -211,7 +214,7 @@ class CatalogController extends Controller
                 ProductKeyFeatures::where('product_id', $productId)->delete();
                 ProductKeyFeatures::upsert($data, ['product_id','value'], ['sort_order']);
 
-                return response()->json(['success' => true, 'message' => 'Data saved successfully']);
+                return response()->json(['success' => true, 'message' => 'Data saved successfully!']);
 
             }catch (QueryException $e) {
                 // Handle the exception and show an error message
@@ -229,7 +232,17 @@ class CatalogController extends Controller
             ProductTitleKeyword::where('product_id', $productId)->delete();
             ProductTitleKeyword::upsert($data, ['product_id','keyword'], ['priority']);
 
-            return response()->json(['success' => true, 'message' => 'Data saved successfully']);
+            return response()->json(['success' => true, 'message' => 'Data saved successfully!']);
+        }elseif ($tabId == 11){
+            try {
+                $product = Catalog::findOrFail($productId);
+                $product->update($request->all());
+                return response()->json(['success' => true, 'message' => 'Data saved successfully!!']);
+
+            }catch (QueryException $e) {
+                // Handle the exception and show an error message
+                return response()->json(['errors' => $e->getMessage()]);
+            }
         }
     }
 
@@ -237,22 +250,29 @@ class CatalogController extends Controller
      * Submit the records from different tab.
      */
     public function finalize(Request $request) {
-        $record = Catalog::find($request->input('product_id'));
+        $productId = $request->input('product_id');
 
-        $request->validate([
-            'product_title' => 'required|string|max:30',
-            'product_type' => 'required|string',
-            'product_manufacturer' => 'required|integer',
-            'product_price' => 'required|decimal:2',
-            'product_sku' => 'required|string|max:225',
-            'product_description' => 'nullable|string'
-        ]);
+        try {
+            $request->validate([
+                'product_title' => 'required|string|max:30',
+                'product_type' => 'required|string',
+                'product_manufacturer' => 'required|integer',
+                'product_price' => 'required|decimal:2',
+                'product_sku' => 'required|string|max:225',
+                'product_description' => 'nullable|string'
+            ]);
 
-        if ($record) {
-            $record->update(['product_status' => 'active']);
+            $product = Catalog::findOrFail($productId); // Retrieve the product by ID
+            $product->update($request->all());
+
+            return response()->json(['success' => true, 'message' => 'Data saved successfully']);
+
+        }catch(QueryException $e){
+
+            return response()->json(['errors' => $e->getMessage()], 422);
         }
 
-        return redirect()->route('catalog.list');
+
     }
 
     /**
@@ -318,5 +338,102 @@ class CatalogController extends Controller
 
         // If the user doesn't exist, return an error
         return response()->json(['error' => 'Product not found!'], 404);
+    }
+
+    /**
+     * Upload product images.
+     */
+    public function uploadImage(Request $request)
+    {
+        $productId = $request->input('product_id');
+        // Validate the request
+        $validator = Validator::make($request->all(), [
+            'images.*' => 'required|image|mimes:jpeg,png,jpg,gif,JPG,PNG,JPEG|max:2048'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['error' => $validator->errors()], 422);
+        }
+
+        $imageNames = [];
+        $thumbnailNames = [];
+        $imagedata = [];
+        // Store the uploaded image and create a thumbnail
+        if ($request->file('images')) {
+
+            foreach ($request->file('images') as $key=>$image) {
+                $imageName = time() . '_' . uniqid() . '.' . $image->getClientOriginalExtension();
+                $image->move(public_path('images'), $imageName);
+                $imageNames[] = $imageName;
+                $imagedata[] = array(
+                    'product_id' => $productId,
+                    'image' => $imageName,
+                    'sort_order' => (int) $key + 1,
+                );
+
+                if($key == 0){
+                    Catalog::upsert(['product_image_url'=>$imageName],['product_id','product_image_url'], ['product_image_url']);
+                }
+
+                // Create thumbnail
+                /*$thumbnailPath = public_path('images/thumbnails');
+                if (!file_exists($thumbnailPath)) {
+                    mkdir($thumbnailPath, 0755, true);
+                }
+
+                $thumbnailImage = Image::make(public_path('images/' . $imageName));
+                $thumbnailImage->resize(150, 150); // Set thumbnail size
+                $thumbnailImage->save($thumbnailPath . '/' . $imageName);
+                $thumbnailNames[] = 'thumbnails/' . $imageName;*/
+            }
+            //print_r($imagedata);die;
+            $iamges = ProductImages::upsert($imagedata,['product_id','image'], ['image']);
+
+            return response()->json([
+                'success' => 'Image uploaded successfully!',
+                'image_name' => $imageName,
+                //'thumbnail_name' => 'thumbnails/' . $imageName,
+            ]);
+        }
+
+        return response()->json(['error' => 'Image upload failed.'], 500);
+    }
+
+    /* set default image*/
+    public function setDefaultImage(Request $request){
+
+        $imageId = $request->input('image_id');
+        $productId = $request->input('product_id');
+
+        try {
+
+            ProductImages::where('product_id', $productId)->update(['main_image' => 0]);
+            ProductImages::where('id', $imageId)->update(['main_image' => 1]);
+
+            $imageDetail = ProductImages::find($imageId);
+            Catalog::where('product_id', $productId)->update(['product_image_url'=>$imageDetail->image]);
+            
+            return response()->json(['success' => true, 'message' => 'Image set default successfully']);
+
+        }catch(QueryException $e){
+
+            return response()->json(['errors' => $e->getMessage()], 422);
+        }
+    }
+
+    /* set image sort order*/
+    public function setImageOrder(Request $request){
+        $imageId = $request->input('image_id');
+        $sort_order = $request->input('sort_order');
+
+        try {
+
+            ProductImages::where('id', $imageId)->update(['sort_order' => $sort_order]);
+            return response()->json(['success' => true, 'message' => 'Set order  successfully']);
+
+        }catch(QueryException $e){
+
+            return response()->json(['errors' => $e->getMessage()], 422);
+        }
     }
 }

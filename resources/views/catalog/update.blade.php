@@ -29,11 +29,11 @@
                             Inventory
                         </a>
                     </li>
-                    <li class="nav-item">
+                    {{--<li class="nav-item">
                         <a class="nav-link" id="tier-pricing-tab" data-toggle="pill" href="#tab3" role="tab" aria-controls="tab3" aria-selected="false">
                             Tier Pricing
                         </a>
-                    </li>
+                    </li>--}}
                     <li class="nav-item">
                         <a class="nav-link" id="compatibility-tab" data-toggle="pill" href="#tab4" role="tab" aria-controls="tab4" aria-selected="false">
                             Compatibility
@@ -88,9 +88,7 @@
                                                 <div class="form-group">
                                                     <label for="name">Product Title</label>
                                                     <input type="text" class="form-control" id="product_title" name="product_title" value="{{ old('product_title',$product->product_title) }}" placeholder="Enter product title">
-                                                    @error('product_title')
-                                                        <span class="text-danger">{{ $message }}</span>
-                                                    @enderror
+                                                    <span class="text-danger"></span>
                                                 </div>
                                             </div>
                                             <div class="col-md-6">
@@ -98,7 +96,7 @@
                                                     <label for="name">Product Code</label>
                                                     <input type="text" class="form-control" id="product_sku" name="product_sku" value="{{ old('product_sku',$product->product_sku) }}" placeholder="Enter product code">
                                                     @error('product_sku')
-                                                    <span class="text-danger">{{ $message }}</span>
+                                                        <span class="text-danger">{{ $message }}</span>
                                                     @enderror
                                                 </div>
                                             </div>
@@ -108,11 +106,11 @@
                                                 <div class="form-group">
                                                     <label for="name">Product Type</label>
                                                     <select class="form-control" id="product_type" name="product_type">
-                                                        <option></option>
+                                                        <option>-- Product Type --</option>
                                                         <option value="1" {{ 1 == $product->product_type ? 'selected' : '' }}>Leather Case</option>
                                                     </select>
                                                     @error('product_type')
-                                                    <span class="text-danger">{{ $message }}</span>
+                                                        <span class="text-danger">{{ $message }}</span>
                                                     @enderror
                                                 </div>
                                             </div>
@@ -120,11 +118,11 @@
                                                 <div class="form-group">
                                                     <label for="name">Product Condition</label>
                                                     <select class="form-control" id="product_condition" name="product_condition">
-                                                        <option></option>
+                                                        <option>-- Product Condition --</option>
                                                         <option value="new" {{ "new" == $product->product_condition ? 'selected' : '' }}>New</option>
                                                     </select>
                                                     @error('product_type')
-                                                    <span class="text-danger">{{ $message }}</span>
+                                                        <span class="text-danger">{{ $message }}</span>
                                                     @enderror
                                                 </div>
                                             </div>
@@ -133,13 +131,13 @@
                                         <div class="row">
                                             <div class="col-md-6">
                                                 <div class="form-group">
-                                                    <label for="name">Product Manufacture</label>
+                                                    <label for="name">Product Manufacturer</label>
                                                     <select class="form-control" id="product_manufacturer" name="product_manufacturer">
-                                                        <option></option>
+                                                        <option>-- Product Manufacture --</option>
                                                         <option value="1" {{ 1 == $product->product_manufacturer ? 'selected' : '' }}>HCO</option>
                                                     </select>
                                                     @error('product_manufacture')
-                                                    <span class="text-danger">{{ $message }}</span>
+                                                        <span class="text-danger">{{ $message }}</span>
                                                     @enderror
                                                 </div>
                                             </div>
@@ -147,13 +145,13 @@
                                                 <div class="form-group">
                                                     <label for="name">Product Status</label>
                                                     <select class="form-control" id="product_status" name="product_status">
-                                                        <option></option>
+                                                        <option>-- Product Status --</option>
                                                         <option value="active" {{ "active" == $product->product_status ? 'selected' : '' }}> Active </option>
                                                         <option value="discontinued" {{ "discontinued" == $product->product_status ? 'selected' : '' }}> Discontinued </option>
                                                         <option value="out_of_stock" {{ "out_of_stock" == $product->product_status ? 'selected' : '' }}> Out of stock </option>
                                                     </select>
                                                     @error('product_status')
-                                                    <span class="text-danger">{{ $message }}</span>
+                                                        <span class="text-danger">{{ $message }}</span>
                                                     @enderror
                                                 </div>
                                             </div>
@@ -188,7 +186,7 @@
                                                             <label for="name">Product Price</label>
                                                             <input type="text" class="form-control" id="product_price" name="product_price" value="{{ old('product_price',$product->product_price) }}" placeholder="00.00">
                                                             @error('product_price')
-                                                            <span class="text-danger">{{ $message }}</span>
+                                                                <span class="text-danger">{{ $message }}</span>
                                                             @enderror
                                                         </div>
                                                     </div>
@@ -197,7 +195,7 @@
                                                             <label for="name">Wholesale Price</label>
                                                             <input type="text" class="form-control" id="product_wholesale_price" name="product_wholesale_price" value="{{ old('product_wholesale_price',$product->product_wholesale_price) }}" placeholder="00.00">
                                                             @error('product_wholesale_price')
-                                                            <span class="text-danger">{{ $message }}</span>
+                                                                <span class="text-danger">{{ $message }}</span>
                                                             @enderror
                                                         </div>
                                                     </div>
@@ -208,7 +206,7 @@
                                                             <label for="name">Marketplace Price</label>
                                                             <input type="text" class="form-control" id="product_marketplace_price" name="product_marketplace_price" value="{{ old('product_marketplace_price',$product->product_marketplace_price) }}" placeholder="00.00">
                                                             @error('product_marketplace_price')
-                                                            <span class="text-danger">{{ $message }}</span>
+                                                                <span class="text-danger">{{ $message }}</span>
                                                             @enderror
                                                         </div>
                                                     </div>
@@ -217,7 +215,7 @@
                                                             <label for="name">Mrsp</label>
                                                             <input type="text" class="form-control" id="product_mrsp" name="product_mrsp" value="{{ old('product_mrsp',$product->product_mrsp) }}" placeholder="00.00">
                                                             @error('product_mrsp')
-                                                            <span class="text-danger">{{ $message }}</span>
+                                                                <span class="text-danger">{{ $message }}</span>
                                                             @enderror
                                                         </div>
                                                     </div>
@@ -282,7 +280,7 @@
                                         <div class="row">
                                             <div class="col-md-8">
                                                 <div class="form-group">
-                                                    <label for="name">Target Audionces</label>
+                                                    <label for="name">Target Audiences</label>
                                                     <div class="d-flex">
                                                         <input type="checkbox" class="mr-1" name="target_aud" value="unisex" {{ "unisex" == $product->target_aud ? 'checked' : '' }}><span class="mr-3">Unisex</span>
                                                         <input type="checkbox" class="mr-1" name="target_aud" value="men" {{ "men" == $product->target_aud ? 'checked' : '' }}><span class="mr-3">Men</span>
@@ -290,10 +288,10 @@
                                                     </div>
                                                 </div>
                                             </div>
-                                            <div class="col-md-8">
+                                            <div class="col-md-5">
                                                 <div class="form-group">
                                                     <label for="name">Color</label>
-                                                    <select class="form-control" name="product_color" id="product_color">
+                                                    <select class="custom-select" name="product_color" id="product_color">
                                                         <option></option>
                                                         <option value="red" {{ "red" == $product->product_color ? 'selected' : '' }}>Red</option>
                                                         <option value="green" {{ "green" == $product->product_color ? 'selected' : '' }}>Green</option>
@@ -317,25 +315,25 @@
                     <div class="tab-pane fade" id="tab2" role="tabpanel" aria-labelledby="inventory-tab">
                         <form method="POST" id="frmtab2">
                             <div class="row">
-                                <div class="col-md-4">
+                                <div class="col-md-6">
                                     <div class="card-body border">
                                         <div class="row">
-                                            <div class="col-md-8">
+                                            <div class="col-md-6">
                                                 <div class="form-group">
                                                     <label for="name">Quantity</label>
                                                     <input type="text" class="form-control" id="product_qty" name="product_qty" value="{{ old('product_qty',$product->product_qty) }}" placeholder="100">
                                                     @error('product_qty')
-                                                    <span class="text-danger">{{ $message }}</span>
+                                                        <span class="text-danger">{{ $message }}</span>
                                                     @enderror
                                                 </div>
                                             </div>
-                                            <div class="col-md-8">
+                                            <div class="col-md-6">
                                                 <div class="form-group">
                                                     <label for="name">Reorder Quantity</label>
                                                     <input type="text" class="form-control" id="product_reorder_qty" name="product_reorder_qty" value="{{ old('product_reorder_qty',$product->product_reorder_qty) }}" placeholder="100">
                                                 </div>
                                             </div>
-                                            <div class="col-md-8">
+                                            {{--<div class="col-md-8">
                                                 <div class="form-group">
                                                     <label for="name">Pick Location</label>
                                                     <select class="form-control" name="product_pick_location" id="product_pick_location">
@@ -361,12 +359,12 @@
                                                     </select>
 
                                                 </div>
-                                            </div>
+                                            </div>--}}
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                            <div class="row mt-3">
+                            {{--<div class="row mt-3">
                                 <div class="col-md-12">
                                     <div class="card card-primary">
                                         <div class="card-header">
@@ -390,7 +388,7 @@
                                         </div>
                                     </div>
                                 </div>
-                            </div>
+                            </div>--}}
                             <div class="card-footer text-center mt-3">
                                 <button type="button" class="btn btn-success" onclick="saveTabData(2)">Save</button>
                                 <button type="button" class="btn btn-primary" onclick="finalizeForm()">Submit</button>
@@ -399,7 +397,7 @@
                             </div>
                         </form>
                     </div>
-                    <div class="tab-pane fade" id="tab3" role="tabpanel" aria-labelledby="tier-pricing-tab">
+                    {{--<div class="tab-pane fade" id="tab3" role="tabpanel" aria-labelledby="tier-pricing-tab">
                         <form method="POST" id="frmtab3">
                             <div class="row">
                                 <div class="col-md-6">
@@ -411,18 +409,18 @@
                                             <button class="btn btn-secondary" type="button" id="add_retail"><i class="fa fa-plus-square"></i> Add</button>
                                             <table class="table table-bordered mt-2" id="table_retail">
                                                 <thead>
-                                                <tr>
-                                                    <th>Quantity</th>
-                                                    <th>Price</th>
-                                                    <th></th>
-                                                </tr>
+                                                    <tr>
+                                                        <th>Quantity</th>
+                                                        <th>Price</th>
+                                                        <th></th>
+                                                    </tr>
                                                 </thead>
                                                 <tbody>
-                                                <tr>
-                                                    <td><input type="text" class="form-control" name="retail_qty[]"></td>
-                                                    <td><input type="text" class="form-control" name="retail_price[]"></td>
-                                                    <td></td>
-                                                </tr>
+                                                    <tr>
+                                                        <td><input type="text" class="form-control" name="retail_qty[]"></td>
+                                                        <td><input type="text" class="form-control" name="retail_price[]"></td>
+                                                        <td></td>
+                                                    </tr>
                                                 </tbody>
                                             </table>
                                         </div>
@@ -457,11 +455,11 @@
                             <div class="card-footer text-center mt-3">
                                 <button type="button" class="btn btn-success" onclick="saveTabData(3)">Save</button>
                                 <button type="button" class="btn btn-primary" onclick="finalizeForm()">Submit</button>
-                                {{--<button type="reset" class="btn btn-primary">Reset</button>--}}
+                                --}}{{--<button type="reset" class="btn btn-primary">Reset</button>--}}{{--
                                 <a href="{{ route('catalog.list') }}" class="btn btn-secondary">Cancel</a>
                             </div>
                         </form>
-                    </div>
+                    </div>--}}
                     <div class="tab-pane fade" id="tab4" role="tabpanel" aria-labelledby="compatibility-tab">
                         <form method="POST" id="frmtab4">
                             <div class="row">
@@ -541,22 +539,21 @@
                                     </tr>
                                     </thead>
                                     <tbody>
-                                    @if(!empty($keyFeatures))
-                                        @foreach($keyFeatures as $features)
-                                            <tr class="field-group">
-                                                <td><textarea class="form-control" name="features[]">{{ $features->value }}</textarea></td>
-                                                <td><input type="text" class="form-control" name="feature_sort_order[]" value="{{ $features->sort_order }}"></td>
-                                                <td><button type="button" class="btn btn-danger remove-feature"> <i class="fas fa-fw fa-trash"></i></button></td>
+                                        @if(count($keyFeatures) > 0)
+                                            @foreach($keyFeatures as $features)
+                                                <tr class="field-group">
+                                                    <td><textarea class="form-control" name="features[]">{{ $features->value }}</textarea></td>
+                                                    <td><input type="text" class="form-control" name="feature_sort_order[]" value="{{ $features->sort_order }}"></td>
+                                                    <td><button type="button" class="btn btn-danger remove-feature"> <i class="fas fa-fw fa-trash"></i></button></td>
+                                                </tr>
+                                            @endforeach
+                                        @else
+                                            <tr>
+                                                <td><textarea class="form-control" name="features[]"></textarea></td>
+                                                <td><input type="text" class="form-control" name="feature_sort_order[]" value="1"></td>
+                                                <td></td>
                                             </tr>
-                                        @endforeach
-                                    @else
-                                        <tr>
-                                            <td><textarea class="form-control" name="features[]"></textarea></td>
-                                            <td><input type="text" class="form-control" name="feature_sort_order[]" value="1"></td>
-                                            <td></td>
-                                        </tr>
-                                    @endif
-
+                                        @endif
                                     </tbody>
                                 </table>
                             </div>
@@ -574,21 +571,28 @@
                             <div class="row mt-3">
                                 <div class="col-md-6">
                                     <table class="table table-bordered" id="table_title_keywords">
-                                        <tbody>
-                                        @if(!empty($titleKeywords))
-                                            @foreach($titleKeywords as $key)
-                                                <tr class="field-group">
-                                                    <td width="70%"><input type="text" class="form-control" name="title_keyword[]" value="{{ $key->keyword }}"></td>
-                                                    <td width="20%"><input type="text" class="form-control" name="title_priority[]" value="{{ $key->priority }}"></td>
-                                                    <td width="10%"><button type="button" class="btn btn-danger remove-keyword"> <i class="fas fa-fw fa-trash"></i></button></td>
-                                                </tr>
-                                            @endforeach
-                                        @else
+                                        <thead>
                                             <tr>
-                                                <td width="80%"><input type="text" class="form-control" name="title_keyword[]"></td>
-                                                <td width="20%"><input type="text" class="form-control" name="title_priority[]"></td>
+                                                <th>Keyword</th>
+                                                <th>Priority</th>
+                                                <th></th>
                                             </tr>
-                                        @endif
+                                        </thead>
+                                        <tbody>
+                                            @if(count($titleKeywords) > 0)
+                                                @foreach($titleKeywords as $key)
+                                                    <tr class="field-group">
+                                                        <td width="70%"><input type="text" class="form-control" name="title_keyword[]" value="{{ $key->keyword }}"></td>
+                                                        <td width="20%"><input type="text" class="form-control" name="title_priority[]" value="{{ $key->priority }}"></td>
+                                                        <td width="10%"><button type="button" class="btn btn-danger remove-keyword"> <i class="fas fa-fw fa-trash"></i></button></td>
+                                                    </tr>
+                                                @endforeach
+                                            @else
+                                                <tr>
+                                                    <td width="80%"><input type="text" class="form-control" name="title_keyword[]"></td>
+                                                    <td width="20%"><input type="text" class="form-control" name="title_priority[]"></td>
+                                                </tr>
+                                            @endif
                                         </tbody>
                                     </table>
                                 </div>
@@ -602,6 +606,38 @@
                         </form>
                     </div>
                     <div class="tab-pane fade" id="tab7" role="tabpanel" aria-labelledby="images-tab">
+
+                        <form id="imageUploadForm" enctype="multipart/form-data">
+                            <div class="form-group col-md-4 d-flex">
+                                <input class="form-control" type="file" name="images[]" id="images" accept="image/*" multiple>
+                                <button class="btn btn-secondary" type="submit">Upload</button>
+                            </div>
+                        </form>
+
+                        <div class="row">
+                            <div class="col-md-8">
+                                <table class="table table-bordered">
+                                    <thead>
+                                        <th>Image</th>
+                                        <th>Main Image</th>
+                                        <th>Order</th>
+                                    </thead>
+                                    <tbody>
+                                        @if(count($productImages) > 0)
+                                            @foreach($productImages as $images)
+                                                <tr>
+                                                    <td><img src="{{ url('images/' . $images->image) }}" alt="{{ $images->image }}" width="70" height="70"></td>
+                                                    <td><input type="checkbox" name="main_image" class="set_main_image" value="{{ $images->id }}" {{ $images->main_image == 1 ? 'checked' : '' }}></td>
+                                                    <td><input type="text" class="form-control image-sort-order" data-id="{{ $images->id }}" name="sort_order" value="{{ $images->sort_order }}"></td>
+                                                </tr>
+                                            @endforeach
+                                        @endif
+                                    </tbody>
+                                </table>
+                            </div>
+
+                        </div>
+
                     </div>
                     <div class="tab-pane fade" id="tab8" role="tabpanel" aria-labelledby="tags-tab">
                         <form method="POST" id="frmtab8">
@@ -666,16 +702,16 @@
                         </form>
                     </div>
                     <div class="tab-pane fade" id="tab11" role="tabpanel" aria-labelledby="spitex-tab">
-                        <form method="POST" id="frmtab10">
+                        <form method="POST" id="frmtab11">
                             <div class="row">
                                 <div class="col-md-6">
                                     <div class="form-group">
                                         <label for="name">Title Template</label>
-                                        <textarea name="title_template" class="form-control"  rows="10"></textarea>
+                                        <textarea name="title_template" class="form-control"  rows="10">{{ $product->title_template }}</textarea>
                                     </div>
                                     <div class="form-group">
                                         <label for="name">Description Template</label>
-                                        <textarea name="description_template" class="form-control"  rows="10"></textarea>
+                                        <textarea name="description_template" class="form-control"  rows="10">{{ $product->description_template }}</textarea>
                                     </div>
                                 </div>
                             </div>
@@ -722,31 +758,122 @@
                             document.querySelector(`#${field} ~ .text-danger`).innerText = errorMessage;
                         });
                     } else {
-                        alert('Data saved successfully!');
+                        alert(data.message);
+                        location.reload();
                     }
                 });
         }
 
         function finalizeForm() {
+
+            const form = document.querySelector("#frmtab1");
+            let formData = new FormData(form);
+            formData.append('product_id', product_id);
+            formData.set('product_status', 'active');
+
             fetch('{{ route('catalog.final') }}', {
                 method: 'POST',
                 headers: {
                     'X-CSRF-TOKEN': '{{ csrf_token() }}',
                 },
-                body: JSON.stringify({ product_id: product_id })
+                body: formData
             })
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
                         alert('Product saved successfully!');
-                        window.location.href = "/catalog";
+                        window.location.href = "{{ route('catalog.list') }}";
                     } else {
-                        alert('Error finalizing the record');
+                        alert('Error submiting the record');
                     }
-                });
+                })
+                .catch(error => console.error('Error:', error));
         }
 
         $(document).ready(function() {
+
+            $('#imageUploadForm').on('submit', function (e) {
+                e.preventDefault();
+
+                let formData = new FormData(this);
+                formData.append('product_id', product_id);
+
+                $.ajax({
+                    url: "{{ route('catalog.upload') }}",
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    headers: {
+                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                    },
+                    success: function (response) {
+                        if (response.success) {
+                            location.reload();
+                        }
+                    },
+                    error: function (xhr) {
+                        if (xhr.responseJSON?.error) {
+                            $('#responseMessage').html('<p style="color:red;">' + xhr.responseJSON.error.image[0] + '</p>');
+                        }
+                    }
+                });
+            });
+
+            // set default image for prodcut
+            $(document).on('click', '.set_main_image', function() {
+                $('.set_main_image').prop('checked',false);
+                $(this).prop('checked',true);
+                $.ajax({
+                    url: "{{ route('catalog.set_default') }}",
+                    type: 'POST',
+                    data: {
+                        image_id : $(this).val(),
+                        product_id : product_id
+                    },
+                    headers: {
+                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                    },
+                    success: function (response) {
+                        if (response.success) {
+                            alert(response.message);
+                        }
+                    },
+                    error: function (xhr) {
+                        if (xhr.responseJSON?.error) {
+                            $('#responseMessage').html('<p style="color:red;">' + xhr.responseJSON.error.image[0] + '</p>');
+                        }
+                    }
+                });
+            });
+
+            // change sort order for image of prodcut
+            $(document).on('change', '.image-sort-order', function() {
+                $('.set_main_image').prop('checked',false);
+                $(this).prop('checked',true);
+                $.ajax({
+                    url: "{{ route('catalog.set_image_order') }}",
+                    type: 'POST',
+                    data: {
+                        image_id : $(this).data('id'),
+                        sort_order : $(this).val(),
+                        product_id : product_id
+                    },
+                    headers: {
+                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                    },
+                    success: function (response) {
+                        if (response.success) {
+                            alert(response.message);
+                        }
+                    },
+                    error: function (xhr) {
+                        if (xhr.responseJSON?.error) {
+                            $('#responseMessage').html('<p style="color:red;">' + xhr.responseJSON.error.image[0] + '</p>');
+                        }
+                    }
+                });
+            });
 
             // Add new field group
             $('#add_feature').click(function() {
@@ -821,7 +948,7 @@
             // Add new device
             $('#add_title_keyword').click(function() {
                 $('#table_title_keywords tbody').append(`
-                    <tr>
+                    <tr class="field-group">
                         <td width="70%"><input type="text" class="form-control" name="title_keyword[]" value=""></td>
                         <td width="20%"><input type="text" class="form-control" name="title_priority[]" value=""></td>
                         <td width="10%"><button type="button" class="btn btn-danger remove-keyword"> <i class="fas fa-fw fa-trash"></i></button></td>
@@ -834,9 +961,6 @@
             $(document).on('click', '.remove-keyword', function() {
                 $(this).parents('tr.field-group').remove();
             });
-
-
-
 
         });
     </script>
