@@ -17,7 +17,7 @@ return new class extends Migration
             $table->string('image');
             $table->string('thumbnail_image')->nullable();
             $table->unsignedBigInteger('product_id');
-            $table->foreign('product_id')->references('product_id')->on('product_images')
+            $table->foreign('product_id')->references('product_id')->on('products')
                 ->onDelete('cascade');
             $table->integer('sort_order');
             $table->string('created_by')->nullable();
