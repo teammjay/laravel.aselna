@@ -18,7 +18,7 @@ return new class extends Migration
             $table->float('price');
             $table->integer('lead_time_in_days');
             $table->unsignedBigInteger('product_id');
-            $table->foreign('product_id')->references('product_id')->on('product_supplier')
+            $table->foreign('product_id')->references('product_id')->on('products')
                 ->onDelete('cascade');
             $table->string('created_by')->nullable();
             $table->string('updated_by')->nullable();
