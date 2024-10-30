@@ -16,7 +16,8 @@
                     <div class="col-md-6">
                         <div class="form-check">
                             <input type="checkbox" class="form-check-input @error('status') is-invalid @enderror"
-                                   @if(isset($device) && $device->status === 'active') checked @endif name="status"
+                                   @if((isset($device) && $device->status === 'active') || old('status') == 'on') checked
+                                   @endif name="status"
                                    id="status">
                             <label class="form-check-label" for="status">Status</label>
                             @error('status')
@@ -31,7 +32,7 @@
                             <label for="name">Device Name</label>
                             <input type="text" class="form-control @error('name') is-invalid @enderror" id="name"
                                    name="name"
-                                   placeholder="Enter Device Name" value="{{ $device['name'] ?? '' }}">
+                                   placeholder="Enter Device Name" value="{{ old('name', $device['name'] ?? '') }}">
                             @if ($errors->has('name'))
                                 <span class="text-danger">{{ $errors->first('name') }}</span>
                             @endif
@@ -42,7 +43,7 @@
                             <label for="name">Code</label>
                             <input type="text" class="form-control @error('ccode') is-invalid @enderror" id="code"
                                    name="code"
-                                   placeholder="Enter Code" value="{{ $device['code'] ?? '' }}">
+                                   placeholder="Enter Code" value="{{ old('code', $device['code'] ?? '') }}">
                             @if ($errors->has('code'))
                                 <span class="text-danger">{{ $errors->first('code') }}</span>
                             @endif
@@ -55,7 +56,7 @@
                             <label for="name">Order</label>
                             <input type="text" class="form-control @error('order') is-invalid @enderror" id="order"
                                    name="order"
-                                   placeholder="Enter Order" value="{{ $device['order'] ?? '' }}">
+                                   placeholder="Enter Order" value="{{ old('order', $device['order'] ?? '') }}">
                             @if ($errors->has('order'))
                                 <span class="text-danger">{{ $errors->first('order') }}</span>
                             @endif
@@ -67,7 +68,8 @@
                             <div class="input-group date">
                                 <input type="text"
                                        class="form-control datetimepicker-input @error('release_date') is-invalid @enderror"
-                                       id="release_date" name="release_date" value="{{ $device['release_date'] ?? '' }}">
+                                       id="release_date" name="release_date"
+                                       value="{{ old('release_date', $device['release_date'] ?? '') }}">
                             </div>
                             @if ($errors->has('release_date'))
                                 <span class="text-danger">{{ $errors->first('release_date') }}</span>
@@ -82,7 +84,8 @@
                             <input type="text" class="form-control @error('dimensions_width') is-invalid @enderror"
                                    id="dimensions_width"
                                    name="dimensions_width"
-                                   placeholder="Enter Dimension width" value="{{ $device['dimensions_width'] ?? '' }}">
+                                   placeholder="Enter Dimension width"
+                                   value="{{ old('dimensions_width', $device['dimensions_width'] ?? '') }}">
                             @if ($errors->has('dimensions_width'))
                                 <span class="text-danger">{{ $errors->first('dimensions_width') }}</span>
                             @endif
@@ -95,7 +98,7 @@
                                    id="dimensions_height"
                                    name="dimensions_height"
                                    placeholder="Enter Dimension Height"
-                                   value="{{ $device['dimensions_height'] ?? '' }}">
+                                   value="{{ old('dimensions_height', $device['dimensions_height'] ?? '') }}">
                             @if ($errors->has('dimensions_height'))
                                 <span class="text-danger">{{ $errors->first('dimensions_height') }}</span>
                             @endif
@@ -110,7 +113,7 @@
                                    id="dimensions_length"
                                    name="dimensions_length"
                                    placeholder="Enter Dimension Length"
-                                   value="{{ $device['dimensions_length'] ?? '' }}">
+                                   value="{{ old('dimensions_length', $device['dimensions_length'] ?? '') }}">
                             @if ($errors->has('dimensions_length'))
                                 <span class="text-danger">{{ $errors->first('dimensions_length') }}</span>
                             @endif
@@ -124,7 +127,7 @@
                                    id="dimensions_length_unit"
                                    name="dimensions_length_unit"
                                    placeholder="Enter Dimension Length Unit"
-                                   value="{{ $device['dimensions_length_unit'] ?? '' }}">
+                                   value="{{ old('dimensions_length_unit',  $device['dimensions_length_unit'] ?? '') }}">
                             @if ($errors->has('dimensions_length_unit'))
                                 <span class="text-danger">{{ $errors->first('dimensions_length_unit') }}</span>
                             @endif
@@ -135,7 +138,8 @@
                     <div class="col-md-6">
                         <div class="form-group">
                             <label for="device_type_id">Device Type</label>
-                            <select class="form-control @error('device_type_id') is-invalid @enderror" id="device_type_id"
+                            <select class="form-control @error('device_type_id') is-invalid @enderror"
+                                    id="device_type_id"
                                     name="device_type_id">
                                 <option value="">Select Device Type</option>
                                 @foreach($deviceTypes as $deviceType)
@@ -151,7 +155,8 @@
                     <div class="col-md-6">
                         <div class="form-group">
                             <label for="device_sub_type_id">Device Sub Type</label>
-                            <select class="form-control @error('device_sub_type_id') is-invalid @enderror" id="device_sub_type_id"
+                            <select class="form-control @error('device_sub_type_id') is-invalid @enderror"
+                                    id="device_sub_type_id"
                                     name="device_sub_type_id">
                                 <option value="">Select Device Sub Type</option>
                                 @foreach($deviceSubTypes as $deviceSubType)
@@ -169,7 +174,8 @@
                     <div class="col-md-6">
                         <div class="form-group">
                             <label for="device_series_id">Device Series</label>
-                            <select class="form-control @error('device_series_id') is-invalid @enderror" id="device_series_id"
+                            <select class="form-control @error('device_series_id') is-invalid @enderror"
+                                    id="device_series_id"
                                     name="device_series_id">
                                 <option value="">Select Device Series</option>
                                 @foreach($deviceSeries as $deviceSerie)
@@ -264,7 +270,7 @@
                         <div class="form-group">
                             <label for="notes">Notes</label>
                             <textarea class="form-control @error('notes') is-invalid @enderror" id="notes" name="notes"
-                                      placeholder="Enter Notes">{{ $device['notes'] ?? '' }}</textarea>
+                                      placeholder="Enter Notes">{{ old('notes',$device['notes'] ?? '') }}</textarea>
                             @if ($errors->has('notes'))
                                 <span class="text-danger">{{ $errors->first('notes') }}</span>
                             @endif
