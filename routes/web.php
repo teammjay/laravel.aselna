@@ -1,7 +1,9 @@
 <?php
 
 use App\Http\Controllers\BrandController;
+use App\Http\Controllers\DeviceController;
 use App\Http\Controllers\DeviceRatingController;
+use App\Http\Controllers\DeviceScreenController;
 use App\Http\Controllers\DeviceSeriesController;
 use App\Http\Controllers\DeviceSubTypesController;
 use App\Http\Controllers\DeviceTypesController;
@@ -69,4 +71,22 @@ Route::controller(DeviceRatingController::class)->group(function () {
     Route::get('/device_ratings/edit/{id}', 'edit')->name('device_ratings.edit');
     Route::post('/device_ratings/edit/{id}', 'update')->name('device_ratings.update');
     Route::get('/device_ratings/delete/{id}', 'destroy')->name('device_ratings.delete');
+});
+
+Route::controller(DeviceScreenController::class)->group(function () {
+    Route::get('/device_screen', 'index')->name('device_screen.index');
+    Route::get('/device_screen/add', 'create')->name('device_screen.create');
+    Route::post('/device_screen/add', 'store')->name('device_screen.store');
+    Route::get('/device_screen/edit/{id}', 'edit')->name('device_screen.edit');
+    Route::post('/device_screen/edit/{id}', 'update')->name('device_screen.update');
+    Route::get('/device_screen/delete/{id}', 'destroy')->name('device_screen.delete');
+});
+
+Route::controller(DeviceController::class)->group(function () {
+    Route::get('/devices', 'index')->name('devices.index');
+    Route::get('/devices/add', 'create')->name('devices.create');
+    Route::post('/devices/add', 'store')->name('devices.store');
+    Route::get('/devices/edit/{id}', 'edit')->name('devices.edit');
+    Route::post('/devices/edit/{id}', 'update')->name('devices.update');
+    Route::get('/devices/delete/{id}', 'destroy')->name('devices.delete');
 });

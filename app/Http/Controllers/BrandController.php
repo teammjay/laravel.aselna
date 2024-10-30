@@ -17,7 +17,6 @@ class BrandController extends Controller
     public function data()
     {
 
-
     }
 
     public function create()
@@ -33,8 +32,8 @@ class BrandController extends Controller
             'notes2' => 'nullable|string|max:255',
             'notes3' => 'nullable|string|max:255',
             'order_no' => 'nullable|integer|min:1',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
-            'thumbnail_image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'image' => 'nullable|string|max:255',
+            'thumbnail_image' => 'nullable|string|max:255',
             'code' => 'nullable|number|max:50',
             'status' => 'nullable|in:on,off'
         ]);

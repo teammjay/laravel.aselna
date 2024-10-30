@@ -39,7 +39,6 @@
                     </div>
                     <div class="col-md-6">
                         <div class="form-group">
-{{--                            Create seslect from deviceTyes variables--}}
                             <label for="device_type_id">Device Type</label>
                             <select class="form-control @error('device_type_id') is-invalid @enderror" id="device_type_id"
                                     name="device_type_id">
