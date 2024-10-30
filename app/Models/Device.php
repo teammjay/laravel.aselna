@@ -70,11 +70,13 @@ class Device extends Model
 
     public function setReleaseDateAttribute($value)
     {
+        if (!isset($value)) return;
         $this->attributes['release_date'] = Carbon::createFromFormat('m/d/Y', $value)->format('Y-m-d');
     }
 
     public function getReleaseDateAttribute($value)
     {
+        if (!isset($value)) return '';
         return Carbon::parse($value)->format('m/d/Y');
     }
 
