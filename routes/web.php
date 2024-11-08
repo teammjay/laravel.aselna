@@ -9,6 +9,7 @@ use App\Http\Controllers\DeviceSubTypesController;
 use App\Http\Controllers\DeviceTypesController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\CatalogController;
+use App\Http\Controllers\StoreController;
 use App\Http\Controllers\ImageUploadController;
 
 Route::get('/', function () {
@@ -30,6 +31,11 @@ Route::get('/catalog/{id}', [CatalogController::class, 'show'])->name('catalog.s
 Route::post('/upload-image', [CatalogController::class, 'uploadImage'])->name('catalog.upload');
 Route::post('/set-default', [CatalogController::class, 'setDefaultImage'])->name('catalog.set_default');
 Route::post('/set-image-order', [CatalogController::class, 'setImageOrder'])->name('catalog.set_image_order');
+
+Route::controller(StoreController::class)->group(function () {
+    Route::get('/stores', 'index')->name('store.list');
+    Route::get('/stores/add', 'create')->name('store.create');
+});
 
 Route::controller(BrandController::class)->group(function () {
     Route::get('/brands', 'index')->name('brand.list');
