@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\DeviceSubTypeRequest;
+use App\Http\Requests\DeviceTypeRequest;
 use App\Models\DeviceTypes;
 use Illuminate\Http\Request;
 
@@ -20,14 +22,9 @@ class DeviceTypesController extends Controller
         return view('device_types.add');
     }
 
-    public function store(Request $request)
+    public function store(DeviceTypeRequest $request)
     {
-        $request->validate([
-            'name' => 'required|string|max:30',
-            'notes1' => 'nullable|string|max:255',
-            'status' => 'nullable|in:on,off',
-            'code' => 'nullable|string|max:50'
-        ]);
+        $request->validated();
 
         $status = $request->status ?? 'off';
         $statusCode = $status === 'on' ? 'active' : 'inactive';
@@ -52,14 +49,9 @@ class DeviceTypesController extends Controller
         return view('device_types.add', compact('deviceType'));
     }
 
-    public function update(Request $request, $id)
+    public function update(DeviceTypeRequest $request, $id)
     {
-        $request->validate([
-            'name' => 'required|string|max:30',
-            'notes1' => 'nullable|string|max:255',
-            'status' => 'nullable|in:on,off',
-            'code' => 'nullable|string|max:50'
-        ]);
+        $request->validated();
 
         $status = $request->status ?? 'off';
         $statusCode = $status === 'on' ? 'active' : 'inactive';

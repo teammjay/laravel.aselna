@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\DeviceRequest;
 use App\Models\DeviceRating;
 use Illuminate\Http\Request;
 
@@ -18,12 +19,9 @@ class DeviceRatingController extends Controller
         return view('device_ratings.add');
     }
 
-    public function store(Request $request)
+    public function store(DeviceRequest $request)
     {
-        $request->validate([
-            'value' => 'required',
-            'status' => 'required|in:on,off',
-        ]);
+        $request->validated();
 
         $status = $request->status ?? 'off';
         $statusCode = $status === 'on' ? 'active' : 'inactive';
@@ -43,12 +41,9 @@ class DeviceRatingController extends Controller
         return view('device_ratings.add', compact('device_rating'));
     }
 
-    public function update(Request $request, $id)
+    public function update(DeviceRequest $request, $id)
     {
-        $request->validate([
-            'value' => 'required',
-            'status' => 'required|in:on,off',
-        ]);
+        $request->validated();
 
         $status = $request->status ?? 'off';
         $statusCode = $status === 'on' ? 'active' : 'inactive';

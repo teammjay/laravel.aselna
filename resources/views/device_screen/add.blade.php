@@ -17,7 +17,7 @@
                     <div class="col-md-6">
                         <div class="form-check">
                             <input type="checkbox" class="form-check-input @error('status') is-invalid @enderror"
-                                   @if(isset($device_screen) && $device_screen->status === 'active') checked
+                                   @if((isset($device_screen) && $device_screen->status === 'active') || old('status') == 'on') checked
                                    @endif name="status" id="status">
                             <label class="form-check-label" for="status">Status</label>
                             @error('status')
@@ -32,7 +32,7 @@
                             <label for="size">Device Size</label>
                             <input type="text" class="form-control @error('size') is-invalid @enderror" id="size"
                                    name="size"
-                                   placeholder="Enter Device Screen Size" value="{{ $device_screen['size'] ?? '' }}">
+                                   placeholder="Enter Device Screen Size" value="{{ old('size', $device_screen['size'] ?? '') }}">
                             @if ($errors->has('size'))
                                 <span class="text-danger">{{ $errors->first('size') }}</span>
                             @endif

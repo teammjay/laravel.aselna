@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\DeviceSeriesRequest;
 use App\Models\DeviceSeries;
 use Illuminate\Http\Request;
 
@@ -21,13 +22,9 @@ class DeviceSeriesController extends Controller
     }
 
 
-    public function store(Request $request)
+    public function store(DeviceSeriesRequest $request)
     {
-        $request->validate([
-            'name' => 'required',
-            'slug' => 'required',
-            'status' => 'required|in:on,off',
-        ]);
+        $request->validated();
 
         $status = $request->status ?? 'off';
         $statusCode = $status === 'on' ? 'active' : 'inactive';
@@ -49,13 +46,9 @@ class DeviceSeriesController extends Controller
     }
 
 
-    public function update(Request $request, $id)
+    public function update(DeviceSeriesRequest $request, $id)
     {
-        $request->validate([
-            'name' => 'required|string',
-            'slug' => 'required|string',
-            'status' => 'required|in:on,off',
-        ]);
+        $request->validated();
 
         $status = $request->status ?? 'off';
         $statusCode = $status === 'on' ? 'active' : 'inactive';
