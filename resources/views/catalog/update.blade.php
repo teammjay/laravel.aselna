@@ -6,6 +6,17 @@
     <h1>Edit Product</h1>
 @stop
 
+@section('adminlte_css')
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <style>
+        .select2-container--default .select2-dropdown .select2-search__field:focus, .select2-container--default .select2-search--inline .select2-search__field:focus {
+            outline: 0;
+             border: none;
+        }
+        .select2-container{width:100% !important;}
+    </style>
+@stop
+
 @section('content')
 
         @csrf
@@ -466,7 +477,7 @@
                                 <div class="col-md-12">
                                     <div class="card">
                                         <div class="card-header">
-                                            Retail
+                                            Interfaces
                                         </div>
                                         <div class="card-body">
                                             <button class="btn btn-secondary" type="button" id="add_retail"><i class="fa fa-plus-square"></i> Add</button>
@@ -641,9 +652,19 @@
                     </div>
                     <div class="tab-pane fade" id="tab8" role="tabpanel" aria-labelledby="tags-tab">
                         <form method="POST" id="frmtab8">
-                            <button type="button" class="btn btn-secondary" id="add_tag"><i class="fa fa-plus-square"></i> Add</button>
-                            <div class="form-group mt-3">
-                                <textarea name="tags" class="form-control"  rows="10"></textarea>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <button type="button" class="btn btn-secondary" id="add_tag"><i class="fa fa-plus-square"></i> Add</button>
+                                    <div class="form-group mt-3">
+                                        {{--<textarea name="tags" class="form-control"  rows="10"></textarea>--}}
+                                        <select class="form-control pro-tags" name="tags[]" multiple="multiple">
+                                            <option value="Apple" {{ in_array('Apple',$productTags) ? 'selected' : '' }}>Apple</option>
+                                            <option value="Android" {{ in_array('Android',$productTags) ? 'selected' : '' }}>Android</option>
+                                            <option value="Smart" {{ in_array('Smart',$productTags) ? 'selected' : '' }}>Smart</option>
+
+                                        </select>
+                                    </div>
+                                </div>
                             </div>
                             <div class="card-footer text-center mt-3">
                                 <button type="button" class="btn btn-success" onclick="saveTabData(8)">Save</button>
@@ -659,15 +680,93 @@
                                 <div class="col-md-6">
                                     <table class="table table-bordered">
                                         <thead>
-                                        <th>Store</th>
-                                        <th>Active</th>
-                                        <th>Store Products, Store Category</th>
+                                            <th>Store</th>
+                                            <th>Active</th>
+                                            <th>Store Products, Store Category</th>
                                         </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td>Aselna - Magento</td>
+                                                <td align="center"><input type="checkbox" name="store_status" /></td>
+                                                <td>
+                                                    <select class="form-control">
+                                                        <option>Case, cover, skin</option>
+                                                    </select>
+                                                </td>
+                                            </tr>
+                                        </tbody>
                                     </table>
                                 </div>
                                 <div class="col-md-6">
                                     <div class="card">
+                                        <div class="card-header">
+                                            Store Detail
+                                        </div>
                                         <div class="card-body">
+                                            <div class="row mt-3 g-3 align-items-center">
+                                                <div class="col-md-3">
+                                                    <label for="name" class="col-form-label">Title</label>
+                                                </div>
+                                                <div class="col-md-9">
+                                                    <textarea class="form-control" placeholder="Store Name/ Title"></textarea>
+                                                </div>
+                                            </div>
+                                            <div class="row mt-3 g-3 align-items-center">
+                                                <div class="col-md-3">
+                                                    <label for="Description" class="col-form-label">Description</label>
+                                                </div>
+                                                <div class="col-md-9">
+                                                    <textarea class="form-control" placeholder="Description"></textarea>
+                                                </div>
+                                            </div>
+                                            <div class="row mt-3 g-3 align-items-center">
+                                                <div class="col-md-3">
+                                                    <label for="Price" class="col-form-label">Price</label>
+                                                </div>
+                                                <div class="col-md-9">
+                                                    <input type="text" class="form-control" placeholder="00.00">
+                                                </div>
+                                            </div>
+                                            <div class="row mt-3 g-3 align-items-center">
+                                                <div class="col-md-3">
+                                                    <label for="Price" class="col-form-label">Compate at Price</label>
+                                                </div>
+                                                <div class="col-md-9">
+                                                    <input type="text" class="form-control" placeholder="00.00">
+                                                </div>
+                                            </div>
+                                            <div class="row mt-3 g-3 align-items-center">
+                                                <div class="col-md-3">
+                                                    <label for="Price" class="col-form-label">Fbc Price</label>
+                                                </div>
+                                                <div class="col-md-9">
+                                                    <input type="text" class="form-control" placeholder="00.00">
+                                                </div>
+                                            </div>
+                                            <div class="row mt-3 g-3 align-items-center">
+                                                <div class="col-md-3">
+                                                    <label for="Price" class="col-form-label">Wholesale Price</label>
+                                                </div>
+                                                <div class="col-md-9">
+                                                    <input type="text" class="form-control" placeholder="00.00">
+                                                </div>
+                                            </div>
+                                            <div class="row mt-3 g-3 align-items-center">
+                                                <div class="col-md-3">
+                                                    <label for="Price" class="col-form-label">Msrp</label>
+                                                </div>
+                                                <div class="col-md-9">
+                                                    <input type="text" class="form-control" placeholder="00.00">
+                                                </div>
+                                            </div>
+                                            <div class="row mt-3 g-3 align-items-center">
+                                                <div class="col-md-3">
+                                                    <label for="Price" class="col-form-label">Sale Count</label>
+                                                </div>
+                                                <div class="col-md-9">
+                                                    <input type="text" class="form-control" placeholder="00.00">
+                                                </div>
+                                            </div>
 
                                         </div>
                                     </div>
@@ -730,6 +829,7 @@
 
 @stop
 @section('adminlte_js')
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script>
         var product_id = "{{ $product->product_id ?? '' }}"; // Passed from controller
 
@@ -791,6 +891,8 @@
         }
 
         $(document).ready(function() {
+
+            $('.pro-tags').select2();
 
             $('#imageUploadForm').on('submit', function (e) {
                 e.preventDefault();
