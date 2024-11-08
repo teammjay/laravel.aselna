@@ -28,7 +28,7 @@
                         <div class="form-group">
                             <label for="name">Device Type Name</label>
                             <input type="text" class="form-control @error('name') is-invalid @enderror" id="name" name="name"
-                                   placeholder="Enter brand name"  value="{{ $deviceType['name'] ?? '' }}">
+                                   placeholder="Enter brand name"  value="{{ old('name', $deviceType['name'] ?? '') }}">
                             @if ($errors->has('name'))
                                 <span class="text-danger">{{ $errors->first('name') }}</span>
                             @endif
@@ -38,7 +38,7 @@
                         <div class="form-group">
                             <label for="name">Code</label>
                             <input type="text" class="form-control @error('code') is-invalid @enderror" id="code" name="code"
-                                placeholder="Enter code" value="{{ $deviceType['code'] ?? '' }}">
+                                placeholder="Enter code" value="{{ old('code', $deviceType['code'] ?? '') }}">
                             @if ($errors->has('code'))
                                 <span class="text-danger">{{ $errors->first('name') }}</span>
                             @endif

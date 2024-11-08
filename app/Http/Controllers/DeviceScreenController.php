@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\DeviceScreenRequest;
 use App\Models\DeviceScreen;
 use Illuminate\Http\Request;
 
@@ -19,12 +20,9 @@ class DeviceScreenController extends Controller
     }
 
 
-    public function store(Request $request)
+    public function store(DeviceScreenRequest $request)
     {
-        $request->validate([
-            'size' => 'required',
-            'status' => 'required|in:on,off',
-        ]);
+        $request->validated();
 
         $status = $request->status ?? 'off';
         $statusCode = $status === 'on' ? 'active' : 'inactive';
@@ -44,12 +42,9 @@ class DeviceScreenController extends Controller
         return view('device_screen.add', compact('device_screen'));
     }
 
-    public function update(Request $request, $id)
+    public function update(DeviceScreenRequest $request, $id)
     {
-        $request->validate([
-            'size' => 'required',
-            'status' => 'required|in:on,off',
-        ]);
+        $request->validated();
 
         $status = $request->status ?? 'off';
         $statusCode = $status === 'on' ? 'active' : 'inactive';

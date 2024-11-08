@@ -62,6 +62,26 @@ return [
             ]) : [],
         ],
 
+        'fonus_db' => [
+            'driver' => 'mysql',
+            'url' => env('DB_FONUS_URL'),
+            'host' => env('DB_FONUS_HOST', '127.0.0.1'),
+            'port' => env('DB_FONUS_PORT', '3306'),
+            'database' => env('DB_FONUS_DATABASE', 'laravel'),
+            'username' => env('DB_FONUS_USERNAME', 'root'),
+            'password' => env('DB_FONUS_PASSWORD', ''),
+            'unix_socket' => env('DB_FONUS_SOCKET', ''),
+            'charset' => env('DB_FONUS_CHARSET', 'utf8mb4'),
+            'collation' => env('DB_FONUS_COLLATION', 'utf8mb4_unicode_ci'),
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'strict' => true,
+            'engine' => null,
+            'options' => extension_loaded('pdo_mysql') ? array_filter([
+                PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
+            ]) : [],
+        ],
+
         'mariadb' => [
             'driver' => 'mariadb',
             'url' => env('DB_URL'),

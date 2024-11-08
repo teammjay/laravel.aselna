@@ -15,7 +15,7 @@
                     <div class="col-md-6">
                         <div class="form-check">
                             <input type="checkbox" class="form-check-input @error('code') is-invalid @enderror"
-                                   @if(isset($device_series) && $device_series->status === 'active') checked @endif name="status" id="status">
+                                   @if((isset($device_series) && $device_series->status === 'active') || old('status') == 'on') checked @endif name="status" id="status">
                             <label class="form-check-label" for="status">Status</label>
                             @error('status')
                             <span class="text-danger">{{ $message }}</span>
@@ -29,7 +29,7 @@
                             <label for="name">Device Series Name</label>
                             <input type="text" class="form-control @error('name') is-invalid @enderror" id="name"
                                    name="name"
-                                   placeholder="Enter Device Series Name" value="{{ $device_series['name'] ?? '' }}">
+                                   placeholder="Enter Device Series Name" value="{{ old('name' ,$device_series['name'] ?? '') }}">
                             @if ($errors->has('name'))
                                 <span class="text-danger">{{ $errors->first('name') }}</span>
                             @endif
@@ -40,7 +40,7 @@
                             <label for="slug">Device Series slug</label>
                             <input type="text" class="form-control @error('slug') is-invalid @enderror" id="slug"
                                    name="slug"
-                                   placeholder="Enter Device series slug" value="{{ $device_series['slug'] ?? '' }}">
+                                   placeholder="Enter Device series slug" value="{{ old('slug',$device_series['slug'] ?? '') }}">
                             @if ($errors->has('slug'))
                                 <span class="text-danger">{{ $errors->first('slug') }}</span>
                             @endif

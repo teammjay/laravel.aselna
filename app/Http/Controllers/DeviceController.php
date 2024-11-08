@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\DeviceRequest;
 use App\Models\Brand;
 use App\Models\Device;
 use App\Models\DeviceRating;
@@ -33,28 +34,9 @@ class DeviceController extends Controller
         return view('device.add', compact('deviceTypes', 'deviceSubTypes', 'deviceSeries', 'deviceRatings', 'deviceScreens', 'brands'));
     }
 
-    public function store(Request $request)
+    public function store(DeviceRequest $request)
     {
-        $request->validate([
-            'dimensions_height' => 'nullable|string|max:25',
-            'dimensions_width' => 'nullable|string|max:25',
-            'name' => 'required',
-            'release_date' => 'nullable|string|max:25',
-            'image' => 'nullable|string|max:255',
-            'thumbnail_image' => 'nullable|string|max:255',
-            'notes' => 'nullable|string',
-            'order' => 'required',
-            'code' => 'required',
-            'dimensions_length' => 'nullable|string|max:25',
-            'dimensions_length_unit' => 'nullable|string|max:25',
-            'device_sub_type_id' => 'nullable',
-            'device_series_id' => 'nullable',
-            'rating_id' => 'nullable',
-            'screen_id' => 'nullable',
-            'brand_id' => 'nullable',
-            'device_type_id' => 'nullable',
-            'status' => 'required|in:on,off',
-        ]);
+        $request->validated();
 
         $status = $request->status ?? 'off';
         $statusCode = $status === 'on' ? 'active' : 'inactive';;
@@ -80,28 +62,9 @@ class DeviceController extends Controller
         return view('device.add', compact('device', 'deviceTypes', 'deviceSubTypes', 'deviceSeries', 'deviceRatings', 'deviceScreens', 'brands'));
     }
 
-    public function update(Request $request, $id)
+    public function update(DeviceRequest $request, $id)
     {
-        $request->validate([
-            'dimensions_height' => 'nullable|string|max:25',
-            'dimensions_width' => 'nullable|string|max:25',
-            'name' => 'required',
-            'release_date' => 'nullable|string|max:25',
-            'image' => 'nullable|string|max:255',
-            'thumbnail_image' => 'nullable|string|max:255',
-            'notes' => 'nullable|string',
-            'order' => 'required',
-            'code' => 'required',
-            'dimensions_length' => 'nullable|string|max:25',
-            'dimensions_length_unit' => 'nullable|string|max:25',
-            'device_sub_type_id' => 'nullable',
-            'device_series_id' => 'nullable',
-            'rating_id' => 'nullable',
-            'screen_id' => 'nullable',
-            'brand_id' => 'nullable',
-            'device_type_id' => 'nullable',
-            'status' => 'required|in:on,off',
-        ]);
+        $request->validated();
 
         $status = $request->status ?? 'off';
         $statusCode = $status === 'on' ? 'active' : 'inactive';

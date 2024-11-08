@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\BrandRequest;
 use App\Models\Brand;
 use Illuminate\Http\Request;
 
@@ -24,19 +25,9 @@ class BrandController extends Controller
         return view('brand.add');
     }
 
-    public function store(Request $request)
+    public function store(BrandRequest $request)
     {
-        $request->validate([
-            'name' => 'required|string|max:30',
-            'notes1' => 'nullable|string|max:255',
-            'notes2' => 'nullable|string|max:255',
-            'notes3' => 'nullable|string|max:255',
-            'order_no' => 'nullable|integer|min:1',
-            'image' => 'nullable|string|max:255',
-            'thumbnail_image' => 'nullable|string|max:255',
-            'code' => 'nullable|number|max:50',
-            'status' => 'nullable|in:on,off'
-        ]);
+        $request->validated();
 
         $status = $request->status ?? 'off';
         $statusCode = $status === 'on' ? 'active' : 'inactive';
@@ -63,19 +54,9 @@ class BrandController extends Controller
         return view('brand.add', compact('brand'));
     }
 
-    public function update(Request $request, $id)
+    public function update(BrandRequest $request, $id)
     {
-        $request->validate([
-            'name' => 'required|string|max:30',
-            'notes1' => 'nullable|string|max:255',
-            'notes2' => 'nullable|string|max:255',
-            'notes3' => 'nullable|string|max:255',
-            'order_no' => 'nullable|integer',
-            'image' => 'nullable|string|max:255',
-            'thumbnail_image' => 'nullable|string|max:255',
-            'code' => 'nullable|string|max:50',
-            'status' => 'nullable|in:on,off'
-        ]);
+        $request->validated();
 
         $status = $request->status ?? 'off';
         $statusCode = $status === 'on' ? 'active' : 'inactive';

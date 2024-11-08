@@ -9,4 +9,8 @@ class DeviceTypes extends Model
     //
     protected $table = 'device_types';
     protected $fillable = ['name', 'notes1', 'created_by', 'updated_by', 'code', 'status'];
+
+    // timestamps
+    public $timestamps = true;
+
 }

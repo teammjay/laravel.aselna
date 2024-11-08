@@ -31,7 +31,7 @@
                             <label for="name">Device Sub Type Name</label>
                             <input type="text" class="form-control @error('name') is-invalid @enderror" id="name"
                                    name="name"
-                                   placeholder="Enter Device sub type" value="{{ $deviceSubType['name'] ?? '' }}">
+                                   placeholder="Enter Device sub type" value="{{ old('name', $deviceSubType['name'] ?? '') }}">
                             @if ($errors->has('name'))
                                 <span class="text-danger">{{ $errors->first('name') }}</span>
                             @endif
@@ -59,7 +59,7 @@
                         <div class="form-group">
                             <label for="notes1">Notes 1</label>
                             <textarea class="form-control @error('notes1') is-invalid @enderror" id="notes1" name="notes1"
-                                      placeholder="Enter Notes">{{ $deviceSubType['notes1'] ?? '' }}</textarea>
+                                      placeholder="Enter Notes">{{ old('notes1', $deviceSubType['notes1'] ?? '') }}</textarea>
                             @if ($errors->has('notes1'))
                                 <span class="text-danger">{{ $errors->first('notes1') }}</span>
                             @endif
@@ -69,7 +69,7 @@
                         <div class="form-group">
                             <label for="name">Code</label>
                             <input type="text" class="form-control @error('code') is-invalid @enderror" id="code" name="code"
-                                   placeholder="Enter code" value="{{ $deviceSubType['code'] ?? '' }}">
+                                   placeholder="Enter code" value="{{ old('code', $deviceSubType['code'] ?? '') }}">
                             @if ($errors->has('code'))
                                 <span class="text-danger">{{ $errors->first('name') }}</span>
                             @endif

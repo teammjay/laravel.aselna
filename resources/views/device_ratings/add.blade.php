@@ -15,7 +15,7 @@
                     <div class="col-md-6">
                         <div class="form-check">
                             <input type="checkbox" class="form-check-input @error('status') is-invalid @enderror"
-                                   @if(isset($device_rating) && $device_rating->status === 'active') checked @endif name="status" id="status">
+                                   @if((isset($device_rating) && $device_rating->status === 'active') || old('status') == 'on') checked @endif name="status" id="status">
                             <label class="form-check-label" for="status">Status</label>
                             @error('status')
                             <span class="text-danger">{{ $message }}</span>
@@ -29,7 +29,7 @@
                             <label for="name">Device Rating</label>
                             <input type="text" class="form-control @error('value') is-invalid @enderror" id="value"
                                    name="value"
-                                   placeholder="Enter Device Rating" value="{{ $device_rating['value'] ?? '' }}">
+                                   placeholder="Enter Device Rating" value="{{ old('value', $device_rating['value'] ?? '') }}">
                             @if ($errors->has('value'))
                                 <span class="text-danger">{{ $errors->first('value') }}</span>
                             @endif
