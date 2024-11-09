@@ -16,7 +16,7 @@ return new class extends Migration
             // create name, picture, notes1 column
             $table->string('name',30);
 //            $table->string('picture')->nullable();
-            $table->string('notes1',255)->nullable();
+            $table->text('notes1')->nullable();
             $table->timestamps();
         });
     }

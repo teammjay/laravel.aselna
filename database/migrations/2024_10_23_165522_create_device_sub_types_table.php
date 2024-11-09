@@ -16,7 +16,7 @@ return new class extends Migration
             // Picture, notes1 and name
             // also add foreign key to device_types
             $table->string('name', 30);
-            $table->string('notes1', 255)->nullable();
+            $table->text('notes1')->nullable();
             $table->foreignId('device_type_id')->constrained('device_types');
             $table->unique(['name', 'device_type_id']);
             $table->index('device_type_id');
