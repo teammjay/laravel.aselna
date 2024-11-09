@@ -32,7 +32,7 @@ class DeviceTypesSyncJob implements ShouldQueue
         $data = DB::connection('fonus_db')->table('tbl_device_type')->get();
         foreach ($data as $deviceType) {
             if (DeviceTypes::where(['code' => $deviceType->device_type_id])->exists()) {
-                Log::info('Device Type exists: ' . $deviceType->device_type_id);
+//                Log::info('Device Type exists: ' . $deviceType->device_type_id);
                 continue;
             }
             $this->createDeviceType($deviceType);
@@ -40,9 +40,8 @@ class DeviceTypesSyncJob implements ShouldQueue
 
         $deviceSubTypes = DB::connection('fonus_db')->table('tbl_device_type_sub')->get();
         foreach ($deviceSubTypes as $deviceSubType) {
-            Log::info('Device Sub Type exists: ' . DeviceSubTypes::where(['code' => $deviceSubType->device_type_sub_id])->first());
             if (DeviceSubTypes::where(['code' => $deviceSubType->device_type_sub_id])->exists()) {
-                Log::info('Device Sub Type exists: ' . $deviceSubType->device_type_sub_id);
+//                Log::info('Device Sub Type exists: ' . $deviceSubType->device_type_sub_id);
                 continue;
             }
             $this->createDeviceSubType($deviceSubType);
@@ -55,7 +54,7 @@ class DeviceTypesSyncJob implements ShouldQueue
      */
     public function createDeviceType(mixed $deviceType): void
     {
-        Log::info('Device Type: ' . json_encode($deviceType));
+//        Log::info('Device Type: ' . json_encode($deviceType));
         DeviceTypes::updateOrInsert(
             ['code' => $deviceType->device_type_id],
             [
@@ -73,7 +72,7 @@ class DeviceTypesSyncJob implements ShouldQueue
 
     private function createDeviceSubType(mixed $deviceSubType)
     {
-        Log::info('Device Sub Type: ' . json_encode($deviceSubType));
+//        Log::info('Device Sub Type: ' . json_encode($deviceSubType));
         $deviceType = DeviceTypes::where('code', $deviceSubType->device_type_id)->first();
         DeviceSubTypes::updateOrInsert(
             ['code' => $deviceSubType->device_type_sub_id],

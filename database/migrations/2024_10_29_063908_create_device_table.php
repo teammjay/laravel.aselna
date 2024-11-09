@@ -22,7 +22,7 @@ return new class extends Migration
             $table->date('release_date')->nullable();
             $table->string('image', 50)->nullable();
             $table->string('thumbnail_image', 50)->nullable();
-            $table->string('notes', 50)->nullable();
+            $table->text('notes', 50)->nullable();
             $table->string('order', 50)->nullable();
             $table->string('code', 50)->nullable();
             $table->string('dimensions_length', 50)->nullable();

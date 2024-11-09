@@ -15,9 +15,9 @@ return new class extends Migration
             $table->id();
             $table->string('name',30);
 //            $table->string('picture',50);
-            $table->string('notes1',255)->nullable();
-            $table->string('notes2',255)->nullable();
-            $table->string('notes3',255)->nullable();
+            $table->text('notes1')->nullable();
+            $table->text('notes2')->nullable();
+            $table->text('notes3')->nullable();
             $table->integer('order_no')->nullable();
             $table->timestamps();
         });
