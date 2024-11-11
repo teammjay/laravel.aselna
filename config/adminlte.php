@@ -327,6 +327,10 @@ return [
             'icon' => 'far fa-fw fa-file'
         ],
         [
+            'text' => 'Stores',
+            'url' => '/stores',
+            'icon' => 'far fa-fw fa-file'
+        ], [
             'text' => 'Customers',
             'url' => '/customers',
             'icon' => 'far fa-fw fa-file'

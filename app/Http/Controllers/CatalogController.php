@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Catalog;
 use App\Models\ProductKeyFeatures;
+use App\Models\ProductTags;
 use App\Models\ProductTitleKeyword;
 use App\Models\ProductImages;
 use Illuminate\Http\Request;
@@ -150,7 +151,10 @@ class CatalogController extends Controller
         $keyFeatures = ProductKeyFeatures::where('product_id', $id)->orderBy('sort_order')->get();
         $titleKeywords = ProductTitleKeyword::where('product_id', $id)->orderBy('priority')->get();
         $productImages = ProductImages::where('product_id', $id)->get();
-        return view('catalog.update', compact('product','keyFeatures','titleKeywords','productImages'));
+        $productTags = ProductTags::pluck('name')->values()->all();
+        //echo '<pre>';
+        //print_r($productTags);die;
+        return view('catalog.update', compact('product','keyFeatures','titleKeywords','productImages','productTags'));
     }
 
     /**
@@ -231,6 +235,18 @@ class CatalogController extends Controller
             }
             ProductTitleKeyword::where('product_id', $productId)->delete();
             ProductTitleKeyword::upsert($data, ['product_id','keyword'], ['priority']);
+
+            return response()->json(['success' => true, 'message' => 'Data saved successfully!']);
+        }elseif ($tabId == 8){
+            $data = [];
+            for($i=0; $i < count($request->tags); $i++){
+                $data[] = array(
+                    'product_id' => $productId,
+                    'name' => $request->tags[$i]
+                );
+            }
+            //ProductTags::where('product_id', $productId)->delete();
+            ProductTags::upsert($data, ['product_id','name'], ['name']);
 
             return response()->json(['success' => true, 'message' => 'Data saved successfully!']);
         }elseif ($tabId == 11){
@@ -372,7 +388,7 @@ class CatalogController extends Controller
                 );
 
                 if($key == 0){
-                    Catalog::upsert(['product_image_url'=>$imageName],['product_id','product_image_url'], ['product_image_url']);
+                    Catalog::where('product_id', $productId)->update(['product_image_url'=>$imageName]);
                 }
 
                 // Create thumbnail
