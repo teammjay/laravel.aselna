@@ -1,28 +1,24 @@
-@if(!empty($products))
-    @foreach($products as $product)
-        <tr id="product-{{ $product->product_id }}">
+@if(!empty($stores))
+    @foreach($stores as $store)
+        <tr id="store-{{ $store->id }}">
+
+            <td>{{ $store->marketplace_name }}</td>
+            <td>{{ $store->name }}</td>
+            <td>{{ $store->store_type_id }}</td>
+            <td>{{ $store->listing_type }}</td>
+            <td></td>
+            <td>{{ $store->short_code }}</td>
+            <td>{{ $store->upc_usage_type }}</td>
             <td>
-                @if($product->product_image_url != '')
-                    <img src="{{ url('images/' . $product->product_image_url) }}" alt="{{ $product->product_image_url }}" width="70" height="70">
-                @endif
-            </td>
-            <td>{{ $product->product_sku }}</td>
-            <td>{{ $product->product_type }}</td>
-            <td>{{ $product->product_title }}</td>
-            <td>{{ $product->product_status }}</td>
-            <td>{{ $product->product_price }}</td>
-            <td>{{ $product->product_manufacturer }}</td>
-            <td>{{ $product->product_color }}</td>
-            <td>
-                <a href="{{ route('catalog.edit', $product->product_id) }}" class="btn btn-primary">
+                <a href="{{ route('store.edit', $store->id) }}" class="btn btn-primary">
                     <i class="fas fa-fw fa-pencil-alt"></i>
                 </a>
-                <button class="btn btn-danger delete-btn" data-id="{{ $product->product_id }}"> <i class="fas fa-fw fa-trash"></i></button>
+                <button class="btn btn-danger delete-btn" data-id="{{ $store->id }}"> <i class="fas fa-fw fa-trash"></i></button>
             </td>
         </tr>
     @endforeach
 @else
     <tr>
-        <td colspan="7"> No products found </td>
+        <td colspan="7"> No stores found </td>
     </tr>
 @endif
