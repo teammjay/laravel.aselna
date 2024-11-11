@@ -35,6 +35,11 @@ Route::post('/set-image-order', [CatalogController::class, 'setImageOrder'])->na
 Route::controller(StoreController::class)->group(function () {
     Route::get('/stores', 'index')->name('store.list');
     Route::get('/stores/add', 'create')->name('store.create');
+    Route::post('/stores/saveTabData', 'saveTabData')->name('store.save');
+    Route::post('/stores/finalize', 'finalize')->name('store.final');
+    Route::get('/stores/edit/{id}', 'edit')->name('store.edit');
+    Route::post('/stores/edit/{id}', 'update')->name('store.update');
+    Route::delete('/stores/destroy/{id}', 'destroy')->name('store.delete');
 });
 
 Route::controller(BrandController::class)->group(function () {

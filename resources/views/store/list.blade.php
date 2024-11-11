@@ -78,9 +78,12 @@
         </tr>
         </thead>
         <tbody id="store-list">
-
+        @include('store.store_list', ['stores' => $stores])
         </tbody>
     </table>
+    <div id="pagination">
+        @include('store.pagination', ['stores' => $stores])
+    </div>
 
 @stop
 
