@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\BrandController;
+use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DeviceController;
 use App\Http\Controllers\DeviceRatingController;
 use App\Http\Controllers\DeviceScreenController;
@@ -93,4 +94,13 @@ Route::controller(DeviceController::class)->group(function () {
     Route::get('/devices/edit/{id}', 'edit')->name('devices.edit');
     Route::post('/devices/edit/{id}', 'update')->name('devices.update');
     Route::get('/devices/delete/{id}', 'destroy')->name('devices.delete');
+});
+
+Route::controller(CustomerController::class)->group(function () {
+    Route::get('/customers', 'index')->name('customers.index');
+    Route::get('/customers/add', 'create')->name('customers.create');
+    Route::post('/customers/add', 'store')->name('customers.store');
+    Route::get('/customers/edit/{id}', 'edit')->name('customers.edit');
+    Route::post('/customers/edit/{id}', 'update')->name('customers.update');
+    Route::get('/customers/delete/{id}', 'destroy')->name('customers.delete');
 });
