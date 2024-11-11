@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Jobs\BrandSyncJob;
 use App\Jobs\DevicesSyncJob;
 use App\Jobs\DeviceTypesSyncJob;
+use App\Jobs\ProductSyncJob;
 use Illuminate\Console\Command;
 
 class SyncAllTables extends Command
@@ -31,5 +32,6 @@ class SyncAllTables extends Command
         DeviceTypesSyncJob::dispatch();
         BrandSyncJob::dispatch();
         DevicesSyncJob::dispatch();
+        ProductSyncJob::dispatch();
     }
 }
