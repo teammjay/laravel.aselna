@@ -171,25 +171,26 @@ class CatalogController extends Controller
         // Logic to handle saving data based on $tabId
         if ($tabId == 1) {
 
-            try {
+            $validator = $request->validate([
+                'product_title' => 'required|string|max:30',
+                'product_type' => 'required|string',
+                'product_manufacturer' => 'required|integer',
+                'product_price' => 'required|decimal:2',
+                'product_sku' => 'required|string|max:225',
+                'product_description' => 'nullable|string'
+            ]);
 
-                $request->validate([
-                    'product_title' => 'required|string|max:30',
-                    'product_type' => 'required|string',
-                    'product_manufacturer' => 'required|integer',
-                    'product_price' => 'required|decimal:2',
-                    'product_sku' => 'required|string|max:225',
-                    'product_description' => 'nullable|string'
-                ]);
-
-                $product = Catalog::findOrFail($productId); // Retrieve the product by ID
-                $product->update($request->all());
-                return response()->json(['success' => true, 'message' => 'Data saved successfully!']);
-
-            }catch (QueryException $e) {
-                // Handle the exception and show an error message
-                return response()->json(['errors' => $e->getMessage()]);
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'errors' => $request->errors()
+                ], 422);
             }
+
+            $product = Catalog::findOrFail($productId); // Retrieve the product by ID
+            $product->update($request->all());
+            return response()->json(['success' => true, 'message' => 'Data saved successfully!']);
+
 
         } elseif ($tabId == 2) {
 
@@ -270,8 +271,7 @@ class CatalogController extends Controller
     public function finalize(Request $request) {
         $productId = $request->input('product_id');
 
-        try {
-            $request->validate([
+            $validator = $request->validate([
                 'product_title' => 'required|string|max:30',
                 'product_type' => 'required|string',
                 'product_manufacturer' => 'required|integer',
@@ -280,17 +280,17 @@ class CatalogController extends Controller
                 'product_description' => 'nullable|string'
             ]);
 
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'errors' => $request->errors()
+                ], 422);
+            }
+
             $product = Catalog::findOrFail($productId); // Retrieve the product by ID
             $product->update($request->all());
 
             return response()->json(['success' => true, 'message' => 'Data saved successfully']);
-
-        }catch(QueryException $e){
-
-            return response()->json(['errors' => $e->getMessage()], 422);
-        }
-
-
     }
 
     /**

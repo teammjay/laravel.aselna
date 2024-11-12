@@ -2,6 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Device;
+use App\Models\DeviceTypes;
+use App\Models\StoreDeviceType;
 use Illuminate\Http\Request;
 use App\Models\Store;
 use Illuminate\Support\Facades\Config;
@@ -37,8 +40,10 @@ class StoreController extends Controller
         }
 
         $store = Store::findOrFail($store_id); // Retrieve the store by ID
-        //print_r($store);die;
-        return view('store.update',compact('store'));
+        $devices = DeviceTypes::all();
+        $storeDevices = StoreDeviceType::where('store_id', $store_id)->get();
+        //print_r($devices);die;
+        return view('store.update',compact('store','devices','storeDevices'));
     }
 
     /**
@@ -60,15 +65,27 @@ class StoreController extends Controller
 
         // Logic to handle saving data based on $tabId
         if ($tabId == 1) {
+            $validator = $request->validate([
+                'name' => 'required|string|max:30',
+                'marketplace_name' => 'required|string',
+                'store_url' => 'required|string'
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'errors' => $request->errors()
+                ], 422);
+            }
+
+            $store = Store::findOrFail($storeId); // Retrieve the product by ID
+            $store->update($request->all());
+            return response()->json(['success' => true, 'message' => 'Data saved successfully!']);
+
+
+        } elseif ($tabId == 2 || $tabId == 3) {
 
             try {
-
-                $request->validate([
-                    'name' => 'required|string|max:30',
-                    'marketplace_name' => 'required|string',
-                    'store_url' => 'required|string'
-                ]);
-
                 $store = Store::findOrFail($storeId); // Retrieve the product by ID
                 $store->update($request->all());
                 return response()->json(['success' => true, 'message' => 'Data saved successfully!']);
@@ -77,30 +94,70 @@ class StoreController extends Controller
                 // Handle the exception and show an error message
                 return response()->json(['errors' => $e->getMessage()]);
             }
-
-        } elseif ($tabId == 2) {
-
-            try {
-                $store = Store::findOrFail($storeId); // Retrieve the product by ID
-                $store->update($request->all());
-                return response()->json(['success' => true, 'message' => 'Data saved successfully!']);
-
-            }catch (QueryException $e) {
-                // Handle the exception and show an error message
-                return response()->json(['errors' => $e->getMessage()]);
-            }
-        }elseif ($tabId == 3) {
-
         }elseif ($tabId == 4) {
 
         }elseif ($tabId == 5) {
 
         }elseif ($tabId == 6){
 
+            try {
+                $request['authorized'] = $request->has('authorized') ? 1 : 0;
+
+                $store = Store::findOrFail($storeId); // Retrieve the product by ID
+                $store->update($request->all());
+                return response()->json(['success' => true, 'message' => 'Data saved successfully!']);
+
+            }catch (QueryException $e) {
+                // Handle the exception and show an error message
+                return response()->json(['errors' => $e->getMessage()]);
+            }
+
+        }elseif ($tabId == 7){
+
+            try {
+
+                $request['alter_image_files'] = $request->has('alter_image_files') ? 1 : 0;
+                $request['apply_watermark'] = $request->has('apply_watermark') ? 1 : 0;
+
+                if ($request->hasFile('watermark_image')) {
+
+                    $image = $request->file('watermark_image');
+                    $imageName = time() . '_' . uniqid() . '.' . $image->getClientOriginalExtension();
+                    $image->move(public_path('images'), $imageName);
+                    $request['watermark_image_id'] =$imageName;
+                }
+
+                $store = Store::findOrFail($storeId); // Retrieve the product by ID
+                $store->update($request->all());
+                return response()->json(['success' => true, 'message' => 'Data saved successfully!']);
+
+            }catch (QueryException $e) {
+                // Handle the exception and show an error message
+                return response()->json(['errors' => $e->getMessage()]);
+            }
+
         }elseif ($tabId == 8){
 
         }elseif ($tabId == 11){
 
+        }elseif($tabId == 12){
+            try {
+                $data = [];
+                for($i=0; $i < count($request->devices); $i++){
+                    $data[] = array(
+                        'store_id' => $storeId,
+                        'device_type_id' => $request->devices[$i]
+                    );
+                }
+                StoreDeviceType::where('store_id', $storeId)->delete();
+                StoreDeviceType::upsert($data, ['store_id','device_type_id'], ['device_type_id']);
+
+                return response()->json(['success' => true, 'message' => 'Data saved successfully!']);
+
+            }catch (QueryException $e) {
+                // Handle the exception and show an error message
+                return response()->json(['errors' => $e->getMessage()]);
+            }
         }
     }
 
@@ -146,8 +203,11 @@ class StoreController extends Controller
     public function edit(string $id)
     {
         $store = Store::findOrFail($id); // Retrieve the store by ID
+        $devices = DeviceTypes::all();
+        $storeDevices = StoreDeviceType::where('store_id', $id)->get();
+        $storeDevices = $storeDevices->pluck('device_type_id')->values()->all();
 
-        return view('store.update', compact('store'));
+        return view('store.update', compact('store','devices','storeDevices'));
     }
 
     /**

@@ -3,7 +3,7 @@
 @section('title', 'Edit Store')
 
 @section('content_header')
-    <h1>Edit Store</h1>
+    <h1>Add / Edit Store</h1>
 @stop
 
 @section('content')
@@ -75,7 +75,7 @@
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" id="devices-tab" data-toggle="pill" href="#tab11" role="tab" aria-controls="tab11" aria-selected="false">
+                    <a class="nav-link" id="devices-tab" data-toggle="pill" href="#tab12" role="tab" aria-controls="tab12" aria-selected="false">
                         Devices
                     </a>
                 </li>
@@ -101,6 +101,7 @@
                                     </div>
                                     <div class="col-md-7">
                                         <input type="text" class="form-control" id="name" name="name" value="{{ old('name',$store->name) }}" placeholder="Enter store name">
+                                        <span class="error-message text-danger" id="name-error"></span>
                                     </div>
                                 </div>
                                 <div class="row mt-3 g-3 align-items-center">
@@ -131,6 +132,7 @@
                                     </div>
                                     <div class="col-md-7">
                                         <input type="text" class="form-control" id="marketplace_name" name="marketplace_name" value="{{ old('marketplace_name',$store->marketplace_name) }}">
+                                        <span class="error-message text-danger" id="marketplace_name-error"></span>
                                     </div>
                                 </div>
                                 <div class="row mt-3 g-3 align-items-center">
@@ -147,6 +149,7 @@
                                     </div>
                                     <div class="col-md-7">
                                         <input type="text" class="form-control" id="store_url" name="store_url" value="{{ old('store_url',$store->store_url) }}">
+                                        <span class="error-message text-danger" id="store_url-error"></span>
                                     </div>
                                 </div>
                                 <div class="row mt-3 g-3 align-items-center">
@@ -459,7 +462,7 @@
                                         <label for="address_3">Address Line3</label>
                                     </div>
                                     <div class="col-md-7">
-                                        <input type="text" class="form-control" id="address_3" name="address_3" value="">
+                                        <input type="text" class="form-control" id="address_3" name="address_3" value="{{ old('address_3',$store->address_3) }}">
                                     </div>
                                 </div>
                                 <div class="row mt-3 g-3 align-items-center">
@@ -467,7 +470,7 @@
                                         <label for="city">City</label>
                                     </div>
                                     <div class="col-md-7">
-                                        <input type="text" class="form-control" id="city" name="city" value="">
+                                        <input type="text" class="form-control" id="city" name="city" value="{{ old('city',$store->city) }}">
                                     </div>
                                 </div>
                             </div>
@@ -477,7 +480,7 @@
                                         <label for="country">Country</label>
                                     </div>
                                     <div class="col-md-7">
-                                        <input type="text" class="form-control" id="country" name="country" value="">
+                                        <input type="text" class="form-control" id="country" name="country" value="{{ old('country',$store->country) }}">
                                     </div>
                                 </div>
                                 <div class="row mt-3 g-3 align-items-center">
@@ -485,14 +488,14 @@
                                         <label for="district">District</label>
                                     </div>
                                     <div class="col-md-7">
-                                        <input type="text" class="form-control" id="district" name="district" value="">
+                                        <input type="text" class="form-control" id="district" name="district" value="{{ old('district',$store->district) }}">
                                     </div>
                                 </div><div class="row mt-3 g-3 align-items-center">
                                     <div class="col-md-3">
                                         <label for="state">State Or Region</label>
                                     </div>
                                     <div class="col-md-7">
-                                        <input type="text" class="form-control" id="state" name="state" value="">
+                                        <input type="text" class="form-control" id="state" name="state" value="{{ old('state',$store->state) }}">
                                     </div>
                                 </div>
                                 <div class="row mt-3 g-3 align-items-center">
@@ -500,7 +503,7 @@
                                         <label for="postal_code">Postal Code</label>
                                     </div>
                                     <div class="col-md-7">
-                                        <input type="text" class="form-control" id="postal_code" name="postal_code" value="">
+                                        <input type="text" class="form-control" id="postal_code" name="postal_code" value="{{ old('postal_code',$store->postal_code) }}">
                                     </div>
                                 </div>
                                 <div class="row mt-3 g-3 align-items-center">
@@ -508,7 +511,7 @@
                                         <label for="country_code">Country Code</label>
                                     </div>
                                     <div class="col-md-7">
-                                        <input type="text" class="form-control" id="country_code" name="country_code" value="">
+                                        <input type="text" class="form-control" id="country_code" name="country_code" value="{{ old('country_code',$store->country_code) }}">
                                     </div>
                                 </div>
                                 <div class="row mt-3 g-3 align-items-center">
@@ -516,7 +519,7 @@
                                         <label for="phone">Phone</label>
                                     </div>
                                     <div class="col-md-7">
-                                        <input type="text" class="form-control" id="phone" name="phone" value="">
+                                        <input type="text" class="form-control" id="phone" name="phone" value="{{ old('phone',$store->phone) }}">
                                     </div>
                                 </div>
                                 <div class="row mt-3 g-3 align-items-center">
@@ -524,7 +527,7 @@
                                         <label for="email">Email</label>
                                     </div>
                                     <div class="col-md-7">
-                                        <input type="text" class="form-control" id="email" name="email" value="">
+                                        <input type="text" class="form-control" id="email" name="email" value="{{ old('email',$store->email) }}">
                                     </div>
                                 </div>
                             </div>
@@ -538,9 +541,19 @@
                         </div>
                     </form>
                 </div>
-                <div class="tab-pane fade" id="tab4" role="tabpanel" aria-labelledby="compatibility-tab">
+                <div class="tab-pane fade" id="tab4" role="tabpanel" aria-labelledby="payment-tab">
                     <form method="POST" id="frmtab4">
-
+                        <button type="button" class="btn btn-secondary" id="store_payment" data-toggle="modal" data-target="#exampleModal" ><i class="fa fa-plus-square"></i> Create</button>
+                        <table class="table table-bordered mt-2">
+                            <thead>
+                            <tr>
+                                <th>Payment Type</th>
+                                <th>Payment Method</th>
+                                <th>Email</th>
+                                <th></th>
+                            </tr>
+                            </thead>
+                        </table>
 
                         <div class="card-footer text-center mt-3">
                             <button type="button" class="btn btn-success" onclick="saveStoreTabData(4)">Save</button>
@@ -550,9 +563,17 @@
                         </div>
                     </form>
                 </div>
-                <div class="tab-pane fade" id="tab5" role="tabpanel" aria-labelledby="features-tab">
+                <div class="tab-pane fade" id="tab5" role="tabpanel" aria-labelledby="shipping-tab">
                     <form method="POST" id="frmtab5">
-
+                        <button type="button" class="btn btn-secondary" id="create_shipping" data-toggle="modal" data-target="#addShippingModal" ><i class="fa fa-plus-square"></i> Create</button>
+                        <table class="table table-bordered mt-2">
+                            <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th></th>
+                            </tr>
+                            </thead>
+                        </table>
                         <div class="card-footer text-center mt-3">
                             <button type="button" class="btn btn-success" onclick="saveStoreTabData(5)">Save</button>
                             <button type="button" class="btn btn-primary" onclick="finalizeForm()">Submit</button>
@@ -570,7 +591,7 @@
                                         <label for="app_id">App Id</label>
                                     </div>
                                     <div class="col-md-7">
-                                        <input type="text" class="form-control" id="app_id" name="app_id" value="">
+                                        <input type="text" class="form-control" id="app_id" name="app_id" value="{{ old('app_id',$store->app_id) }}">
                                     </div>
                                 </div>
                                 <div class="row mt-3 g-3 align-items-center">
@@ -578,7 +599,7 @@
                                         <label for="dev_id">Dev Id</label>
                                     </div>
                                     <div class="col-md-7">
-                                        <input type="text" class="form-control" id="dev_id" name="dev_id" value="">
+                                        <input type="text" class="form-control" id="dev_id" name="dev_id" value="{{ old('dev_id',$store->dev_id) }}">
                                     </div>
                                 </div>
                                 <div class="row mt-3 g-3 align-items-center">
@@ -586,7 +607,7 @@
                                         <label for="certificate">Certificate</label>
                                     </div>
                                     <div class="col-md-7">
-                                        <input type="text" class="form-control" id="certificate" name="certificate" value="">
+                                        <input type="text" class="form-control" id="certificate" name="certificate" value="{{ old('certificate',$store->certificate) }}">
                                     </div>
                                 </div>
                                 <div class="row mt-3 g-3 align-items-center">
@@ -594,15 +615,15 @@
                                         <label for="authorized">Authorized</label>
                                     </div>
                                     <div class="col-md-7">
-                                        <input type="checkbox" id="authorized" name="authorized" value="">
+                                        <input type="checkbox" id="authorized" name="authorized" {{ 1 == $store->authorized ? 'checked' : '' }}>
                                     </div>
                                 </div>
                                 <div class="row mt-3 g-3 align-items-center">
                                     <div class="col-md-3">
-                                        <label for="user_id">User ID</label>
+                                        <label for="seller_id">User ID</label>
                                     </div>
                                     <div class="col-md-7">
-                                        <input type="text" class="form-control" id="user_id" name="user_id" value="">
+                                        <input type="text" class="form-control" id="seller_id" name="seller_id" value="{{ old('seller_id',$store->seller_id) }}">
                                     </div>
                                 </div>
                                 <div class="row mt-3 g-3 align-items-center">
@@ -610,7 +631,7 @@
                                         <label for="api_key">API key</label>
                                     </div>
                                     <div class="col-md-7">
-                                        <input type="text" class="form-control" id="api_key" name="api_key" value="">
+                                        <input type="text" class="form-control" id="api_key" name="api_key" value="{{ old('api_key',$store->api_key) }}">
                                     </div>
                                 </div>
                                 <div class="row mt-3 g-3 align-items-center">
@@ -618,7 +639,7 @@
                                         <label for="password">Password</label>
                                     </div>
                                     <div class="col-md-7">
-                                        <input type="text" class="form-control" id="password" name="password" value="">
+                                        <input type="text" class="form-control" id="password" name="password" value="{{ old('password',$store->password) }}">
                                     </div>
                                 </div>
 
@@ -627,7 +648,7 @@
                                         <label for="access_key">Access Key</label>
                                     </div>
                                     <div class="col-md-7">
-                                        <input type="text" class="form-control" id="access_key" name="access_key" value="">
+                                        <input type="text" class="form-control" id="access_key" name="access_key" value="{{ old('access_key',$store->access_key) }}">
                                     </div>
                                 </div>
                                 <div class="row mt-3 g-3 align-items-center">
@@ -635,7 +656,7 @@
                                         <label for="secret_key">Secret Key</label>
                                     </div>
                                     <div class="col-md-7">
-                                        <input type="text" class="form-control" id="secret_key" name="secret_key" value="">
+                                        <input type="text" class="form-control" id="secret_key" name="secret_key" value="{{ old('secret_key',$store->secret_key) }}">
                                     </div>
                                 </div>
                                 <div class="row mt-3 g-3 align-items-center">
@@ -643,7 +664,7 @@
                                         <label for="app_name">App Name</label>
                                     </div>
                                     <div class="col-md-7">
-                                        <input type="text" class="form-control" id="app_name" name="app_name" value="">
+                                        <input type="text" class="form-control" id="app_name" name="app_name" value="{{ old('app_name',$store->app_name) }}">
                                     </div>
                                 </div>
                                 <div class="row mt-3 g-3 align-items-center">
@@ -651,7 +672,7 @@
                                         <label for="app_version">App Version</label>
                                     </div>
                                     <div class="col-md-7">
-                                        <input type="text" class="form-control" id="app_version" name="app_version" value="">
+                                        <input type="text" class="form-control" id="app_version" name="app_version" value="{{ old('app_version',$store->app_version) }}">
                                     </div>
                                 </div>
                                 <div class="row mt-3 g-3 align-items-center">
@@ -659,7 +680,7 @@
                                         <label for="service_url">Service Url</label>
                                     </div>
                                     <div class="col-md-7">
-                                        <input type="text" class="form-control" id="service_url" name="service_url" value="">
+                                        <input type="text" class="form-control" id="service_url" name="service_url" value="{{ old('service_url',$store->service_url) }}">
                                     </div>
                                 </div>
                             </div>
@@ -672,9 +693,80 @@
                         </div>
                     </form>
                 </div>
-                <div class="tab-pane fade" id="tab7" role="tabpanel" aria-labelledby="images-tab">
+                <div class="tab-pane fade" id="tab7" role="tabpanel" aria-labelledby="media-tab">
+                    <form method="POST" id="frmtab7" enctype="multipart/form-data">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="row mt-3 g-3 align-items-center">
+                                    <div class="col-md-5">
+                                        <label for="image_base_path">Image Base Path</label>
+                                    </div>
+                                    <div class="col-md-7">
+                                        <input type="text" class="form-control" id="image_base_path" name="image_base_path" value="{{ old('image_base_path',$store->image_base_path) }}">
+                                    </div>
+                                </div>
+                                <div class="row mt-3 g-3 align-items-center">
+                                    <div class="col-md-5">
+                                        <label for="alter_image_files">Modify Image Files</label>
+                                    </div>
+                                    <div class="col-md-7">
+                                        <input type="checkbox" id="alter_image_files" name="alter_image_files" {{ 1 == $store->alter_image_files ? 'checked' : '' }}>
+                                    </div>
+                                </div>
+                                <div class="row mt-3 g-3 align-items-center">
+                                    <div class="col-md-5">
+                                        <label for="resize_images">Resize Images</label>
+                                    </div>
+                                    <div class="col-md-7">
+                                        <input type="text" class="form-control" id="resize_images" name="resize_images" value="{{ old('image_base_path',$store->image_base_path) }}">
+                                    </div>
+                                </div>
+                                <div class="row mt-3 g-3 align-items-center">
+                                    <div class="col-md-5">
+                                        <label for="apply_watermark">Apply Watermark</label>
+                                    </div>
+                                    <div class="col-md-7">
+                                        <input type="checkbox" id="apply_watermark" name="apply_watermark" {{ 1 == $store->apply_watermark ? 'checked' : '' }}>
+                                    </div>
+                                </div>
+                                <div class="row mt-3 g-3 align-items-center">
+                                    <div class="col-md-5">
+                                        <label for="watermark_image">Watermark Image</label>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <input type="file" id="watermark_image" name="watermark_image" >
+                                    </div>
+                                    <div class="col-md-3">
+                                        <img src="{{ url('images/' . $store->watermark_image_id) }}" alt="{{ $store->watermark_image_id }}" width="70" height="70">
+                                    </div>
+                                </div>
+                                <div class="row mt-3 g-3 align-items-center">
+                                    <div class="col-md-5">
+                                        <label for="watermark_transparency">Watermark Transparency</label>
+                                    </div>
+                                    <div class="col-md-7">
+                                        <input type="text" class="form-control" id="watermark_transparency" name="watermark_transparency" value="{{ old('watermark_transparency',$store->watermark_transparency) }}">
+                                    </div>
+                                </div>
+                                <div class="row mt-3 g-3 align-items-center">
+                                    <div class="col-md-5">
+                                        <label for="images_location">Images Location</label>
+                                    </div>
+                                    <div class="col-md-7">
+                                        <input type="text" class="form-control" id="images_location" name="images_location" value="{{ old('images_location',$store->images_location) }}">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-footer text-center mt-3">
+                            <button type="button" class="btn btn-success" onclick="saveStoreTabData(7)">Save</button>
+                            <button type="button" class="btn btn-primary" onclick="finalizeForm()">Submit</button>
+                            {{--<button type="reset" class="btn btn-primary">Reset</button>--}}
+                            <a href="{{ route('store.list') }}" class="btn btn-secondary">Cancel</a>
+                        </div>
+                    </form>
                 </div>
-                <div class="tab-pane fade" id="tab8" role="tabpanel" aria-labelledby="tags-tab">
+                <div class="tab-pane fade" id="tab8" role="tabpanel" aria-labelledby="pages-tab">
                     <form method="POST" id="frmtab8">
 
                         <div class="card-footer text-center mt-3">
@@ -685,7 +777,7 @@
                         </div>
                     </form>
                 </div>
-                <div class="tab-pane fade" id="tab9" role="tabpanel" aria-labelledby="stores-tab">
+                <div class="tab-pane fade" id="tab9" role="tabpanel" aria-labelledby="listingbar-tab">
                     <form method="POST" id="frmtab9">
 
                         <div class="card-footer text-center mt-3">
@@ -696,7 +788,7 @@
                         </div>
                     </form>
                 </div>
-                <div class="tab-pane fade" id="tab10" role="tabpanel" aria-labelledby="channel-tab">
+                <div class="tab-pane fade" id="tab10" role="tabpanel" aria-labelledby="categories-tab">
                     <form method="POST" id="frmtab10">
 
                         <div class="card-footer text-center mt-3">
@@ -707,7 +799,7 @@
                         </div>
                     </form>
                 </div>
-                <div class="tab-pane fade" id="tab11" role="tabpanel" aria-labelledby="spitex-tab">
+                <div class="tab-pane fade" id="tab11" role="tabpanel" aria-labelledby="logistics-tab">
                     <form method="POST" id="frmtab11">
 
                         <div class="card-footer text-center mt-3">
@@ -718,9 +810,21 @@
                         </div>
                     </form>
                 </div>
-                <div class="tab-pane fade" id="tab12" role="tabpanel" aria-labelledby="spitex-tab">
+                <div class="tab-pane fade" id="tab12" role="tabpanel" aria-labelledby="devices-tab">
                     <form method="POST" id="frmtab12">
+                        <div class="row">
+                            <div class="col-md-4">
+                                @if(count($devices ?? []) > 0)
+                                    @foreach($devices as $device)
+                                        <div class="form-group">
+                                            <input type="checkbox" name="devices[]" value="{{ $device->id }}" {{ in_array($device->id,$storeDevices) ? 'checked' : '' }}>  {{ $device->name }}
+                                        </div>
 
+                                    @endforeach
+                                @endif
+
+                            </div>
+                        </div>
                         <div class="card-footer text-center mt-3">
                             <button type="button" class="btn btn-success" onclick="saveStoreTabData(12)">Save</button>
                             <button type="button" class="btn btn-primary" onclick="finalizeForm()">Submit</button>
@@ -728,6 +832,36 @@
                             <a href="{{ route('store.list') }}" class="btn btn-secondary">Cancel</a>
                         </div>
                     </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Vertically centered modal -->
+    <div class="modal fade" id="addShippingModal">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">Store Shipping Service Editor</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form>
+                        <div class="mb-3">
+                            <label for="shipping-name" class="col-form-label">Name:</label>
+                            <input type="text" class="form-control" id="shipping-name">
+                        </div>
+                        <div class="mb-3">
+                            <label for="carrier-service" class="col-form-label">Carrier Service:</label>
+                            <select class="form-control" id="carrier-service">
+                                <option value="1">Fedex Ground</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary">Save</button>
                 </div>
             </div>
         </div>
@@ -742,32 +876,39 @@
         function saveStoreTabData(tabId) {
             const form = document.querySelector("#frmtab"+ tabId);
             let formData = new FormData(form);
-            //formData.append('store_id', store_id);
+            formData.append('store_id', store_id);
             formData.append('tab', tabId);
 
-            fetch('{{ route('store.save') }}', {
-                method: 'POST',
+            $.ajax({
+                type: 'POST',
+                url: "{{ route('store.save') }}", // Adjust this URL to your endpoint
+                data: formData,
+                processData: false,
+                contentType: false,
                 headers: {
                     'X-CSRF-TOKEN': '{{ csrf_token() }}',
                 },
-                body: formData
-            })
-                .then(response => response.json())
-                .then(data => {
-                    console.log(data);
-                    if (data.errors) {
+                dataType:'json',
+                success: function(response) {
+                    // Display a success message
+                    alert(response.message);
+                    location.reload();
+                },
+                error: function(xhr) {
+                    if (xhr.status === 422) { // Validation error
+                        var errors = xhr.responseJSON.errors;
 
-                        // Display validation errors
-                        Object.keys(data.errors).forEach((field) => {
-                            let errorMessage = data.errors[field][0];
-                            document.querySelector(`#${field}`).classList.add('is-invalid');
-                            document.querySelector(`#${field} ~ .text-danger`).innerText = errorMessage;
+                        // Clear previous errors
+                        $('.error-message').text('');
+
+                        // Loop through and display errors
+                        $.each(errors, function(field, messages) {
+                            $('#' + field + '-error').text(messages[0]); // Display the first error message
                         });
-                    } else {
-                        alert(data.message);
-                        location.reload();
                     }
-                });
+                }
+            });
+
         }
 
         function finalizeForm() {
@@ -777,31 +918,41 @@
             formData.append('store_id', store_id);
             formData.set('store_status', 'active');
 
-            fetch('{{ route('store.final') }}', {
-                method: 'POST',
+            $.ajax({
+                type: 'POST',
+                url: "{{ route('store.final') }}", // Adjust this URL to your endpoint
+                data: formData,
+                processData: false,
+                contentType: false,
                 headers: {
                     'X-CSRF-TOKEN': '{{ csrf_token() }}',
                 },
-                body: formData
-            })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        alert('Store saved successfully!');
-                        window.location.href = "{{ route('store.list') }}";
-                    } else {
-                        alert('Error submiting the record');
+                dataType:'json',
+                success: function(response) {
+                    // Display a success message
+                    alert(response.message);
+                    window.location.href = "{{ route('store.list') }}";
+                },
+                error: function(xhr) {
+                    if (xhr.status === 422) { // Validation error
+                        var errors = xhr.responseJSON.errors;
+
+                        // Clear previous errors
+                        $('.error-message').text('');
+
+                        // Loop through and display errors
+                        $.each(errors, function(field, messages) {
+                            $('#' + field + '-error').text(messages[0]); // Display the first error message
+                        });
                     }
-                })
-                .catch(error => console.error('Error:', error));
+                }
+            });
+
         }
 
         $(document).ready(function() {
 
             $('.pro-tags').select2();
-
-
-
             // Add new field group
             $('#add_feature').click(function() {
                 $('#features_table tbody').append(`

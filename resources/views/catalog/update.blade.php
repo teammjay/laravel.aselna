@@ -3,7 +3,7 @@
 @section('title', 'Edit Product')
 
 @section('content_header')
-    <h1>Edit Product</h1>
+    <h1>Add / Edit Product</h1>
 @stop
 
 @section('adminlte_css')
@@ -97,44 +97,38 @@
                                         <div class="row">
                                             <div class="col-md-6">
                                                 <div class="form-group">
-                                                    <label for="name">Product Title</label>
+                                                    <label for="product_title">Product Title</label>
                                                     <input type="text" class="form-control" id="product_title" name="product_title" value="{{ old('product_title',$product->product_title) }}" placeholder="Enter product title">
-                                                    <span class="text-danger"></span>
+                                                    <span class="error-message text-danger" id="product_title-error"></span>
                                                 </div>
                                             </div>
                                             <div class="col-md-6">
                                                 <div class="form-group">
-                                                    <label for="name">Product Code</label>
+                                                    <label for="product_sku">Product Code</label>
                                                     <input type="text" class="form-control" id="product_sku" name="product_sku" value="{{ old('product_sku',$product->product_sku) }}" placeholder="Enter product code">
-                                                    @error('product_sku')
-                                                        <span class="text-danger">{{ $message }}</span>
-                                                    @enderror
+                                                    <span class="error-message text-danger" id="product_sku-error"></span>
                                                 </div>
                                             </div>
                                         </div>
                                         <div class="row">
                                             <div class="col-md-6">
                                                 <div class="form-group">
-                                                    <label for="name">Product Type</label>
+                                                    <label for="product_type">Product Type</label>
                                                     <select class="form-control" id="product_type" name="product_type">
                                                         <option>-- Product Type --</option>
                                                         <option value="1" {{ 1 == $product->product_type ? 'selected' : '' }}>Leather Case</option>
                                                     </select>
-                                                    @error('product_type')
-                                                        <span class="text-danger">{{ $message }}</span>
-                                                    @enderror
+                                                    <span class="error-message text-danger" id="product_type-error"></span>
                                                 </div>
                                             </div>
                                             <div class="col-md-6">
                                                 <div class="form-group">
-                                                    <label for="name">Product Condition</label>
+                                                    <label for="product_condition">Product Condition</label>
                                                     <select class="form-control" id="product_condition" name="product_condition">
                                                         <option>-- Product Condition --</option>
                                                         <option value="new" {{ "new" == $product->product_condition ? 'selected' : '' }}>New</option>
                                                     </select>
-                                                    @error('product_type')
-                                                        <span class="text-danger">{{ $message }}</span>
-                                                    @enderror
+                                                    <span class="error-message text-danger" id="product_condition-error"></span>
                                                 </div>
                                             </div>
 
@@ -142,28 +136,24 @@
                                         <div class="row">
                                             <div class="col-md-6">
                                                 <div class="form-group">
-                                                    <label for="name">Product Manufacturer</label>
+                                                    <label for="product_manufacturer">Product Manufacturer</label>
                                                     <select class="form-control" id="product_manufacturer" name="product_manufacturer">
                                                         <option>-- Product Manufacture --</option>
                                                         <option value="1" {{ 1 == $product->product_manufacturer ? 'selected' : '' }}>HCO</option>
                                                     </select>
-                                                    @error('product_manufacture')
-                                                        <span class="text-danger">{{ $message }}</span>
-                                                    @enderror
+                                                    <span class="error-message text-danger" id="product_manufacturer-error"></span>
                                                 </div>
                                             </div>
                                             <div class="col-md-6">
                                                 <div class="form-group">
-                                                    <label for="name">Product Status</label>
+                                                    <label for="product_status">Product Status</label>
                                                     <select class="form-control" id="product_status" name="product_status">
                                                         <option>-- Product Status --</option>
                                                         <option value="active" {{ "active" == $product->product_status ? 'selected' : '' }}> Active </option>
                                                         <option value="discontinued" {{ "discontinued" == $product->product_status ? 'selected' : '' }}> Discontinued </option>
                                                         <option value="out_of_stock" {{ "out_of_stock" == $product->product_status ? 'selected' : '' }}> Out of stock </option>
                                                     </select>
-                                                    @error('product_status')
-                                                        <span class="text-danger">{{ $message }}</span>
-                                                    @enderror
+                                                    <span class="error-message text-danger" id="product_status-error"></span>
                                                 </div>
                                             </div>
 
@@ -177,7 +167,7 @@
                                                 <div class="row">
                                                     <div class="col-md-12">
                                                         <div class="form-group">
-                                                            <label for="description">Product Description</label>
+                                                            <label for="product_description">Product Description</label>
                                                             <textarea class="form-control" id="product_description" name="product_description" rows="10" placeholder="Enter Description">{{ old('product_title',$product->product_title) }}</textarea>
                                                         </div>
                                                     </div>
@@ -194,40 +184,32 @@
                                                 <div class="row">
                                                     <div class="col-md-6">
                                                         <div class="form-group">
-                                                            <label for="name">Product Price</label>
+                                                            <label for="product_price">Product Price</label>
                                                             <input type="text" class="form-control" id="product_price" name="product_price" value="{{ old('product_price',$product->product_price) }}" placeholder="00.00">
-                                                            @error('product_price')
-                                                                <span class="text-danger">{{ $message }}</span>
-                                                            @enderror
+                                                            <span class="error-message text-danger" id="product_price-error"></span>
                                                         </div>
                                                     </div>
                                                     <div class="col-md-6">
                                                         <div class="form-group">
-                                                            <label for="name">Wholesale Price</label>
+                                                            <label for="product_wholesale_price">Wholesale Price</label>
                                                             <input type="text" class="form-control" id="product_wholesale_price" name="product_wholesale_price" value="{{ old('product_wholesale_price',$product->product_wholesale_price) }}" placeholder="00.00">
-                                                            @error('product_wholesale_price')
-                                                                <span class="text-danger">{{ $message }}</span>
-                                                            @enderror
+                                                            <span class="error-message text-danger" id="product_wholesale_price-error"></span>
                                                         </div>
                                                     </div>
                                                 </div>
                                                 <div class="row">
                                                     <div class="col-md-6">
                                                         <div class="form-group">
-                                                            <label for="name">Marketplace Price</label>
+                                                            <label for="product_marketplace_price">Marketplace Price</label>
                                                             <input type="text" class="form-control" id="product_marketplace_price" name="product_marketplace_price" value="{{ old('product_marketplace_price',$product->product_marketplace_price) }}" placeholder="00.00">
-                                                            @error('product_marketplace_price')
-                                                                <span class="text-danger">{{ $message }}</span>
-                                                            @enderror
+                                                            <span class="error-message text-danger" id="product_marketplace_price-error"></span>
                                                         </div>
                                                     </div>
                                                     <div class="col-md-6">
                                                         <div class="form-group">
-                                                            <label for="name">Mrsp</label>
+                                                            <label for="product_mrsp">Mrsp</label>
                                                             <input type="text" class="form-control" id="product_mrsp" name="product_mrsp" value="{{ old('product_mrsp',$product->product_mrsp) }}" placeholder="00.00">
-                                                            @error('product_mrsp')
-                                                                <span class="text-danger">{{ $message }}</span>
-                                                            @enderror
+                                                            <span class="error-message text-danger" id="product_mrsp-error"></span>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -241,7 +223,7 @@
                                         <div class="row">
                                             <div class="col-md-8">
                                                 <div class="form-group">
-                                                    <label for="name">Dimensions</label>
+                                                    <label for="dimensions_width">Dimensions</label>
                                                     <div class="d-flex">
                                                         <input type="text" class="form-control mr-1" id="dimensions_width" name="dimensions_width" value="{{ old('dimensions_width',$product->dimensions_width) }}" placeholder="">
                                                         <input type="text" class="form-control mr-1" id="dimensions_height" name="dimensions_height"  value="{{ old('dimensions_height',$product->dimensions_height) }}"placeholder="">
@@ -252,7 +234,7 @@
                                             </div>
                                             <div class="col-md-8">
                                                 <div class="form-group">
-                                                    <label for="name">Weight</label>
+                                                    <label for="product_weight">Weight</label>
                                                     <div class="d-flex">
                                                         <input type="text" class="form-control mr-1" id="product_weight" name="product_weight" value="{{ old('product_weight',$product->product_weight) }}" placeholder="">
                                                         <select class="form-control w-25" id="product_weight_unit" name="product_weight_unit">
@@ -264,7 +246,7 @@
                                             </div>
                                             <div class="col-md-8">
                                                 <div class="form-group">
-                                                    <label for="name">Package Dimensions</label>
+                                                    <label for="package_dimensions_width">Package Dimensions</label>
                                                     <div class="d-flex">
                                                         <input type="text" class="form-control mr-1" id="package_dimensions_width" name="package_dimensions_width" value="{{ old('package_dimensions_width',$product->package_dimensions_width) }}" placeholder="">
                                                         <input type="text" class="form-control mr-1" id="package_dimensions_height" name="package_dimensions_height" value="{{ old('package_dimensions_height',$product->package_dimensions_height) }}" placeholder="">
@@ -275,7 +257,7 @@
                                             </div>
                                             <div class="col-md-8">
                                                 <div class="form-group">
-                                                    <label for="name">Package Weight</label>
+                                                    <label for="package__weight">Package Weight</label>
                                                     <div class="d-flex">
                                                         <input type="text" class="form-control mr-1" id="package__weight" name="package_weight" value="{{ old('package_weight',$product->package_weight) }}" placeholder="">
                                                         <select class="form-control w-25" id="package_weight_unit" name="package_weight_unit">
@@ -291,7 +273,7 @@
                                         <div class="row">
                                             <div class="col-md-8">
                                                 <div class="form-group">
-                                                    <label for="name">Target Audiences</label>
+                                                    <label>Target Audiences</label>
                                                     <div class="d-flex">
                                                         <input type="checkbox" class="mr-1" name="target_aud" value="unisex" {{ "unisex" == $product->target_aud ? 'checked' : '' }}><span class="mr-3">Unisex</span>
                                                         <input type="checkbox" class="mr-1" name="target_aud" value="men" {{ "men" == $product->target_aud ? 'checked' : '' }}><span class="mr-3">Men</span>
@@ -301,7 +283,7 @@
                                             </div>
                                             <div class="col-md-5">
                                                 <div class="form-group">
-                                                    <label for="name">Color</label>
+                                                    <label for="product_color">Color</label>
                                                     <select class="custom-select" name="product_color" id="product_color">
                                                         <option></option>
                                                         <option value="red" {{ "red" == $product->product_color ? 'selected' : '' }}>Red</option>
@@ -331,7 +313,7 @@
                                         <div class="row">
                                             <div class="col-md-6">
                                                 <div class="form-group">
-                                                    <label for="name">Quantity</label>
+                                                    <label for="product_qty">Quantity</label>
                                                     <input type="text" class="form-control" id="product_qty" name="product_qty" value="{{ old('product_qty',$product->product_qty) }}" placeholder="100">
                                                     @error('product_qty')
                                                         <span class="text-danger">{{ $message }}</span>
@@ -340,7 +322,7 @@
                                             </div>
                                             <div class="col-md-6">
                                                 <div class="form-group">
-                                                    <label for="name">Reorder Quantity</label>
+                                                    <label for="product_reorder_qty">Reorder Quantity</label>
                                                     <input type="text" class="form-control" id="product_reorder_qty" name="product_reorder_qty" value="{{ old('product_reorder_qty',$product->product_reorder_qty) }}" placeholder="100">
                                                 </div>
                                             </div>
@@ -705,7 +687,7 @@
                                         <div class="card-body">
                                             <div class="row mt-3 g-3 align-items-center">
                                                 <div class="col-md-3">
-                                                    <label for="name" class="col-form-label">Title</label>
+                                                    <label class="col-form-label">Title</label>
                                                 </div>
                                                 <div class="col-md-9">
                                                     <textarea class="form-control" placeholder="Store Name/ Title"></textarea>
@@ -713,7 +695,7 @@
                                             </div>
                                             <div class="row mt-3 g-3 align-items-center">
                                                 <div class="col-md-3">
-                                                    <label for="Description" class="col-form-label">Description</label>
+                                                    <label class="col-form-label">Description</label>
                                                 </div>
                                                 <div class="col-md-9">
                                                     <textarea class="form-control" placeholder="Description"></textarea>
@@ -721,7 +703,7 @@
                                             </div>
                                             <div class="row mt-3 g-3 align-items-center">
                                                 <div class="col-md-3">
-                                                    <label for="Price" class="col-form-label">Price</label>
+                                                    <label class="col-form-label">Price</label>
                                                 </div>
                                                 <div class="col-md-9">
                                                     <input type="text" class="form-control" placeholder="00.00">
@@ -729,7 +711,7 @@
                                             </div>
                                             <div class="row mt-3 g-3 align-items-center">
                                                 <div class="col-md-3">
-                                                    <label for="Price" class="col-form-label">Compate at Price</label>
+                                                    <label class="col-form-label">Compate at Price</label>
                                                 </div>
                                                 <div class="col-md-9">
                                                     <input type="text" class="form-control" placeholder="00.00">
@@ -737,7 +719,7 @@
                                             </div>
                                             <div class="row mt-3 g-3 align-items-center">
                                                 <div class="col-md-3">
-                                                    <label for="Price" class="col-form-label">Fbc Price</label>
+                                                    <label class="col-form-label">Fbc Price</label>
                                                 </div>
                                                 <div class="col-md-9">
                                                     <input type="text" class="form-control" placeholder="00.00">
@@ -745,7 +727,7 @@
                                             </div>
                                             <div class="row mt-3 g-3 align-items-center">
                                                 <div class="col-md-3">
-                                                    <label for="Price" class="col-form-label">Wholesale Price</label>
+                                                    <label class="col-form-label">Wholesale Price</label>
                                                 </div>
                                                 <div class="col-md-9">
                                                     <input type="text" class="form-control" placeholder="00.00">
@@ -753,7 +735,7 @@
                                             </div>
                                             <div class="row mt-3 g-3 align-items-center">
                                                 <div class="col-md-3">
-                                                    <label for="Price" class="col-form-label">Msrp</label>
+                                                    <label class="col-form-label">Msrp</label>
                                                 </div>
                                                 <div class="col-md-9">
                                                     <input type="text" class="form-control" placeholder="00.00">
@@ -761,7 +743,7 @@
                                             </div>
                                             <div class="row mt-3 g-3 align-items-center">
                                                 <div class="col-md-3">
-                                                    <label for="Price" class="col-form-label">Sale Count</label>
+                                                    <label class="col-form-label">Sale Count</label>
                                                 </div>
                                                 <div class="col-md-9">
                                                     <input type="text" class="form-control" placeholder="00.00">
@@ -805,12 +787,12 @@
                             <div class="row">
                                 <div class="col-md-6">
                                     <div class="form-group">
-                                        <label for="name">Title Template</label>
-                                        <textarea name="title_template" class="form-control"  rows="10">{{ $product->title_template }}</textarea>
+                                        <label for="title_template">Title Template</label>
+                                        <textarea name="title_template" id="title_template" class="form-control"  rows="10">{{ $product->title_template }}</textarea>
                                     </div>
                                     <div class="form-group">
-                                        <label for="name">Description Template</label>
-                                        <textarea name="description_template" class="form-control"  rows="10">{{ $product->description_template }}</textarea>
+                                        <label for="description_template">Description Template</label>
+                                        <textarea name="description_template" id="description_template" class="form-control"  rows="10">{{ $product->description_template }}</textarea>
                                     </div>
                                 </div>
                             </div>
@@ -839,29 +821,36 @@
             formData.append('product_id', product_id);
             formData.append('tab', tabId);
 
-            fetch('{{ route('catalog.save') }}', {
-                method: 'POST',
+            $.ajax({
+                type: 'POST',
+                url: "{{ route('catalog.save') }}", // Adjust this URL to your endpoint
+                data: formData,
+                processData: false,
+                contentType: false,
                 headers: {
                     'X-CSRF-TOKEN': '{{ csrf_token() }}',
                 },
-                body: formData
-            })
-                .then(response => response.json())
-                .then(data => {
-                    console.log(data);
-                    if (data.errors) {
+                dataType:'json',
+                success: function(response) {
+                    // Display a success message
+                    alert(response.message);
+                    location.reload();
+                },
+                error: function(xhr) {
+                    if (xhr.status === 422) { // Validation error
+                        var errors = xhr.responseJSON.errors;
 
-                        // Display validation errors
-                        Object.keys(data.errors).forEach((field) => {
-                            let errorMessage = data.errors[field][0];
-                            document.querySelector(`#${field}`).classList.add('is-invalid');
-                            document.querySelector(`#${field} ~ .text-danger`).innerText = errorMessage;
+                        // Clear previous errors
+                        $('.error-message').text('');
+
+                        // Loop through and display errors
+                        $.each(errors, function(field, messages) {
+                            $('#' + field + '-error').text(messages[0]); // Display the first error message
                         });
-                    } else {
-                        alert(data.message);
-                        location.reload();
                     }
-                });
+                }
+            });
+
         }
 
         function finalizeForm() {
@@ -871,23 +860,36 @@
             formData.append('product_id', product_id);
             formData.set('product_status', 'active');
 
-            fetch('{{ route('catalog.final') }}', {
-                method: 'POST',
+            $.ajax({
+                type: 'POST',
+                url: "{{ route('catalog.final') }}", // Adjust this URL to your endpoint
+                data: formData,
+                processData: false,
+                contentType: false,
                 headers: {
                     'X-CSRF-TOKEN': '{{ csrf_token() }}',
                 },
-                body: formData
-            })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        alert('Product saved successfully!');
-                        window.location.href = "{{ route('catalog.list') }}";
-                    } else {
-                        alert('Error submiting the record');
+                dataType:'json',
+                success: function(response) {
+                    // Display a success message
+                    alert(response.message);
+                    window.location.href = "{{ route('catalog.list') }}";
+                },
+                error: function(xhr) {
+                    if (xhr.status === 422) { // Validation error
+                        var errors = xhr.responseJSON.errors;
+
+                        // Clear previous errors
+                        $('.error-message').text('');
+
+                        // Loop through and display errors
+                        $.each(errors, function(field, messages) {
+                            $('#' + field + '-error').text(messages[0]); // Display the first error message
+                        });
                     }
-                })
-                .catch(error => console.error('Error:', error));
+                }
+            });
+
         }
 
         $(document).ready(function() {
