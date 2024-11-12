@@ -18,14 +18,19 @@
         <thead>
         <tr>
             <th>Customer Name</th>
-            <th>Address</th>
-            <th>Phone</th>
-            <th>Email</th>
             <th>Action</th>
         </tr>
         </thead>
         <tbody>
-
+        @foreach($customers as $customer)
+            <tr>
+                <td>{{ $customer->full_name }}</td>
+                <td>
+                    <a href="{{ route('customers.edit', ['id' => $customer->id]) }}" class="btn btn-primary">Edit</a>
+                    <a href="{{ route('customers.delete',['id' => $customer->id]) }}" class="btn btn-danger"> Delete</a>
+                </td>
+            </tr>
+        @endforeach
         </tbody>
     </table>
 @stop
