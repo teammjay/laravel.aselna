@@ -550,7 +550,7 @@
                                     </tr>
                                     </thead>
                                     <tbody>
-                                        @if(count($keyFeatures) > 0)
+                                        @if(count($keyFeatures ?? []) > 0)
                                             @foreach($keyFeatures as $features)
                                                 <tr class="field-group">
                                                     <td><textarea class="form-control" name="features[]">{{ $features->value }}</textarea></td>
@@ -590,7 +590,7 @@
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            @if(count($titleKeywords) > 0)
+                                            @if(count($titleKeywords ?? []) > 0)
                                                 @foreach($titleKeywords as $key)
                                                     <tr class="field-group">
                                                         <td width="70%"><input type="text" class="form-control" name="title_keyword[]" value="{{ $key->keyword }}"></td>
@@ -634,7 +634,7 @@
                                         <th>Order</th>
                                     </thead>
                                     <tbody>
-                                        @if(count($productImages) > 0)
+                                        @if(count($productImages ?? []) > 0)
                                             @foreach($productImages as $images)
                                                 <tr>
                                                     <td><img src="{{ url('images/' . $images->image) }}" alt="{{ $images->image }}" width="70" height="70"></td>
