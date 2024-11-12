@@ -89,7 +89,9 @@ class CatalogController extends Controller
         $product = Catalog::findOrFail($pro_id); // Retrieve the product by ID
         $keyFeatures = ProductKeyFeatures::where('product_id', $pro_id)->orderBy('sort_order')->get();
         $titleKeywords = ProductTitleKeyword::where('product_id', $pro_id)->orderBy('priority')->get();
-        return view('catalog.update', compact('product','keyFeatures','titleKeywords'));
+        $productImages = ProductImages::where('product_id', $pro_id)->get();
+        $productTags = ProductTags::pluck('name')->values()->all();
+        return view('catalog.update', compact('product','keyFeatures','titleKeywords','productImages','productTags'));
     }
 
     /**
