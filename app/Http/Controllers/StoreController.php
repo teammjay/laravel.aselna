@@ -4,7 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\Device;
 use App\Models\DeviceTypes;
+use App\Models\ShippingCarrierService;
 use App\Models\StoreDeviceType;
+use App\Models\StoreShippingService;
 use Illuminate\Http\Request;
 use App\Models\Store;
 use Illuminate\Support\Facades\Config;
@@ -41,9 +43,13 @@ class StoreController extends Controller
 
         $store = Store::findOrFail($store_id); // Retrieve the store by ID
         $devices = DeviceTypes::all();
+        $shipping_services = ShippingCarrierService::leftJoin('shipping_carrier', 'shipping_carrier_service.shipping_carrier_id', '=', 'shipping_carrier.id')
+            ->select('shipping_carrier_service.id', 'shipping_carrier_service.name', 'shipping_carrier.name as carrierName')  // Select the fields you need
+            ->get();
         $storeDevices = StoreDeviceType::where('store_id', $store_id)->get();
+        $storeShippingService = StoreShippingService::where('store_id', $store_id)->get();
         //print_r($devices);die;
-        return view('store.update',compact('store','devices','storeDevices'));
+        return view('store.update',compact('store','devices','storeDevices','shipping_services','storeShippingService'));
     }
 
     /**
@@ -65,7 +71,8 @@ class StoreController extends Controller
 
         // Logic to handle saving data based on $tabId
         if ($tabId == 1) {
-            $validator = $request->validate([
+
+            $validator = Validator::make(request()->all(), [
                 'name' => 'required|string|max:30',
                 'marketplace_name' => 'required|string',
                 'store_url' => 'required|string'
@@ -169,12 +176,18 @@ class StoreController extends Controller
         $storeId = $request->input('store_id');
 
         try {
-            $request->validate([
+            $validator = Validator::make(request()->all(), [
                 'name' => 'required|string|max:30',
-                'store_type' => 'required|string',
                 'marketplace_name' => 'required|string',
                 'store_url' => 'required|string'
             ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'errors' => $request->errors()
+                ], 422);
+            }
 
             $store = Store::findOrFail($storeId); // Retrieve the product by ID
             $store->update($request->all());
@@ -204,10 +217,51 @@ class StoreController extends Controller
     {
         $store = Store::findOrFail($id); // Retrieve the store by ID
         $devices = DeviceTypes::all();
+        $shipping_services = ShippingCarrierService::leftJoin('shipping_carrier', 'shipping_carrier_service.shipping_carrier_id', '=', 'shipping_carrier.id')
+            ->select('shipping_carrier_service.id', 'shipping_carrier_service.name', 'shipping_carrier.name as carrierName')  // Select the fields you need
+            ->get();
+
         $storeDevices = StoreDeviceType::where('store_id', $id)->get();
         $storeDevices = $storeDevices->pluck('device_type_id')->values()->all();
+        $storeShippingService = StoreShippingService::where('store_id', $id)->get();
 
-        return view('store.update', compact('store','devices','storeDevices'));
+        return view('store.update', compact('store','devices','storeDevices','shipping_services','storeShippingService'));
+    }
+
+    public function saveShippingService(Request $request){
+
+        $storeId = $request->input('store_id');
+
+        try {
+
+            StoreShippingService::create($request->all());
+            return response()->json(['success' => true, 'message' => 'Data saved successfully']);
+
+        }catch (QueryException $e) {
+            // Handle the exception and show an error message
+            return response()->json(['errors' => $e->getMessage()], 422);
+        }
+    }
+
+
+    /**
+     * Remove the specified resource from storage.
+     */
+    public function removeShipping(Request $request)
+    {
+        // Find the service by id
+        $shippingId = $request->input('shippingId');
+        $service = StoreShippingService::find($shippingId);
+
+        if ($service) {
+            $service->delete(); // Delete the user
+
+            // Return a success response
+            return response()->json(['success' => true, 'message' => 'Service deleted successfully']);
+        }
+
+        // If the user doesn't exist, return an error
+        return response()->json(['error' => 'Service not found!'], 422);
     }
 
     /**
@@ -223,6 +277,17 @@ class StoreController extends Controller
      */
     public function destroy(string $id)
     {
-        //
+        // Find the user by id
+        $store = Store::find($id);
+
+        if ($store) {
+            $store->delete(); // Delete the user
+
+            // Return a success response
+            return response()->json(['success' => 'Store deleted successfully!']);
+        }
+
+        // If the user doesn't exist, return an error
+        return response()->json(['error' => 'Store not found!'], 404);
     }
 }

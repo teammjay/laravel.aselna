@@ -67,6 +67,7 @@
     <table id="productsTable" class="table table-bordered table-striped">
         <thead>
         <tr>
+            <th>Product ID</th>
             <th>Image</th>
             <th>Code</th>
             <th>Type</th>

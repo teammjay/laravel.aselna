@@ -12,6 +12,8 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\CatalogController;
 use App\Http\Controllers\StoreController;
 use App\Http\Controllers\ImageUploadController;
+use App\Http\Controllers\ShippingCarrierController;
+use App\Http\Controllers\ShippingCarrierServiceController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -41,6 +43,26 @@ Route::controller(StoreController::class)->group(function () {
     Route::get('/stores/edit/{id}', 'edit')->name('store.edit');
     Route::post('/stores/edit/{id}', 'update')->name('store.update');
     Route::delete('/stores/destroy/{id}', 'destroy')->name('store.delete');
+    Route::post('/stores/removeshipping', 'removeShipping')->name('store.removeshipping');
+    Route::post('/stores/saveShippingService', 'saveShippingService')->name('store.shippingservice');
+});
+
+Route::controller(ShippingCarrierController::class)->group(function () {
+    Route::get('/shipping_carrier', 'index')->name('shipping_carrier.index');
+    Route::get('/shipping_carrier/add', 'create')->name('shipping_carrier.create');
+    Route::post('/shipping_carrier/add', 'store')->name('shipping_carrier.store');
+    Route::get('/shipping_carrier/edit/{id}', 'edit')->name('shipping_carrier.edit');
+    Route::post('/shipping_carrier/edit/{id}', 'update')->name('shipping_carrier.update');
+    Route::get('/shipping_carrier/delete/{id}', 'destroy')->name('shipping_carrier.delete');
+});
+
+Route::controller(ShippingCarrierServiceController::class)->group(function () {
+    Route::get('/shipping_carrier_service', 'index')->name('shipping_carrier_service.index');
+    Route::get('/shipping_carrier_service/add', 'create')->name('shipping_carrier_service.create');
+    Route::post('/shipping_carrier_service/add', 'store')->name('shipping_carrier_service.store');
+    Route::get('/shipping_carrier_service/edit/{id}', 'edit')->name('shipping_carrier_service.edit');
+    Route::post('/shipping_carrier_service/edit/{id}', 'update')->name('shipping_carrier_service.update');
+    Route::get('/shipping_carrier_service/delete/{id}', 'destroy')->name('shipping_carrier_service.delete');
 });
 
 Route::controller(BrandController::class)->group(function () {

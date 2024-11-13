@@ -10,6 +10,7 @@ use App\Models\ProductImages;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 
 class CatalogController extends Controller
 {
@@ -85,13 +86,13 @@ class CatalogController extends Controller
             $pro_id = session('pro_id');
         }
         //return view('catalog.update', ['product_id' => $record->product_id]);
-
+        $pageAt = 'Add';
         $product = Catalog::findOrFail($pro_id); // Retrieve the product by ID
         $keyFeatures = ProductKeyFeatures::where('product_id', $pro_id)->orderBy('sort_order')->get();
         $titleKeywords = ProductTitleKeyword::where('product_id', $pro_id)->orderBy('priority')->get();
         $productImages = ProductImages::where('product_id', $pro_id)->get();
         $productTags = ProductTags::pluck('name')->values()->all();
-        return view('catalog.update', compact('product','keyFeatures','titleKeywords','productImages','productTags'));
+        return view('catalog.update', compact('product','keyFeatures','titleKeywords','productImages','productTags','pageAt'));
     }
 
     /**
@@ -149,6 +150,7 @@ class CatalogController extends Controller
      */
     public function edit(string $id)
     {
+        $pageAt = 'Edit';
         $product = Catalog::findOrFail($id); // Retrieve the product by ID
         $keyFeatures = ProductKeyFeatures::where('product_id', $id)->orderBy('sort_order')->get();
         $titleKeywords = ProductTitleKeyword::where('product_id', $id)->orderBy('priority')->get();
@@ -156,7 +158,7 @@ class CatalogController extends Controller
         $productTags = ProductTags::pluck('name')->values()->all();
         //echo '<pre>';
         //print_r($productTags);die;
-        return view('catalog.update', compact('product','keyFeatures','titleKeywords','productImages','productTags'));
+        return view('catalog.update', compact('product','keyFeatures','titleKeywords','productImages','productTags','pageAt'));
     }
 
     /**
@@ -171,7 +173,8 @@ class CatalogController extends Controller
         // Logic to handle saving data based on $tabId
         if ($tabId == 1) {
 
-            $validator = $request->validate([
+
+            $validator = Validator::make(request()->all(), [
                 'product_title' => 'required|string|max:30',
                 'product_type' => 'required|string',
                 'product_manufacturer' => 'required|integer',
@@ -213,13 +216,14 @@ class CatalogController extends Controller
                 $data = [];
                 for($i=0; $i < count($request->features); $i++){
                     $data[] = array(
+                        'id' => (string) Str::uuid(),
                         'product_id' => $productId,
                         'value' => $request->features[$i],
                         'sort_order' => $request->feature_sort_order[$i],
                     );
                 }
                 ProductKeyFeatures::where('product_id', $productId)->delete();
-                ProductKeyFeatures::upsert($data, ['product_id','value'], ['sort_order']);
+                ProductKeyFeatures::insert($data);
 
                 return response()->json(['success' => true, 'message' => 'Data saved successfully!']);
 
@@ -231,19 +235,21 @@ class CatalogController extends Controller
             $data = [];
             for($i=0; $i < count($request->title_keyword); $i++){
                 $data[] = array(
+                    'id' => (string) Str::uuid(),
                     'product_id' => $productId,
                     'keyword' => $request->title_keyword[$i],
                     'priority' => $request->title_priority[$i],
                 );
             }
             ProductTitleKeyword::where('product_id', $productId)->delete();
-            ProductTitleKeyword::upsert($data, ['product_id','keyword'], ['priority']);
+            ProductTitleKeyword::insert($data);
 
             return response()->json(['success' => true, 'message' => 'Data saved successfully!']);
         }elseif ($tabId == 8){
             $data = [];
             for($i=0; $i < count($request->tags); $i++){
                 $data[] = array(
+                    'id' => (string) Str::uuid(),
                     'product_id' => $productId,
                     'name' => $request->tags[$i]
                 );
@@ -271,34 +277,7 @@ class CatalogController extends Controller
     public function finalize(Request $request) {
         $productId = $request->input('product_id');
 
-            $validator = $request->validate([
-                'product_title' => 'required|string|max:30',
-                'product_type' => 'required|string',
-                'product_manufacturer' => 'required|integer',
-                'product_price' => 'required|decimal:2',
-                'product_sku' => 'required|string|max:225',
-                'product_description' => 'nullable|string'
-            ]);
-
-            if ($validator->fails()) {
-                return response()->json([
-                    'success' => false,
-                    'errors' => $request->errors()
-                ], 422);
-            }
-
-            $product = Catalog::findOrFail($productId); // Retrieve the product by ID
-            $product->update($request->all());
-
-            return response()->json(['success' => true, 'message' => 'Data saved successfully']);
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
-    {
-        $request->validate([
+        $validator = Validator::make(request()->all(), [
             'product_title' => 'required|string|max:30',
             'product_type' => 'required|string',
             'product_manufacturer' => 'required|integer',
@@ -307,37 +286,19 @@ class CatalogController extends Controller
             'product_description' => 'nullable|string'
         ]);
 
-        // save the data to the database
-        try {
-
-            $product = Catalog::findOrFail($id); // Retrieve the product by ID
-
-            // Update the product details
-            /*$product->update([
-                'product_title' => $request->product_title,
-                'product_type' => $request->product_type,
-                'product_manufacturer' => $request->product_manufacturer,
-                'product_price' => $request->product_price,
-                'product_sku' => $request->product_sku,
-                'product_description' => $request->product_description,
-                'product_status' => 'active',
-                'product_stock_quantity' => 10,
-                'product_condition' => 'New'
-            ]);*/
-
-
-            $product->update($request->all());
-
-            //echo $product->toSql();die;
-
-            return redirect()->route('catalog.list')->with('success', 'Product updated successfully!');
-
-        }catch (QueryException $e) {
-            // Handle the exception and show an error message
-            Log::error('Error saving user: ' . $e->getMessage());
-            return redirect()->back()->with('error', 'Failed to update product. Please try again.');
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'errors' => $request->errors()
+            ], 422);
         }
+
+        $product = Catalog::findOrFail($productId); // Retrieve the product by ID
+        $product->update($request->all());
+
+        return response()->json(['success' => true, 'message' => 'Data saved successfully']);
     }
+
 
     /**
      * Remove the specified resource from storage.
@@ -384,6 +345,7 @@ class CatalogController extends Controller
                 $image->move(public_path('images'), $imageName);
                 $imageNames[] = $imageName;
                 $imagedata[] = array(
+                    'id' => (string) Str::uuid(),
                     'product_id' => $productId,
                     'image' => $imageName,
                     'sort_order' => (int) $key + 1,

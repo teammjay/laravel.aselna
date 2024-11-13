@@ -12,8 +12,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('store_page', function (Blueprint $table) {
-            $table->id();
-            $table->unsignedBigInteger('store_id');
+            $table->uuid('id')->primary();
+            $table->uuid('store_id');
             $table->foreign('store_id')->references('store_id')->on('store')
                 ->onDelete('cascade');
             $table->integer('page_type');

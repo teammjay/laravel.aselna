@@ -1,6 +1,7 @@
 @if(!empty($products))
     @foreach($products as $product)
         <tr id="product-{{ $product->product_id }}">
+            <td>{{ $product->product_id }}</td>
             <td>
                 @if($product->product_image_url != '')
                     <img src="{{ url('images/' . $product->product_image_url) }}" alt="{{ $product->product_image_url }}" width="70" height="70">
