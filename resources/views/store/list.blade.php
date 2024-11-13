@@ -8,9 +8,14 @@
 
 @section('content')
     <div class="row my-3">
-        <div class="col-md-3">
+        <div class="col-md-2">
             <a href="{{ route('store.create') }}" class="btn btn-secondary">
                 Add new store
+            </a>
+        </div>
+        <div class="col-md-2">
+            <a href="{{ route('customers.create') }}" class="btn btn-outline-info">
+                Create Customer
             </a>
         </div>
     </div>
@@ -66,16 +71,17 @@
     </div>--}}
     <table id="storeTable" class="table table-bordered table-striped">
         <thead>
-        <tr>
-            <th>Marketplace Name</th>
-            <th>Name</th>
-            <th>Store Type</th>
-            <th>Listing Type</th>
-            <th>Store Status</th>
-            <th>Authorized</th>
-            <th>Short Code</th>
-            <th>Upc usage type</th>
-        </tr>
+            <tr>
+                <th>Store ID</th>
+                <th>Marketplace Name</th>
+                <th>Name</th>
+                <th>Store Type</th>
+                <th>Listing Type</th>
+                <th>Store Status</th>
+                <th>Authorized</th>
+                <th>Short Code</th>
+                <th>Upc usage type</th>
+            </tr>
         </thead>
         <tbody id="store-list">
         @include('store.store_list', ['stores' => $stores])
@@ -85,6 +91,59 @@
         @include('store.pagination', ['stores' => $stores])
     </div>
 
+@stop
+
+@section('adminlte_js')
+
+    <script>
+        $(document).ready(function() {
+            // Handle pagination links click
+            $(document).on('click', '.pagination a', function(event) {
+                event.preventDefault();
+                var page = $(this).attr('href').split('page=')[1];
+                loadProductsWithPage(page);
+            });
+
+            function loadProductsWithPage(page) {
+                var perPage = 1;
+                $.ajax({
+                    url: "{{ route('catalog.filter') }}?page=" + page + "&perPage=" + perPage,
+                    data: $('#filter-form').serialize(),
+                    success: function(response) {
+                        $('#product-list').html(response.html);
+                        $('#pagination').html(response.pagination);
+                    }
+                });
+            }
+
+            $(document).on('click', '.delete-btn', function() {
+                var storeId = $(this).data('id');
+                var token = '{{ csrf_token() }}'; // CSRF token for security
+
+                // Confirm the deletion
+                if (confirm("Are you sure you want to delete this store?")) {
+                    $.ajax({
+                        url: "{{ url('store/destroy') }}/" + storeId,   // Laravel route for deletion
+                        type: 'DELETE',
+                        data: {
+                            "_token": token
+                        },
+                        success: function (response) {
+                            // If success, remove the user row from the table
+                            if (response.success) {
+                                $('#store-' + storeId).remove();
+                                alert(response.success);
+                            }
+                        },
+                        error: function (xhr) {
+                            // Handle error response
+                            alert('Error: ' + xhr.responseJSON.error);
+                        }
+                    });
+                }
+            });
+        });
+    </script>
 @stop
 
 

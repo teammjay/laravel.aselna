@@ -374,6 +374,16 @@ return [
                     'url' => '/device_sub_types',
                     'icon' => 'far fa-fw fa-file'
                 ],
+                [
+                    'text' => 'Shipping Carrier',
+                    'url' => '/shipping_carrier',
+                    'icon' => 'far fa-fw fa-file'
+                ],
+                [
+                    'text' => 'Shipping Carrier Service',
+                    'url' => '/shipping_carrier_service',
+                    'icon' => 'far fa-fw fa-file'
+                ],
             ],
         ]
 //        [
