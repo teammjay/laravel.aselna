@@ -11,7 +11,6 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('product', function (Blueprint $table) {
 
             Schema::table('products', function (Blueprint $table) {
 
@@ -36,8 +35,6 @@ return new class extends Migration
                 $table->dropColumn('product_stock_quantity');
 
             });
-
-        });
     }
 
     /**

@@ -2,9 +2,13 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Device;
 use App\Models\DeviceTypes;
+use App\Models\ShippingCarrierService;
+use App\Models\StoreCategory;
 use App\Models\StoreDeviceType;
+use App\Models\StorePage;
+use App\Models\PageType;
+use App\Models\StoreShippingService;
 use Illuminate\Http\Request;
 use App\Models\Store;
 use Illuminate\Support\Facades\Config;
@@ -40,10 +44,17 @@ class StoreController extends Controller
         }
 
         $store = Store::findOrFail($store_id); // Retrieve the store by ID
-        $devices = DeviceTypes::all();
+        $devices = DeviceTypes::where('status','active')->get();
+        $pageTypes = PageType::all();
+        $shipping_services = ShippingCarrierService::leftJoin('shipping_carrier', 'shipping_carrier_service.shipping_carrier_id', '=', 'shipping_carrier.id')
+            ->select('shipping_carrier_service.id', 'shipping_carrier_service.name', 'shipping_carrier.name as carrierName')  // Select the fields you need
+            ->get();
         $storeDevices = StoreDeviceType::where('store_id', $store_id)->get();
+        $storeShippingService = StoreShippingService::where('store_id', $store_id)->get();
+        $storePages = StorePage::with('PageType')->where('store_id', $store_id)->get();
+        $storeCategories = StoreCategory::where('store_id', $store_id)->get();
         //print_r($devices);die;
-        return view('store.update',compact('store','devices','storeDevices'));
+        return view('store.update',compact('store','devices','storeDevices','shipping_services','storeShippingService','pageTypes','storePages','storeCategories'));
     }
 
     /**
@@ -65,20 +76,21 @@ class StoreController extends Controller
 
         // Logic to handle saving data based on $tabId
         if ($tabId == 1) {
-            $validator = $request->validate([
-                'name' => 'required|string|max:30',
-                'marketplace_name' => 'required|string',
-                'store_url' => 'required|string'
+
+            $validator = Validator::make(request()->all(), [
+                'name' => 'required',
+                'marketplace_name' => 'required',
+                'store_url' => 'required'
             ]);
 
             if ($validator->fails()) {
                 return response()->json([
                     'success' => false,
-                    'errors' => $request->errors()
+                    'errors' => $validator->errors()
                 ], 422);
             }
 
-            $store = Store::findOrFail($storeId); // Retrieve the product by ID
+            $store = Store::findOrFail($storeId); // Retrieve the store by ID
             $store->update($request->all());
             return response()->json(['success' => true, 'message' => 'Data saved successfully!']);
 
@@ -86,7 +98,7 @@ class StoreController extends Controller
         } elseif ($tabId == 2 || $tabId == 3) {
 
             try {
-                $store = Store::findOrFail($storeId); // Retrieve the product by ID
+                $store = Store::findOrFail($storeId); // Retrieve the store by ID
                 $store->update($request->all());
                 return response()->json(['success' => true, 'message' => 'Data saved successfully!']);
 
@@ -94,16 +106,12 @@ class StoreController extends Controller
                 // Handle the exception and show an error message
                 return response()->json(['errors' => $e->getMessage()]);
             }
-        }elseif ($tabId == 4) {
-
-        }elseif ($tabId == 5) {
-
         }elseif ($tabId == 6){
 
             try {
                 $request['authorized'] = $request->has('authorized') ? 1 : 0;
 
-                $store = Store::findOrFail($storeId); // Retrieve the product by ID
+                $store = Store::findOrFail($storeId); // Retrieve the store by ID
                 $store->update($request->all());
                 return response()->json(['success' => true, 'message' => 'Data saved successfully!']);
 
@@ -127,7 +135,7 @@ class StoreController extends Controller
                     $request['watermark_image_id'] =$imageName;
                 }
 
-                $store = Store::findOrFail($storeId); // Retrieve the product by ID
+                $store = Store::findOrFail($storeId); // Retrieve the store by ID
                 $store->update($request->all());
                 return response()->json(['success' => true, 'message' => 'Data saved successfully!']);
 
@@ -135,10 +143,6 @@ class StoreController extends Controller
                 // Handle the exception and show an error message
                 return response()->json(['errors' => $e->getMessage()]);
             }
-
-        }elseif ($tabId == 8){
-
-        }elseif ($tabId == 11){
 
         }elseif($tabId == 12){
             try {
@@ -169,12 +173,18 @@ class StoreController extends Controller
         $storeId = $request->input('store_id');
 
         try {
-            $request->validate([
-                'name' => 'required|string|max:30',
-                'store_type' => 'required|string',
-                'marketplace_name' => 'required|string',
-                'store_url' => 'required|string'
+            $validator = Validator::make(request()->all(), [
+                'name' => 'required',
+                'marketplace_name' => 'required',
+                'store_url' => 'required'
             ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'errors' => $validator->errors()
+                ], 422);
+            }
 
             $store = Store::findOrFail($storeId); // Retrieve the product by ID
             $store->update($request->all());
@@ -190,32 +200,59 @@ class StoreController extends Controller
     }
 
     /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
-    {
-        //
-    }
-
-    /**
      * Show the form for editing the specified resource.
      */
     public function edit(string $id)
     {
         $store = Store::findOrFail($id); // Retrieve the store by ID
-        $devices = DeviceTypes::all();
+        $devices = DeviceTypes::where('status','active')->get();
+        $pageTypes = PageType::all();
+        $shipping_services = ShippingCarrierService::leftJoin('shipping_carrier', 'shipping_carrier_service.shipping_carrier_id', '=', 'shipping_carrier.id')
+            ->select('shipping_carrier_service.id', 'shipping_carrier_service.name', 'shipping_carrier.name as carrierName')  // Select the fields you need
+            ->get();
+
         $storeDevices = StoreDeviceType::where('store_id', $id)->get();
         $storeDevices = $storeDevices->pluck('device_type_id')->values()->all();
+        $storeShippingService = StoreShippingService::where('store_id', $id)->get();
+        $storePages = StorePage::with('PageType')->where('store_id', $id)->get();
+        $storeCategories = StoreCategory::where('store_id', $id)->get();
+        //echo '<pre>';
+        //print_r($storePages);die;
 
-        return view('store.update', compact('store','devices','storeDevices'));
+        return view('store.update', compact('store','devices','storeDevices','shipping_services','storeShippingService','pageTypes','storePages','storeCategories'));
+    }
+
+    public function saveShippingService(Request $request){
+
+        try {
+
+            StoreShippingService::create($request->all());
+            return response()->json(['success' => true, 'message' => 'Data saved successfully']);
+
+        }catch (QueryException $e) {
+            // Handle the exception and show an error message
+            return response()->json(['errors' => $e->getMessage()], 422);
+        }
     }
 
     /**
-     * Update the specified resource in storage.
+     * Remove the specified resource from storage.
      */
-    public function update(Request $request, string $id)
+    public function removeShipping(Request $request)
     {
-        //
+        // Find the service by id
+        $shippingId = $request->input('shippingId');
+        $service = StoreShippingService::find($shippingId);
+
+        if ($service) {
+            $service->delete(); // Delete the shipping
+
+            // Return a success response
+            return response()->json(['success' => true, 'message' => 'Service deleted successfully']);
+        }
+
+        // If the shipping service doesn't exist, return an error
+        return response()->json(['error' => 'Service not found!'], 422);
     }
 
     /**
@@ -223,6 +260,105 @@ class StoreController extends Controller
      */
     public function destroy(string $id)
     {
-        //
+        // Find the store by id
+        $store = Store::find($id);
+
+        if ($store) {
+            $store->delete(); // Delete the store
+            // Return a success response
+            return response()->json(['success' => 'Store deleted successfully!']);
+        }
+
+        // If the store doesn't exist, return an error
+        return response()->json(['error' => 'Store not found!'], 404);
+    }
+
+    public function savePages(Request $request){
+
+        try {
+
+            $validator = Validator::make(request()->all(), [
+                'title' => 'required|string',
+                'page_type_id' => 'required'
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+
+            StorePage::create($request->all());
+            return response()->json(['success' => true, 'message' => 'Data saved successfully']);
+
+        }catch (QueryException $e) {
+            // Handle the exception and show an error message
+            return response()->json(['errors' => $e->getMessage()], 422);
+        }
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     */
+    public function removePage(Request $request)
+    {
+        // Find the page by id
+        $pageId = $request->input('pageId');
+        $page = StorePage::find($pageId);
+
+        if ($page) {
+            $page->delete(); // Delete the page
+
+            // Return a success response
+            return response()->json(['success' => true, 'message' => 'Page deleted successfully']);
+        }
+
+        // If the page doesn't exist, return an error
+        return response()->json(['error' => 'Page not found!'], 422);
+    }
+
+    public function saveCategory(Request $request){
+
+        try {
+
+            $validator = Validator::make(request()->all(), [
+                'name' => 'required'
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+
+            StoreCategory::create($request->all());
+            return response()->json(['success' => true, 'message' => 'Data saved successfully']);
+
+        }catch (QueryException $e) {
+            // Handle the exception and show an error message
+            return response()->json(['errors' => $e->getMessage()], 422);
+        }
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     */
+    public function removeCategory(Request $request)
+    {
+        // Find the page by id
+        $categoryId = $request->input('categoryId');
+        $category = StoreCategory::find($categoryId);
+
+        if ($category) {
+            $category->delete(); // Delete the category
+
+            // Return a success response
+            return response()->json(['success' => true, 'message' => 'Category deleted successfully']);
+        }
+
+        // If the page doesn't exist, return an error
+        return response()->json(['error' => 'Category not found!'], 422);
     }
 }

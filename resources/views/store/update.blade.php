@@ -1,9 +1,9 @@
 @extends('adminlte::page')
 
-@section('title', 'Edit Store')
+@section('title', 'Add / Edit Store')
 
 @section('content_header')
-    <h1>Add / Edit Store</h1>
+    <h1>{{ isset($store) ? 'Edit Store' : 'Add Store' }}</h1>
 @stop
 
 @section('content')
@@ -89,7 +89,7 @@
                             <div class="col-md-4">
                                 <div class="row mt-3 g-3 align-items-center">
                                     <div class="col-md-5">
-                                        <label for="id">ID</label>
+                                        <label for="store_id">ID</label>
                                     </div>
                                     <div class="col-md-7">
                                         <input type="text" class="form-control" id="store_id" name="store_id" value="{{ old('id',$store->id) }}" placeholder="Enter product title" readonly="">
@@ -106,7 +106,7 @@
                                 </div>
                                 <div class="row mt-3 g-3 align-items-center">
                                     <div class="col-md-5">
-                                        <label for="store_type">Store Type</label>
+                                        <label for="store_type_id">Store Type</label>
                                     </div>
                                     <div class="col-md-7">
                                         <select class="form-control" name="store_type_id" id="store_type_id">
@@ -568,18 +568,27 @@
                         <button type="button" class="btn btn-secondary" id="create_shipping" data-toggle="modal" data-target="#addShippingModal" ><i class="fa fa-plus-square"></i> Create</button>
                         <table class="table table-bordered mt-2">
                             <thead>
-                            <tr>
-                                <th>Name</th>
-                                <th></th>
-                            </tr>
+                                <tr>
+                                    <th>Name</th>
+                                    <th></th>
+                                </tr>
                             </thead>
+                            <tbody>
+                                @if(count($storeShippingService ?? []) > 0)
+                                    @foreach($storeShippingService as $shipping)
+                                        <tr class="field-group">
+                                            <td>{{ $shipping->name }}</td>
+                                            <td><button type="button" class="btn btn-danger remove-shipping" data-id="{{ $shipping->id }}"> <i class="fas fa-fw fa-trash"></i></button></td>
+                                        </tr>
+                                    @endforeach
+                                @endif
+                            </tbody>
                         </table>
-                        <div class="card-footer text-center mt-3">
+                        {{--<div class="card-footer text-center mt-3">
                             <button type="button" class="btn btn-success" onclick="saveStoreTabData(5)">Save</button>
                             <button type="button" class="btn btn-primary" onclick="finalizeForm()">Submit</button>
-                            {{--<button type="reset" class="btn btn-primary">Reset</button>--}}
                             <a href="{{ route('store.list') }}" class="btn btn-secondary">Cancel</a>
-                        </div>
+                        </div>--}}
                     </form>
                 </div>
                 <div class="tab-pane fade" id="tab6" role="tabpanel" aria-labelledby="credential-tab">
@@ -737,7 +746,9 @@
                                         <input type="file" id="watermark_image" name="watermark_image" >
                                     </div>
                                     <div class="col-md-3">
-                                        <img src="{{ url('images/' . $store->watermark_image_id) }}" alt="{{ $store->watermark_image_id }}" width="70" height="70">
+                                        @if($store->watermark_image_id != '')
+                                            <img src="{{ url('images/' . $store->watermark_image_id) }}" alt="{{ $store->watermark_image_id }}" width="70" height="70">
+                                        @endif
                                     </div>
                                 </div>
                                 <div class="row mt-3 g-3 align-items-center">
@@ -767,48 +778,90 @@
                     </form>
                 </div>
                 <div class="tab-pane fade" id="tab8" role="tabpanel" aria-labelledby="pages-tab">
-                    <form method="POST" id="frmtab8">
-
-                        <div class="card-footer text-center mt-3">
+                        <button type="button" class="btn btn-secondary" id="add_pages" data-toggle="modal" data-target="#addPagesModal" ><i class="fa fa-plus-square"></i> Create</button>
+                        <table class="table table-bordered mt-2">
+                            <thead>
+                            <tr>
+                                <th>Title</th>
+                                <th>Page Type</th>
+                                <th></th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            @if(count($storePages ?? []) > 0)
+                                @foreach($storePages as $page)
+                                    <tr class="field-group">
+                                        <td>{{ $page->title }}</td>
+                                        <td>{{ $page->PageType->type }}</td>
+                                        <td>
+                                            {{--<button type="button" class="btn btn-primary edit-page" data-id="{{ $page->id }}" title="Edit"> <i class="fas fa-fw fa-pencil-alt"></i></button>--}}
+                                            <button type="button" class="btn btn-danger remove-page" data-id="{{ $page->id }}" title="Remove"> <i class="fas fa-fw fa-trash"></i></button></td>
+                                    </tr>
+                                @endforeach
+                            @endif
+                            </tbody>
+                        </table>
+                        {{--<div class="card-footer text-center mt-3">
                             <button type="button" class="btn btn-success" onclick="saveStoreTabData(8)">Save</button>
                             <button type="button" class="btn btn-primary" onclick="finalizeForm()">Submit</button>
-                            {{--<button type="reset" class="btn btn-primary">Reset</button>--}}
+                            --}}{{--<button type="reset" class="btn btn-primary">Reset</button>--}}{{--
                             <a href="{{ route('store.list') }}" class="btn btn-secondary">Cancel</a>
-                        </div>
-                    </form>
+                        </div>--}}
                 </div>
                 <div class="tab-pane fade" id="tab9" role="tabpanel" aria-labelledby="listingbar-tab">
-                    <form method="POST" id="frmtab9">
+                    {{--<form method="POST" id="frmtab9">
 
                         <div class="card-footer text-center mt-3">
                             <button type="button" class="btn btn-success" onclick="saveStoreTabData(9)">Save</button>
                             <button type="button" class="btn btn-primary" onclick="finalizeForm()">Submit</button>
-                            {{--<button type="reset" class="btn btn-primary">Reset</button>--}}
+                            --}}{{--<button type="reset" class="btn btn-primary">Reset</button>--}}{{--
                             <a href="{{ route('store.list') }}" class="btn btn-secondary">Cancel</a>
                         </div>
-                    </form>
+                    </form>--}}
                 </div>
                 <div class="tab-pane fade" id="tab10" role="tabpanel" aria-labelledby="categories-tab">
-                    <form method="POST" id="frmtab10">
+                    <button type="button" class="btn btn-secondary" id="add_category" data-toggle="modal" data-target="#addCategoryModal" ><i class="fa fa-plus-square"></i> Create</button>
+                    <table class="table table-bordered mt-2">
+                        <thead>
+                        <tr>
+                            <th>Code</th>
+                            <th>Category Name</th>
+                            <th>Url</th>
+                            <th></th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        @if(count($storeCategories ?? []) > 0)
+                            @foreach($storeCategories as $category)
+                                <tr class="field-group">
+                                    <td>{{ $category->code }}</td>
+                                    <td>{{ $category->name }}</td>
+                                    <td>{{ $category->url }}</td>
+                                    <td>
+                                        {{--<button type="button" class="btn btn-primary edit-page" data-id="{{ $page->id }}" title="Edit"> <i class="fas fa-fw fa-pencil-alt"></i></button>--}}
+                                        <button type="button" class="btn btn-danger remove-category" data-id="{{ $category->id }}" title="Remove"> <i class="fas fa-fw fa-trash"></i></button></td>
+                                </tr>
+                            @endforeach
+                        @endif
+                        </tbody>
+                    </table>
 
-                        <div class="card-footer text-center mt-3">
-                            <button type="button" class="btn btn-success" onclick="saveStoreTabData(10)">Save</button>
-                            <button type="button" class="btn btn-primary" onclick="finalizeForm()">Submit</button>
-                            {{--<button type="reset" class="btn btn-primary">Reset</button>--}}
-                            <a href="{{ route('store.list') }}" class="btn btn-secondary">Cancel</a>
-                        </div>
-                    </form>
                 </div>
                 <div class="tab-pane fade" id="tab11" role="tabpanel" aria-labelledby="logistics-tab">
-                    <form method="POST" id="frmtab11">
+                    <button type="button" class="btn btn-secondary" id="add_logistic" data-toggle="modal" data-target="#addLogisticModal" ><i class="fa fa-plus-square"></i> Create</button>
+                    <table class="table table-bordered mt-2">
+                        <thead>
+                        <tr>
+                            <th>Center Type</th>
+                            <th>Logistic Center</th>
+                            <th></th>
+                        </tr>
+                        </thead>
+                        <tbody>
 
-                        <div class="card-footer text-center mt-3">
-                            <button type="button" class="btn btn-success" onclick="saveStoreTabData(11)">Save</button>
-                            <button type="button" class="btn btn-primary" onclick="finalizeForm()">Submit</button>
-                            {{--<button type="reset" class="btn btn-primary">Reset</button>--}}
-                            <a href="{{ route('store.list') }}" class="btn btn-secondary">Cancel</a>
-                        </div>
-                    </form>
+                        </tbody>
+                    </table>
+
                 </div>
                 <div class="tab-pane fade" id="tab12" role="tabpanel" aria-labelledby="devices-tab">
                     <form method="POST" id="frmtab12">
@@ -837,35 +890,7 @@
         </div>
     </div>
 
-    <!-- Vertically centered modal -->
-    <div class="modal fade" id="addShippingModal">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="exampleModalLabel">Store Shipping Service Editor</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <form>
-                        <div class="mb-3">
-                            <label for="shipping-name" class="col-form-label">Name:</label>
-                            <input type="text" class="form-control" id="shipping-name">
-                        </div>
-                        <div class="mb-3">
-                            <label for="carrier-service" class="col-form-label">Carrier Service:</label>
-                            <select class="form-control" id="carrier-service">
-                                <option value="1">Fedex Ground</option>
-                            </select>
-                        </div>
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    <button type="button" class="btn btn-primary">Save</button>
-                </div>
-            </div>
-        </div>
-    </div>
+    @include('store.modal',['shipping_services'=> $shipping_services])
 @stop
 
 @section('adminlte_js')
@@ -943,6 +968,117 @@
                         // Loop through and display errors
                         $.each(errors, function(field, messages) {
                             $('#' + field + '-error').text(messages[0]); // Display the first error message
+                        });
+                    }
+                }
+            });
+
+        }
+
+        function saveStoreShippingService() {
+            const form = document.querySelector("#frmStoreShippingService");
+            let formData = new FormData(form);
+            formData.append('store_id', store_id);
+
+            $.ajax({
+                type: 'POST',
+                url: "{{ route('store.shippingservice') }}", // Adjust this URL to your endpoint
+                data: formData,
+                processData: false,
+                contentType: false,
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                },
+                dataType:'json',
+                success: function(response) {
+                    // Display a success message
+                    alert(response.message);
+                    location.reload();
+                },
+                error: function(xhr) {
+                    if (xhr.status === 422) { // Validation error
+                        var errors = xhr.responseJSON.errors;
+
+                        // Clear previous errors
+                        $('.error-message').text('');
+
+                        // Loop through and display errors
+                        $.each(errors, function(field, messages) {
+                            $('#' + field + '-error').text(messages[0]); // Display the first error message
+                        });
+                    }
+                }
+            });
+
+        }
+
+        function saveStorePages() {
+            const form = document.querySelector("#frmStorePages");
+            let formData = new FormData(form);
+            formData.append('store_id', store_id);
+
+            $.ajax({
+                type: 'POST',
+                url: "{{ route('store.pages') }}", // Adjust this URL to your endpoint
+                data: formData,
+                processData: false,
+                contentType: false,
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                },
+                dataType:'json',
+                success: function(response) {
+                    // Display a success message
+                    alert(response.message);
+                    location.reload();
+                },
+                error: function(xhr) {
+                    if (xhr.status === 422) { // Validation error
+                        var errors = xhr.responseJSON.errors;
+
+                        // Clear previous errors
+                        $('.error-message').text('');
+
+                        // Loop through and display errors
+                        $.each(errors, function(field, messages) {
+                            $("#frmStorePages").find('#' + field + '-error').text(messages[0]); // Display the first error message
+                        });
+                    }
+                }
+            });
+
+        }
+
+        function saveStoreCategory() {
+            const form = document.querySelector("#frmStoreCategory");
+            let formData = new FormData(form);
+            formData.append('store_id', store_id);
+
+            $.ajax({
+                type: 'POST',
+                url: "{{ route('store.category') }}", // Adjust this URL to your endpoint
+                data: formData,
+                processData: false,
+                contentType: false,
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                },
+                dataType:'json',
+                success: function(response) {
+                    // Display a success message
+                    alert(response.message);
+                    location.reload();
+                },
+                error: function(xhr) {
+                    if (xhr.status === 422) { // Validation error
+                        var errors = xhr.responseJSON.errors;
+
+                        // Clear previous errors
+                        $('.error-message').text('');
+
+                        // Loop through and display errors
+                        $.each(errors, function(field, messages) {
+                            $("#frmStoreCategory").find('#' + field + '-error').text(messages[0]); // Display the first error message
                         });
                     }
                 }
@@ -1039,6 +1175,70 @@
             $(document).on('click', '.remove-keyword', function() {
                 $(this).parents('tr.field-group').remove();
             });
+
+
+            $(document).on('click', '.remove-shipping', function() {
+
+                var shippingId = $(this).data('id');
+                var ele = $(this);
+                // Confirm the deletion
+                if (confirm("Are you sure you want to delete this shipping servie?")) {
+
+                    $.ajax({
+                        type: 'POST',
+                        url: "{{ route('store.removeshipping') }}", // Adjust this URL to your endpoint
+                        data: {
+                            "shippingId": shippingId
+                        },
+                        headers: {
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        },
+                        dataType:'json',
+                        success: function(response) {
+                            // Display a success message
+                            alert(response.message);
+                            ele.parents('tr.field-group').remove();
+                        },
+                        error: function(xhr) {
+                            alert(response.message);
+                        }
+                    });
+
+                }
+            });
+
+            $(document).on('click', '.remove-page', function() {
+
+                var pageId = $(this).data('id');
+                var ele = $(this);
+                // Confirm the deletion
+                if (confirm("Are you sure you want to delete this page?")) {
+
+                    $.ajax({
+                        type: 'POST',
+                        url: "{{ route('store.removepage') }}", // Adjust this URL to your endpoint
+                        data: {
+                            "pageId": pageId
+                        },
+                        headers: {
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        },
+                        dataType:'json',
+                        success: function(response) {
+                            // Display a success message
+                            alert(response.message);
+                            ele.parents('tr.field-group').remove();
+                        },
+                        error: function(xhr) {
+                            alert(response.message);
+                        }
+                    });
+
+                }
+            });
+
+
+
 
         });
     </script>

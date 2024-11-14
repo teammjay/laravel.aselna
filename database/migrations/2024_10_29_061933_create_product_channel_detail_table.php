@@ -12,9 +12,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('product_channel_detail', function (Blueprint $table) {
-            $table->id();
+            $table->uuid('id')->primary();
             $table->integer('channel_id');
-            $table->unsignedBigInteger('product_id');
+            $table->uuid('product_id');
             $table->foreign('product_id')->references('product_id')->on('products')
                 ->onDelete('cascade');
             $table->integer('status');

@@ -12,9 +12,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('product_title_keyword', function (Blueprint $table) {
-            $table->id();
+            $table->uuid('id')->primary();
             $table->string('keyword');
-            $table->unsignedBigInteger('product_id');
+            $table->uuid('product_id');
             $table->foreign('product_id')->references('product_id')->on('products')
                 ->onDelete('cascade');
             $table->integer('priority')->default(0);
