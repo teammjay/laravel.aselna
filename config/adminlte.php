@@ -375,6 +375,11 @@ return [
                     'icon' => 'far fa-fw fa-file'
                 ],
                 [
+                    'text' => 'Category',
+                    'url' => '/categories',
+                    'icon' => 'far fa-fw fa-file'
+                ],
+                [
                     'text' => 'Shipping Carrier',
                     'url' => '/shipping_carrier',
                     'icon' => 'far fa-fw fa-file'

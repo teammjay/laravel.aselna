@@ -46,6 +46,8 @@
         <thead>
         <tr>
             <th>Device Name</th>
+            <th>Brand Name</th>
+            <th>Device Type</th>
             <th>Status</th>
             <th>Last modified by</th>
             <th>Last modified at</th>
@@ -56,6 +58,8 @@
         @foreach($devices as $device)
             <tr>
                 <td>{{$device->name}}</td>
+                <td>{{ isset($device->brand) ? $device->brand->name : '' }}</td>
+                <td>{{ isset($device->deviceType) ? $device->deviceType->name : '' }}</td>
                 <td>{{ ucfirst($device->status) }}</td>
                 <td>{{ $device->updated_by }}</td>
                 <td>{{ $device->updated_at->format('d M Y g:i A') }}</td>

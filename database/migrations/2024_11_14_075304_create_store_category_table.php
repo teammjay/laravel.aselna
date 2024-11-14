@@ -17,7 +17,7 @@ return new class extends Migration
             $table->string('code')->nullable();
             $table->text('url')->nullable();
             $table->uuid('store_id');
-            $table->foreign('store_id')->references('store_id')->on('store')
+            $table->foreign('store_id')->references('id')->on('store')
                 ->onDelete('cascade');
             $table->uuid('text_generation_template_id')->nullable();
             $table->string('created_by')->nullable();

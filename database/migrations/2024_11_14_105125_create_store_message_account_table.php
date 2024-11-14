@@ -17,7 +17,7 @@ return new class extends Migration
             $table->string('email');
             $table->uuid('client_id');
             $table->uuid('store_id');
-            $table->foreign('store_id')->references('store_id')->on('store')
+            $table->foreign('store_id')->references('id')->on('store')
                 ->onDelete('cascade');
             $table->uuid('incoming_account_id');
             $table->uuid('outgoing_account_id');

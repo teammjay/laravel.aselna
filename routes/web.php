@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\BrandController;
+use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DeviceController;
 use App\Http\Controllers\DeviceRatingController;
@@ -150,4 +151,13 @@ Route::controller(CustomerController::class)->group(function () {
     Route::get('/customers/edit/{id}', 'edit')->name('customers.edit');
     Route::post('/customers/edit/{id}', 'update')->name('customers.update');
     Route::get('/customers/delete/{id}', 'destroy')->name('customers.delete');
+});
+
+Route::controller( CategoryController::class)->group(function () {
+    Route::get('/categories', 'index')->name('categories.index');
+    Route::get('/categories/add', 'create')->name('categories.create');
+    Route::post('/categories/add', 'store')->name('categories.store');
+    Route::get('/categories/edit/{id}', 'edit')->name('categories.edit');
+    Route::post('/categories/edit/{id}', 'update')->name('categories.update');
+    Route::get('/categories/delete/{id}', 'destroy')->name('categories.delete');
 });
