@@ -14,6 +14,7 @@ use App\Http\Controllers\StoreController;
 use App\Http\Controllers\ImageUploadController;
 use App\Http\Controllers\ShippingCarrierController;
 use App\Http\Controllers\ShippingCarrierServiceController;
+use App\Http\Controllers\PageTypesController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -45,6 +46,10 @@ Route::controller(StoreController::class)->group(function () {
     Route::delete('/stores/destroy/{id}', 'destroy')->name('store.delete');
     Route::post('/stores/removeshipping', 'removeShipping')->name('store.removeshipping');
     Route::post('/stores/saveShippingService', 'saveShippingService')->name('store.shippingservice');
+    Route::post('/stores/savePages', 'savePages')->name('store.pages');
+    Route::post('/stores/removepage', 'removePage')->name('store.removepage');
+    Route::post('/stores/saveCategory', 'saveCategory')->name('store.category');
+    Route::post('/stores/removecategory', 'removeCategory')->name('store.removecategory');
 });
 
 Route::controller(ShippingCarrierController::class)->group(function () {
@@ -63,6 +68,15 @@ Route::controller(ShippingCarrierServiceController::class)->group(function () {
     Route::get('/shipping_carrier_service/edit/{id}', 'edit')->name('shipping_carrier_service.edit');
     Route::post('/shipping_carrier_service/edit/{id}', 'update')->name('shipping_carrier_service.update');
     Route::get('/shipping_carrier_service/delete/{id}', 'destroy')->name('shipping_carrier_service.delete');
+});
+
+Route::controller(PageTypesController::class)->group(function () {
+    Route::get('/page_type', 'index')->name('page_type.index');
+    Route::get('/page_type/add', 'create')->name('page_type.create');
+    Route::post('/page_type/add', 'store')->name('page_type.store');
+    Route::get('/page_type/edit/{id}', 'edit')->name('page_type.edit');
+    Route::post('/page_type/edit/{id}', 'update')->name('page_type.update');
+    Route::get('/page_type/delete/{id}', 'destroy')->name('page_type.delete');
 });
 
 Route::controller(BrandController::class)->group(function () {

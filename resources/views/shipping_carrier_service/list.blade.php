@@ -1,6 +1,6 @@
 @extends('adminlte::page')
 
-@section('title', 'Catalog')
+@section('title', 'Shipping Carrier Service')
 
 @section('content_header')
     <h1>Shipping Carrier Service</h1>

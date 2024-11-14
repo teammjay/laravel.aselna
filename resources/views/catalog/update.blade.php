@@ -3,7 +3,7 @@
 @section('title', 'Edit Product')
 
 @section('content_header')
-    <h1>{{ $pageAt }} Product</h1>
+    <h1>{{ isset($product) ? 'Edit Product' : 'Add Product' }}</h1>
 @stop
 
 @section('adminlte_css')
