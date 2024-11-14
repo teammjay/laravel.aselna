@@ -384,6 +384,11 @@ return [
                     'url' => '/shipping_carrier_service',
                     'icon' => 'far fa-fw fa-file'
                 ],
+                [
+                    'text' => 'Page Types',
+                    'url' => '/page_type',
+                    'icon' => 'far fa-fw fa-file'
+                ],
             ],
         ]
 //        [

@@ -186,7 +186,7 @@ class CatalogController extends Controller
             if ($validator->fails()) {
                 return response()->json([
                     'success' => false,
-                    'errors' => $request->errors()
+                    'errors' => $validator->errors()
                 ], 422);
             }
 
@@ -289,7 +289,7 @@ class CatalogController extends Controller
         if ($validator->fails()) {
             return response()->json([
                 'success' => false,
-                'errors' => $request->errors()
+                'errors' => $validator->errors()
             ], 422);
         }
 

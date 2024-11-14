@@ -1,6 +1,6 @@
 @extends('adminlte::page')
 
-@section('title', 'Catalog')
+@section('title', 'Shipping Carrier')
 
 @section('content_header')
     <h1>Shipping Carrier</h1>
@@ -9,7 +9,7 @@
 @section('content')
     <div class="row my-3">
         <div class="col-md-3">
-            <a href="{{ route('device_screen.create') }}" class="btn btn-primary">
+            <a href="{{ route('shipping_carrier.create') }}" class="btn btn-primary">
                 Add Shipping Carrier
             </a>
         </div>
