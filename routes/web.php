@@ -15,6 +15,7 @@ use App\Http\Controllers\ImageUploadController;
 use App\Http\Controllers\ShippingCarrierController;
 use App\Http\Controllers\ShippingCarrierServiceController;
 use App\Http\Controllers\PageTypesController;
+use App\Http\Controllers\LogisticCenterController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -50,6 +51,19 @@ Route::controller(StoreController::class)->group(function () {
     Route::post('/stores/removepage', 'removePage')->name('store.removepage');
     Route::post('/stores/saveCategory', 'saveCategory')->name('store.category');
     Route::post('/stores/removecategory', 'removeCategory')->name('store.removecategory');
+    Route::post('/stores/saveMessageAccount', 'saveMessageAccount')->name('store.messageaccount');
+    Route::post('/stores/removemessageaccount', 'removeMessageAccount')->name('store.removemessageaccount');
+    Route::post('/stores/saveLogisticCenter', 'saveLogisticCenter')->name('store.logisticcenter');
+    Route::post('/stores/removelogisticcenter', 'removeLogisticCenter')->name('store.removelogisticcenter');
+});
+
+Route::controller(LogisticCenterController::class)->group(function () {
+    Route::get('/logistic_center', 'index')->name('logistic_center.index');
+    Route::get('/logistic_center/add', 'create')->name('logistic_center.create');
+    Route::post('/logistic_center/add', 'store')->name('logistic_center.store');
+    Route::get('/logistic_center/edit/{id}', 'edit')->name('logistic_center.edit');
+    Route::post('/logistic_center/edit/{id}', 'update')->name('logistic_center.update');
+    Route::get('/logistic_center/delete/{id}', 'destroy')->name('logistic_center.delete');
 });
 
 Route::controller(ShippingCarrierController::class)->group(function () {

@@ -3,16 +3,22 @@
 namespace App\Http\Controllers;
 
 use App\Models\DeviceTypes;
+use App\Models\LogisticCenter;
+use App\Models\MessagingAccount;
 use App\Models\ShippingCarrierService;
 use App\Models\StoreCategory;
 use App\Models\StoreDeviceType;
+use App\Models\StoreLogisticCenter;
 use App\Models\StorePage;
 use App\Models\PageType;
+use App\Models\StoreMessageAccount;
 use App\Models\StoreShippingService;
 use Illuminate\Http\Request;
 use App\Models\Store;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Validator;
+use function Ramsey\Uuid\Generator\timestamp;
+use Illuminate\Support\Str;
 
 class StoreController extends Controller
 {
@@ -46,15 +52,21 @@ class StoreController extends Controller
         $store = Store::findOrFail($store_id); // Retrieve the store by ID
         $devices = DeviceTypes::where('status','active')->get();
         $pageTypes = PageType::all();
-        $shipping_services = ShippingCarrierService::leftJoin('shipping_carrier', 'shipping_carrier_service.shipping_carrier_id', '=', 'shipping_carrier.id')
-            ->select('shipping_carrier_service.id', 'shipping_carrier_service.name', 'shipping_carrier.name as carrierName')  // Select the fields you need
-            ->get();
+        $logisticCenters = LogisticCenter::all();
+        $shipping_services = ShippingCarrierService::leftJoin('shipping_carrier', 'shipping_carrier_service.shipping_carrier_id', '=', 'shipping_carrier.id')->select('shipping_carrier_service.id', 'shipping_carrier_service.name', 'shipping_carrier.name as carrierName')->get();
         $storeDevices = StoreDeviceType::where('store_id', $store_id)->get();
         $storeShippingService = StoreShippingService::where('store_id', $store_id)->get();
         $storePages = StorePage::with('PageType')->where('store_id', $store_id)->get();
         $storeCategories = StoreCategory::where('store_id', $store_id)->get();
-        //print_r($devices);die;
-        return view('store.update',compact('store','devices','storeDevices','shipping_services','storeShippingService','pageTypes','storePages','storeCategories'));
+        $storeMessageAccount = StoreMessageAccount::where('store_id', $store_id)->get();
+        $storeLogisticCenters = StoreLogisticCenter::with('LogisticCenter')->where('store_id', $store_id)->get();
+        /*$messagerecord = $storeMessageAccount->toArray();
+        $incomingAccount = MessagingAccount::where('id', $messagerecord[0]['incoming_account_id'])->get();
+        $outgoingAccount = MessagingAccount::where('id', $messagerecord[0]['outgoing_account_id'])->get();*/
+        //echo '<pre>';
+        //print_r($outgoingAccount);die;
+
+        return view('store.update', compact('store','devices','storeDevices','shipping_services','storeShippingService','pageTypes','storePages','storeCategories','storeMessageAccount','logisticCenters','storeLogisticCenters'));
     }
 
     /**
@@ -207,19 +219,23 @@ class StoreController extends Controller
         $store = Store::findOrFail($id); // Retrieve the store by ID
         $devices = DeviceTypes::where('status','active')->get();
         $pageTypes = PageType::all();
-        $shipping_services = ShippingCarrierService::leftJoin('shipping_carrier', 'shipping_carrier_service.shipping_carrier_id', '=', 'shipping_carrier.id')
-            ->select('shipping_carrier_service.id', 'shipping_carrier_service.name', 'shipping_carrier.name as carrierName')  // Select the fields you need
-            ->get();
+        $logisticCenters = LogisticCenter::all();
+        $shipping_services = ShippingCarrierService::leftJoin('shipping_carrier', 'shipping_carrier_service.shipping_carrier_id', '=', 'shipping_carrier.id')->select('shipping_carrier_service.id', 'shipping_carrier_service.name', 'shipping_carrier.name as carrierName')->get();
 
         $storeDevices = StoreDeviceType::where('store_id', $id)->get();
         $storeDevices = $storeDevices->pluck('device_type_id')->values()->all();
         $storeShippingService = StoreShippingService::where('store_id', $id)->get();
         $storePages = StorePage::with('PageType')->where('store_id', $id)->get();
         $storeCategories = StoreCategory::where('store_id', $id)->get();
+        $storeMessageAccount = StoreMessageAccount::where('store_id', $id)->get();
+        $storeLogisticCenters = StoreLogisticCenter::with('LogisticCenter')->where('store_id', $id)->get();
+        /*$messagerecord = $storeMessageAccount->toArray();
+        $incomingAccount = MessagingAccount::where('id', $messagerecord[0]['incoming_account_id'])->get();
+        $outgoingAccount = MessagingAccount::where('id', $messagerecord[0]['outgoing_account_id'])->get();*/
         //echo '<pre>';
-        //print_r($storePages);die;
+        //print_r($outgoingAccount);die;
 
-        return view('store.update', compact('store','devices','storeDevices','shipping_services','storeShippingService','pageTypes','storePages','storeCategories'));
+        return view('store.update', compact('store','devices','storeDevices','shipping_services','storeShippingService','pageTypes','storePages','storeCategories','storeMessageAccount','logisticCenters','storeLogisticCenters'));
     }
 
     public function saveShippingService(Request $request){
@@ -360,5 +376,190 @@ class StoreController extends Controller
 
         // If the page doesn't exist, return an error
         return response()->json(['error' => 'Category not found!'], 422);
+    }
+
+    public function saveMessageAccount(Request $request){
+
+        try {
+
+            $validator = Validator::make(request()->all(), [
+                'name' => 'required',
+                'email' => 'required',
+                'acc_out_protocol' => 'required',
+                'acc_out_email' => 'required',
+                'acc_out_user_id' => 'required',
+                'acc_out_password' => 'required',
+                'acc_out_server' => 'required',
+                'acc_out_port' => 'required',
+                'acc_in_protocol' => 'required',
+                'acc_in_email' => 'required',
+                'acc_in_user_id' => 'required',
+                'acc_in_password' => 'required',
+                'acc_in_server' => 'required',
+                'acc_in_port' => 'required'
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+
+
+            /* save outgoing account*/
+            $outgoingRecords = [
+                'protocol' => $request->input('acc_out_protocol'),
+                'email' => $request->input('acc_out_email'),
+                'user_id' => $request->input('acc_out_user_id'),
+                'password' => $request->input('acc_out_password'),
+                'server' => $request->input('acc_out_server'),
+                'port' => $request->input('acc_out_port'),
+                'requires_ssl' => $request->has('acc_out_requires_ssl') ? 1 : 0,
+                'requires_tls' => $request->has('acc_out_requires_tls') ? 1 : 0,
+                'requires_authentication' => $request->has('acc_out_requires_ssl') ? 1 : 0,
+                'ssl_port' => $request->input('acc_out_ssl_port'),
+                'tls_port' => $request->input('acc_out_tls_port'),
+                'filter_from_date' => date('Y-m-d H:i:s'),
+                'created_by' => auth()->user()->name ?? 'admin',
+            ];
+
+            $messasgeOutAcc = MessagingAccount::updateOrCreate(
+                ['id' => $request->input('acc_out_id')],
+                $outgoingRecords
+            );
+
+            $outgoingAccountid = $messasgeOutAcc->id;
+
+
+            /* save incoming account*/
+            $incomingRecords = [
+                'protocol' => $request->input('acc_in_protocol'),
+                'email' => $request->input('acc_in_email'),
+                'user_id' => $request->input('acc_in_user_id'),
+                'password' => $request->input('acc_in_password'),
+                'server' => $request->input('acc_in_server'),
+                'port' => $request->input('acc_in_port'),
+                'requires_ssl' => $request->has('acc_in_requires_ssl') ? 1 : 0,
+                'requires_tls' => $request->has('acc_in_requires_tls') ? 1 : 0,
+                'requires_authentication' => $request->has('acc_in_requires_ssl') ? 1 : 0,
+                'ssl_port' => $request->input('acc_in_ssl_port'),
+                'tls_port' => $request->input('acc_in_tls_port'),
+                'folders' => $request->input('acc_in_folders'),
+                'filter_from_date' => date('Y-m-d H:i:s'),
+                'created_by' => auth()->user()->name ?? 'admin',
+            ];
+
+            $messasgeInAcc = MessagingAccount::updateOrCreate(
+                ['id' => $request->input('acc_in_id')],
+                $incomingRecords
+            );
+
+            $incomingAccountid = $messasgeInAcc->id;
+
+            if($outgoingAccountid && $incomingAccountid) {
+                $storeAccount = [
+                    'name' => $request->input('name'),
+                    'email' => $request->input('email'),
+                    'client_id' => (string) Str::uuid(),
+                    'store_id' => $request->input('store_id'),
+                    'incoming_account_id' => $incomingAccountid,
+                    'outgoing_account_id' => $outgoingAccountid,
+                    'api_account' => $request->has('api_account') ? 1 : 0,
+                    'active' => $request->has('active') ? 1 : 0,
+                    'version' => 1,
+                    'created_by' => auth()->user()->name ?? 'admin',
+                    'updated_by' => auth()->user()->name ?? 'admin',
+                ];
+
+                StoreMessageAccount::updateOrCreate(
+                    ['store_id' => $request->input('store_id')],
+                    $storeAccount
+                );
+
+                return response()->json(['success' => true, 'message' => 'Data saved successfully']);
+            }else{
+                return response()->json(['success' => false, 'message' => 'Something went wrong. Please try again']);
+            }
+
+        }catch (QueryException $e) {
+            // Handle the exception and show an error message
+            return response()->json(['errors' => $e->getMessage()], 422);
+        }
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     */
+    public function removeMessageAccount(Request $request)
+    {
+        // Find the message account by id
+        $accId = $request->input('accId');
+        $messageAcc = StoreMessageAccount::find($accId);
+        $messageRecord = $messageAcc->toArray();
+        //print_r($messageRecord);die;
+        if ($messageAcc && !empty($messageRecord)) {
+            $messageAcc->delete(); // Delete the store message account
+            $messageInAcc = MessagingAccount::find($messageRecord['incoming_account_id']);
+            $messageInAcc->delete(); // Delete the message accoount
+            $messageOutAcc = MessagingAccount::find($messageRecord['outgoing_account_id']);
+            $messageOutAcc->delete(); // Delete the message account
+
+
+            // Return a success response
+            return response()->json(['success' => true, 'message' => 'Message account deleted successfully']);
+        }
+
+        // If the message accoubt doesn't exist, return an error
+        return response()->json(['error' => 'Message account not found!'], 422);
+    }
+
+    public function saveLogisticCenter(Request $request){
+
+        try {
+
+            $request['overwrite_from_address'] = $request->has('overwrite_from_address') ? 1 : 0;
+            $request['overwrite_return_address'] = $request->has('overwrite_return_address') ? 1 : 0;
+
+            $validator = Validator::make(request()->all(), [
+                'store_id' => 'required',
+                'logistic_center_id' => 'required'
+            ]);
+
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+
+            StoreLogisticCenter::create($request->all());
+            return response()->json(['success' => true, 'message' => 'Data saved successfully']);
+
+        }catch (QueryException $e) {
+            // Handle the exception and show an error message
+            return response()->json(['errors' => $e->getMessage()], 422);
+        }
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     */
+    public function removeLogisticCenter(Request $request)
+    {
+        // Find the page by id
+        $centerId = $request->input('centerId');
+        $center = StoreLogisticCenter::find($centerId);
+
+        if ($center) {
+            $center->delete(); // Delete the page
+
+            // Return a success response
+            return response()->json(['success' => true, 'message' => 'Logistic center deleted successfully']);
+        }
+
+        // If the center doesn't exist, return an error
+        return response()->json(['error' => 'Logistic center not found!'], 422);
     }
 }
