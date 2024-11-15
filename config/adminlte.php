@@ -389,6 +389,11 @@ return [
                     'url' => '/page_type',
                     'icon' => 'far fa-fw fa-file'
                 ],
+                [
+                    'text' => 'Logistic Center',
+                    'url' => '/logistic_center',
+                    'icon' => 'far fa-fw fa-file'
+                ],
             ],
         ]
 //        [
