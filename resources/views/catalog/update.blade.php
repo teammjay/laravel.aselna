@@ -667,15 +667,20 @@
                                             <th>Store Products, Store Category</th>
                                         </thead>
                                         <tbody>
-                                            <tr>
-                                                <td>Aselna - Magento</td>
-                                                <td align="center"><input type="checkbox" name="store_status" /></td>
-                                                <td>
-                                                    <select class="form-control">
-                                                        <option>Case, cover, skin</option>
-                                                    </select>
-                                                </td>
-                                            </tr>
+                                            @if(count($stores ?? []) > 0)
+                                                @foreach($stores as $store)
+                                                    <tr class="store_row" data-id="{{ $store->id }}">
+                                                        <td>{{ $store->name.' - '.$store->marketplace_name }}</td>
+                                                        <td align="center"><input type="checkbox" name="store_status" {{ $store->store_status == 1 ? 'checked' : '' }} /></td>
+                                                        <td>
+                                                            <select class="form-control">
+                                                                <option>Case, cover, skin</option>
+                                                            </select>
+                                                        </td>
+                                                    </tr>
+                                                @endforeach
+                                            @endif
+
                                         </tbody>
                                     </table>
                                 </div>
@@ -690,7 +695,7 @@
                                                     <label class="col-form-label">Title</label>
                                                 </div>
                                                 <div class="col-md-9">
-                                                    <textarea class="form-control" placeholder="Store Name/ Title"></textarea>
+                                                    <textarea class="form-control" id="store_title" placeholder="Store Name/ Title" readonly></textarea>
                                                 </div>
                                             </div>
                                             <div class="row mt-3 g-3 align-items-center">
@@ -698,7 +703,7 @@
                                                     <label class="col-form-label">Description</label>
                                                 </div>
                                                 <div class="col-md-9">
-                                                    <textarea class="form-control" placeholder="Description"></textarea>
+                                                    <textarea class="form-control" id="store_description" placeholder="Description" readonly></textarea>
                                                 </div>
                                             </div>
                                             <div class="row mt-3 g-3 align-items-center">
@@ -706,15 +711,15 @@
                                                     <label class="col-form-label">Price</label>
                                                 </div>
                                                 <div class="col-md-9">
-                                                    <input type="text" class="form-control" placeholder="00.00">
+                                                    <input type="text" class="form-control" id="store_price" placeholder="00.00" readonly>
                                                 </div>
                                             </div>
                                             <div class="row mt-3 g-3 align-items-center">
                                                 <div class="col-md-3">
-                                                    <label class="col-form-label">Compate at Price</label>
+                                                    <label class="col-form-label">Compare at Price</label>
                                                 </div>
                                                 <div class="col-md-9">
-                                                    <input type="text" class="form-control" placeholder="00.00">
+                                                    <input type="text" class="form-control" id="store_compare_price" placeholder="00.00" readonly>
                                                 </div>
                                             </div>
                                             <div class="row mt-3 g-3 align-items-center">
@@ -722,7 +727,7 @@
                                                     <label class="col-form-label">Fbc Price</label>
                                                 </div>
                                                 <div class="col-md-9">
-                                                    <input type="text" class="form-control" placeholder="00.00">
+                                                    <input type="text" class="form-control" id="store_fbc_price" placeholder="00.00" readonly>
                                                 </div>
                                             </div>
                                             <div class="row mt-3 g-3 align-items-center">
@@ -730,7 +735,7 @@
                                                     <label class="col-form-label">Wholesale Price</label>
                                                 </div>
                                                 <div class="col-md-9">
-                                                    <input type="text" class="form-control" placeholder="00.00">
+                                                    <input type="text" class="form-control" id="store_wholesale_price" placeholder="00.00" readonly>
                                                 </div>
                                             </div>
                                             <div class="row mt-3 g-3 align-items-center">
@@ -738,7 +743,7 @@
                                                     <label class="col-form-label">Msrp</label>
                                                 </div>
                                                 <div class="col-md-9">
-                                                    <input type="text" class="form-control" placeholder="00.00">
+                                                    <input type="text" class="form-control" id="store_msrp_price" placeholder="00.00" readonly>
                                                 </div>
                                             </div>
                                             <div class="row mt-3 g-3 align-items-center">
@@ -746,7 +751,7 @@
                                                     <label class="col-form-label">Sale Count</label>
                                                 </div>
                                                 <div class="col-md-9">
-                                                    <input type="text" class="form-control" placeholder="00.00">
+                                                    <input type="text" class="form-control" id="store_sale_count" placeholder="00.00" readonly>
                                                 </div>
                                             </div>
 
@@ -1064,6 +1069,37 @@
             // Remove retail price group
             $(document).on('click', '.remove-keyword', function() {
                 $(this).parents('tr.field-group').remove();
+            });
+
+            // change sort order for image of prodcut
+            $(document).on('click', '.store_row', function() {
+                $('.store_row').removeClass('bg-blue');
+                $(this).addClass('bg-blue');
+                var store_id = $(this).data('id');
+                $.ajax({
+                    url: "{{ route('catalog.getstoredetail') }}",
+                    type: 'POST',
+                    data: {
+                        store_id : store_id,
+                    },
+                    headers: {
+                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                    },
+                    success: function (response) {
+                        if (response.success) {
+                            //alert(response.message);
+                            console.log(response.data);
+                            if(response.data){
+                                $('#store_title').val(response.data.name);
+                            }
+                        }
+                    },
+                    error: function (xhr) {
+                        /*if (xhr.responseJSON?.error) {
+                            $('#responseMessage').html('<p style="color:red;">' + xhr.responseJSON.error.image[0] + '</p>');
+                        }*/
+                    }
+                });
             });
 
         });

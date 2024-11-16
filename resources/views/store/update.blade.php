@@ -900,7 +900,7 @@
                                 @if(count($devices ?? []) > 0)
                                     @foreach($devices as $device)
                                         <div class="form-group">
-                                            <input type="checkbox" name="devices[]" value="{{ $device->id }}" {{ in_array($device->id,$storeDevices) ? 'checked' : '' }}>  {{ $device->name }}
+                                            <input type="checkbox" name="devices[]" value="{{ $device->id }}" @if(is_array($storeDevices)){{ in_array($device->id,($storeDevices ?? [])) ? 'checked' : '' }} @endif>  {{ $device->name }}
                                         </div>
 
                                     @endforeach
