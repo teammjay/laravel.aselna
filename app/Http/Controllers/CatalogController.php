@@ -7,10 +7,12 @@ use App\Models\ProductKeyFeatures;
 use App\Models\ProductTags;
 use App\Models\ProductTitleKeyword;
 use App\Models\ProductImages;
+use App\Models\Store;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
+use function Symfony\Component\HttpKernel\Profiler\find;
 
 class CatalogController extends Controller
 {
@@ -92,7 +94,8 @@ class CatalogController extends Controller
         $titleKeywords = ProductTitleKeyword::where('product_id', $pro_id)->orderBy('priority')->get();
         $productImages = ProductImages::where('product_id', $pro_id)->get();
         $productTags = ProductTags::pluck('name')->values()->all();
-        return view('catalog.update', compact('product','keyFeatures','titleKeywords','productImages','productTags','pageAt'));
+        $stores = Store::all();
+        return view('catalog.update', compact('product','keyFeatures','titleKeywords','productImages','productTags','pageAt','stores'));
     }
 
     /**
@@ -156,9 +159,10 @@ class CatalogController extends Controller
         $titleKeywords = ProductTitleKeyword::where('product_id', $id)->orderBy('priority')->get();
         $productImages = ProductImages::where('product_id', $id)->get();
         $productTags = ProductTags::pluck('name')->values()->all();
+        $stores = Store::all();
         //echo '<pre>';
         //print_r($productTags);die;
-        return view('catalog.update', compact('product','keyFeatures','titleKeywords','productImages','productTags','pageAt'));
+        return view('catalog.update', compact('product','keyFeatures','titleKeywords','productImages','productTags','pageAt','stores'));
     }
 
     /**
@@ -414,6 +418,18 @@ class CatalogController extends Controller
         }catch(QueryException $e){
 
             return response()->json(['errors' => $e->getMessage()], 422);
+        }
+    }
+
+    public function getStoreDetail(Request $request){
+        $store_id = $request->input('store_id');
+        if($store_id){
+
+            $storeDetail = Store::findOrFail($store_id);
+            //print_r($storeDetail);die;
+            return response()->json(['success' => true, 'data' => $storeDetail->toArray()]);
+        }else{
+            return response()->json(['success' =>false]);
         }
     }
 }

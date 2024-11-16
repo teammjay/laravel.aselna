@@ -64,7 +64,7 @@ class StoreController extends Controller
         $incomingAccount = MessagingAccount::where('id', $messagerecord[0]['incoming_account_id'])->get();
         $outgoingAccount = MessagingAccount::where('id', $messagerecord[0]['outgoing_account_id'])->get();*/
         //echo '<pre>';
-        //print_r($outgoingAccount);die;
+        //print_r($storeDevices);die;
 
         return view('store.update', compact('store','devices','storeDevices','shipping_services','storeShippingService','pageTypes','storePages','storeCategories','storeMessageAccount','logisticCenters','storeLogisticCenters'));
     }
@@ -88,6 +88,15 @@ class StoreController extends Controller
 
         // Logic to handle saving data based on $tabId
         if ($tabId == 1) {
+
+            $request['wholesale'] = $request->has('wholesale') ? 1 : 0;
+            $request['auto_generate_listing'] = $request->has('auto_generate_listing') ? 1 : 0;
+            $request['test_store'] = $request->has('test_store') ? 1 : 0;
+            $request['ad_account'] = $request->has('ad_account') ? 1 : 0;
+            $request['download_listings'] = $request->has('download_listings') ? 1 : 0;
+            $request['download_buy_box'] = $request->has('download_buy_box') ? 1 : 0;
+            $request['download_reviews'] = $request->has('download_reviews') ? 1 : 0;
+            $request['generate_device_details'] = $request->has('generate_device_details') ? 1 : 0;
 
             $validator = Validator::make(request()->all(), [
                 'name' => 'required',

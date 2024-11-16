@@ -16,6 +16,7 @@ use App\Http\Controllers\ShippingCarrierController;
 use App\Http\Controllers\ShippingCarrierServiceController;
 use App\Http\Controllers\PageTypesController;
 use App\Http\Controllers\LogisticCenterController;
+use App\Http\Controllers\StoreTypesController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -36,6 +37,7 @@ Route::get('/catalog/{id}', [CatalogController::class, 'show'])->name('catalog.s
 Route::post('/upload-image', [CatalogController::class, 'uploadImage'])->name('catalog.upload');
 Route::post('/set-default', [CatalogController::class, 'setDefaultImage'])->name('catalog.set_default');
 Route::post('/set-image-order', [CatalogController::class, 'setImageOrder'])->name('catalog.set_image_order');
+Route::post('catalog/getstoredetail', [CatalogController::class, 'getStoreDetail'])->name('catalog.getstoredetail');
 
 Route::controller(StoreController::class)->group(function () {
     Route::get('/stores', 'index')->name('store.list');
@@ -55,6 +57,15 @@ Route::controller(StoreController::class)->group(function () {
     Route::post('/stores/removemessageaccount', 'removeMessageAccount')->name('store.removemessageaccount');
     Route::post('/stores/saveLogisticCenter', 'saveLogisticCenter')->name('store.logisticcenter');
     Route::post('/stores/removelogisticcenter', 'removeLogisticCenter')->name('store.removelogisticcenter');
+});
+
+Route::controller(StoreTypesController::class)->group(function () {
+    Route::get('/store_type', 'index')->name('store_type.index');
+    Route::get('/store_type/add', 'create')->name('store_type.create');
+    Route::post('/store_type/add', 'store')->name('store_type.store');
+    Route::get('/store_type/edit/{id}', 'edit')->name('store_type.edit');
+    Route::post('/store_type/edit/{id}', 'update')->name('store_type.update');
+    Route::get('/store_type/delete/{id}', 'destroy')->name('store_type.delete');
 });
 
 Route::controller(LogisticCenterController::class)->group(function () {

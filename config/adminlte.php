@@ -394,6 +394,11 @@ return [
                     'url' => '/logistic_center',
                     'icon' => 'far fa-fw fa-file'
                 ],
+                [
+                    'text' => 'Store Type',
+                    'url' => '/store_type',
+                    'icon' => 'far fa-fw fa-file'
+                ],
             ],
         ]
 //        [
