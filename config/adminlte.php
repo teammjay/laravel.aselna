@@ -380,6 +380,11 @@ return [
                     'icon' => 'far fa-fw fa-file'
                 ],
                 [
+                    'text' => 'Subcategory',
+                    'url' => '/categories_sub',
+                    'icon' => 'far fa-fw fa-file'
+                ],
+                [
                     'text' => 'Shipping Carrier',
                     'url' => '/shipping_carrier',
                     'icon' => 'far fa-fw fa-file'

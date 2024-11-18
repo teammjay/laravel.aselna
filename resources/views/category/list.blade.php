@@ -17,13 +17,27 @@
     <table id="categoryTable" class="table table-bordered table-striped">
         <thead>
         <tr>
-            <th></th>
-            <th></th>
-            <th></th>
+            <th>Name</th>
+            <th>Status</th>
+            <th>Last modified by</th>
+            <th>Last modified at</th>
+            <th>Action</th>
         </tr>
         </thead>
         <tbody>
-
+        @foreach($categories as $category)
+            <tr>
+{{--                Generate--}}
+                <td>{{$category->name}}</td>
+                <td>{{ ucfirst($category->status) }}</td>
+                <td>{{ $category->updated_by }}</td>
+                <td>{{ $category->updated_at->format('d M Y g:i A') }}</td>
+                <td>
+                    <a href="{{ route('categories.edit', ['id' => $category->id]) }}" class="btn btn-primary">Edit</a>
+                    <a href="{{ route('categories.delete', ['id' => $category->id]) }}" class="btn btn-danger">Delete</a>
+                </td>
+            </tr>
+        @endforeach
         </tbody>
     </table>
 @stop
