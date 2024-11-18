@@ -13,6 +13,7 @@ use App\Models\StorePage;
 use App\Models\PageType;
 use App\Models\StoreMessageAccount;
 use App\Models\StoreShippingService;
+use App\Models\StoreType;
 use Illuminate\Http\Request;
 use App\Models\Store;
 use Illuminate\Support\Facades\Config;
@@ -53,6 +54,7 @@ class StoreController extends Controller
         $devices = DeviceTypes::where('status','active')->get();
         $pageTypes = PageType::all();
         $logisticCenters = LogisticCenter::all();
+        $store_types = StoreType::all();
         $shipping_services = ShippingCarrierService::leftJoin('shipping_carrier', 'shipping_carrier_service.shipping_carrier_id', '=', 'shipping_carrier.id')->select('shipping_carrier_service.id', 'shipping_carrier_service.name', 'shipping_carrier.name as carrierName')->get();
         $storeDevices = StoreDeviceType::where('store_id', $store_id)->get();
         $storeShippingService = StoreShippingService::where('store_id', $store_id)->get();
@@ -66,7 +68,7 @@ class StoreController extends Controller
         //echo '<pre>';
         //print_r($storeDevices);die;
 
-        return view('store.update', compact('store','devices','storeDevices','shipping_services','storeShippingService','pageTypes','storePages','storeCategories','storeMessageAccount','logisticCenters','storeLogisticCenters'));
+        return view('store.update', compact('store','devices','storeDevices','shipping_services','storeShippingService','pageTypes','storePages','storeCategories','storeMessageAccount','logisticCenters','storeLogisticCenters','store_types'));
     }
 
     /**
@@ -229,6 +231,7 @@ class StoreController extends Controller
         $devices = DeviceTypes::where('status','active')->get();
         $pageTypes = PageType::all();
         $logisticCenters = LogisticCenter::all();
+        $store_types = StoreType::all();
         $shipping_services = ShippingCarrierService::leftJoin('shipping_carrier', 'shipping_carrier_service.shipping_carrier_id', '=', 'shipping_carrier.id')->select('shipping_carrier_service.id', 'shipping_carrier_service.name', 'shipping_carrier.name as carrierName')->get();
 
         $storeDevices = StoreDeviceType::where('store_id', $id)->get();
@@ -244,7 +247,7 @@ class StoreController extends Controller
         //echo '<pre>';
         //print_r($outgoingAccount);die;
 
-        return view('store.update', compact('store','devices','storeDevices','shipping_services','storeShippingService','pageTypes','storePages','storeCategories','storeMessageAccount','logisticCenters','storeLogisticCenters'));
+        return view('store.update', compact('store','devices','storeDevices','shipping_services','storeShippingService','pageTypes','storePages','storeCategories','storeMessageAccount','logisticCenters','storeLogisticCenters','store_types'));
     }
 
     public function saveShippingService(Request $request){

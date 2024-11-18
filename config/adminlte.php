@@ -336,6 +336,11 @@ return [
             'icon' => 'far fa-fw fa-file'
         ],
         [
+            'text' => 'Listing',
+            'url' => '/listing',
+            'icon' => 'far fa-fw fa-file'
+        ],
+        [
             'text' => 'Master File Settings',
             'icon' => 'fas fa-fw fa-share',
             'submenu' => [
