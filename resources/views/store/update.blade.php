@@ -110,8 +110,11 @@
                                     </div>
                                     <div class="col-md-7">
                                         <select class="form-control" name="store_type_id" id="store_type_id">
-                                            <option value="1" {{ 1 == $store->store_type_id ? 'selected' : '' }}>Ebay</option>
-                                            <option value="2" {{ 2 == $store->store_type_id ? 'selected' : '' }}>Amazon</option>
+                                            @if(count($store_types ?? []) > 0)
+                                                @foreach($store_types as $stype)
+                                                    <option value="{{ $stype->id }}" {{ $stype->id == $store->store_type_id ? 'selected' : '' }}>{{ $stype->name }}</option>
+                                                @endforeach
+                                            @endif
                                         </select>
                                     </div>
                                 </div>
