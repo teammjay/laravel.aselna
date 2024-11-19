@@ -17,10 +17,10 @@ return new class extends Migration
             $table->foreign('product_id')->references('product_id')->on('products')
                 ->onDelete('cascade');
             $table->uuid('store_id');
-            $table->foreign('store_id')->references('store_id')->on('store')
+            $table->foreign('store_id')->references('id')->on('store')
                 ->onDelete('cascade');
             $table->uuid('store_category_id');
-            $table->foreign('store_category_id')->references('id')->on('store_cateogry')
+            $table->foreign('store_category_id')->references('id')->on('store_category')
                 ->onDelete('cascade');
             $table->string('title');
             $table->boolean('active');
