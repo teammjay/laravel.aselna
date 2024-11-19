@@ -32,7 +32,7 @@ return new class extends Migration
             $table->float('avarage_rating')->nullable();
             $table->string('primary_image_url')->nullable();
             $table->uuid('store_id');
-            $table->foreign('store_id')->references('store_id')->on('store')
+            $table->foreign('store_id')->references('id')->on('store')
                 ->onDelete('cascade');
             $table->float('ship_price')->nullable();
             $table->float('buy_box_price')->nullable();
