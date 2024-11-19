@@ -19,9 +19,9 @@ return new class extends Migration
             $table->string('password');
             $table->string('server');
             $table->integer('port');
-            $table->boolean('requires_ssl')->default(0);
-            $table->boolean('requires_tls')->default(0);
-            $table->boolean('requires_authentication')->default(0);
+            $table->boolean('requires_ssl')->default(false);
+            $table->boolean('requires_tls')->default( false);
+            $table->boolean('requires_authentication')->default(false);
             $table->integer('ssl_port');
             $table->integer('tls_port');
             $table->timestamp('filter_from_date');
