@@ -26,7 +26,7 @@ return new class extends Migration
             $table->integer('tls_port');
             $table->timestamp('filter_from_date');
             $table->text('folders');
-            $table->timestamp('last_sync_date');
+            $table->timestamp('last_sync_date')->default(now());
             $table->string('created_by');
             $table->string('updated_by');
             $table->timestamps();
