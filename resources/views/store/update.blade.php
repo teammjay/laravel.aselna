@@ -110,8 +110,11 @@
                                     </div>
                                     <div class="col-md-7">
                                         <select class="form-control" name="store_type_id" id="store_type_id">
-                                            <option value="1" {{ 1 == $store->store_type_id ? 'selected' : '' }}>Ebay</option>
-                                            <option value="2" {{ 2 == $store->store_type_id ? 'selected' : '' }}>Amazon</option>
+                                            @if(count($store_types ?? []) > 0)
+                                                @foreach($store_types as $stype)
+                                                    <option value="{{ $stype->id }}" {{ $stype->id == $store->store_type_id ? 'selected' : '' }}>{{ $stype->name }}</option>
+                                                @endforeach
+                                            @endif
                                         </select>
                                     </div>
                                 </div>
@@ -404,15 +407,35 @@
 
                 </div>
                 <div class="tab-pane fade" id="tab2" role="tabpanel" aria-labelledby="message-tab">
-                    <form method="POST" id="frmtab2">
-
-                        <div class="card-footer text-center mt-3">
-                            <button type="button" class="btn btn-success" onclick="saveStoreTabData(2)">Save</button>
-                            <button type="button" class="btn btn-primary" onclick="finalizeForm()">Submit</button>
-                            {{--<button type="reset" class="btn btn-primary">Reset</button>--}}
-                            <a href="{{ route('store.list') }}" class="btn btn-secondary">Cancel</a>
-                        </div>
-                    </form>
+                    <button type="button" class="btn btn-secondary" id="add_message" data-toggle="modal" data-target="#addMessageModal" ><i class="fa fa-plus-square"></i> Create</button>
+                    <table class="table table-bordered mt-2">
+                        <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Incoming Account</th>
+                            <th>Outgoing Account</th>
+                            <th>API Account</th>
+                            <th>Active</th>
+                            <th></th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                            @if(count($storeMessageAccount ?? []) > 0)
+                                @foreach($storeMessageAccount as $maccount)
+                                    <tr class="field-group">
+                                        <td>{{ $maccount->name }}</td>
+                                        <td>{{ $maccount->email }}</td>
+                                        <td>{{ $maccount->incoming_account_id }}</td>
+                                        <td>{{ $maccount->outgoing_account_id }}</td>
+                                        <td>{{ $maccount->api_account == 1 ? 'Yes' : 'No' }}</td>
+                                        <td>{{ $maccount->active == 1 ? 'Yes' : 'No' }}</td>
+                                        <td><button type="button" class="btn btn-danger remove-message-account" data-id="{{ $maccount->id }}"> <i class="fas fa-fw fa-trash"></i></button></td>
+                                    </tr>
+                                @endforeach
+                            @endif
+                        </tbody>
+                    </table>
                 </div>
                 <div class="tab-pane fade" id="tab3" role="tabpanel" aria-labelledby="address-tab">
                     <form method="POST" id="frmtab3">
@@ -848,7 +871,7 @@
 
                 </div>
                 <div class="tab-pane fade" id="tab11" role="tabpanel" aria-labelledby="logistics-tab">
-                    <button type="button" class="btn btn-secondary" id="add_logistic" data-toggle="modal" data-target="#addLogisticModal" ><i class="fa fa-plus-square"></i> Create</button>
+                    <button type="button" class="btn btn-secondary" id="add_logistic" data-toggle="modal" data-target="#addLogisticCenterModal" ><i class="fa fa-plus-square"></i> Create</button>
                     <table class="table table-bordered mt-2">
                         <thead>
                         <tr>
@@ -858,7 +881,17 @@
                         </tr>
                         </thead>
                         <tbody>
-
+                            @if(count($storeLogisticCenters ?? []) > 0)
+                                @foreach($storeLogisticCenters as $sCenter)
+                                    <tr class="field-group">
+                                        <td>{{ $sCenter->LogisticCenter->center_type }}</td>
+                                        <td>{{ $sCenter->LogisticCenter->name }}</td>
+                                        <td>
+                                            {{--<button type="button" class="btn btn-primary edit-page" data-id="{{ $page->id }}" title="Edit"> <i class="fas fa-fw fa-pencil-alt"></i></button>--}}
+                                            <button type="button" class="btn btn-danger remove-logistic-center" data-id="{{ $sCenter->id }}" title="Remove"> <i class="fas fa-fw fa-trash"></i></button></td>
+                                    </tr>
+                                @endforeach
+                            @endif
                         </tbody>
                     </table>
 
@@ -870,7 +903,7 @@
                                 @if(count($devices ?? []) > 0)
                                     @foreach($devices as $device)
                                         <div class="form-group">
-                                            <input type="checkbox" name="devices[]" value="{{ $device->id }}" {{ in_array($device->id,$storeDevices) ? 'checked' : '' }}>  {{ $device->name }}
+                                            <input type="checkbox" name="devices[]" value="{{ $device->id }}" @if(is_array($storeDevices)){{ in_array($device->id,($storeDevices ?? [])) ? 'checked' : '' }} @endif>  {{ $device->name }}
                                         </div>
 
                                     @endforeach
@@ -1086,6 +1119,78 @@
 
         }
 
+        function saveStoreMessageAccount() {
+            const form = document.querySelector("#frmStoreMessageAccount");
+            let formData = new FormData(form);
+            formData.append('store_id', store_id);
+
+            $.ajax({
+                type: 'POST',
+                url: "{{ route('store.messageaccount') }}", // Adjust this URL to your endpoint
+                data: formData,
+                processData: false,
+                contentType: false,
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                },
+                dataType:'json',
+                success: function(response) {
+                    // Display a success message
+                    alert(response.message);
+                    location.reload();
+                },
+                error: function(xhr) {
+                    if (xhr.status === 422) { // Validation error
+                        var errors = xhr.responseJSON.errors;
+
+                        // Clear previous errors
+                        $('.error-message').text('');
+
+                        // Loop through and display errors
+                        $.each(errors, function(field, messages) {
+                            $("#frmStoreMessageAccount").find('#acc_' + field + '-error').text(messages[0]); // Display the first error message
+                            $("#frmStoreMessageAccount").find('#' + field + '-error').text(messages[0]); // Display the first error message
+
+                        });
+                    }
+                }
+            });
+
+        }
+
+        function saveStoreLogisticCenter() {
+            const form = document.querySelector("#frmStoreLogisticCenter");
+            let formData = new FormData(form);
+            formData.append('store_id', store_id);
+            $.ajax({
+                type: 'POST',
+                url: "{{ route('store.logisticcenter') }}", // Adjust this URL to your endpoint
+                data: formData,
+                processData: false,
+                contentType: false,
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                },
+                dataType:'json',
+                success: function(response) {
+                    // Display a success message
+                    alert(response.message);
+                    location.reload();
+                },
+                error: function(xhr) {
+                    if (xhr.status === 422) { // Validation error
+                        var errors = xhr.responseJSON.errors;
+                        // Clear previous errors
+                        $('.error-message').text('');
+                        // Loop through and display errors
+                        $.each(errors, function(field, messages) {
+                            $("#frmStoreLogisticCenter").find('#logistic_' + field + '-error').text(messages[0]);
+                        });
+                    }
+                }
+            });
+        }
+
         $(document).ready(function() {
 
             $('.pro-tags').select2();
@@ -1100,12 +1205,10 @@
                 `);
 
             });
-
             // Remove field group
             $(document).on('click', '.remove-feature', function() {
                 $(this).parents('tr.field-group').remove();
             });
-
             // Add new retail price
             $('#add_retail').click(function() {
                 $('#table_retail tbody').append(`
@@ -1117,12 +1220,10 @@
                 `);
 
             });
-
             // Remove retail price group
             $(document).on('click', '.remove-retail', function() {
                 $(this).parents('tr.field-group').remove();
             });
-
             // Add new retail price
             $('#add_wholesale').click(function() {
                 $('#table_wholesale tbody').append(`
@@ -1134,13 +1235,10 @@
                 `);
 
             });
-
             // Remove retail price group
             $(document).on('click', '.remove-wholesale', function() {
                 $(this).parents('tr.field-group').remove();
             });
-
-
             // Add new device
             $('#add_device').click(function() {
                 $('#table_incompatible_device tbody').append(`
@@ -1152,13 +1250,10 @@
                 `);
 
             });
-
             // Remove retail price group
             $(document).on('click', '.remove-device', function() {
                 $(this).parents('tr.field-group').remove();
             });
-
-
             // Add new device
             $('#add_title_keyword').click(function() {
                 $('#table_title_keywords tbody').append(`
@@ -1170,20 +1265,15 @@
                 `);
 
             });
-
             // Remove retail price group
             $(document).on('click', '.remove-keyword', function() {
                 $(this).parents('tr.field-group').remove();
             });
-
-
             $(document).on('click', '.remove-shipping', function() {
-
                 var shippingId = $(this).data('id');
                 var ele = $(this);
                 // Confirm the deletion
                 if (confirm("Are you sure you want to delete this shipping servie?")) {
-
                     $.ajax({
                         type: 'POST',
                         url: "{{ route('store.removeshipping') }}", // Adjust this URL to your endpoint
@@ -1203,12 +1293,9 @@
                             alert(response.message);
                         }
                     });
-
                 }
             });
-
             $(document).on('click', '.remove-page', function() {
-
                 var pageId = $(this).data('id');
                 var ele = $(this);
                 // Confirm the deletion
@@ -1233,13 +1320,62 @@
                             alert(response.message);
                         }
                     });
-
                 }
             });
+            $(document).on('click', '.remove-message-account', function() {
+                var accId = $(this).data('id');
+                var ele = $(this);
+                // Confirm the deletion
+                if (confirm("Are you sure you want to delete this message accounts?")) {
 
+                    $.ajax({
+                        type: 'POST',
+                        url: "{{ route('store.removemessageaccount') }}", // Adjust this URL to your endpoint
+                        data: {
+                            "accId": accId
+                        },
+                        headers: {
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        },
+                        dataType:'json',
+                        success: function(response) {
+                            // Display a success message
+                            alert(response.message);
+                            ele.parents('tr.field-group').remove();
+                        },
+                        error: function(xhr) {
+                            alert(response.message);
+                        }
+                    });
+                }
+            });
+            $(document).on('click', '.remove-logistic-center', function() {
+                var centerId = $(this).data('id');
+                var ele = $(this);
+                // Confirm the deletion
+                if (confirm("Are you sure you want to delete this logistic center?")) {
 
-
-
+                    $.ajax({
+                        type: 'POST',
+                        url: "{{ route('store.removelogisticcenter') }}", // Adjust this URL to your endpoint
+                        data: {
+                            "centerId": centerId
+                        },
+                        headers: {
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        },
+                        dataType:'json',
+                        success: function(response) {
+                            // Display a success message
+                            alert(response.message);
+                            ele.parents('tr.field-group').remove();
+                        },
+                        error: function(xhr) {
+                            alert(response.message);
+                        }
+                    });
+                }
+            });
         });
     </script>
 @stop

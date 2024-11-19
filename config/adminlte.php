@@ -336,6 +336,11 @@ return [
             'icon' => 'far fa-fw fa-file'
         ],
         [
+            'text' => 'Listing',
+            'url' => '/listing',
+            'icon' => 'far fa-fw fa-file'
+        ],
+        [
             'text' => 'Master File Settings',
             'icon' => 'fas fa-fw fa-share',
             'submenu' => [
@@ -397,6 +402,16 @@ return [
                 [
                     'text' => 'Page Types',
                     'url' => '/page_type',
+                    'icon' => 'far fa-fw fa-file'
+                ],
+                [
+                    'text' => 'Logistic Center',
+                    'url' => '/logistic_center',
+                    'icon' => 'far fa-fw fa-file'
+                ],
+                [
+                    'text' => 'Store Type',
+                    'url' => '/store_type',
                     'icon' => 'far fa-fw fa-file'
                 ],
             ],
