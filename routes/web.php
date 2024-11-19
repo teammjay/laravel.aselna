@@ -18,6 +18,7 @@ use App\Http\Controllers\PageTypesController;
 use App\Http\Controllers\LogisticCenterController;
 use App\Http\Controllers\StoreTypesController;
 use App\Http\Controllers\ListingController;
+use App\Http\Controllers\ManufacturerController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -69,6 +70,15 @@ Route::controller(ListingController::class)->group(function () {
     Route::get('/listing/edit/{id}', 'edit')->name('listing.edit');
     Route::post('/listing/edit/{id}', 'update')->name('listing.update');
     Route::delete('/listing/destroy/{id}', 'destroy')->name('listing.delete');
+});
+
+Route::controller(ManufacturerController::class)->group(function () {
+    Route::get('/manufacturer', 'index')->name('manufacturer.index');
+    Route::get('/manufacturer/add', 'create')->name('manufacturer.create');
+    Route::post('/manufacturer/add', 'store')->name('manufacturer.store');
+    Route::get('/manufacturer/edit/{id}', 'edit')->name('manufacturer.edit');
+    Route::post('/manufacturer/edit/{id}', 'update')->name('manufacturer.update');
+    Route::get('/manufacturer/delete/{id}', 'destroy')->name('manufacturer.delete');
 });
 
 Route::controller(StoreTypesController::class)->group(function () {
