@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Manufacturer;
 use Illuminate\Http\Request;
 use App\Models\Store;
 
@@ -95,14 +96,10 @@ class ListingController extends Controller
     public function edit(string $id)
     {
         $pageAt = 'Edit';
-        $product = Catalog::findOrFail($id); // Retrieve the product by ID
-        $keyFeatures = ProductKeyFeatures::where('product_id', $id)->orderBy('sort_order')->get();
-        $titleKeywords = ProductTitleKeyword::where('product_id', $id)->orderBy('priority')->get();
-        $productImages = ProductImages::where('product_id', $id)->get();
-        $productTags = ProductTags::pluck('name')->values()->all();
         $stores = Store::all();
+        $manufacturers = Manufacturer::all();
         //echo '<pre>';
         //print_r($productTags);die;
-        return view('listing.update', compact('product','keyFeatures','titleKeywords','productImages','productTags','pageAt','stores'));
+        return view('listing.update', compact('manufacturers','pageAt','stores'));
     }
 }

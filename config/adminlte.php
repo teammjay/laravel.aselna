@@ -404,6 +404,11 @@ return [
                     'url' => '/store_type',
                     'icon' => 'far fa-fw fa-file'
                 ],
+                [
+                    'text' => 'Manufacturer',
+                    'url' => '/manufacturer',
+                    'icon' => 'far fa-fw fa-file'
+                ],
             ],
         ]
 //        [
