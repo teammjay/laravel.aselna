@@ -17,7 +17,7 @@ return new class extends Migration
             $table->string('name');
             $table->string('image')->nullable();
             $table->string('notes1')->nullable();
-            $table->integer('order')->default(0);
+            $table->integer('order')->default(0)->nullable();
             $table->string('code', 50)->nullable();
             $table->enum('status', ['active', 'inactive'])->default('active');
             $table->string('created_by', 50)->nullable();
@@ -33,7 +33,7 @@ return new class extends Migration
             $table->string('image')->nullable();
             $table->string('notes1')->nullable();
             $table->string('code', 50)->nullable();
-            $table->integer('order')->default(0);
+            $table->integer('order')->default(0)->nullable();
             $table->enum('status', ['active', 'inactive'])->default('active');
             $table->string('created_by', 50)->nullable();
             $table->string('updated_by',50)->nullable();
