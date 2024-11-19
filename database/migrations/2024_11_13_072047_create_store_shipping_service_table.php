@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('store_shipping_service', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->uuid('store_id');
-            $table->foreign('store_id')->references('store_id')->on('store')
+            $table->foreign('store_id')->references('id')->on('store')
                 ->onDelete('cascade');
             $table->string('name');
             $table->uuid('carrier_service_id');

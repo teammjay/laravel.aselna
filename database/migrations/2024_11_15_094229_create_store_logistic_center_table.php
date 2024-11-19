@@ -14,10 +14,10 @@ return new class extends Migration
         Schema::create('store_logistic_center', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->uuid('store_id');
-            $table->foreign('store_id')->references('store_id')->on('store')
+            $table->foreign('store_id')->references('id')->on('store')
                 ->onDelete('cascade');
             $table->uuid('logistic_center_id');
-            $table->foreign('logistic_center_id')->references('logistic_center_id')->on('logistic_center')
+            $table->foreign('logistic_center_id')->references('id')->on('logistic_center')
                 ->onDelete('cascade');
             $table->boolean('overwrite_from_address');
             $table->boolean('overwrite_return_address');

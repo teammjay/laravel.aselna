@@ -13,8 +13,6 @@ return new class extends Migration
     {
         Schema::table('store_device_type', function (Blueprint $table) {
             $table->uuid('store_id')->change();
-            $table->foreign('store_id')->references('store_id')->on('store')
-                ->onDelete('cascade');
             $table->uuid('device_type_id')->change();
         });
     }

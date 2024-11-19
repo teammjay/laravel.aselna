@@ -17,7 +17,8 @@ class DeviceController extends Controller
 
     public function index()
     {
-        $devices = Device::all();
+        //need to get the brand relation name also in all the devices
+        $devices = Device::with('brand')->get();
         return view('device.list', compact('devices'));
     }
 
