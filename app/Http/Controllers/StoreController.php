@@ -49,7 +49,7 @@ class StoreController extends Controller
         }else{
             $store_id = session('store_id');
         }
-
+        $action = 'Add';
         $store = Store::findOrFail($store_id); // Retrieve the store by ID
         $devices = DeviceTypes::where('status','active')->get();
         $pageTypes = PageType::all();
@@ -68,7 +68,7 @@ class StoreController extends Controller
         //echo '<pre>';
         //print_r($storeDevices);die;
 
-        return view('store.update', compact('store','devices','storeDevices','shipping_services','storeShippingService','pageTypes','storePages','storeCategories','storeMessageAccount','logisticCenters','storeLogisticCenters','store_types'));
+        return view('store.update', compact('store','devices','storeDevices','shipping_services','storeShippingService','pageTypes','storePages','storeCategories','storeMessageAccount','logisticCenters','storeLogisticCenters','store_types','action'));
     }
 
     /**
@@ -227,6 +227,7 @@ class StoreController extends Controller
      */
     public function edit(string $id)
     {
+        $action = 'Edit';
         $store = Store::findOrFail($id); // Retrieve the store by ID
         $devices = DeviceTypes::where('status','active')->get();
         $pageTypes = PageType::all();
@@ -247,7 +248,7 @@ class StoreController extends Controller
         //echo '<pre>';
         //print_r($outgoingAccount);die;
 
-        return view('store.update', compact('store','devices','storeDevices','shipping_services','storeShippingService','pageTypes','storePages','storeCategories','storeMessageAccount','logisticCenters','storeLogisticCenters','store_types'));
+        return view('store.update', compact('store','devices','storeDevices','shipping_services','storeShippingService','pageTypes','storePages','storeCategories','storeMessageAccount','logisticCenters','storeLogisticCenters','store_types','action'));
     }
 
     public function saveShippingService(Request $request){
