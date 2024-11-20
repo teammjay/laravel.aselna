@@ -3,7 +3,7 @@
 @section('title', 'Add / Edit Store')
 
 @section('content_header')
-    <h1>{{ isset($store) ? 'Edit Store' : 'Add Store' }}</h1>
+    <h1>{{ ($action == 'Edit') ? 'Edit Store' : 'Add Store' }}</h1>
 @stop
 
 @section('content')
