@@ -28,4 +28,9 @@ class StoreCategory extends Model
 
     protected $fillable = ['store_id','code','name','url','text_generation_template_id'];
 
+    public function store()
+    {
+        return $this->belongsTo(Store::class);
+    }
+
 }

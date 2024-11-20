@@ -3,11 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Models\Catalog;
+use App\Models\Manufacturer;
 use App\Models\ProductKeyFeatures;
 use App\Models\ProductTags;
 use App\Models\ProductTitleKeyword;
 use App\Models\ProductImages;
 use App\Models\Store;
+use App\Models\StoreProduct;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Validator;
@@ -95,7 +97,8 @@ class CatalogController extends Controller
         $productImages = ProductImages::where('product_id', $pro_id)->get();
         $productTags = ProductTags::pluck('name')->values()->all();
         $stores = Store::all();
-        return view('catalog.update', compact('product','keyFeatures','titleKeywords','productImages','productTags','pageAt','stores'));
+        $manufacturers = Manufacturer::all();
+        return view('catalog.update', compact('product','keyFeatures','titleKeywords','productImages','productTags','pageAt','stores','manufacturers'));
     }
 
     /**
@@ -159,10 +162,11 @@ class CatalogController extends Controller
         $titleKeywords = ProductTitleKeyword::where('product_id', $id)->orderBy('priority')->get();
         $productImages = ProductImages::where('product_id', $id)->get();
         $productTags = ProductTags::pluck('name')->values()->all();
-        $stores = Store::all();
-        //echo '<pre>';
-        //print_r($productTags);die;
-        return view('catalog.update', compact('product','keyFeatures','titleKeywords','productImages','productTags','pageAt','stores'));
+        $stores = Store::with('storeCategory')->get();
+        $manufacturers = Manufacturer::all();
+        /*echo '<pre>';
+        print_r($stores);die;*/
+        return view('catalog.update', compact('product','keyFeatures','titleKeywords','productImages','productTags','pageAt','stores','manufacturers'));
     }
 
     /**
@@ -181,7 +185,7 @@ class CatalogController extends Controller
             $validator = Validator::make(request()->all(), [
                 'product_title' => 'required|string|max:30',
                 'product_type' => 'required|string',
-                'product_manufacturer' => 'required|integer',
+                'product_manufacturer' => 'required|string',
                 'product_price' => 'required|decimal:2',
                 'product_sku' => 'required|string|max:225',
                 'product_description' => 'nullable|string'
@@ -262,7 +266,34 @@ class CatalogController extends Controller
             ProductTags::upsert($data, ['product_id','name'], ['name']);
 
             return response()->json(['success' => true, 'message' => 'Data saved successfully!']);
-        }elseif ($tabId == 11){
+        }elseif ($tabId == 9){
+            unset($request['tab']);
+            $request['overwrite_title'] = $request->has('overwrite_title') ? 1 : 0;
+            $request['overwrite_description'] = $request->has('overwrite_description') ? 1 : 0;
+            $request['overwrite_price'] = $request->has('overwrite_price') ? 1 : 0;
+            $request['overwrite_compare_at_price'] = $request->has('overwrite_compare_at_price') ? 1 : 0;
+            $request['overwrite_fulfillment_by_channel_price'] = $request->has('overwrite_fulfillment_by_channel_price') ? 1 : 0;
+            $request['overwrite_wholesale_price'] = $request->has('overwrite_wholesale_price') ? 1 : 0;
+            $request['overwrite_msrp'] = $request->has('overwrite_msrp') ? 1 : 0;
+
+            $created_by = auth()->user()->name ?? 'admin';
+            $request->merge(['created_by' => $created_by, 'updated_by' => $created_by]);
+
+            $product = StoreProduct::where(['product_id' => $productId,'store_id' =>$request->input('store_id')])->get();
+            $productArr = $product->toArray();
+            if(!empty($productArr)){
+                $product->update($request->all());
+            }else{
+                StoreProduct::create($request->all());
+            }
+
+            /*StoreProduct::upsert($request->input(), ['product_id','store_id'], ['store_category_id','title','active','price','msrp','description','sales_count','overwrite_compare_at_price','wholesale_price','compare_at_price','overwrite_wholesale_price','overwrite_description','overwrite_title','overwrite_msrp','overwrite_price','created_by','updated_by']);*/
+
+            return response()->json(['success' => true, 'message' => 'Data saved successfully!']);
+            /*echo '<pre>';
+            print_r($request->input());
+            echo '</pre>';exit;*/
+        }elseif($tabId == 11){
             try {
                 $product = Catalog::findOrFail($productId);
                 $product->update($request->all());
@@ -425,9 +456,10 @@ class CatalogController extends Controller
         $store_id = $request->input('store_id');
         if($store_id){
 
-            $storeDetail = Store::findOrFail($store_id);
+            $storeProductDetail = StoreProduct::findOrFail($store_id)->toArray();
+
             //print_r($storeDetail);die;
-            return response()->json(['success' => true, 'data' => $storeDetail->toArray()]);
+            return response()->json(['success' => true, 'data' => $storeProductDetail]);
         }else{
             return response()->json(['success' =>false]);
         }

@@ -139,7 +139,11 @@
                                                     <label for="product_manufacturer">Product Manufacturer</label>
                                                     <select class="form-control" id="product_manufacturer" name="product_manufacturer">
                                                         <option>-- Product Manufacture --</option>
-                                                        <option value="1" {{ 1 == $product->product_manufacturer ? 'selected' : '' }}>HCO</option>
+                                                        @if(count($manufacturers ?? []) > 0)
+                                                            @foreach($manufacturers as $mf)
+                                                                <option value="{{ $mf->id }}" {{ $mf->id == $product->product_manufacturer ? 'selected' : '' }}>{{ $mf->name }}</option>
+                                                            @endforeach
+                                                        @endif
                                                     </select>
                                                     <span class="error-message text-danger" id="product_manufacturer-error"></span>
                                                 </div>
@@ -168,7 +172,7 @@
                                                     <div class="col-md-12">
                                                         <div class="form-group">
                                                             <label for="product_description">Product Description</label>
-                                                            <textarea class="form-control" id="product_description" name="product_description" rows="10" placeholder="Enter Description">{{ old('product_title',$product->product_title) }}</textarea>
+                                                            <textarea class="form-control" id="product_description" name="product_description" rows="10" placeholder="Enter Description">{{ old('product_description',$product->product_description) }}</textarea>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -668,13 +672,20 @@
                                         </thead>
                                         <tbody>
                                             @if(count($stores ?? []) > 0)
-                                                @foreach($stores as $store)
-                                                    <tr class="store_row" data-id="{{ $store->id }}">
+                                                @foreach($stores as $key=>$store)
+                                                    <tr class="store_row" id="store_{{ $store->id }}" data-id="{{ $store->id }}">
                                                         <td>{{ $store->name.' - '.$store->marketplace_name }}</td>
-                                                        <td align="center"><input type="checkbox" name="store_status" {{ $store->store_status == 1 ? 'checked' : '' }} /></td>
+                                                        <td align="center">
+                                                            <input type="checkbox" name="active" {{ $store->store_status == 1 ? 'checked' : '' }} />
+                                                            <input type="hidden" name="store_id" value="{{ $store->id }}">
+                                                        </td>
                                                         <td>
-                                                            <select class="form-control">
-                                                                <option>Case, cover, skin</option>
+                                                            <select class="form-control" name="store_category_id">
+                                                                @if(count($store->storeCategory ?? []) > 0)
+                                                                    @foreach($store->storeCategory as $key2=>$sCat)
+                                                                        <option value="{{ $sCat->id }}">{{ $sCat->name }}</option>
+                                                                    @endforeach
+                                                                @endif
                                                             </select>
                                                         </td>
                                                     </tr>
@@ -689,69 +700,85 @@
                                         <div class="card-header">
                                             Store Detail
                                         </div>
-                                        <div class="card-body">
+                                        <div class="card-body" id="store_product_detail">
                                             <div class="row mt-3 g-3 align-items-center">
                                                 <div class="col-md-3">
                                                     <label class="col-form-label">Title</label>
                                                 </div>
-                                                <div class="col-md-9">
-                                                    <textarea class="form-control" id="store_title" placeholder="Store Name/ Title" readonly></textarea>
+                                                <div class="col-md-9 d-flex justify-between">
+                                                    <input type="checkbox" name="overwrite_title" class="mr-1"> <textarea class="form-control" name="title" id="store_product_title" placeholder="Store Name/ Title" readonly>{{ old('product_title',$product->product_title) }}</textarea>
                                                 </div>
                                             </div>
                                             <div class="row mt-3 g-3 align-items-center">
                                                 <div class="col-md-3">
                                                     <label class="col-form-label">Description</label>
                                                 </div>
-                                                <div class="col-md-9">
-                                                    <textarea class="form-control" id="store_description" placeholder="Description" readonly></textarea>
+                                                <div class="col-md-9 d-flex justify-between">
+                                                    <input type="checkbox" name="overwrite_description" class="mr-1"> <textarea class="form-control" name="description" id="store_product_description" placeholder="Description" rows="8" readonly>{{ old('product_description',$product->product_description) }}</textarea>
                                                 </div>
                                             </div>
                                             <div class="row mt-3 g-3 align-items-center">
                                                 <div class="col-md-3">
                                                     <label class="col-form-label">Price</label>
                                                 </div>
-                                                <div class="col-md-9">
-                                                    <input type="text" class="form-control" id="store_price" placeholder="00.00" readonly>
+                                                <div class="col-md-9 d-flex justify-between">
+                                                    <input type="checkbox" name="overwrite_price" class="mr-1"> <input type="text" class="form-control" name="price" id="store_product_price" placeholder="00.00" value="{{ old('product_price',$product->product_price) }}" readonly>
                                                 </div>
                                             </div>
                                             <div class="row mt-3 g-3 align-items-center">
                                                 <div class="col-md-3">
                                                     <label class="col-form-label">Compare at Price</label>
                                                 </div>
-                                                <div class="col-md-9">
-                                                    <input type="text" class="form-control" id="store_compare_price" placeholder="00.00" readonly>
+                                                <div class="col-md-9 d-flex justify-between">
+                                                    <input type="checkbox" name="overwrite_compare_at_price" class="mr-1"> <input type="text" class="form-control" name="compare_at_price" id="store_product_compare_at_price" value="{{ old('product_marketplace_price',$product->product_marketplace_price) }}" placeholder="00.00" readonly>
                                                 </div>
                                             </div>
                                             <div class="row mt-3 g-3 align-items-center">
                                                 <div class="col-md-3">
                                                     <label class="col-form-label">Fbc Price</label>
                                                 </div>
-                                                <div class="col-md-9">
-                                                    <input type="text" class="form-control" id="store_fbc_price" placeholder="00.00" readonly>
+                                                <div class="col-md-9 d-flex justify-between">
+                                                    <input type="checkbox" name="overwrite_fulfillment_by_channel_price" class="mr-1"> <input type="text" class="form-control" name="fulfillment_by_channel_price" id="store_product_fbc_price" placeholder="00.00" readonly>
                                                 </div>
                                             </div>
                                             <div class="row mt-3 g-3 align-items-center">
                                                 <div class="col-md-3">
                                                     <label class="col-form-label">Wholesale Price</label>
                                                 </div>
-                                                <div class="col-md-9">
-                                                    <input type="text" class="form-control" id="store_wholesale_price" placeholder="00.00" readonly>
+                                                <div class="col-md-9 d-flex justify-between">
+                                                    <input type="checkbox" name="overwrite_wholesale_price" class="mr-1"> <input type="text" class="form-control" name="wholesale_price" id="store_product_price" value="{{ old('product_wholesale_price',$product->product_wholesale_price) }}" placeholder="00.00" readonly>
                                                 </div>
                                             </div>
                                             <div class="row mt-3 g-3 align-items-center">
                                                 <div class="col-md-3">
                                                     <label class="col-form-label">Msrp</label>
                                                 </div>
-                                                <div class="col-md-9">
-                                                    <input type="text" class="form-control" id="store_msrp_price" placeholder="00.00" readonly>
+                                                <div class="col-md-9 d-flex justify-between">
+                                                    <input type="checkbox" name="overwrite_msrp" class="mr-1"> <input type="text" class="form-control" name="msrp" id="store_product_msrp" value="{{ old('product_mrsp',$product->product_mrsp) }}" placeholder="00.00" readonly>
                                                 </div>
                                             </div>
                                             <div class="row mt-3 g-3 align-items-center">
                                                 <div class="col-md-3">
                                                     <label class="col-form-label">Sale Count</label>
                                                 </div>
-                                                <div class="col-md-9">
-                                                    <input type="text" class="form-control" id="store_sale_count" placeholder="00.00" readonly>
+                                                <div class="col-md-9 d-flex justify-between">
+                                                    <input type="text" class="form-control" name="sales_count" id="store_product_sales_count" placeholder="00.00" readonly>
+                                                </div>
+                                            </div>
+
+                                            <div class="row mt-3 g-3 align-items-center">
+                                                <div class="col-md-3">
+                                                    <label class="col-form-label">Manufacturer</label>
+                                                </div>
+                                                <div class="col-md-9 d-flex justify-between">
+                                                    <select class="form-control" id="manufacturer_id" name="manufacturer_id">
+                                                        <option>-- Product Manufacture --</option>
+                                                        @if(count($manufacturers ?? []) > 0)
+                                                            @foreach($manufacturers as $mf)
+                                                                <option value="{{ $mf->id }}" {{ $mf->id == $product->product_manufacturer ? 'selected' : '' }}>{{ $mf->name }}</option>
+                                                            @endforeach
+                                                        @endif
+                                                    </select>
                                                 </div>
                                             </div>
 
@@ -825,6 +852,17 @@
             let formData = new FormData(form);
             formData.append('product_id', product_id);
             formData.append('tab', tabId);
+
+            if(tabId == 9){
+
+                let store_id = $('.store_row.active').data('id');
+                if($('.store_row.active').find('input[name="active"]').prop('checked')){
+                    var status = 1;
+                }else{
+                    var status = 0;
+                }
+                formData.set('active',status);
+            }
 
             $.ajax({
                 type: 'POST',
@@ -1073,8 +1111,8 @@
 
             // change sort order for image of prodcut
             $(document).on('click', '.store_row', function() {
-                $('.store_row').removeClass('bg-blue');
-                $(this).addClass('bg-blue');
+                $('.store_row').removeClass('active bg-blue');
+                $(this).addClass('active bg-blue');
                 var store_id = $(this).data('id');
                 $.ajax({
                     url: "{{ route('catalog.getstoredetail') }}",
@@ -1101,6 +1139,18 @@
                     }
                 });
             });
+
+            $(document).on('click', '#store_product_detail [type="checkbox"]', function() {
+
+                console.log($(this));
+                let nextSibling = $(this).next();
+                if($(this).prop('checked')){
+                    nextSibling.removeAttr('readonly');
+                }else{
+                    nextSibling.attr('readonly','true');
+                }
+            });
+
 
         });
     </script>
