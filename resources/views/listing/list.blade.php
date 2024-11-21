@@ -9,6 +9,11 @@
 
 @section('content')
     <div class="row my-3">
+        <div class="col-md-1">
+            <a href="{{ route('listing.create') }}" class="btn btn-secondary">
+                Create
+            </a>
+        </div>
         <div class="col-md-3">
             <select class="form-control" id="listing_store">
                 @if(count($stores ?? []) > 0)

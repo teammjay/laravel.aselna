@@ -116,7 +116,12 @@
                                                     <label for="product_type">Product Type</label>
                                                     <select class="form-control" id="product_type" name="product_type">
                                                         <option>-- Product Type --</option>
-                                                        <option value="1" {{ 1 == $product->product_type ? 'selected' : '' }}>Leather Case</option>
+                                                        @if(count($productTypes ?? []) > 0)
+                                                            @foreach($productTypes as $ptype)
+                                                                <option value="{{ $ptype->id }}" {{ $ptype->id == $product->product_type ? 'selected' : '' }}>{{ $ptype->name }}</option>
+                                                            @endforeach
+                                                        @endif
+
                                                     </select>
                                                     <span class="error-message text-danger" id="product_type-error"></span>
                                                 </div>
@@ -136,16 +141,16 @@
                                         <div class="row">
                                             <div class="col-md-6">
                                                 <div class="form-group">
-                                                    <label for="product_manufacturer">Product Manufacturer</label>
-                                                    <select class="form-control" id="product_manufacturer" name="product_manufacturer">
+                                                    <label for="manufacturer_id">Product Manufacturer</label>
+                                                    <select class="form-control" id="manufacturer_id" name="manufacturer_id">
                                                         <option>-- Product Manufacture --</option>
                                                         @if(count($manufacturers ?? []) > 0)
                                                             @foreach($manufacturers as $mf)
-                                                                <option value="{{ $mf->id }}" {{ $mf->id == $product->product_manufacturer ? 'selected' : '' }}>{{ $mf->name }}</option>
+                                                                <option value="{{ $mf->id }}" {{ $mf->id == $product->manufacturer_id ? 'selected' : '' }}>{{ $mf->name }}</option>
                                                             @endforeach
                                                         @endif
                                                     </select>
-                                                    <span class="error-message text-danger" id="product_manufacturer-error"></span>
+                                                    <span class="error-message text-danger" id="manufacturer_id-error"></span>
                                                 </div>
                                             </div>
                                             <div class="col-md-6">
@@ -775,7 +780,7 @@
                                                         <option>-- Product Manufacture --</option>
                                                         @if(count($manufacturers ?? []) > 0)
                                                             @foreach($manufacturers as $mf)
-                                                                <option value="{{ $mf->id }}" {{ $mf->id == $product->product_manufacturer ? 'selected' : '' }}>{{ $mf->name }}</option>
+                                                                <option value="{{ $mf->id }}" {{ $mf->id == $product->manufacturer_id ? 'selected' : '' }}>{{ $mf->name }}</option>
                                                             @endforeach
                                                         @endif
                                                     </select>
