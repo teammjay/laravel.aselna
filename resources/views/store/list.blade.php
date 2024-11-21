@@ -123,8 +123,8 @@
                 // Confirm the deletion
                 if (confirm("Are you sure you want to delete this store?")) {
                     $.ajax({
-                        url: "{{ url('store/destroy') }}/" + storeId,   // Laravel route for deletion
-                        type: 'DELETE',
+                        url: "{{ url('stores/destroy') }}/" + storeId,   // Laravel route for deletion
+                        type: 'GET',
                         data: {
                             "_token": token
                         },

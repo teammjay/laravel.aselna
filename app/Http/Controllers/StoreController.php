@@ -290,7 +290,7 @@ class StoreController extends Controller
     public function destroy(string $id)
     {
         // Find the store by id
-        $store = Store::find($id);
+        $store = Store::findOrFail($id);
 
         if ($store) {
             $store->delete(); // Delete the store

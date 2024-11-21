@@ -341,7 +341,7 @@ class CatalogController extends Controller
     public function destroy(string $id)
     {
         // Find the user by id
-        $product = Catalog::find($id);
+        $product = Catalog::findOrFail($id);
 
         if ($product) {
             $product->delete(); // Delete the user
