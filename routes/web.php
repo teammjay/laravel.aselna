@@ -36,7 +36,7 @@ Route::post('/catalog/finalize', [CatalogController::class, 'finalize'])->name('
 Route::get('/catalog/edit/{id}', [CatalogController::class, 'edit'])->name('catalog.edit');
 Route::post('/catalog/edit/{id}', [CatalogController::class, 'update'])->name('catalog.update');
 //Route::delete('/catalog/destroy', [CatalogController::class, 'destroy'])->name('catalog.delete');
-Route::delete('/catalog/destroy/{id}', [CatalogController::class, 'destroy'])->name('catalog.delete');
+Route::get('/catalog/destroy/{id}', [CatalogController::class, 'destroy'])->name('catalog.delete');
 Route::get('/catalog/{id}', [CatalogController::class, 'show'])->name('catalog.show');
 Route::post('/upload-image', [CatalogController::class, 'uploadImage'])->name('catalog.upload');
 Route::post('/set-default', [CatalogController::class, 'setDefaultImage'])->name('catalog.set_default');
@@ -50,7 +50,7 @@ Route::controller(StoreController::class)->group(function () {
     Route::post('/stores/finalize', 'finalize')->name('store.final');
     Route::get('/stores/edit/{id}', 'edit')->name('store.edit');
     Route::post('/stores/edit/{id}', 'update')->name('store.update');
-    Route::delete('/stores/destroy/{id}', 'destroy')->name('store.delete');
+    Route::get('/stores/destroy/{id}', 'destroy')->name('store.delete');
     Route::post('/stores/removeshipping', 'removeShipping')->name('store.removeshipping');
     Route::post('/stores/saveShippingService', 'saveShippingService')->name('store.shippingservice');
     Route::post('/stores/savePages', 'savePages')->name('store.pages');
@@ -71,7 +71,7 @@ Route::controller(ListingController::class)->group(function () {
     Route::post('/listing/finalize', 'finalize')->name('listing.final');
     Route::get('/listing/edit/{id}', 'edit')->name('listing.edit');
     Route::post('/listing/edit/{id}', 'update')->name('listing.update');
-    Route::delete('/listing/destroy/{id}', 'destroy')->name('listing.delete');
+    Route::get('/listing/destroy/{id}', 'destroy')->name('listing.delete');
 });
 
 Route::controller(ManufacturerController::class)->group(function () {

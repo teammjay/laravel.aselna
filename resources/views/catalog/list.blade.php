@@ -139,7 +139,7 @@
             if (confirm("Are you sure you want to delete this product?")) {
                 $.ajax({
                     url: "{{ url('catalog/destroy') }}/" + productId,   // Laravel route for deletion
-                    type: 'DELETE',
+                    type: 'GET',
                     data: {
                         "_token": token
                     },
