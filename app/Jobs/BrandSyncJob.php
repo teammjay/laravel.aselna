@@ -6,6 +6,7 @@ use App\Models\Brand;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class BrandSyncJob implements ShouldQueue
 {
@@ -38,6 +39,7 @@ class BrandSyncJob implements ShouldQueue
         Brand::updateOrInsert(
             ['code' => $brand->brand_id],
             [
+                'id' => (string) Str::uuid(),
                 'name' => $brand->brand,
                 'code' => $brand->brand_id,
                 'notes1' => $brand->notes1,

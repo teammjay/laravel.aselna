@@ -6,6 +6,7 @@ use App\Jobs\BrandSyncJob;
 use App\Jobs\CategorySyncJob;
 use App\Jobs\DevicesSyncJob;
 use App\Jobs\DeviceTypesSyncJob;
+use App\Jobs\ManufacturerSyncJob;
 use App\Jobs\ProductSyncJob;
 use Illuminate\Console\Command;
 
@@ -30,10 +31,11 @@ class SyncAllTables extends Command
      */
     public function handle()
     {
+//        ManufacturerSyncJob::dispatch();
         DeviceTypesSyncJob::dispatch();
-        BrandSyncJob::dispatch();
-        DevicesSyncJob::dispatch();
-        ProductSyncJob::dispatch();
-        CategorySyncJob::dispatch();
+//        BrandSyncJob::dispatch();
+//        DevicesSyncJob::dispatch();
+//        ProductSyncJob::dispatch();
+//        CategorySyncJob::dispatch();
     }
 }

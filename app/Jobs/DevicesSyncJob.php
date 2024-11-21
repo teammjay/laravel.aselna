@@ -9,6 +9,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class DevicesSyncJob implements ShouldQueue
 {
@@ -49,6 +50,7 @@ class DevicesSyncJob implements ShouldQueue
         Device::updateOrInsert(
             ['code' => $device->device_id],
             [
+                'id' => (string) Str::uuid(),
                 'name' => $device->device_model_name,
                 'code' => $device->device_id,
                 'release_date' => $device->release_date,

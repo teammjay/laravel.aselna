@@ -11,6 +11,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class DeviceTypesSyncJob implements ShouldQueue
 {
@@ -58,6 +59,7 @@ class DeviceTypesSyncJob implements ShouldQueue
         DeviceTypes::updateOrInsert(
             ['code' => $deviceType->device_type_id],
             [
+                'id' => (string) Str::uuid(),
                 'name' => $deviceType->device_type,
                 'code' => $deviceType->device_type_id,
                 'notes1' => $deviceType->notes1,
@@ -77,6 +79,7 @@ class DeviceTypesSyncJob implements ShouldQueue
         DeviceSubTypes::updateOrInsert(
             ['code' => $deviceSubType->device_type_sub_id],
             [
+                'id' => (string) Str::uuid(),
                 'name' => $deviceSubType->device_sub_type,
                 'code' => $deviceSubType->device_type_sub_id,
                 'notes1' => $deviceSubType->notes1,

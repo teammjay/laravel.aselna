@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('device_ratings', function (Blueprint $table) {
-            $table->id();
+            $table->uuid('id')->primary();
             $table->integer('value');
             $table->string('created_by', 50)->nullable();
             $table->string('updated_by', 50)->nullable();

@@ -12,12 +12,14 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('device_sub_types', function (Blueprint $table) {
-            $table->id();
+            $table->uuid('id')->primary();
             // Picture, notes1 and name
             // also add foreign key to device_types
             $table->string('name', 30);
             $table->text('notes1')->nullable();
-            $table->foreignId('device_type_id')->constrained('device_types');
+            $table->uuid('device_type_id')->nullable();
+            $table->foreign('device_type_id')->references('id')->on('device_types')
+                ->onDelete('cascade');
             $table->unique(['name', 'device_type_id']);
             $table->index('device_type_id');
             $table->timestamps();

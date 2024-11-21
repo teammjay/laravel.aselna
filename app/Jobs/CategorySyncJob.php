@@ -8,6 +8,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class CategorySyncJob implements ShouldQueue
 {
@@ -48,6 +49,7 @@ class CategorySyncJob implements ShouldQueue
         $newCategory = Category::updateOrInsert(
             ['code' => $category->category_id],
             [
+                'id' => (string) Str::uuid(),
                 'name' => $category->category,
                 'code' => $category->category_id,
                 'notes1' => $category->notes1,
@@ -69,6 +71,7 @@ class CategorySyncJob implements ShouldQueue
         $newSubCategory = SubCategory::updateOrInsert(
             ['code' => $subCategory->sub_category],
             [
+                'id' => (string) Str::uuid(),
                 'name' => $subCategory->sub_category,
                 'code' => $subCategory->sub_category_id,
                 'category_id' => $category->id ?? null,

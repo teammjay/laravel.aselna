@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('device_types', function (Blueprint $table) {
-            $table->id();
+            $table->uuid('id')->primary();
             // create name, picture, notes1 column
             $table->string('name',30);
 //            $table->string('picture')->nullable();
