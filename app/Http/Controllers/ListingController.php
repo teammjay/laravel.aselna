@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Manufacturer;
+use App\Models\ProductType;
 use Illuminate\Http\Request;
 use App\Models\Store;
 
@@ -71,23 +72,12 @@ class ListingController extends Controller
      */
     public function create()
     {
-        //session()->forget('pro_id');
-        if (!session()->has('pro_id')) {
-            $record = Catalog::create(['product_status' => 'draft']);
-            session(['pro_id' => $record->product_id]);
-            $pro_id = $record->product_id;
-        }else{
-            $pro_id = session('pro_id');
-        }
-        //return view('catalog.update', ['product_id' => $record->product_id]);
+
         $pageAt = 'Add';
-        $product = Catalog::findOrFail($pro_id); // Retrieve the product by ID
-        $keyFeatures = ProductKeyFeatures::where('product_id', $pro_id)->orderBy('sort_order')->get();
-        $titleKeywords = ProductTitleKeyword::where('product_id', $pro_id)->orderBy('priority')->get();
-        $productImages = ProductImages::where('product_id', $pro_id)->get();
-        $productTags = ProductTags::pluck('name')->values()->all();
         $stores = Store::all();
-        return view('listing.update', compact('product','keyFeatures','titleKeywords','productImages','productTags','pageAt','stores'));
+        $manufacturers = Manufacturer::all();
+        $productTypes = ProductType::all();
+        return view('listing.create', compact('pageAt','stores','manufacturers','productTypes'));
     }
 
     /**

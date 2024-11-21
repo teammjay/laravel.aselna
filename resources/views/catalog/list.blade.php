@@ -7,6 +7,14 @@
 @stop
 
 @section('content')
+    @csrf
+    @if (session('success'))
+        <div class="alert alert-success alert-dismissible fade show">{{ session('success') }}</div>
+    @endif
+
+    @if (session('error'))
+        <div class="alert alert-danger alert-dismissible fade show">{{ session('error') }}</div>
+    @endif
     <div class="row my-3">
         <div class="col-md-3">
             <a href="{{ route('catalog.create') }}" class="btn btn-secondary">
@@ -146,8 +154,7 @@
                     success: function (response) {
                         // If success, remove the user row from the table
                         if (response.success) {
-                            $('#product-' + productId).remove();
-                            alert(response.success);
+                            location.reload();
                         }
                     },
                     error: function (xhr) {

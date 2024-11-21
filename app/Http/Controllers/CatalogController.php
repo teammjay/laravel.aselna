@@ -8,6 +8,7 @@ use App\Models\ProductKeyFeatures;
 use App\Models\ProductTags;
 use App\Models\ProductTitleKeyword;
 use App\Models\ProductImages;
+use App\Models\ProductType;
 use App\Models\Store;
 use App\Models\StoreProduct;
 use Illuminate\Http\Request;
@@ -26,9 +27,13 @@ class CatalogController extends Controller
     public function index(Request $request)
     {
         // get the data in the pagination format for datatable to display
-        $products = Catalog::select('*')
-            ->orderBy('product_id','desc')
+        session()->forget('pro_id');
+        $products = Catalog::with('Manufacturer')->select('*')
+            ->orderBy('created_at','desc')
             ->paginate($this->perPage);
+
+        /*echo '<pre>';
+        print_r($products);die;*/
 
         return view('catalog.list')->with('products', $products)->with('perPage', $this->perPage);
     }
@@ -82,6 +87,7 @@ class CatalogController extends Controller
     public function create()
     {
         //session()->forget('pro_id');
+
         if (!session()->has('pro_id')) {
             $record = Catalog::create(['product_status' => 'draft']);
             session(['pro_id' => $record->product_id]);
@@ -90,6 +96,7 @@ class CatalogController extends Controller
             $pro_id = session('pro_id');
         }
         //return view('catalog.update', ['product_id' => $record->product_id]);
+        //echo $pro_id;die;
         $pageAt = 'Add';
         $product = Catalog::findOrFail($pro_id); // Retrieve the product by ID
         $keyFeatures = ProductKeyFeatures::where('product_id', $pro_id)->orderBy('sort_order')->get();
@@ -98,7 +105,8 @@ class CatalogController extends Controller
         $productTags = ProductTags::pluck('name')->values()->all();
         $stores = Store::all();
         $manufacturers = Manufacturer::all();
-        return view('catalog.update', compact('product','keyFeatures','titleKeywords','productImages','productTags','pageAt','stores','manufacturers'));
+        $productTypes = ProductType::all();
+        return view('catalog.update', compact('product','keyFeatures','titleKeywords','productImages','productTags','pageAt','stores','manufacturers','productTypes'));
     }
 
     /**
@@ -109,7 +117,7 @@ class CatalogController extends Controller
         $request->validate([
             'product_title' => 'required|string|max:30',
             'product_type' => 'required|string',
-            'product_manufacturer' => 'required|integer',
+            'manufacturer_id' => 'required|integer',
             'product_price' => 'required|decimal:2',
             'product_sku' => 'required|string|max:225',
             'product_description' => 'nullable|string'
@@ -164,9 +172,10 @@ class CatalogController extends Controller
         $productTags = ProductTags::pluck('name')->values()->all();
         $stores = Store::with('storeCategory')->get();
         $manufacturers = Manufacturer::all();
+        $productTypes = ProductType::all();
         /*echo '<pre>';
         print_r($stores);die;*/
-        return view('catalog.update', compact('product','keyFeatures','titleKeywords','productImages','productTags','pageAt','stores','manufacturers'));
+        return view('catalog.update', compact('product','keyFeatures','titleKeywords','productImages','productTags','pageAt','stores','manufacturers','productTypes'));
     }
 
     /**
@@ -185,7 +194,7 @@ class CatalogController extends Controller
             $validator = Validator::make(request()->all(), [
                 'product_title' => 'required|string|max:30',
                 'product_type' => 'required|string',
-                'product_manufacturer' => 'required|string',
+                'manufacturer_id' => 'required|string',
                 'product_price' => 'required|decimal:2',
                 'product_sku' => 'required|string|max:225',
                 'product_description' => 'nullable|string'
@@ -315,7 +324,7 @@ class CatalogController extends Controller
         $validator = Validator::make(request()->all(), [
             'product_title' => 'required|string|max:30',
             'product_type' => 'required|string',
-            'product_manufacturer' => 'required|integer',
+            'manufacturer_id' => 'required|integer',
             'product_price' => 'required|decimal:2',
             'product_sku' => 'required|string|max:225',
             'product_description' => 'nullable|string'
@@ -331,6 +340,7 @@ class CatalogController extends Controller
         $product = Catalog::findOrFail($productId); // Retrieve the product by ID
         $product->update($request->all());
 
+        session()->flash('success', 'Product added successfully!');
         return response()->json(['success' => true, 'message' => 'Data saved successfully']);
     }
 
@@ -347,10 +357,12 @@ class CatalogController extends Controller
             $product->delete(); // Delete the user
 
             // Return a success response
+            session()->flash('success', 'Product deleted successfully!');
             return response()->json(['success' => 'Product deleted successfully!']);
         }
 
         // If the user doesn't exist, return an error
+        session()->flash('error', 'Product not found!');
         return response()->json(['error' => 'Product not found!'], 404);
     }
 

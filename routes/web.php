@@ -21,6 +21,7 @@ use App\Http\Controllers\LogisticCenterController;
 use App\Http\Controllers\StoreTypesController;
 use App\Http\Controllers\ListingController;
 use App\Http\Controllers\ManufacturerController;
+use App\Http\Controllers\ProductTypeController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -30,7 +31,7 @@ Route::get('/catalog', [CatalogController::class, 'index']);
 Route::get('/catalog', [CatalogController::class, 'index'])->name('catalog.list');
 Route::get('catalog/filter', [CatalogController::class, 'filter'])->name('catalog.filter');
 Route::get('/catalog/add', [CatalogController::class, 'create'])->name('catalog.create');
-Route::post('/catalog/add', [CatalogController::class, 'store'])->name('catalog.store');
+//Route::post('/catalog/add', [CatalogController::class, 'store'])->name('catalog.store');
 Route::post('/catalog/saveTabData', [CatalogController::class, 'saveTabData'])->name('catalog.save');
 Route::post('/catalog/finalize', [CatalogController::class, 'finalize'])->name('catalog.final');
 Route::get('/catalog/edit/{id}', [CatalogController::class, 'edit'])->name('catalog.edit');
@@ -65,13 +66,22 @@ Route::controller(StoreController::class)->group(function () {
 
 Route::controller(ListingController::class)->group(function () {
     Route::get('/listing', 'index')->name('listing.list');
-    Route::get('/listing/add', 'create')->name('listing.create');
+    Route::get('/listing/create', 'create')->name('listing.create');
     Route::get('/listing/filter', 'filter')->name('listing.filter');
     Route::post('/listing/saveTabData', 'saveTabData')->name('listing.save');
     Route::post('/listing/finalize', 'finalize')->name('listing.final');
     Route::get('/listing/edit/{id}', 'edit')->name('listing.edit');
     Route::post('/listing/edit/{id}', 'update')->name('listing.update');
     Route::get('/listing/destroy/{id}', 'destroy')->name('listing.delete');
+});
+
+Route::controller(ProductTypeController::class)->group(function () {
+    Route::get('/product_type', 'index')->name('product_type.index');
+    Route::get('/product_type/add', 'create')->name('product_type.create');
+    Route::post('/product_type/add', 'store')->name('product_type.store');
+    Route::get('/product_type/edit/{id}', 'edit')->name('product_type.edit');
+    Route::post('/product_type/edit/{id}', 'update')->name('product_type.update');
+    Route::get('/product_type/delete/{id}', 'destroy')->name('product_type.delete');
 });
 
 Route::controller(ManufacturerController::class)->group(function () {

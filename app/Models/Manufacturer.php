@@ -28,4 +28,8 @@ class Manufacturer extends Model
 
     protected $fillable = ['name','code','notes','image_id','thumbnail_id','client_id','sort_order','version','created_by','updated_by','deleted_by','deleted_at'];
 
+    public function Catalog()
+    {
+        return $this->hasOne(Catalog::class);
+    }
 }

@@ -135,6 +135,17 @@
     {{-- Custom Scripts --}}
     @yield('adminlte_js')
 
+    <script>
+        // Automatically hide the alert after 5 seconds
+        setTimeout(function () {
+            const alert = $('.alert');
+            if (alert) {
+                alert.addClass('fade');
+                setTimeout(() => alert.remove(), 500);
+            }
+        }, 5000);
+    </script>
+
 </body>
 
 </html>

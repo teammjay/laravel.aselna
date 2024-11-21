@@ -12,7 +12,7 @@
             <td>{{ $product->product_title }}</td>
             <td>{{ $product->product_status }}</td>
             <td>{{ $product->product_price }}</td>
-            <td>{{ $product->product_manufacturer }}</td>
+            <td>{{ isset($product->Manufacturer->name) ? $product->Manufacturer->name : '' }}</td>
             <td>{{ $product->product_color }}</td>
             <td>
                 <a href="{{ route('catalog.edit', $product->product_id) }}" class="btn btn-primary">

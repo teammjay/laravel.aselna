@@ -419,6 +419,11 @@ return [
                     'url' => '/manufacturer',
                     'icon' => 'far fa-fw fa-file'
                 ],
+                [
+                    'text' => 'Product Types',
+                    'url' => '/product_type',
+                    'icon' => 'far fa-fw fa-file'
+                ],
             ],
         ]
 //        [
