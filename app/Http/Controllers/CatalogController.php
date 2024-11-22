@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Catalog;
 use App\Models\Manufacturer;
+use App\Models\ProductCondition;
 use App\Models\ProductKeyFeatures;
 use App\Models\ProductTags;
 use App\Models\ProductTitleKeyword;
@@ -106,7 +107,8 @@ class CatalogController extends Controller
         $stores = Store::all();
         $manufacturers = Manufacturer::all();
         $productTypes = ProductType::all();
-        return view('catalog.update', compact('product','keyFeatures','titleKeywords','productImages','productTags','pageAt','stores','manufacturers','productTypes'));
+        $productConditions = ProductCondition::all();
+        return view('catalog.update', compact('product','keyFeatures','titleKeywords','productImages','productTags','pageAt','stores','manufacturers','productTypes','productConditions'));
     }
 
     /**
@@ -173,9 +175,10 @@ class CatalogController extends Controller
         $stores = Store::with('storeCategory')->get();
         $manufacturers = Manufacturer::all();
         $productTypes = ProductType::all();
+        $productConditions = ProductCondition::all();
         /*echo '<pre>';
         print_r($stores);die;*/
-        return view('catalog.update', compact('product','keyFeatures','titleKeywords','productImages','productTags','pageAt','stores','manufacturers','productTypes'));
+        return view('catalog.update', compact('product','keyFeatures','titleKeywords','productImages','productTags','pageAt','stores','manufacturers','productTypes','productConditions'));
     }
 
     /**
