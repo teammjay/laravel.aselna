@@ -129,9 +129,13 @@
                                             <div class="col-md-6">
                                                 <div class="form-group">
                                                     <label for="product_condition">Product Condition</label>
-                                                    <select class="form-control" id="product_condition" name="product_condition">
+                                                    <select class="form-control" id="product_condition_id" name="product_condition_id">
                                                         <option>-- Product Condition --</option>
-                                                        <option value="new" {{ "new" == $product->product_condition ? 'selected' : '' }}>New</option>
+                                                        @if(count($productConditions ?? []) > 0)
+                                                            @foreach($productConditions as $pc)
+                                                                <option value="{{ $pc->id }}" {{ $pc->id == $product->product_condition_id ? 'selected' : '' }}>{{ $pc->name }}</option>
+                                                            @endforeach
+                                                        @endif
                                                     </select>
                                                     <span class="error-message text-danger" id="product_condition-error"></span>
                                                 </div>

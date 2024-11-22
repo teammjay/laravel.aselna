@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Brand;
+use App\Models\DeviceTypes;
 use App\Models\Manufacturer;
 use App\Models\ProductType;
 use Illuminate\Http\Request;
@@ -77,7 +79,9 @@ class ListingController extends Controller
         $stores = Store::all();
         $manufacturers = Manufacturer::all();
         $productTypes = ProductType::all();
-        return view('listing.create', compact('pageAt','stores','manufacturers','productTypes'));
+        $deviceTypes = DeviceTypes::all();
+        $brands = Brand::all();
+        return view('listing.create', compact('pageAt','stores','manufacturers','productTypes','deviceTypes','brands'));
     }
 
     /**
