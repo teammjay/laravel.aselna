@@ -424,6 +424,11 @@ return [
                     'url' => '/product_type',
                     'icon' => 'far fa-fw fa-file'
                 ],
+                [
+                    'text' => 'Product Condition',
+                    'url' => '/product_condition',
+                    'icon' => 'far fa-fw fa-file'
+                ],
             ],
         ]
 //        [

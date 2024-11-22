@@ -22,6 +22,7 @@ use App\Http\Controllers\StoreTypesController;
 use App\Http\Controllers\ListingController;
 use App\Http\Controllers\ManufacturerController;
 use App\Http\Controllers\ProductTypeController;
+use App\Http\Controllers\ProductConditionController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -82,6 +83,15 @@ Route::controller(ProductTypeController::class)->group(function () {
     Route::get('/product_type/edit/{id}', 'edit')->name('product_type.edit');
     Route::post('/product_type/edit/{id}', 'update')->name('product_type.update');
     Route::get('/product_type/delete/{id}', 'destroy')->name('product_type.delete');
+});
+
+Route::controller(ProductConditionController::class)->group(function () {
+    Route::get('/product_condition', 'index')->name('product_condition.index');
+    Route::get('/product_condition/add', 'create')->name('product_condition.create');
+    Route::post('/product_condition/add', 'store')->name('product_condition.store');
+    Route::get('/product_condition/edit/{id}', 'edit')->name('product_condition.edit');
+    Route::post('/product_condition/edit/{id}', 'update')->name('product_condition.update');
+    Route::get('/product_condition/delete/{id}', 'destroy')->name('product_condition.delete');
 });
 
 Route::controller(ManufacturerController::class)->group(function () {
