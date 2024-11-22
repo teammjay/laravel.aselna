@@ -21,6 +21,8 @@ class Brand extends Model
         'status'
     ];
 
+    protected $keyType = 'string';
+
     protected static function boot()
     {
         parent::boot();

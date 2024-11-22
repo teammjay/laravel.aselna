@@ -11,6 +11,8 @@ class Device extends Model
 
     protected $table = 'device';
 
+    protected $keyType = 'string';
+
     protected $fillable = [
         'dimensions_height',
         'dimensions_width',

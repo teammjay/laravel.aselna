@@ -31,11 +31,11 @@ class SyncAllTables extends Command
      */
     public function handle()
     {
-//        ManufacturerSyncJob::dispatch();
+        ManufacturerSyncJob::dispatch();
         DeviceTypesSyncJob::dispatch();
-//        BrandSyncJob::dispatch();
-//        DevicesSyncJob::dispatch();
+        BrandSyncJob::dispatch();
+        DevicesSyncJob::dispatch();
 //        ProductSyncJob::dispatch();
-//        CategorySyncJob::dispatch();
+        CategorySyncJob::dispatch();
     }
 }

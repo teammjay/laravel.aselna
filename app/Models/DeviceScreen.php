@@ -11,6 +11,8 @@ class DeviceScreen extends Model
     protected $table = 'device_screens';
     protected $fillable = ['size', 'status', 'created_by', 'updated_by'];
 
+    protected $keyType = 'string';
+
     protected static function boot()
     {
         parent::boot();

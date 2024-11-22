@@ -14,6 +14,10 @@ class DeviceTypes extends Model
     // timestamps
     public $timestamps = true;
 
+    // add id as uuid
+    protected $primaryKey = 'id';
+    protected $keyType = 'string';
+
     protected static function boot()
     {
         parent::boot();

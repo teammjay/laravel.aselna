@@ -10,6 +10,8 @@ class Category extends Model
 
     protected $fillable = ['name', 'code', 'notes1', 'order', 'status', 'created_by', 'updated_by'];
 
+    protected $keyType = 'string';
+
     protected static function boot()
     {
         parent::boot();

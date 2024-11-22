@@ -11,6 +11,8 @@ class DeviceRating extends Model
 
     protected $fillable = ['value', 'created_by', 'updated_by', 'status'];
 
+    protected $keyType = 'string';
+
     protected static function boot()
     {
         parent::boot();

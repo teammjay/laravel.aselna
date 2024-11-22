@@ -74,8 +74,8 @@ class DeviceTypesSyncJob implements ShouldQueue
 
     private function createDeviceSubType(mixed $deviceSubType)
     {
-//        Log::info('Device Sub Type: ' . json_encode($deviceSubType));
         $deviceType = DeviceTypes::where('code', $deviceSubType->device_type_id)->first();
+        Log::info('Device Type: ' . json_encode($deviceType));
         DeviceSubTypes::updateOrInsert(
             ['code' => $deviceSubType->device_type_sub_id],
             [
@@ -83,7 +83,7 @@ class DeviceTypesSyncJob implements ShouldQueue
                 'name' => $deviceSubType->device_sub_type,
                 'code' => $deviceSubType->device_type_sub_id,
                 'notes1' => $deviceSubType->notes1,
-                'device_type_id' => $deviceType->id,
+                'device_type_id' => (string) $deviceType->id,
                 'status' => 'active',
                 'created_by' => 'system',
                 'updated_by' => 'system',
