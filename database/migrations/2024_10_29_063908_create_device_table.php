@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('device', function (Blueprint $table) {
-            $table->id();
+            $table->uuid('id')->primary();
             // Add all this as table colums
             // dimensions_height, dimensions_width,model_name,release_date, screen_size_unit,image, thumbnail_image
             // notes, order, code, dimensions_length, dimensions_length_unit.
@@ -28,14 +28,34 @@ return new class extends Migration
             $table->string('dimensions_length', 50)->nullable();
             $table->string('dimensions_length_unit', 50)->nullable();
 
-            // and this as foreign keys
-            //device_sub_type_id, device_series_id, rating_id, screen_id,brand_id, device_type_id
-            $table->foreignId('device_sub_type_id')->nullable()->constrained('device_sub_types');
-            $table->foreignId('device_series_id')->nullable()->constrained('device_series');
-            $table->foreignId('rating_id')->nullable()->constrained('device_ratings');
-            $table->foreignId('screen_id')->nullable()->constrained('device_screens');
-            $table->foreignId('brand_id')->nullable()->constrained('brands');
-            $table->foreignId('device_type_id')->nullable()->constrained('device_types');
+            $table->uuid('device_sub_type_id')->nullable();
+            $table->foreign('device_sub_type_id')->references('id')->on('device_sub_types')
+                ->onDelete('cascade');
+
+            //device_series_id
+            $table->uuid('device_series_id')->nullable();
+            $table->foreign('device_series_id')->references('id')->on('device_series')
+                ->onDelete('cascade');
+
+            //rating_id
+            $table->uuid('rating_id')->nullable();
+            $table->foreign('rating_id')->references('id')->on('device_ratings')
+                ->onDelete('cascade');
+
+            //screen_id
+            $table->uuid('screen_id')->nullable();
+            $table->foreign('screen_id')->references('id')->on('device_screens')
+                ->onDelete('cascade');
+
+            //brand_id
+            $table->uuid('brand_id')->nullable();
+            $table->foreign('brand_id')->references('id')->on('brands')
+                ->onDelete('cascade');
+
+            //device_type_id
+            $table->uuid('device_type_id')->nullable();
+            $table->foreign('device_type_id')->references('id')->on('device_types')
+                ->onDelete('cascade');
 
 
             $table->string('created_by', 50)->nullable();

@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('categories', function (Blueprint $table) {
-            $table->id();
+            $table->uuid('id')->primary();
             // add name, image, notes1, order1, status, created_by, updated_by
             $table->string('name');
             $table->string('image')->nullable();
@@ -26,9 +26,10 @@ return new class extends Migration
         });
 
         Schema::create('categories_sub', function (Blueprint $table) {
-            $table->id();
+            $table->uuid('id')->primary();
             // add category id, name, image, notes1, order1, status, created_by, updated_by
-            $table->foreignId('category_id')->constrained('categories')->onDelete('cascade');
+            $table->uuid('category_id')->nullable();
+            $table->foreign('category_id')->references('id')->on('categories')->onDelete('cascade');
             $table->string('name');
             $table->string('image')->nullable();
             $table->string('notes1')->nullable();

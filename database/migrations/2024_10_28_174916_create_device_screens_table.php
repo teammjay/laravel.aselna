@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('device_screens', function (Blueprint $table) {
-            $table->id();
+            $table->uuid('id')->primary();
             $table->string('size');
             $table->string('size_unit', 50)->nullable();
             $table->string('status');

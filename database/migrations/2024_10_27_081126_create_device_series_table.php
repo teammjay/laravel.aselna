@@ -11,7 +11,7 @@ return new class extends Migration {
     public function up(): void
     {
         Schema::create('device_series', function (Blueprint $table) {
-            $table->id();
+            $table->uuid('id')->primary();
             $table->string('name', 100);
             $table->string('slug', 100)->unique();
             $table->string('created_by', 50)->nullable();
