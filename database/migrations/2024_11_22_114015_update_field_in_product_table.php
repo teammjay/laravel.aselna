@@ -25,7 +25,8 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('products', function (Blueprint $table) {
-            //
+            $table->string('product_condition')->nullable();
+            $table->dropForeign(['product_condition_id']);
         });
     }
 };
