@@ -3,9 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\Brand;
+use App\Models\Catalog;
 use App\Models\DeviceTypes;
 use App\Models\Manufacturer;
 use App\Models\ProductType;
+use App\Models\StoreProduct;
 use Illuminate\Http\Request;
 use App\Models\Store;
 
@@ -95,5 +97,63 @@ class ListingController extends Controller
         //echo '<pre>';
         //print_r($productTags);die;
         return view('listing.update', compact('manufacturers','pageAt','stores'));
+    }
+
+    public function getProducts(Request $request){
+
+        $query = StoreProduct::with('Product');
+        $query->leftJoin('products','products.product_id', '=', 'store_product.product_id');
+        // Filter by product store
+
+        if ($request->has('store_id') && $request->input('store_id') != '') {
+            $query->where('store_product.store_id', $request->input('store_id'));
+        }
+        // Filter by product title
+        if ($request->has('product_code') && $request->product_code != '') {
+            $query->whereIn('products.product_sku', $request->product_code);
+        }
+
+
+        $products = $query->get(); // Paginate results
+
+        //echo '<pre>';
+        //print_r($products);die;
+
+        //echo $query->toSql();die;
+
+        // Return a view or JSON
+        if ($request->ajax()) {
+            return response()->json([
+                'html' => view('listing.search_product_list', compact('products'))->render()
+            ]);
+        }
+    }
+
+    public function search(Request $request){
+
+        $term = $request->input('term');
+        $type = $request->input('type');
+        //echo $term;die;
+
+        switch ($type){
+
+            case 'product_code':
+                $product = Catalog::select('product_id','product_sku')->WhereLike('product_sku', '%'.$term.'%')->get();
+                foreach ($product as $key => $value)
+                {
+                    $data["display"][] = [
+                        "label" => $value->product_sku,
+                        "value" => $value->product_sku
+                    ];
+                    $data["details"][$value->ID] = [
+                        "name" => $value->product_sku,
+                        "ID" => $value->product_sku
+                    ];
+                }
+
+                return response()->json($data);
+                break;
+
+        }
     }
 }
