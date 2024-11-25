@@ -71,11 +71,6 @@
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" id="tags-tab" data-toggle="pill" href="#tab12" role="tab" aria-controls="tab12" aria-selected="false">
-                            Titles
-                        </a>
-                    </li>
-                    <li class="nav-item">
                         <a class="nav-link" id="stores-tab" data-toggle="pill" href="#tab9" role="tab" aria-controls="tab9" aria-selected="false">
                             Stores
                         </a>
@@ -850,42 +845,7 @@
                             </div>
                         </form>
                     </div>
-                    <div class="tab-pane fade" id="tab12" role="tabpanel" aria-labelledby="titles-tab">
-                        <form method="POST" id="frmtab12">
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <div class="form-group">
-                                        <button type="button" class="btn btn-secondary" id="add_title"><i class="fa fa-plus-square"></i> Add</button>
-                                        <table class="table table-bordered mt-2" id="table_title">
-                                            <thead>
-                                            <tr>
-                                                <th>Sort</th>
-                                                <th>Title</th>
-                                                <th></th>
-                                            </tr>
-                                            </thead>
-                                            <tbody>
-                                                @if(count($titles ?? []) > 0)
-                                                    @foreach($titles as $title)
-                                                        <tr class="field-group">
-                                                            <td><input type="text" class="form-control" name="title_sort_order[]" value="{{ $title->sort_order }}"></td>
-                                                            <td>< type="text" class="form-control" name="titles[]">{{ $title->title }}</td>
-                                                            <td><button type="button" class="btn btn-danger remove-title"> <i class="fas fa-fw fa-trash"></i></button></td>
-                                                        </tr>
-                                                    @endforeach
-                                                @else
-                                                    <tr>
-                                                        <td><input type="text" class="form-control" name="title_sort_order[]" value="1"></td>
-                                                        <td><input type="text" class="form-control" name="titles[]"></td>
-                                                        <td></td>
-                                                    </tr>
-                                                @endif
-                                            </tbody>
-                                    </div>
-                                </div>
-                            </div>
-                        </form>
-                    </div>
+
                 </div>
             </div>
         </div>
@@ -1256,15 +1216,6 @@
                 }
             });
 
-            $('#add_title').click(function () {
-                $('#table_title tbody').append(`
-                    <tr class="field-group">
-                        <td><input type="text" class="form-control" name="title_sort_order[]" value=""></td>
-                        <td><input type="text" class="form-control" name="titles[]"></td>
-                        <td><button type="button" class="btn btn-danger remove-title"> <i class="fas fa-fw fa-trash"></i></button></td>
-                    </tr>
-                `);
-            });
 
         });
     </script>
