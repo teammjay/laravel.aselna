@@ -31,4 +31,8 @@ class StoreProduct extends Model
 
     protected $fillable = ['product_id','store_id','store_category_id','title','active','price','msrp','description','sales_count','manufacturer_id','overwrite_compare_at_price','wholesale_price','compare_at_price','overwrite_wholesale_price','overwrite_description','overwrite_title','overwrite_msrp','overwrite_price','created_by','updated_by'];
 
+    public function product(){
+        return $this->belongsTo(Catalog::class,'product_id');
+    }
+
 }

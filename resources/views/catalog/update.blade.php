@@ -690,14 +690,14 @@
                                                     <tr class="store_row" id="store_{{ $store->id }}" data-id="{{ $store->id }}">
                                                         <td>{{ $store->name.' - '.$store->marketplace_name }}</td>
                                                         <td align="center">
-                                                            <input type="checkbox" name="active" {{ $store->store_status == 1 ? 'checked' : '' }} />
+                                                            <input type="checkbox" name="active" {{ (isset($productStore) && in_array($store->id,$productStore)) ? 'checked' : '' }} />
                                                             <input type="hidden" name="store_id" value="{{ $store->id }}">
                                                         </td>
                                                         <td>
                                                             <select class="form-control" name="store_category_id">
                                                                 @if(count($store->storeCategory ?? []) > 0)
                                                                     @foreach($store->storeCategory as $key2=>$sCat)
-                                                                        <option value="{{ $sCat->id }}">{{ $sCat->name }}</option>
+                                                                        <option value="{{ $sCat->id }}" {{ (isset($productStore) && in_array($sCat->id,$productStoreCategory)) ? 'selected' : '' }}>{{ $sCat->name }}</option>
                                                                     @endforeach
                                                                 @endif
                                                             </select>
@@ -720,7 +720,7 @@
                                                     <label class="col-form-label">Title</label>
                                                 </div>
                                                 <div class="col-md-9 d-flex justify-between">
-                                                    <input type="checkbox" name="overwrite_title" class="mr-1"> <textarea class="form-control" name="title" id="store_product_title" placeholder="Store Name/ Title" readonly>{{ old('product_title',$product->product_title) }}</textarea>
+                                                    <input type="checkbox" name="overwrite_title" id="overwrite_title" class="mr-1"> <textarea class="form-control" name="title" id="store_product_title" placeholder="Store Name/ Title" readonly>{{ old('product_title',$product->product_title) }}</textarea>
                                                 </div>
                                             </div>
                                             <div class="row mt-3 g-3 align-items-center">
@@ -728,7 +728,7 @@
                                                     <label class="col-form-label">Description</label>
                                                 </div>
                                                 <div class="col-md-9 d-flex justify-between">
-                                                    <input type="checkbox" name="overwrite_description" class="mr-1"> <textarea class="form-control" name="description" id="store_product_description" placeholder="Description" rows="8" readonly>{{ old('product_description',$product->product_description) }}</textarea>
+                                                    <input type="checkbox" id="overwrite_description" name="overwrite_description" class="mr-1"> <textarea class="form-control" name="description" id="store_product_description" placeholder="Description" rows="8" readonly>{{ old('product_description',$product->product_description) }}</textarea>
                                                 </div>
                                             </div>
                                             <div class="row mt-3 g-3 align-items-center">
@@ -736,7 +736,7 @@
                                                     <label class="col-form-label">Price</label>
                                                 </div>
                                                 <div class="col-md-9 d-flex justify-between">
-                                                    <input type="checkbox" name="overwrite_price" class="mr-1"> <input type="text" class="form-control" name="price" id="store_product_price" placeholder="00.00" value="{{ old('product_price',$product->product_price) }}" readonly>
+                                                    <input type="checkbox" id="overwrite_price" name="overwrite_price" class="mr-1"> <input type="text" class="form-control" name="price" id="store_product_price" placeholder="00.00" value="{{ old('product_price',$product->product_price) }}" readonly>
                                                 </div>
                                             </div>
                                             <div class="row mt-3 g-3 align-items-center">
@@ -744,7 +744,7 @@
                                                     <label class="col-form-label">Compare at Price</label>
                                                 </div>
                                                 <div class="col-md-9 d-flex justify-between">
-                                                    <input type="checkbox" name="overwrite_compare_at_price" class="mr-1"> <input type="text" class="form-control" name="compare_at_price" id="store_product_compare_at_price" value="{{ old('product_marketplace_price',$product->product_marketplace_price) }}" placeholder="00.00" readonly>
+                                                    <input type="checkbox" id="overwrite_compare_at_price" name="overwrite_compare_at_price" class="mr-1"> <input type="text" class="form-control" name="compare_at_price" id="store_product_compare_at_price" value="{{ old('product_marketplace_price',$product->product_marketplace_price) }}" placeholder="00.00" readonly>
                                                 </div>
                                             </div>
                                             <div class="row mt-3 g-3 align-items-center">
@@ -752,7 +752,7 @@
                                                     <label class="col-form-label">Fbc Price</label>
                                                 </div>
                                                 <div class="col-md-9 d-flex justify-between">
-                                                    <input type="checkbox" name="overwrite_fulfillment_by_channel_price" class="mr-1"> <input type="text" class="form-control" name="fulfillment_by_channel_price" id="store_product_fbc_price" placeholder="00.00" readonly>
+                                                    <input type="checkbox" id="overwrite_fulfillment_by_channel_price" name="overwrite_fulfillment_by_channel_price" class="mr-1"> <input type="text" class="form-control" name="fulfillment_by_channel_price" id="store_product_fbc_price" placeholder="00.00" readonly>
                                                 </div>
                                             </div>
                                             <div class="row mt-3 g-3 align-items-center">
@@ -760,7 +760,7 @@
                                                     <label class="col-form-label">Wholesale Price</label>
                                                 </div>
                                                 <div class="col-md-9 d-flex justify-between">
-                                                    <input type="checkbox" name="overwrite_wholesale_price" class="mr-1"> <input type="text" class="form-control" name="wholesale_price" id="store_product_price" value="{{ old('product_wholesale_price',$product->product_wholesale_price) }}" placeholder="00.00" readonly>
+                                                    <input type="checkbox" id="overwrite_wholesale_price" name="overwrite_wholesale_price" class="mr-1"> <input type="text" class="form-control" name="wholesale_price" id="store_wholesale_price" value="{{ old('product_wholesale_price',$product->product_wholesale_price) }}" placeholder="00.00" readonly>
                                                 </div>
                                             </div>
                                             <div class="row mt-3 g-3 align-items-center">
@@ -768,7 +768,7 @@
                                                     <label class="col-form-label">Msrp</label>
                                                 </div>
                                                 <div class="col-md-9 d-flex justify-between">
-                                                    <input type="checkbox" name="overwrite_msrp" class="mr-1"> <input type="text" class="form-control" name="msrp" id="store_product_msrp" value="{{ old('product_mrsp',$product->product_mrsp) }}" placeholder="00.00" readonly>
+                                                    <input type="checkbox" id="overwrite_msrp" name="overwrite_msrp" class="mr-1"> <input type="text" class="form-control" name="msrp" id="store_product_msrp" value="{{ old('product_mrsp',$product->product_mrsp) }}" placeholder="00.00" readonly>
                                                 </div>
                                             </div>
                                             <div class="row mt-3 g-3 align-items-center">
@@ -785,7 +785,7 @@
                                                     <label class="col-form-label">Manufacturer</label>
                                                 </div>
                                                 <div class="col-md-9 d-flex justify-between">
-                                                    <select class="form-control" id="manufacturer_id" name="manufacturer_id">
+                                                    <select class="form-control" id="store_manufacturer_id" name="manufacturer_id">
                                                         <option>-- Product Manufacture --</option>
                                                         @if(count($manufacturers ?? []) > 0)
                                                             @foreach($manufacturers as $mf)
@@ -910,6 +910,7 @@
                 }else{
                     var status = 0;
                 }
+                formData.set('store_id',store_id);
                 formData.set('active',status);
             }
 
@@ -1168,6 +1169,7 @@
                     type: 'POST',
                     data: {
                         store_id : store_id,
+                        product_id : product_id,
                     },
                     headers: {
                         'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
@@ -1175,9 +1177,63 @@
                     success: function (response) {
                         if (response.success) {
                             //alert(response.message);
-                            console.log(response.data);
-                            if(response.data){
-                                $('#store_title').val(response.data.name);
+                            //console.log(response.data);
+                            if(response.data.title){
+                                $('#store_product_title').val(response.data.title);
+                                $('#store_product_description').val(response.data.description);
+                                $('#store_product_price').val(response.data.price);
+                                $('#store_product_compare_at_price').val(response.data.compare_at_price);
+                                $('#store_product_fbc_price').val(response.data.fulfillment_by_channel_price);
+                                $('#store_wholesale_price').val(response.data.wholesale_price);
+                                $('#store_product_msrp').val(response.data.msrp);
+                                $('#store_product_sales_count').val(response.data.sales_count);
+                                $('#store_manufacturer_id').val(response.data.manufacturer_id);
+                                if(response.data.overwrite_title == 1) {
+                                    $('#overwrite_title').prop('checked', true);
+                                    $('#store_product_title').removeAttr('readonly');
+                                }
+                                if(response.data.overwrite_description == 1) {
+                                    $('#overwrite_description').prop('checked', true);
+                                    $('#store_product_description').removeAttr('readonly');
+                                }
+                                if(response.data.overwrite_price == 1) {
+                                    $('#overwrite_price').prop('checked', true);
+                                    $('#store_product_price').removeAttr('readonly');
+                                }
+                                if(response.data.overwrite_compare_at_price == 1) {
+                                    $('#overwrite_compare_at_price').prop('checked', true);
+                                    $('#store_product_compare_at_price').removeAttr('readonly');
+                                }
+                                if(response.data.overwrite_fulfillment_by_channel_price == 1) {
+                                    $('#overwrite_fulfillment_by_channel_price').prop('checked', true);
+                                    $('#store_product_fbc_price').removeAttr('readonly');
+                                }
+                                if(response.data.overwrite_wholesale_price == 1) {
+                                    $('#overwrite_wholesale_price').prop('checked', true);
+                                    $('#store_wholesale_price').removeAttr('readonly');
+                                }
+                                if(response.data.overwrite_msrp == 1) {
+                                    $('#overwrite_msrp').prop('checked', true);
+                                    $('#store_product_msrp').removeAttr('readonly');
+                                }
+                            }else{
+                                $('#store_product_title').val(response.data.product_title);
+                                $('#store_product_description').val(response.data.product_description);
+                                $('#store_product_price').val(response.data.product_price);
+                                $('#store_product_compare_at_price').val(response.data.product_marketplace_price);
+                                $('#store_product_fbc_price').val(response.data.fulfillment_by_channel_price);
+                                $('#store_wholesale_price').val(response.data.product_wholesale_price);
+                                $('#store_product_msrp').val(response.data.product_mrsp);
+                                $('#store_product_sales_count').val('00.00');
+                                $('#store_manufacturer_id').val(response.data.manufacturer_id);
+                                $('#overwrite_title').prop('checked', false);
+                                $('#overwrite_description').prop('checked', false);
+                                $('#overwrite_price').prop('checked', false);
+                                $('#overwrite_compare_at_price').prop('checked', false);
+                                $('#overwrite_fulfillment_by_channel_price').prop('checked', false);
+                                $('#overwrite_wholesale_price').prop('checked', false);
+                                $('#overwrite_msrp').prop('checked', false);
+                                $('#store_product_detail').find('input[type="text"]').attr('readonly',true);
                             }
                         }
                     },

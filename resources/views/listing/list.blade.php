@@ -619,7 +619,7 @@
         $('#open_store_page').on('click',function () {
             var store_id = $('#listing_store').val();
 
-            location.href = "{{ route('store.edit', $store->id) }}" + store_id;
+            location.href = "{{ url('stores/edit') }}/" + store_id;
         });
 
         $('#filter-form').on('submit', function(e) {
