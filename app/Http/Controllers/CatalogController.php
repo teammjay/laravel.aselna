@@ -176,9 +176,12 @@ class CatalogController extends Controller
         $manufacturers = Manufacturer::all();
         $productTypes = ProductType::all();
         $productConditions = ProductCondition::all();
-        /*echo '<pre>';
-        print_r($stores);die;*/
-        return view('catalog.update', compact('product','keyFeatures','titleKeywords','productImages','productTags','pageAt','stores','manufacturers','productTypes','productConditions'));
+        $storeProducts = StoreProduct::where('product_id', $id)->get();
+        $productStore = $storeProducts->pluck('store_id')->values()->all();
+        $productStoreCategory = $storeProducts->pluck('store_category_id')->values()->all();
+       /* echo '<pre>';
+        print_r($productStoreCategory);die;*/
+        return view('catalog.update', compact('product','keyFeatures','titleKeywords','productImages','productTags','pageAt','stores','manufacturers','productTypes','productConditions','productStore','productStoreCategory'));
     }
 
     /**
@@ -469,11 +472,15 @@ class CatalogController extends Controller
 
     public function getStoreDetail(Request $request){
         $store_id = $request->input('store_id');
+        $product_id = $request->input('product_id');
         if($store_id){
 
-            $storeProductDetail = StoreProduct::findOrFail($store_id)->toArray();
+            $storeProductDetail = StoreProduct::where(['store_id'=>$store_id,'product_id'=>$product_id])->first();
 
-            //print_r($storeDetail);die;
+            if(!$storeProductDetail){
+                $storeProductDetail =  Catalog::where(['product_id'=>$product_id])->first();
+            }
+            //print_r($storeProductDetail);die;
             return response()->json(['success' => true, 'data' => $storeProductDetail]);
         }else{
             return response()->json(['success' =>false]);
