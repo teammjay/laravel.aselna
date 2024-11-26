@@ -3,13 +3,11 @@
 {{--@section('title', '')--}}
 
 @section('content_header')
-    <h1>{{ isset($product_condition) ? 'Edit Product Type' : 'Add Product Type' }}</h1>
+    <h1>{{ isset($product_condition) ? 'Edit Product Condition' : 'Add Product Condition' }}</h1>
 @stop
 
 @section('content')
-    <form
-        action="{{ isset($product_condition) ? route('product_condition.update',['id' => $product_condition['id']]) : route('product_condition.store') }}"
-        method="POST">
+    <form action="{{ isset($product_condition) ? route('product_condition.update',['id' => $product_condition['id']]) : route('product_condition.store') }}"  method="POST">
         @csrf
         <div class="card card-primary">
             <div class="card-body">

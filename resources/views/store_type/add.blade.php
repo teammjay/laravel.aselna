@@ -3,7 +3,7 @@
 {{--@section('title', '')--}}
 
 @section('content_header')
-    <h1>{{ isset($store_types) ? 'Edit Page Type' : 'Add Page Type' }}</h1>
+    <h1>{{ isset($store_types) ? 'Edit Store Type' : 'Add Store Type' }}</h1>
 @stop
 
 @section('content')
