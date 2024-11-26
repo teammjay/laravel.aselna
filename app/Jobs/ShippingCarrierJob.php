@@ -41,8 +41,6 @@ class ShippingCarrierJob implements ShouldQueue
                 'id' => (string) Str::uuid(),
                 'code' => $carrier->carrier_id,
                 'name' => $carrier->carrier,
-                'created_by' => 'system',
-                'updated_by' => 'system',
             ]
         );
     }
