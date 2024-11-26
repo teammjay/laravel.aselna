@@ -3,7 +3,7 @@
 {{--@section('title', '')--}}
 
 @section('content_header')
-    <h1>{{ isset($shipping_carrier_service) ? 'Edit Shipping Carrier' : 'Add Shipping Carrier' }}</h1>
+    <h1>{{ isset($shipping_carrier_service) ? 'Edit Shipping Carrier Service' : 'Add Shipping Carrier Service' }}</h1>
 @stop
 
 @section('content')
