@@ -257,7 +257,7 @@ return [
     */
 
     'use_route_url' => false,
-    'dashboard_url' => 'home',
+    'dashboard_url' => '/',
     'logout_url' => 'logout',
     'login_url' => 'login',
     'register_url' => 'register',
@@ -328,8 +328,34 @@ return [
         ],
         [
             'text' => 'Stores',
-            'url' => '/stores',
-            'icon' => 'far fa-fw fa-file'
+            'icon' => 'far fa-fw fa-file',
+            'submenu' => [
+                [
+                    'text' => 'Stores',
+                    'url' => '/stores',
+                    'icon' => 'far fa-fw fa-file',
+                ],
+                [
+                    'text' => 'UPC Generate',
+                    'url' => '#',
+                    'icon' => 'far fa-fw fa-file',
+                ],
+                [
+                    'text' => 'UPC Codes',
+                      'url' => '#',
+                    'icon' => 'far fa-fw fa-file',
+                ],
+                [
+                    'text' => 'Page Templates',
+                    'url' => '#',
+                    'icon' => 'far fa-fw fa-file',
+                ],
+                [
+                    'text' => 'Store Pages',
+                    'url' => '#',
+                    'icon' => 'far fa-fw fa-file',
+                ]
+            ]
         ], [
             'text' => 'Customers',
             'url' => '/customers',
