@@ -41,7 +41,7 @@
             </div>
             <div class="card-footer text-center">
                 <button type="submit" class="btn btn-success">Submit</button>
-                <button type="submit" class="btn btn-secondary">Cancel</button>
+                <a href="{{ route('product_condition.index') }}" class="btn btn-secondary">Cancel</a>
                 @if(!isset($product_condition))
                     <button type="reset" class="btn btn-primary">Reset</button>
                 @endif

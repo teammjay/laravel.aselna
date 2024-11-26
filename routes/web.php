@@ -75,6 +75,8 @@ Route::controller(ListingController::class)->group(function () {
     Route::post('/listing/edit/{id}', 'update')->name('listing.update');
     Route::get('/listing/destroy/{id}', 'destroy')->name('listing.delete');
     Route::post('/listing/getProducts', 'getProducts')->name('listing.getproducts');
+    Route::post('/listing/getselectedproducts', 'getSelectedProducts')->name('listing.getselectedproducts');
+    Route::post('/listing/getproductsubtype', 'getProductSubType')->name('listing.getproductsubtype');
     Route::post('/listing/search', 'Search')->name('listing.search');
 });
 
