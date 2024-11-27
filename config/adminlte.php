@@ -337,12 +337,12 @@ return [
                 ],
                 [
                     'text' => 'UPC Generate',
-                    'url' => '#',
+                    'url' => '/upc_generate',
                     'icon' => 'far fa-fw fa-file',
                 ],
                 [
                     'text' => 'UPC Codes',
-                      'url' => '#',
+                      'url' => '/upc_codes',
                     'icon' => 'far fa-fw fa-file',
                 ],
                 [

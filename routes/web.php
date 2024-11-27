@@ -11,6 +11,7 @@ use App\Http\Controllers\DeviceSubTypesController;
 use App\Http\Controllers\DeviceTypesController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\SubCategoryController;
+use App\Http\Controllers\UPCController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\CatalogController;
 use App\Http\Controllers\StoreController;
@@ -239,4 +240,9 @@ Route::controller(SubCategoryController::class)->group(function () {
     Route::get('/categories_sub/edit/{id}', 'edit')->name('categories_sub.edit');
     Route::post('/categories_sub/edit/{id}', 'update')->name('categories_sub.update');
     Route::get('/categories_sub/delete/{id}', 'destroy')->name('categories_sub.delete');
+});
+
+Route::controller(UPCController::class)->group(function () {
+    Route::get('/upc_codes', 'upc_code')->name('upc_codes.upc_code');
+    Route::get('/upc_generate','upc_generate')->name('upc_codes.upc_generate');
 });

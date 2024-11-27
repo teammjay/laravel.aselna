@@ -23,7 +23,19 @@
                 <thead>
                 <tr>
                     <th>Id</th>
-                    <th>Sku</th>
+                    <th>Listing Id</th>
+                    <th>Feed type</th>
+                    <th>Store</th>
+                    <th>Status</th>
+                    <th>ListingFeed.createTs</th>
+                    <th> Submit Ts</th>
+                    <th>Number Of Items</th>
+                    <th>Processing Count</th>
+                    <th>Success</th>
+                    <th>Fail Count</th>
+                    <th>Warnings</th>
+                    <th>Number Of Attempts</th>
+                    <th> Feed Id</th>
                     <th>Action</th>
                 </tr>
                 </thead>
