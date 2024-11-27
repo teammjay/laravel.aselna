@@ -3,8 +3,11 @@
 @section('title', 'Listing')
 @section('adminlte_css_pre')
     <style>
-        #product_type_filter option, #manufacturer_filter option {
-        border-bottom: 1px solid #eaeaea;
+        #product_type_filter option, #manufacturer_filter option, select[multiple] option {
+            border-bottom: 1px solid #eaeaea;
+        }
+        #frmproductfilter .d-flex .border {
+            width: 14%;
         }
     </style>
 @stop
@@ -27,29 +30,29 @@
         <div class="card-body">
             <ul class="nav nav-tabs" id="custom-tabs-one-tab" role="tablist">
                 <li class="nav-item">
-                    <a class="nav-link active" id="select-product-tab" data-toggle="tab" href="#tab1" role="tab" aria-controls="tab1" aria-selected="true">
+                    <button class="nav-link active" id="select-product-tab" data-toggle="tab" data-target="#tab1" role="tab" aria-controls="tab1" aria-selected="true">
                         Select Product(s)
-                    </a>
+                    </button>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" id="product-update-tab" data-toggle="tab" href="#tab2" role="tab" aria-controls="tab2" aria-selected="false">
+                    <button class="nav-link" id="product-update-tab" data-toggle="tab" data-target="#tab2" role="tab" aria-controls="tab2" aria-selected="false">
                         Product Update
-                    </a>
+                    </button>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" id="select-device-tab" data-toggle="tab" href="#tab3" role="tab" aria-controls="tab3" aria-selected="false">
+                    <button class="nav-link" id="select-device-tab" data-toggle="tab" data-target="#tab3" role="tab" aria-controls="tab3" aria-selected="false">
                         Select Device(s)
-                    </a>
+                    </button>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" id="listing-tab" data-toggle="tab" href="#tab4" role="tab" aria-controls="tab4" aria-selected="false">
+                    <button class="nav-link" id="listing-tab" data-toggle="tab" data-target="#tab4" role="tab" aria-controls="tab4" aria-selected="false">
                         Listing
-                    </a>
+                    </button>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" id="summary-tab" data-toggle="tab" href="#tab5" role="tab" aria-controls="tab5" aria-selected="false">
+                    <button class="nav-link" id="summary-tab" data-toggle="tab" data-target="#tab5" role="tab" aria-controls="tab5" aria-selected="false">
                         Processing Summary
-                    </a>
+                    </button>
                 </li>
 
             </ul>
@@ -70,16 +73,16 @@
                                             @endif
                                         </select>
                                         <div class="form-group mb-1">
-                                            <input type="checkbox" name="never_listed_product" id="never_listed_product" checked> Never Listed Product
+                                            <input type="checkbox" name="never_listed_product" id="never_listed_product" checked> <span>Never Listed Product</span>
                                         </div>
                                         <div class="form-group mb-1">
-                                            <input type="checkbox" name="additional_image_available" id="additional_image_available"> Additional Image Available
+                                            <input type="checkbox" name="additional_image_available" id="additional_image_available"> <span>Additional Image Available</span>
                                         </div>
                                         <div class="form-group mb-1">
-                                            <input type="checkbox" name="exclude_oem" id="exclude_oem"> Exclude Oem
+                                            <input type="checkbox" name="exclude_oem" id="exclude_oem"> <span>Exclude Oem</span>
                                         </div>
                                         <div class="form-group mb-1">
-                                            <input type="checkbox" name="bundle_product" id="bundle_product"> Bundle Product
+                                            <input type="checkbox" name="bundle_product" id="bundle_product"> <span>Bundle Product</span>
                                         </div>
 
                                     </div>
@@ -97,20 +100,24 @@
                                         <div class="form-group d-flex position-relative">
                                             <input type="text" class="form-control" id="device_series_filter" placeholder="Search...."><i class="fa fa-search position-absolute" style="top: 50%;right: 5px;transform: translateY(-50%);"></i>
                                         </div>
+                                        <div id="device_series_list">
 
+                                        </div>
                                     </div>
                                     <div class="border p-2 ">
                                         <label>Device Filter</label>
                                         <div class="form-group d-flex position-relative">
                                             <input type="text" class="form-control" id="device_filter" placeholder="Search...."><i class="fa fa-search position-absolute" style="top: 50%;right: 5px;transform: translateY(-50%);"></i>
                                         </div>
+                                        <div id="device_list">
 
+                                        </div>
                                     </div>
                                     <div class="border p-2">
                                         <label>Manufacturer Filter</label>
                                         <div class="row">
                                             <div class="col-md-12">
-                                                <select class="form-control" id="manufacturer_filter" multiple>
+                                                <select class="form-control" name="manufacturer[]" id="manufacturer_filter" multiple>
                                                     @if(count($manufacturers ?? []) > 0)
                                                         @foreach($manufacturers as $mf)
                                                             <option value="{{ $mf->id }}">{{ $mf->name }}</option>
@@ -124,7 +131,7 @@
                                         <label>Product Type Filter</label>
                                         <div class="row">
                                             <div class="col-md-12">
-                                                <select class="form-control" id="product_type_filter" multiple>
+                                                <select class="form-control" name="product_type[]" id="product_type_filter" multiple>
                                                     @if(count($productTypes ?? []) > 0)
                                                         @foreach($productTypes as $pt)
                                                             <option value="{{ $pt->id }}">{{ $pt->name }}</option>
@@ -134,18 +141,38 @@
                                             </div>
                                         </div>
                                     </div>
+
+                                    <div class="border p-2" id="proSubType" style="display: none;">
+                                        <label>Product Sub Type Filter</label>
+                                        <div class="row">
+                                            <div class="col-md-12">
+                                                <select class="form-control" name="product_sub_type[]" id="product_sub_type_filter" multiple>
+
+                                                </select>
+                                            </div>
+                                        </div>
+
+                                        <label>Interface Filter</label>
+                                        <div class="row">
+                                            <div class="col-md-12">
+                                                <select class="form-control" name="interface[]" id="interface_filter" multiple>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </form>
                         <div class="col-md-12">
                             <div class="">
-                                <div class="card-header">
+                                <div class="card-header pl-0 pr-0">
                                     <input type="checkbox" id="seleced_product"> Selected Products Only
                                 </div>
-                                <div class="card-body">
+                                <div class="card-body pl-0 pr-0">
                                     <table id="productsTable" class="table table-bordered table-striped">
                                         <thead>
                                         <tr>
+                                            <th></th>
                                             <th>Image</th>
                                             <th>Product Code</th>
                                             <th>Product Type</th>
@@ -165,8 +192,6 @@
                             </div>
                         </div>
 
-                        <button type="button" class="btn btn-success" id="nextBtn">Next</button>
-                        <a href="{{ route('listing.list') }}" class="btn btn-secondary">Cancel</a>
                     </div>
                 </div>
                 <div class="tab-pane fade" id="tab2" role="tabpanel" aria-labelledby="product-update-tab">
@@ -240,10 +265,10 @@
                         </div>
                         <div class="col-md-12">
                             <div class="">
-                                <div class="card-header d-flex align-items-center">
+                                <div class="card-header d-flex align-items-center pr-0 pl-0">
                                     <label>Bundle Sperator</label> <input type="text" class="form-control ml-3" name="bundle_seperator" value="w" style="width: 150px;">
                                 </div>
-                                <div class="card-body">
+                                <div class="card-body pr-0 pl-0">
                                     <table id="productsTable" class="table table-bordered table-striped">
                                         <thead>
                                         <tr>
@@ -257,7 +282,7 @@
                                             <th>Channel Category</th>
                                         </tr>
                                         </thead>
-                                        <tbody id="product-list">
+                                        <tbody id="selected_product_list">
 
                                         {{--@include('catalog.product_list', ['products' => $products])--}}
 
@@ -481,6 +506,13 @@
                 </div>
                 <div class="tab-pane fade" id="tab5" role="tabpanel" aria-labelledby="summary-tab">
                 </div>
+                <div class="col-md-12 text-center">
+                    <div class="card-footer">
+                        <button type="button" class="btn btn-warning" id="prevBtn">Prev</button>
+                        <button type="button" class="btn btn-success" id="nextBtn">Next</button>
+                        <a href="{{ route('listing.list') }}" class="btn btn-secondary">Cancel</a>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -500,26 +532,98 @@
                 tab.show();
             };
 
+            // Function to activate a tab
+            const activateTab = (index) => {
+                tabs.forEach((tab, i) => {
+                    tab.disabled = i !== index; // Disable all other tabs
+                });
+
+                console.log(index);
+                const tabInstance = new bootstrap.Tab(tabs[index]);
+                console.log(tabInstance);
+                tabInstance.show();
+
+                // Enable/Disable Previous and Next buttons
+                document.getElementById('prevBtn').disabled = index === 0;
+                document.getElementById('nextBtn').disabled = index === tabs.length - 1;
+            };
+
             document.getElementById('nextBtn').addEventListener('click', () => {
                 console.log(tabs.length);
                 if (currentIndex < tabs.length - 1) {
+                    followSecondStep();
                     currentIndex++;
-                    updateTabs(currentIndex);
+                    activateTab(currentIndex);
                 }
             });
 
-            /*document.getElementById('prevBtn').addEventListener('click', () => {
+            // Handle Previous button click
+            document.getElementById('prevBtn').addEventListener('click', () => {
                 if (currentIndex > 0) {
                     currentIndex--;
-                    updateTabs(currentIndex);
+                    activateTab(currentIndex);
                 }
-            });*/
+            });
+
+            // Initialize by activating the first tab
+            activateTab(currentIndex);
+
         });
         $(document).ready(function() {
 
             $(document).on('click', '#searchBtn', function() {
                 loadProducts();
             });
+
+            $(document).on('click', '#seleced_product', function() {
+                if($(this).is(':checked')){
+                    $('.proCheck').prop('checked',false);
+                }else{
+                    $('.proCheck').prop('checked',true);
+                }
+            });
+
+            $(document).on('click', '.sproRow', function() {
+                if($('#seleced_product').is(':checked')){
+                    if($(this).find('.proCheck').is(':checked')){
+                        $(this).find('.proCheck').prop('checked',false);
+                    }else{
+                        $(this).find('.proCheck').prop('checked',true);
+                    }
+                }
+            });
+
+            $(document).on('change', '#product_type_filter', function() {
+                let product_type = $(this).val();
+                $.ajax({
+                    url: "{{ route('listing.getproductsubtype') }}",
+                    type: 'POST',
+                    data: {
+                        product_types:product_type
+                    },
+                   /* processData: false,
+                    contentType: false,*/
+                    headers: {
+                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                    },
+                    success: function (response) {
+                        console.log(response.html);
+                        if (response.success) {
+                            $('#proSubType').show();
+                            $('#product_sub_type_filter').html(response.option);
+                        }else{
+                            $('#proSubType').hide();
+                        }
+                    },
+                    error: function (xhr) {
+                        /*if (xhr.responseJSON?.error) {
+                            $('#responseMessage').html('<p style="color:red;">' + xhr.responseJSON.error.image[0] + '</p>');
+                        }*/
+                    }
+                });
+            });
+
+
 
             $('#product_code_filter').autocomplete({
 
@@ -538,9 +642,7 @@
                             'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                         },
                         success: function(data) {
-                            // Details to global temp
                             actemp = data.details;
-                            // Return display
                             response(data.display);
                         },
                         minLength: 2,
@@ -553,16 +655,76 @@
                     $('#pro_code_list').append('<div class="border p-1"><input type="hidden" name="product_code[]" value="'+ui.item.value+'">'+ui.item.value+'</div>');
                     return false;
                 }
-            });/*.bind('focus', function() {
-                if(!$(this).val().trim())
-                    $(this).keydown();
-            });*/
+            });
+
+            $('#device_series_filter').autocomplete({
+
+                source: function (request, response) {
+
+                    $.ajax({
+                        type: "POST",
+                        url: "{{ route('listing.search') }}",
+                        data: {
+                            term: request.term,
+                            type: "device_series"
+                        },
+                        //processData: false,
+                        //contentType: false,
+                        headers: {
+                            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                        },
+                        success: function(data) {
+                            actemp = data.details;
+                            response(data.display);
+                        },
+                        minLength: 2,
+                        delay: 100
+                    });
+                },
+                minLength: 2,
+                select : function(event, ui){
+                    $('#device_series_filter').val('');
+                    $('#device_series_list').append('<div class="border p-1"><input type="hidden" name="device_series[]" value="'+ui.item.value+'">'+ui.item.label+'</div>');
+                    return false;
+                }
+            });
+
+            $('#device_filter').autocomplete({
+
+                source: function (request, response) {
+
+                    $.ajax({
+                        type: "POST",
+                        url: "{{ route('listing.search') }}",
+                        data: {
+                            term: request.term,
+                            type: "device"
+                        },
+                        //processData: false,
+                        //contentType: false,
+                        headers: {
+                            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                        },
+                        success: function(data) {
+                            actemp = data.details;
+                            response(data.display);
+                        },
+                        minLength: 2,
+                        delay: 100
+                    });
+                },
+                minLength: 2,
+                select : function(event, ui){
+                    $('#device_filter').val('');
+                    $('#device_list').append('<div class="border p-1"><input type="hidden" name="device[]" value="'+ui.item.value+'">'+ui.item.label+'</div>');
+                    return false;
+                }
+            });
         });
 
         function loadProducts() {
             const form = document.querySelector("#frmproductfilter");
             let formData = new FormData(form);
-            console.log(formData);
             $.ajax({
                 url: "{{ route('listing.getproducts') }}",
                 type: 'POST',
@@ -573,7 +735,6 @@
                     'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                 },
                 success: function (response) {
-                    console.log(response.html);
                     if (response.html) {
                         $('#search-product-list').html(response.html);
                     }
@@ -584,6 +745,37 @@
                     }*/
                 }
             });
+        }
+
+        function followSecondStep() {
+
+            let selected_product = [];
+            $('input[name="products[]"]:checked').each(function () {
+                selected_product.push($(this).val())
+            });
+
+            $.ajax({
+                url: "{{ route('listing.getselectedproducts') }}",
+                type: 'POST',
+                data: {
+                    product_ids:selected_product,
+                    store_id:selected_product,
+                },
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                },
+                success: function (response) {
+                    if (response.html) {
+                        $('#selected_product_list').html(response.html);
+                    }
+                },
+                error: function (xhr) {
+                    /*if (xhr.responseJSON?.error) {
+                        $('#responseMessage').html('<p style="color:red;">' + xhr.responseJSON.error.image[0] + '</p>');
+                    }*/
+                }
+            });
+            console.log(selected_product);
         }
     </script>
 @stop
