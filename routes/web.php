@@ -25,6 +25,7 @@ use App\Http\Controllers\ListingController;
 use App\Http\Controllers\ManufacturerController;
 use App\Http\Controllers\ProductTypeController;
 use App\Http\Controllers\ProductConditionController;
+use App\Http\Controllers\InterfaceController;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/catalog', [CatalogController::class, 'index']);
@@ -77,6 +78,8 @@ Route::controller(ListingController::class)->group(function () {
     Route::post('/listing/getselectedproducts', 'getSelectedProducts')->name('listing.getselectedproducts');
     Route::post('/listing/getproductsubtype', 'getProductSubType')->name('listing.getproductsubtype');
     Route::post('/listing/search', 'Search')->name('listing.search');
+    Route::post('/listing/getkeywords', 'getKeywords')->name('listing.getkeywords');
+    Route::post('/listing/gettitlekeywords', 'getTitleKeywords')->name('listing.gettitlekeywords');
 });
 
 Route::controller(ProductTypeController::class)->group(function () {
@@ -149,6 +152,16 @@ Route::controller(PageTypesController::class)->group(function () {
     Route::get('/page_type/edit/{id}', 'edit')->name('page_type.edit');
     Route::post('/page_type/edit/{id}', 'update')->name('page_type.update');
     Route::get('/page_type/delete/{id}', 'destroy')->name('page_type.delete');
+});
+
+Route::controller(InterfaceController::class)->group(function () {
+    Route::get('/interface', 'index')->name('interface.list');
+    Route::get('/interface/filter', 'filter')->name('interface.filter');
+    Route::get('/interface/add', 'create')->name('interface.create');
+    Route::post('/interface/add', 'store')->name('interface.store');
+    Route::get('/interface/edit/{id}', 'edit')->name('interface.edit');
+    Route::post('/interface/edit/{id}', 'update')->name('interface.update');
+    Route::get('/interface/delete/{id}', 'destroy')->name('interface.delete');
 });
 
 Route::controller(BrandController::class)->group(function () {

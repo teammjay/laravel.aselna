@@ -371,6 +371,11 @@ return [
             'icon' => 'fas fa-fw fa-share',
             'submenu' => [
                 [
+                    'text' => 'Interface',
+                    'url' => '/interface',
+                    'icon' => 'far fa-fw fa-file'
+                ],
+                [
                     'text' => 'Brands',
                     'url' => '/brands',
                     'icon' => 'far fa-fw fa-file'
