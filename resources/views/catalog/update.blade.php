@@ -475,23 +475,13 @@
                                             Interfaces
                                         </div>
                                         <div class="card-body">
-                                            <button class="btn btn-secondary" type="button" id="add_retail"><i class="fa fa-plus-square"></i> Add</button>
-                                            <table class="table table-bordered mt-2" id="table_retail">
-                                                <thead>
-                                                <tr>
-                                                    <th>Quantity</th>
-                                                    <th>Price</th>
-                                                    <th></th>
-                                                </tr>
-                                                </thead>
-                                                <tbody>
-                                                <tr>
-                                                    <td><input type="text" class="form-control" name="retail_qty[]"></td>
-                                                    <td><input type="text" class="form-control" name="retail_price[]"></td>
-                                                    <td></td>
-                                                </tr>
-                                                </tbody>
-                                            </table>
+                                            <select class="form-control pro-interface" name="interfaces[]" multiple="multiple">
+                                                @if(count($interfaces ?? []) > 0)
+                                                    @foreach($interfaces as $interface)
+                                                        <option value="{{ $interface->id }}" {{ in_array($interface->id,$productInterfaces) ? 'selected' : '' }}>{{ $interface->name }}</option>
+                                                    @endforeach
+                                                @endif
+                                            </select>
                                         </div>
                                     </div>
                                 </div>
@@ -573,30 +563,30 @@
                     </div>
                     <div class="tab-pane fade" id="tab6" role="tabpanel" aria-labelledby="search-terms-tab">
                         <form method="POST" id="frmtab6">
-                            <button type="button" class="btn btn-secondary" id="add_title_keyword"><i class="fa fa-plus-square"></i> Add</button>
+                            <button type="button" class="btn btn-secondary" id="add_search_term"><i class="fa fa-plus-square"></i> Add</button>
                             <div class="row mt-3">
                                 <div class="col-md-6">
-                                    <table class="table table-bordered" id="table_title_keywords">
+                                    <table class="table table-bordered" id="table_search_term">
                                         <thead>
                                             <tr>
-                                                <th>Keyword</th>
-                                                <th>Priority</th>
+                                                <th>Term</th>
+                                                <th>Sort Order</th>
                                                 <th></th>
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            @if(count($titleKeywords ?? []) > 0)
-                                                @foreach($titleKeywords as $key)
+                                            @if(count($searchTerms ?? []) > 0)
+                                                @foreach($searchTerms as $key)
                                                     <tr class="field-group">
-                                                        <td width="70%"><input type="text" class="form-control" name="title_keyword[]" value="{{ $key->keyword }}"></td>
-                                                        <td width="20%"><input type="text" class="form-control" name="title_priority[]" value="{{ $key->priority }}"></td>
-                                                        <td width="10%"><button type="button" class="btn btn-danger remove-keyword"> <i class="fas fa-fw fa-trash"></i></button></td>
+                                                        <td width="70%"><input type="text" class="form-control" name="search_term[]" value="{{ $key->term }}"></td>
+                                                        <td width="20%"><input type="text" class="form-control" name="search_sort_order[]" value="{{ $key->sort_order }}"></td>
+                                                        <td width="10%"><button type="button" class="btn btn-danger remove-term"> <i class="fas fa-fw fa-trash"></i></button></td>
                                                     </tr>
                                                 @endforeach
                                             @else
                                                 <tr>
-                                                    <td width="80%"><input type="text" class="form-control" name="title_keyword[]"></td>
-                                                    <td width="20%"><input type="text" class="form-control" name="title_priority[]"></td>
+                                                    <td width="80%"><input type="text" class="form-control" name="search_term[]"></td>
+                                                    <td width="20%"><input type="text" class="form-control" name="search_sort_order[]"></td>
                                                 </tr>
                                             @endif
                                         </tbody>
@@ -837,6 +827,45 @@
                                     </div>
                                 </div>
                             </div>
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <div class="card">
+                                        <div class="card-header">Title Keywords</div>
+                                        <div class="card-body">
+                                            <button type="button" class="btn btn-secondary" id="add_title_keyword"><i class="fa fa-plus-square"></i> Add</button>
+                                            <div class="row mt-3">
+                                                <div class="col-md-6">
+                                                    <table class="table table-bordered" id="table_title_keyword">
+                                                        <thead>
+                                                        <tr>
+                                                            <th>Keyword</th>
+                                                            <th>Priority</th>
+                                                            <th></th>
+                                                        </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                        @if(count($titleKeywords ?? []) > 0)
+                                                            @foreach($titleKeywords as $key)
+                                                                <tr class="field-group">
+                                                                    <td width="70%"><input type="text" class="form-control" name="title_keyword[]" value="{{ $key->keyword }}"></td>
+                                                                    <td width="20%"><input type="text" class="form-control" name="title_priority[]" value="{{ $key->priority }}"></td>
+                                                                    <td width="10%"><button type="button" class="btn btn-danger remove-keyword"> <i class="fas fa-fw fa-trash"></i></button></td>
+                                                                </tr>
+                                                            @endforeach
+                                                        @else
+                                                            <tr>
+                                                                <td width="80%"><input type="text" class="form-control" name="title_keyword[]"></td>
+                                                                <td width="20%"><input type="text" class="form-control" name="title_priority[]"></td>
+                                                            </tr>
+                                                        @endif
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                             <div class="card-footer text-center mt-3">
                                 <button type="button" class="btn btn-success" onclick="saveTabData(11)">Save</button>
                                 <button type="button" class="btn btn-primary" onclick="finalizeForm()">Submit</button>
@@ -947,7 +976,7 @@
 
         $(document).ready(function() {
 
-            $('.pro-tags').select2();
+            $('.pro-tags,.pro-interface').select2();
 
             $('#imageUploadForm').on('submit', function (e) {
                 e.preventDefault();
@@ -1102,19 +1131,37 @@
             });
 
 
-            // Add new device
-            $('#add_title_keyword').click(function() {
-                $('#table_title_keywords tbody').append(`
+            // Add new term
+            $('#add_search_term').click(function() {
+                $('#table_search_term tbody').append(`
                     <tr class="field-group">
-                        <td width="70%"><input type="text" class="form-control" name="title_keyword[]" value=""></td>
-                        <td width="20%"><input type="text" class="form-control" name="title_priority[]" value=""></td>
-                        <td width="10%"><button type="button" class="btn btn-danger remove-keyword"> <i class="fas fa-fw fa-trash"></i></button></td>
+                        <td width="70%"><input type="text" class="form-control" name="search_term[]" value=""></td>
+                        <td width="20%"><input type="text" class="form-control" name="search_sort_order[]" value=""></td>
+                        <td width="10%"><button type="button" class="btn btn-danger remove-term"> <i class="fas fa-fw fa-trash"></i></button></td>
                      </tr>
                 `);
 
             });
 
-            // Remove retail price group
+            // Remove search terms
+            $(document).on('click', '.remove-term', function() {
+                $(this).parents('tr.field-group').remove();
+            });
+
+
+            // Add new term
+            $('#add_title_keyword').click(function() {
+                $('#table_title_keyword tbody').append(`
+                    <tr class="field-group">
+                        <td width="70%"><input type="text" class="form-control" name="title_keyword[]" value=""></td>
+                        <td width="20%"><input type="text" class="form-control" name="title_priority[]" value=""></td>
+                        <td width="10%"><button type="button" class="btn btn-danger remove-keywoird"> <i class="fas fa-fw fa-trash"></i></button></td>
+                     </tr>
+                `);
+
+            });
+
+            // Remove search terms
             $(document).on('click', '.remove-keyword', function() {
                 $(this).parents('tr.field-group').remove();
             });

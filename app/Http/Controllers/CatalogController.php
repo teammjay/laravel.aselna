@@ -3,9 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Models\Catalog;
+use App\Models\Interfaces;
 use App\Models\Manufacturer;
 use App\Models\ProductCondition;
+use App\Models\ProductInterface;
 use App\Models\ProductKeyFeatures;
+use App\Models\ProductSearchTerm;
 use App\Models\ProductTags;
 use App\Models\ProductTitleKeyword;
 use App\Models\ProductImages;
@@ -96,11 +99,10 @@ class CatalogController extends Controller
         }else{
             $pro_id = session('pro_id');
         }
-        //return view('catalog.update', ['product_id' => $record->product_id]);
-        //echo $pro_id;die;
         $pageAt = 'Add';
         $product = Catalog::findOrFail($pro_id); // Retrieve the product by ID
         $keyFeatures = ProductKeyFeatures::where('product_id', $pro_id)->orderBy('sort_order')->get();
+        $searchTerms = ProductSearchTerm::where('product_id', $pro_id)->orderBy('sort_order')->get();
         $titleKeywords = ProductTitleKeyword::where('product_id', $pro_id)->orderBy('priority')->get();
         $productImages = ProductImages::where('product_id', $pro_id)->get();
         $productTags = ProductTags::pluck('name')->values()->all();
@@ -108,7 +110,10 @@ class CatalogController extends Controller
         $manufacturers = Manufacturer::all();
         $productTypes = ProductType::all();
         $productConditions = ProductCondition::all();
-        return view('catalog.update', compact('product','keyFeatures','titleKeywords','productImages','productTags','pageAt','stores','manufacturers','productTypes','productConditions'));
+        $interfaces = Interfaces::all();
+        $productInterfaces = ProductInterface::where('product_id', $pro_id)->get();
+        $productInterfaces = $productInterfaces->pluck('interface_id')->values()->all();
+        return view('catalog.update', compact('product','keyFeatures','searchTerms','productImages','productTags','pageAt','stores','manufacturers','productTypes','productConditions','titleKeywords','interfaces','productInterfaces'));
     }
 
     /**
@@ -169,6 +174,7 @@ class CatalogController extends Controller
         $pageAt = 'Edit';
         $product = Catalog::findOrFail($id); // Retrieve the product by ID
         $keyFeatures = ProductKeyFeatures::where('product_id', $id)->orderBy('sort_order')->get();
+        $searchTerms = ProductSearchTerm::where('product_id', $id)->orderBy('sort_order')->get();
         $titleKeywords = ProductTitleKeyword::where('product_id', $id)->orderBy('priority')->get();
         $productImages = ProductImages::where('product_id', $id)->get();
         $productTags = ProductTags::pluck('name')->values()->all();
@@ -179,9 +185,12 @@ class CatalogController extends Controller
         $storeProducts = StoreProduct::where('product_id', $id)->get();
         $productStore = $storeProducts->pluck('store_id')->values()->all();
         $productStoreCategory = $storeProducts->pluck('store_category_id')->values()->all();
-       /* echo '<pre>';
-        print_r($productStoreCategory);die;*/
-        return view('catalog.update', compact('product','keyFeatures','titleKeywords','productImages','productTags','pageAt','stores','manufacturers','productTypes','productConditions','productStore','productStoreCategory'));
+        $interfaces = Interfaces::all();
+        $productInterfaces = ProductInterface::where('product_id', $id)->get();
+        $productInterfaces = $productInterfaces->pluck('interface_id')->values()->all();
+        /*echo '<pre>';
+        print_r($productInterfaces);die;*/
+        return view('catalog.update', compact('product','keyFeatures','searchTerms','productImages','productTags','pageAt','stores','manufacturers','productTypes','productConditions','productStore','productStoreCategory','titleKeywords','interfaces','productInterfaces'));
     }
 
     /**
@@ -233,6 +242,20 @@ class CatalogController extends Controller
 
         }elseif ($tabId == 4) {
 
+            $data = [];
+            for($i=0; $i < count($request->interfaces); $i++){
+                $data[] = array(
+                    'id' => (string) Str::uuid(),
+                    'product_id' => $productId,
+                    'interface_id' => $request->interfaces[$i]
+                );
+            }
+
+            ProductInterface::where('product_id', $productId)->delete();
+            ProductInterface::insert($data);
+
+            return response()->json(['success' => true, 'message' => 'Data saved successfully!']);
+
         }elseif ($tabId == 5) {
 
             try {
@@ -256,16 +279,16 @@ class CatalogController extends Controller
             }
         }elseif ($tabId == 6){
             $data = [];
-            for($i=0; $i < count($request->title_keyword); $i++){
+            for($i=0; $i < count($request->search_term); $i++){
                 $data[] = array(
                     'id' => (string) Str::uuid(),
                     'product_id' => $productId,
-                    'keyword' => $request->title_keyword[$i],
-                    'priority' => $request->title_priority[$i],
+                    'term' => $request->search_term[$i],
+                    'sort_order' => $request->search_sort_order[$i],
                 );
             }
-            ProductTitleKeyword::where('product_id', $productId)->delete();
-            ProductTitleKeyword::insert($data);
+            ProductSearchTerm::where('product_id', $productId)->delete();
+            ProductSearchTerm::insert($data);
 
             return response()->json(['success' => true, 'message' => 'Data saved successfully!']);
         }elseif ($tabId == 8){
@@ -312,6 +335,19 @@ class CatalogController extends Controller
             try {
                 $product = Catalog::findOrFail($productId);
                 $product->update($request->all());
+
+                $data = [];
+                for($i=0; $i < count($request->title_keyword); $i++){
+                    $data[] = array(
+                        'id' => (string) Str::uuid(),
+                        'product_id' => $productId,
+                        'keyword' => $request->title_keyword[$i],
+                        'priority' => $request->title_priority[$i],
+                    );
+                }
+                ProductTitleKeyword::where('product_id', $productId)->delete();
+                ProductTitleKeyword::insert($data);
+
                 return response()->json(['success' => true, 'message' => 'Data saved successfully!!']);
 
             }catch (QueryException $e) {

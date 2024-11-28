@@ -9,6 +9,10 @@
         #frmproductfilter .d-flex .border {
             width: 14%;
         }
+        .gap-5{gap:5px;}
+        .proCheck{
+            visibility: hidden;
+        }
     </style>
 @stop
 @section('content_header')
@@ -172,7 +176,6 @@
                                     <table id="productsTable" class="table table-bordered table-striped">
                                         <thead>
                                         <tr>
-                                            <th></th>
                                             <th>Image</th>
                                             <th>Product Code</th>
                                             <th>Product Type</th>
@@ -236,7 +239,7 @@
                                         <div>
                                             <div class="d-flex pb-2">
                                                 <input type="text" id="keyword_seperator" value="," class="form-control" style="width: 30px;">
-                                                <button type="button" class="btn btn-secondary ml-3" id="generate_title">Generate</button>
+                                                <button type="button" class="btn btn-secondary ml-3" id="generate_keyword">Generate</button>
                                             </div>
                                             <input type="checkbox" name="append_front" id="append_front" checked> Append Front
                                         </div>
@@ -255,8 +258,8 @@
                                                 <button type="button" class="btn btn-secondary ml-3" id="replace">Replace</button>
                                             </div>
                                             <div class="form-group d-flex align-items-center mt-3">
-                                                <input type="text" class="form-control" name="search_input" placeholder="Search">
-                                                <input type="text" class="form-control" name="replace_value" placeholder="Replace">
+                                                <input type="text" class="form-control" name="search_input" id="search_input" placeholder="Search">
+                                                <input type="text" class="form-control" name="replace_value" id="replace_value" placeholder="Replace">
                                             </div>
                                         </div>
                                     </div>
@@ -269,25 +272,27 @@
                                     <label>Bundle Sperator</label> <input type="text" class="form-control ml-3" name="bundle_seperator" value="w" style="width: 150px;">
                                 </div>
                                 <div class="card-body pr-0 pl-0">
-                                    <table id="productsTable" class="table table-bordered table-striped">
-                                        <thead>
-                                        <tr>
-                                            <th>Image</th>
-                                            <th>Product Code</th>
-                                            <th>Title</th>
-                                            <th>Short Tail Keyword</th>
-                                            <th>Long Tail Keyword</th>
-                                            <th>Price</th>
-                                            <th>Active</th>
-                                            <th>Channel Category</th>
-                                        </tr>
-                                        </thead>
-                                        <tbody id="selected_product_list">
+                                    <div class="table-responsive">
+                                        <table id="productsTable" class="table table-bordered table-striped">
+                                            <thead>
+                                            <tr>
+                                                <th>Image</th>
+                                                <th>Product Code</th>
+                                                <th>Title</th>
+                                                <th>Short Tail Keyword</th>
+                                                <th>Long Tail Keyword</th>
+                                                <th>Price</th>
+                                                <th>Active</th>
+                                                <th>Channel Category</th>
+                                            </tr>
+                                            </thead>
+                                            <tbody id="selected_product_list">
 
-                                        {{--@include('catalog.product_list', ['products' => $products])--}}
+                                            {{--@include('catalog.product_list', ['products' => $products])--}}
 
-                                        </tbody>
-                                    </table>
+                                            </tbody>
+                                        </table>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -458,7 +463,7 @@
                                                     <th>Img Avail.</th>
                                                 </tr>
                                                 </thead>
-                                                <tbody id="product-list">
+                                                <tbody id="product-list-3">
 
                                                 {{--@include('catalog.product_list', ['products' => $products])--}}
 
@@ -538,9 +543,9 @@
                     tab.disabled = i !== index; // Disable all other tabs
                 });
 
-                console.log(index);
+                //console.log(index);
                 const tabInstance = new bootstrap.Tab(tabs[index]);
-                console.log(tabInstance);
+                //console.log(tabInstance);
                 tabInstance.show();
 
                 // Enable/Disable Previous and Next buttons
@@ -551,9 +556,27 @@
             document.getElementById('nextBtn').addEventListener('click', () => {
                 console.log(tabs.length);
                 if (currentIndex < tabs.length - 1) {
-                    followSecondStep();
-                    currentIndex++;
-                    activateTab(currentIndex);
+                    console.log(currentIndex);
+                    if(currentIndex == 0){
+                        let selected_product = [];
+                        $('input[name="products[]"]:checked').each(function () {
+                            selected_product.push($(this).val())
+                        });
+                        if (selected_product.length === 0) {
+                            alert('Please select product to proceed.');
+                        }else{
+                            followSecondStep();
+                            currentIndex++;
+                            activateTab(currentIndex);
+                        }
+                    }else if(currentIndex == 1){
+                        followThirdStep();
+                        currentIndex++;
+                        activateTab(currentIndex);
+                    } else{
+                        currentIndex++;
+                        activateTab(currentIndex);
+                    }
                 }
             });
 
@@ -583,13 +606,18 @@
                 }
             });
 
-            $(document).on('click', '.sproRow', function() {
+            $(document).on('click', '.selectproRow', function() {
+                let ele = $(this);
                 if($('#seleced_product').is(':checked')){
                     if($(this).find('.proCheck').is(':checked')){
+                        ele.removeClass('bg-blue');
                         $(this).find('.proCheck').prop('checked',false);
                     }else{
+                        ele.addClass('bg-blue');
                         $(this).find('.proCheck').prop('checked',true);
                     }
+                }else{
+                    $(this).find('.proCheck').prop('checked',true);
                 }
             });
 
@@ -607,7 +635,6 @@
                         'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                     },
                     success: function (response) {
-                        console.log(response.html);
                         if (response.success) {
                             $('#proSubType').show();
                             $('#product_sub_type_filter').html(response.option);
@@ -621,6 +648,37 @@
                         }*/
                     }
                 });
+            });
+
+            $(document).on('click', '#generate_keyword', function() {
+                generateKeywords();
+            });
+
+            $(document).on('click', '#generate_title', function() {
+                generateTitleKeywords();
+            });
+
+            $(document).on('click', '#replace', function() {
+                let searchTerm = $('#search_input').val();
+                let replaceText = $('#replace_value').val();
+                
+                $('.sproRow').each(function () {
+                    $(this).find('textarea').each(function () {
+                        var currentvalue = $(this).val();
+                        var updatedString = currentvalue.replace(new RegExp(searchTerm, "g"), replaceText);
+                        $(this).val(updatedString);
+                    });
+                });
+            });
+
+
+
+            $(document).on('click', '.price-overwrite', function() {
+                if($(this).is(':checked')){
+                    $(this).parent().find('input[type="text"]').removeAttr('readonly');
+                }else {
+                    $(this).parent().find('input[type="text"]').attr('readonly',true);
+                }
             });
 
 
@@ -760,6 +818,7 @@
                 data: {
                     product_ids:selected_product,
                     store_id:selected_product,
+                    step:2
                 },
                 headers: {
                     'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
@@ -767,6 +826,8 @@
                 success: function (response) {
                     if (response.html) {
                         $('#selected_product_list').html(response.html);
+                        generateKeywords();
+                        generateTitleKeywords();
                     }
                 },
                 error: function (xhr) {
@@ -775,7 +836,126 @@
                     }*/
                 }
             });
-            console.log(selected_product);
+        }
+
+        function followThirdStep(){
+            let selected_product = [];
+            $('input[name="products[]"]:checked').each(function () {
+                selected_product.push($(this).val())
+            });
+
+            $.ajax({
+                url: "{{ route('listing.getselectedproducts') }}",
+                type: 'POST',
+                data: {
+                    product_ids:selected_product,
+                    store_id:selected_product,
+                    step:3
+                },
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                },
+                success: function (response) {
+                    if (response.html) {
+                        $('#product-list-3').html(response.html);
+                    }
+                },
+                error: function (xhr) {
+                    /*if (xhr.responseJSON?.error) {
+                        $('#responseMessage').html('<p style="color:red;">' + xhr.responseJSON.error.image[0] + '</p>');
+                    }*/
+                }
+            });
+        }
+
+        function generateKeywords(){
+            let short_key_length = $('input[name="short_keyword"]:checked').val();
+            let long_key_length = $('input[name="long_keyword"]:checked').val();
+            let keyword_seperator = $('#keyword_seperator').val();
+            let append_front = 0;
+            if($('#append_front').is(':checked')){
+                let append_front = 1;
+            }
+            let selected_product = [];
+            $('input[name="selected_product[]"]').each(function () {
+                selected_product.push($(this).val());
+            });
+            $.ajax({
+                url: "{{ route('listing.getkeywords') }}",
+                type: 'POST',
+                data: {
+                    short_key_length:short_key_length,
+                    long_key_length:long_key_length,
+                    keyword_seperator:keyword_seperator,
+                    append_front:append_front,
+                    selected_product:selected_product,
+                },
+                /* processData: false,
+                 contentType: false,*/
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                },
+                success: function (response) {
+                    if (response.success) {
+                        if(response.short_keyword){
+                            let sObject = response.short_keyword;
+                            let lObject = response.long_keyword;
+                            for (let key in sObject) {
+                                $('.shortKey-'+key).val(sObject[key]);
+                                $('.sLength-'+key).html(sObject[key].length);
+                            }
+
+                            for (let key in lObject) {
+                                $('.longKey-'+key).val(lObject[key]);
+                                $('.lLength-'+key).html(lObject[key].length);
+                            }
+                        }
+                    }
+                },
+                error: function (xhr) {
+                    /*if (xhr.responseJSON?.error) {
+                        $('#responseMessage').html('<p style="color:red;">' + xhr.responseJSON.error.image[0] + '</p>');
+                    }*/
+                }
+            });
+        }
+
+        function generateTitleKeywords(){
+            let title_length = $('input[name="title_generate"]:checked').val();
+            let selected_product = [];
+            $('input[name="selected_product[]"]').each(function () {
+                selected_product.push($(this).val());
+            });
+            $.ajax({
+                url: "{{ route('listing.gettitlekeywords') }}",
+                type: 'POST',
+                data: {
+                    title_length:title_length,
+                    selected_product:selected_product,
+                },
+                /* processData: false,
+                 contentType: false,*/
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                },
+                success: function (response) {
+                    if (response.success) {
+                        if(response.title_keyword){
+                            let sObject = response.title_keyword;
+                            for (let key in sObject) {
+                                $('.title-'+key).val(sObject[key]);
+                                $('.tLength-'+key).html(sObject[key].length);
+                            }
+
+                        }
+                    }
+                },
+                error: function (xhr) {
+                    /*if (xhr.responseJSON?.error) {
+                        $('#responseMessage').html('<p style="color:red;">' + xhr.responseJSON.error.image[0] + '</p>');
+                    }*/
+                }
+            });
         }
     </script>
 @stop
