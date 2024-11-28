@@ -40,4 +40,9 @@ class ProductType extends Model
         return $this->hasOne(ProductType::class, 'parent_id');
     }
 
+    public function Interfaces()
+    {
+        return $this->hasOne(Interfaces::class);
+    }
+
 }

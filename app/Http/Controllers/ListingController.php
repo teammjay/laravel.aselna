@@ -8,6 +8,8 @@ use App\Models\Device;
 use App\Models\DeviceSeries;
 use App\Models\DeviceTypes;
 use App\Models\Manufacturer;
+use App\Models\ProductSearchTerm;
+use App\Models\ProductTitleKeyword;
 use App\Models\ProductType;
 use App\Models\StoreProduct;
 use Illuminate\Http\Request;
@@ -237,17 +239,24 @@ class ListingController extends Controller
     public function getSelectedProducts(Request $request){
 
         $product_ids = $request->input('product_ids');
+        $step = $request->input('step');
         if(!empty($product_ids)){
-            $query = StoreProduct::select('store_product.product_id','store_product.title','store_product.price','store_product.created_at','product_type.name as ProductType')->with('Product');
+            $query = StoreProduct::select('store_product.id','store_product.product_id','store_product.title','store_product.price','store_product.created_at','product_type.name as ProductType')->with('Product');
             $query->leftJoin('products','products.product_id', '=', 'store_product.product_id');
             $query->leftJoin('product_type','products.product_type', '=', 'product_type.id');
             $query->whereIn('store_product.id', $product_ids);
             $products = $query->get();
 
+            if($step == 2){
+                $view = view('listing.selected_product_list', compact('products'))->render();
+            }else if($step == 3){
+                $view = view('listing.select_device_product_list', compact('products'))->render();
+            }
+
             if ($request->ajax()) {
                 return response()->json([
                     'success' => true,
-                    'html' => view('listing.selected_product_list', compact('products'))->render()
+                    'html' => $view
                 ]);
             }
 
@@ -256,5 +265,120 @@ class ListingController extends Controller
                 'success' => false
             ]);
         }
+    }
+
+    public function getKeywords(Request $request){
+        $product_ids = $request->input('selected_product');
+        $keyword_seperator = $request->input('keyword_seperator');
+        $long_key_length = $request->input('long_key_length');
+        $short_key_length = $request->input('short_key_length');
+        $append_front = $request->input('append_front');
+
+        if(!empty($product_ids)){
+
+            $keywords = ProductSearchTerm::select('product_id','term')->whereIn('product_id',$product_ids)->orderBy('sort_order','asc')->get()->toArray();
+
+            /*echo '<pre>';
+            print_r($keywords);
+            echo '</pre>';die;*/
+            $short_keyword = [];
+            $long_keyword = [];
+            if(!empty($keywords)){
+                $sKeyword = $lKeyword = $pro_ids = $shortFlag = $longFlag = [];
+                $sflag = $lflag = 0;
+                foreach($keywords as $key=>$val){
+                    $pro_id = $val['product_id'];
+                    if(!isset($shortFlag[$pro_id])){$shortFlag[$pro_id] = 0;}
+                    if(!isset($longFlag[$pro_id])){$longFlag[$pro_id] = 0;}
+                    if((!array_key_exists($pro_id, $shortFlag) || $shortFlag[$pro_id] < $short_key_length) || !array_key_exists($pro_id, $short_keyword)){
+                        $short_keyword[$pro_id][] = $val['term'];
+                        $shortFlag[$pro_id] = $shortFlag[$pro_id] + 1;
+                    }
+                    if(((!array_key_exists($pro_id, $longFlag) || $longFlag[$pro_id] < $long_key_length) || $long_key_length == 'all') || !array_key_exists($pro_id, $long_keyword)){
+                        $long_keyword[$pro_id][] = $val['term'];
+                        $longFlag[$pro_id] = $longFlag[$pro_id] + 1;
+                    }
+                    if(!in_array($pro_id, $pro_ids)){
+                        $pro_ids[] = $pro_id;
+                    }
+                }
+
+                if(!empty($pro_ids)){
+                    foreach($pro_ids as $id){
+                        if(!empty($short_keyword)){
+                            $sKeyword[$id] = implode(' ', $short_keyword[$id]);
+                        }
+
+                        if(!empty($short_keyword)){
+                            $lKeyword[$id] = implode(' ', $long_keyword[$id]);
+                        }
+                    }
+                }
+
+                if ($request->ajax()) {
+                    return response()->json([
+                        'success' => true,
+                        'short_keyword' => $sKeyword,
+                        'long_keyword' => $lKeyword
+                    ]);
+                }
+
+            }
+
+        }
+
+        return response()->json([
+            'success' => false
+        ]);
+    }
+
+    public function getTitleKeywords(Request $request){
+        $product_ids = $request->input('selected_product');
+        $title_length = $request->input('title_length');
+
+        if(!empty($product_ids)){
+
+            $keywords = ProductTitleKeyword::select('product_id','keyword')->whereIn('product_id',$product_ids)->orderBy('priority','asc')->get()->toArray();
+
+            if(!empty($keywords)){
+                $title_keyword = $tKeyword = $pro_ids = $Flag = [];
+
+                foreach($keywords as $key=>$val){
+                    $pro_id = $val['product_id'];
+                    if(!isset($shortFlag[$pro_id])){$shortFlag[$pro_id] = 0;}
+                    if(!isset($Flag[$pro_id])){$Flag[$pro_id] = 0;}
+
+                    if(((!array_key_exists($pro_id, $Flag) || $Flag[$pro_id] < $title_length)) || !array_key_exists($pro_id, $title_keyword)){
+                        $title_keyword[$pro_id][] = $val['keyword'];
+                        $Flag[$pro_id] = $Flag[$pro_id] + 1;
+                    }
+
+                    if(!in_array($pro_id, $pro_ids)){
+                        $pro_ids[] = $pro_id;
+                    }
+                }
+
+                if(!empty($pro_ids)){
+                    foreach($pro_ids as $id){
+                        if(!empty($title_keyword)){
+                            $tKeyword[$id] = implode(' ', $title_keyword[$id]);
+                        }
+                    }
+                }
+
+                if ($request->ajax()) {
+                    return response()->json([
+                        'success' => true,
+                        'title_keyword' => $tKeyword
+                    ]);
+                }
+
+            }
+
+        }
+
+        return response()->json([
+            'success' => false
+        ]);
     }
 }
