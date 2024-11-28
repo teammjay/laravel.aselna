@@ -6,6 +6,7 @@ use App\Jobs\BrandSyncJob;
 use App\Jobs\CategorySyncJob;
 use App\Jobs\DevicesSyncJob;
 use App\Jobs\DeviceTypesSyncJob;
+use App\Jobs\InterfaceSyncJob;
 use App\Jobs\ManufacturerSyncJob;
 use App\Jobs\ProductSyncJob;
 use App\Jobs\ShippingCarrierJob;
@@ -32,12 +33,13 @@ class SyncAllTables extends Command
      */
     public function handle()
     {
-        ManufacturerSyncJob::dispatch();
-        DeviceTypesSyncJob::dispatch();
-        BrandSyncJob::dispatch();
-        DevicesSyncJob::dispatch();
-        ProductSyncJob::dispatch();
-        CategorySyncJob::dispatch();
-        ShippingCarrierJob::dispatch();
+//        ManufacturerSyncJob::dispatch();
+//        DeviceTypesSyncJob::dispatch();
+//        BrandSyncJob::dispatch();
+//        DevicesSyncJob::dispatch();
+//        ProductSyncJob::dispatch();
+//        CategorySyncJob::dispatch();
+//        ShippingCarrierJob::dispatch();
+        InterfaceSyncJob::dispatch();
     }
 }

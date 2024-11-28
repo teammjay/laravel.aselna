@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Models\Category;
+use App\Models\ProductType;
 use App\Models\SubCategory;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -35,6 +36,13 @@ class CategorySyncJob implements ShouldQueue
             $this->createCategory($category);
         }
 
+        foreach ($categories as $category) {
+            if (ProductType::where(['code' => $category->category_id])->exists()) {
+                continue;
+            }
+            $this->createProductType($category);
+        }
+
         $subCategories = DB::connection('fonus_db')->table('tbl_category_sub')->get();
         foreach ($subCategories as $subCategory) {
             if (SubCategory::where(['code' => $subCategory->sub_category])->exists()) {
@@ -42,6 +50,19 @@ class CategorySyncJob implements ShouldQueue
             }
             $this->createSubCategory($subCategory);
         }
+    }
+
+    private function createProductType(mixed $category)
+    {
+        ProductType::updateOrInsert(
+            ['code' => $category->category_id],
+            [
+                'id' => (string) Str::uuid(),
+                'name' => $category->category,
+                'code' => $category->category_id,
+                'sort_order' => $category->order_no,
+            ]
+        );
     }
 
     private function createCategory(mixed $category)

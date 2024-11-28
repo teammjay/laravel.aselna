@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('product_search_term', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->uuid('product_id');
-            $table->foreign('product_id')->references('id')->on('products')->onDelete('cascade');
+            $table->foreign('product_id')->references('product_id')->on('products')->onDelete('cascade');
             $table->string('term');
             $table->integer('sort_order');
             $table->timestamps();
