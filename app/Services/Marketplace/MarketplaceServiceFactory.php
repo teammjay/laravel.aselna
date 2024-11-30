@@ -23,3 +23,11 @@ class MarketplaceServiceFactory
         return new $marketplaceClass();
     }
 }
+
+/*
+ * $amazonFactory = MarketplaceServiceFactory.create('amazon');
+ * $feed = $amazonFactory->generateFeed();
+ *
+ * $shopifyFactory = MarketplaceServiceFactory.create('shopify');
+ * $feed = $shopifyFactory->generateFeed();
+ */

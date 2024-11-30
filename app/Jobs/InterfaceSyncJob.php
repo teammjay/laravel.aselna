@@ -6,6 +6,7 @@ use App\Models\Category;
 use App\Models\Device;
 use App\Models\DeviceInterface;
 use App\Models\Interfaces;
+use App\Models\ProductInterface;
 use App\Models\ProductType;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -37,10 +38,6 @@ class InterfaceSyncJob implements ShouldQueue
             $this->createInterfaces($attribute);
         }
 
-        $deviceAttributes = DB::connection('fonus_db')->table('tbl_device_attributes')->get();
-        foreach ($deviceAttributes as $deviceAttribute) {
-            $this->createDeviceInterfaces($deviceAttribute);
-        }
     }
 
     private function createInterfaces(mixed $attribute)
@@ -62,21 +59,7 @@ class InterfaceSyncJob implements ShouldQueue
         );
     }
 
-    private function createDeviceInterfaces(mixed $deviceAttribute)
-    {
-        $deviceId = Device::where('code', $deviceAttribute->device_id)->value('id');
-        $interfaceId = Interfaces::where('code', $deviceAttribute->attribute_id)->value('id');
-        if (DeviceInterface::where(['device_id' => $deviceId, 'interface_id' => $interfaceId])->exists()) {
-            return;
-        }
-        DeviceInterface::create([
-            'id' => (string) Str::uuid(),
-            'device_id' => $deviceId,
-            'interface_id' => $interfaceId,
-            'created_by' => 'system',
-            'updated_by' => 'system',
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-    }
+
+
+
 }
