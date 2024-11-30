@@ -844,6 +844,7 @@
                 </div>
                 <div class="tab-pane fade" id="tab10" role="tabpanel" aria-labelledby="categories-tab">
                     <button type="button" class="btn btn-secondary" id="add_category" data-toggle="modal" data-target="#addCategoryModal" ><i class="fa fa-plus-square"></i> Create</button>
+                    <button type="button" class="btn btn-secondary" id="add_category" data-toggle="modal" data-target="#addCategoryModal" ><i class="fa fa-plus-square"></i> Create</button>
                     <table class="table table-bordered mt-2">
                         <thead>
                         <tr>

@@ -25,7 +25,6 @@ class ProductType extends Model
         });
     }
 
-
     protected $fillable = ['code','name','parent_id','singular_name','simple_name','sort_order'];
 
     // Define the parent relationship (belongsTo)

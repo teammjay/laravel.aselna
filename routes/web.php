@@ -9,7 +9,9 @@ use App\Http\Controllers\DeviceScreenController;
 use App\Http\Controllers\DeviceSeriesController;
 use App\Http\Controllers\DeviceSubTypesController;
 use App\Http\Controllers\DeviceTypesController;
+use App\Http\Controllers\HomeController;
 use App\Http\Controllers\SubCategoryController;
+use App\Http\Controllers\UPCController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\CatalogController;
 use App\Http\Controllers\StoreController;
@@ -25,10 +27,7 @@ use App\Http\Controllers\ProductTypeController;
 use App\Http\Controllers\ProductConditionController;
 use App\Http\Controllers\InterfaceController;
 
-Route::get('/', function () {
-    return view('welcome');
-});
-
+Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/catalog', [CatalogController::class, 'index']);
 Route::get('/catalog', [CatalogController::class, 'index'])->name('catalog.list');
 Route::get('catalog/filter', [CatalogController::class, 'filter'])->name('catalog.filter');
@@ -238,7 +237,7 @@ Route::controller(CustomerController::class)->group(function () {
     Route::get('/customers/delete/{id}', 'destroy')->name('customers.delete');
 });
 
-Route::controller( CategoryController::class)->group(function () {
+Route::controller(CategoryController::class)->group(function () {
     Route::get('/categories', 'index')->name('categories.index');
     Route::get('/categories/add', 'create')->name('categories.create');
     Route::post('/categories/add', 'store')->name('categories.store');
@@ -254,4 +253,9 @@ Route::controller(SubCategoryController::class)->group(function () {
     Route::get('/categories_sub/edit/{id}', 'edit')->name('categories_sub.edit');
     Route::post('/categories_sub/edit/{id}', 'update')->name('categories_sub.update');
     Route::get('/categories_sub/delete/{id}', 'destroy')->name('categories_sub.delete');
+});
+
+Route::controller(UPCController::class)->group(function () {
+    Route::get('/upc_codes', 'upc_code')->name('upc_codes.upc_code');
+    Route::get('/upc_generate','upc_generate')->name('upc_codes.upc_generate');
 });
