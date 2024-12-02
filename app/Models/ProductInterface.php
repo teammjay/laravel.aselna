@@ -27,4 +27,14 @@ class ProductInterface extends Model
 
 
     protected $fillable = ['product_id','interface_id'];
+
+    public function product()
+    {
+        return $this->belongsTo(Catalog::class,'product_id','product_id');
+    }
+
+    public function interfaces()
+    {
+        return $this->belongsTo(Interfaces::class, 'interface_id','id');
+    }
 }
