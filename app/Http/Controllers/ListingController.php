@@ -27,7 +27,7 @@ class ListingController extends Controller
         /*$products = Catalog::select('*')
             ->orderBy('product_id','desc')
             ->paginate($this->perPage);*/
-        $stores = Store::all();
+        $stores = Store::Where('store_status',1)->get();
 
         return view('listing.list',compact('stores'))->with('perPage', $this->perPage);
     }
@@ -86,7 +86,7 @@ class ListingController extends Controller
         $manufacturers = Manufacturer::all();
         $productTypes = ProductType::whereNull('parent_id')->get();
         $deviceTypes = DeviceTypes::all();
-        $brands = Brand::all();
+        $brands = Brand::orderBy('name','asc')->get();
         return view('listing.create', compact('pageAt','stores','manufacturers','productTypes','deviceTypes','brands'));
     }
 
@@ -339,7 +339,6 @@ class ListingController extends Controller
         if(!empty($product_ids)){
 
             $keywords = ProductTitleKeyword::select('product_id','keyword')->whereIn('product_id',$product_ids)->orderBy('priority','asc')->get()->toArray();
-
             if(!empty($keywords)){
                 $title_keyword = $tKeyword = $pro_ids = $Flag = [];
 
@@ -357,7 +356,6 @@ class ListingController extends Controller
                         $pro_ids[] = $pro_id;
                     }
                 }
-
                 if(!empty($pro_ids)){
                     foreach($pro_ids as $id){
                         if(!empty($title_keyword)){
@@ -365,20 +363,66 @@ class ListingController extends Controller
                         }
                     }
                 }
-
                 if ($request->ajax()) {
                     return response()->json([
                         'success' => true,
                         'title_keyword' => $tKeyword
                     ]);
                 }
-
             }
-
         }
 
         return response()->json([
             'success' => false
         ]);
+    }
+
+    /**
+     * Get Compatible Device.
+     */
+    public function getCompatibleDevice(Request $request){
+
+        $product_id = $request->input('product_id');
+        $device_type = $request->input('device_type');
+        $brand = $request->input('brand');
+        $rating = $request->input('rating');
+        $popularity = $request->input('popularity');
+        if($product_id){
+            $query = Device::select('device.*')->with('brand')->with('deviceType');
+            $query->leftJoin('device_interface','device_interface.device_id', '=', 'device.id');
+            $query->leftJoin('product_interface','product_interface.interface_id', '=', 'device_interface.interface_id');
+            $query->where('product_interface.product_id', $product_id);
+            if($device_type){
+                $query->where('device.device_type_id', $product_id);
+            }
+            if($brand){
+                $query->whereIn('device.brand_id', $brand);
+            }
+            if($rating){
+                $query->where('device.rating_id', $rating);
+            }
+            if($popularity){
+                $query->where('device.rating_id', $popularity);
+            }
+            $devices = $query->get();
+            //echo $query->toSql();die;
+            $count = $devices->count();
+
+
+            $view = view('listing.target_listing', compact('devices'))->render();
+
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'html' => $view,
+                    'total' => $count,
+                ]);
+            }
+
+        }else{
+            return response()->json([
+                'success' => false
+            ]);
+        }
     }
 }

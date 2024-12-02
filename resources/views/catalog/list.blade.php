@@ -51,7 +51,7 @@
                         <div class="form-group">
                             <label for="price_max">Status:</label>
                             <select class="custom-select" name="status" id="status">
-                                <option> -- </option>
+                                <option value=""> -- </option>
                                 <option value="active"> Active </option>
                                 <option value="discontinued"> Discontinued </option>
                                 <option value="out_of_stock"> Out of stock </option>
@@ -128,7 +128,7 @@
         });
 
         function loadProductsWithPage(page) {
-            var perPage = 1;
+            var perPage = '{{ $perPage }}';
             $.ajax({
                 url: "{{ route('catalog.filter') }}?page=" + page + "&perPage=" + perPage,
                 data: $('#filter-form').serialize(),
