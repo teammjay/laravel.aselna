@@ -82,6 +82,7 @@ Route::controller(ListingController::class)->group(function () {
     Route::post('/listing/search', 'Search')->name('listing.search');
     Route::post('/listing/getkeywords', 'getKeywords')->name('listing.getkeywords');
     Route::post('/listing/gettitlekeywords', 'getTitleKeywords')->name('listing.gettitlekeywords');
+    Route::post('/listing/getcompatibledevice', 'getCompatibleDevice')->name('listing.getcompatibledevice');
 });
 
 Route::controller(ProductTypeController::class)->group(function () {

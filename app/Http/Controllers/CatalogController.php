@@ -122,7 +122,7 @@ class CatalogController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'product_title' => 'required|string|max:30',
+            'product_title' => 'required|string',
             'product_type' => 'required|string',
             'manufacturer_id' => 'required|integer',
             'product_price' => 'required|decimal:2',
@@ -207,7 +207,7 @@ class CatalogController extends Controller
 
 
             $validator = Validator::make(request()->all(), [
-                'product_title' => 'required|string|max:30',
+                'product_title' => 'required|string',
                 'product_type' => 'required|string',
                 'manufacturer_id' => 'required|string',
                 'product_price' => 'required|decimal:2',
