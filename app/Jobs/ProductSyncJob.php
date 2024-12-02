@@ -39,7 +39,6 @@ class ProductSyncJob implements ShouldQueue
             $this->createProductTitleKeywords($product, $product_id);
 
             $this->createProductFeatures($product, $product_id);
-            break;
         }
     }
 

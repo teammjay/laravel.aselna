@@ -12,7 +12,14 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('upc_codes', function (Blueprint $table) {
-            $table->id();
+            $table->uuid('id');
+            $table->string('upc_code');
+            $table->string('company_prefix');
+            $table->string('product_number');
+            $table->boolean('is_used')->default(false);
+            $table->integer('sequence_id');
+            $table->uuid('store');
+            $table->foreign('store')->references('id')->on('store');
             $table->timestamps();
         });
     }

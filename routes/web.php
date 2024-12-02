@@ -4,12 +4,14 @@ use App\Http\Controllers\BrandController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DeviceController;
+use App\Http\Controllers\DeviceInterfaceController;
 use App\Http\Controllers\DeviceRatingController;
 use App\Http\Controllers\DeviceScreenController;
 use App\Http\Controllers\DeviceSeriesController;
 use App\Http\Controllers\DeviceSubTypesController;
 use App\Http\Controllers\DeviceTypesController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\ProductInterfaceController;
 use App\Http\Controllers\SubCategoryController;
 use App\Http\Controllers\UPCController;
 use Illuminate\Support\Facades\Route;
@@ -165,6 +167,26 @@ Route::controller(InterfaceController::class)->group(function () {
     Route::get('/interface/delete/{id}', 'destroy')->name('interface.delete');
 });
 
+Route::controller(ProductInterfaceController::class)->group(function () {
+    Route::get('/product_interface', 'index')->name('product_interface.list');
+    Route::get('/product_interface/filter', 'filter')->name('product_interface.filter');
+    Route::get('/product_interface/add', 'create')->name('product_interface.create');
+    Route::post('/product_interface/add', 'store')->name('product_interface.store');
+    Route::get('/product_interface/edit/{id}', 'edit')->name('product_interface.edit');
+    Route::post('/product_interface/edit/{id}', 'update')->name('product_interface.update');
+    Route::get('/product_interface/delete/{id}', 'destroy')->name('product_interface.delete');
+});
+
+Route::controller(DeviceInterfaceController::class)->group(function () {
+    Route::get('/device_interface', 'index')->name('device_interface.list');
+    Route::get('/device_interface/filter', 'filter')->name('device_interface.filter');
+    Route::get('/device_interface/add', 'create')->name('device_interface.create');
+    Route::post('/device_interface/add', 'store')->name('device_interface.store');
+    Route::get('/device_interface/edit/{id}', 'edit')->name('device_interface.edit');
+    Route::post('/device_interface/edit/{id}', 'update')->name('device_interface.update');
+    Route::get('/device_interface/delete/{id}', 'destroy')->name('device_interface.delete');
+});
+
 Route::controller(BrandController::class)->group(function () {
     Route::get('/brands', 'index')->name('brand.list');
     Route::get('/brands/filter', 'filter')->name('brand.filter');
@@ -259,4 +281,5 @@ Route::controller(SubCategoryController::class)->group(function () {
 Route::controller(UPCController::class)->group(function () {
     Route::get('/upc_codes', 'upc_code')->name('upc_codes.upc_code');
     Route::get('/upc_generate','upc_generate')->name('upc_codes.upc_generate');
+    Route::post('/upc_generate/add', 'create_upc_generate')->name('upc_codes.generate');
 });
