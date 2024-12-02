@@ -47,8 +47,8 @@ class SyncAllTables extends Command
         ProductSyncJob::dispatch();
         CategorySyncJob::dispatch();
         ShippingCarrierJob::dispatch();
-//        InterfaceSyncJob::dispatch();
-//        DeviceInterfaces::dispatch();
+        InterfaceSyncJob::dispatch();
+        DeviceInterfaces::dispatch();
         ProductInterfaces::dispatch();
         StoreTypeSyncJob::dispatch();
         StoreSyncJob::dispatch();
