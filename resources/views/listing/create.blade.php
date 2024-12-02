@@ -72,7 +72,7 @@
                                         <select class="form-control mt-3 mb-3" name="store_id" id="listing_store">
                                             @if(count($stores ?? []) > 0)
                                                 @foreach($stores as $store)
-                                                    <option value="{{ $store->id }}">{{ $store->name.' - '.$store->marketplace_name }}</option>
+                                                    <option value="{{ $store->id }}">{{ $store->name }}</option>
                                                 @endforeach
                                             @endif
                                         </select>
@@ -476,6 +476,7 @@
                                     <div class="card">
                                         <div class="card-header">
                                             Target Listing Details
+                                            <span class="float-right" id="total_listing_product"></span>
                                         </div>
                                         <div class="card-body">
                                             <table id="productListingTable" class="table table-bordered table-striped">
@@ -492,7 +493,7 @@
                                                     <th>Popularity</th>
                                                 </tr>
                                                 </thead>
-                                                <tbody id="listing-list">
+                                                <tbody id="listing_list">
 
                                                 {{--@include('catalog.product_list', ['products' => $products])--}}
 
@@ -507,7 +508,58 @@
                 </div>
                 <div class="tab-pane fade" id="tab4" role="tabpanel" aria-labelledby="listing-tab">
 
+                    <div class="row">
+                        <div class="col-md-12">
 
+                            <div class="border p-2">
+                                <label>Replace / Clear</label>
+                                <div class="d-flex justify-content-between" style="gap:5px;">
+                                    <div class="border p-2">
+                                        <div class="form-group d-flex align-items-center mt-3">
+                                            <input type="text" class="form-control" name="search_input" id="search_input" placeholder="Search">
+                                            <input type="text" class="form-control" name="replace_value" id="replace_value" placeholder="Replace">
+                                            <button type="button" class="btn btn-secondary ml-3" id="replace">Replace</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row  pt-5">
+                        <div class="col-md-9">
+
+                            <table id="listingTable" class="table table-bordered table-striped">
+                                <thead>
+                                <tr>
+                                    <th>Image</th>
+                                    <th>Code</th>
+                                    <th>SKU</th>
+                                    <th>Title</th>
+                                </tr>
+                                </thead>
+                                <tbody id="listing-product">
+
+                                {{--@include('catalog.product_list', ['products' => $products])--}}
+
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="col-md-3">
+                            <table id="modelTable" class="table table-bordered table-striped">
+                                <thead>
+                                <tr>
+                                    <th>Model Name</th>
+                                    <th>Name</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+
+                                {{--@include('catalog.product_list', ['products' => $products])--}}
+
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
                 <div class="tab-pane fade" id="tab5" role="tabpanel" aria-labelledby="summary-tab">
                 </div>
@@ -619,6 +671,42 @@
                 }else{
                     $(this).find('.proCheck').prop('checked',true);
                 }
+            });
+
+            $(document).on('click', '.sprolistRow', function() {
+                let ele = $(this);
+                let product_id = ele.find('.pro-id').val();
+                let device_type = $('input[name="device_type"]:checked').val();
+                let brand = $('#brand_filter').val();
+                let rating = $('#rating_filter').val();
+                let popularity = $('#popularity_filter').val();
+                $.ajax({
+                    url: "{{ route('listing.getcompatibledevice') }}",
+                    type: 'POST',
+                    data: {
+                        product_id:product_id,
+                        device_type:device_type,
+                        brand:brand,
+                        rating:rating,
+                        popularity:popularity,
+                    },
+                    /* processData: false,
+                     contentType: false,*/
+                    headers: {
+                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                    },
+                    success: function (response) {
+                        if (response.success) {
+                            $('#listing_list').html(response.html);
+                            $('#total_listing_product').html(response.total+' rows');
+                        }
+                    },
+                    error: function (xhr) {
+                        /*if (xhr.responseJSON?.error) {
+                            $('#responseMessage').html('<p style="color:red;">' + xhr.responseJSON.error.image[0] + '</p>');
+                        }*/
+                    }
+                });
             });
 
             $(document).on('change', '#product_type_filter', function() {
@@ -948,6 +1036,48 @@
                             }
 
                         }
+                    }
+                },
+                error: function (xhr) {
+                    /*if (xhr.responseJSON?.error) {
+                        $('#responseMessage').html('<p style="color:red;">' + xhr.responseJSON.error.image[0] + '</p>');
+                    }*/
+                }
+            });
+        }
+
+        function loadListingProduct(){
+            let product_id = ele.find('.pro-id').val();
+            let product_ids = [];
+            $('input[name="products[]"]:checked').each(function () {
+                product_ids.push($(this).val())
+            });
+            let device_type = $('input[name="device_type"]:checked').val();
+            let brand = $('#brand_filter').val();
+            let rating = $('#rating_filter').val();
+            let popularity = $('#popularity_filter').val();
+            $.ajax({
+                url: "{{ route('listing.getcompatibledevice') }}",
+                type: 'POST',
+                data: {
+                    product_ids:product_ids,
+                    product_id:product_id,
+                    device_type:device_type,
+                    brand:brand,
+                    rating:rating,
+                    popularity:popularity,
+                },
+                /* processData: false,
+                 contentType: false,*/
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                },
+                success: function (response) {
+                    if (response.success) {
+                        $('#proSubType').show();
+                        $('#product_sub_type_filter').html(response.option);
+                    }else{
+                        $('#proSubType').hide();
                     }
                 },
                 error: function (xhr) {
