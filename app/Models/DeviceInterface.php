@@ -14,13 +14,13 @@ class DeviceInterface extends Model
 
     protected $fillable = ['device_id','interface_id','created_by','updated_by','id','created_at','updated_at'];
 
-    public function Device()
+    public function device()
     {
         return $this->belongsTo(Device::class);
     }
 
-    public function Interfaces()
+    public function interfaces()
     {
-        return $this->belongsTo(Interfaces::class);
+        return $this->belongsTo(Interfaces::class, 'interface_id','id');
     }
 }

@@ -376,6 +376,16 @@ return [
                     'icon' => 'far fa-fw fa-file'
                 ],
                 [
+                    'text' => 'Device Interface',
+                    'url' => '/device_interface',
+                    'icon' => 'far fa-fw fa-file'
+                ],
+                [
+                    'text' => 'Product Interface',
+                    'url' => '/product_interface',
+                    'icon' => 'far fa-fw fa-file'
+                ],
+                [
                     'text' => 'Brands',
                     'url' => '/brands',
                     'icon' => 'far fa-fw fa-file'
