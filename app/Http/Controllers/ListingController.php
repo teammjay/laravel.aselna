@@ -7,6 +7,7 @@ use App\Models\Catalog;
 use App\Models\Device;
 use App\Models\DeviceSeries;
 use App\Models\DeviceTypes;
+use App\Models\ListingGenerationType;
 use App\Models\Manufacturer;
 use App\Models\ProductSearchTerm;
 use App\Models\ProductTitleKeyword;
@@ -82,12 +83,13 @@ class ListingController extends Controller
     {
 
         $pageAt = 'Add';
-        $stores = Store::all();
+        $stores = Store::orderBy('name','asc')->get();
         $manufacturers = Manufacturer::all();
         $productTypes = ProductType::whereNull('parent_id')->get();
         $deviceTypes = DeviceTypes::all();
+        $listingGenerationTypes = ListingGenerationType::all();
         $brands = Brand::orderBy('name','asc')->get();
-        return view('listing.create', compact('pageAt','stores','manufacturers','productTypes','deviceTypes','brands'));
+        return view('listing.create', compact('pageAt','stores','manufacturers','productTypes','deviceTypes','brands','listingGenerationTypes'));
     }
 
     /**
@@ -153,11 +155,16 @@ class ListingController extends Controller
         $term = $request->input('term');
         $type = $request->input('type');
         //echo $term;die;
-
+        $data = [];
         switch ($type){
 
             case 'product_code':
-                $product = Catalog::select('product_id','product_sku')->WhereLike('product_sku', '%'.$term.'%')->get();
+                $product_code =  $request->input('product_code');
+                if(!empty($product_code)){
+                    $product = Catalog::select('product_id','product_sku')->WhereLike('product_sku', '%'.$term.'%')->whereNotIn('product_sku',$product_code)->get();
+                }else{
+                    $product = Catalog::select('product_id','product_sku')->WhereLike('product_sku', '%'.$term.'%')->get();
+                }
                 foreach ($product as $key => $value)
                 {
                     $data["display"][] = [
@@ -171,7 +178,12 @@ class ListingController extends Controller
                 }
                 break;
             case 'device_series':
-                $deviceSeries = DeviceSeries::select('id','name')->WhereLike('name', '%'.$term.'%')->get();
+                $device_series =  $request->input('device_series');
+                if(!empty($device_series)){
+                    $deviceSeries = DeviceSeries::select('id', 'name')->WhereLike('name', '%' . $term . '%')->whereNotIn('id',$device_series)->get();
+                }else {
+                    $deviceSeries = DeviceSeries::select('id', 'name')->WhereLike('name', '%' . $term . '%')->get();
+                }
                 foreach ($deviceSeries as $key => $value)
                 {
                     $data["display"][] = [
@@ -185,7 +197,12 @@ class ListingController extends Controller
                 }
                 break;
             case 'device':
-                $devices = Device::select('id','name')->WhereLike('name', '%'.$term.'%')->get();
+                $device =  $request->input('device');
+                if(!empty($device_series)){
+                    $devices = Device::select('id', 'name')->WhereLike('name', '%' . $term . '%')->whereNotIn('id',$device)->get();
+                }else {
+                    $devices = Device::select('id', 'name')->WhereLike('name', '%' . $term . '%')->get();
+                }
                 foreach ($devices as $key => $value)
                 {
                     $data["display"][] = [
@@ -239,6 +256,8 @@ class ListingController extends Controller
     public function getSelectedProducts(Request $request){
 
         $product_ids = $request->input('product_ids');
+        $product_details = $request->input('product_detail');
+        session(['listing_product_details' => $product_details]);
         $step = $request->input('step');
         if(!empty($product_ids)){
             $query = StoreProduct::select('store_product.id','store_product.product_id','store_product.title','store_product.price','store_product.created_at','product_type.name as ProductType')->with('Product');
@@ -276,7 +295,7 @@ class ListingController extends Controller
 
         if(!empty($product_ids)){
 
-            $keywords = ProductSearchTerm::select('product_id','term')->whereIn('product_id',$product_ids)->orderBy('sort_order','asc')->get()->toArray();
+            $keywords = ProductTitleKeyword::select('product_id','keyword')->whereIn('product_id',$product_ids)->orderBy('priority','asc')->get()->toArray();
 
             /*echo '<pre>';
             print_r($keywords);
@@ -291,11 +310,11 @@ class ListingController extends Controller
                     if(!isset($shortFlag[$pro_id])){$shortFlag[$pro_id] = 0;}
                     if(!isset($longFlag[$pro_id])){$longFlag[$pro_id] = 0;}
                     if((!array_key_exists($pro_id, $shortFlag) || $shortFlag[$pro_id] < $short_key_length) || !array_key_exists($pro_id, $short_keyword)){
-                        $short_keyword[$pro_id][] = $val['term'];
+                        $short_keyword[$pro_id][] = $val['keyword'];
                         $shortFlag[$pro_id] = $shortFlag[$pro_id] + 1;
                     }
                     if(((!array_key_exists($pro_id, $longFlag) || $longFlag[$pro_id] < $long_key_length) || $long_key_length == 'all') || !array_key_exists($pro_id, $long_keyword)){
-                        $long_keyword[$pro_id][] = $val['term'];
+                        $long_keyword[$pro_id][] = $val['keyword'];
                         $longFlag[$pro_id] = $longFlag[$pro_id] + 1;
                     }
                     if(!in_array($pro_id, $pro_ids)){
@@ -391,7 +410,7 @@ class ListingController extends Controller
             $query = Device::select('device.*')->with('brand')->with('deviceType');
             $query->leftJoin('device_interface','device_interface.device_id', '=', 'device.id');
             $query->leftJoin('product_interface','product_interface.interface_id', '=', 'device_interface.interface_id');
-            $query->where('product_interface.product_id', $product_id);
+            $query->whereIn('product_interface.product_id', $product_id);
             if($device_type){
                 $query->where('device.device_type_id', $product_id);
             }
@@ -421,7 +440,7 @@ class ListingController extends Controller
 
         }else{
             return response()->json([
-                'success' => false
+                'error' => true
             ]);
         }
     }
