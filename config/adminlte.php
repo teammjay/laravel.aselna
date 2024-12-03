@@ -470,6 +470,17 @@ return [
                     'url' => '/product_condition',
                     'icon' => 'far fa-fw fa-file'
                 ],
+                [
+                    'text' => 'Listing Generation Type',
+                    'url' => '/list_generate_type',
+                    'icon' => 'far fa-fw fa-file'
+                ],
+                [
+                    'text' => 'Listing Generation Type Template',
+                    'url' => '/list_generate_type_template',
+                    'icon' => 'far fa-fw fa-file'
+                ],
+
             ],
         ]
 //        [

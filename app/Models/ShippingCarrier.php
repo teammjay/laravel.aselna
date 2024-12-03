@@ -26,7 +26,7 @@ class ShippingCarrier extends Model
     }
 
 
-    protected $fillable = ['code','name'];
+    protected $fillable = ['code','name','created_at','updated_at'];
 
     public function ShippingCarrierService()
     {

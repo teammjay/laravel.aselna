@@ -26,5 +26,5 @@ class ProductTags extends Model
     }
 
 
-    protected $fillable = ['product_id','name'];
+    protected $fillable = ['product_id','name','created_by','updated_by','created_at','updated_at'];
 }

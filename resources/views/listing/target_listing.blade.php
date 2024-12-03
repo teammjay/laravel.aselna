@@ -1,7 +1,7 @@
 @if(count($devices ?? []) > 0)
     @foreach($devices as $device)
-        <tr class="sproRow product-{{ $device->product_id }}">
-            <td></td>
+        <tr class="targetRow product-{{ $device->product_id }}">
+            <td><input type="checkbox" class="sel-device" name="listing_product_id[]" style="visibility: hidden;" value="{{ $device->product_id }}" checked></td>
             <td></td>
             <td>{{ (isset($device->brand->name)) ? $device->brand->name : '' }}</td>
             <td>{{ $device->deviceType->name }}</td>
