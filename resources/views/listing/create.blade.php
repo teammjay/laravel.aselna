@@ -72,7 +72,7 @@
                                         <select class="form-control mt-3 mb-3" name="store_id" id="listing_store">
                                             @if(count($stores ?? []) > 0)
                                                 @foreach($stores as $store)
-                                                    <option value="{{ $store->id }}">{{ $store->name }}</option>
+                                                    <option value="{{ $store->id }}">{{ $store->name }} - {{ $store->storeType->name }}</option>
                                                 @endforeach
                                             @endif
                                         </select>
@@ -749,7 +749,7 @@
             $(document).on('click', '#replace', function() {
                 let searchTerm = $('#search_input').val();
                 let replaceText = $('#replace_value').val();
-                
+
                 $('.sproRow').each(function () {
                     $(this).find('textarea').each(function () {
                         var currentvalue = $(this).val();

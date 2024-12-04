@@ -25,7 +25,7 @@ class StoreTypeSyncJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $storeTypes = DB::connection('fonus_db')->table('tbl_channel')->get();
+        $storeTypes = DB::connection('easyesale_db')->table('store_type')->get();
         foreach ($storeTypes as $storeType) {
             $this->createStoreType($storeType);
         }
@@ -33,13 +33,22 @@ class StoreTypeSyncJob implements ShouldQueue
 
     private function createStoreType(mixed $storeType)
     {
-        if (StoreType::where(['code' => $storeType->channel])->exists()) {
+        if (StoreType::where(['code' => $storeType->id])->exists()) {
             return;
         }
         StoreType::create([
-            'id' => (string) Str::uuid(),
-            'code' => $storeType->channel,
-            'name' => $storeType->channel,
+            'id' => (string)Str::uuid(),
+            'code' => $storeType->id,
+            'name' => $storeType->name,
+            'max_title_length' => $storeType->max_title_length,
+            'max_variation_name_length' => $storeType->max_variation_name_length,
+            'max_listing_variants' => $storeType->max_listing_variants,
+            'max_random_title_length' => $storeType->max_random_title_length,
+            'acknowledge_order' => $storeType->acknowledge_order,
+            'min_image_width' => $storeType->min_image_width,
+            'min_image_height' => $storeType->min_image_height,
+            'order_shipment_control_backward_days' => $storeType->order_shipment_control_backward_days,
+            'create_image_per_listing' => $storeType->create_image_per_listing,
         ]);
     }
 }

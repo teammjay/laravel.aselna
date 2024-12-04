@@ -30,13 +30,6 @@ class CategorySyncJob implements ShouldQueue
     {
         $categories = DB::connection('fonus_db')->table('tbl_category')->get();
         foreach ($categories as $category) {
-            if (Category::where(['code' => $category->category_id])->exists()) {
-                continue;
-            }
-            $this->createCategory($category);
-        }
-
-        foreach ($categories as $category) {
             if (ProductType::where(['code' => $category->category_id])->exists()) {
                 continue;
             }
@@ -50,6 +43,8 @@ class CategorySyncJob implements ShouldQueue
             }
             $this->createSubCategory($subCategory);
         }
+
+        $storeCategories = DB::connection('easyesale_db')->table('tbl_store_category')->get();
     }
 
     private function createProductType(mixed $category)
@@ -61,24 +56,6 @@ class CategorySyncJob implements ShouldQueue
                 'name' => $category->category,
                 'code' => $category->category_id,
                 'sort_order' => $category->order_no,
-            ]
-        );
-    }
-
-    private function createCategory(mixed $category)
-    {
-        $newCategory = Category::updateOrInsert(
-            ['code' => $category->category_id],
-            [
-                'id' => (string) Str::uuid(),
-                'name' => $category->category,
-                'code' => $category->category_id,
-                'notes1' => $category->notes1,
-                'order' => $category->order_no,
-                'created_by' => 'system',
-                'updated_by' => 'system',
-                'created_at' => now(),
-                'updated_at' => now(),
             ]
         );
     }

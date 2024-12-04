@@ -12,7 +12,7 @@
             <select class="form-control" id="listing_store">
                 <option value="-">Select Store</option>
                 @foreach($stores as $store)
-                    <option value="{{ $store->id }}">{{ $store->name }} - {{ $store->marketplace_name }}</option>
+                    <option value="{{ $store->id }}">{{ $store->name }} - {{ $store->storeType->name }}</option>
                 @endforeach
             </select>
         </div>
