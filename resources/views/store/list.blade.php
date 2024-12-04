@@ -105,12 +105,12 @@
             });
 
             function loadProductsWithPage(page) {
-                var perPage = 1;
+                var perPage = '{{ $perPage }}';
                 $.ajax({
-                    url: "{{ route('catalog.filter') }}?page=" + page + "&perPage=" + perPage,
+                    url: "{{ route('stores.filter') }}?page=" + page + "&perPage=" + perPage,
                     data: $('#filter-form').serialize(),
                     success: function(response) {
-                        $('#product-list').html(response.html);
+                        $('#store-list').html(response.html);
                         $('#pagination').html(response.pagination);
                     }
                 });

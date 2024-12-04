@@ -11,7 +11,7 @@
             <td>{{ (isset($product->Product->product_sku)) ? $product->Product->product_sku : '' }}</td>
             <td>
                 <div class="d-flex align-items-end gap-5">
-                    <textarea class="form-control title-{{ $product->product_id }}" name="prodcut_title[{{ $product->product_id }}]" style="width:200px;">{{ $product->title }}</textarea>
+                    <textarea class="form-control title-{{ $product->product_id }}" name="product_title[{{ $product->product_id }}]" style="width:200px;">{{ $product->title }}</textarea>
                     <span class="tLength-{{ $product->product_id }}">{{ strlen($product->title) }}</span>
                 </div>
             </td>
