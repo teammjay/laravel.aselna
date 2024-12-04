@@ -52,6 +52,7 @@ Route::post('catalog/getstoredetail', [CatalogController::class, 'getStoreDetail
 Route::controller(StoreController::class)->group(function () {
     Route::get('/stores', 'index')->name('store.list');
     Route::get('/stores/add', 'create')->name('store.create');
+    Route::get('stores/filter', 'filter')->name('stores.filter');
     Route::post('/stores/saveTabData', 'saveTabData')->name('store.save');
     Route::post('/stores/finalize', 'finalize')->name('store.final');
     Route::get('/stores/edit/{id}', 'edit')->name('store.edit');
@@ -85,6 +86,8 @@ Route::controller(ListingController::class)->group(function () {
     Route::post('/listing/getkeywords', 'getKeywords')->name('listing.getkeywords');
     Route::post('/listing/gettitlekeywords', 'getTitleKeywords')->name('listing.gettitlekeywords');
     Route::post('/listing/getcompatibledevice', 'getCompatibleDevice')->name('listing.getcompatibledevice');
+    Route::post('/listing/gettitletemplate', 'getTitleTemplate')->name('listing.gettitletemplate');
+    Route::post('/listing/generateproductlisting', 'generateProductListing')->name('listing.generateproductlisting');
 });
 
 Route::controller(ListingGenerationTypeController::class)->group(function () {
