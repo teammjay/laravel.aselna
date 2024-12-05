@@ -88,6 +88,7 @@ Route::controller(ListingController::class)->group(function () {
     Route::post('/listing/getcompatibledevice', 'getCompatibleDevice')->name('listing.getcompatibledevice');
     Route::post('/listing/gettitletemplate', 'getTitleTemplate')->name('listing.gettitletemplate');
     Route::post('/listing/generateproductlisting', 'generateProductListing')->name('listing.generateproductlisting');
+    Route::post('/listing/savelistingproducts', 'saveListingProducts')->name('listing.savelistingproducts');
 });
 
 Route::controller(ListingGenerationTypeController::class)->group(function () {

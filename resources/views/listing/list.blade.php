@@ -591,13 +591,13 @@
             </thead>
             <tbody id="product-list">
 
-                {{--@include('catalog.product_list', ['products' => $products])--}}
+                @include('listing.product_list', ['products' => $products])
 
             </tbody>
         </table>
     </div>
     <div id="pagination">
-        {{--@include('catalog.pagination', ['products' => $products])--}}
+        @include('listing.pagination', ['products' => $products])
     </div>
 @stop
 

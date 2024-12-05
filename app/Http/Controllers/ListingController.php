@@ -15,6 +15,7 @@ use App\Models\ProductTitleKeyword;
 use App\Models\ProductType;
 use App\Models\StoreProduct;
 use App\Models\StoreType;
+use App\Models\StoreTypeListing;
 use Illuminate\Http\Request;
 use App\Models\Store;
 
@@ -31,8 +32,14 @@ class ListingController extends Controller
             ->orderBy('product_id','desc')
             ->paginate($this->perPage);*/
         $stores = Store::Where('store_status',1)->get();
+        $products = StoreTypeListing::Where('status',1)->get();
 
-        return view('listing.list',compact('stores'))->with('perPage', $this->perPage);
+        $products = StoreTypeListing::with('product')->select('*')
+            ->where('status',1)
+            ->orderBy('created_at','desc')
+            ->paginate($this->perPage);
+
+        return view('listing.list',compact('stores','products'))->with('perPage', $this->perPage);
     }
 
     /**
@@ -91,6 +98,7 @@ class ListingController extends Controller
         $deviceTypes = DeviceTypes::all();
         $listingGenerationTypes = ListingGenerationType::all();
         $brands = Brand::orderBy('name','asc')->get();
+        session()->forget('listing_product_details');
         return view('listing.create', compact('pageAt','stores','manufacturers','productTypes','deviceTypes','brands','listingGenerationTypes'));
     }
 
@@ -515,19 +523,17 @@ class ListingController extends Controller
         $brand_seperator = $request->input('brand_seperator');
         $group_seperator = $request->input('group_seperator');
         $device_seperator = $request->input('device_seperator');
+        $product_details = session('listing_product_details');
+        $product_details = (array) json_decode($product_details);
+        /*echo '<pre>';
+        print_r($product_details);
+        echo '</pre>';*/
 
         if($store_id && $product_ids){
-            $query1 = $store_type = StoreType::select('store_type.*');
-            $query1->leftJoin('store','store.store_type_id', '=', 'store_type.id');
-            $query1->where('store.id', $store_id);
-            $store_type_detail = $query1->first();
-            $max_title_length = $store_type_detail->max_title_length;
 
-            $query2 = StoreProduct::select('store_product.id','store_product.product_id','store_product.title','products.product_sku','store_product.created_at','product_type.name as ProductType')->with('Product');
-            $query2->leftJoin('products','products.product_id', '=', 'store_product.product_id');
-            $query2->leftJoin('product_type','products.product_type', '=', 'product_type.id');
-            $query2->whereIn('store_product.product_id', $product_ids);
-            $products = $query2->get();
+            $store_type_detail = StoreType::getStoreTypeDetailById($store_id);
+            $max_title_length = $store_type_detail->max_title_length;
+            $products = StoreProduct::getStoreProducts($product_ids);
             //echo $query2->toSql();die;
 
             //echo '<pre>';
@@ -536,7 +542,23 @@ class ListingController extends Controller
                 $productsArray = [];
                 foreach($products as $product){
 
-                    $query = Device::select('device.*')->with('brand')->with('deviceType');
+                    $product_short_keyword = $product_details[$product->id]->short_keyword;
+                    $product_long_keyword = $product_details[$product->id]->long_keyword;
+                    $product_price = $product_details[$product->id]->price;
+                    if($title_template){
+                        if(str_contains($title_template, '#short_keyword')){
+
+                            $title_template = str_replace('#short_keyword', $product_short_keyword, $title_template);
+                        }
+
+                        if(str_contains($title_template, '#long_keyword')){
+
+                            $title_template = str_replace('#long_keyword', $product_long_keyword, $title_template);
+                        }
+                    }
+
+                    $query = Device::select('device.*','brands.name as brand_name')->with('deviceType');
+                    $query->leftJoin('brands','brands.id', '=', 'device.brand_id');
                     $query->leftJoin('device_interface','device_interface.device_id', '=', 'device.id');
                     $query->leftJoin('product_interface','product_interface.interface_id', '=', 'device_interface.interface_id');
                     $query->where('product_interface.product_id', $product->product_id);
@@ -552,10 +574,11 @@ class ListingController extends Controller
                     if($popularity){
                         $query->where('device.rating_id', $popularity);
                     }
+                    $query->orderBy('brand_name', 'asc');
                     $query->orderBy('device.name', 'asc');
                     $devices = $query->get();
 
-                    $productsArray[] = $this->generateProductTitles('Type C charger for',$product,$devices,$max_title_length, $brand_seperator,$device_seperator,$compress, $generate_type);
+                    $productsArray[] = $this->generateProductTitles($title_template,$product,$devices,$max_title_length, $brand_seperator,$device_seperator,$compress, $generate_type,$product_price);
                 }
 
                 /*echo '<pre>';
@@ -566,10 +589,23 @@ class ListingController extends Controller
             if(!empty($productsArray)){
                 $view = view('listing.target_listing', compact('productsArray','max_title_length'))->render();
 
+                $models = array();
+                $totalCount = 0;
+                foreach($productsArray as $product){
+                    if(!empty($product)){
+                        $totalCount = count($product);
+                        foreach($product as $key=>$pro){
+                            $models[$key] = $pro['model'];
+                        }
+                    }
+                }
+
                 if ($request->ajax()) {
                     return response()->json([
                         'success' => true,
-                        'html' => $view
+                        'html' => $view,
+                        'models' => $models,
+                        'totalproduct' => $totalCount,
                     ]);
                 }
             }else{
@@ -586,41 +622,57 @@ class ListingController extends Controller
         }
     }
 
-    function generateProductTitles($baseTitle, $product, $devices, $charLimit, $brand_seperator, $device_seperator, $compress, $generate_type) {
-        $titles = array();
+    function generateProductTitles($baseTitle, $product, $devices, $charLimit, $brand_seperator, $device_seperator, $compress, $generate_type, $product_price) {
+        $titles = [];
+        $currentDevices = [];
         $currentTitle = $baseTitle;
         $separator = $device_seperator; // Separator between device names
         $lastBrand = null;
+        $currentBrand = null;
         $cnt = 0;
         foreach ($devices as $device) {
             // Split the device into brand and model
-            $parts = explode(' ', $device->name, 2);
+            $currentBrand = $device->brand_name.' '.$device->name;
+            $parts = explode(' ', $currentBrand, 2);
             $brand = $parts[0];
             $model = $parts[1] ?? ''; // If no model, treat as empty
 
             // Use only the model if the brand is the same as the last one
             if($compress) {
-                $nameToAdd = ($brand === $lastBrand) ? $model : $device->name;
+                $nameToAdd = ($brand === $lastBrand) ? $model : $currentBrand;
             }else{
                 $nameToAdd = $device->name;
             }
 
-            // Check if adding the device exceeds the character limit
-            if (strlen($currentTitle . ' '.$separator.' ' . $nameToAdd) > $charLimit) {
-                // Save the current title and start a new one
-                $titles[$cnt]['title'] = rtrim($currentTitle, $separator); // Remove trailing separator
 
+            // Check if adding the device exceeds the character limit
+            $tempDevices = array_merge($currentDevices, [$nameToAdd]);
+            $tempDeviceString = implode(', ', $tempDevices);
+            $tempTitle = str_replace('#model_series', $tempDeviceString, $baseTitle);
+
+            /*$sku = StoreTypeListing::generateUniqueAlphabeticSku($product->product_sku);*/
+
+            // Check if adding the device exceeds the character limit
+            if (strlen($tempTitle) > $charLimit) {
+
+                // Save the current title and start a new one
+                //$titles[$cnt]['title'] = rtrim($currentTitle, $separator); // Remove trailing separator
+                $titles[$cnt]['title'] = str_replace('#model_series', implode(', ', $currentDevices), $baseTitle);
                 $cnt++;
-                $currentTitle = $baseTitle . ' ' . $nameToAdd;
+                //$currentTitle = $baseTitle . ' ' . $nameToAdd;
+                $currentDevices = [$currentBrand];
                 $titles[$cnt]['product_code'] = $product->product_sku;
                 $titles[$cnt]['product_id'] = $product->product_id;
+                $titles[$cnt]['price'] = $product_price;
                 $titles[$cnt]['model'][] = $device->name;
             } else {
                 // Append the device name
                 $titles[$cnt]['product_code'] = $product->product_sku;
                 $titles[$cnt]['product_id'] = $product->product_id;
                 $titles[$cnt]['model'][] = $device->name;
-                $currentTitle .= ($currentTitle === $baseTitle ? ' ' : ' '.$separator.' ') . $nameToAdd;
+                $titles[$cnt]['price'] = $product_price;
+                //$currentTitle .= ($currentTitle === $baseTitle ? ' ' : ' '.$separator.' ') . $nameToAdd;
+                $currentDevices[] = $nameToAdd;
             }
 
             // Update the last brand
@@ -629,10 +681,50 @@ class ListingController extends Controller
 
         // Add the last title
         if (!empty($currentTitle)) {
-            $titles[$cnt]['title'] = rtrim($currentTitle, ' '.$separator.' ');
+            /*$titles[$cnt]['title'] = rtrim($currentTitle, ' '.$separator.' ');*/
+            $titles[$cnt]['title'] = str_replace('#model_series', implode(', ', $currentDevices), $baseTitle);
         }
 
         return $titles;
+    }
+
+    public function saveListingProducts(Request $request){
+
+        if($request->input()){
+            if(is_array($request->input('final_product_title'))){
+                $product_titles = $request->input('final_product_title');
+                $product_prices = $request->input('final_product_price');
+                $product_codes = $request->input('final_product_code');
+                $product_ids = $request->input('final_product_id');
+                $store_id = $request->input('store_id');
+                foreach($product_titles as $key=>$product){
+                    $sku = StoreTypeListing::generateUniqueAlphabeticSku($product_codes[$key]);
+                    $created_by = auth()->user()->name ?? 'admin';
+                    $listingProductArr = [
+                        'product_name' => $product,
+                        'sku' => $sku,
+                        'price' => $product_prices[$key],
+                        'item_id' => $product_ids[$key],
+                        'store_id' => $store_id,
+                        'has_offers' => 0,
+                        'status' => 1,
+                        'created_by' => $created_by,
+                        'updated_by' => $created_by
+                    ];
+
+                    StoreTypeListing::create($listingProductArr);
+                }
+
+                if ($request->ajax()) {
+                    return response()->json([
+                        'success' => true,
+                        'message' => 'Product listing created successfully!'
+                    ]);
+                }
+            }
+        }
+
+        return response()->json(['error' => true,'message' => 'Something went wrong! Please try again!']);
     }
 
 }
