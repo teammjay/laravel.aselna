@@ -6,13 +6,28 @@
         #product_type_filter option, #manufacturer_filter option, select[multiple] option {
             border-bottom: 1px solid #eaeaea;
         }
-        #frmproductfilter .d-flex .border {
+        #frmproductfilter .d-flex > .border {
             width: 14%;
         }
         .gap-5{gap:5px;}
         .proCheck{
             visibility: hidden;
         }
+        .selectproRow:hover td {
+            background-color: #ddf1ff;
+        }
+        .bd-example {
+            background: #fff;
+            padding: 2rem !important;
+            width: 30% !important;
+            text-align: center;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 99;
+        }
+        .pro-list-title{width: 85% !important;}
     </style>
 @stop
 @section('content_header')
@@ -170,7 +185,7 @@
                         <div class="col-md-12">
                             <div class="">
                                 <div class="card-header pl-0 pr-0">
-                                    <input type="checkbox" id="seleced_product"> Selected Products Only
+                                    <input type="checkbox" id="selected_product"> Selected Products Only
                                 </div>
                                 <div class="card-body pl-0 pr-0">
                                     <table id="productsTable" class="table table-bordered table-striped">
@@ -298,7 +313,33 @@
                         </div>
                     </div>
                 </div>
-                <div class="tab-pane fade" id="tab3" role="tabpanel" aria-labelledby="select-device-tab">
+                <div class="tab-pane fade position-relative" id="tab3" role="tabpanel" aria-labelledby="select-device-tab">
+                    <div class="bd-example border" style="display: none;">
+                        <div class="spinner-grow text-primary" role="status">
+                            <span class="visually-hidden"></span>
+                        </div>
+                        <div class="spinner-grow text-secondary" role="status">
+                            <span class="visually-hidden"></span>
+                        </div>
+                        <div class="spinner-grow text-success" role="status">
+                            <span class="visually-hidden"></span>
+                        </div>
+                        <div class="spinner-grow text-danger" role="status">
+                            <span class="visually-hidden"></span>
+                        </div>
+                        <div class="spinner-grow text-warning" role="status">
+                            <span class="visually-hidden"></span>
+                        </div>
+                        <div class="spinner-grow text-info" role="status">
+                            <span class="visually-hidden"></span>
+                        </div>
+                        <div class="spinner-grow text-light" role="status">
+                            <span class="visually-hidden"></span>
+                        </div>
+                        <div class="spinner-grow text-dark" role="status">
+                            <span class="visually-hidden"></span>
+                        </div>
+                    </div>
                     <div class="row mt-3 mb-3">
 
                         <div class="col-md-12">
@@ -306,7 +347,14 @@
                                 <div class="border p-2">
                                     <label>Generation Type</label>
                                     <div class="form-group align-items-center">
-                                        <div class="form-group mb-1">
+                                        @if(count($listingGenerationTypes ?? []) > 0)
+                                            @foreach($listingGenerationTypes as $ltype)
+                                                <div class="form-group mb-1">
+                                                    <input type="radio" class="mr-1" id="generate_type_{{ $ltype->id }}" name="generate_type" value="{{ $ltype->id }}"> <label for="generate_type_{{ $ltype->id }}">{{ $ltype->name }}</label>
+                                                </div>
+                                            @endforeach
+                                        @endif
+                                        {{--<div class="form-group mb-1">
                                             <input type="radio" class="mr-1" name="generate_type" value="product-only" checked> <span>Product Only</span>
                                         </div>
                                         <div class="form-group mb-1">
@@ -333,7 +381,7 @@
 
                                         <div class="form-group mb-1">
                                             <input type="checkbox" class="mr-1" name="popular_brand" value="popular-brand"> <span>Popular Brand Only</span>
-                                        </div>
+                                        </div>--}}
                                     </div>
                                     <div class="border p-2">
                                         <div class="form-group mb-0 align-items-center">
@@ -341,7 +389,7 @@
                                                 <input type="radio" class="ml-2 mr-2" name="listing_type" value="all" checked> <span>All</span>
                                             </div>
                                             <div class="form-group mb-1">
-                                                <input type="radio" class="ml-2 mr-2" name="listing_type" value="Neverlistedfortype"> <span>Neverlistedfortype</span>
+                                                <input type="radio" class="ml-2 mr-2" name="listing_type" value="Neverlistedfortype"> <span>Never listed for type</span>
                                             </div>
                                             <div class="form-group mb-1">
                                                 <input type="radio" class="ml-2 mr-2" name="listing_type" value="neverlisted"> <span>Neverlisted</span>
@@ -354,7 +402,7 @@
                                     @if(count($deviceTypes ?? []) > 0)
                                         @foreach($deviceTypes as $dType)
                                             <div class="form-group mb-1">
-                                                <input type="checkbox" class="ml-2 mr-2" name="device_type" value="{{ $dType->id }}"> <span>{{ $dType->name }}</span>
+                                                <input type="checkbox" class="ml-2 mr-2" name="device_type[]" value="{{ $dType->id }}"> <span>{{ $dType->name }}</span>
                                             </div>
                                         @endforeach
                                     @endif
@@ -427,16 +475,16 @@
                                     </div>
                                     <div class="form-group mb-1 mt-3">
                                         <label>Title Template</label>
-                                        <select class="form-control" name="title_template">
-                                        </select>
+                                        <input type="text" class="form-control" name="title_template" id="title_template">
+                                        </input>
                                     </div>
                                     <div class="d-flex align-items-center mb-1 mt-3">
                                         <span>Brand Seperator </span>
-                                        <input type="text" name="brand_seperator" class="form-control ml-2 mr-5" id="brand_seperator" value="," style="width: 30px;">
+                                        <input type="text" name="brand_seperator" class="form-control ml-2 mr-5" id="brand_seperator" value=" , " style="width: 40px;">
                                         <span>Group Seperator </span>
-                                        <input type="text" name="group_seperator" class="form-control ml-2 mr-5" id="group_seperator" value="," style="width: 30px;">
+                                        <input type="text" name="group_seperator" class="form-control ml-2 mr-5" id="group_seperator" value=" , " style="width: 40px;">
                                         <span>Device Seperator </span>
-                                        <input type="text" name="device_seperator" class="form-control ml-2 mr-5" id="device_seperator" value="," style="width: 30px;">
+                                        <input type="text" name="device_seperator" class="form-control ml-2 mr-5" id="device_seperator" value=" , " style="width: 40px;">
                                         <input type="checkbox" name="compress" id="compress" checked> <span> Compress</span>
                                     </div>
                                 </div>
@@ -479,26 +527,33 @@
                                             <span class="float-right" id="total_listing_product"></span>
                                         </div>
                                         <div class="card-body">
-                                            <table id="productListingTable" class="table table-bordered table-striped">
-                                                <thead>
-                                                <tr>
-                                                    <th></th>
-                                                    <th>Carrier</th>
-                                                    <th>Brand</th>
-                                                    <th>Type</th>
-                                                    <th>modelName</th>
-                                                    <th>Listed count</th>
-                                                    <th>Listed type count</th>
-                                                    <th>Rating</th>
-                                                    <th>Popularity</th>
-                                                </tr>
-                                                </thead>
-                                                <tbody id="listing_list">
+                                            <div>
+                                                <button type="button" class="btn btn-default mr-2" id="select_all"><i class="fa fa-list"></i> Select All</button>
+                                                <button type="button" class="btn btn-default mr-2" id="select_none"><i class="fa fa-ban"></i> Select None</button>
+                                                <input type="checkbox" id="selected_device_only"> <span>Selected Device Only</span>
+                                            </div>
+                                            <div style="max-height: 500px; overflow: scroll">
+                                                <table id="productListingTable" class="table table-bordered table-striped mt-3">
+                                                    <thead>
+                                                    <tr>
+                                                        <th></th>
+                                                        <th>Carrier</th>
+                                                        <th>Brand</th>
+                                                        <th>Type</th>
+                                                        <th>modelName</th>
+                                                        <th>Listed count</th>
+                                                        <th>Listed type count</th>
+                                                        <th>Rating</th>
+                                                        <th>Popularity</th>
+                                                    </tr>
+                                                    </thead>
+                                                    <tbody id="listing_list">
 
-                                                {{--@include('catalog.product_list', ['products' => $products])--}}
+                                                    {{--@include('catalog.product_list', ['products' => $products])--}}
 
-                                                </tbody>
-                                            </table>
+                                                    </tbody>
+                                                </table>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -508,16 +563,16 @@
                 </div>
                 <div class="tab-pane fade" id="tab4" role="tabpanel" aria-labelledby="listing-tab">
 
-                    <div class="row">
+                    <div class="row pt-2">
                         <div class="col-md-12">
 
-                            <div class="border p-2">
+                            <div class="p-2">
                                 <label>Replace / Clear</label>
                                 <div class="d-flex justify-content-between" style="gap:5px;">
                                     <div class="border p-2">
                                         <div class="form-group d-flex align-items-center mt-3">
-                                            <input type="text" class="form-control" name="search_input" id="search_input" placeholder="Search">
-                                            <input type="text" class="form-control" name="replace_value" id="replace_value" placeholder="Replace">
+                                            <input type="text" class="form-control" name="title_input_from" id="title_input_from" placeholder="Search">
+                                            <input type="text" class="form-control" name="title_value_to_replace" id="title_value_to_replace" placeholder="Replace">
                                             <button type="button" class="btn btn-secondary ml-3" id="replace">Replace</button>
                                         </div>
                                     </div>
@@ -625,7 +680,73 @@
                         followThirdStep();
                         currentIndex++;
                         activateTab(currentIndex);
-                    } else{
+                    }else if(currentIndex == 2){
+
+                        $('.bd-example').show();
+                        let product_ids = [];
+                        $('input[name="selected_list_product[]"]').each(function () {
+                            product_ids.push($(this).val())
+                        });
+
+                        let device_type = [];
+                        $('input[name="device_type[]"]:checked').each(function () {
+                            device_type.push($(this).val())
+                        });
+
+                        let brand = $('#brand_filter').val();
+                        let rating = $('#rating_filter').val();
+                        let popularity = $('#popularity_filter').val();
+                        let store_id = $('#listing_store').val();
+                        let title_template = $('#title_template').val();
+                        let brand_seperator = $('#brand_seperator').val();
+                        let group_seperator = $('#group_seperator').val();
+                        let device_seperator = $('#device_seperator').val();
+                        let compress = 0;
+                        if($('#compress').is(':checked')){
+                            compress = 1;
+                        }
+                        let generate_type = $('input[name="generate_type"]:checked').val();
+
+                        $.ajax({
+                            url: "{{ route('listing.generateproductlisting') }}",
+                            type: 'POST',
+                            data: {
+                                product_id:product_ids,
+                                device_type:device_type,
+                                brand:brand,
+                                rating:rating,
+                                popularity:popularity,
+                                store_id:store_id,
+                                title_template:title_template,
+                                compress:compress,
+                                generate_type:generate_type,
+                                brand_seperator:brand_seperator,
+                                group_seperator:group_seperator,
+                                device_seperator:device_seperator,
+                            },
+                            /* processData: false,
+                             contentType: false,*/
+                            headers: {
+                                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                            },
+                            success: function (response) {
+                                if (response.success) {
+                                    $('#listing-product').html(response.html);
+                                    //$('#total_listing_product').html(response.total+' rows');
+                                    $('.bd-example').hide();
+                                    currentIndex++;
+                                    activateTab(currentIndex);
+
+                                }
+                            },
+                            error: function (xhr) {
+                                /*if (xhr.responseJSON?.error) {
+                                    $('#responseMessage').html('<p style="color:red;">' + xhr.responseJSON.error.image[0] + '</p>');
+                                }*/
+                            }
+                        });
+
+                    }else{
                         currentIndex++;
                         activateTab(currentIndex);
                     }
@@ -650,7 +771,7 @@
                 loadProducts();
             });
 
-            $(document).on('click', '#seleced_product', function() {
+            $(document).on('click', '#selected_product', function() {
                 if($(this).is(':checked')){
                     $('.proCheck').prop('checked',false);
                 }else{
@@ -660,7 +781,7 @@
 
             $(document).on('click', '.selectproRow', function() {
                 let ele = $(this);
-                if($('#seleced_product').is(':checked')){
+                if($('#selected_product').is(':checked')){
                     if($(this).find('.proCheck').is(':checked')){
                         ele.removeClass('bg-blue');
                         $(this).find('.proCheck').prop('checked',false);
@@ -675,38 +796,43 @@
 
             $(document).on('click', '.sprolistRow', function() {
                 let ele = $(this);
-                let product_id = ele.find('.pro-id').val();
-                let device_type = $('input[name="device_type"]:checked').val();
-                let brand = $('#brand_filter').val();
-                let rating = $('#rating_filter').val();
-                let popularity = $('#popularity_filter').val();
-                $.ajax({
-                    url: "{{ route('listing.getcompatibledevice') }}",
-                    type: 'POST',
-                    data: {
-                        product_id:product_id,
-                        device_type:device_type,
-                        brand:brand,
-                        rating:rating,
-                        popularity:popularity,
-                    },
-                    /* processData: false,
-                     contentType: false,*/
-                    headers: {
-                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                    },
-                    success: function (response) {
-                        if (response.success) {
-                            $('#listing_list').html(response.html);
-                            $('#total_listing_product').html(response.total+' rows');
-                        }
-                    },
-                    error: function (xhr) {
-                        /*if (xhr.responseJSON?.error) {
-                            $('#responseMessage').html('<p style="color:red;">' + xhr.responseJSON.error.image[0] + '</p>');
-                        }*/
-                    }
-                });
+                if(ele.find('.pro-id').is(':checked')){
+                    ele.removeClass('bg-blue');
+                    ele.find('.pro-id').prop('checked',false);
+                }else{
+                    ele.addClass('bg-blue');
+                    ele.find('.pro-id').prop('checked',true);
+                }
+                loadListingProduct();
+            });
+
+            $(document).on('click', '#brand_filter', function() {
+                loadListingProduct();
+            });
+
+            $(document).on('click', 'input[name="device_type[]"]', function() {
+                loadListingProduct();
+            });
+
+            $(document).on('click', '#select_all', function() {
+                $('.targetRow').find('.sel-device').prop('checked',true);
+                $('.targetRow').addClass('bg-blue');
+            });
+
+            $(document).on('click', '#select_none', function() {
+                $('.targetRow').find('.sel-device').prop('checked',false);
+                $('.targetRow').removeClass('bg-blue');
+            });
+
+            $(document).on('click', '.targetRow', function() {
+                let ele = $(this);
+                if(ele.find('.sel-device').is(':checked')){
+                    ele.removeClass('bg-blue');
+                    ele.find('.sel-device').prop('checked',false);
+                }else{
+                    ele.addClass('bg-blue');
+                    ele.find('.sel-device').prop('checked',true);
+                }
             });
 
             $(document).on('change', '#product_type_filter', function() {
@@ -737,6 +863,7 @@
                     }
                 });
             });
+
 
             $(document).on('click', '#generate_keyword', function() {
                 generateKeywords();
@@ -769,18 +896,66 @@
                 }
             });
 
+            $(document).on('click', 'input[name="generate_type"]', function() {
+                let type = $(this).val();
+                $('#title_template').val('');
+                $.ajax({
+                    url: "{{ route('listing.gettitletemplate') }}",
+                    type: 'POST',
+                    data: {
+                        type:type
+                    },
+                    /* processData: false,
+                     contentType: false,*/
+                    headers: {
+                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                    },
+                    success: function (response) {
+                        if (response.success) {
+                            //$('#title_template').html(response.option);
+                            let data = response.data;
+                            $('#title_template').val(response.option);
 
+                            $('#title_template').autocomplete({
+
+                                source: function (request, response) {
+                                    actemp = data.details;
+                                    response(data.display);
+                                },
+                                minLength: 0,
+                                select : function(event, ui){
+                                    $('#title_template').val(ui.item.label);
+                                    return false;
+                                }
+                            }).focus(function () {
+                                $('#title_template').keydown();
+                            });;
+                        }
+                    },
+                    error: function (xhr) {
+                        /*if (xhr.responseJSON?.error) {
+                            $('#responseMessage').html('<p style="color:red;">' + xhr.responseJSON.error.image[0] + '</p>');
+                        }*/
+                    }
+                });
+            });
 
             $('#product_code_filter').autocomplete({
 
                 source: function (request, response) {
+
+                    let product_code = [];
+                    $('input[name="product_code[]"]').each(function () {
+                        product_code.push($(this).val())
+                    });
 
                     $.ajax({
                         type: "POST",
                         url: "{{ route('listing.search') }}",
                         data: {
                             term: request.term,
-                            type: "product_code"
+                            type: "product_code",
+                            product_code: product_code,
                         },
                         //processData: false,
                         //contentType: false,
@@ -798,7 +973,7 @@
                 minLength: 2,
                 select : function(event, ui){
                     $('#product_code_filter').val('');
-                    $('#pro_code_list').append('<div class="border p-1"><input type="hidden" name="product_code[]" value="'+ui.item.value+'">'+ui.item.value+'</div>');
+                    $('#pro_code_list').append('<div class="border bg-blue p-1 mt-1"><input type="hidden" name="product_code[]" value="'+ui.item.value+'">'+ui.item.value+'<i class="fa fa-window-close float-right mt-1"></i></div>');
                     return false;
                 }
             });
@@ -806,13 +981,17 @@
             $('#device_series_filter').autocomplete({
 
                 source: function (request, response) {
-
+                    let device_series = [];
+                    $('input[name="device_series[]"]').each(function () {
+                        device_series.push($(this).val())
+                    });
                     $.ajax({
                         type: "POST",
                         url: "{{ route('listing.search') }}",
                         data: {
                             term: request.term,
-                            type: "device_series"
+                            type: "device_series",
+                            device_series: device_series
                         },
                         //processData: false,
                         //contentType: false,
@@ -830,7 +1009,7 @@
                 minLength: 2,
                 select : function(event, ui){
                     $('#device_series_filter').val('');
-                    $('#device_series_list').append('<div class="border p-1"><input type="hidden" name="device_series[]" value="'+ui.item.value+'">'+ui.item.label+'</div>');
+                    $('#device_series_list').append('<div class="border bg-blue p-1 mt-1"><input type="hidden" name="device_series[]" value="'+ui.item.value+'">'+ui.item.label+'<i class="fa fa-window-close float-right mt-1"></i></div>');
                     return false;
                 }
             });
@@ -838,13 +1017,17 @@
             $('#device_filter').autocomplete({
 
                 source: function (request, response) {
-
+                    let device = [];
+                    $('input[name="device[]"]').each(function () {
+                        device.push($(this).val())
+                    });
                     $.ajax({
                         type: "POST",
                         url: "{{ route('listing.search') }}",
                         data: {
                             term: request.term,
-                            type: "device"
+                            type: "device",
+                            device: device
                         },
                         //processData: false,
                         //contentType: false,
@@ -862,9 +1045,14 @@
                 minLength: 2,
                 select : function(event, ui){
                     $('#device_filter').val('');
-                    $('#device_list').append('<div class="border p-1"><input type="hidden" name="device[]" value="'+ui.item.value+'">'+ui.item.label+'</div>');
+                    $('#device_list').append('<div class="border bg-blue p-1 mt-1"><input type="hidden" name="device[]" value="'+ui.item.value+'">'+ui.item.label+' <i class="fa fa-window-close float-right mt-1"></i></div>');
                     return false;
                 }
+            });
+
+
+            $(document).on('click','.fa-window-close',function () {
+                $(this).parent('.border').remove();
             });
         });
 
@@ -915,7 +1103,7 @@
                     if (response.html) {
                         $('#selected_product_list').html(response.html);
                         generateKeywords();
-                        generateTitleKeywords();
+                        //generateTitleKeywords();
                     }
                 },
                 error: function (xhr) {
@@ -928,8 +1116,22 @@
 
         function followThirdStep(){
             let selected_product = [];
-            $('input[name="products[]"]:checked').each(function () {
-                selected_product.push($(this).val())
+            let productDetail = {};
+            $('input[name="selected_store_product[]"]').each(function () {
+                var pid = $(this).val();
+                selected_product.push(pid);
+                console.log(pid);
+                var pro_id = $('.pid-'+pid).val();
+                var title = $('.title-'+pro_id).val();
+                var short_keyword = $('.shortKey-'+pro_id).val();
+                var long_keyword = $('.longKey-'+pro_id).val();
+                var price = $('.price-'+pro_id).val();
+                productDetail[pid] = {};
+                productDetail[pid]['product_id'] = pro_id;
+                productDetail[pid]['title'] = title;
+                productDetail[pid]['short_keyword'] = short_keyword;
+                productDetail[pid]['long_keyword'] = long_keyword;
+                productDetail[pid]['price'] = price;
             });
 
             $.ajax({
@@ -938,6 +1140,7 @@
                 data: {
                     product_ids:selected_product,
                     store_id:selected_product,
+                    product_detail:JSON.stringify(productDetail),
                     step:3
                 },
                 headers: {
@@ -946,6 +1149,7 @@
                 success: function (response) {
                     if (response.html) {
                         $('#product-list-3').html(response.html);
+                        loadListingProduct();
                     }
                 },
                 error: function (xhr) {
@@ -955,6 +1159,7 @@
                 }
             });
         }
+
 
         function generateKeywords(){
             let short_key_length = $('input[name="short_keyword"]:checked').val();
@@ -1047,12 +1252,16 @@
         }
 
         function loadListingProduct(){
-            let product_id = ele.find('.pro-id').val();
+            //let product_id = ele.find('.pro-id').val();
             let product_ids = [];
-            $('input[name="products[]"]:checked').each(function () {
+            $('input[name="selected_list_product[]"]').each(function () {
                 product_ids.push($(this).val())
             });
-            let device_type = $('input[name="device_type"]:checked').val();
+            let device_type = [];
+            $('input[name="device_type[]"]:checked').each(function () {
+                device_type.push($(this).val())
+            });
+
             let brand = $('#brand_filter').val();
             let rating = $('#rating_filter').val();
             let popularity = $('#popularity_filter').val();
@@ -1060,8 +1269,7 @@
                 url: "{{ route('listing.getcompatibledevice') }}",
                 type: 'POST',
                 data: {
-                    product_ids:product_ids,
-                    product_id:product_id,
+                    product_id:product_ids,
                     device_type:device_type,
                     brand:brand,
                     rating:rating,
@@ -1074,10 +1282,11 @@
                 },
                 success: function (response) {
                     if (response.success) {
-                        $('#proSubType').show();
-                        $('#product_sub_type_filter').html(response.option);
+                        $('#listing_list').html(response.html);
+                        $('#total_listing_product').html(response.total+' rows');
                     }else{
-                        $('#proSubType').hide();
+                        $('#listing_list').html('');
+                        $('#total_listing_product').html('0 rows');
                     }
                 },
                 error: function (xhr) {

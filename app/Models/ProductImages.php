@@ -25,5 +25,5 @@ class ProductImages extends Model
         });
     }
 
-    protected $fillable = ['product_id','image', 'thumbnail_image','sort_order'];
+    protected $fillable = ['product_id','image', 'thumbnail_image','sort_order','created_by','updated_by','created_at','updated_at'];
 }

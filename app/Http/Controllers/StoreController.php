@@ -72,11 +72,32 @@ class StoreController extends Controller
     }
 
     /**
-     * Store a newly created resource in storage.
+     * Filter listing.
      */
-    public function store(Request $request)
+    public function filter(Request $request)
     {
-        //
+        $query = Store::query();
+
+        $perPage = $request->input('perPage', $this->perPage);
+
+        // Filter by product title
+        if ($request->has('name') && $request->name != '') {
+            $query->WhereLike('name', '%'.$request->name.'%');
+        }
+
+        $stores = $query->paginate($perPage); // Paginate results
+
+        //echo $query->toSql();die;
+
+        // Return a view or JSON
+        if ($request->ajax()) {
+            return response()->json([
+                'html' => view('store.store_list', compact('stores'))->render(),
+                'pagination' => view('store.pagination', compact('stores'))->render(),
+            ]);
+        }
+
+        return view('store.index', compact('stores'));
     }
 
     /**

@@ -26,5 +26,5 @@ class ProductTitleKeyword extends Model
     }
 
 
-    protected $fillable = ['product_id','keyword', 'priority'];
+    protected $fillable = ['product_id','keyword', 'priority','created_by','updated_by','created_at','updated_at'];
 }

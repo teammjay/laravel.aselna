@@ -28,6 +28,8 @@ use App\Http\Controllers\ManufacturerController;
 use App\Http\Controllers\ProductTypeController;
 use App\Http\Controllers\ProductConditionController;
 use App\Http\Controllers\InterfaceController;
+use App\Http\Controllers\ListingGenerationTypeController;
+use App\Http\Controllers\ListingGenerationTypeTemplateController;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/catalog', [CatalogController::class, 'index']);
@@ -50,6 +52,7 @@ Route::post('catalog/getstoredetail', [CatalogController::class, 'getStoreDetail
 Route::controller(StoreController::class)->group(function () {
     Route::get('/stores', 'index')->name('store.list');
     Route::get('/stores/add', 'create')->name('store.create');
+    Route::get('stores/filter', 'filter')->name('stores.filter');
     Route::post('/stores/saveTabData', 'saveTabData')->name('store.save');
     Route::post('/stores/finalize', 'finalize')->name('store.final');
     Route::get('/stores/edit/{id}', 'edit')->name('store.edit');
@@ -83,6 +86,26 @@ Route::controller(ListingController::class)->group(function () {
     Route::post('/listing/getkeywords', 'getKeywords')->name('listing.getkeywords');
     Route::post('/listing/gettitlekeywords', 'getTitleKeywords')->name('listing.gettitlekeywords');
     Route::post('/listing/getcompatibledevice', 'getCompatibleDevice')->name('listing.getcompatibledevice');
+    Route::post('/listing/gettitletemplate', 'getTitleTemplate')->name('listing.gettitletemplate');
+    Route::post('/listing/generateproductlisting', 'generateProductListing')->name('listing.generateproductlisting');
+});
+
+Route::controller(ListingGenerationTypeController::class)->group(function () {
+    Route::get('/list_generate_type', 'index')->name('listing_generation_type.index');
+    Route::get('/list_generate_type/add', 'create')->name('listing_generation_type.create');
+    Route::post('/list_generate_type/add', 'store')->name('listing_generation_type.store');
+    Route::get('/list_generate_type/edit/{id}', 'edit')->name('listing_generation_type.edit');
+    Route::post('/list_generate_type/edit/{id}', 'update')->name('listing_generation_type.update');
+    Route::get('/list_generate_type/delete/{id}', 'destroy')->name('listing_generation_type.delete');
+});
+
+Route::controller(ListingGenerationTypeTemplateController::class)->group(function () {
+    Route::get('/list_generate_type_template', 'index')->name('listing_generation_type_template.index');
+    Route::get('/list_generate_type_template/add', 'create')->name('listing_generation_type_template.create');
+    Route::post('/list_generate_type_template/add', 'store')->name('listing_generation_type_template.store');
+    Route::get('/list_generate_type_template/edit/{id}', 'edit')->name('listing_generation_type_template.edit');
+    Route::post('/list_generate_type_template/edit/{id}', 'update')->name('listing_generation_type_template.update');
+    Route::get('/list_generate_type_template/delete/{id}', 'destroy')->name('listing_generation_type_template.delete');
 });
 
 Route::controller(ProductTypeController::class)->group(function () {

@@ -27,5 +27,5 @@ class ProductKeyFeatures extends Model
     }
 
 
-    protected $fillable = ['product_id','value', 'sort_order'];
+    protected $fillable = ['product_id','value', 'sort_order','created_at','updated_at'];
 }

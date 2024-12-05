@@ -26,7 +26,7 @@ class ShippingCarrierService extends Model
     }
 
 
-    protected $fillable = ['name','shipping_carrier_id','included_insurance','default_package_dimension_length','default_package_dimension_width','default_package_dimension_height','default_package_dimension_length_unit','generic_service_method','max_weight_value','max_weight_weight_unit','delivery_time','earliest_delivery_days','latest_delivery_days','service_level'];
+    protected $fillable = ['name','shipping_carrier_id','included_insurance','default_package_dimension_length','default_package_dimension_width','default_package_dimension_height','default_package_dimension_length_unit','generic_service_method','max_weight_value','max_weight_weight_unit','delivery_time','earliest_delivery_days','latest_delivery_days','service_level','created_by','updated_by','created_at','updated_at'];
 
     public function ShippingCarrier()
     {
