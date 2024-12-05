@@ -4,6 +4,8 @@ namespace App\Jobs;
 
 use App\Models\Category;
 use App\Models\ProductType;
+use App\Models\StoreType;
+use App\Models\StoreTypeCategories;
 use App\Models\SubCategory;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -44,7 +46,10 @@ class CategorySyncJob implements ShouldQueue
             $this->createSubCategory($subCategory);
         }
 
-        $storeCategories = DB::connection('easyesale_db')->table('tbl_store_category')->get();
+        $storeTypeCategories = DB::connection('easyesale_db')->table('channel_category')->get();
+        foreach ($storeTypeCategories as $storeTypeCategory) {
+            $this->createStoreTypeCategories($storeTypeCategory);
+        }
     }
 
     private function createProductType(mixed $category)
@@ -79,6 +84,24 @@ class CategorySyncJob implements ShouldQueue
                 'updated_by' => 'system',
                 'created_at' => now(),
                 'updated_at' => now(),
+            ]
+        );
+    }
+
+    private function createStoreTypeCategories(mixed $storeTypeCategory)
+    {
+        if (StoreTypeCategories::where('id', $storeTypeCategory->id)->exists()) {
+            return;
+        }
+        $storeType = StoreType::where(['code' => $storeTypeCategory->channel_id])->first();
+        StoreTypeCategories::updateOrInsert(
+            ['id' => $storeTypeCategory->id],
+            [
+                'id' => $storeTypeCategory->id,
+                'store_type_id' => $storeType->id,
+                'parent_id' => $storeTypeCategory->parent_id ?? null ,
+                'name' => $storeTypeCategory->name,
+                'code' => $storeTypeCategory->code
             ]
         );
     }

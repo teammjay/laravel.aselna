@@ -28,17 +28,22 @@ class ProductSyncJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $products = DB::connection('fonus_db')->table('tbl_product')->get();
-        foreach ($products as $product) {
-            if (Catalog::where(['product_code' => $product->product_id])->exists()) continue;
-
-            $this->createProduct($product);
-
-            $product_id = Catalog::where('product_code', $product->product_id)->first();
-
-            $this->createProductTitleKeywords($product, $product_id);
-
-            $this->createProductFeatures($product, $product_id);
+//        $products = DB::connection('fonus_db')->table('tbl_product')->get();
+//        foreach ($products as $product) {
+//            if (Catalog::where(['product_code' => $product->product_id])->exists()) continue;
+//
+//            $this->createProduct($product);
+//
+//            $product_id = Catalog::where('product_code', $product->product_id)->first();
+//
+//            $this->createProductTitleKeywords($product, $product_id);
+//
+//            $this->createProductFeatures($product, $product_id);
+//        }
+        $easyesaleProducts = DB::connection('easyesale_db')->table('product')->get();
+        foreach ($easyesaleProducts as $product) {
+            $this->updateProduct($product);
+            break;
         }
     }
 
@@ -110,5 +115,50 @@ class ProductSyncJob implements ShouldQueue
                 ]
             );
         }
+    }
+
+    private function updateProduct(mixed $product)
+    {
+        Log::info('Product: ' . json_encode($product));
+        Catalog::updateOrInsert([
+            'product_code' => $product->id,
+        ],[
+            'product_id' => (string)Str::uuid(),
+            'product_title' => $product->title,
+            'product_description' => $product->description,
+            'product_type' => '',
+//            'manufacturer_id' => $product->manufacturer_id,
+//            'product_condition_id' => $product->condition_id,
+//            'product_price' => '',
+            'product_wholesale_price' => $product->wholesale_price,
+            'product_marketplace_price' => $product->marketplace_price,
+            'product_mrsp' => $product->msrp,
+            'product_sku' => $product->code,
+//            'product_image_url' => 'as',
+            'product_status' => $product->status == 1 ? 'active' : 'discontinued',
+            'dimensions_length' => $product->dimensions_length,
+            'dimensions_height' => $product->dimensions_height,
+            'dimensions_width' => $product->dimensions_width,
+            'product_weight' => $product->weight_value,
+            'product_weight_unit' => $product->weight_weight_unit,
+            'product_package_weight' => $product->package_weight_value,
+            'package_weight_unit'=> $product->package_weight_weight_unit,
+            'package_dimensions_width'=> $product->package_dimension_width,
+            'package_dimensions_height'=> $product->package_dimension_height,
+            'package_dimensions_length'=> $product->package_dimension_length,
+//            'product_tags'=> $product->weight_weight_unit,
+//            'target_aud'=> $product->weight_weight_unit,
+//            'product_color' => $product->color,
+            'product_qty' => $product->quantity,
+//            'product_reorder_qty',
+//            'product_pick_location' => ,
+            'title_template' => $product->title_template,
+            'description_template' => $product->description_template,
+            'product_code' => $product->id,
+            'created_by' => 'system',
+            'updated_by' => 'system',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
     }
 }
