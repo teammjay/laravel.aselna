@@ -5,7 +5,7 @@
             <td></td>
             <td></td>
             <td>{{ $product->store_id }}</td>
-            <td>{{ $product->product->product_sku }}</td>
+            <td></td>
             <td></td>
             <td>{{ $product->product_name }}</td>
             <td>{{ ($product->status == 1) ? 'Active' : 'Inactive' }}</td>
