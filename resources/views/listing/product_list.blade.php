@@ -1,21 +1,21 @@
-@if(!empty($products))
+@if(count($products ?? []) > 0)
     @foreach($products as $product)
         <tr>
             <td>{{ $product->sku }}</td>
             <td></td>
             <td></td>
             <td>{{ $product->store_id }}</td>
-            <td></td>
-            <td></td>
+            <td>{{ $product->product_sku }}</td>
+            <td>{{ $product->store_name.' - '.$product->marketplace_name }}</td>
             <td>{{ $product->product_name }}</td>
             <td>{{ ($product->status == 1) ? 'Active' : 'Inactive' }}</td>
             <td></td>
+            <td>{{ $product->product_color }}</td>
             <td></td>
             <td></td>
             <td>{{ $product->price }}</td>
-            <td></td>
             <td>
-                <a href="{{ route('catalog.edit', $product->id) }}" class="btn btn-primary">
+                <a href="{{ route('listing.edit', $product->id) }}" class="btn btn-primary">
                     <i class="fas fa-fw fa-pencil-alt"></i>
                 </a>
                 <button class="btn btn-danger delete-btn" data-id="{{ $product->id }}"> <i class="fas fa-fw fa-trash"></i></button>
@@ -24,6 +24,6 @@
     @endforeach
 @else
     <tr>
-        <td colspan="7"> No products found </td>
+        <td colspan="14" align="center"> No products found </td>
     </tr>
 @endif

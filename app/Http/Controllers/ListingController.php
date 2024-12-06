@@ -32,14 +32,17 @@ class ListingController extends Controller
             ->orderBy('product_id','desc')
             ->paginate($this->perPage);*/
         $stores = Store::Where('store_status',1)->get();
-        $products = StoreTypeListing::Where('status',1)->get();
+        $device_types = DeviceTypes::Where('status',1)->get();
+        $product_types = ProductType::all();
 
-        $products = StoreTypeListing::with('product')->select('*')
+        $products = StoreTypeListing::select('store_type_listing.*','products.product_sku','products.dimensions_width','products.product_color','store.name as store_name','store.marketplace_name')
+            ->leftJoin('products','products.product_id', '=', 'store_type_listing.item_id')
+            ->leftJoin('store','store.id', '=', 'store_type_listing.store_id')
             ->where('status',1)
             ->orderBy('created_at','desc')
             ->paginate($this->perPage);
 
-        return view('listing.list',compact('stores','products'))->with('perPage', $this->perPage);
+        return view('listing.list',compact('stores','products','device_types','product_types'))->with('perPage', $this->perPage);
     }
 
     /**
@@ -47,13 +50,269 @@ class ListingController extends Controller
      */
     public function filter(Request $request)
     {
-        $query = Catalog::query();
+        $query = StoreTypeListing::select('store_type_listing.*','products.product_sku','products.dimensions_width','products.product_color','store.name as store_name','store.marketplace_name');
+        $query->leftJoin('products','products.product_id', '=', 'store_type_listing.item_id');
+        $query->leftJoin('store','store.id', '=', 'store_type_listing.store_id');
 
         $perPage = $request->input('perPage', $this->perPage);
 
+
+        // Filter by sku
+        if ($request->has('sku') && $request->sku != '') {
+            $operator = $request->sku_operator;
+            switch($operator){
+                case 'contains':
+                    $query->WhereLike('store_type_listing.sku', '%'.$request->sku.'%');
+                    break;
+                case 'starts_with':
+                    $query->WhereLike('store_type_listing.sku', $request->sku.'%');
+                    break;
+                case 'ends_with':
+                    $query->WhereLike('store_type_listing.sku', '%'.$request->sku);
+                    break;
+                case '=':
+                    $query->Where('store_type_listing.sku', $request->sku);
+                    break;
+                case 'in':
+                    $skus = explode(',',$request->sku);
+                    $query->WhereIn('store_type_listing.sku',$skus);
+                    break;
+                case 'not_in':
+                    $skus = explode(',',$request->sku);
+                    $query->WhereNotIn('store_type_listing.sku', $skus);
+                    break;
+                case 'doesnt_contain':
+                    $query->WhereNotLike('store_type_listing.sku', '%'.$request->sku.'%');
+                    break;
+                case 'is_set':
+                    $query->whereNotNull('store_type_listing.sku');
+                    break;
+            }
+
+        }
+
+        // Filter by store
+        if ($request->has('store') && $request->store != '') {
+            $operator = $request->store_operator;
+            switch($operator){
+                case 'contains':
+                    $query->WhereLike('store.name', '%'.$request->store.'%');
+                    break;
+                case 'starts_with':
+                    $query->WhereLike('store.name', $request->store.'%');
+                    break;
+                case 'ends_with':
+                    $query->WhereLike('store.name', '%'.$request->store);
+                    break;
+                case '=':
+                    $query->Where('store.name', $request->store);
+                    break;
+                case 'in':
+                    $stores = explode(',',$request->store);
+                    $query->WhereIn('store.name',$stores);
+                    break;
+                case 'not_in':
+                    $stores = explode(',',$request->store);
+                    $query->WhereNotIn('store.name', $stores);
+                    break;
+                case 'doesnt_contain':
+                    $query->WhereNotLike('store.name', '%'.$request->store.'%');
+                    break;
+                case 'is_set':
+                    $query->whereNotNull('store.name');
+                    break;
+            }
+
+        }
+
+        // Filter by title
+        if ($request->has('title') && $request->title != '') {
+            $operator = $request->title_operator;
+            switch($operator){
+                case 'contains':
+                    $query->WhereLike('store_type_listing.product_name', '%'.$request->title.'%');
+                    break;
+                case 'starts_with':
+                    $query->WhereLike('store_type_listing.product_name', $request->title.'%');
+                    break;
+                case 'ends_with':
+                    $query->WhereLike('store_type_listing.product_name', '%'.$request->title);
+                    break;
+                case '=':
+                    $query->Where('store_type_listing.product_name', $request->title);
+                    break;
+                case 'in':
+                    $stores = explode(',',$request->title);
+                    $query->WhereIn('store_type_listing.product_name',$stores);
+                    break;
+                case 'not_in':
+                    $stores = explode(',',$request->title);
+                    $query->WhereNotIn('store_type_listing.product_name', $stores);
+                    break;
+                case 'doesnt_contain':
+                    $query->WhereNotLike('store_type_listing.product_name', '%'.$request->title.'%');
+                    break;
+                case 'is_set':
+                    $query->whereNotNull('store_type_listing.product_name');
+                    break;
+            }
+
+        }
+
+        // Filter by product code
+        if ($request->has('product_code') && $request->product_code != '') {
+            $operator = $request->product_code_operator;
+            switch($operator){
+                case 'contains':
+                    $query->WhereLike('products.product_sku', '%'.$request->product_code.'%');
+                    break;
+                case 'starts_with':
+                    $query->WhereLike('products.product_sku', $request->product_code.'%');
+                    break;
+                case 'ends_with':
+                    $query->WhereLike('products.product_sku', '%'.$request->product_code);
+                    break;
+                case '=':
+                    $query->Where('products.product_sku', $request->product_code);
+                    break;
+                case 'in':
+                    $producCodes = explode(',',$request->product_code);
+                    $query->WhereIn('products.product_sku',$producCodes);
+                    break;
+                case 'not_in':
+                    $producCodes = explode(',',$request->product_code);
+                    $query->WhereNotIn('products.product_sku', $producCodes);
+                    break;
+                case 'doesnt_contain':
+                    $query->WhereNotLike('products.product_sku', '%'.$request->product_code.'%');
+                    break;
+                case 'is_set':
+                    $query->whereNotNull('products.product_sku');
+                    break;
+            }
+
+        }
+
+        // Filter by price
+        if ($request->has('price') && $request->price != '') {
+            $operator = $request->price_operator;
+            switch($operator){
+                case 'contains':
+                    $query->WhereLike('store_type_listing.price', '%'.$request->price.'%');
+                    break;
+                case 'starts_with':
+                    $query->WhereLike('store_type_listing.price', $request->price.'%');
+                    break;
+                case 'ends_with':
+                    $query->WhereLike('store_type_listing.price', '%'.$request->price);
+                    break;
+                case '=':
+                    $query->Where('store_type_listing.price', $request->price);
+                    break;
+                case 'in':
+                    $prices = explode(',',$request->price);
+                    $query->WhereIn('store_type_listing.price',$prices);
+                    break;
+                case 'not_in':
+                    $prices = explode(',',$request->price);
+                    $query->WhereNotIn('store_type_listing.price', $prices);
+                    break;
+                case 'doesnt_contain':
+                    $query->WhereNotLike('store_type_listing.price', '%'.$request->price.'%');
+                    break;
+                case 'is_set':
+                    $query->whereNotNull('store_type_listing.price');
+                    break;
+            }
+
+        }
+
+        // Filter by ID
+        if ($request->has('id') && $request->id != '') {
+            $operator = $request->id_operator;
+            switch($operator){
+                case 'contains':
+                    $query->WhereLike('store_type_listing.id', '%'.$request->id.'%');
+                    break;
+                case 'starts_with':
+                    $query->WhereLike('store_type_listing.id', $request->id.'%');
+                    break;
+                case 'ends_with':
+                    $query->WhereLike('store_type_listing.id', '%'.$request->id);
+                    break;
+                case '=':
+                    $query->Where('store_type_listing.id', $request->id);
+                    break;
+                case 'in':
+                    $ids = explode(',',$request->id);
+                    $query->WhereIn('store_type_listing.id',$ids);
+                    break;
+                case 'not_in':
+                    $ids = explode(',',$request->id);
+                    $query->WhereNotIn('store_type_listing.id', $ids);
+                    break;
+                case 'doesnt_contain':
+                    $query->WhereNotLike('store_type_listing.id', '%'.$request->id.'%');
+                    break;
+                case 'is_set':
+                    $query->whereNotNull('store_type_listing.id');
+                    break;
+            }
+
+        }
+
+        // Filter by ID
+        if ($request->has('id') && $request->id != '') {
+            $operator = $request->id_operator;
+            switch($operator){
+                case 'contains':
+                    $query->WhereLike('store_type_listing.id', '%'.$request->id.'%');
+                    break;
+                case 'starts_with':
+                    $query->WhereLike('store_type_listing.id', $request->id.'%');
+                    break;
+                case 'ends_with':
+                    $query->WhereLike('store_type_listing.id', '%'.$request->id);
+                    break;
+                case '=':
+                    $query->Where('store_type_listing.id', $request->id);
+                    break;
+                case 'in':
+                    $ids = explode(',',$request->id);
+                    $query->WhereIn('store_type_listing.id',$ids);
+                    break;
+                case 'not_in':
+                    $ids = explode(',',$request->id);
+                    $query->WhereNotIn('store_type_listing.id', $ids);
+                    break;
+                case 'doesnt_contain':
+                    $query->WhereNotLike('store_type_listing.id', '%'.$request->id.'%');
+                    break;
+                case 'is_set':
+                    $query->whereNotNull('store_type_listing.id');
+                    break;
+            }
+
+        }
+
+        // Filter by product type
+        if ($request->has('product_type') && $request->product_type != '') {
+            $query->where('products.product_type', $request->product_type);
+        }
+
         // Filter by product title
-        if ($request->has('name') && $request->name != '') {
-            $query->WhereLike('product_title', '%'.$request->name.'%');
+        if ($request->has('device_type') && $request->device_type != '') {
+            $query->where('product_title', $request->device_type);
+        }
+
+        // Filter by created date
+        if ($request->has('item_created') && $request->item_created != '') {
+            $query->where('store_type_listing.created_at', $request->item_created);
+        }
+
+        // Filter by product type
+        if ($request->has('store_id') && $request->store_id != '') {
+            $query->where('store_type_listing.store_id', $request->store_id);
         }
 
         // Filter by price range
@@ -82,7 +341,7 @@ class ListingController extends Controller
             ]);
         }
 
-        return view('products.index', compact('products'));
+        return view('listing.list');
     }
 
     /**
@@ -110,9 +369,14 @@ class ListingController extends Controller
         $pageAt = 'Edit';
         $stores = Store::all();
         $manufacturers = Manufacturer::all();
+        $productDetail = StoreTypeListing::select('store_type_listing.*','products.product_sku','products.product_description','products.manufacturer_id','products.dimensions_width','products.product_color','store.name as store_name','store.marketplace_name')
+            ->leftJoin('products','products.product_id', '=', 'store_type_listing.item_id')
+            ->leftJoin('store','store.id', '=', 'store_type_listing.store_id')
+            ->where('store_type_listing.id',$id)
+            ->first();
         //echo '<pre>';
-        //print_r($productTags);die;
-        return view('listing.update', compact('manufacturers','pageAt','stores'));
+        //print_r($productDetail);die;
+        return view('listing.update', compact('manufacturers','pageAt','stores','productDetail'));
     }
 
     public function getProducts(Request $request){
