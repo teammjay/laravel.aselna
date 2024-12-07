@@ -11,9 +11,11 @@
             <td>{{ $product->product_type }}</td>
             <td>{{ $product->product_title }}</td>
             <td>{{ $product->product_status }}</td>
+            <td align="center"><input type="checkbox" class="configurable" data-id="{{ $product->product_id }}" {{ ($product->configurable == 1) ? 'checked' : '' }}></td>
             <td>{{ $product->product_price }}</td>
             <td>{{ isset($product->Manufacturer->name) ? $product->Manufacturer->name : '' }}</td>
             <td>{{ $product->product_color }}</td>
+            <td>{{ $product->created_at }}</td>
             <td>
                 <a href="{{ route('catalog.edit', $product->product_id) }}" class="btn btn-primary">
                     <i class="fas fa-fw fa-pencil-alt"></i>
@@ -24,6 +26,6 @@
     @endforeach
 @else
     <tr>
-        <td colspan="7"> No products found </td>
+        <td colspan="12"> No products found </td>
     </tr>
 @endif
