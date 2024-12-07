@@ -1193,7 +1193,7 @@
                 type: 'POST',
                 data: {
                     product_ids:selected_product,
-                    store_id:selected_product,
+                    store_id:$('#listing_store').val(),
                     step:2
                 },
                 headers: {
@@ -1238,7 +1238,7 @@
                 type: 'POST',
                 data: {
                     product_ids:selected_product,
-                    store_id:selected_product,
+                    store_id:$('#listing_store').val(),
                     product_detail:JSON.stringify(productDetail),
                     step:3
                 },

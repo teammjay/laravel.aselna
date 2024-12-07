@@ -7,7 +7,8 @@
             <td>{{ $store->name }}</td>
             <td>{{ $store->store_type_id }}</td>
             <td>{{ $store->listing_type }}</td>
-            <td></td>
+            <td>{{ ($store->store_status == 1) ? 'Active' : ''}}</td>
+            <td align="center"><input type="checkbox" class="authorize" data-id="{{ $store->id }}" {{ ($store->authorized == 1) ? 'checked' : '' }}> </td>
             <td>{{ $store->short_code }}</td>
             <td>{{ $store->upc_usage_type }}</td>
             <td>

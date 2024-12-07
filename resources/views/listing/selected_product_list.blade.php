@@ -34,7 +34,16 @@
                 </div>
             </td>
             <td><input type="checkbox" name="product_status[{{ $product->product_id }}]" checked ></td>
-            <td></td>
+            <td>
+                <select class="form-control" name="store_type_category_id" style="width: 200px;">
+                    <option value=""></option>
+                    @if(count($storeCategories ?? []) > 0)
+                        @foreach($storeCategories as $key2=>$sCat)
+                            <option value="{{ $sCat->id }}" {{ ($sCat->id == $product->store_type_category_id) ? 'selected' : '' }}>{{ $sCat->name }}</option>
+                        @endforeach
+                    @endif
+                </select>
+            </td>
 
         </tr>
     @endforeach

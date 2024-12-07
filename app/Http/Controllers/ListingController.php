@@ -15,6 +15,7 @@ use App\Models\ProductTitleKeyword;
 use App\Models\ProductType;
 use App\Models\StoreProduct;
 use App\Models\StoreType;
+use App\Models\StoreTypeCategory;
 use App\Models\StoreTypeListing;
 use Illuminate\Http\Request;
 use App\Models\Store;
@@ -546,19 +547,28 @@ class ListingController extends Controller
 
         $product_ids = $request->input('product_ids');
         $product_details = $request->input('product_detail');
+        $store_id = $request->input('store_id');
         session(['listing_product_details' => $product_details]);
         $step = $request->input('step');
         if(!empty($product_ids)){
-            $query = StoreProduct::select('store_product.id','store_product.product_id','store_product.title','store_product.price','store_product.created_at','product_type.name as ProductType')->with('Product');
+            $query = StoreProduct::select('store_product.id','store_product.store_type_category_id','store_product.product_id','store_product.title','store_product.price','store_product.created_at','product_type.name as ProductType')->with('Product');
             $query->leftJoin('products','products.product_id', '=', 'store_product.product_id');
             $query->leftJoin('product_type','products.product_type', '=', 'product_type.id');
             $query->whereIn('store_product.id', $product_ids);
             $products = $query->get();
+            $storeCategories = [];
+            if($store_id){
+                $storeCategories = StoreTypeCategory::select('store_type_category.*')
+                    ->leftJoin('store_type','store_type.id', '=', 'store_type_category.store_type_id')
+                    ->leftJoin('store','store_type.id', '=', 'store.store_type_id')
+                    ->where('store.id',$store_id)
+                    ->get();
+            }
 
             if($step == 2){
-                $view = view('listing.selected_product_list', compact('products'))->render();
+                $view = view('listing.selected_product_list', compact('products','storeCategories'))->render();
             }else if($step == 3){
-                $view = view('listing.select_device_product_list', compact('products'))->render();
+                $view = view('listing.select_device_product_list', compact('products','storeCategories'))->render();
             }
 
             if ($request->ajax()) {

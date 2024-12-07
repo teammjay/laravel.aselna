@@ -670,19 +670,20 @@
                                             <th>Store Products, Store Category</th>
                                         </thead>
                                         <tbody>
-                                            @if(count($stores ?? []) > 0)
-                                                @foreach($stores as $key=>$store)
-                                                    <tr class="store_row" id="store_{{ $store->id }}" data-id="{{ $store->id }}">
-                                                        <td>{{ $store->name.' - '.$store->marketplace_name }}</td>
+                                            @if(count($store_details ?? []) > 0)
+                                                @foreach($store_details as $key=>$store)
+                                                    <tr class="store_row" id="store_{{ $store['store_detail']->id }}" data-id="{{ $store['store_detail']->id }}">
+                                                        <td>{{ $store['store_detail']->name.' - '.$store['store_detail']->marketplace_name }}</td>
                                                         <td align="center">
-                                                            <input type="checkbox" name="active" {{ (isset($productStore) && in_array($store->id,$productStore)) ? 'checked' : '' }} />
-                                                            <input type="hidden" name="store_id" value="{{ $store->id }}">
+                                                            <input type="checkbox" name="active" {{ (isset($productStore) && in_array($store['store_detail']->id,$productStore)) ? 'checked' : '' }} />
+                                                            <input type="hidden" name="store_id" value="{{ $store['store_detail']->id }}">
                                                         </td>
                                                         <td>
-                                                            <select class="form-control" name="store_category_id">
-                                                                @if(count($store->storeCategory ?? []) > 0)
-                                                                    @foreach($store->storeCategory as $key2=>$sCat)
-                                                                        <option value="{{ $sCat->id }}" {{ (isset($productStore) && in_array($sCat->id,$productStoreCategory)) ? 'selected' : '' }}>{{ $sCat->name }}</option>
+                                                            <select class="form-control" name="store_type_category_id">
+                                                                <option value=""></option>
+                                                                @if(count($store['store_category'] ?? []) > 0)
+                                                                    @foreach($store['store_category'] as $key2=>$sCat)
+                                                                        <option value="{{ $sCat->id }}" {{ (isset($productStoreCategory) && in_array($sCat->id,$productStoreCategory)) ? 'selected' : '' }}>{{ $sCat->name }}</option>
                                                                     @endforeach
                                                                 @endif
                                                             </select>
