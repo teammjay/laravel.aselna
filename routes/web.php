@@ -30,6 +30,7 @@ use App\Http\Controllers\ProductConditionController;
 use App\Http\Controllers\InterfaceController;
 use App\Http\Controllers\ListingGenerationTypeController;
 use App\Http\Controllers\ListingGenerationTypeTemplateController;
+use App\Http\Controllers\StoreTypeCategoryController;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/catalog', [CatalogController::class, 'index']);
@@ -143,6 +144,15 @@ Route::controller(StoreTypesController::class)->group(function () {
     Route::get('/store_type/edit/{id}', 'edit')->name('store_type.edit');
     Route::post('/store_type/edit/{id}', 'update')->name('store_type.update');
     Route::get('/store_type/delete/{id}', 'destroy')->name('store_type.delete');
+});
+
+Route::controller(StoreTypeCategoryController::class)->group(function () {
+    Route::get('/store_type_category', 'index')->name('store_type_category.index');
+    Route::get('/store_type_category/add', 'create')->name('store_type_category.create');
+    Route::post('/store_type_category/add', 'store')->name('store_type_category.store');
+    Route::get('/store_type_category/edit/{id}', 'edit')->name('store_type_category.edit');
+    Route::post('/store_type_category/edit/{id}', 'update')->name('store_type_category.update');
+    Route::get('/store_type_category/delete/{id}', 'destroy')->name('store_type_category.delete');
 });
 
 Route::controller(LogisticCenterController::class)->group(function () {

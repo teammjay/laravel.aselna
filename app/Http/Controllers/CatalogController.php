@@ -15,6 +15,9 @@ use App\Models\ProductImages;
 use App\Models\ProductType;
 use App\Models\Store;
 use App\Models\StoreProduct;
+use App\Models\StoreType;
+use App\Models\StoreTypeCategory;
+use function Illuminate\Database\Query\leftJoin;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Validator;
@@ -35,9 +38,6 @@ class CatalogController extends Controller
         $products = Catalog::with('Manufacturer')->select('*')
             ->orderBy('created_at','desc')
             ->paginate($this->perPage);
-
-        /*echo '<pre>';
-        print_r($products);die;*/
 
         return view('catalog.list')->with('products', $products)->with('perPage', $this->perPage);
     }
@@ -107,13 +107,24 @@ class CatalogController extends Controller
         $productImages = ProductImages::where('product_id', $pro_id)->get();
         $productTags = ProductTags::pluck('name')->values()->all();
         $stores = Store::all();
+        $store_details = [];
+        if(count($stores ?? []) > 0){
+            foreach($stores as $key=>$store){
+                $store_details[$key]['store_detail'] = $store;
+                $storeCategories = StoreTypeCategory::select('store_type_category.*')
+                    ->leftJoin('store_type','store_type.id', '=', 'store_type_category.store_type_id')
+                    ->where('store_type.id',$store->store_type_id)
+                    ->get();
+                $store_details[$key]['store_category'] = $storeCategories;
+            }
+        }
         $manufacturers = Manufacturer::all();
         $productTypes = ProductType::all();
         $productConditions = ProductCondition::all();
         $interfaces = Interfaces::all();
         $productInterfaces = ProductInterface::where('product_id', $pro_id)->get();
         $productInterfaces = $productInterfaces->pluck('interface_id')->values()->all();
-        return view('catalog.update', compact('product','keyFeatures','searchTerms','productImages','productTags','pageAt','stores','manufacturers','productTypes','productConditions','titleKeywords','interfaces','productInterfaces'));
+        return view('catalog.update', compact('product','keyFeatures','searchTerms','productImages','productTags','pageAt','store_details','manufacturers','productTypes','productConditions','titleKeywords','interfaces','productInterfaces'));
     }
 
     /**
@@ -132,17 +143,6 @@ class CatalogController extends Controller
 
         // save the data to the database
         try {
-            /*Catalog::create([
-                'product_title' => $request->product_title,
-                'product_type' => $request->product_type,
-                'product_manufacturer' => $request->product_manufacturer,
-                'product_price' => $request->product_price,
-                'product_sku' => $request->product_sku,
-                'product_description' => $request->product_description,
-                'product_status' => 'active',
-                'product_stock_quantity' => 10,
-                'product_condition' => 'New'
-            ]);*/
 
             Catalog::create($request->all());
 
@@ -178,19 +178,28 @@ class CatalogController extends Controller
         $titleKeywords = ProductTitleKeyword::where('product_id', $id)->orderBy('priority')->get();
         $productImages = ProductImages::where('product_id', $id)->get();
         $productTags = ProductTags::pluck('name')->values()->all();
-        $stores = Store::with('storeCategory')->get();
+        $stores = Store::all();
+        $store_details = [];
+        if(count($stores ?? []) > 0){
+            foreach($stores as $key=>$store){
+                $store_details[$key]['store_detail'] = $store;
+                $storeCategories = StoreTypeCategory::select('store_type_category.*')
+                    ->leftJoin('store_type','store_type.id', '=', 'store_type_category.store_type_id')
+                    ->where('store_type.id',$store->store_type_id)
+                    ->get();
+                $store_details[$key]['store_category'] = $storeCategories;
+            }
+        }
         $manufacturers = Manufacturer::all();
         $productTypes = ProductType::all();
         $productConditions = ProductCondition::all();
         $storeProducts = StoreProduct::where('product_id', $id)->get();
         $productStore = $storeProducts->pluck('store_id')->values()->all();
-        $productStoreCategory = $storeProducts->pluck('store_category_id')->values()->all();
+        $productStoreCategory = $storeProducts->pluck('store_type_category_id')->values()->all();
         $interfaces = Interfaces::all();
         $productInterfaces = ProductInterface::where('product_id', $id)->get();
         $productInterfaces = $productInterfaces->pluck('interface_id')->values()->all();
-        /*echo '<pre>';
-        print_r($productInterfaces);die;*/
-        return view('catalog.update', compact('product','keyFeatures','searchTerms','productImages','productTags','pageAt','stores','manufacturers','productTypes','productConditions','productStore','productStoreCategory','titleKeywords','interfaces','productInterfaces'));
+        return view('catalog.update', compact('product','keyFeatures','searchTerms','productImages','productTags','pageAt','store_details','manufacturers','productTypes','productConditions','productStore','productStoreCategory','titleKeywords','interfaces','productInterfaces'));
     }
 
     /**

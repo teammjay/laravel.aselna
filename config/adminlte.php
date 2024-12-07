@@ -456,6 +456,11 @@ return [
                     'icon' => 'far fa-fw fa-file'
                 ],
                 [
+                    'text' => 'Store Type Category',
+                    'url' => '/store_type_category',
+                    'icon' => 'far fa-fw fa-file'
+                ],
+                [
                     'text' => 'Manufacturer',
                     'url' => '/manufacturer',
                     'icon' => 'far fa-fw fa-file'
