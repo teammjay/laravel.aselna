@@ -12,6 +12,7 @@ use App\Http\Controllers\DeviceSubTypesController;
 use App\Http\Controllers\DeviceTypesController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ProductInterfaceController;
+use App\Http\Controllers\StoreTypeCategoryController;
 use App\Http\Controllers\SubCategoryController;
 use App\Http\Controllers\UPCController;
 use Illuminate\Support\Facades\Route;
@@ -142,6 +143,15 @@ Route::controller(StoreTypesController::class)->group(function () {
     Route::get('/store_type/edit/{id}', 'edit')->name('store_type.edit');
     Route::post('/store_type/edit/{id}', 'update')->name('store_type.update');
     Route::get('/store_type/delete/{id}', 'destroy')->name('store_type.delete');
+});
+
+Route::controller(StoreTypeCategoryController::class)->group(function () {
+    Route::get('/store_category', 'index')->name('store_category.index');
+    Route::get('/store_category/add', 'create')->name('store_category.create');
+    Route::post('/store_category/add', 'store')->name('store_category.store');
+    Route::get('/store_category/edit/{id}', 'edit')->name('store_category.edit');
+    Route::post('/store_category/edit/{id}', 'update')->name('store_category.update');
+    Route::get('/store_category/delete/{id}', 'destroy')->name('store_category.delete');
 });
 
 Route::controller(LogisticCenterController::class)->group(function () {

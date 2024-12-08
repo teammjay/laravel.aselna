@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('products', function (Blueprint $table) {
-            $table->uuid('aselna_product_id');
+//            $table->uuid('aselna_product_id');
         });
     }
 
@@ -23,7 +23,7 @@ return new class extends Migration
     {
         // drop only one column
         Schema::table('products', function (Blueprint $table) {
-            $table->dropColumn('aselna_product_id');
+//            $table->dropColumn('aselna_product_id');
         });
     }
 };

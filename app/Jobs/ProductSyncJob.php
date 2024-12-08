@@ -5,6 +5,8 @@ namespace App\Jobs;
 use App\Models\Catalog;
 use App\Models\Manufacturer;
 use App\Models\ProductKeyFeatures;
+use App\Models\Store;
+use App\Models\StoreProduct;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\DB;
@@ -14,6 +16,8 @@ use Illuminate\Support\Str;
 class ProductSyncJob implements ShouldQueue
 {
     use Queueable;
+
+    public $timeout = 3000;
 
     /**
      * Create a new job instance.
@@ -40,10 +44,14 @@ class ProductSyncJob implements ShouldQueue
 //
 //            $this->createProductFeatures($product, $product_id);
 //        }
-        $easyesaleProducts = DB::connection('easyesale_db')->table('product')->get();
+        $easyesaleProducts = DB::connection('easyesale_db')->table('product')->whereNull('deleted_by')->where('status', '=', '1')->get();
         foreach ($easyesaleProducts as $product) {
             $this->updateProduct($product);
-            break;
+        }
+
+        $storeProducts = DB::connection('easyesale_db')->table('store_product')->get();
+        foreach ($storeProducts as $storeProduct) {
+            $this->createStoreProduct($storeProduct);
         }
     }
 
@@ -119,10 +127,12 @@ class ProductSyncJob implements ShouldQueue
 
     private function updateProduct(mixed $product)
     {
-        Log::info('Product: ' . json_encode($product));
+        if (Catalog::where('product_sku', $product->code)->exists()) {
+            return;
+        }
         Catalog::updateOrInsert([
             'product_code' => $product->id,
-        ],[
+        ], [
             'product_id' => (string)Str::uuid(),
             'product_title' => $product->title,
             'product_description' => $product->description,
@@ -142,10 +152,10 @@ class ProductSyncJob implements ShouldQueue
             'product_weight' => $product->weight_value,
             'product_weight_unit' => $product->weight_weight_unit,
             'product_package_weight' => $product->package_weight_value,
-            'package_weight_unit'=> $product->package_weight_weight_unit,
-            'package_dimensions_width'=> $product->package_dimension_width,
-            'package_dimensions_height'=> $product->package_dimension_height,
-            'package_dimensions_length'=> $product->package_dimension_length,
+            'package_weight_unit' => $product->package_weight_weight_unit,
+            'package_dimensions_width' => $product->package_dimension_width,
+            'package_dimensions_height' => $product->package_dimension_height,
+            'package_dimensions_length' => $product->package_dimension_length,
 //            'product_tags'=> $product->weight_weight_unit,
 //            'target_aud'=> $product->weight_weight_unit,
 //            'product_color' => $product->color,
@@ -155,6 +165,67 @@ class ProductSyncJob implements ShouldQueue
             'title_template' => $product->title_template,
             'description_template' => $product->description_template,
             'product_code' => $product->id,
+            'created_by' => 'system',
+            'updated_by' => 'system',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+    }
+
+    private function createStoreProduct(mixed $storeProduct)
+    {
+        $product = Catalog::where('product_code', $storeProduct->product_id)->first();
+        $store = Store::where('code', $storeProduct->store_id)->first();
+        if (!$product || !$store) {
+            return;
+        }
+        if (StoreProduct::where(['product_id' => $product->product_id, 'store_id' => $store->id])->exists()) {
+            return;
+        }
+        Log::info('Creating store product');
+        StoreProduct::create([
+            'id' => (string)Str::uuid(),
+            'product_id' => $product->product_id,
+            'store_id' => $store->id,
+
+            'active' => $storeProduct->active ? 1 : 0,
+            'brand_combo' => $storeProduct->brand_combo,
+            'carrier_combo' => $storeProduct->carrier_combo,
+//            'channel_category_id' => $product ,
+            'client' => $storeProduct->client,
+            'compare_at_price' => $storeProduct->compare_at_price,
+            'description' => $storeProduct->description,
+            'errors' => $storeProduct->errors,
+            'fulfillment_by_channel_price' => $storeProduct->fulfillment_by_channel_price,
+            'fulfillment_type' => $storeProduct->fulfillment_type,
+            'include_carriers' => $storeProduct->include_carriers,
+            'last_sale_date' => $storeProduct->last_sale_date,
+            'last_synch_date_time' => $storeProduct->last_synch_date_time,
+            'last_update_date_time' => $storeProduct->last_update_date_time,
+//            'listing_generation_type_id' => $product->listing_generation_type_id ,
+//            'listing_title_template_id' => $product ,
+//            'long_tail_keywords' => $storeProduct,
+//            'manufacturer_id' => $product ,
+            'msrp' => $storeProduct->msrp,
+            'overwrite_compare_at_price' => $storeProduct->overwrite_compare_at_price,
+            'overwrite_description' => $storeProduct->overwrite_description,
+            'overwrite_fulfillment_by_channel_price' => $storeProduct->overwrite_fulfillment_by_channel_price,
+            'overwrite_msrp' => $storeProduct->overwrite_msrp,
+            'overwrite_price' => $storeProduct->overwrite_price,
+            'overwrite_title' => $storeProduct->overwrite_title,
+            'overwrite_wholesale_price' => $storeProduct->overwrite_wholesale_price,
+            'preserve_title_description' => $storeProduct->preserve_title_description,
+            'price' => $storeProduct->price,
+            'profit_rate' => $storeProduct->profit_rate,
+            'sales_count' => $storeProduct->sales_count,
+            'short_tail_keywords' => $storeProduct->short_tail_keywords,
+//            'store_category_id' => $product ,
+            'synch_inventory' => $storeProduct->synch_inventory,
+            'synch_item' => $storeProduct->synch_item,
+            'synch_price' => $storeProduct->synch_price,
+            'title' => $storeProduct->title,
+//            'wholesale_price' => $storeProduct,
+
             'created_by' => 'system',
             'updated_by' => 'system',
             'created_at' => now(),

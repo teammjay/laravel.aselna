@@ -34,7 +34,7 @@ class StoreSyncJob implements ShouldQueue
 
         //check if connection exists or not
         if (DB::connection('easyesale_db')->getDatabaseName()) {
-            Log::info('Connection exists');
+
             $allStores = DB::connection('easyesale_db')->table('store')->get();
             foreach ($allStores as $store) {
                 $this->createStoreFromEasyEsale($store);
