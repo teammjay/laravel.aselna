@@ -288,7 +288,7 @@
                                                     </div>
                                                 </div>
                                             </div>
-                                            <div class="col-md-8">
+                                            {{--<div class="col-md-8">
                                                 <div class="form-group">
                                                     <label for="package__weight">Retail Bulk?</label>
                                                     <div class="d-flex">
@@ -299,7 +299,7 @@
                                                         </select>
                                                     </div>
                                                 </div>
-                                            </div>
+                                            </div>--}}
                                         </div>
                                     </div>
                                     <div class="card-body border mt-2">
@@ -308,9 +308,12 @@
                                                 <div class="form-group">
                                                     <label>Target Audiences</label>
                                                     <div class="d-flex">
-                                                        <input type="checkbox" class="mr-1" name="target_aud" value="unisex" {{ "unisex" == $product->target_aud ? 'checked' : '' }}><span class="mr-3">Unisex</span>
-                                                        <input type="checkbox" class="mr-1" name="target_aud" value="men" {{ "men" == $product->target_aud ? 'checked' : '' }}><span class="mr-3">Men</span>
-                                                        <input type="checkbox" class="mr-1" name="target_aud" value="women" {{ "women" == $product->target_aud ? 'checked' : '' }}><span class="mr-3">Women</span>
+                                                        @if(count($targetAudience ?? []) > 0)
+                                                            @foreach($targetAudience as $ta)
+                                                                <input type="checkbox" class="mr-1" name="target_aud" value="{{ $ta->name }}" {{ $ta->name == $product->target_aud ? 'checked' : '' }}><span class="mr-3">{{ $ta->name }}</span>
+                                                            @endforeach
+                                                        @endif
+
                                                     </div>
                                                 </div>
                                             </div>
@@ -816,22 +819,26 @@
                     </div>
                     <div class="tab-pane fade" id="tab10" role="tabpanel" aria-labelledby="channel-tab">
                         <form method="POST" id="frmtab10">
-                            <button type="button" class="btn btn-secondary" id="create_channel"><i class="fa fa-plus-square"></i> Create</button>
+                            <button type="button" class="btn btn-secondary" id="create_channel" data-toggle="modal" data-target="#addChannelModal" ><i class="fa fa-plus-square"></i> Create</button>
                             <table class="table table-bordered mt-2">
                                 <thead>
                                 <tr>
                                     <th>Channel</th>
                                     <th>Status</th>
-                                    <th></th>
                                 </tr>
                                 </thead>
+                                <tbody>
+                                    @if(count($productStoreType ?? []) > 0)
+                                        @foreach($productStoreType as $stype)
+                                            <tr>
+                                                <td>{{ $stype->name }}</td>
+                                                <td>{{ ($stype->status == 1) ? 'Active' : '' }}</td>
+                                            </tr>
+                                        @endforeach
+                                    @endif
+                                </tbody>
                             </table>
-                            <div class="card-footer text-center mt-3">
-                                <button type="button" class="btn btn-success" onclick="saveTabData(10)">Save</button>
-                                <button type="button" class="btn btn-primary" onclick="finalizeForm()">Submit</button>
-                                {{--<button type="reset" class="btn btn-primary">Reset</button>--}}
-                                <a href="{{ route('catalog.list') }}" class="btn btn-secondary">Cancel</a>
-                            </div>
+
                         </form>
                     </div>
                     <div class="tab-pane fade" id="tab11" role="tabpanel" aria-labelledby="spitex-tab">
@@ -899,7 +906,42 @@
                 </div>
             </div>
         </div>
+        <!-- Add channel modal -->
+        <div class="modal fade" id="addChannelModal">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="addShippingModalLabel">Product Channel</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="frmproductChannel">
 
+                            <div class="mb-3">
+                                <label for="channel_id" class="col-form-label">Channel:</label>
+                                <select class="form-control" name="store_type_id" id="store_type_id">
+                                    @if(count($storeTypes ?? []) > 0)
+                                        @foreach($storeTypes as $sType)
+                                            <option value="{{ $sType->id }}">{{ $sType->name }}</option>
+                                        @endforeach
+                                    @endif
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="shipping-name" class="col-form-label">Status:</label>
+                                <select class="form-control" name="status">
+                                    <option value="1">Active</option>
+                                </select>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-primary" onclick="saveProductChannel()" id="saveProductChannel">Save</button>
+                    </div>
+                </div>
+            </div>
+        </div>
 @stop
 @section('adminlte_js')
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
@@ -977,6 +1019,43 @@
                     // Display a success message
                     alert(response.message);
                     window.location.href = "{{ route('catalog.list') }}";
+                },
+                error: function(xhr) {
+                    if (xhr.status === 422) { // Validation error
+                        var errors = xhr.responseJSON.errors;
+
+                        // Clear previous errors
+                        $('.error-message').text('');
+
+                        // Loop through and display errors
+                        $.each(errors, function(field, messages) {
+                            $('#' + field + '-error').text(messages[0]); // Display the first error message
+                        });
+                    }
+                }
+            });
+
+        }
+
+        function saveProductChannel() {
+            const form = document.querySelector("#frmproductChannel");
+            let formData = new FormData(form);
+            formData.append('product_id', '{{ $product->product_id }}');
+
+            $.ajax({
+                type: 'POST',
+                url: "<?php echo e(route('catalog.saveproductchannel')); ?>", // Adjust this URL to your endpoint
+                data: formData,
+                processData: false,
+                contentType: false,
+                headers: {
+                    'X-CSRF-TOKEN': '<?php echo e(csrf_token()); ?>',
+                },
+                dataType:'json',
+                success: function(response) {
+                    // Display a success message
+                    alert(response.message);
+                    location.reload();
                 },
                 error: function(xhr) {
                     if (xhr.status === 422) { // Validation error

@@ -10,6 +10,7 @@ use App\Models\ProductInterface;
 use App\Models\ProductKeyFeatures;
 use App\Models\ProductSearchTerm;
 use App\Models\ProductTags;
+use App\Models\ProductTargetAudience;
 use App\Models\ProductTitleKeyword;
 use App\Models\ProductImages;
 use App\Models\ProductType;
@@ -23,6 +24,8 @@ use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use function Symfony\Component\HttpKernel\Profiler\find;
+use Illuminate\Support\Facades\DB;
+
 
 class CatalogController extends Controller
 {
@@ -41,9 +44,10 @@ class CatalogController extends Controller
         $productTypes = ProductType::all();
         $manufacturers = Manufacturer::all();
         $productConditions = ProductCondition::all();
+        $targetAudience = ProductTargetAudience::all();
         $perPage = $this->perPage;
 
-        return view('catalog.list',compact('products','perPage','productTypes','manufacturers','productConditions'));
+        return view('catalog.list',compact('products','perPage','productTypes','manufacturers','productConditions','targetAudience'));
     }
 
     /**
@@ -315,7 +319,13 @@ class CatalogController extends Controller
         $interfaces = Interfaces::all();
         $productInterfaces = ProductInterface::where('product_id', $pro_id)->get();
         $productInterfaces = $productInterfaces->pluck('interface_id')->values()->all();
-        return view('catalog.update', compact('product','keyFeatures','searchTerms','productImages','productTags','pageAt','store_details','manufacturers','productTypes','productConditions','titleKeywords','interfaces','productInterfaces'));
+        $targetAudience = ProductTargetAudience::all();
+        $storeTypes = StoreType::all();
+        $productStoreType = DB::table('product_channel_detail')
+            ->select('product_channel_detail.status','store_type.name')
+            ->leftJoin('store_type','store_type.id','=','product_channel_detail.store_type_id')
+            ->where('product_id',$pro_id)->get();
+        return view('catalog.update', compact('product','keyFeatures','searchTerms','productImages','productTags','pageAt','store_details','manufacturers','productTypes','productConditions','titleKeywords','interfaces','productInterfaces','targetAudience','storeTypes','productStoreType'));
     }
 
     /**
@@ -390,7 +400,13 @@ class CatalogController extends Controller
         $interfaces = Interfaces::all();
         $productInterfaces = ProductInterface::where('product_id', $id)->get();
         $productInterfaces = $productInterfaces->pluck('interface_id')->values()->all();
-        return view('catalog.update', compact('product','keyFeatures','searchTerms','productImages','productTags','pageAt','store_details','manufacturers','productTypes','productConditions','productStore','productStoreCategory','titleKeywords','interfaces','productInterfaces'));
+        $targetAudience = ProductTargetAudience::all();
+        $storeTypes = StoreType::all();
+        $productStoreType = DB::table('product_channel_detail')
+                            ->select('product_channel_detail.status','store_type.name')
+                            ->leftJoin('store_type','store_type.id','=','product_channel_detail.store_type_id')
+                            ->where('product_id',$id)->get();
+        return view('catalog.update', compact('product','keyFeatures','searchTerms','productImages','productTags','pageAt','store_details','manufacturers','productTypes','productConditions','productStore','productStoreCategory','titleKeywords','interfaces','productInterfaces','targetAudience','storeTypes','productStoreType'));
     }
 
     /**
@@ -720,6 +736,19 @@ class CatalogController extends Controller
             return response()->json(['success' => true, 'data' => $storeProductDetail]);
         }else{
             return response()->json(['success' =>false]);
+        }
+    }
+
+    public function saveProductChannel(Request $request){
+
+        try {
+            $request['id'] = (string) Str::uuid();
+            DB::table('product_channel_detail')->insert($request->all());
+            return response()->json(['success' => true, 'message' => 'Data saved successfully']);
+
+        }catch (QueryException $e) {
+            // Handle the exception and show an error message
+            return response()->json(['errors' => $e->getMessage()], 422);
         }
     }
 }

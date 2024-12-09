@@ -626,6 +626,7 @@
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script>
         let product_model = {};
+        let product_models = {};
         document.addEventListener('DOMContentLoaded', () => {
             const tabs = document.querySelectorAll('[data-toggle="tab"]');
             let currentIndex = 0;
@@ -726,6 +727,7 @@
                                     $('#total_generate_product').html(response.totalproduct +' rows');
                                     $('.bd-example').hide();
                                     product_model = response.models;
+                                    product_models = response.modelDetail;
                                     $('#nextBtn').html('Finish');
                                     currentIndex++;
                                     activateTab(currentIndex);
@@ -744,6 +746,7 @@
                         const form = document.querySelector("#frmFinalListingProducts");
                         let formData = new FormData(form);
                         formData.append('store_id', $('#listing_store').val());
+                        formData.append('product_models', JSON.stringify(product_models));
                         $.ajax({
                             type: 'POST',
                             url: "{{ route('listing.savelistingproducts') }}", // Adjust this URL to your endpoint
