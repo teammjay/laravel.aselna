@@ -172,6 +172,14 @@
 
 
                                         </div>
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="form-group">
+                                                    <label for="product_status">Is Configurable? </label>
+                                                    <input type="checkbox" name="configurable" id="configurable" class="custom-checkbox">
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                     <div class="row pt-2">
                                         <div class="col-md-12">
@@ -271,6 +279,18 @@
                                             <div class="col-md-8">
                                                 <div class="form-group">
                                                     <label for="package__weight">Package Weight</label>
+                                                    <div class="d-flex">
+                                                        <input type="text" class="form-control mr-1" id="package__weight" name="package_weight" value="{{ old('package_weight',$product->package_weight) }}" placeholder="">
+                                                        <select class="form-control w-25" id="package_weight_unit" name="package_weight_unit">
+                                                            <option value="kg" {{ "kg" == $product->package_weight_unit ? 'selected' : '' }}> Kg </option>
+                                                            <option value="oz" {{ "oz" == $product->package_weight_unit ? 'selected' : '' }}> OZ </option>
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-8">
+                                                <div class="form-group">
+                                                    <label for="package__weight">Retail Bulk?</label>
                                                     <div class="d-flex">
                                                         <input type="text" class="form-control mr-1" id="package__weight" name="package_weight" value="{{ old('package_weight',$product->package_weight) }}" placeholder="">
                                                         <select class="form-control w-25" id="package_weight_unit" name="package_weight_unit">

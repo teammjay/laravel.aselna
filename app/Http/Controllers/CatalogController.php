@@ -38,8 +38,12 @@ class CatalogController extends Controller
         $products = Catalog::with('Manufacturer')->select('*')
             ->orderBy('created_at','desc')
             ->paginate($this->perPage);
+        $productTypes = ProductType::all();
+        $manufacturers = Manufacturer::all();
+        $productConditions = ProductCondition::all();
+        $perPage = $this->perPage;
 
-        return view('catalog.list')->with('products', $products)->with('perPage', $this->perPage);
+        return view('catalog.list',compact('products','perPage','productTypes','manufacturers','productConditions'));
     }
 
     /**
@@ -53,7 +57,194 @@ class CatalogController extends Controller
 
         // Filter by product title
         if ($request->has('name') && $request->name != '') {
-            $query->WhereLike('product_title', '%'.$request->name.'%');
+            $operator = $request->name_operator;
+            switch($operator){
+                case 'contains':
+                    $query->WhereLike('product_title', '%'.$request->name.'%');
+                    break;
+                case 'starts_with':
+                    $query->WhereLike('product_title', $request->name.'%');
+                    break;
+                case 'ends_with':
+                    $query->WhereLike('product_title', '%'.$request->name);
+                    break;
+                case '=':
+                    $query->Where('product_title', $request->name);
+                    break;
+                case 'in':
+                    $names = explode(',',$request->name);
+                    $query->WhereIn('product_title',$names);
+                    break;
+                case 'not_in':
+                    $names = explode(',',$request->name);
+                    $query->WhereNotIn('product_title', $names);
+                    break;
+                case 'doesnt_contain':
+                    $query->WhereNotLike('product_title', '%'.$request->name.'%');
+                    break;
+                case 'is_set':
+                    $query->whereNotNull('product_title');
+                    break;
+            }
+        }
+
+        // Filter by product title
+        if ($request->has('product_sku') && $request->product_sku != '') {
+            $operator = $request->product_sku_operator;
+            switch($operator){
+                case 'contains':
+                    $query->WhereLike('product_sku', '%'.$request->product_sku.'%');
+                    break;
+                case 'starts_with':
+                    $query->WhereLike('product_sku', $request->product_sku.'%');
+                    break;
+                case 'ends_with':
+                    $query->WhereLike('product_sku', '%'.$request->product_sku);
+                    break;
+                case '=':
+                    $query->Where('product_sku', $request->product_sku);
+                    break;
+                case 'in':
+                    $skus = explode(',',$request->product_sku);
+                    $query->WhereIn('product_sku',$skus);
+                    break;
+                case 'not_in':
+                    $skus = explode(',',$request->product_sku);
+                    $query->WhereNotIn('product_sku', $skus);
+                    break;
+                case 'doesnt_contain':
+                    $query->WhereNotLike('product_sku', '%'.$request->product_sku.'%');
+                    break;
+                case 'is_set':
+                    $query->whereNotNull('product_sku');
+                    break;
+            }
+        }
+
+        // Filter by product type
+        if ($request->has('product_type') && $request->product_type != '') {
+            $operator = $request->product_type_operator;
+            switch($operator){
+                case 'contains':
+                    $query->WhereLike('product_type', '%'.$request->product_type.'%');
+                    break;
+                case 'starts_with':
+                    $query->WhereLike('product_type', $request->product_type.'%');
+                    break;
+                case 'ends_with':
+                    $query->WhereLike('product_type', '%'.$request->product_type);
+                    break;
+                case '=':
+                    $query->Where('product_type', $request->product_type);
+                    break;
+                case 'in':
+                    $productTypes = explode(',',$request->product_type);
+                    $query->WhereIn('product_type',$productTypes);
+                    break;
+                case 'not_in':
+                    $productTypes = explode(',',$request->product_type);
+                    $query->WhereNotIn('product_type', $productTypes);
+                    break;
+                case 'doesnt_contain':
+                    $query->WhereNotLike('product_type', '%'.$request->product_type.'%');
+                    break;
+                case 'is_set':
+                    $query->whereNotNull('product_type');
+                    break;
+            }
+
+        }
+
+        // Filter by manufacturer
+        if ($request->has('manufacturer_id') && $request->manufacturer_id != '') {
+            $query->where('manufacturer_id', $request->manufacturer_id);
+        }
+
+        // Filter by product condition
+        if ($request->has('product_condition') && $request->product_condition != '') {
+            $query->where('product_condition_id', $request->product_condition);
+        }
+
+        // Filter by product_weight
+        if ($request->has('product_weight') && $request->product_weight != '') {
+            $query->where('product_weight', $request->product_weight);
+        }
+
+        // Filter by product_weight
+        if ($request->has('package_weight') && $request->package_weight != '') {
+            $query->where('package_weight', $request->package_weight);
+        }
+
+        // Filter by target audience
+        if ($request->has('target_aud') && $request->target_aud != '') {
+            $query->where('target_aud', $request->target_aud);
+        }
+
+        // Filter by dimension width
+        if ($request->has('dimensions_width') && $request->dimensions_width != '') {
+            $query->where('dimensions_width', $request->dimensions_width);
+        }
+
+        // Filter by dimension height
+        if ($request->has('dimensions_height') && $request->dimensions_height != '') {
+            $query->where('dimensions_height', $request->dimensions_height);
+        }
+        // Filter by dimension length
+        if ($request->has('dimensions_length') && $request->dimensions_length != '') {
+            $query->where('dimensions_length', $request->dimensions_length);
+        }
+
+        // Filter by package dimension width
+        if ($request->has('package_dimensions_width') && $request->package_dimensions_width != '') {
+            $query->where('package_dimensions_width', $request->package_dimensions_width);
+        }
+
+        // Filter by package dimension height
+        if ($request->has('package_dimensions_height') && $request->package_dimensions_height != '') {
+            $query->where('package_dimensions_height', $request->package_dimensions_height);
+        }
+        // Filter by package dimension length
+        if ($request->has('package_dimensions_length') && $request->package_dimensions_length != '') {
+            $query->where('package_dimensions_length', $request->package_dimensions_length);
+        }
+
+        // Filter by created date
+        if ($request->has('created_at') && $request->created_at != '') {
+            $query->where('created_at', $request->created_at);
+        }
+
+        // Filter by color
+        if ($request->has('product_color') && $request->product_color != '') {
+            $operator = $request->product_color_operator;
+            switch($operator){
+                case 'contains':
+                    $query->WhereLike('product_color', '%'.$request->product_color.'%');
+                    break;
+                case 'starts_with':
+                    $query->WhereLike('product_color', $request->product_color.'%');
+                    break;
+                case 'ends_with':
+                    $query->WhereLike('product_color', '%'.$request->product_color);
+                    break;
+                case '=':
+                    $query->Where('product_color', $request->product_color);
+                    break;
+                case 'in':
+                    $productColors = explode(',',$request->product_color);
+                    $query->WhereIn('product_color',$productColors);
+                    break;
+                case 'not_in':
+                    $productColors = explode(',',$request->product_color);
+                    $query->WhereNotIn('product_color', $productColors);
+                    break;
+                case 'doesnt_contain':
+                    $query->WhereNotLike('product_color', '%'.$request->product_color.'%');
+                    break;
+                case 'is_set':
+                    $query->whereNotNull('product_color');
+                    break;
+            }
+
         }
 
         // Filter by price range
@@ -69,7 +260,7 @@ class CatalogController extends Controller
         if ($request->has('status') && $request->status != '') {
             $query->where('product_status', $request->status);
         }
-
+        $query->orderBy('created_at','desc');
         $products = $query->paginate($perPage); // Paginate results
 
         //echo $query->toSql();die;
