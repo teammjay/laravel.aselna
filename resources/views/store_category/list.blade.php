@@ -38,7 +38,7 @@
     </table>
 @stop
 
-@section('js')
+@section('adminlte_js')
     <script>
         $(document).ready(function () {
             $('#storeTypeCatgeory').DataTable();

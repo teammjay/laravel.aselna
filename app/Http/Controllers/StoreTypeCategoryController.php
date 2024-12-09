@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\StoreType;
 use App\Models\StoreTypeCategories;
 use Illuminate\Http\Request;
 
@@ -15,14 +16,14 @@ class StoreTypeCategoryController extends Controller
 
     public function create()
     {
-        return view('store_category.create');
+        $storeType = StoreType::all();
+        return view('store_category.create', compact('storeType'));
     }
 
     public function store(Request $request)
     {
         $request->validate([
             'name' => 'required',
-            'description' => 'required',
         ]);
 
         StoreTypeCategories::create($request->all());
