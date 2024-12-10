@@ -1,29 +1,29 @@
-@if(!empty($products))
+@if(count($products ?? []) > 0)
     @foreach($products as $product)
-        <tr id="product-{{ $product->product_id }}">
-            <td>{{ $product->product_id }}</td>
-            <td>
-                @if($product->product_image_url != '')
-                    <img src="{{ url('images/' . $product->product_image_url) }}" alt="{{ $product->product_image_url }}" width="70" height="70">
-                @endif
-            </td>
+        <tr>
+            <td>{{ $product->sku }}</td>
+            <td></td>
+            <td></td>
+            <td>{{ $product->store_id }}</td>
             <td>{{ $product->product_sku }}</td>
-            <td>{{ $product->product_type }}</td>
-            <td>{{ $product->product_title }}</td>
-            <td>{{ $product->product_status }}</td>
-            <td>{{ $product->product_price }}</td>
-            <td>{{ $product->product_manufacturer }}</td>
+            <td>{{ $product->store_name.' - '.$product->marketplace_name }}</td>
+            <td>{{ $product->product_name }}</td>
+            <td>{{ ($product->status == 1) ? 'Active' : 'Inactive' }}</td>
+            <td></td>
             <td>{{ $product->product_color }}</td>
+            <td></td>
+            <td></td>
+            <td>{{ $product->price }}</td>
             <td>
-                <a href="{{ route('catalog.edit', $product->product_id) }}" class="btn btn-primary">
+                <a href="{{ route('listing.edit', $product->id) }}" class="btn btn-primary">
                     <i class="fas fa-fw fa-pencil-alt"></i>
                 </a>
-                <button class="btn btn-danger delete-btn" data-id="{{ $product->product_id }}"> <i class="fas fa-fw fa-trash"></i></button>
+                <button class="btn btn-danger delete-btn" data-id="{{ $product->id }}"> <i class="fas fa-fw fa-trash"></i></button>
             </td>
         </tr>
     @endforeach
 @else
     <tr>
-        <td colspan="7"> No products found </td>
+        <td colspan="14" align="center"> No products found </td>
     </tr>
 @endif

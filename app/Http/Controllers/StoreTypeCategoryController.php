@@ -4,54 +4,84 @@ namespace App\Http\Controllers;
 
 use App\Models\StoreType;
 use App\Models\StoreTypeCategories;
+use App\Http\Requests\StoreTypeCategoryRequest;
+//use App\Models\StoreType;
+use App\Models\StoreTypeCategory;
 use Illuminate\Http\Request;
 
 class StoreTypeCategoryController extends Controller
 {
+
+    /**
+     * Display a listing of the resource.
+     */
     public function index()
     {
-        $storeCategories = StoreTypeCategories::all();
-        return view('store_category.list', compact('storeCategories'));
+        $store_type_categories = StoreTypeCategory::with('parent')->with('storetype')->get();
+        return view('store_type_category.list', compact('store_type_categories'));
     }
 
+    /**
+     * Show the form for creating a new resource.
+     */
     public function create()
     {
-        $storeType = StoreType::all();
-        return view('store_category.create', compact('storeType'));
+        $store_types = StoreType::all();
+        $store_type_categories = StoreTypeCategory::all();
+        return view('store_type_category.add',compact('store_types','store_type_categories'));
     }
 
-    public function store(Request $request)
+    /**
+     * Store a newly created resource in storage.
+     */
+    public function store(StoreTypeCategoryRequest $request)
     {
-        $request->validate([
-            'name' => 'required',
-        ]);
+        $request->validated();
 
-        StoreTypeCategories::create($request->all());
-        return redirect()->route('store_category.index')->with('success', 'Store category created successfully.');
+        $created_by = auth()->user()->name ?? 'admin';
+        $request->merge(['created_by' => $created_by, 'updated_by' => $created_by]);
+
+        StoreTypeCategory::create($request->all());
+
+        return redirect()->route('store_type_category.index')
+            ->with('success', 'Store type category created successfully.');
     }
 
-    public function edit($id)
+    /**
+     * Show the form for editing the specified resource.
+     */
+    public function edit(string $id)
     {
-        $storeCategory = StoreTypeCategories::find($id);
-        return view('store_category.edit', compact('storeCategory'));
+        $store_type_category = StoreTypeCategory::findOrFail($id);
+        $store_types = StoreType::all();
+        $store_type_categories = StoreTypeCategory::all();
+        return view('store_type_category.add', compact('store_type_category','store_types','store_type_categories'));
     }
 
-    public function update(Request $request, $id)
+    /**
+     * Update the specified resource in storage.
+     */
+    public function update(StoreTypeCategoryRequest $request, string $id)
     {
-        $request->validate([
-            'name' => 'required',
-            'description' => 'required',
-        ]);
+        $request->validated();
 
-        $storeCategory = StoreTypeCategories::find($id);
+        $updated_by = auth()->user()->name ?? 'admin';
+        $request->merge(['updated_by' => $updated_by]);
 
-        $storeCategory->update($request->all());
-        return redirect()->route('store_category.index')->with('success', 'Store category updated successfully.');
+        StoreTypeCategory::findOrFail($id)->update($request->all());
+
+        return redirect()->route('store_type_category.index')
+            ->with('success', 'Store type category updated successfully.');
     }
 
-    public function destroy($id)
+    /**
+     * Remove the specified resource from storage.
+     */
+    public function destroy(string $id)
     {
-        StoreTypeCategories::find($id)->delete();
-        return redirect()->route('store_category.index')->with('success', 'Store category deleted successfully.');
+        StoreTypeCategory::findOrFail($id)->delete();
+
+        return redirect()->route('store_type_category.index')
+            ->with('success', 'Store type category deleted successfully.');
     }
 }

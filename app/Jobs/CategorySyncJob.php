@@ -6,6 +6,7 @@ use App\Models\Category;
 use App\Models\ProductType;
 use App\Models\StoreType;
 use App\Models\StoreTypeCategories;
+use App\Models\StoreTypeCategory;
 use App\Models\SubCategory;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -90,11 +91,11 @@ class CategorySyncJob implements ShouldQueue
 
     private function createStoreTypeCategories(mixed $storeTypeCategory)
     {
-        if (StoreTypeCategories::where('id', $storeTypeCategory->id)->exists()) {
+        if (StoreTypeCategory::where('id', $storeTypeCategory->id)->exists()) {
             return;
         }
         $storeType = StoreType::where(['code' => $storeTypeCategory->channel_id])->first();
-        StoreTypeCategories::updateOrInsert(
+        StoreTypeCategory::updateOrInsert(
             ['id' => $storeTypeCategory->id],
             [
                 'id' => $storeTypeCategory->id,

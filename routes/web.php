@@ -31,6 +31,8 @@ use App\Http\Controllers\ProductConditionController;
 use App\Http\Controllers\InterfaceController;
 use App\Http\Controllers\ListingGenerationTypeController;
 use App\Http\Controllers\ListingGenerationTypeTemplateController;
+//use App\Http\Controllers\StoreTypeCategoryController;
+use App\Http\Controllers\ProductTargetAudienceController;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/catalog', [CatalogController::class, 'index']);
@@ -49,6 +51,7 @@ Route::post('/upload-image', [CatalogController::class, 'uploadImage'])->name('c
 Route::post('/set-default', [CatalogController::class, 'setDefaultImage'])->name('catalog.set_default');
 Route::post('/set-image-order', [CatalogController::class, 'setImageOrder'])->name('catalog.set_image_order');
 Route::post('catalog/getstoredetail', [CatalogController::class, 'getStoreDetail'])->name('catalog.getstoredetail');
+Route::post('catalog/saveproductchannel', [CatalogController::class, 'saveProductChannel'])->name('catalog.saveproductchannel');
 
 Route::controller(StoreController::class)->group(function () {
     Route::get('/stores', 'index')->name('store.list');
@@ -89,6 +92,7 @@ Route::controller(ListingController::class)->group(function () {
     Route::post('/listing/getcompatibledevice', 'getCompatibleDevice')->name('listing.getcompatibledevice');
     Route::post('/listing/gettitletemplate', 'getTitleTemplate')->name('listing.gettitletemplate');
     Route::post('/listing/generateproductlisting', 'generateProductListing')->name('listing.generateproductlisting');
+    Route::post('/listing/savelistingproducts', 'saveListingProducts')->name('listing.savelistingproducts');
 });
 
 Route::controller(ListingGenerationTypeController::class)->group(function () {
@@ -116,6 +120,15 @@ Route::controller(ProductTypeController::class)->group(function () {
     Route::get('/product_type/edit/{id}', 'edit')->name('product_type.edit');
     Route::post('/product_type/edit/{id}', 'update')->name('product_type.update');
     Route::get('/product_type/delete/{id}', 'destroy')->name('product_type.delete');
+});
+
+Route::controller(ProductTargetAudienceController::class)->group(function () {
+    Route::get('/product_target_audience', 'index')->name('product_target_audience.index');
+    Route::get('/product_target_audience/add', 'create')->name('product_target_audience.create');
+    Route::post('/product_target_audience/add', 'store')->name('product_target_audience.store');
+    Route::get('/product_target_audience/edit/{id}', 'edit')->name('product_target_audience.edit');
+    Route::post('/product_target_audience/edit/{id}', 'update')->name('product_target_audience.update');
+    Route::get('/product_target_audience/delete/{id}', 'destroy')->name('product_target_audience.delete');
 });
 
 Route::controller(ProductConditionController::class)->group(function () {
@@ -146,12 +159,12 @@ Route::controller(StoreTypesController::class)->group(function () {
 });
 
 Route::controller(StoreTypeCategoryController::class)->group(function () {
-    Route::get('/store_category', 'index')->name('store_category.index');
-    Route::get('/store_category/add', 'create')->name('store_category.create');
-    Route::post('/store_category/add', 'store')->name('store_category.store');
-    Route::get('/store_category/edit/{id}', 'edit')->name('store_category.edit');
-    Route::post('/store_category/edit/{id}', 'update')->name('store_category.update');
-    Route::get('/store_category/delete/{id}', 'destroy')->name('store_category.delete');
+    Route::get('/store_type_category', 'index')->name('store_type_category.index');
+    Route::get('/store_type_category/add', 'create')->name('store_type_category.create');
+    Route::post('/store_type_category/add', 'store')->name('store_type_category.store');
+    Route::get('/store_type_category/edit/{id}', 'edit')->name('store_type_category.edit');
+    Route::post('/store_type_category/edit/{id}', 'update')->name('store_type_category.update');
+    Route::get('/store_type_category/delete/{id}', 'destroy')->name('store_type_category.delete');
 });
 
 Route::controller(LogisticCenterController::class)->group(function () {

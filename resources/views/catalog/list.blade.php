@@ -1,3 +1,4 @@
+@php use App\Constants\FilterCodes; @endphp
 @extends('adminlte::page')
 
 @section('title', 'Catalog')
@@ -25,46 +26,320 @@
     <div class="card card-secondary">
         <div class="card-header">
             <h3 class="card-title">Filters</h3>
+            <i class="fa fa-angle-down float-right"></i>
         </div>
-        <div class="card-body">
+        <div class="card-body" style="display: none;">
             <form id="filter-form">
                 <div class="row">
+                    <div class="col-md-4">
+                        <div class="row">
+                            <div class="col-3 text-right">
+                                Name
+                            </div>
+                            <div class="col-3">
+                                <select class="custom-select" id="" name="name_operator">
+                                    <option value="{{FilterCodes::CONTAINS}}">contains</option>
+                                    <option value="{{FilterCodes::STARTS_WITH}}">starts with</option>
+                                    <option value="{{FilterCodes::ENDS_WITH}}">ends with</option>
+                                    <option value="{{FilterCodes::EQUAL}}">=</option>
+                                    <option value="{{FilterCodes::IN}}">in</option>
+                                    <option value="{{FilterCodes::NOT_IN}}">not in</option>
+                                    <option value="{{FilterCodes::DOESNT_CONTAIN}}">doesn't contain</option>
+                                    <option value="{{FilterCodes::IS_SET}}">is set</option>
+                                </select>
+                            </div>
+                            <div class="col-6">
+                                <input type="text" name="name" id="name" class="form-control">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="row">
+                            <div class="col-3 text-right">
+                                Code
+                            </div>
+                            <div class="col-3">
+                                <select class="custom-select" id="" name="product_sku_operator">
+                                    <option value="{{FilterCodes::CONTAINS}}">contains</option>
+                                    <option value="{{FilterCodes::STARTS_WITH}}">starts with</option>
+                                    <option value="{{FilterCodes::ENDS_WITH}}">ends with</option>
+                                    <option value="{{FilterCodes::EQUAL}}">=</option>
+                                    <option value="{{FilterCodes::IN}}">in</option>
+                                    <option value="{{FilterCodes::NOT_IN}}">not in</option>
+                                    <option value="{{FilterCodes::DOESNT_CONTAIN}}">doesn't contain</option>
+                                    <option value="{{FilterCodes::IS_SET}}">is set</option>
+                                </select>
+                            </div>
+                            <div class="col-6">
+                                <input type="text" name="product_sku" id="product_sku" class="form-control">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="row">
+                            <div class="col-3 text-right">
+                                Product Type
+                            </div>
+                            <div class="col-3">
+                                <select class="custom-select" id="" name="product_type_operator">
+                                    <option value="{{FilterCodes::EQUAL}}">=</option>
+
+                                </select>
+                            </div>
+                            <div class="col-6">
+                                <select class="form-control" name="product_type">
+                                    <option value=""> -- </option>
+                                    @if(count($productTypes ?? []) > 0)
+                                        @foreach($productTypes as $ptype)
+                                            <option value="{{ $ptype->id }}">{{ $ptype->name }}</option>
+                                        @endforeach
+                                    @endif
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row pt-3">
+                    <div class="col-md-4">
+                        <div class="row">
+                            <div class="col-3 text-right">
+                                Manufacturer
+                            </div>
+                            <div class="col-3">
+                                <select class="custom-select" id="" name="name_operator">
+                                    <option value="{{FilterCodes::EQUAL}}">=</option>
+                                   {{-- <option value="{{FilterCodes::CONTAINS}}">contains</option>
+                                    <option value="{{FilterCodes::STARTS_WITH}}">starts with</option>
+                                    <option value="{{FilterCodes::ENDS_WITH}}">ends with</option>
+                                    <option value="{{FilterCodes::IN}}">in</option>
+                                    <option value="{{FilterCodes::NOT_IN}}">not in</option>
+                                    <option value="{{FilterCodes::DOESNT_CONTAIN}}">doesn't contain</option>
+                                    <option value="{{FilterCodes::IS_SET}}">is set</option>--}}
+                                </select>
+                            </div>
+                            <div class="col-6">
+                                <select class="form-control" name="manufacturer_id">
+                                    <option value=""> -- </option>
+                                    @if(count($manufacturers ?? []) > 0)
+                                        @foreach($manufacturers as $mf)
+                                            <option value="{{ $mf->id }}">{{ $mf->name }}</option>
+                                        @endforeach
+                                    @endif
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="row">
+                            <div class="col-6 text-right">
+                                Min Price
+                            </div>
+                            <div class="col-6">
+                                <input type="number" name="price_min" id="price_min" class="form-control">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="row">
+                            <div class="col-6 text-right">
+                                Max Price
+                            </div>
+                            <div class="col-6">
+                                <input type="number" name="price_max" id="price_max" class="form-control">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row pt-3">
+                    <div class="col-md-4">
+                        <div class="row">
+                            <div class="col-6 text-right">
+                                Status
+                            </div>
+                            <div class="col-6">
+                                <select class="custom-select" name="status" id="status">
+                                    <option value=""> -- </option>
+                                    <option value="active"> Active </option>
+                                    <option value="discontinued"> Discontinued </option>
+                                    <option value="out_of_stock"> Out of stock </option>
+                                    <option value="draft"> Draft </option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="row">
+                            <div class="col-6 text-right">
+                                Product Condition
+                            </div>
+                            <div class="col-6">
+                                <select class="custom-select" name="product_condition" id="product_condition">
+                                    <option value=""> -- </option>
+                                    @if(count($productConditions ?? []) > 0)
+                                        @foreach($productConditions as $pc)
+                                            <option value="{{ $pc->id }}">{{ $pc->name }}</option>
+                                        @endforeach
+                                    @endif
+
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="row">
+                            <div class="col-6 text-right">
+                                Weight
+                            </div>
+                            <div class="col-6">
+                                <input type="text" name="product_weight" id="product_weight" class="form-control">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row pt-3">
+                    <div class="col-md-4">
+                        <div class="row">
+                            <div class="col-6 text-right">
+                                Target Audience
+                            </div>
+                            <div class="col-6">
+                                <select class="custom-select" name="target_aud" id="target_aud">
+                                    <option value=""> -- </option>
+                                    @if(count($targetAudience ?? []) > 0)
+                                        @foreach($targetAudience as $ta)
+                                            <option value="{{ $ta->name }}">{{ $ta->name }}</option>
+                                        @endforeach
+                                    @endif
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="row">
+                            <div class="col-3 text-right">
+                                Color
+                            </div>
+                            <div class="col-3">
+                                <select class="custom-select" id="" name="product_color_operator">
+                                    <option value="{{FilterCodes::CONTAINS}}">contains</option>
+                                    <option value="{{FilterCodes::STARTS_WITH}}">starts with</option>
+                                    <option value="{{FilterCodes::ENDS_WITH}}">ends with</option>
+                                    <option value="{{FilterCodes::EQUAL}}">=</option>
+                                    <option value="{{FilterCodes::IN}}">in</option>
+                                    <option value="{{FilterCodes::NOT_IN}}">not in</option>
+                                    <option value="{{FilterCodes::DOESNT_CONTAIN}}">doesn't contain</option>
+                                    <option value="{{FilterCodes::IS_SET}}">is set</option>
+                                </select>
+                            </div>
+                            <div class="col-6">
+                                <input type="text" name="product_color" id="product_color" class="form-control">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="row">
+                            <div class="col-6 text-right">
+                                Package Weight
+                            </div>
+                            <div class="col-6">
+                                <input type="text" name="package_weight" id="package_weight" class="form-control">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row pt-3">
+                    <div class="col-md-4">
+                        <div class="row">
+                            <div class="col-6 text-right">
+                                Dimension Width
+                            </div>
+                            <div class="col-6">
+                                <input type="text" name="dimensions_width" id="dimensions_width" class="form-control">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="row">
+                            <div class="col-6 text-right">
+                                Dimension Height
+                            </div>
+                            <div class="col-6">
+                                <input type="text" name="dimensions_height" id="dimensions_height" class="form-control">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="row">
+                            <div class="col-6 text-right">
+                                Dimension Length
+                            </div>
+                            <div class="col-6">
+                                <input type="text" name="dimensions_length" id="dimensions_length" class="form-control">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row pt-3">
+                    <div class="col-md-4">
+                        <div class="row">
+                            <div class="col-6 text-right">
+                                Package Dimension Width
+                            </div>
+                            <div class="col-6">
+                                <input type="text" name="package_dimensions_width" id="package_dimensions_width" class="form-control">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="row">
+                            <div class="col-6 text-right">
+                                Package Dimension Height
+                            </div>
+                            <div class="col-6">
+                                <input type="text" name="package_dimensions_height" id="package_dimensions_height" class="form-control">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="row">
+                            <div class="col-6 text-right">
+                                Package Dimension Length
+                            </div>
+                            <div class="col-6">
+                                <input type="text" name="package_dimensions_length" id="package_dimensions_length" class="form-control">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row pt-3">
+                    <div class="col-md-4">
+                        <div class="row">
+                            <div class="col-6 text-right">
+                                Created Date
+                            </div>
+                            <div class="col-6">
+                                <input type="text" name="created_at" id="created_at" class="form-control">
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="row pt-3">
                     <div class="col-md-2">
                         <div class="form-group">
-                            <label for="name">Name:</label>
-                            <input type="text" name="name" id="name" class="form-control">
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="form-group">
-                            <label for="price_min">Min Price:</label>
-                            <input type="number" name="price_min" id="price_min" class="form-control">
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="form-group">
-                            <label for="price_max">Max Price:</label>
-                            <input type="number" name="price_max" id="price_max" class="form-control">
-                        </div>
-                    </div>
-                    <div class="col-md-2">
-                        <div class="form-group">
-                            <label for="price_max">Status:</label>
-                            <select class="custom-select" name="status" id="status">
-                                <option value=""> -- </option>
-                                <option value="active"> Active </option>
-                                <option value="discontinued"> Discontinued </option>
-                                <option value="out_of_stock"> Out of stock </option>
-                                <option value="draft"> Draft </option>
-                            </select>
+                            <label>&nbsp;</label>
+                            <button type="submit" class="form-control btn btn-primary">Apply Filter</button>
                         </div>
                     </div>
                     <div class="col-md-2">
                         <div class="form-group">
                             <label>&nbsp;</label>
-                            <button type="submit" class="form-control btn btn-primary">Filter</button>
+                            <button type="reset" class="form-control btn btn-secondary">Reset</button>
                         </div>
-
                     </div>
                 </div>
 
@@ -81,9 +356,12 @@
             <th>Type</th>
             <th>Title</th>
             <th>Status</th>
+            <th>Configrurable</th>
             <th>Price</th>
             <th>Manufacturer</th>
             <th>Color</th>
+            <th>Created Date</th>
+            <th></th>
         </tr>
         </thead>
         <tbody id="product-list">
@@ -101,6 +379,20 @@
 
 <script>
     $(document).ready(function() {
+        $('.card-header').on('click',function () {
+            if($(this).find('.fa').hasClass('fa-angle-down')){
+                $(this).find('.fa').removeClass('fa-angle-down');
+                $(this).find('.fa').addClass('fa-angle-up');
+            }else{
+                $(this).find('.fa').removeClass('fa-angle-up');
+                $(this).find('.fa').addClass('fa-angle-down');
+            }
+            $('.card-body').toggle();
+        });
+        $('#created_at').datepicker({
+            dateFormat:'yy-mm-dd',
+
+        });
         $('#filter-form').on('submit', function(e) {
             e.preventDefault(); // Prevent default form submission
             var perPage =  '{{ $perPage }}';

@@ -336,9 +336,9 @@ return [
                     'icon' => 'far fa-fw fa-file',
                 ],
                 [
-                    'text' => 'Store Category',
-                    'url' => '/store_category',
-                    'icon' => 'far fa-fw fa-file',
+                    'text' => 'Store Type Category',
+                    'url' => '/store_type_category',
+                    'icon' => 'far fa-fw fa-file'
                 ],
                 [
                     'text' => 'UPC Generate',
@@ -473,6 +473,11 @@ return [
                 [
                     'text' => 'Product Condition',
                     'url' => '/product_condition',
+                    'icon' => 'far fa-fw fa-file'
+                ],
+                [
+                    'text' => 'Product Target Audience',
+                    'url' => '/product_target_audience',
                     'icon' => 'far fa-fw fa-file'
                 ],
                 [

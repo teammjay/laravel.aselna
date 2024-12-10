@@ -81,6 +81,7 @@
                 <th>Authorized</th>
                 <th>Short Code</th>
                 <th>Upc usage type</th>
+                <th></th>
             </tr>
         </thead>
         <tbody id="store-list">

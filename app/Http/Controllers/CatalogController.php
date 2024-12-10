@@ -10,16 +10,22 @@ use App\Models\ProductInterface;
 use App\Models\ProductKeyFeatures;
 use App\Models\ProductSearchTerm;
 use App\Models\ProductTags;
+use App\Models\ProductTargetAudience;
 use App\Models\ProductTitleKeyword;
 use App\Models\ProductImages;
 use App\Models\ProductType;
 use App\Models\Store;
 use App\Models\StoreProduct;
+use App\Models\StoreType;
+use App\Models\StoreTypeCategory;
+use function Illuminate\Database\Query\leftJoin;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use function Symfony\Component\HttpKernel\Profiler\find;
+use Illuminate\Support\Facades\DB;
+
 
 class CatalogController extends Controller
 {
@@ -35,11 +41,13 @@ class CatalogController extends Controller
         $products = Catalog::with('Manufacturer')->select('*')
             ->orderBy('created_at','desc')
             ->paginate($this->perPage);
+        $productTypes = ProductType::all();
+        $manufacturers = Manufacturer::all();
+        $productConditions = ProductCondition::all();
+        $targetAudience = ProductTargetAudience::all();
+        $perPage = $this->perPage;
 
-        /*echo '<pre>';
-        print_r($products);die;*/
-
-        return view('catalog.list')->with('products', $products)->with('perPage', $this->perPage);
+        return view('catalog.list',compact('products','perPage','productTypes','manufacturers','productConditions','targetAudience'));
     }
 
     /**
@@ -53,7 +61,194 @@ class CatalogController extends Controller
 
         // Filter by product title
         if ($request->has('name') && $request->name != '') {
-            $query->WhereLike('product_title', '%'.$request->name.'%');
+            $operator = $request->name_operator;
+            switch($operator){
+                case 'contains':
+                    $query->WhereLike('product_title', '%'.$request->name.'%');
+                    break;
+                case 'starts_with':
+                    $query->WhereLike('product_title', $request->name.'%');
+                    break;
+                case 'ends_with':
+                    $query->WhereLike('product_title', '%'.$request->name);
+                    break;
+                case '=':
+                    $query->Where('product_title', $request->name);
+                    break;
+                case 'in':
+                    $names = explode(',',$request->name);
+                    $query->WhereIn('product_title',$names);
+                    break;
+                case 'not_in':
+                    $names = explode(',',$request->name);
+                    $query->WhereNotIn('product_title', $names);
+                    break;
+                case 'doesnt_contain':
+                    $query->WhereNotLike('product_title', '%'.$request->name.'%');
+                    break;
+                case 'is_set':
+                    $query->whereNotNull('product_title');
+                    break;
+            }
+        }
+
+        // Filter by product title
+        if ($request->has('product_sku') && $request->product_sku != '') {
+            $operator = $request->product_sku_operator;
+            switch($operator){
+                case 'contains':
+                    $query->WhereLike('product_sku', '%'.$request->product_sku.'%');
+                    break;
+                case 'starts_with':
+                    $query->WhereLike('product_sku', $request->product_sku.'%');
+                    break;
+                case 'ends_with':
+                    $query->WhereLike('product_sku', '%'.$request->product_sku);
+                    break;
+                case '=':
+                    $query->Where('product_sku', $request->product_sku);
+                    break;
+                case 'in':
+                    $skus = explode(',',$request->product_sku);
+                    $query->WhereIn('product_sku',$skus);
+                    break;
+                case 'not_in':
+                    $skus = explode(',',$request->product_sku);
+                    $query->WhereNotIn('product_sku', $skus);
+                    break;
+                case 'doesnt_contain':
+                    $query->WhereNotLike('product_sku', '%'.$request->product_sku.'%');
+                    break;
+                case 'is_set':
+                    $query->whereNotNull('product_sku');
+                    break;
+            }
+        }
+
+        // Filter by product type
+        if ($request->has('product_type') && $request->product_type != '') {
+            $operator = $request->product_type_operator;
+            switch($operator){
+                case 'contains':
+                    $query->WhereLike('product_type', '%'.$request->product_type.'%');
+                    break;
+                case 'starts_with':
+                    $query->WhereLike('product_type', $request->product_type.'%');
+                    break;
+                case 'ends_with':
+                    $query->WhereLike('product_type', '%'.$request->product_type);
+                    break;
+                case '=':
+                    $query->Where('product_type', $request->product_type);
+                    break;
+                case 'in':
+                    $productTypes = explode(',',$request->product_type);
+                    $query->WhereIn('product_type',$productTypes);
+                    break;
+                case 'not_in':
+                    $productTypes = explode(',',$request->product_type);
+                    $query->WhereNotIn('product_type', $productTypes);
+                    break;
+                case 'doesnt_contain':
+                    $query->WhereNotLike('product_type', '%'.$request->product_type.'%');
+                    break;
+                case 'is_set':
+                    $query->whereNotNull('product_type');
+                    break;
+            }
+
+        }
+
+        // Filter by manufacturer
+        if ($request->has('manufacturer_id') && $request->manufacturer_id != '') {
+            $query->where('manufacturer_id', $request->manufacturer_id);
+        }
+
+        // Filter by product condition
+        if ($request->has('product_condition') && $request->product_condition != '') {
+            $query->where('product_condition_id', $request->product_condition);
+        }
+
+        // Filter by product_weight
+        if ($request->has('product_weight') && $request->product_weight != '') {
+            $query->where('product_weight', $request->product_weight);
+        }
+
+        // Filter by product_weight
+        if ($request->has('package_weight') && $request->package_weight != '') {
+            $query->where('package_weight', $request->package_weight);
+        }
+
+        // Filter by target audience
+        if ($request->has('target_aud') && $request->target_aud != '') {
+            $query->where('target_aud', $request->target_aud);
+        }
+
+        // Filter by dimension width
+        if ($request->has('dimensions_width') && $request->dimensions_width != '') {
+            $query->where('dimensions_width', $request->dimensions_width);
+        }
+
+        // Filter by dimension height
+        if ($request->has('dimensions_height') && $request->dimensions_height != '') {
+            $query->where('dimensions_height', $request->dimensions_height);
+        }
+        // Filter by dimension length
+        if ($request->has('dimensions_length') && $request->dimensions_length != '') {
+            $query->where('dimensions_length', $request->dimensions_length);
+        }
+
+        // Filter by package dimension width
+        if ($request->has('package_dimensions_width') && $request->package_dimensions_width != '') {
+            $query->where('package_dimensions_width', $request->package_dimensions_width);
+        }
+
+        // Filter by package dimension height
+        if ($request->has('package_dimensions_height') && $request->package_dimensions_height != '') {
+            $query->where('package_dimensions_height', $request->package_dimensions_height);
+        }
+        // Filter by package dimension length
+        if ($request->has('package_dimensions_length') && $request->package_dimensions_length != '') {
+            $query->where('package_dimensions_length', $request->package_dimensions_length);
+        }
+
+        // Filter by created date
+        if ($request->has('created_at') && $request->created_at != '') {
+            $query->where('created_at', $request->created_at);
+        }
+
+        // Filter by color
+        if ($request->has('product_color') && $request->product_color != '') {
+            $operator = $request->product_color_operator;
+            switch($operator){
+                case 'contains':
+                    $query->WhereLike('product_color', '%'.$request->product_color.'%');
+                    break;
+                case 'starts_with':
+                    $query->WhereLike('product_color', $request->product_color.'%');
+                    break;
+                case 'ends_with':
+                    $query->WhereLike('product_color', '%'.$request->product_color);
+                    break;
+                case '=':
+                    $query->Where('product_color', $request->product_color);
+                    break;
+                case 'in':
+                    $productColors = explode(',',$request->product_color);
+                    $query->WhereIn('product_color',$productColors);
+                    break;
+                case 'not_in':
+                    $productColors = explode(',',$request->product_color);
+                    $query->WhereNotIn('product_color', $productColors);
+                    break;
+                case 'doesnt_contain':
+                    $query->WhereNotLike('product_color', '%'.$request->product_color.'%');
+                    break;
+                case 'is_set':
+                    $query->whereNotNull('product_color');
+                    break;
+            }
+
         }
 
         // Filter by price range
@@ -69,7 +264,7 @@ class CatalogController extends Controller
         if ($request->has('status') && $request->status != '') {
             $query->where('product_status', $request->status);
         }
-
+        $query->orderBy('created_at','desc');
         $products = $query->paginate($perPage); // Paginate results
 
         //echo $query->toSql();die;
@@ -107,13 +302,30 @@ class CatalogController extends Controller
         $productImages = ProductImages::where('product_id', $pro_id)->get();
         $productTags = ProductTags::pluck('name')->values()->all();
         $stores = Store::all();
+        $store_details = [];
+        if(count($stores ?? []) > 0){
+            foreach($stores as $key=>$store){
+                $store_details[$key]['store_detail'] = $store;
+                $storeCategories = StoreTypeCategory::select('store_type_category.*')
+                    ->leftJoin('store_type','store_type.id', '=', 'store_type_category.store_type_id')
+                    ->where('store_type.id',$store->store_type_id)
+                    ->get();
+                $store_details[$key]['store_category'] = $storeCategories;
+            }
+        }
         $manufacturers = Manufacturer::all();
         $productTypes = ProductType::all();
         $productConditions = ProductCondition::all();
         $interfaces = Interfaces::all();
         $productInterfaces = ProductInterface::where('product_id', $pro_id)->get();
         $productInterfaces = $productInterfaces->pluck('interface_id')->values()->all();
-        return view('catalog.update', compact('product','keyFeatures','searchTerms','productImages','productTags','pageAt','stores','manufacturers','productTypes','productConditions','titleKeywords','interfaces','productInterfaces'));
+        $targetAudience = ProductTargetAudience::all();
+        $storeTypes = StoreType::all();
+        $productStoreType = DB::table('product_channel_detail')
+            ->select('product_channel_detail.status','store_type.name')
+            ->leftJoin('store_type','store_type.id','=','product_channel_detail.store_type_id')
+            ->where('product_id',$pro_id)->get();
+        return view('catalog.update', compact('product','keyFeatures','searchTerms','productImages','productTags','pageAt','store_details','manufacturers','productTypes','productConditions','titleKeywords','interfaces','productInterfaces','targetAudience','storeTypes','productStoreType'));
     }
 
     /**
@@ -132,17 +344,6 @@ class CatalogController extends Controller
 
         // save the data to the database
         try {
-            /*Catalog::create([
-                'product_title' => $request->product_title,
-                'product_type' => $request->product_type,
-                'product_manufacturer' => $request->product_manufacturer,
-                'product_price' => $request->product_price,
-                'product_sku' => $request->product_sku,
-                'product_description' => $request->product_description,
-                'product_status' => 'active',
-                'product_stock_quantity' => 10,
-                'product_condition' => 'New'
-            ]);*/
 
             Catalog::create($request->all());
 
@@ -178,19 +379,34 @@ class CatalogController extends Controller
         $titleKeywords = ProductTitleKeyword::where('product_id', $id)->orderBy('priority')->get();
         $productImages = ProductImages::where('product_id', $id)->get();
         $productTags = ProductTags::pluck('name')->values()->all();
-        $stores = Store::with('storeCategory')->get();
+        $stores = Store::all();
+        $store_details = [];
+        if(count($stores ?? []) > 0){
+            foreach($stores as $key=>$store){
+                $store_details[$key]['store_detail'] = $store;
+                $storeCategories = StoreTypeCategory::select('store_type_category.*')
+                    ->leftJoin('store_type','store_type.id', '=', 'store_type_category.store_type_id')
+                    ->where('store_type.id',$store->store_type_id)
+                    ->get();
+                $store_details[$key]['store_category'] = $storeCategories;
+            }
+        }
         $manufacturers = Manufacturer::all();
         $productTypes = ProductType::all();
         $productConditions = ProductCondition::all();
         $storeProducts = StoreProduct::where('product_id', $id)->get();
         $productStore = $storeProducts->pluck('store_id')->values()->all();
-        $productStoreCategory = $storeProducts->pluck('store_category_id')->values()->all();
+        $productStoreCategory = $storeProducts->pluck('store_type_category_id')->values()->all();
         $interfaces = Interfaces::all();
         $productInterfaces = ProductInterface::where('product_id', $id)->get();
         $productInterfaces = $productInterfaces->pluck('interface_id')->values()->all();
-        /*echo '<pre>';
-        print_r($productInterfaces);die;*/
-        return view('catalog.update', compact('product','keyFeatures','searchTerms','productImages','productTags','pageAt','stores','manufacturers','productTypes','productConditions','productStore','productStoreCategory','titleKeywords','interfaces','productInterfaces'));
+        $targetAudience = ProductTargetAudience::all();
+        $storeTypes = StoreType::all();
+        $productStoreType = DB::table('product_channel_detail')
+                            ->select('product_channel_detail.status','store_type.name')
+                            ->leftJoin('store_type','store_type.id','=','product_channel_detail.store_type_id')
+                            ->where('product_id',$id)->get();
+        return view('catalog.update', compact('product','keyFeatures','searchTerms','productImages','productTags','pageAt','store_details','manufacturers','productTypes','productConditions','productStore','productStoreCategory','titleKeywords','interfaces','productInterfaces','targetAudience','storeTypes','productStoreType'));
     }
 
     /**
@@ -520,6 +736,19 @@ class CatalogController extends Controller
             return response()->json(['success' => true, 'data' => $storeProductDetail]);
         }else{
             return response()->json(['success' =>false]);
+        }
+    }
+
+    public function saveProductChannel(Request $request){
+
+        try {
+            $request['id'] = (string) Str::uuid();
+            DB::table('product_channel_detail')->insert($request->all());
+            return response()->json(['success' => true, 'message' => 'Data saved successfully']);
+
+        }catch (QueryException $e) {
+            // Handle the exception and show an error message
+            return response()->json(['errors' => $e->getMessage()], 422);
         }
     }
 }

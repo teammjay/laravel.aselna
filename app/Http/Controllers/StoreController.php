@@ -31,6 +31,7 @@ class StoreController extends Controller
     public function index()
     {
         $stores = Store::select('*')
+            ->with('storeType')
             ->orderBy('id','desc')
             ->paginate($this->perPage);
 

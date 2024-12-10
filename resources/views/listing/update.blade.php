@@ -53,7 +53,7 @@
                                         <label for="sku">SKU</label>
                                     </div>
                                     <div class="col-md-7">
-                                        <input type="text" class="form-control" id="sku" name="sku" value="" placeholder="SKU" readonly="">
+                                        <input type="text" class="form-control" id="sku" name="sku" value="{{ old('sku',$productDetail->sku) }}" placeholder="SKU" readonly="">
                                     </div>
                                 </div>
                                 <div class="row mt-3 g-3 align-items-center">
@@ -61,7 +61,7 @@
                                         <label for="product_code">Product Code</label>
                                     </div>
                                     <div class="col-md-7">
-                                        <input type="text" class="form-control" id="product_code" name="product_code" value="">
+                                        <input type="text" class="form-control" id="product_code" name="product_code" value="{{ old('product_sku',$productDetail->product_sku) }}" readonly>
                                         <span class="error-message text-danger" id="product_code-error"></span>
                                     </div>
                                 </div>
@@ -70,7 +70,7 @@
                                         <label for="title">Title</label>
                                     </div>
                                     <div class="col-md-7">
-                                        <textarea class="form-control" id="title" name="title" rows="8"></textarea>
+                                        <textarea class="form-control" id="title" name="title" rows="8">{{ old('product_name',$productDetail->product_name) }}</textarea>
                                         <span class="error-message text-danger" id="title-error"></span>
                                     </div>
                                 </div>
@@ -79,7 +79,7 @@
                                         <label for="description">Description</label>
                                     </div>
                                     <div class="col-md-7">
-                                        <textarea class="form-control" id="description" name="description" rows="8"></textarea>
+                                        <textarea class="form-control" id="description" name="description" rows="8">{{ old('product_description',$productDetail->product_description) }}</textarea>
                                         <span class="error-message text-danger" id="description-error"></span>
                                     </div>
                                 </div>
@@ -91,7 +91,7 @@
                                         <select class="form-control" name="manufacturer" id="manufacturer">
                                             @if(count($manufacturers ?? []) > 0)
                                                 @foreach($manufacturers as $mf)
-                                                    <option value="{{ $mf->id }}">{{ $mf->name }}</option>
+                                                    <option value="{{ $mf->id }}" {{ ($mf->id === $productDetail->manufacturer_id) ? 'selected' :'' }}>{{ $mf->name }}</option>
                                                 @endforeach
                                             @endif
                                         </select>
@@ -111,7 +111,7 @@
                                         <label for="price">Price</label>
                                     </div>
                                     <div class="col-md-7">
-                                        <input type="text" class="form-control" id="price" name="price" value="">
+                                        <input type="text" class="form-control" id="price" name="price" value="{{ old('price',$productDetail->price) }}">
                                     </div>
                                 </div>
                                 <div class="row mt-3 g-3 align-items-center">
@@ -189,7 +189,7 @@
                                         <label for="status">Status</label>
                                     </div>
                                     <div class="col-md-7">
-                                        <input type="text" class="form-control" id="status" name="status" value="">
+                                        <input type="text" class="form-control" id="status" name="status" value="{{ ($productDetail->status == '') ? 'Active' : 'Inactive' }}" readonly>
                                     </div>
                                 </div>
                                 <div class="row mt-3 g-3 align-items-center">
@@ -261,7 +261,7 @@
                                         <label for="store_sku">Store SKU</label>
                                     </div>
                                     <div class="col-md-7">
-                                        <input type="text" class="form-control" id="store_sku" name="store_sku" value="">
+                                        <input type="text" class="form-control" id="store_sku" name="store_sku" value="{{ old('store_id',$productDetail->store_id) }}" readonly>
                                     </div>
                                 </div>
                                 <div class="row mt-3 g-3 align-items-center">
@@ -326,7 +326,7 @@
                                         <label for="product_category">Product Category</label>
                                     </div>
                                     <div class="col-md-7">
-                                        <input type="text" class="form-control" id="product_category" name="product_category" value="">
+                                        <input type="text" class="form-control" id="product_category" name="product_category" value="" readonly>
                                     </div>
                                 </div>
                                 <div class="row mt-3 g-3 align-items-center">
@@ -334,7 +334,7 @@
                                         <label for="publish_status">Publish status</label>
                                     </div>
                                     <div class="col-md-7">
-                                        <input type="text" class="form-control" id="publish_status" name="publish_status" value="">
+                                        <input type="text" class="form-control" id="publish_status" name="publish_status" value="{{ old('publish_status',$productDetail->publish_status) }}" readonly>
                                     </div>
                                 </div>
                                 <div class="row mt-3 g-3 align-items-center">
@@ -342,7 +342,7 @@
                                         <label for="status_change_reason">Status change reason</label>
                                     </div>
                                     <div class="col-md-7">
-                                        <input type="text" class="form-control" id="status_change_reason" name="status_change_reason" value="">
+                                        <input type="text" class="form-control" id="status_change_reason" name="status_change_reason" value="{{ old('status_change_reason',$productDetail->status_change_reason) }}" readonly>
                                     </div>
                                 </div>
                                 <div class="row mt-3 g-3 align-items-center">
@@ -350,7 +350,7 @@
                                         <label for="inventory_count">Inventory Count</label>
                                     </div>
                                     <div class="col-md-7">
-                                        <input type="text" class="form-control" id="inventory_count" name="inventory_count" value="">
+                                        <input type="text" class="form-control" id="inventory_count" name="inventory_count" value="{{ old('inventory_count',$productDetail->inventory_count) }}" readonly>
                                     </div>
                                 </div>
                                 <div class="row mt-3 g-3 align-items-center">
@@ -358,7 +358,7 @@
                                         <label for="wp_id">Wpid</label>
                                     </div>
                                     <div class="col-md-7">
-                                        <input type="text" class="form-control" id="wp_id" name="wp_id" value="">
+                                        <input type="text" class="form-control" id="wp_id" name="wp_id" value="" readonly>
                                     </div>
                                 </div>
                                 <div class="row mt-3 g-3 align-items-center">
@@ -366,7 +366,7 @@
                                         <label for="shelf_name">Shelf Name</label>
                                     </div>
                                     <div class="col-md-7">
-                                        <input type="text" class="form-control" id="shelf_name" name="shelf_name" value="">
+                                        <input type="text" class="form-control" id="shelf_name" name="shelf_name" value="{{ old('shelf_name',$productDetail->shelf_name) }}" readonly>
                                     </div>
                                 </div>
                                 <div class="row mt-3 g-3 align-items-center">
@@ -374,7 +374,7 @@
                                         <label for="primary_catalog_path">Primary catalog path</label>
                                     </div>
                                     <div class="col-md-7">
-                                        <input type="text" class="form-control" id="primary_catalog_path" name="primary_catalog_path" value="">
+                                        <input type="text" class="form-control" id="primary_catalog_path" name="primary_catalog_path" value="" readonly>
                                     </div>
                                 </div>
                                 <div class="row mt-3 g-3 align-items-center">
@@ -382,7 +382,7 @@
                                         <label for="review_count">Review Count</label>
                                     </div>
                                     <div class="col-md-7">
-                                        <input type="text" class="form-control" id="review_count" name="review_count" value="">
+                                        <input type="text" class="form-control" id="review_count" name="review_count" value="{{ old('review_count',$productDetail->review_count) }}" readonly>
                                     </div>
                                 </div>
                                 <div class="row mt-3 g-3 align-items-center">
@@ -390,7 +390,7 @@
                                         <label for="average_rating">Average Rating</label>
                                     </div>
                                     <div class="col-md-7">
-                                        <input type="text" class="form-control" id="average_rating" name="average_rating" value="">
+                                        <input type="text" class="form-control" id="average_rating" name="average_rating" value="{{ old('average_rating',$productDetail->average_rating) }}" readonly>
                                     </div>
                                 </div>
                                 <div class="row mt-3 g-3 align-items-center">
@@ -398,7 +398,7 @@
                                         <label for="channel_status">Status</label>
                                     </div>
                                     <div class="col-md-7">
-                                        <input type="text" class="form-control" id="channel_status" name="channel_status" value="">
+                                        <input type="text" class="form-control" id="channel_status" name="channel_status" value="" readonly>
                                     </div>
                                 </div>
 
@@ -409,7 +409,7 @@
                                         <label for="buy_box_price">Buy box price</label>
                                     </div>
                                     <div class="col-md-7">
-                                        <input type="text" class="form-control" id="buy_box_price" name="buy_box_price" value="">
+                                        <input type="text" class="form-control" id="buy_box_price" name="buy_box_price" value="{{ old('buy_box_price',$productDetail->buy_box_price) }}" readonly>
                                     </div>
                                 </div>
                                 <div class="row mt-3 g-3 align-items-center">
@@ -417,7 +417,7 @@
                                         <label for="buy_box_shipping_price">Buy box shipping price</label>
                                     </div>
                                     <div class="col-md-7">
-                                        <input type="text" class="form-control" id="buy_box_shipping_price" name="buy_box_shipping_price" value="">
+                                        <input type="text" class="form-control" id="buy_box_shipping_price" name="buy_box_shipping_price" value="{{ old('buy_box_shipping_price',$productDetail->buy_box_shipping_price) }}" readonly>
                                     </div>
                                 </div>
                                 <div class="row mt-3 g-3 align-items-center">
@@ -425,7 +425,7 @@
                                         <label for="seller_buy_box_winner">Seller buy box winner</label>
                                     </div>
                                     <div class="col-md-7">
-                                        <input type="checkbox" id="seller_buy_box_winner" name="seller_buy_box_winner" value="">
+                                        <input type="checkbox" id="seller_buy_box_winner" name="seller_buy_box_winner" {{ ($productDetail->seller_buy_box_winner == 1) ? 'checked' :'' }} readonly>
                                     </div>
                                 </div>
                                 <div class="row mt-3 g-3 align-items-center">
@@ -433,7 +433,7 @@
                                         <label for="buy_box_winner">Buy box winner</label>
                                     </div>
                                     <div class="col-md-7">
-                                        <input type="text" class="form-control" id="buy_box_winner" name="buy_box_winner" value="">
+                                        <input type="text" class="form-control" id="buy_box_winner" name="buy_box_winner" value="" readonly>
                                     </div>
                                 </div>
                                 <div class="row mt-3 g-3 align-items-center">
@@ -441,7 +441,7 @@
                                         <label for="quality_explanation">Quality Explanation</label>
                                     </div>
                                     <div class="col-md-7">
-                                        <input type="text" class="form-control" id="quality_explanation" name="quality_explanation" value="">
+                                        <input type="text" class="form-control" id="quality_explanation" name="quality_explanation" value="{{ old('quality_explanation',$productDetail->quality_explanation) }}" readonly>
                                     </div>
                                 </div>
                             </div>
@@ -512,7 +512,6 @@
 @section('adminlte_js')
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script>
-        var store_id = "{{ $store->id ?? '' }}"; // Passed from controller
 
         function saveStoreTabData(tabId) {
             const form = document.querySelector("#frmtab"+ tabId);
@@ -552,413 +551,6 @@
 
         }
 
-        function finalizeForm() {
 
-            const form = document.querySelector("#frmtab1");
-            let formData = new FormData(form);
-            formData.append('store_id', store_id);
-            formData.set('store_status', 'active');
-
-            $.ajax({
-                type: 'POST',
-                url: "{{ route('store.final') }}", // Adjust this URL to your endpoint
-                data: formData,
-                processData: false,
-                contentType: false,
-                headers: {
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                },
-                dataType:'json',
-                success: function(response) {
-                    // Display a success message
-                    alert(response.message);
-                    window.location.href = "{{ route('store.list') }}";
-                },
-                error: function(xhr) {
-                    if (xhr.status === 422) { // Validation error
-                        var errors = xhr.responseJSON.errors;
-
-                        // Clear previous errors
-                        $('.error-message').text('');
-
-                        // Loop through and display errors
-                        $.each(errors, function(field, messages) {
-                            $('#' + field + '-error').text(messages[0]); // Display the first error message
-                        });
-                    }
-                }
-            });
-
-        }
-
-        function saveStoreShippingService() {
-            const form = document.querySelector("#frmStoreShippingService");
-            let formData = new FormData(form);
-            formData.append('store_id', store_id);
-
-            $.ajax({
-                type: 'POST',
-                url: "{{ route('store.shippingservice') }}", // Adjust this URL to your endpoint
-                data: formData,
-                processData: false,
-                contentType: false,
-                headers: {
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                },
-                dataType:'json',
-                success: function(response) {
-                    // Display a success message
-                    alert(response.message);
-                    location.reload();
-                },
-                error: function(xhr) {
-                    if (xhr.status === 422) { // Validation error
-                        var errors = xhr.responseJSON.errors;
-
-                        // Clear previous errors
-                        $('.error-message').text('');
-
-                        // Loop through and display errors
-                        $.each(errors, function(field, messages) {
-                            $('#' + field + '-error').text(messages[0]); // Display the first error message
-                        });
-                    }
-                }
-            });
-
-        }
-
-        function saveStorePages() {
-            const form = document.querySelector("#frmStorePages");
-            let formData = new FormData(form);
-            formData.append('store_id', store_id);
-
-            $.ajax({
-                type: 'POST',
-                url: "{{ route('store.pages') }}", // Adjust this URL to your endpoint
-                data: formData,
-                processData: false,
-                contentType: false,
-                headers: {
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                },
-                dataType:'json',
-                success: function(response) {
-                    // Display a success message
-                    alert(response.message);
-                    location.reload();
-                },
-                error: function(xhr) {
-                    if (xhr.status === 422) { // Validation error
-                        var errors = xhr.responseJSON.errors;
-
-                        // Clear previous errors
-                        $('.error-message').text('');
-
-                        // Loop through and display errors
-                        $.each(errors, function(field, messages) {
-                            $("#frmStorePages").find('#' + field + '-error').text(messages[0]); // Display the first error message
-                        });
-                    }
-                }
-            });
-
-        }
-
-        function saveStoreCategory() {
-            const form = document.querySelector("#frmStoreCategory");
-            let formData = new FormData(form);
-            formData.append('store_id', store_id);
-
-            $.ajax({
-                type: 'POST',
-                url: "{{ route('store.category') }}", // Adjust this URL to your endpoint
-                data: formData,
-                processData: false,
-                contentType: false,
-                headers: {
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                },
-                dataType:'json',
-                success: function(response) {
-                    // Display a success message
-                    alert(response.message);
-                    location.reload();
-                },
-                error: function(xhr) {
-                    if (xhr.status === 422) { // Validation error
-                        var errors = xhr.responseJSON.errors;
-
-                        // Clear previous errors
-                        $('.error-message').text('');
-
-                        // Loop through and display errors
-                        $.each(errors, function(field, messages) {
-                            $("#frmStoreCategory").find('#' + field + '-error').text(messages[0]); // Display the first error message
-                        });
-                    }
-                }
-            });
-
-        }
-
-        function saveStoreMessageAccount() {
-            const form = document.querySelector("#frmStoreMessageAccount");
-            let formData = new FormData(form);
-            formData.append('store_id', store_id);
-
-            $.ajax({
-                type: 'POST',
-                url: "{{ route('store.messageaccount') }}", // Adjust this URL to your endpoint
-                data: formData,
-                processData: false,
-                contentType: false,
-                headers: {
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                },
-                dataType:'json',
-                success: function(response) {
-                    // Display a success message
-                    alert(response.message);
-                    location.reload();
-                },
-                error: function(xhr) {
-                    if (xhr.status === 422) { // Validation error
-                        var errors = xhr.responseJSON.errors;
-
-                        // Clear previous errors
-                        $('.error-message').text('');
-
-                        // Loop through and display errors
-                        $.each(errors, function(field, messages) {
-                            $("#frmStoreMessageAccount").find('#acc_' + field + '-error').text(messages[0]); // Display the first error message
-                            $("#frmStoreMessageAccount").find('#' + field + '-error').text(messages[0]); // Display the first error message
-
-                        });
-                    }
-                }
-            });
-
-        }
-
-        function saveStoreLogisticCenter() {
-            const form = document.querySelector("#frmStoreLogisticCenter");
-            let formData = new FormData(form);
-            formData.append('store_id', store_id);
-            $.ajax({
-                type: 'POST',
-                url: "{{ route('store.logisticcenter') }}", // Adjust this URL to your endpoint
-                data: formData,
-                processData: false,
-                contentType: false,
-                headers: {
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                },
-                dataType:'json',
-                success: function(response) {
-                    // Display a success message
-                    alert(response.message);
-                    location.reload();
-                },
-                error: function(xhr) {
-                    if (xhr.status === 422) { // Validation error
-                        var errors = xhr.responseJSON.errors;
-                        // Clear previous errors
-                        $('.error-message').text('');
-                        // Loop through and display errors
-                        $.each(errors, function(field, messages) {
-                            $("#frmStoreLogisticCenter").find('#logistic_' + field + '-error').text(messages[0]);
-                        });
-                    }
-                }
-            });
-        }
-
-        $(document).ready(function() {
-
-            $('.pro-tags').select2();
-            // Add new field group
-            $('#add_feature').click(function() {
-                $('#features_table tbody').append(`
-                    <tr class="field-group">
-                        <td><textarea class="form-control" name="features[]"></textarea></td>
-                        <td><input type="text" class="form-control" name="feature_sort_order[]" value=""></td>
-                        <td><button type="button" class="btn btn-danger remove-feature"> <i class="fas fa-fw fa-trash"></i></button></td>
-                    </tr>
-                `);
-
-            });
-            // Remove field group
-            $(document).on('click', '.remove-feature', function() {
-                $(this).parents('tr.field-group').remove();
-            });
-            // Add new retail price
-            $('#add_retail').click(function() {
-                $('#table_retail tbody').append(`
-                    <tr class="field-group">
-                        <td><input type="text" class="form-control" name="retail_qty[]"></td>
-                        <td><input type="text" class="form-control" name="retail_price[]"></td>
-                        <td><button type="button" class="btn btn-danger remove-retail"> <i class="fas fa-fw fa-trash"></i></button></td>
-                    </tr>
-                `);
-
-            });
-            // Remove retail price group
-            $(document).on('click', '.remove-retail', function() {
-                $(this).parents('tr.field-group').remove();
-            });
-            // Add new retail price
-            $('#add_wholesale').click(function() {
-                $('#table_wholesale tbody').append(`
-                    <tr class="field-group">
-                        <td><input type="text" class="form-control" name="wholesale_qty[]"></td>
-                        <td><input type="text" class="form-control" name="wholesale_price[]"></td>
-                        <td><button type="button" class="btn btn-danger remove-wholesale"> <i class="fas fa-fw fa-trash"></i></button></td>
-                    </tr>
-                `);
-
-            });
-            // Remove retail price group
-            $(document).on('click', '.remove-wholesale', function() {
-                $(this).parents('tr.field-group').remove();
-            });
-            // Add new device
-            $('#add_device').click(function() {
-                $('#table_incompatible_device tbody').append(`
-                    <tr class="field-group">
-                        <td><input type="text" class="form-control" name="model_name[]"></td>
-                        <td><input type="text" class="form-control" name="device_name[]"></td>
-                        <td><button type="button" class="btn btn-danger remove-device"> <i class="fas fa-fw fa-trash"></i></button></td>
-                    </tr>
-                `);
-
-            });
-            // Remove retail price group
-            $(document).on('click', '.remove-device', function() {
-                $(this).parents('tr.field-group').remove();
-            });
-            // Add new device
-            $('#add_title_keyword').click(function() {
-                $('#table_title_keywords tbody').append(`
-                    <tr class="field-group">
-                        <td width="70%"><input type="text" class="form-control" name="title_keyword[]" value=""></td>
-                        <td width="20%"><input type="text" class="form-control" name="title_priority[]" value=""></td>
-                        <td width="10%"><button type="button" class="btn btn-danger remove-keyword"> <i class="fas fa-fw fa-trash"></i></button></td>
-                     </tr>
-                `);
-
-            });
-            // Remove retail price group
-            $(document).on('click', '.remove-keyword', function() {
-                $(this).parents('tr.field-group').remove();
-            });
-            $(document).on('click', '.remove-shipping', function() {
-                var shippingId = $(this).data('id');
-                var ele = $(this);
-                // Confirm the deletion
-                if (confirm("Are you sure you want to delete this shipping servie?")) {
-                    $.ajax({
-                        type: 'POST',
-                        url: "{{ route('store.removeshipping') }}", // Adjust this URL to your endpoint
-                        data: {
-                            "shippingId": shippingId
-                        },
-                        headers: {
-                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                        },
-                        dataType:'json',
-                        success: function(response) {
-                            // Display a success message
-                            alert(response.message);
-                            ele.parents('tr.field-group').remove();
-                        },
-                        error: function(xhr) {
-                            alert(response.message);
-                        }
-                    });
-                }
-            });
-            $(document).on('click', '.remove-page', function() {
-                var pageId = $(this).data('id');
-                var ele = $(this);
-                // Confirm the deletion
-                if (confirm("Are you sure you want to delete this page?")) {
-
-                    $.ajax({
-                        type: 'POST',
-                        url: "{{ route('store.removepage') }}", // Adjust this URL to your endpoint
-                        data: {
-                            "pageId": pageId
-                        },
-                        headers: {
-                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                        },
-                        dataType:'json',
-                        success: function(response) {
-                            // Display a success message
-                            alert(response.message);
-                            ele.parents('tr.field-group').remove();
-                        },
-                        error: function(xhr) {
-                            alert(response.message);
-                        }
-                    });
-                }
-            });
-            $(document).on('click', '.remove-message-account', function() {
-                var accId = $(this).data('id');
-                var ele = $(this);
-                // Confirm the deletion
-                if (confirm("Are you sure you want to delete this message accounts?")) {
-
-                    $.ajax({
-                        type: 'POST',
-                        url: "{{ route('store.removemessageaccount') }}", // Adjust this URL to your endpoint
-                        data: {
-                            "accId": accId
-                        },
-                        headers: {
-                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                        },
-                        dataType:'json',
-                        success: function(response) {
-                            // Display a success message
-                            alert(response.message);
-                            ele.parents('tr.field-group').remove();
-                        },
-                        error: function(xhr) {
-                            alert(response.message);
-                        }
-                    });
-                }
-            });
-            $(document).on('click', '.remove-logistic-center', function() {
-                var centerId = $(this).data('id');
-                var ele = $(this);
-                // Confirm the deletion
-                if (confirm("Are you sure you want to delete this logistic center?")) {
-
-                    $.ajax({
-                        type: 'POST',
-                        url: "{{ route('store.removelogisticcenter') }}", // Adjust this URL to your endpoint
-                        data: {
-                            "centerId": centerId
-                        },
-                        headers: {
-                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                        },
-                        dataType:'json',
-                        success: function(response) {
-                            // Display a success message
-                            alert(response.message);
-                            ele.parents('tr.field-group').remove();
-                        },
-                        error: function(xhr) {
-                            alert(response.message);
-                        }
-                    });
-                }
-            });
-        });
     </script>
 @stop

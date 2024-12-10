@@ -28,6 +28,9 @@
             z-index: 99;
         }
         .pro-list-title{width: 85% !important;}
+        #modelTable tr td, #modelTable tr th{
+            padding: 5px 10px;
+        }
     </style>
 @stop
 @section('content_header')
@@ -348,40 +351,19 @@
                                     <label>Generation Type</label>
                                     <div class="form-group align-items-center">
                                         @if(count($listingGenerationTypes ?? []) > 0)
-                                            @foreach($listingGenerationTypes as $ltype)
+                                           @php
+                                                $count = 0;
+                                            @endphp
+                                            @foreach($listingGenerationTypes as $key=>$ltype)
                                                 <div class="form-group mb-1">
-                                                    <input type="radio" class="mr-1" id="generate_type_{{ $ltype->id }}" name="generate_type" value="{{ $ltype->id }}"> <label for="generate_type_{{ $ltype->id }}">{{ $ltype->name }}</label>
+                                                    <input type="radio" class="mr-1" {{ ($count == 0) ? 'checked' : '' }} id="generate_type_{{ $ltype->id }}" name="generate_type" value="{{ $ltype->id }}"> <label for="generate_type_{{ $ltype->id }}">{{ $ltype->name }}</label>
                                                 </div>
+                                                @php
+                                                    $count++;
+                                                @endphp
                                             @endforeach
                                         @endif
-                                        {{--<div class="form-group mb-1">
-                                            <input type="radio" class="mr-1" name="generate_type" value="product-only" checked> <span>Product Only</span>
-                                        </div>
-                                        <div class="form-group mb-1">
-                                            <input type="radio" class="mr-1" name="generate_type" value="single-device"> <span>Single Device</span>
-                                        </div>
-                                        <div class="form-group mb-1">
-                                            <input type="radio" class="mr-1" name="generate_type" value="carrier-group"> <span>Carrier Group</span>
-                                        </div>
-                                        <div class="form-group mb-1">
-                                            <input type="radio" class="mr-1" name="generate_type" value="brand-group"> <span>Brand Group</span>
-                                        </div>
-                                        <div class="form-group mb-1">
-                                            <input type="radio" class="mr-1" name="generate_type" value="title-group"> <span>Title Group</span>
-                                        </div>
-                                        <div class="form-group mb-1">
-                                            <input type="radio" class="mr-1" name="generate_type" value="free-group"> <span>Free Group</span>
-                                        </div>
-                                        <div class="form-group mb-1">
-                                            <input type="radio" class="mr-1" name="generate_type" value="all-carrier"> <span>All Carrier</span>
-                                        </div>
-                                        <div class="form-group mb-1">
-                                            <input type="radio" class="mr-1" name="generate_type" value="combined-device"> <span>Combined Device</span>
-                                        </div>
 
-                                        <div class="form-group mb-1">
-                                            <input type="checkbox" class="mr-1" name="popular_brand" value="popular-brand"> <span>Popular Brand Only</span>
-                                        </div>--}}
                                     </div>
                                     <div class="border p-2">
                                         <div class="form-group mb-0 align-items-center">
@@ -573,7 +555,7 @@
                                         <div class="form-group d-flex align-items-center mt-3">
                                             <input type="text" class="form-control" name="title_input_from" id="title_input_from" placeholder="Search">
                                             <input type="text" class="form-control" name="title_value_to_replace" id="title_value_to_replace" placeholder="Replace">
-                                            <button type="button" class="btn btn-secondary ml-3" id="replace">Replace</button>
+                                            <button type="button" class="btn btn-secondary ml-3" id="final_replace">Replace</button>
                                         </div>
                                     </div>
                                 </div>
@@ -582,37 +564,46 @@
                     </div>
                     <div class="row  pt-5">
                         <div class="col-md-9">
+                            <div>
+                                <span class="float-right" id="total_generate_product"></span>
+                            </div>
+                            <form id="frmFinalListingProducts">
+                                <table id="listingTable" class="table table-bordered table-striped">
+                                    <thead>
+                                    <tr>
+                                        <th>Image</th>
+                                        <th>Code</th>
+                                        <th>SKU</th>
+                                        <th>Title</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody id="listing-product">
 
-                            <table id="listingTable" class="table table-bordered table-striped">
-                                <thead>
-                                <tr>
-                                    <th>Image</th>
-                                    <th>Code</th>
-                                    <th>SKU</th>
-                                    <th>Title</th>
-                                </tr>
-                                </thead>
-                                <tbody id="listing-product">
+                                    {{--@include('catalog.product_list', ['products' => $products])--}}
 
-                                {{--@include('catalog.product_list', ['products' => $products])--}}
-
-                                </tbody>
-                            </table>
+                                    </tbody>
+                                </table>
+                            </form>
                         </div>
-                        <div class="col-md-3">
-                            <table id="modelTable" class="table table-bordered table-striped">
-                                <thead>
-                                <tr>
-                                    <th>Model Name</th>
-                                    <th>Name</th>
-                                </tr>
-                                </thead>
-                                <tbody>
+                        <div class="col-md-3 ">
+                            <div class="sticky-top">
+                                <div>
+                                    <span class="float-right" id="total_generate_models"></span>
+                                </div>
+                                <table id="modelTable" class="table table-bordered table-striped">
+                                    <thead>
+                                    <tr>
+                                        <th>Model Name</th>
+                                        <th>Name</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody id="model_list">
 
-                                {{--@include('catalog.product_list', ['products' => $products])--}}
+                                    {{--@include('catalog.product_list', ['products' => $products])--}}
 
-                                </tbody>
-                            </table>
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -634,7 +625,8 @@
 @section('adminlte_js')
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script>
-
+        let product_model = {};
+        let product_models = {};
         document.addEventListener('DOMContentLoaded', () => {
             const tabs = document.querySelectorAll('[data-toggle="tab"]');
             let currentIndex = 0;
@@ -661,9 +653,9 @@
             };
 
             document.getElementById('nextBtn').addEventListener('click', () => {
-                console.log(tabs.length);
+                $('#nextBtn').html('Next');
+                $('html, body').animate({ scrollTop: 0 }, 'fast');
                 if (currentIndex < tabs.length - 1) {
-                    console.log(currentIndex);
                     if(currentIndex == 0){
                         let selected_product = [];
                         $('input[name="products[]"]:checked').each(function () {
@@ -732,8 +724,11 @@
                             success: function (response) {
                                 if (response.success) {
                                     $('#listing-product').html(response.html);
-                                    //$('#total_listing_product').html(response.total+' rows');
+                                    $('#total_generate_product').html(response.totalproduct +' rows');
                                     $('.bd-example').hide();
+                                    product_model = response.models;
+                                    product_models = response.modelDetail;
+                                    $('#nextBtn').html('Finish');
                                     currentIndex++;
                                     activateTab(currentIndex);
 
@@ -746,6 +741,37 @@
                             }
                         });
 
+                    }else if(currentIndex == 3){
+                        $('.bd-example').show();
+                        const form = document.querySelector("#frmFinalListingProducts");
+                        let formData = new FormData(form);
+                        formData.append('store_id', $('#listing_store').val());
+                        formData.append('product_models', JSON.stringify(product_models));
+                        $.ajax({
+                            type: 'POST',
+                            url: "{{ route('listing.savelistingproducts') }}", // Adjust this URL to your endpoint
+                            data: formData,
+                            processData: false,
+                            contentType: false,
+                            headers: {
+                                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                            },
+                            dataType:'json',
+                            success: function(response) {
+                                // Display a success message
+                                alert(response.message);
+                                if(response.success){
+                                    currentIndex++;
+                                    activateTab(currentIndex);
+                                }
+
+                                
+
+                            },
+                            error: function(xhr) {
+
+                            }
+                        });
                     }else{
                         currentIndex++;
                         activateTab(currentIndex);
@@ -755,6 +781,7 @@
 
             // Handle Previous button click
             document.getElementById('prevBtn').addEventListener('click', () => {
+                $('#nextBtn').html('Next');
                 if (currentIndex > 0) {
                     currentIndex--;
                     activateTab(currentIndex);
@@ -834,6 +861,37 @@
                     ele.find('.sel-device').prop('checked',true);
                 }
             });
+
+            $(document).on('click', '.listingRow', function() {
+                let ele = $(this);
+                $('.listingRow').removeClass('bg-blue');
+                ele.addClass('bg-blue');
+                let key = ele.data('key');
+                let selModel = product_model[key];
+
+                let mlist = '';
+                for(i in selModel){
+                    mlist += '<tr><td>'+selModel[i]+'</td><td></td></tr>';
+                }
+                $('#model_list').html(mlist);
+                $('#total_generate_models').html(selModel.length +' rows');
+            });
+
+
+            $(document).on('click', '#final_replace', function() {
+                let searchTerm = $('#title_input_from').val();
+                let replaceText = $('#title_value_to_replace').val();
+
+                $('.listingRow').each(function () {
+                    $(this).find('textarea').each(function () {
+                        var currentvalue = $(this).val();
+                        var updatedString = currentvalue.replace(new RegExp(searchTerm, "g"), replaceText);
+                        $(this).val(updatedString);
+                    });
+                });
+            });
+
+
 
             $(document).on('change', '#product_type_filter', function() {
                 let product_type = $(this).val();
@@ -956,6 +1014,7 @@
                             term: request.term,
                             type: "product_code",
                             product_code: product_code,
+                            store_id: $('#listing_store').val(),
                         },
                         //processData: false,
                         //contentType: false,
@@ -991,7 +1050,7 @@
                         data: {
                             term: request.term,
                             type: "device_series",
-                            device_series: device_series
+                            device_series: device_series,
                         },
                         //processData: false,
                         //contentType: false,
@@ -1056,6 +1115,50 @@
             });
         });
 
+        function loadTitleTemplate() {
+            let type = $('input[name="generate_type"]:checked').val();
+            $('#title_template').val('');
+            $.ajax({
+                url: "{{ route('listing.gettitletemplate') }}",
+                type: 'POST',
+                data: {
+                    type:type
+                },
+                /* processData: false,
+                 contentType: false,*/
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                },
+                success: function (response) {
+                    if (response.success) {
+                        //$('#title_template').html(response.option);
+                        let data = response.data;
+                        $('#title_template').val(response.option);
+
+                        $('#title_template').autocomplete({
+
+                            source: function (request, response) {
+                                actemp = data.details;
+                                response(data.display);
+                            },
+                            minLength: 0,
+                            select : function(event, ui){
+                                $('#title_template').val(ui.item.label);
+                                return false;
+                            }
+                        }).focus(function () {
+                            $('#title_template').keydown();
+                        });;
+                    }
+                },
+                error: function (xhr) {
+                    /*if (xhr.responseJSON?.error) {
+                        $('#responseMessage').html('<p style="color:red;">' + xhr.responseJSON.error.image[0] + '</p>');
+                    }*/
+                }
+            });
+        }
+
         function loadProducts() {
             const form = document.querySelector("#frmproductfilter");
             let formData = new FormData(form);
@@ -1093,7 +1196,7 @@
                 type: 'POST',
                 data: {
                     product_ids:selected_product,
-                    store_id:selected_product,
+                    store_id:$('#listing_store').val(),
                     step:2
                 },
                 headers: {
@@ -1120,7 +1223,6 @@
             $('input[name="selected_store_product[]"]').each(function () {
                 var pid = $(this).val();
                 selected_product.push(pid);
-                console.log(pid);
                 var pro_id = $('.pid-'+pid).val();
                 var title = $('.title-'+pro_id).val();
                 var short_keyword = $('.shortKey-'+pro_id).val();
@@ -1139,7 +1241,7 @@
                 type: 'POST',
                 data: {
                     product_ids:selected_product,
-                    store_id:selected_product,
+                    store_id:$('#listing_store').val(),
                     product_detail:JSON.stringify(productDetail),
                     step:3
                 },
@@ -1158,6 +1260,8 @@
                     }*/
                 }
             });
+
+            loadTitleTemplate();
         }
 
 

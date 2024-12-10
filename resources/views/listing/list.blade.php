@@ -15,10 +15,11 @@
             </a>
         </div>
         <div class="col-md-3">
-            <select class="form-control" id="listing_store">
+            <select class="form-control" id="listing_store" name="store_id">
+                <option value=""></option>
                 @if(count($stores ?? []) > 0)
                     @foreach($stores as $store)
-                        <option value="{{ $store->id }}">{{ $store->name.' - '.$store->marketplace_name }}</option>
+                        <option value="{{ $store->id }}">{{ $store->name}}{{ ($store->marketplace_name) ? '-'.$store->marketplace_name : '' }}</option>
                     @endforeach
                 @endif
             </select>
@@ -135,7 +136,13 @@
                             </div>
                             <div class="col-6">
                                 <select class="form-control" id="" name="device_type">
-                                    <option></option>
+                                    <option value=""></option>
+                                    @if(count($device_types ?? []) > 0)
+                                        @foreach($device_types as $dtype)
+                                            <option value="{{ $dtype->id }}">{{ $dtype->name }}</option>
+                                        @endforeach
+                                    @endif
+
                                 </select>
                             </div>
                         </div>
@@ -415,44 +422,26 @@
                 <div class="row mt-3">
                     <div class="col-md-4">
                         <div class="row">
-                            <div class="col-3 text-right">
+                            <div class="col-6 text-right">
                                 Product Type
                             </div>
-                            <div class="col-3">
-                                <select class="custom-select" id="" name="product_type_operator">
-                                    <option value="{{FilterCodes::IN}}">in</option>
-                                    <option value="{{FilterCodes::CONTAINS}}">contains</option>
-                                    <option value="{{FilterCodes::STARTS_WITH}}">starts with</option>
-                                    <option value="{{FilterCodes::ENDS_WITH}}">ends with</option>
-                                    <option value="{{FilterCodes::EQUAL}}">=</option>
-                                    <option value="{{FilterCodes::NOT_IN}}">not in</option>
-                                    <option value="{{FilterCodes::DOESNT_CONTAIN}}">doesn't contain</option>
-                                    <option value="{{FilterCodes::IS_SET}}">is set</option>
-                                </select>
-                            </div>
+
                             <div class="col-6">
                                 <select class="form-control" id="" name="product_type">
-                                    <option></option>
+                                    <option value=""></option>
+                                    @if(count($product_types ?? []) > 0)
+                                        @foreach($product_types as $ptype)
+                                            <option value="{{ $ptype->id }}">{{ $ptype->name }}</option>
+                                        @endforeach
+                                    @endif
                                 </select>
                             </div>
                         </div>
                     </div>
                     <div class="col-md-4">
                         <div class="row">
-                            <div class="col-3 text-right">
+                            <div class="col-6 text-right">
                                 Item Created Date
-                            </div>
-                            <div class="col-3">
-                                <select class="custom-select" id="" name="item_created_operator">
-                                    <option value="{{FilterCodes::EQUAL}}">=</option>
-                                    <option value="{{FilterCodes::CONTAINS}}">contains</option>
-                                    <option value="{{FilterCodes::STARTS_WITH}}">starts with</option>
-                                    <option value="{{FilterCodes::ENDS_WITH}}">ends with</option>
-                                    <option value="{{FilterCodes::IN}}">in</option>
-                                    <option value="{{FilterCodes::NOT_IN}}">not in</option>
-                                    <option value="{{FilterCodes::DOESNT_CONTAIN}}">doesn't contain</option>
-                                    <option value="{{FilterCodes::IS_SET}}">is set</option>
-                                </select>
                             </div>
                             <div class="col-6">
                                 <input type="text" name="item_created" id="item_created" class="form-control">
@@ -560,7 +549,7 @@
                     <div class="col-md-2">
                         <div class="form-group">
                             <label>&nbsp;</label>
-                            <button type="submit" class="form-control btn btn-primary">Filter</button>
+                            <button type="submit" id="apply_filter" class="form-control btn btn-primary">Filter</button>
                         </div>
 
                     </div>
@@ -591,13 +580,13 @@
             </thead>
             <tbody id="product-list">
 
-                {{--@include('catalog.product_list', ['products' => $products])--}}
+                @include('listing.product_list', ['products' => $products])
 
             </tbody>
         </table>
     </div>
     <div id="pagination">
-        {{--@include('catalog.pagination', ['products' => $products])--}}
+        @include('listing.pagination', ['products' => $products])
     </div>
 @stop
 
@@ -622,12 +611,36 @@
             location.href = "{{ url('stores/edit') }}/" + store_id;
         });
 
+        $('#listing_store').on('change',function () {
+
+            var perPage =  '{{ $perPage }}';
+            var page =  1;
+            $.ajax({
+                url: "{{ route('listing.filter') }}?page=" + page + "&perPage=" + perPage,
+                method: 'GET',
+                data: {
+                    store_id:$(this).val()
+                },
+                success: function(response) {
+                    // Update the product list and pagination
+                    $('#product-list').html(response.html);
+                    $('#pagination').html(response.pagination);
+                },
+                error: function(xhr) {
+                    console.error('Error:', xhr);
+                }
+            });
+
+        });
+
+
+
         $('#filter-form').on('submit', function(e) {
             e.preventDefault(); // Prevent default form submission
             var perPage =  '{{ $perPage }}';
             var page =  1;
             $.ajax({
-                url: "{{ route('catalog.filter') }}?page=" + page + "&perPage=" + perPage,
+                url: "{{ route('listing.filter') }}?page=" + page + "&perPage=" + perPage,
                 method: 'GET',
                 data: $(this).serialize(),
                 success: function(response) {
@@ -649,9 +662,9 @@
         });
 
         function loadProductsWithPage(page) {
-            var perPage = 1;
+            var perPage = '{{ $perPage }}';;
             $.ajax({
-                url: "{{ route('catalog.filter') }}?page=" + page + "&perPage=" + perPage,
+                url: "{{ route('listing.filter') }}?page=" + page + "&perPage=" + perPage,
                 data: $('#filter-form').serialize(),
                 success: function(response) {
                     $('#product-list').html(response.html);
@@ -667,7 +680,7 @@
             // Confirm the deletion
             if (confirm("Are you sure you want to delete this product?")) {
                 $.ajax({
-                    url: "{{ url('catalog/destroy') }}/" + productId,   // Laravel route for deletion
+                    url: "{{ url('listing/destroy') }}/" + productId,   // Laravel route for deletion
                     type: 'DELETE',
                     data: {
                         "_token": token
