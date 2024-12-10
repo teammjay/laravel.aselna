@@ -782,26 +782,68 @@
                                             </div>
                                             <div class="row mt-3 g-3 align-items-center">
                                                 <div class="col-md-3">
-                                                    <label class="col-form-label">Sale Count</label>
+                                                    <label class="col-form-label">Sales Count</label>
                                                 </div>
                                                 <div class="col-md-9 d-flex justify-between">
-                                                    <input type="text" class="form-control" name="sales_count" id="store_product_sales_count" placeholder="00.00" readonly>
+                                                    <input type="text" class="form-control" name="sales_count" id="store_product_sales_count" placeholder="0" readonly>
+                                                </div>
+                                            </div>
+                                            <input type="hidden" name="manufacturer_id" value="{{ $product->manufacturer_id }}">
+                                            <div class="row mt-3 g-3 align-items-center">
+                                                <div class="col-md-3">
+                                                    <label class="col-form-label">Last Sale Date</label>
+                                                </div>
+                                                <div class="col-md-9 d-flex justify-between">
+                                                    <input type="text" class="form-control w-75 mr-1" name="last_sale_date" id="last_sale_date" readonly>
+                                                    <input type="text" class="form-control w-25" name="last_sale_time" id="last_sale_time" readonly>
                                                 </div>
                                             </div>
 
                                             <div class="row mt-3 g-3 align-items-center">
                                                 <div class="col-md-3">
-                                                    <label class="col-form-label">Manufacturer</label>
+                                                    <label class="col-form-label">Last Synch</label>
                                                 </div>
                                                 <div class="col-md-9 d-flex justify-between">
-                                                    <select class="form-control" id="store_manufacturer_id" name="manufacturer_id">
-                                                        <option>-- Product Manufacture --</option>
-                                                        @if(count($manufacturers ?? []) > 0)
-                                                            @foreach($manufacturers as $mf)
-                                                                <option value="{{ $mf->id }}" {{ $mf->id == $product->manufacturer_id ? 'selected' : '' }}>{{ $mf->name }}</option>
-                                                            @endforeach
-                                                        @endif
+                                                    <input type="text" class="form-control w-75 mr-1" name="last_synch_date" id="last_synch_date" readonly>
+                                                    <input type="text" class="form-control w-25" name="last_synch_time" id="last_synch_time" readonly>
+                                                </div>
+                                            </div>
+
+                                            <div class="row mt-3 g-3 align-items-center">
+                                                <div class="col-md-3">
+                                                    <label class="fulfillment_type">Fullfillment Type</label>
+                                                </div>
+                                                <div class="col-md-9">
+                                                    <select class="form-control" name="fulfillment_type" id="fulfillment_type">
+                                                        <option value="10">Merchant</option>
                                                     </select>
+                                                </div>
+                                            </div>
+
+                                            <div class="row mt-3 g-3 align-items-center">
+                                                <div class="col-md-3">
+                                                    <label class="synch_price">Synch Price</label>
+                                                </div>
+                                                <div class="col-md-9 d-flex justify-between">
+                                                    <input type="checkbox" id="synch_price" name="synch_price">
+                                                </div>
+                                            </div>
+
+                                            <div class="row mt-3 g-3 align-items-center">
+                                                <div class="col-md-3">
+                                                    <label class="synch_inventory">Synch Inventory</label>
+                                                </div>
+                                                <div class="col-md-9 d-flex justify-between">
+                                                    <input type="checkbox" id="synch_inventory" name="synch_inventory">
+                                                </div>
+                                            </div>
+
+                                            <div class="row mt-3 g-3 align-items-center">
+                                                <div class="col-md-3">
+                                                    <label class="synch_item">Synch Item</label>
+                                                </div>
+                                                <div class="col-md-9 d-flex justify-between">
+                                                    <input type="checkbox" id="synch_item" name="synch_item">
                                                 </div>
                                             </div>
 
@@ -1295,6 +1337,34 @@
                                 $('#store_product_msrp').val(response.data.msrp);
                                 $('#store_product_sales_count').val(response.data.sales_count);
                                 $('#store_manufacturer_id').val(response.data.manufacturer_id);
+                                if(response.data.last_sale_date){
+                                    var parts = response.data.last_sale_date.split(" ");
+                                    var date = parts[0]; // "2024-12-10"
+                                    var time = parts[1]; // "14:30:00"
+                                    $('#last_sale_date').val(date);
+                                    $('#last_sale_time').val(time);
+                                }
+
+                                if(response.data.last_synch_date){
+                                    var parts = response.data.last_synch_date.split(" ");
+                                    var date = parts[0]; // "2024-12-10"
+                                    var time = parts[1]; // "14:30:00"
+                                    $('#last_synch_date').val(date);
+                                    $('#last_synch_time').val(time);
+                                }
+
+                                if(response.data.synch_price == 1) {
+                                    $('#synch_price').prop('checked', true);
+                                }
+
+                                if(response.data.synch_inventory == 1) {
+                                    $('#synch_inventory').prop('checked', true);
+                                }
+
+                                if(response.data.synch_item == 1) {
+                                    $('#synch_item').prop('checked', true);
+                                }
+
                                 if(response.data.overwrite_title == 1) {
                                     $('#overwrite_title').prop('checked', true);
                                     $('#store_product_title').removeAttr('readonly');
