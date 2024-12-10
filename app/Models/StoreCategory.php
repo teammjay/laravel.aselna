@@ -9,7 +9,7 @@ class StoreCategory extends Model
 {
     protected $table = 'store_category';
 
-    public $timestamps = false;
+    public $timestamps = true;
 
     protected $keyType = 'string';
 
