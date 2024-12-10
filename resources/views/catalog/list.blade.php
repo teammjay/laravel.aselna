@@ -206,9 +206,11 @@
                             <div class="col-6">
                                 <select class="custom-select" name="target_aud" id="target_aud">
                                     <option value=""> -- </option>
-                                    <option value="unisex">Unisex</option>
-                                    <option value="men">Men</option>
-                                    <option value="women">Women</option>
+                                    @if(count($targetAudience ?? []) > 0)
+                                        @foreach($targetAudience as $ta)
+                                            <option value="{{ $ta->name }}">{{ $ta->name }}</option>
+                                        @endforeach
+                                    @endif
                                 </select>
                             </div>
                         </div>

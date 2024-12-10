@@ -476,6 +476,11 @@ return [
                     'icon' => 'far fa-fw fa-file'
                 ],
                 [
+                    'text' => 'Product Target Audience',
+                    'url' => '/product_target_audience',
+                    'icon' => 'far fa-fw fa-file'
+                ],
+                [
                     'text' => 'Listing Generation Type',
                     'url' => '/list_generate_type',
                     'icon' => 'far fa-fw fa-file'

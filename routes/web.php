@@ -31,6 +31,7 @@ use App\Http\Controllers\InterfaceController;
 use App\Http\Controllers\ListingGenerationTypeController;
 use App\Http\Controllers\ListingGenerationTypeTemplateController;
 use App\Http\Controllers\StoreTypeCategoryController;
+use App\Http\Controllers\ProductTargetAudienceController;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/catalog', [CatalogController::class, 'index']);
@@ -49,6 +50,7 @@ Route::post('/upload-image', [CatalogController::class, 'uploadImage'])->name('c
 Route::post('/set-default', [CatalogController::class, 'setDefaultImage'])->name('catalog.set_default');
 Route::post('/set-image-order', [CatalogController::class, 'setImageOrder'])->name('catalog.set_image_order');
 Route::post('catalog/getstoredetail', [CatalogController::class, 'getStoreDetail'])->name('catalog.getstoredetail');
+Route::post('catalog/saveproductchannel', [CatalogController::class, 'saveProductChannel'])->name('catalog.saveproductchannel');
 
 Route::controller(StoreController::class)->group(function () {
     Route::get('/stores', 'index')->name('store.list');
@@ -117,6 +119,15 @@ Route::controller(ProductTypeController::class)->group(function () {
     Route::get('/product_type/edit/{id}', 'edit')->name('product_type.edit');
     Route::post('/product_type/edit/{id}', 'update')->name('product_type.update');
     Route::get('/product_type/delete/{id}', 'destroy')->name('product_type.delete');
+});
+
+Route::controller(ProductTargetAudienceController::class)->group(function () {
+    Route::get('/product_target_audience', 'index')->name('product_target_audience.index');
+    Route::get('/product_target_audience/add', 'create')->name('product_target_audience.create');
+    Route::post('/product_target_audience/add', 'store')->name('product_target_audience.store');
+    Route::get('/product_target_audience/edit/{id}', 'edit')->name('product_target_audience.edit');
+    Route::post('/product_target_audience/edit/{id}', 'update')->name('product_target_audience.update');
+    Route::get('/product_target_audience/delete/{id}', 'destroy')->name('product_target_audience.delete');
 });
 
 Route::controller(ProductConditionController::class)->group(function () {

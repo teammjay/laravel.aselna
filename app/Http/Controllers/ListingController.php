@@ -9,6 +9,7 @@ use App\Models\DeviceSeries;
 use App\Models\DeviceTypes;
 use App\Models\ListingGenerationType;
 use App\Models\ListingGenerationTypeTemplate;
+use App\Models\ListingItem;
 use App\Models\Manufacturer;
 use App\Models\ProductSearchTerm;
 use App\Models\ProductTitleKeyword;
@@ -863,13 +864,14 @@ class ListingController extends Controller
             if(!empty($productsArray)){
                 $view = view('listing.target_listing', compact('productsArray','max_title_length'))->render();
 
-                $models = array();
+                $models = $modelDetail = array();
                 $totalCount = 0;
                 foreach($productsArray as $product){
                     if(!empty($product)){
                         $totalCount = count($product);
                         foreach($product as $key=>$pro){
                             $models[$key] = $pro['model'];
+                            $modelDetail[$key] = $pro['model_detail'];
                         }
                     }
                 }
@@ -879,6 +881,7 @@ class ListingController extends Controller
                         'success' => true,
                         'html' => $view,
                         'models' => $models,
+                        'modelDetail' => $modelDetail,
                         'totalproduct' => $totalCount,
                     ]);
                 }
@@ -939,11 +942,13 @@ class ListingController extends Controller
                 $titles[$cnt]['product_id'] = $product->product_id;
                 $titles[$cnt]['price'] = $product_price;
                 $titles[$cnt]['model'][] = $device->name;
+                $titles[$cnt]['model_detail'][] = $device;
             } else {
                 // Append the device name
                 $titles[$cnt]['product_code'] = $product->product_sku;
                 $titles[$cnt]['product_id'] = $product->product_id;
                 $titles[$cnt]['model'][] = $device->name;
+                $titles[$cnt]['model_detail'][] = $device;
                 $titles[$cnt]['price'] = $product_price;
                 //$currentTitle .= ($currentTitle === $baseTitle ? ' ' : ' '.$separator.' ') . $nameToAdd;
                 $currentDevices[] = $nameToAdd;
@@ -971,6 +976,13 @@ class ListingController extends Controller
                 $product_codes = $request->input('final_product_code');
                 $product_ids = $request->input('final_product_id');
                 $store_id = $request->input('store_id');
+                $product_models = $request->input('product_models');
+                if($product_models){
+                    $product_models = json_decode($product_models);
+                }
+                /*echo '<pre>';
+                print_r();
+                echo '</pre>';die;*/
                 foreach($product_titles as $key=>$product){
                     $sku = StoreTypeListing::generateUniqueAlphabeticSku($product_codes[$key]);
                     $created_by = auth()->user()->name ?? 'admin';
@@ -986,7 +998,28 @@ class ListingController extends Controller
                         'updated_by' => $created_by
                     ];
 
-                    StoreTypeListing::create($listingProductArr);
+                    $record = StoreTypeListing::create($listingProductArr);
+                    $listing_id = $record->id;
+
+                    if(isset($product_models[$key]) && is_array($product_models[$key])){
+                        foreach($product_models[$key] as $model){
+                            $modelDetail[] = array(
+                                'model_name' => $model->name,
+                                'brand_name' => $model->brand_name,
+                                'device_id' => $model->id,
+                                'brand_id' => $model->brand_id,
+                                'device_series_id' => $model->device_series_id,
+                                'device_type_id' => $model->device_type_id,
+                                'device_type_name' => $model->device_type->name,
+                                'device_code' => $model->code,
+                                'device_rating_id' => $model->rating_id,
+                                'created_by' => $created_by
+                            );
+                        }
+
+                        //ListingItem::insert($modelDetail);
+                    }
+
                 }
 
                 if ($request->ajax()) {
