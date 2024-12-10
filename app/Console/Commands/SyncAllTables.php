@@ -7,6 +7,7 @@ use App\Jobs\CategorySyncJob;
 use App\Jobs\DeviceInterfaces;
 use App\Jobs\DevicesSyncJob;
 use App\Jobs\DeviceTypesSyncJob;
+use App\Jobs\GenerationTypeAndTemplateSync;
 use App\Jobs\InterfaceSyncJob;
 use App\Jobs\ManufacturerSyncJob;
 use App\Jobs\ProductInterfaces;
@@ -40,6 +41,8 @@ class SyncAllTables extends Command
      */
     public function handle()
     {
+        StoreTypeSyncJob::dispatch();
+        StoreSyncJob::dispatch();
         ManufacturerSyncJob::dispatch();
         DeviceTypesSyncJob::dispatch();
         BrandSyncJob::dispatch();
@@ -50,7 +53,6 @@ class SyncAllTables extends Command
         InterfaceSyncJob::dispatch();
         DeviceInterfaces::dispatch();
         ProductInterfaces::dispatch();
-        StoreTypeSyncJob::dispatch();
-        StoreSyncJob::dispatch();
+        GenerationTypeAndTemplateSync::dispatch();
     }
 }

@@ -336,6 +336,11 @@ return [
                     'icon' => 'far fa-fw fa-file',
                 ],
                 [
+                    'text' => 'Store Type Category',
+                    'url' => '/store_type_category',
+                    'icon' => 'far fa-fw fa-file'
+                ],
+                [
                     'text' => 'UPC Generate',
                     'url' => '/upc_generate',
                     'icon' => 'far fa-fw fa-file',
@@ -453,11 +458,6 @@ return [
                 [
                     'text' => 'Store Type',
                     'url' => '/store_type',
-                    'icon' => 'far fa-fw fa-file'
-                ],
-                [
-                    'text' => 'Store Type Category',
-                    'url' => '/store_type_category',
                     'icon' => 'far fa-fw fa-file'
                 ],
                 [

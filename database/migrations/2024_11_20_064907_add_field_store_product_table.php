@@ -14,17 +14,17 @@ return new class extends Migration
         Schema::table('store_product', function (Blueprint $table) {
             $table->uuid('listing_generation_type_id')->nullable()->after('manufacturer_id');
             $table->uuid('listing_title_template_id')->nullable()->after('listing_generation_type_id');
-            $table->boolean('preserve_title_description')->default(0)->after('listing_title_template_id');
+            $table->boolean('preserve_title_description')->nullable()->default(0)->after('listing_title_template_id');
             $table->float('fulfillment_by_channel_price')->nullable()->after('preserve_title_description');
             $table->timestamp('last_update_date_time')->nullable()->after('fulfillment_by_channel_price');
             $table->timestamp('last_synch_date_time')->nullable()->after('last_update_date_time');
-            $table->boolean('overwrite_price')->default(0)->after('last_synch_date_time');
-            $table->boolean('overwrite_msrp')->default(0)->after('last_synch_date_time');
-            $table->boolean('overwrite_fulfillment_by_channel_price')->default(0)->after('last_synch_date_time');
-            $table->boolean('overwrite_title')->default(0)->after('last_synch_date_time');
-            $table->boolean('overwrite_description')->default(0)->after('last_synch_date_time');
-            $table->boolean('overwrite_wholesale_price')->default(0)->after('last_synch_date_time');
-            $table->boolean('overwrite_compare_at_price')->default(0)->after('last_synch_date_time');
+            $table->boolean('overwrite_price')->nullable()->default(0)->after('last_synch_date_time');
+            $table->boolean('overwrite_msrp')->nullable()->default(0)->after('last_synch_date_time');
+            $table->boolean('overwrite_fulfillment_by_channel_price')->nullable()->default(0)->after('last_synch_date_time');
+            $table->boolean('overwrite_title')->nullable()->default(0)->after('last_synch_date_time');
+            $table->boolean('overwrite_description')->nullable()->default(0)->after('last_synch_date_time');
+            $table->boolean('overwrite_wholesale_price')->nullable()->default(0)->after('last_synch_date_time');
+            $table->boolean('overwrite_compare_at_price')->nullable()->default(0)->after('last_synch_date_time');
             $table->float('wholesale_price')->nullable()->after('overwrite_compare_at_price');
             $table->float('compare_at_price')->nullable()->after('wholesale_price');
             $table->string('long_tail_keywords')->nullable()->after('compare_at_price');

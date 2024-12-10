@@ -41,9 +41,9 @@ return new class extends Migration
             $table->boolean('ad_account')->default(0)->nullable();
             $table->integer('linked_store_id')->nullable();
             $table->time('order_cutoff_time')->nullable();
-            $table->string('logo_code')->nullable();
+            $table->text('logo_code')->nullable();
             $table->string('standard_shipping_name')->nullable();
-            $table->string('logo_code_base64')->nullable();
+            $table->text('logo_code_base64')->nullable();
             $table->boolean('wholesale')->default(0)->nullable();
             $table->boolean('auto_generate_listings')->default(0)->nullable();
             $table->integer('max_listing_inventory_quantity')->nullable();
@@ -58,6 +58,7 @@ return new class extends Migration
             $table->integer('productaltimagenumber')->nullable();
             $table->boolean('generate_device_details')->default(0)->nullable();
             $table->string('label_order_prefix')->nullable();
+            $table->string('code')->nullable();
             $table->timestamps();
         });
     }

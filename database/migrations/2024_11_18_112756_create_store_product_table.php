@@ -16,27 +16,27 @@ return new class extends Migration
             $table->uuid('product_id');
             $table->foreign('product_id')->references('product_id')->on('products')
                 ->onDelete('cascade');
-            $table->uuid('store_id');
+            $table->uuid('store_id')->nullable();
             $table->foreign('store_id')->references('id')->on('store')
                 ->onDelete('cascade');
-            $table->uuid('store_category_id');
+            $table->uuid('store_category_id')->nullable();
             $table->foreign('store_category_id')->references('id')->on('store_category')
                 ->onDelete('cascade');
-            $table->string('title');
-            $table->boolean('active');
-            $table->string('errors');
-            $table->float('profit_rate');
-            $table->uuid('client');
-            $table->float('price');
-            $table->float('msrp');
-            $table->text('description');
-            $table->uuid('channel_category_id');
-            $table->integer('sales_count');
-            $table->date('last_sale_date');
-            $table->boolean('include_carriers');
-            $table->boolean('brand_combo');
-            $table->boolean('carrier_combo');
-            $table->uuid('manufacturer_id');
+            $table->text('title','')->nullable();
+            $table->boolean('active')->nullable();
+            $table->string('errors')->nullable();
+            $table->float('profit_rate')->nullable();
+            $table->uuid('client')->nullable();
+            $table->float('price')->nullable();
+            $table->float('msrp')->nullable();
+            $table->text('description')->nullable();
+            $table->uuid('channel_category_id')->nullable();
+            $table->integer('sales_count')->nullable();
+            $table->date('last_sale_date')->nullable();
+            $table->boolean('include_carriers')->nullable();
+            $table->boolean('brand_combo')->nullable();
+            $table->boolean('carrier_combo')->nullable();
+            $table->uuid('manufacturer_id')->nullable();
             $table->foreign('manufacturer_id')->references('id')->on('manufacturer')
                 ->onDelete('cascade');
             $table->string('created_by');

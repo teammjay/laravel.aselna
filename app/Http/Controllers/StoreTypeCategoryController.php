@@ -2,13 +2,16 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\StoreTypeCategoryRequest;
 use App\Models\StoreType;
+use App\Models\StoreTypeCategories;
+use App\Http\Requests\StoreTypeCategoryRequest;
+//use App\Models\StoreType;
 use App\Models\StoreTypeCategory;
 use Illuminate\Http\Request;
 
 class StoreTypeCategoryController extends Controller
 {
+
     /**
      * Display a listing of the resource.
      */

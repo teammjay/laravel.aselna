@@ -15,6 +15,7 @@ return new class extends Migration
             $table->uuid('id')->primary();
             $table->string('template',500);
             $table->boolean('default_template')->default(0);
+            $table->string('code', 50)->unique();
             $table->uuid('generation_type_id');
             $table->foreign('generation_type_id')->references('id')->on('listing_generation_type')
                 ->onDelete('cascade');

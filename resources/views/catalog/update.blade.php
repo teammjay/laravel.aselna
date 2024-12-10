@@ -696,7 +696,7 @@
                                             @if(count($store_details ?? []) > 0)
                                                 @foreach($store_details as $key=>$store)
                                                     <tr class="store_row" id="store_{{ $store['store_detail']->id }}" data-id="{{ $store['store_detail']->id }}">
-                                                        <td>{{ $store['store_detail']->name.' - '.$store['store_detail']->marketplace_name }}</td>
+                                                        <td>{{ $store['store_detail']->name.' - '.$store['store_detail']->storeType->name }}</td>
                                                         <td align="center">
                                                             <input type="checkbox" name="active" {{ (isset($productStore) && in_array($store['store_detail']->id,$productStore)) ? 'checked' : '' }} />
                                                             <input type="hidden" name="store_id" value="{{ $store['store_detail']->id }}">

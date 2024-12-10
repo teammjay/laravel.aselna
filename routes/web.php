@@ -12,6 +12,7 @@ use App\Http\Controllers\DeviceSubTypesController;
 use App\Http\Controllers\DeviceTypesController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ProductInterfaceController;
+use App\Http\Controllers\StoreTypeCategoryController;
 use App\Http\Controllers\SubCategoryController;
 use App\Http\Controllers\UPCController;
 use Illuminate\Support\Facades\Route;
@@ -30,7 +31,7 @@ use App\Http\Controllers\ProductConditionController;
 use App\Http\Controllers\InterfaceController;
 use App\Http\Controllers\ListingGenerationTypeController;
 use App\Http\Controllers\ListingGenerationTypeTemplateController;
-use App\Http\Controllers\StoreTypeCategoryController;
+//use App\Http\Controllers\StoreTypeCategoryController;
 use App\Http\Controllers\ProductTargetAudienceController;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
