@@ -3,9 +3,11 @@
 namespace App\Jobs;
 
 use App\Models\ShippingCarrier;
+use App\Models\ShippingCarrierService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class ShippingCarrierJob implements ShouldQueue
@@ -25,23 +27,50 @@ class ShippingCarrierJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $carriers = DB::connection('fonus_db')->table('tbl_carrier')->get();
-        foreach ($carriers as $carrier) {
-            if (ShippingCarrier::where(['code' => $carrier->carrier_id])->exists()) continue;
+        $shippingCarriers = DB::connection('easyesale_db')->table('shipping_carrier')->get();
+        foreach ($shippingCarriers as $shippingCarrier) {
+            $this->createShippingCarrier($shippingCarrier);
+        }
 
-            $this->createCarrier($carrier);
+        $shippingCarrierServices = DB::connection('easyesale_db')->table('shipping_carrier_service')->get();
+        foreach ($shippingCarrierServices as $shippingCarrierService) {
+            $this->createShippingCarrierService($shippingCarrierService);
         }
     }
 
-    private function createCarrier(mixed $carrier)
+    private function createShippingCarrier(mixed $shippingCarrier)
     {
-        ShippingCarrier::updateOrInsert(
-            ['code' => $carrier->carrier_id],
-            [
-                'id' => (string) Str::uuid(),
-                'code' => $carrier->carrier_id,
-                'name' => $carrier->carrier,
-            ]
-        );
+        Log::info('Creating Shipping Carrier ID' . $shippingCarrier->id);
+        ShippingCarrier::updateOrCreate([
+            'id' => $shippingCarrier->id,
+            'name' => $shippingCarrier->name
+        ], [
+            'id' => $shippingCarrier->id,
+            'name' => $shippingCarrier->name,
+            'code' => $shippingCarrier->code,
+        ]);
+    }
+
+    private function createShippingCarrierService(mixed $shippingCarrierService)
+    {
+        ShippingCarrierService::updateOrCreate([
+            'id' => $shippingCarrierService->id,
+        ], [
+            'id' => $shippingCarrierService->id,
+            'default_package_dimension_height' => $shippingCarrierService->default_package_dimension_height,
+            'default_package_dimension_length' => $shippingCarrierService->default_package_dimension_length,
+            'default_package_dimension_length_unit' => $shippingCarrierService->default_package_dimension_length_unit,
+            'default_package_dimension_width' => $shippingCarrierService->default_package_dimension_width,
+            'delivery_time' => $shippingCarrierService->delivery_time,
+            'earliest_delivery_days' => $shippingCarrierService->earliest_delivery_days,
+            'generic_service_method' => $shippingCarrierService->generic_service_method,
+            'included_insurance' => $shippingCarrierService->included_insurance,
+            'latest_delivery_days' => $shippingCarrierService->latest_delivery_days,
+            'max_weight_value' => $shippingCarrierService->max_weight_value,
+            'max_weight_weight_unit' => $shippingCarrierService->max_weight_weight_unit,
+            'name' => $shippingCarrierService->name,
+            'service_level' => $shippingCarrierService->service_level,
+            'shipping_carrier_id' => $shippingCarrierService->shipping_carrier_id,
+        ]);
     }
 }

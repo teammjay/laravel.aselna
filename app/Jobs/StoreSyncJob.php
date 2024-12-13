@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Models\Store;
+use App\Models\StoreLogisticCenter;
 use App\Models\StoreType;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -29,7 +30,7 @@ class StoreSyncJob implements ShouldQueue
     {
         $stores = DB::connection('fonus_db')->table('tbl_seller')->get();
         foreach ($stores as $store) {
-            $this->createStore($store);
+//            $this->createStore($store);
         }
 
         //check if connection exists or not
@@ -38,6 +39,11 @@ class StoreSyncJob implements ShouldQueue
             $allStores = DB::connection('easyesale_db')->table('store')->get();
             foreach ($allStores as $store) {
                 $this->createStoreFromEasyEsale($store);
+            }
+
+            $storeLogistics = DB::connection('easyesale_db')->table('store_logistic_center')->get();
+            foreach ($storeLogistics as $storeLogistic) {
+                $this->createStoreLogistics($storeLogistic);
             }
         }
     }
@@ -56,12 +62,12 @@ class StoreSyncJob implements ShouldQueue
         if (Store::where(['code' => $store->id])->exists()) {
             return;
         }
-        $storeType = StoreType::where(['code' => $store->store_type_id])->first();
+//        $storeType = StoreType::where(['code' => $store->store_type_id])->first();
         Store::create([
             'id' => (string)Str::uuid(),
             'code' => $store->id,
             'name' => $store->name,
-            'store_type_id' => $storeType->id,
+            'store_type_id' => $store->store_type_id,
             'api_key' => $store->api_key,
             'password' => $store->password,
             'secret_key' => $store->secret_key,
@@ -113,6 +119,15 @@ class StoreSyncJob implements ShouldQueue
             'productaltimagenumber' => $store->productaltimagenumber,
             'generate_device_details' => $store->generate_device_details,
             'label_order_prefix' => $store->label_order_prefix,
+
+        ]);
+    }
+
+    private function createStoreLogistics(mixed $storeLogistic)
+    {
+        StoreLogisticCenter::updateOrInsert([
+
+        ], [
 
         ]);
     }

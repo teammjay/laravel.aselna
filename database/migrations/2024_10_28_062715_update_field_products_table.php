@@ -29,12 +29,6 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('products', function (Blueprint $table) {
-            $table->string('product_title')->change();
-            $table->string('product_type')->change();
-            $table->integer('product_manufacturer')->change();
-            $table->string('product_condition')->change();
-            $table->decimal('product_price', 10,2)->change();
-            $table->string('product_sku')->change();
             $table->enum('product_status',['active','discontinued','out_of_stock','draft'])->change();
         });
     }

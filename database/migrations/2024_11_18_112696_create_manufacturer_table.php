@@ -14,12 +14,12 @@ return new class extends Migration
         Schema::create('manufacturer', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->string('name');
-            $table->string('code');
+            $table->string('code')->nullable();
             $table->string('notes')->nullable();
             $table->uuid('image_id')->nullable();
             $table->uuid('thumbnail_id')->nullable();
-            $table->uuid('client');
-            $table->integer('sort_order');
+            $table->uuid('client')->nullable();
+            $table->integer('sort_order')->nullable();
             $table->integer('version');
             $table->string('created_by');
             $table->string('updated_by');
