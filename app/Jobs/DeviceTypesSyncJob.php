@@ -30,21 +30,23 @@ class DeviceTypesSyncJob implements ShouldQueue
      */
     public function handle(): void
     {
+        $deviceTypes = DB::connection('easyesale_db')->table('cea_device_type')->get();
+        foreach ($deviceTypes as $deviceType) {
+            $this->createSyncDeviceType($deviceType);
+        }
+
+        $deviceSubTypes = DB::connection('easyesale_db')->table('cea_device_sub_type')->get();
+        foreach ($deviceSubTypes as $deviceSubType) {
+            $this->createSyncDeviceSubType($deviceSubType);
+        }
+
         $data = DB::connection('fonus_db')->table('tbl_device_type')->get();
         foreach ($data as $deviceType) {
-            if (DeviceTypes::where(['code' => $deviceType->device_type_id])->exists()) {
-//                Log::info('Device Type exists: ' . $deviceType->device_type_id);
-                continue;
-            }
             $this->createDeviceType($deviceType);
         }
 
         $deviceSubTypes = DB::connection('fonus_db')->table('tbl_device_type_sub')->get();
         foreach ($deviceSubTypes as $deviceSubType) {
-            if (DeviceSubTypes::where(['code' => $deviceSubType->device_type_sub_id])->exists()) {
-//                Log::info('Device Sub Type exists: ' . $deviceSubType->device_type_sub_id);
-                continue;
-            }
             $this->createDeviceSubType($deviceSubType);
         }
     }
@@ -59,15 +61,8 @@ class DeviceTypesSyncJob implements ShouldQueue
         DeviceTypes::updateOrInsert(
             ['code' => $deviceType->device_type_id],
             [
-                'id' => (string) Str::uuid(),
                 'name' => $deviceType->device_type,
-                'code' => $deviceType->device_type_id,
                 'notes1' => $deviceType->notes1,
-                'status' => 'active',
-                'created_by' => 'system',
-                'updated_by' => 'system',
-                'created_at' => now(),
-                'updated_at' => now()
             ]
         );
     }
@@ -75,21 +70,38 @@ class DeviceTypesSyncJob implements ShouldQueue
     private function createDeviceSubType(mixed $deviceSubType)
     {
         $deviceType = DeviceTypes::where('code', $deviceSubType->device_type_id)->first();
-        Log::info('Device Type: ' . json_encode($deviceType));
         DeviceSubTypes::updateOrInsert(
             ['code' => $deviceSubType->device_type_sub_id],
             [
-                'id' => (string) Str::uuid(),
                 'name' => $deviceSubType->device_sub_type,
                 'code' => $deviceSubType->device_type_sub_id,
                 'notes1' => $deviceSubType->notes1,
                 'device_type_id' => (string) $deviceType->id,
                 'status' => 'active',
-                'created_by' => 'system',
-                'updated_by' => 'system',
-                'created_at' => now(),
-                'updated_at' => now()
             ]
         );
+    }
+
+    private function createSyncDeviceType(mixed $deviceType)
+    {
+        DeviceTypes::updateOrCreate([
+            'id' => $deviceType->id,
+        ], [
+            'id' => $deviceType->id,
+            'name' => $deviceType->name,
+            'code' => $deviceType->code,
+        ]);
+    }
+
+    private function createSyncDeviceSubType(mixed $deviceSubType)
+    {
+        DeviceSubTypes::updateOrCreate([
+            'id' => $deviceSubType->id,
+        ], [
+            'id' => $deviceSubType->id,
+            'name' => $deviceSubType->name,
+            'code' => $deviceSubType->code,
+            'device_type_id' => $deviceSubType->device_type_id,
+        ]);
     }
 }

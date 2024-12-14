@@ -30,11 +30,8 @@ class InterfaceSyncJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $attributes = DB::connection('fonus_db')->table('tbl_attributes')->get();
+        $attributes = DB::connection('easyesale_db')->table('cea_interface')->get();
         foreach ($attributes as $attribute) {
-            if (Interfaces::where(['code' => $attribute->attribute_id])->exists()) {
-                continue;
-            }
             $this->createInterfaces($attribute);
         }
 
@@ -42,15 +39,13 @@ class InterfaceSyncJob implements ShouldQueue
 
     private function createInterfaces(mixed $attribute)
     {
-        $productType = ProductType::where('code', $attribute->category_id)->first();
-
-        Interfaces::updateOrInsert(
-            ['code' => $attribute->attribute_id],
+        Interfaces::updateOrCreate(
+            ['id' => $attribute->id],
             [
-                'id' => (string) Str::uuid(),
-                'name' => $attribute->attribute,
-                'code' => $attribute->attribute_id,
-                'product_type_id' => $productType->id,
+                'id' => $attribute->id,
+                'name' => $attribute->name,
+                'code' => $attribute->code,
+                'product_type_id' => $attribute->product_type_id,
                 'created_by' => 'system',
                 'updated_by' => 'system',
                 'created_at' => now(),
