@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class ShippingCarrier extends Model
@@ -19,6 +20,7 @@ class ShippingCarrier extends Model
         parent::boot();
 
         static::creating(function ($model) {
+            Log::info('Creating Shipping Carrier' . json_encode($model));
             if (empty($model->id)) {
                 $model->id = (string) Str::uuid();
             }
@@ -26,7 +28,7 @@ class ShippingCarrier extends Model
     }
 
 
-    protected $fillable = ['code','name','created_at','updated_at'];
+    protected $fillable = ['id','code','name','created_at','updated_at'];
 
     public function ShippingCarrierService()
     {

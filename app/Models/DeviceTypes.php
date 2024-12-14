@@ -9,7 +9,7 @@ class DeviceTypes extends Model
 {
     //
     protected $table = 'device_types';
-    protected $fillable = ['name', 'notes1', 'created_by', 'updated_by', 'code', 'status'];
+    protected $fillable = ['id', 'name', 'notes1', 'created_by', 'updated_by', 'code', 'status'];
 
     // timestamps
     public $timestamps = true;
@@ -24,7 +24,7 @@ class DeviceTypes extends Model
 
         static::creating(function ($model) {
             if (empty($model->id)) {
-                $model->id = (string) Str::uuid();
+                $model->id = (string)Str::uuid();
             }
         });
     }

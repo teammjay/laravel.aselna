@@ -40,13 +40,19 @@ class ProductSyncJob implements ShouldQueue
 //
 //            $product_id = Catalog::where('product_code', $product->product_id)->first();
 //
-//            $this->createProductTitleKeywords($product, $product_id);
+//
 //
 //            $this->createProductFeatures($product, $product_id);
 //        }
         $easyesaleProducts = DB::connection('easyesale_db')->table('product')->whereNull('deleted_by')->where('status', '=', '1')->get();
         foreach ($easyesaleProducts as $product) {
             $this->updateProduct($product);
+
+            $newProduct = Catalog::where('product_code', $product->id)->first();
+
+            if(isset($newProduct)) {
+                $this->createProductTitleKeywords($product, $newProduct->product_id);
+            }
         }
 
         $storeProducts = DB::connection('easyesale_db')->table('store_product')->get();
@@ -85,15 +91,19 @@ class ProductSyncJob implements ShouldQueue
 
     private function createProductTitleKeywords($product, $product_id)
     {
-        $keywords = DB::connection('fonus_db')->table('tbl_title_keywords')->where('product_id', $product->product_id)->get();
+        Log::info('Creating product title keywords' . json_encode($product));
+        if (! DB::connection('easyesale_db')->table('product_title_keyword')->where('product_id', $product->id)) {
+            return;
+        }
+        $keywords = DB::connection('easyesale_db')->table('product_title_keyword')->where('product_id', $product->id)->get();
 
         foreach ($keywords as $keyword) {
-            if (DB::table('product_title_keyword')->where('keyword', $keyword->title_keyword)->exists()) continue;
+            if (DB::table('product_title_keyword')->where('keyword', $keyword->keyword)->exists()) continue;
             DB::table('product_title_keyword')->insert([
                 'id' => (string)Str::uuid(),
-                'keyword' => $keyword->title_keyword,
-                'priority' => $keyword->order_id,
-                'product_id' => $product_id->product_id,
+                'keyword' => $keyword->keyword,
+                'priority' => $keyword->priority,
+                'product_id' => $product_id,
                 'created_by' => 'system',
                 'updated_by' => 'system',
                 'created_at' => now(),
@@ -131,15 +141,15 @@ class ProductSyncJob implements ShouldQueue
             return;
         }
         Catalog::updateOrInsert([
-            'product_code' => $product->id,
+            'product_id' => $product->id,
         ], [
-            'product_id' => (string)Str::uuid(),
+            'product_id' => $product->id,
             'product_title' => $product->title,
             'product_description' => $product->description,
-            'product_type' => '',
-//            'manufacturer_id' => $product->manufacturer_id,
-//            'product_condition_id' => $product->condition_id,
-//            'product_price' => '',
+            'product_type' => $product->product_type_id,
+            'manufacturer_id' => $product->manufacturer_id,
+            'product_condition_id' => $product->condition_id,
+            'product_price' => $product->price,
             'product_wholesale_price' => $product->wholesale_price,
             'product_marketplace_price' => $product->marketplace_price,
             'product_mrsp' => $product->msrp,
@@ -164,7 +174,6 @@ class ProductSyncJob implements ShouldQueue
 //            'product_pick_location' => ,
             'title_template' => $product->title_template,
             'description_template' => $product->description_template,
-            'product_code' => $product->id,
             'created_by' => 'system',
             'updated_by' => 'system',
             'created_at' => now(),
@@ -182,7 +191,6 @@ class ProductSyncJob implements ShouldQueue
         if (StoreProduct::where(['product_id' => $product->product_id, 'store_id' => $store->id])->exists()) {
             return;
         }
-        Log::info('Creating store product');
         StoreProduct::create([
             'id' => (string)Str::uuid(),
             'product_id' => $product->product_id,
@@ -191,7 +199,7 @@ class ProductSyncJob implements ShouldQueue
             'active' => $storeProduct->active ? 1 : 0,
             'brand_combo' => $storeProduct->brand_combo,
             'carrier_combo' => $storeProduct->carrier_combo,
-//            'channel_category_id' => $product ,
+            'channel_category_id' => $product->channel_category_id ,
             'client' => $storeProduct->client,
             'compare_at_price' => $storeProduct->compare_at_price,
             'description' => $storeProduct->description,
@@ -202,10 +210,10 @@ class ProductSyncJob implements ShouldQueue
             'last_sale_date' => $storeProduct->last_sale_date,
             'last_synch_date_time' => $storeProduct->last_synch_date_time,
             'last_update_date_time' => $storeProduct->last_update_date_time,
-//            'listing_generation_type_id' => $product->listing_generation_type_id ,
-//            'listing_title_template_id' => $product ,
+            'listing_generation_type_id' => $product->listing_generation_type_id ,
+            'listing_title_template_id' => $product->listing_title_template_id ,
 //            'long_tail_keywords' => $storeProduct,
-//            'manufacturer_id' => $product ,
+            'manufacturer_id' => $product->manufacturer_id ,
             'msrp' => $storeProduct->msrp,
             'overwrite_compare_at_price' => $storeProduct->overwrite_compare_at_price,
             'overwrite_description' => $storeProduct->overwrite_description,
@@ -219,7 +227,7 @@ class ProductSyncJob implements ShouldQueue
             'profit_rate' => $storeProduct->profit_rate,
             'sales_count' => $storeProduct->sales_count,
             'short_tail_keywords' => $storeProduct->short_tail_keywords,
-//            'store_category_id' => $product ,
+            'store_category_id' => $product->store_category_id ,
             'synch_inventory' => $storeProduct->synch_inventory,
             'synch_item' => $storeProduct->synch_item,
             'synch_price' => $storeProduct->synch_price,

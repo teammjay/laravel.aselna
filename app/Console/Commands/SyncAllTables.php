@@ -10,6 +10,7 @@ use App\Jobs\DeviceTypesSyncJob;
 use App\Jobs\GenerationTypeAndTemplateSync;
 use App\Jobs\InterfaceSyncJob;
 use App\Jobs\ManufacturerSyncJob;
+use App\Jobs\ProductConditionJob;
 use App\Jobs\ProductInterfaces;
 use App\Jobs\ProductSyncJob;
 use App\Jobs\ShippingCarrierJob;
@@ -47,12 +48,14 @@ class SyncAllTables extends Command
         DeviceTypesSyncJob::dispatch();
         BrandSyncJob::dispatch();
         DevicesSyncJob::dispatch();
-        ProductSyncJob::dispatch();
         CategorySyncJob::dispatch();
+        ProductConditionJob::dispatch();
         ShippingCarrierJob::dispatch();
         InterfaceSyncJob::dispatch();
         DeviceInterfaces::dispatch();
-        ProductInterfaces::dispatch();
         GenerationTypeAndTemplateSync::dispatch();
+        ProductSyncJob::dispatch();
+        ProductInterfaces::dispatch();
+
     }
 }

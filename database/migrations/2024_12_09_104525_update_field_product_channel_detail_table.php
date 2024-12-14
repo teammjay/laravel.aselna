@@ -23,6 +23,9 @@ return new class extends Migration
      */
     public function down(): void
     {
-        //
+        Schema::table('product_channel_detail', function (Blueprint $table) {
+            $table->dropForeign(['store_type_id']);
+            $table->dropColumn('store_type_id');
+        });
     }
 };

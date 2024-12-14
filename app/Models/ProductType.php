@@ -20,12 +20,12 @@ class ProductType extends Model
 
         static::creating(function ($model) {
             if (empty($model->id)) {
-                $model->id = (string) Str::uuid();
+                $model->id = (string)Str::uuid();
             }
         });
     }
 
-    protected $fillable = ['code','name','parent_id','singular_name','simple_name','sort_order','created_by','updated_by','created_at','updated_at'];
+    protected $fillable = ['id', 'code', 'name', 'parent_id', 'singular_name', 'simple_name', 'sort_order', 'created_by', 'updated_by', 'created_at', 'updated_at'];
 
     // Define the parent relationship (belongsTo)
     public function parent()

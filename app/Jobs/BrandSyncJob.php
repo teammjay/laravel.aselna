@@ -25,11 +25,13 @@ class BrandSyncJob implements ShouldQueue
      */
     public function handle(): void
     {
+        $esaleBrands = DB::connection('easyesale_db')->table('cea_brand')->get();
+        foreach ($esaleBrands as $brand) {
+            $this->createSyncBrand($brand);
+        }
+
         $brands = DB::connection('fonus_db')->table('tbl_brand')->get();
         foreach ($brands as $brand) {
-            if (Brand::where(['code' => $brand->brand_id])->exists()) {
-                continue;
-            }
             $this->createBrand($brand);
         }
     }
@@ -37,20 +39,28 @@ class BrandSyncJob implements ShouldQueue
     private function createBrand(mixed $brand)
     {
         Brand::updateOrInsert(
-            ['code' => $brand->brand_id],
+            ['name' => $brand->brand],
             [
-                'id' => (string) Str::uuid(),
                 'name' => $brand->brand,
-                'code' => $brand->brand_id,
                 'notes1' => $brand->notes1,
                 'notes2' => $brand->notes2,
                 'notes3' => $brand->notes3,
-                'order_no' => $brand->order_no,
-                'created_by' => 'system',
-                'updated_by' => 'system',
-                'created_at' => now(),
-                'updated_at' => now(),
+                'image' => $brand->picture1,
             ]
         );
+    }
+
+    private function createSyncBrand(mixed $brand)
+    {
+        Brand::updateOrCreate([
+            'id' => $brand->id,
+        ], [
+            'id' => $brand->id,
+            'code' => $brand->code,
+            'name' => $brand->name,
+            'order_no' => $brand->sort_order,
+            'image' => $brand->image_id,
+            'thumbnail_image' => $brand->thumbnail_id,
+        ]);
     }
 }

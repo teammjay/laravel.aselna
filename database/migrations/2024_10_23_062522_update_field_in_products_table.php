@@ -33,15 +33,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('products', function (Blueprint $table) {
-            $table->string('product_type')->change();
-            $table->string('product_sku')->change();
-            $table->text('product_description')->change();
-            $table->string('product_image_url')->change();
-            $table->decimal('product_weight',10,2)->change();
-            //$table->string('product_dimensions')->change();
-            $table->decimal('product_package_weight',10,2)->change();
-            //$table->string('product_package_dimensions')->change();
-            $table->string('product_tags')->change();
+
         });
     }
 };

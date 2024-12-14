@@ -29,9 +29,14 @@ class DeviceInterfaces implements ShouldQueue
      */
     public function handle(): void
     {
+        $deviceInterfaces = DB::connection('easyesale_db')->table('cea_device_interface')->get();
+        foreach ($deviceInterfaces as $deviceInterface) {
+            $this->createDeviceInetrface($deviceInterface);
+        }
+
         $deviceAttributes = DB::connection('fonus_db')->table('tbl_device_attributes')->get();
         foreach ($deviceAttributes as $deviceAttribute) {
-            $this->createDeviceInterfaces($deviceAttribute);
+//            $this->createDeviceInterfaces($deviceAttribute);
         }
     }
 
@@ -46,6 +51,21 @@ class DeviceInterfaces implements ShouldQueue
             'id' => (string) Str::uuid(),
             'device_id' => $deviceId,
             'interface_id' => $interfaceId,
+            'created_by' => 'system',
+            'updated_by' => 'system',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+    }
+
+    private function createDeviceInetrface(mixed $deviceInterface)
+    {
+        DeviceInterface::updateOrCreate([
+            'id' => $deviceInterface->id
+        ],[
+            'id' => $deviceInterface->id,
+            'device_id' => $deviceInterface->device_id,
+            'interface_id' => $deviceInterface->cea_interface_id,
             'created_by' => 'system',
             'updated_by' => 'system',
             'created_at' => now(),

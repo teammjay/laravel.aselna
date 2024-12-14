@@ -19,13 +19,13 @@ class Interfaces extends Model
 
         static::creating(function ($model) {
             if (empty($model->id)) {
-                $model->id = (string) Str::uuid();
+                $model->id = (string)Str::uuid();
             }
         });
     }
 
 
-    protected $fillable = ['name','product_type_id','notes','code','client_id','created_by','updated_by','created_at','updated_at'];
+    protected $fillable = ['id', 'name', 'product_type_id', 'notes', 'code', 'client_id', 'created_by', 'updated_by', 'created_at', 'updated_at'];
 
     public function ProductType()
     {

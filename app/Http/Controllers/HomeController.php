@@ -9,7 +9,7 @@ class HomeController extends Controller
 {
     public function index()
     {
-        $stores = Store::all();
+        $stores = Store::with('storeType')->get();
         return view('welcome', compact('stores'));
     }
 

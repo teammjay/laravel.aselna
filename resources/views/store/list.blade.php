@@ -88,9 +88,9 @@
         @include('store.store_list', ['stores' => $stores])
         </tbody>
     </table>
-    <div id="pagination">
-        @include('store.pagination', ['stores' => $stores])
-    </div>
+{{--    <div id="pagination">--}}
+{{--        @include('store.pagination', ['stores' => $stores])--}}
+{{--    </div>--}}
 
 @stop
 
@@ -98,6 +98,8 @@
 
     <script>
         $(document).ready(function() {
+            $('#storeTable').DataTable({});
+
             // Handle pagination links click
             $(document).on('click', '.pagination a', function(event) {
                 event.preventDefault();
@@ -106,15 +108,15 @@
             });
 
             function loadProductsWithPage(page) {
-                var perPage = '{{ $perPage }}';
-                $.ajax({
-                    url: "{{ route('stores.filter') }}?page=" + page + "&perPage=" + perPage,
-                    data: $('#filter-form').serialize(),
-                    success: function(response) {
-                        $('#store-list').html(response.html);
-                        $('#pagination').html(response.pagination);
-                    }
-                });
+                {{--var perPage = '{{ $perPage }}';--}}
+                {{--$.ajax({--}}
+                {{--    url: "{{ route('stores.filter') }}?page=" + page + "&perPage=" + perPage,--}}
+                {{--    data: $('#filter-form').serialize(),--}}
+                {{--    success: function(response) {--}}
+                {{--        $('#store-list').html(response.html);--}}
+                {{--        $('#pagination').html(response.pagination);--}}
+                {{--    }--}}
+                {{--});--}}
             }
 
             $(document).on('click', '.delete-btn', function() {

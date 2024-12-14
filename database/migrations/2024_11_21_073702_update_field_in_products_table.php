@@ -27,7 +27,7 @@ return new class extends Migration
         Schema::table('products', function (Blueprint $table) {
             // remove the foreign key first
             $table->dropForeign(['manufacturer_id']);
-            $table->uuid('product_manufacturer')->after('product_type');
+//            $table->uuid('product_manufacturer')->after('product_type');
         });
     }
 };

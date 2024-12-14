@@ -14,6 +14,7 @@ class Device extends Model
     protected $keyType = 'string';
 
     protected $fillable = [
+        'id',
         'dimensions_height',
         'dimensions_width',
         'name',
@@ -85,6 +86,11 @@ class Device extends Model
     public function setReleaseDateAttribute($value)
     {
         if (!isset($value)) return;
+        //check if the value already in the format or not
+        if ( Carbon::createFromFormat('Y-m-d', $value)->format('Y-m-d') == $value ) {
+            $this->attributes['release_date'] = $value;
+            return;
+        }
         $this->attributes['release_date'] = Carbon::createFromFormat('m/d/Y', $value)->format('Y-m-d');
     }
 

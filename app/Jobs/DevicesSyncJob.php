@@ -30,6 +30,11 @@ class DevicesSyncJob implements ShouldQueue
      */
     public function handle(): void
     {
+        $syncDevices = DB::connection('easyesale_db')->table('cea_device')->get();
+        foreach ($syncDevices as $device) {
+            $this->createSyncDevice($device);
+        }
+
         $devices = DB::connection('fonus_db')->table('tbl_device')->get();
         foreach ($devices as $device) {
             if (Device::where(['code' => $device->device_id])->exists()) {
@@ -52,7 +57,7 @@ class DevicesSyncJob implements ShouldQueue
         Device::updateOrInsert(
             ['code' => $device->device_id],
             [
-                'id' => (string) Str::uuid(),
+                'id' => (string)Str::uuid(),
                 'name' => $device->device_model_name,
                 'code' => $device->device_id,
                 'release_date' => $device->release_date,
@@ -72,5 +77,32 @@ class DevicesSyncJob implements ShouldQueue
                 'brand_id' => $brand->id,
             ]
         );
+    }
+
+    private function createSyncDevice(mixed $device)
+    {
+        Device::updateOrCreate([
+            'id' => $device->id,
+        ], [
+            'id' => $device->id,
+            'name' => $device->model_name,
+            'code' => $device->code,
+            'release_date' => $device->release_date,
+            'brand_id' => $device->brand_id,
+//            'device_series_id' => $device->device_series_id,
+            'device_sub_type_id' => $device->device_sub_type_id,
+            'device_type_id' => $device->device_type_id,
+            'dimensions_height' => $device->dimensions_height,
+            'dimensions_length' => $device->dimensions_length,
+            'dimensions_length_unit' => $device->dimensions_length_unit,
+            'dimensions_width' => $device->dimensions_width,
+            'image' => $device->image_id,
+            'notes' => $device->notes,
+            'order' => $device->sort_order,
+//            'rating_id' => $device->rating_id,
+//            'screen_id' => $device->screen_id,
+//            'status' => $device->status,
+            'thumbnail_image' => $device->thumbnail_id
+        ]);
     }
 }
