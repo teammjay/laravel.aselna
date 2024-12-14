@@ -20,11 +20,11 @@ class ProductCondition extends Model
 
         static::creating(function ($model) {
             if (empty($model->id)) {
-                $model->id = (string) Str::uuid();
+                $model->id = (string)Str::uuid();
             }
         });
     }
 
 
-    protected $fillable = ['name','code','created_by','updated_by','created_at','updated_at'];
+    protected $fillable = ['id', 'name', 'code', 'created_by', 'updated_by', 'created_at', 'updated_at'];
 }

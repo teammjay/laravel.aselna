@@ -8,6 +8,7 @@ use App\Models\StoreType;
 use App\Models\StoreTypeCategories;
 use App\Models\StoreTypeCategory;
 use App\Models\SubCategory;
+use App\Utils\Queue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\DB;
@@ -31,76 +32,72 @@ class CategorySyncJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $categories = DB::connection('fonus_db')->table('tbl_category')->get();
+        $distinctParentIds = DB::connection('easyesale_db')->table('product_type')->whereNull('parent_id')->get();
+        //[{"parent_id":"7a099033-9940-ec5e-30bc-1511d3fc88ea"} I want to convert into array of values
+        $distinctIds = [];
+        foreach ($distinctParentIds as $distinctId) {
+            $distinctIds[] = $distinctId->id;
+        }
+        Log::info(json_encode($distinctIds));
+        $queue = new Queue();
+
+        $categories = DB::connection('easyesale_db')->table('product_type')->whereIn('id', $distinctIds)->get();
         foreach ($categories as $category) {
-            if (ProductType::where(['code' => $category->category_id])->exists()) {
-                continue;
-            }
+            $queue->enqueue($category->id);
             $this->createProductType($category);
         }
 
-        $subCategories = DB::connection('fonus_db')->table('tbl_category_sub')->get();
-        foreach ($subCategories as $subCategory) {
-            if (SubCategory::where(['code' => $subCategory->sub_category])->exists()) {
-                continue;
+        while ($queue->size() > 0) {
+            $nextId = $queue->peek();
+            $queue->dequeue();
+            $categories = DB::connection('easyesale_db')->table('product_type')->where('parent_id', $nextId)->get();
+            foreach ($categories as $category) {
+                $queue->enqueue($category->id);
+                $this->createProductType($category);
             }
-            $this->createSubCategory($subCategory);
         }
 
-        $storeTypeCategories = DB::connection('easyesale_db')->table('channel_category')->get();
+        $queue = new Queue();
+        $storeTypeCategories = DB::connection('easyesale_db')->table('channel_category')->whereNull('parent_id')->get();
         foreach ($storeTypeCategories as $storeTypeCategory) {
+            $queue->enqueue($storeTypeCategory->id);
             $this->createStoreTypeCategories($storeTypeCategory);
+        }
+
+        while ($queue->size() > 0) {
+            $nextId = $queue->peek();
+            $queue->dequeue();
+            $storeTypeCategories = DB::connection('easyesale_db')->table('channel_category')->where('parent_id',$nextId)->get();
+            foreach ($storeTypeCategories as $storeTypeCategory) {
+                $queue->enqueue($storeTypeCategory->id);
+                $this->createStoreTypeCategories($storeTypeCategory);
+            }
         }
     }
 
     private function createProductType(mixed $category)
     {
-        ProductType::updateOrInsert(
-            ['code' => $category->category_id],
+        ProductType::updateOrCreate(
+            ['id' => $category->id],
             [
-                'id' => (string) Str::uuid(),
-                'name' => $category->category,
-                'code' => $category->category_id,
-                'sort_order' => $category->order_no,
-            ]
-        );
-    }
-
-    private function createSubCategory(mixed $subCategory)
-    {
-        // find category by category_id
-        Log::info('Sub Category: ' . $subCategory->category_id);
-        $category = Category::where('code', $subCategory->category_id)->first();
-        if (!isset($category)) return;
-        $newSubCategory = SubCategory::updateOrInsert(
-            ['code' => $subCategory->sub_category],
-            [
-                'id' => (string) Str::uuid(),
-                'name' => $subCategory->sub_category,
-                'code' => $subCategory->sub_category_id,
-                'category_id' => $category->id ?? null,
-                'notes1' => $subCategory->notes1,
-                'order' => $subCategory->order_no,
-                'created_by' => 'system',
-                'updated_by' => 'system',
-                'created_at' => now(),
-                'updated_at' => now(),
+                'id' => $category->id,
+                'name' => $category->name,
+                'code' => $category->code,
+                'parent_id' => $category->parent_id ?? null,
+                'singular_name' => $category->singular_name,
+                'sort_order' => $category->sort_order,
             ]
         );
     }
 
     private function createStoreTypeCategories(mixed $storeTypeCategory)
     {
-        if (StoreTypeCategory::where('id', $storeTypeCategory->id)->exists()) {
-            return;
-        }
-        $storeType = StoreType::where(['code' => $storeTypeCategory->channel_id])->first();
         StoreTypeCategory::updateOrInsert(
             ['id' => $storeTypeCategory->id],
             [
                 'id' => $storeTypeCategory->id,
-                'store_type_id' => $storeType->id,
-                'parent_id' => $storeTypeCategory->parent_id ?? null ,
+                'store_type_id' => $storeTypeCategory->channel_id,
+                'parent_id' => $storeTypeCategory->parent_id ?? null,
                 'name' => $storeTypeCategory->name,
                 'code' => $storeTypeCategory->code
             ]

@@ -8,6 +8,7 @@ use Illuminate\Support\Str;
 class Brand extends Model
 {
     protected $fillable = [
+        'id',
         'name',
         'notes1',
         'notes2',

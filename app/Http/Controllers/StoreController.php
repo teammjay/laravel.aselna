@@ -33,9 +33,10 @@ class StoreController extends Controller
         $stores = Store::select('*')
             ->with('storeType')
             ->orderBy('id','desc')
-            ->paginate($this->perPage);
+            ->get();
+//            ->paginate($this->perPage);
 
-        return view('store.list')->with('stores', $stores)->with('perPage', $this->perPage);
+        return view('store.list', compact('stores'));
     }
 
     /**
