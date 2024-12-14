@@ -26,7 +26,7 @@ class StoreTypeCategory extends Model
     }
 
 
-    protected $fillable = ['code','name','store_type_id','parent_id','category_id','store_type_code','created_by','updated_by','created_at','updated_at'];
+    protected $fillable = ['id','code','name','store_type_id','parent_id','category_id','store_type_code','created_by','updated_by','created_at','updated_at'];
 
     public function parent()
     {

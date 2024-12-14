@@ -33,12 +33,11 @@ class StoreTypeSyncJob implements ShouldQueue
 
     private function createStoreType(mixed $storeType)
     {
-        if (StoreType::where(['code' => $storeType->id])->exists()) {
-            return;
-        }
-        StoreType::create([
-            'id' => (string)Str::uuid(),
-            'code' => $storeType->id,
+        StoreType::updateOrCreate([
+            'id' => $storeType->id
+        ],[
+            'id' => $storeType->id,
+            'code' => $storeType->code,
             'name' => $storeType->name,
             'max_title_length' => $storeType->max_title_length,
             'max_variation_name_length' => $storeType->max_variation_name_length,
