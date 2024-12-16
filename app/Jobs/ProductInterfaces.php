@@ -36,13 +36,16 @@ class ProductInterfaces implements ShouldQueue
 
     private function createProductInterfaces(mixed $productAttribute)
     {
-        if (ProductInterface::where(['product_id' => $productAttribute['product_id'], 'interface_id' => $productAttribute['cea_interface_id']])->exists()) {
+        if (ProductInterface::where(['product_id' => $productAttribute->product_id, 'interface_id' => $productAttribute->cea_interface_id])->exists()) {
+            return;
+        }
+        if (!Catalog::where('product_id', $productAttribute->product_id)->exists()) {
             return;
         }
         ProductInterface::create([
-            'id' => (string) Str::uuid(),
-            'product_id' => $productAttribute['product_id'],
-            'interface_id' => $productAttribute['cea_interface_id'],
+            'id' => (string)Str::uuid(),
+            'product_id' => $productAttribute->product_id,
+            'interface_id' => $productAttribute->cea_interface_id,
             'created_at' => now(),
             'updated_at' => now(),
         ]);
