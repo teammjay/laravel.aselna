@@ -56,6 +56,5 @@ class SyncAllTables extends Command
         GenerationTypeAndTemplateSync::dispatch();
         ProductSyncJob::dispatch();
         ProductInterfaces::dispatch();
-
     }
 }

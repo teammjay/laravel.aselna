@@ -5,6 +5,7 @@ namespace App\Jobs;
 use App\Models\Catalog;
 use App\Models\Manufacturer;
 use App\Models\ProductKeyFeatures;
+use App\Models\ProductTitleKeyword;
 use App\Models\Store;
 use App\Models\StoreProduct;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -46,19 +47,15 @@ class ProductSyncJob implements ShouldQueue
 //        }
         $easyesaleProducts = DB::connection('easyesale_db')->table('product')->whereNull('deleted_by')->where('status', '=', '1')->get();
         foreach ($easyesaleProducts as $product) {
-            $this->updateProduct($product);
+            //$this->updateProduct($product);
 
-            $newProduct = Catalog::where('product_code', $product->id)->first();
-
-            if(isset($newProduct)) {
-                $this->createProductTitleKeywords($product, $newProduct->product_id);
-            }
+            $this->createProductTitleKeywords($product);
         }
 
-        $storeProducts = DB::connection('easyesale_db')->table('store_product')->get();
-        foreach ($storeProducts as $storeProduct) {
-            $this->createStoreProduct($storeProduct);
-        }
+//        $storeProducts = DB::connection('easyesale_db')->table('store_product')->get();
+//        foreach ($storeProducts as $storeProduct) {
+            //$this->createStoreProduct($storeProduct);
+//        }
     }
 
     private function createProduct($product)
@@ -89,26 +86,28 @@ class ProductSyncJob implements ShouldQueue
         );
     }
 
-    private function createProductTitleKeywords($product, $product_id)
+    private function createProductTitleKeywords($product)
     {
-        Log::info('Creating product title keywords' . json_encode($product));
         if (! DB::connection('easyesale_db')->table('product_title_keyword')->where('product_id', $product->id)) {
             return;
         }
         $keywords = DB::connection('easyesale_db')->table('product_title_keyword')->where('product_id', $product->id)->get();
 
         foreach ($keywords as $keyword) {
-            if (DB::table('product_title_keyword')->where('keyword', $keyword->keyword)->exists()) continue;
-            DB::table('product_title_keyword')->insert([
-                'id' => (string)Str::uuid(),
-                'keyword' => $keyword->keyword,
-                'priority' => $keyword->priority,
-                'product_id' => $product_id,
-                'created_by' => 'system',
-                'updated_by' => 'system',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
+            Log::info("Keyword :: " . json_encode($keyword));
+            ProductTitleKeyword::updateOrInsert(
+                ['product_id' => $product->id, 'keyword' => $keyword->keyword],
+                [
+                    'id' => $keyword->id,
+                    'keyword' => $keyword->keyword,
+                    'priority' => $keyword->priority,
+                    'product_id' => $product->id,
+                    'created_by' => 'system',
+                    'updated_by' => 'system',
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]
+            );
         }
     }
 
