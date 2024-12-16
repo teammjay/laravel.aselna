@@ -183,23 +183,25 @@ class ProductSyncJob implements ShouldQueue
 
     private function createStoreProduct(mixed $storeProduct)
     {
-        $product = Catalog::where('product_code', $storeProduct->product_id)->first();
         $store = Store::where('code', $storeProduct->store_id)->first();
-        if (!$product || !$store) {
+        if (!$store) {
             return;
         }
-        if (StoreProduct::where(['product_id' => $product->product_id, 'store_id' => $store->id])->exists()) {
+        if (StoreProduct::where(['product_id' => $storeProduct->product_id, 'store_id' => $store->id])->exists()) {
+            return;
+        }
+        if (!Catalog::where('product_id', $storeProduct->product_id)->exists()) {
             return;
         }
         StoreProduct::create([
             'id' => (string)Str::uuid(),
-            'product_id' => $product->product_id,
+            'product_id' => $storeProduct->product_id,
             'store_id' => $store->id,
 
             'active' => $storeProduct->active ? 1 : 0,
             'brand_combo' => $storeProduct->brand_combo,
             'carrier_combo' => $storeProduct->carrier_combo,
-            'channel_category_id' => $product->channel_category_id ,
+            'channel_category_id' => $storeProduct->channel_category_id ,
             'client' => $storeProduct->client,
             'compare_at_price' => $storeProduct->compare_at_price,
             'description' => $storeProduct->description,
@@ -210,10 +212,10 @@ class ProductSyncJob implements ShouldQueue
             'last_sale_date' => $storeProduct->last_sale_date,
             'last_synch_date_time' => $storeProduct->last_synch_date_time,
             'last_update_date_time' => $storeProduct->last_update_date_time,
-            'listing_generation_type_id' => $product->listing_generation_type_id ,
-            'listing_title_template_id' => $product->listing_title_template_id ,
+            'listing_generation_type_id' => $storeProduct->listing_generation_type_id ,
+            'listing_title_template_id' => $storeProduct->listing_title_template_id ,
 //            'long_tail_keywords' => $storeProduct,
-            'manufacturer_id' => $product->manufacturer_id ,
+            'manufacturer_id' => $storeProduct->manufacturer_id ,
             'msrp' => $storeProduct->msrp,
             'overwrite_compare_at_price' => $storeProduct->overwrite_compare_at_price,
             'overwrite_description' => $storeProduct->overwrite_description,
@@ -227,7 +229,7 @@ class ProductSyncJob implements ShouldQueue
             'profit_rate' => $storeProduct->profit_rate,
             'sales_count' => $storeProduct->sales_count,
             'short_tail_keywords' => $storeProduct->short_tail_keywords,
-            'store_category_id' => $product->store_category_id ,
+//            'store_category_id' => $storeProduct->store_category_id ,
             'synch_inventory' => $storeProduct->synch_inventory,
             'synch_item' => $storeProduct->synch_item,
             'synch_price' => $storeProduct->synch_price,
