@@ -18,6 +18,7 @@ use App\Models\StoreProduct;
 use App\Models\StoreType;
 use App\Models\StoreTypeCategory;
 use App\Models\StoreTypeListing;
+use App\Models\StoreTypeListingItem;
 use Illuminate\Http\Request;
 use App\Models\Store;
 
@@ -33,7 +34,7 @@ class ListingController extends Controller
         /*$products = Catalog::select('*')
             ->orderBy('product_id','desc')
             ->paginate($this->perPage);*/
-        $stores = Store::Where('store_status',1)->get();
+        $stores = Store::where('store_status',1)->get();
         $device_types = DeviceTypes::Where('status',1)->get();
         $product_types = ProductType::all();
 
@@ -354,6 +355,8 @@ class ListingController extends Controller
 
         $pageAt = 'Add';
         $stores = Store::orderBy('name','asc')->get();
+        //echo '<pre>';
+        //print_r($stores);die;
         $manufacturers = Manufacturer::all();
         $productTypes = ProductType::whereNull('parent_id')->get();
         $deviceTypes = DeviceTypes::all();
@@ -816,7 +819,7 @@ class ListingController extends Controller
             if(count($products ?? []) > 0){
                 $productsArray = [];
                 foreach($products as $product){
-
+                    $store_product_id = $product->id;
                     $product_short_keyword = $product_details[$product->id]->short_keyword;
                     $product_long_keyword = $product_details[$product->id]->long_keyword;
                     $product_price = $product_details[$product->id]->price;
@@ -853,7 +856,7 @@ class ListingController extends Controller
                     $query->orderBy('device.name', 'asc');
                     $devices = $query->get();
 
-                    $productsArray[] = $this->generateProductTitles($title_template,$product,$devices,$max_title_length, $brand_seperator,$device_seperator,$compress, $generate_type,$product_price);
+                    $productsArray[] = $this->generateProductTitles($title_template,$product,$devices,$max_title_length, $brand_seperator,$device_seperator,$compress, $generate_type,$product_price,$store_product_id);
                 }
 
                 /*echo '<pre>';
@@ -899,7 +902,7 @@ class ListingController extends Controller
         }
     }
 
-    function generateProductTitles($baseTitle, $product, $devices, $charLimit, $brand_seperator, $device_seperator, $compress, $generate_type, $product_price) {
+    function generateProductTitles($baseTitle, $product, $devices, $charLimit, $brand_seperator, $device_seperator, $compress, $generate_type, $product_price,$store_product_id) {
         $titles = [];
         $currentDevices = [];
         $currentTitle = $baseTitle;
@@ -941,15 +944,19 @@ class ListingController extends Controller
                 $titles[$cnt]['product_code'] = $product->product_sku;
                 $titles[$cnt]['product_id'] = $product->product_id;
                 $titles[$cnt]['price'] = $product_price;
+                $titles[$cnt]['generate_type'] = $generate_type;
+                $titles[$cnt]['store_product_id'] = $store_product_id;
                 $titles[$cnt]['model'][] = $device->name;
                 $titles[$cnt]['model_detail'][] = $device;
             } else {
                 // Append the device name
                 $titles[$cnt]['product_code'] = $product->product_sku;
                 $titles[$cnt]['product_id'] = $product->product_id;
+                $titles[$cnt]['price'] = $product_price;
+                $titles[$cnt]['generate_type'] = $generate_type;
+                $titles[$cnt]['store_product_id'] = $store_product_id;
                 $titles[$cnt]['model'][] = $device->name;
                 $titles[$cnt]['model_detail'][] = $device;
-                $titles[$cnt]['price'] = $product_price;
                 //$currentTitle .= ($currentTitle === $baseTitle ? ' ' : ' '.$separator.' ') . $nameToAdd;
                 $currentDevices[] = $nameToAdd;
             }
@@ -971,9 +978,11 @@ class ListingController extends Controller
 
         if($request->input()){
             if(is_array($request->input('final_product_title'))){
+                $generate_type = $request->input('generate_type');
                 $product_titles = $request->input('final_product_title');
                 $product_prices = $request->input('final_product_price');
                 $product_codes = $request->input('final_product_code');
+                $store_product_ids = $request->input('final_store_product_id');
                 $product_ids = $request->input('final_product_id');
                 $store_id = $request->input('store_id');
                 $product_models = $request->input('product_models');
@@ -1003,21 +1012,35 @@ class ListingController extends Controller
 
                     if(isset($product_models[$key]) && is_array($product_models[$key])){
                         foreach($product_models[$key] as $model){
-                            $modelDetail[] = array(
-                                'model_name' => $model->name,
-                                'brand_name' => $model->brand_name,
+                            $modelDetail = array(
+                                'title' => $product,
+                                'description' => $product,
+                                'store_type_listing_id' => $listing_id,
+                                'sku' => $sku,
+                                'store_sku' => $store_id,
+                                'price' => $product_prices[$key],
+                                'sync_status' => 1,
                                 'device_id' => $model->id,
+                                'store_product_id' => $store_product_ids[$key],
+                                'generation_type_id' => $generate_type[$key],
                                 'brand_id' => $model->brand_id,
+                                'status' => 1,
+                                /*'model_name' => $model->name,
+                                'brand_name' => $model->brand_name,
                                 'device_series_id' => $model->device_series_id,
                                 'device_type_id' => $model->device_type_id,
                                 'device_type_name' => $model->device_type->name,
                                 'device_code' => $model->code,
-                                'device_rating_id' => $model->rating_id,
+                                'device_rating_id' => $model->rating_id,*/
                                 'created_by' => $created_by
                             );
-                        }
 
-                        //ListingItem::insert($modelDetail);
+                            StoreTypeListingItem::create($modelDetail);
+                        }
+                        /*echo '<pre>';
+                        print_r($modelDetail);
+                        echo '</pre>';die;*/
+
                     }
 
                 }
