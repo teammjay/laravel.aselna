@@ -47,15 +47,15 @@ class ProductSyncJob implements ShouldQueue
 //        }
         $easyesaleProducts = DB::connection('easyesale_db')->table('product')->whereNull('deleted_by')->where('status', '=', '1')->get();
         foreach ($easyesaleProducts as $product) {
-            //$this->updateProduct($product);
+            $this->updateProduct($product);
 
             $this->createProductTitleKeywords($product);
         }
 
-//        $storeProducts = DB::connection('easyesale_db')->table('store_product')->get();
-//        foreach ($storeProducts as $storeProduct) {
-            //$this->createStoreProduct($storeProduct);
-//        }
+        $storeProducts = DB::connection('easyesale_db')->table('store_product')->get();
+        foreach ($storeProducts as $storeProduct) {
+            $this->createStoreProduct($storeProduct);
+        }
     }
 
     private function createProduct($product)
