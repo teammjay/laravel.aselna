@@ -90,7 +90,7 @@
                                         <select class="form-control mt-3 mb-3" name="store_id" id="listing_store">
                                             @if(count($stores ?? []) > 0)
                                                 @foreach($stores as $store)
-                                                    <option value="{{ $store->id }}">{{ $store->name }} - {{ $store->storeType->name }}</option>
+                                                    <option value="{{ $store->id }}">{{ $store->name }} - {{ $store->marketplace_name }}</option>
                                                 @endforeach
                                             @endif
                                         </select>
@@ -290,7 +290,7 @@
                                     <label>Bundle Sperator</label> <input type="text" class="form-control ml-3" name="bundle_seperator" value="w" style="width: 150px;">
                                 </div>
                                 <div class="card-body pr-0 pl-0">
-                                    <div class="table-responsive">
+                                    <div class="table-responsive" style="max-height: 500px; overflow: auto;">
                                         <table id="productsTable" class="table table-bordered table-striped">
                                             <thead>
                                             <tr>
@@ -317,7 +317,7 @@
                     </div>
                 </div>
                 <div class="tab-pane fade position-relative" id="tab3" role="tabpanel" aria-labelledby="select-device-tab">
-                    <div class="bd-example border" style="display: none;">
+                    {{--<div class="bd-example border" style="display: none;">
                         <div class="spinner-grow text-primary" role="status">
                             <span class="visually-hidden"></span>
                         </div>
@@ -342,7 +342,7 @@
                         <div class="spinner-grow text-dark" role="status">
                             <span class="visually-hidden"></span>
                         </div>
-                    </div>
+                    </div>--}}
                     <div class="row mt-3 mb-3">
 
                         <div class="col-md-12">
@@ -367,13 +367,13 @@
                                     </div>
                                     <div class="border p-2">
                                         <div class="form-group mb-0 align-items-center">
-                                            <div class="form-group mb-1">
+                                            <div class="form-group d-flex align-items-baseline mb-1">
                                                 <input type="radio" class="ml-2 mr-2" name="listing_type" value="all" checked> <span>All</span>
                                             </div>
-                                            <div class="form-group mb-1">
+                                            <div class="form-group d-flex align-items-baseline mb-1">
                                                 <input type="radio" class="ml-2 mr-2" name="listing_type" value="Neverlistedfortype"> <span>Never listed for type</span>
                                             </div>
-                                            <div class="form-group mb-1">
+                                            <div class="form-group d-flex align-items-baseline mb-1">
                                                 <input type="radio" class="ml-2 mr-2" name="listing_type" value="neverlisted"> <span>Neverlisted</span>
                                             </div>
                                         </div>
@@ -383,7 +383,7 @@
                                     <label>Device Type</label>
                                     @if(count($deviceTypes ?? []) > 0)
                                         @foreach($deviceTypes as $dType)
-                                            <div class="form-group mb-1">
+                                            <div class="form-group d-flex align-items-baseline mb-1">
                                                 <input type="checkbox" class="ml-2 mr-2" name="device_type[]" value="{{ $dType->id }}"> <span>{{ $dType->name }}</span>
                                             </div>
                                         @endforeach
@@ -419,7 +419,7 @@
                                             <label>Rating Filter</label>
                                             <div class="row">
                                                 <div class="col-md-12">
-                                                    <select class="form-control" id="rating_filter" multiple style="height: 225px;">
+                                                    <select class="form-control" id="rating_filter" multiple style="height: 235px;">
                                                         <option value="1">10</option>
                                                         <option value="9">9</option>
                                                         <option value="8">8</option>
@@ -439,7 +439,7 @@
                                             <label>Popularity</label>
                                             <div class="row">
                                                 <div class="col-md-12">
-                                                    <select class="form-control" id="popularity_filter" multiple style="height: 225px;">
+                                                    <select class="form-control" id="popularity_filter" multiple style="height: 235px;">
                                                        <option value="1">1</option>
                                                        <option value="2">2</option>
                                                        <option value="3">3</option>
@@ -482,23 +482,25 @@
                                             Products
                                         </div>
                                         <div class="card-body">
-                                            <table id="productsTable" class="table table-bordered table-striped">
-                                                <thead>
-                                                <tr>
-                                                    <th>Image</th>
-                                                    <th>Product Code</th>
-                                                    <th>Devices</th>
-                                                    <th>Listed</th>
-                                                    <th>Listed Type</th>
-                                                    <th>Img Avail.</th>
-                                                </tr>
-                                                </thead>
-                                                <tbody id="product-list-3">
+                                            <div style="max-height: 538px; overflow: auto">
+                                                <table id="productsTable" class="table table-bordered table-striped">
+                                                    <thead>
+                                                    <tr>
+                                                        <th>Image</th>
+                                                        <th>Product Code</th>
+                                                        <th>Devices</th>
+                                                        <th>Listed</th>
+                                                        <th>Listed Type</th>
+                                                        <th>Img Avail.</th>
+                                                    </tr>
+                                                    </thead>
+                                                    <tbody id="product-list-3">
 
-                                                {{--@include('catalog.product_list', ['products' => $products])--}}
+                                                    {{--@include('catalog.product_list', ['products' => $products])--}}
 
-                                                </tbody>
-                                            </table>
+                                                    </tbody>
+                                                </table>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -517,7 +519,7 @@
                                             <div style="max-height: 500px; overflow: scroll">
                                                 <table id="productListingTable" class="table table-bordered table-striped mt-3">
                                                     <thead>
-                                                    <tr>
+                                                    <tr class="sticky-top bg-white" style="top:-1px;">
                                                         <th></th>
                                                         <th>Carrier</th>
                                                         <th>Brand</th>
