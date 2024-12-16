@@ -28,7 +28,7 @@ class ProductInterfaces implements ShouldQueue
      */
     public function handle(): void
     {
-        $productAttributes = DB::connection('fonus_db')->table('tbl_product')->get();
+        $productAttributes = DB::connection('easyesale_db')->table('product_cea_interface_link')->get();
         foreach ($productAttributes as $productAttribute) {
             $this->createProductInterfaces($productAttribute);
         }
@@ -36,18 +36,13 @@ class ProductInterfaces implements ShouldQueue
 
     private function createProductInterfaces(mixed $productAttribute)
     {
-        $productId = Catalog::where('product_code', $productAttribute->product_id)->value('product_id');
-        $interfaceId = Interfaces::where('code', $productAttribute->attribute_id)->value('id');
-        if (!isset($interfaceId) || !isset($productId)) {
-            return;
-        }
-        if (ProductInterface::where(['product_id' => $productId, 'interface_id' => $interfaceId])->exists()) {
+        if (ProductInterface::where(['product_id' => $productAttribute['product_id'], 'interface_id' => $productAttribute['cea_interface_id']])->exists()) {
             return;
         }
         ProductInterface::create([
             'id' => (string) Str::uuid(),
-            'product_id' => $productId,
-            'interface_id' => $interfaceId,
+            'product_id' => $productAttribute['product_id'],
+            'interface_id' => $productAttribute['cea_interface_id'],
             'created_at' => now(),
             'updated_at' => now(),
         ]);
