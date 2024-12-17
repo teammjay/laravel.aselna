@@ -594,6 +594,7 @@
 
 <script>
     $(document).ready(function() {
+        $('#last_sale_date,#item_created').datepicker();
         $('.card-header').on('click',function () {
             if($(this).find('.fa').hasClass('fa-angle-down')){
                 $(this).find('.fa').removeClass('fa-angle-down');

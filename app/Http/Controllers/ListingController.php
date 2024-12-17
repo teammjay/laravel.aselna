@@ -7,9 +7,12 @@ use App\Models\Catalog;
 use App\Models\Device;
 use App\Models\DeviceSeries;
 use App\Models\DeviceTypes;
+use App\Models\Listing;
 use App\Models\ListingGenerationType;
 use App\Models\ListingGenerationTypeTemplate;
 use App\Models\ListingItem;
+use App\Models\ListingItemDetail;
+use App\Models\ListingItemLink;
 use App\Models\Manufacturer;
 use App\Models\ProductSearchTerm;
 use App\Models\ProductTitleKeyword;
@@ -18,7 +21,7 @@ use App\Models\StoreProduct;
 use App\Models\StoreType;
 use App\Models\StoreTypeCategory;
 use App\Models\StoreTypeListing;
-use App\Models\StoreTypeListingItem;
+use App\Models\UPCCodes;
 use Illuminate\Http\Request;
 use App\Models\Store;
 
@@ -856,7 +859,7 @@ class ListingController extends Controller
                     $query->orderBy('device.name', 'asc');
                     $devices = $query->get();
 
-                    $productsArray[] = $this->generateProductTitles($title_template,$product,$devices,$max_title_length, $brand_seperator,$device_seperator,$compress, $generate_type,$product_price,$store_product_id);
+                    $productsArray[] = $this->generateProductTitles($title_template,$product,$devices,$max_title_length, $brand_seperator,$device_seperator,$compress,$generate_type,$product_price,$store_product_id);
                 }
 
                 /*echo '<pre>';
@@ -886,6 +889,7 @@ class ListingController extends Controller
                         'models' => $models,
                         'modelDetail' => $modelDetail,
                         'totalproduct' => $totalCount,
+                        'generate_type' => $generate_type,
                     ]);
                 }
             }else{
@@ -979,6 +983,7 @@ class ListingController extends Controller
         if($request->input()){
             if(is_array($request->input('final_product_title'))){
                 $generate_type = $request->input('generate_type');
+                $generation_type_id = $request->input('generation_type_id');
                 $product_titles = $request->input('final_product_title');
                 $product_prices = $request->input('final_product_price');
                 $product_codes = $request->input('final_product_code');
@@ -989,41 +994,59 @@ class ListingController extends Controller
                 if($product_models){
                     $product_models = json_decode($product_models);
                 }
+
+
+                $created_by = auth()->user()->name ?? 'admin';
+
+                $listingArr = [
+                    'store_id' => $store_id,
+                    'generation_type_id' => $generation_type_id,
+                    'feed_type' => 1,
+                    'status' => 2,
+                    'chained' => 1,
+                    'include_carriers' => 0,
+                    'brand_combo' => 0,
+                    'carrier_combo' => 0,
+                    'created_by' => $created_by,
+                    'updated_by' => $created_by
+                ];
+
+                $lisrecord = Listing::create($listingArr);
+                $listing_id = $lisrecord->id;
+
                 /*echo '<pre>';
                 print_r();
                 echo '</pre>';die;*/
-                foreach($product_titles as $key=>$product){
-                    $sku = StoreTypeListing::generateUniqueAlphabeticSku($product_codes[$key]);
-                    $created_by = auth()->user()->name ?? 'admin';
-                    $listingProductArr = [
-                        'product_name' => $product,
-                        'sku' => $sku,
-                        'price' => $product_prices[$key],
-                        'item_id' => $product_ids[$key],
-                        'store_id' => $store_id,
-                        'has_offers' => 0,
-                        'status' => 1,
-                        'created_by' => $created_by,
-                        'updated_by' => $created_by
-                    ];
+                if($listing_id && !empty($product_titles)) {
+                    foreach ($product_titles as $key => $product) {
+                        $sku = StoreTypeListing::generateUniqueAlphabeticSku($product_codes[$key]);
+                        $listingProductArr = [
+                            'product_name' => $product,
+                            'sku' => $sku,
+                            'price' => $product_prices[$key],
+                            'item_id' => $product_ids[$key],
+                            'store_id' => $store_id,
+                            'has_offers' => 0,
+                            'status' => 1,
+                            'created_by' => $created_by,
+                            'updated_by' => $created_by
+                        ];
+                        $record = StoreTypeListing::create($listingProductArr);
+                        $store_type_listing_id = $record->id;
 
-                    $record = StoreTypeListing::create($listingProductArr);
-                    $listing_id = $record->id;
-
-                    if(isset($product_models[$key]) && is_array($product_models[$key])){
-                        foreach($product_models[$key] as $model){
+                        if($store_type_listing_id){
+                            $productDetail = StoreProduct::findOrFail($store_product_ids[$key]);
+                            $productDetail = $productDetail->toArray();
                             $modelDetail = array(
                                 'title' => $product,
-                                'description' => $product,
-                                'store_type_listing_id' => $listing_id,
+                                'description' => $productDetail['description'],
+                                'store_type_listing_id' => $store_type_listing_id,
                                 'sku' => $sku,
                                 'store_sku' => $store_id,
                                 'price' => $product_prices[$key],
                                 'sync_status' => 1,
-                                'device_id' => $model->id,
                                 'store_product_id' => $store_product_ids[$key],
-                                'generation_type_id' => $generate_type[$key],
-                                'brand_id' => $model->brand_id,
+                                'generation_type_id' => $generation_type_id,
                                 'status' => 1,
                                 /*'model_name' => $model->name,
                                 'brand_name' => $model->brand_name,
@@ -1035,14 +1058,50 @@ class ListingController extends Controller
                                 'created_by' => $created_by
                             );
 
-                            StoreTypeListingItem::create($modelDetail);
+                            $item = ListingItem::create($modelDetail);
+                            $listing_item_id = $item->id;
+                            if($listing_item_id){
+                                if (isset($product_models[$key]) && is_array($product_models[$key])) {
+
+                                    if(count($product_models[$key] ?? []) > 0){
+                                        $limit = count($product_models[$key]);
+                                        $upcCodes = UPCCodes::where('store',$store_id)->where('is_used',0)->limit($limit)->get();
+                                    }
+                                    foreach ($product_models[$key] as $k=>$model) {
+
+                                        $itemDetail = array(
+                                            'sku' => $sku,
+                                            'title' => $product,
+                                            'upc' => isset($upcCodes[$k]['upc_code']) ? $upcCodes[$k]['upc_code'] : '123',
+                                            'device_id' => $model->id,
+                                            'listing_item_id' => $listing_item_id,
+                                            'store_sku' => $store_id,
+                                            'created_by' => $created_by
+                                        );
+
+                                        ListingItemDetail::create($itemDetail);
+
+                                        $itemLink = array(
+                                            'item_id' => $listing_item_id,
+                                            'listing_id' => $listing_id,
+                                            'sync_status' => 6,
+                                            'old_price' => $product_prices[$key],
+                                            'created_by' => $created_by
+                                        );
+
+                                        ListingItemLink::create($itemLink);
+                                    }
+                                    /*echo '<pre>';
+                                    print_r($modelDetail);
+                                    echo '</pre>';die;*/
+
+                                }
+                            }
                         }
-                        /*echo '<pre>';
-                        print_r($modelDetail);
-                        echo '</pre>';die;*/
+
+
 
                     }
-
                 }
 
                 if ($request->ajax()) {

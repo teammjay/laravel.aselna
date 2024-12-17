@@ -110,17 +110,31 @@
                                                 </div>
                                             </div>
                                         </div>
+
+                                        @php
+                                            function renderCategories($productTypes, $prefix = '') {
+                                                foreach ($productTypes as $ptype) {
+                                                    echo '<option value="' . $ptype->id . '">' . $prefix . $ptype->name . '</option>';
+                                                    if ($ptype->children) {
+                                                        renderCategories($ptype->children, $prefix . '-- ');
+                                                    }
+                                                }
+                                            }
+                                        @endphp
                                         <div class="row">
                                             <div class="col-md-6">
                                                 <div class="form-group">
                                                     <label for="product_type">Product Type</label>
                                                     <select class="form-control" id="product_type" name="product_type">
                                                         <option>-- Product Type --</option>
-                                                        @if(count($productTypes ?? []) > 0)
+                                                        @php
+                                                            renderCategories($productTypes);
+                                                        @endphp
+                                                        {{--@if(count($productTypes ?? []) > 0)
                                                             @foreach($productTypes as $ptype)
                                                                 <option value="{{ $ptype->id }}" {{ $ptype->id == $product->product_type ? 'selected' : '' }}>{{ $ptype->name }}</option>
                                                             @endforeach
-                                                        @endif
+                                                        @endif--}}
 
                                                     </select>
                                                     <span class="error-message text-danger" id="product_type-error"></span>
@@ -696,9 +710,9 @@
                                             @if(count($store_details ?? []) > 0)
                                                 @foreach($store_details as $key=>$store)
                                                     <tr class="store_row" id="store_{{ $store['store_detail']->id }}" data-id="{{ $store['store_detail']->id }}">
-                                                        <td>{{ $store['store_detail']->name.' - '.$store['store_detail']->storeType->name }}</td>
+                                                        <td>{{ $store['store_detail']->name }} {{ (!empty($store['store_detail']->storeType)) ? ' - '.$store['store_detail']->storeType->name : ''}}</td>
                                                         <td align="center">
-                                                            <input type="checkbox" name="active" {{ (isset($productStore) && in_array($store['store_detail']->id,$productStore)) ? 'checked' : '' }} />
+                                                            <input type="checkbox" name="active" {{ ((isset($productStore) && in_array($store['store_detail']->id,$productStore)) || $pageAt != 'Edit') ? 'checked' : '' }} />
                                                             <input type="hidden" name="store_id" value="{{ $store['store_detail']->id }}">
                                                         </td>
                                                         <td>

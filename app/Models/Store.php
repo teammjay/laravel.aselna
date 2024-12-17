@@ -43,6 +43,6 @@ class Store extends Model
 
     public function storeType()
     {
-        return $this->belongsTo(StoreType::class,'store_type_id');
+        return $this->belongsTo(StoreType::class,'store_type_id','id');
     }
 }
