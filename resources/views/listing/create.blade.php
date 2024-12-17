@@ -570,6 +570,7 @@
                                 <span class="float-right" id="total_generate_product"></span>
                             </div>
                             <form id="frmFinalListingProducts">
+                                <input type="hidden" name="generation_type_id" id="generation_type_id">
                                 <table id="listingTable" class="table table-bordered table-striped">
                                     <thead>
                                     <tr>
@@ -728,6 +729,7 @@
                                     $('#listing-product').html(response.html);
                                     $('#total_generate_product').html(response.totalproduct +' rows');
                                     $('.bd-example').hide();
+                                    $('#generation_type_id').val(response.generate_type);
                                     product_model = response.models;
                                     product_models = response.modelDetail;
                                     $('#nextBtn').html('Finish');
