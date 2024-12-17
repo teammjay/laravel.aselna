@@ -181,21 +181,16 @@ class ProductSyncJob implements ShouldQueue
 
     private function createStoreProduct(mixed $storeProduct)
     {
-        $store = Store::where('code', $storeProduct->store_id)->first();
-        if (!$store) {
-            return;
-        }
-        if (StoreProduct::where(['product_id' => $storeProduct->product_id, 'store_id' => $store->id])->exists()) {
+        if (StoreProduct::where(['product_id' => $storeProduct->product_id, 'store_id' => $storeProduct->store_id])->exists()) {
             return;
         }
         if (!Catalog::where('product_id', $storeProduct->product_id)->exists()) {
             return;
         }
         StoreProduct::create([
-            'id' => (string)Str::uuid(),
+            'id' => $storeProduct->product_id,
             'product_id' => $storeProduct->product_id,
-            'store_id' => $store->id,
-
+            'store_id' => $storeProduct->store_id,
             'active' => $storeProduct->active ? 1 : 0,
             'brand_combo' => $storeProduct->brand_combo,
             'carrier_combo' => $storeProduct->carrier_combo,

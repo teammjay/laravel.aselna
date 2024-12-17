@@ -59,12 +59,12 @@ class StoreSyncJob implements ShouldQueue
 
     private function createStoreFromEasyEsale(mixed $store)
     {
-        if (Store::where(['code' => $store->id])->exists()) {
+        if (Store::where(['id' => $store->id])->exists()) {
             return;
         }
 //        $storeType = StoreType::where(['code' => $store->store_type_id])->first();
         Store::create([
-            'id' => (string)Str::uuid(),
+            'id' => $store->id,
             'code' => $store->id,
             'name' => $store->name,
             'store_type_id' => $store->store_type_id,
