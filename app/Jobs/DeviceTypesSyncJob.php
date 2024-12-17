@@ -57,7 +57,6 @@ class DeviceTypesSyncJob implements ShouldQueue
      */
     public function createDeviceType(mixed $deviceType): void
     {
-//        Log::info('Device Type: ' . json_encode($deviceType));
         DeviceTypes::updateOrInsert(
             ['code' => $deviceType->device_type_id],
             [

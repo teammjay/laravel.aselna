@@ -38,7 +38,6 @@ class CategorySyncJob implements ShouldQueue
         foreach ($distinctParentIds as $distinctId) {
             $distinctIds[] = $distinctId->id;
         }
-        Log::info(json_encode($distinctIds));
         $queue = new Queue();
 
         $categories = DB::connection('easyesale_db')->table('product_type')->whereIn('id', $distinctIds)->get();

@@ -40,7 +40,6 @@ class ShippingCarrierJob implements ShouldQueue
 
     private function createShippingCarrier(mixed $shippingCarrier)
     {
-        Log::info('Creating Shipping Carrier ID' . $shippingCarrier->id);
         ShippingCarrier::updateOrCreate([
             'id' => $shippingCarrier->id,
             'name' => $shippingCarrier->name

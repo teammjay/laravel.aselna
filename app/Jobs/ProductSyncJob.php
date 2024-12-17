@@ -94,7 +94,6 @@ class ProductSyncJob implements ShouldQueue
         $keywords = DB::connection('easyesale_db')->table('product_title_keyword')->where('product_id', $product->id)->get();
 
         foreach ($keywords as $keyword) {
-            Log::info("Keyword :: " . json_encode($keyword));
             ProductTitleKeyword::updateOrInsert(
                 ['product_id' => $product->id, 'keyword' => $keyword->keyword],
                 [
