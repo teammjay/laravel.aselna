@@ -10,7 +10,7 @@ class StoreProduct extends Model
     // Set a custom table name
     protected $table = 'store_product';
 
-    public $timestamps = false;
+    public $timestamps = true;
 
     protected $keyType = 'string';
 

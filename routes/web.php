@@ -33,6 +33,8 @@ use App\Http\Controllers\ListingGenerationTypeController;
 use App\Http\Controllers\ListingGenerationTypeTemplateController;
 //use App\Http\Controllers\StoreTypeCategoryController;
 use App\Http\Controllers\ProductTargetAudienceController;
+use App\Http\Controllers\CarrierController;
+use App\Http\Controllers\ProductAttributeController;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/catalog', [CatalogController::class, 'index']);
@@ -201,6 +203,24 @@ Route::controller(PageTypesController::class)->group(function () {
     Route::get('/page_type/edit/{id}', 'edit')->name('page_type.edit');
     Route::post('/page_type/edit/{id}', 'update')->name('page_type.update');
     Route::get('/page_type/delete/{id}', 'destroy')->name('page_type.delete');
+});
+
+Route::controller(CarrierController::class)->group(function () {
+    Route::get('/carriers', 'index')->name('carrier.index');
+    Route::get('/carrier/add', 'create')->name('carrier.create');
+    Route::post('/carrier/add', 'store')->name('carrier.store');
+    Route::get('/carrier/edit/{id}', 'edit')->name('carrier.edit');
+    Route::post('/carrier/edit/{id}', 'update')->name('carrier.update');
+    Route::get('/carrier/delete/{id}', 'destroy')->name('carrier.delete');
+});
+
+Route::controller(ProductAttributeController::class)->group(function () {
+    Route::get('/product_attribute', 'index')->name('product_attribute.index');
+    Route::get('/product_attribute/add', 'create')->name('product_attribute.create');
+    Route::post('/product_attribute/add', 'store')->name('product_attribute.store');
+    Route::get('/product_attribute/edit/{id}', 'edit')->name('product_attribute.edit');
+    Route::post('/product_attribute/edit/{id}', 'update')->name('product_attribute.update');
+    Route::get('/product_attribute/delete/{id}', 'destroy')->name('product_attribute.delete');
 });
 
 Route::controller(InterfaceController::class)->group(function () {

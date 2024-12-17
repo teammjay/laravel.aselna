@@ -10,7 +10,7 @@ class StoreDeviceType extends Model
     // Set a custom table name
     protected $table = 'store_device_type';
 
-    public $timestamps = false;
+    public $timestamps = true;
 
     protected $keyType = 'string';
 

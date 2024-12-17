@@ -323,8 +323,34 @@ return [
 //        ],
         [
             'text' => 'Catalog',
-            'url' => '/catalog',
-            'icon' => 'far fa-fw fa-file'
+            'icon' => 'far fa-fw fa-file',
+            'submenu' => [
+                [
+                    'text' => 'Products',
+                    'url' => '/catalog',
+                    'icon' => 'far fa-fw fa-file',
+                ],
+                [
+                    'text' => 'Product Attributes',
+                    'url' => '/product_attribute',
+                    'icon' => 'far fa-fw fa-file'
+                ],
+                [
+                    'text' => 'Product Types',
+                    'url' => '/product_type',
+                    'icon' => 'far fa-fw fa-file'
+                ],
+                [
+                    'text' => 'Product Condition',
+                    'url' => '/product_condition',
+                    'icon' => 'far fa-fw fa-file'
+                ],
+                [
+                    'text' => 'Product Target Audience',
+                    'url' => '/product_target_audience',
+                    'icon' => 'far fa-fw fa-file'
+                ],
+            ]
         ],
         [
             'text' => 'Stores',
@@ -396,6 +422,11 @@ return [
                     'icon' => 'far fa-fw fa-file'
                 ],
                 [
+                    'text' => 'Carriers',
+                    'url' => '/carriers',
+                    'icon' => 'far fa-fw fa-file'
+                ],
+                [
                     'text' => 'Device',
                     'url' => '/devices',
                     'icon' => 'far fa-fw fa-file'
@@ -463,21 +494,6 @@ return [
                 [
                     'text' => 'Manufacturer',
                     'url' => '/manufacturer',
-                    'icon' => 'far fa-fw fa-file'
-                ],
-                [
-                    'text' => 'Product Types',
-                    'url' => '/product_type',
-                    'icon' => 'far fa-fw fa-file'
-                ],
-                [
-                    'text' => 'Product Condition',
-                    'url' => '/product_condition',
-                    'icon' => 'far fa-fw fa-file'
-                ],
-                [
-                    'text' => 'Product Target Audience',
-                    'url' => '/product_target_audience',
                     'icon' => 'far fa-fw fa-file'
                 ],
                 [
