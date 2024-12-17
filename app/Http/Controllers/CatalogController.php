@@ -381,7 +381,10 @@ class CatalogController extends Controller
         $titleKeywords = ProductTitleKeyword::where('product_id', $id)->orderBy('priority')->get();
         $productImages = ProductImages::where('product_id', $id)->get();
         $productTags = ProductTags::pluck('name')->values()->all();
-        $stores = Store::all();
+        $stores = Store::with('storeType')->get();
+        /*echo '<pre>';
+        print_r($stores);
+        echo '</pre>';die;*/
         $store_details = [];
         if(count($stores ?? []) > 0){
             foreach($stores as $key=>$store){
@@ -394,7 +397,7 @@ class CatalogController extends Controller
             }
         }
         $manufacturers = Manufacturer::all();
-        $productTypes = ProductType::all();
+        $productTypes = ProductType::with('children')->get();
         $productConditions = ProductCondition::all();
         $storeProducts = StoreProduct::where('product_id', $id)->get();
         $productStore = $storeProducts->pluck('store_id')->values()->all();

@@ -5,7 +5,7 @@
             <td>{{ $store->id }}</td>
             <td>{{ $store->marketplace_name }}</td>
             <td>{{ $store->name }}</td>
-            <td>{{ $store->storeType->name }}</td>
+            <td>{{ ($store->storeType()->count() > 0) ? $store->storeType->name : '' }}</td>
             <td>{{ $store->listing_type }}</td>
             <td>{{ ($store->store_status == 1) ? 'Active' : ''}}</td>
             <td align="center"><input type="checkbox" class="authorize" data-id="{{ $store->id }}" {{ ($store->authorized == 1) ? 'checked' : '' }}> </td>

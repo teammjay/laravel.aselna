@@ -30,13 +30,13 @@ class ProductType extends Model
     // Define the parent relationship (belongsTo)
     public function parent()
     {
-        return $this->belongsTo(ProductType::class, 'parent_id');
+        return $this->belongsTo(self::class, 'parent_id');
     }
 
     // Define the children relationship (hasOne)
     public function children()
     {
-        return $this->hasOne(ProductType::class, 'parent_id');
+        return $this->hasMany(self::class, 'parent_id');
     }
 
     public function Interfaces()
