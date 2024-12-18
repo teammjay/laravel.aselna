@@ -576,6 +576,7 @@
                 <th>Gen Type</th>
                 <th>Price</th>
                 <th>Quantity</th>
+                <th></th>
             </tr>
             </thead>
             <tbody id="product-list">

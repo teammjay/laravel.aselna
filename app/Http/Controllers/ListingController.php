@@ -24,6 +24,7 @@ use App\Models\StoreTypeListing;
 use App\Models\UPCCodes;
 use Illuminate\Http\Request;
 use App\Models\Store;
+use Illuminate\Support\Facades\DB;
 
 class ListingController extends Controller
 {
@@ -40,13 +41,22 @@ class ListingController extends Controller
         $stores = Store::where('store_status',1)->get();
         $device_types = DeviceTypes::Where('status',1)->get();
         $product_types = ProductType::all();
-
-        $products = StoreTypeListing::select('store_type_listing.*','products.product_sku','products.dimensions_width','products.product_color','store.name as store_name','store.marketplace_name')
-            ->leftJoin('products','products.product_id', '=', 'store_type_listing.item_id')
-            ->leftJoin('store','store.id', '=', 'store_type_listing.store_id')
-            ->where('status',1)
-            ->orderBy('created_at','desc')
+        //DB::enableQueryLog();
+        $products = ListingItem::select('listing_item.*','products.product_sku','products.dimensions_width','products.product_color','store.name as store_name','store.marketplace_name')
+            ->leftJoin('listing_item_link','listing_item.id', '=', 'listing_item_link.item_id')
+            ->leftJoin('store_product','store_product.id', '=', 'listing_item.store_product_id')
+            ->leftJoin('products','products.product_id', '=', 'store_product.product_id')
+            ->leftJoin('store','store.id', '=', 'store_product.store_id')
+            ->where('listing_item.status',1)
+            ->groupBy('listing_item.id')
+            ->orderBy('listing_item.created_at','desc')
             ->paginate($this->perPage);
+        /*$lastQuery = DB::getQueryLog();
+        dd(end($lastQuery));*/
+
+        /*echo '<pre>';
+        print_r($products);
+        echo '</pre>';die;*/
 
         return view('listing.list',compact('stores','products','device_types','product_types'))->with('perPage', $this->perPage);
     }
@@ -56,9 +66,11 @@ class ListingController extends Controller
      */
     public function filter(Request $request)
     {
-        $query = StoreTypeListing::select('store_type_listing.*','products.product_sku','products.dimensions_width','products.product_color','store.name as store_name','store.marketplace_name');
-        $query->leftJoin('products','products.product_id', '=', 'store_type_listing.item_id');
-        $query->leftJoin('store','store.id', '=', 'store_type_listing.store_id');
+        $query = ListingItem::select('listing_item.*','products.product_sku','products.dimensions_width','products.product_color','store.name as store_name','store.marketplace_name');
+        $query->leftJoin('listing_item_link','listing_item.id', '=', 'listing_item_link.item_id');
+        $query->leftJoin('store_product','store_product.id', '=', 'listing_item.store_product_id');
+        $query->leftJoin('products','products.product_id', '=', 'store_product.product_id');
+        $query->leftJoin('store','store.id', '=', 'store_product.store_id');
 
         $perPage = $request->input('perPage', $this->perPage);
 
@@ -68,30 +80,30 @@ class ListingController extends Controller
             $operator = $request->sku_operator;
             switch($operator){
                 case 'contains':
-                    $query->WhereLike('store_type_listing.sku', '%'.$request->sku.'%');
+                    $query->WhereLike('listing_item.sku', '%'.$request->sku.'%');
                     break;
                 case 'starts_with':
-                    $query->WhereLike('store_type_listing.sku', $request->sku.'%');
+                    $query->WhereLike('listing_item.sku', $request->sku.'%');
                     break;
                 case 'ends_with':
-                    $query->WhereLike('store_type_listing.sku', '%'.$request->sku);
+                    $query->WhereLike('listing_item.sku', '%'.$request->sku);
                     break;
                 case '=':
-                    $query->Where('store_type_listing.sku', $request->sku);
+                    $query->Where('listing_item.sku', $request->sku);
                     break;
                 case 'in':
                     $skus = explode(',',$request->sku);
-                    $query->WhereIn('store_type_listing.sku',$skus);
+                    $query->WhereIn('listing_item.sku',$skus);
                     break;
                 case 'not_in':
                     $skus = explode(',',$request->sku);
-                    $query->WhereNotIn('store_type_listing.sku', $skus);
+                    $query->WhereNotIn('listing_item.sku', $skus);
                     break;
                 case 'doesnt_contain':
-                    $query->WhereNotLike('store_type_listing.sku', '%'.$request->sku.'%');
+                    $query->WhereNotLike('listing_item.sku', '%'.$request->sku.'%');
                     break;
                 case 'is_set':
-                    $query->whereNotNull('store_type_listing.sku');
+                    $query->whereNotNull('listing_item.sku');
                     break;
             }
 
@@ -136,30 +148,30 @@ class ListingController extends Controller
             $operator = $request->title_operator;
             switch($operator){
                 case 'contains':
-                    $query->WhereLike('store_type_listing.product_name', '%'.$request->title.'%');
+                    $query->WhereLike('listing_item.title', '%'.$request->title.'%');
                     break;
                 case 'starts_with':
-                    $query->WhereLike('store_type_listing.product_name', $request->title.'%');
+                    $query->WhereLike('listing_item.title', $request->title.'%');
                     break;
                 case 'ends_with':
-                    $query->WhereLike('store_type_listing.product_name', '%'.$request->title);
+                    $query->WhereLike('listing_item.title', '%'.$request->title);
                     break;
                 case '=':
-                    $query->Where('store_type_listing.product_name', $request->title);
+                    $query->Where('listing_item.title', $request->title);
                     break;
                 case 'in':
                     $stores = explode(',',$request->title);
-                    $query->WhereIn('store_type_listing.product_name',$stores);
+                    $query->WhereIn('listing_item.title',$stores);
                     break;
                 case 'not_in':
                     $stores = explode(',',$request->title);
-                    $query->WhereNotIn('store_type_listing.product_name', $stores);
+                    $query->WhereNotIn('listing_item.title', $stores);
                     break;
                 case 'doesnt_contain':
-                    $query->WhereNotLike('store_type_listing.product_name', '%'.$request->title.'%');
+                    $query->WhereNotLike('listing_item.title', '%'.$request->title.'%');
                     break;
                 case 'is_set':
-                    $query->whereNotNull('store_type_listing.product_name');
+                    $query->whereNotNull('listing_item.title');
                     break;
             }
 
@@ -204,30 +216,30 @@ class ListingController extends Controller
             $operator = $request->price_operator;
             switch($operator){
                 case 'contains':
-                    $query->WhereLike('store_type_listing.price', '%'.$request->price.'%');
+                    $query->WhereLike('listing_item.price', '%'.$request->price.'%');
                     break;
                 case 'starts_with':
-                    $query->WhereLike('store_type_listing.price', $request->price.'%');
+                    $query->WhereLike('listing_item.price', $request->price.'%');
                     break;
                 case 'ends_with':
-                    $query->WhereLike('store_type_listing.price', '%'.$request->price);
+                    $query->WhereLike('listing_item.price', '%'.$request->price);
                     break;
                 case '=':
-                    $query->Where('store_type_listing.price', $request->price);
+                    $query->Where('listing_item.price', $request->price);
                     break;
                 case 'in':
                     $prices = explode(',',$request->price);
-                    $query->WhereIn('store_type_listing.price',$prices);
+                    $query->WhereIn('listing_item.price',$prices);
                     break;
                 case 'not_in':
                     $prices = explode(',',$request->price);
-                    $query->WhereNotIn('store_type_listing.price', $prices);
+                    $query->WhereNotIn('listing_item.price', $prices);
                     break;
                 case 'doesnt_contain':
-                    $query->WhereNotLike('store_type_listing.price', '%'.$request->price.'%');
+                    $query->WhereNotLike('listing_item.price', '%'.$request->price.'%');
                     break;
                 case 'is_set':
-                    $query->whereNotNull('store_type_listing.price');
+                    $query->whereNotNull('listing_item.price');
                     break;
             }
 
@@ -238,64 +250,30 @@ class ListingController extends Controller
             $operator = $request->id_operator;
             switch($operator){
                 case 'contains':
-                    $query->WhereLike('store_type_listing.id', '%'.$request->id.'%');
+                    $query->WhereLike('listing_item.id', '%'.$request->id.'%');
                     break;
                 case 'starts_with':
-                    $query->WhereLike('store_type_listing.id', $request->id.'%');
+                    $query->WhereLike('listing_item.id', $request->id.'%');
                     break;
                 case 'ends_with':
-                    $query->WhereLike('store_type_listing.id', '%'.$request->id);
+                    $query->WhereLike('listing_item.id', '%'.$request->id);
                     break;
                 case '=':
-                    $query->Where('store_type_listing.id', $request->id);
+                    $query->Where('listing_item.id', $request->id);
                     break;
                 case 'in':
                     $ids = explode(',',$request->id);
-                    $query->WhereIn('store_type_listing.id',$ids);
+                    $query->WhereIn('listing_item.id',$ids);
                     break;
                 case 'not_in':
                     $ids = explode(',',$request->id);
-                    $query->WhereNotIn('store_type_listing.id', $ids);
+                    $query->WhereNotIn('listing_item.id', $ids);
                     break;
                 case 'doesnt_contain':
-                    $query->WhereNotLike('store_type_listing.id', '%'.$request->id.'%');
+                    $query->WhereNotLike('listing_item.id', '%'.$request->id.'%');
                     break;
                 case 'is_set':
-                    $query->whereNotNull('store_type_listing.id');
-                    break;
-            }
-
-        }
-
-        // Filter by ID
-        if ($request->has('id') && $request->id != '') {
-            $operator = $request->id_operator;
-            switch($operator){
-                case 'contains':
-                    $query->WhereLike('store_type_listing.id', '%'.$request->id.'%');
-                    break;
-                case 'starts_with':
-                    $query->WhereLike('store_type_listing.id', $request->id.'%');
-                    break;
-                case 'ends_with':
-                    $query->WhereLike('store_type_listing.id', '%'.$request->id);
-                    break;
-                case '=':
-                    $query->Where('store_type_listing.id', $request->id);
-                    break;
-                case 'in':
-                    $ids = explode(',',$request->id);
-                    $query->WhereIn('store_type_listing.id',$ids);
-                    break;
-                case 'not_in':
-                    $ids = explode(',',$request->id);
-                    $query->WhereNotIn('store_type_listing.id', $ids);
-                    break;
-                case 'doesnt_contain':
-                    $query->WhereNotLike('store_type_listing.id', '%'.$request->id.'%');
-                    break;
-                case 'is_set':
-                    $query->whereNotNull('store_type_listing.id');
+                    $query->whereNotNull('listing_item.id');
                     break;
             }
 
@@ -313,28 +291,21 @@ class ListingController extends Controller
 
         // Filter by created date
         if ($request->has('item_created') && $request->item_created != '') {
-            $query->where('store_type_listing.created_at', $request->item_created);
+            $query->where('listing_item.created_at', $request->item_created);
         }
 
         // Filter by product type
         if ($request->has('store_id') && $request->store_id != '') {
-            $query->where('store_type_listing.store_id', $request->store_id);
+            $query->where('store_product.store_id', $request->store_id);
         }
 
-        // Filter by price range
-        if ($request->has('price_min') && $request->price_min != '') {
-            $query->where('product_price', '>=', $request->price_min);
-        }
-
-        if ($request->has('price_max') && $request->price_max != '') {
-            $query->where('product_price', '<=', $request->price_max);
-        }
 
         // Filter by product status
         if ($request->has('status') && $request->status != '') {
-            $query->where('product_status', $request->status);
+            $query->where('listing_item.status', $request->status);
         }
 
+        $query->groupBy('listing_item.id');
         $products = $query->paginate($perPage); // Paginate results
 
         //echo $query->toSql();die;
@@ -377,14 +348,31 @@ class ListingController extends Controller
         $pageAt = 'Edit';
         $stores = Store::all();
         $manufacturers = Manufacturer::all();
-        $productDetail = StoreTypeListing::select('store_type_listing.*','products.product_sku','products.product_description','products.manufacturer_id','products.dimensions_width','products.product_color','store.name as store_name','store.marketplace_name')
+        $productDetail = ListingItem::select('listing_item.*','products.product_sku','products.product_description','products.manufacturer_id','products.dimensions_width','products.product_color','store.name as store_name','store.marketplace_name','listing_generation_type.name as generation_name')
+            ->leftJoin('listing_item_link','listing_item.id', '=', 'listing_item_link.item_id')
+            ->leftJoin('store_product','store_product.id', '=', 'listing_item.store_product_id')
+            ->leftJoin('products','products.product_id', '=', 'store_product.product_id')
+            ->leftJoin('store','store.id', '=', 'store_product.store_id')
+            ->leftJoin('listing_generation_type','listing_generation_type.id', '=', 'listing_item.generation_type_id')
+            ->where('listing_item.id',$id)
+            ->first();
+
+        $store_type_listing_id = $productDetail->store_type_listing_id;
+        $storeTypeDetail = StoreTypeListing::findOrFail($store_type_listing_id);
+
+        $productVariants = ListingItemDetail::select('listing_item_detail.*','brands.name as brand_name','device.name as device_name')
+            ->leftJoin('device','device.id', '=', 'listing_item_detail.device_id')
+            ->leftJoin('brands','brands.id', '=', 'device.brand_id')
+            ->where('listing_item_detail.listing_item_id',$productDetail->id)
+            ->get();
+
+        /*$productDetail = StoreTypeListing::select('store_type_listing.*','products.product_sku','products.product_description','products.manufacturer_id','products.dimensions_width','products.product_color','store.name as store_name','store.marketplace_name')
             ->leftJoin('products','products.product_id', '=', 'store_type_listing.item_id')
             ->leftJoin('store','store.id', '=', 'store_type_listing.store_id')
-            ->where('store_type_listing.id',$id)
-            ->first();
-        //echo '<pre>';
-        //print_r($productDetail);die;
-        return view('listing.update', compact('manufacturers','pageAt','stores','productDetail'));
+            ->where('listing_item.id',$id)
+            ->first();*/
+
+        return view('listing.update', compact('manufacturers','pageAt','stores','productDetail','storeTypeDetail','productVariants'));
     }
 
     public function getProducts(Request $request){
@@ -826,6 +814,7 @@ class ListingController extends Controller
                     $product_short_keyword = $product_details[$product->id]->short_keyword;
                     $product_long_keyword = $product_details[$product->id]->long_keyword;
                     $product_price = $product_details[$product->id]->price;
+                    $product_price_overwrite = $product_details[$product->id]->price_overwrite;
                     if($title_template){
                         if(str_contains($title_template, '#short_keyword')){
 
@@ -859,7 +848,7 @@ class ListingController extends Controller
                     $query->orderBy('device.name', 'asc');
                     $devices = $query->get();
 
-                    $productsArray[] = $this->generateProductTitles($title_template,$product,$devices,$max_title_length, $brand_seperator,$device_seperator,$compress,$generate_type,$product_price,$store_product_id);
+                    $productsArray[] = $this->generateProductTitles($title_template,$product,$devices,$max_title_length, $brand_seperator,$device_seperator,$compress,$generate_type,$product_price,$store_product_id,$product_price_overwrite);
                 }
 
                 /*echo '<pre>';
@@ -906,7 +895,7 @@ class ListingController extends Controller
         }
     }
 
-    function generateProductTitles($baseTitle, $product, $devices, $charLimit, $brand_seperator, $device_seperator, $compress, $generate_type, $product_price,$store_product_id) {
+    function generateProductTitles($baseTitle, $product, $devices, $charLimit, $brand_seperator, $device_seperator, $compress, $generate_type, $product_price,$store_product_id,$product_price_overwrite) {
         $titles = [];
         $currentDevices = [];
         $currentTitle = $baseTitle;
@@ -941,13 +930,14 @@ class ListingController extends Controller
 
                 // Save the current title and start a new one
                 //$titles[$cnt]['title'] = rtrim($currentTitle, $separator); // Remove trailing separator
-                $titles[$cnt]['title'] = str_replace('#model_series', implode(', ', $currentDevices), $baseTitle);
+                $titles[$cnt]['title'] = str_replace('#model_series', implode($separator.' ', $currentDevices), $baseTitle);
                 $cnt++;
                 //$currentTitle = $baseTitle . ' ' . $nameToAdd;
                 $currentDevices = [$currentBrand];
                 $titles[$cnt]['product_code'] = $product->product_sku;
                 $titles[$cnt]['product_id'] = $product->product_id;
                 $titles[$cnt]['price'] = $product_price;
+                $titles[$cnt]['price_overwrite'] = $product_price_overwrite;
                 $titles[$cnt]['generate_type'] = $generate_type;
                 $titles[$cnt]['store_product_id'] = $store_product_id;
                 $titles[$cnt]['model'][] = $device->name;
@@ -957,6 +947,7 @@ class ListingController extends Controller
                 $titles[$cnt]['product_code'] = $product->product_sku;
                 $titles[$cnt]['product_id'] = $product->product_id;
                 $titles[$cnt]['price'] = $product_price;
+                $titles[$cnt]['price_overwrite'] = $product_price_overwrite;
                 $titles[$cnt]['generate_type'] = $generate_type;
                 $titles[$cnt]['store_product_id'] = $store_product_id;
                 $titles[$cnt]['model'][] = $device->name;
@@ -972,7 +963,7 @@ class ListingController extends Controller
         // Add the last title
         if (!empty($currentTitle)) {
             /*$titles[$cnt]['title'] = rtrim($currentTitle, ' '.$separator.' ');*/
-            $titles[$cnt]['title'] = str_replace('#model_series', implode(', ', $currentDevices), $baseTitle);
+            $titles[$cnt]['title'] = str_replace('#model_series', implode($separator.' ', $currentDevices), $baseTitle);
         }
 
         return $titles;
@@ -986,6 +977,7 @@ class ListingController extends Controller
                 $generation_type_id = $request->input('generation_type_id');
                 $product_titles = $request->input('final_product_title');
                 $product_prices = $request->input('final_product_price');
+                $product_price_overwrites = $request->input('final_product_price_overwrite');
                 $product_codes = $request->input('final_product_code');
                 $store_product_ids = $request->input('final_store_product_id');
                 $product_ids = $request->input('final_product_id');
@@ -1019,9 +1011,13 @@ class ListingController extends Controller
                 echo '</pre>';die;*/
                 if($listing_id && !empty($product_titles)) {
                     foreach ($product_titles as $key => $product) {
-                        $sku = StoreTypeListing::generateUniqueAlphabeticSku($product_codes[$key]);
+                        $sku = StoreTypeListing::generateUniqueAlphabeticSku($product_codes[$key],4);
+                        $productDetail = StoreProduct::getStoreProductDetail($store_product_ids[$key]);
+                        $productDetail = $productDetail->toArray();
                         $listingProductArr = [
                             'product_name' => $product,
+                            'description' => $productDetail['description'],
+                            'product_category' => $productDetail['ProductType'],
                             'sku' => $sku,
                             'price' => $product_prices[$key],
                             'item_id' => $product_ids[$key],
@@ -1035,8 +1031,7 @@ class ListingController extends Controller
                         $store_type_listing_id = $record->id;
 
                         if($store_type_listing_id){
-                            $productDetail = StoreProduct::findOrFail($store_product_ids[$key]);
-                            $productDetail = $productDetail->toArray();
+
                             $modelDetail = array(
                                 'title' => $product,
                                 'description' => $productDetail['description'],
@@ -1047,6 +1042,8 @@ class ListingController extends Controller
                                 'sync_status' => 1,
                                 'store_product_id' => $store_product_ids[$key],
                                 'generation_type_id' => $generation_type_id,
+                                'overwrite_title' => 1,
+                                'overwrite_price' => $product_price_overwrites[$key],
                                 'status' => 1,
                                 /*'model_name' => $model->name,
                                 'brand_name' => $model->brand_name,
@@ -1068,9 +1065,9 @@ class ListingController extends Controller
                                         $upcCodes = UPCCodes::where('store',$store_id)->where('is_used',0)->limit($limit)->get();
                                     }
                                     foreach ($product_models[$key] as $k=>$model) {
-
+                                        $nsku = StoreTypeListing::generateUniqueAlphabeticSku($product_codes[$key],6);
                                         $itemDetail = array(
-                                            'sku' => $sku,
+                                            'sku' => $nsku,
                                             'title' => $product,
                                             'upc' => isset($upcCodes[$k]['upc_code']) ? $upcCodes[$k]['upc_code'] : '123',
                                             'device_id' => $model->id,
@@ -1094,13 +1091,9 @@ class ListingController extends Controller
                                     /*echo '<pre>';
                                     print_r($modelDetail);
                                     echo '</pre>';die;*/
-
                                 }
                             }
                         }
-
-
-
                     }
                 }
 
