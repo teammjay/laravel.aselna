@@ -27,12 +27,12 @@ class ShippingCarrierJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $shippingCarriers = DB::connection('easyesale_db')->table('shipping_carrier')->get();
+        $shippingCarriers = DB::connection('easyesale_db')->table('shipping_carrier')->cursor();
         foreach ($shippingCarriers as $shippingCarrier) {
             $this->createShippingCarrier($shippingCarrier);
         }
 
-        $shippingCarrierServices = DB::connection('easyesale_db')->table('shipping_carrier_service')->get();
+        $shippingCarrierServices = DB::connection('easyesale_db')->table('shipping_carrier_service')->cursor();
         foreach ($shippingCarrierServices as $shippingCarrierService) {
             $this->createShippingCarrierService($shippingCarrierService);
         }

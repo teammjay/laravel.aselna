@@ -24,7 +24,7 @@ class UPCSyncJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $upcSequence = DB::connection('easyesale_db')->table('upc_creation')->get();
+        $upcSequence = DB::connection('easyesale_db')->table('upc_creation')->cursor();
         foreach ($upcSequence as $upc) {
             $this->createUPCSequence($upc);
         }

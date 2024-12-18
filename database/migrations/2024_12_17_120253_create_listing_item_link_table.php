@@ -20,8 +20,8 @@ return new class extends Migration
             $table->uuid('client')->nullable();
             $table->uuid('replaced_id')->nullable();
             $table->uuid('order_operation_item_id')->nullable();
-            $table->float('old_price');
-            $table->integer('sync_status');
+            $table->float('old_price')->nullable();
+            $table->integer('sync_status')->nullable();
             $table->string('feed_message_id')->nullable();
             $table->string('created_by')->nullable();
             $table->string('updated_by')->nullable();

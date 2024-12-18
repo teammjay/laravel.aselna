@@ -9,6 +9,10 @@ use App\Jobs\DevicesSyncJob;
 use App\Jobs\DeviceTypesSyncJob;
 use App\Jobs\GenerationTypeAndTemplateSync;
 use App\Jobs\InterfaceSyncJob;
+use App\Jobs\ListingItemDataSyncJob;
+use App\Jobs\ListingItemLinkSyncJob;
+use App\Jobs\ListingItemSyncJob;
+use App\Jobs\ListingSyncJob;
 use App\Jobs\ManufacturerSyncJob;
 use App\Jobs\ProductConditionJob;
 use App\Jobs\ProductInterfaces;
@@ -45,18 +49,22 @@ class SyncAllTables extends Command
     {
         StoreTypeSyncJob::dispatch();
         StoreSyncJob::dispatch();
-//        ManufacturerSyncJob::dispatch();
-//        DeviceTypesSyncJob::dispatch();
-//        BrandSyncJob::dispatch();
-//        DevicesSyncJob::dispatch();
-//        CategorySyncJob::dispatch();
-//        ProductConditionJob::dispatch();
-//        ShippingCarrierJob::dispatch();
-//        InterfaceSyncJob::dispatch();
-//        DeviceInterfaces::dispatch();
-//        GenerationTypeAndTemplateSync::dispatch();
-//        ProductSyncJob::dispatch();
-//        ProductInterfaces::dispatch();
+        ManufacturerSyncJob::dispatch();
+        DeviceTypesSyncJob::dispatch();
+        BrandSyncJob::dispatch();
+        DevicesSyncJob::dispatch();
+        CategorySyncJob::dispatch();
+        ProductConditionJob::dispatch();
+        ShippingCarrierJob::dispatch();
+        InterfaceSyncJob::dispatch();
+        DeviceInterfaces::dispatch();
+        GenerationTypeAndTemplateSync::dispatch();
+        ProductSyncJob::dispatch();
+        ProductInterfaces::dispatch();
+        ListingSyncJob::dispatch();
+        ListingItemSyncJob::dispatch();
+        ListingItemDataSyncJob::dispatch();
+        ListingItemLinkSyncJob::dispatch();
         UPCSyncJob::dispatch();
     }
 }
