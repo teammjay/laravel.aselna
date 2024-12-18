@@ -35,6 +35,15 @@ class StoreProduct extends Model
         return $this->belongsTo(Catalog::class,'product_id');
     }
 
+    public static function getStoreProductDetail($product_id){
+        $query2 = self::select('store_product.*','products.product_sku','store_product.created_at','product_type.name as ProductType')->with('Product');
+        $query2->leftJoin('products','products.product_id', '=', 'store_product.product_id');
+        $query2->leftJoin('product_type','products.product_type', '=', 'product_type.id');
+        $query2->where('store_product.id', $product_id);
+        //echo $query2->toSql();die;
+        return $query2->first();
+    }
+
     public static function getStoreProducts($product_ids){
         $query2 = self::select('store_product.id','store_product.product_id','store_product.title','products.product_sku','store_product.created_at','product_type.name as ProductType')->with('Product');
         $query2->leftJoin('products','products.product_id', '=', 'store_product.product_id');

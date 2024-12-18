@@ -1232,12 +1232,18 @@
                 var short_keyword = $('.shortKey-'+pro_id).val();
                 var long_keyword = $('.longKey-'+pro_id).val();
                 var price = $('.price-'+pro_id).val();
+                if($('.po-'+pro_id).is(':checked')) {
+                    var price_overwrite = 1;
+                }else{
+                    var price_overwrite = 0;
+                }
                 productDetail[pid] = {};
                 productDetail[pid]['product_id'] = pro_id;
                 productDetail[pid]['title'] = title;
                 productDetail[pid]['short_keyword'] = short_keyword;
                 productDetail[pid]['long_keyword'] = long_keyword;
                 productDetail[pid]['price'] = price;
+                productDetail[pid]['price_overwrite'] = price_overwrite;
             });
 
             $.ajax({

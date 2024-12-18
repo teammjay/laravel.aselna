@@ -4,21 +4,22 @@
             <td>{{ $product->sku }}</td>
             <td></td>
             <td></td>
-            <td>{{ $product->store_id }}</td>
+            <td>{{ $product->store_sku }}</td>
             <td>{{ $product->product_sku }}</td>
             <td>{{ $product->store_name.' - '.$product->marketplace_name }}</td>
-            <td>{{ $product->product_name }}</td>
+            <td>{{ $product->title }}</td>
             <td>{{ ($product->status == 1) ? 'Active' : 'Inactive' }}</td>
             <td></td>
             <td>{{ $product->product_color }}</td>
             <td></td>
             <td></td>
             <td>{{ $product->price }}</td>
+            <td></td>
             <td>
                 <a href="{{ route('listing.edit', $product->id) }}" class="btn btn-primary">
                     <i class="fas fa-fw fa-pencil-alt"></i>
                 </a>
-                <button class="btn btn-danger delete-btn" data-id="{{ $product->id }}"> <i class="fas fa-fw fa-trash"></i></button>
+                {{--<button class="btn btn-danger delete-btn" data-id="{{ $product->id }}"> <i class="fas fa-fw fa-trash"></i></button>--}}
             </td>
         </tr>
     @endforeach
