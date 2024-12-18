@@ -45,14 +45,14 @@ class ProductSyncJob implements ShouldQueue
 //
 //            $this->createProductFeatures($product, $product_id);
 //        }
-        $easyesaleProducts = DB::connection('easyesale_db')->table('product')->whereNull('deleted_by')->where('status', '=', '1')->get();
+        $easyesaleProducts = DB::connection('easyesale_db')->table('product')->whereNull('deleted_by')->where('status', '=', '1')->cursor();
         foreach ($easyesaleProducts as $product) {
             $this->updateProduct($product);
 
             $this->createProductTitleKeywords($product);
         }
 
-        $storeProducts = DB::connection('easyesale_db')->table('store_product')->get();
+        $storeProducts = DB::connection('easyesale_db')->table('store_product')->cursor();
         foreach ($storeProducts as $storeProduct) {
             $this->createStoreProduct($storeProduct);
         }
@@ -88,6 +88,9 @@ class ProductSyncJob implements ShouldQueue
 
     private function createProductTitleKeywords($product)
     {
+        if(!Catalog::where('product_id', $product->id)->exists()){
+            return;
+        }
         if (! DB::connection('easyesale_db')->table('product_title_keyword')->where('product_id', $product->id)) {
             return;
         }
@@ -187,8 +190,10 @@ class ProductSyncJob implements ShouldQueue
         if (!Catalog::where('product_id', $storeProduct->product_id)->exists()) {
             return;
         }
-        StoreProduct::create([
-            'id' => $storeProduct->product_id,
+        StoreProduct::updateOrCreate([
+            'id' => $storeProduct->id,
+        ],[
+            'id' => $storeProduct->id,
             'product_id' => $storeProduct->product_id,
             'store_id' => $storeProduct->store_id,
             'active' => $storeProduct->active ? 1 : 0,

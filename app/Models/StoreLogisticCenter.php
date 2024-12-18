@@ -20,13 +20,13 @@ class StoreLogisticCenter extends Model
 
         static::creating(function ($model) {
             if (empty($model->id)) {
-                $model->id = (string) Str::uuid();
+                $model->id = (string)Str::uuid();
             }
         });
     }
 
 
-    protected $fillable = ['store_id','logistic_center_id','overwrite_from_address','overwrite_return_address','created_by','updated_by'];
+    protected $fillable = ['id', 'store_id', 'logistic_center_id', 'overwrite_from_address', 'overwrite_return_address', 'created_by', 'updated_by'];
 
     public function LogisticCenter()
     {

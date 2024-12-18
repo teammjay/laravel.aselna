@@ -24,7 +24,7 @@ class ProductConditionJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $productCondition = DB::connection('easyesale_db')->table('product_condition')->get();
+        $productCondition = DB::connection('easyesale_db')->table('product_condition')->cursor();
         foreach ($productCondition as $condition) {
             $this->createProductCondition($condition);
         }

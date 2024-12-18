@@ -30,7 +30,7 @@ class InterfaceSyncJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $attributes = DB::connection('easyesale_db')->table('cea_interface')->get();
+        $attributes = DB::connection('easyesale_db')->table('cea_interface')->cursor();
         foreach ($attributes as $attribute) {
             $this->createInterfaces($attribute);
         }

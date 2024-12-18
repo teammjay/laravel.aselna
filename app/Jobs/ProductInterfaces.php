@@ -28,7 +28,7 @@ class ProductInterfaces implements ShouldQueue
      */
     public function handle(): void
     {
-        $productAttributes = DB::connection('easyesale_db')->table('product_cea_interface_link')->get();
+        $productAttributes = DB::connection('easyesale_db')->table('product_cea_interface_link')->cursor();
         foreach ($productAttributes as $productAttribute) {
             $this->createProductInterfaces($productAttribute);
         }

@@ -13,6 +13,7 @@ use App\Jobs\ListingItemDataSyncJob;
 use App\Jobs\ListingItemLinkSyncJob;
 use App\Jobs\ListingItemSyncJob;
 use App\Jobs\ListingSyncJob;
+use App\Jobs\LogisticCentreSyncJob;
 use App\Jobs\ManufacturerSyncJob;
 use App\Jobs\ProductConditionJob;
 use App\Jobs\ProductInterfaces;
@@ -66,5 +67,6 @@ class SyncAllTables extends Command
         ListingItemDataSyncJob::dispatch();
         ListingItemLinkSyncJob::dispatch();
         UPCSyncJob::dispatch();
+        LogisticCentreSyncJob::dispatch();
     }
 }

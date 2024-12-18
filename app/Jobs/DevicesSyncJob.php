@@ -30,12 +30,12 @@ class DevicesSyncJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $syncDevices = DB::connection('easyesale_db')->table('cea_device')->get();
+        $syncDevices = DB::connection('easyesale_db')->table('cea_device')->cursor();
         foreach ($syncDevices as $device) {
             $this->createSyncDevice($device);
         }
 
-        $devices = DB::connection('fonus_db')->table('tbl_device')->get();
+        $devices = DB::connection('fonus_db')->table('tbl_device')->cursor();
         foreach ($devices as $device) {
             if (Device::where(['code' => $device->device_id])->exists()) {
                 continue;

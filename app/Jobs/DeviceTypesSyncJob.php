@@ -30,22 +30,22 @@ class DeviceTypesSyncJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $deviceTypes = DB::connection('easyesale_db')->table('cea_device_type')->get();
+        $deviceTypes = DB::connection('easyesale_db')->table('cea_device_type')->cursor();
         foreach ($deviceTypes as $deviceType) {
             $this->createSyncDeviceType($deviceType);
         }
 
-        $deviceSubTypes = DB::connection('easyesale_db')->table('cea_device_sub_type')->get();
+        $deviceSubTypes = DB::connection('easyesale_db')->table('cea_device_sub_type')->cursor();
         foreach ($deviceSubTypes as $deviceSubType) {
             $this->createSyncDeviceSubType($deviceSubType);
         }
 
-        $data = DB::connection('fonus_db')->table('tbl_device_type')->get();
+        $data = DB::connection('fonus_db')->table('tbl_device_type')->cursor();
         foreach ($data as $deviceType) {
             $this->createDeviceType($deviceType);
         }
 
-        $deviceSubTypes = DB::connection('fonus_db')->table('tbl_device_type_sub')->get();
+        $deviceSubTypes = DB::connection('fonus_db')->table('tbl_device_type_sub')->cursor();
         foreach ($deviceSubTypes as $deviceSubType) {
             $this->createDeviceSubType($deviceSubType);
         }

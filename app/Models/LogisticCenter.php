@@ -20,13 +20,13 @@ class LogisticCenter extends Model
 
         static::creating(function ($model) {
             if (empty($model->id)) {
-                $model->id = (string) Str::uuid();
+                $model->id = (string)Str::uuid();
             }
         });
     }
 
 
-    protected $fillable = ['name','client_id','center_type','from_address_id','return_address_id','created_by','updated_by'];
+    protected $fillable = ['id', 'name', 'client_id', 'center_type', 'from_address_id', 'return_address_id', 'created_by', 'updated_by'];
 
     public function StoreLogisticCenter()
     {

@@ -29,12 +29,12 @@ class DeviceInterfaces implements ShouldQueue
      */
     public function handle(): void
     {
-        $deviceInterfaces = DB::connection('easyesale_db')->table('cea_device_interface')->get();
+        $deviceInterfaces = DB::connection('easyesale_db')->table('cea_device_interface')->cursor();
         foreach ($deviceInterfaces as $deviceInterface) {
             $this->createDeviceInetrface($deviceInterface);
         }
 
-        $deviceAttributes = DB::connection('fonus_db')->table('tbl_device_attributes')->get();
+        $deviceAttributes = DB::connection('fonus_db')->table('tbl_device_attributes')->cursor();
         foreach ($deviceAttributes as $deviceAttribute) {
 //            $this->createDeviceInterfaces($deviceAttribute);
         }
