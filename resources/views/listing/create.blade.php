@@ -15,6 +15,7 @@
         }
         .selectproRow:hover td {
             background-color: #ddf1ff;
+            color:#000;
         }
         .bd-example {
             background: #fff;
@@ -347,7 +348,7 @@
 
                         <div class="col-md-12">
                             <div class="d-flex" style="gap:10px;">
-                                <div class="border p-2">
+                                <div class="border p-2" style="width: 17%;">
                                     <label>Generation Type</label>
                                     <div class="form-group align-items-center">
                                         @if(count($listingGenerationTypes ?? []) > 0)
@@ -379,7 +380,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="border p-2">
+                                <div class="border p-2" style="width: 16%;">
                                     <label>Device Type</label>
                                     @if(count($deviceTypes ?? []) > 0)
                                         @foreach($deviceTypes as $dType)
@@ -415,7 +416,7 @@
                                 </div>
                                 <div>
                                     <div class="d-flex" style="gap:10px;">
-                                        <div class="border p-2">
+                                        <div class="border p-2 w-25">
                                             <label>Rating Filter</label>
                                             <div class="row">
                                                 <div class="col-md-12">
@@ -435,7 +436,7 @@
                                             </div>
                                         </div>
 
-                                        <div class="border p-2">
+                                        <div class="border p-2 w-25">
                                             <label>Popularity</label>
                                             <div class="row">
                                                 <div class="col-md-12">
@@ -457,8 +458,10 @@
                                     </div>
                                     <div class="form-group mb-1 mt-3">
                                         <label>Title Template</label>
-                                        <input type="text" class="form-control" name="title_template" id="title_template">
-                                        </input>
+                                        <div class="d-flex">
+                                            <input type="text" class="form-control" name="title_template" id="title_template" style="width: 85%;">
+                                            <button type="button" class="btn btn-default" id="updateAll">Update All</button>
+                                        </div>
                                     </div>
                                     <div class="d-flex align-items-center mb-1 mt-3">
                                         <span>Brand Seperator </span>
@@ -657,7 +660,7 @@
 
             document.getElementById('nextBtn').addEventListener('click', () => {
                 $('#nextBtn').html('Next');
-                $('html, body').animate({ scrollTop: 0 }, 'fast');
+
                 if (currentIndex < tabs.length - 1) {
                     if(currentIndex == 0){
                         let selected_product = [];
@@ -670,11 +673,13 @@
                             followSecondStep();
                             currentIndex++;
                             activateTab(currentIndex);
+                            $('html, body').animate({ scrollTop: 0 }, 'fast');
                         }
                     }else if(currentIndex == 1){
-                        followThirdStep();
                         currentIndex++;
                         activateTab(currentIndex);
+                        followThirdStep();
+                        $('html, body').animate({ scrollTop: 0 }, 'fast');
                     }else if(currentIndex == 2){
 
                         $('.bd-example').show();
@@ -735,6 +740,7 @@
                                     $('#nextBtn').html('Finish');
                                     currentIndex++;
                                     activateTab(currentIndex);
+                                    $('html, body').animate({ scrollTop: 0 }, 'fast');
 
                                 }
                             },
@@ -768,17 +774,14 @@
                                     currentIndex++;
                                     activateTab(currentIndex);
                                 }
-
-                                
-
                             },
                             error: function(xhr) {
-
                             }
                         });
                     }else{
                         currentIndex++;
                         activateTab(currentIndex);
+                        $('html, body').animate({ scrollTop: 0 }, 'fast');
                     }
                 }
             });
@@ -789,6 +792,7 @@
                 if (currentIndex > 0) {
                     currentIndex--;
                     activateTab(currentIndex);
+                    $('html, body').animate({ scrollTop: 0 }, 'fast');
                 }
             });
 
@@ -827,22 +831,36 @@
 
             $(document).on('click', '.sprolistRow', function() {
                 let ele = $(this);
+                $('.sprolistRow').removeClass('bg-blue');
+                $('.pro-id').prop('checked',false);
                 if(ele.find('.pro-id').is(':checked')){
                     ele.removeClass('bg-blue');
                     ele.find('.pro-id').prop('checked',false);
                 }else{
                     ele.addClass('bg-blue');
                     ele.find('.pro-id').prop('checked',true);
+                    var title_template = ele.find('input[name="product_title_template[]"]').val();
+                    if(title_template) {
+                        $('#title_template').val(title_template);
+                    }
                 }
-                loadListingProduct();
+                loadListingProduct(1);
             });
 
+
+
+            $(document).on('click', '#updateAll', function() {
+                var selected_template = $('#title_template').val();
+                $('input[name="product_title_template[]"]').val(selected_template);
+            });
+
+
             $(document).on('click', '#brand_filter', function() {
-                loadListingProduct();
+                loadListingProduct(0);
             });
 
             $(document).on('click', 'input[name="device_type[]"]', function() {
-                loadListingProduct();
+                loadListingProduct(0);
             });
 
             $(document).on('click', '#select_all', function() {
@@ -1148,6 +1166,12 @@
                             minLength: 0,
                             select : function(event, ui){
                                 $('#title_template').val(ui.item.label);
+                                var selected_template = ui.item.label;
+                                $('.pro-id').each(function () {
+                                    if($(this).is(':checked')){
+                                        $(this).parent().find('input[name="product_title_template[]"]').val(selected_template);
+                                    }
+                                });
                                 return false;
                             }
                         }).focus(function () {
@@ -1261,7 +1285,7 @@
                 success: function (response) {
                     if (response.html) {
                         $('#product-list-3').html(response.html);
-                        loadListingProduct();
+                        loadListingProduct(0);
                     }
                 },
                 error: function (xhr) {
@@ -1365,12 +1389,17 @@
             });
         }
 
-        function loadListingProduct(){
+        function loadListingProduct(single){
             //let product_id = ele.find('.pro-id').val();
             let product_ids = [];
-            $('input[name="selected_list_product[]"]').each(function () {
-                product_ids.push($(this).val())
-            });
+            if(single){
+
+                product_ids.push($('input[name="selected_list_product[]"]:checked').val());
+            }else {
+                $('input[name="selected_list_product[]"]').each(function () {
+                    product_ids.push($(this).val())
+                });
+            }
             let device_type = [];
             $('input[name="device_type[]"]:checked').each(function () {
                 device_type.push($(this).val())
@@ -1398,6 +1427,11 @@
                     if (response.success) {
                         $('#listing_list').html(response.html);
                         $('#total_listing_product').html(response.total+' rows');
+                        if(response.total == 0){
+                            $('#nextBtn').attr('disabled',true);
+                        }else{
+                            $('#nextBtn').removeAttr('disabled');
+                        }
                     }else{
                         $('#listing_list').html('');
                         $('#total_listing_product').html('0 rows');

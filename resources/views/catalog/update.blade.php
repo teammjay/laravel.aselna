@@ -112,11 +112,16 @@
                                         </div>
 
                                         @php
-                                            function renderCategories($productTypes, $prefix = '') {
+                                            function renderCategories($productTypes, $product, $prefix = '') {
                                                 foreach ($productTypes as $ptype) {
-                                                    echo '<option value="' . $ptype->id . '">' . $prefix . $ptype->name . '</option>';
+                                                    if($product->product_type == $ptype->id){
+                                                        $sel = 'selected';
+                                                    }else{
+                                                        $sel = '';
+                                                    }
+                                                    echo '<option value="' . $ptype->id . '" '.$sel.'>' . $prefix . $ptype->name . '</option>';
                                                     if ($ptype->children) {
-                                                        renderCategories($ptype->children, $prefix . '-- ');
+                                                        renderCategories($ptype->children, $product,  $prefix . '-- ');
                                                     }
                                                 }
                                             }
@@ -128,7 +133,7 @@
                                                     <select class="form-control" id="product_type" name="product_type">
                                                         <option>-- Product Type --</option>
                                                         @php
-                                                            renderCategories($productTypes);
+                                                            renderCategories($productTypes,$product);
                                                         @endphp
                                                         {{--@if(count($productTypes ?? []) > 0)
                                                             @foreach($productTypes as $ptype)
@@ -720,7 +725,7 @@
                                                                 <option value=""></option>
                                                                 @if(count($store['store_category'] ?? []) > 0)
                                                                     @foreach($store['store_category'] as $key2=>$sCat)
-                                                                        <option value="{{ $sCat->id }}" {{ (isset($productStoreCategory) && in_array($sCat->id,$productStoreCategory)) ? 'selected' : '' }}>{{ $sCat->name }}</option>
+                                                                        <option value="{{ $sCat->id }}" {{ (isset($productStore[$sCat->id]) && $productStore[$sCat->id] == $store['store_detail']->id ) ? 'selected' : '' }}>{{ $sCat->name }}</option>
                                                                     @endforeach
                                                                 @endif
                                                             </select>
@@ -1018,6 +1023,10 @@
                 }else{
                     var status = 0;
                 }
+
+                var cat_id = $('.store_row.active').find('select[name="store_type_category_id"]').val();
+
+                formData.set('store_type_category_id',cat_id);
                 formData.set('store_id',store_id);
                 formData.set('active',status);
             }
@@ -1322,10 +1331,22 @@
                 $(this).parents('tr.field-group').remove();
             });
 
+            $(document).on('click', 'input[name="active"]', function() {
+                if($(this).is(':checked')){
+                    $('.store_row').removeClass('active bg-blue');
+                    $(this).parents('.store_row').addClass('active bg-blue');
+                }else{
+                    $(this).parents('.store_row').removeClass('active bg-blue');
+                }
+            });
+
+
+
             // change sort order for image of prodcut
             $(document).on('click', '.store_row', function() {
                 $('.store_row').removeClass('active bg-blue');
                 $(this).addClass('active bg-blue');
+                $(this).find('input[name="active"]').prop('checked',true);
                 var store_id = $(this).data('id');
                 $.ajax({
                     url: "{{ route('catalog.getstoredetail') }}",

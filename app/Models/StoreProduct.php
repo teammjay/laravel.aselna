@@ -29,7 +29,7 @@ class StoreProduct extends Model
 
     /*protected $fillable = ['product_id','store_id','store_category_id','title','active','errors','profit_rate','client','price','msrp','description','channel_category_id','sales_count','last_sale_date','include_carriers','brand_combo','carrier_combo','manufacturer_id','listing_generation_type_id','listing_title_template_id','preserve_title_description','fulfillment_by_channel_price','last_update_date_time','last_synch_date_time','overwrite_compare_at_price','wholesale_price','compare_at_price','long_tail_keywords','short_tail_keywords','fulfillment_type','synch_price','synch_inventory','synch_item','overwrite_wholesale_price','overwrite_description','overwrite_title','overwrite_fulfillment_by_channel_price','overwrite_msrp','overwrite_price','created_by','updated_by'];*/
 
-    protected $fillable = ['product_id','store_id','store_category_id','title','active','price','msrp','description','sales_count','manufacturer_id','overwrite_compare_at_price','wholesale_price','compare_at_price','overwrite_wholesale_price','overwrite_description','overwrite_title','overwrite_msrp','overwrite_price','created_by','updated_by','created_at','updated_at'];
+    protected $fillable = ['product_id','store_id','store_type_category_id','title','active','price','msrp','description','sales_count','manufacturer_id','overwrite_compare_at_price','wholesale_price','compare_at_price','overwrite_wholesale_price','overwrite_description','overwrite_title','overwrite_msrp','overwrite_price','created_by','updated_by','created_at','updated_at'];
 
     public function product(){
         return $this->belongsTo(Catalog::class,'product_id');

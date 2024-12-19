@@ -398,7 +398,10 @@ class CatalogController extends Controller
         $productTypes = ProductType::with('children')->get();
         $productConditions = ProductCondition::all();
         $storeProducts = StoreProduct::where('product_id', $id)->get();
-        $productStore = $storeProducts->pluck('store_id')->values()->all();
+        $productStore = $storeProducts->pluck('store_id','store_type_category_id')->all();
+        /*echo '<pre>';
+        print_r($productStore);
+        echo '</pre>';die;*/
         $productStoreCategory = $storeProducts->pluck('store_type_category_id')->values()->all();
         $interfaces = Interfaces::all();
         $productInterfaces = ProductInterface::where('product_id', $id)->get();
@@ -536,8 +539,9 @@ class CatalogController extends Controller
             $created_by = auth()->user()->name ?? 'admin';
             $request->merge(['created_by' => $created_by, 'updated_by' => $created_by]);
 
-            $product = StoreProduct::where(['product_id' => $productId,'store_id' =>$request->input('store_id')])->get();
+            $product = StoreProduct::where(['product_id' => $productId,'store_id' =>$request->input('store_id')])->first();
             $productArr = $product->toArray();
+            //print_r($productArr);die;
             if(!empty($productArr)){
                 $product->update($request->all());
             }else{
