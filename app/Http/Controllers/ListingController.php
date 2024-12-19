@@ -865,8 +865,10 @@ class ListingController extends Controller
                     if(!empty($product)){
                         $totalCount = count($product);
                         foreach($product as $key=>$pro){
-                            $models[$key] = $pro['model'];
-                            $modelDetail[$key] = $pro['model_detail'];
+                            if(isset($pro['model'])) {
+                                $models[$key] = $pro['model'];
+                                $modelDetail[$key] = $pro['model_detail'];
+                            }
                         }
                     }
                 }
@@ -1062,21 +1064,26 @@ class ListingController extends Controller
 
                                     if(count($product_models[$key] ?? []) > 0){
                                         $limit = count($product_models[$key]);
-                                        $upcCodes = UPCCodes::where('store',$store_id)->where('is_used',0)->limit($limit)->get();
+                                        $upcCodes = UPCCodes::where('store',$store_id)->where('is_used',0)->orderBy('sequence_id','asc')->limit($limit)->get();
                                     }
                                     foreach ($product_models[$key] as $k=>$model) {
                                         $nsku = StoreTypeListing::generateUniqueAlphabeticSku($product_codes[$key],6);
                                         $itemDetail = array(
                                             'sku' => $nsku,
                                             'title' => $product,
-                                            'upc' => isset($upcCodes[$k]['upc_code']) ? $upcCodes[$k]['upc_code'] : '123',
+                                            'upc' => isset($upcCodes[$k]['upc_code']) ? $upcCodes[$k]['upc_code'] : '',
                                             'device_id' => $model->id,
                                             'listing_item_id' => $listing_item_id,
                                             'store_sku' => $store_id,
                                             'created_by' => $created_by
                                         );
 
-                                        ListingItemDetail::create($itemDetail);
+                                        $rec = ListingItemDetail::create($itemDetail);
+
+                                        if($rec){
+                                            $record = UPCCodes::find($upcCodes[$k]['id']);
+                                            $record->update(['is_used'=>1]);
+                                        }
 
                                         $itemLink = array(
                                             'item_id' => $listing_item_id,
@@ -1095,14 +1102,19 @@ class ListingController extends Controller
                             }
                         }
                     }
-                }
 
-                if ($request->ajax()) {
                     return response()->json([
                         'success' => true,
                         'message' => 'Product listing created successfully!'
                     ]);
                 }
+
+                return response()->json([
+                    'error' => true,
+                    'message' => 'Something went wrong! Please try again!'
+                ]);
+
+
             }
         }
 
