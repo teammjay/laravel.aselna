@@ -334,7 +334,7 @@ class ListingController extends Controller
         $manufacturers = Manufacturer::all();
         $productTypes = ProductType::whereNull('parent_id')->get();
         $deviceTypes = DeviceTypes::all();
-        $listingGenerationTypes = ListingGenerationType::all();
+        $listingGenerationTypes = ListingGenerationType::orderBy('code','asc')->get();
         $brands = Brand::orderBy('name','asc')->get();
         session()->forget('listing_product_details');
         return view('listing.create', compact('pageAt','stores','manufacturers','productTypes','deviceTypes','brands','listingGenerationTypes'));
@@ -707,6 +707,8 @@ class ListingController extends Controller
         $brand = $request->input('brand');
         $rating = $request->input('rating');
         $popularity = $request->input('popularity');
+        $is_selected = $request->input('is_selected');
+        $selected_device = $request->input('selected_device');
         if($product_id){
             $query = Device::select('device.*', 'product_interface.product_id')->with('brand')->with('deviceType');
             $query->leftJoin('device_interface','device_interface.device_id', '=', 'device.id');
@@ -730,13 +732,13 @@ class ListingController extends Controller
             $count = $devices->count();
 
 
-            $view = view('listing.target_product_listing', compact('devices'))->render();
+            $view = view('listing.target_product_listing', compact('devices','selected_device','is_selected'))->render();
 
             if ($request->ajax()) {
                 return response()->json([
                     'success' => true,
                     'html' => $view,
-                    'total' => $count,
+                    'total' => $count
                 ]);
             }
 
@@ -786,17 +788,18 @@ class ListingController extends Controller
         $rating = $request->input('rating');
         $popularity = $request->input('popularity');
         $store_id = $request->input('store_id');
-        $title_template = $request->input('title_template');
+        $title_templates = $request->input('title_template');
         $compress = $request->input('compress');
         $generate_type = $request->input('generate_type');
         $brand_seperator = $request->input('brand_seperator');
         $group_seperator = $request->input('group_seperator');
         $device_seperator = $request->input('device_seperator');
+        $selected_device = $request->input('selected_device');
         $product_details = session('listing_product_details');
         $product_details = (array) json_decode($product_details);
         /*echo '<pre>';
         print_r($product_details);
-        echo '</pre>';*/
+        echo '</pre>';die;*/
 
         if($store_id && $product_ids){
 
@@ -809,12 +812,14 @@ class ListingController extends Controller
             //print_r($products);die;
             if(count($products ?? []) > 0){
                 $productsArray = [];
-                foreach($products as $product){
+                foreach($products as $key=>$product){
                     $store_product_id = $product->id;
                     $product_short_keyword = $product_details[$product->id]->short_keyword;
                     $product_long_keyword = $product_details[$product->id]->long_keyword;
+                    $product_title = $product_details[$product->id]->title;
                     $product_price = $product_details[$product->id]->price;
                     $product_price_overwrite = $product_details[$product->id]->price_overwrite;
+                    $title_template = $title_templates[$key];
                     if($title_template){
                         if(str_contains($title_template, '#short_keyword')){
 
@@ -825,6 +830,16 @@ class ListingController extends Controller
 
                             $title_template = str_replace('#long_keyword', $product_long_keyword, $title_template);
                         }
+
+                        if(str_contains($title_template, '#unique_code')){
+
+                            $title_template = str_replace('#unique_code', '[^]', $title_template);
+                        }
+
+                        if(str_contains($title_template, '#product')){
+
+                            $title_template = str_replace('#product', $product_title, $title_template);
+                        }
                     }
 
                     $query = Device::select('device.*','brands.name as brand_name')->with('deviceType');
@@ -832,6 +847,9 @@ class ListingController extends Controller
                     $query->leftJoin('device_interface','device_interface.device_id', '=', 'device.id');
                     $query->leftJoin('product_interface','product_interface.interface_id', '=', 'device_interface.interface_id');
                     $query->where('product_interface.product_id', $product->product_id);
+                    if(isset($selected_device[$product->product_id]) && !empty($selected_device[$product->product_id])){
+                        $query->whereIn('device.id', $selected_device[$product->product_id]);
+                    }
                     if($device_type){
                         $query->whereIn('device.device_type_id', $device_type);
                     }
@@ -847,6 +865,13 @@ class ListingController extends Controller
                     $query->orderBy('brand_name', 'asc');
                     $query->orderBy('device.name', 'asc');
                     $devices = $query->get();
+
+                    /*if($generate_type){
+                        switch($generate_type){
+                            case '':
+                                break;
+                        }
+                    }*/
 
                     $productsArray[] = $this->generateProductTitles($title_template,$product,$devices,$max_title_length, $brand_seperator,$device_seperator,$compress,$generate_type,$product_price,$store_product_id,$product_price_overwrite);
                 }
@@ -1016,8 +1041,12 @@ class ListingController extends Controller
                         $sku = StoreTypeListing::generateUniqueAlphabeticSku($product_codes[$key],4);
                         $productDetail = StoreProduct::getStoreProductDetail($store_product_ids[$key]);
                         $productDetail = $productDetail->toArray();
+                        $product_name = $product;
+                        if(str_contains($product, '[^]')){
+                            $product_name = str_replace('[^]', $sku, $product);
+                        }
                         $listingProductArr = [
-                            'product_name' => $product,
+                            'product_name' => $product_name,
                             'description' => $productDetail['description'],
                             'product_category' => $productDetail['ProductType'],
                             'sku' => $sku,
@@ -1035,7 +1064,7 @@ class ListingController extends Controller
                         if($store_type_listing_id){
 
                             $modelDetail = array(
-                                'title' => $product,
+                                'title' => $product_name,
                                 'description' => $productDetail['description'],
                                 'store_type_listing_id' => $store_type_listing_id,
                                 'sku' => $sku,
@@ -1068,6 +1097,9 @@ class ListingController extends Controller
                                     }
                                     foreach ($product_models[$key] as $k=>$model) {
                                         $nsku = StoreTypeListing::generateUniqueAlphabeticSku($product_codes[$key],6);
+                                        if(str_contains($product, '[^]')){
+                                            $product = str_replace('[^]', $nsku, $product);
+                                        }
                                         $itemDetail = array(
                                             'sku' => $nsku,
                                             'title' => $product,
