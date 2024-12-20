@@ -616,7 +616,7 @@
                 <div class="tab-pane fade" id="tab5" role="tabpanel" aria-labelledby="summary-tab">
                 </div>
                 <div class="col-md-12 text-center">
-                    <div class="card-footer">
+                    <div class="card-footer footer-btn">
                         <button type="button" class="btn btn-warning" id="prevBtn">Prev</button>
                         <button type="button" class="btn btn-success" id="nextBtn">Next</button>
                         <a href="{{ route('listing.list') }}" class="btn btn-secondary">Cancel</a>
@@ -697,7 +697,7 @@
                         let rating = $('#rating_filter').val();
                         let popularity = $('#popularity_filter').val();
                         let store_id = $('#listing_store').val();
-                        let title_template = $('#title_template').val();
+                        //let title_template = $('#title_template').val();
                         let brand_seperator = $('#brand_seperator').val();
                         let group_seperator = $('#group_seperator').val();
                         let device_seperator = $('#device_seperator').val();
@@ -706,6 +706,12 @@
                             compress = 1;
                         }
                         let generate_type = $('input[name="generate_type"]:checked').val();
+
+                        let title_template = [];
+                        $('input[name="product_title_template[]"]').each(function () {
+                            title_template.push($(this).val())
+                        });
+
 
                         $.ajax({
                             url: "{{ route('listing.generateproductlisting') }}",
@@ -723,6 +729,7 @@
                                 brand_seperator:brand_seperator,
                                 group_seperator:group_seperator,
                                 device_seperator:device_seperator,
+                                selected_device:selected_device,
                             },
                             /* processData: false,
                              contentType: false,*/
@@ -773,6 +780,8 @@
                                 if(response.success){
                                     currentIndex++;
                                     activateTab(currentIndex);
+                                    //$('.footer-btn').hide();
+                                    location.href='{{ route('listing.list') }}'
                                 }
                             },
                             error: function(xhr) {
@@ -800,6 +809,14 @@
             activateTab(currentIndex);
 
         });
+
+        let selected_device = {};
+        function addToKey(key, value) {
+            if (!selected_device[key]) {
+                selected_device[key] = [];
+            }
+            selected_device[key].push(value);
+        }
         $(document).ready(function() {
 
             $(document).on('click', '#searchBtn', function() {
@@ -873,14 +890,38 @@
                 $('.targetRow').removeClass('bg-blue');
             });
 
+            $(document).on('click', '#selected_device_only', function() {
+                if($(this).is(':checked')){
+                    $('.targetRow').find('.sel-device').prop('checked',false);
+                }else{
+                    $('.targetRow').find('.sel-device').prop('checked',true);
+                }
+            });
+
+
+
             $(document).on('click', '.targetRow', function() {
                 let ele = $(this);
                 if(ele.find('.sel-device').is(':checked')){
                     ele.removeClass('bg-blue');
                     ele.find('.sel-device').prop('checked',false);
+                    valueToRemove = ele.find('.sel-device').val();
+                    var product_id = ele.find('.sel-device').data('proid');
+                    var nArr = selected_device[product_id];
+                    const newArray = nArr.reduce((acc, item) => {
+                        if (item !== valueToRemove) acc.push(item);
+                        return acc;
+                    }, []);
+
+                    selected_device[product_id] = newArray;
+                    console.log('remove-'+selected_device);
                 }else{
                     ele.addClass('bg-blue');
                     ele.find('.sel-device').prop('checked',true);
+                    //selected_device.push(ele.find('.sel-device').val());
+                    var product_id = ele.find('.sel-device').data('proid');
+                    addToKey(product_id, ele.find('.sel-device').val());
+                    console.log('add-'+selected_device);
                 }
             });
 
@@ -1043,20 +1084,22 @@
                         headers: {
                             'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                         },
+
                         success: function(data) {
                             actemp = data.details;
                             response(data.display);
                         },
-                        minLength: 2,
                         delay: 100
                     });
                 },
-                minLength: 2,
+                minLength:0,
                 select : function(event, ui){
                     $('#product_code_filter').val('');
                     $('#pro_code_list').append('<div class="border bg-blue p-1 mt-1"><input type="hidden" name="product_code[]" value="'+ui.item.value+'">'+ui.item.value+'<i class="fa fa-window-close float-right mt-1"></i></div>');
                     return false;
                 }
+            }).focus(function () {
+                $('#product_code_filter').keydown();
             });
 
             $('#device_series_filter').autocomplete({
@@ -1176,7 +1219,7 @@
                             }
                         }).focus(function () {
                             $('#title_template').keydown();
-                        });;
+                        });
                     }
                 },
                 error: function (xhr) {
@@ -1405,6 +1448,14 @@
                 device_type.push($(this).val())
             });
 
+            let is_selected = 0;
+            if($('#selected_device_only').is(':checked')) {
+                is_selected = 1;
+                /*$('input[name="listing_product_id[]"]:checked').each(function () {
+                    selected_device.push($(this).val())
+                });*/
+            }
+
             let brand = $('#brand_filter').val();
             let rating = $('#rating_filter').val();
             let popularity = $('#popularity_filter').val();
@@ -1417,6 +1468,8 @@
                     brand:brand,
                     rating:rating,
                     popularity:popularity,
+                    selected_device:selected_device,
+                    is_selected:is_selected,
                 },
                 /* processData: false,
                  contentType: false,*/
