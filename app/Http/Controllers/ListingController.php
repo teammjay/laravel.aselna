@@ -791,6 +791,7 @@ class ListingController extends Controller
         $title_templates = $request->input('title_template');
         $compress = $request->input('compress');
         $generate_type = $request->input('generate_type');
+        $generate_type_name = $request->input('generate_type_name');
         $brand_seperator = $request->input('brand_seperator');
         $group_seperator = $request->input('group_seperator');
         $device_seperator = $request->input('device_seperator');
@@ -866,14 +867,25 @@ class ListingController extends Controller
                     $query->orderBy('device.name', 'asc');
                     $devices = $query->get();
 
-                    /*if($generate_type){
-                        switch($generate_type){
-                            case '':
+                    /*echo '<pre>';
+                    print_r($devices);
+                    echo '<pre>';die;*/
+
+                    if($generate_type_name){
+                        switch(trim(strtolower($generate_type_name))){
+                            case 'combined devices':
+                                $productsArray[] = $this->generateProductTitles($title_template,$product,$devices,$max_title_length, $brand_seperator,$device_seperator,$compress,$generate_type,$product_price,$store_product_id,$product_price_overwrite);
+                                break;
+                            case 'free group':
+                                $productsArray[] = $this->generateFreeGroupProductTitles($title_template,$product,$devices,$max_title_length, $brand_seperator,$device_seperator,$compress,$generate_type,$product_price,$store_product_id,$product_price_overwrite);
+                                break;
+                            case 'single device':
+                                $productsArray[] = $this->generateSingleDeviceProductTitles($title_template,$product,$devices,$max_title_length, $brand_seperator,$device_seperator,$compress,$generate_type,$product_price,$store_product_id,$product_price_overwrite);
                                 break;
                         }
-                    }*/
+                    }
 
-                    $productsArray[] = $this->generateProductTitles($title_template,$product,$devices,$max_title_length, $brand_seperator,$device_seperator,$compress,$generate_type,$product_price,$store_product_id,$product_price_overwrite);
+
                 }
 
                 /*echo '<pre>';
@@ -922,7 +934,7 @@ class ListingController extends Controller
         }
     }
 
-    function generateProductTitles($baseTitle, $product, $devices, $charLimit, $brand_seperator, $device_seperator, $compress, $generate_type, $product_price,$store_product_id,$product_price_overwrite) {
+    private function generateProductTitles($baseTitle, $product, $devices, $charLimit, $brand_seperator, $device_seperator, $compress, $generate_type, $product_price,$store_product_id,$product_price_overwrite) {
         $titles = [];
         $currentDevices = [];
         $currentTitle = $baseTitle;
@@ -936,6 +948,10 @@ class ListingController extends Controller
             $parts = explode(' ', $currentBrand, 2);
             $brand = $parts[0];
             $model = $parts[1] ?? ''; // If no model, treat as empty
+
+            if(str_contains($baseTitle, '#device')){
+                $baseTitle = str_replace('#device', $currentBrand, $baseTitle);
+            }
 
             // Use only the model if the brand is the same as the last one
             if($compress) {
@@ -993,6 +1009,54 @@ class ListingController extends Controller
             $titles[$cnt]['title'] = str_replace('#model_series', implode($separator.' ', $currentDevices), $baseTitle);
         }
 
+        return $titles;
+    }
+
+    private function generateSingleDeviceProductTitles($baseTitle, $product, $devices, $charLimit, $brand_seperator, $device_seperator, $compress, $generate_type, $product_price,$store_product_id,$product_price_overwrite) {
+        $titles = [];
+        $separator = $device_seperator; // Separator between device names
+        foreach ($devices as $k=>$device) {
+
+            $currentBrand = $device->brand_name.' '.$device->name;
+
+            $tempTitle = str_replace('#device_series', $currentBrand, $baseTitle);
+            $tempTitle = str_replace('#device', $currentBrand, $tempTitle);
+            $titles[$k]['title'] = $tempTitle;
+            $titles[$k]['product_code'] = $product->product_sku;
+            $titles[$k]['product_id'] = $product->product_id;
+            $titles[$k]['price'] = $product_price;
+            $titles[$k]['price_overwrite'] = $product_price_overwrite;
+            $titles[$k]['generate_type'] = $generate_type;
+            $titles[$k]['store_product_id'] = $store_product_id;
+            $titles[$k]['model'][] = $device->name;
+            $titles[$k]['model_detail'][] = $device;
+
+        }
+
+
+        return $titles;
+    }
+
+    private function generateFreeGroupProductTitles($baseTitle, $product, $devices, $charLimit, $brand_seperator, $device_seperator, $compress, $generate_type, $product_price,$store_product_id,$product_price_overwrite) {
+        $titles = [];
+        $separator = $device_seperator; // Separator between device names
+        foreach ($devices as $k=>$device) {
+
+            $currentBrand = $device->brand_name.' '.$device->name;
+
+            $tempTitle = str_replace('#device_series', $currentBrand, $baseTitle);
+            $tempTitle = str_replace('#device', $currentBrand, $tempTitle);
+            $titles[$k]['title'] = $tempTitle;
+            $titles[$k]['product_code'] = $product->product_sku;
+            $titles[$k]['product_id'] = $product->product_id;
+            $titles[$k]['price'] = $product_price;
+            $titles[$k]['price_overwrite'] = $product_price_overwrite;
+            $titles[$k]['generate_type'] = $generate_type;
+            $titles[$k]['store_product_id'] = $store_product_id;
+            $titles[$k]['model'][] = $device->name;
+            $titles[$k]['model_detail'][] = $device;
+
+        }
         return $titles;
     }
 
