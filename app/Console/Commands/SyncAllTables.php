@@ -9,6 +9,7 @@ use App\Jobs\DevicesSyncJob;
 use App\Jobs\DeviceTypesSyncJob;
 use App\Jobs\GenerationTypeAndTemplateSync;
 use App\Jobs\InterfaceSyncJob;
+use App\Jobs\ListingFeedSyncJob;
 use App\Jobs\ListingItemDataSyncJob;
 use App\Jobs\ListingItemLinkSyncJob;
 use App\Jobs\ListingItemSyncJob;
@@ -48,25 +49,26 @@ class SyncAllTables extends Command
      */
     public function handle()
     {
-        StoreTypeSyncJob::dispatch();
-        StoreSyncJob::dispatch();
-        ManufacturerSyncJob::dispatch();
-        DeviceTypesSyncJob::dispatch();
-        BrandSyncJob::dispatch();
-        DevicesSyncJob::dispatch();
-        CategorySyncJob::dispatch();
-        ProductConditionJob::dispatch();
-        ShippingCarrierJob::dispatch();
-        InterfaceSyncJob::dispatch();
-        DeviceInterfaces::dispatch();
-        GenerationTypeAndTemplateSync::dispatch();
-        ProductSyncJob::dispatch();
-        ProductInterfaces::dispatch();
-        ListingSyncJob::dispatch();
-        ListingItemSyncJob::dispatch();
-        ListingItemDataSyncJob::dispatch();
-        ListingItemLinkSyncJob::dispatch();
-        UPCSyncJob::dispatch();
-        LogisticCentreSyncJob::dispatch();
+//        StoreTypeSyncJob::dispatch();
+//        StoreSyncJob::dispatch();
+//        ManufacturerSyncJob::dispatch();
+//        DeviceTypesSyncJob::dispatch();
+//        BrandSyncJob::dispatch();
+//        DevicesSyncJob::dispatch();
+//        CategorySyncJob::dispatch();
+//        ProductConditionJob::dispatch();
+//        ShippingCarrierJob::dispatch();
+//        InterfaceSyncJob::dispatch();
+//        DeviceInterfaces::dispatch();
+//        GenerationTypeAndTemplateSync::dispatch();
+//        ProductSyncJob::dispatch();
+//        ProductInterfaces::dispatch();
+//        ListingSyncJob::dispatch();
+//        ListingItemSyncJob::dispatch();
+//        ListingItemDataSyncJob::dispatch();
+//        ListingItemLinkSyncJob::dispatch();
+//        UPCSyncJob::dispatch();
+//        LogisticCentreSyncJob::dispatch();
+        ListingFeedSyncJob::dispatch();
     }
 }

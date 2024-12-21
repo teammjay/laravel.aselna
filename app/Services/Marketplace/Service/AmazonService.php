@@ -9,6 +9,6 @@ class AmazonService implements MarketplaceServiceInterface
 
     public function generateFeed()
     {
-        // TODO: Implement generateFeed() method.
+        
     }
 }
