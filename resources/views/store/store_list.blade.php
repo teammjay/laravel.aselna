@@ -1,4 +1,4 @@
-@if(!empty($stores))
+@if(count($stores ?? []) > 0)
     @foreach($stores as $store)
         <tr id="store-{{ $store->id }}">
 
@@ -21,6 +21,6 @@
     @endforeach
 @else
     <tr>
-        <td colspan="7"> No stores found </td>
+        <td colspan="10" align="center"> No stores found </td>
     </tr>
 @endif

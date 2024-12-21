@@ -32,6 +32,14 @@
         #modelTable tr td, #modelTable tr th{
             padding: 5px 10px;
         }
+        .sticky-bottom{
+            position: sticky !important;
+            bottom: 0;
+            background: #fff;
+            z-index: 9999;
+        }
+        .ui-autocomplete{z-index: 99999; height: 250px; overflow: auto;}
+        #frmproductfilter select.form-control[multiple]{height: 100%;}
     </style>
 @stop
 @section('content_header')
@@ -85,7 +93,7 @@
                     <div class="row mt-3 mb-3">
                         <form id="frmproductfilter">
                             <div class="col-md-12">
-                                <div class="d-flex justify-content-between" style="gap:5px;">
+                                <div class="d-flex" style="gap:5px;">
                                     <div class="border p-2">
                                         <button type="button" id="searchBtn" class="btn btn-primary w-100">Search</button>
                                         <select class="form-control mt-3 mb-3" name="store_id" id="listing_store">
@@ -138,7 +146,7 @@
                                     </div>
                                     <div class="border p-2">
                                         <label>Manufacturer Filter</label>
-                                        <div class="row">
+                                        <div class="row" style="height: 87%;">
                                             <div class="col-md-12">
                                                 <select class="form-control" name="manufacturer[]" id="manufacturer_filter" multiple>
                                                     @if(count($manufacturers ?? []) > 0)
@@ -152,7 +160,7 @@
                                     </div>
                                     <div class="border p-2">
                                         <label>Product Type Filter</label>
-                                        <div class="row">
+                                        <div class="row" style="height: 87%;">
                                             <div class="col-md-12">
                                                 <select class="form-control" name="product_type[]" id="product_type_filter" multiple>
                                                     @if(count($productTypes ?? []) > 0)
@@ -357,7 +365,7 @@
                                             @endphp
                                             @foreach($listingGenerationTypes as $key=>$ltype)
                                                 <div class="form-group mb-1">
-                                                    <input type="radio" class="mr-1" {{ ($count == 0) ? 'checked' : '' }} id="generate_type_{{ $ltype->id }}" name="generate_type" value="{{ $ltype->id }}"> <label for="generate_type_{{ $ltype->id }}">{{ $ltype->name }}</label>
+                                                    <input type="radio" class="mr-1" {{ ($count == 0) ? 'checked' : '' }} id="generate_type_{{ $ltype->id }}" name="generate_type" value="{{ $ltype->id }}" data-name="{{ $ltype->name }}"> <label for="generate_type_{{ $ltype->id }}">{{ $ltype->name }}</label>
                                                 </div>
                                                 @php
                                                     $count++;
@@ -592,7 +600,7 @@
                             </form>
                         </div>
                         <div class="col-md-3 ">
-                            <div class="sticky-top">
+                            <div class="sticky-top" style="height: 100vh; overflow: auto;">
                                 <div>
                                     <span class="float-right" id="total_generate_models"></span>
                                 </div>
@@ -615,7 +623,7 @@
                 </div>
                 <div class="tab-pane fade" id="tab5" role="tabpanel" aria-labelledby="summary-tab">
                 </div>
-                <div class="col-md-12 text-center">
+                <div class="col-md-12 text-center sticky-bottom">
                     <div class="card-footer footer-btn">
                         <button type="button" class="btn btn-warning" id="prevBtn">Prev</button>
                         <button type="button" class="btn btn-success" id="nextBtn">Next</button>
@@ -706,6 +714,7 @@
                             compress = 1;
                         }
                         let generate_type = $('input[name="generate_type"]:checked').val();
+                        let generate_type_name = $('input[name="generate_type"]:checked').data('name');
 
                         let title_template = [];
                         $('input[name="product_title_template[]"]').each(function () {
@@ -726,6 +735,7 @@
                                 title_template:title_template,
                                 compress:compress,
                                 generate_type:generate_type,
+                                generate_type_name:generate_type_name,
                                 brand_seperator:brand_seperator,
                                 group_seperator:group_seperator,
                                 device_seperator:device_seperator,
@@ -819,6 +829,9 @@
         }
         $(document).ready(function() {
 
+           /* $('#listing_store').select2({
+                allowClear: true
+            });*/
             $(document).on('click', '#searchBtn', function() {
                 loadProducts();
             });
@@ -882,11 +895,27 @@
 
             $(document).on('click', '#select_all', function() {
                 $('.targetRow').find('.sel-device').prop('checked',true);
+
+                $('.targetRow').find('.sel-device').each(function () {
+                    let product_id = $(this).data('proid');
+                    addToKey(product_id, $(this).val());
+                });
+
                 $('.targetRow').addClass('bg-blue');
             });
 
             $(document).on('click', '#select_none', function() {
                 $('.targetRow').find('.sel-device').prop('checked',false);
+                $('.targetRow').find('.sel-device').each(function () {
+                    let product_id = $(this).data('proid');
+                    var nArr = selected_device[product_id];
+                    const newArray = nArr.reduce((acc, item) => {
+                        if (item !== $(this).val()) acc.push(item);
+                        return acc;
+                    }, []);
+
+                    selected_device[product_id] = newArray;
+                });
                 $('.targetRow').removeClass('bg-blue');
             });
 
@@ -1036,6 +1065,7 @@
                             //$('#title_template').html(response.option);
                             let data = response.data;
                             $('#title_template').val(response.option);
+                            $('input[name="product_title_template[]"]').val(response.option);
 
                             $('#title_template').autocomplete({
 

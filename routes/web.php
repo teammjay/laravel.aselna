@@ -62,7 +62,7 @@ Route::controller(StoreController::class)->group(function () {
     Route::post('/stores/saveTabData', 'saveTabData')->name('store.save');
     Route::post('/stores/finalize', 'finalize')->name('store.final');
     Route::get('/stores/edit/{id}', 'edit')->name('store.edit');
-    Route::post('/stores/edit/{id}', 'update')->name('store.update');
+    Route::post('/stores/edit', 'update')->name('store.update');
     Route::get('/stores/destroy/{id}', 'destroy')->name('store.delete');
     Route::post('/stores/removeshipping', 'removeShipping')->name('store.removeshipping');
     Route::post('/stores/saveShippingService', 'saveShippingService')->name('store.shippingservice');
