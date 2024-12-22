@@ -15,7 +15,7 @@ return new class extends Migration
             $table->uuid('id')->primary();
             $table->uuid('seller_id')->nullable();
             $table->string('sku')->nullable();
-            $table->string('product_name')->nullable();
+            $table->text('product_name')->nullable();
             $table->text('description')->nullable();
             $table->text('product_category')->nullable();
             $table->float('price')->nullable();
@@ -38,8 +38,8 @@ return new class extends Migration
             $table->float('buy_box_price')->nullable();
             $table->float('buy_box_shipping_price')->nullable();
             $table->boolean('seller_buy_box_winner')->default(0);
-            $table->uuid('buybox_winner_id');
-            $table->boolean('has_offers')->default(0);
+            $table->uuid('buybox_winner_id')->nullable();
+            $table->boolean('has_offers')->nullable()->default(0);
             $table->integer('status');
             $table->string('quality_field_name')->nullable();
             $table->string('quality_alert_type')->nullable();
@@ -48,9 +48,9 @@ return new class extends Migration
             $table->string('quality_alert_name')->nullable();
             $table->string('quality_explanation')->nullable();
             $table->text('item_condition')->nullable();
-            $table->boolean('removed_externally')->default(0);
-            $table->uuid('report_feed_id');
-            $table->boolean('merged_with_another_listing')->default(0);
+            $table->boolean('removed_externally')->nullable()->default(0);
+            $table->uuid('report_feed_id')->nullable();
+            $table->boolean('merged_with_another_listing')->nullable()->default(0);
             $table->string('previous_item_id')->nullable();
             $table->string('created_by')->nullable();
             $table->string('updated_by')->nullable();

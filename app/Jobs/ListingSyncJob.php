@@ -11,6 +11,8 @@ class ListingSyncJob implements ShouldQueue
 {
     use Queueable;
 
+    protected $timeout = 3000;
+
     /**
      * Create a new job instance.
      */

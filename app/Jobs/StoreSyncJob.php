@@ -80,6 +80,7 @@ class StoreSyncJob implements ShouldQueue
             'authorized' => $store->authorized,
             'seller_id' => $store->seller_id,
             'marketplace_name' => $store->marketplace_name,
+            'store_status' => $store->store_status,
 //            'listing_type' => $store->listing_type,
             'brand_name' => $store->brand_name,
 //             'sku_generation_type' => $store->sku_generation_type,

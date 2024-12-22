@@ -19,7 +19,7 @@
                 <option value=""></option>
                 @if(count($stores ?? []) > 0)
                     @foreach($stores as $store)
-                        <option value="{{ $store->id }}">{{ $store->name}}{{ ($store->marketplace_name) ? '-'.$store->marketplace_name : '' }}</option>
+                        <option value="{{ $store->id }}">{{ $store->name }}{{ ($store->marketplace_name) ? '-'.$store->marketplace_name : '' }}</option>
                     @endforeach
                 @endif
             </select>

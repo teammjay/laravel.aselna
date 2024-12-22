@@ -21,6 +21,7 @@ use App\Jobs\ProductInterfaces;
 use App\Jobs\ProductSyncJob;
 use App\Jobs\ShippingCarrierJob;
 use App\Jobs\StoreSyncJob;
+use App\Jobs\StoreTypeListingSyncJob;
 use App\Jobs\StoreTypeSyncJob;
 use App\Jobs\UPCGenerateJob;
 use App\Jobs\UPCSyncJob;
@@ -67,6 +68,7 @@ class SyncAllTables extends Command
         ListingItemSyncJob::dispatch();
         ListingItemDataSyncJob::dispatch();
         ListingItemLinkSyncJob::dispatch();
+        StoreTypeListingSyncJob::dispatch();
         UPCSyncJob::dispatch();
         LogisticCentreSyncJob::dispatch();
         ListingFeedSyncJob::dispatch();
