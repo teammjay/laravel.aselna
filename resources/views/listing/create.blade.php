@@ -15,6 +15,7 @@
         }
         .selectproRow:hover td {
             background-color: #ddf1ff;
+            color:#000;
         }
         .bd-example {
             background: #fff;
@@ -31,6 +32,14 @@
         #modelTable tr td, #modelTable tr th{
             padding: 5px 10px;
         }
+        .sticky-bottom{
+            position: sticky !important;
+            bottom: 0;
+            background: #fff;
+            z-index: 9999;
+        }
+        .ui-autocomplete{z-index: 99999; height: 250px; overflow: auto;}
+        #frmproductfilter select.form-control[multiple]{height: 100%;}
     </style>
 @stop
 @section('content_header')
@@ -84,7 +93,7 @@
                     <div class="row mt-3 mb-3">
                         <form id="frmproductfilter">
                             <div class="col-md-12">
-                                <div class="d-flex justify-content-between" style="gap:5px;">
+                                <div class="d-flex" style="gap:5px;">
                                     <div class="border p-2">
                                         <button type="button" id="searchBtn" class="btn btn-primary w-100">Search</button>
                                         <select class="form-control mt-3 mb-3" name="store_id" id="listing_store">
@@ -137,7 +146,7 @@
                                     </div>
                                     <div class="border p-2">
                                         <label>Manufacturer Filter</label>
-                                        <div class="row">
+                                        <div class="row" style="height: 87%;">
                                             <div class="col-md-12">
                                                 <select class="form-control" name="manufacturer[]" id="manufacturer_filter" multiple>
                                                     @if(count($manufacturers ?? []) > 0)
@@ -151,7 +160,7 @@
                                     </div>
                                     <div class="border p-2">
                                         <label>Product Type Filter</label>
-                                        <div class="row">
+                                        <div class="row" style="height: 87%;">
                                             <div class="col-md-12">
                                                 <select class="form-control" name="product_type[]" id="product_type_filter" multiple>
                                                     @if(count($productTypes ?? []) > 0)
@@ -347,7 +356,7 @@
 
                         <div class="col-md-12">
                             <div class="d-flex" style="gap:10px;">
-                                <div class="border p-2">
+                                <div class="border p-2" style="width: 17%;">
                                     <label>Generation Type</label>
                                     <div class="form-group align-items-center">
                                         @if(count($listingGenerationTypes ?? []) > 0)
@@ -356,7 +365,7 @@
                                             @endphp
                                             @foreach($listingGenerationTypes as $key=>$ltype)
                                                 <div class="form-group mb-1">
-                                                    <input type="radio" class="mr-1" {{ ($count == 0) ? 'checked' : '' }} id="generate_type_{{ $ltype->id }}" name="generate_type" value="{{ $ltype->id }}"> <label for="generate_type_{{ $ltype->id }}">{{ $ltype->name }}</label>
+                                                    <input type="radio" class="mr-1" {{ ($count == 0) ? 'checked' : '' }} id="generate_type_{{ $ltype->id }}" name="generate_type" value="{{ $ltype->id }}" data-name="{{ $ltype->name }}"> <label for="generate_type_{{ $ltype->id }}">{{ $ltype->name }}</label>
                                                 </div>
                                                 @php
                                                     $count++;
@@ -379,7 +388,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="border p-2">
+                                <div class="border p-2" style="width: 16%;">
                                     <label>Device Type</label>
                                     @if(count($deviceTypes ?? []) > 0)
                                         @foreach($deviceTypes as $dType)
@@ -415,7 +424,7 @@
                                 </div>
                                 <div>
                                     <div class="d-flex" style="gap:10px;">
-                                        <div class="border p-2">
+                                        <div class="border p-2 w-25">
                                             <label>Rating Filter</label>
                                             <div class="row">
                                                 <div class="col-md-12">
@@ -435,7 +444,7 @@
                                             </div>
                                         </div>
 
-                                        <div class="border p-2">
+                                        <div class="border p-2 w-25">
                                             <label>Popularity</label>
                                             <div class="row">
                                                 <div class="col-md-12">
@@ -457,8 +466,10 @@
                                     </div>
                                     <div class="form-group mb-1 mt-3">
                                         <label>Title Template</label>
-                                        <input type="text" class="form-control" name="title_template" id="title_template">
-                                        </input>
+                                        <div class="d-flex">
+                                            <input type="text" class="form-control" name="title_template" id="title_template" style="width: 85%;">
+                                            <button type="button" class="btn btn-default" id="updateAll">Update All</button>
+                                        </div>
                                     </div>
                                     <div class="d-flex align-items-center mb-1 mt-3">
                                         <span>Brand Seperator </span>
@@ -589,7 +600,7 @@
                             </form>
                         </div>
                         <div class="col-md-3 ">
-                            <div class="sticky-top">
+                            <div class="sticky-top" style="height: 100vh; overflow: auto;">
                                 <div>
                                     <span class="float-right" id="total_generate_models"></span>
                                 </div>
@@ -612,8 +623,8 @@
                 </div>
                 <div class="tab-pane fade" id="tab5" role="tabpanel" aria-labelledby="summary-tab">
                 </div>
-                <div class="col-md-12 text-center">
-                    <div class="card-footer">
+                <div class="col-md-12 text-center sticky-bottom">
+                    <div class="card-footer footer-btn">
                         <button type="button" class="btn btn-warning" id="prevBtn">Prev</button>
                         <button type="button" class="btn btn-success" id="nextBtn">Next</button>
                         <a href="{{ route('listing.list') }}" class="btn btn-secondary">Cancel</a>
@@ -657,7 +668,7 @@
 
             document.getElementById('nextBtn').addEventListener('click', () => {
                 $('#nextBtn').html('Next');
-                $('html, body').animate({ scrollTop: 0 }, 'fast');
+
                 if (currentIndex < tabs.length - 1) {
                     if(currentIndex == 0){
                         let selected_product = [];
@@ -670,11 +681,13 @@
                             followSecondStep();
                             currentIndex++;
                             activateTab(currentIndex);
+                            $('html, body').animate({ scrollTop: 0 }, 'fast');
                         }
                     }else if(currentIndex == 1){
-                        followThirdStep();
                         currentIndex++;
                         activateTab(currentIndex);
+                        followThirdStep();
+                        $('html, body').animate({ scrollTop: 0 }, 'fast');
                     }else if(currentIndex == 2){
 
                         $('.bd-example').show();
@@ -692,7 +705,7 @@
                         let rating = $('#rating_filter').val();
                         let popularity = $('#popularity_filter').val();
                         let store_id = $('#listing_store').val();
-                        let title_template = $('#title_template').val();
+                        //let title_template = $('#title_template').val();
                         let brand_seperator = $('#brand_seperator').val();
                         let group_seperator = $('#group_seperator').val();
                         let device_seperator = $('#device_seperator').val();
@@ -701,6 +714,13 @@
                             compress = 1;
                         }
                         let generate_type = $('input[name="generate_type"]:checked').val();
+                        let generate_type_name = $('input[name="generate_type"]:checked').data('name');
+
+                        let title_template = [];
+                        $('input[name="product_title_template[]"]').each(function () {
+                            title_template.push($(this).val())
+                        });
+
 
                         $.ajax({
                             url: "{{ route('listing.generateproductlisting') }}",
@@ -715,9 +735,11 @@
                                 title_template:title_template,
                                 compress:compress,
                                 generate_type:generate_type,
+                                generate_type_name:generate_type_name,
                                 brand_seperator:brand_seperator,
                                 group_seperator:group_seperator,
                                 device_seperator:device_seperator,
+                                selected_device:selected_device,
                             },
                             /* processData: false,
                              contentType: false,*/
@@ -735,6 +757,7 @@
                                     $('#nextBtn').html('Finish');
                                     currentIndex++;
                                     activateTab(currentIndex);
+                                    $('html, body').animate({ scrollTop: 0 }, 'fast');
 
                                 }
                             },
@@ -767,18 +790,17 @@
                                 if(response.success){
                                     currentIndex++;
                                     activateTab(currentIndex);
+                                    //$('.footer-btn').hide();
+                                    location.href='{{ route('listing.list') }}'
                                 }
-
-                                
-
                             },
                             error: function(xhr) {
-
                             }
                         });
                     }else{
                         currentIndex++;
                         activateTab(currentIndex);
+                        $('html, body').animate({ scrollTop: 0 }, 'fast');
                     }
                 }
             });
@@ -789,6 +811,7 @@
                 if (currentIndex > 0) {
                     currentIndex--;
                     activateTab(currentIndex);
+                    $('html, body').animate({ scrollTop: 0 }, 'fast');
                 }
             });
 
@@ -796,8 +819,19 @@
             activateTab(currentIndex);
 
         });
+
+        let selected_device = {};
+        function addToKey(key, value) {
+            if (!selected_device[key]) {
+                selected_device[key] = [];
+            }
+            selected_device[key].push(value);
+        }
         $(document).ready(function() {
 
+           /* $('#listing_store').select2({
+                allowClear: true
+            });*/
             $(document).on('click', '#searchBtn', function() {
                 loadProducts();
             });
@@ -827,42 +861,96 @@
 
             $(document).on('click', '.sprolistRow', function() {
                 let ele = $(this);
+                $('.sprolistRow').removeClass('bg-blue');
+                $('.pro-id').prop('checked',false);
                 if(ele.find('.pro-id').is(':checked')){
                     ele.removeClass('bg-blue');
                     ele.find('.pro-id').prop('checked',false);
                 }else{
                     ele.addClass('bg-blue');
                     ele.find('.pro-id').prop('checked',true);
+                    var title_template = ele.find('input[name="product_title_template[]"]').val();
+                    if(title_template) {
+                        $('#title_template').val(title_template);
+                    }
                 }
-                loadListingProduct();
+                loadListingProduct(1);
             });
 
+
+
+            $(document).on('click', '#updateAll', function() {
+                var selected_template = $('#title_template').val();
+                $('input[name="product_title_template[]"]').val(selected_template);
+            });
+
+
             $(document).on('click', '#brand_filter', function() {
-                loadListingProduct();
+                loadListingProduct(0);
             });
 
             $(document).on('click', 'input[name="device_type[]"]', function() {
-                loadListingProduct();
+                loadListingProduct(0);
             });
 
             $(document).on('click', '#select_all', function() {
                 $('.targetRow').find('.sel-device').prop('checked',true);
+
+                $('.targetRow').find('.sel-device').each(function () {
+                    let product_id = $(this).data('proid');
+                    addToKey(product_id, $(this).val());
+                });
+
                 $('.targetRow').addClass('bg-blue');
             });
 
             $(document).on('click', '#select_none', function() {
                 $('.targetRow').find('.sel-device').prop('checked',false);
+                $('.targetRow').find('.sel-device').each(function () {
+                    let product_id = $(this).data('proid');
+                    var nArr = selected_device[product_id];
+                    const newArray = nArr.reduce((acc, item) => {
+                        if (item !== $(this).val()) acc.push(item);
+                        return acc;
+                    }, []);
+
+                    selected_device[product_id] = newArray;
+                });
                 $('.targetRow').removeClass('bg-blue');
             });
+
+            $(document).on('click', '#selected_device_only', function() {
+                if($(this).is(':checked')){
+                    $('.targetRow').find('.sel-device').prop('checked',false);
+                }else{
+                    $('.targetRow').find('.sel-device').prop('checked',true);
+                }
+            });
+
+
 
             $(document).on('click', '.targetRow', function() {
                 let ele = $(this);
                 if(ele.find('.sel-device').is(':checked')){
                     ele.removeClass('bg-blue');
                     ele.find('.sel-device').prop('checked',false);
+                    valueToRemove = ele.find('.sel-device').val();
+                    var product_id = ele.find('.sel-device').data('proid');
+                    var nArr = selected_device[product_id];
+                    const newArray = nArr.reduce((acc, item) => {
+                        if (item !== valueToRemove) acc.push(item);
+                        return acc;
+                    }, []);
+
+                    selected_device[product_id] = newArray;
+                    console.log('remove-'+selected_device);
                 }else{
                     ele.addClass('bg-blue');
                     ele.find('.sel-device').prop('checked',true);
+                    //selected_device.push(ele.find('.sel-device').val());
+                    var product_id = ele.find('.sel-device').data('proid');
+                    addToKey(product_id, ele.find('.sel-device').val());
+                    console.log('add-'+selected_device);
                 }
             });
 
@@ -977,6 +1065,7 @@
                             //$('#title_template').html(response.option);
                             let data = response.data;
                             $('#title_template').val(response.option);
+                            $('input[name="product_title_template[]"]').val(response.option);
 
                             $('#title_template').autocomplete({
 
@@ -1025,20 +1114,22 @@
                         headers: {
                             'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                         },
+
                         success: function(data) {
                             actemp = data.details;
                             response(data.display);
                         },
-                        minLength: 2,
                         delay: 100
                     });
                 },
-                minLength: 2,
+                minLength:0,
                 select : function(event, ui){
                     $('#product_code_filter').val('');
                     $('#pro_code_list').append('<div class="border bg-blue p-1 mt-1"><input type="hidden" name="product_code[]" value="'+ui.item.value+'">'+ui.item.value+'<i class="fa fa-window-close float-right mt-1"></i></div>');
                     return false;
                 }
+            }).focus(function () {
+                $('#product_code_filter').keydown();
             });
 
             $('#device_series_filter').autocomplete({
@@ -1148,11 +1239,17 @@
                             minLength: 0,
                             select : function(event, ui){
                                 $('#title_template').val(ui.item.label);
+                                var selected_template = ui.item.label;
+                                $('.pro-id').each(function () {
+                                    if($(this).is(':checked')){
+                                        $(this).parent().find('input[name="product_title_template[]"]').val(selected_template);
+                                    }
+                                });
                                 return false;
                             }
                         }).focus(function () {
                             $('#title_template').keydown();
-                        });;
+                        });
                     }
                 },
                 error: function (xhr) {
@@ -1261,7 +1358,7 @@
                 success: function (response) {
                     if (response.html) {
                         $('#product-list-3').html(response.html);
-                        loadListingProduct();
+                        loadListingProduct(0);
                     }
                 },
                 error: function (xhr) {
@@ -1365,16 +1462,29 @@
             });
         }
 
-        function loadListingProduct(){
+        function loadListingProduct(single){
             //let product_id = ele.find('.pro-id').val();
             let product_ids = [];
-            $('input[name="selected_list_product[]"]').each(function () {
-                product_ids.push($(this).val())
-            });
+            if(single){
+
+                product_ids.push($('input[name="selected_list_product[]"]:checked').val());
+            }else {
+                $('input[name="selected_list_product[]"]').each(function () {
+                    product_ids.push($(this).val())
+                });
+            }
             let device_type = [];
             $('input[name="device_type[]"]:checked').each(function () {
                 device_type.push($(this).val())
             });
+
+            let is_selected = 0;
+            if($('#selected_device_only').is(':checked')) {
+                is_selected = 1;
+                /*$('input[name="listing_product_id[]"]:checked').each(function () {
+                    selected_device.push($(this).val())
+                });*/
+            }
 
             let brand = $('#brand_filter').val();
             let rating = $('#rating_filter').val();
@@ -1388,6 +1498,8 @@
                     brand:brand,
                     rating:rating,
                     popularity:popularity,
+                    selected_device:selected_device,
+                    is_selected:is_selected,
                 },
                 /* processData: false,
                  contentType: false,*/
@@ -1398,6 +1510,11 @@
                     if (response.success) {
                         $('#listing_list').html(response.html);
                         $('#total_listing_product').html(response.total+' rows');
+                        if(response.total == 0){
+                            $('#nextBtn').attr('disabled',true);
+                        }else{
+                            $('#nextBtn').removeAttr('disabled');
+                        }
                     }else{
                         $('#listing_list').html('');
                         $('#total_listing_product').html('0 rows');

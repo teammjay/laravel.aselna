@@ -33,10 +33,12 @@ class StoreController extends Controller
         $stores = Store::select('*')
             ->with('storeType')
             ->orderBy('id','desc')
-            ->get();
-//            ->paginate($this->perPage);
+            //->get();
+            ->paginate($this->perPage);
+        $perPage = $this->perPage;
+        $store_types = StoreType::all();
 
-        return view('store.list', compact('stores'));
+        return view('store.list', compact('stores','perPage','store_types'));
     }
 
     /**
@@ -74,6 +76,31 @@ class StoreController extends Controller
     }
 
     /**
+     * Update the specified resource in storage.
+     */
+    public function update(Request $request)
+    {
+        $id = $request->input('id');
+        $field = $request->input('field');
+        $value = $request->input('value');
+        $updated_by = auth()->user()->name ?? 'admin';
+        $request->merge(['updated_by' => $updated_by]);
+        $request[$field] = $value;
+
+        try {
+            $store = Store::findOrFail($id); // Retrieve the store by ID
+            $store->update($request->all());
+            return response()->json(['success' => true, 'message' => 'Data updated successfully!']);
+
+        }catch (QueryException $e) {
+            // Handle the exception and show an error message
+            return response()->json(['errors' => $e->getMessage()]);
+        }
+
+        return response()->json(['success' => true, 'message' => 'Data updated successfully!']);
+    }
+
+    /**
      * Filter listing.
      */
     public function filter(Request $request)
@@ -82,9 +109,29 @@ class StoreController extends Controller
 
         $perPage = $request->input('perPage', $this->perPage);
 
-        // Filter by product title
+        // Filter by store name
         if ($request->has('name') && $request->name != '') {
             $query->WhereLike('name', '%'.$request->name.'%');
+        }
+
+        // Filter by marketplace name
+        if ($request->has('marketplace_name') && $request->marketplace_name != '') {
+            $query->WhereLike('marketplace_name', '%'.$request->marketplace_name.'%');
+        }
+
+        // Filter by store status
+        if ($request->has('store_status') && $request->store_status != '') {
+            $query->where('store_status', $request->store_status);
+        }
+
+        // Filter by store authorized
+        if ($request->has('authorized') && $request->authorized != '') {
+            $query->where('authorized', $request->authorized);
+        }
+
+        // Filter by store type
+        if ($request->has('store_type') && $request->store_type != '') {
+            $query->where('store_type_id', $request->store_type);
         }
 
         $stores = $query->paginate($perPage); // Paginate results

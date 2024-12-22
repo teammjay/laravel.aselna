@@ -19,14 +19,15 @@
             </a>
         </div>
     </div>
-    {{--<div class="card card-secondary">
+    <div class="card card-secondary">
         <div class="card-header">
             <h3 class="card-title">Filters</h3>
+            <i class="fa fa-angle-down float-right"></i>
         </div>
-        <div class="card-body">
+        <div class="card-body" style="display: none;">
             <form id="filter-form">
                 <div class="row">
-                    <div class="col-md-2">
+                    <div class="col-md-3">
                         <div class="form-group">
                             <label for="name">Name:</label>
                             <input type="text" name="name" id="name" class="form-control">
@@ -34,28 +35,48 @@
                     </div>
                     <div class="col-md-3">
                         <div class="form-group">
-                            <label for="price_min">Min Price:</label>
-                            <input type="number" name="price_min" id="price_min" class="form-control">
+                            <label for="marketplace_name">Marketplace Name:</label>
+                            <input type="text" name="marketplace_name" id="marketplace_name" class="form-control">
                         </div>
                     </div>
                     <div class="col-md-3">
                         <div class="form-group">
-                            <label for="price_max">Max Price:</label>
-                            <input type="number" name="price_max" id="price_max" class="form-control">
-                        </div>
-                    </div>
-                    <div class="col-md-2">
-                        <div class="form-group">
-                            <label for="price_max">Status:</label>
-                            <select class="custom-select" name="status" id="status">
-                                <option> -- </option>
-                                <option value="active"> Active </option>
-                                <option value="discontinued"> Discontinued </option>
-                                <option value="out_of_stock"> Out of stock </option>
-                                <option value="draft"> Draft </option>
+                            <label for="store_status">Status:</label>
+                            <select class="custom-select" name="store_status" id="store_status">
+                                <option value=""> -- </option>
+                                <option value="1"> Active </option>
+                                <option value="0"> Closed </option>
                             </select>
                         </div>
                     </div>
+
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label for="store_status">Is authorized?</label>
+                            <select class="custom-select" name="authorized" id="authorized">
+                                <option value=""> -- </option>
+                                <option value="1"> Yes </option>
+                                <option value="0"> No </option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label for="store_type">Store Type:</label>
+                            <select class="form-control" name="store_type" id="store_type">
+                                <option value=""> -- </option>
+                                @if(count($store_types ?? []) > 0)
+                                    @foreach($store_types as $stype)
+                                        <option value="{{ $stype->id }}">{{ $stype->name }}</option>
+                                    @endforeach
+                                @endif
+                            </select>
+                        </div>
+                    </div>
+
+                </div>
+                <div class="row">
                     <div class="col-md-2">
                         <div class="form-group">
                             <label>&nbsp;</label>
@@ -63,12 +84,17 @@
                         </div>
 
                     </div>
+                    <div class="col-md-2">
+                        <div class="form-group">
+                            <label>&nbsp;</label>
+                            <button type="reset" class="form-control btn btn-secondary">Reset</button>
+                        </div>
+                    </div>
                 </div>
-
 
             </form>
         </div>
-    </div>--}}
+    </div>
     <table id="storeTable" class="table table-bordered table-striped">
         <thead>
             <tr>
@@ -88,9 +114,9 @@
         @include('store.store_list', ['stores' => $stores])
         </tbody>
     </table>
-{{--    <div id="pagination">--}}
-{{--        @include('store.pagination', ['stores' => $stores])--}}
-{{--    </div>--}}
+    <div id="pagination">
+        @include('store.pagination', ['stores' => $stores])
+    </div>
 
 @stop
 
@@ -98,7 +124,19 @@
 
     <script>
         $(document).ready(function() {
-            $('#storeTable').DataTable({});
+
+            $('.card-header').on('click',function () {
+                if($(this).find('.fa').hasClass('fa-angle-down')){
+                    $(this).find('.fa').removeClass('fa-angle-down');
+                    $(this).find('.fa').addClass('fa-angle-up');
+                }else{
+                    $(this).find('.fa').removeClass('fa-angle-up');
+                    $(this).find('.fa').addClass('fa-angle-down');
+                }
+                $('.card-body').toggle();
+            });
+
+            /*$('#storeTable').DataTable({});*/
 
             // Handle pagination links click
             $(document).on('click', '.pagination a', function(event) {
@@ -108,16 +146,35 @@
             });
 
             function loadProductsWithPage(page) {
-                {{--var perPage = '{{ $perPage }}';--}}
-                {{--$.ajax({--}}
-                {{--    url: "{{ route('stores.filter') }}?page=" + page + "&perPage=" + perPage,--}}
-                {{--    data: $('#filter-form').serialize(),--}}
-                {{--    success: function(response) {--}}
-                {{--        $('#store-list').html(response.html);--}}
-                {{--        $('#pagination').html(response.pagination);--}}
-                {{--    }--}}
-                {{--});--}}
+                var perPage = '{{ $perPage }}';
+                $.ajax({
+                    url: "{{ route('stores.filter') }}?page=" + page + "&perPage=" + perPage,
+                    data: $('#filter-form').serialize(),
+                    success: function(response) {
+                        $('#store-list').html(response.html);
+                        $('#pagination').html(response.pagination);
+                    }
+                });
             }
+
+            $('#filter-form').on('submit', function(e) {
+                e.preventDefault(); // Prevent default form submission
+                var perPage =  '{{ $perPage }}';
+                var page =  1;
+                $.ajax({
+                    url: "{{ route('stores.filter') }}?page=" + page + "&perPage=" + perPage,
+                    method: 'GET',
+                    data: $(this).serialize(),
+                    success: function(response) {
+                        // Update the product list and pagination
+                        $('#store-list').html(response.html);
+                        $('#pagination').html(response.pagination);
+                    },
+                    error: function(xhr) {
+                        console.error('Error:', xhr);
+                    }
+                });
+            });
 
             $(document).on('click', '.delete-btn', function() {
                 var storeId = $(this).data('id');
@@ -145,6 +202,38 @@
                     });
                 }
             });
+
+            $(document).on('click', '.authorize', function() {
+                let ele = $(this);
+                let store_id= $(this).data('id');
+                let is_authorize = 0;
+                if($(this).is(':checked')){
+                    is_authorize = 1
+                }
+
+                $.ajax({
+                    url: "{{ route('store.update') }}",   // Laravel route for deletion
+                    type: 'POST',
+                    data: {
+                        id:store_id,
+                        field:'authorized',
+                        value:is_authorize,
+                        "_token": '{{ csrf_token() }}'
+                    },
+                    success: function (response) {
+                        // If success, remove the user row from the table
+                        if (response.success) {
+                            ele.prop('checked',true);
+                        }
+                    },
+                    error: function (xhr) {
+                        // Handle error response
+                        alert('Error: ' + xhr.responseJSON.error);
+                    }
+                });
+            });
+
+
         });
     </script>
 @stop
