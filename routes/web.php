@@ -55,6 +55,8 @@ Route::post('/set-image-order', [CatalogController::class, 'setImageOrder'])->na
 Route::post('catalog/getstoredetail', [CatalogController::class, 'getStoreDetail'])->name('catalog.getstoredetail');
 Route::post('catalog/saveproductchannel', [CatalogController::class, 'saveProductChannel'])->name('catalog.saveproductchannel');
 
+Route::post('/generate-feed-file',[HomeController::class, 'generateFeedFile'])->name('generate-feed-file');
+
 Route::controller(StoreController::class)->group(function () {
     Route::get('/stores', 'index')->name('store.list');
     Route::get('/stores/add', 'create')->name('store.create');

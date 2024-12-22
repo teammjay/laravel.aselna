@@ -4,12 +4,13 @@ namespace App\Services\Marketplace;
 
 use App\Services\Marketplace\Contracts\MarketplaceServiceInterface;
 use App\Services\Marketplace\Exceptions\MarketplaceNotSupportedException;
+use App\Services\Marketplace\Service\AmazonService;
 
 class MarketplaceServiceFactory
 {
     public static function create(string $marketplace): MarketplaceServiceInterface {
         $marketplaceClass = match (strtolower($marketplace)) {
-//            'amazon' => AmazonService::class,
+            'amazon' => AmazonService::class,
 //            'ebay' => EbayService::class,
 //            'magento' => MagentoService::class,
 //            'shopify' => ShopifyService::class,

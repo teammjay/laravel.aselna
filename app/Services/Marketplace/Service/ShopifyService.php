@@ -6,7 +6,7 @@ use App\Services\Marketplace\Contracts\MarketplaceServiceInterface;
 
 class ShopifyService implements MarketplaceServiceInterface
 {
-    public function generateFeed()
+    public function generateFeed($listingId)
     {
         // TODO: Implement generateFeed() method.
     }
