@@ -19,4 +19,9 @@ class ListingFeed extends Model
     {
         return $this->belongsTo(Listing::class);
     }
+
+    public function store()
+    {
+        return $this->belongsTo(Store::class);
+    }
 }

@@ -36,7 +36,7 @@
                     <th>Warnings</th>
                     <th>Number Of Attempts</th>
                     <th> Feed Id</th>
-{{--                    <th>Action</th>--}}
+                    <th>Action</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -44,7 +44,7 @@
                     <tr>
                         <td>{{$listing->id}}</td>
                         <td>{{$listing->listing_id}}</td>
-                        <td>{{$listing->store_id}}</td>
+                        <td>{{$listing->store->name}} - {{$listing->store->storeType->name}}</td>
                         <td>{{$listing->status}}</td>
                         <td>{{$listing->created_at}}</td>
                         <td>{{$listing->submit_ts}}</td>
@@ -56,6 +56,9 @@
                         <td>{{$listing->number_of_attempts}}</td>
                         <td>{{$listing->feed_id}}</td>
                         <td></td>
+                        <td>
+                            <button class="btn btn-primary generate-feed-file" data-listing="{{$listing->id}}" data-toggle="tooltip" title="Generate Feed File">Generate Feed File</button>
+                        </td>
                     </tr>
                 @endforeach
                 </tbody>
@@ -73,6 +76,22 @@
     <script>
         $(document).ready(function () {
             $('#listingTable').DataTable();
+        });
+
+        //CSRF token mismatch.
+        $('.generate-feed-file').click(function () {
+            var listingId = $(this).data('listing');
+            $.ajax({
+                url: "<?= route('generate-feed-file') ?>",
+                type: 'POST',
+                data: {
+                    _token: "<?= csrf_token() ?>",
+                    listing_id: listingId
+                },
+                success: function (response) {
+                    console.log(response);
+                }
+            });
         });
     </script>
 @stop
