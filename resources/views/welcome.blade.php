@@ -27,8 +27,8 @@
                     <th>Feed type</th>
                     <th>Store</th>
                     <th>Status</th>
-                    <th>ListingFeed.createTs</th>
-                    <th> Submit Ts</th>
+                    <th>created At</th>
+                    <th> Submit At</th>
                     <th>Number Of Items</th>
                     <th>Processing Count</th>
                     <th>Success</th>
@@ -36,9 +36,29 @@
                     <th>Warnings</th>
                     <th>Number Of Attempts</th>
                     <th> Feed Id</th>
-                    <th>Action</th>
+{{--                    <th>Action</th>--}}
                 </tr>
                 </thead>
+                <tbody>
+                @foreach($listings as $listing)
+                    <tr>
+                        <td>{{$listing->id}}</td>
+                        <td>{{$listing->listing_id}}</td>
+                        <td>{{$listing->store_id}}</td>
+                        <td>{{$listing->status}}</td>
+                        <td>{{$listing->created_at}}</td>
+                        <td>{{$listing->submit_ts}}</td>
+                        <td>{{$listing->number_of_items}}</td>
+                        <td>{{$listing->processing_count}}</td>
+                        <td>{{$listing->success_count}}</td>
+                        <td>{{$listing->fail_count}}</td>
+                        <td>{{$listing->warning_count}}</td>
+                        <td>{{$listing->number_of_attempts}}</td>
+                        <td>{{$listing->feed_id}}</td>
+                        <td></td>
+                    </tr>
+                @endforeach
+                </tbody>
             </table>
         </div>
     </div>

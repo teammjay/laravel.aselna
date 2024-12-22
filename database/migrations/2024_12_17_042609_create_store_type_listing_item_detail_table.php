@@ -13,12 +13,12 @@ return new class extends Migration
     {
         Schema::create('listing_item_detail', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->string('sku');
-            $table->string('title');
-            $table->string('upc');
+            $table->string('sku')->nullable();
+            $table->string('title')->nullable();
+            $table->string('upc')->nullable();
             $table->string('url')->nullable();
             $table->string('store_sku')->nullable();
-            $table->boolean('kicked')->default(0);
+            $table->boolean('kicked')->default(0)->nullable();
             $table->uuid('replaced_id')->nullable();
             $table->uuid('device_id')->nullable();
             $table->uuid('device_carrier_id')->nullable();

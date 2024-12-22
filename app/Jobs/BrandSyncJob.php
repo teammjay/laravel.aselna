@@ -25,12 +25,12 @@ class BrandSyncJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $esaleBrands = DB::connection('easyesale_db')->table('cea_brand')->get();
+        $esaleBrands = DB::connection('easyesale_db')->table('cea_brand')->cursor();
         foreach ($esaleBrands as $brand) {
             $this->createSyncBrand($brand);
         }
 
-        $brands = DB::connection('fonus_db')->table('tbl_brand')->get();
+        $brands = DB::connection('fonus_db')->table('tbl_brand')->cursor();
         foreach ($brands as $brand) {
             $this->createBrand($brand);
         }

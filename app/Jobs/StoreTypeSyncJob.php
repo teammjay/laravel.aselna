@@ -25,7 +25,7 @@ class StoreTypeSyncJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $storeTypes = DB::connection('easyesale_db')->table('store_type')->get();
+        $storeTypes = DB::connection('easyesale_db')->table('store_type')->cursor();
         foreach ($storeTypes as $storeType) {
             $this->createStoreType($storeType);
         }

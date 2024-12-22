@@ -1,0 +1,58 @@
+<?php
+
+namespace App\Jobs;
+
+use App\Models\Listing;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Support\Facades\DB;
+
+class ListingSyncJob implements ShouldQueue
+{
+    use Queueable;
+
+    /**
+     * Create a new job instance.
+     */
+    public function __construct()
+    {
+        //
+    }
+
+    /**
+     * Execute the job.
+     */
+    public function handle(): void
+    {
+        $listings = DB::connection('easyesale_db')->table('listing')->cursor();
+        foreach ($listings as $listing) {
+            $this->createListing($listing);
+        }
+    }
+
+    private function createListing(mixed $listing)
+    {
+        Listing::updateOrCreate([
+            'id' => $listing->id
+        ], [
+            'brand_combo' => $listing->brand_combo,
+            'carrier_combo' => $listing->carrier_combo,
+            'chained' => $listing->chained,
+            'client'    => $listing->client,
+            'created_at' => now(),
+            'created_by' => 'system',
+            'device_id' => $listing->device_id,
+            'feed_execution_delay' => $listing->feed_execution_delay,
+            'feed_type' => $listing->feed_type,
+            'generation_type_id' => $listing->generation_type_id,
+            'id' => $listing->id,
+            'include_carriers' => $listing->include_carriers,
+            'manufacturer_id' => $listing->manufacturer_id,
+            'preserve_title_description' => $listing->preserve_title_description,
+            'status' => $listing->status,
+            'store_id' => $listing->store_id,
+            'updated_at' => now(),
+            'updated_by' => 'system'
+        ]);
+    }
+}

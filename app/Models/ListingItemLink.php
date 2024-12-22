@@ -20,11 +20,11 @@ class ListingItemLink extends Model
 
         static::creating(function ($model) {
             if (empty($model->id)) {
-                $model->id = (string) Str::uuid();
+                $model->id = (string)Str::uuid();
             }
         });
     }
 
 
-    protected $fillable = ['item_id','listing_id','feed_id','parent_id','client','replaced_id','order_operation_item_id','old_price','sync_status','feed_message_id','created_by','updated_by','created_at','updated_at'];
+    protected $fillable = ['id', 'item_id', 'listing_id', 'feed_id', 'parent_id', 'client', 'replaced_id', 'order_operation_item_id', 'old_price', 'sync_status', 'feed_message_id', 'created_by', 'updated_by', 'created_at', 'updated_at'];
 }

@@ -14,11 +14,11 @@ return new class extends Migration
         Schema::create('listing_item', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->uuid('store_type_listing_id')->nullable();
-            $table->string('title');
+            $table->text('title')->nullable();
             $table->text('description')->nullable();
             $table->string('sku')->nullable();
             $table->string('store_sku')->nullable();
-            $table->string('store_url')->nullable();
+            $table->text('store_url')->nullable();
             $table->uuid('parent_id')->nullable();
             $table->float('price')->nullable();
             $table->integer('sync_status')->nullable();
@@ -42,7 +42,7 @@ return new class extends Migration
             $table->boolean('carrier_combo')->nullable();
             $table->integer('submit_count')->default(0);
             $table->uuid('replaced_id')->nullable();
-            $table->string('sync_message')->nullable();
+            $table->text('sync_message')->nullable();
             $table->string('mpn')->nullable();
             $table->uuid('manufacturer_id')->nullable();
             $table->integer('sales_count')->nullable();

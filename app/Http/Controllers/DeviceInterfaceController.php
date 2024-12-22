@@ -9,7 +9,7 @@ class DeviceInterfaceController extends Controller
 {
     public function index()
     {
-        $deviceInterfaces = DeviceInterface::all();
+        $deviceInterfaces = DeviceInterface::limit(2000)->get();
         return view('device_interface.list', compact('deviceInterfaces'));
     }
 }

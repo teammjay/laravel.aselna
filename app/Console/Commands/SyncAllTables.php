@@ -9,6 +9,12 @@ use App\Jobs\DevicesSyncJob;
 use App\Jobs\DeviceTypesSyncJob;
 use App\Jobs\GenerationTypeAndTemplateSync;
 use App\Jobs\InterfaceSyncJob;
+use App\Jobs\ListingFeedSyncJob;
+use App\Jobs\ListingItemDataSyncJob;
+use App\Jobs\ListingItemLinkSyncJob;
+use App\Jobs\ListingItemSyncJob;
+use App\Jobs\ListingSyncJob;
+use App\Jobs\LogisticCentreSyncJob;
 use App\Jobs\ManufacturerSyncJob;
 use App\Jobs\ProductConditionJob;
 use App\Jobs\ProductInterfaces;
@@ -17,6 +23,7 @@ use App\Jobs\ShippingCarrierJob;
 use App\Jobs\StoreSyncJob;
 use App\Jobs\StoreTypeSyncJob;
 use App\Jobs\UPCGenerateJob;
+use App\Jobs\UPCSyncJob;
 use App\Models\DeviceInterface;
 use App\Models\ProductInterface;
 use Illuminate\Console\Command;
@@ -56,6 +63,12 @@ class SyncAllTables extends Command
         GenerationTypeAndTemplateSync::dispatch();
         ProductSyncJob::dispatch();
         ProductInterfaces::dispatch();
-
+        ListingSyncJob::dispatch();
+        ListingItemSyncJob::dispatch();
+        ListingItemDataSyncJob::dispatch();
+        ListingItemLinkSyncJob::dispatch();
+        UPCSyncJob::dispatch();
+        LogisticCentreSyncJob::dispatch();
+        ListingFeedSyncJob::dispatch();
     }
 }

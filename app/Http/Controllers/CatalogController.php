@@ -37,8 +37,10 @@ class CatalogController extends Controller
     public function index(Request $request)
     {
         // get the data in the pagination format for datatable to display
+        //sku must contain only 3 characters
         session()->forget('pro_id');
         $products = Catalog::with('Manufacturer')->select('*')
+            ->whereRaw('LENGTH(product_sku) = 3')
             ->orderBy('created_at','desc')
             ->paginate($this->perPage);
         $productTypes = ProductType::all();
@@ -704,7 +706,7 @@ class CatalogController extends Controller
 
             $imageDetail = ProductImages::find($imageId);
             Catalog::where('product_id', $productId)->update(['product_image_url'=>$imageDetail->image]);
-            
+
             return response()->json(['success' => true, 'message' => 'Image set default successfully']);
 
         }catch(QueryException $e){

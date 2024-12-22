@@ -26,12 +26,12 @@ class GenerationTypeAndTemplateSync implements ShouldQueue
      */
     public function handle(): void
     {
-        $listingGenerationType = DB::connection('easyesale_db')->table('cea_listing_generation_type')->get();
+        $listingGenerationType = DB::connection('easyesale_db')->table('cea_listing_generation_type')->cursor();
         foreach ($listingGenerationType as $generationType) {
             $this->createGenerationType($generationType);
         }
 
-        $listingGenerationTypeTemplate = DB::connection('easyesale_db')->table('cea_listing_generation_type_template')->get();
+        $listingGenerationTypeTemplate = DB::connection('easyesale_db')->table('cea_listing_generation_type_template')->cursor();
         foreach ($listingGenerationTypeTemplate as $generationTypeTemplate) {
             $this->createGenerationTypeTemplate($generationTypeTemplate);
         }
