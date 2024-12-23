@@ -8,31 +8,9 @@
 @stop
 
 @section('content')
-    <div class="row my-3">
-        <div class="col-md-1">
-            <a href="{{ route('listing.create') }}" class="btn btn-secondary">
-                Create
-            </a>
-        </div>
-        <div class="col-md-3">
-            <select class="form-control" id="listing_store" name="store_id">
-                <option value=""></option>
-                @if(count($stores ?? []) > 0)
-                    @foreach($stores as $store)
-                        <option value="{{ $store->id }}">{{ $store->name }}{{ ($store->marketplace_name) ? '-'.$store->marketplace_name : '' }}</option>
-                    @endforeach
-                @endif
-            </select>
 
-        </div>
-        <div class="col-md-2">
-            <button type="button" class="btn btn-secondary" id="open_store_page">
-                Open Store Page
-            </button>
-        </div>
-    </div>
     <div class="card card-secondary">
-        <div class="card-header">
+        <div class="card-header bg-white">
             <h3 class="card-title">Filters</h3>
             <i class="fa fa-angle-down float-right"></i>
         </div>
@@ -558,6 +536,52 @@
             </form>
         </div>
     </div>
+    <div class="row my-3">
+        <div class="col-md-1">
+            <a href="{{ route('listing.create') }}" class="btn btn-secondary">
+                Create
+            </a>
+        </div>
+        <div class="col-md-2">
+            <select class="form-control" id="listing_store" name="store_id">
+                <option value="">--</option>
+                @if(count($stores ?? []) > 0)
+                    @foreach($stores as $store)
+                        <option value="{{ $store->id }}">{{ $store->name }}{{ ($store->marketplace_name) ? '-'.$store->marketplace_name : '' }}</option>
+                    @endforeach
+                @endif
+            </select>
+
+        </div>
+        <div class="col-md-8 d-flex">
+            <button type="button" class="btn btn-secondary" id="open_store_page">
+                Open Store Page
+            </button>
+            <button type="button" class="btn btn-default ml-2" id="sync_inventory">
+                Sync Inventory
+            </button>
+            <button type="button" class="btn btn-default ml-2" id="sync_images">
+                Sync Images
+            </button>
+            <button type="button" class="btn btn-default ml-2" id="sync_price">
+                Sync Price
+            </button>
+            <button type="button" class="btn btn-default ml-2" id="select_all">
+                Select All
+            </button>
+            <button type="button" class="btn btn-default ml-2" id="select_none">
+                Select None
+            </button>
+        </div>
+        <div class="col-md-1">
+            <select class="custom-select w-auto float-right" name="per_page" id="per_page">
+                <option value="10" {{ ($perPage == 10) ? 'selected':'' }}>10</option>
+                <option value="25" {{ ($perPage == 25) ? 'selected':'' }}>25</option>
+                <option value="50" {{ ($perPage == 50) ? 'selected':'' }}>50</option>
+                <option value="100" {{ ($perPage == 100) ? 'selected':'' }}>100</option>
+            </select>
+        </div>
+    </div>
     <div class="table-responsive">
         <table id="productsTable" class="table table-bordered table-striped">
             <thead>
@@ -586,7 +610,7 @@
             </tbody>
         </table>
     </div>
-    <div id="pagination">
+    <div id="pagination" class="pt-3 pb-3">
         @include('listing.pagination', ['products' => $products])
     </div>
 @stop
@@ -615,7 +639,7 @@
 
         $('#listing_store').on('change',function () {
 
-            var perPage =  '{{ $perPage }}';
+            var perPage =  $('#per_page').val();
             var page =  1;
             $.ajax({
                 url: "{{ route('listing.filter') }}?page=" + page + "&perPage=" + perPage,
@@ -635,11 +659,13 @@
 
         });
 
-
+        $(document).on('change', '#per_page', function(event) {
+            $('#filter-form').submit();
+        });
 
         $('#filter-form').on('submit', function(e) {
             e.preventDefault(); // Prevent default form submission
-            var perPage =  '{{ $perPage }}';
+            var perPage =  $('#per_page').val();
             var page =  1;
             $.ajax({
                 url: "{{ route('listing.filter') }}?page=" + page + "&perPage=" + perPage,
@@ -664,7 +690,7 @@
         });
 
         function loadProductsWithPage(page) {
-            var perPage = '{{ $perPage }}';;
+            var perPage = $('#per_page').val();
             $.ajax({
                 url: "{{ route('listing.filter') }}?page=" + page + "&perPage=" + perPage,
                 data: $('#filter-form').serialize(),

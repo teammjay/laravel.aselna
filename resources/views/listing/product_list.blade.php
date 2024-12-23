@@ -1,18 +1,18 @@
 @if(count($products ?? []) > 0)
     @foreach($products as $product)
         <tr>
-            <td>{{ $product->sku }}</td>
+            <td style="white-space: nowrap;">{{ $product->sku }}</td>
             <td></td>
             <td></td>
-            <td>{{ $product->store_sku }}</td>
+            <td style="white-space: nowrap;">{{ $product->store_sku }}</td>
             <td>{{ $product->product_sku }}</td>
-            <td>{{ $product->store_name.' - '.$product->marketplace_name }}</td>
-            <td>{{ $product->title }}</td>
+            <td style="white-space: nowrap;">{{ $product->store_name.' - '.$product->marketplace_name }}</td>
+            <td  style="white-space: nowrap;">{{ strlen($product->title) > 50 ? substr($product->title, 0, 50) . "..." : $product->title }}</td>
             <td>{{ ($product->status == 1) ? 'Active' : 'Inactive' }}</td>
             <td></td>
             <td>{{ $product->product_color }}</td>
             <td></td>
-            <td></td>
+            <td style="white-space: nowrap;">{{ $product->generation_type_name }}</td>
             <td>{{ $product->price }}</td>
             <td></td>
             <td>

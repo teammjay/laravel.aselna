@@ -323,12 +323,12 @@ return [
 //        ],
         [
             'text' => 'Catalog',
-            'icon' => 'far fa-fw fa-file',
+            'icon' => 'fa fa-fw fa-book',
             'submenu' => [
                 [
                     'text' => 'Products',
                     'url' => '/catalog',
-                    'icon' => 'far fa-fw fa-file',
+                    'icon' => 'fa fa-fw fa-archive',
                 ],
                 [
                     'text' => 'Product Attributes',
@@ -348,13 +348,13 @@ return [
                 [
                     'text' => 'Product Target Audience',
                     'url' => '/product_target_audience',
-                    'icon' => 'far fa-fw fa-file'
+                    'icon' => 'fa fa-fw fa-user-md'
                 ],
             ]
         ],
         [
             'text' => 'Stores',
-            'icon' => 'far fa-fw fa-file',
+            'icon' => 'far fa-fw fa-building',
             'submenu' => [
                 [
                     'text' => 'Stores',
@@ -390,16 +390,16 @@ return [
         ], [
             'text' => 'Customers',
             'url' => '/customers',
-            'icon' => 'far fa-fw fa-file'
+            'icon' => 'fa fa-fw fa-users'
         ],
         [
             'text' => 'Listing',
             'url' => '/listing',
-            'icon' => 'far fa-fw fa-file'
+            'icon' => 'far fa-fw fa-list-alt'
         ],
         [
             'text' => 'Master File Settings',
-            'icon' => 'fas fa-fw fa-share',
+            'icon' => 'fa fa-fw fa-cogs',
             'submenu' => [
                 [
                     'text' => 'Interface',

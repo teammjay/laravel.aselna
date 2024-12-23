@@ -38,8 +38,25 @@
             background: #fff;
             z-index: 9999;
         }
-        .ui-autocomplete{z-index: 99999; height: 250px; overflow: auto;}
+        .ui-autocomplete{z-index: 99999; max-height: 250px; overflow: auto;}
         #frmproductfilter select.form-control[multiple]{height: 100%;}
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 99999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .overlay i {
+            font-size: 3rem;
+            color: #007bff;
+        }
     </style>
 @stop
 @section('content_header')
@@ -47,6 +64,10 @@
 @stop
 
 @section('content')
+
+    <div class="overlay" id="ajax-preloader" style="display: none;">
+        <i class="fas fa-spinner fa-spin"></i>
+    </div>
 
     @csrf
     @if (session('success'))
@@ -625,9 +646,10 @@
                 </div>
                 <div class="col-md-12 text-center sticky-bottom">
                     <div class="card-footer footer-btn">
-                        <button type="button" class="btn btn-warning" id="prevBtn">Prev</button>
-                        <button type="button" class="btn btn-success" id="nextBtn">Next</button>
-                        <a href="{{ route('listing.list') }}" class="btn btn-secondary">Cancel</a>
+                        <button type="button" class="btn btn-warning lbtn" id="prevBtn">Prev</button>
+                        <button type="button" class="btn btn-success lbtn" id="nextBtn">Next</button>
+                        <a href="{{ route('listing.list') }}" class="btn btn-secondary lbtn">Cancel</a>
+                        <a href="{{ route('listing.list') }}" class="btn btn-warning donebtn" style="display: none;">Done</a>
                     </div>
                 </div>
             </div>
@@ -667,7 +689,9 @@
             };
 
             document.getElementById('nextBtn').addEventListener('click', () => {
-                $('#nextBtn').html('Next');
+                if(currentIndex < 3) {
+                    $('#nextBtn').html('Next');
+                }
 
                 if (currentIndex < tabs.length - 1) {
                     if(currentIndex == 0){
@@ -721,7 +745,7 @@
                             title_template.push($(this).val())
                         });
 
-
+                        $("#ajax-preloader").show();
                         $.ajax({
                             url: "{{ route('listing.generateproductlisting') }}",
                             type: 'POST',
@@ -765,6 +789,9 @@
                                 /*if (xhr.responseJSON?.error) {
                                     $('#responseMessage').html('<p style="color:red;">' + xhr.responseJSON.error.image[0] + '</p>');
                                 }*/
+                            },
+                            complete: function () {
+                                $("#ajax-preloader").hide();
                             }
                         });
 
@@ -774,6 +801,7 @@
                         let formData = new FormData(form);
                         formData.append('store_id', $('#listing_store').val());
                         formData.append('product_models', JSON.stringify(product_models));
+                        $("#ajax-preloader").show();
                         $.ajax({
                             type: 'POST',
                             url: "{{ route('listing.savelistingproducts') }}", // Adjust this URL to your endpoint
@@ -790,11 +818,18 @@
                                 if(response.success){
                                     currentIndex++;
                                     activateTab(currentIndex);
-                                    //$('.footer-btn').hide();
-                                    location.href='{{ route('listing.list') }}'
+                                    if(response.summary) {
+                                        $('#tab5').html(response.summary);
+                                    }
+                                    $('.lbtn').hide();
+                                    $('.donebtn').show();
+                                    //location.href='{{ route('listing.list') }}'
                                 }
                             },
                             error: function(xhr) {
+                            },
+                            complete: function () {
+                                $("#ajax-preloader").hide();
                             }
                         });
                     }else{
@@ -1263,6 +1298,7 @@
         function loadProducts() {
             const form = document.querySelector("#frmproductfilter");
             let formData = new FormData(form);
+            $("#ajax-preloader").show();
             $.ajax({
                 url: "{{ route('listing.getproducts') }}",
                 type: 'POST',
@@ -1281,6 +1317,9 @@
                     /*if (xhr.responseJSON?.error) {
                         $('#responseMessage').html('<p style="color:red;">' + xhr.responseJSON.error.image[0] + '</p>');
                     }*/
+                },
+                complete: function () {
+                    $("#ajax-preloader").hide();
                 }
             });
         }
@@ -1291,7 +1330,7 @@
             $('input[name="products[]"]:checked').each(function () {
                 selected_product.push($(this).val())
             });
-
+            $('#ajax-preloader').show();
             $.ajax({
                 url: "{{ route('listing.getselectedproducts') }}",
                 type: 'POST',
@@ -1314,6 +1353,9 @@
                     /*if (xhr.responseJSON?.error) {
                         $('#responseMessage').html('<p style="color:red;">' + xhr.responseJSON.error.image[0] + '</p>');
                     }*/
+                },
+                complete: function () {
+                    $("#ajax-preloader").hide();
                 }
             });
         }
@@ -1342,7 +1384,7 @@
                 productDetail[pid]['price'] = price;
                 productDetail[pid]['price_overwrite'] = price_overwrite;
             });
-
+            $("#ajax-preloader").show();
             $.ajax({
                 url: "{{ route('listing.getselectedproducts') }}",
                 type: 'POST',
@@ -1358,6 +1400,8 @@
                 success: function (response) {
                     if (response.html) {
                         $('#product-list-3').html(response.html);
+                        var selected_template = $('#title_template').val();
+                        $('input[name="product_title_template[]"]').val(selected_template);
                         loadListingProduct(0);
                     }
                 },
@@ -1365,6 +1409,9 @@
                     /*if (xhr.responseJSON?.error) {
                         $('#responseMessage').html('<p style="color:red;">' + xhr.responseJSON.error.image[0] + '</p>');
                     }*/
+                },
+                complete: function () {
+                    $("#ajax-preloader").hide();
                 }
             });
 
@@ -1489,6 +1536,7 @@
             let brand = $('#brand_filter').val();
             let rating = $('#rating_filter').val();
             let popularity = $('#popularity_filter').val();
+            $("#ajax-preloader").show();
             $.ajax({
                 url: "{{ route('listing.getcompatibledevice') }}",
                 type: 'POST',
@@ -1524,6 +1572,9 @@
                     /*if (xhr.responseJSON?.error) {
                         $('#responseMessage').html('<p style="color:red;">' + xhr.responseJSON.error.image[0] + '</p>');
                     }*/
+                },
+                complete: function () {
+                    $("#ajax-preloader").hide();
                 }
             });
         }
