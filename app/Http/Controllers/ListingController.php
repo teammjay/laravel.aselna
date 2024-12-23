@@ -42,13 +42,14 @@ class ListingController extends Controller
         $device_types = DeviceTypes::Where('status',1)->get();
         $product_types = ProductType::all();
         //DB::enableQueryLog();
-        $products = ListingItem::select('listing_item.*','products.product_sku','products.dimensions_width','products.product_color','store.name as store_name','store.marketplace_name')
+        $products = ListingItem::select('listing_item.*','products.product_sku','products.dimensions_width','products.product_color','store.name as store_name','store.marketplace_name','listing_generation_type.name as generation_type_name')
             ->leftJoin('listing_item_link','listing_item.id', '=', 'listing_item_link.item_id')
             ->leftJoin('store_product','store_product.id', '=', 'listing_item.store_product_id')
             ->leftJoin('products','products.product_id', '=', 'store_product.product_id')
             ->leftJoin('store','store.id', '=', 'store_product.store_id')
+            ->leftJoin('listing_generation_type','listing_generation_type.id', '=', 'listing_item.generation_type_id')
             ->where('listing_item.status',1)
-            ->groupBy('listing_item.id')
+            ->groupBy('listing_item.id', 'products.product_sku', 'products.dimensions_width', 'products.product_color', 'store.name', 'store.marketplace_name')
             ->orderBy('listing_item.created_at','desc')
             ->paginate($this->perPage);
         /*$lastQuery = DB::getQueryLog();
@@ -314,7 +315,7 @@ class ListingController extends Controller
         if ($request->ajax()) {
             return response()->json([
                 'html' => view('listing.product_list', compact('products'))->render(),
-                'pagination' => view('listing.pagination', compact('products'))->render(),
+                'pagination' => view('listing.pagination', compact('products','perPage'))->render(),
             ]);
         }
 
@@ -1100,6 +1101,7 @@ class ListingController extends Controller
                 /*echo '<pre>';
                 print_r();
                 echo '</pre>';die;*/
+                $summary_products = [];
                 if($listing_id && !empty($product_titles)) {
                     foreach ($product_titles as $key => $product) {
                         $sku = StoreTypeListing::generateUniqueAlphabeticSku($product_codes[$key],4);
@@ -1109,6 +1111,10 @@ class ListingController extends Controller
                         if(str_contains($product, '[^]')){
                             $product_name = str_replace('[^]', $sku, $product);
                         }
+                        $summary_products[$key]['title'] = $product_name;
+                        $summary_products[$key]['sku'] = $sku;
+                        $summary_products[$key]['product_type'] = $productDetail['ProductType'];
+                        $summary_products[$key]['product_code'] = $productDetail['product_sku'];
                         $listingProductArr = [
                             'product_name' => $product_name,
                             'description' => $productDetail['description'],
@@ -1152,6 +1158,7 @@ class ListingController extends Controller
 
                             $item = ListingItem::create($modelDetail);
                             $listing_item_id = $item->id;
+                            $modelNames = array();
                             if($listing_item_id){
                                 if (isset($product_models[$key]) && is_array($product_models[$key])) {
 
@@ -1164,6 +1171,7 @@ class ListingController extends Controller
                                         if(str_contains($product, '[^]')){
                                             $product = str_replace('[^]', $nsku, $product);
                                         }
+                                        $modelNames[] = $model->name;
                                         $itemDetail = array(
                                             'sku' => $nsku,
                                             'title' => $product,
@@ -1197,10 +1205,15 @@ class ListingController extends Controller
                                 }
                             }
                         }
+                        $summary_products[$key]['models'] = implode(',',$modelNames);
+
                     }
+
+                    $view = view('listing.listing_summary', compact('summary_products'))->render();
 
                     return response()->json([
                         'success' => true,
+                        'summary' => $view,
                         'message' => 'Product listing created successfully!'
                     ]);
                 }

@@ -95,25 +95,28 @@
             </form>
         </div>
     </div>
-    <table id="storeTable" class="table table-bordered table-striped">
-        <thead>
-            <tr>
-                <th>Store ID</th>
-                <th>Marketplace Name</th>
-                <th>Name</th>
-                <th>Store Type</th>
-                <th>Listing Type</th>
-                <th>Store Status</th>
-                <th>Authorized</th>
-                <th>Short Code</th>
-                <th>Upc usage type</th>
-                <th></th>
-            </tr>
-        </thead>
-        <tbody id="store-list">
-        @include('store.store_list', ['stores' => $stores])
-        </tbody>
-    </table>
+    <div class="table-responsive">
+        <table id="storeTable" class="table table-bordered table-striped">
+            <thead>
+                <tr>
+                    {{--<th>Store ID</th>--}}
+                    <th>Marketplace Name</th>
+                    <th>Name</th>
+                    <th>Store Type</th>
+                    <th>Listing Type</th>
+                    <th>Store Status</th>
+                    <th>Authorized</th>
+                    <th>Short Code</th>
+                    <th>Upc usage type</th>
+                    <th>Ad Account</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody id="store-list">
+            @include('store.store_list', ['stores' => $stores])
+            </tbody>
+        </table>
+    </div>
     <div id="pagination">
         @include('store.pagination', ['stores' => $stores])
     </div>
