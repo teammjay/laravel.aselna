@@ -316,7 +316,7 @@ class CatalogController extends Controller
             }
         }
         $manufacturers = Manufacturer::all();
-        $productTypes = ProductType::all();
+        $productTypes = ProductType::with('children')->where('parent_id',NULL)->get();
         $productConditions = ProductCondition::all();
         $interfaces = Interfaces::all();
         $productInterfaces = ProductInterface::where('product_id', $pro_id)->get();
@@ -397,7 +397,7 @@ class CatalogController extends Controller
             }
         }
         $manufacturers = Manufacturer::all();
-        $productTypes = ProductType::with('children')->get();
+        $productTypes = ProductType::with('children')->where('parent_id',NULL)->get();
         $productConditions = ProductCondition::all();
         $storeProducts = StoreProduct::where('product_id', $id)->get();
         $productStore = $storeProducts->pluck('store_id','store_type_category_id')->all();
