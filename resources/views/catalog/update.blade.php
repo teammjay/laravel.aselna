@@ -14,6 +14,17 @@
              border: none;
         }
         .select2-container{width:100% !important;}
+        .select2-container .select2-selection--single{
+            height: calc(2.25rem + 2px);
+        }
+        .select2-container--default .select2-selection--single .select2-selection__arrow {
+             height: auto;
+            position: absolute;
+            top: 50%;
+            right: 1px;
+            width: 20px;
+            transform: translateY(-50%);
+        }
     </style>
 @stop
 
@@ -120,8 +131,9 @@
                                                         $sel = '';
                                                     }
                                                     echo '<option value="' . $ptype->id . '" '.$sel.'>' . $prefix . $ptype->name . '</option>';
+
                                                     if ($ptype->children) {
-                                                        renderCategories($ptype->children, $product,  $prefix . '-- ');
+                                                        renderCategories($ptype->children, $product, $prefix . '-- ');
                                                     }
                                                 }
                                             }
@@ -571,8 +583,8 @@
                                 <table class="table table-bordered" id="features_table">
                                     <thead>
                                     <tr>
-                                        <th>Value</th>
-                                        <th>Sort</th>
+                                        <th data-column="0" data-order="asc">Value <span class="sort-icon float-right">▲</span></th>
+                                        <th data-column="1" data-order="asc">Sort <span class="sort-icon float-right">▲</span></th>
                                         <th>Action</th>
                                     </tr>
                                     </thead>
@@ -611,8 +623,8 @@
                                     <table class="table table-bordered" id="table_search_term">
                                         <thead>
                                             <tr>
-                                                <th>Term</th>
-                                                <th>Sort Order</th>
+                                                <th data-column="0" data-order="asc">Term <span class="sort-icon float-right">▲</span></th>
+                                                <th data-column="1" data-order="asc">Sort Order <span class="sort-icon float-right">▲</span></th>
                                                 <th></th>
                                             </tr>
                                         </thead>
@@ -927,8 +939,8 @@
                                                     <table class="table table-bordered" id="table_title_keyword">
                                                         <thead>
                                                         <tr>
-                                                            <th>Keyword</th>
-                                                            <th>Priority</th>
+                                                            <th data-column="0" data-order="asc">Keyword <span class="sort-icon float-right">▲</span></th>
+                                                            <th data-column="1" data-order="asc">Priority <span class="sort-icon float-right">▲</span></th>
                                                             <th></th>
                                                         </tr>
                                                         </thead>
@@ -1142,6 +1154,7 @@
         $(document).ready(function() {
 
             $('.pro-tags,.pro-interface').select2();
+            $('#product_type').select2();
 
             $('#imageUploadForm').on('submit', function (e) {
                 e.preventDefault();
@@ -1467,6 +1480,112 @@
                     nextSibling.attr('readonly','true');
                 }
             });
+
+            /* feature table sort*/
+
+            $('#features_table th').click(function() {
+                const table = $('#features_table');
+                const rows = table.find('tbody > tr').toArray();
+                const columnIndex = $(this).data('column');
+                const order = $(this).data('order');
+                const isAscending = order === 'asc';
+
+                rows.sort((a, b) => {
+
+                    let cellA = '';
+                    let cellB = '';
+
+                    if(columnIndex == 0) {
+                        cellA = $(a).children('td').eq(columnIndex).find('textarea').val();
+                        cellB = $(b).children('td').eq(columnIndex).find('textarea').val();
+                    }else{
+                        cellA = $(a).children('td').eq(columnIndex).find('input').val();
+                        cellB = $(b).children('td').eq(columnIndex).find('input').val();
+                    }
+
+                    return isAscending
+                        ? cellA.localeCompare(cellB, undefined, { numeric: true })
+                        : cellB.localeCompare(cellA, undefined, { numeric: true });
+                });
+
+                $(this).data('order', isAscending ? 'desc' : 'asc');
+
+                // Update sort icons
+                $('th .sort-icon').text('▲'); // Reset all icons
+                $(this).find('.sort-icon').text(isAscending ? '▼' : '▲'); // Set current icon
+
+                // Append sorted rows back to the table body
+                table.find('tbody').append(rows);
+            });
+
+            /* table_search_term sort*/
+
+            $('#table_search_term th').click(function() {
+                const table = $('#table_search_term');
+                const rows = table.find('tbody > tr').toArray();
+                const columnIndex = $(this).data('column');
+                const order = $(this).data('order');
+                const isAscending = order === 'asc';
+
+                rows.sort((a, b) => {
+
+                    const cellA = $(a).children('td').eq(columnIndex).find('input').val();
+                    const cellB = $(b).children('td').eq(columnIndex).find('input').val();
+
+                    return isAscending
+                        ? cellA.localeCompare(cellB, undefined, { numeric: true })
+                        : cellB.localeCompare(cellA, undefined, { numeric: true });
+                });
+
+                $(this).data('order', isAscending ? 'desc' : 'asc');
+
+                // Update sort icons
+                $('th .sort-icon').text('▲'); // Reset all icons
+                $(this).find('.sort-icon').text(isAscending ? '▼' : '▲'); // Set current icon
+
+                // Append sorted rows back to the table body
+                table.find('tbody').append(rows);
+            });
+
+            /* table_title_keyword sort*/
+
+            $('#table_title_keyword th').click(function() {
+                const table = $('#table_title_keyword');
+                const rows = table.find('tbody > tr').toArray();
+                const columnIndex = $(this).data('column');
+                const order = $(this).data('order');
+                const isAscending = order === 'asc';
+
+                rows.sort((a, b) => {
+
+                    let cellA = $(a).children('td').eq(columnIndex).find('input').val();
+                    let cellB = $(b).children('td').eq(columnIndex).find('input').val();
+
+                    if(columnIndex == 1) {
+                        // Convert to numbers if possible
+                        let numA = !isNaN(parseFloat(cellA)) ? parseFloat(cellA) : cellA;
+                        let numB = !isNaN(parseFloat(cellB)) ? parseFloat(cellB) : cellB;
+
+                        if (typeof numA === 'number' && typeof numB === 'number') {
+                            return isAscending ? numA - numB : numB - numA;
+                        }
+                    }
+
+                    return isAscending
+                        ? cellA.localeCompare(cellB, undefined, { numeric: true })
+                        : cellB.localeCompare(cellA, undefined, { numeric: true });
+                });
+
+                $(this).data('order', isAscending ? 'desc' : 'asc');
+
+                // Update sort icons
+                $('th .sort-icon').text('▲'); // Reset all icons
+                $(this).find('.sort-icon').text(isAscending ? '▼' : '▲'); // Set current icon
+
+                // Append sorted rows back to the table body
+                table.find('tbody').append(rows);
+            });
+
 
 
         });
