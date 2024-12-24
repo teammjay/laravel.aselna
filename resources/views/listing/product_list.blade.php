@@ -6,7 +6,7 @@
             <td></td>
             <td style="white-space: nowrap;">{{ $product->store_sku }}</td>
             <td>{{ $product->product_sku }}</td>
-            <td style="white-space: nowrap;">{{ $product->store_name.' - '.$product->marketplace_name }}</td>
+            <td style="white-space: nowrap;">{{ $product->store_name.' - '.$product->storeTypeName }}</td>
             <td  style="white-space: nowrap;">{{ strlen($product->title) > 50 ? substr($product->title, 0, 50) . "..." : $product->title }}</td>
             <td>{{ ($product->status == 1) ? 'Active' : 'Inactive' }}</td>
             <td></td>
