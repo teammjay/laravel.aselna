@@ -13,7 +13,7 @@
             <select class="form-control" id="listing_store">
                 <option value="-">Select Store</option>
                 @foreach($stores as $store)
-                    <option value="{{ $store->id }}">{{ $store->name }} - {{ $store->storeType->name }}</option>
+                    <option value="{{ $store->id }}" id="{{ $store->id }}" data-store="{{ $store->name }}" data-store-type="{{ $store->storeType->name }}">{{ $store->name }} - {{ $store->storeType->name }}</option>
                 @endforeach
             </select>
         </div>
@@ -77,8 +77,19 @@
 
 @section('js')
     <script>
+        var table;
         $(document).ready(function () {
-            $('#listingTable').DataTable();
+            table = $('#listingTable').DataTable();
+        });
+
+        // change listing store
+        $('#listing_store').change(function () {
+            //get selected label
+            var storeId = $(this).val();
+            var storeName = $(this).find(':selected').data('store');
+            var storeType = $(this).find(':selected').data('store-type');
+
+            table.columns(3).search(storeName + " - " + storeType).draw();
         });
 
         //CSRF token mismatch.
