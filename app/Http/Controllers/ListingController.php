@@ -43,11 +43,12 @@ class ListingController extends Controller
         $product_types = ProductType::with('children')->where('parent_id',NULL)->get();
         $manufacturers = Manufacturer::all();
         //DB::enableQueryLog();
-        $products = ListingItem::select('listing_item.id','listing_item.title','listing_item.sku','listing_item.store_sku','listing_item.price','listing_item.sales_count','listing_item.last_sale_date','products.product_sku','products.dimensions_width','products.product_color','store.name as store_name','store.marketplace_name','listing_generation_type.name as generation_type_name')
+        $products = ListingItem::select('listing_item.id','listing_item.title','listing_item.sku','listing_item.store_sku','listing_item.price','listing_item.sales_count','listing_item.last_sale_date','products.product_sku','products.dimensions_width','products.product_color','store.name as store_name','store.marketplace_name','listing_generation_type.name as generation_type_name','store_type.name as storeTypeName')
 //            ->leftJoin('listing_item_link','listing_item.id', '=', 'listing_item_link.item_id')
             ->leftJoin('store_product','store_product.id', '=', 'listing_item.store_product_id')
             ->leftJoin('products','products.product_id', '=', 'store_product.product_id')
             ->leftJoin('store','store.id', '=', 'store_product.store_id')
+            ->leftJoin('store_type','store_type.id', '=', 'store.store_type_id')
             ->leftJoin('listing_generation_type','listing_generation_type.id', '=', 'listing_item.generation_type_id')
             ->where('listing_item.status',1)
 //            ->groupBy('listing_item.id','listing_item.title','listing_item.sku','listing_item.store_sku','listing_item.price','listing_item.sales_count','listing_item.last_sale_date','products.product_sku', 'products.dimensions_width', 'products.product_color', 'store.name', 'store.marketplace_name')
@@ -68,11 +69,12 @@ class ListingController extends Controller
      */
     public function filter(Request $request)
     {
-        $query = ListingItem::select('listing_item.id','listing_item.title','listing_item.sku','listing_item.store_sku','listing_item.price','listing_item.sales_count','listing_item.last_sale_date','products.product_sku','products.dimensions_width','products.product_color','store.name as store_name','store.marketplace_name','listing_generation_type.name as generation_type_name');
+        $query = ListingItem::select('listing_item.id','listing_item.title','listing_item.sku','listing_item.store_sku','listing_item.price','listing_item.sales_count','listing_item.last_sale_date','products.product_sku','products.dimensions_width','products.product_color','store.name as store_name','store.marketplace_name','listing_generation_type.name as generation_type_name','store_type.name as storeTypeName');
 //        $query->leftJoin('listing_item_link','listing_item.id', '=', 'listing_item_link.item_id');
         $query->leftJoin('store_product','store_product.id', '=', 'listing_item.store_product_id');
         $query->leftJoin('products','products.product_id', '=', 'store_product.product_id');
         $query->leftJoin('store','store.id', '=', 'store_product.store_id');
+        $query->leftJoin('store_type','store_type.id', '=', 'store.store_type_id');
         $query->leftJoin('listing_generation_type','listing_generation_type.id', '=', 'listing_item.generation_type_id');
 
         $perPage = $request->input('perPage', $this->perPage);
