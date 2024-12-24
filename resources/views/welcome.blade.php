@@ -1,3 +1,4 @@
+@php use App\Constants\FeedTypes; @endphp
 @extends('adminlte::page')
 
 @section('title', 'Dashboard')
@@ -44,6 +45,7 @@
                     <tr>
                         <td>{{$listing->id}}</td>
                         <td>{{$listing->listing_id}}</td>
+                        <td>{{FeedTypes::getFeedName($listing->feed_type)}}</td>
                         <td>{{$listing->store->name}} - {{$listing->store->storeType->name}}</td>
                         <td>{{$listing->status}}</td>
                         <td>{{$listing->created_at}}</td>
@@ -55,9 +57,10 @@
                         <td>{{$listing->warning_count}}</td>
                         <td>{{$listing->number_of_attempts}}</td>
                         <td>{{$listing->feed_id}}</td>
-                        <td></td>
                         <td>
-                            <button class="btn btn-primary generate-feed-file" data-listing="{{$listing->id}}" data-toggle="tooltip" title="Generate Feed File">Generate Feed File</button>
+                            <button class="btn btn-primary generate-feed-file" data-listing="{{$listing->id}}"
+                                    data-toggle="tooltip" title="Generate Feed File">Download Feed File
+                            </button>
                         </td>
                     </tr>
                 @endforeach
@@ -89,7 +92,13 @@
                     listing_id: listingId
                 },
                 success: function (response) {
-                    console.log(response);
+                    //download the file url php code is  return response()->download($filetPath);
+                    var link = document.createElement('a');
+                    link.href = response.file_path;
+                    link.download = response.file_path.split('/').pop();
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
                 }
             });
         });
