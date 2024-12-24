@@ -134,6 +134,8 @@ class StoreController extends Controller
             $query->where('store_type_id', $request->store_type);
         }
 
+        $query->orderBy('id','desc');
+
         $stores = $query->paginate($perPage); // Paginate results
 
         //echo $query->toSql();die;
@@ -173,7 +175,7 @@ class StoreController extends Controller
             $validator = Validator::make(request()->all(), [
                 'name' => 'required',
                 'marketplace_name' => 'required',
-                'store_url' => 'required'
+                //'store_url' => 'required'
             ]);
 
             if ($validator->fails()) {
@@ -269,7 +271,7 @@ class StoreController extends Controller
             $validator = Validator::make(request()->all(), [
                 'name' => 'required',
                 'marketplace_name' => 'required',
-                'store_url' => 'required'
+                //'store_url' => 'required'
             ]);
 
             if ($validator->fails()) {
