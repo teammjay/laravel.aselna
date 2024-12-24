@@ -1154,7 +1154,7 @@
         $(document).ready(function() {
 
             $('.pro-tags,.pro-interface').select2();
-            //$('#product_type').select2();
+            $('#product_type').select2();
 
             $('#imageUploadForm').on('submit', function (e) {
                 e.preventDefault();
