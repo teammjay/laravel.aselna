@@ -158,7 +158,12 @@
                             </div>
                             <div class="col-6">
                                 <select class="form-control" id="manufacturer" name="manufacturer">
-                                    <option></option>
+                                    <option value="">--</option>
+                                    @if(count($manufacturers ?? []) > 0)
+                                        @foreach($manufacturers as $mf)
+                                            <option value="{{ $mf->id }}">{{ $mf->name }}</option>
+                                        @endforeach
+                                    @endif
                                 </select>
                             </div>
                         </div>
@@ -403,15 +408,25 @@
                             <div class="col-6 text-right">
                                 Product Type
                             </div>
+                            @php
+                                function renderCategories($productTypes, $prefix = '') {
+                                    foreach ($productTypes as $ptype) {
 
+                                        echo '<option value="' . $ptype->id . '">' . $prefix . $ptype->name . '</option>';
+
+                                        if ($ptype->children) {
+                                            renderCategories($ptype->children, $prefix . '-- ');
+                                        }
+                                    }
+                                }
+                            @endphp
                             <div class="col-6">
                                 <select class="form-control" id="" name="product_type">
-                                    <option value=""></option>
-                                    @if(count($product_types ?? []) > 0)
-                                        @foreach($product_types as $ptype)
-                                            <option value="{{ $ptype->id }}">{{ $ptype->name }}</option>
-                                        @endforeach
-                                    @endif
+                                    <option value="">--</option>
+                                    @php
+                                        renderCategories($product_types);
+                                    @endphp
+
                                 </select>
                             </div>
                         </div>

@@ -40,7 +40,8 @@ class ListingController extends Controller
             ->paginate($this->perPage);*/
         $stores = Store::with('storeType')->where('store_status',1)->orderBy('name','asc')->get();
         $device_types = DeviceTypes::Where('status',1)->get();
-        $product_types = ProductType::all();
+        $product_types = ProductType::with('children')->where('parent_id',NULL)->get();
+        $manufacturers = Manufacturer::all();
         //DB::enableQueryLog();
         $products = ListingItem::select('listing_item.id','listing_item.title','listing_item.sku','listing_item.store_sku','listing_item.price','listing_item.sales_count','listing_item.last_sale_date','products.product_sku','products.dimensions_width','products.product_color','store.name as store_name','store.marketplace_name','listing_generation_type.name as generation_type_name')
             ->leftJoin('listing_item_link','listing_item.id', '=', 'listing_item_link.item_id')
@@ -59,7 +60,7 @@ class ListingController extends Controller
         print_r($products);
         echo '</pre>';die;*/
 
-        return view('listing.list',compact('stores','products','device_types','product_types'))->with('perPage', $this->perPage);
+        return view('listing.list',compact('stores','products','device_types','product_types','manufacturers'))->with('perPage', $this->perPage);
     }
 
     /**
@@ -279,6 +280,75 @@ class ListingController extends Controller
             }
 
         }
+
+        // Filter by sales count
+        if ($request->has('sales_count') && $request->sales_count != '') {
+            $operator = $request->sales_count_operator;
+            switch($operator){
+                case 'contains':
+                    $query->WhereLike('listing_item.sales_count', '%'.$request->sales_count.'%');
+                    break;
+                case 'starts_with':
+                    $query->WhereLike('listing_item.sales_count', $request->sales_count.'%');
+                    break;
+                case 'ends_with':
+                    $query->WhereLike('listing_item.sales_count', '%'.$request->sales_count);
+                    break;
+                case '=':
+                    $query->Where('listing_item.sales_count', $request->sales_count);
+                    break;
+                case 'in':
+                    $sales_counts = explode(',',$request->sales_count);
+                    $query->WhereIn('listing_item.sales_count',$sales_counts);
+                    break;
+                case 'not_in':
+                    $sales_counts = explode(',',$request->sales_count);
+                    $query->WhereNotIn('listing_item.sales_count', $sales_counts);
+                    break;
+                case 'doesnt_contain':
+                    $query->WhereNotLike('listing_item.sales_count', '%'.$request->sales_count.'%');
+                    break;
+                case 'is_set':
+                    $query->whereNotNull('listing_item.sales_count');
+                    break;
+            }
+
+        }
+
+        // Filter by manufacturer
+        if ($request->has('manufacturer') && $request->manufacturer != '') {
+            $operator = $request->manufacturer_operator;
+            switch($operator){
+                case 'contains':
+                    $query->WhereLike('listing_item.manufacturer_id', '%'.$request->manufacturer.'%');
+                    break;
+                case 'starts_with':
+                    $query->WhereLike('listing_item.manufacturer_id', $request->manufacturer.'%');
+                    break;
+                case 'ends_with':
+                    $query->WhereLike('listing_item.manufacturer_id', '%'.$request->manufacturer);
+                    break;
+                case '=':
+                    $query->Where('listing_item.manufacturer_id', $request->manufacturer);
+                    break;
+                case 'in':
+                    $manufacturers = explode(',',$request->manufacturer);
+                    $query->WhereIn('listing_item.manufacturer_id',$manufacturers);
+                    break;
+                case 'not_in':
+                    $manufacturers = explode(',',$request->manufacturer);
+                    $query->WhereNotIn('listing_item.manufacturer_id', $manufacturers);
+                    break;
+                case 'doesnt_contain':
+                    $query->WhereNotLike('listing_item.manufacturer_id', '%'.$request->manufacturer.'%');
+                    break;
+                case 'is_set':
+                    $query->whereNotNull('listing_item.manufacturer_id');
+                    break;
+            }
+
+        }
+
 
         // Filter by product type
         if ($request->has('product_type') && $request->product_type != '') {
