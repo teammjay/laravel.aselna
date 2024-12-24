@@ -44,14 +44,14 @@ class ListingController extends Controller
         $manufacturers = Manufacturer::all();
         //DB::enableQueryLog();
         $products = ListingItem::select('listing_item.id','listing_item.title','listing_item.sku','listing_item.store_sku','listing_item.price','listing_item.sales_count','listing_item.last_sale_date','products.product_sku','products.dimensions_width','products.product_color','store.name as store_name','store.marketplace_name','listing_generation_type.name as generation_type_name')
-            ->leftJoin('listing_item_link','listing_item.id', '=', 'listing_item_link.item_id')
+//            ->leftJoin('listing_item_link','listing_item.id', '=', 'listing_item_link.item_id')
             ->leftJoin('store_product','store_product.id', '=', 'listing_item.store_product_id')
             ->leftJoin('products','products.product_id', '=', 'store_product.product_id')
             ->leftJoin('store','store.id', '=', 'store_product.store_id')
             ->leftJoin('listing_generation_type','listing_generation_type.id', '=', 'listing_item.generation_type_id')
             ->where('listing_item.status',1)
-            ->groupBy('listing_item.id','listing_item.title','listing_item.sku','listing_item.store_sku','listing_item.price','listing_item.sales_count','listing_item.last_sale_date','products.product_sku', 'products.dimensions_width', 'products.product_color', 'store.name', 'store.marketplace_name')
-            ->orderBy('listing_item.created_at','desc')
+//            ->groupBy('listing_item.id','listing_item.title','listing_item.sku','listing_item.store_sku','listing_item.price','listing_item.sales_count','listing_item.last_sale_date','products.product_sku', 'products.dimensions_width', 'products.product_color', 'store.name', 'store.marketplace_name')
+//            ->orderBy('listing_item.created_at','desc')
             ->paginate($this->perPage);
         /*$lastQuery = DB::getQueryLog();
         dd(end($lastQuery));*/
@@ -69,7 +69,7 @@ class ListingController extends Controller
     public function filter(Request $request)
     {
         $query = ListingItem::select('listing_item.id','listing_item.title','listing_item.sku','listing_item.store_sku','listing_item.price','listing_item.sales_count','listing_item.last_sale_date','products.product_sku','products.dimensions_width','products.product_color','store.name as store_name','store.marketplace_name','listing_generation_type.name as generation_type_name');
-        $query->leftJoin('listing_item_link','listing_item.id', '=', 'listing_item_link.item_id');
+//        $query->leftJoin('listing_item_link','listing_item.id', '=', 'listing_item_link.item_id');
         $query->leftJoin('store_product','store_product.id', '=', 'listing_item.store_product_id');
         $query->leftJoin('products','products.product_id', '=', 'store_product.product_id');
         $query->leftJoin('store','store.id', '=', 'store_product.store_id');
@@ -377,7 +377,7 @@ class ListingController extends Controller
             $query->where('listing_item.status', $request->status);
         }
 
-        $query->groupBy('listing_item.id','listing_item.title','listing_item.sku','listing_item.store_sku','listing_item.price','listing_item.sales_count','listing_item.last_sale_date','products.product_sku', 'products.dimensions_width', 'products.product_color', 'store.name', 'store.marketplace_name');
+//        $query->groupBy('listing_item.id','listing_item.title','listing_item.sku','listing_item.store_sku','listing_item.price','listing_item.sales_count','listing_item.last_sale_date','products.product_sku', 'products.dimensions_width', 'products.product_color', 'store.name', 'store.marketplace_name');
         $products = $query->paginate($perPage); // Paginate results
 
         //echo $query->toSql();die;

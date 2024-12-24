@@ -13,7 +13,7 @@ class HomeController extends Controller
     public function index()
     {
         $stores = Store::with('storeType')->get();
-        $listings = ListingFeed::limit(2000)->get();
+        $listings = ListingFeed::whereNotIn('feed_type',[10,11,50])->get();
         return view('welcome', compact('stores','listings'));
     }
 
@@ -31,8 +31,8 @@ class HomeController extends Controller
 
         $marketplaceService = MarketplaceServiceFactory::create($storeType);
 
-        $marketplaceService->generateFeed($listingId);
-
-        return redirect()->route('home')->with('success', 'Feed file generated successfully');
+        $filetPath = $marketplaceService->generateFeed($listingId);
+        // give the url to download the file
+        return response()->json(['file_path' => $filetPath]);
     }
 }
