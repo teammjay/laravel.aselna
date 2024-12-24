@@ -73,6 +73,7 @@ class ListingController extends Controller
         $query->leftJoin('store_product','store_product.id', '=', 'listing_item.store_product_id');
         $query->leftJoin('products','products.product_id', '=', 'store_product.product_id');
         $query->leftJoin('store','store.id', '=', 'store_product.store_id');
+        $query->leftJoin('listing_generation_type','listing_generation_type.id', '=', 'listing_item.generation_type_id');
 
         $perPage = $request->input('perPage', $this->perPage);
 
