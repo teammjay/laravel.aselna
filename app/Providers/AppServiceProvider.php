@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Schema;
 
@@ -22,5 +23,6 @@ class AppServiceProvider extends ServiceProvider
     {
         //
         Schema::defaultStringLength(225);
+        DB::connection()->enableQueryLog();
     }
 }

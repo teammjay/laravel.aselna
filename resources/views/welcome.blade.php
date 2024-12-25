@@ -11,9 +11,11 @@
     <div class="row my-3">
         <div class="col-md-3">
             <select class="form-control" id="listing_store">
-                <option value="-">Select Store</option>
+                <option value="">Select Store</option>
                 @foreach($stores as $store)
-                    <option value="{{ $store->id }}" id="{{ $store->id }}" data-store="{{ $store->name }}" data-store-type="{{ $store->storeType->name }}">{{ $store->name }} - {{ $store->storeType->name }}</option>
+                    <option value="{{ $store->id }}" id="{{ $store->id }}"
+                            data-store-name="{{ $store->name }} - {{ $store->storeType->name }}">{{ $store->name }}
+                        - {{ $store->storeType->name }}</option>
                 @endforeach
             </select>
         </div>
@@ -41,29 +43,6 @@
                 </tr>
                 </thead>
                 <tbody>
-                @foreach($listings as $listing)
-                    <tr>
-                        <td>{{$listing->id}}</td>
-                        <td>{{$listing->listing_id}}</td>
-                        <td>{{FeedTypes::getFeedName($listing->feed_type)}}</td>
-                        <td>{{$listing->store->name}} - {{$listing->store->storeType->name}}</td>
-                        <td>{{$listing->status}}</td>
-                        <td>{{$listing->created_at}}</td>
-                        <td>{{$listing->submit_ts}}</td>
-                        <td>{{$listing->number_of_items}}</td>
-                        <td>{{$listing->processing_count}}</td>
-                        <td>{{$listing->success_count}}</td>
-                        <td>{{$listing->fail_count}}</td>
-                        <td>{{$listing->warning_count}}</td>
-                        <td>{{$listing->number_of_attempts}}</td>
-                        <td>{{$listing->feed_id}}</td>
-                        <td>
-                            <button class="btn btn-primary generate-feed-file" data-listing="{{$listing->id}}"
-                                    data-toggle="tooltip" title="Generate Feed File">Download Feed File
-                            </button>
-                        </td>
-                    </tr>
-                @endforeach
                 </tbody>
             </table>
         </div>
@@ -79,21 +58,62 @@
     <script>
         var table;
         $(document).ready(function () {
-            table = $('#listingTable').DataTable();
+            table = $('#listingTable').DataTable({
+                processing: true,
+                serverSide: true,
+                searching: true,
+                // search delay
+                searchDelay: 1000,
+                ajax: {
+                    url: "{{ route('listing-data') }}",
+                    data: function (d) {
+                        d.store_id = $('#listing_store').val();
+                    }
+                },
+                columns: [
+                    {data: 'id', name: 'id'},
+                    {data: 'listing_id', name: 'listing_id'},
+                    {data: 'feed_type', name: 'feed_type'},
+                    {
+                        data: 'null', name: 'store', render: function (data, type, row) {
+                            return row.store.name + ' - ' + row.store.store_type.name;
+                        }
+                    },
+                    {data: 'status', name: 'status'},
+                    {
+                        data: 'created_at', name: 'created_at',
+                        render: function (data) {
+                            return moment(data).format('YYYY-MM-DD HH:mm:ss');
+                        }
+                    },
+                    {
+                        data: 'submit_ts', name: 'submit_ts',
+                        render: function (data) {
+                            return moment(data).format('YYYY-MM-DD HH:mm:ss');
+                        }
+                    },
+                    {data: 'number_of_items', name: 'number_of_items'},
+                    {data: 'processing_count', name: 'processing_count'},
+                    {data: 'success_count', name: 'success_count'},
+                    {data: 'fail_count', name: 'fail_count'},
+                    {data: 'warning_count', name: 'warning_count'},
+                    {data: 'number_of_attempts', name: 'number_of_attempts'},
+                    {data: 'feed_id', name: 'feed_id'},
+                    {
+                        data: null, name: 'action', orderable: false, searchable: false, render: function (data) {
+                            return '<button class="btn btn-primary generate-feed-file" data-listing="' + data.id + '">Generate Feed File</button>';
+                        }
+                    }
+                ]
+            });
         });
 
         // change listing store
         $('#listing_store').change(function () {
-            //get selected label
-            var storeId = $(this).val();
-            var storeName = $(this).find(':selected').data('store');
-            var storeType = $(this).find(':selected').data('store-type');
-
-            table.columns(3).search(storeName + " - " + storeType).draw();
+            table.ajax.reload();
         });
 
-        //CSRF token mismatch.
-        $('.generate-feed-file').click(function () {
+        $(document).on('click', '.generate-feed-file', function () {
             var listingId = $(this).data('listing');
             $.ajax({
                 url: "<?= route('generate-feed-file') ?>",

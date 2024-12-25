@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\BrandController;
+use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ImagesController;
 use App\Http\Controllers\UPCController;
 use Illuminate\Support\Facades\Route;
@@ -11,5 +12,7 @@ Route::get('/get-image/{referenceId}', [ImagesController::class, 'getImage']);
 
 Route::post('/brands/data', [BrandController::class, 'data']);
 
+
+Route::get('/listing-feeds', [HomeController::class, 'getListingData'])->name('listing-data');
 
 Route::get('/stores', [UPCController::class, 'getStoresData']);
