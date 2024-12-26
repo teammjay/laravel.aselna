@@ -61,9 +61,7 @@
             table = $('#listingTable').DataTable({
                 processing: true,
                 serverSide: true,
-                searching: true,
-                // search delay
-                searchDelay: 1000,
+                searching: false,
                 ajax: {
                     url: "{{ route('listing-data') }}",
                     data: function (d) {

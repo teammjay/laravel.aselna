@@ -7,16 +7,16 @@ use Illuminate\Database\Eloquent\Builder;
 class DataTableService
 {
     protected $query;
-    protected $columns;
     protected $request;
 
+    protected $disableSearch = false;
     protected $customSearch;
+
     protected $customSorting;
 
-    public function __construct(Builder $query, array $columns, $request)
+    public function __construct(Builder $query, $request)
     {
         $this->query = $query;
-        $this->columns = $columns;
         $this->request = $request;
     }
 
@@ -42,14 +42,24 @@ class DataTableService
         $this->customSorting = $callback;
     }
 
+    public function disableSearch()
+    {
+        $this->disableSearch = true;
+    }
+
     protected function applySearch()
     {
+        if ($this->disableSearch) return;
         if ($this->customSearch) {
             call_user_func($this->customSearch, $this->query, $this->request);
         } elseif ($search = $this->request->input('search.value')) {
             $this->query->where(function ($query) use ($search) {
-                foreach ($this->columns as $column) {
-                    $query->orWhere($column, 'like', "%{$search}%");
+                // get all the columns from request
+                $columns = $this->request->input('columns');
+                foreach ($columns as $column) {
+                    if ($column['searchable'] == 'true' && isset($column['data']) && $column['data'] != 'action') {
+                        $query->orWhere($column['data'], 'like', '%' . $search . '%');
+                    }
                 }
             });
         }
