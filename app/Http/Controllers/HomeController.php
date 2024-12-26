@@ -6,10 +6,7 @@ use App\Models\ListingFeed;
 use App\Models\Store;
 use App\Services\DataTable\DataTableService;
 use App\Services\Marketplace\MarketplaceServiceFactory;
-use App\Utils\XmlUtility;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 
 class HomeController extends Controller
 {
@@ -26,7 +23,6 @@ class HomeController extends Controller
                 $query->where('store_id', $storeId);
             })
             ->with('store', 'store.storeType');
-        $columns = ['id', 'column1', 'column2', 'status', 'created_at'];
 
         $totalRecords = ListingFeed::query()
             ->when($request->input('store_id'), function ($query, $storeId) {
@@ -34,18 +30,9 @@ class HomeController extends Controller
             })
             ->count();
 
-        $dataTableService = new DataTableService($query, $columns, $request);
+        $dataTableService = new DataTableService($query, $request);
 
-        $dataTableService->setCustomSearch(function ($query, $request) {
-            $query->when($request->input('search.value'), function ($query, $search) {
-                // search insdide the relation store and storeType
-                $query->whereHas('store', function ($query) use ($search) {
-                    $query->where('name', 'like', '%' . $search . '%');
-                })->orWhereHas('store.storeType', function ($query) use ($search) {
-                    $query->where('name', 'like', '%' . $search . '%');
-                });
-            });
-        });
+        $dataTableService->disableSearch();
 
         $dataTableService->setCustomSorting(function ($query, $request) {
             $columnIndex = $request->input('order.0.column', 0);
@@ -67,8 +54,8 @@ class HomeController extends Controller
         // Return data in DataTable format
         return response()->json([
             'draw' => $request->input('draw'),
-            'recordsTotal' => $data->total(),
-            'recordsFiltered' => $totalRecords,
+            'recordsTotal' => $totalRecords,
+            'recordsFiltered' => $data->total(),
             'data' => $data->items(),
         ]);
     }
