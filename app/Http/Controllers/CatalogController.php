@@ -303,7 +303,8 @@ class CatalogController extends Controller
         $titleKeywords = ProductTitleKeyword::where('product_id', $pro_id)->orderBy('priority')->get();
         $productImages = ProductImages::where('product_id', $pro_id)->get();
         $productTags = ProductTags::pluck('name')->values()->all();
-        $stores = Store::all();
+        $stores = Store::with('storeType')->get();
+
         $store_details = [];
         if(count($stores ?? []) > 0){
             foreach($stores as $key=>$store){
@@ -324,7 +325,7 @@ class CatalogController extends Controller
         $targetAudience = ProductTargetAudience::all();
         $storeTypes = StoreType::all();
         $productStoreType = DB::table('product_channel_detail')
-            ->select('product_channel_detail.status','store_type.name')
+            ->select('product_channel_detail.id', 'product_channel_detail.status','store_type.name')
             ->leftJoin('store_type','store_type.id','=','product_channel_detail.store_type_id')
             ->where('product_id',$pro_id)->get();
         return view('catalog.update', compact('product','keyFeatures','searchTerms','productImages','productTags','pageAt','store_details','manufacturers','productTypes','productConditions','titleKeywords','interfaces','productInterfaces','targetAudience','storeTypes','productStoreType'));
@@ -382,18 +383,20 @@ class CatalogController extends Controller
         $productImages = ProductImages::where('product_id', $id)->get();
         $productTags = ProductTags::pluck('name')->values()->all();
         $stores = Store::with('storeType')->get();
-        /*echo '<pre>';
-        print_r($stores);
-        echo '</pre>';die;*/
+
         $store_details = [];
         if(count($stores ?? []) > 0){
             foreach($stores as $key=>$store){
-                $store_details[$key]['store_detail'] = $store;
-                $storeCategories = StoreTypeCategory::select('store_type_category.*')
-                    ->leftJoin('store_type','store_type.id', '=', 'store_type_category.store_type_id')
-                    ->where('store_type.id',$store->store_type_id)
-                    ->get();
-                $store_details[$key]['store_category'] = $storeCategories;
+                /* check store active for product */
+                $prochannel = DB::table('product_channel_detail')->where('store_type_id',$store->store_type_id)->where('product_id',$id)->first();
+                if((!empty($prochannel) && $prochannel->status)) {
+                    $store_details[$key]['store_detail'] = $store;
+                    $storeCategories = StoreTypeCategory::select('store_type_category.*')
+                        ->leftJoin('store_type', 'store_type.id', '=', 'store_type_category.store_type_id')
+                        ->where('store_type.id', $store->store_type_id)
+                        ->get();
+                    $store_details[$key]['store_category'] = $storeCategories;
+                }
             }
         }
         $manufacturers = Manufacturer::all();
@@ -411,9 +414,10 @@ class CatalogController extends Controller
         $targetAudience = ProductTargetAudience::all();
         $storeTypes = StoreType::all();
         $productStoreType = DB::table('product_channel_detail')
-                            ->select('product_channel_detail.status','store_type.name')
+                            ->select('product_channel_detail.id','product_channel_detail.status','store_type.name')
                             ->leftJoin('store_type','store_type.id','=','product_channel_detail.store_type_id')
                             ->where('product_id',$id)->get();
+
         return view('catalog.update', compact('product','keyFeatures','searchTerms','productImages','productTags','pageAt','store_details','manufacturers','productTypes','productConditions','productStore','productStoreCategory','titleKeywords','interfaces','productInterfaces','targetAudience','storeTypes','productStoreType'));
     }
 
@@ -748,16 +752,37 @@ class CatalogController extends Controller
         }
     }
 
+    public function getProductChannel(Request $request){
+        $product_channel_id = $request->input('id');
+
+        $productStoreType = DB::table('product_channel_detail')
+            ->select('product_channel_detail.id','product_channel_detail.store_type_id', 'product_channel_detail.status','store_type.name')
+            ->leftJoin('store_type','store_type.id','=','product_channel_detail.store_type_id')
+            ->where('product_channel_detail.id',$product_channel_id)->first();
+
+        return response()->json(['success' => true, 'data' => $productStoreType]);
+
+    }
+
     public function saveProductChannel(Request $request){
 
         try {
-            $request['id'] = (string) Str::uuid();
-            DB::table('product_channel_detail')->insert($request->all());
+            if($request->has('id') && $request->id == ''){
+              $request['id'] = (string)Str::uuid();
+            }
+            DB::table('product_channel_detail')->upsert($request->all(),['id'],['status']);
             return response()->json(['success' => true, 'message' => 'Data saved successfully']);
 
         }catch (QueryException $e) {
             // Handle the exception and show an error message
             return response()->json(['errors' => $e->getMessage()], 422);
         }
+    }
+
+    public function deleteProductChannel(Request $request){
+
+        $product_channel_id = $request->input('id');
+        DB::table('product_channel_detail')->where('id', $product_channel_id)->delete();
+        return response()->json(['success' => true, 'message' => 'Data saved successfully!']);
     }
 }

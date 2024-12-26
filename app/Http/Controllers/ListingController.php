@@ -28,7 +28,7 @@ use Illuminate\Support\Facades\DB;
 
 class ListingController extends Controller
 {
-    private $perPage = 10;
+    private $perPage = 20;
     /**
      * Display a listing of the resource.
      */
@@ -43,7 +43,7 @@ class ListingController extends Controller
         $product_types = ProductType::with('children')->where('parent_id',NULL)->get();
         $manufacturers = Manufacturer::all();
         //DB::enableQueryLog();
-        $products = ListingItem::select('listing_item.id','listing_item.title','listing_item.sku','listing_item.store_sku','listing_item.price','listing_item.sales_count','listing_item.last_sale_date','products.product_sku','products.dimensions_width','products.product_color','store.name as store_name','store.marketplace_name','listing_generation_type.name as generation_type_name','store_type.name as storeTypeName')
+        /*$products = ListingItem::select('listing_item.id','listing_item.title','listing_item.sku','listing_item.store_sku','listing_item.price','listing_item.sales_count','listing_item.last_sale_date','products.product_sku','products.dimensions_width','products.product_color','store.name as store_name','store.marketplace_name','listing_generation_type.name as generation_type_name','store_type.name as storeTypeName')
 //            ->leftJoin('listing_item_link','listing_item.id', '=', 'listing_item_link.item_id')
             ->leftJoin('store_product','store_product.id', '=', 'listing_item.store_product_id')
             ->leftJoin('products','products.product_id', '=', 'store_product.product_id')
@@ -53,7 +53,7 @@ class ListingController extends Controller
             ->where('listing_item.status',1)
 //            ->groupBy('listing_item.id','listing_item.title','listing_item.sku','listing_item.store_sku','listing_item.price','listing_item.sales_count','listing_item.last_sale_date','products.product_sku', 'products.dimensions_width', 'products.product_color', 'store.name', 'store.marketplace_name')
 //            ->orderBy('listing_item.created_at','desc')
-            ->paginate($this->perPage);
+            ->paginate($this->perPage);*/
         /*$lastQuery = DB::getQueryLog();
         dd(end($lastQuery));*/
 
@@ -61,7 +61,7 @@ class ListingController extends Controller
         print_r($products);
         echo '</pre>';die;*/
 
-        return view('listing.list',compact('stores','products','device_types','product_types','manufacturers'))->with('perPage', $this->perPage);
+        return view('listing.list',compact('stores','device_types','product_types','manufacturers'))->with('perPage', $this->perPage);
     }
 
     /**
@@ -69,7 +69,16 @@ class ListingController extends Controller
      */
     public function filter(Request $request)
     {
-        $query = ListingItem::select('listing_item.id','listing_item.title','listing_item.sku','listing_item.store_sku','listing_item.price','listing_item.sales_count','listing_item.last_sale_date','products.product_sku','products.dimensions_width','products.product_color','store.name as store_name','store.marketplace_name','listing_generation_type.name as generation_type_name','store_type.name as storeTypeName');
+
+
+        $draw = $request['draw'];
+        $start = $request['start'];
+        $perPage = $request['length'];
+        $columnIndex = $request['order'][0]['column'];
+        $columnName = $request['columns'][$columnIndex]['data'];
+        $columnSortOrder = $request['order'][0]['dir'];
+
+        $query = ListingItem::select('listing_item.id','listing_item.title','listing_item.sku','listing_item.store_sku','listing_item.price','listing_item.sales_count','listing_item.last_sale_date','listing_item.status','listing_item.created_at','products.product_sku','products.dimensions_width','products.product_color','store.name as store_name','store.marketplace_name','listing_generation_type.name as generation_type_name','store_type.name as storeTypeName');
 //        $query->leftJoin('listing_item_link','listing_item.id', '=', 'listing_item_link.item_id');
         $query->leftJoin('store_product','store_product.id', '=', 'listing_item.store_product_id');
         $query->leftJoin('products','products.product_id', '=', 'store_product.product_id');
@@ -77,7 +86,7 @@ class ListingController extends Controller
         $query->leftJoin('store_type','store_type.id', '=', 'store.store_type_id');
         $query->leftJoin('listing_generation_type','listing_generation_type.id', '=', 'listing_item.generation_type_id');
 
-        $perPage = $request->input('perPage', $this->perPage);
+        //$perPage = $request->input('perPage', $this->perPage);
 
 
         // Filter by sku
@@ -380,11 +389,101 @@ class ListingController extends Controller
         }
 
 //        $query->groupBy('listing_item.id','listing_item.title','listing_item.sku','listing_item.store_sku','listing_item.price','listing_item.sales_count','listing_item.last_sale_date','products.product_sku', 'products.dimensions_width', 'products.product_color', 'store.name', 'store.marketplace_name');
-        $products = $query->paginate($perPage); // Paginate results
+
+        if($columnName != ''){
+            switch(strtolower($columnName)){
+                case 'sku':
+                    $query->orderBy('listing_item.sku', $columnSortOrder);
+                    break;
+                case 'sale_count':
+                    $query->orderBy('listing_item.sale_count', $columnSortOrder);
+                    break;
+                case 'last_sale_date':
+                    $query->orderBy('listing_item.last_sale_date', $columnSortOrder);
+                    break;
+                case 'store_sku':
+                    $query->orderBy('listing_item.store_sku', $columnSortOrder);
+                    break;
+                case 'product_sku':
+                    $query->orderBy('products.product_sku', $columnSortOrder);
+                    break;
+                case 'store_name':
+                    $query->orderBy('store.name', $columnSortOrder);
+                    break;
+                case 'title':
+                    $query->orderBy('listing_item.title', $columnSortOrder);
+                    break;
+                case 'status':
+                    $query->orderBy('listing_item.status', $columnSortOrder);
+                    break;
+                case 'product_size':
+                    $query->orderBy('products.dimensions_width', $columnSortOrder);
+                    break;
+                case 'product_color':
+                    $query->orderBy('products.product_color', $columnSortOrder);
+                    break;
+                case 'sync_status':
+                    $query->orderBy('listing_item.sync_status', $columnSortOrder);
+                    break;
+                case 'generation_type_name':
+                    $query->orderBy('listing_generation_type.name', $columnSortOrder);
+                    break;
+                case 'price':
+                    $query->orderBy('listing_item.price', $columnSortOrder);
+                    break;
+                case 'qty':
+                    $query->orderBy('listing_item.quantity', $columnSortOrder);
+                    break;
+                case 'created_date':
+                    $query->orderBy('listing_item.created_at', $columnSortOrder);
+                    break;
+
+            }
+        }
+
+        $productsRecord = $query->paginate($perPage); // Paginate results
+        $products = $query->skip($start)->take($perPage)->get(); // Paginate results
 
         //echo $query->toSql();die;
 
-        // Return a view or JSON
+        $totalRecordwithFilter = $productsRecord->total();
+
+        $data = [];
+        if(!empty((array) $products)){
+            foreach($products as $product) {
+                $data[] = array(
+                    "sku" => $product->sku,
+                    "sale_count" => ($product->sale_count) ? $product->sale_count : 0,
+                    "last_sale_date" => '',
+                    "store_sku" => $product->store_sku,
+                    "product_sku" => $product->product_sku,
+                    "store_name" => $product->store_name.' - '.$product->storeTypeName,
+                    "title" => strlen($product->title) > 50 ? substr($product->title, 0, 50) . "..." : $product->title,
+                    "status" => ($product->status == 1) ? 'Active' : 'Inactive',
+                    "product_size" => '',
+                    "product_color" => $product->product_color,
+                    "sync_status" => '',
+                    "generation_type_name" => $product->generation_type_name,
+                    "price" => $product->price,
+                    "qty" => 0,
+                    "created_date" => date('Y-m-d H:i:s',strtotime($product->created_at)),
+                    "action" => '<a href="'.route('listing.edit', $product->id).'" class="btn btn-primary">
+                                    <i class="fas fa-fw fa-pencil-alt"></i>
+                                </a>',
+                );
+            }
+        }
+
+        $response = array(
+            "draw" => intval($draw),
+            "iTotalRecords" => $totalRecordwithFilter,
+            "iTotalDisplayRecords" => $totalRecordwithFilter,
+            "aaData" => $data
+        );
+
+        return $response;
+
+        /*// Return a view or JSON
         if ($request->ajax()) {
             return response()->json([
                 'html' => view('listing.product_list', compact('products'))->render(),
@@ -392,7 +491,7 @@ class ListingController extends Controller
             ]);
         }
 
-        return view('listing.list');
+        return view('listing.list');*/
     }
 
     /**
@@ -422,11 +521,12 @@ class ListingController extends Controller
         $pageAt = 'Edit';
         $stores = Store::all();
         $manufacturers = Manufacturer::all();
-        $productDetail = ListingItem::select('listing_item.*','products.product_sku','products.product_description','products.manufacturer_id','products.dimensions_width','products.product_color','store.name as store_name','store.marketplace_name','listing_generation_type.name as generation_name')
-            ->leftJoin('listing_item_link','listing_item.id', '=', 'listing_item_link.item_id')
+        $productDetail = ListingItem::select('listing_item.*','products.product_sku','products.product_description','products.manufacturer_id','products.dimensions_width','products.product_color','store.name as store_name','store.marketplace_name','listing_generation_type.name as generation_name','store_type.product_qty')
+            //->leftJoin('listing_item_link','listing_item.id', '=', 'listing_item_link.item_id')
             ->leftJoin('store_product','store_product.id', '=', 'listing_item.store_product_id')
             ->leftJoin('products','products.product_id', '=', 'store_product.product_id')
             ->leftJoin('store','store.id', '=', 'store_product.store_id')
+            ->leftJoin('store_type','store.store_type_id', '=', 'store_type.id')
             ->leftJoin('listing_generation_type','listing_generation_type.id', '=', 'listing_item.generation_type_id')
             ->where('listing_item.id',$id)
             ->first();

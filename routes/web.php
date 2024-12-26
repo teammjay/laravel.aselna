@@ -54,6 +54,8 @@ Route::post('/set-default', [CatalogController::class, 'setDefaultImage'])->name
 Route::post('/set-image-order', [CatalogController::class, 'setImageOrder'])->name('catalog.set_image_order');
 Route::post('catalog/getstoredetail', [CatalogController::class, 'getStoreDetail'])->name('catalog.getstoredetail');
 Route::post('catalog/saveproductchannel', [CatalogController::class, 'saveProductChannel'])->name('catalog.saveproductchannel');
+Route::post('catalog/getproductchannel', [CatalogController::class, 'getProductChannel'])->name('catalog.getproductchannel');
+Route::post('catalog/deleteproductchannel', [CatalogController::class, 'deleteProductChannel'])->name('catalog.deleteproductchannel');
 
 Route::post('/generate-feed-file',[HomeController::class, 'generateFeedFile'])->name('generate-feed-file');
 
@@ -81,7 +83,7 @@ Route::controller(StoreController::class)->group(function () {
 Route::controller(ListingController::class)->group(function () {
     Route::get('/listing', 'index')->name('listing.list');
     Route::get('/listing/create', 'create')->name('listing.create');
-    Route::get('/listing/filter', 'filter')->name('listing.filter');
+    Route::post('/listing/filter', 'filter')->name('listing.filter');
     Route::post('/listing/saveTabData', 'saveTabData')->name('listing.save');
     Route::post('/listing/finalize', 'finalize')->name('listing.final');
     Route::get('/listing/edit/{id}', 'edit')->name('listing.edit');

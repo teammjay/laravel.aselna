@@ -2,7 +2,7 @@
     @foreach($products as $product)
         <tr>
             <td style="white-space: nowrap;">{{ $product->sku }}</td>
-            <td></td>
+            <td>{{ ($product->sale_count) ? $product->sale_count : 0 }}</td>
             <td></td>
             <td style="white-space: nowrap;">{{ $product->store_sku }}</td>
             <td>{{ $product->product_sku }}</td>
