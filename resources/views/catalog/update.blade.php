@@ -898,6 +898,7 @@
                                 <tr>
                                     <th>Channel</th>
                                     <th>Status</th>
+                                    <th></th>
                                 </tr>
                                 </thead>
                                 <tbody>
@@ -905,7 +906,13 @@
                                         @foreach($productStoreType as $stype)
                                             <tr>
                                                 <td>{{ $stype->name }}</td>
-                                                <td>{{ ($stype->status == 1) ? 'Active' : '' }}</td>
+                                                <td>{{ ($stype->status == 1) ? 'Active' : 'Inactive' }}</td>
+                                                <td>
+                                                    <button type="button" id="edit_channel" data-toggle="modal" data-id="{{ $stype->id }}" data-target="#addChannelModal"  class="btn btn-primary">
+                                                        <i class="fas fa-fw fa-pencil-alt"></i>
+                                                    </button>
+                                                    <button class="btn btn-danger delete-product-channel" data-id="{{ $stype->id }}"> <i class="fas fa-fw fa-trash"></i></button>
+                                                </td>
                                             </tr>
                                         @endforeach
                                     @endif
@@ -989,9 +996,9 @@
                     </div>
                     <div class="modal-body">
                         <form id="frmproductChannel">
-
+                            <input type="hidden" name="id" id="product_channel_id">
                             <div class="mb-3">
-                                <label for="channel_id" class="col-form-label">Channel:</label>
+                                <label for="store_type_id" class="col-form-label">Channel:</label>
                                 <select class="form-control" name="store_type_id" id="store_type_id">
                                     @if(count($storeTypes ?? []) > 0)
                                         @foreach($storeTypes as $sType)
@@ -1001,9 +1008,10 @@
                                 </select>
                             </div>
                             <div class="mb-3">
-                                <label for="shipping-name" class="col-form-label">Status:</label>
-                                <select class="form-control" name="status">
+                                <label for="status" class="col-form-label">Status:</label>
+                                <select class="form-control" name="status" id="status">
                                     <option value="1">Active</option>
+                                    <option value="0">Inactive</option>
                                 </select>
                             </div>
                         </form>
@@ -1153,6 +1161,12 @@
 
         $(document).ready(function() {
 
+            $(document).ajaxStart(function () {
+                $("#ajax-preloader").show(); // Show preloader when AJAX starts
+            }).ajaxStop(function () {
+                $("#ajax-preloader").hide(); // Hide preloader when AJAX stops
+            });
+
             $('.pro-tags,.pro-interface').select2();
             $('#product_type').select2();
 
@@ -1183,6 +1197,66 @@
                     }
                 });
             });
+
+            /* get channel detail*/
+
+            $(document).on('click', '#create_channel', function() {
+                $('#frmproductChannel').find('#store_type_id').removeAttr('disabled');
+                $('#frmproductChannel').find('#status').val(1);
+            });
+
+            $(document).on('click', '#edit_channel', function() {
+                $.ajax({
+                    url: "{{ route('catalog.getproductchannel') }}",
+                    type: 'POST',
+                    data: {
+                        id : $(this).data('id')
+                    },
+                    headers: {
+                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                    },
+                    success: function (response) {
+                        if (response.success) {
+                            if(response.data){
+                                $('#frmproductChannel').find('#store_type_id').val(response.data.store_type_id).attr('disabled',true);
+                                $('#frmproductChannel').find('#status').val(response.data.status);
+                                $('#frmproductChannel').find('#product_channel_id').val(response.data.id);
+                            }
+                        }
+                    },
+                    error: function (xhr) {
+                        if (xhr.responseJSON?.error) {
+                            $('#responseMessage').html('<p style="color:red;">' + xhr.responseJSON.error.image[0] + '</p>');
+                        }
+                    }
+                });
+            });
+
+            $(document).on('click', '.delete-product-channel', function() {
+
+                $.ajax({
+                    url: "{{ route('catalog.deleteproductchannel') }}",
+                    type: 'POST',
+                    data: {
+                        id : $(this).data('id')
+                    },
+                    headers: {
+                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                    },
+                    success: function (response) {
+                        if (response.success) {
+                            alert(response.message)
+                        }
+                    },
+                    error: function (xhr) {
+                        if (xhr.responseJSON?.error) {
+                            $('#responseMessage').html('<p style="color:red;">' + xhr.responseJSON.error.image[0] + '</p>');
+                        }
+                    }
+                });
+            });
+
+
 
             // set default image for prodcut
             $(document).on('click', '.set_main_image', function() {
@@ -1346,9 +1420,11 @@
 
             $(document).on('click', 'input[name="active"]', function() {
                 if($(this).is(':checked')){
+                    $(this).prop('checked',false);
                     $('.store_row').removeClass('active bg-blue');
                     $(this).parents('.store_row').addClass('active bg-blue');
                 }else{
+                    $(this).prop('checked',true);
                     $(this).parents('.store_row').removeClass('active bg-blue');
                 }
             });
@@ -1359,7 +1435,14 @@
             $(document).on('click', '.store_row', function() {
                 $('.store_row').removeClass('active bg-blue');
                 $(this).addClass('active bg-blue');
-                $(this).find('input[name="active"]').prop('checked',true);
+
+                if($(this).find('input[name="active"]').is(':checked')){
+                    $(this).find('input[name="active"]').prop('checked',false);
+                }else{
+                    $(this).find('input[name="active"]').prop('checked',true);
+                }
+
+
                 var store_id = $(this).data('id');
                 $.ajax({
                     url: "{{ route('catalog.getstoredetail') }}",

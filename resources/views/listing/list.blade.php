@@ -16,6 +16,7 @@
         </div>
         <div class="card-body" style="display: none;">
             <form id="filter-form">
+                <input type="hidden" name="store_id" id="store_id">
                 <div class="row">
                     <div class="col-md-4">
                         <div class="row">
@@ -544,7 +545,12 @@
                             <label>&nbsp;</label>
                             <button type="submit" id="apply_filter" class="form-control btn btn-primary">Filter</button>
                         </div>
-
+                    </div>
+                    <div class="col-md-2">
+                        <div class="form-group">
+                            <label>&nbsp;</label>
+                            <button type="reset" class="form-control btn btn-secondary">Reset</button>
+                        </div>
                     </div>
                 </div>
 
@@ -558,7 +564,7 @@
             </a>
         </div>
         <div class="col-md-2">
-            <select class="form-control" id="listing_store" name="store_id">
+            <select class="form-control" id="listing_store" name="listing_store_id">
                 <option value="">--</option>
                 @if(count($stores ?? []) > 0)
                     @foreach($stores as $store)
@@ -588,14 +594,14 @@
                 Select None
             </button>
         </div>
-        <div class="col-md-1">
+        {{--<div class="col-md-1">
             <select class="custom-select w-auto float-right" name="per_page" id="per_page">
                 <option value="10" {{ ($perPage == 10) ? 'selected':'' }}>10</option>
                 <option value="25" {{ ($perPage == 25) ? 'selected':'' }}>25</option>
                 <option value="50" {{ ($perPage == 50) ? 'selected':'' }}>50</option>
                 <option value="100" {{ ($perPage == 100) ? 'selected':'' }}>100</option>
             </select>
-        </div>
+        </div>--}}
     </div>
     <div class="table-responsive">
         <table id="productsTable" class="table table-bordered table-striped">
@@ -615,18 +621,19 @@
                 <th>Gen Type</th>
                 <th>Price</th>
                 <th>Quantity</th>
+                <th>Created Date</th>
                 <th></th>
             </tr>
             </thead>
             <tbody id="product-list">
 
-                @include('listing.product_list', ['products' => $products])
+               {{-- @include('listing.product_list', ['products' => $products])--}}
 
             </tbody>
         </table>
     </div>
     <div id="pagination" class="pt-3 pb-3">
-        @include('listing.pagination', ['products' => $products])
+        {{--@include('listing.pagination', ['products' => $products])--}}
     </div>
 @stop
 
@@ -634,6 +641,11 @@
 
 <script>
     $(document).ready(function() {
+        $(document).ajaxStart(function () {
+            $("#ajax-preloader").show(); // Show preloader when AJAX starts
+        }).ajaxStop(function () {
+            $("#ajax-preloader").hide(); // Hide preloader when AJAX stops
+        });
         $('#last_sale_date,#item_created').datepicker();
         $('.card-header').on('click',function () {
             if($(this).find('.fa').hasClass('fa-angle-down')){
@@ -648,7 +660,6 @@
 
         $('#open_store_page').on('click',function () {
             var store_id = $('#listing_store').val();
-
             location.href = "{{ url('stores/edit') }}/" + store_id;
         });
 
@@ -656,7 +667,9 @@
 
             var perPage =  $('#per_page').val();
             var page =  1;
-            $.ajax({
+            $('#store_id').val($(this).val());
+            loadDatatables();
+            /*$.ajax({
                 url: "{{ route('listing.filter') }}?page=" + page + "&perPage=" + perPage,
                 method: 'GET',
                 data: {
@@ -670,7 +683,7 @@
                 error: function(xhr) {
                     console.error('Error:', xhr);
                 }
-            });
+            });*/
 
         });
 
@@ -682,7 +695,9 @@
             e.preventDefault(); // Prevent default form submission
             var perPage =  $('#per_page').val();
             var page =  1;
-            $.ajax({
+
+            loadDatatables();
+            /*$.ajax({
                 url: "{{ route('listing.filter') }}?page=" + page + "&perPage=" + perPage,
                 method: 'GET',
                 data: $(this).serialize(),
@@ -694,10 +709,10 @@
                 error: function(xhr) {
                     console.error('Error:', xhr);
                 }
-            });
+            });*/
         });
 
-        // Handle pagination links click
+        /*// Handle pagination links click
         $(document).on('click', '.pagination a', function(event) {
             event.preventDefault();
             var page = $(this).attr('href').split('page=')[1];
@@ -714,7 +729,7 @@
                     $('#pagination').html(response.pagination);
                 }
             });
-        }
+        }*/
 
         $(document).on('click', '.delete-btn', function() {
             var productId = $(this).data('id');
@@ -742,7 +757,92 @@
                 });
             }
         });
+
+        loadDatatables();
     });
+
+    function loadDatatables(){
+
+        var perPage = $('#per_page').val();
+
+        $("#productsTable").dataTable().fnDestroy();
+
+        var table = $('#productsTable').DataTable({
+            "iDisplayLength": 20,
+            "responsive": true,
+            "lengthChange": true,
+            "autoWidth": false,
+            "processing": true,
+            "serverSide": true,
+            "searching": false,
+            "aLengthMenu": [20, 25, 50, 100],
+            'ajax': {
+                url: "{{ route('listing.filter') }}",
+                type: "POST",
+                //dataType:'json',
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                },
+                data: function(d) {
+                    // Create a FormData object
+                    var formData = $('#filter-form').serializeArray(); // Serialize form inputs
+
+                    // Add form data to the DataTable's request payload
+                    $.each(formData, function(index, field) {
+                        d[field.name] = field.value; // Append form data to the DataTables request
+                    });
+
+                    var columnValues = [];
+                    if (table) {
+                        table.rows({ search: 'applied' }).every(function(rowIdx) {
+                            var rowData = this.data();
+                            columnValues.push(rowData.id);
+                        });
+                    }
+
+                    // Add to the request payload
+                    d.columnValues = columnValues;
+
+                    // Append DataTables parameters
+                    $.each(d, function(key, value) {
+                        //formData.append(key, value);
+                        //d.key = value;
+                    });
+
+
+                    //return formData;
+                },
+                //processData: false,
+                //contentType: false
+            },
+            "order": [[ 14, "desc" ]],
+            'columns': [
+                { data: 'sku' },
+                { data: 'sale_count' },
+                { data: 'last_sale_date' },
+                { data: 'store_sku' },
+                { data: 'product_sku' },
+                { data: 'store_name' },
+                { data: 'title' },
+                { data: 'status' },
+                { data: 'product_size' },
+                { data: 'product_color' },
+                { data: 'sync_status' },
+                { data: 'generation_type_name' },
+                { data: 'price' },
+                { data: 'qty' },
+                { data: 'created_date' },
+                { data: 'action' },
+            ]/*,
+            columnDefs: [
+                { targets: 'disable-sorting', orderable: true }
+            ]*/
+        });
+
+        $( '#productsTable_wrapper').removeClass( 'form-inline' );
+
+        $.fn.dataTable.ext.errMode = 'throw';
+    }
 </script>
 @stop
 

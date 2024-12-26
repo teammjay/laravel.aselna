@@ -22,6 +22,7 @@
                     <th>ID</th>
                     <th>Code</th>
                     <th>Name</th>
+                    <th>Product Qty</th>
                     <th>Action</th>
                 </tr>
                 </thead>
@@ -31,6 +32,7 @@
                         <td>{{ $sType->id }}</td>
                         <td>{{ $sType->code }}</td>
                         <td>{{ $sType->name }}</td>
+                        <td>{{ $sType->product_qty }}</td>
                         <td>
                             <a href="{{ route('store_type.edit', $sType->id) }}" class="btn btn-primary" title="Edit">
                                 <i class="fas fa-fw fa-pencil-alt"></i>

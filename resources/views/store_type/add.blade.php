@@ -49,6 +49,17 @@
                     </div>
                     <div class="col-md-6">
                         <div class="form-group">
+                            <label for="product_qty">Total Product Quantity</label>
+                            <input type="text" class="form-control @error('product_qty') is-invalid @enderror" id="product_qty"
+                                   name="product_qty"
+                                   placeholder="Product Quantity" value="{{ old('product_qty', $store_types['product_qty'] ?? '') }}">
+                            @if ($errors->has('product_qty'))
+                                <span class="text-danger">{{ $errors->first('product_qty') }}</span>
+                            @endif
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
                             <label for="max_variation_name_length">Max. Variation Name Length</label>
                             <input type="text" class="form-control @error('max_variation_name_length') is-invalid @enderror" id="max_variation_name_length"
                                    name="max_variation_name_length"

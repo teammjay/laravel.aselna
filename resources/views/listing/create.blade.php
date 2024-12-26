@@ -40,23 +40,6 @@
         }
         .ui-autocomplete{z-index: 99999; max-height: 250px; overflow: auto;}
         #frmproductfilter select.form-control[multiple]{height: 100%;}
-        .overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.6);
-            z-index: 99999;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .overlay i {
-            font-size: 3rem;
-            color: #007bff;
-        }
     </style>
 @stop
 @section('content_header')
@@ -64,10 +47,6 @@
 @stop
 
 @section('content')
-
-    <div class="overlay" id="ajax-preloader" style="display: none;">
-        <i class="fas fa-spinner fa-spin"></i>
-    </div>
 
     @csrf
     @if (session('success'))

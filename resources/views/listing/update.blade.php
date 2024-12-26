@@ -102,7 +102,7 @@
                                         <label for="quantity">Quantity</label>
                                     </div>
                                     <div class="col-md-7">
-                                        <input type="text" class="form-control" id="quantity" name="quantity" value="">
+                                        <input type="text" class="form-control" id="quantity" name="quantity" value="{{ old('price',$productDetail->product_qty) }}">
                                         <span class="error-message text-danger" id="quantity-error"></span>
                                     </div>
                                 </div>
@@ -312,7 +312,7 @@
                             <button type="button" class="btn btn-success" onclick="saveStoreTabData(1)">Save</button>
                             <button type="button" class="btn btn-primary" onclick="finalizeForm()">Submit</button>
                             {{--<button type="reset" class="btn btn-primary">Reset</button>--}}
-                            <a href="{{ route('store.list') }}" class="btn btn-secondary">Cancel</a>
+                            <a href="{{ route('listing.list') }}" class="btn btn-secondary">Cancel</a>
                         </div>
                     </form>
 
@@ -482,7 +482,7 @@
                             <button type="button" class="btn btn-success" onclick="saveStoreTabData(2)">Save</button>
                             <button type="button" class="btn btn-primary" onclick="finalizeForm()">Submit</button>
                             {{--<button type="reset" class="btn btn-primary">Reset</button>--}}
-                            <a href="{{ route('store.list') }}" class="btn btn-secondary">Cancel</a>
+                            <a href="{{ route('listing.list') }}" class="btn btn-secondary">Cancel</a>
                         </div>
                     </form>
 
