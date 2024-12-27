@@ -506,6 +506,11 @@ return [
                     'url' => '/list_generate_type_template',
                     'icon' => 'far fa-fw fa-file'
                 ],
+                [
+                    'text' => 'Listing Template',
+                    'url' => '/listing_template',
+                    'icon' => 'far fa-fw fa-file'
+                ]
 
             ],
         ]

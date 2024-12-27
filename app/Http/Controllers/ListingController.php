@@ -42,6 +42,8 @@ class ListingController extends Controller
         $device_types = DeviceTypes::Where('status',1)->get();
         $product_types = ProductType::with('children')->where('parent_id',NULL)->get();
         $manufacturers = Manufacturer::all();
+        $devices = Device::all();
+        $brands = Brand::all();
         //DB::enableQueryLog();
         /*$products = ListingItem::select('listing_item.id','listing_item.title','listing_item.sku','listing_item.store_sku','listing_item.price','listing_item.sales_count','listing_item.last_sale_date','products.product_sku','products.dimensions_width','products.product_color','store.name as store_name','store.marketplace_name','listing_generation_type.name as generation_type_name','store_type.name as storeTypeName')
 //            ->leftJoin('listing_item_link','listing_item.id', '=', 'listing_item_link.item_id')
@@ -61,7 +63,7 @@ class ListingController extends Controller
         print_r($products);
         echo '</pre>';die;*/
 
-        return view('listing.list',compact('stores','device_types','product_types','manufacturers'))->with('perPage', $this->perPage);
+        return view('listing.list',compact('stores','device_types','product_types','manufacturers','devices','brands'))->with('perPage', $this->perPage);
     }
 
     /**
@@ -361,6 +363,55 @@ class ListingController extends Controller
 
         }
 
+        // Filter by sync message
+        if ($request->has('sync_message') && $request->sync_message != '') {
+            $operator = $request->sync_message_operator;
+            switch($operator){
+                case 'contains':
+                    $query->WhereLike('listing_item.sync_message', '%'.$request->sync_message.'%');
+                    break;
+                case 'starts_with':
+                    $query->WhereLike('listing_item.sync_message', $request->sync_message.'%');
+                    break;
+                case 'ends_with':
+                    $query->WhereLike('listing_item.sync_message', '%'.$request->sync_message);
+                    break;
+                case '=':
+                    $query->Where('listing_item.sync_message', $request->sync_message);
+                    break;
+                case 'in':
+                    $sync_messages = explode(',',$request->sync_message);
+                    $query->WhereIn('listing_item.sync_message',$sync_messages);
+                    break;
+                case 'not_in':
+                    $sync_messages = explode(',',$request->sync_message);
+                    $query->WhereNotIn('listing_item.sync_message', $sync_messages);
+                    break;
+                case 'doesnt_contain':
+                    $query->WhereNotLike('listing_item.sync_message', '%'.$request->sync_message.'%');
+                    break;
+                case 'is_set':
+                    $query->whereNotNull('listing_item.sync_message');
+                    break;
+            }
+
+        }
+
+        // Filter by device
+        if ($request->has('device') && $request->device != '') {
+            $query->where('listing_item.device_id', $request->device);
+        }
+
+        // Filter by brand
+        if ($request->has('device_brand') && $request->device_brand != '') {
+            $query->where('listing_item.brand_id', $request->device_brand);
+        }
+
+        // Filter by qty
+        if ($request->has('quantity') && $request->quantity != '') {
+            $query->where('listing_item.quantity', $request->quantity);
+        }
+
 
         // Filter by product type
         if ($request->has('product_type') && $request->product_type != '') {
@@ -377,6 +428,11 @@ class ListingController extends Controller
             $query->where('listing_item.created_at', $request->item_created);
         }
 
+        // Filter by last sale date
+        if ($request->has('last_sale_date') && $request->last_sale_date != '') {
+            $query->where('listing_item.last_sale_date', $request->last_sale_date);
+        }
+
         // Filter by product type
         if ($request->has('store_id') && $request->store_id != '') {
             $query->where('store_product.store_id', $request->store_id);
@@ -384,8 +440,13 @@ class ListingController extends Controller
 
 
         // Filter by product status
-        if ($request->has('status') && $request->status != '') {
-            $query->where('listing_item.status', $request->status);
+        if ($request->has('listing_status') && $request->listing_status != '') {
+            $query->where('listing_item.status', $request->listing_status);
+        }
+
+        // Filter by product status
+        if ($request->has('product_status') && $request->product_status != '') {
+            $query->where('products.status', $request->product_status);
         }
 
 //        $query->groupBy('listing_item.id','listing_item.title','listing_item.sku','listing_item.store_sku','listing_item.price','listing_item.sales_count','listing_item.last_sale_date','products.product_sku', 'products.dimensions_width', 'products.product_color', 'store.name', 'store.marketplace_name');

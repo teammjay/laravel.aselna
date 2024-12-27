@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\DeviceTypes;
+use App\Models\ListingTemplate;
 use App\Models\LogisticCenter;
 use App\Models\MessagingAccount;
 use App\Models\ShippingCarrierService;
@@ -59,6 +60,7 @@ class StoreController extends Controller
         $pageTypes = PageType::all();
         $logisticCenters = LogisticCenter::all();
         $store_types = StoreType::all();
+        $listing_templates = ListingTemplate::all();
         $shipping_services = ShippingCarrierService::leftJoin('shipping_carrier', 'shipping_carrier_service.shipping_carrier_id', '=', 'shipping_carrier.id')->select('shipping_carrier_service.id', 'shipping_carrier_service.name', 'shipping_carrier.name as carrierName')->get();
         $storeDevices = StoreDeviceType::where('store_id', $store_id)->get();
         $storeShippingService = StoreShippingService::where('store_id', $store_id)->get();
@@ -72,7 +74,7 @@ class StoreController extends Controller
         //echo '<pre>';
         //print_r($storeDevices);die;
 
-        return view('store.update', compact('store','devices','storeDevices','shipping_services','storeShippingService','pageTypes','storePages','storeCategories','storeMessageAccount','logisticCenters','storeLogisticCenters','store_types','action'));
+        return view('store.update', compact('store','devices','storeDevices','shipping_services','storeShippingService','pageTypes','storePages','storeCategories','storeMessageAccount','logisticCenters','storeLogisticCenters','store_types','action','listing_templates'));
     }
 
     /**
@@ -127,6 +129,11 @@ class StoreController extends Controller
         // Filter by store authorized
         if ($request->has('authorized') && $request->authorized != '') {
             $query->where('authorized', $request->authorized);
+        }
+
+        // Filter by store authorized
+        if ($request->has('ad_account') && $request->ad_account != '') {
+            $query->where('ad_account', $request->ad_account);
         }
 
         // Filter by store type
@@ -305,6 +312,7 @@ class StoreController extends Controller
         $pageTypes = PageType::all();
         $logisticCenters = LogisticCenter::all();
         $store_types = StoreType::all();
+        $listing_templates = ListingTemplate::all();
         $shipping_services = ShippingCarrierService::leftJoin('shipping_carrier', 'shipping_carrier_service.shipping_carrier_id', '=', 'shipping_carrier.id')->select('shipping_carrier_service.id', 'shipping_carrier_service.name', 'shipping_carrier.name as carrierName')->get();
 
         $storeDevices = StoreDeviceType::where('store_id', $id)->get();
@@ -320,7 +328,7 @@ class StoreController extends Controller
         //echo '<pre>';
         //print_r($outgoingAccount);die;
 
-        return view('store.update', compact('store','devices','storeDevices','shipping_services','storeShippingService','pageTypes','storePages','storeCategories','storeMessageAccount','logisticCenters','storeLogisticCenters','store_types','action'));
+        return view('store.update', compact('store','devices','storeDevices','shipping_services','storeShippingService','pageTypes','storePages','storeCategories','storeMessageAccount','logisticCenters','storeLogisticCenters','store_types','action','listing_templates'));
     }
 
     public function saveShippingService(Request $request){

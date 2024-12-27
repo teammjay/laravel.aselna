@@ -7,11 +7,33 @@
     <h1>Listing</h1>
 @stop
 
+@section('adminlte_css')
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <style>
+        .select2-container--default .select2-dropdown .select2-search__field:focus, .select2-container--default .select2-search--inline .select2-search__field:focus {
+            outline: 0;
+            border: none;
+        }
+        .select2-container{width:100% !important;}
+        .select2-container .select2-selection--single{
+            height: calc(2.25rem + 2px);
+        }
+        .select2-container--default .select2-selection--single .select2-selection__arrow {
+            height: auto;
+            position: absolute;
+            top: 50%;
+            right: 1px;
+            width: 20px;
+            transform: translateY(-50%);
+        }
+    </style>
+@stop
+
 @section('content')
 
     <div class="card card-secondary">
         <div class="card-header bg-white">
-            <h3 class="card-title">Filters</h3>
+            <h3 class="card-title"><a href="javascript:void(0);" class="text-blue">Add search condition</a> </h3>
             <i class="fa fa-angle-down float-right"></i>
         </div>
         <div class="card-body" style="display: none;">
@@ -132,7 +154,7 @@
                                 Main Product Type
                             </div>
                             <div class="col-6">
-                                <select class="form-control" id="" name="main_product_type">
+                                <select class="form-control" id="main_product_type" name="main_product_type">
                                     <option></option>
                                 </select>
                             </div>
@@ -279,7 +301,7 @@
                                 </select>
                             </div>
                             <div class="col-6">
-                                <input type="checkbox" name="sync_message" id="sync_message">
+                                <input type="text" name="sync_message" id="sync_message">
                             </div>
                         </div>
                     </div>
@@ -315,7 +337,12 @@
 
                             <div class="col-6">
                                 <select class="form-control" id="device" name="device">
-                                    <option></option>
+                                    <option value="">--</option>
+                                    @if(count($devices ?? []) > 0)
+                                        @foreach($devices as $dvc)
+                                            <option value="{{ $dvc->id }}">{{ $dvc->name }}</option>
+                                        @endforeach
+                                    @endif
                                 </select>
                             </div>
                         </div>
@@ -327,7 +354,12 @@
                             </div>
                             <div class="col-6">
                                 <select class="form-control" id="device_brand" name="device_brand">
-                                    <option></option>
+                                    <option value=""></option>
+                                    @if(count($brands ?? []) > 0)
+                                        @foreach($brands as $brand)
+                                            <option value="{{ $brand->id }}">{{ $brand->name }}</option>
+                                        @endforeach
+                                    @endif
                                 </select>
                             </div>
                         </div>
@@ -422,7 +454,7 @@
                                 }
                             @endphp
                             <div class="col-6">
-                                <select class="form-control" id="" name="product_type">
+                                <select class="form-control" id="product_type" name="product_type">
                                     <option value="">--</option>
                                     @php
                                         renderCategories($product_types);
@@ -549,7 +581,7 @@
                     <div class="col-md-2">
                         <div class="form-group">
                             <label>&nbsp;</label>
-                            <button type="reset" class="form-control btn btn-secondary">Reset</button>
+                            <button type="reset" class="form-control btn  btn-reset btn-secondary">Reset</button>
                         </div>
                     </div>
                 </div>
@@ -638,7 +670,7 @@
 @stop
 
 @section('adminlte_js')
-
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script>
     $(document).ready(function() {
         $(document).ajaxStart(function () {
@@ -646,6 +678,7 @@
         }).ajaxStop(function () {
             $("#ajax-preloader").hide(); // Hide preloader when AJAX stops
         });
+        $('#device_brand, #device, #product_type').select2();
         $('#last_sale_date,#item_created').datepicker();
         $('.card-header').on('click',function () {
             if($(this).find('.fa').hasClass('fa-angle-down')){
@@ -656,6 +689,12 @@
                 $(this).find('.fa').addClass('fa-angle-down');
             }
            $('.card-body').toggle();
+        });
+
+        $('.btn-reset').on('click', function () {
+            $('#device_brand').val(null).trigger('change');
+            $('#device').val(null).trigger('change');
+            $('#product_type').val(null).trigger('change');
         });
 
         $('#open_store_page').on('click',function () {

@@ -161,7 +161,10 @@
                                     </div>
                                     <div class="col-md-7">
                                         <select class="form-control" name="sku_generation_type" id="sku_generation_type">
-                                            <option value="1">Product Code With Hash ID</option>
+                                            <option value="1" {{ ($store->sku_generation_type == 1) ? 'selected' : '' }}>Sequence</option>
+                                            <option value="2" {{ ($store->sku_generation_type == 2) ? 'selected' : '' }}>Hash ID</option>
+                                            <option value="3" {{ ($store->sku_generation_type == 3) ? 'selected' : '' }}>Product Code With Hash ID</option>
+                                            <option value="4" {{ ($store->sku_generation_type == 4) ? 'selected' : '' }}>Product Code</option>
                                         </select>
                                     </div>
                                 </div>
@@ -196,7 +199,7 @@
                                         <label for="wholesale">Wholesale</label>
                                     </div>
                                     <div class="col-md-7">
-                                        <input type="checkbox" id="wholesale" name="wholesale">
+                                        <input type="checkbox" id="wholesale" name="wholesale" {{ ($store->wholesale == 1) ? 'checked' : '' }}>
                                     </div>
                                 </div>
                                 <div class="row mt-3 g-3 align-items-center">
@@ -204,7 +207,7 @@
                                         <label for="auto_generate_listing">Auto generate listing</label>
                                     </div>
                                     <div class="col-md-7">
-                                        <input type="checkbox" id="auto_generate_listing" name="auto_generate_listing">
+                                        <input type="checkbox" id="auto_generate_listing" name="auto_generate_listing" {{ ($store->auto_generate_listing == 1) ? 'checked' : '' }}>
                                     </div>
                                 </div>
                                 <div class="row mt-3 g-3 align-items-center">
@@ -233,6 +236,11 @@
                                     <div class="col-md-7">
                                         <select class="form-control" name="listing_template_id" id="listing_template_id">
                                             <option value=""></option>
+                                            @if(count($listing_templates ?? []) > 0)
+                                                @foreach($listing_templates as $ltemplate)
+                                                    <option value="{{ $ltemplate->id }}" {{ $ltemplate->id == $store->listing_template_id ? 'selected' : '' }}>{{ $ltemplate->name }}</option>
+                                                @endforeach
+                                            @endif
                                         </select>
                                     </div>
                                 </div>
@@ -243,6 +251,10 @@
                                     <div class="col-md-7">
                                         <select class="form-control" name="upc_usage_type" id="upc_usage_type">
                                             <option value=""></option>
+                                            <option value="0" {{ ($store->upc_usage_type == 0) ? 'selected' : '' }}>None</option>
+                                            <option value="1" {{ ($store->upc_usage_type == 1) ? 'selected' : '' }}>Storeownupc</option>
+                                            <option value="2" {{ ($store->upc_usage_type == 2) ? 'selected' : '' }}>Upcpool</option>
+                                            <option value="3" {{ ($store->upc_usage_type == 3) ? 'selected' : '' }}>Product</option>
                                         </select>
                                     </div>
                                 </div>
@@ -267,7 +279,7 @@
                                         <label for="test_store">Test store</label>
                                     </div>
                                     <div class="col-md-7">
-                                        <input type="checkbox" id="test_store" name="test_store">
+                                        <input type="checkbox" id="test_store" name="test_store" {{ ($store->test_store == 1) ? 'checked' : '' }}>
                                     </div>
                                 </div>
                                 <div class="row mt-3 g-3 align-items-center">
@@ -283,7 +295,7 @@
                                         <label for="ad_account">Ad account</label>
                                     </div>
                                     <div class="col-md-7">
-                                        <input type="checkbox" id="ad_account" name="ad_account">
+                                        <input type="checkbox" id="ad_account" name="ad_account" {{ ($store->ad_account == 1) ? 'checked' : '' }}>
                                     </div>
                                 </div>
                                 <div class="row mt-3 g-3 align-items-center">
@@ -359,7 +371,7 @@
                                         <label for="download_listings">Download listings</label>
                                     </div>
                                     <div class="col-md-7">
-                                        <input type="checkbox" id="download_listings" name="download_listings">
+                                        <input type="checkbox" id="download_listings" name="download_listings" {{ ($store->download_listings == 1) ? 'checked' : '' }}>
                                     </div>
                                 </div>
                                 <div class="row mt-3 g-3 align-items-center">
@@ -367,7 +379,7 @@
                                         <label for="download_buy_box">Download buy box</label>
                                     </div>
                                     <div class="col-md-7">
-                                        <input type="checkbox" id="download_buy_box" name="download_buy_box">
+                                        <input type="checkbox" id="download_buy_box" name="download_buy_box" {{ ($store->download_buy_box == 1) ? 'checked' : '' }}>
                                     </div>
                                 </div>
                                 <div class="row mt-3 g-3 align-items-center">
@@ -375,7 +387,7 @@
                                         <label for="download_reviews">Download reviews</label>
                                     </div>
                                     <div class="col-md-7">
-                                        <input type="checkbox" id="download_reviews" name="download_reviews">
+                                        <input type="checkbox" id="download_reviews" name="download_reviews" {{ ($store->download_reviews == 1) ? 'checked' : '' }}>
                                     </div>
                                 </div>
                                 <div class="row mt-3 g-3 align-items-center">
@@ -383,7 +395,7 @@
                                         <label for="generate_device_details">Generate device details</label>
                                     </div>
                                     <div class="col-md-7">
-                                        <input type="checkbox" id="generate_device_details" name="generate_device_details">
+                                        <input type="checkbox" id="generate_device_details" name="generate_device_details" {{ ($store->generate_device_details == 1) ? 'checked' : '' }}>
                                     </div>
                                 </div>
                                 <div class="row mt-3 g-3 align-items-center">
