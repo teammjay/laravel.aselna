@@ -3,8 +3,8 @@
         <tr id="store-{{ $store->id }}">
 
             {{--<td>{{ $store->id }}</td>--}}
-            <td>{{ $store->marketplace_name }}</td>
             <td>{{ $store->name }}</td>
+            <td>{{ $store->marketplace_name }}</td>
             <td>{{ ($store->storeType()->count() > 0) ? $store->storeType->name : '' }}</td>
             <td>{{ $store->listing_type }}</td>
             <td>{{ ($store->store_status == 1) ? 'Active' : ''}}</td>

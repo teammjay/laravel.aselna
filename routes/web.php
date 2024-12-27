@@ -35,6 +35,7 @@ use App\Http\Controllers\ListingGenerationTypeTemplateController;
 use App\Http\Controllers\ProductTargetAudienceController;
 use App\Http\Controllers\CarrierController;
 use App\Http\Controllers\ProductAttributeController;
+use App\Http\Controllers\ListingTemplateController;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/catalog', [CatalogController::class, 'index']);
@@ -117,6 +118,15 @@ Route::controller(ListingGenerationTypeTemplateController::class)->group(functio
     Route::get('/list_generate_type_template/edit/{id}', 'edit')->name('listing_generation_type_template.edit');
     Route::post('/list_generate_type_template/edit/{id}', 'update')->name('listing_generation_type_template.update');
     Route::get('/list_generate_type_template/delete/{id}', 'destroy')->name('listing_generation_type_template.delete');
+});
+
+Route::controller(ListingTemplateController::class)->group(function () {
+    Route::get('/listing_template', 'index')->name('listing_template.index');
+    Route::get('/listing_template/add', 'create')->name('listing_template.create');
+    Route::post('/listing_template/add', 'store')->name('listing_template.store');
+    Route::get('/listing_template/edit/{id}', 'edit')->name('listing_template.edit');
+    Route::post('/listing_template/edit/{id}', 'update')->name('listing_template.update');
+    Route::get('/listing_template/delete/{id}', 'destroy')->name('listing_template.delete');
 });
 
 Route::controller(ProductTypeController::class)->group(function () {

@@ -19,9 +19,9 @@
             </a>
         </div>
     </div>
-    <div class="card card-secondary">
+    <div class="card card-default">
         <div class="card-header">
-            <h3 class="card-title">Filters</h3>
+            <h3 class="card-title"><a href="javascript:void(0);" class="text-blue">Add search condition</a> </h3>
             <i class="fa fa-angle-down float-right"></i>
         </div>
         <div class="card-body" style="display: none;">
@@ -54,6 +54,17 @@
                         <div class="form-group">
                             <label for="store_status">Is authorized?</label>
                             <select class="custom-select" name="authorized" id="authorized">
+                                <option value=""> -- </option>
+                                <option value="1"> Yes </option>
+                                <option value="0"> No </option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label for="store_status">Ad account?</label>
+                            <select class="custom-select" name="ad_account" id="ad_account">
                                 <option value=""> -- </option>
                                 <option value="1"> Yes </option>
                                 <option value="0"> No </option>
@@ -100,8 +111,8 @@
             <thead>
                 <tr>
                     {{--<th>Store ID</th>--}}
-                    <th>Marketplace Name</th>
                     <th>Name</th>
+                    <th>Marketplace Name</th>
                     <th>Store Type</th>
                     <th>Listing Type</th>
                     <th>Store Status</th>
@@ -236,7 +247,35 @@
                 });
             });
 
+            $(document).on('click', '.ad_account', function() {
+                let ele = $(this);
+                let store_id= $(this).data('id');
+                let is_ad_account = 0;
+                if($(this).is(':checked')){
+                    is_ad_account = 1
+                }
 
+                $.ajax({
+                    url: "{{ route('store.update') }}",   // Laravel route for deletion
+                    type: 'POST',
+                    data: {
+                        id:store_id,
+                        field:'ad_account',
+                        value:is_ad_account,
+                        "_token": '{{ csrf_token() }}'
+                    },
+                    success: function (response) {
+                        // If success, remove the user row from the table
+                        if (response.success) {
+                            ele.prop('checked',true);
+                        }
+                    },
+                    error: function (xhr) {
+                        // Handle error response
+                        alert('Error: ' + xhr.responseJSON.error);
+                    }
+                });
+            });
         });
     </script>
 @stop

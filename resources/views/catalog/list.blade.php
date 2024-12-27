@@ -23,9 +23,9 @@
             </a>
         </div>
     </div>
-    <div class="card card-secondary">
+    <div class="card card-default">
         <div class="card-header">
-            <h3 class="card-title">Filters</h3>
+            <h3 class="card-title"><a href="javascript:void(0);" class="text-blue">Add search condition</a> </h3>
             <i class="fa fa-angle-down float-right"></i>
         </div>
         <div class="card-body" style="display: none;">

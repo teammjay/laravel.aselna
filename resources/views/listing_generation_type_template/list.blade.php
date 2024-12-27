@@ -24,7 +24,7 @@
                     <th>Name</th>
                     <th>Default Template</th>
                     <th>Created By</th>
-                    <th>Created Data</th>
+                    <th>Created Date</th>
                     <th>Action</th>
                 </tr>
                 </thead>
