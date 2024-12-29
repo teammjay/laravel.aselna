@@ -141,6 +141,7 @@
     {{-- Extra Configured Plugins Scripts --}}
     @include('adminlte::plugins', ['type' => 'js'])
     <script src="https://code.jquery.com/ui/1.14.0/jquery-ui.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.30.0/moment.min.js"></script>
 
     {{-- Livewire Script --}}
     @if(config('adminlte.livewire'))

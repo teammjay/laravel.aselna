@@ -23,20 +23,6 @@
         </tr>
         </thead>
         <tbody>
-        @foreach($deviceInterfaces as $deviceInterface)
-            <tr>
-                <td>{{$deviceInterface->device->name}}</td>
-                <td>{{$deviceInterface->interfaces->name}}</td>
-                <td>
-                    <a href="{{ route('device_interface.edit', $deviceInterface->id) }}" class="btn btn-primary">
-                        Edit
-                    </a>
-                    <a href="{{ route('device_interface.delete', $deviceInterface->id) }}" class="btn btn-danger">
-                        Delete
-                    </a>
-                </td>
-            </tr>
-        @endforeach
         </tbody>
     </table>
 @Stop
@@ -44,7 +30,38 @@
 @section('js')
     <script>
         $(document).ready(function () {
-            $('#deviceInterfaceTable').DataTable();
+            $('#deviceInterfaceTable').DataTable(
+                {
+                    processing: true,
+                    serverSide: true,
+                    searching: false,
+                    ajax: "{{ route('device-interface-data') }}",
+                    columns: [
+                        {
+                            data: null, name: 'device_name',
+                            render: function (data, type, row) {
+                                return row.device.name;
+                            }
+                        },
+                        {
+                            data: null, name: 'interface_name',
+                            render: function (data, type, row) {
+                                return row.interfaces.name;
+                            }
+                        },
+                        {
+                            data: 'action',
+                            name: 'action',
+                            orderable: false,
+                            searchable: false,
+                            render: function (data, type, row) {
+                                return '<a href="{{ route('device_interface.edit', ':id') }}" class="btn btn-primary">Edit</a>'.replace(':id', row.id) +
+                                    '<a href="{{ route('device_interface.delete', ':id') }}" class="btn btn-danger">Delete</a>'.replace(':id', row.id);
+                            }
+                        },
+                    ]
+                }
+            );
         });
     </script>
 @Stop

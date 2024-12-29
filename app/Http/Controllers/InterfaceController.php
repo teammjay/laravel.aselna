@@ -5,21 +5,62 @@ namespace App\Http\Controllers;
 use App\Http\Requests\InterfaceRequest;
 use App\Models\Interfaces;
 use App\Models\ProductType;
+use App\Services\DataTable\DataTableService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class InterfaceController extends Controller
 {
     public function index()
     {
         // get the data in the pagination format for datatable to display
-        $interfaces = Interfaces::with('ProductType')->get();
-        return view('interface.list', compact('interfaces'));
+        return view('interface.list');
+    }
+
+    public function getInterfaceData(Request $request)
+    {
+        $totalRecords = Interfaces::query()->count();
+        $query = Interfaces::query()
+            ->select('interface.*')
+            ->with('ProductType');
+
+        $dataTableService = new DataTableService($query, $request);
+
+        $dataTableService->setCustomSorting(function ($query, $request) {
+            $columnIndex = $request->input('order.0.column', 0);
+            $sortColumn = $request->input('columns.' . $columnIndex . '.data', 'id');
+            $columnName = $request->input('columns.' . $columnIndex . '.name', 'id');
+            $sortDirection = $request->input('order.0.dir', 'asc');
+            if ($columnName == 'product_type') {
+                $query->join('product_type', 'product_type.id', '=', 'interface.product_type_id')
+                    ->orderBy('product_type.name', $sortDirection);
+            } else {
+                // Default sorting logic
+                $query->orderBy($sortColumn, $sortDirection);
+            }
+        });
+
+        $data = $dataTableService->handle();
+
+//        $queryLog = DB::getQueryLog();
+//        foreach ($queryLog as $query) {
+//            Log::info('Query: ' . $query['query']);
+//            Log::info('Bindings: ' . implode(', ', $query['bindings']));
+//        }
+
+        return response()->json([
+            'draw' => $request->input('draw'),
+            'recordsTotal' => $totalRecords,
+            'recordsFiltered' => $data->total(),
+            'data' => $data->items(),
+        ]);
     }
 
     public function create()
     {
         $productTypes = ProductType::all();
-        return view('interface.add',compact('productTypes'));
+        return view('interface.add', compact('productTypes'));
     }
 
     public function store(InterfaceRequest $request)
@@ -44,7 +85,7 @@ class InterfaceController extends Controller
     {
         $interface = Interfaces::findOrFail($id);
         $productTypes = ProductType::all();
-        return view('interface.add', compact('interface','productTypes'));
+        return view('interface.add', compact('interface', 'productTypes'));
     }
 
     public function update(InterfaceRequest $request, $id)
