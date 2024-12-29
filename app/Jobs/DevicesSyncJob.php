@@ -37,9 +37,6 @@ class DevicesSyncJob implements ShouldQueue
 
         $devices = DB::connection('fonus_db')->table('tbl_device')->cursor();
         foreach ($devices as $device) {
-            if (Device::where(['code' => $device->device_id])->exists()) {
-                continue;
-            }
             $this->createDevice($device);
         }
     }
@@ -52,28 +49,37 @@ class DevicesSyncJob implements ShouldQueue
 //        $deviceSubType = DeviceSubTypes::where('code', $device->device_sub_type_id)->first();
         $brand = Brand::where('code', $device->brand_id)->first();
 
+        if (!file_exists(storage_path('app/public/device_images/' . $device->picture1))) {
+            $image = file_get_contents('https://fonusaccessory.com/inv/inv_images/device_images/' . $device->picture1);
+            file_put_contents(storage_path('app/public/device_images/' . $device->picture1), $image);
+        }
 
-        Device::updateOrInsert(
+        if (!file_exists(storage_path('app/public/device_images/' . $device->thumbnail_picture1))) {
+            $image = file_get_contents('https://fonusaccessory.com/inv/inv_images/device_images/' . $device->thumbnail_picture1);
+            file_put_contents(storage_path('app/public/device_images/' . $device->thumbnail_picture1), $image);
+        }
+
+
+        Device::updateOrCreate(
             ['code' => $device->device_id],
             [
-                'id' => (string)Str::uuid(),
-                'name' => $device->device_model_name,
-                'code' => $device->device_id,
-                'release_date' => $device->release_date,
-//                'image' => $device->picture1,
-//                'thumbnail_image' => $device->thumbnail_picture1,
-                'dimensions_width' => $device->width,
-                'dimensions_length' => $device->depth,
-                'dimensions_height' => $device->height,
-                'notes' => $device->notes1,
-                'order' => $device->order_no,
-                'created_by' => 'system',
-                'updated_by' => 'system',
-                'created_at' => now(),
-                'updated_at' => now(),
-                'status' => $device->status_id == 1 ? 'active' : 'inactive',
-                'device_type_id' => $deviceType->id,
-                'brand_id' => $brand->id,
+//                'name' => $device->device_model_name,
+//                'code' => $device->device_id,
+//                'release_date' => $device->release_date,
+                'image' => $device->picture1,
+                'thumbnail_image' => $device->thumbnail_picture1,
+//                'dimensions_width' => $device->width,
+//                'dimensions_length' => $device->depth,
+//                'dimensions_height' => $device->height,
+//                'notes' => $device->notes1,
+//                'order' => $device->order_no,
+//                'created_by' => 'system',
+//                'updated_by' => 'system',
+//                'created_at' => now(),
+//                'updated_at' => now(),
+//                'status' => $device->status_id == 1 ? 'active' : 'inactive',
+//                'device_type_id' => $deviceType->id,
+//                'brand_id' => $brand->id,
             ]
         );
     }
@@ -95,13 +101,13 @@ class DevicesSyncJob implements ShouldQueue
             'dimensions_length' => $device->dimensions_length,
             'dimensions_length_unit' => $device->dimensions_length_unit,
             'dimensions_width' => $device->dimensions_width,
-            'image' => $device->image_id,
+//            'image' => $device->image_id,
             'notes' => $device->notes,
             'order' => $device->sort_order,
 //            'rating_id' => $device->rating_id,
 //            'screen_id' => $device->screen_id,
 //            'status' => $device->status,
-            'thumbnail_image' => $device->thumbnail_id
+//            'thumbnail_image' => $device->thumbnail_id
         ]);
     }
 }
