@@ -17,6 +17,7 @@ use App\Jobs\ListingSyncJob;
 use App\Jobs\LogisticCentreSyncJob;
 use App\Jobs\ManufacturerSyncJob;
 use App\Jobs\ProductConditionJob;
+use App\Jobs\ProductImagesSyncJob;
 use App\Jobs\ProductInterfaces;
 use App\Jobs\ProductSyncJob;
 use App\Jobs\ShippingCarrierJob;
@@ -72,5 +73,6 @@ class SyncAllTables extends Command
         UPCSyncJob::dispatch();
         LogisticCentreSyncJob::dispatch();
         ListingFeedSyncJob::dispatch();
+        ProductImagesSyncJob::dispatch();
     }
 }
