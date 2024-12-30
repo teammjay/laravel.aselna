@@ -32,9 +32,14 @@ class StoreTypeListing extends Model
         return $this->belongsTo(Catalog::class, 'product_id');
     }
 
-    public static function generateUniqueAlphabeticSku($product_code, $length = 6) {
+    public static function generateUniqueAlphabeticSku($product_code='', $length = 6) {
         do {
-            $sku = strtoupper($product_code.'-' . Str::random($length));
+            if($product_code != ''){
+                $sku = strtoupper($product_code.'-' . Str::random($length));
+            }else{
+                $sku = strtoupper(Str::random($length));
+            }
+
         } while (self::where('sku', $sku)->exists());  // Check if SKU exists in the database
 
         return $sku;
