@@ -45,6 +45,7 @@
     <table id="deviceTable" class="table table-bordered table-striped">
         <thead>
         <tr>
+            <th>Image</th>
             <th>Device Name</th>
             <th>Brand Name</th>
             <th>Device Type</th>
@@ -55,20 +56,24 @@
         </tr>
         </thead>
         <tbody>
-        @foreach($devices as $device)
-            <tr>
-                <td>{{$device->name}}</td>
-                <td>{{ isset($device->brand) ? $device->brand->name : '' }}</td>
-                <td>{{ isset($device->deviceType) ? $device->deviceType->name : '' }}</td>
-                <td>{{ ucfirst($device->status) }}</td>
-                <td>{{ $device->updated_by }}</td>
-                <td>{{ $device->updated_at->format('d M Y g:i A') }}</td>
-                <td>
-                    <a href="{{ route('devices.edit', ['id' => $device->id]) }}" class="btn btn-primary">Edit</a>
-                    <a href="{{ route('devices.delete', ['id' => $device->id]) }}" class="btn btn-danger">Delete</a>
-                </td>
-            </tr>
-        @endforeach
+        {{--        @foreach($devices as $device)--}}
+        {{--            <tr>--}}
+        {{--                <td>--}}
+        {{--                    <img src="{{ asset('storage/device_images/'.$device->image) }}" alt="{{ $device->name }}"--}}
+        {{--                         width="50">--}}
+        {{--                </td>--}}
+        {{--                <td>{{$device->name}}</td>--}}
+        {{--                <td>{{ isset($device->brand) ? $device->brand->name : '' }}</td>--}}
+        {{--                <td>{{ isset($device->deviceType) ? $device->deviceType->name : '' }}</td>--}}
+        {{--                <td>{{ ucfirst($device->status) }}</td>--}}
+        {{--                <td>{{ $device->updated_by }}</td>--}}
+        {{--                <td>{{ $device->updated_at->format('d M Y g:i A') }}</td>--}}
+        {{--                <td>--}}
+        {{--                    <a href="{{ route('devices.edit', ['id' => $device->id]) }}" class="btn btn-primary">Edit</a>--}}
+        {{--                    <a href="{{ route('devices.delete', ['id' => $device->id]) }}" class="btn btn-danger">Delete</a>--}}
+        {{--                </td>--}}
+        {{--            </tr>--}}
+        {{--        @endforeach--}}
         </tbody>
     </table>
 @stop
@@ -76,7 +81,40 @@
 @section('js')
     <script>
         $(document).ready(function () {
-            $('#deviceTable').DataTable({});
+            $('#deviceTable').DataTable({
+                processing: true,
+                serverSide: true,
+                ajax: {
+                    url: '{{ route('device-data') }}',
+                    data: function (d) {
+                        d.name = $('#name').val();
+                    }
+                },
+                columns: [
+                    {
+                        data: '', name: 'image', render: function (data, type, row) {
+                            return '<img src="{{ asset('storage/device_images/') }}/' + row.image + '" alt="' + row.name + '" width="50">';
+                        }
+                    },
+                    {data: 'name', name: 'name'},
+                    {data: 'brand.name', name: 'brand.name'},
+                    {data: 'device_type.name', name: 'device_type.name'},
+                    {data: 'status', name: 'status'},
+                    {data: 'updated_by', name: 'updated_by'},
+                    {
+                        data: 'updated_at', name: 'updated_at', render: function (data) {
+                            return moment(data).format('DD MMM YYYY hh:mm A');
+                        }
+                    },
+                    {
+                        data: 'action', name: 'action', orderable: false, searchable: false,
+                        render: function (data, type, row) {
+                            return '<a href="{{ route('devices.edit', ['id' => ':id']) }}'.replace(':id','') + row.id + '" class="btn btn-primary">Edit</a>' +
+                                '<a href="{{ route('devices.delete', ['id' => ':id']) }}'.replace(':id','') + row.id + '" class="btn btn-danger">Delete</a>';
+                        }
+                    }
+                ]
+            });
         });
     </script>
 @stop
