@@ -50,6 +50,8 @@ class ProductSyncJob implements ShouldQueue
             $this->updateProduct($product);
 
             $this->createProductTitleKeywords($product);
+
+
         }
 
         $storeProducts = DB::connection('easyesale_db')->table('store_product')->cursor();
@@ -88,10 +90,10 @@ class ProductSyncJob implements ShouldQueue
 
     private function createProductTitleKeywords($product)
     {
-        if(!Catalog::where('product_id', $product->id)->exists()){
+        if (!Catalog::where('product_id', $product->id)->exists()) {
             return;
         }
-        if (! DB::connection('easyesale_db')->table('product_title_keyword')->where('product_id', $product->id)) {
+        if (!DB::connection('easyesale_db')->table('product_title_keyword')->where('product_id', $product->id)) {
             return;
         }
         $keywords = DB::connection('easyesale_db')->table('product_title_keyword')->where('product_id', $product->id)->get();
@@ -155,6 +157,7 @@ class ProductSyncJob implements ShouldQueue
             'product_marketplace_price' => $product->marketplace_price,
             'product_mrsp' => $product->msrp,
             'product_sku' => $product->code,
+            'product_code' => $product->reference_id1,
 //            'product_image_url' => 'as',
             'product_status' => $product->status == 1 ? 'active' : 'discontinued',
             'dimensions_length' => $product->dimensions_length,
@@ -167,6 +170,7 @@ class ProductSyncJob implements ShouldQueue
             'package_dimensions_width' => $product->package_dimension_width,
             'package_dimensions_height' => $product->package_dimension_height,
             'package_dimensions_length' => $product->package_dimension_length,
+            'oem_generic' => $product->oem_generic,
 //            'product_tags'=> $product->weight_weight_unit,
 //            'target_aud'=> $product->weight_weight_unit,
 //            'product_color' => $product->color,
@@ -192,14 +196,14 @@ class ProductSyncJob implements ShouldQueue
         }
         StoreProduct::updateOrCreate([
             'id' => $storeProduct->id,
-        ],[
+        ], [
             'id' => $storeProduct->id,
             'product_id' => $storeProduct->product_id,
             'store_id' => $storeProduct->store_id,
             'active' => $storeProduct->active ? 1 : 0,
             'brand_combo' => $storeProduct->brand_combo,
             'carrier_combo' => $storeProduct->carrier_combo,
-            'channel_category_id' => $storeProduct->channel_category_id ,
+            'channel_category_id' => $storeProduct->channel_category_id,
             'client' => $storeProduct->client,
             'compare_at_price' => $storeProduct->compare_at_price,
             'description' => $storeProduct->description,
@@ -210,10 +214,10 @@ class ProductSyncJob implements ShouldQueue
             'last_sale_date' => $storeProduct->last_sale_date,
             'last_synch_date_time' => $storeProduct->last_synch_date_time,
             'last_update_date_time' => $storeProduct->last_update_date_time,
-            'listing_generation_type_id' => $storeProduct->listing_generation_type_id ,
-            'listing_title_template_id' => $storeProduct->listing_title_template_id ,
+            'listing_generation_type_id' => $storeProduct->listing_generation_type_id,
+            'listing_title_template_id' => $storeProduct->listing_title_template_id,
 //            'long_tail_keywords' => $storeProduct,
-            'manufacturer_id' => $storeProduct->manufacturer_id ,
+            'manufacturer_id' => $storeProduct->manufacturer_id,
             'msrp' => $storeProduct->msrp,
             'overwrite_compare_at_price' => $storeProduct->overwrite_compare_at_price,
             'overwrite_description' => $storeProduct->overwrite_description,

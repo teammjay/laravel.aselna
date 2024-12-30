@@ -40,7 +40,7 @@ class CatalogController extends Controller
         //sku must contain only 3 characters
         session()->forget('pro_id');
         $products = Catalog::with('Manufacturer')->select('*')
-            ->whereRaw('LENGTH(product_sku) = 3')
+            ->where('oem_generic',2)
             ->orderBy('created_at','desc')
             ->paginate($this->perPage);
         $productTypes = ProductType::all();

@@ -10,6 +10,7 @@ use App\Models\DeviceScreen;
 use App\Models\DeviceSeries;
 use App\Models\DeviceSubTypes;
 use App\Models\DeviceTypes;
+use App\Services\DataTable\DataTableService;
 use Illuminate\Http\Request;
 
 class DeviceController extends Controller
@@ -20,6 +21,38 @@ class DeviceController extends Controller
         //need to get the brand relation name also in all the devices
         $devices = Device::with('brand')->get();
         return view('device.list', compact('devices'));
+    }
+
+    public function getDeviceData(Request $request)
+    {
+        $totalRecords = Device::query()->count();
+        $query = Device::query()->with('brand','deviceType');
+
+        $dataTableService = new DataTableService($query, $request);
+
+        $dataTableService->setCustomSorting(function ($query, $request) {
+            $columnIndex = $request->input('order.0.column', 0);
+            $columnName = $request->input('columns.' . $columnIndex . '.name', 'id');
+            $sortDirection = $request->input('order.0.dir', 'asc');
+            if ($columnName == 'brand_name') {
+                $query->join('brand', 'brand.id', '=', 'device.brand_id')
+                    ->orderBy('brand.name', $sortDirection);
+            } elseif ($columnName == 'device_type_name') {
+                $query->join('device_type', 'device_type.id', '=', 'device.device_type_id')
+                    ->orderBy('device_type.name', $sortDirection);
+            } else {
+                $query->orderBy($columnName, $sortDirection);
+            }
+        });
+
+        $data = $dataTableService->handle();
+
+        return response()->json([
+            'draw' => $request->input('draw'),
+            'recordsTotal' => $totalRecords,
+            'recordsFiltered' => $data->total(),
+            'data' => $data->items(),
+        ]);
     }
 
     public function create()
