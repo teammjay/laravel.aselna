@@ -2,6 +2,8 @@
 
 @section('title', 'Listing')
 @section('adminlte_css_pre')
+    <link href="{{ asset('css/jquery.multiselect.css') }}" rel="stylesheet">
+
     <style>
         #product_type_filter option, #manufacturer_filter option, select[multiple] option {
             border-bottom: 1px solid #eaeaea;
@@ -117,7 +119,7 @@
                                         </div>
 
                                     </div>
-                                    <div class="border p-2">
+                                    <div class="border p-2" style="width: 13%;">
                                         <label>Product Code Filter</label>
                                         <div class="form-group d-flex position-relative">
                                             <input type="text" class="form-control" id="product_code_filter" placeholder="Search...."><i class="fa fa-search position-absolute" style="top: 50%;right: 5px;transform: translateY(-50%);"></i>
@@ -126,7 +128,7 @@
 
                                         </div>
                                     </div>
-                                    <div class="border p-2">
+                                    <div class="border p-2" style="width: 10%;">
                                         <label>Device Series</label>
                                         <div class="form-group d-flex position-relative">
                                             <input type="text" class="form-control" id="device_series_filter" placeholder="Search...."><i class="fa fa-search position-absolute" style="top: 50%;right: 5px;transform: translateY(-50%);"></i>
@@ -135,7 +137,7 @@
 
                                         </div>
                                     </div>
-                                    <div class="border p-2 ">
+                                    <div class="border p-2 " style="width: 10%;">
                                         <label>Device Filter</label>
                                         <div class="form-group d-flex position-relative">
                                             <input type="text" class="form-control" id="device_filter" placeholder="Search...."><i class="fa fa-search position-absolute" style="top: 50%;right: 5px;transform: translateY(-50%);"></i>
@@ -144,10 +146,10 @@
 
                                         </div>
                                     </div>
-                                    <div class="border p-2">
+                                    <div class="border p-2" style="width: 17%;">
                                         <label>Manufacturer Filter</label>
                                         <div class="row" style="height: 87%;">
-                                            <div class="col-md-12">
+                                            <div class="col-md-12 multi-select-filter">
                                                 <select class="form-control" name="manufacturer[]" id="manufacturer_filter" multiple>
                                                     @if(count($manufacturers ?? []) > 0)
                                                         @foreach($manufacturers as $mf)
@@ -158,10 +160,10 @@
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="border p-2">
+                                    <div class="border p-2" style="width: 17%;">
                                         <label>Product Type Filter</label>
                                         <div class="row" style="height: 87%;">
-                                            <div class="col-md-12">
+                                            <div class="col-md-12 prod-type multi-select-filter">
                                                 <select class="form-control" name="product_type[]" id="product_type_filter" multiple>
                                                     @if(count($productTypes ?? []) > 0)
                                                         @foreach($productTypes as $pt)
@@ -173,10 +175,10 @@
                                         </div>
                                     </div>
 
-                                    <div class="border p-2" id="proSubType" style="display: none;">
+                                    <div class="border p-2" id="proSubType" style="display: none; width: 17%;">
                                         <label>Product Sub Type Filter</label>
                                         <div class="row">
-                                            <div class="col-md-12">
+                                            <div class="col-md-12 multi-select-filter">
                                                 <select class="form-control" name="product_sub_type[]" id="product_sub_type_filter" multiple>
 
                                                 </select>
@@ -185,7 +187,7 @@
 
                                         <label>Interface Filter</label>
                                         <div class="row">
-                                            <div class="col-md-12">
+                                            <div class="col-md-12 multi-select-filter">
                                                 <select class="form-control" name="interface[]" id="interface_filter" multiple>
                                                 </select>
                                             </div>
@@ -397,39 +399,30 @@
                                             </div>
                                         @endforeach
                                     @endif
-
-
-                                </div>
-                                <div>
-                                    <div class="border p-2">
-                                        <label>Brand Filter</label>
-                                        <div class="row">
-                                            <div class="col-md-12">
-                                                <select class="form-control" id="brand_filter" multiple style="height: 225px;">
-                                                    @if(count($brands ?? []) > 0)
-                                                        @foreach($brands as $brand)
-                                                            <option value="{{ $brand->id }}">{{ $brand->name }}</option>
-                                                        @endforeach
-                                                    @endif
-                                                </select>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="form-group mb-1 mt-3">
-                                        <label>Brand</label>
-                                        <select class="form-control" name="brand">
-                                            <option value="use-store">Use store as brand</option>
-                                        </select>
-                                    </div>
                                 </div>
                                 <div>
                                     <div class="d-flex" style="gap:10px;">
-                                        <div class="border p-2 w-25">
+                                        <div class="border p-2" style="widows: 33.33%;">
+                                            <label>Brand Filter</label>
+                                            <div class="row">
+                                                <div class="col-md-12 multi-select-filter">
+                                                    <select class="form-control" id="brand_filter" multiple style="height: 225px;">
+                                                        @if(count($brands ?? []) > 0)
+                                                            @foreach($brands as $brand)
+                                                                <option value="{{ $brand->id }}">{{ $brand->name }}</option>
+                                                            @endforeach
+                                                        @endif
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="border p-2" style="widows: 33.33%;">
                                             <label>Rating Filter</label>
                                             <div class="row">
-                                                <div class="col-md-12">
+                                                <div class="col-md-12 multi-select-filter">
                                                     <select class="form-control" id="rating_filter" multiple style="height: 235px;">
-                                                        <option value="1">10</option>
+                                                        <option value="10">10</option>
                                                         <option value="9">9</option>
                                                         <option value="8">8</option>
                                                         <option value="7">7</option>
@@ -444,10 +437,10 @@
                                             </div>
                                         </div>
 
-                                        <div class="border p-2 w-25">
+                                        <div class="border p-2" style="widows: 33.33%;">
                                             <label>Popularity</label>
                                             <div class="row">
-                                                <div class="col-md-12">
+                                                <div class="col-md-12 multi-select-filter">
                                                     <select class="form-control" id="popularity_filter" multiple style="height: 235px;">
                                                        <option value="1">1</option>
                                                        <option value="2">2</option>
@@ -464,21 +457,31 @@
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="form-group mb-1 mt-3">
-                                        <label>Title Template</label>
-                                        <div class="d-flex">
-                                            <input type="text" class="form-control" name="title_template" id="title_template" style="width: 85%;">
-                                            <button type="button" class="btn btn-default" id="updateAll">Update All</button>
+                                    <div class="d-flex">
+                                        <div class="form-group mb-1 mt-3">
+                                            <label>Brand</label>
+                                            <select class="form-control" name="brand">
+                                                <option value="use-store">Use store as brand</option>
+                                            </select>
                                         </div>
-                                    </div>
-                                    <div class="d-flex align-items-center mb-1 mt-3">
-                                        <span>Brand Seperator </span>
-                                        <input type="text" name="brand_seperator" class="form-control ml-2 mr-5" id="brand_seperator" value=" , " style="width: 40px;">
-                                        <span>Group Seperator </span>
-                                        <input type="text" name="group_seperator" class="form-control ml-2 mr-5" id="group_seperator" value=" , " style="width: 40px;">
-                                        <span>Device Seperator </span>
-                                        <input type="text" name="device_seperator" class="form-control ml-2 mr-5" id="device_seperator" value=" , " style="width: 40px;">
-                                        <input type="checkbox" name="compress" id="compress" checked> <span> Compress</span>
+                                        <div>
+                                            <div class="form-group mb-1 mt-3">
+                                                <label>Title Template</label>
+                                                <div class="d-flex">
+                                                    <input type="text" class="form-control" name="title_template" id="title_template" style="width: 85%;">
+                                                    <button type="button" class="btn btn-default" id="updateAll">Update All</button>
+                                                </div>
+                                            </div>
+                                            <div class="d-flex align-items-center mb-1 mt-3">
+                                                <span>Brand Seperator </span>
+                                                <input type="text" name="brand_seperator" class="form-control ml-2 mr-5" id="brand_seperator" value=" , " style="width: 40px;">
+                                                <span>Group Seperator </span>
+                                                <input type="text" name="group_seperator" class="form-control ml-2 mr-5" id="group_seperator" value=" , " style="width: 40px;">
+                                                <span>Device Seperator </span>
+                                                <input type="text" name="device_seperator" class="form-control ml-2 mr-5" id="device_seperator" value=" , " style="width: 40px;">
+                                                <input type="checkbox" name="compress" id="compress" checked> <span> Compress</span>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -639,6 +642,8 @@
 
 @section('adminlte_js')
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="{{ asset('js/jquery.multiselect.js') }}"></script>
+
     <script>
         let product_model = {};
         let product_models = {};
@@ -850,6 +855,8 @@
                 loadProducts();
             });
 
+            $("#manufacturer_filter, #product_type_filter, #brand_filter, #rating_filter, #popularity_filter").gs_multiselect();
+
             $(document).on('click', '#selected_product', function() {
                 if($(this).is(':checked')){
                     $('.proCheck').prop('checked',false);
@@ -997,7 +1004,43 @@
                 });
             });
 
+            /*$(document).on('click','.btn-val-add',function(){
+                let ele = $(this);
+                setTimeout(function () {
+                    console.log(ele.parents('.prod-type').find('input[name="product_type[]"]').val());
+                    let product_types = [];
+                    ele.parents('.prod-type').find('input[name="product_type[]"]').each(function () {
+                        product_types.push($(this).val());
+                    });
+                    $.ajax({
+                        url: "{{ route('listing.getproductsubtype') }}",
+                        type: 'POST',
+                        data: {
+                            product_types:product_types
+                        },
+                        /!* processData: false,
+                         contentType: false,*!/
+                        headers: {
+                            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                        },
+                        success: function (response) {
+                            if (response.success) {
+                                $('#proSubType').show();
+                                $('#product_sub_type_filter').html(response.option);
+                                $('#product_sub_type_filter').gs_multiselect();
+                            }else{
+                                $('#proSubType').hide();
+                            }
+                        },
+                        error: function (xhr) {
+                            /!*if (xhr.responseJSON?.error) {
+                                $('#responseMessage').html('<p style="color:red;">' + xhr.responseJSON.error.image[0] + '</p>');
+                            }*!/
+                        }
+                    });
+                },500);
 
+            });*/
 
             $(document).on('change', '#product_type_filter', function() {
                 let product_type = $(this).val();
@@ -1016,6 +1059,7 @@
                         if (response.success) {
                             $('#proSubType').show();
                             $('#product_sub_type_filter').html(response.option);
+                            //$('#product_sub_type_filter').gs_multiselect();
                         }else{
                             $('#proSubType').hide();
                         }

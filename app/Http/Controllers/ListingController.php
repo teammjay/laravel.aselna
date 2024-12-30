@@ -397,6 +397,40 @@ class ListingController extends Controller
 
         }
 
+        // Filter by upc
+        if ($request->has('upc') && $request->upc != '') {
+            $operator = $request->upc_operator;
+            switch($operator){
+                case 'contains':
+                    $query->WhereLike('listing_item.upc', '%'.$request->upc.'%');
+                    break;
+                case 'starts_with':
+                    $query->WhereLike('listing_item.upc', $request->upc.'%');
+                    break;
+                case 'ends_with':
+                    $query->WhereLike('listing_item.upc', '%'.$request->upc);
+                    break;
+                case '=':
+                    $query->Where('listing_item.upc', $request->upc);
+                    break;
+                case 'in':
+                    $upc_codes = explode(',',$request->upc);
+                    $query->WhereIn('listing_item.upc',$upc_codes);
+                    break;
+                case 'not_in':
+                    $upc_codes = explode(',',$request->upc);
+                    $query->WhereNotIn('listing_item.upc', $upc_codes);
+                    break;
+                case 'doesnt_contain':
+                    $query->WhereNotLike('listing_item.upc', '%'.$request->upc.'%');
+                    break;
+                case 'is_set':
+                    $query->whereNotNull('listing_item.upc');
+                    break;
+            }
+
+        }
+
         // Filter by device
         if ($request->has('device') && $request->device != '') {
             $query->where('listing_item.device_id', $request->device);
@@ -1308,6 +1342,7 @@ class ListingController extends Controller
                 $store_product_ids = $request->input('final_store_product_id');
                 $product_ids = $request->input('final_product_id');
                 $store_id = $request->input('store_id');
+                $store_detail = Store::where('id',$store_id)->first();
                 $product_models = $request->input('product_models');
                 if($product_models){
                     $product_models = json_decode($product_models);
@@ -1338,7 +1373,27 @@ class ListingController extends Controller
                 $summary_products = [];
                 if($listing_id && !empty($product_titles)) {
                     foreach ($product_titles as $key => $product) {
-                        $sku = StoreTypeListing::generateUniqueAlphabeticSku($product_codes[$key],4);
+
+                        if($store_detail->sku_generation_type){
+                            switch ($store_detail->sku_generation_type){
+                                case 1:
+                                    $sku = StoreTypeListing::generateUniqueAlphabeticSku($product_codes[$key],4);
+                                    break;
+                                case 2:
+                                    $sku = StoreTypeListing::generateUniqueAlphabeticSku('',4);
+                                    break;
+                                case 3:
+                                    $sku = StoreTypeListing::generateUniqueAlphabeticSku($product_codes[$key],4);
+                                    break;
+                                case 4:
+                                    $sku = StoreTypeListing::generateUniqueAlphabeticSku($product_codes[$key],4);
+                                    break;
+                                case 'default':
+                                    $sku = StoreTypeListing::generateUniqueAlphabeticSku($product_codes[$key],4);
+                                    break;
+                            }
+                        }
+
                         $productDetail = StoreProduct::getStoreProductDetail($store_product_ids[$key]);
                         $productDetail = $productDetail->toArray();
                         $product_name = $product;
