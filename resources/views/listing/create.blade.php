@@ -42,6 +42,14 @@
         }
         .ui-autocomplete{z-index: 99999; max-height: 250px; overflow: auto;}
         #frmproductfilter select.form-control[multiple]{height: 100%;}
+        table th, table td, .column-no-whitespace{
+            white-space: nowrap;
+            font-size: 14px;
+        }
+        .form-group span,  .border label, .form-control, .d-flex span, .btn{
+            font-size: 14px !important;
+        }
+        .nav-tabs .nav-item .nav-link, .nav-tabs .nav-link.active{font-size: 14px;}
     </style>
 @stop
 @section('content_header')
@@ -99,6 +107,7 @@
                                     <div class="border p-2">
                                         <button type="button" id="searchBtn" class="btn btn-primary w-100">Search</button>
                                         <select class="form-control mt-3 mb-3" name="store_id" id="listing_store">
+                                            <option value="">--</option>
                                             @if(count($stores ?? []) > 0)
                                                 @foreach($stores as $store)
                                                     <option value="{{ $store->id }}">{{ $store->name }} {{ (!empty((array)$store->storeType)) ? ' - '.$store->storeType->name : '' }}</option>
@@ -457,7 +466,7 @@
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="d-flex">
+                                    <div class="d-flex" style="gap:10px;">
                                         <div class="form-group mb-1 mt-3">
                                             <label>Brand</label>
                                             <select class="form-control" name="brand">
@@ -773,6 +782,8 @@
                                 /*if (xhr.responseJSON?.error) {
                                     $('#responseMessage').html('<p style="color:red;">' + xhr.responseJSON.error.image[0] + '</p>');
                                 }*/
+                                const message = xhr.responseJSON?.error || 'An unexpected error occurred. Please try again later.';
+                                alert(message);
                             },
                             complete: function () {
                                 $("#ajax-preloader").hide();
@@ -797,9 +808,9 @@
                             },
                             dataType:'json',
                             success: function(response) {
-                                // Display a success message
-                                alert(response.message);
                                 if(response.success){
+                                    // Display a success message
+                                    alert(response.message);
                                     currentIndex++;
                                     activateTab(currentIndex);
                                     if(response.summary) {
@@ -811,6 +822,8 @@
                                 }
                             },
                             error: function(xhr) {
+                                const message = xhr.responseJSON?.error || 'An unexpected error occurred. Please try again later.';
+                                alert(message);
                             },
                             complete: function () {
                                 $("#ajax-preloader").hide();
@@ -1041,7 +1054,7 @@
                 },500);
 
             });*/
-
+            let cnt = 0;
             $(document).on('change', '#product_type_filter', function() {
                 let product_type = $(this).val();
                 $.ajax({
@@ -1058,8 +1071,14 @@
                     success: function (response) {
                         if (response.success) {
                             $('#proSubType').show();
-                            $('#product_sub_type_filter').html(response.option);
-                            //$('#product_sub_type_filter').gs_multiselect();
+                            if(cnt == 0) {
+                                $('#product_sub_type_filter').html(response.option);
+                                $('#product_sub_type_filter').gs_multiselect();
+                                cnt++;
+                            }else{
+                                $('#product_sub_type_filter').html('');
+                                $('#proSubType').find('.default-drop-down').html(response.option);
+                            }
                         }else{
                             $('#proSubType').hide();
                         }
@@ -1214,16 +1233,17 @@
                             actemp = data.details;
                             response(data.display);
                         },
-                        minLength: 2,
                         delay: 100
                     });
                 },
-                minLength: 2,
+                minLength: 0,
                 select : function(event, ui){
                     $('#device_series_filter').val('');
                     $('#device_series_list').append('<div class="border bg-blue p-1 mt-1"><input type="hidden" name="device_series[]" value="'+ui.item.value+'">'+ui.item.label+'<i class="fa fa-window-close float-right mt-1"></i></div>');
                     return false;
                 }
+            }).focus(function () {
+                $('#device_series_filter').keydown();
             });
 
             $('#device_filter').autocomplete({
@@ -1250,16 +1270,17 @@
                             actemp = data.details;
                             response(data.display);
                         },
-                        minLength: 2,
                         delay: 100
                     });
                 },
-                minLength: 2,
+                minLength: 0,
                 select : function(event, ui){
                     $('#device_filter').val('');
                     $('#device_list').append('<div class="border bg-blue p-1 mt-1"><input type="hidden" name="device[]" value="'+ui.item.value+'">'+ui.item.label+' <i class="fa fa-window-close float-right mt-1"></i></div>');
                     return false;
                 }
+            }).focus(function () {
+                $('#device_filter').keydown();
             });
 
 

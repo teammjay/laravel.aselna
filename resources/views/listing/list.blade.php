@@ -26,6 +26,10 @@
             width: 20px;
             transform: translateY(-50%);
         }
+
+        table th, table td, .column-no-whitespace{
+            white-space: nowrap;
+        }
     </style>
 @stop
 
@@ -872,10 +876,13 @@
                 { data: 'qty' },
                 { data: 'created_date' },
                 { data: 'action' },
-            ]/*,
+            ],
             columnDefs: [
-                { targets: 'disable-sorting', orderable: true }
-            ]*/
+                {
+                    targets: 6, // The column index
+                    className: 'column-no-whitespace' // The class to add
+                }
+            ]
         });
 
         $( '#productsTable_wrapper').removeClass( 'form-inline' );
