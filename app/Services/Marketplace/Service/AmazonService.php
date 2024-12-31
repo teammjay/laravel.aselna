@@ -5,11 +5,18 @@ namespace App\Services\Marketplace\Service;
 use App\Models\Listing;
 use App\Models\ListingFeed;
 use App\Models\ListingItemLink;
+use App\Services\Auth\AmazonAuthService;
 use App\Services\Marketplace\Contracts\MarketplaceServiceInterface;
 use App\Utils\XmlUtility;
 
 class AmazonService implements MarketplaceServiceInterface
 {
+    private $authService;
+
+    public function __construct(AmazonAuthService $authService)
+    {
+        $this->authService = $authService;
+    }
 
     public function generateFeed($listingId)
     {
@@ -75,5 +82,13 @@ class AmazonService implements MarketplaceServiceInterface
 
         //return the file path so that it can be downloaded
         return 'feeds/' . $listingId . '.xml';
+    }
+
+    public function submitFeed($feedId)
+    {
+        $content = '';
+        $generatedFeedId = $this->authService->uploadProductFeed($content);
+
+        $this->authService->submitFeed($generatedFeedId);
     }
 }

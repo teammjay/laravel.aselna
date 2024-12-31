@@ -57,22 +57,22 @@ class SyncAllTables extends Command
         DeviceTypesSyncJob::dispatch();
         BrandSyncJob::dispatch();
         DevicesSyncJob::dispatch();
-//        CategorySyncJob::dispatch();
-//        ProductConditionJob::dispatch();
-//        ShippingCarrierJob::dispatch();
-//        InterfaceSyncJob::dispatch();
-//        DeviceInterfaces::dispatch();
-//        GenerationTypeAndTemplateSync::dispatch();
-//        ProductSyncJob::dispatch();
-//        ProductInterfaces::dispatch();
-//        ListingSyncJob::dispatch();
-//        ListingItemSyncJob::dispatch();
-//        ListingItemDataSyncJob::dispatch();
-//        ListingItemLinkSyncJob::dispatch();
-//        StoreTypeListingSyncJob::dispatch();
-//        UPCSyncJob::dispatch();
-//        LogisticCentreSyncJob::dispatch();
-//        ListingFeedSyncJob::dispatch();
+        CategorySyncJob::dispatch();
+        ProductConditionJob::dispatch();
+        ShippingCarrierJob::dispatch();
+        InterfaceSyncJob::dispatch();
+        DeviceInterfaces::dispatch();
+        GenerationTypeAndTemplateSync::dispatch();
+        ProductSyncJob::dispatch();
+        ProductInterfaces::dispatch();
+        ListingSyncJob::dispatch();
+        ListingItemSyncJob::dispatch();
+        ListingItemDataSyncJob::dispatch();
+        ListingItemLinkSyncJob::dispatch();
+        StoreTypeListingSyncJob::dispatch();
+        UPCSyncJob::dispatch();
+        LogisticCentreSyncJob::dispatch();
+        ListingFeedSyncJob::dispatch();
         ProductImagesSyncJob::dispatch();
     }
 }

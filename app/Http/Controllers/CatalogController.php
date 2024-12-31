@@ -267,6 +267,7 @@ class CatalogController extends Controller
             $query->where('product_status', $request->status);
         }
         $query->orderBy('created_at','desc');
+        $query->where('oem_generic',2);
         $products = $query->paginate($perPage); // Paginate results
 
         //echo $query->toSql();die;
