@@ -41,7 +41,8 @@
 			var o_lc=lc;
 			
 			lc.appendChild(to_sel);
-			$(fc).append($(from_sel));
+			//$(fc).append($(from_sel));
+			$(fc).html($(from_sel));
 			//var from_sel=fc.firstChild;
 			var sel_name=to_sel.getAttribute('name');
 			to_sel.setAttribute('name','');
