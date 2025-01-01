@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Jobs\BrandSyncJob;
+use App\Jobs\CarrierSyncJob;
 use App\Jobs\CategorySyncJob;
 use App\Jobs\DeviceInterfaces;
 use App\Jobs\DevicesSyncJob;
@@ -57,22 +58,23 @@ class SyncAllTables extends Command
         DeviceTypesSyncJob::dispatch();
         BrandSyncJob::dispatch();
         DevicesSyncJob::dispatch();
-//        CategorySyncJob::dispatch();
-//        ProductConditionJob::dispatch();
-//        ShippingCarrierJob::dispatch();
-//        InterfaceSyncJob::dispatch();
-//        DeviceInterfaces::dispatch();
-//        GenerationTypeAndTemplateSync::dispatch();
-//        ProductSyncJob::dispatch();
-//        ProductInterfaces::dispatch();
-//        ListingSyncJob::dispatch();
-//        ListingItemSyncJob::dispatch();
-//        ListingItemDataSyncJob::dispatch();
-//        ListingItemLinkSyncJob::dispatch();
-//        StoreTypeListingSyncJob::dispatch();
-//        UPCSyncJob::dispatch();
-//        LogisticCentreSyncJob::dispatch();
-//        ListingFeedSyncJob::dispatch();
+        CategorySyncJob::dispatch();
+        ProductConditionJob::dispatch();
+        CarrierSyncJob::dispatch();
+        ShippingCarrierJob::dispatch();
+        InterfaceSyncJob::dispatch();
+        DeviceInterfaces::dispatch();
+        GenerationTypeAndTemplateSync::dispatch();
+        ProductSyncJob::dispatch();
+        ProductInterfaces::dispatch();
+        ListingSyncJob::dispatch();
+        ListingItemSyncJob::dispatch();
+        ListingItemDataSyncJob::dispatch();
+        ListingItemLinkSyncJob::dispatch();
+        StoreTypeListingSyncJob::dispatch();
+        UPCSyncJob::dispatch();
+        LogisticCentreSyncJob::dispatch();
+        ListingFeedSyncJob::dispatch();
         ProductImagesSyncJob::dispatch();
     }
 }

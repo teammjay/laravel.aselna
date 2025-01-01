@@ -7,12 +7,13 @@ use App\Models\ProductImages;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class ProductImagesSyncJob implements ShouldQueue
 {
     use Queueable;
 
-    protected $timeout = 3000;
+    public $timeout = 3000;
 
     /**
      * Create a new job instance.
@@ -27,6 +28,8 @@ class ProductImagesSyncJob implements ShouldQueue
      */
     public function handle(): void
     {
+        //add local env variable to check if we are in local environment
+        if (env('APP_ENV') === 'local') return;
         $productImages = DB::connection('fonus_db')->table('tbl_product_images')->cursor();
 
         foreach ($productImages as $productImage) {
@@ -48,6 +51,12 @@ class ProductImagesSyncJob implements ShouldQueue
         if (!file_exists(storage_path('app/public/product_images/' . $productImage->thumbnail_picture_name))) {
             $imageThumbnail = file_get_contents('https://fonusaccessory.com/inv/inv_images/main_product_images/' . $productImage->thumbnail_picture_name);
             file_put_contents(storage_path('app/public/product_images/' . $productImage->thumbnail_picture_name), $imageThumbnail);
+        }
+
+        if ($productImage->picture_id === 1) {
+            $product->update([
+                'product_image_url' => $productImage->picture_name,
+            ]);
         }
 
         ProductImages::updateOrCreate([

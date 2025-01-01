@@ -49,14 +49,16 @@ class DevicesSyncJob implements ShouldQueue
 //        $deviceSubType = DeviceSubTypes::where('code', $device->device_sub_type_id)->first();
         $brand = Brand::where('code', $device->brand_id)->first();
 
-        if (!file_exists(storage_path('app/public/device_images/' . $device->picture1))) {
-            $image = file_get_contents('https://fonusaccessory.com/inv/inv_images/device_images/' . $device->picture1);
-            file_put_contents(storage_path('app/public/device_images/' . $device->picture1), $image);
-        }
+        if (env('APP_ENV') !== 'local') {
+            if (!file_exists(storage_path('app/public/device_images/' . $device->picture1))) {
+                $image = file_get_contents('https://fonusaccessory.com/inv/inv_images/device_images/' . $device->picture1);
+                file_put_contents(storage_path('app/public/device_images/' . $device->picture1), $image);
+            }
 
-        if (!file_exists(storage_path('app/public/device_images/' . $device->thumbnail_picture1))) {
-            $image = file_get_contents('https://fonusaccessory.com/inv/inv_images/device_images/' . $device->thumbnail_picture1);
-            file_put_contents(storage_path('app/public/device_images/' . $device->thumbnail_picture1), $image);
+            if (!file_exists(storage_path('app/public/device_images/' . $device->thumbnail_picture1))) {
+                $image = file_get_contents('https://fonusaccessory.com/inv/inv_images/device_images/' . $device->thumbnail_picture1);
+                file_put_contents(storage_path('app/public/device_images/' . $device->thumbnail_picture1), $image);
+            }
         }
 
 

@@ -11,4 +11,9 @@ class EbayService implements MarketplaceServiceInterface
     {
         // TODO: Implement generateFeed() method.
     }
+
+    public function submitFeed($feedId)
+    {
+        // TODO: Implement submitFeed() method.
+    }
 }
