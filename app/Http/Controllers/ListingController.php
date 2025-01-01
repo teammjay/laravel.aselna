@@ -650,6 +650,9 @@ class ListingController extends Controller
         $query->leftJoin('products','products.product_id', '=', 'store_product.product_id');
         $query->leftJoin('product_type','products.product_type', '=', 'product_type.id');
 
+        // Handle Only Active Products (Remove the bundled products)
+        $query->where('products.oem_generic',2);
+
         // Filter by product store
         if ($request->has('store_id') && $request->input('store_id') != '') {
             $query->where('store_product.store_id', $request->input('store_id'));
@@ -814,6 +817,7 @@ class ListingController extends Controller
         $store_id = $request->input('store_id');
         session(['listing_product_details' => $product_details]);
         $step = $request->input('step');
+        $view = '';
         if(!empty($product_ids)){
             $query = StoreProduct::select('store_product.id','store_product.store_type_category_id','store_product.product_id','store_product.title','store_product.price','store_product.created_at','product_type.name as ProductType')->with('Product');
             $query->leftJoin('products','products.product_id', '=', 'store_product.product_id');
