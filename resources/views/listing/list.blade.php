@@ -610,8 +610,17 @@
             </select>
 
         </div>
-        <div class="col-md-8 d-flex">
-            <button type="button" class="btn btn-secondary" id="open_store_page">
+        <div class="col-md-9 d-flex">
+            <button type="button" class="btn btn-default" id="edit_list" disabled="">
+                <i class="fas fa-fw fa-pencil-alt"></i> Edit
+            </button>
+            <button type="button" class="btn btn-default ml-2" id="end_listing">
+                End Listing
+            </button>
+            <button type="button" class="btn btn-default ml-2" id="re-list">
+                Relist
+            </button>
+            <button type="button" class="btn btn-default ml-2" id="open_store_page">
                 Open Store Page
             </button>
             <button type="button" class="btn btn-default ml-2" id="sync_inventory">
@@ -658,7 +667,6 @@
                 <th>Price</th>
                 <th>Quantity</th>
                 <th>Created Date</th>
-                <th></th>
             </tr>
             </thead>
             <tbody id="product-list">
@@ -703,8 +711,47 @@
 
         $('#open_store_page').on('click',function () {
             var store_id = $('#listing_store').val();
-            location.href = "{{ url('stores/edit') }}/" + store_id;
+            if(store_id != '') {
+                location.href = "{{ url('stores/edit') }}/" + store_id;
+            }
         });
+
+        $('#select_all').on('click',function () {
+            $('input[name="listing_item[]"]').each(function () {
+                $(this).prop('checked',true);
+                $(this).parents('tr').addClass('bg-blue');
+            });
+        });
+
+        $('#select_none').on('click',function () {
+            $('input[name="listing_item[]"]').each(function () {
+                $(this).prop('checked',false);
+                $(this).parents('tr').removeClass('bg-blue');
+            });
+        });
+
+        $(document).on('click','#product-list tr',function () {
+           let ele = $(this);
+           $('#product-list tr').removeClass('bg-blue');
+           $('input[name="listing_item[]"]').prop('checked',false);
+           ele.addClass('bg-blue');
+           ele.find('input[name="listing_item[]"]').prop('checked',true);
+           $('#edit_list').removeAttr('disabled');
+        });
+
+        $('#edit_list').on('click',function () {
+            let flag = true;
+            $('input[name="listing_item[]"]').each(function () {
+                if($(this).is(':checked')){
+                    flag = false;
+                    let selectedId = $(this).val();
+                    location.href = "{{ url('listing/edit') }}/" + selectedId;
+                }
+
+            });
+
+        });
+
 
         $('#listing_store').on('change',function () {
 
@@ -860,7 +907,7 @@
             },
             "order": [[ 14, "desc" ]],
             'columns': [
-                { data: 'sku' },
+                { data: 'sku'},
                 { data: 'sale_count' },
                 { data: 'last_sale_date' },
                 { data: 'store_sku' },
@@ -874,8 +921,7 @@
                 { data: 'generation_type_name' },
                 { data: 'price' },
                 { data: 'qty' },
-                { data: 'created_date' },
-                { data: 'action' },
+                { data: 'created_date' }
             ],
             columnDefs: [
                 {

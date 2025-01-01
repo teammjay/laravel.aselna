@@ -205,7 +205,7 @@
                                         <label for="brand">Brand</label>
                                     </div>
                                     <div class="col-md-7">
-                                        <input type="text" class="form-control" id="brand" name="brand" value="">
+                                        <input type="text" class="form-control" id="brand" name="brand" value="" readonly>
                                     </div>
                                 </div>
                                 <div class="row mt-3 g-3 align-items-center">
@@ -213,7 +213,7 @@
                                         <label for="model_name">Model Name</label>
                                     </div>
                                     <div class="col-md-7">
-                                        <input type="text" class="form-control" id="model_name" name="model_name" value="">
+                                        <input type="text" class="form-control" id="model_name" name="model_name" value="" readonly>
                                     </div>
                                 </div>
                                 <div class="row mt-3 g-3 align-items-center">
@@ -221,7 +221,7 @@
                                         <label for="carrier">Carrier</label>
                                     </div>
                                     <div class="col-md-7">
-                                        <input type="text" class="form-control" id="carrier" name="carrier" value="">
+                                        <input type="text" class="form-control" id="carrier" name="carrier" value="" readonly>
                                     </div>
                                 </div>
                                 <div class="row mt-3 g-3 align-items-center">
@@ -269,7 +269,7 @@
                                         <label for="sync_status">Sync Status</label>
                                     </div>
                                     <div class="col-md-7">
-                                        <input type="text" class="form-control" id="sync_status" name="sync_status" value="{{ old('sync_status',$productDetail->sync_status) }}">
+                                        <input type="text" class="form-control" id="sync_status" name="sync_status" value="{{ old('sync_status',$productDetail->sync_status) }}" readonly>
                                     </div>
                                 </div>
                                 <div class="row mt-3 g-3 align-items-center">
@@ -277,7 +277,7 @@
                                         <label for="sync_message">Sync Message</label>
                                     </div>
                                     <div class="col-md-7">
-                                        <textarea class="form-control" name="sync_message" id="sync_message" rows="8">{{ old('sync_message',$productDetail->sync_message) }}</textarea>
+                                        <textarea class="form-control" name="sync_message" id="sync_message" rows="8" readonly>{{ old('sync_message',$productDetail->sync_message) }}</textarea>
                                     </div>
                                 </div>
                                 <div class="row mt-3 g-3 align-items-center">
@@ -285,7 +285,7 @@
                                         <label for="submit_count">Submit Count</label>
                                     </div>
                                     <div class="col-md-7">
-                                        <input type="text" class="form-control" id="submit_count" name="submit_count" value="{{ old('submit_count',$productDetail->submit_count) }}">
+                                        <input type="text" class="form-control" id="submit_count" name="submit_count" value="{{ old('submit_count',$productDetail->submit_count) }}" readonly>
                                     </div>
                                 </div>
                                 <div class="row mt-3 g-3 align-items-center">

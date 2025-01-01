@@ -54,5 +54,10 @@ class ListingItem extends Model
         return $this->belongsTo(Manufacturer::class);
     }
 
+    public function generationType()
+    {
+        return $this->belongsTo(ListingGenerationType::class,'generation_type_id');
+    }
+
 
 }
