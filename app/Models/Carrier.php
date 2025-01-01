@@ -27,7 +27,7 @@ class Carrier extends Model
         });
     }
 
-    protected $fillable = ['name','code','image','thumbnail_image','sort_order','client','created_by','updated_by','created_at','updated_at'];
+    protected $fillable = ['id','name','code','image','thumbnail_image','sort_order','client','created_by','updated_by','created_at','updated_at'];
 
     // wrap image and thumbnail_image with full URL from the image table currently image holds the reference_id of the image table
     public function getImage()

@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Jobs\BrandSyncJob;
+use App\Jobs\CarrierSyncJob;
 use App\Jobs\CategorySyncJob;
 use App\Jobs\DeviceInterfaces;
 use App\Jobs\DevicesSyncJob;
@@ -59,6 +60,7 @@ class SyncAllTables extends Command
         DevicesSyncJob::dispatch();
         CategorySyncJob::dispatch();
         ProductConditionJob::dispatch();
+        CarrierSyncJob::dispatch();
         ShippingCarrierJob::dispatch();
         InterfaceSyncJob::dispatch();
         DeviceInterfaces::dispatch();
