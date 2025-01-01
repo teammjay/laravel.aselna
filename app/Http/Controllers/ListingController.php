@@ -540,16 +540,14 @@ class ListingController extends Controller
 
         $productsRecord = $query->paginate($perPage); // Paginate results
         $products = $query->skip($start)->take($perPage)->get(); // Paginate results
-
         //echo $query->toSql();die;
-
         $totalRecordwithFilter = $productsRecord->total();
 
         $data = [];
         if(!empty((array) $products)){
             foreach($products as $product) {
                 $data[] = array(
-                    "sku" => $product->sku,
+                    "sku" => $product->sku.'<input type="checkbox" name="listing_item[]" value="'.$product->id.'" style="visibility:hidden;">',
                     "sale_count" => ($product->sale_count) ? $product->sale_count : 0,
                     "last_sale_date" => '',
                     "store_sku" => $product->store_sku,
@@ -564,9 +562,9 @@ class ListingController extends Controller
                     "price" => $product->price,
                     "qty" => 0,
                     "created_date" => date('Y-m-d H:i:s',strtotime($product->created_at)),
-                    "action" => '<a href="'.route('listing.edit', $product->id).'" class="btn btn-primary">
+                    /*"action" => '<a href="'.route('listing.edit', $product->id).'" class="btn btn-primary">
                                     <i class="fas fa-fw fa-pencil-alt"></i>
-                                </a>',
+                                </a>',*/
                 );
             }
         }
@@ -982,6 +980,7 @@ class ListingController extends Controller
         $selected_device = $request->input('selected_device');
         if($product_id){
             $query = Device::select('device.*', 'product_interface.product_id')->with('brand')->with('deviceType');
+            $query->leftJoin('brands','brands.id', '=', 'device.brand_id');
             $query->leftJoin('device_interface','device_interface.device_id', '=', 'device.id');
             $query->leftJoin('product_interface','product_interface.interface_id', '=', 'device_interface.interface_id');
             $query->whereIn('product_interface.product_id', $product_id);
@@ -997,7 +996,10 @@ class ListingController extends Controller
             if($popularity){
                 $query->where('device.rating_id', $popularity);
             }
+            $query->orderBy('brands.name', 'asc');
             $query->orderBy('device.name', 'asc');
+
+
             $devices = $query->get();
             //echo $query->toSql();die;
             $count = $devices->count();
@@ -1214,6 +1216,7 @@ class ListingController extends Controller
 
     private function generateProductTitles($baseTitle, $product, $devices, $charLimit, $brand_seperator, $device_seperator, $compress, $generate_type, $product_price,$store_product_id,$product_price_overwrite) {
         $titles = [];
+        $currentModels = [];
         $currentDevices = [];
         $currentTitle = $baseTitle;
         $separator = $device_seperator; // Separator between device names
@@ -1227,9 +1230,7 @@ class ListingController extends Controller
             $brand = $parts[0];
             $model = $parts[1] ?? ''; // If no model, treat as empty
 
-            if(str_contains($baseTitle, '#device')){
-                $baseTitle = str_replace('#device', $currentBrand, $baseTitle);
-            }
+
 
             // Use only the model if the brand is the same as the last one
             if($compress) {
@@ -1240,9 +1241,13 @@ class ListingController extends Controller
 
 
             // Check if adding the device exceeds the character limit
-            $tempDevices = array_merge($currentDevices, [$nameToAdd]);
+            $tempModels = array_merge($currentModels, [$nameToAdd]);
+            $tempModelString = implode(', ', $tempModels);
+            $tempTitle = str_replace('#model_series', $tempModelString, $baseTitle);
+
+            $tempDevices = array_merge($currentDevices, [$currentBrand]);
             $tempDeviceString = implode(', ', $tempDevices);
-            $tempTitle = str_replace('#model_series', $tempDeviceString, $baseTitle);
+            $tempTitle = str_replace('#device', $tempDeviceString, $tempTitle);
 
 
             /*$sku = StoreTypeListing::generateUniqueAlphabeticSku($product->product_sku);*/
@@ -1252,10 +1257,11 @@ class ListingController extends Controller
 
                 // Save the current title and start a new one
                 //$titles[$cnt]['title'] = rtrim($currentTitle, $separator); // Remove trailing separator
-                $titles[$cnt]['title'] = str_replace('#model_series', implode($separator.' ', $currentDevices), $baseTitle);
+                $titles[$cnt]['title'] = str_replace(['#model_series','#device'], [implode($separator.' ', $currentModels),implode($separator.' ', $currentDevices)], $baseTitle);
                 $cnt++;
                 //$currentTitle = $baseTitle . ' ' . $nameToAdd;
                 $currentDevices = [$currentBrand];
+                $currentModels = [$currentBrand];
                 $titles[$cnt]['product_code'] = $product->product_sku;
                 $titles[$cnt]['product_id'] = $product->product_id;
                 $titles[$cnt]['price'] = $product_price;
@@ -1275,7 +1281,8 @@ class ListingController extends Controller
                 $titles[$cnt]['model'][] = $device->name;
                 $titles[$cnt]['model_detail'][] = $device;
                 //$currentTitle .= ($currentTitle === $baseTitle ? ' ' : ' '.$separator.' ') . $nameToAdd;
-                $currentDevices[] = $nameToAdd;
+                $currentModels[] = $nameToAdd;
+                $currentDevices[] = $currentBrand;
             }
 
             // Update the last brand
@@ -1285,7 +1292,8 @@ class ListingController extends Controller
         // Add the last title
         if (!empty($currentTitle)) {
             /*$titles[$cnt]['title'] = rtrim($currentTitle, ' '.$separator.' ');*/
-            $titles[$cnt]['title'] = str_replace('#model_series', implode($separator.' ', $currentDevices), $baseTitle);
+            //$titles[$cnt]['title'] = str_replace('#model_series', implode($separator.' ', $currentModels), $baseTitle);
+            $titles[$cnt]['title'] = str_replace(['#model_series','#device'], [implode($separator.' ', $currentModels),implode($separator.' ', $currentDevices)], $baseTitle);
         }
 
         return $titles;
@@ -1382,19 +1390,19 @@ class ListingController extends Controller
 
                             switch ($store_detail->sku_generation_type) {
                                 case 1:
-                                    $sku = StoreTypeListing::generateUniqueAlphabeticSku($product_codes[$key], 4);
+                                    $sku = StoreTypeListing::generateUniqueAlphabeticSku($product_codes[$key], 6);
                                     break;
                                 case 2:
-                                    $sku = StoreTypeListing::generateUniqueAlphabeticSku('', 4);
+                                    $sku = StoreTypeListing::generateUniqueAlphabeticSku('', 6);
                                     break;
                                 case 3:
-                                    $sku = StoreTypeListing::generateUniqueAlphabeticSku($product_codes[$key], 4);
+                                    $sku = StoreTypeListing::generateUniqueAlphabeticSku($product_codes[$key], 6);
                                     break;
                                 case 4:
-                                    $sku = StoreTypeListing::generateUniqueAlphabeticSku($product_codes[$key], 4);
+                                    $sku = StoreTypeListing::generateUniqueAlphabeticSku($product_codes[$key], 6);
                                     break;
                                 case 'default':
-                                    $sku = StoreTypeListing::generateUniqueAlphabeticSku($product_codes[$key], 4);
+                                    $sku = StoreTypeListing::generateUniqueAlphabeticSku($product_codes[$key], 6);
                                     break;
                             }
 
@@ -1454,6 +1462,7 @@ class ListingController extends Controller
                                     'price' => $product_prices[$key],
                                     'sync_status' => 1,
                                     'store_product_id' => $store_product_ids[$key],
+                                    'manufacturer_id' => $productDetail['manufacturer_id'],
                                     'generation_type_id' => $generation_type_id,
                                     'overwrite_title' => 1,
                                     'overwrite_price' => $product_price_overwrites[$key],

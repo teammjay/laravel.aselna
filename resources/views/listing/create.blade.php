@@ -414,7 +414,7 @@
                                         <div class="border p-2" style="widows: 33.33%;">
                                             <label>Brand Filter</label>
                                             <div class="row">
-                                                <div class="col-md-12 multi-select-filter">
+                                                <div class="col-md-12 pro-brand multi-select-filter">
                                                     <select class="form-control" id="brand_filter" multiple style="height: 225px;">
                                                         @if(count($brands ?? []) > 0)
                                                             @foreach($brands as $brand)
@@ -429,7 +429,7 @@
                                         <div class="border p-2" style="widows: 33.33%;">
                                             <label>Rating Filter</label>
                                             <div class="row">
-                                                <div class="col-md-12 multi-select-filter">
+                                                <div class="col-md-12 pro-rating multi-select-filter">
                                                     <select class="form-control" id="rating_filter" multiple style="height: 235px;">
                                                         <option value="10">10</option>
                                                         <option value="9">9</option>
@@ -449,7 +449,7 @@
                                         <div class="border p-2" style="widows: 33.33%;">
                                             <label>Popularity</label>
                                             <div class="row">
-                                                <div class="col-md-12 multi-select-filter">
+                                                <div class="col-md-12 pro-popular multi-select-filter">
                                                     <select class="form-control" id="popularity_filter" multiple style="height: 235px;">
                                                        <option value="1">1</option>
                                                        <option value="2">2</option>
@@ -771,6 +771,7 @@
                                     $('#generation_type_id').val(response.generate_type);
                                     product_model = response.models;
                                     product_models = response.modelDetail;
+                                    $('#model_list').html('');
                                     $('#nextBtn').html('Finish');
                                     currentIndex++;
                                     activateTab(currentIndex);
@@ -919,9 +920,9 @@
             });
 
 
-            $(document).on('click', '#brand_filter', function() {
+            /*$(document).on('click', '#brand_filter', function() {
                 loadListingProduct(0);
-            });
+            });*/
 
             $(document).on('click', 'input[name="device_type[]"]', function() {
                 loadListingProduct(0);
@@ -1016,46 +1017,111 @@
                     });
                 });
             });
-
-            /*$(document).on('click','.btn-val-add',function(){
+            let cnt = cnt2 = 0;
+            $(document).on('click','.btn-val-add',function(){
                 let ele = $(this);
                 setTimeout(function () {
-                    console.log(ele.parents('.prod-type').find('input[name="product_type[]"]').val());
-                    let product_types = [];
-                    ele.parents('.prod-type').find('input[name="product_type[]"]').each(function () {
-                        product_types.push($(this).val());
-                    });
-                    $.ajax({
-                        url: "{{ route('listing.getproductsubtype') }}",
-                        type: 'POST',
-                        data: {
-                            product_types:product_types
-                        },
-                        /!* processData: false,
-                         contentType: false,*!/
-                        headers: {
-                            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                        },
-                        success: function (response) {
-                            if (response.success) {
-                                $('#proSubType').show();
-                                $('#product_sub_type_filter').html(response.option);
-                                $('#product_sub_type_filter').gs_multiselect();
-                            }else{
-                                $('#proSubType').hide();
-                            }
-                        },
-                        error: function (xhr) {
-                            /!*if (xhr.responseJSON?.error) {
-                                $('#responseMessage').html('<p style="color:red;">' + xhr.responseJSON.error.image[0] + '</p>');
-                            }*!/
-                        }
-                    });
-                },500);
 
-            });*/
-            let cnt = 0;
-            $(document).on('change', '#product_type_filter', function() {
+                    if (ele.parents('.prod-type').length) {
+
+                        let product_types = [];
+                        ele.parents('.prod-type').find('input[name="product_type[]"]').each(function () {
+                            product_types.push($(this).val());
+                        });
+                        $.ajax({
+                            url: "{{ route('listing.getproductsubtype') }}",
+                            type: 'POST',
+                            data: {
+                                product_types: product_types
+                            },
+                            /* processData: false,
+                             contentType: false,*/
+                            headers: {
+                                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                            },
+                            success: function (response) {
+                                if (response.success) {
+                                    $('#proSubType').show();
+                                    if (cnt == 0) {
+                                        $('#product_sub_type_filter').html(response.option);
+                                        $('#product_sub_type_filter').gs_multiselect();
+                                        cnt++;
+                                    } else {
+                                        $('#product_sub_type_filter').html('');
+                                        $('#proSubType').find('.default-drop-down').html(response.option);
+                                    }
+                                } else {
+                                    $('#proSubType').hide();
+                                }
+                            },
+                            error: function (xhr) {
+                                /*if (xhr.responseJSON?.error) {
+                                    $('#responseMessage').html('<p style="color:red;">' + xhr.responseJSON.error.image[0] + '</p>');
+                                }*/
+                            }
+                        });
+                    }
+
+                    if (ele.parents('.pro-brand').length || ele.parents('.pro-rating').length || ele.parents('.pro-popular').length) {
+                        loadListingProduct(0);
+                    }
+
+                },300);
+
+            });
+
+            $(document).on('click','.btn-val-remove',function(){
+                let ele = $(this);
+                setTimeout(function () {
+                    if (ele.parents('.prod-type').length) {
+
+                        let product_types = [];
+                        ele.parents('.prod-type').find('input[name="product_type[]"]').each(function () {
+                            product_types.push($(this).val());
+                        });
+                        $.ajax({
+                            url: "{{ route('listing.getproductsubtype') }}",
+                            type: 'POST',
+                            data: {
+                                product_types: product_types
+                            },
+                            /* processData: false,
+                             contentType: false,*/
+                            headers: {
+                                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                            },
+                            success: function (response) {
+                                if (response.success) {
+                                    $('#proSubType').show();
+                                    if (cnt2 == 0) {
+                                        $('#product_sub_type_filter').html(response.option);
+                                        $('#product_sub_type_filter').gs_multiselect();
+                                        cnt2++;
+                                    } else {
+                                        $('#product_sub_type_filter').html('');
+                                        $('#proSubType').find('.default-drop-down').html(response.option);
+                                    }
+                                } else {
+                                    $('#proSubType').hide();
+                                }
+                            },
+                            error: function (xhr) {
+                                /*if (xhr.responseJSON?.error) {
+                                    $('#responseMessage').html('<p style="color:red;">' + xhr.responseJSON.error.image[0] + '</p>');
+                                }*/
+                            }
+                        });
+                    }
+
+                    if (ele.parents('.pro-brand').length || ele.parents('.pro-rating').length || ele.parents('.pro-popular').length) {
+                        loadListingProduct(0);
+                    }
+
+                },300);
+
+            });
+
+            /*$(document).on('change', '#product_type_filter', function() {
                 let product_type = $(this).val();
                 $.ajax({
                     url: "{{ route('listing.getproductsubtype') }}",
@@ -1063,8 +1129,8 @@
                     data: {
                         product_types:product_type
                     },
-                   /* processData: false,
-                    contentType: false,*/
+                   /!* processData: false,
+                    contentType: false,*!/
                     headers: {
                         'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                     },
@@ -1084,12 +1150,12 @@
                         }
                     },
                     error: function (xhr) {
-                        /*if (xhr.responseJSON?.error) {
+                        /!*if (xhr.responseJSON?.error) {
                             $('#responseMessage').html('<p style="color:red;">' + xhr.responseJSON.error.image[0] + '</p>');
-                        }*/
+                        }*!/
                     }
                 });
-            });
+            });*/
 
 
             $(document).on('click', '#generate_keyword', function() {
@@ -1103,13 +1169,31 @@
             $(document).on('click', '#replace', function() {
                 let searchTerm = $('#search_input').val();
                 let replaceText = $('#replace_value').val();
+                let replaceField = $('input[name="replace_field"]:checked').val();
 
+                console.log(replaceField);
                 $('.sproRow').each(function () {
-                    $(this).find('textarea').each(function () {
-                        var currentvalue = $(this).val();
+                    let ele = $(this);
+                    if(replaceField == 'all'){
+                        ele.find('textarea').each(function () {
+                            var currentvalue = $(this).val();
+                            var updatedString = currentvalue.replace(new RegExp(searchTerm, "g"), replaceText);
+                            $(this).val(updatedString);
+                        });
+                    }else if(replaceField == 'title'){
+                        var currentvalue = ele.find('.pro-title').val();
                         var updatedString = currentvalue.replace(new RegExp(searchTerm, "g"), replaceText);
-                        $(this).val(updatedString);
-                    });
+                        ele.find('.pro-title').val(updatedString);
+                    }else if(replaceField == 'short'){
+                        var currentvalue = ele.find('.pro-shortkey').val();
+                        var updatedString = currentvalue.replace(new RegExp(searchTerm, "g"), replaceText);
+                        ele.find('.pro-shortkey').val(updatedString);
+                    }else if(replaceField == 'long'){
+                        var currentvalue = ele.find('.pro-longkey').val();
+                        var updatedString = currentvalue.replace(new RegExp(searchTerm, "g"), replaceText);
+                        ele.find('.pro-longkey').val(updatedString);
+                    }
+
                 });
             });
 
@@ -1577,9 +1661,21 @@
                 });*/
             }
 
-            let brand = $('#brand_filter').val();
-            let rating = $('#rating_filter').val();
-            let popularity = $('#popularity_filter').val();
+            let brand = [];
+            $("#brand_filter option").each(function()
+            {
+                brand.push($(this).val())
+            });
+            let rating = [];
+            $("#rating_filter option").each(function()
+            {
+                rating.push($(this).val())
+            });
+            let popularity = [];
+            $("#popularity_filter option").each(function()
+            {
+                popularity.push($(this).val())
+            });
             $("#ajax-preloader").show();
             $.ajax({
                 url: "{{ route('listing.getcompatibledevice') }}",
