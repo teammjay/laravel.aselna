@@ -161,6 +161,7 @@
                                     </div>
                                     <div class="col-md-7">
                                         <select class="form-control" name="sku_generation_type" id="sku_generation_type">
+                                            <option value=""></option>
                                             <option value="1" {{ ($store->sku_generation_type == 1) ? 'selected' : '' }}>Sequence</option>
                                             <option value="2" {{ ($store->sku_generation_type == 2) ? 'selected' : '' }}>Hash ID</option>
                                             <option value="3" {{ ($store->sku_generation_type == 3) ? 'selected' : '' }}>Product Code With Hash ID</option>

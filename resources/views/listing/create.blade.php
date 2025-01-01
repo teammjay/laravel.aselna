@@ -2,6 +2,8 @@
 
 @section('title', 'Listing')
 @section('adminlte_css_pre')
+    <link href="{{ asset('css/jquery.multiselect.css') }}" rel="stylesheet">
+
     <style>
         #product_type_filter option, #manufacturer_filter option, select[multiple] option {
             border-bottom: 1px solid #eaeaea;
@@ -40,6 +42,14 @@
         }
         .ui-autocomplete{z-index: 99999; max-height: 250px; overflow: auto;}
         #frmproductfilter select.form-control[multiple]{height: 100%;}
+        table th, table td, .column-no-whitespace{
+            white-space: nowrap;
+            font-size: 14px;
+        }
+        .form-group span,  .border label, .form-control, .d-flex span, .btn{
+            font-size: 14px !important;
+        }
+        .nav-tabs .nav-item .nav-link, .nav-tabs .nav-link.active{font-size: 14px;}
     </style>
 @stop
 @section('content_header')
@@ -97,6 +107,7 @@
                                     <div class="border p-2">
                                         <button type="button" id="searchBtn" class="btn btn-primary w-100">Search</button>
                                         <select class="form-control mt-3 mb-3" name="store_id" id="listing_store">
+                                            <option value="">--</option>
                                             @if(count($stores ?? []) > 0)
                                                 @foreach($stores as $store)
                                                     <option value="{{ $store->id }}">{{ $store->name }} {{ (!empty((array)$store->storeType)) ? ' - '.$store->storeType->name : '' }}</option>
@@ -117,7 +128,7 @@
                                         </div>
 
                                     </div>
-                                    <div class="border p-2">
+                                    <div class="border p-2" style="width: 13%;">
                                         <label>Product Code Filter</label>
                                         <div class="form-group d-flex position-relative">
                                             <input type="text" class="form-control" id="product_code_filter" placeholder="Search...."><i class="fa fa-search position-absolute" style="top: 50%;right: 5px;transform: translateY(-50%);"></i>
@@ -126,7 +137,7 @@
 
                                         </div>
                                     </div>
-                                    <div class="border p-2">
+                                    <div class="border p-2" style="width: 10%;">
                                         <label>Device Series</label>
                                         <div class="form-group d-flex position-relative">
                                             <input type="text" class="form-control" id="device_series_filter" placeholder="Search...."><i class="fa fa-search position-absolute" style="top: 50%;right: 5px;transform: translateY(-50%);"></i>
@@ -135,7 +146,7 @@
 
                                         </div>
                                     </div>
-                                    <div class="border p-2 ">
+                                    <div class="border p-2 " style="width: 10%;">
                                         <label>Device Filter</label>
                                         <div class="form-group d-flex position-relative">
                                             <input type="text" class="form-control" id="device_filter" placeholder="Search...."><i class="fa fa-search position-absolute" style="top: 50%;right: 5px;transform: translateY(-50%);"></i>
@@ -144,10 +155,10 @@
 
                                         </div>
                                     </div>
-                                    <div class="border p-2">
+                                    <div class="border p-2" style="width: 17%;">
                                         <label>Manufacturer Filter</label>
                                         <div class="row" style="height: 87%;">
-                                            <div class="col-md-12">
+                                            <div class="col-md-12 multi-select-filter">
                                                 <select class="form-control" name="manufacturer[]" id="manufacturer_filter" multiple>
                                                     @if(count($manufacturers ?? []) > 0)
                                                         @foreach($manufacturers as $mf)
@@ -158,10 +169,10 @@
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="border p-2">
+                                    <div class="border p-2" style="width: 17%;">
                                         <label>Product Type Filter</label>
                                         <div class="row" style="height: 87%;">
-                                            <div class="col-md-12">
+                                            <div class="col-md-12 prod-type multi-select-filter">
                                                 <select class="form-control" name="product_type[]" id="product_type_filter" multiple>
                                                     @if(count($productTypes ?? []) > 0)
                                                         @foreach($productTypes as $pt)
@@ -173,10 +184,10 @@
                                         </div>
                                     </div>
 
-                                    <div class="border p-2" id="proSubType" style="display: none;">
+                                    <div class="border p-2" id="proSubType" style="display: none; width: 17%;">
                                         <label>Product Sub Type Filter</label>
                                         <div class="row">
-                                            <div class="col-md-12">
+                                            <div class="col-md-12 multi-select-filter">
                                                 <select class="form-control" name="product_sub_type[]" id="product_sub_type_filter" multiple>
 
                                                 </select>
@@ -185,7 +196,7 @@
 
                                         <label>Interface Filter</label>
                                         <div class="row">
-                                            <div class="col-md-12">
+                                            <div class="col-md-12 multi-select-filter">
                                                 <select class="form-control" name="interface[]" id="interface_filter" multiple>
                                                 </select>
                                             </div>
@@ -397,39 +408,30 @@
                                             </div>
                                         @endforeach
                                     @endif
-
-
-                                </div>
-                                <div>
-                                    <div class="border p-2">
-                                        <label>Brand Filter</label>
-                                        <div class="row">
-                                            <div class="col-md-12">
-                                                <select class="form-control" id="brand_filter" multiple style="height: 225px;">
-                                                    @if(count($brands ?? []) > 0)
-                                                        @foreach($brands as $brand)
-                                                            <option value="{{ $brand->id }}">{{ $brand->name }}</option>
-                                                        @endforeach
-                                                    @endif
-                                                </select>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="form-group mb-1 mt-3">
-                                        <label>Brand</label>
-                                        <select class="form-control" name="brand">
-                                            <option value="use-store">Use store as brand</option>
-                                        </select>
-                                    </div>
                                 </div>
                                 <div>
                                     <div class="d-flex" style="gap:10px;">
-                                        <div class="border p-2 w-25">
+                                        <div class="border p-2" style="widows: 33.33%;">
+                                            <label>Brand Filter</label>
+                                            <div class="row">
+                                                <div class="col-md-12 pro-brand multi-select-filter">
+                                                    <select class="form-control" id="brand_filter" multiple style="height: 225px;">
+                                                        @if(count($brands ?? []) > 0)
+                                                            @foreach($brands as $brand)
+                                                                <option value="{{ $brand->id }}">{{ $brand->name }}</option>
+                                                            @endforeach
+                                                        @endif
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="border p-2" style="widows: 33.33%;">
                                             <label>Rating Filter</label>
                                             <div class="row">
-                                                <div class="col-md-12">
+                                                <div class="col-md-12 pro-rating multi-select-filter">
                                                     <select class="form-control" id="rating_filter" multiple style="height: 235px;">
-                                                        <option value="1">10</option>
+                                                        <option value="10">10</option>
                                                         <option value="9">9</option>
                                                         <option value="8">8</option>
                                                         <option value="7">7</option>
@@ -444,10 +446,10 @@
                                             </div>
                                         </div>
 
-                                        <div class="border p-2 w-25">
+                                        <div class="border p-2" style="widows: 33.33%;">
                                             <label>Popularity</label>
                                             <div class="row">
-                                                <div class="col-md-12">
+                                                <div class="col-md-12 pro-popular multi-select-filter">
                                                     <select class="form-control" id="popularity_filter" multiple style="height: 235px;">
                                                        <option value="1">1</option>
                                                        <option value="2">2</option>
@@ -464,21 +466,31 @@
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="form-group mb-1 mt-3">
-                                        <label>Title Template</label>
-                                        <div class="d-flex">
-                                            <input type="text" class="form-control" name="title_template" id="title_template" style="width: 85%;">
-                                            <button type="button" class="btn btn-default" id="updateAll">Update All</button>
+                                    <div class="d-flex" style="gap:10px;">
+                                        <div class="form-group mb-1 mt-3">
+                                            <label>Brand</label>
+                                            <select class="form-control" name="brand">
+                                                <option value="use-store">Use store as brand</option>
+                                            </select>
                                         </div>
-                                    </div>
-                                    <div class="d-flex align-items-center mb-1 mt-3">
-                                        <span>Brand Seperator </span>
-                                        <input type="text" name="brand_seperator" class="form-control ml-2 mr-5" id="brand_seperator" value=" , " style="width: 40px;">
-                                        <span>Group Seperator </span>
-                                        <input type="text" name="group_seperator" class="form-control ml-2 mr-5" id="group_seperator" value=" , " style="width: 40px;">
-                                        <span>Device Seperator </span>
-                                        <input type="text" name="device_seperator" class="form-control ml-2 mr-5" id="device_seperator" value=" , " style="width: 40px;">
-                                        <input type="checkbox" name="compress" id="compress" checked> <span> Compress</span>
+                                        <div>
+                                            <div class="form-group mb-1 mt-3">
+                                                <label>Title Template</label>
+                                                <div class="d-flex">
+                                                    <input type="text" class="form-control" name="title_template" id="title_template" style="width: 85%;">
+                                                    <button type="button" class="btn btn-default" id="updateAll">Update All</button>
+                                                </div>
+                                            </div>
+                                            <div class="d-flex align-items-center mb-1 mt-3">
+                                                <span>Brand Seperator </span>
+                                                <input type="text" name="brand_seperator" class="form-control ml-2 mr-5" id="brand_seperator" value=" , " style="width: 40px;">
+                                                <span>Group Seperator </span>
+                                                <input type="text" name="group_seperator" class="form-control ml-2 mr-5" id="group_seperator" value=" , " style="width: 40px;">
+                                                <span>Device Seperator </span>
+                                                <input type="text" name="device_seperator" class="form-control ml-2 mr-5" id="device_seperator" value=" , " style="width: 40px;">
+                                                <input type="checkbox" name="compress" id="compress" checked> <span> Compress</span>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -639,6 +651,8 @@
 
 @section('adminlte_js')
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="{{ asset('js/jquery.multiselect.js') }}"></script>
+
     <script>
         let product_model = {};
         let product_models = {};
@@ -757,6 +771,7 @@
                                     $('#generation_type_id').val(response.generate_type);
                                     product_model = response.models;
                                     product_models = response.modelDetail;
+                                    $('#model_list').html('');
                                     $('#nextBtn').html('Finish');
                                     currentIndex++;
                                     activateTab(currentIndex);
@@ -768,6 +783,8 @@
                                 /*if (xhr.responseJSON?.error) {
                                     $('#responseMessage').html('<p style="color:red;">' + xhr.responseJSON.error.image[0] + '</p>');
                                 }*/
+                                const message = xhr.responseJSON?.error || 'An unexpected error occurred. Please try again later.';
+                                alert(message);
                             },
                             complete: function () {
                                 $("#ajax-preloader").hide();
@@ -792,9 +809,9 @@
                             },
                             dataType:'json',
                             success: function(response) {
-                                // Display a success message
-                                alert(response.message);
                                 if(response.success){
+                                    // Display a success message
+                                    alert(response.message);
                                     currentIndex++;
                                     activateTab(currentIndex);
                                     if(response.summary) {
@@ -806,6 +823,8 @@
                                 }
                             },
                             error: function(xhr) {
+                                const message = xhr.responseJSON?.error || 'An unexpected error occurred. Please try again later.';
+                                alert(message);
                             },
                             complete: function () {
                                 $("#ajax-preloader").hide();
@@ -849,6 +868,8 @@
             $(document).on('click', '#searchBtn', function() {
                 loadProducts();
             });
+
+            $("#manufacturer_filter, #product_type_filter, #brand_filter, #rating_filter, #popularity_filter").gs_multiselect();
 
             $(document).on('click', '#selected_product', function() {
                 if($(this).is(':checked')){
@@ -899,9 +920,9 @@
             });
 
 
-            $(document).on('click', '#brand_filter', function() {
+            /*$(document).on('click', '#brand_filter', function() {
                 loadListingProduct(0);
-            });
+            });*/
 
             $(document).on('click', 'input[name="device_type[]"]', function() {
                 loadListingProduct(0);
@@ -996,10 +1017,111 @@
                     });
                 });
             });
+            let cnt = cnt2 = 0;
+            $(document).on('click','.btn-val-add',function(){
+                let ele = $(this);
+                setTimeout(function () {
 
+                    if (ele.parents('.prod-type').length) {
 
+                        let product_types = [];
+                        ele.parents('.prod-type').find('input[name="product_type[]"]').each(function () {
+                            product_types.push($(this).val());
+                        });
+                        $.ajax({
+                            url: "{{ route('listing.getproductsubtype') }}",
+                            type: 'POST',
+                            data: {
+                                product_types: product_types
+                            },
+                            /* processData: false,
+                             contentType: false,*/
+                            headers: {
+                                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                            },
+                            success: function (response) {
+                                if (response.success) {
+                                    $('#proSubType').show();
+                                    if (cnt == 0) {
+                                        $('#product_sub_type_filter').html(response.option);
+                                        $('#product_sub_type_filter').gs_multiselect();
+                                        cnt++;
+                                    } else {
+                                        $('#product_sub_type_filter').html('');
+                                        $('#proSubType').find('.default-drop-down').html(response.option);
+                                    }
+                                } else {
+                                    $('#proSubType').hide();
+                                }
+                            },
+                            error: function (xhr) {
+                                /*if (xhr.responseJSON?.error) {
+                                    $('#responseMessage').html('<p style="color:red;">' + xhr.responseJSON.error.image[0] + '</p>');
+                                }*/
+                            }
+                        });
+                    }
 
-            $(document).on('change', '#product_type_filter', function() {
+                    if (ele.parents('.pro-brand').length || ele.parents('.pro-rating').length || ele.parents('.pro-popular').length) {
+                        loadListingProduct(0);
+                    }
+
+                },300);
+
+            });
+
+            $(document).on('click','.btn-val-remove',function(){
+                let ele = $(this);
+                setTimeout(function () {
+                    if (ele.parents('.prod-type').length) {
+
+                        let product_types = [];
+                        ele.parents('.prod-type').find('input[name="product_type[]"]').each(function () {
+                            product_types.push($(this).val());
+                        });
+                        $.ajax({
+                            url: "{{ route('listing.getproductsubtype') }}",
+                            type: 'POST',
+                            data: {
+                                product_types: product_types
+                            },
+                            /* processData: false,
+                             contentType: false,*/
+                            headers: {
+                                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                            },
+                            success: function (response) {
+                                if (response.success) {
+                                    $('#proSubType').show();
+                                    if (cnt2 == 0) {
+                                        $('#product_sub_type_filter').html(response.option);
+                                        $('#product_sub_type_filter').gs_multiselect();
+                                        cnt2++;
+                                    } else {
+                                        $('#product_sub_type_filter').html('');
+                                        $('#proSubType').find('.default-drop-down').html(response.option);
+                                    }
+                                } else {
+                                    $('#proSubType').hide();
+                                }
+                            },
+                            error: function (xhr) {
+                                /*if (xhr.responseJSON?.error) {
+                                    $('#responseMessage').html('<p style="color:red;">' + xhr.responseJSON.error.image[0] + '</p>');
+                                }*/
+                            }
+                        });
+                    }
+
+                    if (ele.parents('.pro-brand').length || ele.parents('.pro-rating').length || ele.parents('.pro-popular').length) {
+                        loadListingProduct(0);
+                    }
+
+                },300);
+
+            });
+
+            /*$(document).on('change', '#product_type_filter', function() {
                 let product_type = $(this).val();
                 $.ajax({
                     url: "{{ route('listing.getproductsubtype') }}",
@@ -1007,26 +1129,33 @@
                     data: {
                         product_types:product_type
                     },
-                   /* processData: false,
-                    contentType: false,*/
+                   /!* processData: false,
+                    contentType: false,*!/
                     headers: {
                         'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                     },
                     success: function (response) {
                         if (response.success) {
                             $('#proSubType').show();
-                            $('#product_sub_type_filter').html(response.option);
+                            if(cnt == 0) {
+                                $('#product_sub_type_filter').html(response.option);
+                                $('#product_sub_type_filter').gs_multiselect();
+                                cnt++;
+                            }else{
+                                $('#product_sub_type_filter').html('');
+                                $('#proSubType').find('.default-drop-down').html(response.option);
+                            }
                         }else{
                             $('#proSubType').hide();
                         }
                     },
                     error: function (xhr) {
-                        /*if (xhr.responseJSON?.error) {
+                        /!*if (xhr.responseJSON?.error) {
                             $('#responseMessage').html('<p style="color:red;">' + xhr.responseJSON.error.image[0] + '</p>');
-                        }*/
+                        }*!/
                     }
                 });
-            });
+            });*/
 
 
             $(document).on('click', '#generate_keyword', function() {
@@ -1040,13 +1169,31 @@
             $(document).on('click', '#replace', function() {
                 let searchTerm = $('#search_input').val();
                 let replaceText = $('#replace_value').val();
+                let replaceField = $('input[name="replace_field"]:checked').val();
 
+                console.log(replaceField);
                 $('.sproRow').each(function () {
-                    $(this).find('textarea').each(function () {
-                        var currentvalue = $(this).val();
+                    let ele = $(this);
+                    if(replaceField == 'all'){
+                        ele.find('textarea').each(function () {
+                            var currentvalue = $(this).val();
+                            var updatedString = currentvalue.replace(new RegExp(searchTerm, "g"), replaceText);
+                            $(this).val(updatedString);
+                        });
+                    }else if(replaceField == 'title'){
+                        var currentvalue = ele.find('.pro-title').val();
                         var updatedString = currentvalue.replace(new RegExp(searchTerm, "g"), replaceText);
-                        $(this).val(updatedString);
-                    });
+                        ele.find('.pro-title').val(updatedString);
+                    }else if(replaceField == 'short'){
+                        var currentvalue = ele.find('.pro-shortkey').val();
+                        var updatedString = currentvalue.replace(new RegExp(searchTerm, "g"), replaceText);
+                        ele.find('.pro-shortkey').val(updatedString);
+                    }else if(replaceField == 'long'){
+                        var currentvalue = ele.find('.pro-longkey').val();
+                        var updatedString = currentvalue.replace(new RegExp(searchTerm, "g"), replaceText);
+                        ele.find('.pro-longkey').val(updatedString);
+                    }
+
                 });
             });
 
@@ -1170,16 +1317,17 @@
                             actemp = data.details;
                             response(data.display);
                         },
-                        minLength: 2,
                         delay: 100
                     });
                 },
-                minLength: 2,
+                minLength: 0,
                 select : function(event, ui){
                     $('#device_series_filter').val('');
                     $('#device_series_list').append('<div class="border bg-blue p-1 mt-1"><input type="hidden" name="device_series[]" value="'+ui.item.value+'">'+ui.item.label+'<i class="fa fa-window-close float-right mt-1"></i></div>');
                     return false;
                 }
+            }).focus(function () {
+                $('#device_series_filter').keydown();
             });
 
             $('#device_filter').autocomplete({
@@ -1206,16 +1354,17 @@
                             actemp = data.details;
                             response(data.display);
                         },
-                        minLength: 2,
                         delay: 100
                     });
                 },
-                minLength: 2,
+                minLength: 0,
                 select : function(event, ui){
                     $('#device_filter').val('');
                     $('#device_list').append('<div class="border bg-blue p-1 mt-1"><input type="hidden" name="device[]" value="'+ui.item.value+'">'+ui.item.label+' <i class="fa fa-window-close float-right mt-1"></i></div>');
                     return false;
                 }
+            }).focus(function () {
+                $('#device_filter').keydown();
             });
 
 
@@ -1512,9 +1661,21 @@
                 });*/
             }
 
-            let brand = $('#brand_filter').val();
-            let rating = $('#rating_filter').val();
-            let popularity = $('#popularity_filter').val();
+            let brand = [];
+            $("#brand_filter option").each(function()
+            {
+                brand.push($(this).val())
+            });
+            let rating = [];
+            $("#rating_filter option").each(function()
+            {
+                rating.push($(this).val())
+            });
+            let popularity = [];
+            $("#popularity_filter option").each(function()
+            {
+                popularity.push($(this).val())
+            });
             $("#ajax-preloader").show();
             $.ajax({
                 url: "{{ route('listing.getcompatibledevice') }}",

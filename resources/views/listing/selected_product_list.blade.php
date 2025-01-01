@@ -11,19 +11,19 @@
             <td>{{ (isset($product->Product->product_sku)) ? $product->Product->product_sku : '' }}</td>
             <td>
                 <div class="d-flex align-items-end gap-5">
-                    <textarea class="form-control title-{{ $product->product_id }}" name="product_title[{{ $product->product_id }}]" style="width:200px;">{{ $product->title }}</textarea>
+                    <textarea class="form-control pro-title title-{{ $product->product_id }}" name="product_title[{{ $product->product_id }}]" style="width:200px;">{{ $product->title }}</textarea>
                     <span class="tLength-{{ $product->product_id }}">{{ strlen($product->title) }}</span>
                 </div>
             </td>
             <td>
                 <div class="d-flex align-items-end gap-5">
-                    <textarea class="form-control shortKey-{{ $product->product_id }}" name="prodcut_short_keyword[{{ $product->product_id }}]" style="width:250px;"></textarea>
+                    <textarea class="form-control pro-shortkey shortKey-{{ $product->product_id }}" name="prodcut_short_keyword[{{ $product->product_id }}]" style="width:250px;"></textarea>
                     <span class="sLength-{{ $product->product_id }}"></span>
                 </div>
             </td>
             <td>
                 <div class="d-flex align-items-end gap-5">
-                    <textarea class="form-control longKey-{{ $product->product_id }}" name="prodcut_long_keyword[{{ $product->product_id }}]" style="width:250px;"></textarea>
+                    <textarea class="form-control pro-longkey longKey-{{ $product->product_id }}" name="prodcut_long_keyword[{{ $product->product_id }}]" style="width:250px;"></textarea>
                     <span class="lLength-{{ $product->product_id }}"></span>
                 </div>
             </td>

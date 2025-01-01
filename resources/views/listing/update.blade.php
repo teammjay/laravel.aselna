@@ -205,7 +205,7 @@
                                         <label for="brand">Brand</label>
                                     </div>
                                     <div class="col-md-7">
-                                        <input type="text" class="form-control" id="brand" name="brand" value="">
+                                        <input type="text" class="form-control" id="brand" name="brand" value="" readonly>
                                     </div>
                                 </div>
                                 <div class="row mt-3 g-3 align-items-center">
@@ -213,7 +213,7 @@
                                         <label for="model_name">Model Name</label>
                                     </div>
                                     <div class="col-md-7">
-                                        <input type="text" class="form-control" id="model_name" name="model_name" value="">
+                                        <input type="text" class="form-control" id="model_name" name="model_name" value="" readonly>
                                     </div>
                                 </div>
                                 <div class="row mt-3 g-3 align-items-center">
@@ -221,7 +221,7 @@
                                         <label for="carrier">Carrier</label>
                                     </div>
                                     <div class="col-md-7">
-                                        <input type="text" class="form-control" id="carrier" name="carrier" value="">
+                                        <input type="text" class="form-control" id="carrier" name="carrier" value="" readonly>
                                     </div>
                                 </div>
                                 <div class="row mt-3 g-3 align-items-center">
@@ -229,7 +229,7 @@
                                         <label for="mpn">Mpn</label>
                                     </div>
                                     <div class="col-md-7">
-                                        <input type="text" class="form-control" id="mpn" name="mpn" value="">
+                                        <input type="text" class="form-control" id="mpn" name="mpn" value="{{ old('mpn',$productDetail->mpn) }}" readonly>
                                     </div>
                                 </div>
                                 <div class="row mt-3 g-3 align-items-center">
@@ -237,7 +237,7 @@
                                         <label for="upc">Upc</label>
                                     </div>
                                     <div class="col-md-7">
-                                        <input type="text" class="form-control" id="upc" name="upc" value="{{ old('upc',$productDetail->upc) }}">
+                                        <input type="text" class="form-control" id="upc" name="upc" value="{{ old('upc',$productDetail->upc) }}" readonly>
                                     </div>
                                 </div>
                                 <div class="row mt-3 g-3 align-items-center">
@@ -245,7 +245,7 @@
                                         <label for="brand_combo">Brand Combo</label>
                                     </div>
                                     <div class="col-md-7">
-                                        <input type="checkbox" id="brand_combo" name="brand_combo">
+                                        <input type="checkbox" id="brand_combo" name="brand_combo" {{ ($productDetail->brand_combo == 1) ? 'checked' : '' }}>
                                     </div>
                                 </div>
                                 <div class="row mt-3 g-3 align-items-center">
@@ -253,7 +253,7 @@
                                         <label for="carrier_combo">Carrier Combo</label>
                                     </div>
                                     <div class="col-md-7">
-                                        <input type="checkbox" id="carrier_combo" name="carrier_combo">
+                                        <input type="checkbox" id="carrier_combo" name="carrier_combo" {{ ($productDetail->carrier_combo == 1) ? 'checked' : '' }}>
                                     </div>
                                 </div>
                                 <div class="row mt-3 g-3 align-items-center">
@@ -269,7 +269,7 @@
                                         <label for="sync_status">Sync Status</label>
                                     </div>
                                     <div class="col-md-7">
-                                        <input type="text" class="form-control" id="sync_status" name="sync_status" value="">
+                                        <input type="text" class="form-control" id="sync_status" name="sync_status" value="{{ old('sync_status',$productDetail->sync_status) }}" readonly>
                                     </div>
                                 </div>
                                 <div class="row mt-3 g-3 align-items-center">
@@ -277,7 +277,7 @@
                                         <label for="sync_message">Sync Message</label>
                                     </div>
                                     <div class="col-md-7">
-                                        <textarea class="form-control" name="sync_status" id="sync_status" rows="8"></textarea>
+                                        <textarea class="form-control" name="sync_message" id="sync_message" rows="8" readonly>{{ old('sync_message',$productDetail->sync_message) }}</textarea>
                                     </div>
                                 </div>
                                 <div class="row mt-3 g-3 align-items-center">
@@ -285,7 +285,7 @@
                                         <label for="submit_count">Submit Count</label>
                                     </div>
                                     <div class="col-md-7">
-                                        <input type="text" class="form-control" id="submit_count" name="submit_count" value="">
+                                        <input type="text" class="form-control" id="submit_count" name="submit_count" value="{{ old('submit_count',$productDetail->submit_count) }}" readonly>
                                     </div>
                                 </div>
                                 <div class="row mt-3 g-3 align-items-center">
@@ -293,7 +293,7 @@
                                         <label for="sales_count">Sales Count</label>
                                     </div>
                                     <div class="col-md-7">
-                                        <input type="text" class="form-control" id="sales_count" name="sales_count" value="">
+                                        <input type="text" class="form-control" id="sales_count" name="sales_count" value="{{ old('sales_count',$productDetail->sales_count) }}">
                                     </div>
                                 </div>
                                 <div class="row mt-3 g-3 align-items-center">
@@ -301,7 +301,7 @@
                                         <label for="last_sale_date">Last Sale Date</label>
                                     </div>
                                     <div class="col-md-7">
-                                        <input type="text" class="form-control" id="last_sale_date" name="last_sale_date" value="">
+                                        <input type="text" class="form-control" id="last_sale_date" name="last_sale_date" value="" placeholder="mm/dd/YY">
                                     </div>
                                 </div>
                             </div>
@@ -508,7 +508,7 @@
                                         <td>{{ $var->device_name }}</td>
                                         <td></td>
                                         <td>{{ $var->sku }}</td>
-                                        <td></td>
+                                        <td>{{ $productDetail->price }}</td>
                                         <td></td>
                                     </tr>
                                 @endforeach
@@ -580,6 +580,11 @@
             });
 
         }
+
+        $(document).ready(function() {
+            $('#last_sale_date').datepicker();
+        });
+
 
 
     </script>
