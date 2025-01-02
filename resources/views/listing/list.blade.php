@@ -853,12 +853,11 @@
 
     function loadDatatables(){
 
-        var perPage = $('#per_page').val();
-
         $("#productsTable").dataTable().fnDestroy();
 
         var table = $('#productsTable').DataTable({
             "iDisplayLength": 20,
+            "info": true,
             "responsive": true,
             "lengthChange": true,
             "autoWidth": false,

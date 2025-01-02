@@ -17,10 +17,16 @@
         <div class="alert alert-danger alert-dismissible fade show">{{ session('error') }}</div>
     @endif
     <div class="row my-3">
-        <div class="col-md-3">
+        <div class="col-md-2">
             <a href="{{ route('catalog.create') }}" class="btn btn-secondary">
                 Add Catalog
             </a>
+        </div>
+        <div class="col-md-10 d-flex align-items-center" style="gap:10px;">
+            <a href="{{ route('listing.list') }}" class="btn btn-default">
+               Show Listing
+            </a>
+            <input type="checkbox" id="show_simple_products"> <label for="show_simple_products" class="mb-0">Show simple products</label>
         </div>
     </div>
     <div class="card card-default">
@@ -30,6 +36,7 @@
         </div>
         <div class="card-body" style="display: none;">
             <form id="filter-form">
+                <input type="hidden" name="configurable" id="configurable">
                 <div class="row">
                     <div class="col-md-4">
                         <div class="row">
@@ -106,7 +113,7 @@
                                 Manufacturer
                             </div>
                             <div class="col-3">
-                                <select class="custom-select" id="" name="name_operator">
+                                <select class="custom-select" id="" name="manufacturer_operator">
                                     <option value="{{FilterCodes::EQUAL}}">=</option>
                                    {{-- <option value="{{FilterCodes::CONTAINS}}">contains</option>
                                     <option value="{{FilterCodes::STARTS_WITH}}">starts with</option>
@@ -356,7 +363,7 @@
             <th>Type</th>
             <th>Title</th>
             <th>Status</th>
-            <th>Configrurable</th>
+            <th>configurable</th>
             <th>Price</th>
             <th>Manufacturer</th>
             <th>Color</th>
@@ -366,12 +373,12 @@
         </thead>
         <tbody id="product-list">
 
-            @include('catalog.product_list', ['products' => $products])
+            {{--@include('catalog.product_list', ['products' => $products])--}}
 
         </tbody>
     </table>
     <div id="pagination">
-        @include('catalog.pagination', ['products' => $products])
+        {{--@include('catalog.pagination', ['products' => $products])--}}
     </div>
 @stop
 
@@ -395,7 +402,9 @@
         });
         $('#filter-form').on('submit', function(e) {
             e.preventDefault(); // Prevent default form submission
-            var perPage =  '{{ $perPage }}';
+
+            loadDatatables();
+            /*var perPage =  '{{ $perPage }}';
             var page =  1;
             $.ajax({
                 url: "{{ route('catalog.filter') }}?page=" + page + "&perPage=" + perPage,
@@ -409,11 +418,11 @@
                 error: function(xhr) {
                     console.error('Error:', xhr);
                 }
-            });
+            });*/
         });
 
         // Handle pagination links click
-        $(document).on('click', '.pagination a', function(event) {
+        /*$(document).on('click', '.pagination a', function(event) {
             event.preventDefault();
             var page = $(this).attr('href').split('page=')[1];
             loadProductsWithPage(page);
@@ -429,7 +438,7 @@
                     $('#pagination').html(response.pagination);
                 }
             });
-        }
+        }*/
 
         $(document).on('click', '.delete-btn', function() {
             var productId = $(this).data('id');
@@ -456,7 +465,104 @@
                 });
             }
         });
+
+        $(document).on('click','#show_simple_products',function () {
+            if($(this).is(':checked')){
+                $('#configurable').val(1);
+            }else{
+                $('#configurable').val('')
+            }
+
+            loadDatatables();
+        });
+
+        loadDatatables();
     });
+
+    function loadDatatables(){
+
+        $("#productsTable").dataTable().fnDestroy();
+
+        var table = $('#productsTable').DataTable({
+            "iDisplayLength": 20,
+            "info": true,
+            "responsive": true,
+            "lengthChange": true,
+            "autoWidth": false,
+            "processing": true,
+            "serverSide": true,
+            "searching": false,
+            "aLengthMenu": [20, 25, 50, 100],
+            'ajax': {
+                url: "{{ route('catalog.filter') }}",
+                type: "POST",
+                //dataType:'json',
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                },
+                data: function(d) {
+                    // Create a FormData object
+                    var formData = $('#filter-form').serializeArray(); // Serialize form inputs
+
+                    // Add form data to the DataTable's request payload
+                    $.each(formData, function(index, field) {
+                        d[field.name] = field.value; // Append form data to the DataTables request
+                    });
+
+                    var columnValues = [];
+                    if (table) {
+                        table.rows({ search: 'applied' }).every(function(rowIdx) {
+                            var rowData = this.data();
+                            columnValues.push(rowData.id);
+                        });
+                    }
+
+                    // Add to the request payload
+                    d.columnValues = columnValues;
+
+                    // Append DataTables parameters
+                    $.each(d, function(key, value) {
+                        //formData.append(key, value);
+                        //d.key = value;
+                    });
+
+
+                    //return formData;
+                },
+                //processData: false,
+                //contentType: false
+            },
+            "order": [[ 10, "desc" ]],
+            'columns': [
+                { data: 'product_id'},
+                { data: 'product_image_url' },
+                { data: 'product_sku' },
+                { data: 'product_type' },
+                { data: 'product_title' },
+                { data: 'product_status' },
+                { data: 'configurable' },
+                { data: 'product_price' },
+                { data: 'manufacture_name' },
+                { data: 'product_color' },
+                { data: 'created_date' },
+                { data: 'action' }
+            ],
+            columnDefs: [
+                {
+                    targets: 6, // The column index
+                    className: 'column-no-whitespace' // The class to add
+                },
+                {
+                    targets: [1,6,8], // Index of the column you want to disable sorting for
+                    orderable: false // Disable sorting
+                }
+            ]
+        });
+
+        $( '#productsTable_wrapper').removeClass( 'form-inline' );
+
+        $.fn.dataTable.ext.errMode = 'throw';
+    }
 </script>
 @stop
 

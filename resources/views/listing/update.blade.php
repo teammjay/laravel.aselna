@@ -331,7 +331,7 @@
                                                 <label for="product_category">Product Category</label>
                                             </div>
                                             <div class="col-md-7">
-                                                <input type="text" class="form-control" id="product_category" name="product_category" value="{{ old('product_category',$storeTypeDetail->product_category) }}" readonly>
+                                                <input type="text" class="form-control" id="product_category" name="product_category" value="{{ (isset($storeTypeDetail->product_category)) ? $storeTypeDetail->product_category : '' }}" readonly>
                                             </div>
                                         </div>
                                         <div class="row mt-3 g-3 align-items-center">
@@ -339,7 +339,7 @@
                                                 <label for="publish_status">Publish status</label>
                                             </div>
                                             <div class="col-md-7">
-                                                <input type="text" class="form-control" id="publish_status" name="publish_status" value="{{ old('publish_status',$storeTypeDetail->publish_status) }}" readonly>
+                                                <input type="text" class="form-control" id="publish_status" name="publish_status" value="{{ (isset($storeTypeDetail->publish_status)) ? $storeTypeDetail->publish_status : '' }}" readonly>
                                             </div>
                                         </div>
                                         <div class="row mt-3 g-3 align-items-center">
@@ -347,7 +347,7 @@
                                                 <label for="status_change_reason">Status change reason</label>
                                             </div>
                                             <div class="col-md-7">
-                                                <input type="text" class="form-control" id="status_change_reason" name="status_change_reason" value="{{ old('status_change_reason',$storeTypeDetail->status_change_reason) }}" readonly>
+                                                <input type="text" class="form-control" id="status_change_reason" name="status_change_reason" value="{{ (isset($storeTypeDetail->status_change_reason)) ? $storeTypeDetail->status_change_reason : '' }}" readonly>
                                             </div>
                                         </div>
                                         <div class="row mt-3 g-3 align-items-center">
@@ -355,7 +355,7 @@
                                                 <label for="inventory_count">Inventory Count</label>
                                             </div>
                                             <div class="col-md-7">
-                                                <input type="text" class="form-control" id="inventory_count" name="inventory_count" value="{{ old('inventory_count',$storeTypeDetail->inventory_count) }}" readonly>
+                                                <input type="text" class="form-control" id="inventory_count" name="inventory_count" value="{{ (isset($storeTypeDetail->inventory_count)) ? $storeTypeDetail->inventory_count : '' }}" readonly>
                                             </div>
                                         </div>
                                         <div class="row mt-3 g-3 align-items-center">
@@ -371,7 +371,7 @@
                                                 <label for="shelf_name">Shelf Name</label>
                                             </div>
                                             <div class="col-md-7">
-                                                <input type="text" class="form-control" id="shelf_name" name="shelf_name" value="{{ old('shelf_name',$storeTypeDetail->shelf_name) }}" readonly>
+                                                <input type="text" class="form-control" id="shelf_name" name="shelf_name" value="{{ (isset($storeTypeDetail->shelf_name)) ? $storeTypeDetail->shelf_name : '' }}" readonly>
                                             </div>
                                         </div>
                                         <div class="row mt-3 g-3 align-items-center">
@@ -387,7 +387,7 @@
                                                 <label for="review_count">Review Count</label>
                                             </div>
                                             <div class="col-md-7">
-                                                <input type="text" class="form-control" id="review_count" name="review_count" value="{{ old('review_count',$storeTypeDetail->review_count) }}" readonly>
+                                                <input type="text" class="form-control" id="review_count" name="review_count" value="{{ (isset($storeTypeDetail->review_count)) ? $storeTypeDetail->review_count : '' }}" readonly>
                                             </div>
                                         </div>
                                         <div class="row mt-3 g-3 align-items-center">
@@ -395,7 +395,7 @@
                                                 <label for="average_rating">Average Rating</label>
                                             </div>
                                             <div class="col-md-7">
-                                                <input type="text" class="form-control" id="average_rating" name="average_rating" value="{{ old('average_rating',$storeTypeDetail->average_rating) }}" readonly>
+                                                <input type="text" class="form-control" id="average_rating" name="average_rating" value="{{ (isset($storeTypeDetail->average_rating)) ? $storeTypeDetail->average_rating : '' }}" readonly>
                                             </div>
                                         </div>
                                         <div class="row mt-3 g-3 align-items-center">
@@ -414,7 +414,7 @@
                                                 <label for="buy_box_price">Buy box price</label>
                                             </div>
                                             <div class="col-md-7">
-                                                <input type="text" class="form-control" id="buy_box_price" name="buy_box_price" value="{{ old('buy_box_price',$storeTypeDetail->buy_box_price) }}" readonly>
+                                                <input type="text" class="form-control" id="buy_box_price" name="buy_box_price" value="{{ (isset($storeTypeDetail->buy_box_price)) ? $storeTypeDetail->buy_box_price : '' }}" readonly>
                                             </div>
                                         </div>
                                         <div class="row mt-3 g-3 align-items-center">
@@ -422,7 +422,7 @@
                                                 <label for="buy_box_shipping_price">Buy box shipping price</label>
                                             </div>
                                             <div class="col-md-7">
-                                                <input type="text" class="form-control" id="buy_box_shipping_price" name="buy_box_shipping_price" value="{{ old('buy_box_shipping_price',$storeTypeDetail->buy_box_shipping_price) }}" readonly>
+                                                <input type="text" class="form-control" id="buy_box_shipping_price" name="buy_box_shipping_price" value="{{ (isset($storeTypeDetail->buy_box_shipping_price)) ? $storeTypeDetail->buy_box_shipping_price : '' }}" readonly>
                                             </div>
                                         </div>
                                         <div class="row mt-3 g-3 align-items-center">
@@ -430,7 +430,7 @@
                                                 <label for="seller_buy_box_winner">Seller buy box winner</label>
                                             </div>
                                             <div class="col-md-7">
-                                                <input type="checkbox" id="seller_buy_box_winner" name="seller_buy_box_winner" {{ ($storeTypeDetail->seller_buy_box_winner == 1) ? 'checked' :'' }} readonly>
+                                                <input type="checkbox" id="seller_buy_box_winner" name="seller_buy_box_winner" {{ (isset($storeTypeDetail->seller_buy_box_winner) && $storeTypeDetail->seller_buy_box_winner == 1) ? 'checked' :'' }} readonly>
                                             </div>
                                         </div>
                                         <div class="row mt-3 g-3 align-items-center">
@@ -446,7 +446,7 @@
                                                 <label for="quality_explanation">Quality Explanation</label>
                                             </div>
                                             <div class="col-md-7">
-                                                <input type="text" class="form-control" id="quality_explanation" name="quality_explanation" value="{{ old('quality_explanation',$storeTypeDetail->quality_explanation) }}" readonly>
+                                                <input type="text" class="form-control" id="quality_explanation" name="quality_explanation" value="{{ (isset($storeTypeDetail->quality_explanation)) ? $storeTypeDetail->quality_explanation : '' }}" readonly>
                                             </div>
                                         </div>
                                     </div>
