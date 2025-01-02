@@ -38,7 +38,7 @@ class ListingItemSyncJob implements ShouldQueue
             'id' => $listingItem->id
         ], [
             'id' => $listingItem->id,
-//            'store_type_listing_id' => $listingItem->store_type_listing_id,
+            'store_type_listing_id' => $listingItem->channel_listing_id,
             'title' => $listingItem->title,
             'description' => $listingItem->description,
             'sku' => $listingItem->sku,
