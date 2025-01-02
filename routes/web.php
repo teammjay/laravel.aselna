@@ -40,7 +40,7 @@ use App\Http\Controllers\ListingTemplateController;
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/catalog', [CatalogController::class, 'index']);
 Route::get('/catalog', [CatalogController::class, 'index'])->name('catalog.list');
-Route::get('catalog/filter', [CatalogController::class, 'filter'])->name('catalog.filter');
+Route::post('catalog/filter', [CatalogController::class, 'filter'])->name('catalog.filter');
 Route::get('/catalog/add', [CatalogController::class, 'create'])->name('catalog.create');
 //Route::post('/catalog/add', [CatalogController::class, 'store'])->name('catalog.store');
 Route::post('/catalog/saveTabData', [CatalogController::class, 'saveTabData'])->name('catalog.save');

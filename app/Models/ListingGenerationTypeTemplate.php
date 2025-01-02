@@ -26,4 +26,9 @@ class ListingGenerationTypeTemplate extends Model
     }
 
     protected $fillable = ['template','default_template','generation_type_id','created_by','updated_by','created_at','updated_at'];
+
+    public function listingType()
+    {
+        return $this->belongsTo(ListingGenerationType::class,'generation_type_id');
+    }
 }

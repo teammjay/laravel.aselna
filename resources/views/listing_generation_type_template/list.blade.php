@@ -33,7 +33,7 @@
                     <tr>
                         <td>{{ $ltype->id }}</td>
                         <td>{{ $ltype->template }}</td>
-                        <td>{{ $ltype->generation_type_id }}</td>
+                        <td>{{ $ltype->listingType->name }}</td>
                         <td>{{ ($ltype->default_template == 1) ? 'Yes' : '' }}</td>
                         <td>{{ $ltype->created_by  }}</td>
                         <td>{{ $ltype->created_at  }}</td>
