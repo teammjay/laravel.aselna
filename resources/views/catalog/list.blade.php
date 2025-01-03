@@ -7,6 +7,15 @@
     <h1>Catalog</h1>
 @stop
 
+@section('adminlte_css')
+    <style>
+        .bulk-edit{display: none; width: 150px;}
+        table th, .column-no-whitespace{
+            white-space: nowrap;
+        }
+    </style>
+@stop
+
 @section('content')
     @csrf
     @if (session('success'))
@@ -27,6 +36,13 @@
                Show Listing
             </a>
             <input type="checkbox" id="show_simple_products"> <label for="show_simple_products" class="mb-0">Show simple products</label>
+
+            <button type="button" class="btn btn-default" id="edit_product" disabled="">
+                <i class="fas fa-fw fa-pencil-alt"></i> Bulk Edit
+            </button>
+            <button type="button" class="btn btn-default" id="update_product" disabled="">
+                Update Product
+            </button>
         </div>
     </div>
     <div class="card card-default">
@@ -36,7 +52,7 @@
         </div>
         <div class="card-body" style="display: none;">
             <form id="filter-form">
-                <input type="hidden" name="configurable" id="configurable">
+
                 <div class="row">
                     <div class="col-md-4">
                         <div class="row">
@@ -354,29 +370,34 @@
             </form>
         </div>
     </div>
-    <table id="productsTable" class="table table-bordered table-striped">
-        <thead>
-        <tr>
-            <th>Product ID</th>
-            <th>Image</th>
-            <th>Code</th>
-            <th>Type</th>
-            <th>Title</th>
-            <th>Status</th>
-            <th>configurable</th>
-            <th>Price</th>
-            <th>Manufacturer</th>
-            <th>Color</th>
-            <th>Created Date</th>
-            <th></th>
-        </tr>
-        </thead>
-        <tbody id="product-list">
+    <form action="{{ route('catalog.bulk-update') }}" id="frmbulkupdate" method="POST">
+        @csrf
+        <div class="table-responsive">
+            <table id="productsTable" class="table table-bordered table-striped">
+                <thead>
+                <tr>
+                    <th>Product ID</th>
+                    <th>Image</th>
+                    <th>Code</th>
+                    <th>Type</th>
+                    <th>Title</th>
+                    <th>Status</th>
+                    <th>configurable</th>
+                    <th>Price</th>
+                    <th>Manufacturer</th>
+                    <th>Color</th>
+                    <th>Created Date</th>
+                    <th></th>
+                </tr>
+                </thead>
+                <tbody id="product-list">
 
-            {{--@include('catalog.product_list', ['products' => $products])--}}
+                    {{--@include('catalog.product_list', ['products' => $products])--}}
 
-        </tbody>
-    </table>
+                </tbody>
+            </table>
+        </div>
+    </form>
     <div id="pagination">
         {{--@include('catalog.pagination', ['products' => $products])--}}
     </div>
@@ -400,6 +421,80 @@
             dateFormat:'yy-mm-dd',
 
         });
+
+        $(document).on('click','#product-list tr',function (e) {
+            let ele = $(this);
+            if ($(e.target).is('input, textarea, select, checkbox')) {
+                return;
+            }
+            //$('#product-list tr').removeClass('bg-blue');
+            //$('.pro-id').prop('checked',false);
+            if(ele.find('.pro-id').is(':checked')){
+                ele.removeClass('bg-blue');
+                ele.find('.pro-id').prop('checked', false);
+                ele.find('.bulk-edit').attr('disabled',true).hide();
+                ele.find('.prVal').show();
+            }else {
+                ele.addClass('bg-blue');
+                ele.find('.pro-id').prop('checked', true);
+                $('#edit_product').removeAttr('disabled');
+                $('#update_product').removeAttr('disabled');
+            }
+
+            if(!$('.pro-id:checked').length){
+                $('#edit_product').attr('disabled',true);
+                $('#update_product').attr('disabled',true);
+            }
+        });
+
+        $(document).on('click','#edit_product',function () {
+            $('#product-list tr').each(function () {
+                var $ele = $(this);
+                if($ele.find('.pro-id').is(':checked')){
+                    $ele.find('.bulk-edit').removeAttr('disabled').show();
+                    $ele.find('.prVal').hide();
+                }
+            });
+
+        });
+
+        $(document).on('click','#update_product',function () {
+            $('#frmbulkupdate').submit();
+        });
+
+        $(document).on('click', '.configurable', function() {
+            let ele = $(this);
+            let product_id= $(this).data('id');
+            let is_configurable = 0;
+            if($(this).is(':checked')){
+                is_configurable = 1
+            }
+
+            $.ajax({
+                url: "{{ route('catalog.update') }}",   // Laravel route for deletion
+                type: 'POST',
+                data: {
+                    product_id:product_id,
+                    configurable:is_configurable,
+                    "_token": '{{ csrf_token() }}'
+                },
+                success: function (response) {
+                    // If success, remove the user row from the table
+                    if (response.success) {
+                        if(is_configurable) {
+                            ele.prop('checked', true);
+                        }else{
+                            ele.prop('checked', false);
+                        }
+                    }
+                },
+                error: function (xhr) {
+                    // Handle error response
+                    alert('Error: ' + xhr.responseJSON.error);
+                }
+            });
+        });
+
         $('#filter-form').on('submit', function(e) {
             e.preventDefault(); // Prevent default form submission
 
@@ -467,10 +562,11 @@
         });
 
         $(document).on('click','#show_simple_products',function () {
+            $('#configurable').remove();
             if($(this).is(':checked')){
-                $('#configurable').val(1);
+                $('#filter-form').prepend('<input type="hidden" name="configurable" id="configurable" value="1">');
             }else{
-                $('#configurable').val('')
+                $('#filter-form').prepend('<input type="hidden" name="configurable" id="configurable" value="0">');
             }
 
             loadDatatables();
