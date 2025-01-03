@@ -226,7 +226,7 @@
                 }
 
                 $.ajax({
-                    url: "{{ route('store.update') }}",   // Laravel route for deletion
+                    url: "{{ route('store.update') }}",
                     type: 'POST',
                     data: {
                         id:store_id,
@@ -256,7 +256,7 @@
                 }
 
                 $.ajax({
-                    url: "{{ route('store.update') }}",   // Laravel route for deletion
+                    url: "{{ route('store.update') }}",
                     type: 'POST',
                     data: {
                         id:store_id,

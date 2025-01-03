@@ -169,10 +169,8 @@ class CatalogController extends Controller
         }
 
         // Filter by configurable
-        if ($request->has('configurable')) {
-            if($request->configurable != '') {
-                $query->where('configurable', $request->configurable);
-            }else{
+        if ($request->has('configurable') && $request->configurable != '') {
+            if($request->configurable) {
                 $query->where('configurable', 0);
                 $query->orWhere('configurable', NULL);
             }
@@ -321,27 +319,32 @@ class CatalogController extends Controller
         }
 
         $query->where('oem_generic',2);
+        ///echo $query->toSql();die;
         $productsRecord = $query->paginate($perPage); // Paginate results
         $products = $query->skip($start)->take($perPage)->get(); // Paginate results
         $totalRecordwithFilter = $productsRecord->total();
 
         $data = [];
         if(!empty((array) $products)){
-            foreach($products as $product) {
+            foreach($products as $key=>$product) {
                 if($product->configurable == 1){
                     $checked = 'checked';
                 }else{
                     $checked = '';
                 }
+
                 $data[] = array(
-                    "product_id" => $product->product_id,
+                    "product_id" => $product->product_id.'<input type="checkbox" class="pro-id" name="product['.$key.'][product_id]" value="'.$product->product_id.'" style="visibility:hidden;">',
                     "product_image_url" => ($product->product_image_url != '') ? '<img src="'.asset('storage/product_images/'. $product->product_image_url).'" alt="'.$product->product_image_url.'" width="70" height="70">' : '',
-                    "product_sku" => $product->product_sku,
+                    "product_sku" => '<span class="prVal">'.$product->product_sku.'</span><input type="text" class="form-control bulk-edit" name="product['.$key.'][product_sku]" value="'.$product->product_sku.'" disabled>',
                     "product_type" => $product->product_type,
-                    "product_title" => $product->product_title,
-                    "product_status" =>  $product->product_status ,
+                    "product_title" => '<span class="prVal">'.$product->product_title.'</span><textarea class="form-control bulk-edit" name="product['.$key.'][product_title]" rows="3" disabled>'.$product->product_title.'</textarea>',
+                    "product_status" =>  '<span class="prVal">'.$product->product_status.'</span><select class="form-control bulk-edit" name="product['.$key.'][product_status]" disabled>
+                        <option value="active"> Active </option>
+                        <option value="discontinued"> Discontinued </option>
+                        <option value="out_of_stock"> Out of stock </option></select>' ,
                     "configurable" => '<input type="checkbox" class="configurable" data-id="'.$product->product_id.'" '.$checked.'>',
-                    "product_price" => $product->product_price,
+                    "product_price" => '<span class="prVal">'.$product->product_price.'</span><input type="text" class="form-control bulk-edit" name="product['.$key.'][product_price]" value="'.$product->product_price.'" disabled>',
                     "manufacture_name" => isset($product->Manufacturer->name) ? $product->Manufacturer->name : '',
                     "product_color" => $product->product_color,
                     "created_date" => date('Y-m-d H:i:s',strtotime($product->created_at)),
@@ -373,6 +376,31 @@ class CatalogController extends Controller
         }
 
         return view('products.index', compact('products'));*/
+    }
+
+    public function bulkUpdate(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'product.*.product_sku' => 'required|string',
+            'product.*.product_title' => 'required|string',
+            'product.*.product_price' => 'required|decimal:2',
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
+
+        $products = $request->input('product');
+
+        foreach ($products as $proData) {
+            Catalog::where('product_id', $proData['product_id'])->update([
+                'product_sku' => $proData['product_sku'],
+                'product_title' => $proData['product_title'],
+                'product_price' => $proData['product_price'],
+            ]);
+        }
+
+        return redirect()->back()->with('success', 'Products updated successfully.');
     }
 
     /**
@@ -453,6 +481,28 @@ class CatalogController extends Controller
 
         // redirect to the brands list
 
+    }
+
+    /**
+     * Update the specified resource in storage.
+     */
+    public function update(Request $request)
+    {
+        $id = $request->input('product_id');
+        $updated_by = auth()->user()->name ?? 'admin';
+        $request->merge(['updated_by' => $updated_by]);
+
+        try {
+            $product = Catalog::findOrFail($id);
+            $product->update($request->all());
+            return response()->json(['success' => true, 'message' => 'Data updated successfully!']);
+
+        }catch (QueryException $e) {
+            // Handle the exception and show an error message
+            return response()->json(['errors' => $e->getMessage()]);
+        }
+
+        return response()->json(['success' => true, 'message' => 'Data updated successfully!']);
     }
 
     /**

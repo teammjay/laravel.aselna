@@ -341,6 +341,11 @@ return [
                     'icon' => 'far fa-fw fa-file'
                 ],
                 [
+                    'text' => 'Product Colors',
+                    'url' => '/product_color',
+                    'icon' => 'far fa-fw fa-file'
+                ],
+                [
                     'text' => 'Product Condition',
                     'url' => '/product_condition',
                     'icon' => 'far fa-fw fa-file'
