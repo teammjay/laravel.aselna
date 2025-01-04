@@ -690,7 +690,7 @@
         }).ajaxStop(function () {
             $("#ajax-preloader").hide(); // Hide preloader when AJAX stops
         });
-        $('#device_brand, #device, #product_type').select2();
+        $('#device_brand, #device, #product_type, #listing_store').select2();
         $('#last_sale_date,#item_created').datepicker();
         $('.card-header').on('click',function () {
             if($(this).find('.fa').hasClass('fa-angle-down')){
@@ -853,12 +853,11 @@
 
     function loadDatatables(){
 
-        var perPage = $('#per_page').val();
-
         $("#productsTable").dataTable().fnDestroy();
 
         var table = $('#productsTable').DataTable({
             "iDisplayLength": 20,
+            "info": true,
             "responsive": true,
             "lengthChange": true,
             "autoWidth": false,

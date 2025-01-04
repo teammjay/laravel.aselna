@@ -14,7 +14,7 @@ class ListingGenerationTypeTemplateController extends Controller
      */
     public function index()
     {
-        $listing_generation_type_templates = ListingGenerationTypeTemplate::all();
+        $listing_generation_type_templates = ListingGenerationTypeTemplate::with('listingType')->get();
 
         return view('listing_generation_type_template.list', compact('listing_generation_type_templates'));
     }

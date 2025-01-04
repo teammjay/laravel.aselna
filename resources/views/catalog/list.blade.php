@@ -7,6 +7,15 @@
     <h1>Catalog</h1>
 @stop
 
+@section('adminlte_css')
+    <style>
+        .bulk-edit{display: none; width: 150px;}
+        table th, .column-no-whitespace{
+            white-space: nowrap;
+        }
+    </style>
+@stop
+
 @section('content')
     @csrf
     @if (session('success'))
@@ -17,10 +26,23 @@
         <div class="alert alert-danger alert-dismissible fade show">{{ session('error') }}</div>
     @endif
     <div class="row my-3">
-        <div class="col-md-3">
+        <div class="col-md-2">
             <a href="{{ route('catalog.create') }}" class="btn btn-secondary">
                 Add Catalog
             </a>
+        </div>
+        <div class="col-md-10 d-flex align-items-center" style="gap:10px;">
+            <a href="{{ route('listing.list') }}" class="btn btn-default">
+               Show Listing
+            </a>
+            <input type="checkbox" id="show_simple_products"> <label for="show_simple_products" class="mb-0">Show simple products</label>
+
+            <button type="button" class="btn btn-default" id="edit_product" disabled="">
+                <i class="fas fa-fw fa-pencil-alt"></i> Bulk Edit
+            </button>
+            <button type="button" class="btn btn-default" id="update_product" disabled="">
+                Update Product
+            </button>
         </div>
     </div>
     <div class="card card-default">
@@ -30,6 +52,7 @@
         </div>
         <div class="card-body" style="display: none;">
             <form id="filter-form">
+
                 <div class="row">
                     <div class="col-md-4">
                         <div class="row">
@@ -106,7 +129,7 @@
                                 Manufacturer
                             </div>
                             <div class="col-3">
-                                <select class="custom-select" id="" name="name_operator">
+                                <select class="custom-select" id="" name="manufacturer_operator">
                                     <option value="{{FilterCodes::EQUAL}}">=</option>
                                    {{-- <option value="{{FilterCodes::CONTAINS}}">contains</option>
                                     <option value="{{FilterCodes::STARTS_WITH}}">starts with</option>
@@ -347,31 +370,36 @@
             </form>
         </div>
     </div>
-    <table id="productsTable" class="table table-bordered table-striped">
-        <thead>
-        <tr>
-            <th>Product ID</th>
-            <th>Image</th>
-            <th>Code</th>
-            <th>Type</th>
-            <th>Title</th>
-            <th>Status</th>
-            <th>Configrurable</th>
-            <th>Price</th>
-            <th>Manufacturer</th>
-            <th>Color</th>
-            <th>Created Date</th>
-            <th></th>
-        </tr>
-        </thead>
-        <tbody id="product-list">
+    <form action="{{ route('catalog.bulk-update') }}" id="frmbulkupdate" method="POST">
+        @csrf
+        <div class="table-responsive">
+            <table id="productsTable" class="table table-bordered table-striped">
+                <thead>
+                <tr>
+                    <th>Product ID</th>
+                    <th>Image</th>
+                    <th>Code</th>
+                    <th>Type</th>
+                    <th>Title</th>
+                    <th>Status</th>
+                    <th>configurable</th>
+                    <th>Price</th>
+                    <th>Manufacturer</th>
+                    <th>Color</th>
+                    <th>Created Date</th>
+                    <th></th>
+                </tr>
+                </thead>
+                <tbody id="product-list">
 
-            @include('catalog.product_list', ['products' => $products])
+                    {{--@include('catalog.product_list', ['products' => $products])--}}
 
-        </tbody>
-    </table>
+                </tbody>
+            </table>
+        </div>
+    </form>
     <div id="pagination">
-        @include('catalog.pagination', ['products' => $products])
+        {{--@include('catalog.pagination', ['products' => $products])--}}
     </div>
 @stop
 
@@ -393,9 +421,85 @@
             dateFormat:'yy-mm-dd',
 
         });
+
+        $(document).on('click','#product-list tr',function (e) {
+            let ele = $(this);
+            if ($(e.target).is('input, textarea, select, checkbox')) {
+                return;
+            }
+            //$('#product-list tr').removeClass('bg-blue');
+            //$('.pro-id').prop('checked',false);
+            if(ele.find('.pro-id').is(':checked')){
+                ele.removeClass('bg-blue');
+                ele.find('.pro-id').prop('checked', false);
+                ele.find('.bulk-edit').attr('disabled',true).hide();
+                ele.find('.prVal').show();
+            }else {
+                ele.addClass('bg-blue');
+                ele.find('.pro-id').prop('checked', true);
+                $('#edit_product').removeAttr('disabled');
+                $('#update_product').removeAttr('disabled');
+            }
+
+            if(!$('.pro-id:checked').length){
+                $('#edit_product').attr('disabled',true);
+                $('#update_product').attr('disabled',true);
+            }
+        });
+
+        $(document).on('click','#edit_product',function () {
+            $('#product-list tr').each(function () {
+                var $ele = $(this);
+                if($ele.find('.pro-id').is(':checked')){
+                    $ele.find('.bulk-edit').removeAttr('disabled').show();
+                    $ele.find('.prVal').hide();
+                }
+            });
+
+        });
+
+        $(document).on('click','#update_product',function () {
+            $('#frmbulkupdate').submit();
+        });
+
+        $(document).on('click', '.configurable', function() {
+            let ele = $(this);
+            let product_id= $(this).data('id');
+            let is_configurable = 0;
+            if($(this).is(':checked')){
+                is_configurable = 1
+            }
+
+            $.ajax({
+                url: "{{ route('catalog.update') }}",   // Laravel route for deletion
+                type: 'POST',
+                data: {
+                    product_id:product_id,
+                    configurable:is_configurable,
+                    "_token": '{{ csrf_token() }}'
+                },
+                success: function (response) {
+                    // If success, remove the user row from the table
+                    if (response.success) {
+                        if(is_configurable) {
+                            ele.prop('checked', true);
+                        }else{
+                            ele.prop('checked', false);
+                        }
+                    }
+                },
+                error: function (xhr) {
+                    // Handle error response
+                    alert('Error: ' + xhr.responseJSON.error);
+                }
+            });
+        });
+
         $('#filter-form').on('submit', function(e) {
             e.preventDefault(); // Prevent default form submission
-            var perPage =  '{{ $perPage }}';
+
+            loadDatatables();
+            /*var perPage =  '{{ $perPage }}';
             var page =  1;
             $.ajax({
                 url: "{{ route('catalog.filter') }}?page=" + page + "&perPage=" + perPage,
@@ -409,11 +513,11 @@
                 error: function(xhr) {
                     console.error('Error:', xhr);
                 }
-            });
+            });*/
         });
 
         // Handle pagination links click
-        $(document).on('click', '.pagination a', function(event) {
+        /*$(document).on('click', '.pagination a', function(event) {
             event.preventDefault();
             var page = $(this).attr('href').split('page=')[1];
             loadProductsWithPage(page);
@@ -429,7 +533,7 @@
                     $('#pagination').html(response.pagination);
                 }
             });
-        }
+        }*/
 
         $(document).on('click', '.delete-btn', function() {
             var productId = $(this).data('id');
@@ -456,7 +560,105 @@
                 });
             }
         });
+
+        $(document).on('click','#show_simple_products',function () {
+            $('#configurable').remove();
+            if($(this).is(':checked')){
+                $('#filter-form').prepend('<input type="hidden" name="configurable" id="configurable" value="1">');
+            }else{
+                $('#filter-form').prepend('<input type="hidden" name="configurable" id="configurable" value="0">');
+            }
+
+            loadDatatables();
+        });
+
+        loadDatatables();
     });
+
+    function loadDatatables(){
+
+        $("#productsTable").dataTable().fnDestroy();
+
+        var table = $('#productsTable').DataTable({
+            "iDisplayLength": 20,
+            "info": true,
+            "responsive": true,
+            "lengthChange": true,
+            "autoWidth": false,
+            "processing": true,
+            "serverSide": true,
+            "searching": false,
+            "aLengthMenu": [20, 25, 50, 100],
+            'ajax': {
+                url: "{{ route('catalog.filter') }}",
+                type: "POST",
+                //dataType:'json',
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                },
+                data: function(d) {
+                    // Create a FormData object
+                    var formData = $('#filter-form').serializeArray(); // Serialize form inputs
+
+                    // Add form data to the DataTable's request payload
+                    $.each(formData, function(index, field) {
+                        d[field.name] = field.value; // Append form data to the DataTables request
+                    });
+
+                    var columnValues = [];
+                    if (table) {
+                        table.rows({ search: 'applied' }).every(function(rowIdx) {
+                            var rowData = this.data();
+                            columnValues.push(rowData.id);
+                        });
+                    }
+
+                    // Add to the request payload
+                    d.columnValues = columnValues;
+
+                    // Append DataTables parameters
+                    $.each(d, function(key, value) {
+                        //formData.append(key, value);
+                        //d.key = value;
+                    });
+
+
+                    //return formData;
+                },
+                //processData: false,
+                //contentType: false
+            },
+            "order": [[ 10, "desc" ]],
+            'columns': [
+                { data: 'product_id'},
+                { data: 'product_image_url' },
+                { data: 'product_sku' },
+                { data: 'product_type' },
+                { data: 'product_title' },
+                { data: 'product_status' },
+                { data: 'configurable' },
+                { data: 'product_price' },
+                { data: 'manufacture_name' },
+                { data: 'product_color' },
+                { data: 'created_date' },
+                { data: 'action' }
+            ],
+            columnDefs: [
+                {
+                    targets: 6, // The column index
+                    className: 'column-no-whitespace' // The class to add
+                },
+                {
+                    targets: [1,6,8], // Index of the column you want to disable sorting for
+                    orderable: false // Disable sorting
+                }
+            ]
+        });
+
+        $( '#productsTable_wrapper').removeClass( 'form-inline' );
+
+        $.fn.dataTable.ext.errMode = 'throw';
+    }
 </script>
 @stop
 

@@ -33,6 +33,7 @@ class StoreTypeListing extends Model
     }
 
     public static function generateUniqueAlphabeticSku($product_code='', $length = 6) {
+
         do {
             if($product_code != ''){
                 $sku = strtoupper($product_code.'-' . Str::random($length));
@@ -40,7 +41,7 @@ class StoreTypeListing extends Model
                 $sku = strtoupper(Str::random($length));
             }
 
-        } while (ListingItem::leftJoin('listing_item_detail','listing_item.id', '=', 'listing_item_detail.listing_item_id')->where('listing_item.sku', $sku)->orWhere('listing_item_detail.sku', $sku)->exists());  // Check if SKU exists in the database
+        } while (ListingItem::leftJoin('listing_item_detail','listing_item.id', '=', 'listing_item_detail.listing_item_id')->WhereLike('listing_item.sku', $sku)->orWhereLike('listing_item_detail.sku', $sku)->exists());  // Check if SKU exists in the database
 
         return $sku;
     }

@@ -40,7 +40,7 @@
             background: #fff;
             z-index: 9999;
         }
-        .ui-autocomplete{z-index: 99999; max-height: 250px; overflow: auto;}
+        /*.ui-autocomplete{z-index: 99999; max-height: 250px; overflow: auto;}*/
         #frmproductfilter select.form-control[multiple]{height: 100%;}
         table th, table td, .column-no-whitespace{
             white-space: nowrap;
@@ -211,24 +211,26 @@
                                     <input type="checkbox" id="selected_product"> Selected Products Only
                                 </div>
                                 <div class="card-body pl-0 pr-0">
-                                    <table id="productsTable" class="table table-bordered table-striped">
-                                        <thead>
-                                        <tr>
-                                            <th>Image</th>
-                                            <th>Product Code</th>
-                                            <th>Product Type</th>
-                                            <th>Title</th>
-                                            <th>Price</th>
-                                            <th>Quantity</th>
-                                            <th>Created At</th>
-                                        </tr>
-                                        </thead>
-                                        <tbody id="search-product-list">
+                                    <div class="table-responsive" style="max-height: 500px; overflow: auto;">
+                                        <table id="productsTable" class="table table-bordered table-striped">
+                                            <thead>
+                                            <tr>
+                                                <th>Image</th>
+                                                <th>Product Code</th>
+                                                <th>Product Type</th>
+                                                <th>Title</th>
+                                                <th>Price</th>
+                                                <th>Quantity</th>
+                                                <th>Created At</th>
+                                            </tr>
+                                            </thead>
+                                            <tbody id="search-product-list">
 
-                                        {{--@include('catalog.product_list', ['products' => $products])--}}
+                                            {{--@include('catalog.product_list', ['products' => $products])--}}
 
-                                        </tbody>
-                                    </table>
+                                            </tbody>
+                                        </table>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -635,7 +637,7 @@
                 </div>
                 <div class="tab-pane fade" id="tab5" role="tabpanel" aria-labelledby="summary-tab">
                 </div>
-                <div class="col-md-12 text-center sticky-bottom">
+                <div class="text-center sticky-bottom">
                     <div class="card-footer footer-btn">
                         <button type="button" class="btn btn-warning lbtn" id="prevBtn">Prev</button>
                         <button type="button" class="btn btn-success lbtn" id="nextBtn">Next</button>
@@ -820,11 +822,15 @@
                                     $('.lbtn').hide();
                                     $('.donebtn').show();
                                     //location.href='{{ route('listing.list') }}'
+                                }else if(response.error){
+                                    alert('Something went wrong! Please try again later.');
+                                    location.reload();
                                 }
                             },
                             error: function(xhr) {
                                 const message = xhr.responseJSON?.error || 'An unexpected error occurred. Please try again later.';
                                 alert(message);
+                                //location.reload();
                             },
                             complete: function () {
                                 $("#ajax-preloader").hide();
@@ -1283,14 +1289,14 @@
                         delay: 100
                     });
                 },
-                minLength:0,
+                minLength:1,
                 select : function(event, ui){
                     $('#product_code_filter').val('');
                     $('#pro_code_list').append('<div class="border bg-blue p-1 mt-1"><input type="hidden" name="product_code[]" value="'+ui.item.value+'">'+ui.item.value+'<i class="fa fa-window-close float-right mt-1"></i></div>');
                     return false;
                 }
             }).focus(function () {
-                $('#product_code_filter').keydown();
+                //$('#product_code_filter').keydown();
             });
 
             $('#device_series_filter').autocomplete({
@@ -1320,14 +1326,14 @@
                         delay: 100
                     });
                 },
-                minLength: 0,
+                minLength: 1,
                 select : function(event, ui){
                     $('#device_series_filter').val('');
                     $('#device_series_list').append('<div class="border bg-blue p-1 mt-1"><input type="hidden" name="device_series[]" value="'+ui.item.value+'">'+ui.item.label+'<i class="fa fa-window-close float-right mt-1"></i></div>');
                     return false;
                 }
             }).focus(function () {
-                $('#device_series_filter').keydown();
+                //$('#device_series_filter').keydown();
             });
 
             $('#device_filter').autocomplete({
@@ -1357,14 +1363,14 @@
                         delay: 100
                     });
                 },
-                minLength: 0,
+                minLength: 1,
                 select : function(event, ui){
                     $('#device_filter').val('');
                     $('#device_list').append('<div class="border bg-blue p-1 mt-1"><input type="hidden" name="device[]" value="'+ui.item.value+'">'+ui.item.label+' <i class="fa fa-window-close float-right mt-1"></i></div>');
                     return false;
                 }
             }).focus(function () {
-                $('#device_filter').keydown();
+                //$('#device_filter').keydown();
             });
 
 
@@ -1391,7 +1397,11 @@
                     if (response.success) {
                         //$('#title_template').html(response.option);
                         let data = response.data;
-                        $('#title_template').val(response.option);
+                        if(response.option != '') {
+                            $('#title_template').val(response.option);
+                        }else{
+                            $("#title_template").val($("#title_template option:first").val());
+                        }
 
                         $('#title_template').autocomplete({
 
@@ -1402,6 +1412,7 @@
                             minLength: 0,
                             select : function(event, ui){
                                 $('#title_template').val(ui.item.label);
+
                                 var selected_template = ui.item.label;
                                 $('.pro-id').each(function () {
                                     if($(this).is(':checked')){

@@ -36,17 +36,18 @@ use App\Http\Controllers\ProductTargetAudienceController;
 use App\Http\Controllers\CarrierController;
 use App\Http\Controllers\ProductAttributeController;
 use App\Http\Controllers\ListingTemplateController;
+use App\Http\Controllers\ProductColorController;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/catalog', [CatalogController::class, 'index']);
 Route::get('/catalog', [CatalogController::class, 'index'])->name('catalog.list');
-Route::get('catalog/filter', [CatalogController::class, 'filter'])->name('catalog.filter');
+Route::post('catalog/filter', [CatalogController::class, 'filter'])->name('catalog.filter');
 Route::get('/catalog/add', [CatalogController::class, 'create'])->name('catalog.create');
 //Route::post('/catalog/add', [CatalogController::class, 'store'])->name('catalog.store');
 Route::post('/catalog/saveTabData', [CatalogController::class, 'saveTabData'])->name('catalog.save');
 Route::post('/catalog/finalize', [CatalogController::class, 'finalize'])->name('catalog.final');
 Route::get('/catalog/edit/{id}', [CatalogController::class, 'edit'])->name('catalog.edit');
-Route::post('/catalog/edit/{id}', [CatalogController::class, 'update'])->name('catalog.update');
+Route::post('/catalog/edit', [CatalogController::class, 'update'])->name('catalog.update');
 //Route::delete('/catalog/destroy', [CatalogController::class, 'destroy'])->name('catalog.delete');
 Route::get('/catalog/destroy/{id}', [CatalogController::class, 'destroy'])->name('catalog.delete');
 Route::get('/catalog/{id}', [CatalogController::class, 'show'])->name('catalog.show');
@@ -57,6 +58,7 @@ Route::post('catalog/getstoredetail', [CatalogController::class, 'getStoreDetail
 Route::post('catalog/saveproductchannel', [CatalogController::class, 'saveProductChannel'])->name('catalog.saveproductchannel');
 Route::post('catalog/getproductchannel', [CatalogController::class, 'getProductChannel'])->name('catalog.getproductchannel');
 Route::post('catalog/deleteproductchannel', [CatalogController::class, 'deleteProductChannel'])->name('catalog.deleteproductchannel');
+Route::post('catalog/bulk-update', [CatalogController::class, 'bulkUpdate'])->name('catalog.bulk-update');
 
 Route::post('/generate-feed-file',[HomeController::class, 'generateFeedFile'])->name('generate-feed-file');
 
@@ -136,6 +138,15 @@ Route::controller(ProductTypeController::class)->group(function () {
     Route::get('/product_type/edit/{id}', 'edit')->name('product_type.edit');
     Route::post('/product_type/edit/{id}', 'update')->name('product_type.update');
     Route::get('/product_type/delete/{id}', 'destroy')->name('product_type.delete');
+});
+
+Route::controller(ProductColorController::class)->group(function () {
+    Route::get('/product_color', 'index')->name('product_color.index');
+    Route::get('/product_color/add', 'create')->name('product_color.create');
+    Route::post('/product_color/add', 'store')->name('product_color.store');
+    Route::get('/product_color/edit/{id}', 'edit')->name('product_color.edit');
+    Route::post('/product_color/edit/{id}', 'update')->name('product_color.update');
+    Route::get('/product_color/delete/{id}', 'destroy')->name('product_color.delete');
 });
 
 Route::controller(ProductTargetAudienceController::class)->group(function () {
