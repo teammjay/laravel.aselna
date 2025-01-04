@@ -61,12 +61,22 @@ class AmazonService implements MarketplaceServiceInterface
 //                'SearchTerms' => $item->search_terms,
 //                'ItemType' => 'flat-sheets',
             ];
-//            $product['ProductData'] = [
-//                'HealthAndBeauty' => [
-//                    'ProductType' => 'Health',
-//                    'Beauty' => 'Beauty',
-//                ],
-//            ];
+            $product['ProductData'] = [
+                'Clothing' => [
+                    'VariationData' => [
+                        'Parentage' => 'parent',
+                        'Size' => $item->size->name,
+                        'Color' => $item->color->name,
+                    ],
+                ],
+                'Health' => [
+                    'ProductType' => 'Health',
+                    'HealthMisc' => [
+                        'Ingredients' => $item->ingredients,
+                        'Directions' => $item->directions,
+                    ],
+                ],
+            ];
 
             $messages['MessageID'] = $listingItem->id;
             $messages['Product'] = $product;
