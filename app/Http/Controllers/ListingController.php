@@ -503,7 +503,7 @@ class ListingController extends Controller
 
         $productsRecord = $query->paginate($perPage); // Paginate results
         //echo $query->toSql();die;
-        dd(DB::getQueryLog());
+        //dd(DB::getQueryLog());
         $products = $query->skip($start)->take($perPage)->get(); // Paginate results
         $totalRecordwithFilter = $productsRecord->total();
 
