@@ -43,6 +43,11 @@ class ListingItem extends Model
         return $this->belongsTo(Device::class);
     }
 
+    public function storeProduct()
+    {
+        return $this->belongsTo(StoreProduct::class, 'store_product_id');
+    }
+
     public function products()
     {
         return $this->hasMany(Catalog::class);
@@ -51,12 +56,12 @@ class ListingItem extends Model
     //maunfacturer
     public function manufacturer()
     {
-        return $this->belongsTo(Manufacturer::class);
+        return $this->belongsTo(Manufacturer::class, 'manufacturer_id');
     }
 
     public function generationType()
     {
-        return $this->belongsTo(ListingGenerationType::class,'generation_type_id');
+        return $this->belongsTo(ListingGenerationType::class, 'generation_type_id','code');
     }
 
 
