@@ -31,10 +31,6 @@ class Catalog extends Model
 
     protected $fillable = ['product_id', 'product_title', 'product_type','configurable', 'manufacturer_id', 'product_price', 'product_wholesale_price', 'product_marketplace_price', 'product_mrsp', 'dimensions_width', 'dimensions_height', 'dimensions_length', 'product_weight', 'product_weight_unit', 'product_package_weight', 'package_weight_unit', 'package_dimensions_width', 'package_dimensions_height', 'package_dimensions_length', 'product_sku', 'product_description', 'product_status', 'product_condition_id', 'target_aud', 'product_tags', 'product_color', 'product_qty', 'product_reorder_qty', 'product_pick_location', 'title_template', 'description_template', 'product_code', 'created_by', 'updated_by', 'oem_generic','product_image_url'];
 
-    public function getProductStoreType()
-    {
-
-    }
 
     public function Manufacturer()
     {
@@ -43,6 +39,6 @@ class Catalog extends Model
 
     public function StoreProduct()
     {
-        return $this->hasOne(StoreProduct::class, 'product_id');
+        return $this->hasOne(StoreProduct::class, 'product_id','product_id');
     }
 }

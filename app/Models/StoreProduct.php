@@ -31,11 +31,6 @@ class StoreProduct extends Model
 
     protected $fillable = ['id','product_id','store_id','store_type_category_id','title','active','price','msrp','description','sales_count','manufacturer_id','overwrite_compare_at_price','wholesale_price','compare_at_price','overwrite_wholesale_price','overwrite_description','overwrite_title','overwrite_msrp','overwrite_price','created_by','updated_by','created_at','updated_at'];
 
-
-    public function product(){
-        return $this->belongsTo(Catalog::class,'product_id');
-    }
-
     public static function getStoreProductDetail($product_id){
         $query2 = self::select('store_product.*','products.product_sku','store_product.created_at','product_type.name as ProductType')->with('Product');
         $query2->leftJoin('products','products.product_id', '=', 'store_product.product_id');
@@ -51,6 +46,16 @@ class StoreProduct extends Model
         $query2->leftJoin('product_type','products.product_type', '=', 'product_type.id');
         $query2->whereIn('store_product.product_id', $product_ids);
         return $query2->get();
+    }
+
+    public function product()
+    {
+        return $this->belongsTo(Catalog::class, 'product_id');
+    }
+
+    public function store()
+    {
+        return $this->belongsTo(Store::class, 'store_id');
     }
 
 }

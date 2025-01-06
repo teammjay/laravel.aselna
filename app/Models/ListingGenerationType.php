@@ -27,8 +27,8 @@ class ListingGenerationType extends Model
 
     protected $fillable = ['code','name','singleton','allow_duplicates','popular_device','include_carrier','include_device','carrier_combo','brand_combo','created_by','updated_by','created_at','updated_at'];
 
-    public function listingItem()
-{
-    return $this->hasOne(ListingItem::class,'generation_type_id');
-}
+    /*public function listingItem()
+    {
+        return $this->hasOne(ListingItem::class,'generation_type_id','code');
+    }*/
 }
