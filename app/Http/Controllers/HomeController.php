@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Listing;
 use App\Models\ListingFeed;
 use App\Models\Store;
 use App\Services\DataTable\DataTableService;
@@ -67,7 +68,7 @@ class HomeController extends Controller
         ]);
 
         $listingId = $request->listing_id;
-        $listingFeed = ListingFeed::where('id', $listingId)->first();
+        $listingFeed = Listing::where('id', $listingId)->first();
 
         // get StoreType froms store that is inside listingfeed
         $storeType = $listingFeed->store->storeType->name;
@@ -77,5 +78,21 @@ class HomeController extends Controller
         $filetPath = $marketplaceService->generateFeed($listingId);
         // give the url to download the file
         return response()->json(['file_path' => $filetPath]);
+    }
+
+    public function generateResultFeedFile(Request $request)
+    {
+        $request->validate([
+            'listing_id' => 'required',
+        ]);
+
+        $listingId = $request->listing_id;
+        $listingFeed = ListingFeed::where('id', $listingId)->first();
+
+        $storeType = $listingFeed->store->storeType->name;
+
+        $filePath = '';
+
+        return response()->json(['file_path' => $filePath]);
     }
 }

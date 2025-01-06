@@ -1,4 +1,4 @@
-@php use App\Constants\FeedTypes; @endphp
+@php use App\Constants\FeedStatus;use App\Constants\FeedTypes; @endphp
 @extends('adminlte::page')
 
 @section('title', 'Dashboard')
@@ -62,6 +62,7 @@
                 processing: true,
                 serverSide: true,
                 searching: false,
+                scrollX: true,
                 ajax: {
                     url: "{{ route('listing-data') }}",
                     data: function (d) {
@@ -71,23 +72,36 @@
                 columns: [
                     {data: 'id', name: 'id'},
                     {data: 'listing_id', name: 'listing_id'},
-                    {data: 'feed_type', name: 'feed_type'},
+                    {
+                        data: 'feed_type', name: 'feed_type', render: function (data) {
+                            const feedJson = '<?= json_encode(FeedTypes::names) ?>';
+                            const feedTypes = JSON.parse(feedJson);
+                            return feedTypes[data];
+                        }
+                    },
                     {
                         data: 'null', name: 'store', render: function (data, type, row) {
                             return row.store.name + ' - ' + row.store.store_type.name;
                         }
                     },
-                    {data: 'status', name: 'status'},
+                    {
+                        data: 'status', name: 'status', render: function (data) {
+                            const statusJson = '<?= json_encode(FeedStatus::names) ?>';
+                            const status = JSON.parse(statusJson);
+                            return status[data];
+                        }
+                    },
                     {
                         data: 'created_at', name: 'created_at',
                         render: function (data) {
-                            return moment(data).format('YYYY-MM-DD HH:mm:ss');
+                            // change that to 09/29/2022 12:00:00
+                            return moment(data).format('MM/DD/YYYY HH:mm:ss');
                         }
                     },
                     {
                         data: 'submit_ts', name: 'submit_ts',
                         render: function (data) {
-                            return moment(data).format('YYYY-MM-DD HH:mm:ss');
+                            return moment(data).format('MM/DD/YYYY HH:mm:ss');
                         }
                     },
                     {data: 'number_of_items', name: 'number_of_items'},
@@ -96,10 +110,13 @@
                     {data: 'fail_count', name: 'fail_count'},
                     {data: 'warning_count', name: 'warning_count'},
                     {data: 'number_of_attempts', name: 'number_of_attempts'},
-                    {data: 'feed_id', name: 'feed_id'},
+                    {data: 'feed_id', name: 'feed_id', maxWidth: '100px'},
                     {
                         data: null, name: 'action', orderable: false, searchable: false, render: function (data) {
-                            return '<button class="btn btn-primary generate-feed-file" data-listing="' + data.id + '">Generate Feed File</button>';
+                            return '<div>' +
+                                '<button class="btn btn-primary col-md-6 generate-feed-file" data-listing="' + data.listing_id + '">Download Feed File</button>' +
+                                '<button class="btn btn-primary col-md-6 generate-result-feed-file" data-listing="' + data.listing_id + '">Download Result Feed File</button>' +
+                                '</div>';
                         }
                     }
                 ]
@@ -131,5 +148,26 @@
                 }
             });
         });
+
+        $(document).on('click','.generate-result-feed-file',function () {
+            var listingId = $(this).data('listing');
+            $.ajax({
+                url: "<?= route('generate-result-feed-file') ?>",
+                type: 'POST',
+                data: {
+                    _token: "<?= csrf_token() ?>",
+                    listing_id: listingId
+                },
+                success: function (response) {
+                    //download the file url php code is  return response()->download($filetPath);
+                    var link = document.createElement('a');
+                    link.href = response.file_path;
+                    link.download = response.file_path.split('/').pop();
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                }
+            });
+        })
     </script>
 @stop

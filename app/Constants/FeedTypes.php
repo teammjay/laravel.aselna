@@ -21,6 +21,8 @@ class FeedTypes
 
     const ORDER_CANCEL = 9;
 
+    const ITEM_REPORT = 50;
+
     const names = [
         self::CREATE => 'Create',
         self::INVENTORY => 'Inventory',
@@ -31,6 +33,7 @@ class FeedTypes
         self::RELATIONSHIP_UPDATE => 'Relationship Update',
         self::SHIPMENT_UPDATE => 'Shipment Update',
         self::ORDER_CANCEL => 'Order Cancel',
+        self::ITEM_REPORT => 'Item Report',
     ];
 
     public static function getFeedName($feedId)

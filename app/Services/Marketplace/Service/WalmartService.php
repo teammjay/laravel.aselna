@@ -2,32 +2,81 @@
 
 namespace App\Services\Marketplace\Service;
 
+use App\Models\Listing;
 use App\Models\ListingFeed;
 use App\Models\ListingItemLink;
 use App\Services\Marketplace\Contracts\MarketplaceServiceInterface;
+use App\Utils\FileUtility;
 use App\Utils\XmlUtility;
+use Illuminate\Support\Facades\Log;
 
 class WalmartService implements MarketplaceServiceInterface
 {
 
     public function generateFeed($listingId)
     {
+        $listingInfo = Listing::where('id', $listingId)->first();
+        $feedInfo = ListingFeed::where('listing_id', $listingId)->first();
+        $feedId = $feedInfo->id;
+
+        $userIdentifier = $listingInfo->store->user_id;
+
+        $listingItems = ListingItemLink::where('listing_id', $listingId)->cursor();
+
+        $jsonFeed = [
+            'MPItemFeedHeader' => [
+                'sellingChannel' => 'marketplace',
+                'mart' => 'WALMART_US',
+                'subset' => 'EXTERNAL',
+                'version' => '4.6',
+                'local' => 'en',
+                'subCategory' => 'electronics_other',
+                'processMode' => 'REPLACE_ALL',
+                'requestId' => $listingId,
+                'requestBatchId' => $listingId . '_1',
+            ]
+        ];
+
+        foreach ($listingItems as $listingItem) {
+            $item = $listingItem->item;
+            $product = [
+                'Orderable' => [
+                    'endDate' => '2060-01-01T08:00:00Z',
+                    'productName' => $item->title,
+                    'productIdentifiers' => [
+                        'productId' => $item->upc,
+                        'productIdType' => 'UPC'
+                    ],
+                    'electronicsIndicator' => 'Yes',
+                    'shipsInOriginalPackaging' => 'Yes',
+                    'price' => '',
+                    'sku' => $item->sku,
+                    'brand' => $listingInfo->store->name,
+                    'startDate' => '2019-01-01T08:00:00Z',
+                    'MustShipAlone' => 'No',
+                    'ShippingWeight' => ''
+                ]
+            ];
+
+            $compatibleDevices = [];
+
+
+            $jsonFeed['MPItem'][] = $product;
+        }
+
+        FileUtility::saveToFile('feeds/walmart/' . $listingId . '.json', json_encode($jsonFeed));
+
+        return 'feeds/walmart/' . $listingId . '.json';
+    }
+
+    public function generateFeedXML($listingId)
+    {
         $listingInfo = ListingFeed::where('id', $listingId)->first();
 
         $userIdentifier = $listingInfo->store->user_id;
 
         $listingItems = ListingItemLink::where('feed_id', $listingId)->cursor();
-
-        // create a walmart feed
-        //<MPItemFeed xmlns="http://walmart.com/">
-        //    <MPItemFeedHeader>
-        //        <version>3.1</version>
-        //        <requestId>d05aafd1-4fe7-d258-437c-e32c3e935e2e</requestId>
-        //        <requestBatchId>d05aafd1-4fe7-d258-437c-e32c3e935e2e_1</requestBatchId>
-        //        <feedDate>2022-04-08T21:06:36</feedDate>
-        //        <mart>WALMART_US</mart>
-        //    </MPItemFeedHeader>
-        //    <MPItem>
+// create a walmart feed
         $feed = [
             'xmlns' => 'http://walmart.com/',
             'MPItemFeedHeader' => [
@@ -40,32 +89,36 @@ class WalmartService implements MarketplaceServiceInterface
             'MPItem' => []
         ];
 
-        // Add products to the feed
-
         foreach ($listingItems as $listingItem) {
             $item = $listingItem->item;
             $product = [];
-            $product['SKU'] = $item->sku;
-            $product['StandardProductID'] = [
-                'Type' => 'UPC',
-                'Value' => $item->upc,
+            $product['processMode'] = 'REPLACE_ALL';
+            $product['feedDate'] = $listingItem->created_at;
+            $product['sku'] = $item->sku;
+            $product['productIdentifiers'] = [
+                'productIdentifier' => [
+                    'productIdType' => 'UPC',
+                    'productId' => $item->upc,
+                ]
             ];
-            $product['Condition'] = [
-                'ConditionType' => 'New'
+            $product['MPProduct'] = [
+                'SkuUpdate' => 'No',
+                'productName' => $item->title,
+                'ProductIdUpdate' => 'No',
             ];
-            $product['DescriptionData'] = [
-                'Title' => $item->title,
-                'Brand' => $item->manufacturer->name,
-                'PackageDimensions' => [
-                    'Length' => '5',
-                    'Width' => '5',
-                    'Height' => '5',
-                    'UnitOfMeasure' => 'IN',
+            // ctageory is left
+            $product['MPOffer'] = [
+                'price' => 24,
+                'MinimumAdvertisedPrice' => 54,
+                'MustShipAlone' => 'No',
+                'ShippingWeight' => [
+                    'value' => 0.33,
+                    'unit' => 'LB'
                 ],
-                'ShippingWeight' => $item->description,
-                'MerchantCatalogNumber' => $item->bullet_points,
-                'MSRP' => $item->manufacturer,
+                'ProductTaxCode' => '2038716',
+                'shipsInOriginalPackaging' => 'Yes'
             ];
+
             $feed['MPItem'][] = $product;
         }
 
