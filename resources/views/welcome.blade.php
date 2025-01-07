@@ -113,8 +113,7 @@
                     {
                         data: null, name: 'action', orderable: false, searchable: false, render: function (data) {
                             return '<div>' +
-                                '<button class="btn btn-primary col-md-6 generate-feed-file" data-listing="' + data.listing_id + '">Download Feed File</button>' +
-                                '<button class="btn btn-primary col-md-6 generate-result-feed-file" data-listing="' + data.listing_id + '">Download Result Feed File</button>' +
+                                '<button class="btn btn-primary generate-feed-file" data-listing="' + data.listing_id + '">Download Feed File</button>' +
                                 '</div>';
                         }
                     }
@@ -138,12 +137,13 @@
                 },
                 success: function (response) {
                     //download the file url php code is  return response()->download($filetPath);
-                    // var link = document.createElement('a');
-                    // link.href = response.file_path;
-                    // link.download = response.file_path.split('/').pop();
-                    // document.body.appendChild(link);
-                    // link.click();
-                    // document.body.removeChild(link);
+                    if (response.generating) return;
+                    var link = document.createElement('a');
+                    link.href = response.file_path;
+                    link.download = response.file_path.split('/').pop();
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
                 }
             });
         });

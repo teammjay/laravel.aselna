@@ -83,7 +83,7 @@ class AmazonService implements MarketplaceServiceInterface
 
         $xmlContent = XmlUtility::toXml($feed, 'AmazonEnvelope');
 
-        XmlUtility::saveToFile('feeds/amazon/' . $listingId . '.xml', $xmlContent);
+        XmlUtility::saveToFile(public_path('feeds/amazon/' . $listingId . '.xml'), $xmlContent);
 
         //return the file path so that it can be downloaded
         return 'feeds/amazon/' . $listingId . '.xml';
