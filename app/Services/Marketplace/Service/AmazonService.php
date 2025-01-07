@@ -8,22 +8,25 @@ use App\Models\ListingItemLink;
 use App\Services\Auth\AmazonAuthService;
 use App\Services\Marketplace\Contracts\MarketplaceServiceInterface;
 use App\Utils\XmlUtility;
+use Illuminate\Support\Facades\Log;
 
 class AmazonService implements MarketplaceServiceInterface
 {
     private $authService;
 
-    public function __construct(AmazonAuthService $authService)
-    {
-        $this->authService = $authService;
-    }
-
     public function generateFeed($listingId)
     {
-        $listingInfo = ListingFeed::where('id', $listingId)->first();
+        $listingInfo = Listing::where('id', $listingId)->first();
         // Generate feed for Amazon
         $userIdentifier = $listingInfo->store->user_id;
-        $listingItems = ListingItemLink::where('feed_id', $listingId)->cursor();
+        Log::info('Listing Info Created');
+        $feedInfo = ListingFeed::where('listing_id', $listingId)->first();
+
+        $feedId = $feedInfo->id;
+        Log::info('Feed Info Created ' . $feedId);
+
+        $listingItems = ListingItemLink::where('listing_id', $listingId)->cursor();
+
         $feed = [
             'headers' => [
                 'DocumentVersion' => '1.01',
@@ -43,6 +46,7 @@ class AmazonService implements MarketplaceServiceInterface
                 'Type' => 'UPC',
                 'Value' => $item->upc,
             ];
+            $product['ProductTaxCode'] = '';
             $product['Condition'] = [
                 'ConditionType' => 'New'
             ];
@@ -57,26 +61,17 @@ class AmazonService implements MarketplaceServiceInterface
                 ],
                 'ShippingWeight' => $item->description,
                 'MerchantCatalogNumber' => $item->bullet_points,
-                'MSRP' => $item->manufacturer,
-//                'SearchTerms' => $item->search_terms,
-//                'ItemType' => 'flat-sheets',
+                'MSRP' => $item->price,
+                'Manufacturer' => $item->manufacturer->name,
             ];
-            $product['ProductData'] = [
-                'Clothing' => [
-                    'VariationData' => [
-                        'Parentage' => 'parent',
-                        'Size' => $item->size->name,
-                        'Color' => $item->color->name,
-                    ],
-                ],
-                'Health' => [
-                    'ProductType' => 'Health',
-                    'HealthMisc' => [
-                        'Ingredients' => $item->ingredients,
-                        'Directions' => $item->directions,
-                    ],
-                ],
-            ];
+            $bulletPoints = [];
+            $storeProducts = $item->storeProduct;
+            foreach ($storeProducts->features as $feature) {
+                $bulletPoints[] = $feature->value;
+            }
+            $product['DescriptionData']['BulletPoint'] = $bulletPoints;
+            $devices = $item->devices;
+            $product['ProductData']['wireless']['ProductType']['WirelessAccessories'] = [];
 
             $messages['MessageID'] = $listingItem->id;
             $messages['Product'] = $product;
@@ -97,6 +92,7 @@ class AmazonService implements MarketplaceServiceInterface
     public function submitFeed($feedId)
     {
         $content = '';
+        $this->authService = new AmazonAuthService();
         $generatedFeedId = $this->authService->uploadProductFeed($content);
 
         $this->authService->submitFeed($generatedFeedId);
