@@ -73,7 +73,7 @@ class WalmartService implements MarketplaceServiceInterface
             $jsonFeed['MPItem'][] = $product;
         }
 
-        FileUtility::saveToFile('feeds/walmart/' . $listingId . '.json', json_encode($jsonFeed));
+        FileUtility::saveToFile(public_path('feeds/walmart/' . $listingId . '.json'), json_encode($jsonFeed));
 
         return 'feeds/walmart/' . $listingId . '.json';
     }

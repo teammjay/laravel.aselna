@@ -25,10 +25,7 @@ use App\Jobs\ShippingCarrierJob;
 use App\Jobs\StoreSyncJob;
 use App\Jobs\StoreTypeListingSyncJob;
 use App\Jobs\StoreTypeSyncJob;
-use App\Jobs\UPCGenerateJob;
 use App\Jobs\UPCSyncJob;
-use App\Models\DeviceInterface;
-use App\Models\ProductInterface;
 use Illuminate\Console\Command;
 
 class SyncAllTables extends Command
@@ -52,29 +49,29 @@ class SyncAllTables extends Command
      */
     public function handle()
     {
-//        StoreTypeSyncJob::dispatch();
-//        StoreSyncJob::dispatch();
-//        ManufacturerSyncJob::dispatch();
-//        DeviceTypesSyncJob::dispatch();
-//        BrandSyncJob::dispatch();
-//        DevicesSyncJob::dispatch();
-//        CategorySyncJob::dispatch();
-//        ProductConditionJob::dispatch();
-//        CarrierSyncJob::dispatch();
-//        ShippingCarrierJob::dispatch();
-//        InterfaceSyncJob::dispatch();
-//        DeviceInterfaces::dispatch();
-//        GenerationTypeAndTemplateSync::dispatch();
+        StoreTypeSyncJob::dispatch();
+        StoreSyncJob::dispatch();
+        ManufacturerSyncJob::dispatch();
+        DeviceTypesSyncJob::dispatch();
+        BrandSyncJob::dispatch();
+        DevicesSyncJob::dispatch();
+        CategorySyncJob::dispatch();
+        ProductConditionJob::dispatch();
+        CarrierSyncJob::dispatch();
+        ShippingCarrierJob::dispatch();
+        InterfaceSyncJob::dispatch();
+        DeviceInterfaces::dispatch();
+        GenerationTypeAndTemplateSync::dispatch();
         ProductSyncJob::dispatch();
-//        ProductInterfaces::dispatch();
-//        ListingSyncJob::dispatch();
-//        ListingItemSyncJob::dispatch();
-//        ListingItemDataSyncJob::dispatch();
-//        ListingItemLinkSyncJob::dispatch();
-//        StoreTypeListingSyncJob::dispatch();
-//        UPCSyncJob::dispatch();
-//        LogisticCentreSyncJob::dispatch();
-//        ListingFeedSyncJob::dispatch();
-//        ProductImagesSyncJob::dispatch();
+        ProductInterfaces::dispatch();
+        ListingSyncJob::dispatch();
+        ListingItemSyncJob::dispatch();
+        ListingItemDataSyncJob::dispatch();
+        ListingItemLinkSyncJob::dispatch();
+        StoreTypeListingSyncJob::dispatch();
+        UPCSyncJob::dispatch();
+        LogisticCentreSyncJob::dispatch();
+        ListingFeedSyncJob::dispatch();
+        ProductImagesSyncJob::dispatch();
     }
 }
