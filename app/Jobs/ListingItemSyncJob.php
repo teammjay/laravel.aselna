@@ -26,10 +26,20 @@ class ListingItemSyncJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $listingItems = DB::connection('easyesale_db')->table('listing_item')->cursor();
-        foreach ($listingItems as $listingItem) {
-            $this->createListingItem($listingItem);
+        $listingItemsQ = DB::connection('easyesale_db')
+            ->table('listing_item')
+            // only on local
+            ->orderBy('id');
+
+        if (env('APP_ENV') !== 'local') {
+            $listingItemsQ->whereRaw('store_product_id in (select id from oydera_store_product where product_id in (select id from oydera_product where oem_generic = 2))');
         }
+
+        $listingItemsQ->chunk(1000, function ($listingItems) {
+            foreach ($listingItems as $listingItem) {
+                $this->createListingItem($listingItem);
+            }
+        });
     }
 
     private function createListingItem(mixed $listingItem)

@@ -12,7 +12,7 @@ class ListingItemLinkSyncJob implements ShouldQueue
 {
     use Queueable;
 
-    public $timeout = 3000;
+    public $timeout = 60000;
 
     /**
      * Create a new job instance.
@@ -27,10 +27,18 @@ class ListingItemLinkSyncJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $listingItemLinks = DB::connection('easyesale_db')->table('listing_item_link')->cursor();
-        foreach ($listingItemLinks as $listingItemLink) {
-            $this->createListingItemLink($listingItemLink);
+        $listingItemLinksQ = DB::connection('easyesale_db')->table('listing_item_link')
+            ->orderBy('id');
+
+        if (env('APP_ENV') !== 'local') {
+            $listingItemLinksQ->whereRaw('item_id in (select id from oydera_listing_item where store_product_id in (select id from oydera_store_product where product_id in (select id from oydera_product where oem_generic = 2)))');
         }
+
+        $listingItemLinksQ->chunk(1000, function ($listingItemLinks) {
+                foreach ($listingItemLinks as $listingItemLink) {
+                    $this->createListingItemLink($listingItemLink);
+                }
+            });
     }
 
     private function createListingItemLink(mixed $listingItemLink)

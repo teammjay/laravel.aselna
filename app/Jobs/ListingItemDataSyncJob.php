@@ -11,7 +11,7 @@ class ListingItemDataSyncJob implements ShouldQueue
 {
     use Queueable;
 
-    public $timeout = 3000;
+    public $timeout = 60000;
 
     /**
      * Create a new job instance.
@@ -26,10 +26,18 @@ class ListingItemDataSyncJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $listingItemDatas = DB::connection('easyesale_db')->table('cea_listing_item_detail')->cursor();
-        foreach ($listingItemDatas as $listingItemData) {
-            $this->createListingItemData($listingItemData);
+        $listingItemDataQ = DB::connection('easyesale_db')->table('cea_listing_item_detail')
+            ->orderBy('id');
+
+        if (env('APP_ENV') !== 'local') {
+            $listingItemDataQ->whereRaw('listing_item_id in (select id from oydera_listing_item where store_product_id in (select id from oydera_store_product where product_id in (select id from oydera_product where oem_generic = 2)))');
         }
+
+        $listingItemDataQ->chunk(1000, function ($listingItemDatas) {
+            foreach ($listingItemDatas as $listingItemData) {
+                $this->createListingItemData($listingItemData);
+            }
+        });
     }
 
     private function createListingItemData(mixed $listingItemData)

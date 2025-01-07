@@ -11,7 +11,7 @@ class ListingSyncJob implements ShouldQueue
 {
     use Queueable;
 
-    protected $timeout = 3000;
+    public $timeout = 3000;
 
     /**
      * Create a new job instance.
@@ -26,10 +26,14 @@ class ListingSyncJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $listings = DB::connection('easyesale_db')->table('listing')->cursor();
-        foreach ($listings as $listing) {
-            $this->createListing($listing);
-        }
+        $listings = DB::connection('easyesale_db')
+            ->table('listing')
+            ->orderBy('id')
+            ->chunk(1000, function ($listings) {
+                foreach ($listings as $listing) {
+                    $this->createListing($listing);
+                }
+            });
     }
 
     private function createListing(mixed $listing)

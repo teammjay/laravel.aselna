@@ -45,7 +45,10 @@ class ProductSyncJob implements ShouldQueue
 //
 //            $this->createProductFeatures($product, $product_id);
 //        }
-        $easyesaleProducts = DB::connection('easyesale_db')->table('product')->whereNull('deleted_by')->where('status', '=', '1')->cursor();
+        $easyesaleProducts = DB::connection('easyesale_db')->table('product')
+            ->whereNull('deleted_by')
+            ->where('oem_generic', '=', '2')
+            ->where('status', '=', '1')->cursor();
         foreach ($easyesaleProducts as $product) {
             $this->updateProduct($product);
 

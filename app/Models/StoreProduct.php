@@ -45,7 +45,7 @@ class StoreProduct extends Model
         $query2->leftJoin('products','products.product_id', '=', 'store_product.product_id');
         $query2->leftJoin('product_type','products.product_type', '=', 'product_type.id');
         $query2->whereIn('store_product.product_id', $product_ids);
-        return $query2->get();
+        return $query2->cursor();
     }
 
     public function product()
