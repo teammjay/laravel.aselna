@@ -88,7 +88,7 @@ class DevicesSyncJob implements ShouldQueue
 
     private function createSyncDevice(mixed $device)
     {
-        $rating = DB::connection('easyesale_db')->table('cea_device_rating')->where('id', $device->rating_id)->select('value')->first();
+//        $rating = DB::connection('easyesale_db')->table('cea_device_rating')->where('id', $device->rating_id)->select('value')->first();
         Device::updateOrCreate([
             'id' => $device->id,
         ], [
@@ -107,7 +107,7 @@ class DevicesSyncJob implements ShouldQueue
 //            'image' => $device->image_id,
             'notes' => $device->notes,
             'order' => $device->sort_order,
-            'rating_id' => $rating,
+//            'rating_id' => $rating->value,
 //            'screen_id' => $device->screen_id,
 //            'status' => $device->status,
 //            'thumbnail_image' => $device->thumbnail_id

@@ -61,6 +61,7 @@ Route::post('catalog/deleteproductchannel', [CatalogController::class, 'deletePr
 Route::post('catalog/bulk-update', [CatalogController::class, 'bulkUpdate'])->name('catalog.bulk-update');
 
 Route::post('/generate-feed-file',[HomeController::class, 'generateFeedFile'])->name('generate-feed-file');
+Route::post('/generate-result-feed-file', [HomeController::class, 'generateResultFeedFile'])->name('generate-result-feed-file');
 
 Route::controller(StoreController::class)->group(function () {
     Route::get('/stores', 'index')->name('store.list');

@@ -12,6 +12,8 @@ class ListingFeedSyncJob implements ShouldQueue
 {
     use Queueable;
 
+    public $timeout = 4000;
+
     /**
      * Create a new job instance.
      */
@@ -25,10 +27,14 @@ class ListingFeedSyncJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $allFeeds = DB::connection('easyesale_db')->table('listing_feed')->cursor();
-        foreach ($allFeeds as $feed) {
-            $this->createListingFeed($feed);
-        }
+        DB::connection('easyesale_db')
+            ->table('listing_feed')
+            ->orderBy('id')
+            ->chunk(1000, function ($allFeeds) {
+                foreach ($allFeeds as $feed) {
+                    $this->createListingFeed($feed);
+                }
+            });
     }
 
     private function createListingFeed($feed)

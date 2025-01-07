@@ -61,12 +61,22 @@ class AmazonService implements MarketplaceServiceInterface
 //                'SearchTerms' => $item->search_terms,
 //                'ItemType' => 'flat-sheets',
             ];
-//            $product['ProductData'] = [
-//                'HealthAndBeauty' => [
-//                    'ProductType' => 'Health',
-//                    'Beauty' => 'Beauty',
-//                ],
-//            ];
+            $product['ProductData'] = [
+                'Clothing' => [
+                    'VariationData' => [
+                        'Parentage' => 'parent',
+                        'Size' => $item->size->name,
+                        'Color' => $item->color->name,
+                    ],
+                ],
+                'Health' => [
+                    'ProductType' => 'Health',
+                    'HealthMisc' => [
+                        'Ingredients' => $item->ingredients,
+                        'Directions' => $item->directions,
+                    ],
+                ],
+            ];
 
             $messages['MessageID'] = $listingItem->id;
             $messages['Product'] = $product;
@@ -78,10 +88,10 @@ class AmazonService implements MarketplaceServiceInterface
 
         $xmlContent = XmlUtility::toXml($feed, 'AmazonEnvelope');
 
-        XmlUtility::saveToFile('feeds/' . $listingId . '.xml', $xmlContent);
+        XmlUtility::saveToFile('feeds/amazon/' . $listingId . '.xml', $xmlContent);
 
         //return the file path so that it can be downloaded
-        return 'feeds/' . $listingId . '.xml';
+        return 'feeds/amazon/' . $listingId . '.xml';
     }
 
     public function submitFeed($feedId)
