@@ -1037,101 +1037,104 @@ class ListingController extends Controller
             echo '</pre>';*/
 
             if ($store_id && $product_ids) {
+                foreach ($product_ids as $index => $product_id) {
 
-                $store_type_detail = StoreType::getStoreTypeDetailById($store_id);
-                $max_title_length = $store_type_detail->max_title_length;
-                $products = StoreProduct::getStoreProducts($product_ids);
-                //echo $query2->toSql();die;
+                    $store_type_detail = StoreType::getStoreTypeDetailById($store_id);
+                    $max_title_length = $store_type_detail->max_title_length;
+                    $products = StoreProduct::getStoreProducts([$product_id]);
+                    //echo $query2->toSql();die;
 
-                //echo '<pre>';
-                //print_r($products);die;
-                if (count($products ?? []) > 0) {
-                    $productsArray = [];
-                    foreach ($products as $key => $product) {
-                        $store_product_id = trim($product->id);
-                        if(array_key_exists($store_product_id, $product_details)) {
-                            $pDetail = $product_details[$store_product_id];
-                            /*echo '<pre>';
-                            print_r($product_details[$store_product_id]);
-                            echo '</pre>';*/
-                            $product_short_keyword = $pDetail->short_keyword;
-                            $product_long_keyword = $pDetail->long_keyword;
-                            $product_title = $pDetail->title;
-                            $product_price = $pDetail->price;
-                            $product_price_overwrite = $pDetail->price_overwrite;
-                            $title_template = $title_templates[$key];
-                            if ($title_template) {
-                                if (str_contains($title_template, '#short_keyword')) {
+                    //echo '<pre>';
+                    //print_r($products);die;
+                    if (count($products ?? []) > 0) {
+                        $productsArray = [];
+                        foreach ($products as $key => $product) {
+                            $store_product_id = trim($product->id);
+                            if (array_key_exists($store_product_id, $product_details)) {
+                                $pDetail = $product_details[$store_product_id];
+                                /*echo '<pre>';
+                                print_r($product_details[$store_product_id]);
+                                echo '</pre>';*/
+                                $product_short_keyword = $pDetail->short_keyword;
+                                $product_long_keyword = $pDetail->long_keyword;
+                                $product_title = $pDetail->title;
+                                $product_price = $pDetail->price;
+                                $product_price_overwrite = $pDetail->price_overwrite;
+                                $title_template = $title_templates[$index];
+                                if ($title_template) {
+                                    if (str_contains($title_template, '#short_keyword')) {
 
-                                    $title_template = str_replace('#short_keyword', $product_short_keyword, $title_template);
+                                        $title_template = str_replace('#short_keyword', $product_short_keyword, $title_template);
+                                    }
+
+                                    if (str_contains($title_template, '#long_keyword')) {
+
+                                        $title_template = str_replace('#long_keyword', $product_long_keyword, $title_template);
+                                    }
+
+                                    if (str_contains($title_template, '#unique_code')) {
+
+                                        $title_template = str_replace('#unique_code', '[^]', $title_template);
+                                    }
+
+                                    if (str_contains($title_template, '#product')) {
+
+                                        $title_template = str_replace('#product', $product_title, $title_template);
+                                    }
                                 }
 
-                                if (str_contains($title_template, '#long_keyword')) {
+                                $query = Device::select('device.*', 'brands.name as brand_name')->with('deviceType');
+                                $query->leftJoin('brands', 'brands.id', '=', 'device.brand_id');
+                                $query->leftJoin('device_interface', 'device_interface.device_id', '=', 'device.id');
+                                $query->leftJoin('product_interface', 'product_interface.interface_id', '=', 'device_interface.interface_id');
+                                $query->where('product_interface.product_id', $product->product_id);
+                                if (isset($selected_device[$product->product_id]) && !empty($selected_device[$product->product_id])) {
+                                    $query->whereIn('device.id', $selected_device[$product->product_id]);
+                                }
+                                if ($device_type) {
+                                    $query->whereIn('device.device_type_id', $device_type);
+                                }
+                                if ($brand) {
+                                    $query->whereIn('device.brand_id', $brand);
+                                }
+                                if ($rating) {
+                                    $query->where('device.rating_id', $rating);
+                                }
+                                if ($popularity) {
+                                    $query->where('device.rating_id', $popularity);
+                                }
+                                $query->orderBy('brand_name', 'asc');
+                                $query->orderBy('device.name', 'asc');
+                                $devices = $query->get();
 
-                                    $title_template = str_replace('#long_keyword', $product_long_keyword, $title_template);
+                                /*echo '<pre>';
+                                print_r($devices);
+                                echo '<pre>';die;*/
+
+                                if ($generate_type_name) {
+                                    switch (trim(strtolower($generate_type_name))) {
+                                        case 'combined devices':
+                                            $productsArray[] = $this->generateProductTitles($title_template, $product, $devices, $max_title_length, $brand_seperator, $device_seperator, $compress, $generate_type, $product_price, $store_product_id, $product_price_overwrite);
+                                            break;
+                                        case 'free group':
+                                            $productsArray[] = $this->generateFreeGroupProductTitles($title_template, $product, $devices, $max_title_length, $brand_seperator, $device_seperator, $compress, $generate_type, $product_price, $store_product_id, $product_price_overwrite);
+                                            break;
+                                        case 'single device':
+                                            $productsArray[] = $this->generateSingleDeviceProductTitles($title_template, $product, $devices, $max_title_length, $brand_seperator, $device_seperator, $compress, $generate_type, $product_price, $store_product_id, $product_price_overwrite);
+                                            break;
+                                    }
                                 }
 
-                                if (str_contains($title_template, '#unique_code')) {
-
-                                    $title_template = str_replace('#unique_code', '[^]', $title_template);
-                                }
-
-                                if (str_contains($title_template, '#product')) {
-
-                                    $title_template = str_replace('#product', $product_title, $title_template);
-                                }
                             }
-
-                            $query = Device::select('device.*', 'brands.name as brand_name')->with('deviceType');
-                            $query->leftJoin('brands', 'brands.id', '=', 'device.brand_id');
-                            $query->leftJoin('device_interface', 'device_interface.device_id', '=', 'device.id');
-                            $query->leftJoin('product_interface', 'product_interface.interface_id', '=', 'device_interface.interface_id');
-                            $query->where('product_interface.product_id', $product->product_id);
-                            if (isset($selected_device[$product->product_id]) && !empty($selected_device[$product->product_id])) {
-                                $query->whereIn('device.id', $selected_device[$product->product_id]);
-                            }
-                            if ($device_type) {
-                                $query->whereIn('device.device_type_id', $device_type);
-                            }
-                            if ($brand) {
-                                $query->whereIn('device.brand_id', $brand);
-                            }
-                            if ($rating) {
-                                $query->where('device.rating_id', $rating);
-                            }
-                            if ($popularity) {
-                                $query->where('device.rating_id', $popularity);
-                            }
-                            $query->orderBy('brand_name', 'asc');
-                            $query->orderBy('device.name', 'asc');
-                            $devices = $query->get();
-
-                            /*echo '<pre>';
-                            print_r($devices);
-                            echo '<pre>';die;*/
-
-                            if ($generate_type_name) {
-                                switch (trim(strtolower($generate_type_name))) {
-                                    case 'combined devices':
-                                        $productsArray[] = $this->generateProductTitles($title_template, $product, $devices, $max_title_length, $brand_seperator, $device_seperator, $compress, $generate_type, $product_price, $store_product_id, $product_price_overwrite);
-                                        break;
-                                    case 'free group':
-                                        $productsArray[] = $this->generateFreeGroupProductTitles($title_template, $product, $devices, $max_title_length, $brand_seperator, $device_seperator, $compress, $generate_type, $product_price, $store_product_id, $product_price_overwrite);
-                                        break;
-                                    case 'single device':
-                                        $productsArray[] = $this->generateSingleDeviceProductTitles($title_template, $product, $devices, $max_title_length, $brand_seperator, $device_seperator, $compress, $generate_type, $product_price, $store_product_id, $product_price_overwrite);
-                                        break;
-                                }
-                            }
-
                         }
+
+                        /*echo '<pre>';
+                        print_r($productsArray);
+                        echo '</pre>';die;*/
+
                     }
-
-                    /*echo '<pre>';
-                    print_r($productsArray);
-                    echo '</pre>';die;*/
-
                 }
+
                 if (!empty($productsArray)) {
                     $view = view('listing.target_listing', compact('productsArray', 'max_title_length'))->render();
 
