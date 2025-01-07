@@ -63,6 +63,7 @@ class ListingController extends Controller
         $columnSortOrder = $request['order'][0]['dir'];
 
         $query = ListingItem::with([
+            'storeProduct',
             'storeProduct.store.storeType',
             'storeProduct.store',
             'storeProduct.product',
@@ -462,25 +463,19 @@ class ListingController extends Controller
         if ($columnName != '') {
             switch (strtolower($columnName)) {
                 case 'product_sku':
-                    $query->whereHas('storeProduct.product', function ($q) use ($request,$columnSortOrder) {
-                        $q->orderBy('product_sku',$columnSortOrder);
-                    });
+                    $query->orderByRaw('(SELECT product_sku FROM products LEFT JOIN store_product ON(store_product.product_id = products.product_id) WHERE store_product.id = listing_item.store_product_id) '.$columnSortOrder);
                     break;
                 case 'product_size':
-                    $query->orderBy(Catalog::select('dimensions_width')
-                        ->whereColumn('id', 'store_product.product_id'), $columnSortOrder);
+                    $query->orderByRaw('(SELECT dimensions_width FROM products LEFT JOIN store_product ON(store_product.product_id = products.product_id) WHERE store_product.id = listing_item.store_product_id) '.$columnSortOrder);
                     break;
                 case 'product_color':
-                    $query->orderBy(Catalog::select('product_color')
-                        ->whereColumn('id', 'store_product.product_id'), $columnSortOrder);
+                    $query->orderByRaw('(SELECT product_color FROM products LEFT JOIN store_product ON(store_product.product_id = products.product_id) WHERE store_product.id = listing_item.store_product_id) '.$columnSortOrder);
                     break;
                 case 'store_name':
-                    $query->orderBy(Store::select('name')
-                        ->whereColumn('id', 'store_product.store_id'), $columnSortOrder);
+                    $query->orderByRaw('(SELECT name FROM store LEFT JOIN store_product ON(store_product.store_id = store.id) LEFT JOIN listing_item ON(listing_item.store_product_id = store_product.store_id) WHERE store_product.id = listing_item.store_product_id) '.$columnSortOrder);
                     break;
                 case 'generation_type_name':
-                    $query->orderBy(ListingGenerationType::select('name')
-                        ->whereColumn('code', 'listing_generation_type.code'), $columnSortOrder);
+                    $query->orderByRaw('(SELECT name FROM listing_generation_type WHERE listing_item.generation_type_id = listing_generation_type.code) '.$columnSortOrder);
                     break;
             }
 
@@ -506,6 +501,9 @@ class ListingController extends Controller
         //echo $query->toSql();die;
         //dd(DB::getQueryLog());
         $products = $query->skip($start)->take($perPage)->get(); // Paginate results
+        /*echo '<pre>';
+        print_r($products);
+        echo '</pre>';die;*/
         $totalRecordwithFilter = $productsRecord->total();
 
         $data = [];
