@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\FeedGenerationJob;
 use App\Models\Brand;
 use App\Models\Catalog;
 use App\Models\Device;
@@ -1510,7 +1511,7 @@ class ListingController extends Controller
                                             }else{
                                                 $nsku = StoreTypeListing::generateUniqueAlphabeticSku($product_codes[$key], 6);
                                             }
-                                            
+
                                             if (str_contains($product, '[^]')) {
                                                 $product = str_replace('[^]', $nsku, $product);
                                             }
@@ -1542,9 +1543,8 @@ class ListingController extends Controller
 
                                             ListingItemLink::create($itemLink);
                                         }
-                                        /*echo '<pre>';
-                                        print_r($modelDetail);
-                                        echo '</pre>';die;*/
+
+                                        FeedGenerationJob::dispatch($store_type_listing_id);
                                     }
                                 }
                             }
