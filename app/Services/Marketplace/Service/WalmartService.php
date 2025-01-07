@@ -16,10 +16,12 @@ class WalmartService implements MarketplaceServiceInterface
     public function generateFeed($listingId)
     {
         $listingInfo = Listing::where('id', $listingId)->first();
+        Log::info('Listing Info Created');
         $feedInfo = ListingFeed::where('listing_id', $listingId)->first();
         $feedId = $feedInfo->id;
+        Log::info('Feed Info Created' . $feedId);
 
-        $userIdentifier = $listingInfo->store->user_id;
+//        $userIdentifier = $listingInfo->store->user_id;
 
         $listingItems = ListingItemLink::where('listing_id', $listingId)->cursor();
 
@@ -59,6 +61,10 @@ class WalmartService implements MarketplaceServiceInterface
             ];
 
             $compatibleDevices = [];
+
+            Log::info('Device: ' . json_encode($item->devices));
+
+            $product['Visible'] = [];
 
 
             $jsonFeed['MPItem'][] = $product;

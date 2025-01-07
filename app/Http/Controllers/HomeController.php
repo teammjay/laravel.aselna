@@ -2,12 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\FeedGenerationJob;
 use App\Models\Listing;
 use App\Models\ListingFeed;
 use App\Models\Store;
 use App\Services\DataTable\DataTableService;
 use App\Services\Marketplace\MarketplaceServiceFactory;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class HomeController extends Controller
 {
@@ -69,15 +71,22 @@ class HomeController extends Controller
 
         $listingId = $request->listing_id;
         $listingFeed = Listing::where('id', $listingId)->first();
-
-        // get StoreType froms store that is inside listingfeed
         $storeType = $listingFeed->store->storeType->name;
 
-        $marketplaceService = MarketplaceServiceFactory::create($storeType);
+        FeedGenerationJob::dispatch($listingId);
 
-        $filetPath = $marketplaceService->generateFeed($listingId);
+        //file may be json or xml check for the file type
+        $filePattern = 'feeds/' . strtolower($storeType) . '/' . $listingId . '.{json,xml}';
+        $files = glob($filePattern, GLOB_BRACE);
+        Log::info('Files: ' . json_encode($files));
+        if (!empty($files)) {
+            return response()->json(['file_path' => $filePattern]);
+        }
+
+        // get StoreType froms store that is inside listingfeed
+
         // give the url to download the file
-        return response()->json(['file_path' => $filetPath]);
+        return response()->json(['generating' => true]);
     }
 
     public function generateResultFeedFile(Request $request)

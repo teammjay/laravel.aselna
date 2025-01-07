@@ -38,9 +38,10 @@ class ListingItem extends Model
         return $this->belongsTo(Store::class);
     }
 
-    public function device()
+    public function devices()
     {
-        return $this->belongsTo(Device::class);
+        //listing_item_detail.listing_item_id = listing_item.id
+        return $this->hasMany(ListingItemDetail::class,'listing_item_id','id');
     }
 
     public function products()

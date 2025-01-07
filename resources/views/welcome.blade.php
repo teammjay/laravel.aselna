@@ -62,7 +62,6 @@
                 processing: true,
                 serverSide: true,
                 searching: false,
-                scrollX: true,
                 ajax: {
                     url: "{{ route('listing-data') }}",
                     data: function (d) {
@@ -139,12 +138,12 @@
                 },
                 success: function (response) {
                     //download the file url php code is  return response()->download($filetPath);
-                    var link = document.createElement('a');
-                    link.href = response.file_path;
-                    link.download = response.file_path.split('/').pop();
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
+                    // var link = document.createElement('a');
+                    // link.href = response.file_path;
+                    // link.download = response.file_path.split('/').pop();
+                    // document.body.appendChild(link);
+                    // link.click();
+                    // document.body.removeChild(link);
                 }
             });
         });
@@ -160,12 +159,12 @@
                 },
                 success: function (response) {
                     //download the file url php code is  return response()->download($filetPath);
-                    var link = document.createElement('a');
-                    link.href = response.file_path;
-                    link.download = response.file_path.split('/').pop();
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
+                    // var link = document.createElement('a');
+                    // link.href = response.file_path;
+                    // link.download = response.file_path.split('/').pop();
+                    // document.body.appendChild(link);
+                    // link.click();
+                    // document.body.removeChild(link);
                 }
             });
         })
