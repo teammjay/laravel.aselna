@@ -27,4 +27,9 @@ class ListingItemDetail extends Model
 
 
     protected $fillable = ['id', 'sales_count', 'sku', 'upc', 'title', 'kicked', 'replaced_id', 'device_id', 'device_carrier_id', 'listing_item_id', 'last_sale_date', 'url', 'store_sku', 'created_by', 'updated_by', 'created_at', 'updated_at'];
+
+    public function device()
+    {
+        return $this->belongsTo(Device::class,'device_id');
+    }
 }

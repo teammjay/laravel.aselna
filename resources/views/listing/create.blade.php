@@ -1048,6 +1048,7 @@
                             success: function (response) {
                                 if (response.success) {
                                     $('#proSubType').show();
+                                    console.log(0);
                                     if (cnt == 0) {
                                         $('#product_sub_type_filter').html(response.option);
                                         $('#product_sub_type_filter').gs_multiselect();

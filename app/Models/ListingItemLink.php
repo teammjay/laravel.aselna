@@ -28,9 +28,9 @@ class ListingItemLink extends Model
 
     protected $fillable = ['id', 'item_id', 'listing_id', 'feed_id', 'parent_id', 'client', 'replaced_id', 'order_operation_item_id', 'old_price', 'sync_status', 'feed_message_id', 'created_by', 'updated_by', 'created_at', 'updated_at'];
 
-    public function listing()
+    public function listingItem()
     {
-        return $this->belongsTo(Listing::class);
+        return $this->belongsTo(ListingItem::class,'item_id');
     }
 
     public function item()
