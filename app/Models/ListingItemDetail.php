@@ -30,6 +30,6 @@ class ListingItemDetail extends Model
 
     public function device()
     {
-        return $this->belongsTo(Device::class, 'device_id');
+        return $this->belongsTo(Device::class,'device_id');
     }
 }

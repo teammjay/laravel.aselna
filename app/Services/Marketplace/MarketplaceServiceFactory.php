@@ -6,6 +6,7 @@ use App\Services\Marketplace\Contracts\MarketplaceServiceInterface;
 use App\Services\Marketplace\Exceptions\MarketplaceNotSupportedException;
 use App\Services\Marketplace\Service\AmazonService;
 use App\Services\Marketplace\Service\WalmartService;
+use App\Services\Marketplace\Service\EbayService;
 
 class MarketplaceServiceFactory
 {
@@ -13,7 +14,7 @@ class MarketplaceServiceFactory
         $marketplaceClass = match (strtolower($marketplace)) {
             'amazon' => AmazonService::class,
             'walmart' => WalmartService::class,
-//            'ebay' => EbayService::class,
+            'ebay' => EbayService::class,
 //            'magento' => MagentoService::class,
 //            'shopify' => ShopifyService::class,
             default => null,

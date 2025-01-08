@@ -8,6 +8,7 @@ use App\Models\ListingFeed;
 use App\Models\Store;
 use App\Services\DataTable\DataTableService;
 use App\Services\Marketplace\MarketplaceServiceFactory;
+use App\Services\Marketplace\Service\EbayService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
@@ -16,6 +17,9 @@ class HomeController extends Controller
     public function index()
     {
         $stores = Store::with('storeType')->get();
+//        $ebayService = new EbayService();
+//        $test = $ebayService->generateFeed('0310236d-295f-bd6d-730d-35fcc324bdf9');
+//        echo $test;die;
         return view('welcome', compact('stores'));
     }
 

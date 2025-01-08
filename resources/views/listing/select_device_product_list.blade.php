@@ -9,10 +9,10 @@
                 @endif
             </td>
             <td>{{ (isset($product->Product->product_sku)) ? $product->Product->product_sku : '' }}</td>
+            <td>0</td>
+            <td>0</td>
             <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
+            <td>0</td>
 
         </tr>
     @endforeach

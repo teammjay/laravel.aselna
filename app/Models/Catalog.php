@@ -37,6 +37,11 @@ class Catalog extends Model
         return $this->belongsTo(Manufacturer::class);
     }
 
+    public function productType()
+    {
+        return $this->belongsTo(ProductType::class,'product_type');
+    }
+
     public function StoreProduct()
     {
         return $this->hasOne(StoreProduct::class, 'product_id','product_id');

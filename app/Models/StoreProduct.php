@@ -40,13 +40,13 @@ class StoreProduct extends Model
         return $query2->first();
     }
 
-    public static function getStoreProducts($product_ids){
+    /*public static function getStoreProducts($product_ids){
         $query2 = self::select('store_product.id','store_product.product_id','store_product.title','products.product_sku','store_product.created_at','product_type.name as ProductType')->with('Product');
         $query2->leftJoin('products','products.product_id', '=', 'store_product.product_id');
         $query2->leftJoin('product_type','products.product_type', '=', 'product_type.id');
         $query2->whereIn('store_product.product_id', $product_ids);
         return $query2->cursor();
-    }
+    }*/
 
     public function product()
     {

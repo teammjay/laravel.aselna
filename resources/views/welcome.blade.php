@@ -7,6 +7,32 @@
     <h1>Dashboard</h1>
 @stop
 
+@section('adminlte_css')
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <style>
+        .select2-container--default .select2-dropdown .select2-search__field:focus, .select2-container--default .select2-search--inline .select2-search__field:focus {
+            outline: 0;
+            border: none;
+        }
+        .select2-container{width:100% !important;}
+        .select2-container .select2-selection--single{
+            height: calc(2.25rem + 2px);
+        }
+        .select2-container--default .select2-selection--single .select2-selection__arrow {
+            height: auto;
+            position: absolute;
+            top: 50%;
+            right: 1px;
+            width: 20px;
+            transform: translateY(-50%);
+        }
+
+        table th, table td, .column-no-whitespace{
+            white-space: nowrap;
+        }
+    </style>
+@stop
+
 @section('content')
     <div class="row my-3">
         <div class="col-md-3">
@@ -22,29 +48,31 @@
     </div>
     <div class="row">
         <div class="col-md-12">
-            <table class="table table-bordered table-striped table-hover" id="listingTable">
-                <thead>
-                <tr>
-                    <th>Id</th>
-                    <th>Listing Id</th>
-                    <th>Feed type</th>
-                    <th>Store</th>
-                    <th>Status</th>
-                    <th>created At</th>
-                    <th> Submit At</th>
-                    <th>Number Of Items</th>
-                    <th>Processing Count</th>
-                    <th>Success</th>
-                    <th>Fail Count</th>
-                    <th>Warnings</th>
-                    <th>Number Of Attempts</th>
-                    <th> Feed Id</th>
-                    <th>Action</th>
-                </tr>
-                </thead>
-                <tbody>
-                </tbody>
-            </table>
+            <div class="table-responsive">
+                <table class="table table-bordered table-striped table-hover" id="listingTable">
+                    <thead>
+                    <tr>
+                        <th>Id</th>
+                        <th>Listing Id</th>
+                        <th>Feed type</th>
+                        <th>Store</th>
+                        <th>Status</th>
+                        <th>created At</th>
+                        <th> Submit At</th>
+                        <th>Number Of Items</th>
+                        <th>Processing Count</th>
+                        <th>Success</th>
+                        <th>Fail Count</th>
+                        <th>Warnings</th>
+                        <th>Number Of Attempts</th>
+                        <th> Feed Id</th>
+                        <th>Action</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 @stop
@@ -55,9 +83,11 @@
 @stop
 
 @section('js')
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script>
         var table;
         $(document).ready(function () {
+            $('#listing_store').select2();
             table = $('#listingTable').DataTable({
                 processing: true,
                 serverSide: true,
