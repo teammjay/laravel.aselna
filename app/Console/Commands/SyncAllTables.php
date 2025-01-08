@@ -25,10 +25,7 @@ use App\Jobs\ShippingCarrierJob;
 use App\Jobs\StoreSyncJob;
 use App\Jobs\StoreTypeListingSyncJob;
 use App\Jobs\StoreTypeSyncJob;
-use App\Jobs\UPCGenerateJob;
 use App\Jobs\UPCSyncJob;
-use App\Models\DeviceInterface;
-use App\Models\ProductInterface;
 use Illuminate\Console\Command;
 
 class SyncAllTables extends Command

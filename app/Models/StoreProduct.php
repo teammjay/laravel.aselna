@@ -58,4 +58,9 @@ class StoreProduct extends Model
         return $this->belongsTo(Store::class, 'store_id');
     }
 
+    public function features()
+    {
+        return $this->hasMany(ProductKeyFeatures::class, 'product_id','product_id');
+    }
+
 }

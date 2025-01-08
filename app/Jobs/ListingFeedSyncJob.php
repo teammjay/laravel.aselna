@@ -27,19 +27,24 @@ class ListingFeedSyncJob implements ShouldQueue
      */
     public function handle(): void
     {
-        DB::connection('easyesale_db')
+        $allFeedsQ = DB::connection('easyesale_db')
             ->table('listing_feed')
-            ->orderBy('id')
-            ->chunk(1000, function ($allFeeds) {
-                foreach ($allFeeds as $feed) {
-                    $this->createListingFeed($feed);
-                }
-            });
+            ->orderBy('id');
+
+        if (env('APP_ENV') === 'local') {
+            $allFeedsQ->whereNotNull('listing_id');
+        }
+
+        $allFeedsQ->chunk(1000, function ($allFeeds) {
+            foreach ($allFeeds as $feed) {
+                $this->createListingFeed($feed);
+            }
+        });
     }
 
     private function createListingFeed($feed)
     {
-        if (isset($feed->listing_id) && !Listing::where('id',$feed->listing_id)->exists()) {
+        if (isset($feed->listing_id) && !Listing::where('id', $feed->listing_id)->exists()) {
             return;
         }
         ListingFeed::updateOrCreate(

@@ -79,12 +79,25 @@ class HomeController extends Controller
 
         FeedGenerationJob::dispatch($listingId);
 
+        Log::info('Store Type: ' . $storeType);
+
         //file may be json or xml check for the file type
-        $filePattern = 'feeds/' . strtolower($storeType) . '/' . $listingId . '.{json,xml}';
-        $files = glob($filePattern, GLOB_BRACE);
+        $directory = public_path('feeds/' . strtolower($storeType) . '/');
+        $files = [];
+        Log::info('Directory: ' . $directory);
+        if (is_dir($directory)) {
+            Log::info('Directory exists');
+            foreach (scandir($directory) as $file) {
+                Log::info('File: ' . $file);
+                if (strpos($file, $listingId) === 0 && preg_match('/\.(json|xml)$/', $file)) {
+                    $files[] =  'feeds/' . strtolower($storeType) . '/' . $file;
+                }
+            }
+        }
+
         Log::info('Files: ' . json_encode($files));
         if (!empty($files)) {
-            return response()->json(['file_path' => $filePattern]);
+            return response()->json(['file_path' => $files[0]]);
         }
 
         // get StoreType froms store that is inside listingfeed

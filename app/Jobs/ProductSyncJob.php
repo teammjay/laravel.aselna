@@ -54,7 +54,8 @@ class ProductSyncJob implements ShouldQueue
 
             $this->createProductTitleKeywords($product);
 
-
+            $fonusProduct = DB::connection('fonus_db')->table('tbl_product')->where('custom_label',$product->code)->first();
+            $this->createProductFeatures($fonusProduct, $product->id);
         }
 
         $storeProducts = DB::connection('easyesale_db')->table('store_product')->cursor();
@@ -120,6 +121,7 @@ class ProductSyncJob implements ShouldQueue
 
     private function createProductFeatures(mixed $product, $product_id)
     {
+        if (!isset($product)) return;
         $bullet_points = [
             '1' => $product->bullet_point1,
             '2' => $product->bullet_point2,
@@ -130,10 +132,10 @@ class ProductSyncJob implements ShouldQueue
         ];
         foreach ($bullet_points as $key => $value) {
             ProductKeyFeatures::updateOrInsert(
-                ['product_id' => $product_id->product_id, 'sort_order' => $key],
+                ['product_id' => $product_id, 'sort_order' => $key],
                 [
                     'id' => (string)Str::uuid(),
-                    'product_id' => $product_id->product_id,
+                    'product_id' => $product_id,
                     'value' => $value,
                     'sort_order' => $key,
                 ]

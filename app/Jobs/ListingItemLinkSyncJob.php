@@ -30,8 +30,9 @@ class ListingItemLinkSyncJob implements ShouldQueue
         $listingItemLinksQ = DB::connection('easyesale_db')->table('listing_item_link')
             ->orderBy('id');
 
-        if (env('APP_ENV') !== 'local') {
-            $listingItemLinksQ->whereRaw('item_id in (select id from oydera_listing_item where store_product_id in (select id from oydera_store_product where product_id in (select id from oydera_product where oem_generic = 2)))');
+        if (env('APP_ENV') === 'local') {
+            $listingItemLinksQ->whereRaw('item_id in (select item_id from oydera_listing_item_link where listing_id = \'9a16aef0-e119-8fa7-5e42-ded585f67104\')');
+//            $listingItemLinksQ->whereRaw('item_id in (select id from oydera_listing_item where store_product_id in (select id from oydera_store_product where product_id in (select id from oydera_product where oem_generic = 2)))');
         }
 
         $listingItemLinksQ->chunk(1000, function ($listingItemLinks) {
