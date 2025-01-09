@@ -187,7 +187,7 @@
                                     <div class="border p-2" id="proSubType" style="display: none; width: 17%;">
                                         <label>Product Sub Type Filter</label>
                                         <div class="row">
-                                            <div class="col-md-12 multi-select-filter">
+                                            <div class="col-md-12 prod-sub-type multi-select-filter">
                                                 <select class="form-control" name="product_sub_type[]" id="product_sub_type_filter" multiple>
 
                                                 </select>
@@ -198,6 +198,17 @@
                                         <div class="row">
                                             <div class="col-md-12 multi-select-filter">
                                                 <select class="form-control" name="interface[]" id="interface_filter" multiple>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="border p-2" id="proSubSubType" style="display: none; width: 17%;">
+                                        <label>Product Sub Sub Type Filter</label>
+                                        <div class="row">
+                                            <div class="col-md-12 multi-select-filter">
+                                                <select class="form-control" name="product_sub_sub_type[]" id="product_sub_sub_type_filter" multiple>
+
                                                 </select>
                                             </div>
                                         </div>
@@ -1023,7 +1034,7 @@
                     });
                 });
             });
-            let cnt = cnt2 = 0;
+            let cnt = cnt2 = cnt3 = 0;
             $(document).on('click','.btn-val-add',function(){
                 let ele = $(this);
                 setTimeout(function () {
@@ -1059,6 +1070,46 @@
                                     }
                                 } else {
                                     $('#proSubType').hide();
+                                }
+                            },
+                            error: function (xhr) {
+                                /*if (xhr.responseJSON?.error) {
+                                    $('#responseMessage').html('<p style="color:red;">' + xhr.responseJSON.error.image[0] + '</p>');
+                                }*/
+                            }
+                        });
+                    }
+
+                    if (ele.parents('.prod-sub-type').length) {
+
+                        let product_types = [];
+                        ele.parents('.prod-sub-type').find('input[name="product_sub_type[]"]').each(function () {
+                            product_types.push($(this).val());
+                        });
+                        $.ajax({
+                            url: "{{ route('listing.getproductsubtype') }}",
+                            type: 'POST',
+                            data: {
+                                product_types: product_types
+                            },
+                            /* processData: false,
+                             contentType: false,*/
+                            headers: {
+                                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                            },
+                            success: function (response) {
+                                if (response.success) {
+                                    $('#proSubSubType').show();
+                                    if (cnt3 == 0) {
+                                        $('#product_sub_sub_type_filter').html(response.option);
+                                        $('#product_sub_sub_type_filter').gs_multiselect();
+                                        cnt3++;
+                                    } else {
+                                        $('#product_sub_sub_type_filter').html('');
+                                        $('#proSubSubType').find('.default-drop-down').html(response.option);
+                                    }
+                                } else {
+                                    $('#proSubSubType').hide();
                                 }
                             },
                             error: function (xhr) {

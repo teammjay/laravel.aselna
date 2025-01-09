@@ -19,8 +19,8 @@
                             <label for="template">Template</label>
                             <input type="text" class="form-control @error('template') is-invalid @enderror" id="template"
                                    name="template"
-                                   placeholder="Enter Listing Generation Type Code" value="{{ old('template', $listing_generation_type_template['template'] ?? '') }}">
-                            @if ($errors->has('code'))
+                                   placeholder="Enter Listing Generation Type Template" value="{{ old('template', $listing_generation_type_template['template'] ?? '') }}">
+                            @if ($errors->has('template'))
                                 <span class="text-danger">{{ $errors->first('template') }}</span>
                             @endif
                         </div>

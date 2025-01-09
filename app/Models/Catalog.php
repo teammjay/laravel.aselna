@@ -34,12 +34,17 @@ class Catalog extends Model
 
     public function Manufacturer()
     {
-        return $this->belongsTo(Manufacturer::class);
+        return $this->belongsTo(Manufacturer::class,'manufacturer_id');
     }
 
     public function productType()
     {
         return $this->belongsTo(ProductType::class,'product_type');
+    }
+
+    public function condition()
+    {
+        return $this->belongsTo(ProductCondition::class,'product_condition_id');
     }
 
     public function StoreProduct()

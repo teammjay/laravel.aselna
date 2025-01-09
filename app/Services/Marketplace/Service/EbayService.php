@@ -87,7 +87,7 @@ class EbayService implements MarketplaceServiceInterface
 
             // Add ItemSpecifics
             $itemSpecifics = $item->addChild('ItemSpecifics');
-            if(isset($itemDetail->listingItem) && !empty($itemDetail->listingItem)) {
+            if(isset($itemDetail->listingItem->brand) && !empty($itemDetail->listingItem->brand)) {
                 $specifics = [
                     ['Type', 'CEA Bundle'],
                     ['Fits Model', $itemDetail->listingItem->brand->name.' '.$itemDetail->listingItem->device->name],
