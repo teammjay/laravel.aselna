@@ -50,8 +50,8 @@
 			$(this).html('');
 			from_sel.style.height=to_sel.style.height=rh+'px';
 			from_sel.style.width=to_sel.style.width=rw+'px';
-			var fb=$('<input type="button" class="btn-val-add" value="&raquo;">');
-			var bb=$('<input type="button" class="btn-val-remove" value="&laquo;">');
+			var fb=$('<input type="button" class="btn-val-add" value=">">');
+			var bb=$('<input type="button" class="btn-val-remove" value="<">');
 			mc.appendChild(fb.get(0));
 			mc.appendChild(document.createElement('br'));
 			mc.appendChild(bb.get(0));

@@ -512,7 +512,7 @@ class ListingController extends Controller
                 $data[] = array(
                     "sku" => $product->sku.'<input type="checkbox" name="listing_item[]" value="'.$product->id.'" style="visibility:hidden;">',
                     "sale_count" => ($product->sale_count) ? $product->sale_count : 0,
-                    "last_sale_date" => '',
+                    "last_sale_date" => $product->last_sale_date,
                     "store_sku" => $product->store_sku,
                     "product_sku" => (!empty((array)$product->storeProduct) && !empty((array)$product->storeProduct->product)) ? $product->storeProduct->product->product_sku : '',
                     "store_name" => ((!empty((array)$product->storeProduct) && !empty((array)$product->storeProduct->store)) ? $product->storeProduct->store->name : '' ).((!empty((array)$product->storeProduct) && !empty((array)$product->storeProduct->store) && !empty((array)$product->storeProduct->store->storeType)) ? ' - '.$product->storeProduct->store->storeType->name : ''),
@@ -523,7 +523,7 @@ class ListingController extends Controller
                     "sync_status" => '',
                     "generation_type_name" => (!empty($product->generationType)) ? $product->generationType->name : '',
                     "price" => $product->price,
-                    "qty" => 0,
+                    "qty" => $product->quantity,
                     "created_date" => date('Y-m-d H:i:s',strtotime($product->created_at)),
                     /*"action" => '<a href="'.route('listing.edit', $product->id).'" class="btn btn-primary">
                                     <i class="fas fa-fw fa-pencil-alt"></i>
@@ -600,7 +600,7 @@ class ListingController extends Controller
 
     public function getProducts(Request $request){
 
-        $query = StoreProduct::select('store_product.id','store_product.product_id','store_product.title','store_product.price','store_product.created_at','product_type.name as ProductType')->with('Product');
+        $query = StoreProduct::select('store_product.id','store_product.product_id','store_product.title','store_product.price','store_product.created_at','product_type.name as ProductType')->with('product');
         $query->leftJoin('products','products.product_id', '=', 'store_product.product_id');
         $query->leftJoin('product_type','products.product_type', '=', 'product_type.id');
 
@@ -621,11 +621,10 @@ class ListingController extends Controller
         }
 
         // Filter by product type and sub type
-        if ($request->has('product_sub_type') && $request->product_sub_type != '') {
+        if ($request->has('product_sub_sub_type') && $request->product_sub_sub_type != '') {
+            $query->whereIn('products.product_type', $request->product_sub_sub_type);
+        }else if($request->has('product_sub_type') && $request->product_sub_type != ''){
             $query->whereIn('products.product_type', $request->product_sub_type);
-            $query->orWhere(function ($query) use ($request) {
-                $query->whereIn('products.product_type', $request->product_type);
-            });
         }else if ($request->has('product_type') && $request->product_type != '') {
             $query->whereIn('products.product_type', $request->product_type);
         }
@@ -1243,15 +1242,12 @@ class ListingController extends Controller
             $brand = $parts[0];
             $model = $parts[1] ?? ''; // If no model, treat as empty
 
-
-
             // Use only the model if the brand is the same as the last one
             if($compress) {
                 $nameToAdd = ($brand === $lastBrand) ? $model : $currentBrand;
             }else{
                 $nameToAdd = $device->name;
             }
-
 
             // Check if adding the device exceeds the character limit
             $tempModels = array_merge($currentModels, [$nameToAdd]);
@@ -1261,7 +1257,6 @@ class ListingController extends Controller
             $tempDevices = array_merge($currentDevices, [$currentBrand]);
             $tempDeviceString = implode(', ', $tempDevices);
             $tempTitle = str_replace('#device', $tempDeviceString, $tempTitle);
-
 
             /*$sku = StoreTypeListing::generateUniqueAlphabeticSku($product->product_sku);*/
 
@@ -1316,7 +1311,6 @@ class ListingController extends Controller
         $titles = [];
         $separator = $device_seperator; // Separator between device names
         foreach ($devices as $k=>$device) {
-
             $currentBrand = $device->brand_name.' '.$device->name;
 
             $tempTitle = str_replace('#device_series', $currentBrand, $baseTitle);
@@ -1330,10 +1324,7 @@ class ListingController extends Controller
             $titles[$k]['store_product_id'] = $store_product_id;
             $titles[$k]['model'][] = $device->name;
             $titles[$k]['model_detail'][] = $device;
-
         }
-
-
         return $titles;
     }
 
@@ -1341,7 +1332,6 @@ class ListingController extends Controller
         $titles = [];
         $separator = $device_seperator; // Separator between device names
         foreach ($devices as $k=>$device) {
-
             $currentBrand = $device->brand_name.' '.$device->name;
 
             $tempTitle = str_replace('#device_series', $currentBrand, $baseTitle);
@@ -1355,7 +1345,6 @@ class ListingController extends Controller
             $titles[$k]['store_product_id'] = $store_product_id;
             $titles[$k]['model'][] = $device->name;
             $titles[$k]['model_detail'][] = $device;
-
         }
         return $titles;
     }
@@ -1394,7 +1383,6 @@ class ListingController extends Controller
 
             // Check if adding the device exceeds the character limit
             if ($brand !== $lastBrand || strlen($tempTitle) > $charLimit) {
-
                 // Save the current title and start a new one
                 //$titles[$cnt]['title'] = rtrim($currentTitle, $separator); // Remove trailing separator
                 if (!empty($currentDevices)) {

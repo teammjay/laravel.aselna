@@ -14,7 +14,7 @@
             <td></td>
             <td style="white-space: nowrap;">{{ $product->generation_type_name }}</td>
             <td>{{ $product->price }}</td>
-            <td></td>
+            <td>{{ $product->quantity }}</td>
             <td>
                 <a href="{{ route('listing.edit', $product->id) }}" class="btn btn-primary">
                     <i class="fas fa-fw fa-pencil-alt"></i>

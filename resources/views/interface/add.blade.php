@@ -36,16 +36,31 @@
                         </div>
                     </div>
                 </div>
+                @php
+                    function renderCategories($productTypes, $interface, $prefix = '') {
+                        foreach ($productTypes as $ptype) {
+                            if($interface['product_type_id'] == $ptype->id){
+                                $sel = 'selected';
+                            }else{
+                                $sel = '';
+                            }
+                            echo '<option value="' . $ptype->id . '" '.$sel.'>' . $prefix . $ptype->name . '</option>';
+
+                            if ($ptype->children) {
+                                renderCategories($ptype->children, $interface, $prefix . '-- ');
+                            }
+                        }
+                    }
+                @endphp
                 <div class="row">
                     <div class="col-md-6">
                         <div class="form-group">
                             <label for="product_type_id">Product Type</label>
                             <select class="form-control" name="product_type_id" id="product_type_id">
-                                @if(count($productTypes ?? []) > 0)
-                                    @foreach($productTypes as $pType)
-                                        <option value="{{ $pType->id }}" @if(isset($interface['code']) && $pType->id == $interface['product_type_id']) selected @endif>{{ $pType->name }}</option>
-                                    @endforeach
-                                @endif
+                                @php
+                                    renderCategories($productTypes,$interface);
+                                @endphp
+
                             </select>
                         </div>
                     </div>
