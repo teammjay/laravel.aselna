@@ -28,6 +28,7 @@ use Illuminate\Http\Request;
 use App\Models\Store;
 use Illuminate\Support\Facades\DB;
 use Mockery\Exception;
+use App\Helpers\QueryFilters;
 
 class ListingController extends Controller
 {
@@ -67,6 +68,7 @@ class ListingController extends Controller
             'storeProduct.store.storeType',
             'storeProduct.store',
             'storeProduct.product',
+            'device.deviceType',
             'generationType'
         ]);
 
@@ -90,338 +92,35 @@ class ListingController extends Controller
         }
 
         // Filter by product code
-        if ($request->has('product_code') && $request->product_code != '') {
-            $query->whereHas('storeProduct.product', function ($q) use ($request) {
-                $operator = $request->product_code_operator;
-                switch ($operator) {
-                    case 'contains':
-                        $q->WhereLike('product_sku', '%' . $request->product_code . '%');
-                        break;
-                    case 'starts_with':
-                        $q->WhereLike('product_sku', $request->product_code . '%');
-                        break;
-                    case 'ends_with':
-                        $q->WhereLike('product_sku', '%' . $request->product_code);
-                        break;
-                    case '=':
-                        $q->Where('product_sku', $request->product_code);
-                        break;
-                    case 'in':
-                        $producCodes = explode(',', $request->product_code);
-                        $q->WhereIn('product_sku', $producCodes);
-                        break;
-                    case 'not_in':
-                        $producCodes = explode(',', $request->product_code);
-                        $q->WhereNotIn('product_sku', $producCodes);
-                        break;
-                    case 'doesnt_contain':
-                        $q->WhereNotLike('product_sku', '%' . $request->product_code . '%');
-                        break;
-                    case 'is_set':
-                        $q->whereNotNull('product_sku');
-                        break;
-                }
-            });
-        }
+        QueryFilters::applyRelationFilter($query, $request, 'storeProduct.product', 'product_sku', 'product_code_operator', 'product_code');
 
         // Filter by store
-        if ($request->has('store') && $request->store != '') {
-            $query->whereHas('storeProduct.store', function ($q) use ($request) {
-                $operator = $request->store_operator;
-                switch ($operator) {
-                    case 'contains':
-                        $q->WhereLike('name', '%' . $request->store . '%');
-                        break;
-                    case 'starts_with':
-                        $q->WhereLike('name', $request->store . '%');
-                        break;
-                    case 'ends_with':
-                        $q->WhereLike('name', '%' . $request->store);
-                        break;
-                    case '=':
-                        $q->Where('name', $request->store);
-                        break;
-                    case 'in':
-                        $stores = explode(',', $request->store);
-                        $q->WhereIn('name', $stores);
-                        break;
-                    case 'not_in':
-                        $stores = explode(',', $request->store);
-                        $q->WhereNotIn('name', $stores);
-                        break;
-                    case 'doesnt_contain':
-                        $q->WhereNotLike('name', '%' . $request->store . '%');
-                        break;
-                    case 'is_set':
-                        $q->whereNotNull('name');
-                        break;
-                }
-            });
-        }
+        QueryFilters::applyRelationFilter($query, $request, 'storeProduct.store', 'name', 'store_operator', 'store');
 
         // Filter by sku
-        if ($request->has('sku') && $request->sku != '') {
-            $operator = $request->sku_operator;
-            switch($operator){
-                case 'contains':
-                    $query->WhereLike('sku', '%'.$request->sku.'%');
-                    break;
-                case 'starts_with':
-                    $query->WhereLike('sku', $request->sku.'%');
-                    break;
-                case 'ends_with':
-                    $query->WhereLike('sku', '%'.$request->sku);
-                    break;
-                case '=':
-                    $query->Where('sku', $request->sku);
-                    break;
-                case 'in':
-                    $skus = explode(',',$request->sku);
-                    $query->WhereIn('sku',$skus);
-                    break;
-                case 'not_in':
-                    $skus = explode(',',$request->sku);
-                    $query->WhereNotIn('sku', $skus);
-                    break;
-                case 'doesnt_contain':
-                    $query->WhereNotLike('sku', '%'.$request->sku.'%');
-                    break;
-                case 'is_set':
-                    $query->whereNotNull('sku');
-                    break;
-            }
-        }
+        QueryFilters::applyFilter($query, $request, 'sku', 'sku_operator', 'sku');
 
         // Filter by title
-        if ($request->has('title') && $request->title != '') {
-            $operator = $request->title_operator;
-            switch($operator){
-                case 'contains':
-                    $query->WhereLike('title', '%'.$request->title.'%');
-                    break;
-                case 'starts_with':
-                    $query->WhereLike('title', $request->title.'%');
-                    break;
-                case 'ends_with':
-                    $query->WhereLike('title', '%'.$request->title);
-                    break;
-                case '=':
-                    $query->Where('title', $request->title);
-                    break;
-                case 'in':
-                    $titles = explode(',',$request->title);
-                    $query->WhereIn('title',$titles);
-                    break;
-                case 'not_in':
-                    $titles = explode(',',$request->title);
-                    $query->WhereNotIn('title', $titles);
-                    break;
-                case 'doesnt_contain':
-                    $query->WhereNotLike('title', '%'.$request->title.'%');
-                    break;
-                case 'is_set':
-                    $query->whereNotNull('title');
-                    break;
-            }
-        }
+        QueryFilters::applyFilter($query, $request, 'title', 'title_operator', 'title');
 
         // Filter by price
-        if ($request->has('price') && $request->price != '') {
-            $operator = $request->price_operator;
-            switch($operator){
-                case 'contains':
-                    $query->WhereLike('price', '%'.$request->price.'%');
-                    break;
-                case 'starts_with':
-                    $query->WhereLike('price', $request->price.'%');
-                    break;
-                case 'ends_with':
-                    $query->WhereLike('price', '%'.$request->price);
-                    break;
-                case '=':
-                    $query->Where('price', $request->price);
-                    break;
-                case 'in':
-                    $prices = explode(',',$request->price);
-                    $query->WhereIn('price',$prices);
-                    break;
-                case 'not_in':
-                    $prices = explode(',',$request->price);
-                    $query->WhereNotIn('price', $prices);
-                    break;
-                case 'doesnt_contain':
-                    $query->WhereNotLike('price', '%'.$request->price.'%');
-                    break;
-                case 'is_set':
-                    $query->whereNotNull('price');
-                    break;
-            }
-        }
+        QueryFilters::applyFilter($query, $request, 'price', 'price_operator', 'price');
 
         // Filter by ID
-        if ($request->has('id') && $request->id != '') {
-            $operator = $request->id_operator;
-            switch($operator){
-                case 'contains':
-                    $query->WhereLike('id', '%'.$request->id.'%');
-                    break;
-                case 'starts_with':
-                    $query->WhereLike('id', $request->id.'%');
-                    break;
-                case 'ends_with':
-                    $query->WhereLike('id', '%'.$request->id);
-                    break;
-                case '=':
-                    $query->Where('id', $request->id);
-                    break;
-                case 'in':
-                    $ids = explode(',',$request->id);
-                    $query->WhereIn('id',$ids);
-                    break;
-                case 'not_in':
-                    $ids = explode(',',$request->id);
-                    $query->WhereNotIn('id', $ids);
-                    break;
-                case 'doesnt_contain':
-                    $query->WhereNotLike('id', '%'.$request->id.'%');
-                    break;
-                case 'is_set':
-                    $query->whereNotNull('id');
-                    break;
-            }
-        }
+        QueryFilters::applyFilter($query, $request, 'id', 'id_operator', 'id');
 
         // Filter by sales count
-        if ($request->has('sales_count') && $request->sales_count != '') {
-            $operator = $request->sales_count_operator;
-            switch($operator){
-                case 'contains':
-                    $query->WhereLike('sales_count', '%'.$request->sales_count.'%');
-                    break;
-                case 'starts_with':
-                    $query->WhereLike('sales_count', $request->sales_count.'%');
-                    break;
-                case 'ends_with':
-                    $query->WhereLike('sales_count', '%'.$request->sales_count);
-                    break;
-                case '=':
-                    $query->Where('sales_count', $request->sales_count);
-                    break;
-                case 'in':
-                    $sales_counts = explode(',',$request->sales_count);
-                    $query->WhereIn('sales_count',$sales_counts);
-                    break;
-                case 'not_in':
-                    $sales_counts = explode(',',$request->sales_count);
-                    $query->WhereNotIn('sales_count', $sales_counts);
-                    break;
-                case 'doesnt_contain':
-                    $query->WhereNotLike('sales_count', '%'.$request->sales_count.'%');
-                    break;
-                case 'is_set':
-                    $query->whereNotNull('sales_count');
-                    break;
-            }
-        }
+        QueryFilters::applyFilter($query, $request, 'sales_count', 'sales_count_operator', 'sales_count');
 
         // Filter by manufacturer
-        if ($request->has('manufacturer') && $request->manufacturer != '') {
-            $operator = $request->manufacturer_operator;
-            switch($operator){
-                case 'contains':
-                    $query->WhereLike('manufacturer_id', '%'.$request->manufacturer.'%');
-                    break;
-                case 'starts_with':
-                    $query->WhereLike('manufacturer_id', $request->manufacturer.'%');
-                    break;
-                case 'ends_with':
-                    $query->WhereLike('manufacturer_id', '%'.$request->manufacturer);
-                    break;
-                case '=':
-                    $query->Where('manufacturer_id', $request->manufacturer);
-                    break;
-                case 'in':
-                    $manufacturers = explode(',',$request->manufacturer);
-                    $query->WhereIn('manufacturer_id',$manufacturers);
-                    break;
-                case 'not_in':
-                    $manufacturers = explode(',',$request->manufacturer);
-                    $query->WhereNotIn('manufacturer_id', $manufacturers);
-                    break;
-                case 'doesnt_contain':
-                    $query->WhereNotLike('manufacturer_id', '%'.$request->manufacturer.'%');
-                    break;
-                case 'is_set':
-                    $query->whereNotNull('manufacturer_id');
-                    break;
-            }
-        }
+        QueryFilters::applyFilter($query, $request, 'manufacturer_id', 'manufacturer_operator', 'manufacturer');
 
         // Filter by sync message
-        if ($request->has('sync_message') && $request->sync_message != '') {
-            $operator = $request->sync_message_operator;
-            switch($operator){
-                case 'contains':
-                    $query->WhereLike('sync_message', '%'.$request->sync_message.'%');
-                    break;
-                case 'starts_with':
-                    $query->WhereLike('sync_message', $request->sync_message.'%');
-                    break;
-                case 'ends_with':
-                    $query->WhereLike('sync_message', '%'.$request->sync_message);
-                    break;
-                case '=':
-                    $query->Where('sync_message', $request->sync_message);
-                    break;
-                case 'in':
-                    $sync_messages = explode(',',$request->sync_message);
-                    $query->WhereIn('sync_message',$sync_messages);
-                    break;
-                case 'not_in':
-                    $sync_messages = explode(',',$request->sync_message);
-                    $query->WhereNotIn('sync_message', $sync_messages);
-                    break;
-                case 'doesnt_contain':
-                    $query->WhereNotLike('sync_message', '%'.$request->sync_message.'%');
-                    break;
-                case 'is_set':
-                    $query->whereNotNull('sync_message');
-                    break;
-            }
-        }
+        QueryFilters::applyFilter($query, $request, 'sync_message', 'sync_message_operator', 'sync_message');
+
 
         // Filter by upc
-        if ($request->has('upc') && $request->upc != '') {
-            $operator = $request->upc_operator;
-            switch($operator){
-                case 'contains':
-                    $query->WhereLike('upc', '%'.$request->upc.'%');
-                    break;
-                case 'starts_with':
-                    $query->WhereLike('upc', $request->upc.'%');
-                    break;
-                case 'ends_with':
-                    $query->WhereLike('upc', '%'.$request->upc);
-                    break;
-                case '=':
-                    $query->Where('upc', $request->upc);
-                    break;
-                case 'in':
-                    $upc_codes = explode(',',$request->upc);
-                    $query->WhereIn('upc',$upc_codes);
-                    break;
-                case 'not_in':
-                    $upc_codes = explode(',',$request->upc);
-                    $query->WhereNotIn('upc', $upc_codes);
-                    break;
-                case 'doesnt_contain':
-                    $query->WhereNotLike('upc', '%'.$request->upc.'%');
-                    break;
-                case 'is_set':
-                    $query->whereNotNull('upc');
-                    break;
-            }
-        }
+        QueryFilters::applyFilter($query, $request, 'upc', 'upc_operator', 'upc');
 
         // Filter by device
         if ($request->has('device') && $request->device != '') {
@@ -438,9 +137,12 @@ class ListingController extends Controller
             $query->where('quantity', $request->quantity);
         }
 
-        // Filter by product title
+        // Filter by device type
         if ($request->has('device_type') && $request->device_type != '') {
-            $query->where('product_title', $request->device_type);
+            $query->whereHas('device.deviceType', function ($q) use ($request) {
+                $q->where('id', $request->device_type);
+            });
+
         }
 
         // Filter by created date
@@ -852,11 +554,11 @@ class ListingController extends Controller
                 if(!empty($pro_ids)){
                     foreach($pro_ids as $id){
                         if(!empty($short_keyword)){
-                            $sKeyword[$id] = implode(' ', $short_keyword[$id]);
+                            $sKeyword[$id] = implode(' ', trim($short_keyword[$id]));
                         }
 
                         if(!empty($short_keyword)){
-                            $lKeyword[$id] = implode(' ', $long_keyword[$id]);
+                            $lKeyword[$id] = implode(' ', trim($long_keyword[$id]));
                         }
                     }
                 }

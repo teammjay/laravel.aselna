@@ -353,9 +353,11 @@
                                                     <label for="product_color">Color</label>
                                                     <select class="custom-select" name="product_color" id="product_color">
                                                         <option></option>
-                                                        <option value="red" {{ "red" == $product->product_color ? 'selected' : '' }}>Red</option>
-                                                        <option value="green" {{ "green" == $product->product_color ? 'selected' : '' }}>Green</option>
-                                                        <option value="blue" {{ "blue" == $product->product_color ? 'selected' : '' }}>Blue</option>
+                                                        @if(count($colors ?? []) > 0)
+                                                            @foreach($colors as $color)
+                                                                <option value="{{ $color->id }}" {{ $color->id == $product->product_color ? 'selected' : '' }}>{{ $color->name }}</option>
+                                                            @endforeach
+                                                        @endif
                                                     </select>
                                                 </div>
                                             </div>

@@ -424,7 +424,8 @@
 
         $(document).on('click','#product-list tr',function (e) {
             let ele = $(this);
-            if ($(e.target).is('input, textarea, select, checkbox')) {
+            console.log($(e.target));
+            if ($(e.target).is('input, textarea, select, checkbox, a, i, button')) {
                 return;
             }
             //$('#product-list tr').removeClass('bg-blue');

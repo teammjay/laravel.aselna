@@ -18,9 +18,9 @@ class HomeController extends Controller
     public function index()
     {
         $stores = Store::with('storeType')->get();
-        $googleService = new GoogleShoppingService();
+        /*$googleService = new GoogleShoppingService();
         $test = $googleService->generateFeed('0310236d-295f-bd6d-730d-35fcc324bdf9');
-        echo $test;die;
+        echo $test;die;*/
         return view('welcome', compact('stores'));
     }
 
