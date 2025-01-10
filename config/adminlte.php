@@ -322,6 +322,11 @@ return [
 //            'can' => 'manage-blog',
 //        ],
         [
+            'text' => 'Messages',
+            'url' => '/messages',
+            'icon' => 'fa fa-fw fa-envelope'
+        ],
+        [
             'text' => 'Catalog',
             'icon' => 'fa fa-fw fa-book',
             'submenu' => [

@@ -51,4 +51,9 @@ class Catalog extends Model
     {
         return $this->hasOne(StoreProduct::class, 'product_id','product_id');
     }
+
+    public function color()
+    {
+        return $this->belongsTo(ProductColor::class,'product_color');
+    }
 }

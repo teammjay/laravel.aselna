@@ -37,6 +37,7 @@ use App\Http\Controllers\CarrierController;
 use App\Http\Controllers\ProductAttributeController;
 use App\Http\Controllers\ListingTemplateController;
 use App\Http\Controllers\ProductColorController;
+use App\Http\Controllers\MessagesController;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/catalog', [CatalogController::class, 'index']);
@@ -220,6 +221,16 @@ Route::controller(ShippingCarrierServiceController::class)->group(function () {
     Route::get('/shipping_carrier_service/edit/{id}', 'edit')->name('shipping_carrier_service.edit');
     Route::post('/shipping_carrier_service/edit/{id}', 'update')->name('shipping_carrier_service.update');
     Route::get('/shipping_carrier_service/delete/{id}', 'destroy')->name('shipping_carrier_service.delete');
+});
+
+Route::controller(MessagesController::class)->group(function () {
+    Route::get('/messages', 'index')->name('message.index');
+    Route::get('/messages/add', 'create')->name('message.create');
+    Route::post('/messages/add', 'store')->name('message.store');
+    Route::post('/messages/getdata', 'getMessageData')->name('message.getdata');
+    Route::get('/messages/edit/{id}', 'edit')->name('message.edit');
+    Route::post('/messages/edit/{id}', 'update')->name('message.update');
+    Route::get('/messages/delete/{id}', 'destroy')->name('message.delete');
 });
 
 Route::controller(PageTypesController::class)->group(function () {

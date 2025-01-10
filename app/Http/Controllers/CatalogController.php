@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\QueryFilters;
 use App\Models\Catalog;
 use App\Models\Interfaces;
 use App\Models\Manufacturer;
+use App\Models\ProductColor;
 use App\Models\ProductCondition;
 use App\Models\ProductInterface;
 use App\Models\ProductKeyFeatures;
@@ -39,7 +41,7 @@ class CatalogController extends Controller
         // get the data in the pagination format for datatable to display
         //sku must contain only 3 characters
         session()->forget('pro_id');
-        $products = Catalog::with('Manufacturer')->select('*')
+        $products = Catalog::with('Manufacturer','color')->select('*')
             ->where('oem_generic',2)
             ->orderBy('created_at','desc')
             ->paginate($this->perPage);
@@ -69,104 +71,16 @@ class CatalogController extends Controller
         /*$perPage = $request->input('perPage', $this->perPage);*/
 
         // Filter by product title
-        if ($request->has('name') && $request->name != '') {
-            $operator = $request->name_operator;
-            switch($operator){
-                case 'contains':
-                    $query->WhereLike('product_title', '%'.$request->name.'%');
-                    break;
-                case 'starts_with':
-                    $query->WhereLike('product_title', $request->name.'%');
-                    break;
-                case 'ends_with':
-                    $query->WhereLike('product_title', '%'.$request->name);
-                    break;
-                case '=':
-                    $query->Where('product_title', $request->name);
-                    break;
-                case 'in':
-                    $names = explode(',',$request->name);
-                    $query->WhereIn('product_title',$names);
-                    break;
-                case 'not_in':
-                    $names = explode(',',$request->name);
-                    $query->WhereNotIn('product_title', $names);
-                    break;
-                case 'doesnt_contain':
-                    $query->WhereNotLike('product_title', '%'.$request->name.'%');
-                    break;
-                case 'is_set':
-                    $query->whereNotNull('product_title');
-                    break;
-            }
-        }
+        QueryFilters::applyFilter($query, $request, 'product_title', 'name_operator', 'name');
 
         // Filter by product title
-        if ($request->has('product_sku') && $request->product_sku != '') {
-            $operator = $request->product_sku_operator;
-            switch($operator){
-                case 'contains':
-                    $query->WhereLike('product_sku', '%'.$request->product_sku.'%');
-                    break;
-                case 'starts_with':
-                    $query->WhereLike('product_sku', $request->product_sku.'%');
-                    break;
-                case 'ends_with':
-                    $query->WhereLike('product_sku', '%'.$request->product_sku);
-                    break;
-                case '=':
-                    $query->Where('product_sku', $request->product_sku);
-                    break;
-                case 'in':
-                    $skus = explode(',',$request->product_sku);
-                    $query->WhereIn('product_sku',$skus);
-                    break;
-                case 'not_in':
-                    $skus = explode(',',$request->product_sku);
-                    $query->WhereNotIn('product_sku', $skus);
-                    break;
-                case 'doesnt_contain':
-                    $query->WhereNotLike('product_sku', '%'.$request->product_sku.'%');
-                    break;
-                case 'is_set':
-                    $query->whereNotNull('product_sku');
-                    break;
-            }
-        }
+        QueryFilters::applyFilter($query, $request, 'product_sku', 'product_sku_operator', 'product_sku');
 
         // Filter by product type
-        if ($request->has('product_type') && $request->product_type != '') {
-            $operator = $request->product_type_operator;
-            switch($operator){
-                case 'contains':
-                    $query->WhereLike('product_type', '%'.$request->product_type.'%');
-                    break;
-                case 'starts_with':
-                    $query->WhereLike('product_type', $request->product_type.'%');
-                    break;
-                case 'ends_with':
-                    $query->WhereLike('product_type', '%'.$request->product_type);
-                    break;
-                case '=':
-                    $query->Where('product_type', $request->product_type);
-                    break;
-                case 'in':
-                    $productTypes = explode(',',$request->product_type);
-                    $query->WhereIn('product_type',$productTypes);
-                    break;
-                case 'not_in':
-                    $productTypes = explode(',',$request->product_type);
-                    $query->WhereNotIn('product_type', $productTypes);
-                    break;
-                case 'doesnt_contain':
-                    $query->WhereNotLike('product_type', '%'.$request->product_type.'%');
-                    break;
-                case 'is_set':
-                    $query->whereNotNull('product_type');
-                    break;
-            }
+        QueryFilters::applyFilter($query, $request, 'product_type', 'product_type_operator', 'product_type');
 
-        }
+        // Filter by color
+        QueryFilters::applyFilter($query, $request, 'product_color', 'product_color_operator', 'product_color');
 
         // Filter by configurable
         if ($request->has('configurable') && $request->configurable != '') {
@@ -232,40 +146,6 @@ class CatalogController extends Controller
         // Filter by created date
         if ($request->has('created_at') && $request->created_at != '') {
             $query->where('created_at', $request->created_at);
-        }
-
-        // Filter by color
-        if ($request->has('product_color') && $request->product_color != '') {
-            $operator = $request->product_color_operator;
-            switch($operator){
-                case 'contains':
-                    $query->WhereLike('product_color', '%'.$request->product_color.'%');
-                    break;
-                case 'starts_with':
-                    $query->WhereLike('product_color', $request->product_color.'%');
-                    break;
-                case 'ends_with':
-                    $query->WhereLike('product_color', '%'.$request->product_color);
-                    break;
-                case '=':
-                    $query->Where('product_color', $request->product_color);
-                    break;
-                case 'in':
-                    $productColors = explode(',',$request->product_color);
-                    $query->WhereIn('product_color',$productColors);
-                    break;
-                case 'not_in':
-                    $productColors = explode(',',$request->product_color);
-                    $query->WhereNotIn('product_color', $productColors);
-                    break;
-                case 'doesnt_contain':
-                    $query->WhereNotLike('product_color', '%'.$request->product_color.'%');
-                    break;
-                case 'is_set':
-                    $query->whereNotNull('product_color');
-                    break;
-            }
-
         }
 
         // Filter by price range
@@ -346,7 +226,7 @@ class CatalogController extends Controller
                     "configurable" => '<input type="checkbox" class="configurable" data-id="'.$product->product_id.'" '.$checked.'>',
                     "product_price" => '<span class="prVal">'.$product->product_price.'</span><input type="text" class="form-control bulk-edit" name="product['.$key.'][product_price]" value="'.$product->product_price.'" disabled>',
                     "manufacture_name" => isset($product->Manufacturer->name) ? $product->Manufacturer->name : '',
-                    "product_color" => $product->product_color,
+                    "product_color" => isset($product->color) ? $product->color->name : '',
                     "created_date" => date('Y-m-d H:i:s',strtotime($product->created_at)),
                     "action" => '<a href="'.route('catalog.edit', $product->product_id).'" class="btn btn-primary">
                                     <i class="fas fa-fw fa-pencil-alt"></i>
@@ -445,11 +325,12 @@ class CatalogController extends Controller
         $productInterfaces = $productInterfaces->pluck('interface_id')->values()->all();
         $targetAudience = ProductTargetAudience::all();
         $storeTypes = StoreType::all();
+        $colors = ProductColor::all();
         $productStoreType = DB::table('product_channel_detail')
             ->select('product_channel_detail.id', 'product_channel_detail.status','store_type.name')
             ->leftJoin('store_type','store_type.id','=','product_channel_detail.store_type_id')
             ->where('product_id',$pro_id)->get();
-        return view('catalog.update', compact('product','keyFeatures','searchTerms','productImages','productTags','pageAt','store_details','manufacturers','productTypes','productConditions','titleKeywords','interfaces','productInterfaces','targetAudience','storeTypes','productStoreType'));
+        return view('catalog.update', compact('product','keyFeatures','searchTerms','productImages','productTags','pageAt','store_details','manufacturers','productTypes','productConditions','titleKeywords','interfaces','productInterfaces','targetAudience','storeTypes','productStoreType','colors'));
     }
 
     /**
@@ -547,21 +428,19 @@ class CatalogController extends Controller
         $productConditions = ProductCondition::all();
         $storeProducts = StoreProduct::where('product_id', $id)->get();
         $productStore = $storeProducts->pluck('store_id','store_type_category_id')->all();
-        /*echo '<pre>';
-        print_r($productStore);
-        echo '</pre>';die;*/
         $productStoreCategory = $storeProducts->pluck('store_type_category_id')->values()->all();
         $interfaces = Interfaces::all();
         $productInterfaces = ProductInterface::where('product_id', $id)->get();
         $productInterfaces = $productInterfaces->pluck('interface_id')->values()->all();
         $targetAudience = ProductTargetAudience::all();
         $storeTypes = StoreType::all();
+        $colors = ProductColor::all();
         $productStoreType = DB::table('product_channel_detail')
                             ->select('product_channel_detail.id','product_channel_detail.status','store_type.name')
                             ->leftJoin('store_type','store_type.id','=','product_channel_detail.store_type_id')
                             ->where('product_id',$id)->get();
 
-        return view('catalog.update', compact('product','keyFeatures','searchTerms','productImages','productTags','pageAt','store_details','manufacturers','productTypes','productConditions','productStore','productStoreCategory','titleKeywords','interfaces','productInterfaces','targetAudience','storeTypes','productStoreType'));
+        return view('catalog.update', compact('product','keyFeatures','searchTerms','productImages','productTags','pageAt','store_details','manufacturers','productTypes','productConditions','productStore','productStoreCategory','titleKeywords','interfaces','productInterfaces','targetAudience','storeTypes','productStoreType','colors'));
     }
 
     /**

@@ -14,7 +14,7 @@
             <td align="center"><input type="checkbox" class="configurable" data-id="{{ $product->product_id }}" {{ ($product->configurable == 1) ? 'checked' : '' }}></td>
             <td>{{ $product->product_price }}</td>
             <td>{{ isset($product->Manufacturer->name) ? $product->Manufacturer->name : '' }}</td>
-            <td>{{ $product->product_color }}</td>
+            <td>{{ isset($product->color) ? $product->color->name : '' }}</td>
             <td>{{ $product->created_at }}</td>
             <td>
                 <a href="{{ route('catalog.edit', $product->product_id) }}" class="btn btn-primary">
