@@ -536,13 +536,13 @@ class ListingController extends Controller
                         $longFlag[$pro_id] = $short_key_length;
                     }
                     if((!array_key_exists($pro_id, $shortFlag) || $shortFlag[$pro_id] < $short_key_length) || !array_key_exists($pro_id, $short_keyword)){
-                        $short_keyword[$pro_id][] = $val['keyword'];
+                        $short_keyword[$pro_id][] = trim($val['keyword']);
                         $shortFlag[$pro_id] = $shortFlag[$pro_id]+1;
                     }
                     //echo $key .'>'. $short_key_length.'<br>';
                     if($key >= $short_key_length || $long_key_length == 'all') {
                         if (((!array_key_exists($pro_id, $longFlag) || $longFlag[$pro_id] < $long_key_length) || $long_key_length == 'all') || !array_key_exists($pro_id, $long_keyword)) {
-                            $long_keyword[$pro_id][] = $val['keyword'];
+                            $long_keyword[$pro_id][] = trim($val['keyword']);
                             $longFlag[$pro_id] = $longFlag[$pro_id] + 1;
                         }
                     }
@@ -554,11 +554,11 @@ class ListingController extends Controller
                 if(!empty($pro_ids)){
                     foreach($pro_ids as $id){
                         if(!empty($short_keyword)){
-                            $sKeyword[$id] = implode(' ', trim($short_keyword[$id]));
+                            $sKeyword[$id] = implode(' ', $short_keyword[$id]);
                         }
 
                         if(!empty($short_keyword)){
-                            $lKeyword[$id] = implode(' ', trim($long_keyword[$id]));
+                            $lKeyword[$id] = implode(' ', $long_keyword[$id]);
                         }
                     }
                 }
@@ -826,51 +826,6 @@ class ListingController extends Controller
                                     }
                                 }
 
-                            }
-
-                            $query = Device::select('device.*', 'brands.name as brand_name')->with('deviceType');
-                            $query->leftJoin('brands', 'brands.id', '=', 'device.brand_id');
-                            $query->leftJoin('device_interface', 'device_interface.device_id', '=', 'device.id');
-                            $query->leftJoin('product_interface', 'product_interface.interface_id', '=', 'device_interface.interface_id');
-                            $query->where('product_interface.product_id', $product->product_id);
-                            if (isset($selected_device[$product->product_id]) && !empty($selected_device[$product->product_id])) {
-                                $query->whereIn('device.id', $selected_device[$product->product_id]);
-                            }
-                            if ($device_type) {
-                                $query->whereIn('device.device_type_id', $device_type);
-                            }
-                            if ($brand) {
-                                $query->whereIn('device.brand_id', $brand);
-                            }
-                            if ($rating) {
-                                $query->where('device.rating_id', $rating);
-                            }
-                            if ($popularity) {
-                                $query->where('device.rating_id', $popularity);
-                            }
-                            $query->orderBy('brand_name', 'asc');
-                            $query->orderBy('device.name', 'asc');
-                            $devices = $query->get();
-
-                            /*echo '<pre>';
-                            print_r($devices);
-                            echo '<pre>';die;*/
-
-                            if ($generate_type_name) {
-                                switch (trim(strtolower($generate_type_name))) {
-                                    case 'combined devices':
-                                        $productsArray[] = $this->generateProductTitles($title_template, $product, $devices, $max_title_length, $brand_seperator, $device_seperator, $compress, $generate_type, $product_price, $store_product_id, $product_price_overwrite);
-                                        break;
-                                    case 'free group':
-                                        $productsArray[] = $this->generateFreeGroupProductTitles($title_template, $product, $devices, $max_title_length, $brand_seperator, $device_seperator, $compress, $generate_type, $product_price, $store_product_id, $product_price_overwrite);
-                                        break;
-                                    case 'single device':
-                                        $productsArray[] = $this->generateSingleDeviceProductTitles($title_template, $product, $devices, $max_title_length, $brand_seperator, $device_seperator, $compress, $generate_type, $product_price, $store_product_id, $product_price_overwrite);
-                                        break;
-                                    case 'brand group':
-                                        $productsArray[] = $this->generateBrandGroupProductTitles($title_template, $product, $devices, $max_title_length, $brand_seperator, $device_seperator, $compress, $generate_type, $product_price, $store_product_id, $product_price_overwrite);
-                                        break;
-                                }
                             }
 
                         }
