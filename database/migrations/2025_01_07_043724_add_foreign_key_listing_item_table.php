@@ -41,10 +41,10 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('listing_item', function (Blueprint $table) {
-            $table->dropIndex('store_product_id');
-            $table->dropIndex('generation_type_id');
-            $table->dropIndex('manufacturer_id');
-            $table->dropIndex('store_type_listing_id');
+//            $table->dropIndex('store_product_id');
+//            $table->dropIndex('generation_type_id');
+//            $table->dropIndex('manufacturer_id');
+//            $table->dropIndex('store_type_listing_id');
 
             /*$table->dropForeign(['store_product_id']);
             $table->dropForeign(['generation_type_id']);

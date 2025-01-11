@@ -33,35 +33,30 @@ class ProductSyncJob implements ShouldQueue
      */
     public function handle(): void
     {
-//        $products = DB::connection('fonus_db')->table('tbl_product')->get();
-//        foreach ($products as $product) {
-//            if (Catalog::where(['product_code' => $product->product_id])->exists()) continue;
-//
-//            $this->createProduct($product);
-//
-//            $product_id = Catalog::where('product_code', $product->product_id)->first();
-//
-//
-//
-//            $this->createProductFeatures($product, $product_id);
-//        }
-        $easyesaleProducts = DB::connection('easyesale_db')->table('product')
+        $easyesaleProductsQ = DB::connection('easyesale_db')->table('product')
             ->whereNull('deleted_by')
-            ->where('oem_generic', '=', '2')
-            ->where('status', '=', '1')->cursor();
-        foreach ($easyesaleProducts as $product) {
-            $this->updateProduct($product);
+            ->where('status', '=', '1')->orderBy('id');
 
-            $this->createProductTitleKeywords($product);
-
-            $fonusProduct = DB::connection('fonus_db')->table('tbl_product')->where('custom_label',$product->code)->first();
-            $this->createProductFeatures($fonusProduct, $product->id);
+        if (env('APP_ENV') === 'local') {
+            Log::info('Local Environment');
+            $easyesaleProductsQ->where('oem_generic', '=', '2');
         }
 
-        $storeProducts = DB::connection('easyesale_db')->table('store_product')->cursor();
-        foreach ($storeProducts as $storeProduct) {
-            $this->createStoreProduct($storeProduct);
-        }
+        $easyesaleProductsQ->chunk(100, function ($easyesaleProducts) {
+            foreach ($easyesaleProducts as $product) {
+                $this->updateProduct($product);
+
+                $this->createProductTitleKeywords($product);
+
+                $fonusProduct = DB::connection('fonus_db')->table('tbl_product')->where('custom_label',$product->code)->first();
+                $this->createProductFeatures($fonusProduct, $product->id);
+            }
+        });
+
+//        $storeProducts = DB::connection('easyesale_db')->table('store_product')->cursor();
+//        foreach ($storeProducts as $storeProduct) {
+//            $this->createStoreProduct($storeProduct);
+//        }
     }
 
     private function createProduct($product)

@@ -30,15 +30,21 @@ class DevicesSyncJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $syncDevices = DB::connection('easyesale_db')->table('cea_device')->cursor();
-        foreach ($syncDevices as $device) {
-            $this->createSyncDevice($device);
-        }
+        DB::connection('easyesale_db')->table('cea_device')
+            ->orderBy('id')
+            ->chunk(1000, function ($syncDevices) {
+                foreach ($syncDevices as $device) {
+                    $this->createSyncDevice($device);
+                }
+            });
 
-        $devices = DB::connection('fonus_db')->table('tbl_device')->cursor();
-        foreach ($devices as $device) {
-            $this->createDevice($device);
-        }
+        DB::connection('fonus_db')->table('tbl_device')
+            ->orderBy('device_id')
+            ->chunk(1000, function ($devices) {
+                foreach ($devices as $device) {
+                    $this->createDevice($device);
+                }
+            });
     }
 
     private function createDevice(mixed $device)
@@ -49,7 +55,8 @@ class DevicesSyncJob implements ShouldQueue
 //        $deviceSubType = DeviceSubTypes::where('code', $device->device_sub_type_id)->first();
         $brand = Brand::where('code', $device->brand_id)->first();
 
-        if (env('APP_ENV') == 'local') {
+        if (env('APP_ENV') !== 'local') {
+            Log::info('Syncing Images Also');
             if (!file_exists(storage_path('app/public/device_images/' . $device->picture1))) {
                 $image = file_get_contents('https://fonusaccessory.com/inv/inv_images/device_images/' . $device->picture1);
                 file_put_contents(storage_path('app/public/device_images/' . $device->picture1), $image);
@@ -65,14 +72,14 @@ class DevicesSyncJob implements ShouldQueue
         Device::updateOrCreate(
             ['code' => $device->device_id],
             [
-//                'name' => $device->device_model_name,
-//                'code' => $device->device_id,
-//                'release_date' => $device->release_date,
+                'name' => $device->device_model_name,
+                'code' => $device->device_id,
+                'release_date' => $device->release_date,
                 'image' => $device->picture1,
                 'thumbnail_image' => $device->thumbnail_picture1,
-//                'dimensions_width' => $device->width,
-//                'dimensions_length' => $device->depth,
-//                'dimensions_height' => $device->height,
+                'dimensions_width' => $device->width,
+                'dimensions_length' => $device->depth,
+                'dimensions_height' => $device->height,
 //                'notes' => $device->notes1,
 //                'order' => $device->order_no,
 //                'created_by' => 'system',

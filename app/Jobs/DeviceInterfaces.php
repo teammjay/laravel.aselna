@@ -29,15 +29,17 @@ class DeviceInterfaces implements ShouldQueue
      */
     public function handle(): void
     {
-        $deviceInterfaces = DB::connection('easyesale_db')->table('cea_device_interface')->cursor();
-        foreach ($deviceInterfaces as $deviceInterface) {
-            $this->createDeviceInetrface($deviceInterface);
-        }
+        DB::connection('easyesale_db')->table('cea_device_interface')->orderBy('id')
+            ->chunk(1000, function ($deviceInterfaces) {
+                foreach ($deviceInterfaces as $deviceInterface) {
+                    $this->createDeviceInetrface($deviceInterface);
+                }
+            });
 
-        $deviceAttributes = DB::connection('fonus_db')->table('tbl_device_attributes')->cursor();
-        foreach ($deviceAttributes as $deviceAttribute) {
-//            $this->createDeviceInterfaces($deviceAttribute);
-        }
+//        $deviceAttributes = DB::connection('fonus_db')->table('tbl_device_attributes')->cursor();
+//        foreach ($deviceAttributes as $deviceAttribute) {
+////            $this->createDeviceInterfaces($deviceAttribute);
+//        }
     }
 
     private function createDeviceInterfaces(mixed $deviceAttribute)
@@ -48,7 +50,7 @@ class DeviceInterfaces implements ShouldQueue
             return;
         }
         DeviceInterface::create([
-            'id' => (string) Str::uuid(),
+            'id' => (string)Str::uuid(),
             'device_id' => $deviceId,
             'interface_id' => $interfaceId,
             'created_by' => 'system',
@@ -62,7 +64,7 @@ class DeviceInterfaces implements ShouldQueue
     {
         DeviceInterface::updateOrCreate([
             'id' => $deviceInterface->id
-        ],[
+        ], [
             'id' => $deviceInterface->id,
             'device_id' => $deviceInterface->device_id,
             'interface_id' => $deviceInterface->cea_interface_id,
