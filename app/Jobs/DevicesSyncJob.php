@@ -38,13 +38,13 @@ class DevicesSyncJob implements ShouldQueue
                 }
             });
 
-        DB::connection('fonus_db')->table('tbl_device')
-            ->orderBy('device_id')
-            ->chunk(1000, function ($devices) {
-                foreach ($devices as $device) {
-                    $this->createDevice($device);
-                }
-            });
+//        DB::connection('fonus_db')->table('tbl_device')
+//            ->orderBy('device_id')
+//            ->chunk(1000, function ($devices) {
+//                foreach ($devices as $device) {
+//                    $this->createDevice($device);
+//                }
+//            });
     }
 
     private function createDevice(mixed $device)
@@ -96,9 +96,8 @@ class DevicesSyncJob implements ShouldQueue
     private function createSyncDevice(mixed $device)
     {
 //        $rating = DB::connection('easyesale_db')->table('cea_device_rating')->where('id', $device->rating_id)->select('value')->first();
-        Device::updateOrCreate([
-            'id' => $device->id,
-        ], [
+
+        $deviceData = [
             'id' => $device->id,
             'name' => $device->model_name,
             'code' => $device->code,
@@ -118,6 +117,38 @@ class DevicesSyncJob implements ShouldQueue
 //            'screen_id' => $device->screen_id,
 //            'status' => $device->status,
 //            'thumbnail_image' => $device->thumbnail_id
-        ]);
+        ];
+
+        $Image = DB::connection('easyesale_db_wt_prefix')->table('sys_file')->where('id', $device->image_id)->first();
+        try {
+            $image_name = strtolower($Image->name);
+            if (isset($image_name)) {
+                if (!file_exists(storage_path('app/public/device_images/' . $image_name))) {
+                    $image = file_get_contents('https://fonusaccessory.com/inv/inv_images/device_images/' . $image_name);
+                    file_put_contents(storage_path('app/public/device_images/' . $image_name), $image);
+                    $deviceData['image'] = $image_name;
+                }
+            }
+        } catch (\Exception $e) {
+            Log::error('Error in Image Sync: ' . $e->getMessage());
+        }
+
+        $Thumbnail = DB::connection('easyesale_db_wt_prefix')->table('sys_file')->where('id', $device->thumbnail_id)->first();
+        try {
+            $thumbnail_name = strtolower($Thumbnail->name);
+            if (isset($thumbnail_name)) {
+                if (!file_exists(storage_path('app/public/device_images/' . $thumbnail_name))) {
+                    $thumbnail = file_get_contents('https://fonusaccessory.com/inv/inv_images/device_images/' . $thumbnail_name);
+                    file_put_contents(storage_path('app/public/device_images/' . $thumbnail_name), $thumbnail);
+                    $deviceData['thumbnail_image'] = $thumbnail_name;
+                }
+            }
+        } catch (\Exception $e) {
+            Log::error('Error in Thumbnail Sync: ' . $e->getMessage());
+        }
+
+        Device::updateOrCreate([
+            'id' => $device->id,
+        ], $deviceData);
     }
 }

@@ -49,29 +49,29 @@ class SyncAllTables extends Command
      */
     public function handle()
     {
-//        StoreTypeSyncJob::dispatch();
-//        StoreSyncJob::dispatch();
-//        ManufacturerSyncJob::dispatch();
-//        DeviceTypesSyncJob::dispatch();
-//        BrandSyncJob::dispatch();
-//        DevicesSyncJob::dispatch();
-//        CategorySyncJob::dispatch();
-//        ProductConditionJob::dispatch();
-//        CarrierSyncJob::dispatch();
-//        ShippingCarrierJob::dispatch();
-//        InterfaceSyncJob::dispatch();
-//        DeviceInterfaces::dispatch();
-//        GenerationTypeAndTemplateSync::dispatch();
-//        ProductSyncJob::dispatch();
-//        ProductInterfaces::dispatch();
-//        ListingSyncJob::dispatch();
-//        ListingItemSyncJob::dispatch();
-//        ListingItemDataSyncJob::dispatch();
-//        ListingItemLinkSyncJob::dispatch();
-//        StoreTypeListingSyncJob::dispatch();
-//        UPCSyncJob::dispatch();
-//        LogisticCentreSyncJob::dispatch();
-//        ListingFeedSyncJob::dispatch();
+        StoreTypeSyncJob::dispatch();
+        StoreSyncJob::dispatch();
+        ManufacturerSyncJob::dispatch();
+        DeviceTypesSyncJob::dispatch();
+        BrandSyncJob::dispatch();
+        DevicesSyncJob::dispatch();
+        CategorySyncJob::dispatch();
+        ProductConditionJob::dispatch();
+        CarrierSyncJob::dispatch();
+        ShippingCarrierJob::dispatch();
+        InterfaceSyncJob::dispatch();
+        DeviceInterfaces::dispatch();
+        GenerationTypeAndTemplateSync::dispatch();
+        ProductSyncJob::dispatch();
+        ProductInterfaces::dispatch();
+        ListingSyncJob::dispatch();
+        ListingItemSyncJob::dispatch();
+        ListingItemDataSyncJob::dispatch();
+        ListingItemLinkSyncJob::dispatch();
+        StoreTypeListingSyncJob::dispatch();
+        UPCSyncJob::dispatch();
+        LogisticCentreSyncJob::dispatch();
+        ListingFeedSyncJob::dispatch();
         ProductImagesSyncJob::dispatch();
     }
 }
