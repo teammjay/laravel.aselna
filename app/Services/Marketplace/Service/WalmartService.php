@@ -5,6 +5,7 @@ namespace App\Services\Marketplace\Service;
 use App\Models\Listing;
 use App\Models\ListingFeed;
 use App\Models\ListingItemLink;
+use App\Services\Auth\WalmartAuthService;
 use App\Services\Marketplace\Contracts\MarketplaceServiceInterface;
 use App\Utils\FileUtility;
 use App\Utils\XmlUtility;
@@ -155,6 +156,12 @@ class WalmartService implements MarketplaceServiceInterface
 
     public function submitFeed($feedId)
     {
-        // TODO: Implement submitFeed() method.
+        $credentials = [];
+        $authService = new WalmartAuthService();
+
+        $response = $authService->submitFeed($feedId);
+        $resultFeedId = $response['feedId'];
+
+        // save the result and then check the process in queue after like 5-10 minutes
     }
 }
