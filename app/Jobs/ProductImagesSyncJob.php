@@ -99,6 +99,7 @@ class ProductImagesSyncJob implements ShouldQueue
         if (!$product) return;
 
         $imageData = [
+            'id' => $productImage->id,
             'product_id' => $product->product_id,
             'sort_order' => last(str_split($productImage->sort_order ?? '')),
             'main_image' => $productImage->main_image ? 1 : 0
