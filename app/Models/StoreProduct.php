@@ -48,6 +48,11 @@ class StoreProduct extends Model
         return $query2->cursor();
     }*/
 
+    public function StoreTypeCategory()
+    {
+        return $this->belongsTo(StoreTypeCategory::class, 'store_type_category_id');
+    }
+
     public function product()
     {
         return $this->belongsTo(Catalog::class, 'product_id');

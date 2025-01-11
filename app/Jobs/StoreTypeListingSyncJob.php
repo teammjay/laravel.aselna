@@ -27,10 +27,14 @@ class StoreTypeListingSyncJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $allStoreListing = DB::connection('easyesale_db')->table('channel_listing')->cursor();
-        foreach ($allStoreListing as $storeListing) {
-            $this->createStoreListing($storeListing);
-        }
+        $allStoreListingQ = DB::connection('easyesale_db')->table('channel_listing')
+            ->orderBy('id');
+
+        $allStoreListingQ->chunk(1000, function ($allStoreListing) {
+            foreach ($allStoreListing as $storeListing) {
+                $this->createStoreListing($storeListing);
+            }
+        });
     }
 
     private function createStoreListing($storeListing)

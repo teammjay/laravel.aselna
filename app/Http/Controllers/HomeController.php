@@ -30,6 +30,7 @@ class HomeController extends Controller
             ->when($request->input('store_id'), function ($query, $storeId) {
                 $query->where('store_id', $storeId);
             })
+            //->where('listing_id','=','8cf6ffb3-d1c4-4885-2eb9-e794a7df2a49')
             ->with('store', 'store.storeType');
 
         $totalRecords = ListingFeed::query()

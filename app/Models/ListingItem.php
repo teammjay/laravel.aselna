@@ -30,7 +30,7 @@ class ListingItem extends Model
 
     public function storeTypeListing()
     {
-        return $this->belongsTo(StoreTypeListing::class);
+        return $this->belongsTo(StoreTypeListing::class,'store_type_listing_id','id');
     }
 
     public function brand()
@@ -56,7 +56,7 @@ class ListingItem extends Model
 
     public function storeProduct()
     {
-        return $this->belongsTo(StoreProduct::class, 'store_product_id');
+        return $this->belongsTo(StoreProduct::class, 'store_product_id','id');
     }
 
     public function products()
