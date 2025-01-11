@@ -305,9 +305,19 @@ class ListingController extends Controller
         $query = StoreProduct::select('store_product.id','store_product.product_id','store_product.title','store_product.price','store_product.created_at','product_type.name as ProductType')->with('product');
         $query->leftJoin('products','products.product_id', '=', 'store_product.product_id');
         $query->leftJoin('product_type','products.product_type', '=', 'product_type.id');
+        $query->leftJoin('listing_item','listing_item.store_product_id', '=', 'store_product.id');
 
         // Handle Only Active Products (Remove the bundled products)
-        $query->where('products.oem_generic',2);
+        if ($request->has('exclude_oem')) {
+            $query->where('products.oem_generic');
+        }else{
+            $query->where('products.oem_generic', 2);
+        }
+
+        // Filter by product store
+        if ($request->has('never_listed_product')) {
+            $query->where('listing_item.id');
+        }
 
         // Filter by product store
         if ($request->has('store_id') && $request->input('store_id') != '') {
@@ -822,6 +832,9 @@ class ListingController extends Controller
                                             break;
                                         case 'single device':
                                             $productsArray[] = $this->generateSingleDeviceProductTitles($title_template, $product, $devices, $max_title_length, $brand_seperator, $device_seperator, $compress, $generate_type, $product_price, $store_product_id, $product_price_overwrite);
+                                            break;
+                                        case 'brand gruop':
+                                            $productsArray[] = $this->generateBrandGroupProductTitles($title_template, $product, $devices, $max_title_length, $brand_seperator, $device_seperator, $compress, $generate_type, $product_price, $store_product_id, $product_price_overwrite);
                                             break;
                                     }
                                 }

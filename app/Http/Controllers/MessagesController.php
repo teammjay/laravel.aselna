@@ -23,6 +23,41 @@ class MessagesController extends Controller
         $totalRecords = Message::query()->count();
         $query = Message::query();
 
+        // Filter by ticket email
+        if ($request->has('sender_email') && $request->input('sender_email') != '') {
+            $query->where('ticket_email', $request->input('sender_email'));
+        }
+
+        // Filter by ticket type
+        if ($request->has('ticket_type') && $request->input('ticket_type') != '') {
+            $query->where('ticket_type_id', $request->input('ticket_type'));
+        }
+
+        // Filter by ticket code
+        if ($request->has('ticket_code') && $request->input('ticket_code') != '') {
+            $query->where('ticket_code', $request->input('ticket_code'));
+        }
+
+        // Filter by order id
+        if ($request->has('order_id') && $request->input('order_id') != '') {
+            $query->where('order_id', $request->input('order_id'));
+        }
+
+        // Filter by subject
+        if ($request->has('subject') && $request->input('subject') != '') {
+            $query->where('subject', $request->input('subject'));
+        }
+
+        // Filter by notes
+        if ($request->has('body') && $request->input('body') != '') {
+            $query->where('notes', $request->input('body'));
+        }
+
+        // Filter by notes
+        if ($request->has('user_id') && $request->input('user_id') != '') {
+            $query->where('customer_id', $request->input('user_id'));
+        }
+
         $dataTableService = new DataTableService($query, $request);
 
         $dataTableService->setCustomSorting(function ($query, $request) {
