@@ -97,6 +97,21 @@ return [
             'sslmode' => 'prefer',
         ],
 
+        'easyesale_db_wt_prefix' => [
+            'driver' => 'pgsql',
+            'url' => env('DB_ESALE_URL'),
+            'host' => env('DB_ESALE_HOST', '127.0.0.1'),
+            'port' => env('DB_ESALE_PORT', '5432'),
+            'database' => env('DB_ESALE_DATABASE', 'laravel'),
+            'username' => env('DB_ESALE_USERNAME', 'root'),
+            'password' => env('DB_ESALE_PASSWORD', ''),
+            'charset' => env('DB_ESALE_CHARSET', 'utf8'),
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'search_path' => 'public',
+            'sslmode' => 'prefer',
+        ],
+
         'mariadb' => [
             'driver' => 'mariadb',
             'url' => env('DB_URL'),

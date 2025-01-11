@@ -56,4 +56,9 @@ class Catalog extends Model
     {
         return $this->belongsTo(ProductColor::class,'product_color');
     }
+
+    public function productKeyFeatures()
+    {
+        return $this->hasMany(ProductKeyFeatures::class, 'product_id','product_id');
+    }
 }

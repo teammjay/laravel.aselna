@@ -41,6 +41,9 @@ class WalmartService implements MarketplaceServiceInterface
 
         foreach ($listingItems as $listingItem) {
             $item = $listingItem->item;
+            $storeTypeCategory = $item->storeProduct->storeTypeCategory;
+            $productObj = $item->storeProduct->product;
+
             $product = [
                 'Orderable' => [
                     'endDate' => '2060-01-01T08:00:00Z',
@@ -61,14 +64,25 @@ class WalmartService implements MarketplaceServiceInterface
             ];
 
             $compatibleDevices = [];
-
-            Log::info('Device: ' . json_encode($item->devices));
             foreach ($item->devices as $device) {
-                $compatibleDevices[] = $device->device->name;
+                $compatibleDevices[] = $device->device->brand->name . ' ' . $device->device->name;
             }
 
-//            $product['Visible'] = ;
+            $keyFeatures = [];
+            foreach ($productObj->productKeyFeatures as $feature) {
+                $keyFeatures[] = $feature->value;
+            }
 
+            $product['Visible'][$storeTypeCategory->name] = [
+                'shortDescription' => $item->description,
+                'mainImageUrl' => '',
+                'productSecondaryImageURL' => '',
+                'keyFeatures' => $keyFeatures,
+                'manufacturerPartNumber' => $item->npm,
+                'modelNumber' => $item->sku,
+                'color' => '',
+                'compatibleDevices' => $compatibleDevices,
+            ];
 
             $jsonFeed['MPItem'][] = $product;
         }

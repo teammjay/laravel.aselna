@@ -33,35 +33,38 @@ class ProductSyncJob implements ShouldQueue
      */
     public function handle(): void
     {
-//        $products = DB::connection('fonus_db')->table('tbl_product')->get();
-//        foreach ($products as $product) {
-//            if (Catalog::where(['product_code' => $product->product_id])->exists()) continue;
-//
-//            $this->createProduct($product);
-//
-//            $product_id = Catalog::where('product_code', $product->product_id)->first();
-//
-//
-//
-//            $this->createProductFeatures($product, $product_id);
-//        }
-        $easyesaleProducts = DB::connection('easyesale_db')->table('product')
+        $easyesaleProductsQ = DB::connection('easyesale_db')->table('product')
             ->whereNull('deleted_by')
-            ->where('oem_generic', '=', '2')
-            ->where('status', '=', '1')->cursor();
-        foreach ($easyesaleProducts as $product) {
-            $this->updateProduct($product);
+            ->where('status', '=', '1')->orderBy('id');
 
-            $this->createProductTitleKeywords($product);
-
-            $fonusProduct = DB::connection('fonus_db')->table('tbl_product')->where('custom_label',$product->code)->first();
-            $this->createProductFeatures($fonusProduct, $product->id);
+        if (env('APP_ENV') === 'local') {
+            Log::info('Local Environment');
+            $easyesaleProductsQ->where('oem_generic', '=', '2');
         }
 
-        $storeProducts = DB::connection('easyesale_db')->table('store_product')->cursor();
-        foreach ($storeProducts as $storeProduct) {
-            $this->createStoreProduct($storeProduct);
+        $easyesaleProductsQ->chunk(100, function ($easyesaleProducts) {
+            foreach ($easyesaleProducts as $product) {
+                $this->updateProduct($product);
+
+                $this->createProductTitleKeywords($product);
+
+                $fonusProduct = DB::connection('fonus_db')->table('tbl_product')->where('custom_label',$product->code)->first();
+                $this->createProductFeatures($fonusProduct, $product->id);
+            }
+        });
+
+        $storeProductsQ = DB::connection('easyesale_db')->table('store_product')->orderBy('id');
+
+        if (env('APP_ENV') === 'local') {
+            Log::info('Local Environment');
+            $storeProductsQ->whereRaw('id in (select store_product_id from oydera_listing_item where id in (select item_id from oydera_listing_item_link where listing_id = \'8cf6ffb3-d1c4-4885-2eb9-e794a7df2a49\'))');
         }
+
+        $storeProductsQ->chunk(100, function ($storeProducts) {
+            foreach ($storeProducts as $storeProduct) {
+                $this->createStoreProduct($storeProduct);
+            }
+        });
     }
 
     private function createProduct($product)
@@ -193,12 +196,6 @@ class ProductSyncJob implements ShouldQueue
 
     private function createStoreProduct(mixed $storeProduct)
     {
-        if (StoreProduct::where(['product_id' => $storeProduct->product_id, 'store_id' => $storeProduct->store_id])->exists()) {
-            return;
-        }
-        if (!Catalog::where('product_id', $storeProduct->product_id)->exists()) {
-            return;
-        }
         StoreProduct::updateOrCreate([
             'id' => $storeProduct->id,
         ], [
@@ -208,7 +205,7 @@ class ProductSyncJob implements ShouldQueue
             'active' => $storeProduct->active ? 1 : 0,
             'brand_combo' => $storeProduct->brand_combo,
             'carrier_combo' => $storeProduct->carrier_combo,
-            'channel_category_id' => $storeProduct->channel_category_id,
+            'store_type_category_id' => $storeProduct->channel_category_id,
             'client' => $storeProduct->client,
             'compare_at_price' => $storeProduct->compare_at_price,
             'description' => $storeProduct->description,

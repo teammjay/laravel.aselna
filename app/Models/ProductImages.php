@@ -20,10 +20,10 @@ class ProductImages extends Model
 
         static::creating(function ($model) {
             if (empty($model->id)) {
-                $model->id = (string) Str::uuid();
+                $model->id = (string)Str::uuid();
             }
         });
     }
 
-    protected $fillable = ['product_id','image', 'thumbnail_image','sort_order','created_by','updated_by','created_at','updated_at'];
+    protected $fillable = ['id', 'product_id', 'main_image', 'image', 'thumbnail_image', 'sort_order', 'created_by', 'updated_by', 'created_at', 'updated_at'];
 }

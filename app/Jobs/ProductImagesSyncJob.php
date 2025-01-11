@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Models\Catalog;
 use App\Models\ProductImages;
+use Exception;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\DB;
@@ -13,7 +14,7 @@ class ProductImagesSyncJob implements ShouldQueue
 {
     use Queueable;
 
-    public $timeout = 3000;
+    public $timeout = 6000;
 
     /**
      * Create a new job instance.
@@ -29,12 +30,32 @@ class ProductImagesSyncJob implements ShouldQueue
     public function handle(): void
     {
         //add local env variable to check if we are in local environment
-        if (env('APP_ENV') === 'local') return;
-        $productImages = DB::connection('fonus_db')->table('tbl_product_images')->cursor();
+//        if (env('APP_ENV') === 'local') return;
+        $productImagesQ = DB::connection('fonus_db')
+            ->table('tbl_product_images')
+            ->orderBy('product_id');
 
-        foreach ($productImages as $productImage) {
-            $this->createProductImage($productImage);
+//        $productImagesQ->chunk(1000, function ($productImages) {
+//            foreach ($productImages as $productImage) {
+//                $this->createProductImage($productImage);
+//            }
+//        });
+
+        Log::info('ProductImagesSyncJob From : Done');
+
+        $easyImagesQ = DB::connection('easyesale_db')
+            ->table('product_image')
+            ->orderBy('id');
+
+        if (env('APP_ENV') === 'local') {
+            $easyImagesQ->limit(40);
         }
+
+        $easyImagesQ->chunk(100, function ($productImages) {
+            foreach ($productImages as $productImage) {
+                $this->createProductImageFromEasyEsale($productImage);
+            }
+        });
     }
 
     private function createProductImage(mixed $productImage)
@@ -68,5 +89,64 @@ class ProductImagesSyncJob implements ShouldQueue
             'thumbnail_image' => $productImage->thumbnail_picture_name,
             'sort_order' => $productImage->picture_id
         ]);
+    }
+
+    private function createProductImageFromEasyEsale(mixed $productImage)
+    {
+        Log::info('ProductImagesSyncJob From EasyEsale: ' . $productImage->id);
+
+        $product = Catalog::where('product_id', $productImage->product_id)->first();
+        if (!$product) return;
+
+        $imageData = [
+            'id' => $productImage->id,
+            'product_id' => $product->product_id,
+            'sort_order' => last(str_split($productImage->sort_order ?? '')),
+            'main_image' => $productImage->main_image ? 1 : 0
+        ];
+
+        $Image = DB::connection('easyesale_db_wt_prefix')->table('sys_file')->where('id', $productImage->image_id)->first();
+
+        try {
+            $image_name = strtolower($Image->name);
+            if (!ProductImages::where('image', '=', $image_name)->exists() && isset($image_name) && env('APP_ENV') !== 'local') {
+                if (!file_exists(storage_path('app/public/product_images/' . $image_name))) {
+                    $image = file_get_contents('https://fonusaccessory.com/inv/inv_images/main_product_images/' . $image_name);
+                    file_put_contents(storage_path('app/public/product_images/' . $image_name), $image);
+                    $imageData['image'] = $image_name;
+                }
+            }
+            if (!isset($imageData['image'])) {
+                $imageData['image'] = '';
+            }
+        } catch (Exception $e) {
+            $imageData['image'] = '';
+            Log::error('ProductImagesSyncJob From EasyEsale1: ' . $e->getMessage());
+        }
+
+        $Thumbnail = DB::connection('easyesale_db_wt_prefix')->table('sys_file')->where('id', $productImage->thumbnail_id)->first();
+        try {
+            $thunmail_name = strtolower($Thumbnail->name);
+            if (!ProductImages::where('thumbnail_image', '=', $thunmail_name)->exists() && isset($thunmail_name) && env('APP_ENV') !== 'local') {
+                if (!file_exists(storage_path('app/public/product_images/' . $thunmail_name))) {
+                    $imageThumbnail = file_get_contents('https://fonusaccessory.com/inv/inv_images/main_product_images/' . $thunmail_name);
+                    file_put_contents(storage_path('app/public/product_images/' . $thunmail_name), $imageThumbnail);
+                    $imageData['thumbnail_image'] = $thunmail_name;
+                }
+            }
+            if (!isset($imageData['thumbnail_image'])) {
+                $imageData['thumbnail_image'] = '';
+            }
+        } catch (Exception $e) {
+            $imageData['thumbnail_image'] = '';
+            Log::error('ProductImagesSyncJob From EasyEsale2: ' . $e->getMessage());
+        }
+
+        if ($imageData['image'] != '' || $imageData['thumbnail_image'] != '') {
+            ProductImages::updateOrCreate([
+                'product_id' => $product->product_id,
+                'sort_order' => last(str_split($productImage->sort_order ?? ''))
+            ], $imageData);
+        }
     }
 }
