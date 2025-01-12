@@ -5,6 +5,7 @@ namespace App\Jobs;
 use App\Models\Brand;
 use App\Models\Device;
 use App\Models\DeviceTypes;
+use Exception;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\DB;
@@ -57,14 +58,22 @@ class DevicesSyncJob implements ShouldQueue
 
         if (env('APP_ENV') !== 'local') {
             Log::info('Syncing Images Also');
-            if (!file_exists(storage_path('app/public/device_images/' . $device->picture1))) {
-                $image = file_get_contents('https://fonusaccessory.com/inv/inv_images/device_images/' . $device->picture1);
-                file_put_contents(storage_path('app/public/device_images/' . $device->picture1), $image);
+            try {
+                if (!file_exists(storage_path('app/public/device_images/' . $device->picture1))) {
+                    $image = file_get_contents('https://fonusaccessory.com/inv/inv_images/device_images/' . $device->picture1);
+                    file_put_contents(storage_path('app/public/device_images/' . $device->picture1), $image);
+                }
+            } catch (Exception $e) {
+                Log::error('Error in Image Sync: ' . $e->getMessage());
             }
 
             if (!file_exists(storage_path('app/public/device_images/' . $device->thumbnail_picture1))) {
-                $image = file_get_contents('https://fonusaccessory.com/inv/inv_images/device_images/' . $device->thumbnail_picture1);
-                file_put_contents(storage_path('app/public/device_images/' . $device->thumbnail_picture1), $image);
+                try {
+                    $image = file_get_contents('https://fonusaccessory.com/inv/inv_images/device_images/' . $device->thumbnail_picture1);
+                    file_put_contents(storage_path('app/public/device_images/' . $device->thumbnail_picture1), $image);
+                } catch (Exception $e) {
+                    Log::error('Error in Thumbnail Sync: ' . $e->getMessage());
+                }
             }
         }
 
@@ -129,7 +138,7 @@ class DevicesSyncJob implements ShouldQueue
                     $deviceData['image'] = $image_name;
                 }
             }
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('Error in Image Sync: ' . $e->getMessage());
         }
 
@@ -143,7 +152,7 @@ class DevicesSyncJob implements ShouldQueue
                     $deviceData['thumbnail_image'] = $thumbnail_name;
                 }
             }
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('Error in Thumbnail Sync: ' . $e->getMessage());
         }
 

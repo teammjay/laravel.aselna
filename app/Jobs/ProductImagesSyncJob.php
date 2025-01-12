@@ -69,14 +69,22 @@ class ProductImagesSyncJob implements ShouldQueue
 
         if (env('APP_ENV') !== 'local') {
             //check if file exists in storage
-            if (!file_exists(storage_path('app/public/product_images/' . $productImage->picture_name))) {
-                $image = file_get_contents('https://fonusaccessory.com/inv/inv_images/main_product_images/' . $productImage->picture_name);
-                file_put_contents(storage_path('app/public/product_images/' . $productImage->picture_name), $image);
+            try {
+                if (!file_exists(storage_path('app/public/product_images/' . $productImage->picture_name))) {
+                    $image = file_get_contents('https://fonusaccessory.com/inv/inv_images/main_product_images/' . $productImage->picture_name);
+                    file_put_contents(storage_path('app/public/product_images/' . $productImage->picture_name), $image);
+                }
+            } catch (Exception $e) {
+                Log::error('ProductImagesSyncJob: ' . $e->getMessage());
             }
 
-            if (!file_exists(storage_path('app/public/product_images/' . $productImage->thumbnail_picture_name))) {
-                $imageThumbnail = file_get_contents('https://fonusaccessory.com/inv/inv_images/main_product_images/' . $productImage->thumbnail_picture_name);
-                file_put_contents(storage_path('app/public/product_images/' . $productImage->thumbnail_picture_name), $imageThumbnail);
+            try {
+                if (!file_exists(storage_path('app/public/product_images/' . $productImage->thumbnail_picture_name))) {
+                    $imageThumbnail = file_get_contents('https://fonusaccessory.com/inv/inv_images/main_product_images/' . $productImage->thumbnail_picture_name);
+                    file_put_contents(storage_path('app/public/product_images/' . $productImage->thumbnail_picture_name), $imageThumbnail);
+                }
+            } catch (Exception $e) {
+                Log::error('ProductImagesSyncJob: ' . $e->getMessage());
             }
         }
 
