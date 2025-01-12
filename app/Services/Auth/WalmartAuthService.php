@@ -36,4 +36,37 @@ class WalmartAuthService
 
         return $data['access_token'];
     }
+
+    public function submitFeed($jsonPayload)
+    {
+        $accessToken = $this->authenticate();
+
+        $response = $this->client->post("{$this->endpoint}/feeds", [
+            'headers' => [
+                'Authorization' => "Bearer {$accessToken}",
+                'Content-Type' => 'application/json',
+                'WM_SVC.NAME' => 'Walmart Marketplace',
+                'WM_QOS.CORRELATION_ID' => uniqid(),
+            ],
+            'body' => $jsonPayload,
+        ]);
+
+        return json_decode($response->getBody(), true);
+    }
+
+    public function getFeedStatus($feedId)
+    {
+        $accessToken = $this->authenticate();
+
+        $response = $this->client->get("{$this->endpoint}/feeds/{$feedId}", [
+            'headers' => [
+                'Authorization' => "Bearer {$accessToken}",
+                'Content-Type' => 'application/json',
+                'WM_SVC.NAME' => 'Walmart Marketplace',
+                'WM_QOS.CORRELATION_ID' => uniqid(),
+            ],
+        ]);
+
+        return json_decode($response->getBody(), true);
+    }
 }

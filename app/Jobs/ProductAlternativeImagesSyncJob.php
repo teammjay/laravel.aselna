@@ -50,13 +50,14 @@ class ProductAlternativeImagesSyncJob implements ShouldQueue
 
         $imageData = [
             'product_id' => $product->product_id,
-//            'main_image_id' => $productImage->main_image_id
         ];
 
-        $Image = DB::connection('easyesale_db_wt_prefix')->table('sys_file')->where('id', $productImage->image_id)->first();
+        $Image = DB::connection('easyesale_db_wt_prefix')
+            ->table('sys_file')
+            ->where('id', $productImage->image_id)->first();
         try {
             $image_name = strtolower($Image->name);
-            if (!ProductImageAlternative::where('image', '=', $image_name)->exists() && isset($image_name)) {
+            if (!ProductImageAlternative::where('image', '=', $image_name)->exists() && isset($image_name) && env('APP_ENV') !== 'local') {
                 if (!file_exists(storage_path('app/public/product_additional_images/' . $image_name))) {
                     $image = file_get_contents('https://fonusaccessory.com/inv/inv_images/additional_main_images/' . $image_name);
                     file_put_contents(storage_path('app/public/product_additional_images/' . $image_name), $image);
@@ -68,13 +69,15 @@ class ProductAlternativeImagesSyncJob implements ShouldQueue
             }
         } catch (Exception $e) {
             $imageData['image'] = '';
-            Log::error('ProductImagesSyncJob From EasyEsale1: ' . $e->getMessage());
+            Log::error('ProductImagesSyncJob From EasyEsale: ' . $e->getMessage());
         }
 
-        $Thumbnail = DB::connection('easyesale_db_wt_prefix')->table('sys_file')->where('id', $productImage->thumbnail_id)->first();
+        $Thumbnail = DB::connection('easyesale_db_wt_prefix')
+            ->table('sys_file')
+            ->where('id', $productImage->thumbnail_id)->first();
         try {
             $thunmail_name = strtolower($Thumbnail->name);
-            if (!ProductImageAlternative::where('thumbnail_image', '=', $thunmail_name)->exists() && isset($thunmail_name)) {
+            if (!ProductImageAlternative::where('thumbnail_image', '=', $thunmail_name)->exists() && isset($thunmail_name) && env('APP_ENV') !== 'local') {
                 if (!file_exists(storage_path('app/public/product_additional_images/' . $thunmail_name))) {
                     $imageThumbnail = file_get_contents('https://fonusaccessory.com/inv/inv_images/additional_main_images/' . $thunmail_name);
                     file_put_contents(storage_path('app/public/product_additional_images/' . $thunmail_name), $imageThumbnail);
@@ -86,7 +89,7 @@ class ProductAlternativeImagesSyncJob implements ShouldQueue
             }
         } catch (Exception $e) {
             $imageData['thumbnail_image'] = '';
-            Log::error('ProductImagesSyncJob From EasyEsale2: ' . $e->getMessage());
+            Log::error('ProductImagesSyncJob From EasyEsale: ' . $e->getMessage());
         }
 
         if ($imageData['image'] != '' || $imageData['thumbnail_image'] != '') {

@@ -35,11 +35,15 @@ class ProductImagesSyncJob implements ShouldQueue
             ->table('tbl_product_images')
             ->orderBy('product_id');
 
-//        $productImagesQ->chunk(1000, function ($productImages) {
-//            foreach ($productImages as $productImage) {
-//                $this->createProductImage($productImage);
-//            }
-//        });
+        if (env('APP_ENV') === 'local') {
+            $productImagesQ->limit(40);
+        }
+
+        $productImagesQ->chunk(100, function ($productImages) {
+            foreach ($productImages as $productImage) {
+                $this->createProductImage($productImage);
+            }
+        });
 
         Log::info('ProductImagesSyncJob From : Done');
 
@@ -63,15 +67,17 @@ class ProductImagesSyncJob implements ShouldQueue
         $product = Catalog::where('product_code', $productImage->product_id)->first();
         if (!$product) return;
 
-        //check if file exists in storage
-        if (!file_exists(storage_path('app/public/product_images/' . $productImage->picture_name))) {
-            $image = file_get_contents('https://fonusaccessory.com/inv/inv_images/main_product_images/' . $productImage->picture_name);
-            file_put_contents(storage_path('app/public/product_images/' . $productImage->picture_name), $image);
-        }
+        if (env('APP_ENV') !== 'local') {
+            //check if file exists in storage
+            if (!file_exists(storage_path('app/public/product_images/' . $productImage->picture_name))) {
+                $image = file_get_contents('https://fonusaccessory.com/inv/inv_images/main_product_images/' . $productImage->picture_name);
+                file_put_contents(storage_path('app/public/product_images/' . $productImage->picture_name), $image);
+            }
 
-        if (!file_exists(storage_path('app/public/product_images/' . $productImage->thumbnail_picture_name))) {
-            $imageThumbnail = file_get_contents('https://fonusaccessory.com/inv/inv_images/main_product_images/' . $productImage->thumbnail_picture_name);
-            file_put_contents(storage_path('app/public/product_images/' . $productImage->thumbnail_picture_name), $imageThumbnail);
+            if (!file_exists(storage_path('app/public/product_images/' . $productImage->thumbnail_picture_name))) {
+                $imageThumbnail = file_get_contents('https://fonusaccessory.com/inv/inv_images/main_product_images/' . $productImage->thumbnail_picture_name);
+                file_put_contents(storage_path('app/public/product_images/' . $productImage->thumbnail_picture_name), $imageThumbnail);
+            }
         }
 
         if ($productImage->picture_id === 1) {
