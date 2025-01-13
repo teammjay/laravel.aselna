@@ -122,7 +122,7 @@ class DevicesSyncJob implements ShouldQueue
 //            'image' => $device->image_id,
             'notes' => $device->notes,
             'order' => $device->sort_order,
-//            'rating_id' => $rating->value,
+            'rating_id' => $device->rating_id,
 //            'screen_id' => $device->screen_id,
 //            'status' => $device->status,
 //            'thumbnail_image' => $device->thumbnail_id
