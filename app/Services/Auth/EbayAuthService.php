@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Log;
 
 class EbayAuthService
 {
+    protected $client;
     protected $clientId;
     protected $clientSecret;
     protected $endpoint;
