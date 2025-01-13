@@ -45,7 +45,7 @@ class ProductImagesSyncJob implements ShouldQueue
             }
         });
 
-        Log::info('ProductImagesSyncJob From : Done');
+//        Log::info('ProductImagesSyncJob From : Done');
 
         $easyImagesQ = DB::connection('easyesale_db')
             ->table('product_image')
@@ -107,7 +107,7 @@ class ProductImagesSyncJob implements ShouldQueue
 
     private function createProductImageFromEasyEsale(mixed $productImage)
     {
-        Log::info('ProductImagesSyncJob From EasyEsale: ' . $productImage->id);
+//        Log::info('ProductImagesSyncJob From EasyEsale: ' . $productImage->id);
 
         $product = Catalog::where('product_id', $productImage->product_id)->first();
         if (!$product) return;

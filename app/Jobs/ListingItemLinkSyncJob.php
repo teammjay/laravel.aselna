@@ -44,7 +44,7 @@ class ListingItemLinkSyncJob implements ShouldQueue
 
     private function createListingItemLink(mixed $listingItemLink)
     {
-        Log::info('ListingItemLinkSyncJob: ' . $listingItemLink->id);
+//        Log::info('ListingItemLinkSyncJob: ' . $listingItemLink->id);
         ListingItemLink::updateOrCreate([
             'id' => $listingItemLink->id
         ], [
