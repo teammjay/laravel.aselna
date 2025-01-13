@@ -6,6 +6,7 @@ use App\Models\Listing;
 use App\Models\ListingFeed;
 use App\Models\ListingItemDetail;
 use App\Models\ListingItemLink;
+use App\Services\Auth\EbayAuthService;
 use App\Services\Marketplace\Contracts\MarketplaceServiceInterface;
 use App\Utils\XmlUtility;
 
@@ -155,9 +156,12 @@ class EbayService implements MarketplaceServiceInterface
 
     public function submitFeed($feedId)
     {
-        $content = '';
-        $generatedFeedId = $this->authService->uploadProductFeed($content);
+        $credentials = [];
+        $authService = new EbayAuthService();
 
-        $this->authService->submitFeed($generatedFeedId);
+        $taskID = $authService->createTask();
+        $response = $authService->uploadFile($taskID);
+        $resultFeedId = $response['feedId'];
+
     }
 }

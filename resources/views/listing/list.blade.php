@@ -920,7 +920,7 @@
                 { data: 'generation_type_name' },
                 { data: 'price' },
                 { data: 'qty' },
-                { data: 'created_date' }
+                { data: 'created_at' }
             ],
             columnDefs: [
                 {
