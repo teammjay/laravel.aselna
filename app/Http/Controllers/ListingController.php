@@ -55,7 +55,7 @@ class ListingController extends Controller
     public function filter(Request $request)
     {
 
-        DB::enableQueryLog();
+        //DB::enableQueryLog();
         $draw = $request['draw'];
         $start = $request['start'];
         $perPage = $request['length'];
@@ -64,31 +64,43 @@ class ListingController extends Controller
         $columnSortOrder = $request['order'][0]['dir'];
 
         $query = ListingItem::with([
-            'storeProduct',
-            'storeProduct.store.storeType',
-            'storeProduct.store',
-            'storeProduct.product',
-            'device.deviceType',
-            'generationType'
+            'storeProduct:id,store_id,product_id',
+            'storeProduct.store.storeType:id,name',
+            'storeProduct.store:id,name,store_type_id',
+            'storeProduct.product:product_id,product_status,product_type,product_code,product_sku,dimensions_width,product_color',
+            'device.deviceType:id,name',
+            'generationType:id,name'
         ]);
 
         if ($request->has('store_id') && $request->store_id != '') {
-            $query->whereHas('storeProduct', function ($q) use ($request) {
+            $query->whereRelation('storeProduct', 'store_id', $request->store_id);
+            /*$query->whereHas('storeProduct', function ($q) use ($request) {
                 $q->where('store_id', $request->store_id);
-            });
+            });*/
         }
 
         if ($request->has('product_status') && $request->product_status != '') {
-            $query->whereHas('storeProduct.product', function ($q) use ($request) {
+            $query->whereRelation('storeProduct.product', 'product_status', $request->product_status);
+            /*$query->whereHas('storeProduct.product', function ($q) use ($request) {
                 $q->where('product_status', $request->product_status);
-            });
+            });*/
         }
 
         // Filter by product type
         if ($request->has('product_type') && $request->product_type != '') {
-            $query->whereHas('storeProduct.product', function ($q) use ($request) {
+            $query->whereRelation('storeProduct.product', 'product_type', $request->product_type);
+            /*$query->whereHas('storeProduct.product', function ($q) use ($request) {
                 $q->where('product_type', $request->product_type);
-            });
+            });*/
+        }
+
+        // Filter by device type
+        if ($request->has('device_type') && $request->device_type != '') {
+            $query->whereRelation('device.deviceType', 'id', $request->device_type);
+           /* $query->whereHas('device.deviceType', function ($q) use ($request) {
+                $q->where('id', $request->device_type);
+            });*/
+
         }
 
         // Filter by product code
@@ -118,7 +130,6 @@ class ListingController extends Controller
         // Filter by sync message
         QueryFilters::applyFilter($query, $request, 'sync_message', 'sync_message_operator', 'sync_message');
 
-
         // Filter by upc
         QueryFilters::applyFilter($query, $request, 'upc', 'upc_operator', 'upc');
 
@@ -135,14 +146,6 @@ class ListingController extends Controller
         // Filter by qty
         if ($request->has('quantity') && $request->quantity != '') {
             $query->where('quantity', $request->quantity);
-        }
-
-        // Filter by device type
-        if ($request->has('device_type') && $request->device_type != '') {
-            $query->whereHas('device.deviceType', function ($q) use ($request) {
-                $q->where('id', $request->device_type);
-            });
-
         }
 
         // Filter by created date
@@ -165,19 +168,39 @@ class ListingController extends Controller
         if ($columnName != '') {
             switch (strtolower($columnName)) {
                 case 'product_sku':
-                    $query->orderByRaw('(SELECT product_sku FROM products LEFT JOIN store_product ON(store_product.product_id = products.product_id) WHERE store_product.id = listing_item.store_product_id) '.$columnSortOrder);
+
+                    $query->join('store_product', 'store_product.id', '=', 'listing_item.store_product_id')
+                        ->join('products', 'products.product_id', '=', 'store_product.product_id')
+                        ->orderBy('products.product_sku', $columnSortOrder);
+
+                   /* $query->orderByRaw('(SELECT product_sku FROM products LEFT JOIN store_product ON(store_product.product_id = products.product_id) WHERE store_product.id = listing_item.store_product_id) '.$columnSortOrder);*/
                     break;
                 case 'product_size':
-                    $query->orderByRaw('(SELECT dimensions_width FROM products LEFT JOIN store_product ON(store_product.product_id = products.product_id) WHERE store_product.id = listing_item.store_product_id) '.$columnSortOrder);
+
+                    $query->join('store_product', 'store_product.id', '=', 'listing_item.store_product_id')
+                        ->join('products', 'products.product_id', '=', 'store_product.product_id')
+                        ->orderBy('products.dimensions_width', $columnSortOrder);
+
+                    /*$query->orderByRaw('(SELECT dimensions_width FROM products LEFT JOIN store_product ON(store_product.product_id = products.product_id) WHERE store_product.id = listing_item.store_product_id) '.$columnSortOrder);*/
                     break;
                 case 'product_color':
-                    $query->orderByRaw('(SELECT product_color FROM products LEFT JOIN store_product ON(store_product.product_id = products.product_id) WHERE store_product.id = listing_item.store_product_id) '.$columnSortOrder);
+                    $query->join('store_product', 'store_product.id', '=', 'listing_item.store_product_id')
+                        ->join('products', 'products.product_id', '=', 'store_product.product_id')
+                        ->orderBy('products.product_color', $columnSortOrder);
+
+                    /*$query->orderByRaw('(SELECT product_color FROM products LEFT JOIN store_product ON(store_product.product_id = products.product_id) WHERE store_product.id = listing_item.store_product_id) '.$columnSortOrder);*/
                     break;
                 case 'store_name':
-                    $query->orderByRaw('(SELECT name FROM store LEFT JOIN store_product ON(store_product.store_id = store.id) LEFT JOIN listing_item ON(listing_item.store_product_id = store_product.store_id) WHERE store_product.id = listing_item.store_product_id) '.$columnSortOrder);
+                    $query->join('store_product', 'store_product.id', '=', 'listing_item.store_product_id')
+                        ->join('store', 'store_product.store_id', '=', 'store.id')
+                        ->orderBy('store.name', $columnSortOrder);
+
+                    /*$query->orderByRaw('(SELECT name FROM store LEFT JOIN store_product ON(store_product.store_id = store.id) LEFT JOIN listing_item ON(listing_item.store_product_id = store_product.store_id) WHERE store_product.id = listing_item.store_product_id) '.$columnSortOrder);*/
                     break;
                 case 'generation_type_name':
-                    $query->orderByRaw('(SELECT name FROM listing_generation_type WHERE listing_item.generation_type_id = listing_generation_type.code) '.$columnSortOrder);
+                    $query->join('listing_generation_type', 'listing_generation_type.code', '=', 'listing_item.generation_type_id')
+                        ->orderBy('listing_generation_type.name', $columnSortOrder);
+                    /*$query->orderByRaw('(SELECT name FROM listing_generation_type WHERE listing_item.generation_type_id = listing_generation_type.code) '.$columnSortOrder);*/
                     break;
             }
 
@@ -192,21 +215,27 @@ class ListingController extends Controller
                 'sync_status' => 'sync_status',
                 'price' => 'price',
                 'qty' => 'quantity',
-                'created_date' => 'created_at',
+                'created_at' => 'created_at',
             ];
             if (isset($sortableColumns[$columnName])) {
                 $query->orderBy($sortableColumns[$columnName], $columnSortOrder);
             }
         }
 
-        $productsRecord = $query->paginate($perPage); // Paginate results
+        //$productsRecord = $query->paginate($perPage); // Paginate results
         //echo $query->toSql();die;
+        //$products = $query->skip($start)->take($perPage)->get(); // Paginate results
         //dd(DB::getQueryLog());
-        $products = $query->skip($start)->take($perPage)->get(); // Paginate results
         /*echo '<pre>';
         print_r($products);
         echo '</pre>';die;*/
-        $totalRecordwithFilter = $productsRecord->total();
+        /*$totalRecordwithFilter = $productsRecord->total();*/
+        $totalRecords = $query->count();
+        $products = $query->orderBy($columnName, $columnSortOrder)
+            ->skip($start)
+            ->take($perPage)
+            ->get();
+        $totalRecordwithFilter = $totalRecords;
 
         $data = [];
         if(!empty((array) $products)){
@@ -226,7 +255,7 @@ class ListingController extends Controller
                     "generation_type_name" => (!empty($product->generationType)) ? $product->generationType->name : '',
                     "price" => $product->price,
                     "qty" => $product->quantity,
-                    "created_date" => date('Y-m-d H:i:s',strtotime($product->created_at)),
+                    "created_at" => date('Y-m-d H:i:s',strtotime($product->created_at)),
                     /*"action" => '<a href="'.route('listing.edit', $product->id).'" class="btn btn-primary">
                                     <i class="fas fa-fw fa-pencil-alt"></i>
                                 </a>',*/
@@ -305,9 +334,19 @@ class ListingController extends Controller
         $query = StoreProduct::select('store_product.id','store_product.product_id','store_product.title','store_product.price','store_product.created_at','product_type.name as ProductType')->with('product');
         $query->leftJoin('products','products.product_id', '=', 'store_product.product_id');
         $query->leftJoin('product_type','products.product_type', '=', 'product_type.id');
+        $query->leftJoin('listing_item','listing_item.store_product_id', '=', 'store_product.id');
 
         // Handle Only Active Products (Remove the bundled products)
-        $query->where('products.oem_generic',2);
+        if ($request->has('exclude_oem')) {
+            $query->where('products.oem_generic');
+        }else{
+            $query->where('products.oem_generic', 2);
+        }
+
+        // Filter by product store
+        if ($request->has('never_listed_product')) {
+            $query->where('listing_item.id');
+        }
 
         // Filter by product store
         if ($request->has('store_id') && $request->input('store_id') != '') {
@@ -822,6 +861,9 @@ class ListingController extends Controller
                                             break;
                                         case 'single device':
                                             $productsArray[] = $this->generateSingleDeviceProductTitles($title_template, $product, $devices, $max_title_length, $brand_seperator, $device_seperator, $compress, $generate_type, $product_price, $store_product_id, $product_price_overwrite);
+                                            break;
+                                        case 'brand gruop':
+                                            $productsArray[] = $this->generateBrandGroupProductTitles($title_template, $product, $devices, $max_title_length, $brand_seperator, $device_seperator, $compress, $generate_type, $product_price, $store_product_id, $product_price_overwrite);
                                             break;
                                     }
                                 }

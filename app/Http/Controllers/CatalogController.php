@@ -38,20 +38,14 @@ class CatalogController extends Controller
      */
     public function index(Request $request)
     {
-        // get the data in the pagination format for datatable to display
-        //sku must contain only 3 characters
         session()->forget('pro_id');
-        $products = Catalog::with('Manufacturer','color')->select('*')
-            ->where('oem_generic',2)
-            ->orderBy('created_at','desc')
-            ->paginate($this->perPage);
         $productTypes = ProductType::all();
         $manufacturers = Manufacturer::all();
         $productConditions = ProductCondition::all();
         $targetAudience = ProductTargetAudience::all();
         $perPage = $this->perPage;
 
-        return view('catalog.list',compact('products','perPage','productTypes','manufacturers','productConditions','targetAudience'));
+        return view('catalog.list',compact('perPage','productTypes','manufacturers','productConditions','targetAudience'));
     }
 
     /**
@@ -191,7 +185,7 @@ class CatalogController extends Controller
                 case 'product_color':
                     $query->orderBy('product_color', $columnSortOrder);
                     break;
-                case 'created_date':
+                case 'created_at':
                     $query->orderBy('created_at', $columnSortOrder);
                     break;
 
@@ -200,9 +194,15 @@ class CatalogController extends Controller
 
         $query->where('oem_generic',2);
         ///echo $query->toSql();die;
-        $productsRecord = $query->paginate($perPage); // Paginate results
+        /*$productsRecord = $query->paginate($perPage); // Paginate results
         $products = $query->skip($start)->take($perPage)->get(); // Paginate results
-        $totalRecordwithFilter = $productsRecord->total();
+        $totalRecordwithFilter = $productsRecord->total();*/
+        $totalRecords = $query->count();
+        $products = $query->orderBy($columnName, $columnSortOrder)
+            ->skip($start)
+            ->take($perPage)
+            ->get();
+        $totalRecordwithFilter = $totalRecords;
 
         $data = [];
         if(!empty((array) $products)){
@@ -227,7 +227,7 @@ class CatalogController extends Controller
                     "product_price" => '<span class="prVal">'.$product->product_price.'</span><input type="text" class="form-control bulk-edit" name="product['.$key.'][product_price]" value="'.$product->product_price.'" disabled>',
                     "manufacture_name" => isset($product->Manufacturer->name) ? $product->Manufacturer->name : '',
                     "product_color" => isset($product->color) ? $product->color->name : '',
-                    "created_date" => date('Y-m-d H:i:s',strtotime($product->created_at)),
+                    "created_at" => date('Y-m-d H:i:s',strtotime($product->created_at)),
                     "action" => '<a href="'.route('catalog.edit', $product->product_id).'" class="btn btn-primary">
                                     <i class="fas fa-fw fa-pencil-alt"></i>
                                 </a>
@@ -245,17 +245,6 @@ class CatalogController extends Controller
 
         return $response;
 
-        //echo $query->toSql();die;
-
-        // Return a view or JSON
-        /*if ($request->ajax()) {
-            return response()->json([
-                'html' => view('catalog.product_list', compact('products'))->render(),
-                'pagination' => view('catalog.pagination', compact('products'))->render(),
-            ]);
-        }
-
-        return view('products.index', compact('products'));*/
     }
 
     public function bulkUpdate(Request $request)

@@ -641,7 +641,7 @@
                 { data: 'product_price' },
                 { data: 'manufacture_name' },
                 { data: 'product_color' },
-                { data: 'created_date' },
+                { data: 'created_at' },
                 { data: 'action' }
             ],
             columnDefs: [

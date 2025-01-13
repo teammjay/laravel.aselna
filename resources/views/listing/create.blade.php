@@ -11,6 +11,9 @@
         #frmproductfilter .d-flex > .border {
             width: 14%;
         }
+        .error{
+            border-color: #dc3545 !important;
+        }
         .gap-5{gap:5px;}
         .proCheck{
             visibility: hidden;
@@ -18,6 +21,7 @@
         .selectproRow:hover td {
             background-color: #ddf1ff;
             color:#000;
+            cursor:pointer;
         }
         .bd-example {
             background: #fff;
@@ -731,9 +735,21 @@
                             device_type.push($(this).val())
                         });
 
-                        let brand = $('#brand_filter').val();
-                        let rating = $('#rating_filter').val();
-                        let popularity = $('#popularity_filter').val();
+                        let brand = [];
+                        $("#brand_filter option").each(function()
+                        {
+                            brand.push($(this).val())
+                        });
+                        let rating = [];
+                        $("#rating_filter option").each(function()
+                        {
+                            rating.push($(this).val())
+                        });
+                        let popularity = [];
+                        $("#popularity_filter option").each(function()
+                        {
+                            popularity.push($(this).val())
+                        });
                         let store_id = $('#listing_store').val();
                         //let title_template = $('#title_template').val();
                         let brand_seperator = $('#brand_seperator').val();
@@ -883,7 +899,14 @@
                 allowClear: true
             });*/
             $(document).on('click', '#searchBtn', function() {
-                loadProducts();
+                if($('#listing_store').val() == ''){
+                    alert('Please select store first.');
+                    $('#listing_store').addClass('error');
+                    return false;
+                }else {
+                    $('#listing_store').removeClass('error');
+                    loadProducts();
+                }
             });
 
             $("#manufacturer_filter, #product_type_filter, #brand_filter, #rating_filter, #popularity_filter").gs_multiselect();
