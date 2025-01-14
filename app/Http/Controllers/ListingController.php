@@ -725,7 +725,7 @@ class ListingController extends Controller
                 $query->whereIn('device.brand_id', $brand);
             }
             if ($rating) {
-                $query->where('device.rating_id', $rating);
+                $query->whereIn('device.rating_id', $rating);
             }
             if ($popularity) {
                 $query->where('device.rating_id', $popularity);
