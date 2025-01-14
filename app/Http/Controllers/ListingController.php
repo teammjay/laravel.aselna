@@ -361,15 +361,41 @@ class ListingController extends Controller
             $query->whereIn('store_product.manufacturer_id', $request->manufacturer);
         }
 
+        $all_product_ids = [];
         // Filter by product type and sub type
         if ($request->has('product_sub_sub_type') && $request->product_sub_sub_type != '') {
-            $query->whereIn('products.product_type', $request->product_sub_sub_type);
+            $all_product_ids = array_merge($all_product_ids, $request->product_sub_sub_type);
         }else if($request->has('product_sub_type') && $request->product_sub_type != ''){
-            $query->whereIn('products.product_type', $request->product_sub_type);
-        }else if ($request->has('product_type') && $request->product_type != '') {
-            $query->whereIn('products.product_type', $request->product_type);
+            $all_product_ids = array_merge($all_product_ids, $request->product_sub_type);
+            foreach ($request->product_sub_type as $sub_type){
+                $product_sub_types = ProductType::select('id')->where('parent_id',$sub_type)->get()->toArray();
+                if(!empty($product_sub_types)){
+                    foreach($product_sub_types as $stype){
+                        $all_product_ids[] = $stype['id'];
+                    }
+                }
+            }
+        } else if ($request->has('product_type') && $request->product_type != '') {
+            $all_product_ids = array_merge($all_product_ids, $request->product_type);
+            foreach ($request->product_type as $type){
+                $product_sub_types = ProductType::select('id')->where('parent_id',$type)->get()->toArray();
+                if(!empty($product_sub_types)){
+                    foreach($product_sub_types as $stype){
+                        $all_product_ids[] = $stype['id'];
+                        $product_sub_sub_types = ProductType::select('id')->where('parent_id',$stype['id'])->get()->toArray();
+                        if(!empty($product_sub_sub_types)){
+                            foreach($product_sub_sub_types as $ssubtype){
+                                $all_product_ids[] = $ssubtype['id'];
+                            }
+                        }
+                    }
+                }
+            }
         }
 
+        if (!empty($all_product_ids)) {
+            $query->whereIn('products.product_type', $all_product_ids);
+        }
 
         $products = $query->get();
 
@@ -1212,7 +1238,7 @@ class ListingController extends Controller
                                 $upcCodes = UPCCodes::where('store', $store_id)->where('is_used', 0)->orderBy('sequence_id', 'asc')->first();
                             }
 
-                            $productDetail = StoreProduct::with('product','product.productType')->where('id',$store_product_ids[$key]);
+                            $productDetail = StoreProduct::with('product','product.productType')->where('id',$store_product_ids[$key])->first();
                             $productDetail = $productDetail->toArray();
                             $product_name = $product;
                             if (str_contains($product, '[^]')) {
@@ -1220,12 +1246,12 @@ class ListingController extends Controller
                             }
                             $summary_products[$key]['title'] = $product_name;
                             $summary_products[$key]['sku'] = $sku;
-                            $summary_products[$key]['product_type'] = $productDetail['product']['productType']['name'];
+                            $summary_products[$key]['product_type'] = $productDetail['product']['product_type']['name'];
                             $summary_products[$key]['product_code'] = $productDetail['product']['product_sku'];
                             $listingProductArr = [
                                 'product_name' => $product_name,
                                 'description' => $productDetail['description'],
-                                'product_category' => $productDetail['ProductType'],
+                                'product_category' => $productDetail['product']['product_type']['name'],
                                 'sku' => $sku,
                                 'price' => $product_prices[$key],
                                 'item_id' => $product_ids[$key],
