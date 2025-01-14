@@ -39,11 +39,11 @@ class ProductAlternativeImagesSyncJob implements ShouldQueue
 
     private function createProductImage(mixed $productImage)
     {
-        Log::info('ProductAlternativeImagesSyncJob From : Started');
-        Log::info('ProductAlternativeImagesSyncJob From Main ID :: ' . $productImage->main_image_id);
+//        Log::info('ProductAlternativeImagesSyncJob From : Started');
+//        Log::info('ProductAlternativeImagesSyncJob From Main ID :: ' . $productImage->main_image_id);
 
         $mainImage = DB::connection('easyesale_db')->table('product_image')->where('id', $productImage->main_image_id)->first();
-        Log::info('ProductAlternativeImagesSyncJob From Main Image :: ' . json_encode($mainImage));
+//        Log::info('ProductAlternativeImagesSyncJob From Main Image :: ' . json_encode($mainImage));
 
         $product = Catalog::where('product_id', $mainImage->product_id)->first();
         if (!$product) return;

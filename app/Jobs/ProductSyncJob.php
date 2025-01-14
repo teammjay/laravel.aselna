@@ -8,6 +8,7 @@ use App\Models\ProductKeyFeatures;
 use App\Models\ProductTitleKeyword;
 use App\Models\Store;
 use App\Models\StoreProduct;
+use Exception;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\DB;
@@ -42,16 +43,20 @@ class ProductSyncJob implements ShouldQueue
             $easyesaleProductsQ->where('oem_generic', '=', '2');
         }
 
-        $easyesaleProductsQ->chunk(100, function ($easyesaleProducts) {
-            foreach ($easyesaleProducts as $product) {
-                $this->updateProduct($product);
+        try {
+            $easyesaleProductsQ->chunk(100, function ($easyesaleProducts) {
+                foreach ($easyesaleProducts as $product) {
+                    $this->updateProduct($product);
 
-                $this->createProductTitleKeywords($product);
+                    $this->createProductTitleKeywords($product);
 
-                $fonusProduct = DB::connection('fonus_db')->table('tbl_product')->where('custom_label',$product->code)->first();
-                $this->createProductFeatures($fonusProduct, $product->id);
-            }
-        });
+                    $fonusProduct = DB::connection('fonus_db')->table('tbl_product')->where('custom_label', $product->code)->first();
+                    $this->createProductFeatures($fonusProduct, $product->id);
+                }
+            });
+        } catch (Exception $e) {
+            Log::error($e->getMessage());
+        }
 
         $storeProductsQ = DB::connection('easyesale_db')->table('store_product')->orderBy('id');
 
@@ -60,11 +65,15 @@ class ProductSyncJob implements ShouldQueue
             $storeProductsQ->whereRaw('id in (select store_product_id from oydera_listing_item where id in (select item_id from oydera_listing_item_link where listing_id = \'8cf6ffb3-d1c4-4885-2eb9-e794a7df2a49\'))');
         }
 
-        $storeProductsQ->chunk(100, function ($storeProducts) {
-            foreach ($storeProducts as $storeProduct) {
-                $this->createStoreProduct($storeProduct);
-            }
-        });
+        try {
+            $storeProductsQ->chunk(100, function ($storeProducts) {
+                foreach ($storeProducts as $storeProduct) {
+                    $this->createStoreProduct($storeProduct);
+                }
+            });
+        } catch (Exception $e) {
+            Log::error($e->getMessage());
+        }
     }
 
     private function createProduct($product)
