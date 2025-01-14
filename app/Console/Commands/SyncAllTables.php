@@ -7,6 +7,7 @@ use App\Jobs\CarrierSyncJob;
 use App\Jobs\CategorySyncJob;
 use App\Jobs\DeviceInterfaces;
 use App\Jobs\DeviceRatingSyncJob;
+use App\Jobs\DeviceSeriesSyncJob;
 use App\Jobs\DevicesSyncJob;
 use App\Jobs\DeviceTypesSyncJob;
 use App\Jobs\GenerationTypeAndTemplateSync;
@@ -52,32 +53,33 @@ class SyncAllTables extends Command
      */
     public function handle()
     {
-        StoreTypeSyncJob::dispatch();
-        StoreSyncJob::dispatch();
-        ManufacturerSyncJob::dispatch();
-        DeviceTypesSyncJob::dispatch();
-        DeviceRatingSyncJob::dispatch();
-        BrandSyncJob::dispatch();
-        DevicesSyncJob::dispatch();
-        CategorySyncJob::dispatch();
-        ProductConditionJob::dispatch();
-        CarrierSyncJob::dispatch();
-        ShippingCarrierJob::dispatch();
-        InterfaceSyncJob::dispatch();
-        DeviceInterfaces::dispatch();
-        ProductColorSync::dispatch();
-        GenerationTypeAndTemplateSync::dispatch();
-        ProductSyncJob::dispatch();
-        ProductInterfaces::dispatch();
-        ListingSyncJob::dispatch();
-        ListingItemSyncJob::dispatch();
-        ListingItemDataSyncJob::dispatch();
-        ListingItemLinkSyncJob::dispatch();
-        StoreTypeListingSyncJob::dispatch();
-        UPCSyncJob::dispatch();
-        LogisticCentreSyncJob::dispatch();
-        ListingFeedSyncJob::dispatch();
-        ProductImagesSyncJob::dispatch();
-        ProductAlternativeImagesSyncJob::dispatch();
+//        StoreTypeSyncJob::dispatch();
+//        StoreSyncJob::dispatch();
+//        ManufacturerSyncJob::dispatch();
+//        DeviceTypesSyncJob::dispatch();
+//        DeviceRatingSyncJob::dispatch();
+//        BrandSyncJob::dispatch();
+        DeviceSeriesSyncJob::dispatch();
+//        DevicesSyncJob::dispatch();
+//        CategorySyncJob::dispatch();
+//        ProductConditionJob::dispatch();
+//        CarrierSyncJob::dispatch();
+//        ShippingCarrierJob::dispatch();
+//        InterfaceSyncJob::dispatch();
+//        DeviceInterfaces::dispatch();
+//        ProductColorSync::dispatch();
+//        GenerationTypeAndTemplateSync::dispatch();
+//        ProductSyncJob::dispatch();
+//        ProductInterfaces::dispatch();
+//        ListingSyncJob::dispatch();
+//        ListingItemSyncJob::dispatch();
+//        ListingItemDataSyncJob::dispatch();
+//        ListingItemLinkSyncJob::dispatch();
+//        StoreTypeListingSyncJob::dispatch();
+//        UPCSyncJob::dispatch();
+//        LogisticCentreSyncJob::dispatch();
+//        ListingFeedSyncJob::dispatch();
+//        ProductImagesSyncJob::dispatch();
+//        ProductAlternativeImagesSyncJob::dispatch();
     }
 }
