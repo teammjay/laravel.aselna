@@ -448,16 +448,11 @@
                                             <div class="row">
                                                 <div class="col-md-12 pro-rating multi-select-filter">
                                                     <select class="form-control" id="rating_filter" multiple style="height: 235px;">
-                                                        <option value="10">10</option>
-                                                        <option value="9">9</option>
-                                                        <option value="8">8</option>
-                                                        <option value="7">7</option>
-                                                        <option value="6">6</option>
-                                                        <option value="5">5</option>
-                                                        <option value="4">4</option>
-                                                        <option value="3">3</option>
-                                                        <option value="2">2</option>
-                                                        <option value="1">1</option>
+                                                        @if(count($deviceRating ?? []) > 0)
+                                                            @foreach($deviceRating as $deviceR)
+                                                                <option value="{{ $deviceR->id }}">{{ $deviceR->value }}</option>
+                                                            @endforeach
+                                                        @endif
                                                     </select>
                                                 </div>
                                             </div>
