@@ -340,7 +340,7 @@ class ListingController extends Controller
         $query->leftJoin('products','products.product_id', '=', 'store_product.product_id');
         $query->leftJoin('product_type','products.product_type', '=', 'product_type.id');
         $query->leftJoin('product_interface','product_interface.product_id', '=', 'products.product_id');
-        $query->leftJoin('listing_item','listing_item.store_product_id', '=', 'store_product.id');
+        //$query->leftJoin('listing_item','listing_item.store_product_id', '=', 'store_product.id');
 
         // Handle Only Active Products (Remove the bundled products)
         if ($request->has('exclude_oem')) {
