@@ -89,7 +89,7 @@ class AmazonService implements MarketplaceServiceInterface
         return 'feeds/amazon/' . $listingId . '.xml';
     }
 
-    public function submitFeed($feedId)
+    public function submitFeed($feedId, $listingId)
     {
         $content = '';
         $this->authService = new AmazonAuthService();

@@ -11,11 +11,11 @@ class WalmartAuthService
     protected $clientSecret;
     protected $endpoint;
 
-    public function __construct()
+    public function __construct($clientId, $clientSecret)
     {
         $this->client = new Client();
-        $this->clientId = env('WALMART_CLIENT_ID');
-        $this->clientSecret = env('WALMART_CLIENT_SECRET');
+        $this->clientId = $clientId;
+        $this->clientSecret = $clientSecret;
         $this->endpoint = env('WALMART_API_ENDPOINT');
     }
 

@@ -155,10 +155,13 @@ class WalmartService implements MarketplaceServiceInterface
         return 'feeds/' . $listingId . '.xml';
     }
 
-    public function submitFeed($feedId)
+    public function submitFeed($feedId,$listingId)
     {
         $credentials = [];
-        $authService = new WalmartAuthService();
+        $listingInfo = Listing::where('id', $listingId)->first();
+        $store = $listingInfo->store;
+
+        $authService = new WalmartAuthService($store->seller_id,$store->secret_key);
 
         $response = $authService->submitFeed($feedId);
         $resultFeedId = $response['feedId'];

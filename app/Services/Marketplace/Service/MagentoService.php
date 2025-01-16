@@ -12,7 +12,7 @@ class MagentoService implements MarketplaceServiceInterface
         // TODO: Implement generateFeed() method.
     }
 
-    public function submitFeed($feedId)
+    public function submitFeed($feedId, $listingId)
     {
         // TODO: Implement submitFeed() method.
     }

@@ -87,7 +87,7 @@ class GoogleShoppingService implements MarketplaceServiceInterface
         return implode(' > ', array_reverse($path));
     }
 
-    public function submitFeed($feedId)
+    public function submitFeed($feedId, $listingId)
     {
         $content = '';
         $generatedFeedId = $this->authService->uploadProductFeed($content);
