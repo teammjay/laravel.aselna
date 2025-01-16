@@ -20,13 +20,11 @@ use App\Models\Store;
 use App\Models\StoreProduct;
 use App\Models\StoreType;
 use App\Models\StoreTypeCategory;
-use function Illuminate\Database\Query\leftJoin;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
-use function Symfony\Component\HttpKernel\Profiler\find;
 use Illuminate\Support\Facades\DB;
+use Intervention\Image\Facades\Image;
 
 
 class CatalogController extends Controller
@@ -215,7 +213,7 @@ class CatalogController extends Controller
 
                 $data[] = array(
                     "product_id" => $product->product_id.'<input type="checkbox" class="pro-id" name="product['.$key.'][product_id]" value="'.$product->product_id.'" style="visibility:hidden;">',
-                    "product_image_url" => ($product->product_image_url != '') ? '<img src="'.asset('storage/product_images/'. $product->product_image_url).'" alt="'.$product->product_image_url.'" width="70" height="70">' : '',
+                    "product_image_url" => ($product->product_image_url != '') ? '<div class="main-image"><img src="'.asset('storage/product_images/'. $product->product_image_url).'" alt="'.$product->product_image_url.'" class="mainImage" width="70" height="70" data-product-id="'.$product->product_id.'"></div>' : '',
                     "product_sku" => '<span class="prVal">'.$product->product_sku.'</span><input type="text" class="form-control bulk-edit" name="product['.$key.'][product_sku]" value="'.$product->product_sku.'" disabled>',
                     "product_type" => $product->product_type,
                     "product_title" => '<span class="prVal">'.$product->product_title.'</span><textarea class="form-control bulk-edit" name="product['.$key.'][product_title]" rows="3" disabled>'.$product->product_title.'</textarea>',
@@ -671,12 +669,13 @@ class CatalogController extends Controller
 
             foreach ($request->file('images') as $key=>$image) {
                 $imageName = time() . '_' . uniqid() . '.' . $image->getClientOriginalExtension();
-                $image->move(public_path('images'), $imageName);
+                $image->move(public_path('storage/product_images/'), $imageName);
                 $imageNames[] = $imageName;
                 $imagedata[] = array(
                     'id' => (string) Str::uuid(),
                     'product_id' => $productId,
                     'image' => $imageName,
+                    //'thumbnail_image' => $imageName,
                     'sort_order' => (int) $key + 1,
                 );
 
@@ -685,18 +684,18 @@ class CatalogController extends Controller
                 }
 
                 // Create thumbnail
-                /*$thumbnailPath = public_path('images/thumbnails');
+                /*$thumbnailPath = public_path('storage/product_images/thumbnails');
                 if (!file_exists($thumbnailPath)) {
                     mkdir($thumbnailPath, 0755, true);
                 }
 
-                $thumbnailImage = Image::make(public_path('images/' . $imageName));
+                $thumbnailImage = Image::make(public_path('storage/product_images/thumbnails' . $imageName));
                 $thumbnailImage->resize(150, 150); // Set thumbnail size
                 $thumbnailImage->save($thumbnailPath . '/' . $imageName);
                 $thumbnailNames[] = 'thumbnails/' . $imageName;*/
             }
             //print_r($imagedata);die;
-            $iamges = ProductImages::upsert($imagedata,['product_id','image'], ['image']);
+            $images = ProductImages::upsert($imagedata,['product_id','image'], ['image']);
 
             return response()->json([
                 'success' => 'Image uploaded successfully!',
@@ -795,5 +794,20 @@ class CatalogController extends Controller
         $product_channel_id = $request->input('id');
         DB::table('product_channel_detail')->where('id', $product_channel_id)->delete();
         return response()->json(['success' => true, 'message' => 'Data saved successfully!']);
+    }
+
+    public function getImages(Request $request){
+
+        $product_id = $request->productId;
+        $pimages = [];
+        if($product_id){
+            $images = ProductImages::where('product_id',$product_id)->orderBy('sort_order','asc')->get();
+            if(!empty((array) $images)){
+                foreach($images as $img){
+                    $pimages[] = asset('storage/product_images/'. $img->image);
+                }
+            }
+        }
+        return response()->json($pimages);
     }
 }

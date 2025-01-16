@@ -8,11 +8,21 @@
 @stop
 
 @section('adminlte_css')
+    <!-- Lightbox2 CSS -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.4/css/lightbox.min.css" rel="stylesheet">
+
     <style>
         .bulk-edit{display: none; width: 150px;}
         table th, .column-no-whitespace{
             white-space: nowrap;
         }
+        .main-image img {
+            /*width: 300px;
+            height: 300px;*/
+            object-fit: cover;
+            cursor: pointer;
+        }
+
     </style>
 @stop
 
@@ -398,14 +408,19 @@
             </table>
         </div>
     </form>
+    <div id="ajax-gallery" style="display: none;"></div>
+
     <div id="pagination">
         {{--@include('catalog.pagination', ['products' => $products])--}}
     </div>
 @stop
 
 @section('adminlte_js')
+    <!-- Lightbox2 JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.4/js/lightbox.min.js"></script>
 
-<script>
+
+    <script>
     $(document).ready(function() {
         $('.card-header').on('click',function () {
             if($(this).find('.fa').hasClass('fa-angle-down')){
@@ -425,7 +440,7 @@
         $(document).on('click','#product-list tr',function (e) {
             let ele = $(this);
             console.log($(e.target));
-            if ($(e.target).is('input, textarea, select, checkbox, a, i, button')) {
+            if ($(e.target).is('input, textarea, select, checkbox, a, i, button, img')) {
                 return;
             }
             //$('#product-list tr').removeClass('bg-blue');
@@ -574,6 +589,49 @@
         });
 
         loadDatatables();
+
+        $(document).on('click','.mainImage',function () {
+            const productId = $(this).data('product-id'); // Get the product ID
+            const galleryDiv = $('#ajax-gallery'); // Reference to the hidden gallery div
+
+            // Fetch images via AJAX
+            $.ajax({
+                url: '{{ route('catalog.getimages') }}',
+                method: 'POST',
+                data:{
+                    productId : productId,
+                    "_token": '{{ csrf_token() }}'
+                },
+                success: function (images) {
+                    galleryDiv.empty(); // Clear any existing content
+
+                    // Append images to the gallery div
+                    $.each(images, function (index, image) {
+                        const anchor = $('<a>')
+                            .attr('href', image)
+                            .attr('data-lightbox', 'gallery')
+                            .attr('data-title', 'Gallery Image');
+
+                        const img = $('<img>')
+                            .attr('src', image)
+                            .css('display', 'none'); // Hidden thumbnails
+
+                        anchor.append(img);
+                        galleryDiv.append(anchor);
+                    });
+
+                    // Trigger Lightbox by simulating a click on the first image
+                    if (images.length > 0) {
+                        galleryDiv.find('a:first').trigger('click');
+                    } else {
+                        alert('No images found for this product.');
+                    }
+                },
+                error: function () {
+                    alert('Failed to load images.');
+                }
+            });
+        });
     });
 
     function loadDatatables(){

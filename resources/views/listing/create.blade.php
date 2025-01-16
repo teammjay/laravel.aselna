@@ -190,7 +190,7 @@
 
                                     <div class="border p-2" id="proSubType" style="display: none; width: 17%;">
                                         <label>Product Sub Type Filter</label>
-                                        <div class="row">
+                                        <div class="row" id="proSubTypeFilter">
                                             <div class="col-md-12 prod-sub-type multi-select-filter">
                                                 <select class="form-control" name="product_sub_type[]" id="product_sub_type_filter" multiple>
 
@@ -199,7 +199,7 @@
                                         </div>
 
                                         <label>Interface Filter</label>
-                                        <div class="row">
+                                        <div class="row" id="interfaceFilter">
                                             <div class="col-md-12 multi-select-filter">
                                                 <select class="form-control" name="interface[]" id="interface_filter" multiple>
                                                 </select>
@@ -800,7 +800,10 @@
                                     currentIndex++;
                                     activateTab(currentIndex);
                                     $('html, body').animate({ scrollTop: 0 }, 'fast');
+                                }
 
+                                if(response.error){
+                                    alert('An unexpected error occurred. Please try again later.');
                                 }
                             },
                             error: function (xhr) {
@@ -1084,8 +1087,12 @@
                                         cnt++;
                                     } else {
                                         $('#product_sub_type_filter').html('');
-                                        $('#proSubType').find('.default-drop-down').html(response.option);
+                                        $('#proSubTypeFilter').find('.default-drop-down').html(response.option);
                                     }
+
+                                    $('#interface_filter').html('');
+                                    $('#interfaceFilter').find('.default-drop-down').html(response.ioption);
+
                                 } else {
                                     $('#proSubType').hide();
                                 }
@@ -1121,11 +1128,19 @@
                                     if (cnt3 == 0) {
                                         $('#product_sub_sub_type_filter').html(response.option);
                                         $('#product_sub_sub_type_filter').gs_multiselect();
+
+                                        $('#interface_filter').html(response.ioption);
+                                        $('#interface_filter').gs_multiselect();
                                         cnt3++;
                                     } else {
                                         $('#product_sub_sub_type_filter').html('');
                                         $('#proSubSubType').find('.default-drop-down').html(response.option);
+
+                                        $('#interface_filter').html('');
+                                        $('#interfaceFilter').find('.default-drop-down').html(response.ioption);
                                     }
+
+
                                 } else {
                                     $('#proSubSubType').hide();
                                 }
@@ -1172,11 +1187,15 @@
                                     if (cnt2 == 0) {
                                         $('#product_sub_type_filter').html(response.option);
                                         $('#product_sub_type_filter').gs_multiselect();
+
                                         cnt2++;
                                     } else {
                                         $('#product_sub_type_filter').html('');
-                                        $('#proSubType').find('.default-drop-down').html(response.option);
+                                        $('#proSubTypeFilter').find('.default-drop-down').html(response.option);
                                     }
+
+                                    $('#interface_filter').html('');
+                                    $('#interfaceFilter').find('.default-drop-down').html(response.ioption);
                                 } else {
                                     $('#proSubType').hide();
                                 }
