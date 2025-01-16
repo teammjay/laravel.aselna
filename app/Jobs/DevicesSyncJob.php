@@ -39,22 +39,22 @@ class DevicesSyncJob implements ShouldQueue
                 }
             });
 
-//        DB::connection('fonus_db')->table('tbl_device')
-//            ->orderBy('device_id')
-//            ->chunk(1000, function ($devices) {
-//                foreach ($devices as $device) {
-//                    $this->createDevice($device);
-//                }
-//            });
+        DB::connection('fonus_db')->table('tbl_device')
+            ->orderBy('device_id')
+            ->chunk(1000, function ($devices) {
+                foreach ($devices as $device) {
+                    $this->createDevice($device);
+                }
+            });
     }
 
     private function createDevice(mixed $device)
     {
         // above log prints the following:
         // {"device_id":12,"device_type_id":1,"brand_id":5,"carrier_id":0,"device_model_name":"Curve 8350i","other_name":"","picture1":"12_1.jpg","thumbnail_picture1":"tn_12_1.jpg","status_id":2,"phone_rating":7,"release_date":null,"list":0,"width":"2.40","depth":"0.70","height":"4.40","screen_length":null,"case_size":"(LCASE-08) \/ (Close=>LCASE-19) \/ (Nite-Ize-Wide)","notes1":"","notes2":"","notes3":"","order_no":1000,"cscart":1,"date_added":"2016-10-24 19:42:07","date_updated":"2019-09-07 13:46:12"}
-        $deviceType = DeviceTypes::where('code', $device->device_type_id)->first();
+//        $deviceType = DeviceTypes::where('code', $device->device_type_id)->first();
 //        $deviceSubType = DeviceSubTypes::where('code', $device->device_sub_type_id)->first();
-        $brand = Brand::where('code', $device->brand_id)->first();
+//        $brand = Brand::where('code', $device->brand_id)->first();
 
         if (env('APP_ENV') !== 'local') {
             Log::info('Syncing Images Also');
@@ -122,7 +122,7 @@ class DevicesSyncJob implements ShouldQueue
 //            'image' => $device->image_id,
             'notes' => $device->notes,
             'order' => $device->sort_order,
-//            'rating_id' => $rating->value,
+            'rating_id' => $device->rating_id,
 //            'screen_id' => $device->screen_id,
 //            'status' => $device->status,
 //            'thumbnail_image' => $device->thumbnail_id

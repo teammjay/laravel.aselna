@@ -9,7 +9,7 @@ class DeviceRating extends Model
 {
     protected $table = 'device_ratings';
 
-    protected $fillable = ['value', 'created_by', 'updated_by', 'status'];
+    protected $fillable = ['id', 'value', 'created_by', 'updated_by', 'status'];
 
     protected $keyType = 'string';
 
@@ -19,7 +19,7 @@ class DeviceRating extends Model
 
         static::creating(function ($model) {
             if (empty($model->id)) {
-                $model->id = (string) Str::uuid();
+                $model->id = (string)Str::uuid();
             }
         });
     }

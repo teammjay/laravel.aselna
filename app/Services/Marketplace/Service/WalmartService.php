@@ -44,6 +44,7 @@ class WalmartService implements MarketplaceServiceInterface
             $item = $listingItem->item;
             $storeTypeCategory = $item->storeProduct->storeTypeCategory;
             $productObj = $item->storeProduct->product;
+            $productColor = $productObj->productColor;
 
             $product = [
                 'Orderable' => [
@@ -81,7 +82,7 @@ class WalmartService implements MarketplaceServiceInterface
                 'keyFeatures' => $keyFeatures,
                 'manufacturerPartNumber' => $item->npm,
                 'modelNumber' => $item->sku,
-                'color' => '',
+                'color' => $productColor->name,
                 'compatibleDevices' => $compatibleDevices,
             ];
 

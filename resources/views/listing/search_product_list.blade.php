@@ -5,7 +5,7 @@
             <td>
                 <input type="checkbox" class="proCheck" name="products[]" value="{{ $product->id }}" checked>
                 @if(isset($product->Product->product_image_url) && $product->Product->product_image_url != '')
-                    <img src="{{ asset('storage/product_images/'. $product->Product->product_image_url) }}" alt="{{ $product->Product->product_image_url }}" width="70" height="70">
+                    <img src="{{ asset('storage/product_images/'. $product->Product->product_image_url) }}" alt="{{ $product->Product->product_image_url }}" loading="lazy" width="70" height="70">
                 @endif
             </td>
             <td>{{ (isset($product->Product->product_sku)) ? $product->Product->product_sku : '' }}</td>
