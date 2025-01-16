@@ -678,7 +678,7 @@
                                         @if(count($productImages ?? []) > 0)
                                             @foreach($productImages as $images)
                                                 <tr>
-                                                    <td><img src="{{ url('images/' . $images->image) }}" alt="{{ $images->image }}" width="70" height="70"></td>
+                                                    <td><img src="{{ asset('storage/product_images/'. $images->image) }}" alt="{{ $images->image }}" width="70" height="70"></td>
                                                     <td><input type="checkbox" name="main_image" class="set_main_image" value="{{ $images->id }}" {{ $images->main_image == 1 ? 'checked' : '' }}></td>
                                                     <td><input type="text" class="form-control image-sort-order" data-id="{{ $images->id }}" name="sort_order" value="{{ $images->sort_order }}"></td>
                                                 </tr>

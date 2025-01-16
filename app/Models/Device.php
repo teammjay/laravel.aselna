@@ -65,7 +65,7 @@ class Device extends Model
 
     public function rating()
     {
-        return $this->belongsTo(DeviceRating::class);
+        return $this->belongsTo(DeviceRating::class,'rating_id');
     }
 
     public function screen()
