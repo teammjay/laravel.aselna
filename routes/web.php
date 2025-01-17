@@ -61,6 +61,7 @@ Route::post('catalog/getproductchannel', [CatalogController::class, 'getProductC
 Route::post('catalog/deleteproductchannel', [CatalogController::class, 'deleteProductChannel'])->name('catalog.deleteproductchannel');
 Route::post('catalog/bulk-update', [CatalogController::class, 'bulkUpdate'])->name('catalog.bulk-update');
 Route::post('catalog/getimages', [CatalogController::class, 'getImages'])->name('catalog.getimages');
+Route::post('catalog/imageorder', [CatalogController::class, 'updateImageOrder'])->name('catalog.imageorder');
 
 Route::post('/generate-feed-file',[HomeController::class, 'generateFeedFile'])->name('generate-feed-file');
 Route::post('/generate-result-feed-file', [HomeController::class, 'generateResultFeedFile'])->name('generate-result-feed-file');

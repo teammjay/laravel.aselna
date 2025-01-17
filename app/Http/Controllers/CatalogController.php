@@ -391,7 +391,7 @@ class CatalogController extends Controller
         $keyFeatures = ProductKeyFeatures::where('product_id', $id)->orderBy('sort_order')->get();
         $searchTerms = ProductSearchTerm::where('product_id', $id)->orderBy('sort_order')->get();
         $titleKeywords = ProductTitleKeyword::where('product_id', $id)->orderBy('priority')->get();
-        $productImages = ProductImages::where('product_id', $id)->get();
+        $productImages = ProductImages::where('product_id', $id)->orderBy('sort_order','asc')->get();
         $productTags = ProductTags::pluck('name')->values()->all();
         $stores = Store::with('storeType')->get();
 
@@ -743,6 +743,23 @@ class CatalogController extends Controller
 
             return response()->json(['errors' => $e->getMessage()], 422);
         }
+    }
+
+    public function updateImageOrder(Request $request)
+    {
+        $order = $request->order;
+
+        try {
+            foreach ($order as $position => $id) {
+                ProductImages::where('id', $id)->update(['sort_order' => ($position+1)]);
+            }
+            return response()->json(['success' => true, 'message' => 'Set order  successfully']);
+
+        }catch(QueryException $e){
+
+            return response()->json(['errors' => $e->getMessage()], 422);
+        }
+
     }
 
     public function getStoreDetail(Request $request){
