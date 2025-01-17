@@ -3,10 +3,12 @@
         <tr class="selectproRow" id="product-{{ $product->product_id }}">
 
             <td>
+                <div class="d-flex">
                 <input type="checkbox" class="proCheck" name="products[]" value="{{ $product->id }}" checked>
                 @if(isset($product->Product->product_image_url) && $product->Product->product_image_url != '')
-                    <img src="{{ asset('storage/product_images/'. $product->Product->product_image_url) }}" alt="{{ $product->Product->product_image_url }}" loading="lazy" width="70" height="70">
+                    <img src="{{ asset('storage/product_images/'. $product->Product->product_image_url) }}" alt="{{ $product->Product->product_image_url }}" loading="lazy" width="50" height="50" class="mainImage" data-product-id="{{ $product->Product->product_id }}">
                 @endif
+                </div>
             </td>
             <td>{{ (isset($product->Product->product_sku)) ? $product->Product->product_sku : '' }}</td>
             <td>{{ $product->ProductType }}</td>

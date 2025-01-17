@@ -2,17 +2,21 @@
 
 namespace App\Services\Marketplace\Service;
 
-use App\Models\Listing;
-use App\Models\ListingFeed;
-use App\Models\ListingItemDetail;
 use App\Models\ListingItemLink;
 use App\Models\ProductType;
 use App\Services\Marketplace\Contracts\MarketplaceServiceInterface;
-use App\Utils\XmlUtility;
+use App\Services\Auth\GoogleShoppingAuthService;
 use Illuminate\Support\Facades\Storage;
+
 
 class GoogleShoppingService implements MarketplaceServiceInterface
 {
+    protected $shoppingContentService;
+
+    public function __construct(GoogleShoppingAuthService $shoppingContentService)
+    {
+        $this->shoppingContentService = $shoppingContentService;
+    }
 
     public function generateFeed($listingId)
     {
@@ -20,7 +24,7 @@ class GoogleShoppingService implements MarketplaceServiceInterface
 
         // Generate feed for Ebay
         //$userIdentifier = $listingInfo->store->user_id;
-        $listingItems = ListingItemLink::with('listingItem','listingItem.brand','listingItem.device','listingItem.storeProduct','listingItem.storeProduct.product', 'listingItem.storeProduct.product.Manufacturer', 'listingItem.storeProduct.product.condition')->where('feed_id', $listingId)->limit(2)->get();
+        $listingItems = ListingItemLink::with('listingItem','listingItem.brand','listingItem.device','listingItem.storeProduct','listingItem.storeProduct.product', 'listingItem.storeProduct.productImages', 'listingItem.storeProduct.product.Manufacturer', 'listingItem.storeProduct.product.condition')->where('feed_id', $listingId)->limit(2)->get();
 
         // Define the columns for Google Shopping feed
         $columns = ['id','title','description','google product category','product type','link','image link','condition','availability','price','gtin','brand','mpn','item group id','gender','age group','color','size','shipping','additional_image_link','inventory','return_policy_info','custom_label_0','custom_label_1','custom_label_2','custom_label_3','custom_label_4','product_detail'];
@@ -35,6 +39,12 @@ class GoogleShoppingService implements MarketplaceServiceInterface
         // Write product rows
         foreach ($listingItems as $listingItem) {
             $itemDetail = $listingItem->listingItem;
+            $images = array();
+            if(isset($itemDetail->storeProduct->productImages) && !empty($itemDetail->storeProduct->productImages)){
+                foreach($itemDetail->storeProduct->productImages as $image){
+                    $images[] = asset('storage/product_images/'. $image->image);
+                }
+            }
             /*echo '<pre>';
             print_r($itemDetail);die;*/
             $ptype_id = $itemDetail->storeProduct->product->product_type;
@@ -47,7 +57,7 @@ class GoogleShoppingService implements MarketplaceServiceInterface
                 $ptype_id,
                 $product_type,
                 '',
-                '',
+                (!empty($images)) ? implode(',',$images) : '',
                 $itemDetail->storeProduct->product->condition->name,
                 'in stock',
                 ($itemDetail->price != '') ? $itemDetail->price : $itemDetail->storeProduct->price,
@@ -89,9 +99,21 @@ class GoogleShoppingService implements MarketplaceServiceInterface
 
     public function submitFeed($feedId)
     {
-        $content = '';
-        $generatedFeedId = $this->authService->uploadProductFeed($content);
 
-        $this->authService->submitFeed($generatedFeedId);
+        $path = '';
+
+        // Upload the feed
+        $csvFilePath = storage_path("app/{$path}");
+        $response = $this->shoppingContentService->uploadFeed($csvFilePath);
+
+        if (!$response['success']) {
+            return response()->json([
+                'message' => $response['message'],
+                'errors' => $response['errors'],
+            ], 400);
+        }
+
+        return response()->json(['message' => $response]);
     }
+
 }

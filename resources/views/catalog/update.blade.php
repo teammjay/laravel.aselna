@@ -25,6 +25,7 @@
             width: 20px;
             transform: translateY(-50%);
         }
+
     </style>
 @stop
 
@@ -668,7 +669,7 @@
 
                         <div class="row">
                             <div class="col-md-8">
-                                <table class="table table-bordered">
+                                <table class="table table-bordered" id="sortable-table">
                                     <thead>
                                         <th>Image</th>
                                         <th>Main Image</th>
@@ -677,10 +678,10 @@
                                     <tbody>
                                         @if(count($productImages ?? []) > 0)
                                             @foreach($productImages as $images)
-                                                <tr>
+                                                <tr data-id="{{ $images->id }}">
                                                     <td><img src="{{ asset('storage/product_images/'. $images->image) }}" alt="{{ $images->image }}" width="70" height="70"></td>
                                                     <td><input type="checkbox" name="main_image" class="set_main_image" value="{{ $images->id }}" {{ $images->main_image == 1 ? 'checked' : '' }}></td>
-                                                    <td><input type="text" class="form-control image-sort-order" data-id="{{ $images->id }}" name="sort_order" value="{{ $images->sort_order }}"></td>
+                                                    <td><input type="text" class="form-control image-sort-order" readonly="" data-id="{{ $images->id }}" name="sort_order" value="{{ $images->sort_order }}"></td>
                                                 </tr>
                                             @endforeach
                                         @endif
@@ -1671,7 +1672,29 @@
                 table.find('tbody').append(rows);
             });
 
+            $("#sortable-table tbody").sortable({
+                cursor: "move",
+                update: function (event, ui) {
+                    let order = [];
+                    $("#sortable-table tbody tr").each(function (index, element) {
+                        order.push($(element).data("id"));
+                    });
 
+                    $.ajax({
+                        url: "{{ route('catalog.imageorder') }}",
+                        method: "POST",
+                        data: {
+                            order: order,
+                            _token: "{{ csrf_token() }}"
+                        },
+                        success: function (response) {
+                            if (response.success) {
+                                //alert("Order updated successfully!");
+                            }
+                        }
+                    });
+                }
+            });
 
         });
     </script>

@@ -68,4 +68,9 @@ class StoreProduct extends Model
         return $this->hasMany(ProductKeyFeatures::class, 'product_id','product_id');
     }
 
+    public function productImages()
+    {
+        return $this->hasMany(ProductImages::class, 'product_id','product_id');
+    }
+
 }
