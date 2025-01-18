@@ -147,20 +147,30 @@ class EbayService implements MarketplaceServiceInterface
 
         $xmlContent = $xml->asXML();
 
-        XmlUtility::saveToFile('feeds/ebay/' . $listingId . '.xml', $xmlContent);
+        XmlUtility::saveToFile('feeds/ebay/ebay-' . $listingId . '.xml', $xmlContent);
 
         //return the file path so that it can be downloaded
         return 'feeds/ebay/' . $listingId . '.xml';
     }
 
-    public function submitFeed($feedId)
+    public function submitFeed($feedId,$listingId)
     {
-        $credentials = [];
         $authService = new EbayAuthService();
 
+        $fileName = 'ebay-'.$listingId.'.xml';
+        $filePath = 'feeds/ebay/' . $fileName;
+
         $taskID = $authService->createTask();
-        $response = $authService->uploadFile($taskID);
-        $resultFeedId = $response['feedId'];
+        $response = $authService->uploadFile($taskID, $fileName, $filePath);
+        if($response){
+            $updateFeedData = [
+                'feed_id' => $response['feedId'],
+                'feed_type' => $response['feedType']
+            ];
+
+            ListingFeed::update($updateFeedData,['id'=>$feedId]);
+        }
+
 
     }
 }

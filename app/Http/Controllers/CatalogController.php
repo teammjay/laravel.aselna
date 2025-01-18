@@ -827,4 +827,19 @@ class CatalogController extends Controller
         }
         return response()->json($pimages);
     }
+
+    public function deleteImage(Request $request){
+        $image_id = $request->image_id;
+
+        if ($image_id) {
+            $productImg = ProductImages::findOrFail($image_id);
+            $productImg->delete();
+
+            // Return a success response
+            return response()->json(['success' => 'Image deleted successfully!']);
+        }
+
+        // If the user doesn't exist, return an error
+        return response()->json(['error' => 'Image not found!'], 404);
+    }
 }
