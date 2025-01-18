@@ -97,14 +97,15 @@ class GoogleShoppingService implements MarketplaceServiceInterface
         return implode(' > ', array_reverse($path));
     }
 
-    public function submitFeed($feedId)
+    public function submitFeed($feedId,$listingId)
     {
 
         $path = '';
 
         // Upload the feed
-        $csvFilePath = storage_path("app/{$path}");
-        $response = $this->shoppingContentService->uploadFeed($csvFilePath);
+        $fileName = 'google_shopping_feed_'.$listingId.'.csv';
+        $filePath = 'feeds/google-shopping/' . $fileName;
+        $response = $this->shoppingContentService->uploadFeed($filePath);
 
         if (!$response['success']) {
             return response()->json([
