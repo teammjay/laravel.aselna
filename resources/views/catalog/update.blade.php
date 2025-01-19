@@ -25,6 +25,15 @@
             width: 20px;
             transform: translateY(-50%);
         }
+        .ui-sortable tr:hover{
+            cursor:move;
+        }
+
+        .ui-sortable-placeholder{
+            background:#ccc !important;
+            visibility: initial !important;
+        }
+
     </style>
 @stop
 
@@ -668,19 +677,24 @@
 
                         <div class="row">
                             <div class="col-md-8">
-                                <table class="table table-bordered">
+                                <table class="table table-bordered" id="sortable-table">
                                     <thead>
+                                        <th></th>
                                         <th>Image</th>
                                         <th>Main Image</th>
                                         <th>Order</th>
+                                        <th></th>
                                     </thead>
                                     <tbody>
                                         @if(count($productImages ?? []) > 0)
                                             @foreach($productImages as $images)
-                                                <tr>
+                                                <tr class="pro-img-{{ $images->id }}" data-id="{{ $images->id }}">
+                                                    <td><i class="fa fa-sort" title="Drag and drop row up or down to sort"></i></td>
                                                     <td><img src="{{ asset('storage/product_images/'. $images->image) }}" alt="{{ $images->image }}" width="70" height="70"></td>
                                                     <td><input type="checkbox" name="main_image" class="set_main_image" value="{{ $images->id }}" {{ $images->main_image == 1 ? 'checked' : '' }}></td>
-                                                    <td><input type="text" class="form-control image-sort-order" data-id="{{ $images->id }}" name="sort_order" value="{{ $images->sort_order }}"></td>
+                                                    {{--<td><input type="text" class="form-control image-sort-order" readonly="" data-id="{{ $images->id }}" name="sort_order" value="{{ $images->sort_order }}"></td>--}}
+                                                    <td>{{ $images->sort_order }}</td>
+                                                    <td><button class="btn btn-danger delete-btn" data-id="{{ $images->id }}"> <i class="fas fa-fw fa-trash"></i></button></td>
                                                 </tr>
                                             @endforeach
                                         @endif
@@ -1434,7 +1448,12 @@
 
 
             // change sort order for image of prodcut
-            $(document).on('click', '.store_row', function() {
+            $(document).on('click', '.store_row', function(e) {
+
+                if ($(e.target).is('checkbox, a, select')) {
+                    return;
+                }
+
                 $('.store_row').removeClass('active bg-blue');
                 $(this).addClass('active bg-blue');
 
@@ -1671,7 +1690,57 @@
                 table.find('tbody').append(rows);
             });
 
+            $("#sortable-table tbody").sortable({
+                cursor: "move",
+                update: function (event, ui) {
+                    let order = [];
+                    $("#sortable-table tbody tr").each(function (index, element) {
+                        order.push($(element).data("id"));
+                    });
 
+                    $.ajax({
+                        url: "{{ route('catalog.imageorder') }}",
+                        method: "POST",
+                        data: {
+                            order: order,
+                            _token: "{{ csrf_token() }}"
+                        },
+                        success: function (response) {
+                            if (response.success) {
+                                //alert("Order updated successfully!");
+                            }
+                        }
+                    });
+                }
+            });
+
+            $(document).on('click', '.delete-btn', function() {
+                var imageId = $(this).data('id');
+                var token = '{{ csrf_token() }}'; // CSRF token for security
+
+                // Confirm the deletion
+                if (confirm("Are you sure you want to delete this image?")) {
+                    $.ajax({
+                        url: "{{ url('catalog/deleteimg') }}",
+                        type: 'post',
+                        data: {
+                            image_id: imageId,
+                            _token: "{{ csrf_token() }}"
+                        },
+                        success: function (response) {
+                            // If success, remove the user row from the table
+                            if (response.success) {
+                                $('.pro-img-' + imageId).remove();
+                                alert(response.success);
+                            }
+                        },
+                        error: function (xhr) {
+                            // Handle error response
+                            alert('Error: ' + xhr.responseJSON.error);
+                        }
+                    });
+                }
+            });
 
         });
     </script>

@@ -19,7 +19,7 @@ class EbayService implements MarketplaceServiceInterface
 
         // Generate feed for Ebay
         //$userIdentifier = $listingInfo->store->user_id;
-        $listingItems = ListingItemLink::with('listingItem','listingItem.brand','listingItem.storeProduct','listingItem.storeProduct.product')->where('feed_id', $listingId)->limit(2)->get();
+        $listingItems = ListingItemLink::with('listingItem','listingItem.brand','listingItem.storeProduct','listingItem.storeProduct.product','listingItem.storeProduct.productImages')->where('feed_id', $listingId)->limit(2)->get();
         $version = 1;
 
         $xml = new \SimpleXMLElement('<?xml version="1.0" encoding="UTF-8"?><BulkDataExchangeRequests xmlns="urn:ebay:apis:eBLBaseComponents"></BulkDataExchangeRequests>');
@@ -76,19 +76,17 @@ class EbayService implements MarketplaceServiceInterface
 
             // Add PictureDetails
             $pictureDetails = $item->addChild('PictureDetails');
-            $pictureUrls = [
-                'https://cdn.shopify.com/s/files/1/0605/2711/6496/products/feea05743e8fc7dd2866c630faa01e30.jpg?v=1634925119?device=350b1370-a94b-5f0b-4b67-90b65ba8001e'
-                // Add the remaining URLs here
-            ];
-            foreach ($pictureUrls as $url) {
-                $pictureDetails->addChild('PictureURL', $url);
+            if(isset($itemDetail->storeProduct->productImages) && !empty($itemDetail->storeProduct->productImages)){
+                foreach($itemDetail->storeProduct->productImages as $image){
+                    $pictureDetails->addChild('PictureURL', asset('storage/product_images/'. $image->image));
+                }
             }
 
             $item->addChild('DispatchTimeMax', '1');
 
             // Add ItemSpecifics
-            $itemSpecifics = $item->addChild('ItemSpecifics');
             if(isset($itemDetail->listingItem->brand) && !empty($itemDetail->listingItem->brand)) {
+                $itemSpecifics = $item->addChild('ItemSpecifics');
                 $specifics = [
                     ['Type', 'CEA Bundle'],
                     ['Fits Model', $itemDetail->listingItem->brand->name.' '.$itemDetail->listingItem->device->name],
@@ -96,12 +94,13 @@ class EbayService implements MarketplaceServiceInterface
                     ['MPN', $itemDetail->mpn],
                     ['Model', $itemDetail->mpn],
                 ];
+                foreach ($specifics as $specific) {
+                    $nameValueList = $itemSpecifics->addChild('NameValueList');
+                    $nameValueList->addChild('Name', $specific[0]);
+                    $nameValueList->addChild('Value', $specific[1]);
+                }
             }
-            foreach ($specifics as $specific) {
-                $nameValueList = $itemSpecifics->addChild('NameValueList');
-                $nameValueList->addChild('Name', $specific[0]);
-                $nameValueList->addChild('Value', $specific[1]);
-            }
+
 
             // Add ReturnPolicy
             $returnPolicy = $item->addChild('ReturnPolicy');
@@ -148,20 +147,30 @@ class EbayService implements MarketplaceServiceInterface
 
         $xmlContent = $xml->asXML();
 
-        XmlUtility::saveToFile('feeds/ebay/' . $listingId . '.xml', $xmlContent);
+        XmlUtility::saveToFile('feeds/ebay/ebay-' . $listingId . '.xml', $xmlContent);
 
         //return the file path so that it can be downloaded
         return 'feeds/ebay/' . $listingId . '.xml';
     }
 
-    public function submitFeed($feedId, $listingId)
+    public function submitFeed($feedId,$listingId)
     {
-        $credentials = [];
         $authService = new EbayAuthService();
 
+        $fileName = 'ebay-'.$listingId.'.xml';
+        $filePath = 'feeds/ebay/' . $fileName;
+
         $taskID = $authService->createTask();
-        $response = $authService->uploadFile($taskID);
-        $resultFeedId = $response['feedId'];
+        $response = $authService->uploadFile($taskID, $fileName, $filePath);
+        if($response){
+            $updateFeedData = [
+                'feed_id' => $response['feedId'],
+                'feed_type' => $response['feedType']
+            ];
+
+            ListingFeed::update($updateFeedData,['id'=>$feedId]);
+        }
+
 
     }
 }

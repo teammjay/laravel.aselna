@@ -2,6 +2,8 @@
 
 @section('title', 'Listing')
 @section('adminlte_css_pre')
+    <!-- Lightbox2 CSS -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.4/css/lightbox.min.css" rel="stylesheet">
     <link href="{{ asset('css/jquery.multiselect.css') }}" rel="stylesheet">
 
     <style>
@@ -18,7 +20,7 @@
         .proCheck{
             visibility: hidden;
         }
-        .selectproRow:hover td {
+        .selectproRow:hover:not(.bg-blue) td {
             background-color: #ddf1ff;
             color:#000;
             cursor:pointer;
@@ -657,11 +659,14 @@
                 </div>
             </div>
         </div>
+        <div id="ajax-gallery" style="display: none;"></div>
     </div>
 
 @stop
 
 @section('adminlte_js')
+    <!-- Lightbox2 JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.4/js/lightbox.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script src="{{ asset('js/jquery.multiselect.js') }}"></script>
 
@@ -917,8 +922,12 @@
                 }
             });
 
-            $(document).on('click', '.selectproRow', function() {
+            $(document).on('click', '.selectproRow', function(e) {
                 let ele = $(this);
+
+                if ($(e.target).is('checkbox, a, img')) {
+                    return;
+                }
                 if($('#selected_product').is(':checked')){
                     if($(this).find('.proCheck').is(':checked')){
                         ele.removeClass('bg-blue');
@@ -1465,6 +1474,49 @@
 
             $(document).on('click','.fa-window-close',function () {
                 $(this).parent('.border').remove();
+            });
+
+            $(document).on('click','.mainImage',function () {
+                const productId = $(this).data('product-id'); // Get the product ID
+                const galleryDiv = $('#ajax-gallery'); // Reference to the hidden gallery div
+
+                // Fetch images via AJAX
+                $.ajax({
+                    url: '{{ route('catalog.getimages') }}',
+                    method: 'POST',
+                    data:{
+                        productId : productId,
+                        "_token": '{{ csrf_token() }}'
+                    },
+                    success: function (images) {
+                        galleryDiv.empty(); // Clear any existing content
+
+                        // Append images to the gallery div
+                        $.each(images, function (index, image) {
+                            const anchor = $('<a>')
+                                .attr('href', image)
+                                .attr('data-lightbox', 'gallery')
+                                .attr('data-title', 'Gallery Image');
+
+                            const img = $('<img>')
+                                .attr('src', image)
+                                .css('display', 'none'); // Hidden thumbnails
+
+                            anchor.append(img);
+                            galleryDiv.append(anchor);
+                        });
+
+                        // Trigger Lightbox by simulating a click on the first image
+                        if (images.length > 0) {
+                            galleryDiv.find('a:first').trigger('click');
+                        } else {
+                            alert('No images found for this product.');
+                        }
+                    },
+                    error: function () {
+                        alert('Failed to load images.');
+                    }
+                });
             });
         });
 
