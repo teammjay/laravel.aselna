@@ -117,4 +117,8 @@ class GoogleShoppingService implements MarketplaceServiceInterface
         return response()->json(['message' => $response]);
     }
 
+    public function getResultFeed(mixed $listingId)
+    {
+        // TODO: Implement getResultFeed() method.
+    }
 }

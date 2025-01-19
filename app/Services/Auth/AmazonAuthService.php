@@ -3,6 +3,7 @@
 namespace App\Services\Auth;
 
 use GuzzleHttp\Client;
+use Illuminate\Support\Facades\Log;
 
 class AmazonAuthService
 {
@@ -17,7 +18,11 @@ class AmazonAuthService
 
     public function getAccessToken()
     {
-        $response = $this->client->post('/auth/o2/token', [
+        $client = new Client([
+            'base_uri' => 'https://api.amazon.com',
+        ]);
+
+        $response = $client->post('/auth/o2/token', [
             'form_params' => [
                 'grant_type' => 'refresh_token',
                 'refresh_token' => env('AMAZON_REFRESH_TOKEN'),
@@ -32,25 +37,27 @@ class AmazonAuthService
     public function uploadProductFeed($feedContent)
     {
         $accessToken = $this->getAccessToken();
+        Log::info('Access Token Created ' . $accessToken);
+        return $accessToken;
 
-        $response = $this->client->post('/feeds/2021-06-30/documents', [
-            'headers' => [
-                'Authorization' => "Bearer {$accessToken}",
-            ],
-            'json' => [
-                'contentType' => 'text/xml; charset=UTF-8',
-            ],
-        ]);
+//        $response = $this->client->post('/feeds/2021-06-30/documents', [
+//            'headers' => [
+//                'Authorization' => "Bearer {$accessToken}",
+//            ],
+//            'json' => [
+//                'contentType' => 'text/xml; charset=UTF-8',
+//            ],
+//        ]);
+//
+//        $uploadDetails = json_decode($response->getBody()->getContents(), true);
+//        $uploadUrl = $uploadDetails['url'];
+//
+//        $this->client->put($uploadUrl, [
+//            'headers' => ['Content-Type' => 'text/xml; charset=UTF-8'],
+//            'body' => $feedContent,
+//        ]);
 
-        $uploadDetails = json_decode($response->getBody()->getContents(), true);
-        $uploadUrl = $uploadDetails['url'];
-
-        $this->client->put($uploadUrl, [
-            'headers' => ['Content-Type' => 'text/xml; charset=UTF-8'],
-            'body' => $feedContent,
-        ]);
-
-        return $uploadDetails['feedDocumentId'];
+//        return $uploadDetails['feedDocumentId'];
     }
 
     public function submitFeed(mixed $generatedFeedId)
@@ -70,5 +77,19 @@ class AmazonAuthService
         ]);
 
         return json_decode($response->getBody()->getContents(), true);
+    }
+
+    public function getResultFeed($feedId)
+    {
+        $accessToken = $this->getAccessToken();
+
+        $response = $this->client->get('/feeds/2021-06-30/feeds/' . $feedId, [
+            'headers' => [
+                'Authorization' => "Bearer {$accessToken}",
+            ]
+        ]);
+
+        Log::info('Feed Status: ' . $response->getBody());
+        return '';
     }
 }

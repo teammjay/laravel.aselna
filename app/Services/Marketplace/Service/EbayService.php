@@ -173,4 +173,9 @@ class EbayService implements MarketplaceServiceInterface
 
 
     }
+
+    public function getResultFeed(mixed $listingId)
+    {
+        // TODO: Implement getResultFeed() method.
+    }
 }

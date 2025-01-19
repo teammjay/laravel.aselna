@@ -11,8 +11,13 @@ class ShopifyService implements MarketplaceServiceInterface
         // TODO: Implement generateFeed() method.
     }
 
-    public function submitFeed($feedId)
+    public function submitFeed($feedId, $listingId)
     {
         // TODO: Implement submitFeed() method.
+    }
+
+    public function getResultFeed(mixed $listingId)
+    {
+        // TODO: Implement getResultFeed() method.
     }
 }

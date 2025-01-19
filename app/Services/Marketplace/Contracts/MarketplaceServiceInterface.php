@@ -6,5 +6,7 @@ interface MarketplaceServiceInterface
 {
     public function generateFeed($listingId);
 
-    public function submitFeed($feedId);
+    public function submitFeed($feedId, $listingId);
+
+    public function getResultFeed(mixed $listingId);
 }

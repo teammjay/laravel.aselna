@@ -18,9 +18,9 @@ class WalmartService implements MarketplaceServiceInterface
     {
         $listingInfo = Listing::where('id', $listingId)->first();
         Log::info('Listing Info Created');
-        $feedInfo = ListingFeed::where('listing_id', $listingId)->first();
-        $feedId = $feedInfo->id;
-        Log::info('Feed Info Created ' . $feedId);
+//        $feedInfo = ListingFeed::where('listing_id', $listingId)->first();
+//        $feedId = $feedInfo->id;
+//        Log::info('Feed Info Created ' . $feedId);
 
 //        $userIdentifier = $listingInfo->store->user_id;
 
@@ -155,14 +155,34 @@ class WalmartService implements MarketplaceServiceInterface
         return 'feeds/' . $listingId . '.xml';
     }
 
-    public function submitFeed($feedId)
+    public function submitFeed($feedId,$listingId)
     {
-        $credentials = [];
-        $authService = new WalmartAuthService();
+        $listingInfo = Listing::where('id', $listingId)->first();
+        $store = $listingInfo->store;
 
-        $response = $authService->submitFeed($feedId);
-        $resultFeedId = $response['feedId'];
+        $authService = new WalmartAuthService($store->seller_id,$store->secret_key);
+
+        $response = $authService->submitFeed();
+//        $resultFeedId = $response['feedId'];
 
         // save the result and then check the process in queue after like 5-10 minutes
+    }
+
+    public function getResultFeed(mixed $listingId)
+    {
+        $listingInfo = Listing::where('id', $listingId)->first();
+        $store = $listingInfo->store;
+
+        $authService = new WalmartAuthService($store->seller_id,$store->secret_key);
+
+        $feedInfo = ListingFeed::where('listing_id', $listingId)->first();
+
+        $response = $authService->getFeedStatus($feedInfo->feed_id);
+        Log::info('Feed Status: ' . json_encode($response));
+
+        // save response into folder
+        FileUtility::saveToFile(public_path('result-feeds/walmart/' . $listingId . '.json'), json_encode($response));
+
+        return 'result-feeds/walmart/' . $listingId . '.json';
     }
 }

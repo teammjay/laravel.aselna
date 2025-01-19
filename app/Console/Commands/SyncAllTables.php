@@ -59,7 +59,7 @@ class SyncAllTables extends Command
 //        DeviceTypesSyncJob::dispatch();
 //        DeviceRatingSyncJob::dispatch();
 //        BrandSyncJob::dispatch();
-        DeviceSeriesSyncJob::dispatch();
+//        DeviceSeriesSyncJob::dispatch();
 //        DevicesSyncJob::dispatch();
 //        CategorySyncJob::dispatch();
 //        ProductConditionJob::dispatch();
@@ -69,16 +69,16 @@ class SyncAllTables extends Command
 //        DeviceInterfaces::dispatch();
 //        ProductColorSync::dispatch();
 //        GenerationTypeAndTemplateSync::dispatch();
-//        ProductSyncJob::dispatch();
+        ProductSyncJob::dispatch();
 //        ProductInterfaces::dispatch();
 //        ListingSyncJob::dispatch();
 //        ListingItemSyncJob::dispatch();
 //        ListingItemDataSyncJob::dispatch();
 //        ListingItemLinkSyncJob::dispatch();
 //        StoreTypeListingSyncJob::dispatch();
+//        ListingFeedSyncJob::dispatch();
 //        UPCSyncJob::dispatch();
 //        LogisticCentreSyncJob::dispatch();
-//        ListingFeedSyncJob::dispatch();
 //        ProductImagesSyncJob::dispatch();
 //        ProductAlternativeImagesSyncJob::dispatch();
     }

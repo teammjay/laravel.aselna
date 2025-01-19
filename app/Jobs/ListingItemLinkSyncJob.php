@@ -31,7 +31,7 @@ class ListingItemLinkSyncJob implements ShouldQueue
             ->orderBy('id');
 
         if (env('APP_ENV') === 'local') {
-            $listingItemLinksQ->whereRaw('item_id in (select item_id from oydera_listing_item_link where listing_id = \'8cf6ffb3-d1c4-4885-2eb9-e794a7df2a49\')');
+            $listingItemLinksQ->whereRaw('item_id in (select item_id from oydera_listing_item_link where listing_id = \'eb9a9eef-3fb2-dceb-7b84-10d6118d1141\')');
 //            $listingItemLinksQ->whereRaw('item_id in (select id from oydera_listing_item where store_product_id in (select id from oydera_store_product where product_id in (select id from oydera_product where oem_generic = 2)))');
         }
 

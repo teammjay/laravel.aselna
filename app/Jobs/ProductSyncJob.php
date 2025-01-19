@@ -48,7 +48,7 @@ class ProductSyncJob implements ShouldQueue
                 foreach ($easyesaleProducts as $product) {
                     $this->updateProduct($product);
 
-                    $this->createProductTitleKeywords($product);
+//                    $this->createProductTitleKeywords($product);
 
                     $fonusProduct = DB::connection('fonus_db')->table('tbl_product')->where('custom_label', $product->code)->first();
                     $this->createProductFeatures($fonusProduct, $product->id);
@@ -62,7 +62,7 @@ class ProductSyncJob implements ShouldQueue
 
         if (env('APP_ENV') === 'local') {
             Log::info('Local Environment');
-            $storeProductsQ->whereRaw('id in (select store_product_id from oydera_listing_item where id in (select item_id from oydera_listing_item_link where listing_id = \'8cf6ffb3-d1c4-4885-2eb9-e794a7df2a49\'))');
+            $storeProductsQ->whereRaw('id in (select store_product_id from oydera_listing_item where id in (select item_id from oydera_listing_item_link where listing_id = \'eb9a9eef-3fb2-dceb-7b84-10d6118d1141\'))');
         }
 
         try {
@@ -190,7 +190,7 @@ class ProductSyncJob implements ShouldQueue
             'oem_generic' => $product->oem_generic,
 //            'product_tags'=> $product->weight_weight_unit,
 //            'target_aud'=> $product->weight_weight_unit,
-            'product_color' => $product->color,
+//            'product_color' => $product->color,
             'product_qty' => $product->quantity,
 //            'product_reorder_qty',
 //            'product_pick_location' => ,
