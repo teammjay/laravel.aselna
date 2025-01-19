@@ -97,4 +97,9 @@ class AmazonService implements MarketplaceServiceInterface
 
         $this->authService->submitFeed($generatedFeedId);
     }
+
+    public function getResultFeed(mixed $listingId)
+    {
+        // TODO: Implement getResultFeed() method.
+    }
 }

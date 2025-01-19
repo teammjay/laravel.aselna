@@ -3,6 +3,7 @@
 namespace App\Services\Auth;
 
 use GuzzleHttp\Client;
+use Illuminate\Support\Facades\Log;
 
 class AmazonAuthService
 {
@@ -11,7 +12,7 @@ class AmazonAuthService
     public function __construct()
     {
         $this->client = new Client([
-            'base_uri' => 'https://sellingpartnerapi-na.amazon.com',
+            'base_uri' => 'https://api.amazon.com/auth/o2/token',
         ]);
     }
 
@@ -32,23 +33,25 @@ class AmazonAuthService
     public function uploadProductFeed($feedContent)
     {
         $accessToken = $this->getAccessToken();
+        Log::info('Access Token Created ' . $accessToken);
+        return $accessToken;
 
-        $response = $this->client->post('/feeds/2021-06-30/documents', [
-            'headers' => [
-                'Authorization' => "Bearer {$accessToken}",
-            ],
-            'json' => [
-                'contentType' => 'text/xml; charset=UTF-8',
-            ],
-        ]);
-
-        $uploadDetails = json_decode($response->getBody()->getContents(), true);
-        $uploadUrl = $uploadDetails['url'];
-
-        $this->client->put($uploadUrl, [
-            'headers' => ['Content-Type' => 'text/xml; charset=UTF-8'],
-            'body' => $feedContent,
-        ]);
+//        $response = $this->client->post('/feeds/2021-06-30/documents', [
+//            'headers' => [
+//                'Authorization' => "Bearer {$accessToken}",
+//            ],
+//            'json' => [
+//                'contentType' => 'text/xml; charset=UTF-8',
+//            ],
+//        ]);
+//
+//        $uploadDetails = json_decode($response->getBody()->getContents(), true);
+//        $uploadUrl = $uploadDetails['url'];
+//
+//        $this->client->put($uploadUrl, [
+//            'headers' => ['Content-Type' => 'text/xml; charset=UTF-8'],
+//            'body' => $feedContent,
+//        ]);
 
         return $uploadDetails['feedDocumentId'];
     }
