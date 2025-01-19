@@ -39,10 +39,10 @@ class FeedGenerationJob implements ShouldQueue
         $marketplaceService = MarketplaceServiceFactory::create($storeType);
         Log::info('Marketplace Service Created');
 
-//        $marketplaceService->generateFeed($this->listingId);
+        $marketplaceService->generateFeed($this->listingId);
         Log::info('Feed Generated');
 
-        $marketplaceService->submitFeed('',$this->listingId);
+//        $marketplaceService->submitFeed('',$this->listingId);
 
 //        $marketplaceService->getResultFeed($this->listingId);
 
