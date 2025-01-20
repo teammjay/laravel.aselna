@@ -37,26 +37,75 @@ class GoogleShoppingAuthService
         $client = $this->googleService->getClient();
         $service = new ShoppingContent($client);
 
-        // Define the feed configuration
-        $datafeed = new ShoppingContent\Datafeed();
-        $datafeed->setName('CSV Feed');
-        $datafeed->setContentType('products');
-        $datafeed->setFileName(basename($csvFilePath));
-        $datafeed->setTargetCountry('US');
-        $datafeed->setContentLanguage('en');
+        try {
+            // Define the feed configuration
+            $datafeed = new ShoppingContent\Datafeed();
+            $datafeed->setName('CSV Feed');
+            $datafeed->setContentType('products');
+            $datafeed->setFileName(basename($csvFilePath));
+            $datafeed->setTargetCountry('US');
+            $datafeed->setContentLanguage('en');
 
-        // Create a Datafeed object in Google Merchant Center
-        $merchantId = $this->merchantID;
-        $service->datafeeds->insert($merchantId, $datafeed);
+            // Create a Datafeed object in Google Merchant Center
+            $merchantId = $this->merchantID;
+            $feedResponse = $service->datafeeds->insert($merchantId, $datafeed);
 
-        // Upload the feed
-        $service->datafeeds->update(
-            $merchantId,
-            $datafeed->getId(),
-            file_get_contents($csvFilePath)
-        );
+            // Upload the feed
+            $service->datafeeds->update(
+                $merchantId,
+                $datafeed->getId(),
+                file_get_contents($csvFilePath)
+            );
 
-        return "Feed uploaded successfully!";
+            // Return success response
+            return [
+                'success' => true,
+                'message' => 'Feed uploaded successfully!',
+                'datafeedId' => $feedResponse->getId(),
+                'name' => $feedResponse->getName(),
+            ];
+
+        } catch (GoogleServiceException $e) {
+
+            $error = json_decode($e->getMessage(), true);
+            $errors = $error['error']['errors'] ?? [];
+
+            return [
+                'success' => false,
+                'message' => 'Failed to upload feed.',
+                'errors' => $errors,
+            ];
+        } catch (\Exception $e) {
+            return [
+                'success' => false,
+                'message' => 'An unexpected error occurred.',
+                'errors' => [$e->getMessage()],
+            ];
+        }
+
+    }
+
+    public function getFeedStatus($datafeedId)
+    {
+        try {
+            $client = $this->googleService->getClient();
+            $service = new ShoppingContent($client);
+
+            $status = $service->datafeedstatuses->get($this->merchantID, $datafeedId);
+
+            return [
+                'success' => true,
+                'status' => $status->getProcessingStatus(),
+                'errors' => $status->getError() ?? [],
+                'warnings' => $status->getWarnings() ?? [],
+            ];
+        } catch (\Exception $e) {
+            return [
+                'success' => false,
+                'message' => 'Failed to retrieve feed status.',
+                'error' => $e->getMessage(),
+            ];
+        }
     }
 
 }

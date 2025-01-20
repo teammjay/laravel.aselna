@@ -3,7 +3,7 @@
         @if(count($product ?? []) > 0)
             @foreach($product as $key=>$pro)
                 @if(isset($pro['product_id']))
-                    <tr class="listingRow listingproduct-{{ $pro['product_id'] }}" data-key="{{ $key }}">
+                    <tr class="listingRow listingproduct-{{ $pro['product_id'] }}" data-proid="{{ $pro['product_id'] }}" data-key="{{ $key }}">
                         <td></td>
                         <td>
                             <input type="hidden" name="generate_type[{{ $key }}]" value="{{ $pro['generate_type'] }}">

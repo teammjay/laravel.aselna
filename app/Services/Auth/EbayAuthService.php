@@ -15,15 +15,16 @@ class EbayAuthService
 
     public function __construct()
     {
-        $this->client = new Client(['base_uri' => 'https://api.ebay.com/']);
-        $this->clientId = '';
-        $this->clientSecret = '';
+        $this->client = new Client(['base_uri' => 'https://api.sandbox.ebay.com/']);
+        $this->clientId = 'CommonMr-Testing-SBX-76628eb6f-8cb87fba';
+        $this->clientSecret = 'SBX-6628eb6f4151-c0a1-4b48-b869-3621';
         $this->accessToken = $this->getAccessToken();
     }
 
     public function getAccessToken() {
 
         $response = $this->client->post('identity/v1/oauth2/token', [
+            'verify' => false,
             'headers' => [
                 'Authorization' => 'Basic ' . base64_encode($this->clientId . ':' . $this->clientSecret),
                 'Content-Type' => 'application/x-www-form-urlencoded',
@@ -67,20 +68,29 @@ class EbayAuthService
 
     }
 
-    public function getResultFile(string $taskId) {
+    public function getResultFeed(string $taskId) {
 
-        $savePath = storage_path('app/results/ebay/result_file_'.$taskId.'.csv');
+        $savePath = public_path('result-feeds/ebay/result_file_'.$taskId.'.csv');
+        try {
+            $response = $this->client->get('sell/feed/v1/task/' . $taskId . '/download_result_file', [
+                'headers' => [
+                    'Authorization' => 'Bearer ' . $this->accessToken,
+                    'Accept' => 'application/octet-stream',
+                    'X-EBAY-C-MARKETPLACE-ID' => 'EBAY_US',
+                ],
+                'sink' => $savePath,
+            ]);
 
-        $response = $this->client->get('sell/feed/v1/task/'.$taskId.'/download_result_file', [
-            'headers' => [
-                'Authorization' => 'Bearer ' . $this->accessToken,
-            ],
-            'sink' => $savePath,
-        ]);
+            return $response->getStatusCode() === 200 ? $savePath : false;
 
-        return $response->getStatusCode() === 200
-            ? $savePath
-            : false;
+        }catch (RequestException $e) {
+            if ($e->hasResponse()) {
+                $errorBody = json_decode($e->getResponse()->getBody()->getContents(), true);
+                $this->handleApiErrors($errorBody);
+            } else {
+                throw new \Exception('Unexpected error occurred: ' . $e->getMessage());
+            }
+        }
 
     }
 

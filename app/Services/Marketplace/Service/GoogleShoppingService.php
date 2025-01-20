@@ -24,13 +24,13 @@ class GoogleShoppingService implements MarketplaceServiceInterface
 
         // Generate feed for Ebay
         //$userIdentifier = $listingInfo->store->user_id;
-        $listingItems = ListingItemLink::with('listingItem','listingItem.brand','listingItem.device','listingItem.storeProduct','listingItem.storeProduct.product', 'listingItem.storeProduct.productImages', 'listingItem.storeProduct.product.Manufacturer', 'listingItem.storeProduct.product.condition')->where('feed_id', $listingId)->limit(2)->get();
+        $listingItems = ListingItemLink::with('listingItem','listingItem.brand','listingItem.device','listingItem.storeProduct','listingItem.storeProduct.product', 'listingItem.storeProduct.productImages', 'listingItem.storeProduct.product.Manufacturer', 'listingItem.storeProduct.product.condition')->where('feed_id', $listingId)->cursor();
 
         // Define the columns for Google Shopping feed
         $columns = ['id','title','description','google product category','product type','link','image link','condition','availability','price','gtin','brand','mpn','item group id','gender','age group','color','size','shipping','additional_image_link','inventory','return_policy_info','custom_label_0','custom_label_1','custom_label_2','custom_label_3','custom_label_4','product_detail'];
 
         $fileName = 'google_shopping_feed_'.$listingId.'.csv';
-        $filePath = 'feeds/google-shopping/' . $fileName;
+        $filePath = public_path('feeds/google-shopping/' . $fileName);
         $stream = fopen('php://temp', 'w');
 
         // Write the header row
@@ -99,26 +99,40 @@ class GoogleShoppingService implements MarketplaceServiceInterface
 
     public function submitFeed($feedId,$listingId)
     {
-
-        $path = '';
-
         // Upload the feed
         $fileName = 'google_shopping_feed_'.$listingId.'.csv';
-        $filePath = 'feeds/google-shopping/' . $fileName;
+        $filePath = public_path('feeds/google-shopping/' . $fileName);
         $response = $this->shoppingContentService->uploadFeed($filePath);
 
-        if (!$response['success']) {
+        if ($response['success']) {
+            $statusResponse = $this->shoppingContentService->getFeedStatus($response['datafeedId']);
+
             return response()->json([
                 'message' => $response['message'],
-                'errors' => $response['errors'],
-            ], 400);
+                'status' => $statusResponse,
+            ]);
         }
 
-        return response()->json(['message' => $response]);
+        return response()->json([
+            'message' => $response['message'],
+            'errors' => $response['errors'],
+        ], 400);
+
     }
 
     public function getResultFeed(mixed $listingId)
     {
         // TODO: Implement getResultFeed() method.
+
+        $this->authService = new GoogleShoppingAuthService();
+
+        $feedInfo = ListingFeed::where('listing_id', $listingId)->first();
+        $response = $this->authService->getFeedStatus($feedInfo->feed_id);
+
+        return response()->json([
+            'message' => $response['message'],
+            'status' => $response,
+        ]);
+
     }
 }
