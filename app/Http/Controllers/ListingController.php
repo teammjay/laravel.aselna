@@ -932,7 +932,7 @@ class ListingController extends Controller
 
                         /*echo '<pre>';
                         print_r($productsArray);
-                        echo '</pre>';die;*/
+                        echo '</pre>';*/
 
                     }
                 }
@@ -942,13 +942,14 @@ class ListingController extends Controller
 
                     $models = $modelDetail = array();
                     $totalCount = 0;
-                    foreach ($productsArray as $product) {
+                    foreach ($productsArray as $k=>$product) {
                         if (!empty($product)) {
-                            $totalCount = count($product);
                             foreach ($product as $key => $pro) {
+                                $totalCount ++;
                                 if (isset($pro['model'])) {
-                                    $models[$key] = $pro['model'];
-                                    $modelDetail[$key] = $pro['model_detail'];
+                                    $proid = $pro['product_id'];
+                                    $models[$proid][$key] = $pro['model'];
+                                    $modelDetail[$proid][$key] = $pro['model_detail'];
                                 }
                             }
                         }
@@ -1009,6 +1010,8 @@ class ListingController extends Controller
                 $nameToAdd = $device->name;
             }
 
+            //echo $nameToAdd.'<br>';
+
             // Check if adding the device exceeds the character limit
             $tempModels = array_merge($currentModels, [$nameToAdd]);
             $tempModelString = implode(', ', $tempModels);
@@ -1021,6 +1024,7 @@ class ListingController extends Controller
             /*$sku = StoreTypeListing::generateUniqueAlphabeticSku($product->product_sku);*/
 
             // Check if adding the device exceeds the character limit
+            //echo strlen($tempTitle) .'>'. $charLimit.'<br>';
             if (strlen($tempTitle) > $charLimit) {
 
                 // Save the current title and start a new one
@@ -1051,7 +1055,7 @@ class ListingController extends Controller
                 $titles[$cnt]['model_detail'][] = $device;
                 //$currentTitle .= ($currentTitle === $baseTitle ? ' ' : ' '.$separator.' ') . $nameToAdd;
                 $currentModels[] = $nameToAdd;
-                $currentDevices[] = $currentBrand;
+                $currentDevices[] = $nameToAdd;
             }
 
             // Update the last brand

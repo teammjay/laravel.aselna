@@ -19,7 +19,7 @@ class EbayService implements MarketplaceServiceInterface
 
         // Generate feed for Ebay
         //$userIdentifier = $listingInfo->store->user_id;
-        $listingItems = ListingItemLink::with('listingItem','listingItem.brand','listingItem.storeProduct','listingItem.storeProduct.product','listingItem.storeProduct.productImages')->where('feed_id', $listingId)->limit(2)->get();
+        $listingItems = ListingItemLink::with('listingItem','listingItem.brand','listingItem.storeProduct','listingItem.storeProduct.product','listingItem.storeProduct.productImages')->where('feed_id', $listingId)->cursor();
         $version = 1;
 
         $xml = new \SimpleXMLElement('<?xml version="1.0" encoding="UTF-8"?><BulkDataExchangeRequests xmlns="urn:ebay:apis:eBLBaseComponents"></BulkDataExchangeRequests>');
@@ -147,7 +147,7 @@ class EbayService implements MarketplaceServiceInterface
 
         $xmlContent = $xml->asXML();
 
-        XmlUtility::saveToFile('feeds/ebay/ebay-' . $listingId . '.xml', $xmlContent);
+        XmlUtility::saveToFile(public_path('feeds/ebay/ebay-' . $listingId . '.xml'), $xmlContent);
 
         //return the file path so that it can be downloaded
         return 'feeds/ebay/' . $listingId . '.xml';
@@ -157,19 +157,33 @@ class EbayService implements MarketplaceServiceInterface
     {
         $authService = new EbayAuthService();
 
+        echo '<pre>';
+        print_r($authService);
+        echo '</pre>';die;
+
         $fileName = 'ebay-'.$listingId.'.xml';
         $filePath = 'feeds/ebay/' . $fileName;
 
         $taskID = $authService->createTask();
         $response = $authService->uploadFile($taskID, $fileName, $filePath);
-        if($response){
+        if(isset($response['fileUploadStatus']) && $response['fileUploadStatus'] == 'SUCCESS'){
             $updateFeedData = [
                 'feed_id' => $response['feedId'],
                 'feed_type' => $response['feedType']
             ];
 
             ListingFeed::update($updateFeedData,['id'=>$feedId]);
+
+            return response()->json([
+                'message' => $response['feedId'],
+                'status' => $response['fileUploadStatus'],
+            ]);
         }
+
+        return response()->json([
+            'message' => $response['message'],
+            'errors' => $response['fileUploadStatus'],
+        ], 400);
 
 
     }
@@ -177,5 +191,13 @@ class EbayService implements MarketplaceServiceInterface
     public function getResultFeed(mixed $listingId)
     {
         // TODO: Implement getResultFeed() method.
+
+        $this->authService = new EbayAuthService();
+
+        $feedInfo = ListingFeed::where('listing_id', $listingId)->first();
+        $response = $this->authService->getResultFeed($feedInfo->feed_id);
+
+        return $response;
+
     }
 }

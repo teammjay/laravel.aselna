@@ -1041,14 +1041,15 @@
                 $('.listingRow').removeClass('bg-blue');
                 ele.addClass('bg-blue');
                 let key = ele.data('key');
-                let selModel = product_model[key];
-
+                let proid = ele.data('proid');
+                let selModel = product_model[proid];
+                console.log(selModel);
                 let mlist = '';
-                for(i in selModel){
-                    mlist += '<tr><td>'+selModel[i]+'</td><td></td></tr>';
+                for(i in selModel[key]){
+                    mlist += '<tr><td>'+selModel[key][i]+'</td><td></td></tr>';
                 }
                 $('#model_list').html(mlist);
-                $('#total_generate_models').html(selModel.length +' rows');
+                $('#total_generate_models').html(selModel[key].length +' rows');
             });
 
 
