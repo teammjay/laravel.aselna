@@ -25,6 +25,18 @@ class AmazonService implements MarketplaceServiceInterface
             case FeedTypes::CREATE:
                 $this->generateCreateFeed($listingInfo, $listingId);
                 break;
+            case FeedTypes::IMAGE_UPDATE:
+                $this->generateImageUpdateFeed($listingInfo, $listingId);
+                break;
+            case FeedTypes::DELETE:
+                $this->generateDeleteFeed($listingInfo, $listingId);
+                break;
+            case FeedTypes::INVENTORY:
+                $this->generateInventoryFeed($listingInfo, $listingId);
+                break;
+            case FeedTypes::PRICE:
+                $this->generatePriceFeed($listingInfo, $listingId);
+                break;
             default:
                 break;
         }
@@ -124,4 +136,130 @@ class AmazonService implements MarketplaceServiceInterface
 
         return 'result-feeds/amazon/' . $listingId . '.json';
     }
+
+    private function generateImageUpdateFeed($listingInfo, $listingId)
+    {
+        $userIdentifier = $listingInfo->store->user_id;
+        $listingItems = ListingItemLink::where('listing_id', $listingId)->cursor();
+
+        $xml = new SimpleXMLElement('<?xml version="1.0" encoding="UTF-8"?><AmazonEnvelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"></AmazonEnvelope>');
+
+        $header = $xml->addChild('Header');
+        $header->addChild('DocumentVersion', '1.01');
+        $header->addChild('MerchantIdentifier', $userIdentifier);
+
+        $xml->addChild('MessageType', 'ProductImage');
+
+        $index = 1;
+        foreach ($listingItems as $listingItem) {
+            $messages = $xml->addChild('Message');
+            $messages->addChild('MessageID', $index);
+            $itemDetail = $listingItem->item;
+
+            $productImage = $messages->addChild('ProductImage');
+            $productImage->addChild('SKU', $itemDetail->sku);
+            $productImage->addChild('ImageType', 'Main');
+//            $productImage->addChild('ImageLocation', $itemDetail->image_url);
+
+            $index++;
+        }
+
+        $xmlContent = $xml->asXML();
+
+        XmlUtility::saveToFile(public_path('feeds/amazon/' . $listingId . '.xml'), $xmlContent);
+    }
+
+    private function generateDeleteFeed($listingInfo, $listingId)
+    {
+        $userIdentifier = $listingInfo->store->user_id;
+        $listingItems = ListingItemLink::where('listing_id', $listingId)->cursor();
+
+        $xml = new SimpleXMLElement('<?xml version="1.0" encoding="UTF-8"?><AmazonEnvelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"></AmazonEnvelope>');
+
+        $header = $xml->addChild('Header');
+        $header->addChild('DocumentVersion', '1.01');
+        $header->addChild('MerchantIdentifier', $userIdentifier);
+
+        $xml->addChild('MessageType', 'Product');
+
+        $index = 1;
+        foreach ($listingItems as $listingItem) {
+            $messages = $xml->addChild('Message');
+            $messages->addChild('MessageID', $index);
+            $messages->addChild('OperationType', 'Delete');
+            $itemDetail = $listingItem->item;
+
+            $product = $messages->addChild('Product');
+            $product->addChild('SKU', $itemDetail->sku);
+
+            $index++;
+        }
+    }
+
+    private function generateInventoryFeed($listingInfo, $listingId)
+    {
+        $userIdentifier = $listingInfo->store->user_id;
+        $listingItems = ListingItemLink::where('listing_id', $listingId)->cursor();
+
+        $xml = new SimpleXMLElement('<?xml version="1.0" encoding="UTF-8"?><AmazonEnvelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"></AmazonEnvelope>');
+
+        $header = $xml->addChild('Header');
+        $header->addChild('DocumentVersion', '1.01');
+        $header->addChild('MerchantIdentifier', $userIdentifier);
+
+        $xml->addChild('MessageType', 'Inventory');
+
+        $index = 1;
+        foreach ($listingItems as $listingItem) {
+            $messages = $xml->addChild('Message');
+            $messages->addChild('MessageID', $index);
+            $itemDetail = $listingItem->item;
+
+            $inventory = $messages->addChild('Inventory');
+            $inventory->addChild('SKU', $itemDetail->sku);
+            $inventory->addChild('Quantity', $itemDetail->quantity);
+
+            $index++;
+        }
+
+        $xmlContent = $xml->asXML();
+
+        XmlUtility::saveToFile(public_path('feeds/amazon/' . $listingId . '.xml'), $xmlContent);
+    }
+
+    private function generatePriceFeed($listingInfo, $listingId)
+    {
+        $userIdentifier = $listingInfo->store->user_id;
+        $listingItems = ListingItemLink::where('listing_id', $listingId)->cursor();
+
+        $xml = new SimpleXMLElement('<?xml version="1.0" encoding="UTF-8"?><AmazonEnvelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"></AmazonEnvelope>');
+
+        $header = $xml->addChild('Header');
+        $header->addChild('DocumentVersion', '1.01');
+        $header->addChild('MerchantIdentifier', $userIdentifier);
+
+        $xml->addChild('MessageType', 'Price');
+
+        $index = 1;
+        foreach ($listingItems as $listingItem) {
+            $messages = $xml->addChild('Message');
+            $messages->addChild('MessageID', $index);
+            $itemDetail = $listingItem->item;
+
+            $price = $messages->addChild('Price');
+            $price->addChild('SKU', $itemDetail->sku);
+            $standardPrice = $price->addChild('StandardPrice');
+            // add current like attribute not element
+            $standardPrice->addAttribute('currency', 'USD');
+            $standardPrice->addChild('Amount', $itemDetail->price);
+
+            $index++;
+        }
+
+        $xmlContent = $xml->asXML();
+
+        XmlUtility::saveToFile(public_path('feeds/amazon/' . $listingId . '.xml'), $xmlContent);
+    }
+
+
 }
