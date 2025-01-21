@@ -48,7 +48,7 @@ class ProductSyncJob implements ShouldQueue
                 foreach ($easyesaleProducts as $product) {
                     $this->updateProduct($product);
 
-//                    $this->createProductTitleKeywords($product);
+                    $this->createProductTitleKeywords($product);
 
                     $fonusProduct = DB::connection('fonus_db')->table('tbl_product')->where('custom_label', $product->code)->first();
                     $this->createProductFeatures($fonusProduct, $product->id);

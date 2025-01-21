@@ -38,45 +38,46 @@ class AmazonAuthService
     {
         $accessToken = $this->getAccessToken();
         Log::info('Access Token Created ' . $accessToken);
-        return $accessToken;
 
-//        $response = $this->client->post('/feeds/2021-06-30/documents', [
-//            'headers' => [
-//                'Authorization' => "Bearer {$accessToken}",
-//            ],
-//            'json' => [
-//                'contentType' => 'text/xml; charset=UTF-8',
-//            ],
-//        ]);
-//
-//        $uploadDetails = json_decode($response->getBody()->getContents(), true);
-//        $uploadUrl = $uploadDetails['url'];
-//
-//        $this->client->put($uploadUrl, [
-//            'headers' => ['Content-Type' => 'text/xml; charset=UTF-8'],
-//            'body' => $feedContent,
-//        ]);
+        $response = $this->client->post('/feeds/2021-06-30/documents', [
+            'headers' => [
+                'x-amz-access-token' => "{$accessToken}",
+            ],
+            'json' => [
+                'contentType' => 'text/xml; charset=UTF-8',
+            ]
+        ]);
 
-//        return $uploadDetails['feedDocumentId'];
+        $uploadDetails = json_decode($response->getBody()->getContents(), true);
+        $uploadUrl = $uploadDetails['url'];
+        Log::info('Upload URL: ' . json_encode($uploadDetails));
+
+        $this->client->put($uploadUrl, [
+            'headers' => ['Content-Type' => 'text/xml; charset=UTF-8'],
+            'body' => $feedContent,
+        ]);
+
+        return $uploadDetails['feedDocumentId'];
     }
 
     public function submitFeed(mixed $generatedFeedId)
     {
-        $accessToken = $this->getAccessToken();
+//        $accessToken = $this->getAccessToken();
 
-        $response = $this->client->post('/feeds/2021-06-30/feeds', [
-            'headers' => [
-                'Authorization' => "Bearer {$accessToken}",
-                'Content-Type' => 'application/json',
-            ],
-            'json' => [
-                'marketplaceIds' => [env('AMAZON_MARKETPLACE_ID')],
-                'feedType' => 'POST_PRODUCT_DATA',
-                'inputFeedDocumentId' => $generatedFeedId,
-            ],
-        ]);
+//        $response = $this->client->post('/feeds/2021-06-30/feeds', [
+//            'headers' => [
+//                'x-amz-access-token' => "{$accessToken}",
+//                'Content-Type' => 'application/json',
+//            ],
+//            'json' => [
+//                'marketplaceIds' => [env('AMAZON_MARKETPLACE_ID')],
+//                'feedType' => 'POST_PRODUCT_DATA',
+//                'inputFeedDocumentId' => $generatedFeedId,
+//            ],
+//        ]);
 
-        return json_decode($response->getBody()->getContents(), true);
+//        return json_decode($response->getBody()->getContents(), true);
+        return '';
     }
 
     public function getResultFeed($feedId)
@@ -85,7 +86,7 @@ class AmazonAuthService
 
         $response = $this->client->get('/feeds/2021-06-30/feeds/' . $feedId, [
             'headers' => [
-                'Authorization' => "Bearer {$accessToken}",
+                'x-amz-access-token' => "{$accessToken}",
             ]
         ]);
 
