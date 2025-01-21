@@ -1014,11 +1014,11 @@ class ListingController extends Controller
 
             // Check if adding the device exceeds the character limit
             $tempModels = array_merge($currentModels, [$nameToAdd]);
-            $tempModelString = implode(', ', $tempModels);
+            $tempModelString = implode($brand_seperator.' ', $tempModels);
             $tempTitle = str_replace('#model_series', $tempModelString, $baseTitle);
 
             $tempDevices = array_merge($currentDevices, [$currentBrand]);
-            $tempDeviceString = implode(', ', $tempDevices);
+            $tempDeviceString = implode($device_seperator.' ', $tempDevices);
             $tempTitle = str_replace('#devices', $tempDeviceString, $tempTitle);
 
             /*$sku = StoreTypeListing::generateUniqueAlphabeticSku($product->product_sku);*/
@@ -1029,7 +1029,7 @@ class ListingController extends Controller
 
                 // Save the current title and start a new one
                 //$titles[$cnt]['title'] = rtrim($currentTitle, $separator); // Remove trailing separator
-                $titles[$cnt]['title'] = str_replace(['#model_series','#devices'], [implode($separator.' ', $currentModels),implode($separator.' ', $currentDevices)], $baseTitle);
+                $titles[$cnt]['title'] = str_replace(['#model_series','#devices'], [implode($brand_seperator.' ', $currentModels),implode($separator.' ', $currentDevices)], $baseTitle);
 
                 $cnt++;
                 //$currentTitle = $baseTitle . ' ' . $nameToAdd;
@@ -1066,7 +1066,7 @@ class ListingController extends Controller
         if (!empty($currentTitle)) {
             /*$titles[$cnt]['title'] = rtrim($currentTitle, ' '.$separator.' ');*/
             //$titles[$cnt]['title'] = str_replace('#model_series', implode($separator.' ', $currentModels), $baseTitle);
-            $titles[$cnt]['title'] = str_replace(['#model_series','#devices'], [implode($separator.' ', $currentModels),implode($separator.' ', $currentDevices)], $baseTitle);
+            $titles[$cnt]['title'] = str_replace(['#model_series','#devices'], [implode($brand_seperator.' ', $currentModels),implode($separator.' ', $currentDevices)], $baseTitle);
         }
 
         return $titles;
@@ -1142,11 +1142,11 @@ class ListingController extends Controller
 
             // Check if adding the device exceeds the character limit
             $tempModels = array_merge($currentModels, [$nameToAdd]);
-            $tempModelString = implode(', ', $tempModels);
+            $tempModelString = implode($brand_seperator.' ', $tempModels);
             $tempTitle = str_replace('#model_series', $tempModelString, $baseTitle);
 
             $tempDevices = array_merge($currentDevices, [$currentBrand]);
-            $tempDeviceString = implode(', ', $tempDevices);
+            $tempDeviceString = implode($device_seperator.' ', $tempDevices);
             $tempTitle = str_replace('#devices', $tempDeviceString, $tempTitle);
 
             // Check if adding the device exceeds the character limit
@@ -1154,7 +1154,7 @@ class ListingController extends Controller
                 // Save the current title and start a new one
                 //$titles[$cnt]['title'] = rtrim($currentTitle, $separator); // Remove trailing separator
                 if (!empty($currentDevices)) {
-                    $titles[$cnt]['title'] = str_replace(['#model_series', '#devices'], [implode($separator . ' ', $currentModels), implode($separator . ' ', $currentDevices)], $baseTitle);
+                    $titles[$cnt]['title'] = str_replace(['#model_series', '#devices'], [implode($separator . ' ', $currentModels), implode($device_seperator . ' ', $currentDevices)], $baseTitle);
                 }
                 $cnt++;
                 //$currentTitle = $baseTitle . ' ' . $nameToAdd;
@@ -1188,7 +1188,7 @@ class ListingController extends Controller
 
         // Add the last title
         if (!empty($currentTitle)) {
-            $titles[$cnt]['title'] = str_replace(['#model_series', '#devices'], [implode($separator . ' ', $currentModels), implode($separator . ' ', $currentDevices)], $baseTitle);
+            $titles[$cnt]['title'] = str_replace(['#model_series', '#devices'], [implode($separator . ' ', $currentModels), implode($device_seperator . ' ', $currentDevices)], $baseTitle);
         }
 
         return $titles;
