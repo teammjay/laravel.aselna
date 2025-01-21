@@ -20,7 +20,7 @@ class GoogleShoppingAuthService
     public function getClient()
     {
         $client = new Client();
-        $client->setApplicationName('Laravel Google Shopping API');
+        $client->setApplicationName('Google Shopping API');
         $client->setScopes(['https://www.googleapis.com/auth/content']);
         $client->setAuthConfig(storage_path('app/google_credentials.json'));
         $client->setAccessType('offline');
