@@ -67,6 +67,8 @@ class ListingGenerationTypeTemplateController extends Controller
         $updated_by = auth()->user()->name ?? 'admin';
         $request->merge(['updated_by' => $updated_by]);
 
+        $request['default_template'] = $request->has('default_template') ? 1 : 0;
+
         ListingGenerationTypeTemplate::findOrFail($id)->update($request->all());
 
         return redirect()->route('listing_generation_type_template.index')

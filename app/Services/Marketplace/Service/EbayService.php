@@ -9,16 +9,43 @@ use App\Models\ListingItemLink;
 use App\Services\Auth\EbayAuthService;
 use App\Services\Marketplace\Contracts\MarketplaceServiceInterface;
 use App\Utils\XmlUtility;
+use App\Constants\FeedTypes;
 
 class EbayService implements MarketplaceServiceInterface
 {
 
     public function generateFeed($listingId)
     {
-        //$listingInfo = ListingFeed::where('id', $listingId)->first();
+        $listingInfo = Listing::where('id', $listingId)->first();
+        // Generate feed for Amazon
+        switch ($listingInfo->feed_type) {
+            case FeedTypes::CREATE:
+                $this->generateCreateFeed($listingInfo, $listingId);
+                break;
+            case FeedTypes::SHIPMENT_UPDATE:
+                $this->generateShipmentUpdateFeed($listingInfo, $listingId);
+                break;
+            case FeedTypes::DELETE:
+                $this->generateDeleteFeed($listingInfo, $listingId);
+                break;
+            case FeedTypes::INVENTORY:
+                $this->generatePriceFeed($listingInfo, $listingId);
+                break;
+            case FeedTypes::PRICE:
+                $this->generatePriceFeed($listingInfo, $listingId);
+                break;
+            default:
+                break;
+        }
 
+        //return the file path so that it can be downloaded
+        return 'feeds/amazon/' . $listingId . '.xml';
+    }
+
+    public function generateCreateFeed($listingInfo, $listingId)
+    {
         // Generate feed for Ebay
-        //$userIdentifier = $listingInfo->store->user_id;
+        $userIdentifier = $listingInfo->store->user_id;
         $listingItems = ListingItemLink::with('listingItem','listingItem.brand','listingItem.storeProduct','listingItem.storeProduct.product','listingItem.storeProduct.productImages')->where('feed_id', $listingId)->cursor();
         $version = 1;
 
@@ -147,19 +174,119 @@ class EbayService implements MarketplaceServiceInterface
 
         $xmlContent = $xml->asXML();
 
-        XmlUtility::saveToFile(public_path('feeds/ebay/ebay-' . $listingId . '.xml'), $xmlContent);
+        XmlUtility::saveToFile(public_path('feeds/ebay/' . $listingId . '.xml'), $xmlContent);
+    }
 
-        //return the file path so that it can be downloaded
-        return 'feeds/ebay/' . $listingId . '.xml';
+    public function generatePriceFeed($listingInfo, $listingId){
+
+        $listingItems = ListingItemLink::with('listingItem','listingItem.brand','listingItem.storeProduct','listingItem.storeProduct.product','listingItem.storeProduct.productImages')->where('feed_id', $listingId)->cursor();
+        $version = 1;
+
+        $xml = new \SimpleXMLElement('<?xml version="1.0" encoding="UTF-8"?><BulkDataExchangeRequests xmlns="urn:ebay:apis:eBLBaseComponents"></BulkDataExchangeRequests>');
+
+        // Add Header
+        $header = $xml->addChild('Header');
+        $header->addChild('SiteID', '0');
+        $header->addChild('Version', $version);
+
+        $index = 1;
+        foreach ($listingItems as $listingItem) {
+
+            $itemDetail = $listingItem->item;
+
+            // Add ReviseInventoryStatusRequest
+            $addFixedPriceItemRequest = $xml->addChild('ReviseInventoryStatusRequest', null, 'urn:ebay:apis:eBLBaseComponents');
+            $addFixedPriceItemRequest->addChild('ErrorLanguage', 'en_US');
+            $addFixedPriceItemRequest->addChild('Version', $version);
+            $addFixedPriceItemRequest->addChild('WarningLevel', 'High');
+
+            $inventoryStatus = $xml->addChild('InventoryStatus');
+            $inventoryStatus->addChild('SKU', $itemDetail->sku);
+            $inventoryStatus->addChild('StartPrice', $itemDetail->price)->addAttribute('currencyID', 'USD');;
+            $inventoryStatus->addChild('Quantity', $itemDetail->quantity);
+
+            $index ++;
+        }
+
+        $xmlContent = $xml->asXML();
+
+        XmlUtility::saveToFile(public_path('feeds/ebay/' . $listingId . '.xml'), $xmlContent);
+
+    }
+
+    public function generateDeleteFeed($listingInfo, $listingId){
+
+        $listingItems = ListingItemLink::with('listingItem','listingItem.brand','listingItem.storeProduct','listingItem.storeProduct.product','listingItem.storeProduct.productImages')->where('feed_id', $listingId)->cursor();
+        $version = 1;
+
+        $xml = new \SimpleXMLElement('<?xml version="1.0" encoding="UTF-8"?><BulkDataExchangeRequests xmlns="urn:ebay:apis:eBLBaseComponents"></BulkDataExchangeRequests>');
+
+        // Add Header
+        $header = $xml->addChild('Header');
+        $header->addChild('SiteID', '0');
+        $header->addChild('Version', $version);
+
+        $index = 1;
+        foreach ($listingItems as $listingItem) {
+
+            $itemDetail = $listingItem->item;
+            // Add ReviseInventoryStatusRequest
+            $addFixedPriceItemRequest = $xml->addChild('EndFixedPriceItemRequest', null, 'urn:ebay:apis:eBLBaseComponents');
+            $addFixedPriceItemRequest->addChild('ErrorLanguage', 'en_US');
+            $addFixedPriceItemRequest->addChild('Version', $version);
+            $addFixedPriceItemRequest->addChild('WarningLevel', 'High');
+            $addFixedPriceItemRequest->addChild('EndingReason', 'NotAvailable');
+            $addFixedPriceItemRequest->addChild('SKU', $itemDetail->sku);
+        }
+
+        $xmlContent = $xml->asXML();
+
+        XmlUtility::saveToFile(public_path('feeds/ebay/' . $listingId . '.xml'), $xmlContent);
+
+    }
+
+    public function generateShipmentUpdateFeed($listingInfo, $listingId){
+
+        $listingItems = ListingItemLink::with('listingItem','listingItem.brand','listingItem.storeProduct','listingItem.storeProduct.product','listingItem.storeProduct.productImages')->where('feed_id', $listingId)->cursor();
+        $version = 1;
+
+        $xml = new \SimpleXMLElement('<?xml version="1.0" encoding="UTF-8"?><BulkDataExchangeRequests xmlns="urn:ebay:apis:eBLBaseComponents"></BulkDataExchangeRequests>');
+
+        // Add Header
+        $header = $xml->addChild('Header');
+        $header->addChild('SiteID', '0');
+        $header->addChild('Version', $version);
+
+        $index = 1;
+        foreach ($listingItems as $listingItem) {
+
+            $itemDetail = $listingItem->item;
+            // Add ReviseInventoryStatusRequest
+            $addFixedPriceItemRequest = $xml->addChild('SetShipmentTrackingInfoRequest');
+            $addFixedPriceItemRequest->addChild('ErrorLanguage', 'en_US');
+            $addFixedPriceItemRequest->addChild('Version', $version);
+            $addFixedPriceItemRequest->addChild('WarningLevel', 'High');
+            $addFixedPriceItemRequest->addChild('OrderID', 'NotAvailable');
+
+            $shipment = $xml->addChild('Shipment');
+            $shipment->addChild('ShippingCarrierUsed', 'USPS');
+            $shipment->addChild('ShippingServiceUsed', 'First Class');
+            $shipment->addChild('ShipmentTrackingNumber', '9400111899561627596553');
+        }
+
+        $xmlContent = $xml->asXML();
+
+        XmlUtility::saveToFile(public_path('feeds/ebay/' . $listingId . '.xml'), $xmlContent);
+
     }
 
     public function submitFeed($feedId,$listingId)
     {
         $authService = new EbayAuthService();
 
-        echo '<pre>';
+        /*echo '<pre>';
         print_r($authService);
-        echo '</pre>';die;
+        echo '</pre>';die;*/
 
         $fileName = 'ebay-'.$listingId.'.xml';
         $filePath = 'feeds/ebay/' . $fileName;

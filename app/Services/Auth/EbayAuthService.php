@@ -35,6 +35,8 @@ class EbayAuthService
             ],
         ]);
 
+        Log::info('Access Token Created ' . $response->getBody());
+
         $data = json_decode($response->getBody(), true);
         return $data['access_token'] ?? null;
 
@@ -54,6 +56,8 @@ class EbayAuthService
                     'feedType' => 'LMS_ORDER_ACK'
                 ],
             ]);
+
+            Log::info('Task Created ' . $response->getBody());
 
             return json_decode($response->getBody(), true);
 
@@ -81,6 +85,8 @@ class EbayAuthService
                 'sink' => $savePath,
             ]);
 
+            Log::info('Feed Status: ' . json_encode($response));
+
             return $response->getStatusCode() === 200 ? $savePath : false;
 
         }catch (RequestException $e) {
@@ -103,6 +109,8 @@ class EbayAuthService
                     'Content-Type' => 'application/json',
                 ],
             ]);
+
+            Log::info('Task Detail ' . $response->getBody());
 
             return json_decode($response->getBody(), true);
         } catch (RequestException $e) {
@@ -134,6 +142,8 @@ class EbayAuthService
                     ],
                 ],
             ]);
+
+            Log::info('Upload File Detail ' . $response->getBody());
 
             return json_decode($response->getBody(), true);
         } catch (RequestException $e) {
