@@ -2,6 +2,7 @@
 
 namespace App\Services\Auth;
 
+use App\Services\Marketplace\Service\GoogleShoppingService;
 use Google\Client;
 use Illuminate\Support\Facades\Log;
 use Google\Service\ShoppingContent;
@@ -9,11 +10,9 @@ use Google\Service\ShoppingContent;
 class GoogleShoppingAuthService
 {
     protected $merchantID;
-    protected $googleService;
 
-    public function __construct(GoogleService $googleService)
+    public function __construct()
     {
-        $this->googleService = $googleService;
         $this->merchantID = '';
     }
 
@@ -34,7 +33,7 @@ class GoogleShoppingAuthService
 
     public function uploadFeed($csvFilePath)
     {
-        $client = $this->googleService->getClient();
+        $client = $this->getClient();
         $service = new ShoppingContent($client);
 
         try {
@@ -43,8 +42,6 @@ class GoogleShoppingAuthService
             $datafeed->setName('CSV Feed');
             $datafeed->setContentType('products');
             $datafeed->setFileName(basename($csvFilePath));
-            $datafeed->setTargetCountry('US');
-            $datafeed->setContentLanguage('en');
 
             // Create a Datafeed object in Google Merchant Center
             $merchantId = $this->merchantID;
@@ -57,6 +54,8 @@ class GoogleShoppingAuthService
                 file_get_contents($csvFilePath)
             );
 
+            Log::info('Upload Feed Detail ' . $feedResponse);
+
             // Return success response
             return [
                 'success' => true,
@@ -65,16 +64,6 @@ class GoogleShoppingAuthService
                 'name' => $feedResponse->getName(),
             ];
 
-        } catch (GoogleServiceException $e) {
-
-            $error = json_decode($e->getMessage(), true);
-            $errors = $error['error']['errors'] ?? [];
-
-            return [
-                'success' => false,
-                'message' => 'Failed to upload feed.',
-                'errors' => $errors,
-            ];
         } catch (\Exception $e) {
             return [
                 'success' => false,
@@ -88,15 +77,17 @@ class GoogleShoppingAuthService
     public function getFeedStatus($datafeedId)
     {
         try {
-            $client = $this->googleService->getClient();
+            $client = $this->getClient();
             $service = new ShoppingContent($client);
 
             $status = $service->datafeedstatuses->get($this->merchantID, $datafeedId);
 
+            Log::info('Feed Status :' . $status);
+
             return [
                 'success' => true,
                 'status' => $status->getProcessingStatus(),
-                'errors' => $status->getError() ?? [],
+                'errors' => $status->getErrors() ?? [],
                 'warnings' => $status->getWarnings() ?? [],
             ];
         } catch (\Exception $e) {

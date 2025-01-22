@@ -20,8 +20,34 @@ class GoogleShoppingService implements MarketplaceServiceInterface
 
     public function generateFeed($listingId)
     {
-        //$listingInfo = ListingFeed::where('id', $listingId)->first();
+        $listingInfo = Listing::where('id', $listingId)->first();
+        // Generate feed for Amazon
+        switch ($listingInfo->feed_type) {
+            case FeedTypes::CREATE:
+                $this->generateCreateFeed($listingInfo, $listingId);
+                break;
+            case FeedTypes::SHIPMENT_UPDATE:
+                $this->generateShipmentUpdateFeed($listingInfo, $listingId);
+                break;
+            case FeedTypes::DELETE:
+                $this->generateDeleteFeed($listingInfo, $listingId);
+                break;
+            case FeedTypes::INVENTORY:
+                $this->generatePriceFeed($listingInfo, $listingId);
+                break;
+            case FeedTypes::PRICE:
+                $this->generatePriceFeed($listingInfo, $listingId);
+                break;
+            default:
+                break;
+        }
 
+        //return the file path so that it can be downloaded
+        return 'feeds/google-shopping/' . $listingId . '.csv';
+    }
+
+    public function generateCreateFeed($listingInfo, $listingId)
+    {
         // Generate feed for Ebay
         //$userIdentifier = $listingInfo->store->user_id;
         $listingItems = ListingItemLink::with('listingItem','listingItem.brand','listingItem.device','listingItem.storeProduct','listingItem.storeProduct.product', 'listingItem.storeProduct.productImages', 'listingItem.storeProduct.product.Manufacturer', 'listingItem.storeProduct.product.condition')->where('feed_id', $listingId)->cursor();
@@ -88,6 +114,38 @@ class GoogleShoppingService implements MarketplaceServiceInterface
         return $filePath;
     }
 
+    public function generatePriceFeed($listingInfo, $listingId)
+    {
+        // Generate feed for Ebay
+        //$userIdentifier = $listingInfo->store->user_id;
+        $listingItems = ListingItemLink::with('listingItem','listingItem.brand','listingItem.device','listingItem.storeProduct','listingItem.storeProduct.product', 'listingItem.storeProduct.productImages', 'listingItem.storeProduct.product.Manufacturer', 'listingItem.storeProduct.product.condition')->where('feed_id', $listingId)->cursor();
+
+        // Define the columns for Google Shopping feed
+        $columns = ['product_id','price','currency'];
+
+        $fileName = 'google_shopping_feed_'.$listingId.'.csv';
+        $filePath = public_path('feeds/google-shopping/' . $fileName);
+        $stream = fopen('php://temp', 'w');
+
+        // Write the header row
+        fputcsv($stream, $columns);
+
+        // Write product rows
+        foreach ($listingItems as $listingItem) {
+            $itemDetail = $listingItem->listingItem;
+            fputcsv($stream, [
+                $itemDetail->id,
+                $itemDetail->price,
+                'USD'
+            ]);
+        }
+        rewind($stream);
+        Storage::put($filePath, stream_get_contents($stream));
+        fclose($stream);
+        //return the file path so that it can be downloaded
+        return $filePath;
+    }
+
     private function getCategoryPath($category) {
         $path = [];
         while ($category) {
@@ -106,6 +164,8 @@ class GoogleShoppingService implements MarketplaceServiceInterface
 
         if ($response['success']) {
             $statusResponse = $this->shoppingContentService->getFeedStatus($response['datafeedId']);
+
+
 
             return response()->json([
                 'message' => $response['message'],
