@@ -448,9 +448,7 @@
                             @php
                                 function renderCategories($productTypes, $prefix = '') {
                                     foreach ($productTypes as $ptype) {
-
                                         echo '<option value="' . $ptype->id . '">' . $prefix . $ptype->name . '</option>';
-
                                         if ($ptype->children) {
                                             renderCategories($ptype->children, $prefix . '-- ');
                                         }
@@ -463,7 +461,6 @@
                                     @php
                                         renderCategories($product_types);
                                     @endphp
-
                                 </select>
                             </div>
                         </div>
@@ -639,14 +636,6 @@
                 Select None
             </button>
         </div>
-        {{--<div class="col-md-1">
-            <select class="custom-select w-auto float-right" name="per_page" id="per_page">
-                <option value="10" {{ ($perPage == 10) ? 'selected':'' }}>10</option>
-                <option value="25" {{ ($perPage == 25) ? 'selected':'' }}>25</option>
-                <option value="50" {{ ($perPage == 50) ? 'selected':'' }}>50</option>
-                <option value="100" {{ ($perPage == 100) ? 'selected':'' }}>100</option>
-            </select>
-        </div>--}}
     </div>
     <div class="table-responsive">
         <table id="productsTable" class="table table-bordered table-striped">
@@ -670,14 +659,60 @@
             </tr>
             </thead>
             <tbody id="product-list">
-
-               {{-- @include('listing.product_list', ['products' => $products])--}}
-
             </tbody>
         </table>
     </div>
-    <div id="pagination" class="pt-3 pb-3">
-        {{--@include('listing.pagination', ['products' => $products])--}}
+
+    <!-- Add sync price modal -->
+    <div class="modal fade" id="syncPriceModal">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="syncPriceModalLabel">Price Update Confirmation</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="frmproductPrice">
+                        <input type="hidden" name="id" id="product_channel_id">
+                        <p>Are you sure you want to update inventory for the selected listing?</p>
+                        <div class="mb-3">
+                            <label for="sync_price_value" class="col-form-label">Price:</label>
+                            <input type="text" class="form-control" id="sync_price_value" placeholder="Price">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancle</button>
+                    <button type="button" class="btn btn-primary" id="syncListingPrice">OK <i class="fa fa-check"></i> </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add sync quantity modal -->
+    <div class="modal fade" id="syncInventoryModal">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="syncInventoryModalLabel">Inventory Update Confirmation</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="frmproductInventory">
+                        <input type="hidden" name="id" id="product_channel_id">
+                        <p>Are you sure you want to update inventory for the selected listing?</p>
+                        <div class="mb-3">
+                            <label for="sync_inventory" class="col-form-label">Quantity:</label>
+                            <input type="text" class="form-control" id="sync_inventory" placeholder="Quantity">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancle</button>
+                    <button type="button" class="btn btn-primary" id="syncListingInventory">OK <i class="fa fa-check"></i> </button>
+                </div>
+            </div>
+        </div>
     </div>
 @stop
 
@@ -731,12 +766,22 @@
         });
 
         $(document).on('click','#product-list tr',function () {
-           let ele = $(this);
-           $('#product-list tr').removeClass('bg-blue');
+            let ele = $(this);
+
+            if($(this).find('.proList').is(':checked')){
+                ele.removeClass('bg-blue');
+                $(this).find('.proList').prop('checked',false);
+            }else{
+                ele.addClass('bg-blue');
+                $(this).find('.proList').prop('checked',true);
+            }
+            $('#edit_list').removeAttr('disabled');
+
+           /*$('#product-list tr').removeClass('bg-blue');
            $('input[name="listing_item[]"]').prop('checked',false);
            ele.addClass('bg-blue');
            ele.find('input[name="listing_item[]"]').prop('checked',true);
-           $('#edit_list').removeAttr('disabled');
+           $('#edit_list').removeAttr('disabled');*/
         });
 
         $('#edit_list').on('click',function () {
@@ -747,11 +792,9 @@
                     let selectedId = $(this).val();
                     location.href = "{{ url('listing/edit') }}/" + selectedId;
                 }
-
             });
 
         });
-
 
         $('#listing_store').on('change',function () {
 
@@ -848,7 +891,105 @@
             }
         });
 
+        $(document).on('click', '.delete-btn', function() {
+            var productId = $(this).data('id');
+            var token = '{{ csrf_token() }}'; // CSRF token for security
+
+            // Confirm the deletion
+            if (confirm("Are you sure you want to delete this product?")) {
+                $.ajax({
+                    url: "{{ url('listing/destroy') }}/" + productId,   // Laravel route for deletion
+                    type: 'DELETE',
+                    data: {
+                        "_token": token
+                    },
+                    success: function (response) {
+                        // If success, remove the user row from the table
+                        if (response.success) {
+                            $('#product-' + productId).remove();
+                            alert(response.success);
+                        }
+                    },
+                    error: function (xhr) {
+                        // Handle error response
+                        alert('Error: ' + xhr.responseJSON.error);
+                    }
+                });
+            }
+        });
+
         loadDatatables();
+
+        $(document).on('click', '#sync_price', function() {
+            let selected_list = [];
+            let selected_product = [];
+            var is_same_product = false;
+            $('input[name="listing_item[]"]:checked').each(function () {
+                var prod_code = $(this).data('code');
+                if(selected_product.length !== 0 && $.inArray(prod_code, selected_product) == -1){
+                    is_same_product = true;
+                }
+                selected_product.push(prod_code);
+                selected_list.push($(this).val());
+            });
+            if (selected_list.length === 0) {
+                alert('Please select listing first.');
+            }else if (is_same_product) {
+                alert('Please select same product for update price.');
+            }else{
+                $('#syncPriceModal').modal('show');
+            }
+        });
+
+        $(document).on('click', '#sync_inventory', function() {
+            let selected_list = [];
+            let selected_product = [];
+            var is_same_product = false;
+            $('input[name="listing_item[]"]:checked').each(function () {
+                var prod_code = $(this).data('code');
+                if(selected_product.length !== 0 && $.inArray(prod_code, selected_product) == -1){
+                    is_same_product = true;
+                }
+                selected_product.push(prod_code);
+                selected_list.push($(this).val());
+            });
+            if (selected_list.length === 0) {
+                alert('Please select listing first.');
+            }else if (is_same_product) {
+                alert('Please select same product for update inventory.');
+            }else{
+                $('#syncInventoryModal').modal('show');
+            }
+        });
+
+        $(document).on('click', '#syncListingPrice', function() {
+            let selected_list = [];
+            $('input[name="listing_item[]"]:checked').each(function () {
+                selected_list.push($(this).val())
+            });
+
+            $.ajax({
+                url: "{{ url('listing/destroy') }}/" + productId,   // Laravel route for deletion
+                type: 'DELETE',
+                data: {
+                    "_token": token
+                },
+                success: function (response) {
+                    // If success, remove the user row from the table
+                    if (response.success) {
+                        $('#product-' + productId).remove();
+                        alert(response.success);
+                    }
+                },
+                error: function (xhr) {
+                    // Handle error response
+                    alert('Error: ' + xhr.responseJSON.error);
+                }
+            });
+        });
+
+
+
     });
 
     function loadDatatables(){
@@ -868,7 +1009,6 @@
             'ajax': {
                 url: "{{ route('listing.filter') }}",
                 type: "POST",
-                //dataType:'json',
                 headers: {
                     'X-CSRF-TOKEN': '{{ csrf_token() }}',
                 },
@@ -891,15 +1031,6 @@
 
                     // Add to the request payload
                     d.columnValues = columnValues;
-
-                    // Append DataTables parameters
-                    $.each(d, function(key, value) {
-                        //formData.append(key, value);
-                        //d.key = value;
-                    });
-
-
-                    //return formData;
                 },
                 //processData: false,
                 //contentType: false

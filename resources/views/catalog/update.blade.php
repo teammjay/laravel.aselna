@@ -704,6 +704,41 @@
 
                         </div>
 
+                        <div class="row mt-5">
+                            <div class="col-sm-12">
+                                <label>Additional Images</label>
+                                <form id="additionalImageUploadForm" enctype="multipart/form-data">
+                                    <div class="form-group col-md-4 d-flex">
+                                        <input class="form-control" type="file" name="alternate_images[]" id="alternate_images" accept="image/*" multiple>
+                                        <button class="btn btn-secondary" type="submit">Upload</button>
+                                    </div>
+                                </form>
+                            </div>
+
+                            <div class="col-md-8">
+                                <table class="table table-bordered" id="sortable-alt-table">
+                                    <thead>
+                                    <th></th>
+                                    <th>Image</th>
+                                    <th>Order</th>
+                                    <th></th>
+                                    </thead>
+                                    <tbody>
+                                    @if(count($productAltImages ?? []) > 0)
+                                        @foreach($productAltImages as $images)
+                                            <tr class="pro-alt-img-{{ $images->id }}" data-id="{{ $images->id }}">
+                                                <td><i class="fa fa-sort" title="Drag and drop row up or down to sort"></i></td>
+                                                <td><img src="{{ asset('storage/product_additional_images/'. $images->image) }}" alt="{{ $images->image }}" width="70" height="70"></td>
+                                                <td>{{ $images->sort_order }}</td>
+                                                <td><button class="btn btn-danger delete-alt-btn" data-id="{{ $images->id }}"> <i class="fas fa-fw fa-trash"></i></button></td>
+                                            </tr>
+                                        @endforeach
+                                    @endif
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
                     </div>
                     <div class="tab-pane fade" id="tab8" role="tabpanel" aria-labelledby="tags-tab">
                         <form method="POST" id="frmtab8">
@@ -1194,6 +1229,34 @@
 
                 $.ajax({
                     url: "{{ route('catalog.upload') }}",
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    headers: {
+                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                    },
+                    success: function (response) {
+                        if (response.success) {
+                            location.reload();
+                        }
+                    },
+                    error: function (xhr) {
+                        if (xhr.responseJSON?.error) {
+                            $('#responseMessage').html('<p style="color:red;">' + xhr.responseJSON.error.image[0] + '</p>');
+                        }
+                    }
+                });
+            });
+
+            $('#additionalImageUploadForm').on('submit', function (e) {
+                e.preventDefault();
+
+                let formData = new FormData(this);
+                formData.append('product_id', product_id);
+
+                $.ajax({
+                    url: "{{ route('catalog.uploadaltimg') }}",
                     type: 'POST',
                     data: formData,
                     processData: false,
@@ -1737,6 +1800,58 @@
                         error: function (xhr) {
                             // Handle error response
                             alert('Error: ' + xhr.responseJSON.error);
+                        }
+                    });
+                }
+            });
+
+            $(document).on('click', '.delete-alt-btn', function() {
+                var imageId = $(this).data('id');
+                var token = '{{ csrf_token() }}'; // CSRF token for security
+
+                // Confirm the deletion
+                if (confirm("Are you sure you want to delete this image?")) {
+                    $.ajax({
+                        url: "{{ url('catalog/deletealtimg') }}",
+                        type: 'post',
+                        data: {
+                            image_id: imageId,
+                            _token: "{{ csrf_token() }}"
+                        },
+                        success: function (response) {
+                            // If success, remove the user row from the table
+                            if (response.success) {
+                                $('.pro-alt-img-' + imageId).remove();
+                                alert(response.success);
+                            }
+                        },
+                        error: function (xhr) {
+                            // Handle error response
+                            alert('Error: ' + xhr.responseJSON.error);
+                        }
+                    });
+                }
+            });
+
+            $("#sortable-alt-table tbody").sortable({
+                cursor: "move",
+                update: function (event, ui) {
+                    let order = [];
+                    $("#sortable-alt-table tbody tr").each(function (index, element) {
+                        order.push($(element).data("id"));
+                    });
+
+                    $.ajax({
+                        url: "{{ route('catalog.altimageorder') }}",
+                        method: "POST",
+                        data: {
+                            order: order,
+                            _token: "{{ csrf_token() }}"
+                        },
+                        success: function (response) {
+                            if (response.success) {
+                                //alert("Order updated successfully!");
+                            }
                         }
                     });
                 }

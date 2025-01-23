@@ -63,6 +63,9 @@ Route::post('catalog/bulk-update', [CatalogController::class, 'bulkUpdate'])->na
 Route::post('catalog/getimages', [CatalogController::class, 'getImages'])->name('catalog.getimages');
 Route::post('catalog/imageorder', [CatalogController::class, 'updateImageOrder'])->name('catalog.imageorder');
 Route::post('catalog/deleteimg', [CatalogController::class, 'deleteImage'])->name('catalog.deleteimg');
+Route::post('catalog/deletealtimg', [CatalogController::class, 'deleteAlternativeImage'])->name('catalog.deletealtimg');
+Route::post('/upload-alt-image', [CatalogController::class, 'uploadAlternativeImage'])->name('catalog.uploadaltimg');
+Route::post('catalog/altimageorder', [CatalogController::class, 'updateAlternativeImageOrder'])->name('catalog.altimageorder');
 
 Route::post('/generate-feed-file',[HomeController::class, 'generateFeedFile'])->name('generate-feed-file');
 Route::post('/generate-result-feed-file', [HomeController::class, 'generateResultFeedFile'])->name('generate-result-feed-file');
