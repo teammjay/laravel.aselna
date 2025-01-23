@@ -243,8 +243,14 @@ class ListingController extends Controller
         $data = [];
         if (!empty((array)$products)) {
             foreach ($products as $product) {
+
+                if(!empty((array)$product->storeProduct) && !empty((array)$product->storeProduct->product)){
+                    $productcode = $product->storeProduct->product->product_sku;
+                }else{
+                    $productcode = '';
+                };
                 $data[] = array(
-                    "sku" => $product->sku . '<input type="checkbox" name="listing_item[]" value="' . $product->id . '" style="visibility:hidden;">',
+                    "sku" => $product->sku . '<input type="checkbox" class="proList" name="listing_item[]" data-code="'.$productcode.'" value="' . $product->id . '" style="visibility:hidden;">',
                     "sale_count" => ($product->sale_count) ? $product->sale_count : 0,
                     "last_sale_date" => $product->last_sale_date,
                     "store_sku" => $product->store_sku,
@@ -349,10 +355,16 @@ class ListingController extends Controller
             $query->where('products.oem_generic', 2);
         }
 
-        // Filter by product store
+        // getting only product which are not listed
         if ($request->has('never_listed_product')) {
             $query->leftJoin('listing_item', 'listing_item.store_product_id', '=', 'store_product.id');
             $query->where('listing_item.id');
+        }
+
+        // getting only products which have additional images
+        if ($request->has('additional_image_available')) {
+            $query->leftJoin('product_image_alternatives', 'product_image_alternatives.product_id', '=', 'store_product.product_id');
+            $query->whereNotNull('product_image_alternatives.id');
         }
 
         // Filter by product store
@@ -409,7 +421,7 @@ class ListingController extends Controller
             $query->whereIn('products.product_type', $all_product_ids);
         }
 
-        $products = $query->get();
+        $products = $query->distinct()->get();
         //echo $query->toSql();die;
 
         // Return a view or JSON
