@@ -941,6 +941,35 @@
             }
         });
 
+        $(document).on('click', '#syncListingPrice', function() {
+            let selected_list = [];
+            $('input[name="listing_item[]"]:checked').each(function () {
+                selected_list.push($(this).val())
+            });
+
+            $.ajax({
+                url: "{{ route('listing.synclistingprice') }}",
+                type: 'POST',
+                data: {
+                    selected_list:selected_list,
+                    price:$('#sync_price_value').val(),
+                    "_token": '{{ csrf_token() }}'
+                },
+                success: function (response) {
+                    // If success, remove the user row from the table
+                    if (response.success) {
+                        alert(response.message);
+                        $('#syncPriceModal').modal('hide');
+                        location.reload();
+                    }
+                },
+                error: function (xhr) {
+                    // Handle error response
+                    alert('Error: ' + xhr.responseJSON.error);
+                }
+            });
+        });
+
         $(document).on('click', '#sync_inventory', function() {
             let selected_list = [];
             let selected_product = [];
@@ -962,23 +991,26 @@
             }
         });
 
-        $(document).on('click', '#syncListingPrice', function() {
+        $(document).on('click', '#syncListingInventory', function() {
             let selected_list = [];
             $('input[name="listing_item[]"]:checked').each(function () {
                 selected_list.push($(this).val())
             });
 
             $.ajax({
-                url: "{{ url('listing/destroy') }}/" + productId,   // Laravel route for deletion
-                type: 'DELETE',
+                url: "{{ route('listing.synclistinginventory') }}",
+                type: 'POST',
                 data: {
-                    "_token": token
+                    selected_list:selected_list,
+                    inventory:$('#sync_inventory').val(),
+                    "_token": '{{ csrf_token() }}'
                 },
                 success: function (response) {
                     // If success, remove the user row from the table
                     if (response.success) {
-                        $('#product-' + productId).remove();
-                        alert(response.success);
+                        alert(response.message);
+                        $('#syncInventoryModal').modal('hide');
+                        location.reload();
                     }
                 },
                 error: function (xhr) {
