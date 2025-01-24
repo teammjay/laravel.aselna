@@ -110,6 +110,8 @@ Route::controller(ListingController::class)->group(function () {
     Route::post('/listing/gettitletemplate', 'getTitleTemplate')->name('listing.gettitletemplate');
     Route::post('/listing/generateproductlisting', 'generateProductListing')->name('listing.generateproductlisting');
     Route::post('/listing/savelistingproducts', 'saveListingProducts')->name('listing.savelistingproducts');
+    Route::post('/listing/synclistinginventory', 'syncListingInventory')->name('listing.synclistinginventory');
+    Route::post('/listing/synclistingprice', 'syncListingPrice')->name('listing.synclistingprice');
 });
 
 Route::controller(ListingGenerationTypeController::class)->group(function () {
