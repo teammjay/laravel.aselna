@@ -1,4 +1,4 @@
-@php use App\Constants\FeedStatus;use App\Constants\FeedTypes; @endphp
+@php use App\Constants\FeedStatus;use App\Constants\FeedTypes; use App\Constants\FilterCodes @endphp
 @extends('adminlte::page')
 
 @section('title', 'Dashboard')
@@ -8,16 +8,21 @@
 @stop
 
 @section('adminlte_css')
-    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet"/>
     <style>
         .select2-container--default .select2-dropdown .select2-search__field:focus, .select2-container--default .select2-search--inline .select2-search__field:focus {
             outline: 0;
             border: none;
         }
-        .select2-container{width:100% !important;}
-        .select2-container .select2-selection--single{
+
+        .select2-container {
+            width: 100% !important;
+        }
+
+        .select2-container .select2-selection--single {
             height: calc(2.25rem + 2px);
         }
+
         .select2-container--default .select2-selection--single .select2-selection__arrow {
             height: auto;
             position: absolute;
@@ -27,7 +32,7 @@
             transform: translateY(-50%);
         }
 
-        table th, table td, .column-no-whitespace{
+        table th, table td, .column-no-whitespace {
             white-space: nowrap;
         }
     </style>
@@ -44,6 +49,79 @@
                         - {{ $store->storeType->name }}</option>
                 @endforeach
             </select>
+        </div>
+    </div>
+    <div class="card card-secondary">
+        <div class="card-header bg-white">
+            <h3 class="card-title"><a href="javascript:void(0);" class="text-blue">Add search condition</a></h3>
+            <i class="fa fa-angle-down float-right"></i>
+        </div>
+        <div class="card-body" style="display: none;">
+            <form id="filter-form">
+                <div class="row mt-3">
+                    <div class="col-md-4">
+                        <div class="row">
+                            <div class="col-3 text-right">
+                                Feed Type
+                            </div>
+                            <div class="col-3">
+                                <select class="custom-select" id="" name="feed_type_operator">
+                                    <option value="{{FilterCodes::EQUAL}}">=</option>
+                                    <option value="{{FilterCodes::CONTAINS}}">contains</option>
+                                    <option value="{{FilterCodes::STARTS_WITH}}">starts with</option>
+                                    <option value="{{FilterCodes::ENDS_WITH}}">ends with</option>
+                                    <option value="{{FilterCodes::IN}}">in</option>
+                                    <option value="{{FilterCodes::NOT_IN}}">not in</option>
+                                    <option value="{{FilterCodes::DOESNT_CONTAIN}}">doesn't contain</option>
+                                    <option value="{{FilterCodes::IS_SET}}">is set</option>
+                                </select>
+                            </div>
+                            <div class="col-6">
+                                <input type="text" name="feed_type" id="feed_type" class="form-control">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="row">
+                            <div class="col-3 text-right ">
+                                Feed Id
+                            </div>
+                            <div class="col-3">
+                                <select class="custom-select" id="" name="feed_id_operator">
+                                    <option value="{{FilterCodes::EQUAL}}">=</option>
+                                    <option value="{{FilterCodes::CONTAINS}}">contains</option>
+                                    <option value="{{FilterCodes::STARTS_WITH}}">starts with</option>
+                                    <option value="{{FilterCodes::ENDS_WITH}}">ends with</option>
+                                    <option value="{{FilterCodes::IN}}">in</option>
+                                    <option value="{{FilterCodes::NOT_IN}}">not in</option>
+                                    <option value="{{FilterCodes::DOESNT_CONTAIN}}">doesn't contain</option>
+                                    <option value="{{FilterCodes::IS_SET}}">is set</option>
+                                </select>
+                            </div>
+                            <div class="col-6">
+                                <input type="text" name="feed_id" id="feed_id" class="form-control">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-2">
+                        <div class="form-group">
+                            <label>&nbsp;</label>
+                            <button type="submit" id="apply_filter" class="form-control btn btn-primary">Filter</button>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="form-group">
+                            <label>&nbsp;</label>
+                            <button type="reset" class="form-control btn  btn-reset btn-secondary">Reset</button>
+                        </div>
+                    </div>
+                </div>
+            </form>
         </div>
     </div>
     <div class="row">
@@ -96,6 +174,14 @@
                     url: "{{ route('listing-data') }}",
                     data: function (d) {
                         d.store_id = $('#listing_store').val();
+                        var formData = $('#filter-form').serializeArray(); // Serialize form inputs
+
+                        console.log(formData)
+
+                        // Add form data to the DataTable's request payload
+                        $.each(formData, function (index, field) {
+                            d[field.name] = field.value; // Append form data to the DataTables request
+                        });
                     }
                 },
                 columns: [
@@ -152,9 +238,30 @@
             });
         });
 
+        $(document).ajaxStart(function () {
+            $("#ajax-preloader").show(); // Show preloader when AJAX starts
+        }).ajaxStop(function () {
+            $("#ajax-preloader").hide(); // Hide preloader when AJAX stops
+        });
+
         // change listing store
         $('#listing_store').change(function () {
             table.ajax.reload();
+        });
+
+        $('#apply_filter').on('click', function () {
+            table.ajax.reload();
+        });
+
+        $('.card-header').on('click', function () {
+            if ($(this).find('.fa').hasClass('fa-angle-down')) {
+                $(this).find('.fa').removeClass('fa-angle-down');
+                $(this).find('.fa').addClass('fa-angle-up');
+            } else {
+                $(this).find('.fa').removeClass('fa-angle-up');
+                $(this).find('.fa').addClass('fa-angle-down');
+            }
+            $('.card-body').toggle();
         });
 
         $(document).on('click', '.generate-feed-file', function () {
@@ -179,7 +286,7 @@
             });
         });
 
-        $(document).on('click','.generate-result-feed-file',function () {
+        $(document).on('click', '.generate-result-feed-file', function () {
             var listingId = $(this).data('listing');
             $.ajax({
                 url: "<?= route('generate-result-feed-file') ?>",
