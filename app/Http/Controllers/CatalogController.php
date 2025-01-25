@@ -21,6 +21,7 @@ use App\Models\StoreProduct;
 use App\Models\StoreType;
 use App\Models\StoreTypeCategory;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
@@ -296,6 +297,7 @@ class CatalogController extends Controller
         $store_details = [];
         if(count($stores ?? []) > 0){
             foreach($stores as $key=>$store){
+                Log::info('store_type_id: '.$store->store_type_id);
                 $store_details[$key]['store_detail'] = $store;
                 $storeCategories = StoreTypeCategory::select('store_type_category.*')
                     ->leftJoin('store_type','store_type.id', '=', 'store_type_category.store_type_id')
@@ -398,16 +400,17 @@ class CatalogController extends Controller
         $store_details = [];
         if(count($stores ?? []) > 0){
             foreach($stores as $key=>$store){
+                Log::info('store_type_id: '.$store->store_type_id);
                 /* check store active for product */
-                $prochannel = DB::table('product_channel_detail')->where('store_type_id',$store->store_type_id)->where('product_id',$id)->first();
-                if((!empty($prochannel) && $prochannel->status)) {
+//                $prochannel = DB::table('product_channel_detail')->where('store_type_id',$store->store_type_id)->where('product_id',$id)->first();
+//                if((!empty($prochannel) && $prochannel->status)) {
                     $store_details[$key]['store_detail'] = $store;
                     $storeCategories = StoreTypeCategory::select('store_type_category.*')
                         ->leftJoin('store_type', 'store_type.id', '=', 'store_type_category.store_type_id')
                         ->where('store_type.id', $store->store_type_id)
                         ->get();
                     $store_details[$key]['store_category'] = $storeCategories;
-                }
+//                }
             }
         }
         $manufacturers = Manufacturer::all();
