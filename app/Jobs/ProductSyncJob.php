@@ -62,7 +62,7 @@ class ProductSyncJob implements ShouldQueue
 
         if (env('APP_ENV') === 'local') {
             Log::info('Local Environment');
-            $storeProductsQ->whereRaw('id in (select store_product_id from oydera_listing_item where id in (select item_id from oydera_listing_item_link where listing_id = \'eb9a9eef-3fb2-dceb-7b84-10d6118d1141\'))');
+//            $storeProductsQ->whereRaw('id in (select store_product_id from oydera_listing_item where id in (select item_id from oydera_listing_item_link where listing_id = \'eb9a9eef-3fb2-dceb-7b84-10d6118d1141\'))');
         }
 
         try {

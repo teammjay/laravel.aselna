@@ -345,8 +345,7 @@ class ListingController extends Controller
         $query = StoreProduct::select('store_product.id','store_product.product_id','store_product.title','store_product.price','store_product.created_at','product_type.name as ProductType')->with('product');
         $query->leftJoin('products','products.product_id', '=', 'store_product.product_id');
         $query->leftJoin('product_type','products.product_type', '=', 'product_type.id');
-        $query->leftJoin('product_interface','product_interface.product_id', '=', 'products.product_id');
-        //$query->leftJoin('listing_item','listing_item.store_product_id', '=', 'store_product.id');
+
 
         // Handle Only Active Products (Remove the bundled products)
         if ($request->has('exclude_oem')) {
@@ -382,6 +381,7 @@ class ListingController extends Controller
 
         // Filter by interface
         if ($request->has('interface') && $request->interface != '') {
+            $query->leftJoin('product_interface','product_interface.product_id', '=', 'products.product_id');
             $query->whereIn('product_interface.interface_id', $request->interface);
         }
 
