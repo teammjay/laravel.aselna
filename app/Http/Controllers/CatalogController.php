@@ -16,6 +16,7 @@ use App\Models\ProductTargetAudience;
 use App\Models\ProductTitleKeyword;
 use App\Models\ProductImages;
 use App\Models\ProductType;
+use App\Models\ProductImageAlternative;
 use App\Models\Store;
 use App\Models\StoreProduct;
 use App\Models\StoreType;
@@ -25,7 +26,6 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
-use Intervention\Image\Facades\Image;
 
 
 class CatalogController extends Controller
@@ -291,6 +291,7 @@ class CatalogController extends Controller
         $searchTerms = ProductSearchTerm::where('product_id', $pro_id)->orderBy('sort_order')->get();
         $titleKeywords = ProductTitleKeyword::where('product_id', $pro_id)->orderBy('priority')->get();
         $productImages = ProductImages::where('product_id', $pro_id)->get();
+        $productAltImages = ProductImageAlternative::where('product_id', $pro_id)->get();
         $productTags = ProductTags::pluck('name')->values()->all();
         $stores = Store::with('storeType')->get();
 
@@ -319,7 +320,7 @@ class CatalogController extends Controller
             ->select('product_channel_detail.id', 'product_channel_detail.status','store_type.name')
             ->leftJoin('store_type','store_type.id','=','product_channel_detail.store_type_id')
             ->where('product_id',$pro_id)->get();
-        return view('catalog.update', compact('product','keyFeatures','searchTerms','productImages','productTags','pageAt','store_details','manufacturers','productTypes','productConditions','titleKeywords','interfaces','productInterfaces','targetAudience','storeTypes','productStoreType','colors'));
+        return view('catalog.update', compact('product','keyFeatures','searchTerms','productImages','productTags','pageAt','store_details','manufacturers','productTypes','productConditions','titleKeywords','interfaces','productInterfaces','targetAudience','storeTypes','productStoreType','colors','productAltImages'));
     }
 
     /**
@@ -394,6 +395,7 @@ class CatalogController extends Controller
         $searchTerms = ProductSearchTerm::where('product_id', $id)->orderBy('sort_order')->get();
         $titleKeywords = ProductTitleKeyword::where('product_id', $id)->orderBy('priority')->get();
         $productImages = ProductImages::where('product_id', $id)->orderBy('sort_order','asc')->get();
+        $productAltImages = ProductImageAlternative::where('product_id', $id)->orderBy('sort_order','asc')->get();
         $productTags = ProductTags::pluck('name')->values()->all();
         $stores = Store::with('storeType')->get();
 
@@ -430,7 +432,7 @@ class CatalogController extends Controller
                             ->leftJoin('store_type','store_type.id','=','product_channel_detail.store_type_id')
                             ->where('product_id',$id)->get();
 
-        return view('catalog.update', compact('product','keyFeatures','searchTerms','productImages','productTags','pageAt','store_details','manufacturers','productTypes','productConditions','productStore','productStoreCategory','titleKeywords','interfaces','productInterfaces','targetAudience','storeTypes','productStoreType','colors'));
+        return view('catalog.update', compact('product','keyFeatures','searchTerms','productImages','productTags','pageAt','store_details','manufacturers','productTypes','productConditions','productStore','productStoreCategory','titleKeywords','interfaces','productInterfaces','targetAudience','storeTypes','productStoreType','colors','productAltImages'));
     }
 
     /**
@@ -844,5 +846,94 @@ class CatalogController extends Controller
 
         // If the user doesn't exist, return an error
         return response()->json(['error' => 'Image not found!'], 404);
+    }
+
+    /**
+     * Upload product images.
+     */
+    public function uploadAlternativeImage(Request $request)
+    {
+        $productId = $request->input('product_id');
+        // Validate the request
+        $validator = Validator::make($request->all(), [
+            'alternate_images.*' => 'required|image|mimes:jpeg,png,jpg,gif,JPG,PNG,JPEG|max:2048'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['error' => $validator->errors()], 422);
+        }
+
+        $imageNames = [];
+        $thumbnailNames = [];
+        $imagedata = [];
+        // Store the uploaded image and create a thumbnail
+        if ($request->file('alternate_images')) {
+
+            foreach ($request->file('alternate_images') as $key=>$image) {
+                $imageName = time() . '_' . uniqid() . '.' . $image->getClientOriginalExtension();
+                $image->move(public_path('storage/product_additional_images/'), $imageName);
+                $imageNames[] = $imageName;
+                $imagedata[] = array(
+                    'id' => (string) Str::uuid(),
+                    'product_id' => $productId,
+                    'image' => $imageName,
+                    //'thumbnail_image' => $imageName,
+                    'sort_order' => (int) $key + 1,
+                );
+
+                // Create thumbnail
+                /*$thumbnailPath = public_path('storage/product_images/thumbnails');
+                if (!file_exists($thumbnailPath)) {
+                    mkdir($thumbnailPath, 0755, true);
+                }
+
+                $thumbnailImage = Image::make(public_path('storage/product_images/thumbnails' . $imageName));
+                $thumbnailImage->resize(150, 150); // Set thumbnail size
+                $thumbnailImage->save($thumbnailPath . '/' . $imageName);
+                $thumbnailNames[] = 'thumbnails/' . $imageName;*/
+            }
+            //print_r($imagedata);die;
+            $images = ProductImageAlternative::upsert($imagedata,['product_id','image'], ['image']);
+
+            return response()->json([
+                'success' => 'Image uploaded successfully!',
+                'image_name' => $imageName,
+                //'thumbnail_name' => 'thumbnails/' . $imageName,
+            ]);
+        }
+
+        return response()->json(['error' => 'Image upload failed.'], 500);
+    }
+
+    public function deleteAlternativeImage(Request $request){
+        $image_id = $request->image_id;
+
+        if ($image_id) {
+            $productImg = ProductImageAlternative::findOrFail($image_id);
+            $productImg->delete();
+
+            // Return a success response
+            return response()->json(['success' => 'Image deleted successfully!']);
+        }
+
+        // If the user doesn't exist, return an error
+        return response()->json(['error' => 'Image not found!'], 404);
+    }
+
+    public function updateAlternativeImageOrder(Request $request)
+    {
+        $order = $request->order;
+
+        try {
+            foreach ($order as $position => $id) {
+                ProductImageAlternative::where('id', $id)->update(['sort_order' => ($position+1)]);
+            }
+            return response()->json(['success' => true, 'message' => 'Set order  successfully']);
+
+        }catch(QueryException $e){
+
+            return response()->json(['errors' => $e->getMessage()], 422);
+        }
+
     }
 }

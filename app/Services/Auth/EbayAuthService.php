@@ -15,15 +15,16 @@ class EbayAuthService
 
     public function __construct()
     {
-        $this->client = new Client(['base_uri' => 'https://api.ebay.com/']);
-        $this->clientId = '';
-        $this->clientSecret = '';
+        $this->client = new Client(['base_uri' => 'https://api.sandbox.ebay.com/']);
+        $this->clientId = 'CommonMr-Testing-SBX-76628eb6f-8cb87fba';
+        $this->clientSecret = 'SBX-6628eb6f4151-c0a1-4b48-b869-3621';
         $this->accessToken = $this->getAccessToken();
     }
 
     public function getAccessToken() {
 
         $response = $this->client->post('identity/v1/oauth2/token', [
+            'verify' => false,
             'headers' => [
                 'Authorization' => 'Basic ' . base64_encode($this->clientId . ':' . $this->clientSecret),
                 'Content-Type' => 'application/x-www-form-urlencoded',
@@ -34,6 +35,8 @@ class EbayAuthService
             ],
         ]);
 
+        Log::info('Access Token Created ' . $response->getBody());
+
         $data = json_decode($response->getBody(), true);
         return $data['access_token'] ?? null;
 
@@ -43,17 +46,22 @@ class EbayAuthService
 
         try {
             $response = $this->client->post('sell/feed/v1/task', [
+                'verify' => false,
                 'headers' => [
                     'Authorization' => 'Bearer ' . $this->accessToken,
                     'Content-Type' => 'application/json',
                     'X-EBAY-C-MARKETPLACE-ID' => 'EBAY_US'
                 ],
                 'json' => [
-                    'schemaVersion' => '1.0',
-                    'feedType' => 'LMS_ORDER_ACK'
+                    'schemaVersion' => '1234',
+                    'feedType' => 'LMS_ADD_FIXED_PRICE_ITEM'
                 ],
             ]);
 
+            Log::info('Task Created ' . $response->getBody());
+            /*echo '<pre>';
+            print_r($response);
+            echo '</pre>';die;*/
             return json_decode($response->getBody(), true);
 
         } catch (RequestException $e) {
@@ -67,20 +75,35 @@ class EbayAuthService
 
     }
 
-    public function getResultFile(string $taskId) {
+    public function getResultFeed(string $taskId) {
 
-        $savePath = storage_path('app/results/ebay/result_file_'.$taskId.'.csv');
+        $savePath = public_path('result-feeds/ebay/result_file_'.$taskId.'.csv');
+        try {
+            $response = $this->client->get('sell/feed/v1/task/' . $taskId . '/download_result_file', [
+                'headers' => [
+                    'Authorization' => 'Bearer ' . $this->accessToken,
+                    'Accept' => 'application/octet-stream',
+                    'X-EBAY-C-MARKETPLACE-ID' => 'EBAY_US',
+                ],
+                'sink' => $savePath,
+            ]);
 
-        $response = $this->client->get('sell/feed/v1/task/'.$taskId.'/download_result_file', [
-            'headers' => [
-                'Authorization' => 'Bearer ' . $this->accessToken,
-            ],
-            'sink' => $savePath,
-        ]);
+            Log::info('Feed Status: ' . json_encode($response));
 
-        return $response->getStatusCode() === 200
-            ? $savePath
-            : false;
+           /* echo '<pre>';
+            print_r($response);
+            echo '</pre>';die;*/
+
+            return $response->getStatusCode() === 200 ? $savePath : false;
+
+        }catch (RequestException $e) {
+            if ($e->hasResponse()) {
+                $errorBody = json_decode($e->getResponse()->getBody()->getContents(), true);
+                $this->handleApiErrors($errorBody);
+            } else {
+                throw new \Exception('Unexpected error occurred: ' . $e->getMessage());
+            }
+        }
 
     }
 
@@ -93,6 +116,8 @@ class EbayAuthService
                     'Content-Type' => 'application/json',
                 ],
             ]);
+
+            Log::info('Task Detail ' . $response->getBody());
 
             return json_decode($response->getBody(), true);
         } catch (RequestException $e) {
@@ -124,6 +149,8 @@ class EbayAuthService
                     ],
                 ],
             ]);
+
+            Log::info('Upload File Detail ' . $response->getBody());
 
             return json_decode($response->getBody(), true);
         } catch (RequestException $e) {

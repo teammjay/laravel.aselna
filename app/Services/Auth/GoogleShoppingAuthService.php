@@ -2,6 +2,7 @@
 
 namespace App\Services\Auth;
 
+use App\Services\Marketplace\Service\GoogleShoppingService;
 use Google\Client;
 use Illuminate\Support\Facades\Log;
 use Google\Service\ShoppingContent;
@@ -9,18 +10,16 @@ use Google\Service\ShoppingContent;
 class GoogleShoppingAuthService
 {
     protected $merchantID;
-    protected $googleService;
 
-    public function __construct(GoogleService $googleService)
+    public function __construct()
     {
-        $this->googleService = $googleService;
         $this->merchantID = '';
     }
 
     public function getClient()
     {
         $client = new Client();
-        $client->setApplicationName('Laravel Google Shopping API');
+        $client->setApplicationName('Google Shopping API');
         $client->setScopes(['https://www.googleapis.com/auth/content']);
         $client->setAuthConfig(storage_path('app/google_credentials.json'));
         $client->setAccessType('offline');
@@ -34,29 +33,70 @@ class GoogleShoppingAuthService
 
     public function uploadFeed($csvFilePath)
     {
-        $client = $this->googleService->getClient();
+        $client = $this->getClient();
         $service = new ShoppingContent($client);
 
-        // Define the feed configuration
-        $datafeed = new ShoppingContent\Datafeed();
-        $datafeed->setName('CSV Feed');
-        $datafeed->setContentType('products');
-        $datafeed->setFileName(basename($csvFilePath));
-        $datafeed->setTargetCountry('US');
-        $datafeed->setContentLanguage('en');
+        try {
+            // Define the feed configuration
+            $datafeed = new ShoppingContent\Datafeed();
+            $datafeed->setName('CSV Feed');
+            $datafeed->setContentType('products');
+            $datafeed->setFileName(basename($csvFilePath));
 
-        // Create a Datafeed object in Google Merchant Center
-        $merchantId = $this->merchantID;
-        $service->datafeeds->insert($merchantId, $datafeed);
+            // Create a Datafeed object in Google Merchant Center
+            $merchantId = $this->merchantID;
+            $feedResponse = $service->datafeeds->insert($merchantId, $datafeed);
 
-        // Upload the feed
-        $service->datafeeds->update(
-            $merchantId,
-            $datafeed->getId(),
-            file_get_contents($csvFilePath)
-        );
+            // Upload the feed
+            $service->datafeeds->update(
+                $merchantId,
+                $datafeed->getId(),
+                file_get_contents($csvFilePath)
+            );
 
-        return "Feed uploaded successfully!";
+            Log::info('Upload Feed Detail ' . $feedResponse);
+
+            // Return success response
+            return [
+                'success' => true,
+                'message' => 'Feed uploaded successfully!',
+                'datafeedId' => $feedResponse->getId(),
+                'name' => $feedResponse->getName(),
+            ];
+
+        } catch (\Exception $e) {
+            return [
+                'success' => false,
+                'message' => 'An unexpected error occurred.',
+                'errors' => [$e->getMessage()],
+            ];
+        }
+
+    }
+
+    public function getFeedStatus($datafeedId)
+    {
+        try {
+            $client = $this->getClient();
+            $service = new ShoppingContent($client);
+
+            $status = $service->datafeedstatuses->get($this->merchantID, $datafeedId);
+
+            Log::info('Feed Status :' . $status);
+
+            return [
+                'success' => true,
+                'status' => $status->getProcessingStatus(),
+                'errors' => $status->getErrors() ?? [],
+                'warnings' => $status->getWarnings() ?? [],
+            ];
+        } catch (\Exception $e) {
+            return [
+                'success' => false,
+                'message' => 'Failed to retrieve feed status.',
+                'error' => $e->getMessage(),
+            ];
+        }
     }
 
 }

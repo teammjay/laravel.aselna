@@ -258,7 +258,7 @@
                     <div class="row mt-3 mb-3">
 
                         <div class="col-md-12">
-                            <div class="d-flex justify-content-between" style="gap:5px;">
+                            <div class="d-flex" style="gap:5px;">
                                 <div class="border p-2">
                                     <label>Title Generation</label>
                                     <div class="form-group d-flex position-relative align-items-center w-75">
@@ -311,13 +311,13 @@
                                                 <input type="radio" class="ml-2 mr-2" name="replace_field" value="title"> <span>Title</span>
                                                 <input type="radio" class="ml-2 mr-2" name="replace_field" value="short"> <span>Short</span>
                                                 <input type="radio" class="ml-2 mr-2" name="replace_field" value="long"> <span>Long</span>
-
+                                                <input type="text" class="form-control ml-2 mr-2" name="search_input" id="search_input" placeholder="Search">
+                                                <input type="text" class="form-control ml-2 mr-2" name="replace_value" id="replace_value" placeholder="Replace">
                                                 <button type="button" class="btn btn-secondary ml-3" id="replace">Replace</button>
                                             </div>
-                                            <div class="form-group d-flex align-items-center mt-3">
-                                                <input type="text" class="form-control" name="search_input" id="search_input" placeholder="Search">
-                                                <input type="text" class="form-control" name="replace_value" id="replace_value" placeholder="Replace">
-                                            </div>
+                                            {{--<div class="form-group d-flex align-items-center mt-3">
+
+                                            </div>--}}
                                         </div>
                                     </div>
                                 </div>
@@ -356,34 +356,7 @@
                     </div>
                 </div>
                 <div class="tab-pane fade position-relative" id="tab3" role="tabpanel" aria-labelledby="select-device-tab">
-                    {{--<div class="bd-example border" style="display: none;">
-                        <div class="spinner-grow text-primary" role="status">
-                            <span class="visually-hidden"></span>
-                        </div>
-                        <div class="spinner-grow text-secondary" role="status">
-                            <span class="visually-hidden"></span>
-                        </div>
-                        <div class="spinner-grow text-success" role="status">
-                            <span class="visually-hidden"></span>
-                        </div>
-                        <div class="spinner-grow text-danger" role="status">
-                            <span class="visually-hidden"></span>
-                        </div>
-                        <div class="spinner-grow text-warning" role="status">
-                            <span class="visually-hidden"></span>
-                        </div>
-                        <div class="spinner-grow text-info" role="status">
-                            <span class="visually-hidden"></span>
-                        </div>
-                        <div class="spinner-grow text-light" role="status">
-                            <span class="visually-hidden"></span>
-                        </div>
-                        <div class="spinner-grow text-dark" role="status">
-                            <span class="visually-hidden"></span>
-                        </div>
-                    </div>--}}
                     <div class="row mt-3 mb-3">
-
                         <div class="col-md-12">
                             <div class="d-flex" style="gap:10px;">
                                 <div class="border p-2" style="width: 17%;">
@@ -402,7 +375,6 @@
                                                 @endphp
                                             @endforeach
                                         @endif
-
                                     </div>
                                     <div class="border p-2">
                                         <div class="form-group mb-0 align-items-center">
@@ -444,7 +416,6 @@
                                                 </div>
                                             </div>
                                         </div>
-
                                         <div class="border p-2" style="widows: 33.33%;">
                                             <label>Rating Filter</label>
                                             <div class="row">
@@ -459,7 +430,6 @@
                                                 </div>
                                             </div>
                                         </div>
-
                                         <div class="border p-2" style="widows: 33.33%;">
                                             <label>Popularity</label>
                                             <div class="row">
@@ -509,9 +479,7 @@
                                 </div>
                             </div>
                         </div>
-
                         <div class="col-md-12 mt-5">
-
                             <div class="row pr-0 pl-0">
                                 <div class="col-md-5">
                                     <div class="card">
@@ -569,9 +537,6 @@
                                                     </tr>
                                                     </thead>
                                                     <tbody id="listing_list">
-
-                                                    {{--@include('catalog.product_list', ['products' => $products])--}}
-
                                                     </tbody>
                                                 </table>
                                             </div>
@@ -583,10 +548,8 @@
                     </div>
                 </div>
                 <div class="tab-pane fade" id="tab4" role="tabpanel" aria-labelledby="listing-tab">
-
                     <div class="row pt-2">
                         <div class="col-md-12">
-
                             <div class="p-2">
                                 <label>Replace / Clear</label>
                                 <div class="d-flex justify-content-between" style="gap:5px;">
@@ -959,17 +922,10 @@
                 loadListingProduct(1);
             });
 
-
-
             $(document).on('click', '#updateAll', function() {
                 var selected_template = $('#title_template').val();
                 $('input[name="product_title_template[]"]').val(selected_template);
             });
-
-
-            /*$(document).on('click', '#brand_filter', function() {
-                loadListingProduct(0);
-            });*/
 
             $(document).on('click', 'input[name="device_type[]"]', function() {
                 loadListingProduct(0);
@@ -1009,8 +965,6 @@
                 }
             });
 
-
-
             $(document).on('click', '.targetRow', function() {
                 let ele = $(this);
                 if(ele.find('.sel-device').is(':checked')){
@@ -1041,16 +995,16 @@
                 $('.listingRow').removeClass('bg-blue');
                 ele.addClass('bg-blue');
                 let key = ele.data('key');
-                let selModel = product_model[key];
-
+                let proid = ele.data('proid');
+                let selModel = product_model[proid];
+                console.log(selModel);
                 let mlist = '';
-                for(i in selModel){
-                    mlist += '<tr><td>'+selModel[i]+'</td><td></td></tr>';
+                for(i in selModel[key]){
+                    mlist += '<tr><td>'+selModel[key][i]+'</td><td></td></tr>';
                 }
                 $('#model_list').html(mlist);
-                $('#total_generate_models').html(selModel.length +' rows');
+                $('#total_generate_models').html(selModel[key].length +' rows');
             });
-
 
             $(document).on('click', '#final_replace', function() {
                 let searchTerm = $('#title_input_from').val();
@@ -1165,9 +1119,7 @@
                     if (ele.parents('.pro-brand').length || ele.parents('.pro-rating').length || ele.parents('.pro-popular').length) {
                         loadListingProduct(0);
                     }
-
                 },300);
-
             });
 
             $(document).on('click','.btn-val-remove',function(){

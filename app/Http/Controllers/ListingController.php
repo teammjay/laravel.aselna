@@ -243,8 +243,14 @@ class ListingController extends Controller
         $data = [];
         if (!empty((array)$products)) {
             foreach ($products as $product) {
+
+                if(!empty((array)$product->storeProduct) && !empty((array)$product->storeProduct->product)){
+                    $productcode = $product->storeProduct->product->product_sku;
+                }else{
+                    $productcode = '';
+                };
                 $data[] = array(
-                    "sku" => $product->sku . '<input type="checkbox" name="listing_item[]" value="' . $product->id . '" style="visibility:hidden;">',
+                    "sku" => $product->sku . '<input type="checkbox" class="proList" name="listing_item[]" data-code="'.$productcode.'" value="' . $product->id . '" style="visibility:hidden;">',
                     "sale_count" => ($product->sale_count) ? $product->sale_count : 0,
                     "last_sale_date" => $product->last_sale_date,
                     "store_sku" => $product->store_sku,
@@ -348,10 +354,16 @@ class ListingController extends Controller
             $query->where('products.oem_generic', 2);
         }
 
-        // Filter by product store
+        // getting only product which are not listed
         if ($request->has('never_listed_product')) {
             $query->leftJoin('listing_item', 'listing_item.store_product_id', '=', 'store_product.id');
             $query->where('listing_item.id');
+        }
+
+        // getting only products which have additional images
+        if ($request->has('additional_image_available')) {
+            $query->leftJoin('product_image_alternatives', 'product_image_alternatives.product_id', '=', 'store_product.product_id');
+            $query->whereNotNull('product_image_alternatives.id');
         }
 
         // Filter by product store
@@ -409,7 +421,7 @@ class ListingController extends Controller
             $query->whereIn('products.product_type', $all_product_ids);
         }
 
-        $products = $query->get();
+        $products = $query->distinct()->get();
         //echo $query->toSql();die;
 
         // Return a view or JSON
@@ -932,7 +944,7 @@ class ListingController extends Controller
 
                         /*echo '<pre>';
                         print_r($productsArray);
-                        echo '</pre>';die;*/
+                        echo '</pre>';*/
 
                     }
                 }
@@ -942,13 +954,14 @@ class ListingController extends Controller
 
                     $models = $modelDetail = array();
                     $totalCount = 0;
-                    foreach ($productsArray as $product) {
+                    foreach ($productsArray as $k=>$product) {
                         if (!empty($product)) {
-                            $totalCount = count($product);
                             foreach ($product as $key => $pro) {
+                                $totalCount ++;
                                 if (isset($pro['model'])) {
-                                    $models[$key] = $pro['model'];
-                                    $modelDetail[$key] = $pro['model_detail'];
+                                    $proid = $pro['product_id'];
+                                    $models[$proid][$key] = $pro['model'];
+                                    $modelDetail[$proid][$key] = $pro['model_detail'];
                                 }
                             }
                         }
@@ -995,6 +1008,8 @@ class ListingController extends Controller
         $lastBrand = null;
         $currentBrand = null;
         $cnt = 0;
+        /*echo '<pre>';
+        print_r($devices);*/
         foreach ($devices as $device) {
             // Split the device into brand and model
             $currentBrand = $device->brand_name . ' ' . $device->name;
@@ -1009,23 +1024,26 @@ class ListingController extends Controller
                 $nameToAdd = $device->name;
             }
 
+            //echo $nameToAdd.'<br>';
+
             // Check if adding the device exceeds the character limit
             $tempModels = array_merge($currentModels, [$nameToAdd]);
-            $tempModelString = implode(', ', $tempModels);
+            $tempModelString = implode($brand_seperator.' ', $tempModels);
             $tempTitle = str_replace('#model_series', $tempModelString, $baseTitle);
 
             $tempDevices = array_merge($currentDevices, [$currentBrand]);
-            $tempDeviceString = implode(', ', $tempDevices);
+            $tempDeviceString = implode($device_seperator.' ', $tempDevices);
             $tempTitle = str_replace('#devices', $tempDeviceString, $tempTitle);
 
             /*$sku = StoreTypeListing::generateUniqueAlphabeticSku($product->product_sku);*/
 
             // Check if adding the device exceeds the character limit
+            //echo strlen($tempTitle) .'>'. $charLimit.'<br>';
             if (strlen($tempTitle) > $charLimit) {
 
                 // Save the current title and start a new one
                 //$titles[$cnt]['title'] = rtrim($currentTitle, $separator); // Remove trailing separator
-                $titles[$cnt]['title'] = str_replace(['#model_series','#devices'], [implode($separator.' ', $currentModels),implode($separator.' ', $currentDevices)], $baseTitle);
+                $titles[$cnt]['title'] = str_replace(['#model_series','#devices'], [implode($brand_seperator.' ', $currentModels),implode($separator.' ', $currentDevices)], $baseTitle);
 
                 $cnt++;
                 //$currentTitle = $baseTitle . ' ' . $nameToAdd;
@@ -1039,6 +1057,7 @@ class ListingController extends Controller
                 $titles[$cnt]['store_product_id'] = $store_product_id;
                 $titles[$cnt]['model'][] = $device->name;
                 $titles[$cnt]['model_detail'][] = $device;
+
             } else {
                 // Append the device name
                 $titles[$cnt]['product_code'] = $product->product->product_sku;
@@ -1051,7 +1070,7 @@ class ListingController extends Controller
                 $titles[$cnt]['model_detail'][] = $device;
                 //$currentTitle .= ($currentTitle === $baseTitle ? ' ' : ' '.$separator.' ') . $nameToAdd;
                 $currentModels[] = $nameToAdd;
-                $currentDevices[] = $currentBrand;
+                $currentDevices[] = $nameToAdd;
             }
 
             // Update the last brand
@@ -1062,9 +1081,10 @@ class ListingController extends Controller
         if (!empty($currentTitle)) {
             /*$titles[$cnt]['title'] = rtrim($currentTitle, ' '.$separator.' ');*/
             //$titles[$cnt]['title'] = str_replace('#model_series', implode($separator.' ', $currentModels), $baseTitle);
-            $titles[$cnt]['title'] = str_replace(['#model_series','#devices'], [implode($separator.' ', $currentModels),implode($separator.' ', $currentDevices)], $baseTitle);
+            $titles[$cnt]['title'] = str_replace(['#model_series','#devices'], [implode($brand_seperator.' ', $currentModels),implode($separator.' ', $currentDevices)], $baseTitle);
         }
-
+        /*echo '<pre>';
+        print_r($titles);die;*/
         return $titles;
     }
 
@@ -1138,11 +1158,11 @@ class ListingController extends Controller
 
             // Check if adding the device exceeds the character limit
             $tempModels = array_merge($currentModels, [$nameToAdd]);
-            $tempModelString = implode(', ', $tempModels);
+            $tempModelString = implode($brand_seperator.' ', $tempModels);
             $tempTitle = str_replace('#model_series', $tempModelString, $baseTitle);
 
             $tempDevices = array_merge($currentDevices, [$currentBrand]);
-            $tempDeviceString = implode(', ', $tempDevices);
+            $tempDeviceString = implode($device_seperator.' ', $tempDevices);
             $tempTitle = str_replace('#devices', $tempDeviceString, $tempTitle);
 
             // Check if adding the device exceeds the character limit
@@ -1150,7 +1170,7 @@ class ListingController extends Controller
                 // Save the current title and start a new one
                 //$titles[$cnt]['title'] = rtrim($currentTitle, $separator); // Remove trailing separator
                 if (!empty($currentDevices)) {
-                    $titles[$cnt]['title'] = str_replace(['#model_series', '#devices'], [implode($separator . ' ', $currentModels), implode($separator . ' ', $currentDevices)], $baseTitle);
+                    $titles[$cnt]['title'] = str_replace(['#model_series', '#devices'], [implode($separator . ' ', $currentModels), implode($device_seperator . ' ', $currentDevices)], $baseTitle);
                 }
                 $cnt++;
                 //$currentTitle = $baseTitle . ' ' . $nameToAdd;
@@ -1184,7 +1204,7 @@ class ListingController extends Controller
 
         // Add the last title
         if (!empty($currentTitle)) {
-            $titles[$cnt]['title'] = str_replace(['#model_series', '#devices'], [implode($separator . ' ', $currentModels), implode($separator . ' ', $currentDevices)], $baseTitle);
+            $titles[$cnt]['title'] = str_replace(['#model_series', '#devices'], [implode($separator . ' ', $currentModels), implode($device_seperator . ' ', $currentDevices)], $baseTitle);
         }
 
         return $titles;
@@ -1192,7 +1212,6 @@ class ListingController extends Controller
 
     public function saveListingProducts(Request $request)
     {
-
         if ($request->input()) {
             try {
                 if (is_array($request->input('final_product_title'))) {
@@ -1216,7 +1235,7 @@ class ListingController extends Controller
                         'store_id' => $store_id,
                         'generation_type_id' => $generation_type_id,
                         'feed_type' => 1,
-                        'status' => 2,
+                        'status' => 0,
                         'chained' => 1,
                         'include_carriers' => 0,
                         'brand_combo' => 0,
@@ -1231,8 +1250,6 @@ class ListingController extends Controller
                     $summary_products = [];
                     if ($listing_id && !empty($product_titles)) {
                         foreach ($product_titles as $key => $product) {
-
-
                             if ($store_detail->sku_generation_type) {
                                 switch ($store_detail->sku_generation_type) {
                                     case 1:
@@ -1254,8 +1271,6 @@ class ListingController extends Controller
                             } else {
                                 $sku = StoreTypeListing::generateUniqueAlphabeticSku($product_codes[$key], 6);
                             }
-
-
                             if ($store_detail->upc_usage_type) {
                                 switch ($store_detail->upc_usage_type) {
                                     case 0:
@@ -1322,13 +1337,6 @@ class ListingController extends Controller
                                     'overwrite_price' => $product_price_overwrites[$key],
                                     'status' => 1,
                                     'upc' => $upcCodes->upc_code,
-                                    /*'model_name' => $model->name,
-                                    'brand_name' => $model->brand_name,
-                                    'device_series_id' => $model->device_series_id,
-                                    'device_type_id' => $model->device_type_id,
-                                    'device_type_name' => $model->device_type->name,
-                                    'device_code' => $model->code,
-                                    'device_rating_id' => $model->rating_id,*/
                                     'created_by' => $created_by
                                 );
 
@@ -1410,24 +1418,22 @@ class ListingController extends Controller
                                                 $record = UPCCodes::find($upcCodes[$k]['id']);
                                                 $record->update(['is_used' => 1]);
                                             }
-
-                                            $itemLink = array(
-                                                'item_id' => $listing_item_id,
-                                                'listing_id' => $listing_id,
-                                                'sync_status' => 6,
-                                                'old_price' => $product_prices[$key],
-                                                'created_by' => $created_by
-                                            );
-
-                                            ListingItemLink::create($itemLink);
                                         }
 
-                                        FeedGenerationJob::dispatch($store_type_listing_id);
+                                        $itemLink = array(
+                                            'item_id' => $listing_item_id,
+                                            'listing_id' => $listing_id,
+                                            'sync_status' => 6,
+                                            'old_price' => $product_prices[$key],
+                                            'created_by' => $created_by
+                                        );
+
+                                        ListingItemLink::create($itemLink);
+                                        FeedGenerationJob::dispatch($listing_id);
                                     }
                                 }
                             }
                             $summary_products[$key]['models'] = implode(',', $modelNames);
-
                         }
 
                         $view = view('listing.listing_summary', compact('summary_products'))->render();
@@ -1443,8 +1449,6 @@ class ListingController extends Controller
                         'error' => true,
                         'message' => 'Something went wrong! Please try again!'
                     ]);
-
-
                 }
             } catch (Exception $e) {
                 return response()->json([
@@ -1456,4 +1460,167 @@ class ListingController extends Controller
         return response()->json(['error' => true, 'message' => 'Something went wrong! Please try again!']);
     }
 
+    public function syncListingPrice(Request $request){
+
+        $selected_listing = $request->input('selected_list');
+        $updated_price = $request->input('price');
+
+        if(!empty($selected_listing)){
+            try {
+                $listingDetails = ListingItem::with('storeProduct.store:id')->whereIn('id', $selected_listing)->get();
+                /*echo '<pre>';
+                print_r($listingDetails);
+                echo '</pre>';die;*/
+                if (!empty((array)$listingDetails)) {
+                    $listing_id = '';
+                    foreach ($listingDetails as $key=>$list) {
+                        $created_by = auth()->user()->name ?? 'admin';
+                        if($key == 0) {
+                            $listingArr = [
+                                'store_id' => $list->storeProduct->store->id,
+                                'generation_type_id' => $list->generation_type_id,
+                                'feed_type' => 3,
+                                'status' => 0,
+                                'chained' => 1,
+                                'include_carriers' => 0,
+                                'brand_combo' => 0,
+                                'carrier_combo' => 0,
+                                'created_by' => $created_by,
+                                'updated_by' => $created_by
+                            ];
+
+                            $listrecord = Listing::create($listingArr);
+                            $listing_id = $listrecord->id;
+                        }
+
+                        $itemRecord = ListingItem::find($list->id);
+                        $clonedRecord = $itemRecord->replicate();
+                        $clonedRecord->store_sku = NULL;
+                        $clonedRecord->submit_count = 0;
+                        $clonedRecord->price = $updated_price;
+                        $clonedRecord->created_by = $created_by;
+                        $clonedRecord->updated_by = $created_by;
+                        $clonedRecord->save();
+                        $listing_item_id = $clonedRecord->id;
+                        $itemDetails = ListingItemDetail::where('listing_item_id', $list->id)->get();
+
+                        if (!empty((array)$itemDetails)) {
+                            foreach ($itemDetails as $item_detail) {
+                                $itemDetail = ListingItemDetail::find($item_detail->id);
+                                $itemclonedRecord = $itemDetail->replicate();
+                                $itemclonedRecord->listing_item_id = $listing_item_id;
+                                $itemclonedRecord->created_by = $created_by;
+                                $itemclonedRecord->updated_by = $created_by;
+                                $itemclonedRecord->save();
+                            }
+                            $itemLink = array(
+                                'item_id' => $listing_item_id,
+                                'listing_id' => $listing_id,
+                                'sync_status' => 6,
+                                'old_price' => $updated_price,
+                                'created_by' => $created_by
+                            );
+                            ListingItemLink::create($itemLink);
+                            FeedGenerationJob::dispatch($listing_id);
+                        }
+                    }
+
+                    return response()->json([
+                        'success' => true,
+                        'message' => 'Product price sync successfully!'
+                    ]);
+                }
+            }catch (Exception $e) {
+                return response()->json([
+                    'error' => $e->getMessage(),
+                ], 500);
+            }
+        }
+
+        return response()->json([
+            'error' => true,
+            'message' => 'Something went wrong! Please try again!'
+        ]);
+    }
+
+    public function syncListingInventory(Request $request){
+
+        $selected_listing = $request->input('selected_list');
+        $updated_inventory = $request->input('inventory');
+
+        if(!empty($selected_listing)){
+            try {
+                $listingDetails = Listing::whereIn('id', $selected_listing)->get();
+                if (!empty((array)$listingDetails)) {
+                    foreach ($listingDetails as $list) {
+                        $created_by = auth()->user()->name ?? 'admin';
+                        $listingArr = [
+                            'store_id' => $list->store_id,
+                            'generation_type_id' => $list->generation_type_id,
+                            'feed_type' => 2,
+                            'status' => 0,
+                            'chained' => 1,
+                            'include_carriers' => 0,
+                            'brand_combo' => 0,
+                            'carrier_combo' => 0,
+                            'created_by' => $created_by,
+                            'updated_by' => $created_by
+                        ];
+
+                        $listrecord = Listing::create($listingArr);
+                        $listing_id = $listrecord->id;
+
+                        $listingItemLink = ListingItemLink::where('listing_id', $list->id)->get();
+                        if (!empty((array)$listingItemLink)) {
+                            foreach ($listingItemLink as $item) {
+                                $itemRecord = ListingItem::find($item->id);
+
+                                $clonedRecord = $itemRecord->replicate();
+                                $clonedRecord->quantity = $updated_inventory;
+                                $clonedRecord->save();
+                                $listing_item_id = $clonedRecord->id;
+
+                                $itemDetails = ListingItemDetail::where('listing_item_id', $listing_item_id)->get();
+
+                                if (!empty((array)$itemDetails)) {
+                                    foreach ($itemDetails as $item_detail) {
+                                        $itemDetail = ListingItemDetail::find($item_detail->id);
+                                        $itemclonedRecord = $itemDetail->replicate();
+                                        $itemclonedRecord->listing_item_id = $listing_item_id;
+                                        $itemclonedRecord->save();
+                                    }
+
+                                    $itemLink = array(
+                                        'item_id' => $listing_item_id,
+                                        'listing_id' => $listing_id,
+                                        'sync_status' => 6,
+                                        'old_price' => $itemRecord->price,
+                                        'created_by' => $created_by
+                                    );
+
+                                    ListingItemLink::create($itemLink);
+                                    FeedGenerationJob::dispatch($listing_id);
+
+                                }
+                            }
+                        }
+                    }
+
+                    return response()->json([
+                        'success' => true,
+                        'message' => 'Product inventory sync successfully!'
+                    ]);
+                }
+            }catch (Exception $e) {
+                return response()->json([
+                    'error' => $e->getMessage(),
+                ], 500);
+            }
+        }
+
+        return response()->json([
+            'error' => true,
+            'message' => 'Something went wrong! Please try again!'
+        ]);
+    }
 }
