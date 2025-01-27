@@ -46,19 +46,22 @@ class EbayAuthService
 
         try {
             $response = $this->client->post('sell/feed/v1/task', [
+                'verify' => false,
                 'headers' => [
                     'Authorization' => 'Bearer ' . $this->accessToken,
                     'Content-Type' => 'application/json',
                     'X-EBAY-C-MARKETPLACE-ID' => 'EBAY_US'
                 ],
                 'json' => [
-                    'schemaVersion' => '1.0',
-                    'feedType' => 'LMS_ORDER_ACK'
+                    'schemaVersion' => '1234',
+                    'feedType' => 'LMS_ADD_FIXED_PRICE_ITEM'
                 ],
             ]);
 
             Log::info('Task Created ' . $response->getBody());
-
+            /*echo '<pre>';
+            print_r($response);
+            echo '</pre>';die;*/
             return json_decode($response->getBody(), true);
 
         } catch (RequestException $e) {
@@ -86,6 +89,10 @@ class EbayAuthService
             ]);
 
             Log::info('Feed Status: ' . json_encode($response));
+
+           /* echo '<pre>';
+            print_r($response);
+            echo '</pre>';die;*/
 
             return $response->getStatusCode() === 200 ? $savePath : false;
 

@@ -42,8 +42,32 @@ class GoogleShoppingService implements MarketplaceServiceInterface
                 break;
         }
 
+        /* create listing feed */
+        $created_by = auth()->user()->name ?? 'admin';
+
+        $filedata = array(
+            'name' =>  $listingId . '.csv',
+            'ext' => '',
+            'file_size' => '',
+            'location' => public_path('feeds/google-shopping'),
+            'created_by' => $created_by,
+        );
+
+        $fileDetail = SysFile::create($filedata);
+
+        $feedData = array(
+            'listing_id' => $listingId,
+            'file_id' => $fileDetail->id,
+            'status' => 0,
+            'store_id' => $listingInfo->store_id,
+            'created_by' => $created_by
+        );
+
+        ListingFeed::create($feedData);
+        /* create listing feed */
+
         //return the file path so that it can be downloaded
-        return 'feeds/google-shopping/' . $listingId . '.csv';
+        return public_path('feeds/google-shopping/' . $listingId . '.csv');
     }
 
     public function generateCreateFeed($listingInfo, $listingId)
@@ -182,8 +206,6 @@ class GoogleShoppingService implements MarketplaceServiceInterface
 
     public function getResultFeed(mixed $listingId)
     {
-        // TODO: Implement getResultFeed() method.
-
         $this->authService = new GoogleShoppingAuthService();
 
         $feedInfo = ListingFeed::where('listing_id', $listingId)->first();

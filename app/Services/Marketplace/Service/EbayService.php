@@ -6,6 +6,7 @@ use App\Models\Listing;
 use App\Models\ListingFeed;
 use App\Models\ListingItemDetail;
 use App\Models\ListingItemLink;
+use App\Models\SysFile;
 use App\Services\Auth\EbayAuthService;
 use App\Services\Marketplace\Contracts\MarketplaceServiceInterface;
 use App\Utils\XmlUtility;
@@ -17,6 +18,7 @@ class EbayService implements MarketplaceServiceInterface
     public function generateFeed($listingId)
     {
         $listingInfo = Listing::where('id', $listingId)->first();
+
         // Generate feed for Amazon
         switch ($listingInfo->feed_type) {
             case FeedTypes::CREATE:
@@ -38,14 +40,39 @@ class EbayService implements MarketplaceServiceInterface
                 break;
         }
 
+        /* create listing feed */
+        $created_by = auth()->user()->name ?? 'admin';
+
+        // create entry for file
+
+        $filedata = array(
+            'name' =>  $listingId . '.xml',
+            'ext' => '',
+            'file_size' => '',
+            'location' => public_path('feeds/ebay'),
+            'created_by' => $created_by,
+        );
+
+        $fileDetail = SysFile::create($filedata);
+
+        $feedData = array(
+            'listing_id' => $listingId,
+            'file_id' => $fileDetail->id,
+            'status' => 0,
+            'store_id' => $listingInfo->store_id,
+            'created_by' => $created_by
+        );
+
+        ListingFeed::create($feedData);
+        /* create listing feed */
+
         //return the file path so that it can be downloaded
-        return 'feeds/amazon/' . $listingId . '.xml';
+        return public_path('feeds/ebay/' . $listingId . '.xml');
     }
 
     public function generateCreateFeed($listingInfo, $listingId)
     {
         // Generate feed for Ebay
-        $userIdentifier = $listingInfo->store->user_id;
         $listingItems = ListingItemLink::with('listingItem','listingItem.brand','listingItem.storeProduct','listingItem.storeProduct.product','listingItem.storeProduct.productImages')->where('listing_id', $listingId)->cursor();
         $version = 1;
 
@@ -277,16 +304,11 @@ class EbayService implements MarketplaceServiceInterface
         $xmlContent = $xml->asXML();
 
         XmlUtility::saveToFile(public_path('feeds/ebay/' . $listingId . '.xml'), $xmlContent);
-
     }
 
     public function submitFeed($feedId,$listingId)
     {
         $authService = new EbayAuthService();
-
-        /*echo '<pre>';
-        print_r($authService);
-        echo '</pre>';die;*/
 
         $fileName = 'ebay-'.$listingId.'.xml';
         $filePath = 'feeds/ebay/' . $fileName;
@@ -311,14 +333,10 @@ class EbayService implements MarketplaceServiceInterface
             'message' => $response['message'],
             'errors' => $response['fileUploadStatus'],
         ], 400);
-
-
     }
 
     public function getResultFeed(mixed $listingId)
     {
-        // TODO: Implement getResultFeed() method.
-
         $this->authService = new EbayAuthService();
 
         $feedInfo = ListingFeed::where('listing_id', $listingId)->first();
