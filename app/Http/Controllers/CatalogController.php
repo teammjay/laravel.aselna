@@ -558,7 +558,7 @@ class CatalogController extends Controller
             $request->merge(['created_by' => $created_by, 'updated_by' => $created_by]);
 
             $product = StoreProduct::where(['product_id' => $productId,'store_id' =>$request->input('store_id')])->first();
-            $productArr = $product->toArray();
+            $productArr = isset($product) ? $product->toArray() : [];
             //print_r($productArr);die;
             if(!empty($productArr)){
                 $product->update($request->all());
@@ -607,7 +607,7 @@ class CatalogController extends Controller
         $validator = Validator::make(request()->all(), [
             'product_title' => 'required|string|max:30',
             'product_type' => 'required|string',
-            'manufacturer_id' => 'required|integer',
+            'manufacturer_id' => 'required|string',
             'product_price' => 'required|decimal:2',
             'product_sku' => 'required|string|max:225',
             'product_description' => 'nullable|string'

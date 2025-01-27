@@ -10,6 +10,7 @@ use App\Jobs\DeviceRatingSyncJob;
 use App\Jobs\DeviceSeriesSyncJob;
 use App\Jobs\DevicesSyncJob;
 use App\Jobs\DeviceTypesSyncJob;
+use App\Jobs\FeedGenerationJob;
 use App\Jobs\GenerationTypeAndTemplateSync;
 use App\Jobs\InterfaceSyncJob;
 use App\Jobs\ListingFeedSyncJob;
@@ -20,6 +21,7 @@ use App\Jobs\ListingSyncJob;
 use App\Jobs\LogisticCentreSyncJob;
 use App\Jobs\ManufacturerSyncJob;
 use App\Jobs\ProductAlternativeImagesSyncJob;
+use App\Jobs\ProductChannelDetailSyncJob;
 use App\Jobs\ProductColorSync;
 use App\Jobs\ProductConditionJob;
 use App\Jobs\ProductImagesSyncJob;
@@ -53,6 +55,7 @@ class SyncAllTables extends Command
      */
     public function handle()
     {
+//        FeedGenerationJob::dispatch('b9ab42b9-40ed-c170-3f3e-49eb76af1c20');
         StoreTypeSyncJob::dispatch();
         StoreSyncJob::dispatch();
         ManufacturerSyncJob::dispatch();
@@ -70,6 +73,7 @@ class SyncAllTables extends Command
         ProductColorSync::dispatch();
         GenerationTypeAndTemplateSync::dispatch();
         ProductSyncJob::dispatch();
+        ProductChannelDetailSyncJob::dispatch();
         ProductInterfaces::dispatch();
         ListingSyncJob::dispatch();
         ListingItemSyncJob::dispatch();

@@ -66,4 +66,9 @@ class Catalog extends Model
     {
         return $this->belongsTo(ProductColor::class, 'product_color', 'id');
     }
+
+    public function searchTerms()
+    {
+        return $this->hasMany(ProductSearchTerm::class, 'product_id', 'product_id');
+    }
 }

@@ -5,7 +5,9 @@ namespace App\Services\Marketplace\Service;
 use App\Constants\FeedTypes;
 use App\Models\Listing;
 use App\Models\ListingFeed;
+use App\Models\ListingItemDetail;
 use App\Models\ListingItemLink;
+use App\Models\StoreTypeCategory;
 use App\Services\Auth\AmazonAuthService;
 use App\Services\Marketplace\Contracts\MarketplaceServiceInterface;
 use App\Utils\FileUtility;
@@ -48,6 +50,7 @@ class AmazonService implements MarketplaceServiceInterface
     public function generateCreateFeed($listingInfo, $listingId)
     {
         $userIdentifier = $listingInfo->store->user_id;
+        Log::info('User Identifier: ' . json_encode($listingInfo->store));
         $listingItems = ListingItemLink::where('listing_id', $listingId)->cursor();
 
         $xml = new SimpleXMLElement('<?xml version="1.0" encoding="UTF-8"?><AmazonEnvelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"></AmazonEnvelope>');
@@ -55,7 +58,7 @@ class AmazonService implements MarketplaceServiceInterface
         $feed = $xml->addChild('MPItemFeed');
 
         $header = $xml->addChild('Header');
-        $header->addChild('DocumentVersion', '1.01');
+        $header->addChild('DocumentVersion', '1.1');
         $header->addChild('MerchantIdentifier', $userIdentifier);
 
         $xml->addChild('MessageType', 'Product');
@@ -70,13 +73,17 @@ class AmazonService implements MarketplaceServiceInterface
 
             $product = $messages->addChild('Product');
             $product->addChild('SKU', $itemDetail->sku);
-            $standardProductID = $product->addChild('StandardProductID');
-            $standardProductID->addChild('Type', 'UPC');
-            $standardProductID->addChild('Value', $itemDetail->upc);
-            $product->addChild('ProductTaxCode', '');
+
+            $product->addChild('ProductTaxCode', '2040274');
 
             $condition = $product->addChild('Condition');
             $condition->addChild('ConditionType', 'New');
+
+            if (isset($itemDetail->upc)) {
+                $standardProductID = $product->addChild('StandardProductID');
+                $standardProductID->addChild('Type', 'UPC');
+                $standardProductID->addChild('Value', $itemDetail->upc);
+            }
 
             $descriptionData = $product->addChild('DescriptionData');
             $safeText = htmlspecialchars($itemDetail->title, ENT_QUOTES | ENT_XML1, 'UTF-8');
@@ -85,10 +92,12 @@ class AmazonService implements MarketplaceServiceInterface
             $safeText = htmlspecialchars($itemDetail->manufacturer->name, ENT_QUOTES | ENT_XML1, 'UTF-8');
             $descriptionData->addChild('Brand', $safeText);
 
+            $productData = $itemDetail->storeProduct->product;
+
             $packageDimensions = $descriptionData->addChild('PackageDimensions');
-            $packageDimensions->addChild('Length', '5');
-            $packageDimensions->addChild('Width', '5');
-            $packageDimensions->addChild('Height', '5');
+            $packageDimensions->addChild('Length', $productData->package_dimensions_length);
+            $packageDimensions->addChild('Width', $productData->package_dimensions_width);
+            $packageDimensions->addChild('Height', $productData->package_dimensions_height);
             $packageDimensions->addChild('UnitOfMeasure', 'IN');
 
 
@@ -101,12 +110,37 @@ class AmazonService implements MarketplaceServiceInterface
                     $safeText = htmlspecialchars($feature->value, ENT_QUOTES | ENT_XML1, 'UTF-8'); // Escapes special characters
                     $descriptionData->addChild('BulletPoint', $safeText);
                 }
-            }
 
-//            $productData = $product->addChild('ProductData');
-//            $wireless = $productData->addChild('wireless');
-//            $productType = $wireless->addChild('ProductType');
-//            $wirelessAccessories = $productType->addChild('WirelessAccessories');
+                $categoryId = $storeProducts->store_type_category_id;
+                $tempCategoryId = $categoryId;
+                $parentCategory = null;
+                $subCategory = null;
+
+                while ($parentCategory = StoreTypeCategory::where('id', $tempCategoryId)->first()) {
+                    if (isset($parentCategory->parent_id)) {
+                        $tempCategoryId = $parentCategory->parent_id;
+                        $subCategory = $parentCategory;
+                    } else {
+                        break;
+                    }
+                }
+
+                $productDataElement = $product->addChild('ProductData');
+                $parentCategoryElement = $productDataElement->addChild($parentCategory->name);
+                $productType = $parentCategoryElement->addChild('ProductType');
+                $subCategoryElement = $productType->addChild($subCategory->name);
+
+                $listingItemDetails = ListingItemDetail::where('listing_item_id', $itemDetail->id)->get();
+                $CompatiblePhoneModels = '';
+                foreach ($listingItemDetails as $listingItemDetail) {
+                    $device = $listingItemDetail->device;
+                    $deviceBrand = $device->brand;
+                    $CompatiblePhoneModels = $CompatiblePhoneModels . $deviceBrand->name . ' ' . $device->name . ', ';
+                }
+                $CompatiblePhoneModels = trim($CompatiblePhoneModels, ',');
+                $subCategoryElement->addChild('CompatiblePhoneModels', $CompatiblePhoneModels);
+
+            }
 
             $index++;
         }

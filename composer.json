@@ -15,7 +15,9 @@
         "laravel/sanctum": "^4.0",
         "laravel/tinker": "^2.9",
         "league/oauth2-client": "^2.8",
-        "ext-simplexml": "*"
+        "ext-simplexml": "*",
+        "ext-dom": "*",
+        "ext-libxml": "*"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",

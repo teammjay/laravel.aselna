@@ -5,6 +5,7 @@ namespace App\Services\Marketplace;
 use App\Services\Marketplace\Contracts\MarketplaceServiceInterface;
 use App\Services\Marketplace\Exceptions\MarketplaceNotSupportedException;
 use App\Services\Marketplace\Service\AmazonService;
+use App\Services\Marketplace\Service\MagentoService;
 use App\Services\Marketplace\Service\WalmartService;
 use App\Services\Marketplace\Service\EbayService;
 use App\Services\Marketplace\Service\GoogleShoppingService;
@@ -17,7 +18,7 @@ class MarketplaceServiceFactory
             'walmart' => WalmartService::class,
             'ebay' => EbayService::class,
             'google shopping ads' => GoogleShoppingService::class,
-//            'magento' => MagentoService::class,
+            'magento' => MagentoService::class,
 //            'shopify' => ShopifyService::class,
             default => null,
         };
