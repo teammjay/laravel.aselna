@@ -1008,6 +1008,8 @@ class ListingController extends Controller
         $lastBrand = null;
         $currentBrand = null;
         $cnt = 0;
+        /*echo '<pre>';
+        print_r($devices);*/
         foreach ($devices as $device) {
             // Split the device into brand and model
             $currentBrand = $device->brand_name . ' ' . $device->name;
@@ -1055,6 +1057,7 @@ class ListingController extends Controller
                 $titles[$cnt]['store_product_id'] = $store_product_id;
                 $titles[$cnt]['model'][] = $device->name;
                 $titles[$cnt]['model_detail'][] = $device;
+
             } else {
                 // Append the device name
                 $titles[$cnt]['product_code'] = $product->product->product_sku;
@@ -1080,7 +1083,8 @@ class ListingController extends Controller
             //$titles[$cnt]['title'] = str_replace('#model_series', implode($separator.' ', $currentModels), $baseTitle);
             $titles[$cnt]['title'] = str_replace(['#model_series','#devices'], [implode($brand_seperator.' ', $currentModels),implode($separator.' ', $currentDevices)], $baseTitle);
         }
-
+        /*echo '<pre>';
+        print_r($titles);die;*/
         return $titles;
     }
 
