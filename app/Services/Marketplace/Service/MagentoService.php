@@ -53,26 +53,30 @@ class MagentoService implements MarketplaceServiceInterface
         $jsonFeed = [];
         foreach ($listingItems as $listingItem) {
             $itemDetail = $listingItem->item;
+            $product = $itemDetail->storeProduct->product;
+            $searchTerms = $product->searchTerms;
+            //combine the search terms with spaces
+            $searchTermCombined = implode(' ', $searchTerms->pluck('term')->toArray());
             // populate jsonFeed like product_mapping_simple
             $safeTextTitle = htmlspecialchars($itemDetail->title, ENT_QUOTES | ENT_XML1, 'UTF-8');
             $jsonFeed[] = [
                 'name' => $safeTextTitle,
                 'sku' => $itemDetail->sku,
-                'price' =>  $itemDetail->price,
+                'price' => $itemDetail->price,
                 'weight' => $listingItem->weight,
                 'custom_attributes' => [
-//                    [
-//                        'attribute_code' => 'meta_title',
-//                        'value' => $listingItem->google_title
-//                    ],
-//                    [
-//                        'attribute_code' => 'meta_keyword',
-//                        'value' => $listingItem->search_keywords
-//                    ],
-//                    [
-//                        'attribute_code' => 'meta_description',
-//                        'value' => $listingItem->long_description
-//                    ],
+                    [
+                        'attribute_code' => 'meta_title',
+                        'value' => $listingItem->title
+                    ],
+                    [
+                        'attribute_code' => 'meta_keyword',
+                        'value' => $searchTermCombined,
+                    ],
+                    [
+                        'attribute_code' => 'meta_description',
+                        'value' => $listingItem->description
+                    ],
 //                    [
 //                        'attribute_code' => 'devices',
 //                        'value' => $listingItem->magento_device_id
@@ -81,10 +85,10 @@ class MagentoService implements MarketplaceServiceInterface
 //                        'attribute_code' => 'brands',
 //                        'value' => $listingItem->mage_brand_id
 //                    ],
-//                    [
-//                        'attribute_code' => 'short_description',
-//                        'value' => $listingItem->long_description
-//                    ],
+                    [
+                        'attribute_code' => 'short_description',
+                        'value' => $listingItem->description
+                    ],
 //                    [
 //                        'attribute_code' => 'category_ids',
 //                        'value' => $listingItem->category_ids
@@ -93,18 +97,18 @@ class MagentoService implements MarketplaceServiceInterface
 //                        'attribute_code' => 'bullet_points',
 //                        'value' => $listingItem->bullet_points
 //                    ],
-//                    [
-//                        'attribute_code' => 'width',
-//                        'value' => $listingItem->width
-//                    ],
-//                    [
-//                        'attribute_code' => 'height',
-//                        'value' => $listingItem->height
-//                    ],
-//                    [
-//                        'attribute_code' => 'depth',
-//                        'value' => $listingItem->depth
-//                    ],
+                    [
+                        'attribute_code' => 'width',
+                        'value' => $product->package_dimensions_width
+                    ],
+                    [
+                        'attribute_code' => 'height',
+                        'value' => $listingItem->package_dimensions_height
+                    ],
+                    [
+                        'attribute_code' => 'depth',
+                        'value' => $listingItem->package_dimensions_length
+                    ],
 //                    [
 //                        'attribute_code' => 'screen_length',
 //                        'value' => $listingItem->screen_length

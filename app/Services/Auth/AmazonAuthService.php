@@ -2,6 +2,8 @@
 
 namespace App\Services\Auth;
 
+use App\Constants\FeedTypes;
+use App\Models\Listing;
 use GuzzleHttp\Client;
 use Illuminate\Support\Facades\Log;
 
@@ -47,6 +49,7 @@ class AmazonAuthService
                 'contentType' => 'text/xml; charset=UTF-8',
             ]
         ]);
+        Log::info('Feed Upload Response: ' . $response->getBody());
 
         $uploadDetails = json_decode($response->getBody()->getContents(), true);
         $uploadUrl = $uploadDetails['url'];
@@ -56,28 +59,40 @@ class AmazonAuthService
             'headers' => ['Content-Type' => 'text/xml; charset=UTF-8'],
             'body' => $feedContent,
         ]);
+        Log::info('Feed Content Uploaded');
 
         return $uploadDetails['feedDocumentId'];
     }
 
-    public function submitFeed(mixed $generatedFeedId)
+    public function submitFeed(mixed $generatedFeedId, $listingId)
     {
-//        $accessToken = $this->getAccessToken();
+        $accessToken = $this->getAccessToken();
+        Log::info('Access Token Created ' . $accessToken);
 
-//        $response = $this->client->post('/feeds/2021-06-30/feeds', [
-//            'headers' => [
-//                'x-amz-access-token' => "{$accessToken}",
-//                'Content-Type' => 'application/json',
-//            ],
-//            'json' => [
-//                'marketplaceIds' => [env('AMAZON_MARKETPLACE_ID')],
-//                'feedType' => 'POST_PRODUCT_DATA',
-//                'inputFeedDocumentId' => $generatedFeedId,
-//            ],
-//        ]);
+        $marketplaceIDs = $this->getMarketplaceIDs();
+        Log::info('Marketplace IDs: ' . json_encode($marketplaceIDs));
 
-//        return json_decode($response->getBody()->getContents(), true);
-        return '';
+        $feedType = $this->getFeedType($listingId);
+        Log::info('Feed Type: ' . $feedType);
+
+        $data = [
+            'marketplaceIds' => $marketplaceIDs,
+            'feedType' => $feedType,
+            'inputFeedDocumentId' => $generatedFeedId,
+        ];
+        Log::info('Feed Submission Data: ' . json_encode($data));
+
+        $response = $this->client->post('/feeds/2021-06-30/feeds', [
+            'headers' => [
+                'x-amz-access-token' => "{$accessToken}",
+                'Content-Type' => 'application/json',
+            ],
+            'json' => $data,
+        ]);
+
+        Log::info('Feed Submission Response: ' . $response->getBody());
+
+        return json_decode($response->getBody()->getContents(), true);
     }
 
     public function getResultFeed($feedId)
@@ -92,5 +107,44 @@ class AmazonAuthService
 
         Log::info('Feed Status: ' . $response->getBody());
         return '';
+    }
+
+    private function getMarketplaceIDs()
+    {
+        $accessToken = $this->getAccessToken();
+
+        $response = $this->client->get('/sellers/v1/marketplaceParticipations', [
+            'headers' => [
+                'Accept' => 'application/json',
+                'x-amz-access-token' => "{$accessToken}",
+            ]
+        ]);
+
+        $marketplaces = json_decode($response->getBody()->getContents(), true);
+        Log::info('Marketplaces: ' . json_encode($marketplaces));
+
+        $marketplaceIDs = [];
+        foreach ($marketplaces['payload'] as $marketplace) {
+            $marketplaceIDs[] = $marketplace['marketplace']['id'];
+        }
+        return $marketplaceIDs;
+    }
+
+    private function getFeedType($listingId)
+    {
+        $listingInfo = Listing::where('id', $listingId)->first();
+
+        switch ($listingInfo->feed_type) {
+            case FeedTypes::CREATE:
+                return 'POST_PRODUCT_DATA';
+            case FeedTypes::PRICE:
+                return 'POST_PRODUCT_PRICING_DATA';
+            case FeedTypes::INVENTORY:
+                return 'POST_INVENTORY_AVAILABILITY_DATA';
+            case FeedTypes::IMAGE_UPDATE:
+                return 'POST_PRODUCT_IMAGE_DATA';
+            default:
+                return 'POST_PRODUCT_DATA';
+        }
     }
 }

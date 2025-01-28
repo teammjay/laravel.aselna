@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\QueryFilters;
 use App\Jobs\FeedGenerationJob;
 use App\Models\Listing;
 use App\Models\ListingFeed;
@@ -45,7 +46,18 @@ class HomeController extends Controller
 
         $dataTableService = new DataTableService($query, $request);
 
-        $dataTableService->disableSearch();
+        $dataTableService->setCustomSearch(function ($query, $request) {
+            $query
+                ->when($request->input('feed_type'), function ($query, $searchValue) {
+                    $query->where('feed_type', '=', $searchValue);
+                })
+                ->when($request->input('feed_id'), function ($query) use ($request) {
+                    QueryFilters::applyFilter($query, $request, 'id', 'feed_id_operator', 'feed_id');
+                })
+                ->when($request->input('listing_id'), function ($query) use ($request) {
+                    QueryFilters::applyFilter($query, $request, 'listing_id', 'listing_id_operator', 'listing_id');
+                });
+        });
 
         $dataTableService->setCustomSorting(function ($query, $request) {
             $columnIndex = $request->input('order.0.column', 0);
@@ -96,7 +108,7 @@ class HomeController extends Controller
             foreach (scandir($directory) as $file) {
                 Log::info('File: ' . $file);
                 if (strpos($file, $listingId) === 0 && preg_match('/\.(json|xml)$/', $file)) {
-                    $files[] =  'feeds/' . strtolower($storeType) . '/' . $file;
+                    $files[] = 'feeds/' . strtolower($storeType) . '/' . $file;
                 }
             }
         }

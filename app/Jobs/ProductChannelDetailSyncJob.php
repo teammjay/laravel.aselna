@@ -1,0 +1,53 @@
+<?php
+
+namespace App\Jobs;
+
+use App\Models\Catalog;
+use App\Models\ProductChannelDetail;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Support\Facades\DB;
+
+class ProductChannelDetailSyncJob implements ShouldQueue
+{
+    use Queueable;
+
+    /**
+     * Create a new job instance.
+     */
+    public function __construct()
+    {
+        //
+    }
+
+    /**
+     * Execute the job.
+     */
+    public function handle(): void
+    {
+        DB::connection('easyesale_db')
+            ->table('product_channel_detail')
+            ->orderBy('id')
+            ->chunk(1000, function ($productChannelDetails) {
+                foreach ($productChannelDetails as $productChannelDetail) {
+                    $this->createProductChannelDetail($productChannelDetail);
+                }
+            });
+    }
+
+    private function createProductChannelDetail(mixed $productChannelDetail)
+    {
+        if (Catalog::where('product_id', $productChannelDetail->product_id)->doesntExist()) {
+            return;
+        }
+        ProductChannelDetail::updateOrCreate([
+            'id' => $productChannelDetail->id
+        ], [
+            'store_type_id' => $productChannelDetail->channel_id,
+            'product_id' => $productChannelDetail->product_id,
+            'status' => $productChannelDetail->product_status,
+            'created_by' => $productChannelDetail->created_by,
+            'updated_by' => $productChannelDetail->updated_by,
+        ]);
+    }
+}

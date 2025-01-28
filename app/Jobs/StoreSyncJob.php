@@ -59,11 +59,13 @@ class StoreSyncJob implements ShouldQueue
 
     private function createStoreFromEasyEsale(mixed $store)
     {
-        if (Store::where(['id' => $store->id])->exists()) {
-            return;
-        }
+//        if (Store::where(['id' => $store->id])->exists()) {
+//            return;
+//        }
 //        $storeType = StoreType::where(['code' => $store->store_type_id])->first();
-        Store::create([
+        Store::updateOrCreate([
+            'id' => $store->id,
+        ],[
             'id' => $store->id,
             'code' => $store->id,
             'name' => $store->name,
@@ -83,6 +85,7 @@ class StoreSyncJob implements ShouldQueue
             'store_status' => $store->store_status,
 //            'listing_type' => $store->listing_type,
             'brand_name' => $store->brand_name,
+            'user_id' => $store->user_id,
 //             'sku_generation_type' => $store->sku_generation_type,
 //             'fulfilment_node_id' => $store->fulfilment_node_id,
 //             'listing_template_id' => $store->listing_template_id,

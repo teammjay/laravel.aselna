@@ -30,7 +30,7 @@ class FeedGenerationJob implements ShouldQueue
     public function handle(): void
     {
         $listingFeed = Listing::where('id', $this->listingId)->first();
-        Log::info('Listing Feed: ' . $listingFeed);
+        Log::info('Listing : ' . $listingFeed);
 
         // get StoreType froms store that is inside listingfeed
         $storeType = $listingFeed->store->storeType->name;
