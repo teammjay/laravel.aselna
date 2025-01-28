@@ -156,7 +156,7 @@ class AmazonService implements MarketplaceServiceInterface
         $this->authService = new AmazonAuthService();
         $generatedFeedId = $this->authService->uploadProductFeed($content);
 
-        $this->authService->submitFeed($generatedFeedId);
+        $this->authService->submitFeed($generatedFeedId,$listingId);
     }
 
     public function getResultFeed(mixed $listingId)
