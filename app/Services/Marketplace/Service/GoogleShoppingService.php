@@ -44,11 +44,17 @@ class GoogleShoppingService implements MarketplaceServiceInterface
 
         /* create listing feed */
         $created_by = auth()->user()->name ?? 'admin';
-
+        $filePath = public_path('feeds/google-shopping/' . $listingId . '.xml');
+        $sizeInMB= '';
+        if (file_exists($filePath)) {
+            $sizeInBytes = filesize($filePath); // File size in bytes
+            $sizeInKB = $sizeInBytes / 1024;
+            $sizeInMB = $sizeInKB / 1024;
+        }
         $filedata = array(
             'name' =>  $listingId . '.csv',
             'ext' => '',
-            'file_size' => '',
+            'file_size' => $sizeInMB.'MB',
             'location' => public_path('feeds/google-shopping'),
             'created_by' => $created_by,
         );
@@ -67,7 +73,7 @@ class GoogleShoppingService implements MarketplaceServiceInterface
         /* create listing feed */
 
         //return the file path so that it can be downloaded
-        return public_path('feeds/google-shopping/' . $listingId . '.csv');
+        return $filePath;
     }
 
     public function generateCreateFeed($listingInfo, $listingId)
