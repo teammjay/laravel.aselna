@@ -44,11 +44,17 @@ class EbayService implements MarketplaceServiceInterface
         $created_by = auth()->user()->name ?? 'admin';
 
         // create entry for file
-
+        $filePath = public_path('feeds/ebay/' . $listingId . '.xml');
+        $sizeInMB= '';
+        if (file_exists($filePath)) {
+            $sizeInBytes = filesize($filePath); // File size in bytes
+            $sizeInKB = $sizeInBytes / 1024;
+            $sizeInMB = $sizeInKB / 1024;
+        }
         $filedata = array(
             'name' =>  $listingId . '.xml',
             'ext' => '',
-            'file_size' => '',
+            'file_size' => $sizeInMB.'MB',
             'location' => public_path('feeds/ebay'),
             'created_by' => $created_by,
         );
@@ -67,7 +73,7 @@ class EbayService implements MarketplaceServiceInterface
         /* create listing feed */
 
         //return the file path so that it can be downloaded
-        return public_path('feeds/ebay/' . $listingId . '.xml');
+        return $filePath;
     }
 
     public function generateCreateFeed($listingInfo, $listingId)
