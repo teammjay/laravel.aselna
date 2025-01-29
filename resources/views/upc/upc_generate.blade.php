@@ -125,7 +125,7 @@
                         select.empty();
                         select.append('<option value="">Select Store</option>');
                         $.each(data, function (key, value) {
-                            select.append('<option value="' + value.id + '">' + value.name + '</option>');
+                            select.append('<option value="' + value.id + '">' + value.name + ' - ' + value.store_type.name + '</option>');
                         });
                     },
                     error: function (xhr, status, error) {

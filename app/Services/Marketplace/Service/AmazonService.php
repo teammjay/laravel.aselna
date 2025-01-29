@@ -43,6 +43,16 @@ class AmazonService implements MarketplaceServiceInterface
                 break;
         }
 
+        $created_by = auth()->user()->name ?? 'admin';
+        $feedData = array(
+            'listing_id' => $listingId,
+            // 'file_id' => $fileDetail->id,
+            'status' => 0,
+            'store_id' => $listingInfo->store_id,
+            'created_by' => $created_by
+        );
+        ListingFeed::updateOrCreate(['listing_id' => $listingId],$feedData);
+
         //return the file path so that it can be downloaded
         return 'feeds/amazon/' . $listingId . '.xml';
     }
@@ -152,7 +162,12 @@ class AmazonService implements MarketplaceServiceInterface
 
     public function submitFeed($feedId, $listingId)
     {
-        $content = '';
+        Log::info("Started :: ");
+        $filePath = public_path('feeds/amazon/' . $listingId . '.xml');
+
+        $content = file_get_contents($filePath);
+        Log::info("Content :: " . $content);
+
         $this->authService = new AmazonAuthService();
         $generatedFeedId = $this->authService->uploadProductFeed($content);
 
