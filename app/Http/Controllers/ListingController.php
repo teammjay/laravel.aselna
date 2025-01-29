@@ -385,6 +385,12 @@ class ListingController extends Controller
             $query->whereIn('product_interface.interface_id', $request->interface);
         }
 
+        if ($request->has('device') && $request->device != '') {
+            $query->leftJoin('product_interface','product_interface.product_id', '=', 'products.product_id');
+            $query->leftJoin('device_interface','device_interface.interface_id', '=', 'product_interface.interface_id');
+            $query->whereIn('device_interface.device_id', $request->device);
+        }
+
         $all_product_ids = [];
 
         // Filter by product type and sub type
@@ -427,7 +433,8 @@ class ListingController extends Controller
         // Return a view or JSON
         if ($request->ajax()) {
             return response()->json([
-                'html' => view('listing.search_product_list', compact('products'))->render()
+                'html' => view('listing.search_product_list', compact('products'))->render(),
+                'totalRecords' => $products->count()
             ]);
         }
     }
@@ -734,6 +741,7 @@ class ListingController extends Controller
         $product_id = $request->input('product_id');
         $device_type = $request->input('device_type');
         $brand = $request->input('brand');
+        $devices = $request->input('devices');
         $rating = $request->input('rating');
         $popularity = $request->input('popularity');
         $is_selected = $request->input('is_selected');
@@ -756,6 +764,9 @@ class ListingController extends Controller
             }
             if($popularity){
                 $query->whereIn('device.rating_id', $popularity);
+            }
+            if($devices){
+                $query->whereIn('device.id', $devices);
             }
             $query->orderBy('brands.name', 'asc');
             $query->orderBy('device.name', 'asc');
@@ -1327,7 +1338,7 @@ class ListingController extends Controller
                                     'description' => $productDetail['description'],
                                     'store_type_listing_id' => $store_type_listing_id,
                                     'sku' => $sku,
-                                    'store_sku' => $store_id,
+                                    'store_sku' => '',
                                     'price' => $product_prices[$key],
                                     'sync_status' => 1,
                                     'store_product_id' => $store_product_ids[$key],
