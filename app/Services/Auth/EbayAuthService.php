@@ -31,7 +31,7 @@ class EbayAuthService
             ],
             'form_params' => [
                 'grant_type' => 'client_credentials',
-                'scope' => 'https://api.ebay.com/oauth/api_scope',
+                'scope' => ['https://api.ebay.com/oauth/api_scope/sell.inventory'],
             ],
         ]);
 
@@ -59,9 +59,9 @@ class EbayAuthService
             ]);
 
             Log::info('Task Created ' . $response->getBody());
-            /*echo '<pre>';
+            echo '<pre>';
             print_r($response);
-            echo '</pre>';die;*/
+            echo '</pre>';die;
             return json_decode($response->getBody(), true);
 
         } catch (RequestException $e) {
