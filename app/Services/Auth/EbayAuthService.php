@@ -19,6 +19,7 @@ class EbayAuthService
         $this->clientId = 'CommonMr-Testing-SBX-76628eb6f-8cb87fba';
         $this->clientSecret = 'SBX-6628eb6f4151-c0a1-4b48-b869-3621';
         $this->accessToken = $this->getAccessToken();
+
     }
 
     public function getAccessToken() {
@@ -31,7 +32,10 @@ class EbayAuthService
             ],
             'form_params' => [
                 'grant_type' => 'client_credentials',
-                'scope' => ['https://api.ebay.com/oauth/api_scope/sell.inventory'],
+                'scope' => [
+                    'https://api.ebay.com/oauth/api_scope/',
+                    'https://api.ebay.com/oauth/api_scope/sell.inventory'
+                ]
             ],
         ]);
 
@@ -50,10 +54,10 @@ class EbayAuthService
                 'headers' => [
                     'Authorization' => 'Bearer ' . $this->accessToken,
                     'Content-Type' => 'application/json',
-                    'X-EBAY-C-MARKETPLACE-ID' => 'EBAY_US'
+                    'X-EBAY-C-MARKETPLACE-ID' => 'EBAY_US',
                 ],
                 'json' => [
-                    'schemaVersion' => '1234',
+                    'schemaVersion' => '1.0',
                     'feedType' => 'LMS_ADD_FIXED_PRICE_ITEM'
                 ],
             ]);
@@ -67,6 +71,9 @@ class EbayAuthService
         } catch (RequestException $e) {
             if ($e->hasResponse()) {
                 $errorBody = json_decode($e->getResponse()->getBody()->getContents(), true);
+                echo '<pre>';
+                print_r($errorBody);
+                echo '</pre>';die;
                 $this->handleApiErrors($errorBody);
             } else {
                 throw new \Exception('Unexpected error occurred: ' . $e->getMessage());
