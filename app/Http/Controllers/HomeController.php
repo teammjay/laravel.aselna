@@ -18,7 +18,7 @@ class HomeController extends Controller
 {
     public function index()
     {
-        $stores = Store::with('storeType')->get();
+        $stores = Store::with('storeType')->orderBy('name','asc')->get();
         //$eBayServie = new EbayService();
         //$test = $eBayServie->generateFeed('785a48a1-c62e-656b-7985-dda7f53c4a54');
         //$eBayServie->submitFeed('','785a48a1-c62e-656b-7985-dda7f53c4a54');

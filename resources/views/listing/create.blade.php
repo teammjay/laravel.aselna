@@ -5,8 +5,24 @@
     <!-- Lightbox2 CSS -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.4/css/lightbox.min.css" rel="stylesheet">
     <link href="{{ asset('css/jquery.multiselect.css') }}" rel="stylesheet">
-
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <style>
+        /*.select2-container--default .select2-dropdown .select2-search__field:focus, .select2-container--default .select2-search--inline .select2-search__field:focus {
+            outline: 0;
+            border: none;
+        }
+        .select2-container{width:100% !important;}
+        .select2-container .select2-selection--single{
+            height: calc(2.25rem + 2px);
+        }
+        .select2-container--default .select2-selection--single .select2-selection__arrow {
+            height: auto;
+            position: absolute;
+            top: 50%;
+            right: 1px;
+            width: 20px;
+            transform: translateY(-50%);
+        }*/
         #product_type_filter option, #manufacturer_filter option, select[multiple] option {
             border-bottom: 1px solid #eaeaea;
         }
@@ -225,7 +241,12 @@
                         <div class="col-md-12">
                             <div class="">
                                 <div class="card-header pl-0 pr-0">
-                                    <input type="checkbox" id="selected_product"> Selected Products Only
+                                    <div class="d-flex justify-content-between">
+                                        <div>
+                                            <input type="checkbox" id="selected_product"> Selected Products Only
+                                        </div>
+                                        <div class="float-right" id="total_search_product"></div>
+                                    </div>
                                 </div>
                                 <div class="card-body pl-0 pr-0">
                                     <div class="table-responsive" style="max-height: 500px; overflow: auto;">
@@ -861,9 +882,7 @@
         }
         $(document).ready(function() {
 
-           /* $('#listing_store').select2({
-                allowClear: true
-            });*/
+            /*$('#listing_store').select2();*/
             $(document).on('click', '#searchBtn', function() {
                 if($('#listing_store').val() == ''){
                     alert('Please select store first.');
@@ -1056,9 +1075,12 @@
                                     $('#interface_filter').html('');
                                     $('#interfaceFilter').find('.default-drop-down').html(response.ioption);
 
+
                                 } else {
                                     $('#proSubType').hide();
                                 }
+
+                                loadProducts();
                             },
                             error: function (xhr) {
                                 /*if (xhr.responseJSON?.error) {
@@ -1103,10 +1125,10 @@
                                         $('#interfaceFilter').find('.default-drop-down').html(response.ioption);
                                     }
 
-
                                 } else {
                                     $('#proSubSubType').hide();
                                 }
+                                loadProducts();
                             },
                             error: function (xhr) {
                                 /*if (xhr.responseJSON?.error) {
@@ -1160,6 +1182,8 @@
                                 } else {
                                     $('#proSubType').hide();
                                 }
+
+                                loadProducts();
                             },
                             error: function (xhr) {
                                 /*if (xhr.responseJSON?.error) {
@@ -1343,6 +1367,7 @@
                 select : function(event, ui){
                     $('#product_code_filter').val('');
                     $('#pro_code_list').append('<div class="border bg-blue p-1 mt-1"><input type="hidden" name="product_code[]" value="'+ui.item.value+'">'+ui.item.value+'<i class="fa fa-window-close float-right mt-1"></i></div>');
+                    loadProducts();
                     return false;
                 }
             }).focus(function () {
@@ -1380,6 +1405,7 @@
                 select : function(event, ui){
                     $('#device_series_filter').val('');
                     $('#device_series_list').append('<div class="border bg-blue p-1 mt-1"><input type="hidden" name="device_series[]" value="'+ui.item.value+'">'+ui.item.label+'<i class="fa fa-window-close float-right mt-1"></i></div>');
+                    loadProducts();
                     return false;
                 }
             }).focus(function () {
@@ -1417,6 +1443,7 @@
                 select : function(event, ui){
                     $('#device_filter').val('');
                     $('#device_list').append('<div class="border bg-blue p-1 mt-1"><input type="hidden" name="device[]" value="'+ui.item.value+'">'+ui.item.label+' <i class="fa fa-window-close float-right mt-1"></i></div>');
+                    loadProducts();
                     return false;
                 }
             }).focus(function () {
@@ -1426,6 +1453,7 @@
 
             $(document).on('click','.fa-window-close',function () {
                 $(this).parent('.border').remove();
+                loadProducts();
             });
 
             $(document).on('click','.mainImage',function () {
@@ -1543,6 +1571,7 @@
                 success: function (response) {
                     if (response.html) {
                         $('#search-product-list').html(response.html);
+                        $('#total_search_product').html(response.totalRecords+' rows');
                     }
                 },
                 error: function (xhr) {
@@ -1780,6 +1809,14 @@
             {
                 popularity.push($(this).val())
             });
+
+            let devices = [];
+            $('input[name="device[]"]').each(function()
+            {
+                devices.push($(this).val())
+            });
+
+
             $("#ajax-preloader").show();
             $.ajax({
                 url: "{{ route('listing.getcompatibledevice') }}",
@@ -1787,6 +1824,7 @@
                 data: {
                     product_id:product_ids,
                     device_type:device_type,
+                    devices:devices,
                     brand:brand,
                     rating:rating,
                     popularity:popularity,

@@ -33,7 +33,7 @@ class EbayAuthService
             'form_params' => [
                 'grant_type' => 'client_credentials',
                 'scope' => [
-                    'https://api.ebay.com/oauth/api_scope',
+                    'https://api.ebay.com/oauth/api_scope/',
                     'https://api.ebay.com/oauth/api_scope/sell.inventory'
                 ]
             ],
@@ -58,7 +58,6 @@ class EbayAuthService
                 ],
                 'json' => [
                     'schemaVersion' => '1.0',
-                    'scope' => 'https://api.ebay.com/oauth/api_scope/sell.inventory',
                     'feedType' => 'LMS_ADD_FIXED_PRICE_ITEM'
                 ],
             ]);
