@@ -100,8 +100,10 @@ class AmazonService implements MarketplaceServiceInterface
             $safeText = htmlspecialchars($itemDetail->title, ENT_QUOTES | ENT_XML1, 'UTF-8');
             $descriptionData->addChild('Title', $safeText);
 
-            $safeText = htmlspecialchars($itemDetail->manufacturer->name, ENT_QUOTES | ENT_XML1, 'UTF-8');
-            $descriptionData->addChild('Brand', $safeText);
+            if(isset($itemDetail->manufacturer)) {
+                $safeText = htmlspecialchars($itemDetail->manufacturer->name, ENT_QUOTES | ENT_XML1, 'UTF-8');
+                $descriptionData->addChild('Brand', $safeText);
+            }
 
             $productData = $itemDetail->storeProduct->product;
 
@@ -113,7 +115,9 @@ class AmazonService implements MarketplaceServiceInterface
 
 
             $descriptionData->addChild('MSRP', $itemDetail->price);
-            $descriptionData->addChild('Manufacturer', $itemDetail->manufacturer->name);
+            if(isset($itemDetail->manufacturer)) {
+                $descriptionData->addChild('Manufacturer', $itemDetail->manufacturer->name);
+            }
 
             $storeProducts = $itemDetail->storeProduct;
             if (isset($storeProducts)) {
