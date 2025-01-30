@@ -31,6 +31,7 @@ use App\Models\Store;
 use Illuminate\Support\Facades\DB;
 use Mockery\Exception;
 use App\Helpers\QueryFilters;
+use Illuminate\Support\Facades\Log;
 
 class ListingController extends Controller
 {
@@ -1238,8 +1239,11 @@ class ListingController extends Controller
                     $store_detail = Store::where('id', $store_id)->first();
                     $product_models = $request->input('product_models');
                     if ($product_models) {
-                        $product_models = json_decode($product_models);
+                        $product_models = (array) json_decode($product_models);
                     }
+                    /*echo '<pre>';
+                    print_r($product_models);
+                    echo '<pre>';die;*/
                     $created_by = auth()->user()->name ?? 'admin';
 
                     $listingArr = [
@@ -1340,6 +1344,7 @@ class ListingController extends Controller
                                     'sku' => $sku,
                                     'store_sku' => '',
                                     'price' => $product_prices[$key],
+                                    'quantity' => ($store_detail->default_listing_quantity) ? $store_detail->default_listing_quantity : 10,
                                     'sync_status' => 1,
                                     'store_product_id' => $store_product_ids[$key],
                                     'manufacturer_id' => $productDetail['manufacturer_id'],
@@ -1359,10 +1364,11 @@ class ListingController extends Controller
                                 $listing_item_id = $item->id;
                                 $modelNames = array();
                                 if ($listing_item_id) {
-                                    if (isset($product_models[$key]) && is_array($product_models[$key])) {
+                                    $pid = $product_ids[$key];
+                                    if (isset($product_models[$pid]) && is_array($product_models[$pid])) {
 
-                                        if (count($product_models[$key] ?? []) > 0) {
-                                            $limit = count($product_models[$key]);
+                                        if (count($product_models[$pid] ?? []) > 0) {
+                                            $limit = count($product_models[$pid]);
                                             if ($store_detail->upc_usage_type) {
                                                 switch ($store_detail->upc_usage_type) {
                                                     case 0:
@@ -1385,7 +1391,7 @@ class ListingController extends Controller
                                                 $upcCodes = UPCCodes::where('store', $store_id)->where('is_used', 0)->orderBy('sequence_id', 'asc')->limit($limit)->get();
                                             }
                                         }
-                                        foreach ($product_models[$key] as $k => $model) {
+                                        foreach ($product_models[$pid][$key] as $k => $model) {
 
                                             if ($store_detail->sku_generation_type) {
                                                 switch ($store_detail->sku_generation_type) {
@@ -1439,6 +1445,7 @@ class ListingController extends Controller
                                             'created_by' => $created_by
                                         );
 
+                                        Log::info('item link ' . json_encode($itemLink));
                                         ListingItemLink::create($itemLink);
                                         FeedGenerationJob::dispatch($listing_id);
                                     }

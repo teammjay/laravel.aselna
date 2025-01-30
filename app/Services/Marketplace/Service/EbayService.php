@@ -18,6 +18,9 @@ class EbayService implements MarketplaceServiceInterface
     public function generateFeed($listingId)
     {
         $listingInfo = Listing::where('id', $listingId)->first();
+        /*echo '<pre>';
+        print_r($listingInfo);
+        echo '</pre>';die;*/
 
         // Generate feed for Amazon
         switch ($listingInfo->feed_type) {
@@ -53,8 +56,8 @@ class EbayService implements MarketplaceServiceInterface
         }
         $filedata = array(
             'name' =>  $listingId . '.xml',
-            'ext' => '',
-            'file_size' => $sizeInMB.'MB',
+            'ext' => 'xml',
+            'file_size' => round($sizeInKB),
             'location' => public_path('feeds/ebay'),
             'created_by' => $created_by,
         );
@@ -79,8 +82,12 @@ class EbayService implements MarketplaceServiceInterface
     public function generateCreateFeed($listingInfo, $listingId)
     {
         // Generate feed for Ebay
-        $listingItems = ListingItemLink::with('listingItem','listingItem.brand','listingItem.storeProduct','listingItem.storeProduct.product','listingItem.storeProduct.productImages')->where('listing_id', $listingId)->cursor();
-        $version = 1;
+        $listingItems = ListingItemLink::with('listingItem','listingItem.brand','listingItem.storeProduct','listingItem.storeProduct.product','listingItem.storeProduct.productImages')->where('listing_id', $listingId)->get();
+        $version = 1238;
+
+        /*echo '<pre>';
+        print_r($listingItems);
+        echo '</pre>';die;*/
 
         $xml = new \SimpleXMLElement('<?xml version="1.0" encoding="UTF-8"?><BulkDataExchangeRequests xmlns="urn:ebay:apis:eBLBaseComponents"></BulkDataExchangeRequests>');
 
@@ -180,8 +187,8 @@ class EbayService implements MarketplaceServiceInterface
                 foreach ($variationData as $variant) {
                     $variation = $variations->addChild('Variation');
                     $variation->addChild('SKU', $variant->sku);
-                    $variation->addChild('StartPrice', $variant->price);
-                    $variation->addChild('Quantity', $variant->qty);
+                    $variation->addChild('StartPrice', $itemDetail->price);
+                    $variation->addChild('Quantity', $itemDetail->quantity);
                     $variationSpecifics = $variation->addChild('VariationSpecifics');
                     $nameValueList = $variationSpecifics->addChild('NameValueList');
                     $nameValueList->addChild('Name', 'Compatible Model');
@@ -316,14 +323,19 @@ class EbayService implements MarketplaceServiceInterface
     {
         $authService = new EbayAuthService();
 
-        $fileName = 'ebay-'.$listingId.'.xml';
-        $filePath = 'feeds/ebay/' . $fileName;
+        $fileName = $listingId.'.xml';
+        $filePath = public_path('feeds/ebay/' . $fileName);
+        //echo $filePath;die;
 
         $taskID = $authService->createTask();
         $response = $authService->uploadFile($taskID, $fileName, $filePath);
+        $this->downloadResultFeed($taskID, $listingId);
+        echo '<pre>';
+        print_r($response);
+        echo '</pre>';
         if(isset($response['fileUploadStatus']) && $response['fileUploadStatus'] == 'SUCCESS'){
             $updateFeedData = [
-                'feed_id' => $response['feedId'],
+                'feed_id' => $taskID,
                 'feed_type' => $response['feedType']
             ];
 
@@ -334,7 +346,7 @@ class EbayService implements MarketplaceServiceInterface
                 'status' => $response['fileUploadStatus'],
             ]);
         }
-
+        die;
         return response()->json([
             'message' => $response['message'],
             'errors' => $response['fileUploadStatus'],
@@ -345,8 +357,31 @@ class EbayService implements MarketplaceServiceInterface
     {
         $this->authService = new EbayAuthService();
 
-        $feedInfo = ListingFeed::where('listing_id', $listingId)->first();
-        $response = $this->authService->getResultFeed($feedInfo->feed_id);
+        //$feedInfo = ListingFeed::where('listing_id', $listingId)->first();
+
+        $response = $this->authService->getResultFeed('task-1-1274321',$listingId);
+
+        return $response;
+
+    }
+
+    public function downloadResultFeed($taskID, $listingId)
+    {
+        $this->authService = new EbayAuthService();
+
+        //$feedInfo = ListingFeed::where('listing_id', $listingId)->first();
+
+        $response = $this->authService->getResultFeed('task-1-1274321',$listingId);
+
+        return $response;
+
+    }
+
+    public function getInputFeed($taskID, $listingId)
+    {
+        $this->authService = new EbayAuthService();
+
+        $response = $this->authService->downloadInputFeed($taskID,$listingId);
 
         return $response;
 
