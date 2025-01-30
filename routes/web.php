@@ -69,6 +69,7 @@ Route::post('catalog/altimageorder', [CatalogController::class, 'updateAlternati
 
 Route::post('/generate-feed-file',[HomeController::class, 'generateFeedFile'])->name('generate-feed-file');
 Route::post('/generate-result-feed-file', [HomeController::class, 'generateResultFeedFile'])->name('generate-result-feed-file');
+Route::post('/submit-feed', [HomeController::class, 'submitFeedFile'])->name('submit-feed');
 
 Route::controller(StoreController::class)->group(function () {
     Route::get('/stores', 'index')->name('store.list');
