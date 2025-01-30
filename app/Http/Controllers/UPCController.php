@@ -40,7 +40,7 @@ class UPCController extends Controller
 
     public function getStoresData()
     {
-        $stores = Store::all();
+        $stores = Store::with('storeType')->get();
         return response()->json($stores);
     }
 }

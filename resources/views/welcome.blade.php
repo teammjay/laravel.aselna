@@ -203,6 +203,9 @@
                         data: 'feed_type', name: 'feed_type', render: function (data) {
                             const feedJson = '<?= json_encode(FeedTypes::names) ?>';
                             const feedTypes = JSON.parse(feedJson);
+                            if (feedTypes[data] === undefined) {
+                                return data;
+                            }
                             return feedTypes[data];
                         }
                     },
@@ -243,6 +246,7 @@
                             return '<div>' +
                                 '<button class="btn btn-primary generate-feed-file" data-listing="' + data.listing_id + '">Download Feed File</button>' +
                                 '<button class="btn btn-primary generate-result-feed-file" data-listing="' + data.listing_id + '">Download Result Feed File</button>' +
+                                '<button class="btn btn-primary submit-feed-file" data-listing="' + data.listing_id + '">Submit Feed</button>' +
                                 '</div>';
                         }
                     }

@@ -29,6 +29,7 @@ use App\Models\UPCCodes;
 use Illuminate\Http\Request;
 use App\Models\Store;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Mockery\Exception;
 use App\Helpers\QueryFilters;
 use Illuminate\Support\Facades\Log;
@@ -245,13 +246,13 @@ class ListingController extends Controller
         if (!empty((array)$products)) {
             foreach ($products as $product) {
 
-                if(!empty((array)$product->storeProduct) && !empty((array)$product->storeProduct->product)){
+                if (!empty((array)$product->storeProduct) && !empty((array)$product->storeProduct->product)) {
                     $productcode = $product->storeProduct->product->product_sku;
-                }else{
+                } else {
                     $productcode = '';
                 };
                 $data[] = array(
-                    "sku" => $product->sku . '<input type="checkbox" class="proList" name="listing_item[]" data-code="'.$productcode.'" value="' . $product->id . '" style="visibility:hidden;">',
+                    "sku" => $product->sku . '<input type="checkbox" class="proList" name="listing_item[]" data-code="' . $productcode . '" value="' . $product->id . '" style="visibility:hidden;">',
                     "sale_count" => ($product->sale_count) ? $product->sale_count : 0,
                     "last_sale_date" => $product->last_sale_date,
                     "store_sku" => $product->store_sku,
@@ -300,7 +301,7 @@ class ListingController extends Controller
         $brands = Brand::orderBy('name', 'asc')->get();
         $deviceRating = DeviceRating::orderBy('value', 'asc')->get();
         session()->forget('listing_product_details');
-        return view('listing.create', compact('pageAt', 'stores', 'manufacturers', 'productTypes', 'deviceTypes', 'brands', 'listingGenerationTypes','deviceRating'));
+        return view('listing.create', compact('pageAt', 'stores', 'manufacturers', 'productTypes', 'deviceTypes', 'brands', 'listingGenerationTypes', 'deviceRating'));
     }
 
     /**
@@ -343,9 +344,9 @@ class ListingController extends Controller
     public function getProducts(Request $request)
     {
 
-        $query = StoreProduct::select('store_product.id','store_product.product_id','store_product.title','store_product.price','store_product.created_at','product_type.name as ProductType')->with('product');
-        $query->leftJoin('products','products.product_id', '=', 'store_product.product_id');
-        $query->leftJoin('product_type','products.product_type', '=', 'product_type.id');
+        $query = StoreProduct::select('store_product.id', 'store_product.product_id', 'store_product.title', 'store_product.price', 'store_product.created_at', 'product_type.name as ProductType')->with('product');
+        $query->leftJoin('products', 'products.product_id', '=', 'store_product.product_id');
+        $query->leftJoin('product_type', 'products.product_type', '=', 'product_type.id');
 
 
         // Handle Only Active Products (Remove the bundled products)
@@ -382,13 +383,13 @@ class ListingController extends Controller
 
         // Filter by interface
         if ($request->has('interface') && $request->interface != '') {
-            $query->leftJoin('product_interface','product_interface.product_id', '=', 'products.product_id');
+            $query->leftJoin('product_interface', 'product_interface.product_id', '=', 'products.product_id');
             $query->whereIn('product_interface.interface_id', $request->interface);
         }
 
         if ($request->has('device') && $request->device != '') {
-            $query->leftJoin('product_interface','product_interface.product_id', '=', 'products.product_id');
-            $query->leftJoin('device_interface','device_interface.interface_id', '=', 'product_interface.interface_id');
+            $query->leftJoin('product_interface', 'product_interface.product_id', '=', 'products.product_id');
+            $query->leftJoin('device_interface', 'device_interface.interface_id', '=', 'product_interface.interface_id');
             $query->whereIn('device_interface.device_id', $request->device);
         }
 
@@ -534,18 +535,18 @@ class ListingController extends Controller
         $product_types = $request->input('product_types');
         if (!empty($product_types)) {
             $option = '';
-            $product_sub_types = ProductType::select('id','name')->WhereIn('parent_id', $product_types)->orderBy('name','asc')->get()->toArray();
-            if(!empty($product_sub_types)){
-                foreach($product_sub_types as $stype){
-                    $option .= '<option value="'.$stype['id'].'">'.$stype['name'].'</option>';
+            $product_sub_types = ProductType::select('id', 'name')->WhereIn('parent_id', $product_types)->orderBy('name', 'asc')->get()->toArray();
+            if (!empty($product_sub_types)) {
+                foreach ($product_sub_types as $stype) {
+                    $option .= '<option value="' . $stype['id'] . '">' . $stype['name'] . '</option>';
                 }
             }
 
             $ioption = '';
-            $interface = Interfaces::select('id','name')->WhereIn('product_type_id', $product_types)->orderBy('name','asc')->get()->toArray();
-            if(!empty($interface)){
-                foreach($interface as $iface){
-                    $ioption .= '<option value="'.$iface['id'].'">'.$iface['name'].'</option>';
+            $interface = Interfaces::select('id', 'name')->WhereIn('product_type_id', $product_types)->orderBy('name', 'asc')->get()->toArray();
+            if (!empty($interface)) {
+                foreach ($interface as $iface) {
+                    $ioption .= '<option value="' . $iface['id'] . '">' . $iface['name'] . '</option>';
                 }
             }
 
@@ -642,8 +643,8 @@ class ListingController extends Controller
                         $shortFlag[$pro_id] = $shortFlag[$pro_id] + 1;
                     }
                     //echo $key .'>'. $short_key_length.'<br>';
-                    if($key >= $short_key_length) {
-                        if(!is_numeric($long_key_length)){
+                    if ($key >= $short_key_length) {
+                        if (!is_numeric($long_key_length)) {
                             $long_key_length = 7;
                         }
                         if (((!array_key_exists($pro_id, $longFlag) || $longFlag[$pro_id] < ($long_key_length + $short_key_length))) || !array_key_exists($pro_id, $long_keyword)) {
@@ -704,7 +705,7 @@ class ListingController extends Controller
                     if (!isset($Flag[$pro_id])) {
                         $Flag[$pro_id] = 0;
                     }
-                    if(((!array_key_exists($pro_id, $Flag) || $Flag[$pro_id] < $title_length)) || !array_key_exists($pro_id, $title_keyword)){
+                    if (((!array_key_exists($pro_id, $Flag) || $Flag[$pro_id] < $title_length)) || !array_key_exists($pro_id, $title_keyword)) {
                         $Flag[$pro_id] = $Flag[$pro_id] + 1;
                     }
 
@@ -747,11 +748,11 @@ class ListingController extends Controller
         $popularity = $request->input('popularity');
         $is_selected = $request->input('is_selected');
         $selected_device = $request->input('selected_device');
-        if($product_id){
-            $query = Device::select('device.*', 'product_interface.product_id')->with('brand','rating')->with('deviceType');
-            $query->leftJoin('brands','brands.id', '=', 'device.brand_id');
-            $query->leftJoin('device_interface','device_interface.device_id', '=', 'device.id');
-            $query->leftJoin('product_interface','product_interface.interface_id', '=', 'device_interface.interface_id');
+        if ($product_id) {
+            $query = Device::select('device.*', 'product_interface.product_id')->with('brand', 'rating')->with('deviceType');
+            $query->leftJoin('brands', 'brands.id', '=', 'device.brand_id');
+            $query->leftJoin('device_interface', 'device_interface.device_id', '=', 'device.id');
+            $query->leftJoin('product_interface', 'product_interface.interface_id', '=', 'device_interface.interface_id');
 
             $query->whereIn('product_interface.product_id', $product_id);
             if ($device_type) {
@@ -760,13 +761,13 @@ class ListingController extends Controller
             if ($brand) {
                 $query->whereIn('device.brand_id', $brand);
             }
-            if($rating){
+            if ($rating) {
                 $query->whereIn('device.rating_id', $rating);
             }
-            if($popularity){
+            if ($popularity) {
                 $query->whereIn('device.rating_id', $popularity);
             }
-            if($devices){
+            if ($devices) {
                 $query->whereIn('device.id', $devices);
             }
             $query->orderBy('brands.name', 'asc');
@@ -945,7 +946,7 @@ class ListingController extends Controller
                                     }
                                 }
 
-                            }else{
+                            } else {
                                 return response()->json([
                                     'error' => true,
                                     'message' => 'session value missing',
@@ -966,10 +967,10 @@ class ListingController extends Controller
 
                     $models = $modelDetail = array();
                     $totalCount = 0;
-                    foreach ($productsArray as $k=>$product) {
+                    foreach ($productsArray as $k => $product) {
                         if (!empty($product)) {
                             foreach ($product as $key => $pro) {
-                                $totalCount ++;
+                                $totalCount++;
                                 if (isset($pro['model'])) {
                                     $proid = $pro['product_id'];
                                     $models[$proid][$key] = $pro['model'];
@@ -1040,11 +1041,11 @@ class ListingController extends Controller
 
             // Check if adding the device exceeds the character limit
             $tempModels = array_merge($currentModels, [$nameToAdd]);
-            $tempModelString = implode($brand_seperator.' ', $tempModels);
+            $tempModelString = implode($brand_seperator . ' ', $tempModels);
             $tempTitle = str_replace('#model_series', $tempModelString, $baseTitle);
 
             $tempDevices = array_merge($currentDevices, [$currentBrand]);
-            $tempDeviceString = implode($device_seperator.' ', $tempDevices);
+            $tempDeviceString = implode($device_seperator . ' ', $tempDevices);
             $tempTitle = str_replace('#devices', $tempDeviceString, $tempTitle);
 
             /*$sku = StoreTypeListing::generateUniqueAlphabeticSku($product->product_sku);*/
@@ -1055,7 +1056,7 @@ class ListingController extends Controller
 
                 // Save the current title and start a new one
                 //$titles[$cnt]['title'] = rtrim($currentTitle, $separator); // Remove trailing separator
-                $titles[$cnt]['title'] = str_replace(['#model_series','#devices'], [implode($brand_seperator.' ', $currentModels),implode($separator.' ', $currentDevices)], $baseTitle);
+                $titles[$cnt]['title'] = str_replace(['#model_series', '#devices'], [implode($brand_seperator . ' ', $currentModels), implode($separator . ' ', $currentDevices)], $baseTitle);
 
                 $cnt++;
                 //$currentTitle = $baseTitle . ' ' . $nameToAdd;
@@ -1093,7 +1094,7 @@ class ListingController extends Controller
         if (!empty($currentTitle)) {
             /*$titles[$cnt]['title'] = rtrim($currentTitle, ' '.$separator.' ');*/
             //$titles[$cnt]['title'] = str_replace('#model_series', implode($separator.' ', $currentModels), $baseTitle);
-            $titles[$cnt]['title'] = str_replace(['#model_series','#devices'], [implode($brand_seperator.' ', $currentModels),implode($separator.' ', $currentDevices)], $baseTitle);
+            $titles[$cnt]['title'] = str_replace(['#model_series', '#devices'], [implode($brand_seperator . ' ', $currentModels), implode($separator . ' ', $currentDevices)], $baseTitle);
         }
         /*echo '<pre>';
         print_r($titles);die;*/
@@ -1170,11 +1171,11 @@ class ListingController extends Controller
 
             // Check if adding the device exceeds the character limit
             $tempModels = array_merge($currentModels, [$nameToAdd]);
-            $tempModelString = implode($brand_seperator.' ', $tempModels);
+            $tempModelString = implode($brand_seperator . ' ', $tempModels);
             $tempTitle = str_replace('#model_series', $tempModelString, $baseTitle);
 
             $tempDevices = array_merge($currentDevices, [$currentBrand]);
-            $tempDeviceString = implode($device_seperator.' ', $tempDevices);
+            $tempDeviceString = implode($device_seperator . ' ', $tempDevices);
             $tempTitle = str_replace('#devices', $tempDeviceString, $tempTitle);
 
             // Check if adding the device exceeds the character limit
@@ -1224,8 +1225,11 @@ class ListingController extends Controller
 
     public function saveListingProducts(Request $request)
     {
+
+        Log::info('Entering saveListingProducts ');
         if ($request->input()) {
             try {
+                DB::beginTransaction();
                 if (is_array($request->input('final_product_title'))) {
                     //$generate_type = $request->input('generate_type');
                     $generation_type_id = $request->input('generation_type_id');
@@ -1259,8 +1263,10 @@ class ListingController extends Controller
                         'updated_by' => $created_by
                     ];
 
+                    Log::info(' Listing :: ' . json_encode($listingArr));
                     $lisrecord = Listing::create($listingArr);
                     $listing_id = $lisrecord->id;
+                    Log::info(' Listing ID :: ' . $listing_id);
 
                     $summary_products = [];
                     if ($listing_id && !empty($product_titles)) {
@@ -1332,8 +1338,10 @@ class ListingController extends Controller
                                 'created_by' => $created_by,
                                 'updated_by' => $created_by
                             ];
+                            Log::info(' Store Type Listing :: ' . json_encode($listingProductArr));
                             $record = StoreTypeListing::create($listingProductArr);
                             $store_type_listing_id = $record->id;
+                            Log::info(' Store Type Listing ID :: ' . $store_type_listing_id);
 
                             if ($store_type_listing_id) {
 
@@ -1356,6 +1364,7 @@ class ListingController extends Controller
                                     'created_by' => $created_by
                                 );
 
+                                Log::info(' Listing Item :: ' . json_encode($modelDetail));
                                 $item = ListingItem::create($modelDetail);
                                 if ($item) {
                                     $record = UPCCodes::find($upcCodes->id);
@@ -1364,11 +1373,13 @@ class ListingController extends Controller
                                 $listing_item_id = $item->id;
                                 $modelNames = array();
                                 if ($listing_item_id) {
-                                    $pid = $product_ids[$key];
-                                    if (isset($product_models[$pid]) && is_array($product_models[$pid])) {
+                                   $product_key = $product_ids[$key];
+                                    Log::info(' Product Models :: ' . json_encode($product_models->$product_key));
+                                    $product_model = $product_models->$product_key[$key];
+                                    if (isset($product_model) && is_array($product_model)) {
 
-                                        if (count($product_models[$pid] ?? []) > 0) {
-                                            $limit = count($product_models[$pid]);
+                                        if (count($product_model ?? []) > 0) {
+                                            $limit = count($product_model);
                                             if ($store_detail->upc_usage_type) {
                                                 switch ($store_detail->upc_usage_type) {
                                                     case 0:
@@ -1391,7 +1402,8 @@ class ListingController extends Controller
                                                 $upcCodes = UPCCodes::where('store', $store_id)->where('is_used', 0)->orderBy('sequence_id', 'asc')->limit($limit)->get();
                                             }
                                         }
-                                        foreach ($product_models[$pid][$key] as $k => $model) {
+
+                                        foreach ($product_model as $k => $model) {
 
                                             if ($store_detail->sku_generation_type) {
                                                 switch ($store_detail->sku_generation_type) {
@@ -1429,7 +1441,9 @@ class ListingController extends Controller
                                                 'created_by' => $created_by
                                             );
 
+                                            Log::info(' Listing Item Detail :: ' . json_encode($itemDetail));
                                             $rec = ListingItemDetail::create($itemDetail);
+                                            Log::info(' Listing Item Detail ID :: ' . $rec->id);
 
                                             if ($rec) {
                                                 $record = UPCCodes::find($upcCodes[$k]['id']);
@@ -1445,16 +1459,19 @@ class ListingController extends Controller
                                             'created_by' => $created_by
                                         );
 
-                                        Log::info('item link ' . json_encode($itemLink));
+                                        Log::info(' Listing Item Link :: ' . json_encode($itemLink));
                                         ListingItemLink::create($itemLink);
-                                        FeedGenerationJob::dispatch($listing_id);
+                                        Log::info(' Listing Item Link created successfully!');
                                     }
                                 }
                             }
                             $summary_products[$key]['models'] = implode(',', $modelNames);
                         }
+                        DB::commit();
 
                         $view = view('listing.listing_summary', compact('summary_products'))->render();
+
+                        FeedGenerationJob::dispatch($listing_id);
 
                         return response()->json([
                             'success' => true,
@@ -1463,27 +1480,38 @@ class ListingController extends Controller
                         ]);
                     }
 
+                    DB::rollBack();
                     return response()->json([
                         'error' => true,
                         'message' => 'Something went wrong! Please try again!'
                     ]);
                 }
+
+                DB::rollBack();
+                return response()->json([
+                    'error' => true,
+                    'message' => 'Product title missing!'
+                ]);
+
             } catch (Exception $e) {
+                DB::rollBack();
                 return response()->json([
                     'error' => $e->getMessage(),
                 ], 500);
             }
         }
 
+
         return response()->json(['error' => true, 'message' => 'Something went wrong! Please try again!']);
     }
 
-    public function syncListingPrice(Request $request){
+    public function syncListingPrice(Request $request)
+    {
 
         $selected_listing = $request->input('selected_list');
         $updated_price = $request->input('price');
 
-        if(!empty($selected_listing)){
+        if (!empty($selected_listing)) {
             try {
                 $listingDetails = ListingItem::with('storeProduct.store:id')->whereIn('id', $selected_listing)->get();
                 /*echo '<pre>';
@@ -1491,9 +1519,9 @@ class ListingController extends Controller
                 echo '</pre>';die;*/
                 if (!empty((array)$listingDetails)) {
                     $listing_id = '';
-                    foreach ($listingDetails as $key=>$list) {
+                    foreach ($listingDetails as $key => $list) {
                         $created_by = auth()->user()->name ?? 'admin';
-                        if($key == 0) {
+                        if ($key == 0) {
                             $listingArr = [
                                 'store_id' => $list->storeProduct->store->id,
                                 'generation_type_id' => $list->generation_type_id,
@@ -1548,7 +1576,7 @@ class ListingController extends Controller
                         'message' => 'Product price sync successfully!'
                     ]);
                 }
-            }catch (Exception $e) {
+            } catch (Exception $e) {
                 return response()->json([
                     'error' => $e->getMessage(),
                 ], 500);
@@ -1561,12 +1589,13 @@ class ListingController extends Controller
         ]);
     }
 
-    public function syncListingInventory(Request $request){
+    public function syncListingInventory(Request $request)
+    {
 
         $selected_listing = $request->input('selected_list');
         $updated_inventory = $request->input('inventory');
 
-        if(!empty($selected_listing)){
+        if (!empty($selected_listing)) {
             try {
                 $listingDetails = Listing::whereIn('id', $selected_listing)->get();
                 if (!empty((array)$listingDetails)) {
@@ -1629,7 +1658,7 @@ class ListingController extends Controller
                         'message' => 'Product inventory sync successfully!'
                     ]);
                 }
-            }catch (Exception $e) {
+            } catch (Exception $e) {
                 return response()->json([
                     'error' => $e->getMessage(),
                 ], 500);

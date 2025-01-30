@@ -67,6 +67,7 @@ class EbayService implements MarketplaceServiceInterface
         $feedData = array(
             'listing_id' => $listingId,
             'file_id' => $fileDetail->id,
+            'feed_type' => $listingInfo->feed_type,
             'status' => 0,
             'store_id' => $listingInfo->store_id,
             'created_by' => $created_by

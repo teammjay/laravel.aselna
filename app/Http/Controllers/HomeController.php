@@ -125,6 +125,24 @@ class HomeController extends Controller
         return response()->json(['generating' => true]);
     }
 
+    public function submitFeedFile(Request $request)
+    {
+        $request->validate([
+            'listing_id' => 'required',
+        ]);
+
+        $listingId = $request->listing_id;
+        $listingInfo = Listing::where('id', $listingId)->first();
+
+        $storeType = $listingInfo->store->storeType->name;
+
+        $marketplaceService = MarketplaceServiceFactory::create($storeType);
+
+        $marketplaceService->submitFeed('',$listingId);
+
+        $marketplaceService->getResultFeed($listingId);
+    }
+
     public function generateResultFeedFile(Request $request)
     {
         $request->validate([

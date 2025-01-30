@@ -43,6 +43,17 @@ class AmazonService implements MarketplaceServiceInterface
                 break;
         }
 
+        $created_by = auth()->user()->name ?? 'admin';
+        $feedData = array(
+            'listing_id' => $listingId,
+            // 'file_id' => $fileDetail->id,
+            'status' => 0,
+            'feed_type' => $listingInfo->feed_type,
+            'store_id' => $listingInfo->store_id,
+            'created_by' => $created_by
+        );
+        ListingFeed::updateOrCreate(['listing_id' => $listingId],$feedData);
+
         //return the file path so that it can be downloaded
         return 'feeds/amazon/' . $listingId . '.xml';
     }
@@ -89,8 +100,10 @@ class AmazonService implements MarketplaceServiceInterface
             $safeText = htmlspecialchars($itemDetail->title, ENT_QUOTES | ENT_XML1, 'UTF-8');
             $descriptionData->addChild('Title', $safeText);
 
-            $safeText = htmlspecialchars($itemDetail->manufacturer->name, ENT_QUOTES | ENT_XML1, 'UTF-8');
-            $descriptionData->addChild('Brand', $safeText);
+            if(isset($itemDetail->manufacturer)) {
+                $safeText = htmlspecialchars($itemDetail->manufacturer->name, ENT_QUOTES | ENT_XML1, 'UTF-8');
+                $descriptionData->addChild('Brand', $safeText);
+            }
 
             $productData = $itemDetail->storeProduct->product;
 
@@ -102,7 +115,9 @@ class AmazonService implements MarketplaceServiceInterface
 
 
             $descriptionData->addChild('MSRP', $itemDetail->price);
-            $descriptionData->addChild('Manufacturer', $itemDetail->manufacturer->name);
+            if(isset($itemDetail->manufacturer)) {
+                $descriptionData->addChild('Manufacturer', $itemDetail->manufacturer->name);
+            }
 
             $storeProducts = $itemDetail->storeProduct;
             if (isset($storeProducts)) {
@@ -152,7 +167,12 @@ class AmazonService implements MarketplaceServiceInterface
 
     public function submitFeed($feedId, $listingId)
     {
-        $content = '';
+        Log::info("Started :: ");
+        $filePath = public_path('feeds/amazon/' . $listingId . '.xml');
+
+        $content = file_get_contents($filePath);
+        Log::info("Content :: " . $content);
+
         $this->authService = new AmazonAuthService();
         $generatedFeedId = $this->authService->uploadProductFeed($content);
 
