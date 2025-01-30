@@ -53,8 +53,8 @@ class GoogleShoppingService implements MarketplaceServiceInterface
         }
         $filedata = array(
             'name' =>  $listingId . '.csv',
-            'ext' => '',
-            'file_size' => $sizeInMB.'MB',
+            'ext' => 'csv',
+            'file_size' => round($sizeInKB),
             'location' => public_path('feeds/google-shopping'),
             'created_by' => $created_by,
         );

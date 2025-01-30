@@ -327,6 +327,11 @@ return [
             'icon' => 'fa fa-fw fa-envelope'
         ],
         [
+            'text' => 'Orders',
+            'url' => '/orders',
+            'icon' => 'fa fa-fw fa-shopping-cart'
+        ],
+        [
             'text' => 'Catalog',
             'icon' => 'fa fa-fw fa-book',
             'submenu' => [

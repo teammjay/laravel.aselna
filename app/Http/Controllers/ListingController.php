@@ -32,6 +32,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Mockery\Exception;
 use App\Helpers\QueryFilters;
+use Illuminate\Support\Facades\Log;
 
 class ListingController extends Controller
 {
@@ -1242,8 +1243,11 @@ class ListingController extends Controller
                     $store_detail = Store::where('id', $store_id)->first();
                     $product_models = $request->input('product_models');
                     if ($product_models) {
-                        $product_models = json_decode($product_models);
+                        $product_models = (array) json_decode($product_models);
                     }
+                    /*echo '<pre>';
+                    print_r($product_models);
+                    echo '<pre>';die;*/
                     $created_by = auth()->user()->name ?? 'admin';
 
                     $listingArr = [
@@ -1348,6 +1352,7 @@ class ListingController extends Controller
                                     'sku' => $sku,
                                     'store_sku' => '',
                                     'price' => $product_prices[$key],
+                                    'quantity' => ($store_detail->default_listing_quantity) ? $store_detail->default_listing_quantity : 10,
                                     'sync_status' => 1,
                                     'store_product_id' => $store_product_ids[$key],
                                     'manufacturer_id' => $productDetail['manufacturer_id'],
@@ -1368,7 +1373,7 @@ class ListingController extends Controller
                                 $listing_item_id = $item->id;
                                 $modelNames = array();
                                 if ($listing_item_id) {
-                                    $product_key = $product_ids[$key];
+                                   $product_key = $product_ids[$key];
                                     Log::info(' Product Models :: ' . json_encode($product_models->$product_key));
                                     $product_model = $product_models->$product_key[$key];
                                     if (isset($product_model) && is_array($product_model)) {
@@ -1397,6 +1402,7 @@ class ListingController extends Controller
                                                 $upcCodes = UPCCodes::where('store', $store_id)->where('is_used', 0)->orderBy('sequence_id', 'asc')->limit($limit)->get();
                                             }
                                         }
+
                                         foreach ($product_model as $k => $model) {
 
                                             if ($store_detail->sku_generation_type) {

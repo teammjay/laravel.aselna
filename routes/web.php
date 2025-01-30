@@ -38,6 +38,8 @@ use App\Http\Controllers\ProductAttributeController;
 use App\Http\Controllers\ListingTemplateController;
 use App\Http\Controllers\ProductColorController;
 use App\Http\Controllers\MessagesController;
+use App\Http\Controllers\OrdersController;
+use App\Services\Auth\EbayAuthService;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/catalog', [CatalogController::class, 'index']);
@@ -394,4 +396,16 @@ Route::controller(UPCController::class)->group(function () {
     Route::get('/upc_codes', 'upc_code')->name('upc_codes.upc_code');
     Route::get('/upc_generate','upc_generate')->name('upc_codes.upc_generate');
     Route::post('/upc_generate/add', 'create_upc_generate')->name('upc_codes.generate');
+});
+
+Route::get('/ebay/login', [EbayAuthService::class, 'redirectToEbay'])->name('ebay.login');
+Route::get('/ebay/callback', [EbayAuthService::class, 'handleCallback'])->name('ebay.callback');
+Route::get('/ebay/refresh-token', [EbayAuthService::class, 'refreshToken'])->name('ebay.refresh');
+
+Route::controller(OrdersController::class)->group(function () {
+    Route::get('/orders', 'index')->name('order.list');
+    Route::get('orders/filter', 'filter')->name('order.filter');
+    Route::get('/orders/edit/{id}', 'edit')->name('order.edit');
+    Route::post('/orders/edit', 'update')->name('order.update');
+    Route::post('/orders/getimages', 'getImages')->name('order.getimages');
 });

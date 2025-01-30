@@ -19,9 +19,10 @@ class HomeController extends Controller
     public function index()
     {
         $stores = Store::with('storeType')->orderBy('name','asc')->get();
-        //$eBayServie = new EbayService();
-        //$test = $eBayServie->generateFeed('785a48a1-c62e-656b-7985-dda7f53c4a54');
-        //$eBayServie->submitFeed('','785a48a1-c62e-656b-7985-dda7f53c4a54');
+        $eBayServie = new EbayService();
+        //$test = $eBayServie->generateFeed('c9a99498-1aac-4a4a-a8f6-a27df41b8763');
+        //$eBayServie->submitFeed('221284a9-d400-4712-9eee-a9850f52dd88','c9a99498-1aac-4a4a-a8f6-a27df41b8763');
+        $eBayServie->getInputFeed('task-1-1274330','c9a99498-1aac-4a4a-a8f6-a27df41b8763');
         //echo 'sd';die;
         /*$googleService = new GoogleShoppingService();
         $test = $googleService->generateFeed('0310236d-295f-bd6d-730d-35fcc324bdf9');
