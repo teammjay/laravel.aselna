@@ -48,6 +48,7 @@ class AmazonService implements MarketplaceServiceInterface
             'listing_id' => $listingId,
             // 'file_id' => $fileDetail->id,
             'status' => 0,
+
             'store_id' => $listingInfo->store_id,
             'created_by' => $created_by
         );
