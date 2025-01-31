@@ -548,6 +548,7 @@
                                                     <tr class="sticky-top bg-white" style="top:-1px;">
                                                         <th></th>
                                                         <th>Carrier</th>
+                                                        <th>Product Code</th>
                                                         <th>Brand</th>
                                                         <th>Type</th>
                                                         <th>modelName</th>
@@ -751,6 +752,12 @@
                             title_template.push($(this).val())
                         });
 
+                        let devices = [];
+                        $('input[name="device[]"]').each(function()
+                        {
+                            devices.push($(this).val())
+                        });
+
                         $("#ajax-preloader").show();
                         $.ajax({
                             url: "{{ route('listing.generateproductlisting') }}",
@@ -758,6 +765,7 @@
                             data: {
                                 product_id:product_ids,
                                 device_type:device_type,
+                                devices:devices,
                                 brand:brand,
                                 rating:rating,
                                 popularity:popularity,

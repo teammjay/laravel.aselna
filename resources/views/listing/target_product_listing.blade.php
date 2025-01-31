@@ -9,6 +9,7 @@
                 @endif
             </td>
             <td></td>
+            <td>{{ $device->product_sku }}</td>
             <td>{{ (isset($device->brand->name)) ? $device->brand->name : '' }}</td>
             <td>{{ $device->deviceType->name }}</td>
             <td>{{ $device->name }}</td>

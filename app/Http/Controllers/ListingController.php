@@ -32,7 +32,6 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Mockery\Exception;
 use App\Helpers\QueryFilters;
-use Illuminate\Support\Facades\Log;
 
 class ListingController extends Controller
 {
@@ -749,10 +748,11 @@ class ListingController extends Controller
         $is_selected = $request->input('is_selected');
         $selected_device = $request->input('selected_device');
         if ($product_id) {
-            $query = Device::select('device.*', 'product_interface.product_id')->with('brand', 'rating')->with('deviceType');
+            $query = Device::select('device.*', 'product_interface.product_id','products.product_sku')->with('brand', 'rating')->with('deviceType');
             $query->leftJoin('brands', 'brands.id', '=', 'device.brand_id');
             $query->leftJoin('device_interface', 'device_interface.device_id', '=', 'device.id');
             $query->leftJoin('product_interface', 'product_interface.interface_id', '=', 'device_interface.interface_id');
+            $query->leftJoin('products', 'product_interface.product_id', '=', 'products.product_id');
 
             $query->whereIn('product_interface.product_id', $product_id);
             if ($device_type) {
@@ -836,6 +836,7 @@ class ListingController extends Controller
             $product_ids = $request->input('product_id');
             $device_type = $request->input('device_type');
             $brand = $request->input('brand');
+            $device = $request->input('devices');
             $rating = $request->input('rating');
             $popularity = $request->input('popularity');
             $store_id = $request->input('store_id');
@@ -884,17 +885,14 @@ class ListingController extends Controller
                                     if (str_contains($title_template, '#short_keyword')) {
                                         $title_template = str_replace('#short_keyword', $product_short_keyword, $title_template);
                                     }
-
                                     if (str_contains($title_template, '#long_keyword')) {
 
                                         $title_template = str_replace('#long_keyword', $product_long_keyword, $title_template);
                                     }
-
                                     if (str_contains($title_template, '#unique_code')) {
 
                                         $title_template = str_replace('#unique_code', '[^]', $title_template);
                                     }
-
                                     if (str_contains($title_template, '#product')) {
 
                                         $title_template = str_replace('#product', $product_title, $title_template);
@@ -921,6 +919,9 @@ class ListingController extends Controller
                                 if ($popularity) {
                                     $query->whereIn('device.rating_id', $popularity);
                                 }
+                                if ($device) {
+                                    $query->whereIn('device.id', $device);
+                                }
                                 $query->orderBy('brand_name', 'asc');
                                 $query->orderBy('device.name', 'asc');
                                 $devices = $query->get();
@@ -945,20 +946,16 @@ class ListingController extends Controller
                                             break;
                                     }
                                 }
-
                             } else {
                                 return response()->json([
                                     'error' => true,
                                     'message' => 'session value missing',
                                 ]);
                             }
-
                         }
-
                         /*echo '<pre>';
                         print_r($productsArray);
                         echo '</pre>';*/
-
                     }
                 }
 
@@ -996,8 +993,6 @@ class ListingController extends Controller
                         'message' => 'no title generated',
                     ]);
                 }
-
-
             } else {
                 return response()->json([
                     'error' => true,
@@ -1110,6 +1105,7 @@ class ListingController extends Controller
 
             $tempTitle = str_replace('#device_series', $currentBrand, $baseTitle);
             $tempTitle = str_replace('#devices', $currentBrand, $tempTitle);
+            $tempTitle = str_replace('#model_series', $currentBrand, $tempTitle);
             $titles[$k]['title'] = $tempTitle;
             $titles[$k]['product_code'] = $product->product->product_sku;
             $titles[$k]['product_id'] = $product->product_id;
