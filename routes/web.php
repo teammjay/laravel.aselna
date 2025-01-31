@@ -39,6 +39,7 @@ use App\Http\Controllers\ListingTemplateController;
 use App\Http\Controllers\ProductColorController;
 use App\Http\Controllers\MessagesController;
 use App\Http\Controllers\OrdersController;
+use App\Http\Controllers\ShipmentsController;
 use App\Services\Auth\EbayAuthService;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
@@ -408,4 +409,12 @@ Route::controller(OrdersController::class)->group(function () {
     Route::get('/orders/edit/{id}', 'edit')->name('order.edit');
     Route::post('/orders/edit', 'update')->name('order.update');
     Route::post('/orders/getimages', 'getImages')->name('order.getimages');
+});
+
+Route::controller(ShipmentsController::class)->group(function () {
+    Route::get('/shipment', 'index')->name('shipment.list');
+    Route::get('shipment/filter', 'filter')->name('shipment.filter');
+    Route::get('/shipment/edit/{id}', 'edit')->name('shipment.edit');
+    Route::post('/shipment/edit', 'update')->name('shipment.update');
+    Route::post('/shipment/getimages', 'getImages')->name('shipment.getimages');
 });

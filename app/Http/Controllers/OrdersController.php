@@ -16,4 +16,10 @@ class OrdersController extends Controller
 
         return view('orders.list',compact('perPage','stores'));
     }
+
+
+    public function edit(string $id)
+    {
+        return view('orders.detail');
+    }
 }
