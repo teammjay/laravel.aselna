@@ -1239,7 +1239,7 @@ class ListingController extends Controller
                     $store_detail = Store::where('id', $store_id)->first();
                     $product_models = $request->input('product_models');
                     if ($product_models) {
-                        $product_models = (array) json_decode($product_models);
+                        $product_models = json_decode($product_models);
                     }
                     /*echo '<pre>';
                     print_r($product_models);
@@ -1322,7 +1322,7 @@ class ListingController extends Controller
                             $summary_products[$key]['product_code'] = $productDetail['product']['product_sku'];
                             $listingProductArr = [
                                 'product_name' => $product_name,
-                                'description' => $productDetail['description'],
+                                'description' => ($productDetail['description'] != '') ? $productDetail['description'] : $productDetail['product']['product_description'] ,
                                 'product_category' => $productDetail['product']['product_type']['name'],
                                 'sku' => $sku,
                                 'price' => $product_prices[$key],
@@ -1343,7 +1343,7 @@ class ListingController extends Controller
 
                                 $modelDetail = array(
                                     'title' => $product_name,
-                                    'description' => $productDetail['description'],
+                                    'description' => ($productDetail['description'] != '') ? $productDetail['description'] : $productDetail['product']['product_description'],
                                     'store_type_listing_id' => $store_type_listing_id,
                                     'sku' => $sku,
                                     'store_sku' => '',
@@ -1351,7 +1351,7 @@ class ListingController extends Controller
                                     'quantity' => ($store_detail->default_listing_quantity) ? $store_detail->default_listing_quantity : 10,
                                     'sync_status' => 1,
                                     'store_product_id' => $store_product_ids[$key],
-                                    'manufacturer_id' => $productDetail['manufacturer_id'],
+                                    'manufacturer_id' => ($productDetail['manufacturer_id'] != '') ? $productDetail['manufacturer_id'] : $productDetail['product']['manufacturer_id'],
                                     'generation_type_id' => $generation_type_id,
                                     'overwrite_title' => 1,
                                     'overwrite_price' => $product_price_overwrites[$key],

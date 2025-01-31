@@ -350,7 +350,7 @@
             ]
         });
 
-        $( '#orderssTable_wrapper').removeClass( 'form-inline' );
+        $( '#ordersTable_wrapper').removeClass( 'form-inline' );
 
         $.fn.dataTable.ext.errMode = 'throw';
     }
