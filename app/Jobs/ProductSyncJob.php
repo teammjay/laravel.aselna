@@ -34,35 +34,35 @@ class ProductSyncJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $easyesaleProductsQ = DB::connection('easyesale_db')->table('product')
-            ->whereNull('deleted_by')
-            ->where('status', '=', '1')->orderBy('id');
-
-        if (env('APP_ENV') === 'local') {
-            Log::info('Local Environment');
-            $easyesaleProductsQ->where('oem_generic', '=', '2');
-        }
-
-        try {
-            $easyesaleProductsQ->chunk(100, function ($easyesaleProducts) {
-                foreach ($easyesaleProducts as $product) {
-                    $this->updateProduct($product);
-
-                    $this->createProductTitleKeywords($product);
-
-                    $fonusProduct = DB::connection('fonus_db')->table('tbl_product')->where('custom_label', $product->code)->first();
-                    $this->createProductFeatures($fonusProduct, $product->id);
-                }
-            });
-        } catch (Exception $e) {
-            Log::error($e->getMessage());
-        }
+//        $easyesaleProductsQ = DB::connection('easyesale_db')->table('product')
+//            ->whereNull('deleted_by')
+//            ->where('status', '=', '1')->orderBy('id');
+//
+//        if (env('APP_ENV') === 'local') {
+//            Log::info('Local Environment');
+//            $easyesaleProductsQ->where('oem_generic', '=', '2');
+//        }
+//
+//        try {
+//            $easyesaleProductsQ->chunk(100, function ($easyesaleProducts) {
+//                foreach ($easyesaleProducts as $product) {
+//                    $this->updateProduct($product);
+//
+//                    $this->createProductTitleKeywords($product);
+//
+//                    $fonusProduct = DB::connection('fonus_db')->table('tbl_product')->where('custom_label', $product->code)->first();
+//                    $this->createProductFeatures($fonusProduct, $product->id);
+//                }
+//            });
+//        } catch (Exception $e) {
+//            Log::error($e->getMessage());
+//        }
 
         $storeProductsQ = DB::connection('easyesale_db')->table('store_product')->orderBy('id');
 
         if (env('APP_ENV') === 'local') {
             Log::info('Local Environment');
-            $storeProductsQ->whereRaw('id in (select store_product_id from oydera_listing_item where id in (select item_id from oydera_listing_item_link where listing_id = \'b9ab42b9-40ed-c170-3f3e-49eb76af1c20\'))');
+            $storeProductsQ->whereRaw('id in (select store_product_id from oydera_listing_item where id in (select item_id from oydera_listing_item_link where listing_id = \'fa15f630-a775-9005-28ec-7436a25ff6b8\'))');
         }
 
         try {

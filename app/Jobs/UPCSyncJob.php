@@ -40,9 +40,7 @@ class UPCSyncJob implements ShouldQueue
         if (is_null($upc->company_prefix)) {
             return;
         }
-        UpcGenerate::updateOrCreate([
-            'id' => $upc->id
-        ], [
+        $data = [
             'company_prefix' => $upc->company_prefix,
             'id' => $upc->id,
             'number_of_codes' => $upc->number_of_codes,
@@ -50,6 +48,7 @@ class UPCSyncJob implements ShouldQueue
             'store' => $upc->store_id,
             'created_at' => now(),
             'updated_at' => now()
-        ]);
+        ];
+        UpcGenerate::updateOrCreate(['id' => $upc->id],$data );
     }
 }

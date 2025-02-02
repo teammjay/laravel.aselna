@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Jobs\BrandSyncJob;
 use App\Jobs\CarrierSyncJob;
 use App\Jobs\CategorySyncJob;
+use App\Jobs\DataPatch;
 use App\Jobs\DeviceInterfaces;
 use App\Jobs\DeviceRatingSyncJob;
 use App\Jobs\DeviceSeriesSyncJob;
@@ -33,6 +34,7 @@ use App\Jobs\StoreTypeListingSyncJob;
 use App\Jobs\StoreTypeSyncJob;
 use App\Jobs\UPCSyncJob;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Bus;
 
 class SyncAllTables extends Command
 {
@@ -55,35 +57,39 @@ class SyncAllTables extends Command
      */
     public function handle()
     {
-//        FeedGenerationJob::dispatch('b9ab42b9-40ed-c170-3f3e-49eb76af1c20');
-        StoreTypeSyncJob::dispatch();
-        StoreSyncJob::dispatch();
-        ManufacturerSyncJob::dispatch();
-        DeviceTypesSyncJob::dispatch();
-        DeviceRatingSyncJob::dispatch();
-        BrandSyncJob::dispatch();
-        DeviceSeriesSyncJob::dispatch();
-        DevicesSyncJob::dispatch();
-        CategorySyncJob::dispatch();
-        ProductConditionJob::dispatch();
-        CarrierSyncJob::dispatch();
-        ShippingCarrierJob::dispatch();
-        InterfaceSyncJob::dispatch();
-        DeviceInterfaces::dispatch();
-        ProductColorSync::dispatch();
-        GenerationTypeAndTemplateSync::dispatch();
-        ProductSyncJob::dispatch();
-        ProductChannelDetailSyncJob::dispatch();
-        ProductInterfaces::dispatch();
-        ListingSyncJob::dispatch();
-        ListingItemSyncJob::dispatch();
-        ListingItemDataSyncJob::dispatch();
-        ListingItemLinkSyncJob::dispatch();
-        StoreTypeListingSyncJob::dispatch();
-        ListingFeedSyncJob::dispatch();
-        UPCSyncJob::dispatch();
-        LogisticCentreSyncJob::dispatch();
-        ProductImagesSyncJob::dispatch();
-        ProductAlternativeImagesSyncJob::dispatch();
+        Bus::chain([
+            StoreSyncJob::dispatch(),
+            ManufacturerSyncJob::dispatch(),
+            DeviceTypesSyncJob::dispatch(),
+            DeviceRatingSyncJob::dispatch(),
+            BrandSyncJob::dispatch(),
+            DeviceSeriesSyncJob::dispatch(),
+            DevicesSyncJob::dispatch(),
+            CategorySyncJob::dispatch(),
+            ProductConditionJob::dispatch(),
+            CarrierSyncJob::dispatch(),
+            ShippingCarrierJob::dispatch(),
+            InterfaceSyncJob::dispatch(),
+            DeviceInterfaces::dispatch(),
+            ProductColorSync::dispatch(),
+            GenerationTypeAndTemplateSync::dispatch(),
+            ProductSyncJob::dispatch(),
+            ProductChannelDetailSyncJob::dispatch(),
+            ProductInterfaces::dispatch(),
+            ListingSyncJob::dispatch(),
+            ListingItemSyncJob::dispatch(),
+            ListingItemDataSyncJob::dispatch(),
+            ListingItemLinkSyncJob::dispatch(),
+            StoreTypeListingSyncJob::dispatch(),
+            ListingFeedSyncJob::dispatch(),
+            UPCSyncJob::dispatch(),
+            LogisticCentreSyncJob::dispatch(),
+            ProductImagesSyncJob::dispatch(),
+            ProductAlternativeImagesSyncJob::dispatch(),
+            StoreTypeSyncJob::dispatch(),
+        ]);
+//        DataPatch::dispatch();
+//        FeedGenerationJob::dispatch('fa15f630-a775-9005-28ec-7436a25ff6b8');
+
     }
 }

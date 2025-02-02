@@ -18,6 +18,19 @@ class WalmartService implements MarketplaceServiceInterface
     public function generateFeed($listingId)
     {
         $listingInfo = Listing::where('id', $listingId)->first();
+        $created_by = auth()->user()->name ?? 'admin';
+
+        $feedData = array(
+            'listing_id' => $listingId,
+            // 'file_id' => $fileDetail->id,
+            'status' => 0,
+
+            'feed_type' => $listingInfo->feed_type,
+            'store_id' => $listingInfo->store_id,
+            'created_by' => $created_by
+        );
+        ListingFeed::updateOrCreate(['listing_id' => $listingId],$feedData);
+
         switch ($listingInfo->feed_type) {
             case FeedTypes::CREATE:
                 $this->generateCreateFeed($listingInfo, $listingId);
@@ -37,17 +50,6 @@ class WalmartService implements MarketplaceServiceInterface
             default:
                 break;
         }
-
-        $created_by = auth()->user()->name ?? 'admin';
-        $feedData = array(
-            'listing_id' => $listingId,
-            // 'file_id' => $fileDetail->id,
-            'status' => 0,
-            'feed_type' => $listingInfo->feed_type,
-            'store_id' => $listingInfo->store_id,
-            'created_by' => $created_by
-        );
-        ListingFeed::updateOrCreate(['listing_id' => $listingId],$feedData);
 
         return 'feeds/walmart/' . $listingId . '.json';
     }
@@ -167,6 +169,7 @@ class WalmartService implements MarketplaceServiceInterface
             $storeTypeCategory = $item->storeProduct->storeTypeCategory;
             $productObj = $item->storeProduct->product;
             $productColor = $productObj->productColor;
+            $productData = $item->storeProduct->product;
 
             $product = [
                 'Orderable' => [
@@ -178,12 +181,12 @@ class WalmartService implements MarketplaceServiceInterface
                     ],
                     'electronicsIndicator' => 'Yes',
                     'shipsInOriginalPackaging' => 'Yes',
-                    'price' => '',
+                    'price' => $item->price,
                     'sku' => $item->sku,
                     'brand' => $listingInfo->store->name,
                     'startDate' => '2019-01-01T08:00:00Z',
                     'MustShipAlone' => 'No',
-                    'ShippingWeight' => ''
+                    'ShippingWeight' => $productData->product_weight,
                 ]
             ];
 
