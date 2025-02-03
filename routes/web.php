@@ -405,7 +405,7 @@ Route::get('/ebay/refresh-token', [EbayAuthService::class, 'refreshToken'])->nam
 
 Route::controller(OrdersController::class)->group(function () {
     Route::get('/orders', 'index')->name('order.list');
-    Route::get('orders/filter', 'filter')->name('order.filter');
+    Route::post('orders/filter', 'filter')->name('order.filter');
     Route::get('/orders/edit/{id}', 'edit')->name('order.edit');
     Route::post('/orders/edit', 'update')->name('order.update');
     Route::post('/orders/getimages', 'getImages')->name('order.getimages');
