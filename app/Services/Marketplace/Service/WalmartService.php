@@ -6,6 +6,7 @@ use App\Constants\FeedTypes;
 use App\Models\Listing;
 use App\Models\ListingFeed;
 use App\Models\ListingItemLink;
+use App\Models\ListingItemProductImage;
 use App\Services\Auth\WalmartAuthService;
 use App\Services\Marketplace\Contracts\MarketplaceServiceInterface;
 use App\Utils\FileUtility;
@@ -149,6 +150,7 @@ class WalmartService implements MarketplaceServiceInterface
     private function generateCreateFeed($listingInfo, $listingId)
     {
         $listingItems = ListingItemLink::where('listing_id', $listingId)->cursor();
+        $fileSystem = $listingInfo->store->fileSystem;
 
         $jsonFeed = [
             'MPItemFeedHeader' => [
@@ -169,7 +171,14 @@ class WalmartService implements MarketplaceServiceInterface
             $storeTypeCategory = $item->storeProduct->storeTypeCategory;
             $productObj = $item->storeProduct->product;
             $productColor = $productObj->productColor;
-            $productData = $item->storeProduct->product;
+            $price = $item->price;
+            if (!isset($price)) {
+                $price = $item->storeProduct->price;
+            }
+            if (!isset($price)) {
+                $price = $productObj->product_price;
+            }
+
 
             $product = [
                 'Orderable' => [
@@ -181,12 +190,12 @@ class WalmartService implements MarketplaceServiceInterface
                     ],
                     'electronicsIndicator' => 'Yes',
                     'shipsInOriginalPackaging' => 'Yes',
-                    'price' => $item->price,
+                    'price' => $price,
                     'sku' => $item->sku,
                     'brand' => $listingInfo->store->name,
                     'startDate' => '2019-01-01T08:00:00Z',
                     'MustShipAlone' => 'No',
-                    'ShippingWeight' => $productData->product_weight,
+                    'ShippingWeight' => $productObj->product_weight,
                 ]
             ];
 
@@ -200,14 +209,24 @@ class WalmartService implements MarketplaceServiceInterface
                 $keyFeatures[] = $feature->value;
             }
 
+            $images = ListingItemProductImage::where('listing_item_id', $item->id)->get();
+            Log::info('Images: ' . json_encode($images));
+            Log::info('File System: ' . json_encode($fileSystem));
+            $imagesPath = [];
+            foreach ($images as $image) {
+                $imagesPath[] = $fileSystem->url_base_path . $image->path;
+            }
+
+            // skip only the first one for the secondary image
             $product['Visible'][$storeTypeCategory->name] = [
                 'shortDescription' => $item->description,
-                'mainImageUrl' => '',
-                'productSecondaryImageURL' => '',
+                'mainImageUrl' => $imagesPath[0],
+                'productSecondaryImageURL' => array_slice($imagesPath, 1),
                 'keyFeatures' => $keyFeatures,
-                'manufacturerPartNumber' => $item->npm,
+                'manufacturerPartNumber' => $item->mpn,
                 'modelNumber' => $item->sku,
-                'color' => $productColor->name,
+                'msrp' => $productObj->product_mrsp,
+                'color' => [$productColor->name ?? ''],
                 'compatibleDevices' => $compatibleDevices,
             ];
 

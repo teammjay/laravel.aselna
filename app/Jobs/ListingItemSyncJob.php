@@ -34,7 +34,7 @@ class ListingItemSyncJob implements ShouldQueue
 
         if (env('APP_ENV') == 'local') {
             Log::info("Came tHEre");
-            $listingItemsQ->whereRaw('id in (select item_id from oydera_listing_item_link where listing_id = \'fa15f630-a775-9005-28ec-7436a25ff6b8\')');
+            $listingItemsQ->whereRaw('id in (select item_id from oydera_listing_item_link where listing_id = \'1dd2cd15-757d-d9fc-02af-21a1eba741e7\')');
 //            $listingItemsQ->whereRaw('store_product_id in (select id from oydera_store_product where product_id in (select id from oydera_product where oem_generic = 2))');
         }
 

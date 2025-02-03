@@ -82,6 +82,15 @@ class AmazonService implements MarketplaceServiceInterface
             $messages = $xml->addChild('Message');
             $messages->addChild('MessageID', $index);
             $itemDetail = $listingItem->item;
+            $productData = $itemDetail->storeProduct->product;
+
+            $price = $itemDetail->price;
+            if (!isset($price)) {
+                $price = $itemDetail->storeProduct->price;
+            }
+            if (!isset($price)) {
+                $price = $productData->product_price;
+            }
 
             $product = $messages->addChild('Product');
             $product->addChild('SKU', $itemDetail->sku);
@@ -106,30 +115,28 @@ class AmazonService implements MarketplaceServiceInterface
                 $descriptionData->addChild('Brand', $safeText);
             }
 
-            $productData = $itemDetail->storeProduct->product;
-
-            $packageDimensions = $descriptionData->addChild('PackageDimensions');
-            $packageDimensions->addChild('Length', $productData->package_dimensions_length);
-            $packageDimensions->addChild('Width', $productData->package_dimensions_width);
-            $packageDimensions->addChild('Height', $productData->package_dimensions_height);
-            $packageDimensions->addChild('UnitOfMeasure', 'IN');
-
+            if (isset($productData)) {
+                $packageDimensions = $descriptionData->addChild('PackageDimensions');
+                $packageDimensions->addChild('Length', $productData->package_dimensions_length);
+                $packageDimensions->addChild('Width', $productData->package_dimensions_width);
+                $packageDimensions->addChild('Height', $productData->package_dimensions_height);
+                $packageDimensions->addChild('UnitOfMeasure', 'IN');
+            }
 
             $descriptionData->addChild('MSRP', $itemDetail->price);
             if (isset($itemDetail->manufacturer)) {
                 $descriptionData->addChild('Manufacturer', $itemDetail->manufacturer->name);
             }
 
-            $storeProducts = $itemDetail->storeProduct;
-            if (isset($storeProducts)) {
-                foreach ($storeProducts->features as $feature) {
+            if (isset($productData)) {
+                foreach ($productData->features as $feature) {
                     $safeText = htmlspecialchars($feature->value, ENT_QUOTES | ENT_XML1, 'UTF-8'); // Escapes special characters
                     if (isset($safeText)) {
                         $descriptionData->addChild('BulletPoint', $safeText);
                     }
                 }
 
-                $categoryId = $storeProducts->store_type_category_id;
+                $categoryId = $productData->store_type_category_id;
                 $tempCategoryId = $categoryId;
                 $parentCategory = null;
                 $subCategory = null;

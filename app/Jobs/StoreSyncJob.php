@@ -86,6 +86,7 @@ class StoreSyncJob implements ShouldQueue
 //            'listing_type' => $store->listing_type,
             'brand_name' => $store->brand_name,
             'user_id' => $store->user_id,
+            'file_system_id' => $store->image_file_system_id,
 //             'sku_generation_type' => $store->sku_generation_type,
 //             'fulfilment_node_id' => $store->fulfilment_node_id,
 //             'listing_template_id' => $store->listing_template_id,

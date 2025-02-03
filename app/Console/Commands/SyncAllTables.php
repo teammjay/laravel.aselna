@@ -12,11 +12,13 @@ use App\Jobs\DeviceSeriesSyncJob;
 use App\Jobs\DevicesSyncJob;
 use App\Jobs\DeviceTypesSyncJob;
 use App\Jobs\FeedGenerationJob;
+use App\Jobs\FileSystemSyncJob;
 use App\Jobs\GenerationTypeAndTemplateSync;
 use App\Jobs\InterfaceSyncJob;
 use App\Jobs\ListingFeedSyncJob;
 use App\Jobs\ListingItemDataSyncJob;
 use App\Jobs\ListingItemLinkSyncJob;
+use App\Jobs\ListingItemProductImageSyncJob;
 use App\Jobs\ListingItemSyncJob;
 use App\Jobs\ListingSyncJob;
 use App\Jobs\LogisticCentreSyncJob;
@@ -27,6 +29,7 @@ use App\Jobs\ProductColorSync;
 use App\Jobs\ProductConditionJob;
 use App\Jobs\ProductImagesSyncJob;
 use App\Jobs\ProductInterfaces;
+use App\Jobs\ProductSearchTermSyncJob;
 use App\Jobs\ProductSyncJob;
 use App\Jobs\ShippingCarrierJob;
 use App\Jobs\StoreSyncJob;
@@ -58,6 +61,8 @@ class SyncAllTables extends Command
     public function handle()
     {
         Bus::chain([
+            FileSystemSyncJob::dispatch(),
+            StoreTypeSyncJob::dispatch(),
             StoreSyncJob::dispatch(),
             ManufacturerSyncJob::dispatch(),
             DeviceTypesSyncJob::dispatch(),
@@ -72,6 +77,7 @@ class SyncAllTables extends Command
             InterfaceSyncJob::dispatch(),
             DeviceInterfaces::dispatch(),
             ProductColorSync::dispatch(),
+            ProductSearchTermSyncJob::dispatch(),
             GenerationTypeAndTemplateSync::dispatch(),
             ProductSyncJob::dispatch(),
             ProductChannelDetailSyncJob::dispatch(),
@@ -80,16 +86,16 @@ class SyncAllTables extends Command
             ListingItemSyncJob::dispatch(),
             ListingItemDataSyncJob::dispatch(),
             ListingItemLinkSyncJob::dispatch(),
+            ListingItemProductImageSyncJob::dispatch(),
             StoreTypeListingSyncJob::dispatch(),
             ListingFeedSyncJob::dispatch(),
             UPCSyncJob::dispatch(),
             LogisticCentreSyncJob::dispatch(),
             ProductImagesSyncJob::dispatch(),
             ProductAlternativeImagesSyncJob::dispatch(),
-            StoreTypeSyncJob::dispatch(),
         ]);
 //        DataPatch::dispatch();
-//        FeedGenerationJob::dispatch('fa15f630-a775-9005-28ec-7436a25ff6b8');
+//        FeedGenerationJob::dispatch('1dd2cd15-757d-d9fc-02af-21a1eba741e7');
 
     }
 }
