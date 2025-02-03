@@ -112,14 +112,14 @@
                     </div>
                     <div class="col-md-3">
                         <div class="form-group">
-                            <label for="acknowledge_order">acknowledge_order</label>
+                            <label for="acknowledge_order">acknowledge order</label>
                             <input type="checkbox" class="@error('acknowledge_order') is-invalid @enderror" id="acknowledge_order"
                                    name="acknowledge_order" {{ (isset($store_types['acknowledge_order']) && $store_types['acknowledge_order'] == 1 ) ? 'checked' : '' }}>
                         </div>
                     </div>
                     <div class="col-md-3">
                         <div class="form-group">
-                            <label for="create_image_per_listing">acknowledge_order</label>
+                            <label for="create_image_per_listing">create image per listing</label>
                             <input type="checkbox" class="@error('create_image_per_listing') is-invalid @enderror" id="create_image_per_listing"
                                    name="create_image_per_listing" {{ ( isset($store_types['create_image_per_listing']) && $store_types['create_image_per_listing'] == 1) ? 'checked' : '' }}>
                         </div>

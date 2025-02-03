@@ -72,7 +72,7 @@
             </select>
         </div>
         <div class="col-md-10 d-flex align-items-center" style="gap:10px;">
-            <button type="button" class="btn btn-default" id="edit_list" disabled="">
+            <button type="button" class="btn btn-default" id="edit_order" disabled="">
                 <i class="fas fa-fw fa-pencil-alt"></i> Edit
             </button>
         </div>
@@ -86,22 +86,66 @@
             <form id="filter-form">
                 <input type="hidden" name="store_id" id="store_id">
                 <div class="row pt-3">
-                    <div class="col-md-4">
+                    <div class="col-md-3">
                         <div class="row">
-                            <div class="col-6 text-right">
+                            <div class="col-4 text-right">
                                Order ID
                             </div>
-                            <div class="col-6">
+                            <div class="col-8">
                                 <input type="text" name="order_id" id="order_id" class="form-control">
                             </div>
                         </div>
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-md-3">
                         <div class="row">
-                            <div class="col-6 text-right">
+                            <div class="col-4 text-right">
+                                Order Date
+                            </div>
+                            <div class="col-8">
+                                <input type="text" name="order_date" id="order_date" class="form-control">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="row">
+                            <div class="col-4 text-right">
+                                First Name
+                            </div>
+                            <div class="col-8">
+                                <input type="text" name="buyer_first_name" id="buyer_first_name" class="form-control">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="row">
+                            <div class="col-4 text-right">
+                                Last Name
+                            </div>
+                            <div class="col-8">
+                                <input type="text" name="buyer_last_name" id="buyer_last_name" class="form-control">
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="row pt-3">
+                    <div class="col-md-3">
+                        <div class="row">
+                            <div class="col-4 text-right">
+                                Purchase Order ID
+                            </div>
+                            <div class="col-8">
+                                <input type="text" name="purchase_order_id" id="purchase_order_id" class="form-control">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="row">
+                            <div class="col-4 text-right">
                                 Created Date
                             </div>
-                            <div class="col-6">
+                            <div class="col-8">
                                 <input type="text" name="created_at" id="created_at" class="form-control">
                             </div>
                         </div>
@@ -176,43 +220,39 @@
             }
             $('.card-body').toggle();
         });
-        $('#created_at').datepicker({
+        $('#created_at, #order_date').datepicker({
             dateFormat:'yy-mm-dd',
-
         });
 
         $(document).on('click','#order-list tr',function (e) {
             let ele = $(this);
-            console.log($(e.target));
+
             if ($(e.target).is('input, textarea, select, checkbox, a, i, button, img')) {
                 return;
             }
-            //$('#product-list tr').removeClass('bg-blue');
-            //$('.pro-id').prop('checked',false);
+            $('#order-list tr').removeClass('bg-blue');
+            $('.pro-id').prop('checked',false);
             if(ele.find('.pro-id').is(':checked')){
                 ele.removeClass('bg-blue');
                 ele.find('.pro-id').prop('checked', false);
-                ele.find('.bulk-edit').attr('disabled',true).hide();
-                ele.find('.prVal').show();
             }else {
                 ele.addClass('bg-blue');
                 ele.find('.pro-id').prop('checked', true);
-                $('#edit_product').removeAttr('disabled');
-                $('#update_product').removeAttr('disabled');
+                $('#edit_order').removeAttr('disabled');
             }
 
             if(!$('.pro-id:checked').length){
                 $('#edit_product').attr('disabled',true);
-                $('#update_product').attr('disabled',true);
             }
         });
 
-        $(document).on('click','#edit_product',function () {
-            $('#product-list tr').each(function () {
-                var $ele = $(this);
-                if($ele.find('.pro-id').is(':checked')){
-                    $ele.find('.bulk-edit').removeAttr('disabled').show();
-                    $ele.find('.prVal').hide();
+        $('#edit_order').on('click',function () {
+            let flag = true;
+            $('input[name="order_id[]"]').each(function () {
+                if($(this).is(':checked')){
+                    flag = false;
+                    let selectedId = $(this).val();
+                    location.href = "{{ url('orders/edit') }}/" + selectedId;
                 }
             });
 
@@ -221,12 +261,12 @@
 
         $('#filter-form').on('submit', function(e) {
             e.preventDefault(); // Prevent default form submission
-            //loadDatatables();
+            loadDatatables();
         });
 
         $(document).on('change','#listing_store',function () {
             $('#store_id').val($(this).val());
-            //loadDatatables();
+            loadDatatables();
         });
 
         //loadDatatables();
@@ -274,7 +314,7 @@
             });
         });
 
-        $("#ordersTable").dataTable();
+        loadDatatables();
     });
 
     function loadDatatables(){
@@ -321,7 +361,7 @@
                 //processData: false,
                 //contentType: false
             },
-            "order": [[ 10, "desc" ]],
+            "order": [[ 2, "desc" ]],
             'columns': [
                 { data: 'order_id'},
                 { data: 'store' },
