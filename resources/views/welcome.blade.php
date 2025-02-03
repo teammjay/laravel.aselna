@@ -45,8 +45,8 @@
                 <option value="">Select Store</option>
                 @foreach($stores as $store)
                     <option value="{{ $store->id }}" id="{{ $store->id }}"
-                            data-store-name="{{ $store->name }} - {{ $store->storeType->name }}">{{ $store->name }}
-                        - {{ $store->storeType->name }}</option>
+                            data-store-name="{{ $store->name }} - {{ $store->storeType ? $store->storeType->name : '' }}">{{ $store->name }}
+                        - {{ $store->storeType ? $store->storeType->name : '' }}</option>
                 @endforeach
             </select>
         </div>
