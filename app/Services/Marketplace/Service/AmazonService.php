@@ -82,6 +82,7 @@ class AmazonService implements MarketplaceServiceInterface
             $messages = $xml->addChild('Message');
             $messages->addChild('MessageID', $index);
             $itemDetail = $listingItem->item;
+            $storeProduct = $itemDetail->storeProduct;
             $productData = $itemDetail->storeProduct->product;
 
             $price = $itemDetail->price;
@@ -110,10 +111,15 @@ class AmazonService implements MarketplaceServiceInterface
             $safeText = htmlspecialchars($itemDetail->title, ENT_QUOTES | ENT_XML1, 'UTF-8');
             $descriptionData->addChild('Title', $safeText);
 
+            $safeText = htmlspecialchars($productData->product_description, ENT_QUOTES | ENT_XML1, 'UTF-8');
+            $descriptionData->addChild('Description', $safeText);
+
             if (isset($itemDetail->manufacturer)) {
                 $safeText = htmlspecialchars($itemDetail->manufacturer->name, ENT_QUOTES | ENT_XML1, 'UTF-8');
                 $descriptionData->addChild('Brand', $safeText);
             }
+
+            $descriptionData->addChild('MfrPartNumber', $itemDetail->mpn);
 
             if (isset($productData)) {
                 $packageDimensions = $descriptionData->addChild('PackageDimensions');
@@ -129,14 +135,14 @@ class AmazonService implements MarketplaceServiceInterface
             }
 
             if (isset($productData)) {
-                foreach ($productData->features as $feature) {
+                foreach ($storeProduct->features as $feature) {
                     $safeText = htmlspecialchars($feature->value, ENT_QUOTES | ENT_XML1, 'UTF-8'); // Escapes special characters
                     if (isset($safeText)) {
                         $descriptionData->addChild('BulletPoint', $safeText);
                     }
                 }
 
-                $categoryId = $productData->store_type_category_id;
+                $categoryId = $storeProduct->store_type_category_id;
                 $tempCategoryId = $categoryId;
                 $parentCategory = null;
                 $subCategory = null;
