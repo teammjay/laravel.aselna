@@ -22,6 +22,18 @@ class AmazonService implements MarketplaceServiceInterface
     public function generateFeed($listingId)
     {
         $listingInfo = Listing::where('id', $listingId)->first();
+
+        $created_by = auth()->user()->name ?? 'admin';
+        $feedData = array(
+            'listing_id' => $listingId,
+            // 'file_id' => $fileDetail->id,
+            'status' => 0,
+            'feed_type' => $listingInfo->feed_type,
+            'store_id' => $listingInfo->store_id,
+            'created_by' => $created_by
+        );
+        ListingFeed::updateOrCreate(['listing_id' => $listingId], $feedData);
+
         // Generate feed for Amazon
         switch ($listingInfo->feed_type) {
             case FeedTypes::CREATE:
@@ -42,17 +54,6 @@ class AmazonService implements MarketplaceServiceInterface
             default:
                 break;
         }
-
-        $created_by = auth()->user()->name ?? 'admin';
-        $feedData = array(
-            'listing_id' => $listingId,
-            // 'file_id' => $fileDetail->id,
-            'status' => 0,
-            'feed_type' => $listingInfo->feed_type,
-            'store_id' => $listingInfo->store_id,
-            'created_by' => $created_by
-        );
-        ListingFeed::updateOrCreate(['listing_id' => $listingId],$feedData);
 
         //return the file path so that it can be downloaded
         return 'feeds/amazon/' . $listingId . '.xml';
@@ -81,6 +82,15 @@ class AmazonService implements MarketplaceServiceInterface
             $messages = $xml->addChild('Message');
             $messages->addChild('MessageID', $index);
             $itemDetail = $listingItem->item;
+            $productData = $itemDetail->storeProduct->product;
+
+            $price = $itemDetail->price;
+            if (!isset($price)) {
+                $price = $itemDetail->storeProduct->price;
+            }
+            if (!isset($price)) {
+                $price = $productData->product_price;
+            }
 
             $product = $messages->addChild('Product');
             $product->addChild('SKU', $itemDetail->sku);
@@ -100,36 +110,37 @@ class AmazonService implements MarketplaceServiceInterface
             $safeText = htmlspecialchars($itemDetail->title, ENT_QUOTES | ENT_XML1, 'UTF-8');
             $descriptionData->addChild('Title', $safeText);
 
-            if(isset($itemDetail->manufacturer)) {
+            if (isset($itemDetail->manufacturer)) {
                 $safeText = htmlspecialchars($itemDetail->manufacturer->name, ENT_QUOTES | ENT_XML1, 'UTF-8');
                 $descriptionData->addChild('Brand', $safeText);
             }
 
-            $productData = $itemDetail->storeProduct->product;
-
-            $packageDimensions = $descriptionData->addChild('PackageDimensions');
-            $packageDimensions->addChild('Length', $productData->package_dimensions_length);
-            $packageDimensions->addChild('Width', $productData->package_dimensions_width);
-            $packageDimensions->addChild('Height', $productData->package_dimensions_height);
-            $packageDimensions->addChild('UnitOfMeasure', 'IN');
-
+            if (isset($productData)) {
+                $packageDimensions = $descriptionData->addChild('PackageDimensions');
+                $packageDimensions->addChild('Length', $productData->package_dimensions_length);
+                $packageDimensions->addChild('Width', $productData->package_dimensions_width);
+                $packageDimensions->addChild('Height', $productData->package_dimensions_height);
+                $packageDimensions->addChild('UnitOfMeasure', 'IN');
+            }
 
             $descriptionData->addChild('MSRP', $itemDetail->price);
-            if(isset($itemDetail->manufacturer)) {
+            if (isset($itemDetail->manufacturer)) {
                 $descriptionData->addChild('Manufacturer', $itemDetail->manufacturer->name);
             }
 
-            $storeProducts = $itemDetail->storeProduct;
-            if (isset($storeProducts)) {
-                foreach ($storeProducts->features as $feature) {
+            if (isset($productData)) {
+                foreach ($productData->features as $feature) {
                     $safeText = htmlspecialchars($feature->value, ENT_QUOTES | ENT_XML1, 'UTF-8'); // Escapes special characters
-                    $descriptionData->addChild('BulletPoint', $safeText);
+                    if (isset($safeText)) {
+                        $descriptionData->addChild('BulletPoint', $safeText);
+                    }
                 }
 
-                $categoryId = $storeProducts->store_type_category_id;
+                $categoryId = $productData->store_type_category_id;
                 $tempCategoryId = $categoryId;
                 $parentCategory = null;
                 $subCategory = null;
+                $currentCategory = StoreTypeCategory::where('id', $categoryId)->first();
 
                 while ($parentCategory = StoreTypeCategory::where('id', $tempCategoryId)->first()) {
                     if (isset($parentCategory->parent_id)) {
@@ -152,8 +163,10 @@ class AmazonService implements MarketplaceServiceInterface
                     $deviceBrand = $device->brand;
                     $CompatiblePhoneModels = $CompatiblePhoneModels . $deviceBrand->name . ' ' . $device->name . ', ';
                 }
-                $CompatiblePhoneModels = trim($CompatiblePhoneModels, ',');
+                $CompatiblePhoneModels = rtrim($CompatiblePhoneModels, ', ');
                 $subCategoryElement->addChild('CompatiblePhoneModels', $CompatiblePhoneModels);
+
+                $descriptionData->addChild('ItemType', $currentCategory->name);
 
             }
 
@@ -176,7 +189,7 @@ class AmazonService implements MarketplaceServiceInterface
         $this->authService = new AmazonAuthService();
         $generatedFeedId = $this->authService->uploadProductFeed($content);
 
-        $this->authService->submitFeed($generatedFeedId,$listingId);
+        $this->authService->submitFeed($generatedFeedId, $listingId);
     }
 
     public function getResultFeed(mixed $listingId)

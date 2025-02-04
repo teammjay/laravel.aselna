@@ -62,7 +62,7 @@ class ProductSyncJob implements ShouldQueue
 
         if (env('APP_ENV') === 'local') {
             Log::info('Local Environment');
-            $storeProductsQ->whereRaw('id in (select store_product_id from oydera_listing_item where id in (select item_id from oydera_listing_item_link where listing_id = \'b9ab42b9-40ed-c170-3f3e-49eb76af1c20\'))');
+            $storeProductsQ->whereRaw('id in (select store_product_id from oydera_listing_item where id in (select item_id from oydera_listing_item_link where listing_id = \'1dd2cd15-757d-d9fc-02af-21a1eba741e7\'))');
         }
 
         try {
@@ -157,9 +157,6 @@ class ProductSyncJob implements ShouldQueue
 
     private function updateProduct(mixed $product)
     {
-        if (Catalog::where('product_sku', $product->code)->exists()) {
-            return;
-        }
         Catalog::updateOrInsert([
             'product_id' => $product->id,
         ], [
@@ -190,7 +187,7 @@ class ProductSyncJob implements ShouldQueue
             'oem_generic' => $product->oem_generic,
 //            'product_tags'=> $product->weight_weight_unit,
 //            'target_aud'=> $product->weight_weight_unit,
-//            'product_color' => $product->color,
+            'product_color' => $product->color_id,
             'product_qty' => $product->quantity,
 //            'product_reorder_qty',
 //            'product_pick_location' => ,

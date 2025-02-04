@@ -26,5 +26,5 @@ class ProductSearchTerm extends Model
     }
 
 
-    protected $fillable = ['product_id','term', 'sort_order','created_at','updated_at'];
+    protected $fillable = ['id','product_id','term', 'sort_order','created_at','updated_at'];
 }
