@@ -14,8 +14,8 @@ return new class extends Migration
         Schema::create('product_images', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->boolean('main_image')->default(0);
-            $table->string('image');
-            $table->string('thumbnail_image')->nullable();
+            $table->uuid('image');
+            $table->uuid('thumbnail_image')->nullable();
             $table->uuid('product_id');
             $table->foreign('product_id')->references('product_id')->on('products')
                 ->onDelete('cascade');
