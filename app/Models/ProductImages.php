@@ -31,4 +31,9 @@ class ProductImages extends Model
     {
         return $this->belongsTo(StoreProduct::class, 'product_id');
     }
+
+    public function image()
+    {
+        return $this->belongsTo(SysFile::class, 'image');
+    }
 }
