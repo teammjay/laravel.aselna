@@ -3,8 +3,29 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
 
 class Shipment extends Model
 {
-    //
+    // Set a custom table name
+    protected $table = 'shipping_carrier';
+
+    protected $keyType = 'string';
+
+    public $incrementing = false;
+
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($model) {
+            Log::info('Creating Shipping Carrier' . json_encode($model));
+            if (empty($model->id)) {
+                $model->id = (string) Str::uuid();
+            }
+        });
+    }
+
+
+    protected $fillable = ['id','code','name','created_at','updated_at'];
 }

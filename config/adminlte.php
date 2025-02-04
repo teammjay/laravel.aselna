@@ -413,6 +413,11 @@ return [
             'icon' => 'far fa-fw fa-list-alt'
         ],
         [
+            'text' => 'Shipment',
+            'url' => '/shipment',
+            'icon' => 'fa fa-fw fa-shipping-fast'
+        ],
+        [
             'text' => 'Master File Settings',
             'icon' => 'fa fa-fw fa-cogs',
             'submenu' => [
@@ -489,6 +494,11 @@ return [
                 [
                     'text' => 'Shipping Carrier Service',
                     'url' => '/shipping_carrier_service',
+                    'icon' => 'far fa-fw fa-file'
+                ],
+                [
+                    'text' => 'Shipping Carrier Package',
+                    'url' => '/shipping_carrier_package',
                     'icon' => 'far fa-fw fa-file'
                 ],
                 [
