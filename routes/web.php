@@ -40,6 +40,7 @@ use App\Http\Controllers\ProductColorController;
 use App\Http\Controllers\MessagesController;
 use App\Http\Controllers\OrdersController;
 use App\Http\Controllers\ShipmentsController;
+use App\Http\Controllers\ShippingCarrierPackageController;
 use App\Services\Auth\EbayAuthService;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
@@ -417,4 +418,13 @@ Route::controller(ShipmentsController::class)->group(function () {
     Route::get('/shipment/edit/{id}', 'edit')->name('shipment.edit');
     Route::post('/shipment/edit', 'update')->name('shipment.update');
     Route::post('/shipment/getimages', 'getImages')->name('shipment.getimages');
+});
+
+Route::controller(ShippingCarrierPackageController::class)->group(function () {
+    Route::get('/shipping_carrier_package', 'index')->name('shipping_carrier_package.index');
+    Route::get('/shipping_carrier_package/add', 'create')->name('shipping_carrier_package.create');
+    Route::post('/shipping_carrier_package/add', 'store')->name('shipping_carrier_package.store');
+    Route::get('/shipping_carrier_package/edit/{id}', 'edit')->name('shipping_carrier_package.edit');
+    Route::post('/shipping_carrier_package/edit/{id}', 'update')->name('shipping_carrier_package.update');
+    Route::get('/shipping_carrier_package/delete/{id}', 'destroy')->name('shipping_carrier_package.delete');
 });
