@@ -39,10 +39,10 @@ class ProductImagesSyncJob implements ShouldQueue
             ->orderBy('product_id');
 
         if (env('APP_ENV') === 'local') {
-            $productImagesQ->limit(40);
+//            $productImagesQ->limit(40);
         }
 
-        $productImagesQ->chunk(100, function ($productImages) {
+        $productImagesQ->chunk(1000, function ($productImages) {
             foreach ($productImages as $productImage) {
                 $this->createProductImage($productImage);
             }
@@ -72,7 +72,7 @@ class ProductImagesSyncJob implements ShouldQueue
         $mainImageDetail = null;
         $thumbnailImageDetail = null;
 
-        if (env('APP_ENV') !== 'local') {
+        if (env('APP_ENV') === 'local') {
             //check if file exists in storage
             try {
                 if (!file_exists(storage_path('app/public/product_images/' . $productImage->picture_name))) {
@@ -84,11 +84,12 @@ class ProductImagesSyncJob implements ShouldQueue
                     $image = file_get_contents($imagePath);
                     if ($image !== false) {
                         Log::info('ProductImagesSyncJob: ' . $imagePath);
-                        file_put_contents($storagePath, $image);
+//                        file_put_contents($storagePath, $image);
 
                         $extension = pathinfo($imagePath, PATHINFO_EXTENSION);
 
-                        $fileSize = filesize($storagePath);
+//                        $fileSize = filesize($storagePath);
+                        $fileSize = 1;
 
                         $publicUrl = Storage::url(str_replace('public/', '', $localPath . $productImage->picture_name));
 
@@ -118,11 +119,12 @@ class ProductImagesSyncJob implements ShouldQueue
                     $storagePath = storage_path('app/' . $localPath . $productImage->thumbnail_picture_name);
 
                     if ($imageThumbnail !== false) {
-                        file_put_contents($storagePath, $imageThumbnail);
+//                        file_put_contents($storagePath, $imageThumbnail);
 
                         $extension = pathinfo($productImage->thumbnail_picture_name, PATHINFO_EXTENSION);
 
-                        $fileSize = filesize($storagePath);
+//                        $fileSize = filesize($storagePath);
+                        $fileSize = 1;
 
                         $publicUrl = Storage::url(str_replace('public/', '', $localPath . $productImage->thumbnail_picture_name));
 

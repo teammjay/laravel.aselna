@@ -17,6 +17,7 @@ use App\Jobs\GenerationTypeAndTemplateSync;
 use App\Jobs\InterfaceSyncJob;
 use App\Jobs\ListingFeedSyncJob;
 use App\Jobs\ListingItemDataSyncJob;
+use App\Jobs\ListingItemImageCreate;
 use App\Jobs\ListingItemLinkSyncJob;
 use App\Jobs\ListingItemProductImageSyncJob;
 use App\Jobs\ListingItemSyncJob;
@@ -91,11 +92,12 @@ class SyncAllTables extends Command
 //            ListingFeedSyncJob::dispatch(),
 //            UPCSyncJob::dispatch(),
 //            LogisticCentreSyncJob::dispatch(),
-//            ProductImagesSyncJob::dispatch(),
-            ProductAlternativeImagesSyncJob::dispatch(),
+            ProductImagesSyncJob::dispatch(),
+//            ProductAlternativeImagesSyncJob::dispatch(),
         ]);
 //        DataPatch::dispatch();
 //        FeedGenerationJob::dispatch('1dd2cd15-757d-d9fc-02af-21a1eba741e7');
+        ListingItemImageCreate::dispatch('98961190-1253-45ea-9b7c-4cc3d35d98a3');
 
     }
 }
