@@ -126,7 +126,7 @@
                                         <label for="order_risk_score">Order risk score</label>
                                     </div>
                                     <div class="col-md-9">
-                                        <input type="text" class="form-control" id="order_risk_score" name="order_risk_score" value="" readonly>
+                                        <input type="text" class="form-control" id="order_risk_score" name="order_risk_score" value="{{ old('order_risk_score',$orderDetail->order_risk_score) }}" readonly>
                                     </div>
                                 </div>
                                 <div class="row mt-3 g-3 align-items-center">
@@ -134,7 +134,7 @@
                                         <label for="order_risk_message">Order risk message</label>
                                     </div>
                                     <div class="col-md-9">
-                                        <input type="text" class="form-control" id="order_risk_message" name="order_risk_message" value="" readonly>
+                                        <input type="text" class="form-control" id="order_risk_message" name="order_risk_message" value="{{ old('order_risk_message',$orderDetail->order_risk_message) }}" readonly>
                                     </div>
                                 </div>
 
@@ -143,7 +143,7 @@
                                         <label for="contigent">Contingent</label>
                                     </div>
                                     <div class="col-md-9">
-                                        <input type="checkbox" id="contigent" name="contigent">
+                                        <input type="checkbox" id="contigent" name="contigent" {{ ($orderDetail->contigent == 1) ? 'checked'  : '' }}>
                                     </div>
                                 </div>
                             </div>
@@ -173,7 +173,7 @@
                                         <label for="requested_shipment">Requested Shipment</label>
                                     </div>
                                     <div class="col-md-9">
-                                        <input type="text" class="form-control" id="requested_shipment" name="requested_shipment" value="" readonly>
+                                        <input type="text" class="form-control" id="requested_shipment_service" name="requested_shipment_service" value="{{ old('requested_shipment_service',$orderDetail->requested_shipment_service) }}" readonly>
                                     </div>
                                 </div>
                                 <div class="row mt-3 g-3 align-items-center">
@@ -181,7 +181,7 @@
                                         <label for="requested_shipment">Requested Shipment</label>
                                     </div>
                                     <div class="col-md-9">
-                                        <input type="text" class="form-control" id="requested_shipment" name="requested_shipment" value="" readonly>
+                                        <input type="text" class="form-control" id="requested_shipment_carrier" name="requested_shipment_carrier" value="{{ old('requested_shipment_carrier',$orderDetail->requested_shipment_carrier) }}" readonly>
                                     </div>
                                 </div>
                             </div>
@@ -225,20 +225,26 @@
                                 @if(count($orderDetail->orderItem ?? []) > 0)
                                     @foreach($orderDetail->orderItem as $item)
                                         <tr>
-                                            <td></td>
-                                            <td>{{}}</td>
-                                            <td></td>
-                                            <td></td>
-                                            <td></td>
-                                            <td></td>
-                                            <td></td>
-                                            <td></td>
-                                            <td></td>
+                                            <td>
+                                                @if($item->product->product_image_url != '')
+                                                    <div class="main-image">
+                                                        <img src="{{  asset('storage/product_images/'. $item->product->product_image_url) }}" alt="{{  $item->product->product_image_url }}" class="mainImage" width="70" height="70" data-product-id="{{ $item->product->product_id }}">
+                                                    </div>
+                                                @endif
+                                            </td>
+                                            <td>{{ $item->sku }}</td>
+                                            <td>{{ $item->store_sku }}</td>
+                                            <td>{{ $item->product->product_sku }}</td>
+                                            <td>{{ $item->quantity }}</td>
+                                            <td>{{ $item->item_price }}</td>
+                                            <td>{{ $item->id1 }}</td>
+                                            <td>{{ $item->id2 }}</td>
+                                            <td>{{ $item->title }}</td>
                                         </tr>
                                     @endforeach
                                 @else
                                     <tr>
-                                        <td colspan="9"></td>
+                                        <td colspan="9">No item found</td>
                                     </tr>
                                 @endif
                                 </tbody>

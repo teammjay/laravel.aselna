@@ -177,23 +177,154 @@
     <div class="modal fade" id="shippingDetailModal">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
-                <div class="modal-header">
+                {{--<div class="modal-header">
                     <h5 class="modal-title" id="shippingDetailModalLabel">Price Update Confirmation</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
+                </div>--}}
                 <div class="modal-body">
-                    <form id="frmproductPrice">
-                        <input type="hidden" name="id" id="product_channel_id">
-                        <p>Are you sure you want to update inventory for the selected listing?</p>
-                        <div class="mb-3">
-                            <label for="sync_price_value" class="col-form-label">Price:</label>
-                            <input type="text" class="form-control" id="sync_price_value" placeholder="Price">
+                    <form id="frmShippingDetail">
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="row mt-3 g-3 align-items-center">
+                                    <div class="col-md-4">
+                                        <label for="carrier_name">Carrier Name</label>
+                                    </div>
+                                    <div class="col-md-8">
+                                        <select class="form-control" id="carrier_name" name="carrier_name">
+                                            <option value=""></option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="row mt-3 g-3 align-items-center">
+                                    <div class="col-md-4">
+                                        <label for="shipment_carrier">Shipping Carrier</label>
+                                    </div>
+                                    <div class="col-md-8">
+                                        <select class="form-control" id="shipment_carrier" name="shipment_carrier">
+                                            <option value=""></option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="row mt-3 g-3 align-items-center">
+                                    <div class="col-md-4">
+                                        <label for="ship_date">Ship Date</label>
+                                    </div>
+                                    <div class="col-md-8 d-flex" style="gap:10px;">
+                                        <input type="text" class="form-control" id="ship_date" name="ship_date" value="">
+                                        <input type="text" class="form-control" id="ship_time" name="ship_time" value="">
+                                    </div>
+                                </div>
+                                <div class="row mt-3 g-3 align-items-center">
+                                    <div class="col-md-4">
+                                        <label for="insurance_value">Insurance Value</label>
+                                    </div>
+                                    <div class="col-md-8">
+                                        <input type="text" class="form-control" id="insurance_value" name="insurance_value" value="">
+                                    </div>
+                                </div>
+                                <div class="row mt-3 g-3 align-items-center">
+                                    <div class="col-md-4">
+                                        <label for="weight">Weight</label>
+                                    </div>
+                                    <div class="col-md-8 d-flex" style="gap:10px;">
+                                        <input type="text" class="form-control" id="weight" name="weight" value="">
+                                        <select class="form-control" id="weight_type" name="weight_type">
+                                            <option value=""></option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="row mt-3 g-3 align-items-center">
+                                    <div class="col-md-4">
+                                        <label for="carrier_package">Carrier Package</label>
+                                    </div>
+                                    <div class="col-md-8">
+                                        <select class="form-control" id="carrier_package" name="carrier_package">
+                                            <option value=""></option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="row mt-3 g-3 align-items-center">
+                                    <div class="col-md-4">
+                                        <label for="cost">Cost</label>
+                                    </div>
+                                    <div class="col-md-8">
+                                        <input type="text" class="form-control" id="cost" name="cost" value="" readonly>
+                                    </div>
+                                </div>
+                                <div class="row mt-3 g-3 align-items-center">
+                                    <div class="col-md-4">
+                                        <label for="shipment_from">Shipment from</label>
+                                    </div>
+                                    <div class="col-md-8">
+                                        <select class="form-control" id="shipment_from" name="shipment_from">
+                                            <option value=""></option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="row mt-3 g-3 align-items-center">
+                                    <div class="col-md-4">
+                                        <label for="shipping_address">Shipping Address</label>
+                                    </div>
+                                    <div class="col-md-8">
+                                        <select class="form-control" id="shipping_address" name="shipping_address">
+                                            <option value=""></option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="row mt-3 g-3 align-items-center">
+                                    <div class="col-md-4">
+                                        <label for="signature">Signature</label>
+                                    </div>
+                                    <div class="col-md-8">
+                                        <div>
+                                            <input type="radio" name="signature" value="signature"> None
+                                        </div>
+                                        <div>
+                                            <input type="radio" name="signature" value="directsignature"> Direct Signature
+                                        </div>
+                                        <div>
+                                            <input type="radio" name="signature" value="adultsignature"> Adult Signature
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row mt-3 g-3 align-items-center">
+                                    <div class="col-md-4">
+                                        <label for="store">Store</label>
+                                    </div>
+                                    <div class="col-md-8">
+                                        <input type="text" class="form-control" id="store" name="store" value="" readonly>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-12 mt-5">
+                                <div class="card">
+                                    <div class="card-header">
+                                        Shipment Items
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="table-responsive">
+                                            <table id="shipmentItemTable" class="table table-bordered table-striped">
+                                                <thead>
+                                                <tr>
+                                                    <th>Image</th>
+                                                    <th>Sku</th>
+                                                    <th>Quantity</th>
+                                                </tr>
+                                                </thead>
+                                                <tbody id="shipment-item-list">
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </form>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancle</button>
-                    <button type="button" class="btn btn-primary" id="syncListingPrice">OK <i class="fa fa-check"></i> </button>
+                    <button type="button" class="btn btn-primary" id="shipThis"><i class="fa fa-save"></i> Ship This </button>
                 </div>
             </div>
         </div>
@@ -209,6 +340,7 @@
     <script>
     $(document).ready(function() {
         $('#listing_store').select2();
+        $('#shippingDetailModal').modal('show');
         $('.card-header').on('click',function () {
             if($(this).find('.fa').hasClass('fa-angle-down')){
                 $(this).find('.fa').removeClass('fa-angle-down');

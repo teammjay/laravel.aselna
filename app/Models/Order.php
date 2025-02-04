@@ -24,7 +24,6 @@ class Order extends Model
         });
     }
 
-
     protected $fillable = ['order_id','store_id','order_date','order_status','buyer_first_name','buyer_last_name','buyer_email','order_total','shipping_address_id','client_id','purchase_order_id','order_synchronization_id','status_message','number_of_sync_attempts','customer_id','order_operation_id','hd_ticket_id','buyer_user_id','order_risk_score','order_risk_message','contingent','requested_shipment_service','requested_shipment_carrier','created_by','updated_by','created_at','updated_at'];
 
     public function store()
