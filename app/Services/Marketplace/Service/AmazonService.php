@@ -7,6 +7,8 @@ use App\Models\Listing;
 use App\Models\ListingFeed;
 use App\Models\ListingItemDetail;
 use App\Models\ListingItemLink;
+use App\Models\ProductSearchTerm;
+use App\Models\ProductTypeKeyword;
 use App\Models\StoreTypeCategory;
 use App\Services\Auth\AmazonAuthService;
 use App\Services\Marketplace\Contracts\MarketplaceServiceInterface;
@@ -171,6 +173,16 @@ class AmazonService implements MarketplaceServiceInterface
                 }
                 $CompatiblePhoneModels = rtrim($CompatiblePhoneModels, ', ');
                 $subCategoryElement->addChild('CompatiblePhoneModels', $CompatiblePhoneModels);
+
+                //combine 5 keywords and add into one element. do this for all the keywords
+                ProductTypeKeyword::where('product_type_id', $productData->product_type)->chunk(6, function ($productKeywords) use ($subCategoryElement) {
+                    $keywords = '';
+                    foreach ($productKeywords as $productKeyword) {
+                        $keywords = $keywords . $productKeyword->keyword . ' ';
+                    }
+                    $keywords = rtrim($keywords, ' ');
+                    $subCategoryElement->addChild('Keywords', $keywords);
+                });
 
                 $descriptionData->addChild('ItemType', $currentCategory->name);
 

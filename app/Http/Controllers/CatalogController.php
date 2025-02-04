@@ -214,7 +214,7 @@ class CatalogController extends Controller
 
                 $data[] = array(
                     "product_id" => $product->product_id.'<input type="checkbox" class="pro-id" name="product['.$key.'][product_id]" value="'.$product->product_id.'" style="visibility:hidden;">',
-                    "product_image_url" => ($product->product_image_url != '') ? '<div class="main-image"><img src="'.asset('storage/product_images/'. $product->product_image_url).'" alt="'.$product->product_image_url.'" class="mainImage" width="70" height="70" data-product-id="'.$product->product_id.'"></div>' : '',
+                    "product_image_url" => ($product->image) ? '<div class="main-image"><img src="'.asset('storage/' .$product->image->getFileUrl()).'" alt="'.$product->image.'" class="mainImage" width="70" height="70" data-product-id="'.$product->product_id.'"></div>' : '',
                     "product_sku" => '<span class="prVal">'.$product->product_sku.'</span><input type="text" class="form-control bulk-edit" name="product['.$key.'][product_sku]" value="'.$product->product_sku.'" disabled>',
                     "product_type" => $product->product_type,
                     "product_title" => '<span class="prVal">'.$product->product_title.'</span><textarea class="form-control bulk-edit" name="product['.$key.'][product_title]" rows="3" disabled>'.$product->product_title.'</textarea>',

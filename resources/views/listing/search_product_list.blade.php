@@ -5,8 +5,8 @@
             <td>
                 <div class="d-flex">
                 <input type="checkbox" class="proCheck" name="products[]" value="{{ $product->id }}" checked>
-                @if(isset($product->Product->product_image_url) && $product->Product->product_image_url != '')
-                    <img src="{{ asset('storage/product_images/'. $product->Product->product_image_url) }}" alt="{{ $product->Product->product_image_url }}" loading="lazy" width="50" height="50" class="mainImage" data-product-id="{{ $product->Product->product_id }}">
+                @if(isset($product->Product->image))
+                    <img src="{{ asset('storage/' .$product->Product->image->getFileUrl()) }}" alt="{{ asset('storage/' .$product->Product->image->getFileUrl())}}" loading="lazy" width="50" height="50" class="mainImage" data-product-id="{{ $product->Product->product_id }}">
                 @endif
                 </div>
             </td>
