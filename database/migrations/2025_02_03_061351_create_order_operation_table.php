@@ -21,9 +21,9 @@ return new class extends Migration
             $table->boolean('synchronized_with_store')->nullable();
             $table->double('insurance_value');
             $table->uuid('shipment_batch_id')->nullable();
-            $table->foreign('shipment_batch_id')->references('id')->on('shipment_batch')->onDelete('cascade');
+//            $table->foreign('shipment_batch_id')->references('id')->on('shipment_batch')->onDelete('cascade');
             $table->uuid('to_address_id')->nullable();
-            $table->foreign('to_address_id')->references('id')->on('postal_address')->onDelete('cascade');
+//            $table->foreign('to_address_id')->references('id')->on('postal_address')->onDelete('cascade');
             $table->integer('sync_status')->nullable();
             $table->string('sync_message')->nullable();
             $table->integer('status');
@@ -34,7 +34,7 @@ return new class extends Migration
             $table->integer('own_packaging_dimensions_length_unit')->nullable();
             $table->integer('signature_confirmation');
             $table->uuid('shipping_package_id')->nullable();
-            $table->foreign('shipping_package_id')->references('id')->on('shipping_package')->onDelete('cascade');
+//            $table->foreign('shipping_package_id')->references('id')->on('shipping_package')->onDelete('cascade');
             $table->double('weight_value')->nullable();
             $table->integer('weight_weight_unit')->nullable();
             $table->uuid('ship_from_id');
@@ -56,7 +56,7 @@ return new class extends Migration
             $table->foreign('return_charge_reject_reason_id')->references('id')->on('order_return_charge_reject_reason')->onDelete('cascade');
             $table->boolean('accept_return_charge')->nullable();
             $table->uuid('return_operation_id')->nullable();
-            $table->foreign('return_operation_id')->references('id')->on('return_operation')->onDelete('cascade');
+//            $table->foreign('return_operation_id')->references('id')->on('return_operation')->onDelete('cascade');
             $table->uuid('shipping_carrier_id')->nullable();
             $table->foreign('shipping_carrier_id')->references('id')->on('shipping_carrier')->onDelete('cascade');
             $table->uuid('shipping_carrier_service_id')->nullable();
@@ -66,7 +66,7 @@ return new class extends Migration
             $table->boolean('buyer_initiated');
             $table->string('shipping_transaction_id')->nullable();
             $table->uuid('shipping_account_transaction_id')->nullable();
-            $table->foreign('shipping_account_transaction_id')->references('id')->on('shipping_account_transaction')->onDelete('cascade');
+//            $table->foreign('shipping_account_transaction_id')->references('id')->on('shipping_account_transaction')->onDelete('cascade');
             $table->boolean('print_to_file');
             $table->integer('previous_operation_type')->nullable();
             $table->string('available_actions')->nullable();

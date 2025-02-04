@@ -48,7 +48,7 @@ class ListingItemImageCreate implements ShouldQueue
         ProductImages::where('product_id', $productData->id)
             ->chunk(100, function ($productImages) use ($listingItemLink) {
             foreach ($productImages as $productImage) {
-                $Image = $productImage->image;
+                $Image = $productImage->imageObj;
                 Log::info('ProductImage :: ' . json_encode($productImage));
             }
         });

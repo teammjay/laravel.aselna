@@ -32,9 +32,9 @@ return new class extends Migration
             $table->foreign('reason_id')->references('id')->on('order_operation_reason')->onDelete('cascade');
             $table->string('notes')->nullable();
             $table->uuid('refund_feedback_id')->nullable();
-            $table->foreign('refund_feedback_id')->references('id')->on('refund_feedback')->onDelete('cascade');
+//            $table->foreign('refund_feedback_id')->references('id')->on('refund_feedback')->onDelete('cascade');
             $table->uuid('return_operation_item_id')->nullable();
-            $table->foreign('return_operation_item_id')->references('id')->on('return_operation_item')->onDelete('cascade');
+//            $table->foreign('return_operation_item_id')->references('id')->on('return_operation_item')->onDelete('cascade');
             $table->string('created_by')->nullable();
             $table->string('updated_by')->nullable();
             $table->timestamps();

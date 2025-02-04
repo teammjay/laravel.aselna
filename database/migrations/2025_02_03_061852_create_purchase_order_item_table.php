@@ -14,10 +14,10 @@ return new class extends Migration
         Schema::create('purchase_order_item', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->uuid('product_id');
-            $table->foreign('product_id')->references('id')->on('products')->onDelete('cascade');
+            $table->foreign('product_id')->references('product_id')->on('products')->onDelete('cascade');
             $table->integer('quantity');
             $table->uuid('location_id')->nullable();
-            $table->foreign('location_id')->references('id')->on('inventory_location')->onDelete('cascade');
+//            $table->foreign('location_id')->references('id')->on('inventory_location')->onDelete('cascade');
             $table->double('unit_price')->nullable();
             $table->string('notes')->nullable();
             $table->uuid('purchase_order_id')->nullable();

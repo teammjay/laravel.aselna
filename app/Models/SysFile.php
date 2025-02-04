@@ -24,5 +24,13 @@ class SysFile extends Model
         });
     }
 
+    // create a imageurl attribute adding location and name
+    public function getFileUrl()
+    {
+        return $this->location . $this->name;
+    }
+
+
+
     protected $fillable = ['id','name','ext','file_size','location','created_by','updated_by','deleted_by','deleted_at','created_at','updated_at'];
 }

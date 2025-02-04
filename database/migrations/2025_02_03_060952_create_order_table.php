@@ -27,7 +27,7 @@ return new class extends Migration
             $table->index('buyer_email');
             $table->double('order_total')->nullable();
             $table->uuid('shipping_address_id');
-            $table->foreign('shipping_address_id')->references('id')->on('postal_address')->onDelete('cascade');
+//            $table->foreign('shipping_address_id')->references('id')->on('postal_address')->onDelete('cascade');
             $table->uuid('client_id');
             $table->foreign('client_id')->references('id')->on('client')->onDelete('cascade');
             $table->string('purchase_order_id')->nullable();
@@ -37,7 +37,7 @@ return new class extends Migration
             $table->string('status_message')->nullable();
             $table->integer('number_of_sync_attempts')->nullable();
             $table->uuid('customer_id');
-            $table->foreign('customer_id')->references('id')->on('customer')->onDelete('cascade');
+            $table->foreign('customer_id')->references('id')->on('customers')->onDelete('cascade');
             $table->uuid('order_operation_id')->nullable();
             $table->index('order_operation_id');
             $table->uuid('hd_ticket_id')->nullable();

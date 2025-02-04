@@ -20,7 +20,7 @@ return new class extends Migration
             $table->double('shipping_cost')->nullable();
             $table->string('purchase_orderid');
             $table->uuid('supplier_id')->nullable();
-            $table->foreign('supplier_id')->references('id')->on('supplier')->onDelete('cascade');
+//            $table->foreign('supplier_id')->references('id')->on('supplier')->onDelete('cascade');
             $table->integer('status');
             $table->uuid('client_id')->nullable();
             $table->foreign('client_id')->references('id')->on('client')->onDelete('cascade');

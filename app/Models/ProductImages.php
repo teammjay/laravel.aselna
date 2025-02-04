@@ -32,7 +32,7 @@ class ProductImages extends Model
         return $this->belongsTo(StoreProduct::class, 'product_id');
     }
 
-    public function image()
+    public function imageObj()
     {
         return $this->belongsTo(SysFile::class, 'image');
     }

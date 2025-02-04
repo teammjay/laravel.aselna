@@ -1,0 +1,49 @@
+<?php
+
+namespace App\Jobs;
+
+use App\Models\ProductTypeKeyword;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Support\Facades\DB;
+
+class ProductTypeKeywordSyncJob implements ShouldQueue
+{
+    use Queueable;
+
+    /**
+     * Create a new job instance.
+     */
+    public function __construct()
+    {
+        //
+    }
+
+    /**
+     * Execute the job.
+     */
+    public function handle(): void
+    {
+        $productTypeKeywordQ = DB::connection('easyesale_db')->table('product_type_keyword')
+            ->orderBy('id');
+
+        $productTypeKeywordQ->chunk(1000, function ($productKeywords) {
+            foreach ($productKeywords as $productKeyword) {
+                $this->createProductKeyword($productKeyword);
+            }
+        });
+    }
+
+    private function createProductKeyword(mixed $productKeyword)
+    {
+        ProductTypeKeyword::updateOrCreate([
+            'id' => $productKeyword->id
+        ], [
+            'id' => $productKeyword->id,
+            'product_type_id' => $productKeyword->product_type_id,
+            'keyword' => $productKeyword->keyword,
+            'priority' => $productKeyword->priority,
+            'code' => $productKeyword->code,
+        ]);
+    }
+}
