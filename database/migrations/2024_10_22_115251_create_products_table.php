@@ -21,7 +21,7 @@ return new class extends Migration
             $table->decimal('product_price', 10,2)->nullable();
             $table->string('product_sku')->nullable();
             $table->integer('product_stock_quantity')->nullable();
-            $table->string('product_image_url')->nullable();
+            $table->uuid('product_image_url')->nullable();
             $table->enum('product_status',['active','discontinued','out_of_stock']);
             $table->decimal('product_weight',10,2)->nullable();
             $table->string('product_dimensions')->nullable();

@@ -20,7 +20,7 @@ return new class extends Migration
             $table->uuid('manufacturing_order_id');
             $table->foreign('manufacturing_order_id')->references('id')->on('manufacturing_order')->onDelete('cascade');
             $table->uuid('product_id');
-            $table->foreign('product_id')->references('id')->on('products')->onDelete('cascade');
+            $table->foreign('product_id')->references('product_id')->on('products')->onDelete('cascade');
             $table->uuid('image_id')->nullable();
             $table->foreign('image_id')->references('id')->on('sys_file')->onDelete('cascade');
             $table->uuid('thumbnail_id')->nullable();

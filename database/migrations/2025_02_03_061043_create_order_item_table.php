@@ -17,7 +17,7 @@ return new class extends Migration
             $table->uuid('order_id')->nullable();
             $table->foreign('order_id')->references('id')->on('order')->onDelete('cascade');
             $table->uuid('product_id')->nullable();
-            $table->foreign('product_id')->references('id')->on('products')->onDelete('cascade');
+            $table->foreign('product_id')->references('product_id')->on('products')->onDelete('cascade');
             $table->uuid('client_id')->nullable();
             $table->foreign('client_id')->references('id')->on('client')->onDelete('cascade');
             $table->uuid('listing_item_id')->nullable();
