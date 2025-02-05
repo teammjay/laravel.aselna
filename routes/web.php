@@ -414,10 +414,11 @@ Route::controller(OrdersController::class)->group(function () {
 
 Route::controller(ShipmentsController::class)->group(function () {
     Route::get('/shipment', 'index')->name('shipment.list');
-    Route::get('shipment/filter', 'filter')->name('shipment.filter');
+    Route::post('shipment/filter', 'filter')->name('shipment.filter');
     Route::get('/shipment/edit/{id}', 'edit')->name('shipment.edit');
     Route::post('/shipment/edit', 'update')->name('shipment.update');
-    Route::post('/shipment/getimages', 'getImages')->name('shipment.getimages');
+    Route::post('/shipment/getshippingcarrier', 'getShippingCarrier')->name('shipment.getshippingcarrier');
+    Route::post('/shipment/getshippingdetail', 'getShippingDetail')->name('shipment.getshippingdetail');
 });
 
 Route::controller(ShippingCarrierPackageController::class)->group(function () {

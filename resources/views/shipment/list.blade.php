@@ -103,15 +103,20 @@
                     <div class="form-group">
                         <div class="d-flex align-items-center justify-content-between">
                             <label class="m-0">Carrier</label>
-                            <select class="form-control w-75">
-
+                            <select class="form-control w-75" id="carrier_id">
+                                <option value="">--</option>
+                                @if(count($shippingCarrier ?? []) > 0)
+                                    @foreach($shippingCarrier as $sCarrier)
+                                        <option value="{{ $sCarrier->id }}">{{ $sCarrier->name }}</option>
+                                    @endforeach
+                                @endif
                             </select>
                         </div>
                     </div>
                     <div class="form-group">
                         <div class="d-flex align-items-center justify-content-between">
                             <label class="m-0">Service</label>
-                            <select class="form-control w-75">
+                            <select class="form-control w-75" id="carrier_service_id">
 
                             </select>
                         </div>
@@ -145,7 +150,7 @@
         </div>
         <div class="col-md-10 d-flex align-items-center" style="gap:10px;">
             <button type="button" class="btn btn-default" id="refresh_list">
-                <i class="fas fa-fw fa-pencil-alt"></i> Refresh
+                <i class="fa fa-fw fa-spinner"></i> Refresh
             </button>
         </div>
     </div>
@@ -182,145 +187,7 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>--}}
                 <div class="modal-body">
-                    <form id="frmShippingDetail">
-                        <div class="row">
-                            <div class="col-md-12">
-                                <div class="row mt-3 g-3 align-items-center">
-                                    <div class="col-md-4">
-                                        <label for="carrier_name">Carrier Name</label>
-                                    </div>
-                                    <div class="col-md-8">
-                                        <select class="form-control" id="carrier_name" name="carrier_name">
-                                            <option value=""></option>
-                                        </select>
-                                    </div>
-                                </div>
-                                <div class="row mt-3 g-3 align-items-center">
-                                    <div class="col-md-4">
-                                        <label for="shipment_carrier">Shipping Carrier</label>
-                                    </div>
-                                    <div class="col-md-8">
-                                        <select class="form-control" id="shipment_carrier" name="shipment_carrier">
-                                            <option value=""></option>
-                                        </select>
-                                    </div>
-                                </div>
-                                <div class="row mt-3 g-3 align-items-center">
-                                    <div class="col-md-4">
-                                        <label for="ship_date">Ship Date</label>
-                                    </div>
-                                    <div class="col-md-8 d-flex" style="gap:10px;">
-                                        <input type="text" class="form-control" id="ship_date" name="ship_date" value="">
-                                        <input type="text" class="form-control" id="ship_time" name="ship_time" value="">
-                                    </div>
-                                </div>
-                                <div class="row mt-3 g-3 align-items-center">
-                                    <div class="col-md-4">
-                                        <label for="insurance_value">Insurance Value</label>
-                                    </div>
-                                    <div class="col-md-8">
-                                        <input type="text" class="form-control" id="insurance_value" name="insurance_value" value="">
-                                    </div>
-                                </div>
-                                <div class="row mt-3 g-3 align-items-center">
-                                    <div class="col-md-4">
-                                        <label for="weight">Weight</label>
-                                    </div>
-                                    <div class="col-md-8 d-flex" style="gap:10px;">
-                                        <input type="text" class="form-control" id="weight" name="weight" value="">
-                                        <select class="form-control" id="weight_type" name="weight_type">
-                                            <option value=""></option>
-                                        </select>
-                                    </div>
-                                </div>
-                                <div class="row mt-3 g-3 align-items-center">
-                                    <div class="col-md-4">
-                                        <label for="carrier_package">Carrier Package</label>
-                                    </div>
-                                    <div class="col-md-8">
-                                        <select class="form-control" id="carrier_package" name="carrier_package">
-                                            <option value=""></option>
-                                        </select>
-                                    </div>
-                                </div>
-                                <div class="row mt-3 g-3 align-items-center">
-                                    <div class="col-md-4">
-                                        <label for="cost">Cost</label>
-                                    </div>
-                                    <div class="col-md-8">
-                                        <input type="text" class="form-control" id="cost" name="cost" value="" readonly>
-                                    </div>
-                                </div>
-                                <div class="row mt-3 g-3 align-items-center">
-                                    <div class="col-md-4">
-                                        <label for="shipment_from">Shipment from</label>
-                                    </div>
-                                    <div class="col-md-8">
-                                        <select class="form-control" id="shipment_from" name="shipment_from">
-                                            <option value=""></option>
-                                        </select>
-                                    </div>
-                                </div>
-                                <div class="row mt-3 g-3 align-items-center">
-                                    <div class="col-md-4">
-                                        <label for="shipping_address">Shipping Address</label>
-                                    </div>
-                                    <div class="col-md-8">
-                                        <select class="form-control" id="shipping_address" name="shipping_address">
-                                            <option value=""></option>
-                                        </select>
-                                    </div>
-                                </div>
 
-                                <div class="row mt-3 g-3 align-items-center">
-                                    <div class="col-md-4">
-                                        <label for="signature">Signature</label>
-                                    </div>
-                                    <div class="col-md-8">
-                                        <div>
-                                            <input type="radio" name="signature" value="signature"> None
-                                        </div>
-                                        <div>
-                                            <input type="radio" name="signature" value="directsignature"> Direct Signature
-                                        </div>
-                                        <div>
-                                            <input type="radio" name="signature" value="adultsignature"> Adult Signature
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="row mt-3 g-3 align-items-center">
-                                    <div class="col-md-4">
-                                        <label for="store">Store</label>
-                                    </div>
-                                    <div class="col-md-8">
-                                        <input type="text" class="form-control" id="store" name="store" value="" readonly>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-12 mt-5">
-                                <div class="card">
-                                    <div class="card-header">
-                                        Shipment Items
-                                    </div>
-                                    <div class="card-body">
-                                        <div class="table-responsive">
-                                            <table id="shipmentItemTable" class="table table-bordered table-striped">
-                                                <thead>
-                                                <tr>
-                                                    <th>Image</th>
-                                                    <th>Sku</th>
-                                                    <th>Quantity</th>
-                                                </tr>
-                                                </thead>
-                                                <tbody id="shipment-item-list">
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </form>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancle</button>
@@ -340,7 +207,7 @@
     <script>
     $(document).ready(function() {
         $('#listing_store').select2();
-        $('#shippingDetailModal').modal('show');
+        //$('#shippingDetailModal').modal('show');
         $('.card-header').on('click',function () {
             if($(this).find('.fa').hasClass('fa-angle-down')){
                 $(this).find('.fa').removeClass('fa-angle-down');
@@ -358,7 +225,7 @@
 
         $(document).on('click','#shipment-list tr',function (e) {
             let ele = $(this);
-            console.log($(e.target));
+
             if ($(e.target).is('input, textarea, select, checkbox, a, i, button, img')) {
                 return;
             }
@@ -372,39 +239,74 @@
             }else {
                 ele.addClass('bg-blue');
                 ele.find('.pro-id').prop('checked', true);
-                $('#edit_product').removeAttr('disabled');
-                $('#update_product').removeAttr('disabled');
+                $.ajax({
+                    url: "{{ route('shipment.getshippingdetail') }}",
+                    type: 'POST',
+                    data: {
+                        operation_id: ele.find('.pro-id').val(),
+                        "_token": '{{ csrf_token() }}'
+                    },
+                    success: function (response) {
+                        // If success, remove the user row from the table
+                        if (response.success) {
+                            $('#shippingDetailModal').find('.modal-body').html(response.html);
+                            $('#shippingDetailModal').modal('show');
+                        }
+                    },
+                    error: function (xhr) {
+                        // Handle error response
+                        alert('Error: ' + xhr.responseJSON.error);
+                    }
+                });
             }
 
-            if(!$('.pro-id:checked').length){
-                $('#edit_product').attr('disabled',true);
-                $('#update_product').attr('disabled',true);
-            }
+
+
         });
 
-        $(document).on('click','#edit_product',function () {
-            $('#product-list tr').each(function () {
-                var $ele = $(this);
-                if($ele.find('.pro-id').is(':checked')){
-                    $ele.find('.bulk-edit').removeAttr('disabled').show();
-                    $ele.find('.prVal').hide();
-                }
-            });
-
+        $(document).on('click','#refresh_list',function () {
+            loadDatatables();
         });
 
 
         $('#filter-form').on('submit', function(e) {
             e.preventDefault(); // Prevent default form submission
-            //loadDatatables();
+            loadDatatables();
         });
 
         $(document).on('change','#listing_store',function () {
             $('#store_id').val($(this).val());
-            //loadDatatables();
+            loadDatatables();
         });
 
-        //loadDatatables();
+        $(document).on('change','#carrier_id',function () {
+            var ele = $(this);
+            $.ajax({
+                url: "{{ route('shipment.getshippingcarrier') }}",
+                type: 'POST',
+                data: {
+                    carrier_id: ele.val(),
+                    "_token": '{{ csrf_token() }}'
+                },
+                success: function (response) {
+                    // If success, remove the user row from the table
+                    if (response.success) {
+                        $('#carrier_service_id').html(response.option);
+                    }
+                },
+                error: function (xhr) {
+                    // Handle error response
+                    alert('Error: ' + xhr.responseJSON.error);
+                }
+            });
+        });
+
+        loadDatatables();
+        loadServiceCarrier();
+
+        $(document).on('change','#carrier_name',function () {
+            loadServiceCarrier();
+        });
 
         $(document).on('click','.mainImage',function () {
             const productId = $(this).data('product-id'); // Get the product ID
@@ -452,6 +354,28 @@
         $("#shipmentTable").dataTable();
     });
 
+    function loadServiceCarrier(){
+        var carrier = $('#carrier_name').val();
+        $.ajax({
+            url: "{{ route('shipment.getshippingcarrier') }}",
+            type: 'POST',
+            data: {
+                carrier_id:carrier,
+                "_token": '{{ csrf_token() }}'
+            },
+            success: function (response) {
+                // If success, remove the user row from the table
+                if (response.success) {
+                    $('#shipment_carrier').html(response.option);
+                }
+            },
+            error: function (xhr) {
+                // Handle error response
+                alert('Error: ' + xhr.responseJSON.error);
+            }
+        });
+    }
+
     function loadDatatables(){
 
         $("#shipmentTable").dataTable().fnDestroy();
@@ -467,7 +391,7 @@
             "searching": false,
             "aLengthMenu": [20, 25, 50, 100],
             'ajax': {
-                url: "{{ route('order.filter') }}",
+                url: "{{ route('shipment.filter') }}",
                 type: "POST",
                 //dataType:'json',
                 headers: {
@@ -481,6 +405,8 @@
                     $.each(formData, function(index, field) {
                         d[field.name] = field.value; // Append form data to the DataTables request
                     });
+
+                    d['store_id'] = $('#listing_store').val();
 
                     var columnValues = [];
                     if (table) {
@@ -496,30 +422,27 @@
                 //processData: false,
                 //contentType: false
             },
-            "order": [[ 10, "desc" ]],
+            "order": [[ 5, "desc" ]],
             'columns': [
-                { data: 'order_id'},
+                { data: 'image'},
+                { data: 'status' },
+                { data: 'carrier_service' },
                 { data: 'store' },
+                { data: 'order_id' },
                 { data: 'order_date' },
-                { data: 'order_image' },
-                { data: 'order_sku' },
-                { data: 'order_status' },
+                { data: 'product_code' },
+                { data: 'weight' },
                 { data: 'first_name' },
                 { data: 'last_name' },
-                { data: 'phone' },
-                { data: 'order_total' },
-                { data: 'buyer_last_name' },
-                { data: 'state' },
-                { data: 'purchase_order_id' },
-                { data: 'customer' }
+                { data: 'city' }
             ],
             columnDefs: [
                 {
-                    targets: 6, // The column index
+                    targets: 3, // The column index
                     className: 'column-no-whitespace' // The class to add
                 },
                 {
-                    targets: [1,6,8], // Index of the column you want to disable sorting for
+                    targets: [1,3,7], // Index of the column you want to disable sorting for
                     orderable: false // Disable sorting
                 }
             ]
