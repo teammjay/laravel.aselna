@@ -99,7 +99,7 @@ class ProductImagesSyncJob implements ShouldQueue
 
         if ($productImage->picture_id === 1) {
             $product->update([
-                'product_image_url' => $mainImageDetail ? $mainImageDetail->id : '',
+                'product_image_url' => $thumbnailImageDetail ? $thumbnailImageDetail->id : null
             ]);
         }
 

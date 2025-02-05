@@ -68,11 +68,12 @@ class ProductAlternativeImagesSyncJob implements ShouldQueue
 
                     $image = file_get_contents($imagePath);
                     if ($image !== false) {
-                        file_put_contents($storagePath, $image);
+//                        file_put_contents($storagePath, $image);
 
                         $extension = pathinfo($imagePath, PATHINFO_EXTENSION);
 
-                        $fileSize = filesize($storagePath);
+//                        $fileSize = filesize($storagePath);
+                        $fileSize = 1;
 
                         $publicUrl = Storage::url(str_replace('public/', '', $localPath . $image_name));
 
@@ -108,15 +109,16 @@ class ProductAlternativeImagesSyncJob implements ShouldQueue
                 if (!file_exists(storage_path('app/public/product_additional_images/' . $thunmail_name))) {
                     $imagePath = 'https://fonusaccessory.com/inv/inv_images/additional_main_images/' . $thunmail_name;
                     $localPath = 'public/product_additional_images/';
-                    $storagePath = storage_path('app/' . $localPath . $thunmail_name);
+                    $storagePath = storage_path('ap p/' . $localPath . $thunmail_name);
 
                     $image = file_get_contents($imagePath);
                     if ($image !== false) {
-                        file_put_contents($storagePath, $image);
+//                        file_put_contents($storagePath, $image);
 
                         $extension = pathinfo($imagePath, PATHINFO_EXTENSION);
 
-                        $fileSize = filesize($storagePath);
+//                        $fileSize = filesize($storagePath);
+                        $fileSize = 1;
 
                         $publicUrl = Storage::url(str_replace('public/', '', $localPath . $thunmail_name));
 
