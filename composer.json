@@ -17,7 +17,8 @@
         "league/oauth2-client": "^2.8",
         "ext-simplexml": "*",
         "ext-dom": "*",
-        "ext-libxml": "*"
+        "ext-libxml": "*",
+        "ext-ftp": "*"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",

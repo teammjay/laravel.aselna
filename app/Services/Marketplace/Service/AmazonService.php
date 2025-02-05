@@ -69,8 +69,6 @@ class AmazonService implements MarketplaceServiceInterface
 
         $xml = new SimpleXMLElement('<?xml version="1.0" encoding="UTF-8"?><AmazonEnvelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"></AmazonEnvelope>');
 
-        $feed = $xml->addChild('MPItemFeed');
-
         $header = $xml->addChild('Header');
         $header->addChild('DocumentVersion', '1.1');
         $header->addChild('MerchantIdentifier', $userIdentifier);
@@ -122,6 +120,12 @@ class AmazonService implements MarketplaceServiceInterface
             }
 
             $descriptionData->addChild('MfrPartNumber', $itemDetail->mpn);
+            $productKeywords = ProductTypeKeyword::where('product_type_id', $productData->product_type)
+                ->limit(25) // Ensures only 30 records are fetched
+                ->get();
+
+            $keywords = $productKeywords->pluck('keyword')->implode(' ');
+            $descriptionData->addChild('SearchTerms', $keywords);
 
             if (isset($productData)) {
                 $packageDimensions = $descriptionData->addChild('PackageDimensions');
@@ -139,7 +143,7 @@ class AmazonService implements MarketplaceServiceInterface
             if (isset($productData)) {
                 foreach ($storeProduct->features as $feature) {
                     $safeText = htmlspecialchars($feature->value, ENT_QUOTES | ENT_XML1, 'UTF-8'); // Escapes special characters
-                    if (isset($safeText)) {
+                    if (!empty(trim($safeText))) {
                         $descriptionData->addChild('BulletPoint', $safeText);
                     }
                 }
@@ -175,14 +179,20 @@ class AmazonService implements MarketplaceServiceInterface
                 $subCategoryElement->addChild('CompatiblePhoneModels', $CompatiblePhoneModels);
 
                 //combine 5 keywords and add into one element. do this for all the keywords
-                ProductTypeKeyword::where('product_type_id', $productData->product_type)->chunk(6, function ($productKeywords) use ($subCategoryElement) {
-                    $keywords = '';
-                    foreach ($productKeywords as $productKeyword) {
-                        $keywords = $keywords . $productKeyword->keyword . ' ';
+                $productKeywords = ProductTypeKeyword::where('product_type_id', $productData->product_type)
+                    ->limit(30) // Ensures only 30 records are fetched
+                    ->get();
+                $counter = 0;
+                $keywords = '';
+                foreach ($productKeywords as $productKeyword) {
+                    $counter++;
+                    $keywords = $keywords . $productKeyword->keyword . ' ';
+                    if ($counter % 6 == 0) {
+                        $keywords = rtrim($keywords, ' ');
+                        $subCategoryElement->addChild('Keywords', $keywords);
+                        $keywords = '';
                     }
-                    $keywords = rtrim($keywords, ' ');
-                    $subCategoryElement->addChild('Keywords', $keywords);
-                });
+                }
 
                 $descriptionData->addChild('ItemType', $currentCategory->name);
 
@@ -207,7 +217,17 @@ class AmazonService implements MarketplaceServiceInterface
         $this->authService = new AmazonAuthService();
         $generatedFeedId = $this->authService->uploadProductFeed($content);
 
-        $this->authService->submitFeed($generatedFeedId, $listingId);
+        $feedResponse = $this->authService->submitFeed($generatedFeedId, $listingId);
+
+        $feedInfo = ListingFeed::where('listing_id', $listingId)->first();
+
+        if ($feedInfo && isset($feedResponse)) {
+            $feedInfo->feed_id = $feedResponse['feedId'];
+            $feedInfo->save();
+            Log::info("Feed ID updated successfully.");
+        } else {
+            Log::error("No ListingFeed found for listing_id: " . $listingId);
+        }
     }
 
     public function getResultFeed(mixed $listingId)

@@ -124,9 +124,19 @@ class WalmartService implements MarketplaceServiceInterface
         $authService = new WalmartAuthService($store->seller_id, $store->secret_key);
 
         $response = $authService->submitFeed();
-//        $resultFeedId = $response['feedId'];
+        Log::info('Response ::' . json_encode($response));
 
-        // save the result and then check the process in queue after like 5-10 minutes
+        $resultFeedId = $response['feedId'];
+
+        $feedInfo = ListingFeed::where('listing_id', $listingId)->first();
+
+        if ($feedInfo) {
+            $feedInfo->feed_id = $resultFeedId;
+            $feedInfo->save();
+            Log::info("Feed ID updated successfully.");
+        } else {
+            Log::error("No ListingFeed found for listing_id: " . $listingId);
+        }
     }
 
     public function getResultFeed(mixed $listingId)
