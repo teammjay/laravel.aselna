@@ -11,7 +11,7 @@ return new class extends Migration {
     public function up(): void
     {
         Schema::create('customers', function (Blueprint $table) {
-            $table->id();
+            $table->uuid('id')->primary();
             $table->string('first_name');
             $table->string('last_name');
             $table->string('full_name')->nullable();
@@ -21,24 +21,27 @@ return new class extends Migration {
         });
 
         Schema::create('customer_emails', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('customer_id')->constrained('customers')->onDelete('cascade');
+            $table->uuid('id')->primary();
+            $table->uuid('customer_id');
+            $table->foreign('customer_id')->references('id')->on('customers')->onDelete('cascade');
             $table->string('email_address');
             $table->boolean('is_primary')->default(false);
             $table->timestamps();
         });
 
         Schema::create('customer_phones', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('customer_id')->constrained('customers')->onDelete('cascade');
+            $table->uuid('id')->primary();
+            $table->uuid('customer_id');
+            $table->foreign('customer_id')->references('id')->on('customers')->onDelete('cascade');
             $table->string('phone_no');
             $table->boolean('is_primary')->default(false);
             $table->timestamps();
         });
 
         Schema::create('customer_addresses', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('customer_id')->constrained('customers')->onDelete('cascade');
+            $table->uuid('id')->primary();
+            $table->uuid('customer_id');
+            $table->foreign('customer_id')->references('id')->on('customers')->onDelete('cascade');
             $table->string('address_combined')->nullable();
             $table->enum('address_type', ['billing', 'shipping', 'other'])->default('other');
             $table->string('address_line_1')->nullable();

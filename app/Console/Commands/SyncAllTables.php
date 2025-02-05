@@ -32,11 +32,13 @@ use App\Jobs\ProductImagesSyncJob;
 use App\Jobs\ProductInterfaces;
 use App\Jobs\ProductSearchTermSyncJob;
 use App\Jobs\ProductSyncJob;
+use App\Jobs\ProductTypeKeywordSyncJob;
 use App\Jobs\ShippingCarrierJob;
 use App\Jobs\StoreSyncJob;
 use App\Jobs\StoreTypeListingSyncJob;
 use App\Jobs\StoreTypeSyncJob;
 use App\Jobs\UPCSyncJob;
+use App\Models\ProductType;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Bus;
 
@@ -62,42 +64,44 @@ class SyncAllTables extends Command
     public function handle()
     {
         Bus::chain([
-            FileSystemSyncJob::dispatch(),
-            StoreTypeSyncJob::dispatch(),
-            StoreSyncJob::dispatch(),
-            ManufacturerSyncJob::dispatch(),
-            DeviceTypesSyncJob::dispatch(),
-            DeviceRatingSyncJob::dispatch(),
-            BrandSyncJob::dispatch(),
-            DeviceSeriesSyncJob::dispatch(),
-            DevicesSyncJob::dispatch(),
-            CategorySyncJob::dispatch(),
-            ProductConditionJob::dispatch(),
-            CarrierSyncJob::dispatch(),
-            ShippingCarrierJob::dispatch(),
-            InterfaceSyncJob::dispatch(),
-            DeviceInterfaces::dispatch(),
-            ProductColorSync::dispatch(),
-            ProductSearchTermSyncJob::dispatch(),
-            GenerationTypeAndTemplateSync::dispatch(),
-            ProductSyncJob::dispatch(),
-            ProductChannelDetailSyncJob::dispatch(),
-            ProductInterfaces::dispatch(),
-            ListingSyncJob::dispatch(),
-            ListingItemSyncJob::dispatch(),
-            ListingItemDataSyncJob::dispatch(),
-            ListingItemLinkSyncJob::dispatch(),
-            ListingItemProductImageSyncJob::dispatch(),
-            StoreTypeListingSyncJob::dispatch(),
-            ListingFeedSyncJob::dispatch(),
-            UPCSyncJob::dispatch(),
-            LogisticCentreSyncJob::dispatch(),
-            ProductImagesSyncJob::dispatch(),
-            ProductAlternativeImagesSyncJob::dispatch(),
+//            FileSystemSyncJob::dispatch(),
+//            StoreTypeSyncJob::dispatch(),
+//            StoreSyncJob::dispatch(),
+//            ManufacturerSyncJob::dispatch(),
+//            DeviceTypesSyncJob::dispatch(),
+//            DeviceRatingSyncJob::dispatch(),
+//            BrandSyncJob::dispatch(),
+//            DeviceSeriesSyncJob::dispatch(),
+//            DevicesSyncJob::dispatch(),
+//            CategorySyncJob::dispatch(),
+//            ProductConditionJob::dispatch(),
+//            CarrierSyncJob::dispatch(),
+//            ShippingCarrierJob::dispatch(),
+//            InterfaceSyncJob::dispatch(),
+//            DeviceInterfaces::dispatch(),
+//            ProductColorSync::dispatch(),
+//            ProductSearchTermSyncJob::dispatch(),
+//            GenerationTypeAndTemplateSync::dispatch(),
+//            ProductSyncJob::dispatch(),
+//            ProductChannelDetailSyncJob::dispatch(),
+//            ProductInterfaces::dispatch(),
+//            ListingSyncJob::dispatch(),
+//            ListingItemSyncJob::dispatch(),
+//            ListingItemDataSyncJob::dispatch(),
+//            ListingItemLinkSyncJob::dispatch(),
+//            ListingItemProductImageSyncJob::dispatch(),
+//            StoreTypeListingSyncJob::dispatch(),
+//            ListingFeedSyncJob::dispatch(),
+//            UPCSyncJob::dispatch(),
+//            LogisticCentreSyncJob::dispatch(),
+//            ProductImagesSyncJob::dispatch(),
+//            ProductAlternativeImagesSyncJob::dispatch(),
+//            ProductSearchTermSyncJob::dispatch(),
+//            ProductTypeKeywordSyncJob::dispatch()
         ]);
 //        DataPatch::dispatch();
-//        FeedGenerationJob::dispatch('1dd2cd15-757d-d9fc-02af-21a1eba741e7');
-//        ListingItemImageCreate::dispatch('98961190-1253-45ea-9b7c-4cc3d35d98a3');
+//        FeedGenerationJob::dispatch('fc1d2fb2-7601-40c8-ae05-554837ddbea7');
+        ListingItemImageCreate::dispatch('a5991f10-f19d-491e-b44a-e11752d1deed');
 
     }
 }
