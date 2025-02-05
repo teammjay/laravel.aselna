@@ -5,7 +5,7 @@
                 <input type="hidden" name="selected_store_product[]" value="{{ $product->id }}">
                 <input type="hidden" class="pid-{{ $product->id }}" name="selected_product[]" value="{{ $product->product_id }}">
                 @if(isset($product->Product->image))
-                    <img src="{{ asset('storage/' .$product->image->getFileUrl()) }}" alt="{{ asset('storage/' .$product->image->getFileUrl()) }}" width="70" height="70">
+                    <img src="{{ asset('storage/' .$product->Product->image->getFileUrl()) }}" alt="{{ asset('storage/' .$product->Product->image->getFileUrl()) }}" width="70" height="70">
                 @endif
             </td>
             <td>{{ (isset($product->Product->product_sku)) ? $product->Product->product_sku : '' }}</td>
