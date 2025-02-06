@@ -64,27 +64,27 @@ class SyncAllTables extends Command
     public function handle()
     {
         Bus::chain([
-//            FileSystemSyncJob::dispatch(),
-//            StoreTypeSyncJob::dispatch(),
-//            StoreSyncJob::dispatch(),
-//            ManufacturerSyncJob::dispatch(),
-//            DeviceTypesSyncJob::dispatch(),
-//            DeviceRatingSyncJob::dispatch(),
-//            BrandSyncJob::dispatch(),
-//            DeviceSeriesSyncJob::dispatch(),
-//            DevicesSyncJob::dispatch(),
-//            CategorySyncJob::dispatch(),
-//            ProductConditionJob::dispatch(),
-//            CarrierSyncJob::dispatch(),
-//            ShippingCarrierJob::dispatch(),
-//            InterfaceSyncJob::dispatch(),
-//            DeviceInterfaces::dispatch(),
-//            ProductColorSync::dispatch(),
-//            ProductSearchTermSyncJob::dispatch(),
+        //    FileSystemSyncJob::dispatch(),
+        //    StoreTypeSyncJob::dispatch(),
+        //    StoreSyncJob::dispatch(),
+        //    ManufacturerSyncJob::dispatch(),
+        //    DeviceTypesSyncJob::dispatch(),
+        //    DeviceRatingSyncJob::dispatch(),
+        //    BrandSyncJob::dispatch(),
+        //    DeviceSeriesSyncJob::dispatch(),
+        //    DevicesSyncJob::dispatch(),
+        //    CategorySyncJob::dispatch(),
+        //    ProductConditionJob::dispatch(),
+        //    CarrierSyncJob::dispatch(),
+        //    ShippingCarrierJob::dispatch(),
+        //    InterfaceSyncJob::dispatch(),
+        //    DeviceInterfaces::dispatch(),
+        //    ProductColorSync::dispatch(),
+        //    ProductSearchTermSyncJob::dispatch(),
 //            GenerationTypeAndTemplateSync::dispatch(),
-//            ProductSyncJob::dispatch(),
+        //    ProductSyncJob::dispatch(),
 //            ProductChannelDetailSyncJob::dispatch(),
-//            ProductInterfaces::dispatch(),
+        //    ProductInterfaces::dispatch(),
 //            ListingSyncJob::dispatch(),
 //            ListingItemSyncJob::dispatch(),
 //            ListingItemDataSyncJob::dispatch(),
@@ -94,14 +94,14 @@ class SyncAllTables extends Command
 //            ListingFeedSyncJob::dispatch(),
 //            UPCSyncJob::dispatch(),
 //            LogisticCentreSyncJob::dispatch(),
-//            ProductImagesSyncJob::dispatch(),
+            // ProductImagesSyncJob::dispatch(),
 //            ProductAlternativeImagesSyncJob::dispatch(),
-//            ProductSearchTermSyncJob::dispatch(),
-//            ProductTypeKeywordSyncJob::dispatch()
+        //    ProductSearchTermSyncJob::dispatch(),
+        //    ProductTypeKeywordSyncJob::dispatch()
         ]);
 //        DataPatch::dispatch();
-//        FeedGenerationJob::dispatch('fc1d2fb2-7601-40c8-ae05-554837ddbea7');
-        ListingItemImageCreate::dispatch('a5991f10-f19d-491e-b44a-e11752d1deed');
+    //    FeedGenerationJob::dispatch('70ce4255-9a11-415d-8edf-c6f4112da17d');
+        // ListingItemImageCreate::dispatch('31d15228-8b63-4409-8e38-b95a1b2e83fc');
 
     }
 }

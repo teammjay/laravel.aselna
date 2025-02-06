@@ -121,8 +121,8 @@ class AmazonService implements MarketplaceServiceInterface
 
             $descriptionData->addChild('MfrPartNumber', $itemDetail->mpn);
             $productKeywords = ProductTypeKeyword::where('product_type_id', $productData->product_type)
-                ->limit(25) // Ensures only 30 records are fetched
-                ->get();
+                            ->limit(25) // Ensures only 30 records are fetched
+                            ->get();
 
             $keywords = $productKeywords->pluck('keyword')->implode(' ');
             $descriptionData->addChild('SearchTerms', $keywords);
@@ -180,8 +180,8 @@ class AmazonService implements MarketplaceServiceInterface
 
                 //combine 5 keywords and add into one element. do this for all the keywords
                 $productKeywords = ProductTypeKeyword::where('product_type_id', $productData->product_type)
-                    ->limit(30) // Ensures only 30 records are fetched
-                    ->get();
+                                    ->limit(30) // Ensures only 30 records are fetched
+                                    ->get();
                 $counter = 0;
                 $keywords = '';
                 foreach ($productKeywords as $productKeyword) {
@@ -193,6 +193,14 @@ class AmazonService implements MarketplaceServiceInterface
                         $keywords = '';
                     }
                 }
+                // ProductTypeKeyword::where('product_type_id', $productData->product_type)->chunk(6, function ($productKeywords) use ($subCategoryElement) {
+                //     $keywords = '';
+                //     foreach ($productKeywords as $productKeyword) {
+                //         $keywords = $keywords . $productKeyword->keyword . ' ';
+                //     }
+                //     $keywords = rtrim($keywords, ' ');
+                //     $subCategoryElement->addChild('Keywords', $keywords);
+                // });
 
                 $descriptionData->addChild('ItemType', $currentCategory->name);
 
@@ -216,6 +224,7 @@ class AmazonService implements MarketplaceServiceInterface
 
         $this->authService = new AmazonAuthService();
         $generatedFeedId = $this->authService->uploadProductFeed($content);
+        Log::info("Generated Feed ID :: " . $generatedFeedId);
 
         $feedResponse = $this->authService->submitFeed($generatedFeedId, $listingId);
 

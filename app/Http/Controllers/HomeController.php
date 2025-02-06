@@ -140,7 +140,8 @@ class HomeController extends Controller
 
         $marketplaceService->submitFeed('',$listingId);
 
-        $marketplaceService->getResultFeed($listingId);
+        // $marketplaceService->getResultFeed($listingId);
+        return response()->json(['inprogress' => true]);
     }
 
     public function generateResultFeedFile(Request $request)

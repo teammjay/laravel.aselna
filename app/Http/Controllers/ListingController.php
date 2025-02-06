@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Jobs\FeedGenerationJob;
-use App\Jobs\ListingItemImageCreate;
 use App\Models\Brand;
 use App\Models\Catalog;
 use App\Models\Device;
@@ -29,11 +28,12 @@ use App\Models\StoreTypeListing;
 use App\Models\UPCCodes;
 use Illuminate\Http\Request;
 use App\Models\Store;
-use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Mockery\Exception;
 use App\Helpers\QueryFilters;
+use Illuminate\Support\Facades\Bus;
+use App\Jobs\ListingItemImageCreate;
 
 class ListingController extends Controller
 {

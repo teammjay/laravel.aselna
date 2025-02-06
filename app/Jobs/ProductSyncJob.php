@@ -157,6 +157,9 @@ class ProductSyncJob implements ShouldQueue
 
     private function updateProduct(mixed $product)
     {
+        if (Catalog::where('product_sku', $product->code)->exists()) {
+            return;
+        }
         Catalog::updateOrInsert([
             'product_id' => $product->id,
         ], [

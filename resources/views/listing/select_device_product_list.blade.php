@@ -4,8 +4,8 @@
             <td>
                 <input type="hidden" name="product_title_template[]" >
                 <input type="checkbox" class="pro-id" style="visibility: hidden;" name="selected_list_product[]" value="{{ $product->product_id }}">
-                @if(isset($product->Product->product_image_url) && $product->Product->product_image_url != '')
-                    <img src="{{ asset('storage/product_images/'. $product->Product->product_image_url) }}" alt="{{ $product->Product->product_image_url }}" width="70" height="70">
+                @if(isset($product->Product))
+                    <img src="{{ asset('storage/' . $product->Product->image->getFileUrl()) }}" alt="{{ asset('storage/' . $product->Product->image->getFileUrl()) }}" width="70" height="70">
                 @endif
             </td>
             <td>{{ (isset($product->Product->product_sku)) ? $product->Product->product_sku : '' }}</td>
