@@ -18,11 +18,11 @@ return new class extends Migration
             $table->boolean('enabled');
             $table->integer('document_type');
             $table->uuid('printer_id');
-            $table->foreign('printer_id')->references('id')->on('printer')->onDelete('cascade');
+//            $table->foreign('printer_id')->references('id')->on('printer')->onDelete('cascade');
             $table->uuid('shipping_from_location_id');
             $table->foreign('shipping_from_location_id')->references('id')->on('logistic_center')->onDelete('cascade');
             $table->uuid('page_size_id');
-            $table->foreign('page_size_id')->references('id')->on('document_page_size')->onDelete('cascade');
+//            $table->foreign('page_size_id')->references('id')->on('document_page_size')->onDelete('cascade');
             $table->boolean('two_per_page');
             $table->integer('pdf_action')->nullable();
             $table->integer('rotate');

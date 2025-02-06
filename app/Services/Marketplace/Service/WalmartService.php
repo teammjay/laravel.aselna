@@ -123,6 +123,11 @@ class WalmartService implements MarketplaceServiceInterface
 
         $authService = new WalmartAuthService($store->seller_id, $store->secret_key);
 
+        $file = FileUtility::readFromFile(public_path('feeds/walmart/' . $listingId . '.json'));
+        $jsonPayload = json_decode($file, true);
+
+        Log::info('Payload: ' . json_encode($jsonPayload));
+
         $response = $authService->submitFeed();
         Log::info('Response ::' . json_encode($response));
 
