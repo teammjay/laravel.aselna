@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\LogisticCenter;
 use App\Models\OrderOperation;
 use App\Models\ShippingCarrier;
 use App\Models\ShippingCarrierPackage;
@@ -18,8 +19,9 @@ class ShipmentsController extends Controller
         $perPage = $this->perPage;
         $stores = Store::with('storeType')->where('store_status', 1)->orderBy('name', 'asc')->get();
         $shippingCarrier = ShippingCarrier::all();
+        $shipFrom = LogisticCenter::all();
 
-        return view('shipment.list',compact('perPage','stores','shippingCarrier'));
+        return view('shipment.list',compact('perPage','stores','shippingCarrier','shipFrom'));
     }
 
     public function filter(Request $request)
@@ -107,6 +109,7 @@ class ShipmentsController extends Controller
             foreach($order_operations as $key=>$order) {
                 $storeType = (isset($order->store->storeType) && !empty($order->store->storeType)) ? $order->store->storeType->name : '';
                 $data[] = array(
+                    "action" => '<button type="button" class="btn btn-warning show-detail" data-id="'.$order->oid.'">Show Detail</button>',
                     "image" => '<input type="checkbox" class="pro-id" name="shipment_id[]" value="'.$order->oid.'" style="visibility:hidden;">',
                     "status" => '',
                     "carrier_service" => $order->carrierService->name,
@@ -139,6 +142,33 @@ class ShipmentsController extends Controller
         return view('shipment.detail');
     }
 
+    public function updateShippingDetails(Request $request){
+        echo 'here';die;
+        $selected_shipment = $request->input('selected_shipment');
+        $carrier_id = $request->input('carrier_id');
+        $carrier_service_id = $request->input('carrier_service_id');
+        $ship_from = $request->input('ship_from');
+        $ship_option = $request->input('ship_option');
+
+        if(!empty($selected_shipment)){
+            foreach($selected_shipment as $id){
+                $updateRecord = array(
+                    'shipping_carrier_id' => $carrier_id,
+                    'shipping_carrier_service_id' => $carrier_service_id,
+                    'ship_from_id' => $ship_from,
+                );
+
+                OrderOperation::findOrFail($id)->update($updateRecord);
+                return response()->json([
+                    'success' => true
+                ]);
+            }
+        }
+        return response()->json([
+            'success' => false
+        ]);
+    }
+
     public function getShippingCarrier(Request $request){
         $shipping_carrier_id = $request->input('carrier_id');
         $carrier_servie = ShippingCarrierService::where('shipping_carrier_id',$shipping_carrier_id)->orderBy('name','asc')->get();
@@ -157,12 +187,13 @@ class ShipmentsController extends Controller
     public function getShippingDetail(Request $request){
         $order_opration_id = $request->input('operation_id');
         $shippingCarrier = ShippingCarrier::all();
+        $shipFrom = LogisticCenter::all();
         $shippingCarrierPackage = ShippingCarrierPackage::all();
         $shipmentDetail = OrderOperation::with('order','carrierService','store')->where('id',$order_opration_id)->first();
         $shipping_carrier_id = $shipmentDetail->shipping_carrier_id;
         $shippingCarrierService = ShippingCarrierService::where('shipping_carrier_id',$shipping_carrier_id)->orderBy('name','asc')->get();
 
-        $view = view('shipment.detail', compact('shipmentDetail','shippingCarrier','shippingCarrierService','shippingCarrierPackage'))->render();
+        $view = view('shipment.detail', compact('shipmentDetail','shippingCarrier','shippingCarrierService','shippingCarrierPackage','shipFrom'))->render();
         return response()->json([
             'success' => true,
             'html' => $view

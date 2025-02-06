@@ -419,6 +419,7 @@ Route::controller(ShipmentsController::class)->group(function () {
     Route::post('/shipment/edit', 'update')->name('shipment.update');
     Route::post('/shipment/getshippingcarrier', 'getShippingCarrier')->name('shipment.getshippingcarrier');
     Route::post('/shipment/getshippingdetail', 'getShippingDetail')->name('shipment.getshippingdetail');
+    Route::post('/shipment/updateshippingdetails', 'updateShippingDetails')->name('shipment.updateshippingdetails');
 });
 
 Route::controller(ShippingCarrierPackageController::class)->group(function () {

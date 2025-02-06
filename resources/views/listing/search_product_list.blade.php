@@ -4,10 +4,10 @@
 
             <td>
                 <div class="d-flex">
-                <input type="checkbox" class="proCheck" name="products[]" value="{{ $product->id }}" checked>
                 @if(isset($product->Product->image))
                     <img src="{{ asset('storage/' .$product->Product->image->getFileUrl()) }}" alt="{{ asset('storage/' .$product->Product->image->getFileUrl())}}" loading="lazy" width="50" height="50" class="mainImage" data-product-id="{{ $product->Product->product_id }}">
                 @endif
+                    <input type="checkbox" class="proCheck" name="products[]" value="{{ $product->id }}" checked>
                 </div>
             </td>
             <td>{{ (isset($product->Product->product_sku)) ? $product->Product->product_sku : '' }}</td>

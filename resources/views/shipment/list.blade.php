@@ -85,12 +85,14 @@
                     Ship From
                 </div>
                 <div class="card-body">
-                    <div class="form-group">
-                        <input type="radio" name="ship_from" value="fullfillment_center"> <span>Fullfillment Center</span>
-                    </div>
-                    <div class="form-group">
-                        <input type="radio" name="ship_from" value="uzid_fullfillment_center"> <span>UZID Fullfillment Center</span>
-                    </div>
+                    @if(count($shipFrom ?? []) > 0)
+                        @foreach($shipFrom as $lc)
+                            <div class="form-group mb-1">
+                                <input type="radio" name="ship_from" value="{{ $lc->id }}"> <span>{{ $lc->name }}</span>
+                            </div>
+                        @endforeach
+                    @endif
+
                 </div>
             </div>
         </div>
@@ -102,7 +104,7 @@
                 <div class="card-body">
                     <div class="form-group">
                         <div class="d-flex align-items-center justify-content-between">
-                            <label class="m-0">Carrier</label>
+                            <label for="carrier_id" class="m-0">Carrier</label>
                             <select class="form-control w-75" id="carrier_id">
                                 <option value="">--</option>
                                 @if(count($shippingCarrier ?? []) > 0)
@@ -115,9 +117,9 @@
                     </div>
                     <div class="form-group">
                         <div class="d-flex align-items-center justify-content-between">
-                            <label class="m-0">Service</label>
+                            <label for="carrier_service_id" class="m-0">Service</label>
                             <select class="form-control w-75" id="carrier_service_id">
-
+                                <option value=""></option>
                             </select>
                         </div>
                     </div>
@@ -131,8 +133,8 @@
                     Shipping Service
                 </div>
                 <div class="card-body">
-                    <button class="btn btn-default w-100">Update Selected</button>
-                    <button class="btn btn-default mt-2 w-100">Update All</button>
+                    <button class="btn btn-default w-100" id="update_selected">Update Selected</button>
+                    <button class="btn btn-default mt-2 w-100" id="update_all">Update All</button>
                 </div>
             </div>
         </div>
@@ -159,6 +161,7 @@
         <table id="shipmentTable" class="table table-bordered table-striped">
             <thead>
             <tr>
+                <th></th>
                 <th>Image</th>
                 <th>Status</th>
                 <th>Carrier Service</th>
@@ -239,34 +242,14 @@
             }else {
                 ele.addClass('bg-blue');
                 ele.find('.pro-id').prop('checked', true);
-                $.ajax({
-                    url: "{{ route('shipment.getshippingdetail') }}",
-                    type: 'POST',
-                    data: {
-                        operation_id: ele.find('.pro-id').val(),
-                        "_token": '{{ csrf_token() }}'
-                    },
-                    success: function (response) {
-                        // If success, remove the user row from the table
-                        if (response.success) {
-                            $('#shippingDetailModal').find('.modal-body').html(response.html);
-                            $('#shippingDetailModal').modal('show');
-                        }
-                    },
-                    error: function (xhr) {
-                        // Handle error response
-                        alert('Error: ' + xhr.responseJSON.error);
-                    }
-                });
             }
-
-
-
         });
 
         $(document).on('click','#refresh_list',function () {
             loadDatatables();
         });
+
+
 
 
         $('#filter-form').on('submit', function(e) {
@@ -277,6 +260,37 @@
         $(document).on('change','#listing_store',function () {
             $('#store_id').val($(this).val());
             loadDatatables();
+        });
+
+        $(document).on('click','.show-detail',function () {
+            var operation_id = $(this).data('id');
+            $.ajax({
+                url: "{{ route('shipment.getshippingdetail') }}",
+                type: 'POST',
+                data: {
+                    operation_id: operation_id,
+                    "_token": '{{ csrf_token() }}'
+                },
+                success: function (response) {
+                    // If success, remove the user row from the table
+                    if (response.success) {
+                        $('#shippingDetailModal').find('.modal-body').html(response.html);
+                        $('#shippingDetailModal').modal('show');
+                    }
+                },
+                error: function (xhr) {
+                    // Handle error response
+                    alert('Error: ' + xhr.responseJSON.error);
+                }
+            });
+        });
+
+        $(document).on('click','#update_selected',function () {
+            updateRecord('selected');
+        });
+
+        $(document).on('click','#update_all',function () {
+            updateRecord('all');
         });
 
         $(document).on('change','#carrier_id',function () {
@@ -354,6 +368,78 @@
         $("#shipmentTable").dataTable();
     });
 
+    function updateRecord(type){
+        var needUpdate = false;
+        var selected_shipment = [];
+        if(type == 'selected'){
+
+            $('input[name="shipment_id[]"]:checked').each(function () {
+                selected_shipment.push($(this).val())
+            });
+        }else{
+            $('input[name="shipment_id[]"]').each(function () {
+                selected_shipment.push($(this).val())
+            });
+        }
+
+        if(selected_shipment.length == 0){
+            alert('Please select record first');
+            return false;
+        }
+        var carrier_id;
+        if($('#carrier_id').val() != ''){
+            needUpdate = true;
+            carrier_id = $('#carrier_id').val();
+        }
+
+        var carrier_service_id;
+        if($('#carrier_service_id').val() != ''){
+            needUpdate = true;
+            carrier_service_id = $('#carrier_service_id').val();
+        }
+
+        var ship_from;
+        if($('input[name="ship_from"]').is(':checked')){
+            needUpdate = true;
+            ship_from = $('input[name="ship_from"]:checked').val();
+        }
+
+        var ship_option;
+        if($('input[name="ship_options"]').is(':checked')){
+            needUpdate = true;
+            ship_option = $('input[name="ship_options"]:checked').val();
+        }
+
+        if(!needUpdate){
+            alert('Noting to ppdate. Please select option to update.');
+            return false;
+        }
+
+        $.ajax({
+            url: "{{ route('shipment.updateshippingdetails') }}",
+            type: 'POST',
+            data: {
+                selected_shipment: selected_shipment,
+                carrier_id: carrier_id,
+                carrier_service_id: carrier_service_id,
+                ship_from: ship_from,
+                ship_option: ship_option,
+                "_token": '{{ csrf_token() }}'
+            },
+            success: function (response) {
+                // If success, remove the user row from the table
+                if (response.success) {
+                    alert('Records updated successfully!!');
+                    location.reload();
+                }
+            },
+            error: function (xhr) {
+                // Handle error response
+                alert('Error: ' + xhr.responseJSON.error);
+            }
+        });
+    }
+
     function loadServiceCarrier(){
         var carrier = $('#carrier_name').val();
         $.ajax({
@@ -422,8 +508,9 @@
                 //processData: false,
                 //contentType: false
             },
-            "order": [[ 5, "desc" ]],
+            "order": [[ 6, "desc" ]],
             'columns': [
+                { data: 'action'},
                 { data: 'image'},
                 { data: 'status' },
                 { data: 'carrier_service' },
@@ -442,7 +529,7 @@
                     className: 'column-no-whitespace' // The class to add
                 },
                 {
-                    targets: [1,3,7], // Index of the column you want to disable sorting for
+                    targets: [0,1,3,7], // Index of the column you want to disable sorting for
                     orderable: false // Disable sorting
                 }
             ]

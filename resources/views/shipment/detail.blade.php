@@ -85,7 +85,11 @@
                 </div>
                 <div class="col-md-8">
                     <select class="form-control" id="shipment_from" name="shipment_from">
-                        <option value=""></option>
+                        @if(count($shipFrom ?? []) > 0)
+                            @foreach($shipFrom as $lc)
+                                <option value="{{ $lc->id }}" {{ ( $lc->id == $shipmentDetail->ship_from_id ) ? 'selected' : '' }} >{{ $lc->name }}</option>
+                            @endforeach
+                        @endif
                     </select>
                 </div>
             </div>
@@ -102,7 +106,7 @@
 
             <div class="row mt-3 g-3 align-items-center">
                 <div class="col-md-4">
-                    <label for="signature">Signature</label>
+                    <label>Signature</label>
                 </div>
                 <div class="col-md-8">
                     <div>
