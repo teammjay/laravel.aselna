@@ -447,6 +447,7 @@ class ListingController extends Controller
 
         $term = $request->input('term');
         $type = $request->input('type');
+        $store_id = $request->input('store_id');
         //echo $term;die;
         $data = [];
         switch ($type) {
@@ -454,9 +455,24 @@ class ListingController extends Controller
             case 'product_code':
                 $product_code = $request->input('product_code');
                 if (!empty($product_code)) {
-                    $product = Catalog::select('product_id', 'product_sku')->WhereLike('product_sku', '%' . $term . '%')->whereNotIn('product_sku', $product_code)->get();
+                    $query = StoreProduct::select('store_product.product_id', 'products.product_sku');
+                    $query->leftJoin('products', 'products.product_id', '=', 'store_product.product_id');
+                    if ($store_id != ''){
+                        $query->where('store_product.store_id', $store_id);
+                    }
+                    $query->WhereLike('product_sku', '%' . $term . '%');
+                    $query->whereNotIn('product_sku', $product_code);
+                    $product = $query->get();
+                    /*$product = Catalog::select('product_id', 'product_sku')->where->WhereLike('product_sku', '%' . $term . '%')->whereNotIn('product_sku', $product_code)->get();*/
                 } else {
-                    $product = Catalog::select('product_id', 'product_sku')->WhereLike('product_sku', '%' . $term . '%')->get();
+                    $query = StoreProduct::select('store_product.product_id', 'products.product_sku');
+                    $query->leftJoin('products', 'products.product_id', '=', 'store_product.product_id');
+                    if ($store_id != ''){
+                        $query->where('store_product.store_id', $store_id);
+                    }
+                    $query->WhereLike('product_sku', '%' . $term . '%');
+                    $product = $query->get();
+                    /*$product = Catalog::select('product_id', 'product_sku')->WhereLike('product_sku', '%' . $term . '%')->get();*/
                 }
                 foreach ($product as $key => $value) {
                     $data["display"][] = [
@@ -573,6 +589,7 @@ class ListingController extends Controller
         $product_ids = $request->input('product_ids');
         $product_details = $request->input('product_detail');
         $store_id = $request->input('store_id');
+        session()->forget('listing_product_details');
         session(['listing_product_details' => $product_details]);
         $step = $request->input('step');
         $view = '';

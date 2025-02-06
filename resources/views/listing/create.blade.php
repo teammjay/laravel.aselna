@@ -72,6 +72,11 @@
             font-size: 14px !important;
         }
         .nav-tabs .nav-item .nav-link, .nav-tabs .nav-link.active{font-size: 14px;}
+        .ui-widget.ui-widget-content {
+            border: 1px solid #c5c5c5;
+            max-height: 200px;
+            overflow-y: auto;
+        }
     </style>
 @stop
 @section('content_header')
@@ -389,7 +394,7 @@
                                             @endphp
                                             @foreach($listingGenerationTypes as $key=>$ltype)
                                                 <div class="form-group mb-1">
-                                                    <input type="radio" class="mr-1" {{ ($count == 0) ? 'checked' : '' }} id="generate_type_{{ $ltype->id }}" name="generate_type" value="{{ $ltype->id }}" data-name="{{ $ltype->name }}"> <label for="generate_type_{{ $ltype->id }}">{{ $ltype->name }}</label>
+                                                    <input type="radio" class="mr-1" {{ ($ltype->name == 'Free Group') ? 'checked' : '' }} id="generate_type_{{ $ltype->id }}" name="generate_type" value="{{ $ltype->id }}" data-name="{{ $ltype->name }}"> <label for="generate_type_{{ $ltype->id }}">{{ $ltype->name }}</label>
                                                 </div>
                                                 @php
                                                     $count++;
@@ -707,6 +712,7 @@
                         activateTab(currentIndex);
                         followThirdStep();
                         $('html, body').animate({ scrollTop: 0 }, 'fast');
+                        loadTitleTemplate();
                     }else if(currentIndex == 2){
 
                         $('.bd-example').show();
@@ -757,6 +763,11 @@
                         {
                             devices.push($(this).val())
                         });
+
+                        if($('#title_template').val() == ''){
+                            alert('Please select title template first and update.');
+                            return false;
+                        }
 
                         $("#ajax-preloader").show();
                         $.ajax({
@@ -906,8 +917,10 @@
 
             $(document).on('click', '#selected_product', function() {
                 if($(this).is(':checked')){
+                    $('.selectproRow').removeClass('bg-blue');
                     $('.proCheck').prop('checked',false);
                 }else{
+                    $('.selectproRow').removeClass('bg-blue');
                     $('.proCheck').prop('checked',true);
                 }
             });
@@ -927,6 +940,7 @@
                         $(this).find('.proCheck').prop('checked',true);
                     }
                 }else{
+                    ele.removeClass('bg-blue');
                     $(this).find('.proCheck').prop('checked',true);
                 }
             });
@@ -950,8 +964,13 @@
             });
 
             $(document).on('click', '#updateAll', function() {
+                $("#ajax-preloader").show();
                 var selected_template = $('#title_template').val();
                 $('input[name="product_title_template[]"]').val(selected_template);
+                setTimeout(function(){
+                    $("#ajax-preloader").hide();
+                },1000);
+
             });
 
             $(document).on('click', 'input[name="device_type[]"]', function() {
@@ -1298,6 +1317,11 @@
             $(document).on('click', 'input[name="generate_type"]', function() {
                 let type = $(this).val();
                 $('#title_template').val('');
+                let typeName = $('input[name="generate_type"]:checked').data('name');
+                if(typeName == 'Carrier Group' || typeName == 'Product Only' || typeName == 'Title Group' || typeName == 'All Carriers'){
+                    alert('This selected generate type is under development meanwhile please use other.');
+                    return false;
+                }
                 $.ajax({
                     url: "{{ route('listing.gettitletemplate') }}",
                     type: 'POST',
@@ -1374,7 +1398,7 @@
                 minLength:1,
                 select : function(event, ui){
                     $('#product_code_filter').val('');
-                    $('#pro_code_list').append('<div class="border bg-blue p-1 mt-1"><input type="hidden" name="product_code[]" value="'+ui.item.value+'">'+ui.item.value+'<i class="fa fa-window-close float-right mt-1"></i></div>');
+                    $('#pro_code_list').append('<div class="border bg-blue d-flex justify-content-between p-1 mt-1"><input type="hidden" name="product_code[]" value="'+ui.item.value+'">'+ui.item.value+'<i class="fa fa-window-close float-right mt-1"></i></div>');
                     loadProducts();
                     return false;
                 }
@@ -1412,7 +1436,7 @@
                 minLength: 1,
                 select : function(event, ui){
                     $('#device_series_filter').val('');
-                    $('#device_series_list').append('<div class="border bg-blue p-1 mt-1"><input type="hidden" name="device_series[]" value="'+ui.item.value+'">'+ui.item.label+'<i class="fa fa-window-close float-right mt-1"></i></div>');
+                    $('#device_series_list').append('<div class="border bg-blue d-flex justify-content-between p-1 mt-1"><input type="hidden" name="device_series[]" value="'+ui.item.value+'">'+ui.item.label+'<i class="fa fa-window-close float-right mt-1"></i></div>');
                     loadProducts();
                     return false;
                 }
@@ -1450,7 +1474,7 @@
                 minLength: 1,
                 select : function(event, ui){
                     $('#device_filter').val('');
-                    $('#device_list').append('<div class="border bg-blue p-1 mt-1"><input type="hidden" name="device[]" value="'+ui.item.value+'">'+ui.item.label+' <i class="fa fa-window-close float-right mt-1"></i></div>');
+                    $('#device_list').append('<div class="border bg-blue d-flex justify-content-between p-1 mt-1"><input type="hidden" name="device[]" value="'+ui.item.value+'">'+ui.item.label+' <i class="fa fa-window-close float-right mt-1"></i></div>');
                     loadProducts();
                     return false;
                 }
@@ -1510,7 +1534,12 @@
 
         function loadTitleTemplate() {
             let type = $('input[name="generate_type"]:checked').val();
+            let typeName = $('input[name="generate_type"]:checked').data('name');
             $('#title_template').val('');
+            if(typeName == 'Carrier Group' || typeName == 'Product Only' || typeName == 'Title Group' || typeName == 'All Carriers'){
+                alert('This selected generate type is under development meanwhile please use other.');
+                return false;
+            }
             $.ajax({
                 url: "{{ route('listing.gettitletemplate') }}",
                 type: 'POST',
@@ -1580,6 +1609,15 @@
                     if (response.html) {
                         $('#search-product-list').html(response.html);
                         $('#total_search_product').html(response.totalRecords+' rows');
+
+                        if($('#selected_product').is(':checked')){
+                            $('.selectproRow').removeClass('bg-blue');
+                            $('.proCheck').prop('checked',false);
+                        }else{
+                            $('.selectproRow').removeClass('bg-blue');
+                            $('.proCheck').prop('checked',true);
+                        }
+
                     }
                 },
                 error: function (xhr) {
@@ -1684,7 +1722,7 @@
                 }
             });
 
-            loadTitleTemplate();
+
         }
 
 
