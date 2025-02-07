@@ -51,9 +51,9 @@ class AmazonAuthService
         ]);
         Log::info('Feed Upload Response: ' . $response->getBody());
 
-        $uploadDetails = json_decode($response->getBody()->getContents(), true);
+        $uploadDetails = json_decode($response->getBody(), true);
         $uploadUrl = $uploadDetails['url'];
-        Log::info('Upload URL: ' . json_encode($uploadDetails));
+        Log::info('Upload URL: ' . json_encode($uploadUrl));
 
         $this->client->put($uploadUrl, [
             'headers' => ['Content-Type' => 'text/xml; charset=UTF-8'],
@@ -82,17 +82,17 @@ class AmazonAuthService
         ];
         Log::info('Feed Submission Data: ' . json_encode($data));
 
-        $response = $this->client->post('/feeds/2021-06-30/feeds', [
-            'headers' => [
-                'x-amz-access-token' => "{$accessToken}",
-                'Content-Type' => 'application/json',
-            ],
-            'json' => $data,
-        ]);
+        // $response = $this->client->post('/feeds/2021-06-30/feeds', [
+        //     'headers' => [
+        //         'x-amz-access-token' => "{$accessToken}",
+        //         'Content-Type' => 'application/json',
+        //     ],
+        //     'json' => $data,
+        // ]);
 
-        Log::info('Feed Submission Response: ' . $response->getBody());
+        // Log::info('Feed Submission Response: ' . $response->getBody());
 
-        return json_decode($response->getBody()->getContents(), true);
+        // return json_decode($response->getBody()->getContents(), true);
     }
 
     public function getResultFeed($feedId)
@@ -125,7 +125,9 @@ class AmazonAuthService
 
         $marketplaceIDs = [];
         foreach ($marketplaces['payload'] as $marketplace) {
-            $marketplaceIDs[] = $marketplace['marketplace']['id'];
+            if($marketplace['marketplace']['domainName'] == 'www.amazon.com') {
+                $marketplaceIDs[] = $marketplace['marketplace']['id'];
+            }
         }
         return $marketplaceIDs;
     }

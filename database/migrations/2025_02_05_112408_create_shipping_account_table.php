@@ -20,12 +20,12 @@ return new class extends Migration
             $table->uuid('client');
             $table->foreign('client')->references('id')->on('client')->onDelete('cascade');
             $table->uuid('shipping_solution_id')->nullable();
-            $table->foreign('shipping_solution_id')->references('id')->on('shipping_solution')->onDelete('cascade');
+//            $table->foreign('shipping_solution_id')->references('id')->on('shipping_solution')->onDelete('cascade');
             $table->string('account_id')->nullable();
             $table->string('pass_phrase')->nullable();
             $table->string('requester_id')->nullable();
             $table->uuid('dazzle_client_id')->nullable();
-            $table->foreign('dazzle_client_id')->references('id')->on('printer_client')->onDelete('cascade');
+//            $table->foreign('dazzle_client_id')->references('id')->on('printer_client')->onDelete('cascade');
             $table->boolean('sandbox_account');
             $table->double('maximum_allowable_balance');
             $table->boolean('auto_recharge');

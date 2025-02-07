@@ -32,6 +32,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Mockery\Exception;
 use App\Helpers\QueryFilters;
+use Illuminate\Support\Facades\Bus;
+use App\Jobs\ListingItemImageCreate;
 
 class ListingController extends Controller
 {
@@ -1484,7 +1486,10 @@ class ListingController extends Controller
 
                         $view = view('listing.listing_summary', compact('summary_products'))->render();
 
-                        FeedGenerationJob::dispatch($listing_id);
+                        Bus::chain([
+                            new ListingItemImageCreate($listing_id),
+                            new FeedGenerationJob($listing_id),
+                        ])->dispatch();
 
                         return response()->json([
                             'success' => true,

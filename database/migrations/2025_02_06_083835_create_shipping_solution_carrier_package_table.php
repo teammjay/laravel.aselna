@@ -15,7 +15,7 @@ return new class extends Migration
             $table->uuid('id')->primary();
             $table->string('solution_code')->nullable();
             $table->uuid('shipping_solution_id');
-            $table->foreign('shipping_solution_id')->references('id')->on('shipping_solution')->onDelete('cascade');
+//            $table->foreign('shipping_solution_id')->references('id')->on('shipping_solution')->onDelete('cascade');
             $table->uuid('carrier_package_id');
             $table->foreign('carrier_package_id')->references('id')->on('shipping_carrier_package')->onDelete('cascade');
             $table->string('label_size')->nullable();

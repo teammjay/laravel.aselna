@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('shipping_package_document_template_link', function (Blueprint $table) {
             $table->uuid('document_template_id');
-            $table->foreign('document_template_id','spdt_link_dt_fk')->references('id')->on('document_template')->onDelete('cascade');
+//            $table->foreign('document_template_id','spdt_link_dt_fk')->references('id')->on('document_template')->onDelete('cascade');
             $table->uuid('shipping_package_id');
             $table->foreign('shipping_package_id','spdt_link_sp_fk')->references('id')->on('shipping_package')->onDelete('cascade');
         });
