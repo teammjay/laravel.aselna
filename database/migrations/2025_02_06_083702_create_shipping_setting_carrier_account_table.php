@@ -18,7 +18,7 @@ return new class extends Migration
             $table->uuid('shipping_account_id');
             $table->foreign('shipping_account_id')->references('id')->on('shipping_account')->onDelete('cascade');
             $table->uuid('shipping_setting_id');
-            $table->foreign('shipping_setting_id')->references('id')->on('shipping_setting')->onDelete('cascade');
+//            $table->foreign('shipping_setting_id')->references('id')->on('shipping_setting')->onDelete('cascade');
         });
     }
 

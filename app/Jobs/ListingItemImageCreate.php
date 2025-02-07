@@ -55,12 +55,14 @@ class ListingItemImageCreate implements ShouldQueue
                     $Image = $productImage->imageObj;
                     $path = '';
                     Log::info('StoreType :: ' . json_encode($storeType));
+
                     switch (strtolower($storeType->name)) {
+                        case 'amazon':
                         case 'walmart':
                             $path = '/store-images/' . $store->id . '/' . $listingItem->id . '_' . $productImage->id . '.jpg';
                             break;
-                        case '';
                     }
+                    $this->uploadImage($store,$Image,$path);
 
                     ListingItemProductImage::updateOrCreate([
                         'listing_item_id' => $listingItemLink->item_id,
@@ -74,5 +76,43 @@ class ListingItemImageCreate implements ShouldQueue
                     ]);
                 }
             });
+    }
+
+    private function uploadImage($store,$Image,$path)
+    {
+        $storeFileSystem = $store->fileSystem;
+        Log::info("File system :: " . json_encode($storeFileSystem));
+        $host = $storeFileSystem->host;
+        $port = $storeFileSystem->port ?? 21;
+        $loginId = $storeFileSystem->login_id;
+        $password = $storeFileSystem->password;
+        $rootPath = $storeFileSystem->root_path;
+        $localFilePath = storage_path('app/public/' . $Image->location . $Image->name);
+
+        $ftpConn = ftp_connect($host, $port);
+        if (!$ftpConn) {
+            Log::info("Could not connect to FTP server: $host");
+        }
+
+        $login = ftp_login($ftpConn, $loginId, $password);
+        if (!$login) {
+            ftp_close($ftpConn);
+            Log::info("Could not login to FTP server with provided credentials.");
+        }
+
+        ftp_pasv($ftpConn, true);
+
+        $remoteFilePath = $rootPath . $path;
+        Log::info("Remote Path :: " . $remoteFilePath);
+
+        //Upload the file
+        if (ftp_put($ftpConn, $remoteFilePath, $localFilePath, FTP_BINARY)) {
+            echo "File uploaded successfully to $remoteFilePath";
+        } else {
+            echo "Error uploading file.";
+        }
+
+        // Close FTP connection
+        ftp_close($ftpConn);
     }
 }

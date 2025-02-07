@@ -55,4 +55,9 @@ class FileUtility
 
         return SysFile::create($filedata);
     }
+
+    public static function readFromFile(string $public_path)
+    {
+        return File::get($public_path);
+    }
 }

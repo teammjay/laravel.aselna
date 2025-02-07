@@ -323,6 +323,23 @@
                     document.body.removeChild(link);
                 }
             });
-        })
+        });
+
+        $(document).on('click', '.submit-feed-file', function () {
+            console.log("Submit Clicked");
+            var listingId = $(this).data('listing');
+            $.ajax({
+                url: "<?= route('submit-feed') ?>",
+                type: 'POST',
+                data: {
+                    _token: "<?= csrf_token() ?>",
+                    listing_id: listingId
+                },
+                success: function (response) {
+                    // download the file url php code is  return response()->download($filetPath);
+                    console.log(response);
+                }
+            });
+        });
     </script>
 @stop
