@@ -11,6 +11,8 @@
     <!-- Lightbox2 CSS -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.4/css/lightbox.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet"/>
+    <link href="{{ asset('css/jquery.datetimepicker.css') }}" rel="stylesheet">
+
     <style>
         .select2-container--default .select2-dropdown .select2-search__field:focus, .select2-container--default .select2-search--inline .select2-search__field:focus {
             outline: 0;
@@ -154,6 +156,18 @@
             <button type="button" class="btn btn-default" id="refresh_list">
                 <i class="fa fa-fw fa-spinner"></i> Refresh
             </button>
+            <button type="button" class="btn btn-default" id="ship_all">
+                <i class="fa fa-fw fa-shipping-fast"></i> Ship All
+            </button>
+            <button type="button" class="btn btn-default" id="ship_selected">
+                <i class="fa fa-fw fa-shipping-fast"></i> Ship Selected
+            </button>
+            <button type="button" class="btn btn-default" id="mark_as_shipped">
+                Mark As Shipped
+            </button>
+            <button type="button" class="btn btn-default" id="cancel_selected">
+                Cancel Selected
+            </button>
         </div>
     </div>
 
@@ -194,7 +208,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancle</button>
-                    <button type="button" class="btn btn-primary" id="shipThis"><i class="fa fa-save"></i> Ship This </button>
+                    <button type="button" class="btn btn-primary" id="shipThis"><i class="fa fa-shipping-fast"></i> Ship This </button>
                 </div>
             </div>
         </div>
@@ -206,6 +220,8 @@
     <!-- Lightbox2 JS -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.4/js/lightbox.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+    <script src="{{ asset('js/jquery.datetimepicker.full.js') }}"></script>
 
     <script>
     $(document).ready(function() {
@@ -275,6 +291,15 @@
                     // If success, remove the user row from the table
                     if (response.success) {
                         $('#shippingDetailModal').find('.modal-body').html(response.html);
+                        $('#ship_date').datetimepicker({
+                            format:'Y-m-d H:i',
+                            /* minDate: 'now', */
+                            step:10,
+                            onSelectTime: function(dp,$input) {
+                                var sel_date = $input.val();
+                                $('#ship_date').val(sel_date);
+                            }
+                        });
                         $('#shippingDetailModal').modal('show');
                     }
                 },

@@ -663,6 +663,7 @@
     <script>
         let product_model = {};
         let product_models = {};
+        let productDetail = {};
         document.addEventListener('DOMContentLoaded', () => {
             const tabs = document.querySelectorAll('[data-toggle="tab"]');
             let currentIndex = 0;
@@ -789,6 +790,7 @@
                                 group_seperator:group_seperator,
                                 device_seperator:device_seperator,
                                 selected_device:selected_device,
+                                product_detail:productDetail,
                             },
                             /* processData: false,
                              contentType: false,*/
@@ -811,13 +813,14 @@
                                 }
 
                                 if(response.error){
-                                    alert('An unexpected error occurred. Please try again later.');
+                                    alert(response.message);
                                 }
                             },
                             error: function (xhr) {
-                                /*if (xhr.responseJSON?.error) {
-                                    $('#responseMessage').html('<p style="color:red;">' + xhr.responseJSON.error.image[0] + '</p>');
-                                }*/
+                                console.log(xhr);
+                                if (xhr.responseJSON?.error) {
+                                   alert(xhr.responseJSON.error.image[0]);
+                                }
                                 const message = xhr.responseJSON?.error || 'An unexpected error occurred. Please try again later.';
                                 alert(message);
                             },
@@ -1669,7 +1672,6 @@
 
         function followThirdStep(){
             let selected_product = [];
-            let productDetail = {};
             $('input[name="selected_store_product[]"]').each(function () {
                 var pid = $(this).val();
                 selected_product.push(pid);

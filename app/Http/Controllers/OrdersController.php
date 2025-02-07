@@ -29,7 +29,7 @@ class OrdersController extends Controller
         $columnName = $request['columns'][$columnIndex]['data'];
         $columnSortOrder = $request['order'][0]['dir'];
 
-        $query = Order::with('store','store.storeType')->select('*');
+        $query = Order::with('orderItem','orderItem.product','store','store.storeType')->select('*');
 
         // Filter by store
         if ($request->has('store_id') && $request->store_id != '') {
@@ -112,12 +112,26 @@ class OrdersController extends Controller
         if(!empty((array) $orders)){
             foreach($orders as $key=>$order) {
                 $storeType = (isset($order->store->storeType) && !empty($order->store->storeType)) ? $order->store->storeType->name : '';
+                $sku = '';
+                $image = '';
+                if(isset($order->orderItem) && !empty($order->orderItem)){
+                    foreach($order->orderItem as $oitem){
+                        $sku .= $oitem->sku.' x '.$oitem->quantity.'<br>';
+                        if(isset($oitem->product) && !empty($oitem->product)){
+                            if($oitem->product->product_image_url != ''){
+                                $image = '<div class="main-image">
+                                                <img src="'.asset('storage/product_images/'. $oitem->orderItem->product->product_image_url).'" alt="'.$oitem->orderItem->product->product_image_url.'" class="mainImage" width="70" height="70" data-product-id="'.$oitem->orderItem->product->product_id.'">
+                                            </div>';
+                            }
+                        }
+                    }
+                }
                 $data[] = array(
                     "order_id" => $order->order_id.'<input type="checkbox" class="pro-id" name="order_id[]" value="'.$order->id.'" style="visibility:hidden;">',
                     "store" => $order->store->name.' - '.$storeType,
                     "order_date" => $order->order_date,
-                    "order_image" => '',
-                    "order_sku" => $order->order_sku,
+                    "order_image" => $image,
+                    "order_sku" => $sku,
                     "order_status" =>  $order->order_status,
                     "first_name" => $order->buyer_first_name,
                     "last_name" =>  $order->buyer_last_name,

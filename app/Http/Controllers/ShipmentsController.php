@@ -35,7 +35,7 @@ class ShipmentsController extends Controller
         $columnSortOrder = $request['order'][0]['dir'];
 
         $query = OrderOperation::with([
-            'order:id,order_id',
+            'order:id,order_id,buyer_first_name,buyer_last_name',
             'carrierService:id,name',
             'store:id,name,store_type_id'
         ])->select('*','order_operation.id as oid');
@@ -143,7 +143,6 @@ class ShipmentsController extends Controller
     }
 
     public function updateShippingDetails(Request $request){
-        echo 'here';die;
         $selected_shipment = $request->input('selected_shipment');
         $carrier_id = $request->input('carrier_id');
         $carrier_service_id = $request->input('carrier_service_id');
@@ -189,7 +188,10 @@ class ShipmentsController extends Controller
         $shippingCarrier = ShippingCarrier::all();
         $shipFrom = LogisticCenter::all();
         $shippingCarrierPackage = ShippingCarrierPackage::all();
-        $shipmentDetail = OrderOperation::with('order','carrierService','store')->where('id',$order_opration_id)->first();
+        $shipmentDetail = OrderOperation::with('carrierService','store','operationItem','operationItem.orderItem','operationItem.orderItem.product')->where('id',$order_opration_id)->first();
+        /*echo '<pre>';
+        print_r($shipmentDetail->operationItem);
+        echo '</pre>';die;*/
         $shipping_carrier_id = $shipmentDetail->shipping_carrier_id;
         $shippingCarrierService = ShippingCarrierService::where('shipping_carrier_id',$shipping_carrier_id)->orderBy('name','asc')->get();
 

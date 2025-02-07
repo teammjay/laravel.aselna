@@ -867,8 +867,9 @@ class ListingController extends Controller
             $group_seperator = $request->input('group_seperator');
             $device_seperator = $request->input('device_seperator');
             $selected_device = $request->input('selected_device');
-            $product_details = session('listing_product_details');
-            $product_details = (array)json_decode($product_details);
+            //$product_details = session('listing_product_details');
+            $product_details = $request->input('product_detail');
+            Log::info(' product_details :: ' . json_encode($product_details));
             /*echo '<pre>';
             print_r($product_ids);
             print_r($product_details);
@@ -889,16 +890,17 @@ class ListingController extends Controller
                         $productsArray = [];
                         foreach ($products as $key => $product) {
                             $store_product_id = trim($product->id);
+                            Log::info(' store_product_id : ' . $store_product_id);
                             if (array_key_exists($store_product_id, $product_details)) {
                                 $pDetail = $product_details[$store_product_id];
                                 /*echo '<pre>';
                                 print_r($product_details[$store_product_id]);
                                 echo '</pre>';*/
-                                $product_short_keyword = $pDetail->short_keyword;
-                                $product_long_keyword = $pDetail->long_keyword;
-                                $product_title = $pDetail->title;
-                                $product_price = $pDetail->price;
-                                $product_price_overwrite = $pDetail->price_overwrite;
+                                $product_short_keyword = $pDetail['short_keyword'];
+                                $product_long_keyword = $pDetail['long_keyword'];
+                                $product_title = $pDetail['title'];
+                                $product_price = $pDetail['price'];
+                                $product_price_overwrite = $pDetail['price_overwrite'];
                                 $title_template = $title_templates[$key];
                                 if ($title_template) {
                                     if (str_contains($title_template, '#short_keyword')) {
@@ -1020,7 +1022,8 @@ class ListingController extends Controller
             }
         } catch (Exception $e) {
             return response()->json([
-                'error' => $e->getMessage(),
+                'error' => true,
+                'message' => $e->getMessage(),
             ], 500);
         }
     }
@@ -1501,20 +1504,21 @@ class ListingController extends Controller
                     DB::rollBack();
                     return response()->json([
                         'error' => true,
-                        'message' => 'Something went wrong! Please try again!'
+                        'message' => 'Listind id or product titles are missing!'
                     ]);
                 }
 
                 DB::rollBack();
                 return response()->json([
                     'error' => true,
-                    'message' => 'Product title missing!'
+                    'message' => 'Missing final product titles!'
                 ]);
 
             } catch (Exception $e) {
                 DB::rollBack();
                 return response()->json([
-                    'error' => $e->getMessage(),
+                    'error' => true,
+                    'message' => $e->getMessage(),
                 ], 500);
             }
         }
