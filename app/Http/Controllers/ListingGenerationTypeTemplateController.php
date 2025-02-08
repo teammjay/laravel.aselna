@@ -80,7 +80,7 @@ class ListingGenerationTypeTemplateController extends Controller
      */
     public function destroy(string $id)
     {
-        ListingGenerationTypeTemplate::findOrFail($id)->delete();
+//        ListingGenerationTypeTemplate::findOrFail($id)->delete();
 
         return redirect()->route('listing_generation_type_template.index')
             ->with('success', 'Listing Generation Type deleted successfully.');
