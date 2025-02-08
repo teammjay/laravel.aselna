@@ -8,6 +8,7 @@ use App\Models\Catalog;
 use App\Models\Device;
 use App\Models\DeviceRating;
 use App\Models\DeviceSeries;
+use App\Models\DevicesLinkedDevice;
 use App\Models\DeviceTypes;
 use App\Models\GoodUpc;
 use App\Models\Interfaces;
@@ -394,10 +395,10 @@ class ListingController extends Controller
         }
 
         if ($request->has('device_series') && $request->device_series != '') {
+            $devices = DevicesLinkedDevice::select('device_id')->whereIn('device_series_id', $request->device_series)->get();
             $query->leftJoin('product_interface', 'product_interface.product_id', '=', 'products.product_id');
             $query->leftJoin('device_interface', 'device_interface.interface_id', '=', 'product_interface.interface_id');
-            $query->leftJoin('device', 'device.id', '=', 'product_interface.device_id');
-            $query->whereIn('device.device_series_id', $request->device_series);
+            $query->whereIn('device_interface.device_id', $devices);
         }
 
         $all_product_ids = [];
@@ -766,6 +767,7 @@ class ListingController extends Controller
         $device_type = $request->input('device_type');
         $brand = $request->input('brand');
         $devices = $request->input('devices');
+        $deviceSeries = $request->input('device_series');
         $rating = $request->input('rating');
         $popularity = $request->input('popularity');
         $is_selected = $request->input('is_selected');
@@ -791,6 +793,10 @@ class ListingController extends Controller
                 $query->whereIn('device.rating_id', $popularity);
             }
             if ($devices) {
+                $query->whereIn('device.id', $devices);
+            }
+            if ($deviceSeries) {
+                $devices = DevicesLinkedDevice::select('device_id')->whereIn('device_series_id', $deviceSeries)->get();
                 $query->whereIn('device.id', $devices);
             }
             $query->orderBy('brands.name', 'asc');
@@ -860,6 +866,7 @@ class ListingController extends Controller
             $device_type = $request->input('device_type');
             $brand = $request->input('brand');
             $device = $request->input('devices');
+            $deviceSeries = $request->input('device_series');
             $rating = $request->input('rating');
             $popularity = $request->input('popularity');
             $store_id = $request->input('store_id');
@@ -945,6 +952,10 @@ class ListingController extends Controller
                                 }
                                 if ($device) {
                                     $query->whereIn('device.id', $device);
+                                }
+                                if ($deviceSeries) {
+                                    $devices = DevicesLinkedDevice::select('device_id')->whereIn('device_series_id', $deviceSeries)->get();
+                                    $query->whereIn('device.id', $devices);
                                 }
                                 $query->orderBy('brand_name', 'asc');
                                 $query->orderBy('device.name', 'asc');

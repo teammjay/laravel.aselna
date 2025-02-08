@@ -9,6 +9,7 @@ use App\Jobs\DataPatch;
 use App\Jobs\DeviceInterfaces;
 use App\Jobs\DeviceRatingSyncJob;
 use App\Jobs\DeviceSeriesSyncJob;
+use App\Jobs\DevicesLinkSyncJob;
 use App\Jobs\DevicesSyncJob;
 use App\Jobs\DeviceTypesSyncJob;
 use App\Jobs\FeedGenerationJob;
@@ -64,40 +65,51 @@ class SyncAllTables extends Command
     public function handle()
     {
         Bus::chain([
-            FileSystemSyncJob::dispatch(),
-            StoreTypeSyncJob::dispatch(),
-            StoreSyncJob::dispatch(),
-            ManufacturerSyncJob::dispatch(),
-            DeviceTypesSyncJob::dispatch(),
-            DeviceRatingSyncJob::dispatch(),
-            BrandSyncJob::dispatch(),
-            DeviceSeriesSyncJob::dispatch(),
-            DevicesSyncJob::dispatch(),
-            CategorySyncJob::dispatch(),
-            ProductConditionJob::dispatch(),
-            CarrierSyncJob::dispatch(),
-            ShippingCarrierJob::dispatch(),
-            InterfaceSyncJob::dispatch(),
-            DeviceInterfaces::dispatch(),
-            ProductColorSync::dispatch(),
-            ProductSearchTermSyncJob::dispatch(),
-            GenerationTypeAndTemplateSync::dispatch(),
-            ProductSyncJob::dispatch(),
-            ProductChannelDetailSyncJob::dispatch(),
-            ProductInterfaces::dispatch(),
-            ListingSyncJob::dispatch(),
-            ListingItemSyncJob::dispatch(),
-            ListingItemDataSyncJob::dispatch(),
-            ListingItemLinkSyncJob::dispatch(),
-            ListingItemProductImageSyncJob::dispatch(),
-            StoreTypeListingSyncJob::dispatch(),
-            ListingFeedSyncJob::dispatch(),
-            UPCSyncJob::dispatch(),
-            LogisticCentreSyncJob::dispatch(),
-            ProductImagesSyncJob::dispatch(),
-            ProductAlternativeImagesSyncJob::dispatch(),
-            ProductSearchTermSyncJob::dispatch(),
-            ProductTypeKeywordSyncJob::dispatch()
+//            new DeviceTypesSyncJob(),
+//            new DeviceRatingSyncJob(),
+//            new DeviceSeriesSyncJob(),
+//            new BrandSyncJob(),
+//            new CategorySyncJob(),
+//            new InterfaceSyncJob(),
+//            new DevicesSyncJob(),
+//            new DeviceInterfaces(),
+//            new ProductInterfaces(),
+            new DevicesLinkSyncJob(),
+        ])->dispatch();
+        Bus::chain([
+            // FileSystemSyncJob::dispatch(),
+            // StoreTypeSyncJob::dispatch(),
+            // StoreSyncJob::dispatch(),
+            // ManufacturerSyncJob::dispatch(),
+            // DeviceTypesSyncJob::dispatch(),
+            // DeviceRatingSyncJob::dispatch(),
+            // DeviceSeriesSyncJob::dispatch(),
+            // DevicesSyncJob::dispatch(),
+            // CategorySyncJob::dispatch(),
+            // ProductConditionJob::dispatch(),
+            // CarrierSyncJob::dispatch(),
+            // ShippingCarrierJob::dispatch(),
+            // InterfaceSyncJob::dispatch(),
+            // DeviceInterfaces::dispatch(),
+            // ProductColorSync::dispatch(),
+            // ProductSearchTermSyncJob::dispatch(),
+            // GenerationTypeAndTemplateSync::dispatch(),
+            // ProductSyncJob::dispatch(),
+            // ProductChannelDetailSyncJob::dispatch(),
+            // ProductInterfaces::dispatch(),
+            // ListingSyncJob::dispatch(),
+            // ListingItemSyncJob::dispatch(),
+            // ListingItemDataSyncJob::dispatch(),
+            // ListingItemLinkSyncJob::dispatch(),
+            // ListingItemProductImageSyncJob::dispatch(),
+            // StoreTypeListingSyncJob::dispatch(),
+            // ListingFeedSyncJob::dispatch(),
+            // UPCSyncJob::dispatch(),
+            // LogisticCentreSyncJob::dispatch(),
+            // ProductImagesSyncJob::dispatch(),
+            // ProductAlternativeImagesSyncJob::dispatch(),
+            // ProductSearchTermSyncJob::dispatch(),
+            // ProductTypeKeywordSyncJob::dispatch()
         ]);
 //        DataPatch::dispatch();
 //        FeedGenerationJob::dispatch('70ce4255-9a11-415d-8edf-c6f4112da17d');

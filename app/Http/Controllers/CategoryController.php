@@ -77,7 +77,7 @@ class CategoryController extends Controller
      */
     public function destroy($id)
     {
-        Category::findOrFail($id)->delete();
+//        Category::findOrFail($id)->delete();
 
         return redirect()->route('categories.index')
             ->with('success', 'Category deleted successfully.');

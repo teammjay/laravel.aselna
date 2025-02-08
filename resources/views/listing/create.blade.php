@@ -765,6 +765,12 @@
                             devices.push($(this).val())
                         });
 
+                        let deviceSeries = [];
+                        $('input[name="device_series[]"]').each(function()
+                        {
+                            deviceSeries.push($(this).val())
+                        });
+
                         if($('#title_template').val() == ''){
                             alert('Please select title template first and update.');
                             return false;
@@ -778,6 +784,7 @@
                                 product_id:product_ids,
                                 device_type:device_type,
                                 devices:devices,
+                                device_series:deviceSeries,
                                 brand:brand,
                                 rating:rating,
                                 popularity:popularity,
@@ -1865,6 +1872,12 @@
                 devices.push($(this).val())
             });
 
+            let deviceSeries = [];
+            $('input[name="device_series[]"]').each(function()
+            {
+                deviceSeries.push($(this).val())
+            });
+
 
             $("#ajax-preloader").show();
             $.ajax({
@@ -1874,6 +1887,7 @@
                     product_id:product_ids,
                     device_type:device_type,
                     devices:devices,
+                    device_series:deviceSeries,
                     brand:brand,
                     rating:rating,
                     popularity:popularity,

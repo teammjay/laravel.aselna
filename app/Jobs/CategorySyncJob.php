@@ -36,6 +36,7 @@ class CategorySyncJob implements ShouldQueue
         //[{"parent_id":"7a099033-9940-ec5e-30bc-1511d3fc88ea"} I want to convert into array of values
         $distinctIds = [];
         foreach ($distinctParentIds as $distinctId) {
+            // Log::info("Id :: " . $distinctId->id);
             $distinctIds[] = $distinctId->id;
         }
         $queue = new Queue();
@@ -76,7 +77,7 @@ class CategorySyncJob implements ShouldQueue
 
     private function createProductType(mixed $category)
     {
-        ProductType::updateOrCreate(
+        $category = ProductType::updateOrCreate(
             ['id' => $category->id],
             [
                 'id' => $category->id,
@@ -87,11 +88,12 @@ class CategorySyncJob implements ShouldQueue
                 'sort_order' => $category->sort_order,
             ]
         );
+        Log::info('Category Created :: ' . $category);
     }
 
     private function createStoreTypeCategories(mixed $storeTypeCategory)
     {
-        StoreTypeCategory::updateOrInsert(
+        StoreTypeCategory::updateOrCreate(
             ['id' => $storeTypeCategory->id],
             [
                 'id' => $storeTypeCategory->id,

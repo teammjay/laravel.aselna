@@ -71,7 +71,7 @@ class ManufacturerController extends Controller
      */
     public function destroy(string $id)
     {
-        Manufacturer::findOrFail($id)->delete();
+//        Manufacturer::findOrFail($id)->delete();
 
         return redirect()->route('manufacturer.index')
             ->with('success', 'Manufacturer deleted successfully.');

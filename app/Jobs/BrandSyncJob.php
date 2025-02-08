@@ -38,7 +38,7 @@ class BrandSyncJob implements ShouldQueue
 
     private function createBrand(mixed $brand)
     {
-        Brand::updateOrInsert(
+        Brand::updateOrCreate(
             ['name' => $brand->brand],
             [
                 'name' => $brand->brand,
