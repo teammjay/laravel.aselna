@@ -71,7 +71,7 @@ class ProductConditionController extends Controller
      */
     public function destroy(string $id)
     {
-        ProductCondition::findOrFail($id)->delete();
+//        ProductCondition::findOrFail($id)->delete();
 
         return redirect()->route('product_condition.index')
             ->with('success', 'Product condition deleted successfully.');

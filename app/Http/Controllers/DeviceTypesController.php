@@ -73,7 +73,7 @@ class DeviceTypesController extends Controller
     public function destroy($id)
     {
         // delete the device type
-        DeviceTypes::findOrFail($id)->delete();
+//        DeviceTypes::findOrFail($id)->delete();
         // redirect to the device types list with success message
         return redirect()->route('device_types.list')->with('success', 'Device type deleted successfully.');
     }

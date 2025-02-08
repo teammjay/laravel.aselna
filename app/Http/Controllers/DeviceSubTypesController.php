@@ -77,7 +77,7 @@ class DeviceSubTypesController extends Controller
     {
         try {
             // delete the record from the database
-            DeviceSubTypes::findOrFail($id)->delete();
+//            DeviceSubTypes::findOrFail($id)->delete();
             // redirect to the device sub types list with success message
             return redirect()->route('device_sub_types.list')->with('success', 'Device sub type deleted successfully.');
         } catch (\Exception $e) {

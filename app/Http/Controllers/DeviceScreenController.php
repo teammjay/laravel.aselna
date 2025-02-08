@@ -60,7 +60,7 @@ class DeviceScreenController extends Controller
 
     public function destroy($id)
     {
-        DeviceScreen::findOrFail($id)->delete();
+//        DeviceScreen::findOrFail($id)->delete();
 
         return redirect()->route('device_screen.index')
             ->with('success', 'Device Screen deleted successfully.');
