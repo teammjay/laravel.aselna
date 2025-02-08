@@ -378,7 +378,7 @@ class ListingController extends Controller
         }
         // Filter by manufacturer
         if ($request->has('manufacturer') && $request->manufacturer != '') {
-            $query->whereIn('store_product.manufacturer_id', $request->manufacturer);
+            $query->whereIn('products.manufacturer_id', $request->manufacturer);
         }
 
         // Filter by interface
@@ -391,6 +391,13 @@ class ListingController extends Controller
             $query->leftJoin('product_interface', 'product_interface.product_id', '=', 'products.product_id');
             $query->leftJoin('device_interface', 'device_interface.interface_id', '=', 'product_interface.interface_id');
             $query->whereIn('device_interface.device_id', $request->device);
+        }
+
+        if ($request->has('device_series') && $request->device_series != '') {
+            $query->leftJoin('product_interface', 'product_interface.product_id', '=', 'products.product_id');
+            $query->leftJoin('device_interface', 'device_interface.interface_id', '=', 'product_interface.interface_id');
+            $query->leftJoin('device', 'device.id', '=', 'product_interface.device_id');
+            $query->whereIn('device.device_series_id', $request->device_series);
         }
 
         $all_product_ids = [];
@@ -504,7 +511,7 @@ class ListingController extends Controller
                 break;
             case 'device':
                 $device = $request->input('device');
-                if (!empty($device_series)) {
+                if (!empty($device)) {
                     $devices = Device::select('id', 'name')->WhereLike('name', '%' . $term . '%')->whereNotIn('id', $device)->get();
                 } else {
                     $devices = Device::select('id', 'name')->WhereLike('name', '%' . $term . '%')->get();
