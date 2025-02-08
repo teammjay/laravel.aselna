@@ -154,7 +154,7 @@
                                                 @endif
                                             </td>
                                             <td>{{ $oitem->orderItem->sku }}</td>
-                                            <td>{{ $oitem->orderItem->quantity }}</td>
+                                            <td><input type="text" class="form-control" name="quantity" value="{{ $oitem->orderItem->quantity }}"></td>
                                         </tr>
                                     @endforeach
                                 @endif

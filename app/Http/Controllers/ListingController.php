@@ -301,7 +301,6 @@ class ListingController extends Controller
         $listingGenerationTypes = ListingGenerationType::orderBy('code', 'asc')->get();
         $brands = Brand::orderBy('name', 'asc')->get();
         $deviceRating = DeviceRating::orderBy('value', 'asc')->get();
-        session()->forget('listing_product_details');
         return view('listing.create', compact('pageAt', 'stores', 'manufacturers', 'productTypes', 'deviceTypes', 'brands', 'listingGenerationTypes', 'deviceRating'));
     }
 
@@ -589,8 +588,6 @@ class ListingController extends Controller
         $product_ids = $request->input('product_ids');
         $product_details = $request->input('product_detail');
         $store_id = $request->input('store_id');
-        session()->forget('listing_product_details');
-        session(['listing_product_details' => $product_details]);
         $step = $request->input('step');
         $view = '';
         if (!empty($product_ids)) {
@@ -867,7 +864,6 @@ class ListingController extends Controller
             $group_seperator = $request->input('group_seperator');
             $device_seperator = $request->input('device_seperator');
             $selected_device = $request->input('selected_device');
-            //$product_details = session('listing_product_details');
             $product_details = $request->input('product_detail');
             Log::info(' product_details :: ' . json_encode($product_details));
             /*echo '<pre>';
