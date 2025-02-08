@@ -582,7 +582,8 @@ class ListingController extends Controller
 
         } else {
             return response()->json([
-                'success' => false
+                'success' => false,
+                'option' => []
             ]);
         }
     }
@@ -1409,7 +1410,7 @@ class ListingController extends Controller
                                 $listing_item_id = $item->id;
                                 $modelNames = array();
                                 if ($listing_item_id) {
-                                   $product_key = $product_ids[$key];
+                                    $product_key = $product_ids[$key];
                                     Log::info(' Product Models :: ' . json_encode($product_models->$product_key));
                                     $product_model = $product_models->$product_key[$key];
                                     if (isset($product_model) && is_array($product_model)) {
