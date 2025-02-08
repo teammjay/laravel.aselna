@@ -35,9 +35,10 @@ class ShipmentsController extends Controller
         $columnSortOrder = $request['order'][0]['dir'];
 
         $query = OrderOperation::with([
-            'order:id,order_id',
+            'order:id,order_id,buyer_first_name,buyer_last_name',
+            'order.orderItem.product',
             'carrierService:id,name',
-            'store:id,name,store_type_id'
+            'store:id,name,store_type_id',
         ])->select('*','order_operation.id as oid');
 
         // Filter by store
@@ -108,6 +109,16 @@ class ShipmentsController extends Controller
         if(!empty((array) $order_operations)){
             foreach($order_operations as $key=>$order) {
                 $storeType = (isset($order->store->storeType) && !empty($order->store->storeType)) ? $order->store->storeType->name : '';
+                $code = '';
+                if(isset($order->order->orderItem) && !empty($order->order->orderItem)){
+                    foreach($order->order->orderItem as $oitem){
+                        if(isset($oitem->product) && !empty($oitem->product)){
+                            if($oitem->product->product_sku != ''){
+                                $code .= $oitem->product->product_sku.' x '.$oitem->quantity.'<br>';
+                            }
+                        }
+                    }
+                }
                 $data[] = array(
                     "action" => '<button type="button" class="btn btn-warning show-detail" data-id="'.$order->oid.'">Show Detail</button>',
                     "image" => '<input type="checkbox" class="pro-id" name="shipment_id[]" value="'.$order->oid.'" style="visibility:hidden;">',
@@ -116,7 +127,7 @@ class ShipmentsController extends Controller
                     "store" => $order->store->name.' - '.$storeType,
                     "order_id" => $order->order_id,
                     "order_date" => $order->order_date,
-                    "product_code" =>  '',
+                    "product_code" =>  $code,
                     "weight" =>  $order->order_status,
                     "first_name" => (isset($order->order) && !empty($order->order)) ? $order->order->buyer_first_name : '',
                     "last_name" =>  (isset($order->order) && !empty($order->order)) ? $order->order->buyer_last_name : '',
@@ -143,7 +154,6 @@ class ShipmentsController extends Controller
     }
 
     public function updateShippingDetails(Request $request){
-        echo 'here';die;
         $selected_shipment = $request->input('selected_shipment');
         $carrier_id = $request->input('carrier_id');
         $carrier_service_id = $request->input('carrier_service_id');
@@ -189,7 +199,10 @@ class ShipmentsController extends Controller
         $shippingCarrier = ShippingCarrier::all();
         $shipFrom = LogisticCenter::all();
         $shippingCarrierPackage = ShippingCarrierPackage::all();
-        $shipmentDetail = OrderOperation::with('order','carrierService','store')->where('id',$order_opration_id)->first();
+        $shipmentDetail = OrderOperation::with('carrierService','store','operationItem','operationItem.orderItem','operationItem.orderItem.product')->where('id',$order_opration_id)->first();
+        /*echo '<pre>';
+        print_r($shipmentDetail->operationItem);
+        echo '</pre>';die;*/
         $shipping_carrier_id = $shipmentDetail->shipping_carrier_id;
         $shippingCarrierService = ShippingCarrierService::where('shipping_carrier_id',$shipping_carrier_id)->orderBy('name','asc')->get();
 

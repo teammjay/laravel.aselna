@@ -36,4 +36,9 @@ class OrderItem extends Model
     {
         return $this->belongsTo(Catalog::class,'product_id');
     }
+
+    public function orderOperationItem()
+    {
+        return $this->hasOne(OrderOperationItem::class,'id');
+    }
 }

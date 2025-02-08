@@ -663,6 +663,7 @@
     <script>
         let product_model = {};
         let product_models = {};
+        let productDetail = {};
         document.addEventListener('DOMContentLoaded', () => {
             const tabs = document.querySelectorAll('[data-toggle="tab"]');
             let currentIndex = 0;
@@ -789,6 +790,7 @@
                                 group_seperator:group_seperator,
                                 device_seperator:device_seperator,
                                 selected_device:selected_device,
+                                product_detail:productDetail,
                             },
                             /* processData: false,
                              contentType: false,*/
@@ -811,15 +813,13 @@
                                 }
 
                                 if(response.error){
-                                    alert('An unexpected error occurred. Please try again later.');
+                                    alert(response.message);
                                 }
                             },
                             error: function (xhr) {
-                                /*if (xhr.responseJSON?.error) {
-                                    $('#responseMessage').html('<p style="color:red;">' + xhr.responseJSON.error.image[0] + '</p>');
-                                }*/
-                                const message = xhr.responseJSON?.error || 'An unexpected error occurred. Please try again later.';
-                                alert(message);
+                                if (xhr.responseJSON.message) {
+                                    alert(xhr.responseJSON.message);
+                                }
                             },
                             complete: function () {
                                 $("#ajax-preloader").hide();
@@ -861,9 +861,13 @@
                                 }
                             },
                             error: function(xhr) {
-                                const message = xhr.responseJSON?.error || 'An unexpected error occurred. Please try again later.';
-                                alert(message);
-                                //location.reload();
+                                if (xhr.responseJSON.message) {
+                                    if(xhr.responseJSON.message == 'Attempt to read property "upc_code" on null'){
+                                        alert("Upc code missign for selected store. Please generate upc code and try again.");
+                                    }else{
+                                        alert(xhr.responseJSON.message);
+                                    }
+                                }
                             },
                             complete: function () {
                                 $("#ajax-preloader").hide();
@@ -1669,7 +1673,6 @@
 
         function followThirdStep(){
             let selected_product = [];
-            let productDetail = {};
             $('input[name="selected_store_product[]"]').each(function () {
                 var pid = $(this).val();
                 selected_product.push(pid);

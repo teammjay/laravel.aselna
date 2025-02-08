@@ -33,9 +33,8 @@
                 <div class="col-md-4">
                     <label for="ship_date">Ship Date</label>
                 </div>
-                <div class="col-md-8 d-flex" style="gap:10px;">
+                <div class="col-md-8" style="gap:10px;">
                     <input type="text" class="form-control" id="ship_date" name="ship_date" value="{{ $shipmentDetail->ship_date }}">
-                    <input type="text" class="form-control" id="ship_time" name="ship_time" value="">
                 </div>
             </div>
             <div class="row mt-3 g-3 align-items-center">
@@ -51,7 +50,7 @@
                     <label for="weight">Weight</label>
                 </div>
                 <div class="col-md-8 d-flex" style="gap:10px;">
-                    <input type="text" class="form-control" id="weight" name="weight" value="">
+                    <input type="text" class="form-control" id="weight" name="weight" value="{{ $shipmentDetail->weight_value }}">
                     <select class="form-control" id="weight_type" name="weight_type">
 
                     </select>
@@ -98,9 +97,7 @@
                     <label for="shipping_address">Shipping Address</label>
                 </div>
                 <div class="col-md-8">
-                    <select class="form-control" id="shipping_address" name="shipping_address">
-                        <option value=""></option>
-                    </select>
+
                 </div>
             </div>
 
@@ -110,7 +107,7 @@
                 </div>
                 <div class="col-md-8">
                     <div>
-                        <input type="radio" name="signature" value="signature"> None
+                        <input type="radio" name="signature" value="signature" checked> None
                     </div>
                     <div>
                         <input type="radio" name="signature" value="directsignature"> Direct Signature
@@ -145,6 +142,22 @@
                             </tr>
                             </thead>
                             <tbody id="shipment-item-list">
+
+                                @if(count($shipmentDetail->operationItem ?? []) > 0)
+                                    @foreach($shipmentDetail->operationItem as $oitem)
+                                        <tr>
+                                            <td>
+                                                @if($oitem->orderItem->product->product_image_url != '')
+                                                    <div class="main-image">
+                                                        <img src="{{  asset('storage/product_images/'. $oitem->orderItem->product->product_image_url) }}" alt="{{  $oitem->orderItem->product->product_image_url }}" class="mainImage" width="70" height="70" data-product-id="{{ $oitem->orderItem->product->product_id }}">
+                                                    </div>
+                                                @endif
+                                            </td>
+                                            <td>{{ $oitem->orderItem->sku }}</td>
+                                            <td><input type="text" class="form-control" name="quantity" value="{{ $oitem->orderItem->quantity }}"></td>
+                                        </tr>
+                                    @endforeach
+                                @endif
                             </tbody>
                         </table>
                     </div>
