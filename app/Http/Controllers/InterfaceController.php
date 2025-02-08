@@ -105,7 +105,7 @@ class InterfaceController extends Controller
     public function destroy($id)
     {
         // delete the interface
-        Interfaces::findOrFail($id)->delete();
+//        Interfaces::findOrFail($id)->delete();
 
         // redirect to the interfaces list
         return redirect()->route('interface.list');

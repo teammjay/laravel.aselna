@@ -639,7 +639,7 @@ class CatalogController extends Controller
         $product = Catalog::findOrFail($id);
 
         if ($product) {
-            $product->delete(); // Delete the user
+//            $product->delete(); // Delete the user
 
             // Return a success response
             session()->flash('success', 'Product deleted successfully!');

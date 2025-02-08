@@ -114,7 +114,7 @@ class DeviceController extends Controller
 
     public function destroy($id)
     {
-        Device::findOrFail($id)->delete();
+        // Device::findOrFail($id)->delete();
 
         return redirect()->route('devices.index')
             ->with('success', 'Device deleted successfully.');

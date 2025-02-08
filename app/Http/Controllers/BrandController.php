@@ -74,7 +74,7 @@ class BrandController extends Controller
     public function destroy($id)
     {
         // delete the brand
-        Brand::findOrFail($id)->delete();
+        // Brand::findOrFail($id)->delete();
 
         // redirect to the brands list
         return redirect()->route('brand.list');

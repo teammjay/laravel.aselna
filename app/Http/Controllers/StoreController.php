@@ -646,7 +646,7 @@ class StoreController extends Controller
         $center = StoreLogisticCenter::find($centerId);
 
         if ($center) {
-            $center->delete(); // Delete the page
+//            $center->delete(); // Delete the page
 
             // Return a success response
             return response()->json(['success' => true, 'message' => 'Logistic center deleted successfully']);

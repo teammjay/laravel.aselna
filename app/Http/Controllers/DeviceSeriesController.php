@@ -65,7 +65,7 @@ class DeviceSeriesController extends Controller
 
     public function destroy($id)
     {
-        DeviceSeries::findOrFail($id)->delete();
+//        DeviceSeries::findOrFail($id)->delete();
 
         return redirect()->route('device_series.index')
             ->with('success', 'Device Series deleted successfully');
