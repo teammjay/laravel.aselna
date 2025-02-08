@@ -9,6 +9,7 @@ use App\Jobs\DataPatch;
 use App\Jobs\DeviceInterfaces;
 use App\Jobs\DeviceRatingSyncJob;
 use App\Jobs\DeviceSeriesSyncJob;
+use App\Jobs\DevicesLinkSyncJob;
 use App\Jobs\DevicesSyncJob;
 use App\Jobs\DeviceTypesSyncJob;
 use App\Jobs\FeedGenerationJob;
@@ -64,15 +65,16 @@ class SyncAllTables extends Command
     public function handle()
     {
         Bus::chain([
-            new DeviceTypesSyncJob(),
-            new DeviceRatingSyncJob(),
-            new DeviceSeriesSyncJob(),
-            new BrandSyncJob(),
-            new CategorySyncJob(),
-            new InterfaceSyncJob(),
-            new DevicesSyncJob(),
-            new DeviceInterfaces(),
-            new ProductInterfaces(),
+//            new DeviceTypesSyncJob(),
+//            new DeviceRatingSyncJob(),
+//            new DeviceSeriesSyncJob(),
+//            new BrandSyncJob(),
+//            new CategorySyncJob(),
+//            new InterfaceSyncJob(),
+//            new DevicesSyncJob(),
+//            new DeviceInterfaces(),
+//            new ProductInterfaces(),
+            new DevicesLinkSyncJob(),
         ])->dispatch();
         Bus::chain([
             // FileSystemSyncJob::dispatch(),
