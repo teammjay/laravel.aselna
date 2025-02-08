@@ -642,64 +642,68 @@ class ListingController extends Controller
         $append_front = $request->input('append_front');
 
         if (!empty($product_ids)) {
-
-            $keywords = ProductTitleKeyword::select('product_id', 'keyword')->whereIn('product_id', $product_ids)->orderBy('priority', 'asc')->get()->toArray();
-
-            /*echo '<pre>';
-            print_r($keywords);
-            echo '</pre>';die;*/
             $short_keyword = [];
             $long_keyword = [];
-            if (!empty($keywords)) {
-                $sKeyword = $lKeyword = $pro_ids = $shortFlag = $longFlag = [];
-                $sflag = $lflag = 0;
-                foreach ($keywords as $key => $val) {
-                    $pro_id = $val['product_id'];
-                    if (!isset($shortFlag[$pro_id])) {
-                        $shortFlag[$pro_id] = 0;
-                    }
-                    if (!isset($longFlag[$pro_id])) {
-                        $longFlag[$pro_id] = $short_key_length;
-                    }
-                    if ((!array_key_exists($pro_id, $shortFlag) || $shortFlag[$pro_id] < $short_key_length) || !array_key_exists($pro_id, $short_keyword)) {
-                        $short_keyword[$pro_id][] = trim($val['keyword']);
-                        $shortFlag[$pro_id] = $shortFlag[$pro_id] + 1;
-                    }
-                    //echo $key .'>'. $short_key_length.'<br>';
-                    if ($key >= $short_key_length) {
-                        if (!is_numeric($long_key_length)) {
-                            $long_key_length = 7;
-                        }
-                        if (((!array_key_exists($pro_id, $longFlag) || $longFlag[$pro_id] < ($long_key_length + $short_key_length))) || !array_key_exists($pro_id, $long_keyword)) {
-                            $long_keyword[$pro_id][] = trim($val['keyword']);
-                            $longFlag[$pro_id] = $longFlag[$pro_id] + 1;
-                        }
-                    }
-                    if (!in_array($pro_id, $pro_ids)) {
-                        $pro_ids[] = $pro_id;
-                    }
-                }//die;
+            foreach($product_ids as $pid) {
+                $keywords = ProductTitleKeyword::select('product_id', 'keyword')->where('product_id', $pid)->orderBy('priority', 'asc')->get()->toArray();
 
-                if (!empty($pro_ids)) {
-                    foreach ($pro_ids as $id) {
-                        if (!empty($short_keyword)) {
-                            $sKeyword[$id] = implode(' ', $short_keyword[$id]);
+                if (!empty($keywords)) {
+                    $sKeyword = $lKeyword = $pro_ids = $shortFlag = $longFlag = [];
+                    $sflag = $lflag = 0;
+                    foreach ($keywords as $key => $val) {
+                        $pro_id = $val['product_id'];
+                        if (!isset($shortFlag[$pro_id])) {
+                            $shortFlag[$pro_id] = 0;
+                        }
+                        if (!isset($longFlag[$pro_id])) {
+                            $longFlag[$pro_id] = $short_key_length;
+                        }
+                        if ((!array_key_exists($pro_id, $shortFlag) || $shortFlag[$pro_id] < $short_key_length) || !array_key_exists($pro_id, $short_keyword)) {
+                            $short_keyword[$pro_id][] = trim($val['keyword']);
+                            $shortFlag[$pro_id] = $shortFlag[$pro_id] + 1;
                         }
 
-                        if (!empty($short_keyword)) {
-                            $lKeyword[$id] = implode(' ', $long_keyword[$id]);
+                        if ($key >= $short_key_length) {
+                            if (!is_numeric($long_key_length)) {
+                                $long_key_length = 7;
+                            }
+                            if (((!array_key_exists($pro_id, $longFlag) || $longFlag[$pro_id] < ($long_key_length + $short_key_length))) || !array_key_exists($pro_id, $long_keyword)) {
+                                $long_keyword[$pro_id][] = trim($val['keyword']);
+                                $longFlag[$pro_id] = $longFlag[$pro_id] + 1;
+                            }
                         }
+                        if (!in_array($pro_id, $pro_ids)) {
+                            $pro_ids[] = $pro_id;
+                        }
+                    }
+
+
+                }
+            }
+
+           /* echo '<pre>';
+            print_r($short_keyword);
+            print_r($long_keyword);
+            echo '</pre>';die;*/
+
+            if (!empty($pro_ids)) {
+                foreach ($pro_ids as $id) {
+                    if (!empty($short_keyword)) {
+                        $sKeyword[$id] = implode(' ', $short_keyword[$id]);
+                    }
+
+                    if (!empty($short_keyword)) {
+                        $lKeyword[$id] = implode(' ', $long_keyword[$id]);
                     }
                 }
+            }
 
-                if ($request->ajax()) {
-                    return response()->json([
-                        'success' => true,
-                        'short_keyword' => $sKeyword,
-                        'long_keyword' => $lKeyword
-                    ]);
-                }
-
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'short_keyword' => $sKeyword,
+                    'long_keyword' => $lKeyword
+                ]);
             }
 
         }
