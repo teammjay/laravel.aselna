@@ -74,7 +74,7 @@ class ProductTypeController extends Controller
      */
     public function destroy(string $id)
     {
-        ProductType::findOrFail($id)->delete();
+        // ProductType::findOrFail($id)->delete();
 
         return redirect()->route('product_type.index')
             ->with('success', 'Product type deleted successfully.');

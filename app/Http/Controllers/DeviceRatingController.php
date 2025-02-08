@@ -59,7 +59,7 @@ class DeviceRatingController extends Controller
 
     public function destroy($id)
     {
-        DeviceRating::findOrFail($id)->delete();
+        // DeviceRating::findOrFail($id)->delete();
         return redirect()->route('device_ratings.index')
             ->with('success', 'Device Rating deleted successfully.');
     }
