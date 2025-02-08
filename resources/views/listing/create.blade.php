@@ -75,7 +75,7 @@
         .ui-widget.ui-widget-content {
             border: 1px solid #c5c5c5;
             max-height: 200px;
-            overflow-y: auto;
+            overflow-y: scroll;
         }
     </style>
 @stop
@@ -1117,8 +1117,9 @@
                                 } else {
                                     $('#proSubType').hide();
                                 }
-
-                                loadProducts();
+                                if($('#listing_store').val() != '') {
+                                    loadProducts();
+                                }
                             },
                             error: function (xhr) {
                                 /*if (xhr.responseJSON?.error) {
@@ -1166,7 +1167,9 @@
                                 } else {
                                     $('#proSubSubType').hide();
                                 }
-                                loadProducts();
+                                if($('#listing_store').val() != '') {
+                                    loadProducts();
+                                }
                             },
                             error: function (xhr) {
                                 /*if (xhr.responseJSON?.error) {
@@ -1221,7 +1224,9 @@
                                     $('#proSubType').hide();
                                 }
 
-                                loadProducts();
+                                if($('#listing_store').val() != '') {
+                                    loadProducts();
+                                }
                             },
                             error: function (xhr) {
                                 /*if (xhr.responseJSON?.error) {
@@ -1410,7 +1415,9 @@
                 select : function(event, ui){
                     $('#product_code_filter').val('');
                     $('#pro_code_list').append('<div class="border bg-blue d-flex justify-content-between p-1 mt-1"><input type="hidden" name="product_code[]" value="'+ui.item.value+'">'+ui.item.value+'<i class="fa fa-window-close float-right mt-1"></i></div>');
-                    loadProducts();
+                    if($('#listing_store').val() != '') {
+                        loadProducts();
+                    }
                     return false;
                 }
             }).focus(function () {
@@ -1448,7 +1455,9 @@
                 select : function(event, ui){
                     $('#device_series_filter').val('');
                     $('#device_series_list').append('<div class="border bg-blue d-flex justify-content-between p-1 mt-1"><input type="hidden" name="device_series[]" value="'+ui.item.value+'">'+ui.item.label+'<i class="fa fa-window-close float-right mt-1"></i></div>');
-                    loadProducts();
+                    if($('#listing_store').val() != '') {
+                        loadProducts();
+                    }
                     return false;
                 }
             }).focus(function () {
@@ -1486,7 +1495,9 @@
                 select : function(event, ui){
                     $('#device_filter').val('');
                     $('#device_list').append('<div class="border bg-blue d-flex justify-content-between p-1 mt-1"><input type="hidden" name="device[]" value="'+ui.item.value+'">'+ui.item.label+' <i class="fa fa-window-close float-right mt-1"></i></div>');
-                    loadProducts();
+                    if($('#listing_store').val() != '') {
+                        loadProducts();
+                    }
                     return false;
                 }
             }).focus(function () {
@@ -1496,7 +1507,9 @@
 
             $(document).on('click','.fa-window-close',function () {
                 $(this).parent('.border').remove();
-                loadProducts();
+                if($('#listing_store').val() != '') {
+                    loadProducts();
+                }
             });
 
             $(document).on('click','.mainImage',function () {
