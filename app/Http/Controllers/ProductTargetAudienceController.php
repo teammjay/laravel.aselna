@@ -72,7 +72,7 @@ class ProductTargetAudienceController extends Controller
      */
     public function destroy(string $id)
     {
-        ProductTargetAudience::findOrFail($id)->delete();
+//        ProductTargetAudience::findOrFail($id)->delete();
 
         return redirect()->route('product_target_audience.index')
             ->with('success', 'Product type deleted successfully.');

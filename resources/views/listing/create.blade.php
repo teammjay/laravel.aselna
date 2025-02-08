@@ -1617,6 +1617,7 @@
         }
 
         function loadProducts() {
+            if($('#listing_store').val() === '') return;
             const form = document.querySelector("#frmproductfilter");
             let formData = new FormData(form);
             $("#ajax-preloader").show();

@@ -132,7 +132,7 @@ class MessagesController extends Controller
      */
     public function destroy(string $id)
     {
-        Message::findOrFail($id)->delete();
+//        Message::findOrFail($id)->delete();
 
         return redirect()->route('message.index')
             ->with('success', 'Message deleted successfully.');
