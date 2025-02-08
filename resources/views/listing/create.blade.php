@@ -817,12 +817,9 @@
                                 }
                             },
                             error: function (xhr) {
-                                console.log(xhr);
-                                if (xhr.responseJSON?.error) {
-                                   alert(xhr.responseJSON.error.image[0]);
+                                if (xhr.responseJSON.message) {
+                                    alert(xhr.responseJSON.message);
                                 }
-                                const message = xhr.responseJSON?.error || 'An unexpected error occurred. Please try again later.';
-                                alert(message);
                             },
                             complete: function () {
                                 $("#ajax-preloader").hide();
@@ -864,9 +861,13 @@
                                 }
                             },
                             error: function(xhr) {
-                                const message = xhr.responseJSON?.error || 'An unexpected error occurred. Please try again later.';
-                                alert(message);
-                                //location.reload();
+                                if (xhr.responseJSON.message) {
+                                    if(xhr.responseJSON.message == 'Attempt to read property "upc_code" on null'){
+                                        alert("Upc code missign for selected store. Please generate upc code and try again.");
+                                    }else{
+                                        alert(xhr.responseJSON.message);
+                                    }
+                                }
                             },
                             complete: function () {
                                 $("#ajax-preloader").hide();

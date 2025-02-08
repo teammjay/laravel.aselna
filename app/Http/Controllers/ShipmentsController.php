@@ -36,8 +36,9 @@ class ShipmentsController extends Controller
 
         $query = OrderOperation::with([
             'order:id,order_id,buyer_first_name,buyer_last_name',
+            'order.orderItem.product',
             'carrierService:id,name',
-            'store:id,name,store_type_id'
+            'store:id,name,store_type_id',
         ])->select('*','order_operation.id as oid');
 
         // Filter by store
@@ -108,6 +109,16 @@ class ShipmentsController extends Controller
         if(!empty((array) $order_operations)){
             foreach($order_operations as $key=>$order) {
                 $storeType = (isset($order->store->storeType) && !empty($order->store->storeType)) ? $order->store->storeType->name : '';
+                $code = '';
+                if(isset($order->order->orderItem) && !empty($order->order->orderItem)){
+                    foreach($order->order->orderItem as $oitem){
+                        if(isset($oitem->product) && !empty($oitem->product)){
+                            if($oitem->product->product_sku != ''){
+                                $code .= $oitem->product->product_sku.' x '.$oitem->quantity.'<br>';
+                            }
+                        }
+                    }
+                }
                 $data[] = array(
                     "action" => '<button type="button" class="btn btn-warning show-detail" data-id="'.$order->oid.'">Show Detail</button>',
                     "image" => '<input type="checkbox" class="pro-id" name="shipment_id[]" value="'.$order->oid.'" style="visibility:hidden;">',
@@ -116,7 +127,7 @@ class ShipmentsController extends Controller
                     "store" => $order->store->name.' - '.$storeType,
                     "order_id" => $order->order_id,
                     "order_date" => $order->order_date,
-                    "product_code" =>  '',
+                    "product_code" =>  $code,
                     "weight" =>  $order->order_status,
                     "first_name" => (isset($order->order) && !empty($order->order)) ? $order->order->buyer_first_name : '',
                     "last_name" =>  (isset($order->order) && !empty($order->order)) ? $order->order->buyer_last_name : '',

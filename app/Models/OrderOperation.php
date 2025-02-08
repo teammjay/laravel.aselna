@@ -29,7 +29,7 @@ class OrderOperation extends Model
 
     public function operationItem(){
 
-        return $this->hasMany(OrderOperationItem::class);
+        return $this->hasMany(OrderOperationItem::class,'id');
     }
 
     public function order(){
