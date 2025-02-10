@@ -645,11 +645,12 @@ class ListingController extends Controller
         if (!empty($product_ids)) {
             $short_keyword = [];
             $long_keyword = [];
+            $sKeyword = $lKeyword = $pro_ids = $shortFlag = $longFlag = [];
             foreach($product_ids as $pid) {
                 $keywords = ProductTitleKeyword::select('product_id', 'keyword')->where('product_id', $pid)->orderBy('priority', 'asc')->get()->toArray();
 
                 if (!empty($keywords)) {
-                    $sKeyword = $lKeyword = $pro_ids = $shortFlag = $longFlag = [];
+
                     $sflag = $lflag = 0;
                     foreach ($keywords as $key => $val) {
                         $pro_id = $val['product_id'];
@@ -682,8 +683,9 @@ class ListingController extends Controller
                 }
             }
 
-           /* echo '<pre>';
-            print_r($short_keyword);
+            /*echo '<pre>';
+            print_r($pro_ids);
+            print_r($long_keyword);
             print_r($long_keyword);
             echo '</pre>';die;*/
 
