@@ -196,6 +196,7 @@
                         });
                     }
                 },
+                "order": [[ 5, "desc" ]],
                 columns: [
                     {data: 'id', name: 'id'},
                     {data: 'listing_id', name: 'listing_id'},

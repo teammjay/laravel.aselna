@@ -26,7 +26,7 @@
                 <td>{{$upcCode->upc_code}}</td>
                 <td>{{$upcCode->is_used ? 'Used' : 'Not Used'}}</td>
                 <td>{{$upcCode->sequence_id}}</td>
-                <td>{{$upcCode->storeData->name}}</td>
+                <td>{{$upcCode->storeData->name}} - {{ $upcCode->storeData->storeType->name }}</td>
             </tr>
         @endforeach
         </tbody>
