@@ -75,7 +75,7 @@ class ListingTemplateController extends Controller
      */
     public function destroy(string $id)
     {
-        ListingTemplate::findOrFail($id)->delete();
+//        ListingTemplate::findOrFail($id)->delete();
 
         return redirect()->route('listing_template.index')
             ->with('success', 'Listing Template deleted successfully.');

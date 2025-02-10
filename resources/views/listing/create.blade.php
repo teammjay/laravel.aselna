@@ -223,7 +223,7 @@
 
                                         <label>Interface Filter</label>
                                         <div class="row" id="interfaceFilter">
-                                            <div class="col-md-12 multi-select-filter">
+                                            <div class="col-md-12 interface-filter multi-select-filter">
                                                 <select class="form-control" name="interface[]" id="interface_filter" multiple>
                                                 </select>
                                             </div>
@@ -233,7 +233,7 @@
                                     <div class="border p-2" id="proSubSubType" style="display: none; width: 17%;">
                                         <label>Product Sub Sub Type Filter</label>
                                         <div class="row">
-                                            <div class="col-md-12 multi-select-filter">
+                                            <div class="col-md-12 prod-sub-sub-type multi-select-filter">
                                                 <select class="form-control" name="product_sub_sub_type[]" id="product_sub_sub_type_filter" multiple>
 
                                                 </select>
@@ -389,7 +389,7 @@
                                     <label>Generation Type</label>
                                     <div class="form-group align-items-center">
                                         @if(count($listingGenerationTypes ?? []) > 0)
-                                           @php
+                                            @php
                                                 $count = 0;
                                             @endphp
                                             @foreach($listingGenerationTypes as $key=>$ltype)
@@ -461,16 +461,16 @@
                                             <div class="row">
                                                 <div class="col-md-12 pro-popular multi-select-filter">
                                                     <select class="form-control" id="popularity_filter" multiple style="height: 235px;">
-                                                       <option value="1">1</option>
-                                                       <option value="2">2</option>
-                                                       <option value="3">3</option>
-                                                       <option value="4">4</option>
-                                                       <option value="5">5</option>
-                                                       <option value="6">6</option>
-                                                       <option value="7">7</option>
-                                                       <option value="8">8</option>
-                                                       <option value="9">9</option>
-                                                       <option value="1">10</option>
+                                                        <option value="1">1</option>
+                                                        <option value="2">2</option>
+                                                        <option value="3">3</option>
+                                                        <option value="4">4</option>
+                                                        <option value="5">5</option>
+                                                        <option value="6">6</option>
+                                                        <option value="7">7</option>
+                                                        <option value="8">8</option>
+                                                        <option value="9">9</option>
+                                                        <option value="1">10</option>
                                                     </select>
                                                 </div>
                                             </div>
@@ -1101,21 +1101,28 @@
                                 if (response.success) {
                                     $('#proSubType').show();
                                     console.log(0);
-                                    if (cnt == 0) {
+                                    if ($('#proSubTypeFilter').find('.default-drop-down').length <= 0) {
                                         $('#product_sub_type_filter').html(response.option);
                                         $('#product_sub_type_filter').gs_multiselect();
-                                        cnt++;
                                     } else {
                                         $('#product_sub_type_filter').html('');
                                         $('#proSubTypeFilter').find('.default-drop-down').html(response.option);
                                     }
 
-                                    $('#interface_filter').html('');
-                                    $('#interfaceFilter').find('.default-drop-down').html(response.ioption);
-
+                                    if ($('#interfaceFilter').find('.default-drop-down').length <= 0) {
+                                        $('#interface_filter').html(response.ioption);
+                                        $('#interface_filter').gs_multiselect();
+                                    } else {
+                                        $('#interface_filter').html('');
+                                        $('#interfaceFilter').find('.default-drop-down').html(response.ioption);
+                                    }
 
                                 } else {
+                                    clearMultiSelect('product_sub_type','prod-sub-type');
+                                    clearMultiSelect('product_sub_sub_type','prod-sub-sub-type');
+                                    clearMultiSelect('interface','interface-filter');
                                     $('#proSubType').hide();
+                                    $('#proSubSubType').hide();
                                 }
                                 if($('#listing_store').val() != '') {
                                     loadProducts();
@@ -1149,22 +1156,25 @@
                             success: function (response) {
                                 if (response.success) {
                                     $('#proSubSubType').show();
-                                    if (cnt3 == 0) {
+                                    if ($('#proSubSubType').find('.default-drop-down').length <= 0) {
                                         $('#product_sub_sub_type_filter').html(response.option);
                                         $('#product_sub_sub_type_filter').gs_multiselect();
-
-                                        $('#interface_filter').html(response.ioption);
-                                        $('#interface_filter').gs_multiselect();
-                                        cnt3++;
                                     } else {
                                         $('#product_sub_sub_type_filter').html('');
                                         $('#proSubSubType').find('.default-drop-down').html(response.option);
+                                    }
 
+                                    if ($('#interfaceFilter').find('.default-drop-down').length <= 0) {
+                                        $('#interface_filter').html(response.ioption);
+                                        $('#interface_filter').gs_multiselect();
+                                    } else {
                                         $('#interface_filter').html('');
                                         $('#interfaceFilter').find('.default-drop-down').html(response.ioption);
                                     }
 
                                 } else {
+                                    clearMultiSelect('product_sub_sub_type','prod-sub-sub-type');
+                                    clearMultiSelect('interface','interface-filter');
                                     $('#proSubSubType').hide();
                                 }
                                 if($('#listing_store').val() != '') {
@@ -1177,6 +1187,14 @@
                                 }*/
                             }
                         });
+                    }
+
+                    if(ele.parents('.interface-filter').length) {
+                        loadProducts()
+                    }
+
+                    if(ele.parents('.prod-sub-sub-type').length) {
+                        loadProducts()
                     }
 
                     if (ele.parents('.pro-brand').length || ele.parents('.pro-rating').length || ele.parents('.pro-popular').length) {
@@ -1208,20 +1226,29 @@
                             success: function (response) {
                                 if (response.success) {
                                     $('#proSubType').show();
-                                    if (cnt2 == 0) {
+                                    if ($('#proSubTypeFilter').find('.default-drop-down').length <= 0) {
                                         $('#product_sub_type_filter').html(response.option);
                                         $('#product_sub_type_filter').gs_multiselect();
 
-                                        cnt2++;
                                     } else {
                                         $('#product_sub_type_filter').html('');
                                         $('#proSubTypeFilter').find('.default-drop-down').html(response.option);
                                     }
 
-                                    $('#interface_filter').html('');
-                                    $('#interfaceFilter').find('.default-drop-down').html(response.ioption);
+                                    if ($('#interfaceFilter').find('.default-drop-down').length <= 0) {
+                                        $('#interface_filter').html(response.ioption);
+                                        $('#interface_filter').gs_multiselect();
+                                    } else {
+                                        $('#interface_filter').html('');
+                                        $('#interfaceFilter').find('.default-drop-down').html(response.ioption);
+                                    }
+
                                 } else {
+                                    clearMultiSelect('product_sub_type','prod-sub-type');
+                                    clearMultiSelect('product_sub_sub_type','prod-sub-sub-type');
+                                    clearMultiSelect('interface','interface-filter');
                                     $('#proSubType').hide();
+                                    $('#proSubSubType').hide();
                                 }
 
                                 if($('#listing_store').val() != '') {
@@ -1234,6 +1261,64 @@
                                 }*/
                             }
                         });
+                    }
+
+                    if (ele.parents('.prod-sub-type').length) {
+                        let product_types = [];
+                        ele.parents('.prod-sub-type').find('input[name="product_sub_type[]"]').each(function () {
+                            product_types.push($(this).val());
+                        });
+                        $.ajax({
+                            url: "{{ route('listing.getproductsubtype') }}",
+                            type: 'POST',
+                            data: {
+                                product_types: product_types
+                            },
+                            /* processData: false,
+                             contentType: false,*/
+                            headers: {
+                                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                            },
+                            success: function (response) {
+                                if (response.success) {
+                                    $('#proSubSubType').show();
+                                    if ($('#proSubSubType').find('.default-drop-down').length <= 0) {
+                                        $('#product_sub_sub_type_filter').html(response.option);
+                                        $('#product_sub_sub_type_filter').gs_multiselect();
+                                    } else {
+                                        $('#product_sub_sub_type_filter').html('');
+                                        $('#proSubSubType').find('.default-drop-down').html(response.option);
+                                    }
+
+                                    if ($('#interfaceFilter').find('.default-drop-down').length <= 0) {
+                                        $('#interface_filter').html(response.ioption);
+                                        $('#interface_filter').gs_multiselect();
+                                    } else {
+                                        $('#interface_filter').html('');
+                                        $('#interfaceFilter').find('.default-drop-down').html(response.ioption);
+                                    }
+
+                                } else {
+                                    clearMultiSelect('product_sub_sub_type','prod-sub-sub-type');
+                                    clearMultiSelect('interface','interface-filter');
+                                    $('#proSubSubType').hide();
+                                }
+                                loadProducts();
+                            },
+                            error: function (xhr) {
+                                /*if (xhr.responseJSON?.error) {
+                                    $('#responseMessage').html('<p style="color:red;">' + xhr.responseJSON.error.image[0] + '</p>');
+                                }*/
+                            }
+                        });
+                    }
+
+                    if(ele.parents('.prod-sub-sub-type').length) {
+                        loadProducts()
+                    }
+
+                    if(ele.parents('.interface-filter').length) {
+                        loadProducts()
                     }
 
                     if (ele.parents('.pro-brand').length || ele.parents('.pro-rating').length || ele.parents('.pro-popular').length) {
@@ -1617,6 +1702,7 @@
         }
 
         function loadProducts() {
+            if($('#listing_store').val() === '') return;
             const form = document.querySelector("#frmproductfilter");
             let formData = new FormData(form);
             $("#ajax-preloader").show();
@@ -1935,6 +2021,17 @@
                     $("#ajax-preloader").hide();
                 }
             });
+        }
+
+        function clearMultiSelect(elementClass,parentClass) {
+            var $select = $('<select>', {
+                class: 'form-control',
+                name: elementClass + '[]',
+                id: elementClass + '_filter',
+                multiple: 'multiple'
+            });
+
+            $('.'+parentClass).html($select);
         }
     </script>
 @stop

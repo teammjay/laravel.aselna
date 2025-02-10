@@ -74,7 +74,7 @@ class LogisticCenterController extends Controller
      */
     public function destroy(string $id)
     {
-        LogisticCenter::findOrFail($id)->delete();
+//        LogisticCenter::findOrFail($id)->delete();
 
         return redirect()->route('logistic_center.index')
             ->with('success', 'Shipping carrier deleted successfully.');

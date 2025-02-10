@@ -462,9 +462,9 @@ class ListingController extends Controller
             case 'product_code':
                 $product_code = $request->input('product_code');
                 if (!empty($product_code)) {
-                    $query = StoreProduct::select('store_product.product_id', 'products.product_sku');
-                    $query->leftJoin('products', 'products.product_id', '=', 'store_product.product_id');
+                    $query = Catalog::select('products.product_sku');
                     if ($store_id != ''){
+                        $query->leftJoin('store_product', 'store_product.product_id', '=', 'products.product_id');
                         $query->where('store_product.store_id', $store_id);
                     }
                     $query->WhereLike('product_sku', '%' . $term . '%');
@@ -472,9 +472,9 @@ class ListingController extends Controller
                     $product = $query->get();
                     /*$product = Catalog::select('product_id', 'product_sku')->where->WhereLike('product_sku', '%' . $term . '%')->whereNotIn('product_sku', $product_code)->get();*/
                 } else {
-                    $query = StoreProduct::select('store_product.product_id', 'products.product_sku');
-                    $query->leftJoin('products', 'products.product_id', '=', 'store_product.product_id');
+                    $query = Catalog::select('products.product_sku');
                     if ($store_id != ''){
+                        $query->leftJoin('store_product', 'store_product.product_id', '=', 'products.product_id');
                         $query->where('store_product.store_id', $store_id);
                     }
                     $query->WhereLike('product_sku', '%' . $term . '%');
@@ -582,7 +582,8 @@ class ListingController extends Controller
 
         } else {
             return response()->json([
-                'success' => false
+                'success' => false,
+                'option' => []
             ]);
         }
     }
@@ -1411,7 +1412,7 @@ class ListingController extends Controller
                                 $listing_item_id = $item->id;
                                 $modelNames = array();
                                 if ($listing_item_id) {
-                                   $product_key = $product_ids[$key];
+                                    $product_key = $product_ids[$key];
                                     Log::info(' Product Models :: ' . json_encode($product_models->$product_key));
                                     $product_model = $product_models->$product_key[$key];
                                     if (isset($product_model) && is_array($product_model)) {
