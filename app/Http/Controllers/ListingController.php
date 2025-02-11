@@ -352,8 +352,6 @@ class ListingController extends Controller
 
         // Handle Only Active Products (Remove the bundled products)
         if ($request->has('exclude_oem')) {
-            $query->where('products.oem_generic');
-        } else {
             $query->where('products.oem_generic', 2);
         }
 
@@ -367,6 +365,12 @@ class ListingController extends Controller
         if ($request->has('additional_image_available')) {
             $query->leftJoin('product_image_alternatives', 'product_image_alternatives.product_id', '=', 'store_product.product_id');
             $query->whereNotNull('product_image_alternatives.id');
+        }
+
+        if(!$request->has('bundle_product')) {
+            $query->whereNotIn('products.product_type', function ($subquery) {
+                $subquery->select('id')->from('product_type')->where('code', 'ceabundle');
+            });
         }
 
         // Filter by product store
