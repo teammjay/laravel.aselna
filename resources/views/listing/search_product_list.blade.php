@@ -12,8 +12,8 @@
             </td>
             <td>{{ (isset($product->Product->product_sku)) ? $product->Product->product_sku : '' }}</td>
             <td>{{ $product->ProductType }}</td>
-            <td>{{ $product->title }}</td>
-            <td>{{ $product->price }}</td>
+            <td>{{ ($product->title != '') ? $product->title : $product->product->product_title }}</td>
+            <td>{{ ($product->price != '') ? $product->price : $product->product->product_price }}</td>
             <td>{{ $product->Product->product_qty }}</td>
             <td>{{ $product->created_at }}</td>
 
