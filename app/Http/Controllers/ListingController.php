@@ -48,7 +48,7 @@ class ListingController extends Controller
         // get the data in the pagination format for datatable to display
         $stores = Store::with('storeType')->where('store_status', 1)->orderBy('name', 'asc')->get();
         $device_types = DeviceTypes::Where('status', 1)->get();
-        $product_types = ProductType::with('children')->where('parent_id', NULL)->get();
+        $product_types = ProductType::with('children')->where('parent_id', '39f0a7ab-1d27-6ba0-0b31-77e572d50006')->orderBy('name', 'asc')->get();
         $manufacturers = Manufacturer::all();
         $devices = Device::all();
         $brands = Brand::all();
@@ -297,7 +297,7 @@ class ListingController extends Controller
         /*echo '<pre>';
         print_r($stores);die;*/
         $manufacturers = Manufacturer::all();
-        $productTypes = ProductType::whereNull('parent_id')->get();
+        $productTypes = ProductType::with('children')->where('parent_id', '39f0a7ab-1d27-6ba0-0b31-77e572d50006')->orderBy('name', 'asc')->get();
         $deviceTypes = DeviceTypes::all();
         $listingGenerationTypes = ListingGenerationType::orderBy('code', 'asc')->get();
         $brands = Brand::orderBy('name', 'asc')->get();
@@ -439,6 +439,9 @@ class ListingController extends Controller
 
         $products = $query->distinct()->get();
         //echo $query->toSql();die;
+       /* echo '<pre>';
+        print_r($products);
+        echo '</pre>';die;*/
 
         // Return a view or JSON
         if ($request->ajax()) {
