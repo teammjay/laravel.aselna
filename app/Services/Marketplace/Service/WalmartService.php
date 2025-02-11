@@ -228,14 +228,19 @@ class WalmartService implements MarketplaceServiceInterface
             Log::info('Images: ' . json_encode($images));
             Log::info('File System: ' . json_encode($fileSystem));
             $imagesPath = [];
+            $mainImagePath = [];
             foreach ($images as $image) {
-                $imagesPath[] = $fileSystem->url_base_path . $image->path;
+                if ($image->productImage && $image->productImage->main_image == 0) {
+                    $imagesPath[] = $fileSystem->url_base_path . $image->path;
+                } else {
+                    $mainImagePath = $fileSystem->url_base_path . $image->path;
+                }
             }
 
             // skip only the first one for the secondary image
             $product['Visible'][$storeTypeCategory->name] = [
                 'shortDescription' => $item->description,
-                'mainImageUrl' => $imagesPath[0],
+                'mainImageUrl' => $mainImagePath,
                 'productSecondaryImageURL' => array_slice($imagesPath, 1),
                 'keyFeatures' => $keyFeatures,
                 'manufacturerPartNumber' => $item->mpn,
