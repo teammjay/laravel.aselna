@@ -13,7 +13,7 @@
             <td>{{ $product->product_color }}</td>
             <td></td>
             <td style="white-space: nowrap;">{{ $product->generation_type_name }}</td>
-            <td>{{ $product->price }}</td>
+            <td>{{ ($product->price != '') ? $product->price : $product->product->product_price }}</td>
             <td>{{ $product->quantity }}</td>
             <td>
                 <a href="{{ route('listing.edit', $product->id) }}" class="btn btn-primary">
