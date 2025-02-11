@@ -2,23 +2,21 @@
 
 namespace App\Services\Marketplace\Service;
 
-use App\Models\ListingItemLink;
+use App\Models\Listing;
 use App\Models\ListingFeed;
+use App\Models\ListingItemDetail;
+use App\Models\ListingItemLink;
 use App\Models\ProductType;
 use App\Models\SysFile;
 use App\Services\Marketplace\Contracts\MarketplaceServiceInterface;
 use App\Services\Auth\GoogleShoppingAuthService;
 use Illuminate\Support\Facades\Storage;
+use App\Constants\FeedTypes;
+use App\Utils\FileUtility;
 
 
 class GoogleShoppingService implements MarketplaceServiceInterface
 {
-    protected $shoppingContentService;
-
-    public function __construct(GoogleShoppingAuthService $shoppingContentService)
-    {
-        $this->shoppingContentService = $shoppingContentService;
-    }
 
     public function generateFeed($listingId)
     {
@@ -46,8 +44,8 @@ class GoogleShoppingService implements MarketplaceServiceInterface
 
         /* create listing feed */
         $created_by = auth()->user()->name ?? 'admin';
-        $filePath = public_path('feeds/google-shopping/' . $listingId . '.xml');
-        $sizeInMB= '';
+        $filePath = public_path('feeds/google-shopping/' . $listingId . '.csv');
+        $sizeInMB= $sizeInKB = '';
         if (file_exists($filePath)) {
             $sizeInBytes = filesize($filePath); // File size in bytes
             $sizeInKB = $sizeInBytes / 1024;
@@ -141,7 +139,8 @@ class GoogleShoppingService implements MarketplaceServiceInterface
             ]);
         }
         rewind($stream);
-        Storage::put($filePath, stream_get_contents($stream));
+        FileUtility::saveToFile(public_path('feeds/google-shopping/' . $listingId . '.csv'), stream_get_contents($stream));
+        //Storage::put($filePath, stream_get_contents($stream));
         fclose($stream);
         //return the file path so that it can be downloaded
         return $filePath;
@@ -193,10 +192,11 @@ class GoogleShoppingService implements MarketplaceServiceInterface
         // Upload the feed
         $fileName = 'google_shopping_feed_'.$listingId.'.csv';
         $filePath = public_path('feeds/google-shopping/' . $fileName);
-        $response = $this->shoppingContentService->uploadFeed($filePath);
+        $authservice = new GoogleShoppingAuthService();
+        $response = $authservice->uploadFeed($filePath);
 
         if ($response['success']) {
-            $statusResponse = $this->shoppingContentService->getFeedStatus($response['datafeedId']);
+            $statusResponse = $authservice->getFeedStatus($response['datafeedId']);
 
 
 
@@ -215,10 +215,10 @@ class GoogleShoppingService implements MarketplaceServiceInterface
 
     public function getResultFeed(mixed $listingId)
     {
-        $this->authService = new GoogleShoppingAuthService();
+        $authService = new GoogleShoppingAuthService();
 
         $feedInfo = ListingFeed::where('listing_id', $listingId)->first();
-        $response = $this->authService->getFeedStatus($feedInfo->feed_id);
+        $response = $authService->getFeedStatus($feedInfo->feed_id);
 
         return response()->json([
             'message' => $response['message'],
