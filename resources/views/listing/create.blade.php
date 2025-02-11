@@ -77,6 +77,13 @@
             max-height: 200px;
             overflow-y: scroll;
         }
+        #frmproductfilter .select2-container{
+            width: 100% !important;
+            margin: 15px 0;
+        }
+        .select2-container--default .select2-dropdown{
+            width:320px !important;
+        }
     </style>
 @stop
 @section('content_header')
@@ -141,7 +148,7 @@
                                                 @endforeach
                                             @endif
                                         </select>
-                                        <div class="form-group mb-1">
+                                        <div class="form-group mb-1 mt-1">
                                             <input type="checkbox" name="never_listed_product" id="never_listed_product" checked> <span>Never Listed Product</span>
                                         </div>
                                         <div class="form-group mb-1">
@@ -912,7 +919,7 @@
         }
         $(document).ready(function() {
 
-            /*$('#listing_store').select2();*/
+            $('#listing_store').select2();
             $(document).on('click', '#searchBtn', function() {
                 if($('#listing_store').val() == ''){
                     alert('Please select store first.');
