@@ -826,7 +826,9 @@ class CatalogController extends Controller
             $images = ProductImages::where('product_id',$product_id)->orderBy('sort_order','asc')->get();
             if(!empty((array) $images)){
                 foreach($images as $img){
-                    $pimages[] = asset('storage/product_images/'. $img->image);
+                    if($img->imageObj) {
+                        $pimages[] = asset('storage/' .$img->imageObj->getFileUrl());
+                    }
                 }
             }
         }
