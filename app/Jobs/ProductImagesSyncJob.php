@@ -103,11 +103,13 @@ class ProductImagesSyncJob implements ShouldQueue
             ]);
         }
 
+        
         ProductImages::updateOrCreate([
             'product_id' => $product->product_id,
             'sort_order' => $productImage->picture_id
         ], [
             'product_id' => $product->product_id,
+            'main_image' => $productImage->picture_id === 1 ? true : false,
             'image' => $mainImageDetail ? $mainImageDetail->id : '',
             'thumbnail_image' => $thumbnailImageDetail ? $thumbnailImageDetail->id : null,
             'sort_order' => $productImage->picture_id

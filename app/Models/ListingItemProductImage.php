@@ -34,10 +34,10 @@ class ListingItemProductImage extends Model
         return $this->belongsTo(ListingItem::class, 'listing_item_id', 'id');
     }
 
-//    public function productImage()
-//    {
-//        return $this->belongsTo(ProductImage::class, 'product_image_id', 'id');
-//    }
+   public function productImage()
+   {
+       return $this->belongsTo(ProductImages::class, 'product_image_id', 'id');
+   }
 //
 //    public function imageFileSystem()
 //    {

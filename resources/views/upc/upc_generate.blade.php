@@ -29,7 +29,7 @@
                 <td>{{$upcGenerate->company_prefix}}</td>
                 <td>{{$upcGenerate->product_number}}</td>
                 <td>{{$upcGenerate->number_of_codes}}</td>
-                <td>{{$upcGenerate->storeData->name}} - {{ $upcGenerate->storeData->storeType->name }}</td>
+                <td>{{$upcGenerate->storeData->name}}</td>
             </tr>
         @endforeach
         </tbody>
@@ -125,7 +125,7 @@
                         select.empty();
                         select.append('<option value="">Select Store</option>');
                         $.each(data, function (key, value) {
-                            select.append('<option value="' + value.id + '">' + value.name + ' - ' + value.store_type.name + '</option>');
+                            select.append('<option value="' + value.id + '">' + value.name + ' - ' + value?.store_type?.name + '</option>');
                         });
                     },
                     error: function (xhr, status, error) {
