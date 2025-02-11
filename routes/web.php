@@ -42,7 +42,9 @@ use App\Http\Controllers\OrdersController;
 use App\Http\Controllers\ShipmentsController;
 use App\Http\Controllers\ShippingCarrierPackageController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\ResetPasswordController;
 use App\Services\Auth\EbayAuthService;
+
 Route::middleware('auth')->group(function () {
     Route::get('/', [HomeController::class, 'index'])->name('home');
     Route::get('/catalog', [CatalogController::class, 'index']);
@@ -440,4 +442,7 @@ Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
 Route::post('/login', [AuthController::class, 'login']);
 Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
 Route::post('/register', [AuthController::class, 'register']);
-
+Route::get('/forgot-password', [ResetPasswordController::class, 'showForgotForm'])->name('password.request');
+Route::post('/forgot-password', [ResetPasswordController::class, 'sendResetLink'])->name('password.email');
+Route::get('/reset-password/{token}', [ResetPasswordController::class, 'showResetForm'])->name('password.reset');
+Route::post('/reset-password', [ResetPasswordController::class, 'resetPassword'])->name('password.update');

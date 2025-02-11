@@ -60,7 +60,7 @@ class Device extends Model
 
     public function deviceSeries()
     {
-        return $this->belongsTo(DeviceSeries::class);
+        return $this->belongsTo(DeviceSeries::class,'device_series_id');
     }
 
     public function rating()
