@@ -3,7 +3,9 @@
 namespace App\Services\Marketplace\Service;
 
 use App\Models\ListingItemLink;
+use App\Models\ListingFeed;
 use App\Models\ProductType;
+use App\Models\SysFile;
 use App\Services\Marketplace\Contracts\MarketplaceServiceInterface;
 use App\Services\Auth\GoogleShoppingAuthService;
 use Illuminate\Support\Facades\Storage;
