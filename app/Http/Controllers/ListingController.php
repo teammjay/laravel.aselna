@@ -937,7 +937,7 @@ class ListingController extends Controller
                                     }
                                 }
 
-                                $query = Device::select('device.*', 'brands.name as brand_name')->with('deviceType');
+                                $query = Device::select('device.*', 'brands.name as brand_name')->with('deviceType','deviceSeries');
                                 $query->leftJoin('brands', 'brands.id', '=', 'device.brand_id');
                                 $query->leftJoin('device_interface', 'device_interface.device_id', '=', 'device.id');
                                 $query->leftJoin('product_interface', 'product_interface.interface_id', '=', 'device_interface.interface_id');
