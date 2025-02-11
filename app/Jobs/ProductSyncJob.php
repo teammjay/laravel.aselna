@@ -57,23 +57,6 @@ class ProductSyncJob implements ShouldQueue
         } catch (Exception $e) {
             Log::error($e->getMessage());
         }
-
-        $storeProductsQ = DB::connection('easyesale_db')->table('store_product')->orderBy('id');
-
-        if (env('APP_ENV') === 'local') {
-            Log::info('Local Environment');
-//            $storeProductsQ->whereRaw('id in (select store_product_id from oydera_listing_item where id in (select item_id from oydera_listing_item_link where listing_id = \'1dd2cd15-757d-d9fc-02af-21a1eba741e7\'))');
-        }
-
-        try {
-            $storeProductsQ->chunk(100, function ($storeProducts) {
-                foreach ($storeProducts as $storeProduct) {
-                    $this->createStoreProduct($storeProduct);
-                }
-            });
-        } catch (Exception $e) {
-            Log::error($e->getMessage());
-        }
     }
 
     private function createProduct($product)
@@ -157,50 +140,54 @@ class ProductSyncJob implements ShouldQueue
 
     private function updateProduct(mixed $product)
     {
-        if (Catalog::where('product_sku', $product->code)->exists()) {
-            return;
+        try {
+            // if (Catalog::where('product_sku', $product->code)->exists()) {
+            //     return;
+            // }
+            Catalog::updateOrInsert([
+                'product_id' => $product->id,
+            ], [
+                'product_id' => $product->id,
+                'product_title' => $product->title,
+                'product_description' => $product->description,
+                'product_type' => $product->product_type_id,
+                'manufacturer_id' => $product->manufacturer_id,
+                'product_condition_id' => $product->condition_id,
+                'product_price' => $product->price,
+                'product_wholesale_price' => $product->wholesale_price,
+                'product_marketplace_price' => $product->marketplace_price,
+                'product_mrsp' => $product->msrp,
+                'product_sku' => $product->code,
+                'product_code' => $product->reference_id1,
+    //            'product_image_url' => 'as',
+                'product_status' => $product->status == 1 ? 'active' : 'discontinued',
+                'dimensions_length' => $product->dimensions_length,
+                'dimensions_height' => $product->dimensions_height,
+                'dimensions_width' => $product->dimensions_width,
+                'product_weight' => $product->weight_value,
+                'product_weight_unit' => $product->weight_weight_unit,
+                'product_package_weight' => $product->package_weight_value,
+                'package_weight_unit' => $product->package_weight_weight_unit,
+                'package_dimensions_width' => $product->package_dimension_width,
+                'package_dimensions_height' => $product->package_dimension_height,
+                'package_dimensions_length' => $product->package_dimension_length,
+                'oem_generic' => $product->oem_generic,
+    //            'product_tags'=> $product->weight_weight_unit,
+    //            'target_aud'=> $product->weight_weight_unit,
+                'product_color' => $product->color_id,
+                'product_qty' => $product->quantity,
+    //            'product_reorder_qty',
+    //            'product_pick_location' => ,
+                'title_template' => $product->title_template,
+                'description_template' => $product->description_template,
+                'created_by' => 'system',
+                'updated_by' => 'system',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        } catch(Exception $e) {
+            Log::info('Test Error ::' . $e->getMessage());
         }
-        Catalog::updateOrInsert([
-            'product_id' => $product->id,
-        ], [
-            'product_id' => $product->id,
-            'product_title' => $product->title,
-            'product_description' => $product->description,
-            'product_type' => $product->product_type_id,
-            'manufacturer_id' => $product->manufacturer_id,
-            'product_condition_id' => $product->condition_id,
-            'product_price' => $product->price,
-            'product_wholesale_price' => $product->wholesale_price,
-            'product_marketplace_price' => $product->marketplace_price,
-            'product_mrsp' => $product->msrp,
-            'product_sku' => $product->code,
-            'product_code' => $product->reference_id1,
-//            'product_image_url' => 'as',
-            'product_status' => $product->status == 1 ? 'active' : 'discontinued',
-            'dimensions_length' => $product->dimensions_length,
-            'dimensions_height' => $product->dimensions_height,
-            'dimensions_width' => $product->dimensions_width,
-            'product_weight' => $product->weight_value,
-            'product_weight_unit' => $product->weight_weight_unit,
-            'product_package_weight' => $product->package_weight_value,
-            'package_weight_unit' => $product->package_weight_weight_unit,
-            'package_dimensions_width' => $product->package_dimension_width,
-            'package_dimensions_height' => $product->package_dimension_height,
-            'package_dimensions_length' => $product->package_dimension_length,
-            'oem_generic' => $product->oem_generic,
-//            'product_tags'=> $product->weight_weight_unit,
-//            'target_aud'=> $product->weight_weight_unit,
-            'product_color' => $product->color_id,
-            'product_qty' => $product->quantity,
-//            'product_reorder_qty',
-//            'product_pick_location' => ,
-            'title_template' => $product->title_template,
-            'description_template' => $product->description_template,
-            'created_by' => 'system',
-            'updated_by' => 'system',
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
     }
 
     private function createStoreProduct(mixed $storeProduct)
