@@ -1126,7 +1126,7 @@
 
                                 } else {
                                     clearMultiSelect('product_sub_type','prod-sub-type');
-                                    clearMultiSelect('product_sub_sub_type','prod-sub-sub-type');
+                                    //clearMultiSelect('product_sub_sub_type','prod-sub-sub-type');
                                     clearMultiSelect('interface','interface-filter');
                                     $('#proSubType').hide();
                                     $('#proSubSubType').hide();
@@ -1143,7 +1143,7 @@
                         });
                     }
 
-                    if (ele.parents('.prod-sub-type').length) {
+                    /*if (ele.parents('.prod-sub-type').length) {
 
                         let product_types = [];
                         ele.parents('.prod-sub-type').find('input[name="product_sub_type[]"]').each(function () {
@@ -1155,8 +1155,8 @@
                             data: {
                                 product_types: product_types
                             },
-                            /* processData: false,
-                             contentType: false,*/
+                            /!* processData: false,
+                             contentType: false,*!/
                             headers: {
                                 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                             },
@@ -1189,19 +1189,29 @@
                                 }
                             },
                             error: function (xhr) {
-                                /*if (xhr.responseJSON?.error) {
+                                /!*if (xhr.responseJSON?.error) {
                                     $('#responseMessage').html('<p style="color:red;">' + xhr.responseJSON.error.image[0] + '</p>');
-                                }*/
+                                }*!/
                             }
                         });
+                    }*/
+
+                    if (ele.parents('.prod-sub-type').length) {
+                        if($('#listing_store').val() != '') {
+                            loadProducts();
+                        }
                     }
 
                     if(ele.parents('.interface-filter').length) {
-                        loadProducts()
+                        if($('#listing_store').val() != '') {
+                            loadProducts();
+                        }
                     }
 
                     if(ele.parents('.prod-sub-sub-type').length) {
-                        loadProducts()
+                        if($('#listing_store').val() != '') {
+                            loadProducts();
+                        }
                     }
 
                     if (ele.parents('.pro-brand').length || ele.parents('.pro-rating').length || ele.parents('.pro-popular').length) {
