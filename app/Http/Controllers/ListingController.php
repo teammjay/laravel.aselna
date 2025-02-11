@@ -1171,6 +1171,7 @@ class ListingController extends Controller
 
             $tempTitle = str_replace('#device_series', $currentBrand, $baseTitle);
             $tempTitle = str_replace('#devices', $currentBrand, $tempTitle);
+            $tempTitle = str_replace('#model_series', $currentBrand, $tempTitle);
             $titles[$k]['title'] = $tempTitle;
             $titles[$k]['product_code'] = $product->product->product_sku;
             $titles[$k]['product_id'] = $product->product_id;
