@@ -6,6 +6,7 @@ use App\Models\Listing;
 use App\Models\ListingFeed;
 use App\Models\ListingItemDetail;
 use App\Models\ListingItemLink;
+use App\Models\ListingItemProductImage;
 use App\Models\ProductType;
 use App\Models\SysFile;
 use App\Services\Marketplace\Contracts\MarketplaceServiceInterface;
@@ -83,6 +84,8 @@ class GoogleShoppingService implements MarketplaceServiceInterface
         //$userIdentifier = $listingInfo->store->user_id;
         $listingItems = ListingItemLink::with('listingItem','listingItem.brand','listingItem.device','listingItem.storeProduct','listingItem.storeProduct.product', 'listingItem.storeProduct.productImages', 'listingItem.storeProduct.product.Manufacturer', 'listingItem.storeProduct.product.condition')->where('listing_id', $listingId)->cursor();
 
+        $fileSystem = $listingInfo->store->fileSystem;
+
         // Define the columns for Google Shopping feed
         $columns = ['id','title','description','google product category','product type','link','image link','condition','availability','price','gtin','brand','mpn','item group id','gender','age group','color','size','shipping','additional_image_link','inventory','return_policy_info','custom_label_0','custom_label_1','custom_label_2','custom_label_3','custom_label_4','product_detail'];
 
@@ -96,12 +99,20 @@ class GoogleShoppingService implements MarketplaceServiceInterface
         // Write product rows
         foreach ($listingItems as $listingItem) {
             $itemDetail = $listingItem->listingItem;
+
             $images = array();
-            if(isset($itemDetail->storeProduct->productImages) && !empty($itemDetail->storeProduct->productImages)){
+            $pimages = ListingItemProductImage::where('listing_item_id', $itemDetail->id)->get();
+            foreach ($pimages as $image) {
+                if ($image->productImage) {
+                    $images[] = $fileSystem->url_base_path . $image->path;
+                }
+            }
+
+            /*if(isset($itemDetail->storeProduct->productImages) && !empty($itemDetail->storeProduct->productImages)){
                 foreach($itemDetail->storeProduct->productImages as $image){
                     $images[] = asset('storage/product_images/'. $image->image);
                 }
-            }
+            }*/
             /*echo '<pre>';
             print_r($itemDetail);die;*/
             $ptype_id = $itemDetail->storeProduct->product->product_type;
