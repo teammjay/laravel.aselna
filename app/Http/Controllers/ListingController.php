@@ -436,6 +436,20 @@ class ListingController extends Controller
                     }
                 }
             }
+        } else {
+            $product_sub_types = ProductType::select('id')->where('code', 'cea')->get()->toArray();
+            if (!empty($product_sub_types)) {
+                foreach ($product_sub_types as $stype) {
+                    if ($stype['code'] === 'ceabundle') continue;
+                    $all_product_ids[] = $stype['id'];
+                    $product_sub_sub_types = ProductType::select('id')->where('parent_id', $stype['id'])->get()->toArray();
+                    if (!empty($product_sub_sub_types)) {
+                        foreach ($product_sub_sub_types as $ssubtype) {
+                            $all_product_ids[] = $ssubtype['id'];
+                        }
+                    }
+                }
+            }
         }
         if (!empty($all_product_ids)) {
             $query->whereIn('products.product_type', $all_product_ids);
