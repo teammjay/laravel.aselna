@@ -180,6 +180,7 @@
             $('#listing_store').select2();
             table = $('#listingTable').DataTable({
                 processing: true,
+                order: [[5, 'desc']],
                 serverSide: true,
                 searching: false,
                 ajax: {

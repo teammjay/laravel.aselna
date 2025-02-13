@@ -1,6 +1,5 @@
 @if(count($products ?? []) > 0)
     @foreach($products as $product)
-
         <tr class="selectproRow" id="product-{{ $product->product_id }}">
 
             <td>
