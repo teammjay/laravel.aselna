@@ -21,6 +21,7 @@ use App\Models\Store;
 use App\Models\StoreProduct;
 use App\Models\StoreType;
 use App\Models\StoreTypeCategory;
+use App\Models\SysFile;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
@@ -673,19 +674,34 @@ class CatalogController extends Controller
         if ($request->file('images')) {
 
             foreach ($request->file('images') as $key=>$image) {
-                $imageName = time() . '_' . uniqid() . '.' . $image->getClientOriginalExtension();
-                $image->move(public_path('storage/product_images/'), $imageName);
+                $extension = $image->getClientOriginalExtension();
+                $imageName = time() . '_' . uniqid() . '.' . $extension;
+                $storagePath = storage_path('app/public/product_images/' . $imageName);
+                /*$image->move(public_path('storage/product_images/'), $imageName);*/
+                $image->move(storage_path('app/public/product_images/'), $imageName);
+
+                $fileSize = filesize($storagePath);
+                $filedata = [
+                    'name' => $imageName,
+                    'ext' => $extension ?: 'jpg', // Default to 'jpg' if missing
+                    'file_size' => $fileSize ?: 'Unknown', // Use 'Unknown' if not determined
+                    'location' => 'product_images/',
+                    'created_by' => 'admin',
+                ];
+
+                $imageFile = SysFile::create($filedata);
+
                 $imageNames[] = $imageName;
                 $imagedata[] = array(
                     'id' => (string) Str::uuid(),
                     'product_id' => $productId,
-                    'image' => $imageName,
+                    'image' => $imageFile->id,
                     //'thumbnail_image' => $imageName,
                     'sort_order' => (int) $key + 1,
                 );
 
                 if($key == 0){
-                    Catalog::where('product_id', $productId)->update(['product_image_url'=>$imageName]);
+                    Catalog::where('product_id', $productId)->update(['product_image_url'=>$imageFile->id]);
                 }
 
                 // Create thumbnail

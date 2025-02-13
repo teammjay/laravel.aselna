@@ -6,6 +6,7 @@ use App\Models\Listing;
 use App\Models\ListingFeed;
 use App\Models\ListingItemDetail;
 use App\Models\ListingItemLink;
+use App\Models\ListingItemProductImage;
 use App\Models\SysFile;
 use App\Services\Auth\EbayAuthService;
 use App\Services\Marketplace\Contracts\MarketplaceServiceInterface;
@@ -84,6 +85,7 @@ class EbayService implements MarketplaceServiceInterface
     {
         // Generate feed for Ebay
         $listingItems = ListingItemLink::with('listingItem','listingItem.brand','listingItem.storeProduct','listingItem.storeProduct.product','listingItem.storeProduct.productImages')->where('listing_id', $listingId)->get();
+        $fileSystem = $listingInfo->store->fileSystem;
         $version = 1238;
 
         /*echo '<pre>';
@@ -144,11 +146,18 @@ class EbayService implements MarketplaceServiceInterface
 
             // Add PictureDetails
             $pictureDetails = $item->addChild('PictureDetails');
-            if(isset($itemDetail->storeProduct->productImages) && !empty($itemDetail->storeProduct->productImages)){
+            $images = ListingItemProductImage::where('listing_item_id', $itemDetail->id)->get();
+            foreach ($images as $image) {
+                if ($image->productImage) {
+                    $imagesPath = $fileSystem->url_base_path . $image->path;
+                    $pictureDetails->addChild('PictureURL', $imagesPath);
+                }
+            }
+            /*if(isset($itemDetail->storeProduct->productImages) && !empty($itemDetail->storeProduct->productImages)){
                 foreach($itemDetail->storeProduct->productImages as $image){
                     $pictureDetails->addChild('PictureURL', asset('storage/product_images/'. $image->image));
                 }
-            }
+            }*/
 
             $item->addChild('DispatchTimeMax', '1');
 
