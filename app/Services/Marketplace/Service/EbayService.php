@@ -73,7 +73,7 @@ class EbayService implements MarketplaceServiceInterface
             'created_by' => $created_by
         );
 
-        ListingFeed::create($feedData);
+        ListingFeed::updateOrCreate(['listing_id' => $listingId],$feedData);
         /* create listing feed */
 
         //return the file path so that it can be downloaded

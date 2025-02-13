@@ -48,7 +48,9 @@ class ListingController extends Controller
         // get the data in the pagination format for datatable to display
         $stores = Store::with('storeType')->where('store_status', 1)->orderBy('name', 'asc')->get();
         $device_types = DeviceTypes::Where('status', 1)->get();
-        $product_types = ProductType::with('children')->where('parent_id', '39f0a7ab-1d27-6ba0-0b31-77e572d50006')->orderBy('name', 'asc')->get();
+        $product_types = ProductType::with('children')->whereIn('parent_id', function($subquery) {
+            $subquery->select('id')->from('product_type')->where('code', 'cea');
+        })->get();
         $manufacturers = Manufacturer::all();
         $devices = Device::all();
         $brands = Brand::all();
@@ -297,7 +299,9 @@ class ListingController extends Controller
         /*echo '<pre>';
         print_r($stores);die;*/
         $manufacturers = Manufacturer::all();
-        $productTypes = ProductType::with('children')->where('parent_id', '39f0a7ab-1d27-6ba0-0b31-77e572d50006')->orderBy('name', 'asc')->get();
+        $productTypes = ProductType::with('children')->whereIn('parent_id', function($subquery) {
+            $subquery->select('id')->from('product_type')->where('code', 'cea');
+        })->orderBy('name', 'asc')->get();
         $deviceTypes = DeviceTypes::all();
         $listingGenerationTypes = ListingGenerationType::orderBy('code', 'asc')->get();
         $brands = Brand::orderBy('name', 'asc')->get();
@@ -345,14 +349,15 @@ class ListingController extends Controller
     public function getProducts(Request $request)
     {
 
-        $query = StoreProduct::select('store_product.id', 'store_product.product_id', 'store_product.title', 'store_product.price', 'store_product.created_at', 'product_type.name as ProductType')->with('product');
-        $query->leftJoin('products', 'products.product_id', '=', 'store_product.product_id');
-        $query->leftJoin('product_type', 'products.product_type', '=', 'product_type.id');
+//        $query = StoreProduct::select('store_product.id', 'store_product.product_id', 'store_product.title', 'store_product.price', 'store_product.created_at', 'product_type.name as ProductType')->with('product');
+//        $query->rightJoin('products', 'products.product_id', '=', 'store_product.product_id');
+//        $query->leftJoin('product_type', 'products.product_type', '=', 'product_type.id');
 
+        $query = Catalog::where('products.product_status', 1);
 
         // Handle Only Active Products (Remove the bundled products)
         if ($request->has('exclude_oem')) {
-            $query->where('products.oem_generic', 2);
+            $query->where('products.oem_generic',2);
         }
 
         // getting only product which are not listed
@@ -374,9 +379,9 @@ class ListingController extends Controller
         }
 
         // Filter by product store
-        if ($request->has('store_id') && $request->input('store_id') != '') {
-            $query->where('store_product.store_id', $request->input('store_id'));
-        }
+//        if ($request->has('store_id') && $request->input('store_id') != '') {
+//            $query->where('store_product.id', $request->input('store_id'));
+//        }
         // Filter by product code
         if ($request->has('product_code') && $request->product_code != '') {
             $query->whereIn('products.product_sku', $request->product_code);
@@ -436,16 +441,28 @@ class ListingController extends Controller
                     }
                 }
             }
+        } else {
+            $product_sub_types = ProductType::select('id','code')->whereIn('parent_id', function($subquery) {
+                $subquery->select('id')->from('product_type')->where('code', 'cea');
+            })->get()->toArray();
+            if (!empty($product_sub_types)) {
+                foreach ($product_sub_types as $stype) {
+                    if ($stype['code'] === 'ceabundle') continue;
+                    $all_product_ids[] = $stype['id'];
+                    $product_sub_sub_types = ProductType::select('id')->where('parent_id', $stype['id'])->get()->toArray();
+                    if (!empty($product_sub_sub_types)) {
+                        foreach ($product_sub_sub_types as $ssubtype) {
+                            $all_product_ids[] = $ssubtype['id'];
+                        }
+                    }
+                }
+            }
         }
         if (!empty($all_product_ids)) {
             $query->whereIn('products.product_type', $all_product_ids);
         }
 
-        $products = $query->distinct()->get();
-        //echo $query->toSql();die;
-       /* echo '<pre>';
-        print_r($products);
-        echo '</pre>';die;*/
+        $products = $query->get();
 
         // Return a view or JSON
         if ($request->ajax()) {
@@ -1318,6 +1335,7 @@ class ListingController extends Controller
                     $summary_products = [];
                     if ($listing_id && !empty($product_titles)) {
                         foreach ($product_titles as $key => $product) {
+                            //Log::info('Title :: ' . $key);
                             if ($store_detail->sku_generation_type) {
                                 switch ($store_detail->sku_generation_type) {
                                     case 1:
@@ -1421,7 +1439,7 @@ class ListingController extends Controller
                                 $modelNames = array();
                                 if ($listing_item_id) {
                                     $product_key = $product_ids[$key];
-                                    Log::info(' Product Models :: ' . json_encode($product_models->$product_key));
+                                    //Log::info(' Product Models :: ' . json_encode($product_models->$product_key));
                                     $product_model = $product_models->$product_key[$key];
                                     if (isset($product_model) && is_array($product_model)) {
 
