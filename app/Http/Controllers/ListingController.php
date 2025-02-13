@@ -349,16 +349,17 @@ class ListingController extends Controller
     public function getProducts(Request $request)
     {
 
-//        $query = StoreProduct::select('store_product.id', 'store_product.product_id', 'store_product.title', 'store_product.price', 'store_product.created_at', 'product_type.name as ProductType')->with('product');
-//        $query->rightJoin('products', 'products.product_id', '=', 'store_product.product_id');
-//        $query->leftJoin('product_type', 'products.product_type', '=', 'product_type.id');
+        $query = StoreProduct::select('store_product.id', 'store_product.product_id', 'store_product.title', 'store_product.price', 'store_product.created_at', 'product_type.name as ProductType')->with('product');
+        $query->leftJoin('products', 'products.product_id', '=', 'store_product.product_id');
+        $query->leftJoin('product_type', 'products.product_type', '=', 'product_type.id');
 
-        $query = Catalog::where('products.product_status', 1);
 
         // Handle Only Active Products (Remove the bundled products)
         if ($request->has('exclude_oem')) {
             $query->where('products.oem_generic',2);
         }
+
+        $query->where('products.product_status',1);
 
         // getting only product which are not listed
         if ($request->has('never_listed_product')) {
@@ -379,9 +380,9 @@ class ListingController extends Controller
         }
 
         // Filter by product store
-//        if ($request->has('store_id') && $request->input('store_id') != '') {
-//            $query->where('store_product.id', $request->input('store_id'));
-//        }
+        if ($request->has('store_id') && $request->input('store_id') != '') {
+            $query->where('store_product.store_id', $request->input('store_id'));
+        }
         // Filter by product code
         if ($request->has('product_code') && $request->product_code != '') {
             $query->whereIn('products.product_sku', $request->product_code);
@@ -462,7 +463,8 @@ class ListingController extends Controller
             $query->whereIn('products.product_type', $all_product_ids);
         }
 
-        $products = $query->get();
+        $products = $query->distinct()->get();
+        //echo $query->toSql();die;
 
         // Return a view or JSON
         if ($request->ajax()) {
