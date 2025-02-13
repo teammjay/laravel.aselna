@@ -241,7 +241,7 @@ class WalmartService implements MarketplaceServiceInterface
             $product['Visible'][$storeTypeCategory->name] = [
                 'shortDescription' => $item->description,
                 'mainImageUrl' => $mainImagePath,
-                'productSecondaryImageURL' => array_slice($imagesPath, 1),
+                'productSecondaryImageURL' => $imagesPath,
                 'keyFeatures' => $keyFeatures,
                 'manufacturerPartNumber' => $item->mpn,
                 'modelNumber' => $item->sku,
