@@ -40,7 +40,7 @@ class Catalog extends Model
 
     public function productType()
     {
-        return $this->belongsTo(ProductType::class, 'product_type');
+        return $this->belongsTo(ProductType::class, 'product_type','id');
     }
 
     public function condition()

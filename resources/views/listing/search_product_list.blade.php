@@ -4,17 +4,17 @@
 
             <td>
                 <div class="d-flex">
-                @if(isset($product->Product->image))
-                    <img src="{{ asset('storage/' .$product->Product->image->getFileUrl()) }}" alt="{{ asset('storage/' .$product->Product->image->getFileUrl())}}" loading="lazy" width="50" height="50" class="mainImage" data-product-id="{{ $product->Product->product_id }}">
+                @if(isset($product->image))
+                    <img src="{{ asset('storage/' .$product->image->getFileUrl()) }}" alt="{{ asset('storage/' .$product->image->getFileUrl())}}" loading="lazy" width="50" height="50" class="mainImage" data-product-id="{{ $product->product_id }}">
                 @endif
-                    <input type="checkbox" class="proCheck" name="products[]" value="{{ $product->id }}" checked>
+                    <input type="checkbox" class="proCheck" name="products[]" value="{{ $product->store_product_id }}" checked>
                 </div>
             </td>
-            <td>{{ (isset($product->Product->product_sku)) ? $product->Product->product_sku : '' }}</td>
-            <td>{{ $product->ProductType }}</td>
-            <td>{{ ($product->title != '') ? $product->title : $product->product->product_title }}</td>
-            <td>{{ ($product->price != '') ? $product->price : $product->product->product_price }}</td>
-            <td>{{ $product->Product->product_qty }}</td>
+            <td>{{ (isset($product->product_sku)) ? $product->product_sku : '' }}</td>
+            <td>{{ $product->productType->name ?? '' }}</td>
+            <td>{{ ($product->product_title != '') ? $product->product_title : $product->product->product_title }}</td>
+            <td>{{ ($product->product_price != '') ? $product->product_price : $product->product->product_price }}</td>
+            <td>{{ $product->product_qty }}</td>
             <td>{{ $product->created_at }}</td>
 
         </tr>

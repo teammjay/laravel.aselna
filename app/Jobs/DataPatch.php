@@ -3,6 +3,8 @@
 namespace App\Jobs;
 
 use App\Models\Catalog;
+use App\Models\ProductType;
+use App\Models\Store;
 use App\Models\StoreProduct;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -25,22 +27,36 @@ class DataPatch implements ShouldQueue
      */
     public function handle(): void
     {
-        $products = Catalog::all();
-        foreach ($products as $product) {
-            Log::info('Product: ' . $product->product_sku);
-            StoreProduct::updateOrCreate(
-                [
-                    'product_id' => $product->product_id,
-                    'store_id' => 'c476797e-9682-cc87-c841-5ecc63b9b002',
-                ],
-                [
-                    'product_id' => $product->product_id,
-                    'store_id' => 'c476797e-9682-cc87-c841-5ecc63b9b002',
-                    'store_type_category_id' => 'ff505a0a-ca50-4c88-be79-2794c21b03cb',
-                    'created_by' => 'admin',
-                    'updated_by' => 'admin',
-                ]
-            );
+        $all_product_ids = [];
+        $product_sub_types = ProductType::select('id', 'code')->whereIn('parent_id', function ($subquery) {
+            $subquery->select('id')->from('product_type')->where('code', 'cea');
+        })->get()->toArray();
+        if (!empty($product_sub_types)) {
+            foreach ($product_sub_types as $stype) {
+                if ($stype['code'] === 'ceabundle') continue;
+                $all_product_ids[] = $stype['id'];
+                $product_sub_sub_types = ProductType::select('id')->where('parent_id', $stype['id'])->get()->toArray();
+                if (!empty($product_sub_sub_types)) {
+                    foreach ($product_sub_sub_types as $ssubtype) {
+                        $all_product_ids[] = $ssubtype['id'];
+                    }
+                }
+            }
         }
+        $products = Catalog::where('product_status', '=', '1')->whereIn('products.product_type', $all_product_ids)->get();
+        foreach ($products as $product) {
+            $stores = Store::all();
+            foreach ($stores as $store) {
+                $store_product = StoreProduct::where('store_id', $store->id)->where('product_id', $product->product_id)->first();
+                if (empty($store_product)) {
+                    $store_product = new StoreProduct();
+                    $store_product->store_id = $store->id;
+                    $store_product->product_id = $product->product_id;
+                    $store_product->save();
+                }
+            }
+        }
+
+
     }
 }
