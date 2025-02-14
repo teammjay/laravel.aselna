@@ -65,7 +65,7 @@ class SyncAllTables extends Command
      */
     public function handle()
     {
-         Bus::chain([
+//         Bus::chain([
 //            new DeviceTypesSyncJob(),
 //            new DeviceRatingSyncJob(),
 //            new DeviceSeriesSyncJob(),
@@ -75,10 +75,10 @@ class SyncAllTables extends Command
         //    new DevicesSyncJob(),
         //    new DeviceInterfaces(),
         // new ProductSyncJob(),
-        new StoreProductSyncJob()
+//        new StoreProductSyncJob()
             // new ProductInterfaces(),
             // new DevicesLinkSyncJob(),
-         ])->dispatch();
+//         ])->dispatch();
         Bus::chain([
             // FileSystemSyncJob::dispatch(),
             // StoreTypeSyncJob::dispatch(),
@@ -88,7 +88,7 @@ class SyncAllTables extends Command
             // DeviceRatingSyncJob::dispatch(),
             // DeviceSeriesSyncJob::dispatch(),
             // DevicesSyncJob::dispatch(),
-            // CategorySyncJob::dispatch(),
+//             CategorySyncJob::dispatch(),
             // ProductConditionJob::dispatch(),
             // CarrierSyncJob::dispatch(),
             // ShippingCarrierJob::dispatch(),
@@ -109,12 +109,12 @@ class SyncAllTables extends Command
             // ListingFeedSyncJob::dispatch(),
             // UPCSyncJob::dispatch(),
             // LogisticCentreSyncJob::dispatch(),
-            ProductImagesSyncJob::dispatch(),
+//            ProductImagesSyncJob::dispatch(),
             // ProductAlternativeImagesSyncJob::dispatch(),
             // ProductSearchTermSyncJob::dispatch(),
             // ProductTypeKeywordSyncJob::dispatch()
         ]);
-//        DataPatch::dispatch();
+        DataPatch::dispatch();
 //        FeedGenerationJob::dispatch('70ce4255-9a11-415d-8edf-c6f4112da17d');
 //        ListingItemImageCreate::dispatch('31d15228-8b63-4409-8e38-b95a1b2e83fc');
 
