@@ -383,7 +383,8 @@ class ListingController extends Controller
 
         // Filter by product store
         if ($request->has('store_id') && $request->input('store_id') != '') {
-            $query->where('store_product.store_id', $request->input('store_id'))->OrWhereNull('store_product.store_id');
+            /*$query->where('store_product.store_id', $request->input('store_id'))->OrWhereNull('store_product.store_id');*/
+            /*$query->where('store_product.store_id', $request->input('store_id'));*/
         }
         // Filter by product code
         if ($request->has('product_code') && $request->product_code != '') {
@@ -466,6 +467,7 @@ class ListingController extends Controller
         }
 
         $products = $query->distinct()->get();
+        //echo $query->toSql();die;
 
         // Return a view or JSON
         if ($request->ajax()) {
