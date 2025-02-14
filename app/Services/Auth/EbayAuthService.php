@@ -292,6 +292,35 @@ class EbayAuthService
         }
     }
 
+    public function getOrders()
+    {
+        if (!$this->accessToken) {
+            return ['error' => 'Access token not found'];
+        }
+
+        try {
+            $response = $this->client->get('/sell/fulfillment/v1/order', [
+                'headers' => [
+                    'Authorization' => "Bearer $this->accessToken",
+                    'Content-Type' => 'application/json',
+                ],
+                'query' => [
+                    'limit' => 50, // Fetch max 50 orders
+                ],
+            ]);
+
+            return json_decode($response->getBody(), true);
+
+        } catch (RequestException $e) {
+            if ($e->hasResponse()) {
+                $errorBody = json_decode($e->getResponse()->getBody()->getContents(), true);
+                $this->handleApiErrors($errorBody);
+            } else {
+                throw new \Exception('Unexpected error occurred: ' . $e->getMessage());
+            }
+        }
+    }
+
     protected function handleApiErrors(array $errorResponse)
     {
         if (isset($errorResponse['errors'])) {
