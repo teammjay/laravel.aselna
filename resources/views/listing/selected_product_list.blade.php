@@ -2,7 +2,7 @@
     @foreach($products as $product)
         <tr class="sproRow product-{{ $product->product_id }}">
             <td>
-                <input type="hidden" name="selected_store_product[]" value="{{ $product->id }}">
+                <input type="hidden" name="selected_store_product[]" value="{{ $product->product_id }}">
                 <input type="hidden" class="pid-{{ $product->id }}" name="selected_product[]" value="{{ $product->product_id }}">
                 @if(isset($product->Product->image))
                     <img src="{{ asset('storage/' .$product->Product->image->getFileUrl()) }}" alt="{{ asset('storage/' .$product->Product->image->getFileUrl()) }}" width="70" height="70">
@@ -35,7 +35,7 @@
             </td>
             <td><input type="checkbox" name="product_status[{{ $product->product_id }}]" checked ></td>
             <td>
-                <select class="form-control" name="store_type_category_id" style="width: 200px;">
+                <select class="form-control store-type-category stc-{{ $product->product_id }}" name="store_type_category_id[{{ $product->product_id }}]" style="width: 200px;">
                     <option value=""></option>
                     @if(count($storeCategories ?? []) > 0)
                         @foreach($storeCategories as $key2=>$sCat)

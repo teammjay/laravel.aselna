@@ -7,7 +7,7 @@
                 @if(isset($product->image))
                     <img src="{{ asset('storage/' .$product->image->getFileUrl()) }}" alt="{{ asset('storage/' .$product->image->getFileUrl())}}" loading="lazy" width="50" height="50" class="mainImage" data-product-id="{{ $product->product_id }}">
                 @endif
-                    <input type="checkbox" class="proCheck" name="products[]" value="{{ $product->store_product_id }}" checked>
+                    <input type="checkbox" class="proCheck" name="products[]" value="{{ $product->product_id }}" checked>
                 </div>
             </td>
             <td>{{ (isset($product->product_sku)) ? $product->product_sku : '' }}</td>
