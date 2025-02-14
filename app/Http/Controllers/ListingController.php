@@ -350,7 +350,7 @@ class ListingController extends Controller
     {
 
 //        $query = StoreProduct::select('store_product.id', 'store_product.product_id', 'store_product.title', 'store_product.price', 'store_product.created_at', 'product_type.name as ProductType')->with('product');
-//        $query->rightJoin('products', 'products.product_id', '=', 'store_product.product_id');
+//        $query->leftJoin('products', 'products.product_id', '=', 'store_product.product_id');
 //        $query->leftJoin('product_type', 'products.product_type', '=', 'product_type.id');
 
         $query = Catalog::with('StoreProduct', 'image', 'productType')->select('products.product_id', 'product_sku', 'product_title', 'product_price', 'product_qty', 'products.created_at','product_type','product_image_url','store_product.id as store_product_id')->where('products.product_status', 1);
@@ -360,6 +360,8 @@ class ListingController extends Controller
         if ($request->has('exclude_oem')) {
             $query->where('products.oem_generic', 2);
         }
+
+//        $query->where('products.product_status',1);
 
         // getting only product which are not listed
         if ($request->has('never_listed_product')) {
@@ -383,7 +385,6 @@ class ListingController extends Controller
         if ($request->has('store_id') && $request->input('store_id') != '') {
             $query->where('store_product.store_id', $request->input('store_id'))->OrWhereNull('store_product.store_id');
         }
-
         // Filter by product code
         if ($request->has('product_code') && $request->product_code != '') {
             $query->whereIn('products.product_sku', $request->product_code);
@@ -465,8 +466,6 @@ class ListingController extends Controller
         }
 
         $products = $query->distinct()->get();
-        //print_r($query->toSql());
-        //  die();
 
         // Return a view or JSON
         if ($request->ajax()) {
