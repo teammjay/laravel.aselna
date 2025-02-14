@@ -1455,23 +1455,28 @@
                         if (response.success) {
                             //$('#title_template').html(response.option);
                             let data = response.data;
-                            $('#title_template').val(response.option);
-                            $('input[name="product_title_template[]"]').val(response.option);
+                            if(response.option != '') {
+                                $('#title_template').val(response.option);
+                                $('input[name="product_title_template[]"]').val(response.option);
 
-                            $('#title_template').autocomplete({
+                                $('#title_template').autocomplete({
 
-                                source: function (request, response) {
-                                    actemp = data.details;
-                                    response(data.display);
-                                },
-                                minLength: 0,
-                                select : function(event, ui){
-                                    $('#title_template').val(ui.item.label);
-                                    return false;
-                                }
-                            }).focus(function () {
-                                $('#title_template').keydown();
-                            });;
+                                    source: function (request, response) {
+                                        actemp = data.details;
+                                        response(data.display);
+                                    },
+                                    minLength: 0,
+                                    select: function (event, ui) {
+                                        $('#title_template').val(ui.item.label);
+                                        return false;
+                                    }
+                                }).focus(function () {
+                                    $('#title_template').keydown();
+                                });
+                            }else{
+                                alert('This selected generate type is under development meanwhile please use other.');
+                                return false;
+                            }
                         }
                     },
                     error: function (xhr) {
