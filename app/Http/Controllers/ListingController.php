@@ -298,7 +298,9 @@ class ListingController extends Controller
         $stores = Store::with('storeType')->where('store_status', 1)->orderBy('name', 'asc')->get();
         /*echo '<pre>';
         print_r($stores);die;*/
-        $manufacturers = Manufacturer::all();
+        $manufacturers = Manufacturer::whereIn('id',function ($query) {
+            $query->select('manufacturer_id')->from('products')->distinct();
+        })->orderBy('name', 'asc')->get();
         $productTypes = ProductType::with('children')->whereIn('parent_id', function ($subquery) {
             $subquery->select('id')->from('product_type')->where('code', 'cea');
         })->orderBy('name', 'asc')->get();

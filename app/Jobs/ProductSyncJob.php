@@ -182,7 +182,7 @@ class ProductSyncJob implements ShouldQueue
                 'description_template' => $product->description_template,
                 'created_by' => 'system',
                 'updated_by' => 'system',
-                'created_at' => now(),
+                'created_at' => $product->created_at,
                 'updated_at' => now(),
             ]);
         } catch(Exception $e) {
