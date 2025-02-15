@@ -716,9 +716,22 @@
                             $('html, body').animate({ scrollTop: 0 }, 'fast');
                         }
                     }else if(currentIndex == 1){
+                        /* check channel category selected or not*/
+                        let flag = false;
+                        $('.store-type-category').each(function () {
+                            if($(this).val() == ''){
+                                $(this).addClass('error');
+                                flag = true;
+                            }
+                        });
+
+                        if(flag){
+                            alert('Please select channel category for products');
+                            return false;
+                        }
+                        followThirdStep();
                         currentIndex++;
                         activateTab(currentIndex);
-                        followThirdStep();
                         $('html, body').animate({ scrollTop: 0 }, 'fast');
                         loadTitleTemplate();
                     }else if(currentIndex == 2){
@@ -1809,6 +1822,7 @@
                 var short_keyword = $('.shortKey-'+pro_id).val();
                 var long_keyword = $('.longKey-'+pro_id).val();
                 var price = $('.price-'+pro_id).val();
+                var store_type_category_id = $('.stc-'+pro_id).val();
                 if($('.po-'+pro_id).is(':checked')) {
                     var price_overwrite = 1;
                 }else{
@@ -1821,6 +1835,7 @@
                 productDetail[pid]['long_keyword'] = long_keyword;
                 productDetail[pid]['price'] = price;
                 productDetail[pid]['price_overwrite'] = price_overwrite;
+                productDetail[pid]['store_type_category_id'] = store_type_category_id;
             });
             $("#ajax-preloader").show();
             $.ajax({

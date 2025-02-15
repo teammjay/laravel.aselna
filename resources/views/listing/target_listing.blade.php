@@ -12,6 +12,7 @@
                             <input type="hidden" name="final_product_code[{{ $key }}]" value="{{ $pro['product_code'] }}">
                             <input type="hidden" name="final_product_price[{{ $key }}]" value="{{ $pro['price'] }}">
                             <input type="hidden" name="final_product_price_overwrite[{{ $key }}]" value="{{ $pro['price_overwrite'] }}">
+                            <input type="hidden" name="final_store_type_category_id[{{ $key }}]" value="{{ $pro['store_type_category_id'] }}">
                             {{ $pro['product_code'] }}</td>
                         <td></td>
                         <td>

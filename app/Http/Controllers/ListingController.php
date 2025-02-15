@@ -353,8 +353,8 @@ class ListingController extends Controller
 //        $query->leftJoin('products', 'products.product_id', '=', 'store_product.product_id');
 //        $query->leftJoin('product_type', 'products.product_type', '=', 'product_type.id');
 
-        $query = Catalog::with('StoreProduct', 'image', 'productType')->select('products.product_id', 'product_sku', 'product_title', 'product_price', 'product_qty', 'products.created_at','product_type','product_image_url','store_product.id as store_product_id')->where('products.product_status', 1);
-        $query->leftJoin('store_product', 'store_product.product_id', '=', 'products.product_id');
+        $query = Catalog::with('StoreProduct', 'image', 'productType')->select('products.product_id', 'product_sku', 'product_title', 'product_price', 'product_qty', 'products.created_at','product_type','product_image_url')->where('products.product_status', 1);
+
 
         // Handle Only Active Products (Remove the bundled products)
         if ($request->has('exclude_oem')) {
@@ -365,6 +365,7 @@ class ListingController extends Controller
 
         // getting only product which are not listed
         if ($request->has('never_listed_product')) {
+            $query->leftJoin('store_product', 'store_product.product_id', '=', 'products.product_id');
             $query->leftJoin('listing_item', 'listing_item.store_product_id', '=', 'store_product.id');
             $query->where('listing_item.id');
         }
@@ -383,7 +384,8 @@ class ListingController extends Controller
 
         // Filter by product store
         if ($request->has('store_id') && $request->input('store_id') != '') {
-            $query->where('store_product.store_id', $request->input('store_id'))->OrWhereNull('store_product.store_id');
+            /*$query->where('store_product.store_id', $request->input('store_id'))->OrWhereNull('store_product.store_id');*/
+            /*$query->where('store_product.store_id', $request->input('store_id'));*/
         }
         // Filter by product code
         if ($request->has('product_code') && $request->product_code != '') {
@@ -466,6 +468,7 @@ class ListingController extends Controller
         }
 
         $products = $query->distinct()->get();
+        //echo $query->toSql();die;
 
         // Return a view or JSON
         if ($request->ajax()) {
@@ -627,10 +630,35 @@ class ListingController extends Controller
         $step = $request->input('step');
         $view = '';
         if (!empty($product_ids)) {
+            /* check product exist in store product or not*/
+            $productDetails = Catalog::select('product_id','product_type')->whereIn('product_id',$product_ids)->get();
+            if($productDetails){
+                $created_by = auth()->user()->name ?? 'admin';
+                foreach($productDetails as $pid){
+                    $product_exist = StoreProduct::where('product_id',$pid->product_id)->where('store_id',$store_id)->count();
+                    if(!$product_exist){
+                        $sPr = [
+                            'product_id' => $pid->product_id,
+                            'title' => $pid->product_title,
+                            'store_type_category_id' => $pid->product_type,
+                            'price' => $pid->product_price,
+                            'msrp' => $pid->product_msrp,
+                            'description' => $pid->product_description,
+                            'store_id' => $store_id,
+                            'created_by' => $created_by,
+                            'updated_by' => $created_by
+                        ];
+                        StoreProduct::create($sPr);
+                    }
+                }
+            }
+
+            /* check product exist in store product or not*/
             $query = StoreProduct::select('store_product.id', 'store_product.store_type_category_id', 'store_product.product_id', 'store_product.title', 'store_product.price', 'store_product.created_at', 'product_type.name as ProductType')->with('Product');
             $query->leftJoin('products', 'products.product_id', '=', 'store_product.product_id');
             $query->leftJoin('product_type', 'products.product_type', '=', 'product_type.id');
-            $query->whereIn('store_product.id', $product_ids);
+            $query->whereIn('store_product.product_id', $product_ids);
+            $query->where('store_product.store_id', $store_id);
             $products = $query->get();
             $storeCategories = [];
             if ($store_id) {
@@ -946,6 +974,7 @@ class ListingController extends Controller
                                 $product_title = $pDetail['title'];
                                 $product_price = $pDetail['price'];
                                 $product_price_overwrite = $pDetail['price_overwrite'];
+                                $product_store_type_category_id = $pDetail['store_type_category_id'];
                                 $title_template = $title_templates[$key];
                                 if ($title_template) {
                                     if (str_contains($title_template, '#short_keyword')) {
@@ -1003,16 +1032,16 @@ class ListingController extends Controller
                                 if ($generate_type_name) {
                                     switch (trim(strtolower($generate_type_name))) {
                                         case 'combined devices':
-                                            $productsArray[] = $this->generateProductTitles($title_template, $product, $devices, $max_title_length, $brand_seperator, $device_seperator, $compress, $generate_type, $product_price, $store_product_id, $product_price_overwrite);
+                                            $productsArray[] = $this->generateProductTitles($title_template, $product, $devices, $max_title_length, $brand_seperator, $device_seperator, $compress, $generate_type, $pDetail, $store_product_id);
                                             break;
                                         case 'free group':
-                                            $productsArray[] = $this->generateFreeGroupProductTitles($title_template, $product, $devices, $max_title_length, $brand_seperator, $device_seperator, $compress, $generate_type, $product_price, $store_product_id, $product_price_overwrite);
+                                            $productsArray[] = $this->generateFreeGroupProductTitles($title_template, $product, $devices, $max_title_length, $brand_seperator, $device_seperator, $compress, $generate_type, $pDetail, $store_product_id);
                                             break;
                                         case 'single device':
-                                            $productsArray[] = $this->generateSingleDeviceProductTitles($title_template, $product, $devices, $max_title_length, $brand_seperator, $device_seperator, $compress, $generate_type, $product_price, $store_product_id, $product_price_overwrite);
+                                            $productsArray[] = $this->generateSingleDeviceProductTitles($title_template, $product, $devices, $max_title_length, $brand_seperator, $device_seperator, $compress, $generate_type, $pDetail, $store_product_id);
                                             break;
                                         case 'brand gruop':
-                                            $productsArray[] = $this->generateBrandGroupProductTitles($title_template, $product, $devices, $max_title_length, $brand_seperator, $device_seperator, $compress, $generate_type, $product_price, $store_product_id, $product_price_overwrite);
+                                            $productsArray[] = $this->generateBrandGroupProductTitles($title_template, $product, $devices, $max_title_length, $brand_seperator, $device_seperator, $compress, $generate_type, $pDetail, $store_product_id);
                                             break;
                                     }
                                 }
@@ -1077,7 +1106,7 @@ class ListingController extends Controller
         }
     }
 
-    private function generateProductTitles($baseTitle, $product, $devices, $charLimit, $brand_seperator, $device_seperator, $compress, $generate_type, $product_price, $store_product_id, $product_price_overwrite)
+    private function generateProductTitles($baseTitle, $product, $devices, $charLimit, $brand_seperator, $device_seperator, $compress, $generate_type, $pDetail, $store_product_id, $product_price_overwrite)
     {
         $titles = [];
         $currentModels = [];
@@ -1130,8 +1159,9 @@ class ListingController extends Controller
                 $currentModels = [$currentBrand];
                 $titles[$cnt]['product_code'] = $product->product->product_sku;
                 $titles[$cnt]['product_id'] = $product->product_id;
-                $titles[$cnt]['price'] = $product_price;
-                $titles[$cnt]['price_overwrite'] = $product_price_overwrite;
+                $titles[$cnt]['price'] = $pDetail['price'];
+                $titles[$cnt]['price_overwrite'] = $pDetail['price_overwrite'];
+                $titles[$cnt]['store_type_category_id'] = $pDetail['store_type_category_id'];
                 $titles[$cnt]['generate_type'] = $generate_type;
                 $titles[$cnt]['store_product_id'] = $store_product_id;
                 $titles[$cnt]['model'][] = $device->name;
@@ -1141,8 +1171,9 @@ class ListingController extends Controller
                 // Append the device name
                 $titles[$cnt]['product_code'] = $product->product->product_sku;
                 $titles[$cnt]['product_id'] = $product->product_id;
-                $titles[$cnt]['price'] = $product_price;
-                $titles[$cnt]['price_overwrite'] = $product_price_overwrite;
+                $titles[$cnt]['price'] = $pDetail['price'];
+                $titles[$cnt]['price_overwrite'] = $pDetail['price_overwrite'];
+                $titles[$cnt]['store_type_category_id'] = $pDetail['store_type_category_id'];
                 $titles[$cnt]['generate_type'] = $generate_type;
                 $titles[$cnt]['store_product_id'] = $store_product_id;
                 $titles[$cnt]['model'][] = $device->name;
@@ -1167,7 +1198,7 @@ class ListingController extends Controller
         return $titles;
     }
 
-    private function generateSingleDeviceProductTitles($baseTitle, $product, $devices, $charLimit, $brand_seperator, $device_seperator, $compress, $generate_type, $product_price, $store_product_id, $product_price_overwrite)
+    private function generateSingleDeviceProductTitles($baseTitle, $product, $devices, $charLimit, $brand_seperator, $device_seperator, $compress, $generate_type, $pDetail, $store_product_id)
     {
         $titles = [];
         $separator = $device_seperator; // Separator between device names
@@ -1180,8 +1211,9 @@ class ListingController extends Controller
             $titles[$k]['title'] = $tempTitle;
             $titles[$k]['product_code'] = $product->product->product_sku;
             $titles[$k]['product_id'] = $product->product_id;
-            $titles[$k]['price'] = $product_price;
-            $titles[$k]['price_overwrite'] = $product_price_overwrite;
+            $titles[$k]['price'] = $pDetail['price'];
+            $titles[$k]['price_overwrite'] = $pDetail['price_overwrite'];
+            $titles[$k]['store_type_category_id'] = $pDetail['store_type_category_id'];
             $titles[$k]['generate_type'] = $generate_type;
             $titles[$k]['store_product_id'] = $store_product_id;
             $titles[$k]['model'][] = $device->name;
@@ -1190,7 +1222,7 @@ class ListingController extends Controller
         return $titles;
     }
 
-    private function generateFreeGroupProductTitles($baseTitle, $product, $devices, $charLimit, $brand_seperator, $device_seperator, $compress, $generate_type, $product_price, $store_product_id, $product_price_overwrite)
+    private function generateFreeGroupProductTitles($baseTitle, $product, $devices, $charLimit, $brand_seperator, $device_seperator, $compress, $generate_type, $pDetail, $store_product_id)
     {
         $titles = [];
         $separator = $device_seperator; // Separator between device names
@@ -1203,8 +1235,9 @@ class ListingController extends Controller
             $titles[$k]['title'] = $tempTitle;
             $titles[$k]['product_code'] = $product->product->product_sku;
             $titles[$k]['product_id'] = $product->product_id;
-            $titles[$k]['price'] = $product_price;
-            $titles[$k]['price_overwrite'] = $product_price_overwrite;
+            $titles[$k]['price'] = $pDetail['price'];
+            $titles[$k]['price_overwrite'] = $pDetail['price_overwrite'];
+            $titles[$k]['store_type_category_id'] = $pDetail['store_type_category_id'];
             $titles[$k]['generate_type'] = $generate_type;
             $titles[$k]['store_product_id'] = $store_product_id;
             $titles[$k]['model'][] = $device->name;
@@ -1213,7 +1246,7 @@ class ListingController extends Controller
         return $titles;
     }
 
-    private function generateBrandGroupProductTitles($baseTitle, $product, $devices, $charLimit, $brand_seperator, $device_seperator, $compress, $generate_type, $product_price, $store_product_id, $product_price_overwrite)
+    private function generateBrandGroupProductTitles($baseTitle, $product, $devices, $charLimit, $brand_seperator, $device_seperator, $compress, $generate_type, $pDetail, $store_product_id)
     {
         $titles = [];
         $currentModels = [];
@@ -1259,8 +1292,9 @@ class ListingController extends Controller
                 $currentModels = [$currentBrand];
                 $titles[$cnt]['product_code'] = $product->product->product_sku;
                 $titles[$cnt]['product_id'] = $product->product_id;
-                $titles[$cnt]['price'] = $product_price;
-                $titles[$cnt]['price_overwrite'] = $product_price_overwrite;
+                $titles[$cnt]['price'] = $pDetail['price'];
+                $titles[$cnt]['price_overwrite'] = $pDetail['price_overwrite'];
+                $titles[$cnt]['store_type_category_id'] = $pDetail['store_type_category_id'];
                 $titles[$cnt]['generate_type'] = $generate_type;
                 $titles[$cnt]['store_product_id'] = $store_product_id;
                 $titles[$cnt]['model'][] = $device->name;
@@ -1269,8 +1303,9 @@ class ListingController extends Controller
                 // Append the device name
                 $titles[$cnt]['product_code'] = $product->product->product_sku;
                 $titles[$cnt]['product_id'] = $product->product_id;
-                $titles[$cnt]['price'] = $product_price;
-                $titles[$cnt]['price_overwrite'] = $product_price_overwrite;
+                $titles[$cnt]['price'] = $pDetail['price'];
+                $titles[$cnt]['price_overwrite'] = $pDetail['price_overwrite'];
+                $titles[$cnt]['store_type_category_id'] = $pDetail['store_type_category_id'];
                 $titles[$cnt]['generate_type'] = $generate_type;
                 $titles[$cnt]['store_product_id'] = $store_product_id;
                 $titles[$cnt]['model'][] = $device->name;
@@ -1304,6 +1339,7 @@ class ListingController extends Controller
                     $product_titles = $request->input('final_product_title');
                     $product_prices = $request->input('final_product_price');
                     $product_price_overwrites = $request->input('final_product_price_overwrite');
+                    $store_type_category_id = $request->input('final_store_type_category_id');
                     $product_codes = $request->input('final_product_code');
                     $store_product_ids = $request->input('final_store_product_id');
                     $product_ids = $request->input('final_product_id');
