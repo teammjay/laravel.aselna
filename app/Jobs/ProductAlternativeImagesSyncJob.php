@@ -109,7 +109,7 @@ class ProductAlternativeImagesSyncJob implements ShouldQueue
                 if (!file_exists(storage_path('app/public/product_additional_images/' . $thunmail_name))) {
                     $imagePath = 'https://fonusaccessory.com/inv/inv_images/additional_main_images/' . $thunmail_name;
                     $localPath = 'public/product_additional_images/';
-                    $storagePath = storage_path('ap p/' . $localPath . $thunmail_name);
+                    $storagePath = storage_path('app/' . $localPath . $thunmail_name);
 
                     $image = file_get_contents($imagePath);
                     if ($image !== false) {
