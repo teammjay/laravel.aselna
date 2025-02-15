@@ -1052,11 +1052,13 @@ class ListingController extends Controller
 //                                ]);
                             }
                         }
-                        /*echo '<pre>';
-                        print_r($productsArray);
-                        echo '</pre>';*/
+
                     }
                 }
+
+                /*echo '<pre>';
+                print_r($productsArray);
+                echo '</pre>';die;*/
 
                 if (!empty($productsArray)) {
                     $view = view('listing.target_listing', compact('productsArray', 'max_title_length'))->render();
@@ -1106,7 +1108,7 @@ class ListingController extends Controller
         }
     }
 
-    private function generateProductTitles($baseTitle, $product, $devices, $charLimit, $brand_seperator, $device_seperator, $compress, $generate_type, $pDetail, $store_product_id, $product_price_overwrite)
+    private function generateProductTitles($baseTitle, $product, $devices, $charLimit, $brand_seperator, $device_seperator, $compress, $generate_type, $pDetail, $store_product_id)
     {
         $titles = [];
         $currentModels = [];
@@ -1350,6 +1352,7 @@ class ListingController extends Controller
                         $product_models = json_decode($product_models);
                     }
                     /*echo '<pre>';
+                    print_r($product_titles);
                     print_r($product_models);
                     echo '<pre>';die;*/
                     $created_by = auth()->user()->name ?? 'admin';
@@ -1479,11 +1482,11 @@ class ListingController extends Controller
                                 $modelNames = array();
                                 if ($listing_item_id) {
                                     $product_key = $product_ids[$key];
-                                    //Log::info(' Product Models :: ' . json_encode($product_models->$product_key));
-                                    $product_model = $product_models->$product_key[$key];
+                                    Log::info(' Product Models :: ' . json_encode($product_models->$product_key));
+                                    $product_model = $product_models->$product_key;
                                     if (isset($product_model) && is_array($product_model)) {
 
-                                        if (count($product_model ?? []) > 0) {
+                                        /*if (count($product_model ?? []) > 0) {
                                             $limit = count($product_model);
                                             if ($store_detail->upc_usage_type) {
                                                 switch ($store_detail->upc_usage_type) {
@@ -1506,53 +1509,85 @@ class ListingController extends Controller
                                             } else {
                                                 $upcCodes = UPCCodes::where('store', $store_id)->where('is_used', 0)->orderBy('sequence_id', 'asc')->limit($limit)->get();
                                             }
-                                        }
+                                        }*/
 
-                                        foreach ($product_model as $k => $model) {
+                                        foreach ($product_model as $k => $models) {
+                                            if(count($models ?? []) > 0 && is_array($models)){
 
-                                            if ($store_detail->sku_generation_type) {
-                                                switch ($store_detail->sku_generation_type) {
-                                                    case 1:
+                                                foreach($models as $j=>$model){
+
+                                                    if ($store_detail->upc_usage_type) {
+                                                        switch ($store_detail->upc_usage_type) {
+                                                            case 0:
+                                                                $upcCodes = UPCCodes::where('store', $store_id)->where('is_used', 0)->orderBy('sequence_id', 'asc')->limit(1)->first();
+                                                                break;
+                                                            case 1:
+                                                                $upcCodes = UPCCodes::where('store', $store_id)->where('is_used', 0)->orderBy('sequence_id', 'asc')->limit(1)->first();
+                                                                break;
+                                                            case 2:
+                                                                $upcCodes = GoodUpc::where('is_used', 0)->orderBy('upc', 'asc')->limit(1)->first();
+                                                                break;
+                                                            case 3:
+                                                                $upcCodes = UPCCodes::where('store', $store_id)->where('is_used', 0)->orderBy('sequence_id', 'asc')->limit(1)->first();
+                                                                break;
+                                                            case 'default':
+                                                                $upcCodes = UPCCodes::where('store', $store_id)->where('is_used', 0)->orderBy('sequence_id', 'asc')->limit(1)->first();
+                                                                break;
+                                                        }
+                                                    } else {
+                                                        $upcCodes = UPCCodes::where('store', $store_id)->where('is_used', 0)->orderBy('sequence_id', 'asc')->limit(1)->first();
+                                                    }
+
+                                                    /*if(isset($models[0])) {
+                                                        $model = $models[0];
+                                                    }else{
+                                                        $model = $models;
+                                                    }*/
+                                                    if ($store_detail->sku_generation_type) {
+                                                        switch ($store_detail->sku_generation_type) {
+                                                            case 1:
+                                                                $nsku = StoreTypeListing::generateUniqueAlphabeticSku($product_codes[$key], 6);
+                                                                break;
+                                                            case 2:
+                                                                $nsku = StoreTypeListing::generateUniqueAlphabeticSku('', 6);
+                                                                break;
+                                                            case 3:
+                                                                $nsku = StoreTypeListing::generateUniqueAlphabeticSku($product_codes[$key], 6);
+                                                                break;
+                                                            case 4:
+                                                                $nsku = StoreTypeListing::generateUniqueAlphabeticSku($product_codes[$key], 6);
+                                                                break;
+                                                            case 'default':
+                                                                $nsku = StoreTypeListing::generateUniqueAlphabeticSku($product_codes[$key], 6);
+                                                                break;
+                                                        }
+                                                    } else {
                                                         $nsku = StoreTypeListing::generateUniqueAlphabeticSku($product_codes[$key], 6);
-                                                        break;
-                                                    case 2:
-                                                        $nsku = StoreTypeListing::generateUniqueAlphabeticSku('', 6);
-                                                        break;
-                                                    case 3:
-                                                        $nsku = StoreTypeListing::generateUniqueAlphabeticSku($product_codes[$key], 6);
-                                                        break;
-                                                    case 4:
-                                                        $nsku = StoreTypeListing::generateUniqueAlphabeticSku($product_codes[$key], 6);
-                                                        break;
-                                                    case 'default':
-                                                        $nsku = StoreTypeListing::generateUniqueAlphabeticSku($product_codes[$key], 6);
-                                                        break;
+                                                    }
+
+                                                    if (str_contains($product, '[^]')) {
+                                                        $product = str_replace('[^]', $nsku, $product);
+                                                    }
+                                                    $modelNames[] = $model->name;
+                                                    $itemDetail = array(
+                                                        'sku' => $nsku,
+                                                        'title' => $product,
+                                                        'upc' => isset($upcCodes['upc_code']) ? $upcCodes['upc_code'] : '',
+                                                        'device_id' => $model->id,
+                                                        'listing_item_id' => $listing_item_id,
+                                                        //'store_sku' => $store_id,
+                                                        'created_by' => $created_by
+                                                    );
+
+                                                    Log::info(' Listing Item Detail :: ' . json_encode($itemDetail));
+                                                    $rec = ListingItemDetail::create($itemDetail);
+                                                    Log::info(' Listing Item Detail ID :: ' . $rec->id);
+
+                                                    if ($rec) {
+                                                        $record = UPCCodes::find($upcCodes['id']);
+                                                        $record->update(['is_used' => 1]);
+                                                    }
                                                 }
-                                            } else {
-                                                $nsku = StoreTypeListing::generateUniqueAlphabeticSku($product_codes[$key], 6);
-                                            }
-
-                                            if (str_contains($product, '[^]')) {
-                                                $product = str_replace('[^]', $nsku, $product);
-                                            }
-                                            $modelNames[] = $model->name;
-                                            $itemDetail = array(
-                                                'sku' => $nsku,
-                                                'title' => $product,
-                                                'upc' => isset($upcCodes[$k]['upc_code']) ? $upcCodes[$k]['upc_code'] : '',
-                                                'device_id' => $model->id,
-                                                'listing_item_id' => $listing_item_id,
-                                                //'store_sku' => $store_id,
-                                                'created_by' => $created_by
-                                            );
-
-                                            Log::info(' Listing Item Detail :: ' . json_encode($itemDetail));
-                                            $rec = ListingItemDetail::create($itemDetail);
-                                            Log::info(' Listing Item Detail ID :: ' . $rec->id);
-
-                                            if ($rec) {
-                                                $record = UPCCodes::find($upcCodes[$k]['id']);
-                                                $record->update(['is_used' => 1]);
                                             }
                                         }
 
@@ -1777,6 +1812,18 @@ class ListingController extends Controller
         return response()->json([
             'error' => true,
             'message' => 'Something went wrong! Please try again!'
+        ]);
+    }
+
+    public function updateStoreProduct(Request $request){
+
+        $id = $request->input('id');
+        $category_id = $request->input('category_id');
+        $product = StoreProduct::findOrFail($id); // Retrieve the product by ID
+        $product->update(['store_type_category_id' =>$category_id ]);
+
+        return response()->json([
+            'success' => true
         ]);
     }
 }
