@@ -43,12 +43,17 @@ class DataPatch implements ShouldQueue
                 }
             }
         }
-        $products = Catalog::where('product_status', '=', '1')->whereIn('products.product_type', $all_product_ids)->get();
+        Log::info('All product ids: ' . json_encode($all_product_ids));
+        $products = Catalog::where('product_status', '=', '1')->whereIn('product_type', $all_product_ids)->get();
+        Log::info('Total products: ' . count($products));
         foreach ($products as $product) {
+            Log::info('Processing product: ' . $product->product_sku);
             $stores = Store::all();
             foreach ($stores as $store) {
+                Log::info('Processing store: ' . $store->store_name);
                 $store_product = StoreProduct::where('store_id', $store->id)->where('product_id', $product->product_id)->first();
                 if (empty($store_product)) {
+                    Log::info('Creating store product: ' . $store->store_name . ' - ' . $product->product_sku);
                     $store_product = new StoreProduct();
                     $store_product->store_id = $store->id;
                     $store_product->product_id = $product->product_id;

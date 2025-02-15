@@ -46,7 +46,7 @@ class StoreProductSyncJob implements ShouldQueue
     }
 
 
-        private function createStoreProduct(mixed $storeProduct)
+    private function createStoreProduct(mixed $storeProduct)
     {
         if (Catalog::where('product_id', $storeProduct->product_id)->doesntExist()) {
             return;
@@ -100,6 +100,5 @@ class StoreProductSyncJob implements ShouldQueue
             'created_at' => now(),
             'updated_at' => now(),
         ]);
-    }
     }
 }
