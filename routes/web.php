@@ -120,6 +120,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/listing/savelistingproducts', 'saveListingProducts')->name('listing.savelistingproducts');
         Route::post('/listing/synclistinginventory', 'syncListingInventory')->name('listing.synclistinginventory');
         Route::post('/listing/synclistingprice', 'syncListingPrice')->name('listing.synclistingprice');
+        Route::post('/listing/updatestoreproduct', 'updateStoreProduct')->name('listing.updatestoreproduct');
     });
 
     Route::controller(ListingGenerationTypeController::class)->group(function () {

@@ -1449,6 +1449,7 @@
                 let type = $(this).val();
                 $('#title_template').val('');
                 let typeName = $('input[name="generate_type"]:checked').data('name');
+
                 if(typeName == 'Carrier Group' || typeName == 'Product Only' || typeName == 'Title Group' || typeName == 'All Carriers'){
                     alert('This selected generate type is under development meanwhile please use other.');
                     return false;
@@ -1468,7 +1469,7 @@
                         if (response.success) {
                             //$('#title_template').html(response.option);
                             let data = response.data;
-                            if(response.option != '') {
+                            if(response.display != '') {
                                 $('#title_template').val(response.option);
                                 $('input[name="product_title_template[]"]').val(response.option);
 
@@ -1674,6 +1675,30 @@
                     }
                 });
             });
+
+            $(document).on('change','.store-type-category',function () {
+                var store_product_id = $(this).data('spid');
+                var category_id = $(this).val();
+                $.ajax({
+                    url: "{{ route('listing.updatestoreproduct') }}",
+                    type: 'POST',
+                    data: {
+                        category_id:category_id,
+                        id: store_product_id
+                    },
+                    headers: {
+                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                    },
+                    success: function (response) {
+
+                    },
+                    error: function (xhr) {
+                    },
+                    complete: function () {
+                        $("#ajax-preloader").hide();
+                    }
+                });
+            });
         });
 
         function loadTitleTemplate() {
@@ -1816,8 +1841,8 @@
             let selected_product = [];
             $('input[name="selected_store_product[]"]').each(function () {
                 var pid = $(this).val();
-                selected_product.push(pid);
                 var pro_id = $('.pid-'+pid).val();
+                selected_product.push(pro_id);
                 var title = $('.title-'+pro_id).val();
                 var short_keyword = $('.shortKey-'+pro_id).val();
                 var long_keyword = $('.longKey-'+pro_id).val();

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Order;
 use App\Models\Store;
+use App\Services\Marketplace\Service\EbayService;
 use Illuminate\Http\Request;
 use App\Helpers\QueryFilters;
 
@@ -14,6 +15,11 @@ class OrdersController extends Controller
     public function index(Request $request)
     {
         $perPage = $this->perPage;
+        $eBayServie = new EbayService();
+        $orders = $eBayServie->getOrders();
+        echo '<pre>';
+        print_r($orders);
+        echo '</pre>';die;
         $stores = Store::with('storeType')->where('store_status', 1)->orderBy('name', 'asc')->get();
 
         return view('orders.list',compact('perPage','stores'));
@@ -165,4 +171,5 @@ class OrdersController extends Controller
         echo '</pre>';die;*/
         return view('orders.detail',compact('orderDetail'));
     }
+
 }
