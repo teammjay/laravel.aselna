@@ -353,6 +353,7 @@ class ListingController extends Controller
 //        $query->leftJoin('products', 'products.product_id', '=', 'store_product.product_id');
 //        $query->leftJoin('product_type', 'products.product_type', '=', 'product_type.id');
 
+        //DB::enableQueryLog();
         $query = Catalog::with('StoreProduct', 'image', 'productType')->select('products.product_id', 'product_sku', 'product_title', 'product_price', 'product_qty', 'products.created_at','product_type','product_image_url')->where('products.product_status', 1);
 
 
@@ -367,7 +368,12 @@ class ListingController extends Controller
         if ($request->has('never_listed_product')) {
             $query->leftJoin('store_product', 'store_product.product_id', '=', 'products.product_id');
             $query->leftJoin('listing_item', 'listing_item.store_product_id', '=', 'store_product.id');
-            $query->where('listing_item.id');
+            $query->where('listing_item.parent_id');
+            $query->whereNotIn('listing_item.status',['2','3']);
+            if ($request->has('store_id') && $request->input('store_id') != '') {
+                $query->where('store_product.store_id', $request->input('store_id'));
+            }
+            /*$query->where('(SELECT count(li) FROM listing_item li left join store_product sp ON(sp.id = li.store_product_id) left join products p ON(p.product_id = sp.product_id) left join store s ON (sp.store_id = s.id) where p.id');*/
         }
 
         // getting only products which have additional images
@@ -468,6 +474,7 @@ class ListingController extends Controller
         }
 
         $products = $query->distinct()->get();
+        //dd(DB::getQueryLog());
         //echo $query->toSql();die;
 
         // Return a view or JSON
