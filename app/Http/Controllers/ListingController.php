@@ -27,6 +27,8 @@ use App\Models\StoreType;
 use App\Models\StoreTypeCategory;
 use App\Models\StoreTypeListing;
 use App\Models\UPCCodes;
+use App\Utils\ListingUtility;
+use App\Utils\Spintax;
 use Illuminate\Http\Request;
 use App\Models\Store;
 use Illuminate\Support\Facades\DB;
@@ -298,7 +300,7 @@ class ListingController extends Controller
         $stores = Store::with('storeType')->where('store_status', 1)->orderBy('name', 'asc')->get();
         /*echo '<pre>';
         print_r($stores);die;*/
-        $manufacturers = Manufacturer::whereIn('id',function ($query) {
+        $manufacturers = Manufacturer::whereIn('id', function ($query) {
             $query->select('manufacturer_id')->from('products')->distinct();
         })->orderBy('name', 'asc')->get();
         $productTypes = ProductType::with('children')->whereIn('parent_id', function ($subquery) {
@@ -355,7 +357,7 @@ class ListingController extends Controller
 //        $query->leftJoin('products', 'products.product_id', '=', 'store_product.product_id');
 //        $query->leftJoin('product_type', 'products.product_type', '=', 'product_type.id');
 
-        $query = Catalog::with('StoreProduct', 'image', 'productType')->select('products.product_id', 'product_sku', 'product_title', 'product_price', 'product_qty', 'products.created_at','product_type','product_image_url')->where('products.product_status', 1);
+        $query = Catalog::with('StoreProduct', 'image', 'productType')->select('products.product_id', 'product_sku', 'product_title', 'product_price', 'product_qty', 'products.created_at', 'product_type', 'product_image_url')->where('products.product_status', 1);
 
 
         // Handle Only Active Products (Remove the bundled products)
@@ -633,12 +635,12 @@ class ListingController extends Controller
         $view = '';
         if (!empty($product_ids)) {
             /* check product exist in store product or not*/
-            $productDetails = Catalog::select('product_id','product_type')->whereIn('product_id',$product_ids)->get();
-            if($productDetails){
+            $productDetails = Catalog::select('product_id', 'product_type')->whereIn('product_id', $product_ids)->get();
+            if ($productDetails) {
                 $created_by = auth()->user()->name ?? 'admin';
-                foreach($productDetails as $pid){
-                    $product_exist = StoreProduct::where('product_id',$pid->product_id)->where('store_id',$store_id)->count();
-                    if(!$product_exist){
+                foreach ($productDetails as $pid) {
+                    $product_exist = StoreProduct::where('product_id', $pid->product_id)->where('store_id', $store_id)->count();
+                    if (!$product_exist) {
                         $sPr = [
                             'product_id' => $pid->product_id,
                             'title' => $pid->product_title,
@@ -777,44 +779,62 @@ class ListingController extends Controller
     {
         $product_ids = $request->input('selected_product');
         $title_length = $request->input('title_length');
+        $store_id = $request->input('store_id');
+
+        $tKeyword = [];
 
         if (!empty($product_ids)) {
-
-            $keywords = ProductTitleKeyword::select('product_id', 'keyword')->whereIn('product_id', $product_ids)->orderBy('priority', 'asc')->get()->toArray();
-            if (!empty($keywords)) {
-                $title_keyword = $tKeyword = $pro_ids = $Flag = [];
-
-                foreach ($keywords as $key => $val) {
-                    $pro_id = $val['product_id'];
-                    if (!isset($shortFlag[$pro_id])) {
-                        $shortFlag[$pro_id] = 0;
-                    }
-                    if (!isset($Flag[$pro_id])) {
-                        $Flag[$pro_id] = 0;
-                    }
-                    if (((!array_key_exists($pro_id, $Flag) || $Flag[$pro_id] < $title_length)) || !array_key_exists($pro_id, $title_keyword)) {
-                        $Flag[$pro_id] = $Flag[$pro_id] + 1;
-                    }
-
-                    if (!in_array($pro_id, $pro_ids)) {
-                        $pro_ids[] = $pro_id;
-                    }
-                }
-                if (!empty($pro_ids)) {
-                    foreach ($pro_ids as $id) {
-                        if (!empty($title_keyword)) {
-                            $tKeyword[$id] = implode(' ', $title_keyword[$id]);
-                        }
-                    }
-                }
-                if ($request->ajax()) {
-                    return response()->json([
-                        'success' => true,
-                        'title_keyword' => $tKeyword
-                    ]);
-                }
+            foreach ($product_ids as $pid) {
+                $storeProduct = StoreProduct::where('product_id', $pid)->where('store_id', $store_id)->first();
+                $title = ListingUtility::generateTitle($storeProduct, true, $title_length);
+                $tKeyword[$pid] = $title;
             }
         }
+
+        if ($request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'title_keyword' => $tKeyword
+            ]);
+        }
+
+//        if (!empty($product_ids)) {
+//
+//            $keywords = ProductTitleKeyword::select('product_id', 'keyword')->whereIn('product_id', $product_ids)->orderBy('priority', 'asc')->get()->toArray();
+//            if (!empty($keywords)) {
+//                $title_keyword = $tKeyword = $pro_ids = $Flag = [];
+//
+//                foreach ($keywords as $key => $val) {
+//                    $pro_id = $val['product_id'];
+//                    if (!isset($shortFlag[$pro_id])) {
+//                        $shortFlag[$pro_id] = 0;
+//                    }
+//                    if (!isset($Flag[$pro_id])) {
+//                        $Flag[$pro_id] = 0;
+//                    }
+//                    if (((!array_key_exists($pro_id, $Flag) || $Flag[$pro_id] < $title_length)) || !array_key_exists($pro_id, $title_keyword)) {
+//                        $Flag[$pro_id] = $Flag[$pro_id] + 1;
+//                    }
+//
+//                    if (!in_array($pro_id, $pro_ids)) {
+//                        $pro_ids[] = $pro_id;
+//                    }
+//                }
+//                if (!empty($pro_ids)) {
+//                    foreach ($pro_ids as $id) {
+//                        if (!empty($title_keyword)) {
+//                            $tKeyword[$id] = implode(' ', $title_keyword[$id]);
+//                        }
+//                    }
+//                }
+//                if ($request->ajax()) {
+//                    return response()->json([
+//                        'success' => true,
+//                        'title_keyword' => $tKeyword
+//                    ]);
+//                }
+//            }
+//        }
 
         return response()->json([
             'success' => false

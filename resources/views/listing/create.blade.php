@@ -1936,6 +1936,7 @@
                 data: {
                     title_length:title_length,
                     selected_product:selected_product,
+                    store_id:$('#listing_store').val(),
                 },
                 /* processData: false,
                  contentType: false,*/
