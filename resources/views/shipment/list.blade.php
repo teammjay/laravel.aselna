@@ -214,6 +214,25 @@
         </div>
     </div>
 
+    <!-- Mark as shipped modal -->
+    <div class="modal fade" id="markAsShippedModal">
+        <div class="modal-dialog modal-dialog-centered" style="max-width:800px;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="markAsShippedModalLabel">Shipment Detail</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancle</button>
+                    <button type="button" class="btn btn-primary" id="shipThis"><i class="fa fa-check"></i> Ok </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
 @stop
 
 @section('adminlte_js')
@@ -226,7 +245,7 @@
     <script>
     $(document).ready(function() {
         $('#listing_store').select2();
-        //$('#shippingDetailModal').modal('show');
+        //$('#markAsShippedModal').modal('show');
         $('.card-header').on('click',function () {
             if($(this).find('.fa').hasClass('fa-angle-down')){
                 $(this).find('.fa').removeClass('fa-angle-down');
@@ -265,6 +284,40 @@
             loadDatatables();
         });
 
+        $(document).on('click','#mark_as_shipped',function () {
+            var shipment_id = $('input[name="shipment_id[]"]:checked').val();
+            if(shipment_id !=''){
+                $.ajax({
+                    url: "{{ route('shipment.getshippingdetail') }}",
+                    type: 'POST',
+                    data: {
+                        operation_id: shipment_id,
+                        mark_as_ship:1,
+                        "_token": '{{ csrf_token() }}'
+                    },
+                    success: function (response) {
+                        // If success, remove the user row from the table
+                        if (response.success) {
+                            $('#markAsShippedModal').find('.modal-body').html(response.html);
+                            $('#date').datetimepicker({
+                                format:'Y-m-d H:i',
+                                /* minDate: 'now', */
+                                step:10,
+                                onSelectTime: function(dp,$input) {
+                                    var sel_date = $input.val();
+                                    $('#date').val(sel_date);
+                                }
+                            });
+                            $('#markAsShippedModal').modal('show');
+                        }
+                    },
+                    error: function (xhr) {
+                        // Handle error response
+                        alert('Error: ' + xhr.responseJSON.error);
+                    }
+                });
+            }
+        });
 
 
 
