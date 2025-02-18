@@ -28,7 +28,7 @@ class OrderOperationItem extends Model
 
     public function orderOperation()
     {
-        return $this->belongsTo(OrderOperation::class,'order_operation_id');
+        return $this->belongsTo(OrderOperation::class);
     }
 
     public function orderItem()

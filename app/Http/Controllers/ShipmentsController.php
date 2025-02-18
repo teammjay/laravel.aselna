@@ -199,14 +199,18 @@ class ShipmentsController extends Controller
         $shippingCarrier = ShippingCarrier::all();
         $shipFrom = LogisticCenter::all();
         $shippingCarrierPackage = ShippingCarrierPackage::all();
-        $shipmentDetail = OrderOperation::with('carrierService','store','operationItem','operationItem.orderItem','operationItem.orderItem.product')->where('id',$order_opration_id)->first();
+        $shipmentDetail = OrderOperation::with('operationItem','carrierService','store','operationItem.orderItem','operationItem.orderItem.product')->where('id',$order_opration_id)->first();
         /*echo '<pre>';
-        print_r($shipmentDetail->operationItem);
+        print_r($shipmentDetail);
         echo '</pre>';die;*/
         $shipping_carrier_id = $shipmentDetail->shipping_carrier_id;
         $shippingCarrierService = ShippingCarrierService::where('shipping_carrier_id',$shipping_carrier_id)->orderBy('name','asc')->get();
 
-        $view = view('shipment.detail', compact('shipmentDetail','shippingCarrier','shippingCarrierService','shippingCarrierPackage','shipFrom'))->render();
+        if($request->input('mark_as_ship')){
+            $view = view('shipment.mark_as_shipped', compact('shipmentDetail','shippingCarrier','shippingCarrierService','shippingCarrierPackage','shipFrom'))->render();
+        }else {
+            $view = view('shipment.detail', compact('shipmentDetail', 'shippingCarrier', 'shippingCarrierService', 'shippingCarrierPackage', 'shipFrom'))->render();
+        }
         return response()->json([
             'success' => true,
             'html' => $view
