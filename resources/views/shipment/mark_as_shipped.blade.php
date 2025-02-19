@@ -10,7 +10,7 @@
                                     <label for="order_id">Order ID</label>
                                 </div>
                                 <div class="col-md-8">
-                                    <input type="text" class="form-control" name="order_id" id="order_id" readonly="">
+                                    <input type="text" class="form-control" name="order_id" id="order_id" value="{{ $shipmentDetail->order->order_id }}" readonly="">
                                 </div>
                             </div>
                             <div class="row mt-3 g-3 align-items-center">
@@ -18,7 +18,7 @@
                                     <label for="date">Date</label>
                                 </div>
                                 <div class="col-md-8">
-                                    <input type="text" class="form-control" name="date" id="date" readonly="">
+                                    <input type="text" class="form-control" name="date" id="date" value="{{ $shipmentDetail->order->order_date }}" readonly="">
                                 </div>
                             </div>
                             <div class="row mt-3 g-3 align-items-center">
@@ -26,7 +26,7 @@
                                     <label for="status">Status</label>
                                 </div>
                                 <div class="col-md-8">
-                                    <input type="text" class="form-control" name="status" id="status" readonly="">
+                                    <input type="text" class="form-control" name="status" id="status" value="{{ $shipmentDetail->order->order_status }}" readonly="">
                                 </div>
                             </div>
                             <div class="row mt-3 g-3 align-items-center">
@@ -64,10 +64,10 @@
                                     <label for="shipping_carrier_service">Shipping Carrie Service</label>
                                 </div>
                                 <div class="col-md-8">
-                                    <select class="form-control" id="carrier_name" name="carrier_name">
-                                        @if(count($shippingCarrier ?? []) > 0)
-                                            @foreach($shippingCarrier as $sCarrier)
-                                                <option value="{{ $sCarrier->id }}" {{ ( $sCarrier->id == $shipmentDetail->shipping_carrier_id ) ? 'selected' : '' }}>{{ $sCarrier->name }}</option>
+                                    <select class="form-control" id="shipping_carrier_service" name="shipping_carrier_service">
+                                        @if(count($shippingCarrierService ?? []) > 0)
+                                            @foreach($shippingCarrierService as $sCarrierService)
+                                                <option value="{{ $sCarrierService->id }}" {{ ( $sCarrierService->id == $shipmentDetail->shipping_carrier_service_id ) ? 'selected' : '' }}>{{ $sCarrierService->name }}</option>
                                             @endforeach
                                         @endif
                                     </select>
@@ -175,8 +175,10 @@
                                     @foreach($shipmentDetail->operationItem as $oitem)
                                         <tr>
                                             <td>
-                                                @if($oitem->orderItem->product->product_image_url != '')
+                                                @if($oitem->orderItem->product->image != '')
                                                     <div class="main-image">
+                                                        <img src="{{ asset('storage/' .$oitem->orderItem->product->image->getFileUrl()) }}" alt="{{ asset('storage/' .$product->image->getFileUrl())}}" loading="lazy" width="50" height="50" class="mainImage" data-product-id="{{ $oitem->orderItem->product->product_id }}">
+
                                                         <img src="{{  asset('storage/product_images/'. $oitem->orderItem->product->product_image_url) }}" alt="{{  $oitem->orderItem->product->product_image_url }}" class="mainImage" width="70" height="70" data-product-id="{{ $oitem->orderItem->product->product_id }}">
                                                     </div>
                                                 @endif

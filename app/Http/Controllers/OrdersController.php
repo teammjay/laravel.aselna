@@ -16,10 +16,10 @@ class OrdersController extends Controller
     {
         $perPage = $this->perPage;
         $eBayServie = new EbayService();
-        $orders = $eBayServie->getOrders();
+        /*$orders = $eBayServie->getOrders();
         echo '<pre>';
         print_r($orders);
-        echo '</pre>';die;
+        echo '</pre>';die;*/
         $stores = Store::with('storeType')->where('store_status', 1)->orderBy('name', 'asc')->get();
 
         return view('orders.list',compact('perPage','stores'));

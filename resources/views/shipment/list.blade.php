@@ -232,7 +232,7 @@
             </div>
         </div>
     </div>
-
+    <div id="ajax-gallery" style="display: none;"></div>
 @stop
 
 @section('adminlte_js')
@@ -286,7 +286,7 @@
 
         $(document).on('click','#mark_as_shipped',function () {
             var shipment_id = $('input[name="shipment_id[]"]:checked').val();
-            if(shipment_id !=''){
+            if(shipment_id != '' && shipment_id != null){
                 $.ajax({
                     url: "{{ route('shipment.getshippingdetail') }}",
                     type: 'POST',
@@ -316,6 +316,8 @@
                         alert('Error: ' + xhr.responseJSON.error);
                     }
                 });
+            }else{
+                alert('Please select shipment first');
             }
         });
 
@@ -373,24 +375,12 @@
 
         $(document).on('change','#carrier_id',function () {
             var ele = $(this);
-            $.ajax({
-                url: "{{ route('shipment.getshippingcarrier') }}",
-                type: 'POST',
-                data: {
-                    carrier_id: ele.val(),
-                    "_token": '{{ csrf_token() }}'
-                },
-                success: function (response) {
-                    // If success, remove the user row from the table
-                    if (response.success) {
-                        $('#carrier_service_id').html(response.option);
-                    }
-                },
-                error: function (xhr) {
-                    // Handle error response
-                    alert('Error: ' + xhr.responseJSON.error);
-                }
-            });
+            getShippingCarrierService(ele);
+        });
+
+        $(document).on('change','#carrier_name',function () {
+            var ele = $(this);
+            getShippingCarrierService(ele);
         });
 
         loadDatatables();
@@ -444,7 +434,71 @@
         });
 
         $("#shipmentTable").dataTable();
+
+        $(document).on('click','.mainImage',function () {
+            const productId = $(this).data('product-id'); // Get the product ID
+            const galleryDiv = $('#ajax-gallery'); // Reference to the hidden gallery div
+
+            // Fetch images via AJAX
+            $.ajax({
+                url: '{{ route('catalog.getimages') }}',
+                method: 'POST',
+                data:{
+                    productId : productId,
+                    "_token": '{{ csrf_token() }}'
+                },
+                success: function (images) {
+                    galleryDiv.empty(); // Clear any existing content
+
+                    // Append images to the gallery div
+                    $.each(images, function (index, image) {
+                        const anchor = $('<a>')
+                            .attr('href', image)
+                            .attr('data-lightbox', 'gallery')
+                            .attr('data-title', 'Gallery Image');
+
+                        const img = $('<img>')
+                            .attr('src', image)
+                            .css('display', 'none'); // Hidden thumbnails
+
+                        anchor.append(img);
+                        galleryDiv.append(anchor);
+                    });
+
+                    // Trigger Lightbox by simulating a click on the first image
+                    if (images.length > 0) {
+                        galleryDiv.find('a:first').trigger('click');
+                    } else {
+                        alert('No images found for this product.');
+                    }
+                },
+                error: function () {
+                    alert('Failed to load images.');
+                }
+            });
+        });
     });
+
+    function getShippingCarrierService(element){
+        $.ajax({
+            url: "{{ route('shipment.getshippingcarrier') }}",
+            type: 'POST',
+            data: {
+                carrier_id: ele.val(),
+                "_token": '{{ csrf_token() }}'
+            },
+            success: function (response) {
+                // If success, remove the user row from the table
+                if (response.success) {
+                    $('#carrier_service_id').html(response.option);
+                }
+            },
+            error: function (xhr) {
+                // Handle error response
+                alert('Error: ' + xhr.responseJSON.error);
+            }
+        });
+    }
 
     function updateRecord(type){
         var needUpdate = false;

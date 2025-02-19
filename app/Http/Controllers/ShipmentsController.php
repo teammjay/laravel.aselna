@@ -35,11 +35,13 @@ class ShipmentsController extends Controller
         $columnSortOrder = $request['order'][0]['dir'];
 
         $query = OrderOperation::with([
-            'order:id,order_id,buyer_first_name,buyer_last_name',
+            'order:id,order_id,order_date,buyer_first_name,buyer_last_name',
+            'order.orderItem',
             'order.orderItem.product',
+            'order.orderItem.product.image',
             'carrierService:id,name',
             'store:id,name,store_type_id',
-        ])->select('*','order_operation.id as oid');
+        ])->select('order_operation.*','order_operation.id as oid');
 
         // Filter by store
         if ($request->has('store_id') && $request->store_id != '') {
@@ -110,9 +112,15 @@ class ShipmentsController extends Controller
             foreach($order_operations as $key=>$order) {
                 $storeType = (isset($order->store->storeType) && !empty($order->store->storeType)) ? $order->store->storeType->name : '';
                 $code = '';
+                $image = $product_id = '';
                 if(isset($order->order->orderItem) && !empty($order->order->orderItem)){
                     foreach($order->order->orderItem as $oitem){
                         if(isset($oitem->product) && !empty($oitem->product)){
+                            $imagename = $oitem->product->product_image;
+                            if(!empty($oitem->product->image)) {
+                                $image = asset('storage/' . $oitem->product->image->getFileUrl());
+                                $product_id = $oitem->product->product_id;
+                            }
                             if($oitem->product->product_sku != ''){
                                 $code .= $oitem->product->product_sku.' x '.$oitem->quantity.'<br>';
                             }
@@ -120,15 +128,15 @@ class ShipmentsController extends Controller
                     }
                 }
                 $data[] = array(
-                    "action" => '<button type="button" class="btn btn-warning show-detail" data-id="'.$order->oid.'">Show Detail</button>',
-                    "image" => '<input type="checkbox" class="pro-id" name="shipment_id[]" value="'.$order->oid.'" style="visibility:hidden;">',
+                    "action" => '<button type="button" class="btn btn-warning show-detail" data-id="'.$order->oid.'">Show Detail</button><input type="checkbox" class="pro-id" name="shipment_id[]" value="'.$order->oid.'" style="visibility:hidden;">',
+                    "image" => ($image) ? '<div class="main-image"><img src="'.$image.'" alt="'.$imagename.'" class="mainImage" width="70" height="70" data-product-id="'.$product_id.'"></div>' : '',
                     "status" => '',
                     "carrier_service" => $order->carrierService->name,
                     "store" => $order->store->name.' - '.$storeType,
-                    "order_id" => $order->order_id,
-                    "order_date" => $order->order_date,
+                    "order_id" => $order->order->order_id,
+                    "order_date" => $order->order->order_date,
                     "product_code" =>  $code,
-                    "weight" =>  $order->order_status,
+                    "weight" =>  $order->weight_value,
                     "first_name" => (isset($order->order) && !empty($order->order)) ? $order->order->buyer_first_name : '',
                     "last_name" =>  (isset($order->order) && !empty($order->order)) ? $order->order->buyer_last_name : '',
                     "city" => ''
@@ -199,7 +207,7 @@ class ShipmentsController extends Controller
         $shippingCarrier = ShippingCarrier::all();
         $shipFrom = LogisticCenter::all();
         $shippingCarrierPackage = ShippingCarrierPackage::all();
-        $shipmentDetail = OrderOperation::with('operationItem','carrierService','store','operationItem.orderItem','operationItem.orderItem.product')->where('id',$order_opration_id)->first();
+        $shipmentDetail = OrderOperation::with('operationItem','order','carrierService','store','operationItem.orderItem','operationItem.orderItem.product')->where('id',$order_opration_id)->first();
         /*echo '<pre>';
         print_r($shipmentDetail);
         echo '</pre>';die;*/

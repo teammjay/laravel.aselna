@@ -34,7 +34,7 @@ class OrderOperation extends Model
 
     public function order(){
 
-        return $this->belongsTo(Order::class,'id');
+        return $this->belongsTo(Order::class,'order_id');
     }
 
     public function carrierService(){
