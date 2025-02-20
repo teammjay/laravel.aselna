@@ -19,18 +19,6 @@ class WalmartService implements MarketplaceServiceInterface
     public function generateFeed($listingId)
     {
         $listingInfo = Listing::where('id', $listingId)->first();
-        $created_by = auth()->user()->name ?? 'admin';
-
-        $feedData = array(
-            'listing_id' => $listingId,
-            // 'file_id' => $fileDetail->id,
-            'status' => 0,
-
-            'feed_type' => $listingInfo->feed_type,
-            'store_id' => $listingInfo->store_id,
-            'created_by' => $created_by
-        );
-        ListingFeed::updateOrCreate(['listing_id' => $listingId],$feedData);
 
         switch ($listingInfo->feed_type) {
             case FeedTypes::CREATE:
