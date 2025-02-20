@@ -29,12 +29,12 @@ class OrderOperation extends Model
 
     public function operationItem(){
 
-        return $this->hasMany(OrderOperationItem::class,'id');
+        return $this->hasMany(OrderOperationItem::class);
     }
 
     public function order(){
 
-        return $this->belongsTo(Order::class,'id');
+        return $this->belongsTo(Order::class,'order_id');
     }
 
     public function carrierService(){
