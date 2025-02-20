@@ -376,4 +376,19 @@ class AmazonService implements MarketplaceServiceInterface
     }
 
 
+    public function getOrders()
+    {
+        $this->authService = new AmazonAuthService();
+        $response = $this->authService->getOrders();
+
+        return $response;
+    }
+
+    public function getOrderItems(mixed $orderId)
+    {
+        $this->authService = new AmazonAuthService();
+        $response = $this->authService->getOrderItems($orderId);
+
+        return $response;
+    }
 }
