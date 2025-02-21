@@ -71,7 +71,7 @@ class FetchAmazonOrdersJob implements ShouldQueue
 
                         $order_item_id = OrderItem::updateOrCreate([
                             'order_id' => $order_id,
-                            'product_id' => $order_id,
+                            'product_id' => $itemDetail->storeProduct->product->product_id,
                         ],$orderItemData);
                     }
 
