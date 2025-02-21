@@ -163,16 +163,17 @@ class AmazonAuthService
 
             $response = $this->client->get('/orders/v0/orders', [
                 'headers' => [
-                    'Authorization' => 'Bearer ' . $accessToken,
-                    'x-amz-access-token' => $accessToken,
+                    'x-amz-access-token' => "{$accessToken}",
                     'Content-Type' => 'application/json',
                     'x-amz-date' => gmdate('Ymd\THis\Z'),
                 ],
                 'query' => [
-                    'MarketplaceIds' => $marketplaceIDs,
+                    'MarketplaceIds' => implode(',',$marketplaceIDs),
                     'CreatedAfter' => now()->subDays(7)->toISOString(),
                 ],
             ]);
+
+            Log::info('Order Response'.$response->getBody());
 
             $data = json_decode($response->getBody(), true);
 
@@ -196,8 +197,7 @@ class AmazonAuthService
 
             $response = $this->client->get("/orders/v0/orders/{$orderId}/orderItems", [
                 'headers' => [
-                    'Authorization' => 'Bearer ' . $accessToken,
-                    'x-amz-access-token' => $accessToken,
+                    'x-amz-access-token' => "{$accessToken}",
                     'Content-Type' => 'application/json',
                     'x-amz-date' => gmdate('Ymd\THis\Z'),
                 ]

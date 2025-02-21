@@ -34,7 +34,7 @@ class FetchWalmartOrdersJob implements ShouldQueue
                 $firstname = $lastname = '';
                 $orderTotal = 0;
                 $taxTotal = 0;
-                $discountTotal = 0; 
+                $discountTotal = 0;
                 $orderTotals = 0;
                 foreach ($order['orderLines']['orderLine'] as $line) {
                     $itemTotal = 0;

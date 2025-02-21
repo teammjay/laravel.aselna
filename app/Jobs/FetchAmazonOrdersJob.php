@@ -32,13 +32,20 @@ class FetchAmazonOrdersJob implements ShouldQueue
 
         if (!isset($orders['error'])) {
             foreach($orders as $order){
+                $firstname = $lastname = '';
+                if(isset($order['BuyerInfo']['BuyerName'])){
+                    $nameArr = explode(' ',$order['BuyerInfo']['BuyerName']);
+                    $firstname = $nameArr[0];
+                    $lastname = $nameArr[1];
+                }
+
                 $orderData = [
                     'order_id' => $order['AmazonOrderId'],
                     'order_date' => date('Y-m-d H:i:s',strtotime($order['PurchaseDate'])),
                     'order_status' => $order['OrderStatus'],
                     'order_total' => $order['OrderTotal']['Amount'],
-                    'buyer_first_name' => $order['BuyerInfo']['BuyerName'],
-                    'buyer_last_name' => $order['BuyerInfo']['BuyerName'],
+                    'buyer_first_name' => $firstname,
+                    'buyer_last_name' => $lastname,
                     'buyer_email' => $order['BuyerInfo']['BuyerEmail'],
                     'purchase_order_id' => $order['OrderTotal'],
                 ];
