@@ -334,4 +334,12 @@ class WalmartService implements MarketplaceServiceInterface
 
         FileUtility::saveToFile(public_path('feeds/walmart/' . $listingId . '.json'), json_encode($jsonFeed));
     }
+
+    public function getOrders()
+    {
+        $this->authService = new WalmartAuthService();
+        $response = $this->authService->getOrders();
+
+        return $response;
+    }
 }
