@@ -88,4 +88,38 @@ class WalmartAuthService
 
         return json_decode($response->getBody(), true);
     }
+
+    public function getOrders()
+    {
+        try {
+            $accessToken = $this->authenticate();
+
+            if (!$accessToken) {
+                Log::error("Failed to retrieve Walmart API token.");
+                return null;
+            }
+
+            $url = "https://marketplace.walmartapis.com/v3/orders";
+
+            $response = $this->client->get($url, [
+                'headers' => [
+                    'WM_SEC.ACCESS_TOKEN' => "{$accessToken}",
+                    'Content-Type' => 'application/json',
+                    'Accept' => 'application/json',
+                    'WM_SVC.NAME' => 'Walmart Marketplace',
+                    'WM_QOS.CORRELATION_ID' => uniqid(),
+                ],
+                'query' => [
+                    'createdStartDate' => now()->subDays(7)->toISOString(),
+                ],
+            ]);
+
+            return json_decode($response->getBody(), true);
+        } catch (RequestException $e) {
+            return response()->json([
+                'error' => 'Walmart API request failed',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
 }

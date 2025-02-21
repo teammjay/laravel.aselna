@@ -149,4 +149,68 @@ class AmazonAuthService
                 return 'POST_PRODUCT_DATA';
         }
     }
+
+    public function getOrders()
+    {
+        try {
+            $accessToken = $this->getAccessToken();
+            if (!$accessToken) {
+                return "Error: Could not retrieve access token.";
+            }
+
+            $marketplaceIDs = $this->getMarketplaceIDs();
+            Log::info('Marketplace IDs: ' . json_encode($marketplaceIDs));
+
+            $response = $this->client->get('/orders/v0/orders', [
+                'headers' => [
+                    'Authorization' => 'Bearer ' . $accessToken,
+                    'x-amz-access-token' => $accessToken,
+                    'Content-Type' => 'application/json',
+                    'x-amz-date' => gmdate('Ymd\THis\Z'),
+                ],
+                'query' => [
+                    'MarketplaceIds' => $marketplaceIDs,
+                    'CreatedAfter' => now()->subDays(7)->toISOString(),
+                ],
+            ]);
+
+            $data = json_decode($response->getBody(), true);
+
+            return $data['payload']['Orders'] ?? [];
+
+        } catch (RequestException $e) {
+            return response()->json([
+                'error' => 'Amazon API request failed',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function getOrderItems($orderId)
+    {
+        try {
+            $accessToken = $this->getAccessToken();
+            if (!$accessToken) {
+                return response()->json(['error' => 'Unable to retrieve access token'], 401);
+            }
+
+            $response = $this->client->get("/orders/v0/orders/{$orderId}/orderItems", [
+                'headers' => [
+                    'Authorization' => 'Bearer ' . $accessToken,
+                    'x-amz-access-token' => $accessToken,
+                    'Content-Type' => 'application/json',
+                    'x-amz-date' => gmdate('Ymd\THis\Z'),
+                ]
+            ]);
+
+            $data = json_decode($response->getBody(), true);
+            return $data['payload']['OrderItems'] ?? [];
+
+        } catch (RequestException $e) {
+            return response()->json([
+                'error' => 'Amazon API request failed',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
 }

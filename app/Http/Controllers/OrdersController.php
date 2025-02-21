@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Order;
 use App\Models\Store;
+use App\Services\Marketplace\Service\AmazonService;
 use App\Services\Marketplace\Service\EbayService;
 use Illuminate\Http\Request;
 use App\Helpers\QueryFilters;
@@ -15,8 +16,8 @@ class OrdersController extends Controller
     public function index(Request $request)
     {
         $perPage = $this->perPage;
-        $eBayServie = new EbayService();
-        /*$orders = $eBayServie->getOrders();
+        /*$amazonServie = new AmazonService();
+        $orders = $amazonServie->getOrders();
         echo '<pre>';
         print_r($orders);
         echo '</pre>';die;*/
