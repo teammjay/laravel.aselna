@@ -4,9 +4,12 @@ namespace App\Services\Marketplace\Service;
 
 use App\Constants\FeedTypes;
 use App\Models\Listing;
+use App\Models\ListingFeed;
 use App\Models\ListingItemLink;
+use App\Services\Auth\MagentoAuthService;
 use App\Services\Marketplace\Contracts\MarketplaceServiceInterface;
 use App\Utils\FileUtility;
+use Illuminate\Support\Facades\Log;
 
 class MagentoService implements MarketplaceServiceInterface
 {
@@ -38,11 +41,36 @@ class MagentoService implements MarketplaceServiceInterface
 
     public function submitFeed($feedId, $listingId)
     {
-        // TODO: Implement submitFeed() method.
+        Log::info("Started :: ");
+        $filePath = public_path('feeds/magento/' . $listingId . '.json');
+
+        $content = file_get_contents($filePath);
+        $jsonDecodedContent = json_decode($content, true);
+        Log::info("Content :: " . json_encode($jsonDecodedContent));
+        $listingInfo = Listing::where('id', $listingId)->first();
+
+        $store = $listingInfo->store;
+        $magentoAuthService = new MagentoAuthService($store->seller_id, $store->secret_key);
+        $accessToken = $magentoAuthService->authenticate();
+        Log::info('Access Token: ' . $accessToken);
+
+        $response = $magentoAuthService->saveProducts($jsonDecodedContent);
+        Log::info('Product: ' . json_encode($response));
+        ListingFeed::where('listing_id', $listingId)->update(['feed_id' => $response['bulk_uuid']]);
     }
 
     public function getResultFeed(mixed $listingId)
     {
+        $listingFeed = ListingFeed::where('listing_id', $listingId)->first();
+        $store = $listingFeed->listing->store;
+        $magentoAuthService = new MagentoAuthService($store->seller_id, $store->secret_key);
+        $response = $magentoAuthService->getBulkStatus($listingFeed->feed_id);
+        Log::info('Response: ' . json_encode($response));
+
+        // save to the response feed file
+        FileUtility::saveToFile(public_path('feeds/magento/' . $listingId . '.json'), json_encode($response));
+
+        return 'feeds/magento/' . $listingId . '.json';
     }
 
     private function generateCreateFeed($listingInfo, $listingId)
@@ -59,7 +87,7 @@ class MagentoService implements MarketplaceServiceInterface
             $searchTermCombined = implode(' ', $searchTerms->pluck('term')->toArray());
             // populate jsonFeed like product_mapping_simple
             $safeTextTitle = htmlspecialchars($itemDetail->title, ENT_QUOTES | ENT_XML1, 'UTF-8');
-            $jsonFeed[] = [
+            $jsonFeed[]['product'] = [
                 'name' => $safeTextTitle,
                 'sku' => $itemDetail->sku,
                 'price' => $itemDetail->price,
