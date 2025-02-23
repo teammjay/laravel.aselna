@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Models\Listing;
 use App\Models\ListingFeed;
+use App\Models\ListingItemLink;
 use App\Services\Marketplace\MarketplaceServiceFactory;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -54,10 +55,14 @@ class FeedGenerationJob implements ShouldQueue
 
         $marketplaceService->generateFeed($this->listingId);
         Log::info('Feed Generated');
+        $itemCount = ListingItemLink::where('listing_id', $listingId)->count();
+
+        ListingFeed::update(['listing_id' => $this->listingId], ['number_of_items' => $itemCount]);
 
 //        $marketplaceService->submitFeed('',$this->listingId);
 //
 //        $marketplaceService->getResultFeed($this->listingId);
+
 
     }
 }
