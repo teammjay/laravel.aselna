@@ -3,6 +3,7 @@
 namespace App\Services\Marketplace\Service;
 
 use App\Constants\FeedTypes;
+use App\Constants\MagentoSyncConstants;
 use App\Models\Listing;
 use App\Models\ListingFeed;
 use App\Models\ListingItemLink;
@@ -70,7 +71,7 @@ class MagentoService implements MarketplaceServiceInterface
         // save to the response feed file
         FileUtility::saveToFile(public_path('feeds/magento/' . $listingId . '.json'), json_encode($response));
 
-        return 'feeds/magento/' . $listingId . '.json';
+        return 'result-feeds/magento/' . $listingId . '.json';
     }
 
     private function generateCreateFeed($listingInfo, $listingId)
@@ -92,6 +93,7 @@ class MagentoService implements MarketplaceServiceInterface
                 'sku' => $itemDetail->sku,
                 'price' => $itemDetail->price,
                 'weight' => $listingItem->weight,
+                'attribute_set_id' => "4",
                 'custom_attributes' => [
                     [
                         'attribute_code' => 'meta_title',
@@ -148,7 +150,7 @@ class MagentoService implements MarketplaceServiceInterface
                 ],
                 'extension_attributes' => [
                     'stock_item' => [
-                        'qty' => 100,
+                        'qty' => $itemDetail->qty,
                         'is_in_stock' => true
                     ]
                 ]
@@ -172,5 +174,16 @@ class MagentoService implements MarketplaceServiceInterface
 
     private function generatePriceFeed($listingInfo, $listingId)
     {
+    }
+
+    public function syncAttributes($store)
+    {
+        $magentoAuthService = new MagentoAuthService($store->seller_id, $store->secret_key);
+        foreach (MagentoSyncConstants::$neccesaryAttributes as $attribute => $attributeData) {
+            if ($magentoAuthService->isAttributeExists($attribute)) {
+                continue;
+            }
+            $magentoAuthService->createAttribute($attributeData);
+        }
     }
 }
