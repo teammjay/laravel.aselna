@@ -339,6 +339,7 @@
                 success: function (response) {
                     // download the file url php code is  return response()->download($filetPath);
                     console.log(response);
+                    table.ajax.reload();
                 }
             });
         });
