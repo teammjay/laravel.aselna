@@ -2,7 +2,9 @@
 
 namespace App\Services\Auth;
 
+use App\Utils\FileUtility;
 use GuzzleHttp\Client;
+use GuzzleHttp\Psr7\Utils;
 use Illuminate\Support\Facades\Log;
 use GuzzleHttp\Psr7\Request;
 
@@ -52,23 +54,34 @@ class WalmartAuthService
         return $data['access_token'];
     }
 
-    public function submitFeed()
+    public function submitFeed($file)
     {
+        $client = new Client();
         $accessToken = $this->authenticate();
         Log::info('Access Token Created ' . $accessToken);
-        return $accessToken;
 
-//        $response = $this->client->post("{$this->endpoint}/feeds", [
-//            'headers' => [
-//                'Authorization' => "Bearer {$accessToken}",
-//                'Content-Type' => 'application/json',
-//                'WM_SVC.NAME' => 'Walmart Marketplace',
-//                'WM_QOS.CORRELATION_ID' => uniqid(),
-//            ],
-//            'body' => $jsonPayload,
-//        ]);
-//
-//        return json_decode($response->getBody(), true);
+        $headers = [
+            'WM_SEC.ACCESS_TOKEN' => "{$accessToken}",
+            'WM_QOS.CORRELATION_ID' => uniqid(),
+            'WM_SVC.NAME' => 'Walmart Service Name',
+            'Accept' => 'application/json'
+        ];
+
+        $options = [
+            'multipart' => [
+                [
+                    'name' => 'file',
+                    'contents' => Utils::tryFopen($file->getPathname(), 'r'),
+                    'filename' => $file->getClientOriginalName(),
+                    'headers'  => [
+                        'Content-Type' => '<Content-type header>'
+                    ]
+                ]
+            ]];
+        $request = new Request('POST', 'https://marketplace.walmartapis.com/v3/feeds?feedType=item', $headers);
+        $res = $client->sendAsync($request, $options)->wait();
+
+        return json_decode($res->getBody(), true);
     }
 
     public function getFeedStatus($feedId)
