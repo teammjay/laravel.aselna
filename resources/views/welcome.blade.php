@@ -345,6 +345,8 @@
 
                     if (response.success) {
                         alert("Feed Submitted Successfully");
+                        console.log(response);
+                        table.ajax.reload();
                     } else {
                         alert("An Error Occurred which submitting the feed");
                     }

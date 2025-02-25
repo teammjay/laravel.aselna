@@ -35,6 +35,7 @@ use Mockery\Exception;
 use App\Helpers\QueryFilters;
 use Illuminate\Support\Facades\Bus;
 use App\Jobs\ListingItemImageCreate;
+use Illuminate\Support\Str;
 
 class ListingController extends Controller
 {
@@ -45,6 +46,9 @@ class ListingController extends Controller
      */
     public function index(Request $request)
     {
+        /*Bus::chain([
+            new FeedGenerationJob('2e63e6ca-36a6-452a-b0bc-d41bd9f08a54'),
+        ])->dispatch();*/
         // get the data in the pagination format for datatable to display
         $stores = Store::with('storeType')->where('store_status', 1)->orderBy('name', 'asc')->get();
         $device_types = DeviceTypes::Where('status', 1)->get();
@@ -1173,6 +1177,8 @@ class ListingController extends Controller
                 $titles[$cnt]['store_type_category_id'] = $pDetail['store_type_category_id'];
                 $titles[$cnt]['generate_type'] = $generate_type;
                 $titles[$cnt]['store_product_id'] = $store_product_id;
+                $titles[$cnt]['brand_id'] = $device->brand_id;
+                $titles[$cnt]['device_id'] = $device->id;
                 $titles[$cnt]['model'][] = $device->name;
                 $titles[$cnt]['model_detail'][] = $device;
 
@@ -1185,6 +1191,8 @@ class ListingController extends Controller
                 $titles[$cnt]['store_type_category_id'] = $pDetail['store_type_category_id'];
                 $titles[$cnt]['generate_type'] = $generate_type;
                 $titles[$cnt]['store_product_id'] = $store_product_id;
+                $titles[$cnt]['brand_id'] = $device->brand_id;
+                $titles[$cnt]['device_id'] = $device->id;
                 $titles[$cnt]['model'][] = $device->name;
                 $titles[$cnt]['model_detail'][] = $device;
                 //$currentTitle .= ($currentTitle === $baseTitle ? ' ' : ' '.$separator.' ') . $nameToAdd;
@@ -1225,6 +1233,8 @@ class ListingController extends Controller
             $titles[$k]['store_type_category_id'] = $pDetail['store_type_category_id'];
             $titles[$k]['generate_type'] = $generate_type;
             $titles[$k]['store_product_id'] = $store_product_id;
+            $titles[$k]['brand_id'] = $device->brand_id;
+            $titles[$k]['device_id'] = $device->id;
             $titles[$k]['model'][] = $device->name;
             $titles[$k]['model_detail'][] = $device;
         }
@@ -1249,6 +1259,8 @@ class ListingController extends Controller
             $titles[$k]['store_type_category_id'] = $pDetail['store_type_category_id'];
             $titles[$k]['generate_type'] = $generate_type;
             $titles[$k]['store_product_id'] = $store_product_id;
+            $titles[$k]['brand_id'] = $device->brand_id;
+            $titles[$k]['device_id'] = $device->id;
             $titles[$k]['model'][] = $device->name;
             $titles[$k]['model_detail'][] = $device;
         }
@@ -1306,6 +1318,8 @@ class ListingController extends Controller
                 $titles[$cnt]['store_type_category_id'] = $pDetail['store_type_category_id'];
                 $titles[$cnt]['generate_type'] = $generate_type;
                 $titles[$cnt]['store_product_id'] = $store_product_id;
+                $titles[$cnt]['brand_id'] = $device->brand_id;
+                $titles[$cnt]['device_id'] = $device->id;
                 $titles[$cnt]['model'][] = $device->name;
                 $titles[$cnt]['model_detail'][] = $device;
             } else {
@@ -1317,6 +1331,8 @@ class ListingController extends Controller
                 $titles[$cnt]['store_type_category_id'] = $pDetail['store_type_category_id'];
                 $titles[$cnt]['generate_type'] = $generate_type;
                 $titles[$cnt]['store_product_id'] = $store_product_id;
+                $titles[$cnt]['brand_id'] = $device->brand_id;
+                $titles[$cnt]['device_id'] = $device->id;
                 $titles[$cnt]['model'][] = $device->name;
                 $titles[$cnt]['model_detail'][] = $device;
                 $currentModels[] = $nameToAdd;
@@ -1352,6 +1368,8 @@ class ListingController extends Controller
                     $product_codes = $request->input('final_product_code');
                     $store_product_ids = $request->input('final_store_product_id');
                     $product_ids = $request->input('final_product_id');
+                    $brand_id = $request->input('final_brand_id');
+                    $device_id = $request->input('final_device_id');
                     $store_id = $request->input('store_id');
                     $store_detail = Store::where('id', $store_id)->first();
                     $product_models = $request->input('product_models');
@@ -1471,9 +1489,12 @@ class ListingController extends Controller
                                     'sync_status' => 1,
                                     'store_product_id' => $store_product_ids[$key],
                                     'manufacturer_id' => ($productDetail['manufacturer_id'] != '') ? $productDetail['manufacturer_id'] : $productDetail['product']['manufacturer_id'],
+                                    'brand_id' => $brand_id[$key],
+                                    'device_id' => $device_id[$key],
                                     'generation_type_id' => $generation_type_id,
                                     'overwrite_title' => 1,
                                     'overwrite_price' => $product_price_overwrites[$key],
+                                    'mpn' => $this->generateMPN(),
                                     'status' => 1,
                                     'upc' => $upcCodes->upc_code,
                                     'created_by' => $created_by
@@ -1654,6 +1675,14 @@ class ListingController extends Controller
 
 
         return response()->json(['error' => true, 'message' => 'Something went wrong! Please try again!']);
+    }
+
+    private function generateMPN($suffix='GI')
+    {
+        $randomPart = strtoupper(Str::random(6)); // 6 random alphanumeric characters
+        //$suffix = 'GI'; // Fixed suffix
+
+        return "{$randomPart}-{$suffix}";
     }
 
     public function syncListingPrice(Request $request)

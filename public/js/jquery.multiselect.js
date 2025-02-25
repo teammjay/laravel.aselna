@@ -88,6 +88,7 @@
 					if (add) {
 						to_sel.appendChild($('<option value="'+key+'">'+list_names[list_options[key]]+'</option>').get(0));
 						o_lc.appendChild($('<input type="hidden" name="'+sel_name+'" value="'+key+'">').get(0));
+                        $(to_sel).trigger('change');
 					}
 				}
 			}
@@ -123,6 +124,8 @@
 					} else {
 						o_lc.appendChild($('<input type="hidden" name="'+sel_name+'" value="'+key+'">').get(0));
 					}
+                    //$(to_sel).trigger('change');
+                    //$(from_sel).trigger('change');
 				}
 			}
 			// end of functions
