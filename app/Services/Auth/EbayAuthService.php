@@ -23,7 +23,7 @@ class EbayAuthService
         $this->redirectUri = 'https://localaselna.com/public/ebay/callback';
         $this->ebay_refresh_token = '';
         //$this->accessToken = $this->refreshToken();
-        $this->accessToken = 'v^1.1#i^1#I^3#r^0#p^3#f^0#t^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';
+        $this->accessToken = 'v^1.1#i^1#r^0#p^3#f^0#I^3#t^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';
 
     }
 
@@ -171,10 +171,6 @@ class EbayAuthService
                 'sink' => $savePath,
             ]);
 
-            if (file_exists($savePath)) {
-                return response()->download($savePath);
-            }
-
             $errorResponse = json_decode($response->getBody()->getContents(), true);
 
             Log::info('Feed Response: ' . json_encode($errorResponse));
@@ -182,6 +178,11 @@ class EbayAuthService
             $headerValue = $response->getHeaders();
 
             Log::info('Feed Status: ' . json_encode($headerValue));
+
+            if (file_exists($savePath)) {
+                response()->download($savePath);
+                return $savePath;
+            }
 
             /*echo '<pre>';
             print_r($headerValue);

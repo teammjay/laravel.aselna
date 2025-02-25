@@ -9,6 +9,8 @@
                             <input type="hidden" name="generate_type[]" value="{{ $pro['generate_type'] }}">
                             <input type="hidden" name="final_store_product_id[]" value="{{ $pro['store_product_id'] }}">
                             <input type="hidden" name="final_product_id[]" value="{{ $pro['product_id'] }}">
+                            <input type="hidden" name="final_brand_id[]" value="{{ $pro['brand_id'] }}">
+                            <input type="hidden" name="final_device_id[]" value="{{ $pro['device_id'] }}">
                             <input type="hidden" name="final_product_code[]" value="{{ $pro['product_code'] }}">
                             <input type="hidden" name="final_product_price[]" value="{{ $pro['price'] }}">
                             <input type="hidden" name="final_product_price_overwrite[]" value="{{ $pro['price_overwrite'] }}">

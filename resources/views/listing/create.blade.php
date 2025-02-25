@@ -1450,7 +1450,7 @@
                         });
                     }
 
-                    if (ele.parents('.prod-sub-type').length) {
+                    /*if (ele.parents('.prod-sub-type').length) {
                         let product_types = [];
                         ele.parents('.prod-sub-type').find('input[name="product_sub_type[]"]').each(function () {
                             product_types.push($(this).val());
@@ -1461,8 +1461,8 @@
                             data: {
                                 product_types: product_types
                             },
-                            /* processData: false,
-                             contentType: false,*/
+                            /!* processData: false,
+                             contentType: false,*!/
                             headers: {
                                 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                             },
@@ -1493,12 +1493,12 @@
                                 loadProducts();
                             },
                             error: function (xhr) {
-                                /*if (xhr.responseJSON?.error) {
+                                /!*if (xhr.responseJSON?.error) {
                                     $('#responseMessage').html('<p style="color:red;">' + xhr.responseJSON.error.image[0] + '</p>');
-                                }*/
+                                }*!/
                             }
                         });
-                    }
+                    }*/
 
                     if(ele.parents('.prod-sub-sub-type').length) {
                         loadProducts()
@@ -1577,7 +1577,7 @@
                         });
                     }
 
-                    if (ele.parents('.prod-sub-type').length) {
+                    /*if (ele.parents('.prod-sub-type').length) {
                         let product_types = [];
                         ele.parents('.prod-sub-type').find('input[name="product_sub_type[]"]').each(function () {
                             product_types.push($(this).val());
@@ -1588,8 +1588,8 @@
                             data: {
                                 product_types: product_types
                             },
-                            /* processData: false,
-                             contentType: false,*/
+                            /!* processData: false,
+                             contentType: false,*!/
                             headers: {
                                 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                             },
@@ -1620,12 +1620,12 @@
                                 loadProducts();
                             },
                             error: function (xhr) {
-                                /*if (xhr.responseJSON?.error) {
+                                /!*if (xhr.responseJSON?.error) {
                                     $('#responseMessage').html('<p style="color:red;">' + xhr.responseJSON.error.image[0] + '</p>');
-                                }*/
+                                }*!/
                             }
                         });
-                    }
+                    }*/
 
                     if(ele.parents('.prod-sub-sub-type').length) {
                         loadProducts()

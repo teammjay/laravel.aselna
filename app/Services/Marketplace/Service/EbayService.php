@@ -114,20 +114,20 @@ class EbayService implements MarketplaceServiceInterface
             //$item->addChild('CategoryMappingAllowed', 'true');
             $item->addChild('Country', 'US');
             $item->addChild('Currency', 'USD');
-            $item->addChild('Description', $itemDetail->description);
+            $item->addChild('Description', htmlspecialchars($itemDetail->description));
             $item->addChild('ListingDuration', 'GTC');
             $item->addChild('ListingType', 'FixedPriceItem');
             $item->addChild('Location', '06473');
 
             // Add PrimaryCategory
             $primaryCategory = $item->addChild('PrimaryCategory');
-            $primaryCategory->addChild('CategoryID', (isset($itemDetail->storeProduct->StoreTypeCategory) && !empty($itemDetail->storeProduct->StoreTypeCategory)) ? $itemDetail->storeProduct->StoreTypeCategory->store_type_code : '');
+            $primaryCategory->addChild('CategoryID', (isset($listingItem->listingItem->storeProduct->StoreTypeCategory) && !empty($listingItem->listingItem->storeProduct->StoreTypeCategory)) ? $listingItem->listingItem->storeProduct->StoreTypeCategory->store_type_code : '');
 
             // Add ProductListingDetails
-            if(isset($itemDetail->storeProduct->store) && !empty($itemDetail->storeProduct->store)) {
+            if(isset($listingItem->listingItem->storeProduct->store) && !empty($listingItem->listingItem->storeProduct->store)) {
                 $productListingDetails = $item->addChild('ProductListingDetails');
                 $brandMPN = $productListingDetails->addChild('BrandMPN');
-                $brandMPN->addChild('Brand', $itemDetail->storeProduct->store->name);
+                $brandMPN->addChild('Brand', $listingItem->listingItem->storeProduct->store->name);
                 $brandMPN->addChild('MPN', $itemDetail->mpn);
             }
 
@@ -163,19 +163,19 @@ class EbayService implements MarketplaceServiceInterface
             $item->addChild('DispatchTimeMax', '1');
 
             // Add ItemSpecifics
-            if(isset($itemDetail->storeProduct->StoreTypeCategory) && !empty($itemDetail->storeProduct->StoreTypeCategory)) {
+            if(isset($listingItem->listingItem->storeProduct->StoreTypeCategory) && !empty($listingItem->listingItem->storeProduct->StoreTypeCategory)) {
                 $itemSpecifics = $item->addChild('ItemSpecifics');
                 $specifics = [
-                    ['Type', $itemDetail->storeProduct->StoreTypeCategory->name],
-                    ['Fits Model', (isset($itemDetail->listingItem->brand)) ? $itemDetail->listingItem->brand->name.' '.$itemDetail->listingItem->device->name : ''],
-                    ['Brand', $itemDetail->listingItem->brand->name],
+                    ['Type', $listingItem->listingItem->storeProduct->StoreTypeCategory->name],
+                    ['Fits Model', (isset($listingItem->listingItem->brand)) ? $listingItem->listingItem->brand->name.' '.$listingItem->listingItem->device->name : ''],
+                    ['Brand', $listingItem->listingItem->brand->name],
                     ['MPN', $itemDetail->mpn],
                     ['Model', $itemDetail->mpn],
                 ];
                 foreach ($specifics as $specific) {
                     $nameValueList = $itemSpecifics->addChild('NameValueList');
                     $nameValueList->addChild('Name', $specific[0]);
-                    $nameValueList->addChild('Value', $specific[1]);
+                    $nameValueList->addChild('Value', htmlspecialchars($specific[1]));
                 }
             }
 
@@ -338,8 +338,13 @@ class EbayService implements MarketplaceServiceInterface
         $filePath = public_path('feeds/ebay/' . $fileName);
         //echo $filePath;die;
         Log::info('Feed Id : '.$feedId);
+        $listingDetail = ListingFeed::where('listing_id',$listingId)->first();
+        $feed_id = $listingDetail->id;
+
         $taskID = $authService->createTask();
-        //ListingFeed::findOrFail($feedId)->update([ 'feed_id' => $taskID]);
+
+        ListingFeed::findOrFail($feed_id)->update([ 'feed_id' => $taskID]);
+
         $response = $authService->uploadFile($taskID, $fileName, $filePath);
         Log::info('Feed Submitted : '.$feedId);
         //$this->downloadResultFeed($taskID, $listingId);
@@ -368,8 +373,8 @@ class EbayService implements MarketplaceServiceInterface
         $feedInfo = ListingFeed::where('listing_id', $listingId)->first();
 
         if($feedInfo){
-            //$response = $this->authService->getResultFeed($feedInfo->feed_id,$listingId);
-            $response = $this->authService->getResultFeed('task-1-1275351',$listingId);
+            $response = $this->authService->getResultFeed($feedInfo->feed_id,$listingId);
+            //$response = $this->authService->getResultFeed('task-1-1275361',$listingId);
             return $response;
         }
 
