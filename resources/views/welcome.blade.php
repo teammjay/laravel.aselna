@@ -315,6 +315,10 @@
                     listing_id: listingId
                 },
                 success: function (response) {
+                    if(!response.success) {
+                        alert("An Error Occurred which submitting the feed");
+                        return;
+                    }
                     // download the file url php code is  return response()->download($filetPath);
                     var link = document.createElement('a');
                     link.href = response.file_path;
@@ -338,7 +342,12 @@
                 },
                 success: function (response) {
                     // download the file url php code is  return response()->download($filetPath);
-                    console.log(response);
+
+                    if (response.success) {
+                        alert("Feed Submitted Successfully");
+                    } else {
+                        alert("An Error Occurred which submitting the feed");
+                    }
                 }
             });
         });

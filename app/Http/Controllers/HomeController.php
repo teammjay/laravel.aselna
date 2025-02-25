@@ -11,6 +11,7 @@ use App\Services\DataTable\DataTableService;
 use App\Services\Marketplace\MarketplaceServiceFactory;
 use App\Services\Marketplace\Service\EbayService;
 use App\Services\Marketplace\Service\GoogleShoppingService;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
@@ -18,7 +19,7 @@ class HomeController extends Controller
 {
     public function index()
     {
-        $stores = Store::with('storeType')->orderBy('name','asc')->get();
+        $stores = Store::with('storeType')->orderBy('name', 'asc')->get();
         //$eBayServie = new EbayService();
         //$test = $eBayServie->generateFeed('c9a99498-1aac-4a4a-a8f6-a27df41b8763');
         //$eBayServie->submitFeed('221284a9-d400-4712-9eee-a9850f52dd88','c9a99498-1aac-4a4a-a8f6-a27df41b8763');
@@ -127,38 +128,48 @@ class HomeController extends Controller
 
     public function submitFeedFile(Request $request)
     {
-        $request->validate([
-            'listing_id' => 'required',
-        ]);
+        try {
+            $request->validate([
+                'listing_id' => 'required',
+            ]);
 
-        $listingId = $request->listing_id;
-        $listingInfo = Listing::where('id', $listingId)->first();
+            $listingId = $request->listing_id;
+            $listingInfo = Listing::where('id', $listingId)->first();
 
-        $storeType = $listingInfo->store->storeType->name;
+            $storeType = $listingInfo->store->storeType->name;
 
-        $marketplaceService = MarketplaceServiceFactory::create($storeType);
+            $marketplaceService = MarketplaceServiceFactory::create($storeType);
 
-        $marketplaceService->submitFeed('',$listingId);
+            $marketplaceService->submitFeed('', $listingId);
 
-        // $marketplaceService->getResultFeed($listingId);
-        return response()->json(['inprogress' => true]);
+            // $marketplaceService->getResultFeed($listingId);
+            return response()->json(['success' => true]);
+        } catch (Exception $e) {
+            return response()->json(['success' => false, 'error' => $e->getMessage()]);
+        }
     }
 
     public function generateResultFeedFile(Request $request)
     {
-        $request->validate([
-            'listing_id' => 'required',
-        ]);
+        try {
+            $request->validate([
+                'listing_id' => 'required',
+            ]);
 
-        $listingId = $request->listing_id;
-        $listingFeed = Listing::where('id', $listingId)->first();
+            $listingId = $request->listing_id;
+            $listingFeed = Listing::where('id', $listingId)->first();
 
-        $storeType = $listingFeed->store->storeType->name;
+            $storeType = $listingFeed->store->storeType->name;
 
-        $marketplaceService = MarketplaceServiceFactory::create($storeType);
+            $marketplaceService = MarketplaceServiceFactory::create($storeType);
 
-        $filePath = $marketplaceService->getResultFeed($listingId);;
+            $filePath = $marketplaceService->getResultFeed($listingId);;
 
-        return response()->json(['file_path' => $filePath]);
+            return response()->json(['file_path' => $filePath]);
+        } catch (\Exception $e) {
+            Log::error('Error: ' . $e->getMessage());
+            return response()->json(['success' => false, 'error' => $e->getMessage()]);
+        }
+
     }
 }
