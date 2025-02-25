@@ -54,7 +54,7 @@ class WalmartAuthService
         return $data['access_token'];
     }
 
-    public function submitFeed($file)
+    public function submitFeed($fileName)
     {
         $client = new Client();
         $accessToken = $this->authenticate();
@@ -71,11 +71,8 @@ class WalmartAuthService
             'multipart' => [
                 [
                     'name' => 'file',
-                    'contents' => Utils::tryFopen($file->getPathname(), 'r'),
-                    'filename' => $file->getClientOriginalName(),
-                    'headers'  => [
-                        'Content-Type' => '<Content-type header>'
-                    ]
+                    'contents' => Utils::tryFopen($fileName, 'r'),
+                    'filename' => $fileName,
                 ]
             ]];
         $request = new Request('POST', 'https://marketplace.walmartapis.com/v3/feeds?feedType=item', $headers);
