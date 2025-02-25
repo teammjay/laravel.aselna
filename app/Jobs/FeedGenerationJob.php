@@ -3,6 +3,8 @@
 namespace App\Jobs;
 
 use App\Models\Listing;
+use App\Models\ListingFeed;
+use App\Models\ListingItemLink;
 use App\Services\Marketplace\MarketplaceServiceFactory;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -29,22 +31,38 @@ class FeedGenerationJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $listingFeed = Listing::where('id', $this->listingId)->first();
-        Log::info('Listing : ' . $listingFeed);
+        $listingInfo = Listing::where('id', $this->listingId)->first();
+        Log::info('Listing : ' . $listingInfo);
 
         // get StoreType froms store that is inside listingfeed
-        $storeType = $listingFeed->store->storeType->name;
+        $storeType = $listingInfo->store->storeType->name;
         Log::info('Store Type: ' . $storeType);
 
         $marketplaceService = MarketplaceServiceFactory::create($storeType);
         Log::info('Marketplace Service Created');
 
+        Log::info('Generating Feed Starts');
+        $created_by = auth()->user()->name ?? 'admin';
+        $feedData = array(
+            'listing_id' => $this->listingId,
+            'status' => 0,
+            'feed_type' => $listingInfo->feed_type,
+            'store_id' => $listingInfo->store_id,
+            'created_by' => $created_by
+        );
+        ListingFeed::updateOrCreate(['listing_id' => $this->listingId], $feedData);
+        Log::info('Feed Data Updated');
+
         $marketplaceService->generateFeed($this->listingId);
         Log::info('Feed Generated');
+        $itemCount = ListingItemLink::where('listing_id', $this->listingId)->count();
+
+        ListingFeed::update(['listing_id' => $this->listingId], ['number_of_items' => $itemCount]);
 
 //        $marketplaceService->submitFeed('',$this->listingId);
 //
 //        $marketplaceService->getResultFeed($this->listingId);
+
 
     }
 }

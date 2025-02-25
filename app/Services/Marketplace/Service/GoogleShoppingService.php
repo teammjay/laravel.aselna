@@ -44,35 +44,7 @@ class GoogleShoppingService implements MarketplaceServiceInterface
         }
 
         /* create listing feed */
-        $created_by = auth()->user()->name ?? 'admin';
         $filePath = public_path('feeds/google-shopping/' . $listingId . '.csv');
-        $sizeInMB= $sizeInKB = '';
-        if (file_exists($filePath)) {
-            $sizeInBytes = filesize($filePath); // File size in bytes
-            $sizeInKB = $sizeInBytes / 1024;
-            $sizeInMB = $sizeInKB / 1024;
-        }
-        $filedata = array(
-            'name' =>  $listingId . '.csv',
-            'ext' => 'csv',
-            'file_size' => round($sizeInKB),
-            'location' => public_path('feeds/google-shopping'),
-            'created_by' => $created_by,
-        );
-
-        $fileDetail = SysFile::create($filedata);
-
-        $feedData = array(
-            'listing_id' => $listingId,
-            'file_id' => $fileDetail->id,
-            'feed_type' => $listingInfo->feed_type,
-            'status' => 0,
-            'store_id' => $listingInfo->store_id,
-            'created_by' => $created_by
-        );
-
-        ListingFeed::create($feedData);
-        /* create listing feed */
 
         //return the file path so that it can be downloaded
         return $filePath;
