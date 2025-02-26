@@ -13,6 +13,7 @@ use App\Jobs\DevicesLinkSyncJob;
 use App\Jobs\DevicesSyncJob;
 use App\Jobs\DeviceTypesSyncJob;
 use App\Jobs\FeedGenerationJob;
+use App\Jobs\FetchAmazonOrdersJob;
 use App\Jobs\FileSystemSyncJob;
 use App\Jobs\GenerationTypeAndTemplateSync;
 use App\Jobs\InterfaceSyncJob;
@@ -65,36 +66,36 @@ class SyncAllTables extends Command
      */
     public function handle()
     {
-        Bus::chain([
-            new FileSystemSyncJob(),
-            new StoreTypeSyncJob(),
-            new StoreSyncJob(),
-            new ManufacturerSyncJob(),
-            new DeviceTypesSyncJob(),
-            new DeviceRatingSyncJob(),
-            new DeviceSeriesSyncJob(),
-            new BrandSyncJob(),
-            new CategorySyncJob(),
-            new InterfaceSyncJob(),
-            new DevicesSyncJob(),
-            new DeviceInterfaces(),
-            new ProductConditionJob(),
-            new CarrierSyncJob(),
-            new ShippingCarrierJob(),
-            new ProductColorSync(),
-            new GenerationTypeAndTemplateSync(),
-            new ProductSyncJob(),
-            new ProductChannelDetailSyncJob(),
-            new StoreProductSyncJob(),
-            new ProductInterfaces(),
-            new DevicesLinkSyncJob(),
-            new LogisticCentreSyncJob(),
-            new ProductSearchTermSyncJob(),
-            new ProductTypeKeywordSyncJob(),
-            new ProductImagesSyncJob(),
-            new ProductAlternativeImagesSyncJob(),
-        ])->dispatch();
-        Bus::chain([
+//        Bus::chain([
+//            new FileSystemSyncJob(),
+//            new StoreTypeSyncJob(),
+//            new StoreSyncJob(),
+//            new ManufacturerSyncJob(),
+//            new DeviceTypesSyncJob(),
+//            new DeviceRatingSyncJob(),
+//            new DeviceSeriesSyncJob(),
+//            new BrandSyncJob(),
+//            new CategorySyncJob(),
+//            new InterfaceSyncJob(),
+//            new DevicesSyncJob(),
+//            new DeviceInterfaces(),
+//            new ProductConditionJob(),
+//            new CarrierSyncJob(),
+//            new ShippingCarrierJob(),
+//            new ProductColorSync(),
+//            new GenerationTypeAndTemplateSync(),
+//            new ProductSyncJob(),
+//            new ProductChannelDetailSyncJob(),
+//            new StoreProductSyncJob(),
+//            new ProductInterfaces(),
+//            new DevicesLinkSyncJob(),
+//            new LogisticCentreSyncJob(),
+//            new ProductSearchTermSyncJob(),
+//            new ProductTypeKeywordSyncJob(),
+//            new ProductImagesSyncJob(),
+//            new ProductAlternativeImagesSyncJob(),
+//        ])->dispatch();
+//        Bus::chain([
             // ListingSyncJob::dispatch(),
             // ListingItemSyncJob::dispatch(),
             // ListingItemDataSyncJob::dispatch(),
@@ -106,10 +107,11 @@ class SyncAllTables extends Command
             // LogisticCentreSyncJob::dispatch(),
 //            ProductImagesSyncJob::dispatch(),
             // ProductAlternativeImagesSyncJob::dispatch(),
-        ]);
+//        ]);
 //        DataPatch::dispatch();
 //        FeedGenerationJob::dispatch('70ce4255-9a11-415d-8edf-c6f4112da17d');
 //        ListingItemImageCreate::dispatch('31d15228-8b63-4409-8e38-b95a1b2e83fc');
+//        FetchAmazonOrdersJob::dispatch();
 
     }
 }
