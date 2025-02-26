@@ -69,7 +69,7 @@ class MagentoService implements MarketplaceServiceInterface
         Log::info('Response: ' . json_encode($response));
 
         // save to the response feed file
-        FileUtility::saveToFile(public_path('feeds/magento/' . $listingId . '.json'), json_encode($response));
+        FileUtility::saveToFile(public_path('result-feeds/magento/' . $listingId . '.json'), json_encode($response));
 
         return 'result-feeds/magento/' . $listingId . '.json';
     }
@@ -82,12 +82,19 @@ class MagentoService implements MarketplaceServiceInterface
         $jsonFeed = [];
         foreach ($listingItems as $listingItem) {
             $itemDetail = $listingItem->item;
-            $product = $itemDetail->storeProduct->product;
-            $searchTerms = $product->searchTerms;
+            $storeProduct = $itemDetail->storeProduct;
+            $productData = $itemDetail->storeProduct->product;
+            $searchTerms = $productData->searchTerms;
             //combine the search terms with spaces
             $searchTermCombined = implode(' ', $searchTerms->pluck('term')->toArray());
             // populate jsonFeed like product_mapping_simple
             $safeTextTitle = htmlspecialchars($itemDetail->title, ENT_QUOTES | ENT_XML1, 'UTF-8');
+
+            $BulletPoints = '';
+            foreach ($storeProduct->features as $feature) {
+                $BulletPoints .= $feature->feature . ',';
+            }
+
             $jsonFeed[]['product'] = [
                 'name' => $safeTextTitle,
                 'sku' => $itemDetail->sku,
@@ -123,30 +130,30 @@ class MagentoService implements MarketplaceServiceInterface
 //                        'attribute_code' => 'category_ids',
 //                        'value' => $listingItem->category_ids
 //                    ],
-//                    [
-//                        'attribute_code' => 'bullet_points',
-//                        'value' => $listingItem->bullet_points
-//                    ],
+                    [
+                        'attribute_code' => 'bullet_points',
+                        'value' => $listingItem->bullet_points
+                    ],
                     [
                         'attribute_code' => 'width',
-                        'value' => $product->package_dimensions_width
+                        'value' => $productData->package_dimensions_width
                     ],
                     [
                         'attribute_code' => 'height',
-                        'value' => $listingItem->package_dimensions_height
+                        'value' => $productData->package_dimensions_height
                     ],
                     [
                         'attribute_code' => 'depth',
-                        'value' => $listingItem->package_dimensions_length
+                        'value' => $productData->package_dimensions_length
                     ],
-//                    [
-//                        'attribute_code' => 'screen_length',
-//                        'value' => $listingItem->screen_length
-//                    ],
-//                    [
-//                        'attribute_code' => 'case_size',
-//                        'value' => $listingItem->case_size
-//                    ]
+                    [
+                        'attribute_code' => 'screen_length',
+                        'value' => $productData->screen_length
+                    ],
+                    [
+                        'attribute_code' => 'case_size',
+                        'value' => $productData->case_size
+                    ]
                 ],
                 'extension_attributes' => [
                     'stock_item' => [

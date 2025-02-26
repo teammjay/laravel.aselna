@@ -209,4 +209,9 @@ class GoogleShoppingService implements MarketplaceServiceInterface
         ]);
 
     }
+
+    public function syncAttributes($store)
+    {
+        // TODO: Implement syncAttributes() method.
+    }
 }

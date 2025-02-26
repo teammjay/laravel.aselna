@@ -232,7 +232,7 @@
                     {
                         data: 'submit_ts', name: 'submit_ts',
                         render: function (data) {
-                            if(!data) return '';
+                            if (!data) return '';
                             return moment(data).format('MM/DD/YYYY HH:mm:ss');
                         }
                     },
@@ -294,13 +294,15 @@
                 },
                 success: function (response) {
                     //download the file url php code is  return response()->download($filetPath);
-                    if (response.generating) return;
-                    var link = document.createElement('a');
-                    link.href = response.file_path;
-                    link.download = response.file_path.split('/').pop();
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
+                    if (<?php echo env('APP_ENV') != 'local' ? 'true' : 'false' ?>) {
+                        if (response.generating) return;
+                        var link = document.createElement('a');
+                        link.href = response.file_path;
+                        link.download = response.file_path.split('/').pop();
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                    }
                 }
             });
         });
@@ -315,17 +317,19 @@
                     listing_id: listingId
                 },
                 success: function (response) {
-                    if(!response.success) {
+                    if (!response.success) {
                         alert("An Error Occurred which submitting the feed");
                         return;
                     }
-                    // download the file url php code is  return response()->download($filetPath);
-                    var link = document.createElement('a');
-                    link.href = response.file_path;
-                    link.download = response.file_path.split('/').pop();
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
+                    if (<?php echo env('APP_ENV') != 'local' ? 'true' : 'false' ?>) {
+                        // download the file url php code is  return response()->download($filetPath);
+                        var link = document.createElement('a');
+                        link.href = response.file_path;
+                        link.download = response.file_path.split('/').pop();
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                    }
                 }
             });
         });

@@ -74,7 +74,6 @@ class MagentoAuthService
 
     public function getBulkStatus($feed_id)
     {
-        //call the response api /rest/V1/bulk/:bulkUuid/status
         $accessToken = $this->authenticate();
         Log::info('Access Token Created ' . $accessToken);
 
@@ -123,19 +122,23 @@ class MagentoAuthService
 
     public function isAttributeExists($attribute)
     {
-        $accessToken = $this->authenticate();
-        Log::info('Access Token Created ' . $accessToken);
+        try {
+            $accessToken = $this->authenticate();
+            Log::info('Access Token Created ' . $accessToken);
 
-        $headers = [
-            'Content-Type' => 'application/json',
-            'Accept' => 'application/json',
-            'Authorization' => 'Bearer ' . $accessToken,
-        ];
+            $headers = [
+                'Content-Type' => 'application/json',
+                'Accept' => 'application/json',
+                'Authorization' => 'Bearer ' . $accessToken,
+            ];
 
-        $endpoint = '/rest/V1/products/attributes/' . $attribute;
-        $request = new Request('GET', $this->endpoint . $endpoint, $headers);
-        $response = $this->client->sendAsync($request)->wait();
-        return $response->getStatusCode() == 200;
+            $endpoint = '/rest/V1/products/attributes/' . $attribute;
+            $request = new Request('GET', $this->endpoint . $endpoint, $headers);
+            $response = $this->client->sendAsync($request)->wait();
+            return $response->getStatusCode() == 200;
+        } catch (\Exception $e) {
+            return false;
+        }
     }
 
     public function createAttribute($attributeData)
@@ -149,7 +152,7 @@ class MagentoAuthService
             'Authorization' => 'Bearer ' . $accessToken,
         ];
 
-        $body = $attributeData;
+        $body = ['attribute' => $attributeData];
 
         $request = new Request('POST', $this->endpoint . '/rest/V1/products/attributes', $headers);
         $response = $this->client->sendAsync($request, ['json' => $body])->wait();
