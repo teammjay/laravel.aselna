@@ -173,15 +173,13 @@ class GoogleShoppingService implements MarketplaceServiceInterface
     public function submitFeed($feedId,$listingId)
     {
         // Upload the feed
-        $fileName = 'google_shopping_feed_'.$listingId.'.csv';
+        $fileName = $listingId.'.csv';
         $filePath = public_path('feeds/google-shopping/' . $fileName);
         $authservice = new GoogleShoppingAuthService();
         $response = $authservice->uploadFeed($filePath);
 
         if ($response['success']) {
             $statusResponse = $authservice->getFeedStatus($response['datafeedId']);
-
-
 
             return response()->json([
                 'message' => $response['message'],
