@@ -27,12 +27,12 @@ class GoogleShoppingService implements MarketplaceServiceInterface
             case FeedTypes::CREATE:
                 $this->generateCreateFeed($listingInfo, $listingId);
                 break;
-            case FeedTypes::SHIPMENT_UPDATE:
+            /*case FeedTypes::SHIPMENT_UPDATE:
                 $this->generateShipmentUpdateFeed($listingInfo, $listingId);
                 break;
             case FeedTypes::DELETE:
                 $this->generateDeleteFeed($listingInfo, $listingId);
-                break;
+                break;*/
             case FeedTypes::INVENTORY:
                 $this->generatePriceFeed($listingInfo, $listingId);
                 break;
@@ -54,7 +54,7 @@ class GoogleShoppingService implements MarketplaceServiceInterface
     {
         // Generate feed for Ebay
         //$userIdentifier = $listingInfo->store->user_id;
-        $listingItems = ListingItemLink::with('listingItem','listingItem.brand','listingItem.device','listingItem.storeProduct','listingItem.storeProduct.product', 'listingItem.storeProduct.productImages', 'listingItem.storeProduct.product.Manufacturer', 'listingItem.storeProduct.product.condition')->where('listing_id', $listingId)->cursor();
+        $listingItems = ListingItemLink::with('listingItem','listingItem.brand','listingItem.device','listingItem.storeProduct','listingItem.storeProduct.product', 'listingItem.storeProduct.productImages', 'listingItem.storeProduct.product.Manufacturer', 'listingItem.storeProduct.product.condition','listingItem.storeProduct.StoreTypeCategory')->where('listing_id', $listingId)->cursor();
 
         $fileSystem = $listingInfo->store->fileSystem;
 
@@ -87,11 +87,11 @@ class GoogleShoppingService implements MarketplaceServiceInterface
             }*/
             /*echo '<pre>';
             print_r($itemDetail);die;*/
-            $ptype_id = $itemDetail->storeProduct->product->product_type;
+            $ptype_id = (isset($listingItem->listingItem->storeProduct->StoreTypeCategory) && !empty($listingItem->listingItem->storeProduct->StoreTypeCategory)) ? $listingItem->listingItem->storeProduct->StoreTypeCategory->store_type_code : '';
             $typeDetail = ProductType::with('parent')->where('id',$ptype_id)->first();
             $product_type = $this->getCategoryPath($typeDetail);
             fputcsv($stream, [
-                $itemDetail->id,
+                $itemDetail->sku,
                 $itemDetail->title,
                 $itemDetail->description,
                 $ptype_id,
@@ -103,16 +103,16 @@ class GoogleShoppingService implements MarketplaceServiceInterface
                 ($itemDetail->price != '') ? $itemDetail->price : $itemDetail->storeProduct->price,
                 '',
                 $itemDetail->storeProduct->product->Manufacturer->name,
-                $itemDetail->mpn,
+                $itemDetail->sku,
                 '',
                 '',
                 '',
                 '',
                 '',
-                '',
+                'US::Standard:4.9 USD',
                 '',
                 $itemDetail->qty,
-                '',
+                'return_policy_days: "30"',
                 (isset($itemDetail->listingItem->brand) && !empty($itemDetail->listingItem->brand)) ? $itemDetail->listingItem->brand->name : '',
                 (isset($itemDetail->listingItem->device) && !empty($itemDetail->listingItem->device)) ? $itemDetail->listingItem->device->name : '',
                 $itemDetail->storeProduct->product->product_title,
@@ -133,7 +133,7 @@ class GoogleShoppingService implements MarketplaceServiceInterface
     {
         // Generate feed for Ebay
         //$userIdentifier = $listingInfo->store->user_id;
-        $listingItems = ListingItemLink::with('listingItem','listingItem.brand','listingItem.device','listingItem.storeProduct','listingItem.storeProduct.product', 'listingItem.storeProduct.productImages', 'listingItem.storeProduct.product.Manufacturer', 'listingItem.storeProduct.product.condition')->where('listing_id', $listingId)->cursor();
+        $listingItems = ListingItemLink::where('listing_id', $listingId)->cursor();
 
         // Define the columns for Google Shopping feed
         $columns = ['product_id','price','currency'];
