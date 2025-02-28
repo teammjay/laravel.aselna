@@ -207,4 +207,12 @@ class GoogleShoppingService implements MarketplaceServiceInterface
         ]);
 
     }
+
+    public function getOrders()
+    {
+        $this->authService = new GoogleShoppingAuthService();
+        $response = $this->authService->getOrders();
+
+        return $response;
+    }
 }

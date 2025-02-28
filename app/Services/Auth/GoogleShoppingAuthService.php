@@ -73,8 +73,6 @@ class GoogleShoppingAuthService
 
     public function uploadFeed($csvFilePath)
     {
-        $client = $this->getClient();
-        $service = new ShoppingContent($client);
 
         try {
             // Define the feed configuration
@@ -85,10 +83,10 @@ class GoogleShoppingAuthService
 
             // Create a Datafeed object in Google Merchant Center
             $merchantId = $this->merchantId;
-            $feedResponse = $service->datafeeds->insert($merchantId, $datafeed);
+            $feedResponse = $this->service->datafeeds->insert($merchantId, $datafeed);
 
             // Upload the feed
-            $service->datafeeds->update(
+            $this->service->datafeeds->update(
                 $merchantId,
                 $datafeed->getId(),
                 file_get_contents($csvFilePath)
@@ -117,11 +115,8 @@ class GoogleShoppingAuthService
     public function getFeedStatus($datafeedId)
     {
         try {
-            $client = $this->getClient();
-            $service = new ShoppingContent($client);
 
-            $status = $service->datafeedstatuses->get($this->merchantId, $datafeedId);
-
+            $status = $this->service->datafeedstatuses->get($this->merchantId, $datafeedId);
             Log::info('Feed Status :' . $status);
 
             return [
@@ -134,6 +129,36 @@ class GoogleShoppingAuthService
             return [
                 'success' => false,
                 'message' => 'Failed to retrieve feed status.',
+                'error' => $e->getMessage(),
+            ];
+        }
+    }
+
+
+    public function getOrders(){
+
+        try{
+
+            $orders = $this->service->orders->listOrders($this->merchantId, ['maxResults' => 50]);
+            return $orders->getResources();
+
+        } catch (\Exception $e) {
+            return [
+                'success' => false,
+                'message' => 'Failed to retrieve orders.',
+                'error' => $e->getMessage(),
+            ];
+        }
+    }
+
+    public function getOrderDetails($orderId)
+    {
+        try {
+            return $this->service->orders->get($this->merchantId, $orderId);
+        } catch (\Exception $e) {
+            return [
+                'success' => false,
+                'message' => 'Failed to retrieve order detail.',
                 'error' => $e->getMessage(),
             ];
         }
