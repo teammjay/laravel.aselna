@@ -69,7 +69,7 @@ class MagentoService implements MarketplaceServiceInterface
         Log::info('Response: ' . json_encode($response));
 
         // save to the response feed file
-        FileUtility::saveToFile(public_path('feeds/magento/' . $listingId . '.json'), json_encode($response));
+        FileUtility::saveToFile(public_path('result-feeds/magento/' . $listingId . '.json'), json_encode($response));
 
         return 'result-feeds/magento/' . $listingId . '.json';
     }
@@ -79,15 +79,35 @@ class MagentoService implements MarketplaceServiceInterface
         // create a feed to insert the products in magento
         $listingItems = ListingItemLink::where('listing_id', $listingId)->cursor();
 
+        $magetoAuthservice = new MagentoAuthService($listingInfo->store->seller_id, $listingInfo->store->secret_key);
+
         $jsonFeed = [];
         foreach ($listingItems as $listingItem) {
             $itemDetail = $listingItem->item;
-            $product = $itemDetail->storeProduct->product;
-            $searchTerms = $product->searchTerms;
+            $storeProduct = $itemDetail->storeProduct;
+            $productData = $itemDetail->storeProduct->product;
+            $searchTerms = $productData->searchTerms;
             //combine the search terms with spaces
             $searchTermCombined = implode(' ', $searchTerms->pluck('term')->toArray());
             // populate jsonFeed like product_mapping_simple
             $safeTextTitle = htmlspecialchars($itemDetail->title, ENT_QUOTES | ENT_XML1, 'UTF-8');
+
+            $itemDevices = $itemDetail->devices;
+
+            $devicesNames = $itemDevices->pluck('device.name')->toArray();
+            $deviceOptionsID = $this->getUpdatedOptions('devices', $devicesNames, $magetoAuthservice);
+
+            $brandsNames = $itemDevices->pluck('device.brand.name')->toArray();
+            $brandsOptionsID = $this->getUpdatedOptions('brands', $brandsNames, $magetoAuthservice);
+
+            Log::info('Devices Options ID: ' . json_encode($deviceOptionsID));
+            Log::info('Brands Options ID: ' . json_encode($brandsOptionsID));
+
+            $BulletPoints = '';
+            foreach ($storeProduct->features as $feature) {
+                $BulletPoints .= $feature->feature . ',';
+            }
+
             $jsonFeed[]['product'] = [
                 'name' => $safeTextTitle,
                 'sku' => $itemDetail->sku,
@@ -107,14 +127,14 @@ class MagentoService implements MarketplaceServiceInterface
                         'attribute_code' => 'meta_description',
                         'value' => $listingItem->description
                     ],
-//                    [
-//                        'attribute_code' => 'devices',
-//                        'value' => $listingItem->magento_device_id
-//                    ],
-//                    [
-//                        'attribute_code' => 'brands',
-//                        'value' => $listingItem->mage_brand_id
-//                    ],
+                    [
+                        'attribute_code' => 'devices',
+                        'value' => $deviceOptionsID
+                    ],
+                    [
+                        'attribute_code' => 'brands',
+                        'value' => $brandsOptionsID
+                    ],
                     [
                         'attribute_code' => 'short_description',
                         'value' => $listingItem->description
@@ -123,30 +143,30 @@ class MagentoService implements MarketplaceServiceInterface
 //                        'attribute_code' => 'category_ids',
 //                        'value' => $listingItem->category_ids
 //                    ],
-//                    [
-//                        'attribute_code' => 'bullet_points',
-//                        'value' => $listingItem->bullet_points
-//                    ],
+                    [
+                        'attribute_code' => 'bullet_points',
+                        'value' => $BulletPoints
+                    ],
                     [
                         'attribute_code' => 'width',
-                        'value' => $product->package_dimensions_width
+                        'value' => $productData->package_dimensions_width
                     ],
                     [
                         'attribute_code' => 'height',
-                        'value' => $listingItem->package_dimensions_height
+                        'value' => $productData->package_dimensions_height
                     ],
                     [
                         'attribute_code' => 'depth',
-                        'value' => $listingItem->package_dimensions_length
+                        'value' => $productData->package_dimensions_length
                     ],
-//                    [
-//                        'attribute_code' => 'screen_length',
-//                        'value' => $listingItem->screen_length
-//                    ],
-//                    [
-//                        'attribute_code' => 'case_size',
-//                        'value' => $listingItem->case_size
-//                    ]
+                    [
+                        'attribute_code' => 'screen_length',
+                        'value' => $productData->screen_length
+                    ],
+                    [
+                        'attribute_code' => 'case_size',
+                        'value' => $productData->case_size
+                    ]
                 ],
                 'extension_attributes' => [
                     'stock_item' => [
@@ -185,5 +205,41 @@ class MagentoService implements MarketplaceServiceInterface
             }
             $magentoAuthService->createAttribute($attributeData);
         }
+    }
+
+    /**
+     * @param mixed $magentoDevices
+     * @param $optionNames
+     * @param MagentoAuthService $magetoAuthservice
+     * @return string
+     */
+    public function getUpdatedOptions($attributeCode, $optionNames, MagentoAuthService $magetoAuthservice): string
+    {
+        $magentoDevices = $magetoAuthservice->getAttribute($attributeCode);
+//create a array of devices name only
+        $magentoDevicesArray = array_map(fn($device) => $device['label'], $magentoDevices['options']);
+
+        $newUpdatedOptions = [];
+        foreach ($optionNames as $itemDevice) {
+            if (!in_array($itemDevice, $magentoDevicesArray)) {
+                $newUpdatedOptions[] = [
+                    'label' => $itemDevice
+                ];
+                $magentoDevicesArray[] = $itemDevice;
+            }
+        }
+        $magentoDevices['options'] = $newUpdatedOptions;
+
+        $newAttribute = $magetoAuthservice->updateAttributeOptions($attributeCode, $magentoDevices);
+
+        // return the id of the names array element from the new attribute['options'], iterrate the new attribute['options'] and get the id of the name which is in the $optionNames
+        $optionId = [];
+        foreach ($newAttribute['options'] as $option) {
+            if (in_array($option['label'], $optionNames)) {
+                $optionId[] = $option['value'];
+            }
+        }
+        // return comma separated string of the option id
+        return implode(',', $optionId);
     }
 }

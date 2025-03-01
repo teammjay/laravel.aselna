@@ -9,4 +9,6 @@ interface MarketplaceServiceInterface
     public function submitFeed($feedId, $listingId);
 
     public function getResultFeed(mixed $listingId);
+
+    public function syncAttributes($store);
 }

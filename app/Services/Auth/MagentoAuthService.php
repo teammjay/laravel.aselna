@@ -24,11 +24,6 @@ class MagentoAuthService
 
     public function authenticate()
     {
-        Log::info('Authenticating Magento');
-        Log::info('Client ID: ' . $this->clientId);
-        Log::info('Client Secret: ' . $this->clientSecret);
-        Log::info('Endpoint: ' . $this->endpoint);
-
         $headers = [
             'Content-Type' => 'application/json',
             'Accept' => 'application/json',
@@ -38,9 +33,6 @@ class MagentoAuthService
             'username' => $this->clientId,
             'password' => $this->clientSecret,
         ];
-
-        Log::info("Headers: " . json_encode($headers));
-        Log::info("Body: " . json_encode($body));
 
         $request = new Request('POST', $this->endpoint . '/rest/V1/integration/admin/token', $headers);
         $res = $this->client->sendAsync($request, ['json' => $body])->wait();
@@ -74,7 +66,6 @@ class MagentoAuthService
 
     public function getBulkStatus($feed_id)
     {
-        //call the response api /rest/V1/bulk/:bulkUuid/status
         $accessToken = $this->authenticate();
         Log::info('Access Token Created ' . $accessToken);
 
@@ -123,19 +114,23 @@ class MagentoAuthService
 
     public function isAttributeExists($attribute)
     {
-        $accessToken = $this->authenticate();
-        Log::info('Access Token Created ' . $accessToken);
+        try {
+            $accessToken = $this->authenticate();
+            Log::info('Access Token Created ' . $accessToken);
 
-        $headers = [
-            'Content-Type' => 'application/json',
-            'Accept' => 'application/json',
-            'Authorization' => 'Bearer ' . $accessToken,
-        ];
+            $headers = [
+                'Content-Type' => 'application/json',
+                'Accept' => 'application/json',
+                'Authorization' => 'Bearer ' . $accessToken,
+            ];
 
-        $endpoint = '/rest/V1/products/attributes/' . $attribute;
-        $request = new Request('GET', $this->endpoint . $endpoint, $headers);
-        $response = $this->client->sendAsync($request)->wait();
-        return $response->getStatusCode() == 200;
+            $endpoint = '/rest/V1/products/attributes/' . $attribute;
+            $request = new Request('GET', $this->endpoint . $endpoint, $headers);
+            $response = $this->client->sendAsync($request)->wait();
+            return $response->getStatusCode() == 200;
+        } catch (\Exception $e) {
+            return false;
+        }
     }
 
     public function createAttribute($attributeData)
@@ -149,9 +144,47 @@ class MagentoAuthService
             'Authorization' => 'Bearer ' . $accessToken,
         ];
 
-        $body = $attributeData;
+        $body = ['attribute' => $attributeData];
 
         $request = new Request('POST', $this->endpoint . '/rest/V1/products/attributes', $headers);
+        $response = $this->client->sendAsync($request, ['json' => $body])->wait();
+
+        return json_decode($response->getBody(), true);
+    }
+
+    public function getAttribute($attributeCode)
+    {
+        $accessToken = $this->authenticate();
+        Log::info('Access Token Created ' . $accessToken);
+
+        $headers = [
+            'Content-Type' => 'application/json',
+            'Accept' => 'application/json',
+            'Authorization' => 'Bearer ' . $accessToken,
+        ];
+
+        $endpoint = '/rest/V1/products/attributes/' . $attributeCode;
+        $request = new Request('GET', $this->endpoint . $endpoint, $headers);
+
+        $response = $this->client->sendAsync($request)->wait();
+
+        return json_decode($response->getBody(), true);
+    }
+
+    public function updateAttributeOptions($attributeCode, $optionData)
+    {
+        $accessToken = $this->authenticate();
+        Log::info('Access Token Created ' . $accessToken);
+
+        $headers = [
+            'Content-Type' => 'application/json',
+            'Accept' => 'application/json',
+            'Authorization' => 'Bearer ' . $accessToken,
+        ];
+
+        $body = ['attribute' => $optionData];
+
+        $request = new Request('PUT', $this->endpoint . '/rest/V1/products/attributes/' . $attributeCode, $headers);
         $response = $this->client->sendAsync($request, ['json' => $body])->wait();
 
         return json_decode($response->getBody(), true);

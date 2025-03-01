@@ -20,4 +20,9 @@ class ShopifyService implements MarketplaceServiceInterface
     {
         // TODO: Implement getResultFeed() method.
     }
+
+    public function syncAttributes($store)
+    {
+        // TODO: Implement syncAttributes() method.
+    }
 }

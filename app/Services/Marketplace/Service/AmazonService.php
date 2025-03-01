@@ -380,4 +380,9 @@ class AmazonService implements MarketplaceServiceInterface
 
         return $response;
     }
+
+    public function syncAttributes($store)
+    {
+        // TODO: Implement syncAttributes() method.
+    }
 }

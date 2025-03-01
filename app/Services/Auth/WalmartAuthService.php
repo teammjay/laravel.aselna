@@ -75,7 +75,7 @@ class WalmartAuthService
                     'filename' => $fileName,
                 ]
             ]];
-        $request = new Request('POST', 'https://marketplace.walmartapis.com/v3/feeds?feedType=item', $headers);
+        $request = new Request('POST', 'https://marketplace.walmartapis.com/v3/feeds?feedType=MP_ITEM', $headers);
         $res = $client->sendAsync($request, $options)->wait();
 
         return json_decode($res->getBody(), true);
@@ -93,7 +93,7 @@ class WalmartAuthService
             'WM_QOS.CORRELATION_ID' => uniqid(),
         ];
 
-        $request = new Request('GET', "{$this->endpoint}/feeds/{$feedId}", $headers);
+        $request = new Request('GET', "{$this->endpoint}/feeds/{$feedId}?includeDetails=true", $headers);
         $response = $this->client->sendAsync($request)->wait();
 
         return json_decode($response->getBody(), true);

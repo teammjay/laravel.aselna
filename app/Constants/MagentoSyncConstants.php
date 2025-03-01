@@ -7,11 +7,11 @@ class MagentoSyncConstants
     public static $neccesaryAttributes = [
         'brands' => [
             "default_frontend_label" => "Brands",
-            "frontend_input" => "select"
+            "frontend_input" => "multiselect"
         ],
         'devices' => [
             "default_frontend_label" => "Devices",
-            "frontend_input" => "select"
+            "frontend_input" => "multiselect"
         ],
         'bullet_points' => [
             "default_frontend_label" => "Bullet Points",

@@ -82,17 +82,17 @@ class AmazonAuthService
         ];
         Log::info('Feed Submission Data: ' . json_encode($data));
 
-        // $response = $this->client->post('/feeds/2021-06-30/feeds', [
-        //     'headers' => [
-        //         'x-amz-access-token' => "{$accessToken}",
-        //         'Content-Type' => 'application/json',
-        //     ],
-        //     'json' => $data,
-        // ]);
+         $response = $this->client->post('/feeds/2021-06-30/feeds', [
+             'headers' => [
+                 'x-amz-access-token' => "{$accessToken}",
+                 'Content-Type' => 'application/json',
+             ],
+             'json' => $data,
+         ]);
 
-        // Log::info('Feed Submission Response: ' . $response->getBody());
+         Log::info('Feed Submission Response: ' . $response->getBody());
 
-        // return json_decode($response->getBody()->getContents(), true);
+         return json_decode($response->getBody()->getContents(), true);
     }
 
     public function getResultFeed($feedId)

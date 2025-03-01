@@ -167,7 +167,7 @@ class HomeController extends Controller
 
             $filePath = $marketplaceService->getResultFeed($listingId);;
 
-            return response()->json(['file_path' => $filePath]);
+            return response()->json(['success' => true,'file_path' => $filePath]);
         } catch (\Exception $e) {
             Log::error('Error: ' . $e->getMessage());
             return response()->json(['success' => false, 'error' => $e->getMessage()]);
