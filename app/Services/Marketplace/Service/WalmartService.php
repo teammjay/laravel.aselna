@@ -124,7 +124,7 @@ class WalmartService implements MarketplaceServiceInterface
                     'sku' => $item->sku,
                     'brand' => $listingInfo->store->name,
                     'productName' => $item->title,
-                    'ShippingWeight' => intval($productObj->product_weight),
+                    'ShippingWeight' => floatval($productObj->product_weight),
                     'productIdentifiers' => [
                         'productId' => $item->upc,
                         'productIdType' => 'UPC'
@@ -169,7 +169,7 @@ class WalmartService implements MarketplaceServiceInterface
                 'keyFeatures' => $keyFeatures,
                 'manufacturerPartNumber' => $item->mpn,
                 'modelNumber' => $item->sku,
-                'msrp' => intval($productObj->product_mrsp),
+                'msrp' => floatval($productObj->product_mrsp),
                 'color' => [$productColor->name ?? ''],
                 'compatibleDevices' => $compatibleDevices,
             ];
