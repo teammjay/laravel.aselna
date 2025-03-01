@@ -7,6 +7,7 @@ use App\Jobs\FeedGenerationJob;
 use App\Models\Listing;
 use App\Models\ListingFeed;
 use App\Models\Store;
+use App\Services\Auth\GoogleShoppingAuthService;
 use App\Services\DataTable\DataTableService;
 use App\Services\Marketplace\MarketplaceServiceFactory;
 use App\Services\Marketplace\Service\EbayService;
@@ -25,9 +26,10 @@ class HomeController extends Controller
         //$eBayServie->submitFeed('221284a9-d400-4712-9eee-a9850f52dd88','c9a99498-1aac-4a4a-a8f6-a27df41b8763');
         //$eBayServie->getInputFeed('task-1-1274330','c9a99498-1aac-4a4a-a8f6-a27df41b8763');
         //echo 'sd';die;
-        /*$googleService = new GoogleShoppingService();
-        $test = $googleService->generateFeed('0310236d-295f-bd6d-730d-35fcc324bdf9');
-        echo $test;die;*/
+        //$googleService = new GoogleShoppingAuthService();
+
+        //$test = $googleService->generateFeed('0310236d-295f-bd6d-730d-35fcc324bdf9');
+        //echo $test;die;
         return view('welcome', compact('stores'));
     }
 
