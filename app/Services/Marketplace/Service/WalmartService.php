@@ -43,67 +43,6 @@ class WalmartService implements MarketplaceServiceInterface
         return 'feeds/walmart/' . $listingId . '.json';
     }
 
-    public function generateFeedXML($listingId)
-    {
-        $listingInfo = ListingFeed::where('id', $listingId)->first();
-
-        $userIdentifier = $listingInfo->store->user_id;
-
-        $listingItems = ListingItemLink::where('feed_id', $listingId)->cursor();
-// create a walmart feed
-        $feed = [
-            'xmlns' => 'http://walmart.com/',
-            'MPItemFeedHeader' => [
-                'version' => '3.1',
-                'requestId' => 'd05aafd1-4fe7-d258-437c-e32c3e935e2e',
-                'requestBatchId' => 'd05aafd1-4fe7-d258-437c-e32c3e935e2e_1',
-                'feedDate' => '2022-04-08T21:06:36',
-                'mart' => 'WALMART_US',
-            ],
-            'MPItem' => []
-        ];
-
-        foreach ($listingItems as $listingItem) {
-            $item = $listingItem->item;
-            $product = [];
-            $product['processMode'] = 'REPLACE_ALL';
-            $product['feedDate'] = $listingItem->created_at;
-            $product['sku'] = $item->sku;
-            $product['productIdentifiers'] = [
-                'productIdentifier' => [
-                    'productIdType' => 'UPC',
-                    'productId' => $item->upc,
-                ]
-            ];
-            $product['MPProduct'] = [
-                'SkuUpdate' => 'No',
-                'productName' => $item->title,
-                'ProductIdUpdate' => 'No',
-            ];
-            // ctageory is left
-            $product['MPOffer'] = [
-                'price' => 24,
-                'MinimumAdvertisedPrice' => 54,
-                'MustShipAlone' => 'No',
-                'ShippingWeight' => [
-                    'value' => 0.33,
-                    'unit' => 'LB'
-                ],
-                'ProductTaxCode' => '2038716',
-                'shipsInOriginalPackaging' => 'Yes'
-            ];
-
-            $feed['MPItem'][] = $product;
-        }
-
-        $xmlContent = XmlUtility::toXml($feed, 'MPItemFeed');
-
-        XmlUtility::saveToFile('feeds/' . $listingId . '.xml', $xmlContent);
-
-        //return the file path so that it can be downloaded
-        return 'feeds/' . $listingId . '.xml';
-    }
-
     public function submitFeed($feedId, $listingId)
     {
         $listingInfo = Listing::where('id', $listingId)->first();
@@ -154,13 +93,13 @@ class WalmartService implements MarketplaceServiceInterface
 
         $jsonFeed = [
             'MPItemFeedHeader' => [
-                'sellingChannel' => 'marketplace',
-                'mart' => 'WALMART_US',
                 'subset' => 'EXTERNAL',
-                'version' => '4.6',
-                'local' => 'en',
+                'locale' => 'en',
+                'sellingChannel' => 'marketplace',
+                'processMode' => 'REPLACE',
+                'version' => '4.8',
+                'mart' => 'WALMART_US',
                 'subCategory' => 'electronics_other',
-                'processMode' => 'REPLACE_ALL',
                 'requestId' => $listingId,
                 'requestBatchId' => $listingId . '_1',
             ]
@@ -182,20 +121,20 @@ class WalmartService implements MarketplaceServiceInterface
 
             $product = [
                 'Orderable' => [
-                    'endDate' => '2060-01-01T08:00:00Z',
+                    'sku' => $item->sku,
+                    'brand' => $listingInfo->store->name,
                     'productName' => $item->title,
+                    'ShippingWeight' => intval($productObj->product_weight),
                     'productIdentifiers' => [
                         'productId' => $item->upc,
                         'productIdType' => 'UPC'
                     ],
+                    'price' => $price,
+                    'endDate' => '2060-01-01T08:00:00Z',
                     'electronicsIndicator' => 'Yes',
                     'shipsInOriginalPackaging' => 'Yes',
-                    'price' => $price,
-                    'sku' => $item->sku,
-                    'brand' => $listingInfo->store->name,
                     'startDate' => '2019-01-01T08:00:00Z',
                     'MustShipAlone' => 'No',
-                    'ShippingWeight' => $productObj->product_weight,
                 ]
             ];
 
@@ -230,7 +169,7 @@ class WalmartService implements MarketplaceServiceInterface
                 'keyFeatures' => $keyFeatures,
                 'manufacturerPartNumber' => $item->mpn,
                 'modelNumber' => $item->sku,
-                'msrp' => $productObj->product_mrsp,
+                'msrp' => intval($productObj->product_mrsp),
                 'color' => [$productColor->name ?? ''],
                 'compatibleDevices' => $compatibleDevices,
             ];
