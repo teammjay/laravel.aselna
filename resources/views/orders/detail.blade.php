@@ -226,7 +226,7 @@
                                     @foreach($orderDetail->orderItem as $item)
                                         <tr>
                                             <td>
-                                                @if($item->product->product_image_url != '')
+                                                @if(isset($item->product) && $item->product->product_image_url != '')
                                                     <div class="main-image">
                                                         <img src="{{  asset('storage/product_images/'. $item->product->product_image_url) }}" alt="{{  $item->product->product_image_url }}" class="mainImage" width="70" height="70" data-product-id="{{ $item->product->product_id }}">
                                                     </div>
@@ -234,7 +234,7 @@
                                             </td>
                                             <td>{{ $item->sku }}</td>
                                             <td>{{ $item->store_sku }}</td>
-                                            <td>{{ $item->product->product_sku }}</td>
+                                            <td>{{ (isset($item->product)) ? $item->product->product_sku : '' }}</td>
                                             <td>{{ $item->quantity }}</td>
                                             <td>{{ $item->item_price }}</td>
                                             <td>{{ $item->id1 }}</td>

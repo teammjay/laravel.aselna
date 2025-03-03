@@ -3,6 +3,7 @@
 namespace App\Services\Auth;
 
 use GuzzleHttp\Client;
+use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Psr7\Request;
 use Illuminate\Support\Facades\Log;
 
@@ -20,6 +21,7 @@ class MagentoAuthService
         $this->clientId = $clientId;
         $this->clientSecret = $clientSecret;
         $this->endpoint = env('MAGENTO_API_ENDPOINT');
+        $this->endpoint = 'https://magento.aselna.com';
     }
 
     public function authenticate()
@@ -35,7 +37,7 @@ class MagentoAuthService
         ];
 
         $request = new Request('POST', $this->endpoint . '/rest/V1/integration/admin/token', $headers);
-        $res = $this->client->sendAsync($request, ['json' => $body])->wait();
+        $res = $this->client->sendAsync($request, ['verify' => false, 'json' => $body])->wait();
 
         Log::info('Response: ' . $res->getBody());
 
@@ -188,5 +190,35 @@ class MagentoAuthService
         $response = $this->client->sendAsync($request, ['json' => $body])->wait();
 
         return json_decode($response->getBody(), true);
+    }
+
+    public function getOrders($pageSize = 10, $currentPage = 1)
+    {
+        try {
+
+            $accessToken = $this->authenticate();
+            Log::info('Access Token Created ' . $accessToken);
+
+            $response = $this->client->get($this->endpoint."/rest/V1/orders", [
+                'verify' => false,
+                'headers' => [
+                    'Content-Type' => 'application/json',
+                    'Accept' => 'application/json',
+                    'Authorization' => 'Bearer ' . $accessToken,
+                ],
+                'query' => [
+                    'searchCriteria[pageSize]' => $pageSize,
+                    'searchCriteria[currentPage]' => $currentPage
+                ]
+            ]);
+
+            return json_decode($response->getBody(), true);
+
+        } catch (RequestException $e) {
+            return [
+                'error' => true,
+                'message' => $e->getMessage()
+            ];
+        }
     }
 }
