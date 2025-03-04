@@ -703,7 +703,7 @@
                         <p>Are you sure you want to update inventory for the selected listing?</p>
                         <div class="mb-3">
                             <label for="sync_inventory" class="col-form-label">Quantity:</label>
-                            <input type="text" class="form-control" id="sync_inventory" placeholder="Quantity">
+                            <input type="text" class="form-control" id="sync_listing_inventory" placeholder="Quantity">
                         </div>
                     </form>
                 </div>
@@ -1019,7 +1019,7 @@
                 type: 'POST',
                 data: {
                     selected_list:selected_list,
-                    inventory:$('#sync_inventory').val(),
+                    inventory:$('#sync_listing_inventory').val(),
                     "_token": '{{ csrf_token() }}'
                 },
                 success: function (response) {
