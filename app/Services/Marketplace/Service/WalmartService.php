@@ -5,6 +5,7 @@ namespace App\Services\Marketplace\Service;
 use App\Constants\FeedTypes;
 use App\Models\Listing;
 use App\Models\ListingFeed;
+use App\Models\ListingItem;
 use App\Models\ListingItemLink;
 use App\Models\ListingItemProductImage;
 use App\Services\Auth\WalmartAuthService;
@@ -12,6 +13,7 @@ use App\Services\Marketplace\Contracts\MarketplaceServiceInterface;
 use App\Utils\FileUtility;
 use App\Utils\XmlUtility;
 use Illuminate\Support\Facades\Log;
+use Termwind\Components\Li;
 
 class WalmartService implements MarketplaceServiceInterface
 {
@@ -63,6 +65,8 @@ class WalmartService implements MarketplaceServiceInterface
 
         if ($feedInfo) {
             $feedInfo->feed_id = $resultFeedId;
+            $feedInfo->submit_ts = now();
+            $feedInfo->number_of_attempts = $feedInfo->number_of_attempts ?? 0 + 1;
             $feedInfo->save();
             Log::info("Feed ID updated successfully.");
         } else {
@@ -81,6 +85,22 @@ class WalmartService implements MarketplaceServiceInterface
 
         $response = $authService->getFeedStatus($feedInfo->feed_id);
         Log::info('Feed Status: ' . json_encode($response));
+
+        $feedInfo->update([
+            'success_count' => $response['itemsSucceeded'],
+            'fail_count' => $response['itemsFailed'],
+            'processing_count' => $response['itemsProcessing'],
+            'number_of_items' => $response['itemsReceived'],
+        ]);
+
+        foreach ($response['itemDetails']['itemIngestionStatus'] as $item) {
+            $listingItems = ListingItem::where('sku', $item['sku'])->get();
+            foreach($listingItems as $listingItem) {
+                $listingItem->update([
+                    'store_sku' => $item['itemid']
+                ]);
+            }
+        }
 
         // save response into folder
         FileUtility::saveToFile(public_path('result-feeds/walmart/' . $listingId . '.json'), json_encode($response));
@@ -229,7 +249,7 @@ class WalmartService implements MarketplaceServiceInterface
                     'unit' => 'EACH',
                     'amount' => $item->quantity
                 ]
-            ]; 
+            ];
             $jsonFeed['Inventory'][] = $product;
         }
 
