@@ -1782,8 +1782,13 @@ class ListingController extends Controller
 
         if (!empty($selected_listing)) {
             try {
-                $listingDetails = Listing::whereIn('id', $selected_listing)->get();
+                Log::info('Inside Inventory Sync ');
+                $listingDetails = Listing::whereIn('id',
+                                    ListingItemLink::select('listing_id')
+                                        ->whereIn('item_id', $selected_listing)
+                                )->get();
                 if (!empty((array)$listingDetails)) {
+                    Log::info('Listing Info Found');
                     foreach ($listingDetails as $list) {
                         $created_by = auth()->user()->name ?? 'admin';
                         $listingArr = [
@@ -1803,9 +1808,11 @@ class ListingController extends Controller
                         $listing_id = $listrecord->id;
 
                         $listingItemLink = ListingItemLink::where('listing_id', $list->id)->get();
+                        Log::info("Item Item Link");
                         if (!empty((array)$listingItemLink)) {
                             foreach ($listingItemLink as $item) {
-                                $itemRecord = ListingItem::find($item->id);
+                                Log::info("Inside Item " . json_encode($item));
+                                $itemRecord = ListingItem::find($item->item_id);
 
                                 $clonedRecord = $itemRecord->replicate();
                                 $clonedRecord->quantity = $updated_inventory;

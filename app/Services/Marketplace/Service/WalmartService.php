@@ -48,11 +48,13 @@ class WalmartService implements MarketplaceServiceInterface
         $listingInfo = Listing::where('id', $listingId)->first();
         $store = $listingInfo->store;
 
+        $feedType = $this->getfeedType($listingInfo->feed_type);
+
         $authService = new WalmartAuthService($store->seller_id, $store->secret_key);
 
         $file = public_path('feeds/walmart/' . $listingId . '.json');
 
-        $response = $authService->submitFeed($file);
+        $response = $authService->submitFeed($file,$feedType);
         Log::info('Response ::' . json_encode($response));
 
         $resultFeedId = $response['feedId'];
@@ -167,7 +169,7 @@ class WalmartService implements MarketplaceServiceInterface
                 'mainImageUrl' => $mainImagePath,
                 'productSecondaryImageURL' => $imagesPath,
                 'keyFeatures' => $keyFeatures,
-                'manufacturerPartNumber' => $item->mpn,
+                'manufacturerPartNumber' => '' . $item->sku,
                 'modelNumber' => $item->sku,
                 'msrp' => floatval($productObj->product_mrsp),
                 'color' => [$productColor->name ?? ''],
@@ -188,15 +190,23 @@ class WalmartService implements MarketplaceServiceInterface
     {
         $listingItems = ListingItemLink::where('listing_id', $listingId)->cursor();
 
-        $xml = new \SimpleXMLElement('<?xml version="1.0" encoding="UTF-8"?><RetireItemFeed xmlns="http://walmart.com/"></RetireItemFeed>');
+        $jsonFeed = [
+            'RetireItemHeader' => [
+                'version' => '1.0'
+            ],
+            'RetireItem' => []
+        ];
 
         foreach ($listingItems as $listingItem) {
             $item = $listingItem->item;
-            $skuList = $xml->addChild('SkuList', $item->sku);
+
+            $product = [
+                'sku' => $item->sku
+            ];
+            $jsonFeed['RetireItem'][] = $product;
         }
 
-        $xml->asXML(public_path('feeds/walmart/' . $listingId . '.xml'));
-
+        FileUtility::saveToFile(public_path('feeds/walmart/' . $listingId . '.json'), json_encode($jsonFeed));
     }
 
     private function generateInventoryFeed($listingInfo, $listingId)
@@ -219,7 +229,7 @@ class WalmartService implements MarketplaceServiceInterface
                     'unit' => 'EACH',
                     'amount' => $item->quantity
                 ]
-            ];
+            ]; 
             $jsonFeed['Inventory'][] = $product;
         }
 
@@ -261,14 +271,32 @@ class WalmartService implements MarketplaceServiceInterface
 
     public function getOrders()
     {
-        $this->authService = new WalmartAuthService();
-        $response = $this->authService->getOrders();
+        //$this->authService = new WalmartAuthService();
+        //$response = $this->authService->getOrders();
 
-        return $response;
+        // return $response;
     }
 
     public function syncAttributes($store)
     {
         // TODO: Implement syncAttributes() method.
+    }
+
+    public function getfeedType($feedType)
+    {
+        switch ($feedType) {
+            case FeedTypes::CREATE:
+                return 'MP_ITEM';
+            // case FeedTypes::IMAGE_UPDATE:
+            //     return 'MPItem';
+            case FeedTypes::DELETE:
+                return 'RETIRE_ITEM';
+            case FeedTypes::INVENTORY:
+                return 'inventory';
+            case FeedTypes::PRICE:
+                return 'price';
+            default:
+                return '';
+        }
     }
 }
