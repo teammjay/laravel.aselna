@@ -2,27 +2,76 @@
 
 namespace App\Services\Marketplace\Service;
 
+use App\Models\Listing;
+use App\Models\ListingItemLink;
+use App\Models\ProductTags;
+use App\Models\ProductTypeKeyword;
+use App\Services\Auth\ShopifyAuthService;
 use App\Services\Marketplace\Contracts\MarketplaceServiceInterface;
+use Illuminate\Support\Facades\Log;
 
 class ShopifyService implements MarketplaceServiceInterface
 {
     public function generateFeed($listingId)
     {
-        // TODO: Implement generateFeed() method.
+
     }
 
     public function submitFeed($feedId, $listingId)
     {
-        // TODO: Implement submitFeed() method.
+        $listingInfo = Listing::where('id', $listingId)->first();
+        $store = $listingInfo->store;
+
+        $listingItems = ListingItemLink::where('listing_id', $listingId)->cursor();
+        foreach ($listingItems as $item) {
+            $listingItem = $item->listingItem;
+            $storeProduct = $listingItem->storeProduct;
+            $productData = $listingItem->storeProduct->product;
+            Log::info('Listing Item: ' . json_encode($listingItem));
+
+
+            $tags = [];
+            ProductTags::where('product_id',$productData['product_id'])->get()->each(function($tag){
+                $tags[] = $tag->name;
+            });
+            Log::info('Tags: ' . json_encode($tags));
+//            $listingItem->tags = $tags;
+
+            $productData = [
+                'input' => array_filter([
+                    'title' => $listingItem->title,
+                    'descriptionHtml' => $listingItem->description,
+                    'vendor' => $listingItem->brand->name,
+                    'product_type' => $listingItem->category,
+                    'tags' => $listingItem->tags,
+                ], function ($value) {
+                    return !is_null($value);
+                }),
+            ];
+
+            Log::info('Product Data: ' . json_encode($productData));
+
+//            $shopifyAuthService = new ShopifyAuthService($store->secret_key);
+//            $response = $shopifyAuthService->saveProduct($productData);
+            // get handle and id from response and save in listing_item table
+//            Log::info('Product: ' . json_encode($response));
+
+//            $handle = $response['data']['productCreate']['product']['handle'];
+//            Log::info('Handle: ' . $handle);
+
+//            $listingItem->update([
+//                'store_url' => $handle,
+//            ]);
+        }
     }
 
     public function getResultFeed(mixed $listingId)
     {
-        // TODO: Implement getResultFeed() method.
+
     }
 
     public function syncAttributes($store)
     {
-        // TODO: Implement syncAttributes() method.
+
     }
 }
