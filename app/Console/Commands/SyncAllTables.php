@@ -34,6 +34,7 @@ use App\Jobs\ProductImagesSyncJob;
 use App\Jobs\ProductInterfaces;
 use App\Jobs\ProductSearchTermSyncJob;
 use App\Jobs\ProductSyncJob;
+use App\Jobs\ProductTagSyncJob;
 use App\Jobs\ProductTypeKeywordSyncJob;
 use App\Jobs\ShippingCarrierJob;
 use App\Jobs\StoreProductSyncJob;
@@ -66,7 +67,7 @@ class SyncAllTables extends Command
      */
     public function handle()
     {
-//        Bus::chain([
+        Bus::chain([
 //            new FileSystemSyncJob(),
 //            new StoreTypeSyncJob(),
 //            new StoreSyncJob(),
@@ -92,9 +93,10 @@ class SyncAllTables extends Command
 //            new LogisticCentreSyncJob(),
 //            new ProductSearchTermSyncJob(),
 //            new ProductTypeKeywordSyncJob(),
+        new ProductTagSyncJob(),
 //            new ProductImagesSyncJob(),
 //            new ProductAlternativeImagesSyncJob(),
-//        ])->dispatch();
+        ])->dispatch();
 //        Bus::chain([
             // ListingSyncJob::dispatch(),
             // ListingItemSyncJob::dispatch(),

@@ -35,7 +35,7 @@
             </td>
             <td><input type="checkbox" name="product_status[{{ $product->product_id }}]" checked ></td>
             <td>
-                <select class="form-control store-type-category stc-{{ $product->product_id }}" data-spid="{{ $product->id }}" name="store_type_category_id[{{ $product->product_id }}]" style="width: 200px;">
+                <select class="form-control store-type-category stc-{{ $product->product_id }}" data-spid="{{ $product->id }}" name="store_type_category_id[{{ $product->product_id }}]" style="width: 200px;" data-store-type-name="{{ $storeTypeName->storeTypeName }}">
                     <option value=""></option>
                     @if(count($storeCategories ?? []) > 0)
                         @foreach($storeCategories as $key2=>$sCat)

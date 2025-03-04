@@ -2,6 +2,7 @@
 
 namespace App\Services\Auth;
 
+use App\Constants\ShopifyQueries;
 use GuzzleHttp\Client;
 use GuzzleHttp\Psr7\Request;
 use Illuminate\Support\Facades\Log;
@@ -10,34 +11,49 @@ class ShopifyAuthService
 {
 
     protected $client;
-    protected $clientId;
-    protected $clientSecret;
+    protected $accessToken;
     protected $endpoint;
+    protected $apiVersion;
 
-    public function __construct($clientId, $clientSecret)
+    public function __construct($clientSecret)
     {
         $this->client = new Client();
-        $this->clientId = $clientId;
-        $this->clientSecret = $clientSecret;
+        $this->accessToken = $clientSecret;
         $this->endpoint = env('SHOPIFY_API_ENDPOINT');
+        $this->apiVersion = env('SHOPIFY_API_VERSION');
     }
 
-    public function authenticate()
+    public function makeGraphQLRequest($query, $variables)
     {
-        Log::info('Authenticating Shopify');
-        Log::info('Client ID: ' . $this->clientId);
-        Log::info('Client Secret: ' . $this->clientSecret);
-        Log::info('Endpoint: ' . $this->endpoint);
+        $headers = [
+            'Content-Type' => 'application/json',
+            'X-Shopify-Access-Token' => $this->accessToken,
+        ];
 
+        $body = [
+            'query' => $query,
+            'variables' => $variables
+        ];
 
-        return $data ?? null;
+        try {
+            $request = new Request('POST', $this->endpoint . '/admin/api/' . $this->apiVersion . '/graphql.json', $headers, json_encode($body));
+            $res = $this->client->sendAsync($request)->wait();
+
+            Log::info('Response: ' . $res->getBody());
+
+            $result = json_decode($res->getBody(), true);
+
+            return $result ?? null;
+        } catch (\Exception $e) {
+            Log::error('Error: ' . $e->getMessage());
+            return null;
+        }
     }
 
-    public function saveProducts($productData)
+    public function saveProduct($productData)
     {
-        $accessToken = $this->authenticate();
-        Log::info('Access Token Created ' . $accessToken);
+        $result = $this->makeGraphQLRequest(ShopifyQueries::$saveProduct, $productData);
 
-
+        return $result;
     }
 }

@@ -719,7 +719,11 @@
                         /* check channel category selected or not*/
                         let flag = false;
                         $('.store-type-category').each(function () {
-                            if($(this).val() == ''){
+                            var storeTypeName = $(this).data('store-type-name').toLowerCase();
+
+                            var notAllowedStore = ['shopify'];
+                            //
+                            if($(this).val() == '' && !notAllowedStore.includes(storeTypeName)){
                                 $(this).addClass('error');
                                 flag = true;
                             }

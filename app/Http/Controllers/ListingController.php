@@ -680,8 +680,13 @@ class ListingController extends Controller
                     ->get();
             }
 
+            $storeTypeName = Store::select('store_type.name as storeTypeName')
+                ->leftJoin('store_type', 'store_type.id', '=', 'store.store_type_id')
+                ->where('store.id', $store_id)
+                ->first();
+
             if ($step == 2) {
-                $view = view('listing.selected_product_list', compact('products', 'storeCategories'))->render();
+                $view = view('listing.selected_product_list', compact('products', 'storeCategories','storeTypeName'))->render();
             } else if ($step == 3) {
                 $view = view('listing.select_device_product_list', compact('products', 'storeCategories'))->render();
             }
