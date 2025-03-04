@@ -74,4 +74,12 @@ class ShopifyService implements MarketplaceServiceInterface
     {
 
     }
+
+    public function getOrders()
+    {
+        $this->authService = new ShopifyAuthService('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');
+        $response = $this->authService->getOrders();
+
+        return $response;
+    }
 }

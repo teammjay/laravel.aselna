@@ -17,16 +17,19 @@ class ShopifyAuthService
 
     public function __construct($clientSecret)
     {
-        $this->client = new Client();
+        $this->client = new Client(['verify'   => false]);
         $this->accessToken = $clientSecret;
-        $this->endpoint = env('SHOPIFY_API_ENDPOINT');
-        $this->apiVersion = env('SHOPIFY_API_VERSION');
+        //$this->endpoint = env('SHOPIFY_API_ENDPOINT');
+        $this->endpoint = 'https://aselna-dev.myshopify.com';
+        //$this->apiVersion = env('SHOPIFY_API_VERSION');
+        $this->apiVersion = '2025-01';
     }
 
-    public function makeGraphQLRequest($query, $variables)
+    public function makeGraphQLRequest($query, $variables = [])
     {
         $headers = [
             'Content-Type' => 'application/json',
+            'Accept' => 'application/json',
             'X-Shopify-Access-Token' => $this->accessToken,
         ];
 
@@ -55,5 +58,75 @@ class ShopifyAuthService
         $result = $this->makeGraphQLRequest(ShopifyQueries::$saveProduct, $productData);
 
         return $result;
+    }
+
+    public function getOrdersField()
+    {
+        try {
+
+            $response = $this->makeGraphQLRequest(ShopifyQueries::$orderFields,array('first'=>10));
+            /*echo '<pre>';
+            print_r($response);
+            echo '</pre>';die;*/
+            $fields = collect($response['data']['__type']['fields'])->pluck('name')->toArray();
+            return $this->processFields($response['data']['__type']['fields']);;
+        } catch (\Exception $e) {
+            Log::error('Error: ' . $e->getMessage());
+            return null;
+        }
+    }
+
+    private function processFields($fields)
+    {
+        $result = [];
+
+        foreach ($fields as $field) {
+            if (isset($field['type']['kind']) && $field['type']['kind'] === 'OBJECT' && !empty($field['type']['fields'])) {
+                // If it's an object, add subfields
+                $nestedFields = $this->processFields($field['type']['fields']);
+                $result[] = "{$field['name']} { " . implode(" ", $nestedFields) . " }";
+            } else {
+                // If it's scalar, add normally
+                $result[] = $field['name'];
+            }
+        }
+
+        return $result;
+    }
+
+    public function getOrders()
+    {
+    
+        //$fields = $this->getOrdersField();
+        /*echo '<pre>';
+        print_r($fields);
+        echo '</pre>';*/
+        //$fieldsString = implode("\n", $fields);
+        //echo $fieldsString;
+        //die;
+        try {
+            /*$getOrders = <<<GQL
+            {
+              orders(first: 5) {
+                edges {
+                  node {
+                    $fieldsString
+                  }
+                }
+              }
+            }
+            GQL;*/
+            $result = $this->makeGraphQLRequest(ShopifyQueries::$getOrders,array('first'=>10));
+            /*echo '<pre>';
+            print_r($result);
+            echo '</pre>';die;*/
+            if(!isset($result['errors'])){
+                return $result['data']['orders']['edges'];
+            }
+
+        } catch (\Exception $e) {
+            Log::error('Error: ' . $e->getMessage());
+            return null;
+        }
     }
 }

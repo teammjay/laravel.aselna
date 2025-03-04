@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Helpers\QueryFilters;
 use App\Jobs\FeedGenerationJob;
 use App\Jobs\FetchMagentoOrderJob;
+use App\Jobs\FetchShopifyOrders;
 use App\Models\Listing;
 use App\Models\ListingFeed;
 use App\Models\Store;
@@ -14,6 +15,7 @@ use App\Services\Marketplace\MarketplaceServiceFactory;
 use App\Services\Marketplace\Service\EbayService;
 use App\Services\Marketplace\Service\GoogleShoppingService;
 use App\Services\Marketplace\Service\MagentoService;
+use App\Services\Marketplace\Service\ShopifyService;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Bus;
@@ -32,9 +34,11 @@ class HomeController extends Controller
         //$googleService = new GoogleShoppingAuthService();
         //$magentoService = new MagentoService();
         //$magentoService->getOrders();
+        //$shopifyService = new ShopifyService();
+        //$shopifyService->getOrders();
 
         Bus::chain([
-            new FetchMagentoOrderJob(),
+            new FetchShopifyOrders(),
         ])->dispatch();
 
         //$test = $googleService->generateFeed('0310236d-295f-bd6d-730d-35fcc324bdf9');
