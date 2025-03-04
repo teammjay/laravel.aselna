@@ -37,9 +37,9 @@ class HomeController extends Controller
         //$shopifyService = new ShopifyService();
         //$shopifyService->getOrders();
 
-        Bus::chain([
+        /*Bus::chain([
             new FetchShopifyOrders(),
-        ])->dispatch();
+        ])->dispatch();*/
 
         //$test = $googleService->generateFeed('0310236d-295f-bd6d-730d-35fcc324bdf9');
         //echo $test;die;
