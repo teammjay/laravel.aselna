@@ -70,7 +70,7 @@ class FetchShopifyOrders implements ShouldQueue
                             'store_sku' => '',
                             'quantity' => $item['quantity'],
                             'id1' => $item['id'],
-                            'item_price' => '1',
+                            'item_price' => $item['variant']['price'],
                             'shipping_price' => '0',
                             'item_tax' => '0',
                             'shipping_tax' => '0',
