@@ -54,7 +54,7 @@ class WalmartAuthService
         return $data['access_token'];
     }
 
-    public function submitFeed($fileName)
+    public function submitFeed($fileName,$feedType)
     {
         $client = new Client();
         $accessToken = $this->authenticate();
@@ -75,7 +75,7 @@ class WalmartAuthService
                     'filename' => $fileName,
                 ]
             ]];
-        $request = new Request('POST', 'https://marketplace.walmartapis.com/v3/feeds?feedType=MP_ITEM', $headers);
+        $request = new Request('POST', 'https://marketplace.walmartapis.com/v3/feeds?feedType='.$feedType, $headers);
         $res = $client->sendAsync($request, $options)->wait();
 
         return json_decode($res->getBody(), true);
