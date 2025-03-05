@@ -69,6 +69,9 @@ class ShopifyQueries
                                 quantity
                                 sku
                                 currentQuantity
+                                variant{
+                                    price
+                                }
                                 taxLines(first: 10){
                                     title
                                     price
