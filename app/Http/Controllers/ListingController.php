@@ -82,7 +82,8 @@ class ListingController extends Controller
             'storeProduct.store:id,name,store_type_id',
             'storeProduct.product:product_id,product_status,product_type,product_code,product_sku,dimensions_width,product_color',
             'device.deviceType:id,name',
-            'generationType:id,name'
+            'generationType:id,name',
+            'manufacturer:id,name'
         ]);
 
         if ($request->has('store_id') && $request->store_id != '') {
@@ -274,7 +275,10 @@ class ListingController extends Controller
                     "generation_type_name" => (!empty($product->generationType)) ? $product->generationType->name : '',
                     "price" => $product->price,
                     "qty" => $product->quantity,
+                    "upc" => $product->upc,
+                    "manufacturer" => (isset($product->manufacturer)) ? $product->manufacturer->name : '',
                     "created_at" => date('Y-m-d H:i:s', strtotime($product->created_at)),
+                    "sync_count" => $product->sync_count
                     /*"action" => '<a href="'.route('listing.edit', $product->id).'" class="btn btn-primary">
                                     <i class="fas fa-fw fa-pencil-alt"></i>
                                 </a>',*/

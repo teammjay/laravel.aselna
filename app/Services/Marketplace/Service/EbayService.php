@@ -378,6 +378,10 @@ class EbayService implements MarketplaceServiceInterface
 
         $response = $this->authService->getOrders();
 
+        /*echo '<pre>';
+        print_r($response);
+        echo '</pre>';die;*/
+
         return $response;
 
     }
