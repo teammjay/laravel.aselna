@@ -655,7 +655,10 @@
                 <th>Gen Type</th>
                 <th>Price</th>
                 <th>Quantity</th>
+                <th>Upc</th>
+                <th>Manufacturer</th>
                 <th>Created Date</th>
+                <th>Sync Count</th>
             </tr>
             </thead>
             <tbody id="product-list">
@@ -1082,7 +1085,7 @@
                 //processData: false,
                 //contentType: false
             },
-            "order": [[ 14, "desc" ]],
+            "order": [[ 16, "desc" ]],
             'columns': [
                 { data: 'sku'},
                 { data: 'sale_count' },
@@ -1098,7 +1101,10 @@
                 { data: 'generation_type_name' },
                 { data: 'price' },
                 { data: 'qty' },
-                { data: 'created_at' }
+                { data: 'upc' },
+                { data: 'manufacturer' },
+                { data: 'created_at' },
+                { data: 'sync_count' }
             ],
             columnDefs: [
                 {
