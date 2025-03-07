@@ -56,7 +56,7 @@ class EbayService implements MarketplaceServiceInterface
         // Generate feed for Ebay
         $listingItems = ListingItemLink::with('listingItem','listingItem.brand','listingItem.storeProduct','listingItem.storeProduct.product','listingItem.storeProduct.StoreTypeCategory','listingItem.storeProduct.productImages')->where('listing_id', $listingId)->get();
         $fileSystem = $listingInfo->store->fileSystem;
-        $version = 1240;
+        $version = 1250;
 
         /*echo '<pre>';
         print_r($listingItems);
@@ -301,7 +301,13 @@ class EbayService implements MarketplaceServiceInterface
 
     public function submitFeed($feedId,$listingId)
     {
-        $authService = new EbayAuthService();
+        $listingInfo = Listing::where('id', $listingId)->first();
+        $store = $listingInfo->store;
+        /*echo '<pre>';
+        print_r($store);
+        echo '</pre>';die;*/
+
+        $authService = new EbayAuthService($store->seller_id, $store->secret_key,$store->access_key,$store->user_id);
 
         $fileName = $listingId.'.xml';
         $filePath = public_path('feeds/ebay/' . $fileName);
@@ -337,7 +343,10 @@ class EbayService implements MarketplaceServiceInterface
 
     public function getResultFeed(mixed $listingId)
     {
-        $this->authService = new EbayAuthService();
+        $listingInfo = Listing::where('id', $listingId)->first();
+        $store = $listingInfo->store;
+
+        $this->authService = new EbayAuthService($store->seller_id, $store->secret_key,$store->access_key,$store->user_id);
 
         $feedInfo = ListingFeed::where('listing_id', $listingId)->first();
 
@@ -350,9 +359,12 @@ class EbayService implements MarketplaceServiceInterface
         return false;
     }
 
-    public function downloadResultFeed($taskID, $listingId)
+    /*public function downloadResultFeed($taskID, $listingId)
     {
-        $this->authService = new EbayAuthService();
+        $listingInfo = Listing::where('id', $listingId)->first();
+        $store = $listingInfo->store;
+
+        $this->authService = new EbayAuthService($store->seller_id, $store->secret_key,$store->access_key,$store->user_id);
 
         //$feedInfo = ListingFeed::where('listing_id', $listingId)->first();
 
@@ -360,11 +372,14 @@ class EbayService implements MarketplaceServiceInterface
 
         return $response;
 
-    }
+    }*/
 
     public function getInputFeed($taskID, $listingId)
     {
-        $this->authService = new EbayAuthService();
+        $listingInfo = Listing::where('id', $listingId)->first();
+        $store = $listingInfo->store;
+
+        $this->authService = new EbayAuthService($store->seller_id, $store->secret_key,$store->access_key,$store->user_id);
 
         $response = $this->authService->downloadInputFeed($taskID,$listingId);
 

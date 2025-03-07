@@ -15,6 +15,7 @@ use App\Models\PageType;
 use App\Models\StoreMessageAccount;
 use App\Models\StoreShippingService;
 use App\Models\StoreType;
+use App\Services\Auth\EbayAuthService;
 use Illuminate\Http\Request;
 use App\Models\Store;
 use Illuminate\Support\Facades\Config;
@@ -654,5 +655,65 @@ class StoreController extends Controller
 
         // If the center doesn't exist, return an error
         return response()->json(['error' => 'Logistic center not found!'], 422);
+    }
+
+    // Redirect User to eBay Authorization Page
+    public function authorize(string $id)
+    {
+        $store_detail = Store::with('storeType')->find($id);
+
+        if(isset($store_detail->storeType)){
+            $clientId = $store_detail->user_id;
+            switch($store_detail->storeType->name){
+                case 'Ebay':
+                    //https://auth.sandbox.ebay.com/oauth2/authorize?client_id=CommonMr-Testing-SBX-76628eb6f-8cb87fba&response_type=code&redirect_uri=Common_Mrintunj-CommonMr-Testin-jyehhrol&
+                    $scope = 'https://api.ebay.com/oauth/api_scope+https://api.ebay.com/oauth/api_scope/sell.marketing.readonly+https://api.ebay.com/oauth/api_scope/sell.marketing+https://api.ebay.com/oauth/api_scope/sell.inventory.readonly+https://api.ebay.com/oauth/api_scope/sell.inventory+https://api.ebay.com/oauth/api_scope/sell.account.readonly+https://api.ebay.com/oauth/api_scope/sell.account+https://api.ebay.com/oauth/api_scope/sell.fulfillment.readonly+https://api.ebay.com/oauth/api_scope/sell.fulfillment+https://api.ebay.com/oauth/api_scope/sell.analytics.readonly';
+
+                    //$scope = urlencode('https://api.ebay.com/oauth/api_scope/sell.inventory');
+                    $authUrl = "https://auth.sandbox.ebay.com/oauth2/authorize?client_id=CommonMr-Testing-SBX-76628eb6f-8cb87fba&redirect_uri=Common_Mrintunj-CommonMr-Testin-ubcto&response_type=code&scope=".$scope."&state=".$id;
+                    return redirect()->away($authUrl);
+                    break;
+                default:
+                    break;
+
+            }
+        }
+
+        return redirect('/stores');
+
+    }
+
+    // Handle eBay Callback
+    public function handleCallback(Request $request)
+    {
+        /*echo '<pre>';
+        print_r($_GET);
+        echo '</pre>';die;*/
+        if (!$request->has('code')) {
+            return response()->json(['error' => 'Authorization code not found'], 400);
+        }
+
+        $store_id = $request->get('state');
+        $authorizationCode = $request->get('code');
+        $ebayAuth = new EbayAuthService();
+        $tokenData = $ebayAuth->getAccessToken($authorizationCode);
+        /*echo '<pre>';
+        print_r($tokenData);
+        echo '</pre>';die;*/
+        if (isset($tokenData['access_token'])) {
+
+           $updateData = [
+                'authorized' => 1,
+                'api_key' => $tokenData['access_token'],
+                'user_id' => $tokenData['refresh_token']
+            ];
+            $store = Store::findOrFail($store_id); // Retrieve the store by ID
+            $store->update($updateData);
+
+            //$this->storeAccessToken(Auth::user()->id, $tokenData);
+            return redirect('/stores');
+        }
+
+        return response()->json(['error' => 'Failed to get access token'], 400);
     }
 }
