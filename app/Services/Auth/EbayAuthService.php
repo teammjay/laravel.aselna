@@ -12,26 +12,29 @@ class EbayAuthService
     protected $client;
     protected $clientId;
     protected $clientSecret;
+    protected $scope;
     private $redirectUri;
     private $ebay_refresh_token;
 
-    public function __construct()
+    public function __construct($clientId, $clientSecret,$redirectUri,$refresh_token)
     {
         $this->client = new Client(['base_uri' => 'https://api.sandbox.ebay.com/']);
         //$this->client = new Client(['base_uri' => 'https://api.ebay.com/']);
-        $this->clientId = 'CommonMr-Testing-SBX-76628eb6f-8cb87fba';
-        $this->clientSecret = 'SBX-6628eb6f4151-c0a1-4b48-b869-3621';
-        $this->redirectUri = 'https://localaselna.com/public/ebay/callback';
-        $this->ebay_refresh_token = '';
-        //$this->accessToken = $this->refreshToken();
-        $this->accessToken = 'v^1.1#i^1#f^0#r^0#p^3#I^3#t^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';
+        $this->clientId = $clientId;
+        $this->clientSecret = $clientSecret;
+        $this->redirectUri = $redirectUri;
+        $this->ebay_refresh_token = $refresh_token;
+
+        //$this->accessToken = 'v^1.1#i^1#f^0#r^0#p^3#I^3#t^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';
 
         //$this->accessToken = 'v^1.1#i^1#p^3#f^0#I^3#r^1#t^Ul4xMF8wOkE2NEQwMDY5QTNGRUVCODAzMUI0MEZGQjA4REZGMzM0XzFfMSNFXjI2MA==';
+
+        $this->scope = 'https://api.ebay.com/oauth/api_scope https://api.ebay.com/oauth/api_scope/buy.order.readonly https://api.ebay.com/oauth/api_scope/buy.guest.order https://api.ebay.com/oauth/api_scope/sell.marketing.readonly https://api.ebay.com/oauth/api_scope/sell.marketing https://api.ebay.com/oauth/api_scope/sell.inventory.readonly https://api.ebay.com/oauth/api_scope/sell.inventory https://api.ebay.com/oauth/api_scope/sell.account.readonly https://api.ebay.com/oauth/api_scope/sell.account https://api.ebay.com/oauth/api_scope/sell.fulfillment.readonly https://api.ebay.com/oauth/api_scope/sell.fulfillment https://api.ebay.com/oauth/api_scope/sell.analytics.readonly https://api.ebay.com/oauth/api_scope/sell.marketplace.insights.readonly https://api.ebay.com/oauth/api_scope/commerce.catalog.readonly https://api.ebay.com/oauth/api_scope/buy.shopping.cart https://api.ebay.com/oauth/api_scope/buy.offer.auction https://api.ebay.com/oauth/api_scope/commerce.identity.readonly https://api.ebay.com/oauth/api_scope/commerce.identity.email.readonly https://api.ebay.com/oauth/api_scope/commerce.identity.phone.readonly https://api.ebay.com/oauth/api_scope/commerce.identity.address.readonly https://api.ebay.com/oauth/api_scope/commerce.identity.name.readonly https://api.ebay.com/oauth/api_scope/commerce.identity.status.readonly https://api.ebay.com/oauth/api_scope/sell.finances https://api.ebay.com/oauth/api_scope/sell.payment.dispute https://api.ebay.com/oauth/api_scope/sell.item.draft https://api.ebay.com/oauth/api_scope/sell.item https://api.ebay.com/oauth/api_scope/sell.reputation https://api.ebay.com/oauth/api_scope/sell.reputation.readonly https://api.ebay.com/oauth/api_scope/commerce.notification.subscription https://api.ebay.com/oauth/api_scope/commerce.notification.subscription.readonly https://api.ebay.com/oauth/api_scope/sell.stores https://api.ebay.com/oauth/api_scope/sell.stores.readonly';
 
     }
 
     // Exchange Authorization Code for Access Token
-    private function getAccessToken($authorizationCode)
+    public function getAccessToken($authorizationCode)
     {
         try {
             $response = $this->client->post("identity/v1/oauth2/token", [
@@ -47,11 +50,16 @@ class EbayAuthService
                 ]
             ]);
 
+
+
             $data = json_decode($response->getBody(), true);
+            /*echo '<pre>';
+            print_r($data);
+            echo '</pre>';die;*/
 
-            Log::info('Token Created ' . $data);
+            Log::info('Token Created ' . $response->getBody());
 
-            return $data ?? null;
+            return $data;
 
         } catch (\Exception $e) {
             return ['error' => $e->getMessage()];
@@ -59,9 +67,8 @@ class EbayAuthService
     }
 
     // Refresh eBay Access Token
-    public function refreshToken()
+    private function refreshToken()
     {
-
         try {
             $response = $this->client->post("identity/v1/oauth2/token", [
                 'verify' => false,
@@ -71,20 +78,20 @@ class EbayAuthService
                 ],
                 'form_params' => [
                     'grant_type' => 'refresh_token',
-                    'refresh_token' => $this->ebay_refresh_token,
-                    'scope' => 'https://api.ebay.com/oauth/api_scope/sell.inventory',
+                    'refresh_token' => $this->ebay_refresh_token
                 ]
             ]);
 
-            $data = json_decode($response->getBody()->getContents(), true);
+            $data = json_decode($response->getBody(), true);
 
-           /* echo '<pre>';
+            /*echo '<pre>';
             print_r($data);
             echo '</pre>';die;*/
+            Log::info('Token Refresh ' . $response->getBody());
 
             if (isset($data['access_token'])) {
 
-                Log::info('Token Refresh ' . $data);
+                //$this->accessToken = $data['access_token'];
                 //$this->storeAccessToken($user->id, $data);
                 return $data['access_token'];
             }
@@ -99,7 +106,7 @@ class EbayAuthService
     public function redirectToEbay()
     {
         $scope = urlencode('https://api.ebay.com/oauth/api_scope/sell.inventory');
-        $authUrl = "https://auth.sandbox.ebay.com/oauth2/authorize?client_id={$this->clientId}&redirect_uri={$this->redirectUri}&response_type=code&scope={$scope}";
+        $authUrl = "https://auth.sandbox.ebay.com/oauth2/authorize?client_id={$this->clientId}&redirect_uri={$this->redirectUri}&response_type=code&scope={$this->scope}";
         return redirect()->away($authUrl);
     }
 
@@ -119,7 +126,7 @@ class EbayAuthService
             $this->accessToken = $tokenData['access_token'];
             $this->ebay_refresh_token = $tokenData['refresh_token'];
             //$this->storeAccessToken(Auth::user()->id, $tokenData);
-            //return redirect('/dashboard')->with('success', 'eBay account connected!');
+            return redirect('/stores');
         }
 
         return response()->json(['error' => 'Failed to get access token'], 400);
@@ -128,15 +135,17 @@ class EbayAuthService
     public function createTask() {
 
         try {
+            $accessToken = $this->refreshToken();
+
             $response = $this->client->post('sell/feed/v1/task', [
                 'verify' => false,
                 'headers' => [
-                    'Authorization' => 'Bearer ' . $this->accessToken,
+                    'Authorization' => 'Bearer ' . $accessToken,
                     'Content-Type' => 'application/json',
                     'X-EBAY-C-MARKETPLACE-ID' => 'EBAY_US',
                 ],
                 'json' => [
-                    'schemaVersion' => '1240',
+                    'schemaVersion' => '1250',
                     'feedType' => 'LMS_ADD_FIXED_PRICE_ITEM'
                 ],
             ]);
@@ -164,10 +173,11 @@ class EbayAuthService
 
         $savePath = public_path('result-feeds/ebay/'.$listingId.'.zip');
         try {
+            $accessToken = $this->refreshToken();
             $response = $this->client->get('sell/feed/v1/task/' . $taskId . '/download_result_file', [
                 'verify' => false,
                 'headers' => [
-                    'Authorization' => 'Bearer ' . $this->accessToken,
+                    'Authorization' => 'Bearer ' . $accessToken,
                     'Accept' => 'application/octet-stream',
                     'X-EBAY-C-MARKETPLACE-ID' => 'EBAY_US',
                 ],
@@ -208,10 +218,11 @@ class EbayAuthService
 
         $savePath = public_path('input-feeds/ebay/'.$listingId.'.xml');
         try {
+            $accessToken = $this->refreshToken();
             $response = $this->client->get('sell/feed/v1/task/' . $taskId . '/download_input_file', [
                 'verify' => false,
                 'headers' => [
-                    'Authorization' => 'Bearer ' . $this->accessToken,
+                    'Authorization' => 'Bearer ' . $accessToken,
                     'Accept' => 'application/octet-stream',
                     'X-EBAY-C-MARKETPLACE-ID' => 'EBAY_US',
                 ],
@@ -242,10 +253,11 @@ class EbayAuthService
     public function getTaskDetails(string $taskId)
     {
         try {
+            $accessToken = $this->refreshToken();
             $response = $this->client->get("sell/feed/v1/task/".$taskId, [
                 'verify' => false,
                 'headers' => [
-                    'Authorization' => 'Bearer ' . $this->accessToken,
+                    'Authorization' => 'Bearer ' . $accessToken,
                     'Content-Type' => 'application/json',
                 ],
             ]);
@@ -266,10 +278,12 @@ class EbayAuthService
     public function uploadFile(string $taskId, string $fileName, string $filePath)
     {
         try {
+            $accessToken = $this->refreshToken();
+
             $response = $this->client->post("sell/feed/v1/task/".$taskId."/upload_file", [
                 'verify' => false,
                 'headers' => [
-                    'Authorization' => 'Bearer ' . $this->accessToken
+                    'Authorization' => 'Bearer ' . $accessToken
                 ],
                 'multipart' => [
                     [
@@ -298,15 +312,13 @@ class EbayAuthService
 
     public function getOrders()
     {
-        if (!$this->accessToken) {
-            return ['error' => 'Access token not found'];
-        }
+        $accessToken = $this->refreshToken();
 
         try {
             $response = $this->client->get('/sell/fulfillment/v1/order', [
                 'verify' => false,
                 'headers' => [
-                    'Authorization' => "Bearer $this->accessToken",
+                    'Authorization' => "Bearer $accessToken",
                     'Content-Type' => 'application/json',
                 ],
                 'query' => [

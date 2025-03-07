@@ -665,10 +665,18 @@
                                 </div>
                                 <div class="row mt-3 g-3 align-items-center">
                                     <div class="col-md-3">
-                                        <label for="seller_id">User ID</label>
+                                        <label for="seller_id">Seller ID</label>
                                     </div>
                                     <div class="col-md-7">
                                         <input type="text" class="form-control" id="seller_id" name="seller_id" value="{{ old('seller_id',$store->seller_id) }}">
+                                    </div>
+                                </div>
+                                <div class="row mt-3 g-3 align-items-center">
+                                    <div class="col-md-3">
+                                        <label for="user_id">User ID</label>
+                                    </div>
+                                    <div class="col-md-7">
+                                        <input type="text" class="form-control" id="user_id" name="user_id" value="{{ old('user_id',$store->user_id) }}">
                                     </div>
                                 </div>
                                 <div class="row mt-3 g-3 align-items-center">

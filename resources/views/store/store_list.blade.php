@@ -31,11 +31,12 @@
             <td>{{ $store->short_code }}</td>
             <td>{{ $upc_type }}</td>
             <td align="center"><input type="checkbox" class="ad_account" data-id="{{ $store->id }}" {{ ($store->ad_account == 1) ? 'checked' : '' }}> </td>
-            <td>
+            <td class="d-flex" style="gap:10px;">
                 <a href="{{ route('store.edit', $store->id) }}" class="btn btn-primary" title="Edit">
                     <i class="fas fa-fw fa-pencil-alt"></i>
                 </a>
                 <button class="btn btn-danger delete-btn" data-id="{{ $store->id }}" title="Remove"> <i class="fas fa-fw fa-trash"></i></button>
+                <a href="{{ route('store.authorize', $store->id) }}" class="btn btn-secondary" title="Authorize">Authorize</a>
             </td>
         </tr>
     @endforeach
