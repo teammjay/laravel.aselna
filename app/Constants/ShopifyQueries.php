@@ -4,7 +4,7 @@ namespace App\Constants;
 
 class ShopifyQueries
 {
-    public static $saveProduct = <<<GQL
+    public static string $saveProduct = <<<GQL
         mutation productCreate(\$input: ProductInput!) {
             productCreate(input: \$input) {
                 product {
@@ -17,9 +17,9 @@ class ShopifyQueries
                     message
                 }
             }
-        }   
+        }
     GQL;
-    
+
     // Query to get orders with a dynamic limit
     public static $getOrders = <<<GQL
         query getOrders(\$first: Int!) {
@@ -86,6 +86,25 @@ class ShopifyQueries
         }
     GQL;
 
+    public static string $createProductVariant = <<<GQL
+        mutation productVariantCreate(\$input: ProductVariantInput!) {
+            productVariantCreate(input: \$input) {
+                productVariant {
+                    id
+                    sku
+                    title
+                    inventoryItem {
+                        id
+                    }
+                }
+                userErrors {
+                    field
+                    message
+                }
+            }
+        }
+        GQL;
+
     public static $orderFields = <<<GQL
     {
       __type(name: "Order") {
@@ -103,5 +122,4 @@ class ShopifyQueries
     }
     GQL;
 
-    
 }

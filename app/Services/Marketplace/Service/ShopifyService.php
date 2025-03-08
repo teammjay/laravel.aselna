@@ -2,8 +2,10 @@
 
 namespace App\Services\Marketplace\Service;
 
+use App\Jobs\ProductInterfaces;
 use App\Models\Listing;
 use App\Models\ListingItemLink;
+use App\Models\ProductInterface;
 use App\Models\ProductTags;
 use App\Models\ProductTypeKeyword;
 use App\Services\Auth\ShopifyAuthService;
@@ -31,11 +33,9 @@ class ShopifyService implements MarketplaceServiceInterface
 
 
             $tags = [];
-            ProductTags::where('product_id',$productData['product_id'])->get()->each(function($tag){
-                $tags[] = $tag->name;
-            });
+            $tags = $this->getAllTags($productData, $tags);
             Log::info('Tags: ' . json_encode($tags));
-//            $listingItem->tags = $tags;
+            $listingItem->tags = implode(',', $tags);
 
             $productData = [
                 'input' => array_filter([
@@ -51,17 +51,17 @@ class ShopifyService implements MarketplaceServiceInterface
 
             Log::info('Product Data: ' . json_encode($productData));
 
-//            $shopifyAuthService = new ShopifyAuthService($store->secret_key);
-//            $response = $shopifyAuthService->saveProduct($productData);
+            $shopifyAuthService = new ShopifyAuthService($store->secret_key);
+            $response = $shopifyAuthService->saveProduct($productData);
             // get handle and id from response and save in listing_item table
-//            Log::info('Product: ' . json_encode($response));
+            Log::info('Product: ' . json_encode($response));
 
-//            $handle = $response['data']['productCreate']['product']['handle'];
-//            Log::info('Handle: ' . $handle);
+            $handle = $response['data']['productCreate']['product']['handle'];
+            Log::info('Handle: ' . $handle);
 
-//            $listingItem->update([
-//                'store_url' => $handle,
-//            ]);
+            $listingItem->update([
+                'store_url' => $handle,
+            ]);
         }
     }
 
@@ -73,6 +73,32 @@ class ShopifyService implements MarketplaceServiceInterface
     public function syncAttributes($store)
     {
 
+    }
+
+    public function getAllTags($productData, array $tags): array
+    {
+        ProductTags::where('product_id', $productData['product_id'])->get()->each(function ($tag) use (&$tags) {
+            $tags[] = $tag->name;
+        });
+
+        ProductInterface::where('product_id', $productData['product_id'])->get()->each(function ($interface) use (&$tags) {
+            $tags[] = $interface->interface_id;
+        });
+
+        if (isset($productData->productColor) && !empty($productData->productColor->name)) {
+            $tags[] = 'color-' . $productData->productColor->name;
+        }
+
+        if (isset($productData->material) && !empty($productData->material->name)) {
+            $tags[] = 'material-' . $productData->material->name;
+        }
+
+        if (isset($productData->size) && !empty($productData->size->value)) {
+            $tags[] = 'size-' . $productData->size->value;
+        }
+
+        $tags[] = 'upsell-enable';
+        return $tags;
     }
 
     public function getOrders()

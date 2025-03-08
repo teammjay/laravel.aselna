@@ -21,3 +21,11 @@ const uploadImage = (event, imageId, previewID) => {
         .catch(error => console.error('Error:', error));
 }
 window.uploadImage = uploadImage;
+
+
+const createMarketPlaceUrl = (data, row) => {
+    console.log(data);
+    console.log(row);
+}
+
+window.createMarketPlaceUrl = createMarketPlaceUrl;

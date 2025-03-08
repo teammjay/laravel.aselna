@@ -108,4 +108,23 @@ class ListingUtility
         return $text;
     }
 
+    public static function generateTitleUrl(mixed $product): string
+    {
+        Log::info("Product: " . json_encode($product));
+        if (isset($product->storeProduct->store->storeType->name)) {
+            return match (strtolower($product->storeProduct->store->storeType->name)) {
+                "ebay" => "https://www.ebay.com/itm/" . $product->store_sku . "/" . $product->store_sku,
+                "amazon" => "https://www.amazon.com/dp/" . $product->store_sku,
+                "shopify" => "https://" . $product->store_sku . "/products/" . $product->store_sku,
+                "magento" => "https://" . $product->store_sku . "/product/" . $product->store_sku,
+                "walmart" => "https://www.walmart.com/ip/" . $product->store_sku,
+                "newegg" => "https://www.newegg.com/p/" . $product->store_sku,
+                default => "",
+            };
+        } else {
+            return "";
+        }
+    }
+
+
 }

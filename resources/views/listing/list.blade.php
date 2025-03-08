@@ -1093,7 +1093,13 @@
                 { data: 'store_sku' },
                 { data: 'product_sku' },
                 { data: 'store_name' },
-                { data: 'title' },
+                { data: 'title', render: function(data, type, row) {
+                    if (row.title_url) {
+                        return '<a href="' + row.title_url + '" target="_blank">' + data + '</a>';
+                    } else {
+                        return data;
+                    }
+                }},
                 { data: 'status' },
                 { data: 'product_size' },
                 { data: 'product_color' },
