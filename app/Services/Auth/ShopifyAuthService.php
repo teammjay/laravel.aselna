@@ -52,8 +52,11 @@ class ShopifyAuthService
 
     public function saveProduct($productData)
     {
-        $result = $this->makeGraphQLRequest(ShopifyQueries::$saveProduct, $productData);
+        return $this->makeGraphQLRequest(ShopifyQueries::$saveProduct, $productData);
+    }
 
-        return $result;
+    public function createProductVariant($productVariantData)
+    {
+        return $this->makeGraphQLRequest(ShopifyQueries::$createProductVariant, $productVariantData);
     }
 }
