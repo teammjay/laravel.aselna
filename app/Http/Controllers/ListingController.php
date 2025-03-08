@@ -27,6 +27,7 @@ use App\Models\StoreType;
 use App\Models\StoreTypeCategory;
 use App\Models\StoreTypeListing;
 use App\Models\UPCCodes;
+use App\Utils\ListingUtility;
 use Illuminate\Http\Request;
 use App\Models\Store;
 use Illuminate\Support\Facades\DB;
@@ -275,6 +276,7 @@ class ListingController extends Controller
                     "price" => $product->price,
                     "qty" => $product->quantity,
                     "created_at" => date('Y-m-d H:i:s', strtotime($product->created_at)),
+                    "title_url" => ListingUtility::generateTitleUrl($product),
                     /*"action" => '<a href="'.route('listing.edit', $product->id).'" class="btn btn-primary">
                                     <i class="fas fa-fw fa-pencil-alt"></i>
                                 </a>',*/
