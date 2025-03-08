@@ -2,6 +2,9 @@
 
 namespace App\Jobs;
 
+use App\Constants\OrderStatus;
+use App\Models\ListingItem;
+use App\Models\Order;
 use App\Models\OrderItem;
 use App\Services\Marketplace\Service\WalmartService;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -71,7 +74,7 @@ class FetchWalmartOrdersJob implements ShouldQueue
                 $orderData = [
                     'order_id' => $order['purchaseOrderId'],
                     'order_date' => date('Y-m-d H:i:s',strtotime($order['orderDate'])),
-                    'order_status' => $order['OrderStatus'],
+                    'order_status' => OrderStatus::getOrderStatusId($order['OrderStatus']),
                     'order_total' => $orderTotals,
                     'buyer_first_name' => $firstname,
                     'buyer_last_name' => $lastname,

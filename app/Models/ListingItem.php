@@ -72,7 +72,7 @@ class ListingItem extends Model
 
     public function generationType()
     {
-        return $this->belongsTo(ListingGenerationType::class, 'generation_type_id', 'code');
+        return $this->belongsTo(ListingGenerationType::class, 'generation_type_id');
     }
 
 }

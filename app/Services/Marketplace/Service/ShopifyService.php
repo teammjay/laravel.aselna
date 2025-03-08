@@ -75,11 +75,6 @@ class ShopifyService implements MarketplaceServiceInterface
 
     }
 
-    /**
-     * @param $productData
-     * @param array $tags
-     * @return array
-     */
     public function getAllTags($productData, array $tags): array
     {
         ProductTags::where('product_id', $productData['product_id'])->get()->each(function ($tag) use (&$tags) {
@@ -104,5 +99,13 @@ class ShopifyService implements MarketplaceServiceInterface
 
         $tags[] = 'upsell-enable';
         return $tags;
+    }
+
+    public function getOrders()
+    {
+        $this->authService = new ShopifyAuthService('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');
+        $response = $this->authService->getOrders();
+
+        return $response;
     }
 }

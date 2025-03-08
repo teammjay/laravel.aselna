@@ -242,4 +242,16 @@ class MagentoService implements MarketplaceServiceInterface
         // return comma separated string of the option id
         return implode(',', $optionId);
     }
+
+    public function getOrders(){
+
+        $magentoAuthService = new MagentoAuthService('api_user', 'api_user@123');
+
+        $response = $magentoAuthService->getOrders();
+        Log::info('Product: ' . json_encode($response));
+        /*echo '<pre>';
+        print_r($response);
+        echo '</pre>';die;*/
+        return $response;
+    }
 }

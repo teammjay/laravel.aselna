@@ -97,6 +97,8 @@ Route::middleware('auth')->group(function () {
         Route::post('/stores/removemessageaccount', 'removeMessageAccount')->name('store.removemessageaccount');
         Route::post('/stores/saveLogisticCenter', 'saveLogisticCenter')->name('store.logisticcenter');
         Route::post('/stores/removelogisticcenter', 'removeLogisticCenter')->name('store.removelogisticcenter');
+        Route::get('/stores/authorize/{id}', 'authorize')->name('store.authorize');
+        Route::get('/store/handleCallback/', 'handleCallback')->name('store.handleCallback');
     });
 
     Route::controller(ListingController::class)->group(function () {
