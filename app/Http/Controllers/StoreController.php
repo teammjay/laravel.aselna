@@ -669,8 +669,12 @@ class StoreController extends Controller
                     //https://auth.sandbox.ebay.com/oauth2/authorize?client_id=CommonMr-Testing-SBX-76628eb6f-8cb87fba&response_type=code&redirect_uri=Common_Mrintunj-CommonMr-Testin-jyehhrol&
                     $scope = 'https://api.ebay.com/oauth/api_scope+https://api.ebay.com/oauth/api_scope/sell.marketing.readonly+https://api.ebay.com/oauth/api_scope/sell.marketing+https://api.ebay.com/oauth/api_scope/sell.inventory.readonly+https://api.ebay.com/oauth/api_scope/sell.inventory+https://api.ebay.com/oauth/api_scope/sell.account.readonly+https://api.ebay.com/oauth/api_scope/sell.account+https://api.ebay.com/oauth/api_scope/sell.fulfillment.readonly+https://api.ebay.com/oauth/api_scope/sell.fulfillment+https://api.ebay.com/oauth/api_scope/sell.analytics.readonly';
 
+                    $clientId = env('EBAY_CLIENT_ID');
+                    $clientSecret = env('EBAY_CLIENT_SECRET');
+                    $redirectUri = env('EBAY_REDIRECT_URI');
+
                     //$scope = urlencode('https://api.ebay.com/oauth/api_scope/sell.inventory');
-                    $authUrl = "https://auth.sandbox.ebay.com/oauth2/authorize?client_id=CommonMr-Testing-SBX-76628eb6f-8cb87fba&redirect_uri=Common_Mrintunj-CommonMr-Testin-ubcto&response_type=code&scope=".$scope."&state=".$id;
+                    $authUrl = "https://auth.ebay.com/oauth2/authorize?client_id={$clientId}&redirect_uri={$redirectUri}&response_type=code&scope=".$scope."&state=".$id;
                     return redirect()->away($authUrl);
                     break;
                 default:
