@@ -18,8 +18,8 @@ class EbayAuthService
 
     public function __construct($clientId, $clientSecret,$redirectUri,$refresh_token)
     {
-        $this->client = new Client(['base_uri' => 'https://api.sandbox.ebay.com/']);
-        //$this->client = new Client(['base_uri' => 'https://api.ebay.com/']);
+//        $this->client = new Client(['base_uri' => 'https://api.sandbox.ebay.com/']);
+        $this->client = new Client(['base_uri' => 'https://api.ebay.com/']);
         $this->clientId = $clientId;
         $this->clientSecret = $clientSecret;
         $this->redirectUri = $redirectUri;

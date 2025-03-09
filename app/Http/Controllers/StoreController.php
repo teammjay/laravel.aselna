@@ -19,6 +19,7 @@ use App\Services\Auth\EbayAuthService;
 use Illuminate\Http\Request;
 use App\Models\Store;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use function Ramsey\Uuid\Generator\timestamp;
 use Illuminate\Support\Str;
@@ -699,8 +700,12 @@ class StoreController extends Controller
 
         $store_id = $request->get('state');
         $authorizationCode = $request->get('code');
-        $ebayAuth = new EbayAuthService();
+        $clientId = env('EBAY_CLIENT_ID');
+        $clientSecret = env('EBAY_CLIENT_SECRET');
+        $redirectUri = env('EBAY_REDIRECT_URI');
+        $ebayAuth = new EbayAuthService($clientId, $clientSecret, $redirectUri,null);
         $tokenData = $ebayAuth->getAccessToken($authorizationCode);
+        Log::info('Token Data: ' . json_encode($tokenData));
         /*echo '<pre>';
         print_r($tokenData);
         echo '</pre>';die;*/
