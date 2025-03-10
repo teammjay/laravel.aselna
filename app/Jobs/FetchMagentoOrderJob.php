@@ -31,7 +31,7 @@ class FetchMagentoOrderJob implements ShouldQueue
     public function handle(): void
     {
         /* get amazon stores*/
-        $stores = Store::join('store_type', 'store_type.id', '=', 'store.store_type_id')->where('store_type.code','amazon')->get();
+        $stores = Store::join('store_type', 'store_type.id', '=', 'store.store_type_id')->where('store_type.code','magento')->get();
 
         if(count($stores ?? []) > 0) {
             foreach ($stores as $store) {
