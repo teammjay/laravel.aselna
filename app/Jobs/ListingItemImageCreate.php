@@ -58,6 +58,7 @@ class ListingItemImageCreate implements ShouldQueue
                     Log::info('StoreType :: ' . json_encode($storeType));
 
                     switch (strtolower($storeType->name)) {
+                        case 'shopify':
                         case 'amazon':
                         case 'walmart':
                             $path = '/store-images/' . $store->id . '/' . $listingItem->id . '_' . $productImage->id . '.jpg';

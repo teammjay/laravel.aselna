@@ -5,14 +5,19 @@ namespace App\Constants;
 class ShopifyQueries
 {
     public static string $saveProduct = <<<GQL
-        mutation productCreate(\$input: ProductInput!) {
-            productCreate(input: \$input) {
+        mutation (\$productSet : ProductSetInput!) {
+            productSet(input : \$productSet) {
                 product {
                     id
                     handle
-                    status
+                    variants(first : 1) {
+                        nodes {
+                            id
+                        }
+                    }
                 }
                 userErrors {
+                    code
                     field
                     message
                 }
