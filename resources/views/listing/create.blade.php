@@ -84,6 +84,10 @@
         .select2-container--default .select2-dropdown{
             width:320px !important;
         }
+        span.titleLength {
+            border: 1px solid #eaeaea;
+            padding: 2px 5px;
+        }
     </style>
 @stop
 @section('content_header')
@@ -1723,6 +1727,27 @@
                 });
             });
 
+
+            $(document).on('blur', '.pro-title', function() {
+                var val = $(this).val();
+                var id = $(this).data('id');
+
+                $('.tLength-'+id).html(val.length);
+            });
+
+            $(document).on('blur', '.pro-shortkey', function() {
+                var val = $(this).val();
+                var id = $(this).data('id');
+
+                $('.sLength-'+id).html(val.length);
+            });
+
+            $(document).on('blur', '.pro-longkey', function() {
+                var val = $(this).val();
+                var id = $(this).data('id');
+
+                $('.lLength-'+id).html(val.length);
+            });
 
 
             $(document).on('click', '.price-overwrite', function() {
