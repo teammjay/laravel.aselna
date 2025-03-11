@@ -703,7 +703,7 @@ class StoreController extends Controller
         $clientId = env('EBAY_CLIENT_ID');
         $clientSecret = env('EBAY_CLIENT_SECRET');
         $redirectUri = env('EBAY_REDIRECT_URI');
-        $ebayAuth = new EbayAuthService($clientId, $clientSecret, $redirectUri,null);
+        $ebayAuth = new EbayAuthService($clientId, $clientSecret, $redirectUri,'');
         $tokenData = $ebayAuth->getAccessToken($authorizationCode);
         Log::info('Token Data: ' . json_encode($tokenData));
         /*echo '<pre>';
