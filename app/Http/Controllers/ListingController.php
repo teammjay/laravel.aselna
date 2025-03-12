@@ -308,7 +308,7 @@ class ListingController extends Controller
         $stores = Store::with('storeType')->where('store_status', 1)->orderBy('name', 'asc')->get();
         /*echo '<pre>';
         print_r($stores);die;*/
-        $manufacturers = Manufacturer::all();
+        $manufacturers = Manufacturer::orderBy('name', 'asc')->get();
         $productTypes = ProductType::with('children')->whereIn('parent_id', function ($subquery) {
             $subquery->select('id')->from('product_type')->where('code', 'cea');
         })->orderBy('name', 'asc')->get();
@@ -525,6 +525,7 @@ class ListingController extends Controller
                         $query->where('store_product.store_id', $store_id);
                     }
                     $query->WhereLike('product_sku', '%' . $term . '%');
+                    $query->orderBy('product_sku', 'asc');
                     $product = $query->get();
                     /*$product = Catalog::select('product_id', 'product_sku')->WhereLike('product_sku', '%' . $term . '%')->get();*/
                 }
@@ -542,9 +543,9 @@ class ListingController extends Controller
             case 'device_series':
                 $device_series = $request->input('device_series');
                 if (!empty($device_series)) {
-                    $deviceSeries = DeviceSeries::select('id', 'name')->WhereLike('name', '%' . $term . '%')->whereNotIn('id', $device_series)->get();
+                    $deviceSeries = DeviceSeries::select('id', 'name')->WhereLike('name', '%' . $term . '%')->whereNotIn('id', $device_series)->orderBy('name', 'asc')->get();
                 } else {
-                    $deviceSeries = DeviceSeries::select('id', 'name')->WhereLike('name', '%' . $term . '%')->get();
+                    $deviceSeries = DeviceSeries::select('id', 'name')->WhereLike('name', '%' . $term . '%')->orderBy('name', 'asc')->get();
                 }
                 foreach ($deviceSeries as $key => $value) {
                     $data["display"][] = [
@@ -560,9 +561,9 @@ class ListingController extends Controller
             case 'device':
                 $device = $request->input('device');
                 if (!empty($device)) {
-                    $devices = Device::select('id', 'name')->WhereLike('name', '%' . $term . '%')->whereNotIn('id', $device)->get();
+                    $devices = Device::select('id', 'name')->WhereLike('name', '%' . $term . '%')->whereNotIn('id', $device)->orderBy('name', 'asc')->get();
                 } else {
-                    $devices = Device::select('id', 'name')->WhereLike('name', '%' . $term . '%')->get();
+                    $devices = Device::select('id', 'name')->WhereLike('name', '%' . $term . '%')->orderBy('name', 'asc')->get();
                 }
                 foreach ($devices as $key => $value) {
                     $data["display"][] = [
@@ -1045,6 +1046,7 @@ class ListingController extends Controller
                                 }
                                 $query->orderBy('brand_name', 'asc');
                                 $query->orderBy('device.name', 'asc');
+                                //$query->limit(250);
                                 $devices = $query->get();
 
                                 /*echo '<pre>';
@@ -1057,6 +1059,19 @@ class ListingController extends Controller
                                             $productsArray[] = $this->generateProductTitles($title_template, $product, $devices, $max_title_length, $brand_seperator, $device_seperator, $compress, $generate_type, $pDetail, $store_product_id);
                                             break;
                                         case 'free group':
+                                            $prevBrand = null;
+                                            $flag = false;
+                                            foreach ($devices as $key=>$val) {
+                                                $brandName = $val->brand_name;
+                                                if($prevBrand != NULL && $brandName != $prevBrand && str_contains($title_template, '#device_series')){
+                                                    $flag = true;
+                                                    break;
+                                                }
+                                                $prevBrand = $brandName;
+                                            }
+                                            if($flag){
+                                                continue;
+                                            }
                                             $productsArray[] = $this->generateFreeGroupProductTitles($title_template, $product, $devices, $max_title_length, $brand_seperator, $device_seperator, $compress, $generate_type, $pDetail, $store_product_id);
                                             break;
                                         case 'single device':
@@ -1067,14 +1082,8 @@ class ListingController extends Controller
                                             break;
                                     }
                                 }
-                            } else {
-//                                return response()->json([
-//                                    'error' => true,
-//                                    'message' => 'session value missing',
-//                                ]);
                             }
                         }
-
                     }
                 }
 
@@ -1143,8 +1152,6 @@ class ListingController extends Controller
         $currentMod = null;
         $lastModel = null;
         $cnt = 0;
-        /*echo '<pre>';
-        print_r($devices);*/
 
         foreach ($devices as $key=>$device) {
             // Split the device into brand and model
@@ -1405,7 +1412,7 @@ class ListingController extends Controller
             $tempModelString = implode($brand_seperator . ' ', $tempModels);
             $tempTitle = str_replace('#model_series', $tempModelString, $tempTitle);
 
-            if(strlen($tempTitle) > $charLimit){
+            if(strlen($tempTitle) > $charLimit ||  (!str_contains($baseTitle, '#device_series'))){
                 //$cnt++;
                 //continue;
             }
