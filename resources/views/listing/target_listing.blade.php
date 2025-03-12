@@ -20,7 +20,11 @@
                         <td>
                             <div class="d-flex align-items-end gap-5">
                                 <textarea class="form-control pro-list-title" rows="5" name="final_product_title[]">{{ $pro['title'] ?? '' }}</textarea>
-                                <span class="titleLength" data-length="{{ strlen($pro['title'] ?? '') }}" data-maxlength="{{ $max_title_length }}">{{ strlen($pro['title'] ?? '') }} / {{ $max_title_length }}</span>
+                                @if(strlen($pro['title']) > $max_title_length)
+                                    <span class="titleLength error" data-length="{{ strlen($pro['title'] ?? '') }}" data-maxlength="{{ $max_title_length }}"><i class="fa fa-ban"></i> {{ strlen($pro['title'] ?? '') }} / {{ $max_title_length }}</span>
+                                @else
+                                    <span class="titleLength success" data-length="{{ strlen($pro['title'] ?? '') }}" data-maxlength="{{ $max_title_length }}"><i class="fa fa-check-circle"></i> {{ strlen($pro['title'] ?? '') }} / {{ $max_title_length }}</span>
+                                @endif
                             </div>
                         </td>
                     </tr>

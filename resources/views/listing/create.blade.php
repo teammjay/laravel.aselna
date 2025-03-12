@@ -88,7 +88,15 @@
             border: 1px solid #eaeaea;
             padding: 2px 5px;
         }
-        .bg-blue {
+        span.titleLength.success {
+            color: green;
+            border-color: green;
+        }
+        span.titleLength.error {
+            color: red;
+            border-color: red;
+        }
+        tr.bg-blue {
             background-color: #9dccff !important;
         }
     </style>
@@ -1776,7 +1784,12 @@
                 var maxlen = $(this).parent().find('.titleLength').data('maxlength');
 
                 $(this).parent().find('.titleLength').attr('data-length',val.length);
-                $(this).parent().find('.titleLength').html(val.length +' / '+ maxlen);
+                $(this).parent().find('.titleLength').removeClass('error').removeClass('success');
+                if(val.length > maxlen){
+                    $(this).parent().find('.titleLength').addClass('error').html('<i class="fa fa-ban"></i> '+val.length +' / '+ maxlen);
+                }else{
+                    $(this).parent().find('.titleLength').addClass('success').html('<i class="fa fa-check-circle"></i> '+val.length +' / '+ maxlen);
+                }
             });
 
 
