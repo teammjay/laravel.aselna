@@ -20,7 +20,7 @@
                         <td>
                             <div class="d-flex align-items-end gap-5">
                                 <textarea class="form-control pro-list-title" rows="5" name="final_product_title[]">{{ $pro['title'] ?? '' }}</textarea>
-                                <span class="titleLength">{{ strlen($pro['title'] ?? '') }} / {{ $max_title_length }}</span>
+                                <span class="titleLength" data-length="{{ strlen($pro['title'] ?? '') }}" data-maxlength="{{ $max_title_length }}">{{ strlen($pro['title'] ?? '') }} / {{ $max_title_length }}</span>
                             </div>
                         </td>
                     </tr>
