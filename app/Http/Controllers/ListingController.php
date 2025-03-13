@@ -889,6 +889,9 @@ class ListingController extends Controller
 
 
             $devices = $query->get();
+            /*echo '<pre>';
+            print_r($devices);
+            echo '</pre>';die;*/
             //echo $query->toSql();die;
             $count = $devices->count();
 
@@ -1402,7 +1405,7 @@ class ListingController extends Controller
                 }
                 //$nameToAdd = ($brand === $lastBrand) ? $model : $currentBrand;
             } else {
-                $nameToAdd = $currentMod;
+                $nameToAdd = $currentBrand;
             }
 
             //echo $nameToAdd;
@@ -1417,7 +1420,7 @@ class ListingController extends Controller
 
 
             $tempModels = array_merge($currentModels, [str_replace($device->brand_name.' ','',$currentBrand)]);
-            $tempModelString = implode($brand_seperator . ' ', $tempModels);
+            $tempModelString = implode($device_seperator . ' ', $tempModels);
             $tempTitle = str_replace('#model_series', $tempModelString, $tempTitle);
 
             if(strlen($tempTitle) > $charLimit ||  (!str_contains($baseTitle, '#device_series'))){
@@ -1452,7 +1455,7 @@ class ListingController extends Controller
 
         // Add the last title
         if (!empty($currentTitle)) {
-            $titles[$cnt]['title'] = str_replace(['#model_series', '#devices','#device_series'], [implode($separator . ' ', $currentModels), implode($device_seperator . ' ', $currentDevices), implode($device_seperator . ' ', $currentDevices)], $baseTitle);
+            $titles[$cnt]['title'] = str_replace(['#model_series', '#devices','#device_series'], [implode($device_seperator . ' ', $currentModels), implode($device_seperator . ' ', $currentDevices), implode($device_seperator . ' ', $currentDevices)], $baseTitle);
         }
 
         return $titles;
@@ -1703,7 +1706,7 @@ class ListingController extends Controller
                                     'generation_type_id' => $generation_type_id,
                                     'overwrite_title' => 1,
                                     'overwrite_price' => $product_price_overwrites[$key],
-                                    'mpn' => $this->generateMPN(),
+                                    'mpn' => $this->generateMPN($store_detail->short_code),
                                     'status' => 1,
                                     'upc' => $upcCodes->upc_code,
                                     'created_by' => $created_by
