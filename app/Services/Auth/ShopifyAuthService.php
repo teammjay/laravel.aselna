@@ -17,7 +17,7 @@ class ShopifyAuthService
 
     public function __construct($clientSecret)
     {
-        $this->client = new Client(['verify'   => false]);
+        $this->client = new Client(['verify' => false]);
         $this->accessToken = $clientSecret;
         //$this->endpoint = env('SHOPIFY_API_ENDPOINT');
         $this->endpoint = 'https://aselna-dev.myshopify.com';
@@ -33,10 +33,12 @@ class ShopifyAuthService
             'X-Shopify-Access-Token' => $this->accessToken,
         ];
 
-        $body = [
+        $body = array_filter([
             'query' => $query,
             'variables' => $variables
-        ];
+        ], function ($value) {
+            return $value !== null;
+        });
 
         try {
             $request = new Request('POST', $this->endpoint . '/admin/api/' . $this->apiVersion . '/graphql.json', $headers, json_encode($body));
@@ -58,6 +60,11 @@ class ShopifyAuthService
         return $this->makeGraphQLRequest(ShopifyQueries::$saveProduct, $productData);
     }
 
+    public function createCollection($createCollection)
+    {
+        return $this->makeGraphQLRequest(ShopifyQueries::$createCollection, $createCollection);
+    }
+
     public function createProductVariant($productVariantData)
     {
         return $this->makeGraphQLRequest(ShopifyQueries::$createProductVariant, $productVariantData);
@@ -67,7 +74,7 @@ class ShopifyAuthService
     {
         try {
 
-            $response = $this->makeGraphQLRequest(ShopifyQueries::$orderFields,array('first'=>10));
+            $response = $this->makeGraphQLRequest(ShopifyQueries::$orderFields, array('first' => 10));
             /*echo '<pre>';
             print_r($response);
             echo '</pre>';die;*/
@@ -99,7 +106,7 @@ class ShopifyAuthService
 
     public function getOrders()
     {
-    
+
         //$fields = $this->getOrdersField();
         /*echo '<pre>';
         print_r($fields);
@@ -119,11 +126,11 @@ class ShopifyAuthService
               }
             }
             GQL;*/
-            $result = $this->makeGraphQLRequest(ShopifyQueries::$getOrders,array('first'=>10));
+            $result = $this->makeGraphQLRequest(ShopifyQueries::$getOrders, array('first' => 10));
             /*echo '<pre>';
             print_r($result);
             echo '</pre>';die;*/
-            if(!isset($result['errors'])){
+            if (!isset($result['errors'])) {
                 return $result['data']['orders']['edges'];
             }
 
@@ -131,5 +138,10 @@ class ShopifyAuthService
             Log::error('Error: ' . $e->getMessage());
             return null;
         }
+    }
+
+    public function getPublications()
+    {
+        return $this->makeGraphQLRequest(ShopifyQueries::$getPublications,null);
     }
 }
