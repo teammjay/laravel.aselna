@@ -308,7 +308,7 @@ class ListingController extends Controller
         $stores = Store::with('storeType')->where('store_status', 1)->orderBy('name', 'asc')->get();
         /*echo '<pre>';
         print_r($stores);die;*/
-        $manufacturers = Manufacturer::all();
+        $manufacturers = Manufacturer::orderBy('name', 'asc')->get();
         $productTypes = ProductType::with('children')->whereIn('parent_id', function ($subquery) {
             $subquery->select('id')->from('product_type')->where('code', 'cea');
         })->orderBy('name', 'asc')->get();
@@ -525,6 +525,7 @@ class ListingController extends Controller
                         $query->where('store_product.store_id', $store_id);
                     }
                     $query->WhereLike('product_sku', '%' . $term . '%');
+                    $query->orderBy('product_sku', 'asc');
                     $product = $query->get();
                     /*$product = Catalog::select('product_id', 'product_sku')->WhereLike('product_sku', '%' . $term . '%')->get();*/
                 }
@@ -542,9 +543,9 @@ class ListingController extends Controller
             case 'device_series':
                 $device_series = $request->input('device_series');
                 if (!empty($device_series)) {
-                    $deviceSeries = DeviceSeries::select('id', 'name')->WhereLike('name', '%' . $term . '%')->whereNotIn('id', $device_series)->get();
+                    $deviceSeries = DeviceSeries::select('id', 'name')->WhereLike('name', '%' . $term . '%')->whereNotIn('id', $device_series)->orderBy('name', 'asc')->get();
                 } else {
-                    $deviceSeries = DeviceSeries::select('id', 'name')->WhereLike('name', '%' . $term . '%')->get();
+                    $deviceSeries = DeviceSeries::select('id', 'name')->WhereLike('name', '%' . $term . '%')->orderBy('name', 'asc')->get();
                 }
                 foreach ($deviceSeries as $key => $value) {
                     $data["display"][] = [
@@ -560,9 +561,9 @@ class ListingController extends Controller
             case 'device':
                 $device = $request->input('device');
                 if (!empty($device)) {
-                    $devices = Device::select('id', 'name')->WhereLike('name', '%' . $term . '%')->whereNotIn('id', $device)->get();
+                    $devices = Device::select('id', 'name')->WhereLike('name', '%' . $term . '%')->whereNotIn('id', $device)->orderBy('name', 'asc')->get();
                 } else {
-                    $devices = Device::select('id', 'name')->WhereLike('name', '%' . $term . '%')->get();
+                    $devices = Device::select('id', 'name')->WhereLike('name', '%' . $term . '%')->orderBy('name', 'asc')->get();
                 }
                 foreach ($devices as $key => $value) {
                     $data["display"][] = [
@@ -888,6 +889,9 @@ class ListingController extends Controller
 
 
             $devices = $query->get();
+            /*echo '<pre>';
+            print_r($devices);
+            echo '</pre>';die;*/
             //echo $query->toSql();die;
             $count = $devices->count();
 
@@ -1045,6 +1049,7 @@ class ListingController extends Controller
                                 }
                                 $query->orderBy('brand_name', 'asc');
                                 $query->orderBy('device.name', 'asc');
+                                //$query->limit(250);
                                 $devices = $query->get();
 
                                 /*echo '<pre>';
@@ -1057,6 +1062,19 @@ class ListingController extends Controller
                                             $productsArray[] = $this->generateProductTitles($title_template, $product, $devices, $max_title_length, $brand_seperator, $device_seperator, $compress, $generate_type, $pDetail, $store_product_id);
                                             break;
                                         case 'free group':
+                                            $prevBrand = null;
+                                            $flag = false;
+                                            foreach ($devices as $key=>$val) {
+                                                $brandName = $val->brand_name;
+                                                if($prevBrand != NULL && $brandName != $prevBrand && str_contains($title_template, '#device_series')){
+                                                    $flag = true;
+                                                    break;
+                                                }
+                                                $prevBrand = $brandName;
+                                            }
+                                            if($flag){
+                                                continue 2;
+                                            }
                                             $productsArray[] = $this->generateFreeGroupProductTitles($title_template, $product, $devices, $max_title_length, $brand_seperator, $device_seperator, $compress, $generate_type, $pDetail, $store_product_id);
                                             break;
                                         case 'single device':
@@ -1067,18 +1085,12 @@ class ListingController extends Controller
                                             break;
                                     }
                                 }
-                            } else {
-//                                return response()->json([
-//                                    'error' => true,
-//                                    'message' => 'session value missing',
-//                                ]);
                             }
                         }
-
                     }
                 }
 
-                /*echo '<pre>';
+               /* echo '<pre>';
                 print_r($productsArray);
                 echo '</pre>';die;*/
 
@@ -1130,6 +1142,7 @@ class ListingController extends Controller
         }
     }
 
+
     private function generateProductTitles($baseTitle, $product, $devices, $charLimit, $brand_seperator, $device_seperator, $compress, $generate_type, $pDetail, $store_product_id)
     {
         $titles = [];
@@ -1139,33 +1152,82 @@ class ListingController extends Controller
         $separator = $device_seperator; // Separator between device names
         $lastBrand = null;
         $currentBrand = null;
+        $prevBrand = null;
+        $currentMod = null;
+        $lastModel = null;
         $cnt = 0;
-        /*echo '<pre>';
-        print_r($devices);*/
-        foreach ($devices as $device) {
+
+        foreach ($devices as $key=>$device) {
             // Split the device into brand and model
             $currentBrand = $device->brand_name . ' ' . $device->name;
-            $parts = explode(' ', $currentBrand, 2);
+            $brandName = $device->brand_name;
+            $currentMod = $device->name;
+            $parts = explode(' ', $device->name, 2);
             $brand = $parts[0];
-            $model = $parts[1] ?? ''; // If no model, treat as empty
+            $model = $parts[1] ?? '';
 
-            // Use only the model if the brand is the same as the last one
             if ($compress) {
-                $nameToAdd = ($brand === $lastBrand) ? $model : $currentBrand;
+                if($prevBrand != null && $brandName != $prevBrand){
+                    $nameToAdd = $brand_seperator . ' ' .$brandName.' '.$currentMod;
+                }else {
+                    if ($brand === $lastBrand) {
+                        $parts2 = explode(' ', $model, 2);
+                        if (isset($parts2[1])) {
+                            if ($parts2[0] == $lastModel) {
+                                $model = $parts2[1];
+                            }
+                            //$model = $parts2[1];
+                        }
+                        $lastModel = $parts2[0];
+                        $nameToAdd = $model;
+                    } else {
+                        /*$brandparts = explode(' ', $brand, 2);
+                        if(isset($brandparts[1])) {
+                            //$brand = $brandparts[1];
+                        }*/
+                        $lastModel = $model;
+                        if ($key == 0) {
+                            $nameToAdd = $currentBrand;
+                        } else {
+                            $nameToAdd = $brand_seperator . ' ' . $currentBrand;
+                        }
+
+                        $nameToAdd = $currentMod;
+                    }
+                }
+                //$nameToAdd = ($brand === $lastBrand) ? $model : $currentBrand;
             } else {
-                $nameToAdd = $device->name;
+                $nameToAdd = $currentMod;
             }
 
             //echo $nameToAdd.'<br>';
 
-            // Check if adding the device exceeds the character limit
-            $tempModels = array_merge($currentModels, [$nameToAdd]);
+            $tempDevices = array_merge($currentDevices, [str_replace($device->brand_name.' ','',$nameToAdd)]);
+            $tempDeviceString = implode($device_seperator . ' ', $tempDevices);
+            $tempTitle = str_replace('#devices', $tempDeviceString, $baseTitle);
+
+            $tempDevices = array_merge($currentDevices, [str_replace($device->brand_name.' ','',$currentBrand)]);
+            $tempDeviceString = implode($device_seperator . ' ', $tempDevices);
+            $tempTitle = str_replace('#device_series', $tempDeviceString, $tempTitle);
+
+
+            $tempModels = array_merge($currentModels, [$currentMod]);
+            $tempModelString = implode($device_seperator . ' ', $tempModels);
+            $tempTitle = str_replace('#model_series', $tempModelString, $tempTitle);
+
+
+            /*// Check if adding the device exceeds the character limit
+            $tempModels = array_merge($currentModels, [str_replace($device->brand_name.' ','',$nameToAdd)]);
             $tempModelString = implode($brand_seperator . ' ', $tempModels);
             $tempTitle = str_replace('#model_series', $tempModelString, $baseTitle);
 
             $tempDevices = array_merge($currentDevices, [$currentBrand]);
             $tempDeviceString = implode($device_seperator . ' ', $tempDevices);
             $tempTitle = str_replace('#devices', $tempDeviceString, $tempTitle);
+
+            $tempDevices = array_merge($currentDevices, [$currentBrand]);
+            $tempDeviceString = implode($device_seperator . ' ', $tempDevices);
+            $tempTitle = str_replace('#device_series', $tempDeviceString, $tempTitle);*/
 
             /*$sku = StoreTypeListing::generateUniqueAlphabeticSku($product->product_sku);*/
 
@@ -1175,12 +1237,12 @@ class ListingController extends Controller
 
                 // Save the current title and start a new one
                 //$titles[$cnt]['title'] = rtrim($currentTitle, $separator); // Remove trailing separator
-                $titles[$cnt]['title'] = str_replace(['#model_series', '#devices'], [implode($brand_seperator . ' ', $currentModels), implode($separator . ' ', $currentDevices)], $baseTitle);
+                $titles[$cnt]['title'] = str_replace(['#model_series', '#devices' ,'#device_series'], [implode($device_seperator . ' ', $currentModels), implode($device_seperator . ' ', $currentDevices), implode($device_seperator . ' ', $currentDevices)], $baseTitle);
 
                 $cnt++;
                 //$currentTitle = $baseTitle . ' ' . $nameToAdd;
                 $currentDevices = [$currentBrand];
-                $currentModels = [$currentBrand];
+                $currentModels = [$currentMod];
                 $titles[$cnt]['product_code'] = $product->product->product_sku;
                 $titles[$cnt]['product_id'] = $product->product_id;
                 $titles[$cnt]['price'] = $pDetail['price'];
@@ -1207,19 +1269,25 @@ class ListingController extends Controller
                 $titles[$cnt]['model'][] = $device->name;
                 $titles[$cnt]['model_detail'][] = $device;
                 //$currentTitle .= ($currentTitle === $baseTitle ? ' ' : ' '.$separator.' ') . $nameToAdd;
-                $currentModels[] = $nameToAdd;
-                $currentDevices[] = $nameToAdd;
+                $currentModels[] = str_replace($device->brand_name.' ','',$nameToAdd);
+                if(empty($currentDevices)){
+                    $currentDevices[] = $device->brand_name.' '.$nameToAdd;
+                }else {
+                    $currentDevices[] = $nameToAdd;
+                }
+                //$currentDevices[] = $nameToAdd;
             }
 
             // Update the last brand
             $lastBrand = $brand;
+            $prevBrand = $brandName;
         }
 
         // Add the last title
         if (!empty($currentTitle)) {
             /*$titles[$cnt]['title'] = rtrim($currentTitle, ' '.$separator.' ');*/
             //$titles[$cnt]['title'] = str_replace('#model_series', implode($separator.' ', $currentModels), $baseTitle);
-            $titles[$cnt]['title'] = str_replace(['#model_series', '#devices'], [implode($brand_seperator . ' ', $currentModels), implode($separator . ' ', $currentDevices)], $baseTitle);
+            $titles[$cnt]['title'] = str_replace(['#model_series', '#devices','#device_series'], [implode($device_seperator . ' ', $currentModels), implode($device_seperator . ' ', $currentDevices), implode($device_seperator . ' ', $currentDevices)], $baseTitle);
         }
         /*echo '<pre>';
         print_r($titles);die;*/
@@ -1235,7 +1303,7 @@ class ListingController extends Controller
 
             $tempTitle = str_replace('#device_series', $currentBrand, $baseTitle);
             $tempTitle = str_replace('#devices', $currentBrand, $tempTitle);
-            $tempTitle = str_replace('#model_series', $currentBrand, $tempTitle);
+            $tempTitle = str_replace('#model_series', $device->name, $tempTitle);
 
             if(strlen($tempTitle) > $charLimit){
                 continue;
@@ -1297,82 +1365,97 @@ class ListingController extends Controller
         $currentTitle = $baseTitle;
         $separator = $brand_seperator; // Separator between device names
         $lastBrand = null;
+        $lastModel = null;
         $currentBrand = null;
+        $currentMod = null;
         $cnt = 0;
-        foreach ($devices as $device) {
+
+        foreach ($devices as $key=>$device) {
             // Split the device into brand and model
             $currentBrand = $device->brand_name . ' ' . $device->name;
-            $parts = explode(' ', $currentBrand, 2);
+            $currentMod = $device->name;
+            $parts = explode(' ', $device->name, 2);
             $brand = $parts[0];
-            $model = $parts[1] ?? ''; // If no model, treat as empty
+            $model = $parts[1] ?? '';
 
             // Use only the model if the brand is the same as the last one
             if ($compress) {
-                $nameToAdd = ($brand === $lastBrand) ? $model : $currentBrand;
+                if($brand === $lastBrand){
+                    $parts2 = explode(' ', $model, 2);
+                    if(isset($parts2[1])) {
+                        if($parts2[0] == $lastModel){
+                            $model = $parts2[1];
+                        }
+                        //$model = $parts2[1];
+                    }
+                    $lastModel = $parts2[0];
+                    /*$parts2 = explode(' ', $model, 2);
+                    if(isset($parts2[1])) {
+                        $model = $parts2[1];
+                    }*/
+                    $nameToAdd = $model;
+                }else{
+                    if($key == 0){
+                        $nameToAdd = $currentBrand;
+                    }else{
+                        //$nameToAdd = $brand_seperator.' '.$currentBrand;
+                        $nameToAdd = $currentMod;
+                    }
+                    //$nameToAdd = $currentMod;
+                }
+                //$nameToAdd = ($brand === $lastBrand) ? $model : $currentBrand;
             } else {
-                $nameToAdd = $device->name;
+                $nameToAdd = $currentBrand;
             }
 
-            // Check if adding the device exceeds the character limit
-            $tempModels = array_merge($currentModels, [$nameToAdd]);
-            $tempModelString = implode($brand_seperator . ' ', $tempModels);
-            $tempTitle = str_replace('#model_series', $tempModelString, $baseTitle);
+            //echo $nameToAdd;
+
+            $tempDevices = array_merge($currentDevices, [$nameToAdd]);
+            $tempDeviceString = implode($device_seperator . ' ', $tempDevices);
+            $tempTitle = str_replace('#devices', $tempDeviceString, $baseTitle);
 
             $tempDevices = array_merge($currentDevices, [$currentBrand]);
             $tempDeviceString = implode($device_seperator . ' ', $tempDevices);
-            $tempTitle = str_replace('#devices', $tempDeviceString, $tempTitle);
+            $tempTitle = str_replace('#device_series', $tempDeviceString, $tempTitle);
 
-            if(strlen($tempTitle) > $charLimit){
-                $cnt++;
-                continue;
+
+            $tempModels = array_merge($currentModels, [str_replace($device->brand_name.' ','',$currentBrand)]);
+            $tempModelString = implode($device_seperator . ' ', $tempModels);
+            $tempTitle = str_replace('#model_series', $tempModelString, $tempTitle);
+
+            if(strlen($tempTitle) > $charLimit ||  (!str_contains($baseTitle, '#device_series'))){
+                //$cnt++;
+                //continue;
             }
 
-            // Check if adding the device exceeds the character limit
-            if ($brand !== $lastBrand) {
-                // Save the current title and start a new one
-                //$titles[$cnt]['title'] = rtrim($currentTitle, $separator); // Remove trailing separator
-                if (!empty($currentDevices)) {
-                    $titles[$cnt]['title'] = str_replace(['#model_series', '#devices'], [implode($separator . ' ', $currentModels), implode($device_seperator . ' ', $currentDevices)], $baseTitle);
-                }
-                $cnt++;
-                //$currentTitle = $baseTitle . ' ' . $nameToAdd;
-                $currentDevices = [$currentBrand];
-                $currentModels = [$currentBrand];
-                $titles[$cnt]['product_code'] = $product->product->product_sku;
-                $titles[$cnt]['product_id'] = $product->product_id;
-                $titles[$cnt]['price'] = $pDetail['price'];
-                $titles[$cnt]['price_overwrite'] = $pDetail['price_overwrite'];
-                $titles[$cnt]['store_type_category_id'] = $pDetail['store_type_category_id'];
-                $titles[$cnt]['generate_type'] = $generate_type;
-                $titles[$cnt]['store_product_id'] = $store_product_id;
-                $titles[$cnt]['brand_id'] = $device->brand_id;
-                $titles[$cnt]['device_id'] = $device->id;
-                $titles[$cnt]['model'][] = $device->name;
-                $titles[$cnt]['model_detail'][] = $device;
-            } else {
-                // Append the device name
-                $titles[$cnt]['product_code'] = $product->product->product_sku;
-                $titles[$cnt]['product_id'] = $product->product_id;
-                $titles[$cnt]['price'] = $pDetail['price'];
-                $titles[$cnt]['price_overwrite'] = $pDetail['price_overwrite'];
-                $titles[$cnt]['store_type_category_id'] = $pDetail['store_type_category_id'];
-                $titles[$cnt]['generate_type'] = $generate_type;
-                $titles[$cnt]['store_product_id'] = $store_product_id;
-                $titles[$cnt]['brand_id'] = $device->brand_id;
-                $titles[$cnt]['device_id'] = $device->id;
-                $titles[$cnt]['model'][] = $device->name;
-                $titles[$cnt]['model_detail'][] = $device;
-                $currentModels[] = $nameToAdd;
+            $titles[$cnt]['title'] = $tempTitle;
+            $titles[$cnt]['product_code'] = $product->product->product_sku;
+            $titles[$cnt]['product_id'] = $product->product_id;
+            $titles[$cnt]['price'] = $pDetail['price'];
+            $titles[$cnt]['price_overwrite'] = $pDetail['price_overwrite'];
+            $titles[$cnt]['store_type_category_id'] = $pDetail['store_type_category_id'];
+            $titles[$cnt]['generate_type'] = $generate_type;
+            $titles[$cnt]['store_product_id'] = $store_product_id;
+            $titles[$cnt]['brand_id'] = $device->brand_id;
+            $titles[$cnt]['device_id'] = $device->id;
+            $titles[$cnt]['model'][] = $device->name;
+            $titles[$cnt]['model_detail'][] = $device;
+            $currentModels[] = str_replace($device->brand_name.' ','',$nameToAdd);
+
+            /*if(empty($currentDevices)){
                 $currentDevices[] = $nameToAdd;
-            }
+            }else {
+                $currentDevices[] = $nameToAdd;
+            }*/
 
+            $currentDevices[] = $nameToAdd;
             // Update the last brand
             $lastBrand = $brand;
         }
 
         // Add the last title
         if (!empty($currentTitle)) {
-            $titles[$cnt]['title'] = str_replace(['#model_series', '#devices'], [implode($separator . ' ', $currentModels), implode($device_seperator . ' ', $currentDevices)], $baseTitle);
+            $titles[$cnt]['title'] = str_replace(['#model_series', '#devices','#device_series'], [implode($device_seperator . ' ', $currentModels), implode($device_seperator . ' ', $currentDevices), implode($device_seperator . ' ', $currentDevices)], $baseTitle);
         }
 
         return $titles;
@@ -1391,13 +1474,22 @@ class ListingController extends Controller
         foreach ($devices as $device) {
             // Split the device into brand and model
             $currentBrand = $device->brand_name . ' ' . $device->name;
-            $parts = explode(' ', $currentBrand, 2);
+            $parts = explode(' ', $device->name, 2);
             $brand = $parts[0];
             $model = $parts[1] ?? ''; // If no model, treat as empty
 
             // Use only the model if the brand is the same as the last one
             if ($compress) {
-                $nameToAdd = ($brand === $lastBrand) ? $model : $currentBrand;
+                if($brand === $lastBrand){
+                    $parts2 = explode(' ', $model, 2);
+                    if(isset($parts2[1])) {
+                        $model = $parts2[1];
+                    }
+                    $nameToAdd = $model;
+                }else{
+                    $nameToAdd = $currentBrand;
+                }
+                //$nameToAdd = ($brand === $lastBrand) ? $model : $currentBrand;
             } else {
                 $nameToAdd = $device->name;
             }
@@ -1411,12 +1503,16 @@ class ListingController extends Controller
             $tempDeviceString = implode($device_seperator . ' ', $tempDevices);
             $tempTitle = str_replace('#devices', $tempDeviceString, $tempTitle);
 
+            $tempDevices = array_merge($currentDevices, [$currentBrand]);
+            $tempDeviceString = implode($device_seperator . ' ', $tempDevices);
+            $tempTitle = str_replace('#device_series', $tempDeviceString, $tempTitle);
+
             // Check if adding the device exceeds the character limit
             if ($brand !== $lastBrand || strlen($tempTitle) > $charLimit) {
                 // Save the current title and start a new one
                 //$titles[$cnt]['title'] = rtrim($currentTitle, $separator); // Remove trailing separator
                 if (!empty($currentDevices)) {
-                    $titles[$cnt]['title'] = str_replace(['#model_series', '#devices'], [implode($separator . ' ', $currentModels), implode($device_seperator . ' ', $currentDevices)], $baseTitle);
+                    $titles[$cnt]['title'] = str_replace(['#model_series', '#devices','#device_series'], [implode($separator . ' ', $currentModels), implode($device_seperator . ' ', $currentDevices), implode($device_seperator . ' ', $currentDevices)], $baseTitle);
                 }
                 $cnt++;
                 //$currentTitle = $baseTitle . ' ' . $nameToAdd;
@@ -1447,7 +1543,12 @@ class ListingController extends Controller
                 $titles[$cnt]['model'][] = $device->name;
                 $titles[$cnt]['model_detail'][] = $device;
                 $currentModels[] = $nameToAdd;
-                $currentDevices[] = $nameToAdd;
+                if(empty($currentDevices)){
+                    $currentDevices[] = $device->brand_name.' '.$nameToAdd;
+                }else {
+                    $currentDevices[] = $nameToAdd;
+                }
+                //$currentDevices[] = $nameToAdd;
             }
 
             // Update the last brand
@@ -1456,7 +1557,7 @@ class ListingController extends Controller
 
         // Add the last title
         if (!empty($currentTitle)) {
-            $titles[$cnt]['title'] = str_replace(['#model_series', '#devices'], [implode($separator . ' ', $currentModels), implode($device_seperator . ' ', $currentDevices)], $baseTitle);
+            $titles[$cnt]['title'] = str_replace(['#model_series', '#devices','#device_series'], [implode($separator . ' ', $currentModels), implode($device_seperator . ' ', $currentDevices), implode($device_seperator . ' ', $currentDevices)], $baseTitle);
         }
 
         return $titles;
@@ -1605,7 +1706,7 @@ class ListingController extends Controller
                                     'generation_type_id' => $generation_type_id,
                                     'overwrite_title' => 1,
                                     'overwrite_price' => $product_price_overwrites[$key],
-                                    'mpn' => $this->generateMPN(),
+                                    'mpn' => $this->generateMPN($store_detail->short_code),
                                     'status' => 1,
                                     'upc' => $upcCodes->upc_code,
                                     'created_by' => $created_by

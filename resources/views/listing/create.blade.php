@@ -88,6 +88,17 @@
             border: 1px solid #eaeaea;
             padding: 2px 5px;
         }
+        span.titleLength.success {
+            color: green;
+            border-color: green;
+        }
+        span.titleLength.error {
+            color: red;
+            border-color: red;
+        }
+        tr.bg-blue {
+            background-color: #9dccff !important;
+        }
     </style>
 @stop
 @section('content_header')
@@ -148,7 +159,7 @@
                                             <option value="">--</option>
                                             @if(count($stores ?? []) > 0)
                                                 @foreach($stores as $store)
-                                                    <option value="{{ $store->id }}">{{ $store->name }} {{ (!empty((array)$store->storeType)) ? ' - '.$store->storeType->name : '' }}</option>
+                                                    <option value="{{ $store->id }}" data-storetype="{{ (!empty((array)$store->storeType)) ? $store->storeType->name : '' }}">{{ $store->name }} {{ (!empty((array)$store->storeType)) ? ' - '.$store->storeType->name : '' }}</option>
                                                 @endforeach
                                             @endif
                                         </select>
@@ -443,7 +454,7 @@
                                             <label>Brand Filter</label>
                                             <div class="row">
                                                 <div class="col-md-12 pro-brand multi-select-filter">
-                                                    <select class="form-control" id="brand_filter" multiple style="height: 225px;">
+                                                    <select class="form-control list-filter" id="brand_filter" multiple style="height: 225px;">
                                                         @if(count($brands ?? []) > 0)
                                                             @foreach($brands as $brand)
                                                                 <option value="{{ $brand->id }}">{{ $brand->name }}</option>
@@ -457,7 +468,7 @@
                                             <label>Rating Filter</label>
                                             <div class="row">
                                                 <div class="col-md-12 pro-rating multi-select-filter">
-                                                    <select class="form-control" id="rating_filter" multiple style="height: 235px;">
+                                                    <select class="form-control list-filter" id="rating_filter" multiple style="height: 235px;">
                                                         @if(count($deviceRating ?? []) > 0)
                                                             @foreach($deviceRating as $deviceR)
                                                                 <option value="{{ $deviceR->id }}">{{ $deviceR->value }}</option>
@@ -471,7 +482,7 @@
                                             <label>Popularity</label>
                                             <div class="row">
                                                 <div class="col-md-12 pro-popular multi-select-filter">
-                                                    <select class="form-control" id="popularity_filter" multiple style="height: 235px;">
+                                                    <select class="form-control list-filter" id="popularity_filter" multiple style="height: 235px;">
                                                         <option value="1">1</option>
                                                         <option value="2">2</option>
                                                         <option value="3">3</option>
@@ -508,7 +519,7 @@
                                                 <span>Group Seperator </span>
                                                 <input type="text" name="group_seperator" class="form-control ml-2 mr-5" id="group_seperator" value=" , " style="width: 40px;">
                                                 <span>Device Seperator </span>
-                                                <input type="text" name="device_seperator" class="form-control ml-2 mr-5" id="device_seperator" value=" , " style="width: 40px;">
+                                                <input type="text" name="device_seperator" class="form-control ml-2 mr-5" id="device_seperator" value=" / " style="width: 40px;">
                                                 <input type="checkbox" name="compress" id="compress" checked> <span> Compress</span>
                                             </div>
                                         </div>
@@ -862,52 +873,66 @@
                         });
 
                     }else if(currentIndex == 3){
-                        $('.bd-example').show();
-                        const form = document.querySelector("#frmFinalListingProducts");
-                        let formData = new FormData(form);
-                        formData.append('store_id', $('#listing_store').val());
-                        formData.append('product_models', JSON.stringify(product_models));
-                        $("#ajax-preloader").show();
-                        $.ajax({
-                            type: 'POST',
-                            url: "{{ route('listing.savelistingproducts') }}", // Adjust this URL to your endpoint
-                            data: formData,
-                            processData: false,
-                            contentType: false,
-                            headers: {
-                                'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                            },
-                            dataType:'json',
-                            success: function(response) {
-                                if(response.success){
-                                    // Display a success message
-                                    alert(response.message);
-                                    currentIndex++;
-                                    activateTab(currentIndex);
-                                    if(response.summary) {
-                                        $('#tab5').html(response.summary);
-                                    }
-                                    $('.lbtn').hide();
-                                    $('.donebtn').show();
-                                    //location.href='{{ route('listing.list') }}'
-                                }else if(response.error){
-                                    alert('Something went wrong! Please try again later.');
-                                    location.reload();
-                                }
-                            },
-                            error: function(xhr) {
-                                if (xhr.responseJSON.message) {
-                                    if(xhr.responseJSON.message == 'Attempt to read property "upc_code" on null'){
-                                        alert("Upc code missign for selected store. Please generate upc code and try again.");
-                                    }else{
-                                        alert(xhr.responseJSON.message);
-                                    }
-                                }
-                            },
-                            complete: function () {
-                                $("#ajax-preloader").hide();
+                        //$('.bd-example').show();
+                        var flag = false;
+                        $('.titleLength').each(function () {
+                            var len =  $(this).data('length');
+                            var maxlen =  $(this).data('maxlength');
+                            if(len > maxlen){
+                                flag = true;
                             }
                         });
+
+                        if(flag){
+                            alert('The title length is greater than maximum length so product can not generated');
+                            return false;
+                        }else {
+                            const form = document.querySelector("#frmFinalListingProducts");
+                            let formData = new FormData(form);
+                            formData.append('store_id', $('#listing_store').val());
+                            formData.append('product_models', JSON.stringify(product_models));
+                            $("#ajax-preloader").show();
+                            $.ajax({
+                                type: 'POST',
+                                url: "{{ route('listing.savelistingproducts') }}", // Adjust this URL to your endpoint
+                                data: formData,
+                                processData: false,
+                                contentType: false,
+                                headers: {
+                                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                                },
+                                dataType: 'json',
+                                success: function (response) {
+                                    if (response.success) {
+                                        // Display a success message
+                                        alert(response.message);
+                                        currentIndex++;
+                                        activateTab(currentIndex);
+                                        if (response.summary) {
+                                            $('#tab5').html(response.summary);
+                                        }
+                                        $('.lbtn').hide();
+                                        $('.donebtn').show();
+                                        //location.href='{{ route('listing.list') }}'
+                                    } else if (response.error) {
+                                        alert('Something went wrong! Please try again later.');
+                                        location.reload();
+                                    }
+                                },
+                                error: function (xhr) {
+                                    if (xhr.responseJSON.message) {
+                                        if (xhr.responseJSON.message == 'Attempt to read property "upc_code" on null') {
+                                            alert("Upc code missign for selected store. Please generate upc code and try again.");
+                                        } else {
+                                            alert(xhr.responseJSON.message);
+                                        }
+                                    }
+                                },
+                                complete: function () {
+                                    $("#ajax-preloader").hide();
+                                }
+                            });
+                        }
                     }else{
                         currentIndex++;
                         activateTab(currentIndex);
@@ -1052,6 +1077,10 @@
 
             $(document).on('click', '.targetRow', function() {
                 let ele = $(this);
+
+                if(!$('#selected_device_only').is(':checked')){
+                    return false;
+                }
                 if(ele.find('.sel-device').is(':checked')){
                     ele.removeClass('bg-blue');
                     ele.find('.sel-device').prop('checked',false);
@@ -1064,14 +1093,14 @@
                     }, []);
 
                     selected_device[product_id] = newArray;
-                    console.log('remove-'+selected_device);
+                    //console.log('remove-'+selected_device);
                 }else{
                     ele.addClass('bg-blue');
                     ele.find('.sel-device').prop('checked',true);
                     //selected_device.push(ele.find('.sel-device').val());
                     var product_id = ele.find('.sel-device').data('proid');
                     addToKey(product_id, ele.find('.sel-device').val());
-                    console.log('add-'+selected_device);
+                    //console.log('add-'+selected_device);
                 }
             });
 
@@ -1082,7 +1111,7 @@
                 let key = ele.data('key');
                 let proid = ele.data('proid');
                 let selModel = product_model[proid];
-                console.log(selModel);
+                //console.log(selModel);
                 let mlist = '';
                 for(i in selModel[key]){
                     mlist += '<tr><td>'+selModel[key][i]+'</td><td></td></tr>';
@@ -1128,7 +1157,7 @@
                             success: function (response) {
                                 if (response.success) {
                                     $('#proSubType').show();
-                                    console.log(0);
+                                    //console.log(0);
                                     if ($('#proSubTypeFilter').find('.default-drop-down').length <= 0) {
                                         $('#product_sub_type_filter').html(response.option);
                                         $('#product_sub_type_filter').gs_multiselect();
@@ -1256,7 +1285,7 @@
             $(document).on('change','.list-filter',function(e){
                 e.preventDefault();
                 let ele = $(this);
-                console.log(ele);
+                //console.log(ele);
                 setTimeout(function () {
 
                     if (ele.parents('.prod-type').length) {
@@ -1279,7 +1308,7 @@
                             success: function (response) {
                                 if (response.success) {
                                     $('#proSubType').show();
-                                    console.log(0);
+                                    //console.log(0);
                                     if ($('#proSubTypeFilter').find('.default-drop-down').length <= 0) {
                                         $('#product_sub_type_filter').html(response.option);
                                         $('#product_sub_type_filter').gs_multiselect();
@@ -1701,7 +1730,7 @@
                 let replaceText = $('#replace_value').val();
                 let replaceField = $('input[name="replace_field"]:checked').val();
 
-                console.log(replaceField);
+                //console.log(replaceField);
                 $('.sproRow').each(function () {
                     let ele = $(this);
                     if(replaceField == 'all'){
@@ -1748,6 +1777,22 @@
 
                 $('.lLength-'+id).html(val.length);
             });
+
+            $(document).on('blur', '.pro-list-title', function() {
+                var ele = $(this);
+                var val = $(this).val();
+                var maxlen = $(this).parent().find('.titleLength').data('maxlength');
+
+                $(this).parent().find('.titleLength').attr('data-length',val.length);
+                $(this).parent().find('.titleLength').removeClass('error').removeClass('success');
+                if(val.length > maxlen){
+                    $(this).parent().find('.titleLength').addClass('error').html('<i class="fa fa-ban"></i> '+val.length +' / '+ maxlen);
+                }else{
+                    $(this).parent().find('.titleLength').addClass('success').html('<i class="fa fa-check-circle"></i> '+val.length +' / '+ maxlen);
+                }
+            });
+
+
 
 
             $(document).on('click', '.price-overwrite', function() {
@@ -2152,6 +2197,10 @@
 
         function followThirdStep(){
             let selected_product = [];
+            let store_type = $('#listing_store option:selected').data('storetype');
+            if(store_type == 'Ebay' || store_type == 'eBay'){
+                $('input[data-name="Combined Devices"]').parent().hide();
+            }
             $('input[name="selected_store_product[]"]').each(function () {
                 var pid = $(this).val();
                 var pro_id = $('.pid-'+pid).val();
