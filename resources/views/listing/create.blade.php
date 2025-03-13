@@ -159,7 +159,7 @@
                                             <option value="">--</option>
                                             @if(count($stores ?? []) > 0)
                                                 @foreach($stores as $store)
-                                                    <option value="{{ $store->id }}">{{ $store->name }} {{ (!empty((array)$store->storeType)) ? ' - '.$store->storeType->name : '' }}</option>
+                                                    <option value="{{ $store->id }}" data-storetype="{{ (!empty((array)$store->storeType)) ? $store->storeType->name : '' }}">{{ $store->name }} {{ (!empty((array)$store->storeType)) ? ' - '.$store->storeType->name : '' }}</option>
                                                 @endforeach
                                             @endif
                                         </select>
@@ -1093,14 +1093,14 @@
                     }, []);
 
                     selected_device[product_id] = newArray;
-                    console.log('remove-'+selected_device);
+                    //console.log('remove-'+selected_device);
                 }else{
                     ele.addClass('bg-blue');
                     ele.find('.sel-device').prop('checked',true);
                     //selected_device.push(ele.find('.sel-device').val());
                     var product_id = ele.find('.sel-device').data('proid');
                     addToKey(product_id, ele.find('.sel-device').val());
-                    console.log('add-'+selected_device);
+                    //console.log('add-'+selected_device);
                 }
             });
 
@@ -1111,7 +1111,7 @@
                 let key = ele.data('key');
                 let proid = ele.data('proid');
                 let selModel = product_model[proid];
-                console.log(selModel);
+                //console.log(selModel);
                 let mlist = '';
                 for(i in selModel[key]){
                     mlist += '<tr><td>'+selModel[key][i]+'</td><td></td></tr>';
@@ -1157,7 +1157,7 @@
                             success: function (response) {
                                 if (response.success) {
                                     $('#proSubType').show();
-                                    console.log(0);
+                                    //console.log(0);
                                     if ($('#proSubTypeFilter').find('.default-drop-down').length <= 0) {
                                         $('#product_sub_type_filter').html(response.option);
                                         $('#product_sub_type_filter').gs_multiselect();
@@ -1285,7 +1285,7 @@
             $(document).on('change','.list-filter',function(e){
                 e.preventDefault();
                 let ele = $(this);
-                console.log(ele);
+                //console.log(ele);
                 setTimeout(function () {
 
                     if (ele.parents('.prod-type').length) {
@@ -1308,7 +1308,7 @@
                             success: function (response) {
                                 if (response.success) {
                                     $('#proSubType').show();
-                                    console.log(0);
+                                    //console.log(0);
                                     if ($('#proSubTypeFilter').find('.default-drop-down').length <= 0) {
                                         $('#product_sub_type_filter').html(response.option);
                                         $('#product_sub_type_filter').gs_multiselect();
@@ -1730,7 +1730,7 @@
                 let replaceText = $('#replace_value').val();
                 let replaceField = $('input[name="replace_field"]:checked').val();
 
-                console.log(replaceField);
+                //console.log(replaceField);
                 $('.sproRow').each(function () {
                     let ele = $(this);
                     if(replaceField == 'all'){
@@ -2197,6 +2197,10 @@
 
         function followThirdStep(){
             let selected_product = [];
+            let store_type = $('#listing_store option:selected').data('storetype');
+            if(store_type == 'Ebay' || store_type == 'eBay'){
+                $('input[data-name="Combined Devices"]').parent().hide();
+            }
             $('input[name="selected_store_product[]"]').each(function () {
                 var pid = $(this).val();
                 var pro_id = $('.pid-'+pid).val();

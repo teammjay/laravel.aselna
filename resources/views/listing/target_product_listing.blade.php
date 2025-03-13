@@ -15,7 +15,7 @@
             <td>{{ $device->name }}</td>
             <td>0</td>
             <td>0</td>
-            <td>{{ (isset($device->rating) && is_array($device->rating)) ? $device->rating->value : '' }}</td>
+            <td>{{ (isset($device->rating)) ? $device->rating->value : '' }}</td>
             <td></td>
 
         </tr>
