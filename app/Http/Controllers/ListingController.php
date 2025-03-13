@@ -1149,6 +1149,7 @@ class ListingController extends Controller
         $separator = $device_seperator; // Separator between device names
         $lastBrand = null;
         $currentBrand = null;
+        $prevBrand = null;
         $currentMod = null;
         $lastModel = null;
         $cnt = 0;
@@ -1156,34 +1157,40 @@ class ListingController extends Controller
         foreach ($devices as $key=>$device) {
             // Split the device into brand and model
             $currentBrand = $device->brand_name . ' ' . $device->name;
+            $brandName = $device->brand_name;
             $currentMod = $device->name;
             $parts = explode(' ', $device->name, 2);
             $brand = $parts[0];
             $model = $parts[1] ?? '';
 
             if ($compress) {
-                if($brand === $lastBrand){
-                    $parts2 = explode(' ', $model, 2);
-                    if(isset($parts2[1])) {
-                        if($parts2[0] == $lastModel){
-                            $model = $parts2[1];
+                if($prevBrand != null && $brandName != $prevBrand){
+                    $nameToAdd = $brand_seperator . ' ' .$brandName.' '.$currentMod;
+                }else {
+                    if ($brand === $lastBrand) {
+                        $parts2 = explode(' ', $model, 2);
+                        if (isset($parts2[1])) {
+                            if ($parts2[0] == $lastModel) {
+                                $model = $parts2[1];
+                            }
+                            //$model = $parts2[1];
                         }
-                        //$model = $parts2[1];
+                        $lastModel = $parts2[0];
+                        $nameToAdd = $model;
+                    } else {
+                        /*$brandparts = explode(' ', $brand, 2);
+                        if(isset($brandparts[1])) {
+                            //$brand = $brandparts[1];
+                        }*/
+                        $lastModel = $model;
+                        if ($key == 0) {
+                            $nameToAdd = $currentBrand;
+                        } else {
+                            $nameToAdd = $brand_seperator . ' ' . $currentBrand;
+                        }
+
+                        $nameToAdd = $currentMod;
                     }
-                    $lastModel = $parts2[0];
-                    $nameToAdd = $model;
-                }else{
-                    /*$brandparts = explode(' ', $brand, 2);
-                    if(isset($brandparts[1])) {
-                        //$brand = $brandparts[1];
-                    }*/
-                    $lastModel = $model;
-                    if($key == 0){
-                        $nameToAdd = $currentBrand;
-                    }else{
-                        $nameToAdd = $brand_seperator.' '.$currentBrand;
-                    }
-                    $nameToAdd = $currentMod;
                 }
                 //$nameToAdd = ($brand === $lastBrand) ? $model : $currentBrand;
             } else {
@@ -1201,7 +1208,7 @@ class ListingController extends Controller
             $tempTitle = str_replace('#device_series', $tempDeviceString, $tempTitle);
 
 
-            $tempModels = array_merge($currentModels, [$currentBrand]);
+            $tempModels = array_merge($currentModels, [$currentMod]);
             $tempModelString = implode($device_seperator . ' ', $tempModels);
             $tempTitle = str_replace('#model_series', $tempModelString, $tempTitle);
 
@@ -1232,7 +1239,7 @@ class ListingController extends Controller
                 $cnt++;
                 //$currentTitle = $baseTitle . ' ' . $nameToAdd;
                 $currentDevices = [$currentBrand];
-                $currentModels = [$currentBrand];
+                $currentModels = [$currentMod];
                 $titles[$cnt]['product_code'] = $product->product->product_sku;
                 $titles[$cnt]['product_id'] = $product->product_id;
                 $titles[$cnt]['price'] = $pDetail['price'];
@@ -1270,6 +1277,7 @@ class ListingController extends Controller
 
             // Update the last brand
             $lastBrand = $brand;
+            $prevBrand = $brandName;
         }
 
         // Add the last title
