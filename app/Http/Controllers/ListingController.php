@@ -1070,7 +1070,7 @@ class ListingController extends Controller
                                                 $prevBrand = $brandName;
                                             }
                                             if($flag){
-                                                continue;
+                                                continue 2;
                                             }
                                             $productsArray[] = $this->generateFreeGroupProductTitles($title_template, $product, $devices, $max_title_length, $brand_seperator, $device_seperator, $compress, $generate_type, $pDetail, $store_product_id);
                                             break;
