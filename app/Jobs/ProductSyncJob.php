@@ -165,6 +165,8 @@ class ProductSyncJob implements ShouldQueue
                 'dimensions_height' => $product->dimensions_height,
                 'dimensions_width' => $product->dimensions_width,
                 'product_weight' => $product->weight_value,
+                'product_material_id' => $product->product_material_id,
+                'product_size_id' => $product->size_id,
                 'product_weight_unit' => $product->weight_weight_unit,
                 'product_package_weight' => $product->package_weight_value,
                 'package_weight_unit' => $product->package_weight_weight_unit,

@@ -32,7 +32,9 @@ use App\Jobs\ProductColorSync;
 use App\Jobs\ProductConditionJob;
 use App\Jobs\ProductImagesSyncJob;
 use App\Jobs\ProductInterfaces;
+use App\Jobs\ProductMaterialSyncJob;
 use App\Jobs\ProductSearchTermSyncJob;
+use App\Jobs\ProductSizeSyncJob;
 use App\Jobs\ProductSyncJob;
 use App\Jobs\ProductTagSyncJob;
 use App\Jobs\ProductTypeKeywordSyncJob;
@@ -43,6 +45,8 @@ use App\Jobs\StoreSyncJob;
 use App\Jobs\StoreTypeListingSyncJob;
 use App\Jobs\StoreTypeSyncJob;
 use App\Jobs\UPCSyncJob;
+use App\Models\ProductMaterial;
+use App\Models\ProductSize;
 use App\Models\ProductType;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Bus;
@@ -68,7 +72,7 @@ class SyncAllTables extends Command
      */
     public function handle()
     {
-//        Bus::chain([
+        Bus::chain([
 //            new FileSystemSyncJob(),
 //            new StoreTypeSyncJob(),
 //            new StoreSyncJob(),
@@ -85,6 +89,8 @@ class SyncAllTables extends Command
 //            new CarrierSyncJob(),
 //            new ShippingCarrierJob(),
 //            new ProductColorSync(),
+//            new ProductSizeSyncJob(),
+//            new ProductMaterialSyncJob(),
 //            new GenerationTypeAndTemplateSync(),
 //            new ProductSyncJob(),
 //            new ProductChannelDetailSyncJob(),
@@ -94,28 +100,28 @@ class SyncAllTables extends Command
 //            new LogisticCentreSyncJob(),
 //            new ProductSearchTermSyncJob(),
 //            new ProductTypeKeywordSyncJob(),
-//        new ProductTagSyncJob(),
+//            new ProductTagSyncJob(),
 //            new ProductImagesSyncJob(),
 //            new ProductAlternativeImagesSyncJob(),
-//        ])->dispatch();
+        ])->dispatch();
 //        Bus::chain([
-            // ListingSyncJob::dispatch(),
-            // ListingItemSyncJob::dispatch(),
-            // ListingItemDataSyncJob::dispatch(),
-            // ListingItemLinkSyncJob::dispatch(),
-            // ListingItemProductImageSyncJob::dispatch(),
-            // StoreTypeListingSyncJob::dispatch(),
-            // ListingFeedSyncJob::dispatch(),
-            // UPCSyncJob::dispatch(),
-            // LogisticCentreSyncJob::dispatch(),
+//            ListingSyncJob::dispatch(),
+//            ListingItemSyncJob::dispatch(),
+//            ListingItemDataSyncJob::dispatch(),
+//            ListingItemLinkSyncJob::dispatch(),
+//            ListingItemProductImageSyncJob::dispatch(),
+//            StoreTypeListingSyncJob::dispatch(),
+//            ListingFeedSyncJob::dispatch(),
+//            UPCSyncJob::dispatch(),
+//            LogisticCentreSyncJob::dispatch(),
 //            ProductImagesSyncJob::dispatch(),
-            // ProductAlternativeImagesSyncJob::dispatch(),
+//            ProductAlternativeImagesSyncJob::dispatch(),
 //        ]);
 //        DataPatch::dispatch();
 //        FeedGenerationJob::dispatch('70ce4255-9a11-415d-8edf-c6f4112da17d');
 //        ListingItemImageCreate::dispatch('aae136d8-6f03-4106-904a-8fda6518b031');
 //        FetchAmazonOrdersJob::dispatch();
-        ShopifyCollectionDeviceSyncJob::dispatch('6c7009ce-eac1-a995-a986-27d5df0103ac');
+//        ShopifyCollectionDeviceSyncJob::dispatch('6c7009ce-eac1-a995-a986-27d5df0103ac');
 
     }
 }
