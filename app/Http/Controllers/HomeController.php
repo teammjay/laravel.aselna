@@ -28,7 +28,7 @@ class HomeController extends Controller
         $stores = Store::with('storeType')->orderBy('name', 'asc')->get();
         //$eBayServie = new EbayService();
         //$eBayServie->getOrders();
-        //$test = $eBayServie->generateFeed('c9a99498-1aac-4a4a-a8f6-a27df41b8763');
+        //$test = $eBayServie->generateFeed('fd484f04-2ae4-454e-82f6-3e1ea34de65f');die;
         //$eBayServie->submitFeed('221284a9-d400-4712-9eee-a9850f52dd88','c9a99498-1aac-4a4a-a8f6-a27df41b8763');
         //$eBayServie->getInputFeed('task-1-1274330','c9a99498-1aac-4a4a-a8f6-a27df41b8763');
         //echo 'sd';die;

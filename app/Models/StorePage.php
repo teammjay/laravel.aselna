@@ -27,10 +27,17 @@ class StorePage extends Model
         });
     }
 
-    protected $fillable = ['store_id','page_type_id','title','text','created_by','updated_by','created_at','updated_at'];
+    protected $fillable = ['store_id','page_type','title','text','created_by','updated_by','created_at','updated_at'];
 
     public function PageType()
     {
         return $this->belongsTo(PageType::class);
+    }
+
+    public static function getStorePageByPageType($store_id, $page_type){
+
+        $page = self::with('PageType')->where('store_id', $store_id)->where('page_type',$page_type)->first();
+        $content = explode(PHP_EOL,$page->text);
+        return $content;
     }
 }

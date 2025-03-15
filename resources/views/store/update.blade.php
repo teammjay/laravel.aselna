@@ -836,9 +836,9 @@
                                 @foreach($storePages as $page)
                                     <tr class="field-group">
                                         <td>{{ $page->title }}</td>
-                                        <td>{{ $page->PageType->type }}</td>
+                                        <td>{{ \App\Constants\PageTypes::getPageTypeName($page->page_type) }}</td>
                                         <td>
-                                            {{--<button type="button" class="btn btn-primary edit-page" data-id="{{ $page->id }}" title="Edit"> <i class="fas fa-fw fa-pencil-alt"></i></button>--}}
+                                            <button type="button" class="btn btn-primary edit-page" data-id="{{ $page->id }}" title="Edit"> <i class="fas fa-fw fa-pencil-alt"></i></button>
                                             <button type="button" class="btn btn-danger remove-page" data-id="{{ $page->id }}" title="Remove"> <i class="fas fa-fw fa-trash"></i></button></td>
                                     </tr>
                                 @endforeach
@@ -1084,6 +1084,7 @@
                 dataType:'json',
                 success: function(response) {
                     // Display a success message
+                    $('#addPagesModal').modal('hide');
                     alert(response.message);
                     location.reload();
                 },
@@ -1343,6 +1344,36 @@
                         }
                     });
                 }
+            });
+            $(document).on('click', '.edit-page', function() {
+                var pageId = $(this).data('id');
+                var ele = $(this);
+                // Confirm the deletion
+
+                $.ajax({
+                    type: 'POST',
+                    url: "{{ route('store.getstorepage') }}",
+                    data: {
+                        "pageId": pageId
+                    },
+                    headers: {
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    },
+                    dataType:'json',
+                    success: function(response) {
+                        // Display a success message
+                        if(response.data) {
+                            $('#page_id').val(response.data.id);
+                            $('#page_type').val(response.data.page_type);
+                            $('#page_title').val(response.data.title);
+                            $('#page_text').val(response.data.text);
+                            $('#addPagesModal').modal('show');
+                        }
+                    },
+                    error: function(xhr) {
+                        alert(response.message);
+                    }
+                });
             });
             $(document).on('click', '.remove-message-account', function() {
                 var accId = $(this).data('id');

@@ -390,7 +390,7 @@ class StoreController extends Controller
 
             $validator = Validator::make(request()->all(), [
                 'title' => 'required|string',
-                'page_type_id' => 'required'
+                'page_type' => 'required'
             ]);
 
             if ($validator->fails()) {
@@ -400,13 +400,24 @@ class StoreController extends Controller
                 ], 422);
             }
 
-            StorePage::create($request->all());
+            StorePage::updateOrCreate([
+                'id' => $request->input('page_id'),
+            ], $request->all());
+
+            //StorePage::create($request->all());
             return response()->json(['success' => true, 'message' => 'Data saved successfully']);
 
         }catch (QueryException $e) {
             // Handle the exception and show an error message
             return response()->json(['errors' => $e->getMessage()], 422);
         }
+    }
+
+    public function getStorePage(Request $request){
+
+        $pageId = $request->input('pageId');
+        $record = StorePage::find($pageId);
+        return response()->json(['success' => true, 'data' => $record]);exit;
     }
 
     /**
