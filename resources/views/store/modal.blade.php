@@ -42,25 +42,31 @@
             </div>
             <div class="modal-body">
                 <form id="frmStorePages">
+                    <input type="hidden" id="page_id" name="page_id" value="">
                     <div class="mb-3">
                         <label for="page_type_id" class="col-form-label">Page Type:</label>
-                        <select class="form-control" name="page_type_id" id="page_type_id">
-                            @if(count($pageTypes ?? []) > 0)
+                        <select class="form-control" name="page_type" id="page_type">
+                            {{--@if(count($pageTypes ?? []) > 0)
                                 @foreach($pageTypes as $ptype)
                                     <option value="{{ $ptype->id }}">{{ $ptype->type }}</option>
                                 @endforeach
-                            @endif
+                            @endif--}}
+                            <option value="2">Shipping</option>
+                            <option value="3">Returns</option>
+                            <option value="4">Payments</option>
+                            <option value="8">Feedback</option>
+                            <option value="10">Return Policy</option>
                         </select>
                         <span class="error-message text-danger" id="page_type-error"></span>
                     </div>
                     <div class="mb-3">
                         <label for="title" class="col-form-label">Title:</label>
-                        <input type="text" name="title" class="form-control" id="title">
+                        <input type="text" name="title" class="form-control" id="page_title">
                         <span class="error-message text-danger" id="title-error"></span>
                     </div>
                     <div class="mb-3">
                         <label for="text" class="col-form-label">Text:</label>
-                        <textarea class="form-control" name="text" id="text" rows="10"></textarea>
+                        <textarea class="form-control" name="text" id="page_text" rows="10"></textarea>
                     </div>
                 </form>
             </div>

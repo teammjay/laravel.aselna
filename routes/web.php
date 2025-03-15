@@ -99,6 +99,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/stores/removelogisticcenter', 'removeLogisticCenter')->name('store.removelogisticcenter');
         Route::get('/stores/authorize/{id}', 'authorize')->name('store.authorize');
         Route::get('/store/handleCallback/', 'handleCallback')->name('store.handleCallback');
+        Route::post('/store/getstorepage/', 'getStorePage')->name('store.getstorepage');
     });
 
     Route::controller(ListingController::class)->group(function () {

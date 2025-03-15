@@ -7,9 +7,15 @@ use App\Models\ListingFeed;
 use App\Models\ListingItemDetail;
 use App\Models\ListingItemLink;
 use App\Models\ListingItemProductImage;
+use App\Models\ListingTemplate;
+use App\Models\ProductKeyFeatures;
+use App\Models\StorePage;
+use App\Models\StoreProduct;
+use App\Models\StoreType;
 use App\Models\SysFile;
 use App\Services\Auth\EbayAuthService;
 use App\Services\Marketplace\Contracts\MarketplaceServiceInterface;
+use App\Utils\ListingUtility;
 use App\Utils\XmlUtility;
 use App\Constants\FeedTypes;
 use Illuminate\Support\Facades\Log;
@@ -54,7 +60,7 @@ class EbayService implements MarketplaceServiceInterface
     public function generateCreateFeed($listingInfo, $listingId)
     {
         // Generate feed for Ebay
-        $listingItems = ListingItemLink::with('listingItem','listingItem.brand','listingItem.storeProduct','listingItem.storeProduct.product','listingItem.storeProduct.StoreTypeCategory','listingItem.storeProduct.productImages')->where('listing_id', $listingId)->get();
+        $listingItems = ListingItemLink::with('listingItem','listingItem.brand','listingItem.storeProduct','listingItem.storeProduct.product','listingItem.storeProduct.store','listingItem.storeProduct.StoreTypeCategory','listingItem.storeProduct.productImages')->where('listing_id', $listingId)->get();
         $fileSystem = $listingInfo->store->fileSystem;
         $version = 1250;
 
@@ -72,6 +78,44 @@ class EbayService implements MarketplaceServiceInterface
         foreach ($listingItems as $key=>$listingItem) {
             $itemDetail = $listingItem->item;
 
+            /*echo '<pre>';
+            print_r($itemDetail);
+            echo '</pre>';die;*/
+            $description = htmlspecialchars($itemDetail->description);
+            $store_id = $listingItem->listingItem->storeProduct->store->id;
+            $listing_template_id = $listingItem->listingItem->storeProduct->store->listing_template_id;
+            $product = $listingItem->listingItem->storeProduct->product;
+            if($listing_template_id != '') {
+                $listing_template = ListingTemplate::findOrFail($listing_template_id)->toArray();
+                /*echo '<pre>';
+                print_r($listing_template['code']);
+                echo '</pre>';die;*/
+                $template = $listing_template['code'];
+
+                $productTitle = $itemDetail->title;
+                $store = $listingItem->listingItem->storeProduct->store;
+                $descriptionParagraphs = explode(PHP_EOL,$description);
+                $keyFeatures = ProductKeyFeatures::where('product_id', $product->product_id)->orderBy('sort_order')->get();
+                $shippingText = StorePage::getStorePageByPageType($store_id,2);
+                $returnsPage = StorePage::with('PageType')->where('store_id', $store_id)->where('page_type','3')->first();
+                $returnsPageContent = \Blade::render($returnsPage->text, compact('store'));
+                $returnsText = explode(PHP_EOL,$returnsPageContent);
+                $paymentText = StorePage::getStorePageByPageType($store_id,4);
+                $feedbackText = StorePage::getStorePageByPageType($store_id,8);;
+                $returnPolicyText = StorePage::getStorePageByPageType($store_id,10);;
+
+                $html = \Blade::render($template, compact('store','productTitle', 'keyFeatures','shippingText','paymentText','feedbackText','returnPolicyText','returnsText','descriptionParagraphs'));
+                $description = preg_replace('/\s+/', ' ', trim($html));
+            }
+
+            $store_type_detail = StoreType::getStoreTypeDetailById($store_id);
+            $max_title_length = $store_type_detail->max_title_length;
+
+            $storeProduct = StoreProduct::where('product_id', $product->product_id)->where('store_id', $store_id)->first();
+            $variationtitle = ListingUtility::generateTitle($storeProduct, true, $max_title_length);
+
+            ///echo $description;die;
+
             // Add AddFixedPriceItemRequest
             $addFixedPriceItemRequest = $xml->addChild('AddFixedPriceItemRequest', null, 'urn:ebay:apis:eBLBaseComponents');
             $addFixedPriceItemRequest->addChild('ErrorLanguage', 'en_US');
@@ -83,7 +127,7 @@ class EbayService implements MarketplaceServiceInterface
             //$item->addChild('CategoryMappingAllowed', 'true');
             $item->addChild('Country', 'US');
             $item->addChild('Currency', 'USD');
-            $item->addChild('Description', htmlspecialchars($itemDetail->description));
+            $item->addChild('Description', $description);
             $item->addChild('ListingDuration', 'GTC');
             $item->addChild('ListingType', 'FixedPriceItem');
             $item->addChild('Location', '06473');
@@ -173,7 +217,7 @@ class EbayService implements MarketplaceServiceInterface
                     $nameValueList = $variationSpecifics->addChild('NameValueList');
                     $nameValueList->addChild('Name', 'Compatible Model');
                     $nameValueList->addChild('Value', $variant->device->brand->name.' '.$variant->device->name);
-                    $variationTitle = $variant->title;
+                    $variationTitle = $variationtitle.' '.$variant->device->brand->name.' '.$variant->device->name;
                     $variation->addChild('VariationTitle', $variationTitle);
                     $variationDetails = $variation->addChild('VariationProductListingDetails');
                     $variationDetails->addChild('UPC', $variant->upc);
