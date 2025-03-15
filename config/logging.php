@@ -51,7 +51,6 @@ return [
     */
 
     'channels' => [
-        
         'rotating' => [
             'driver' => 'single',
             'path' => storage_path('logs/current/laravel.log'),

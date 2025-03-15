@@ -24,6 +24,7 @@ use App\Jobs\ListingItemLinkSyncJob;
 use App\Jobs\ListingItemProductImageSyncJob;
 use App\Jobs\ListingItemSyncJob;
 use App\Jobs\ListingSyncJob;
+use App\Jobs\ListingTemplateSyncJob;
 use App\Jobs\LogisticCentreSyncJob;
 use App\Jobs\ManufacturerSyncJob;
 use App\Jobs\ProductAlternativeImagesSyncJob;
@@ -45,6 +46,7 @@ use App\Jobs\StoreSyncJob;
 use App\Jobs\StoreTypeListingSyncJob;
 use App\Jobs\StoreTypeSyncJob;
 use App\Jobs\UPCSyncJob;
+use App\Models\ListingTemplate;
 use App\Models\ProductMaterial;
 use App\Models\ProductSize;
 use App\Models\ProductType;
@@ -103,6 +105,7 @@ class SyncAllTables extends Command
 //            new ProductTagSyncJob(),
 //            new ProductImagesSyncJob(),
 //            new ProductAlternativeImagesSyncJob(),
+            new ListingTemplateSyncJob(),
         ])->dispatch();
 //        Bus::chain([
 //            ListingSyncJob::dispatch(),
