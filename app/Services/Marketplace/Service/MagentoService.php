@@ -132,10 +132,14 @@ class MagentoService implements MarketplaceServiceInterface
                     'label' => $safeTextTitle,
                     'position' => 1,
                     'disabled' => false,
-                    'file' => $imagesPath
+                    'content' => [
+                        'base64_encoded_data' => base64_encode(file_get_contents($imagesPath)),
+                        'type' => 'image/jpeg',
+                        'name' => $image->id . '.jpg'
+                    ],
                 ];
 
-                if ($image->productImage && $image->productImage->main_image == 0) {
+                if ($image->productImage && $image->productImage->main_image == 1) {
                     $mediaGalleryEntries[count($mediaGalleryEntries) - 1]['types'] = ['image', 'small_image', 'thumbnail'];
                 }
             }
@@ -215,18 +219,78 @@ class MagentoService implements MarketplaceServiceInterface
 
     private function generateImageUpdateFeed($listingInfo, $listingId)
     {
+        $listingItems = ListingItemLink::where('listing_id', $listingId)->cursor();
+        $fileSystem = $listingInfo->store->fileSystem;
+
+        $jsonFeed = [];
+        foreach ($listingItems as $listingItem) {
+            $itemDetail = $listingItem->item;
+            $images = ListingItemProductImage::where('listing_item_id', $itemDetail->id)->get();
+
+            $mediaGalleryEntries = [];
+            foreach ($images as $image) {
+                $imagesPath = $fileSystem->url_base_path . $image->path;
+                $mediaGalleryEntries[] = [
+                    'media_type' => 'image',
+                    'label' => $itemDetail->title,
+                    'position' => 1,
+                    'disabled' => false,
+                    'content' => [
+                        'base64_encoded_data' => base64_encode(file_get_contents($imagesPath)),
+                        'type' => 'image/jpeg',
+                        'name' => $image->id . '.jpg'
+                    ],
+                ];
+
+                if ($image->productImage && $image->productImage->main_image == 1) {
+                    $mediaGalleryEntries[count($mediaGalleryEntries) - 1]['types'] = ['image', 'small_image', 'thumbnail'];
+                }
+            }
+
+            $jsonFeed[]['product'] = [
+                'sku' => $itemDetail->sku,
+                'media_gallery_entries' => $mediaGalleryEntries
+            ];
+        }
+
+        FileUtility::saveToFile(public_path('feeds/magento/' . $listingId . '.json'), json_encode($jsonFeed));
     }
 
     private function generateDeleteFeed($listingInfo, $listingId)
     {
+
     }
 
     private function generateInventoryFeed($listingInfo, $listingId)
     {
+        $listingItems = ListingItemLink::where('listing_id', $listingId)->cursor();
+
+        $jsonFeed = [];
+        foreach ($listingItems as $listingItem) {
+            $item = $listingItem->item;
+            $jsonFeed[]['product'] = [
+                'sku' => $item->sku,
+                'qty' => $item->qty
+            ];
+        }
+
+        FileUtility::saveToFile(public_path('feeds/magento/' . $listingId . '.json'), json_encode($jsonFeed));
     }
 
     private function generatePriceFeed($listingInfo, $listingId)
     {
+        $listingItems = ListingItemLink::where('listing_id', $listingId)->cursor();
+
+        $jsonFeed = [];
+        foreach ($listingItems as $listingItem) {
+            $item = $listingItem->item;
+            $jsonFeed[]['product'] = [
+                'sku' => $item->sku,
+                'price' => $item->price
+            ];
+        }
+
+        FileUtility::saveToFile(public_path('feeds/magento/' . $listingId . '.json'), json_encode($jsonFeed));
     }
 
     public function syncAttributes($store)

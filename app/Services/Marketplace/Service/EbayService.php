@@ -132,6 +132,10 @@ class EbayService implements MarketplaceServiceInterface
             $item->addChild('ListingType', 'FixedPriceItem');
             $item->addChild('Location', '06473');
 
+            Log::info('Listing Item Id : '.json_encode($itemDetail->id));
+            Log::info('Listing Item StoreProduct : '.json_encode($itemDetail->storeProduct));
+            Log::info('Listing Item StoreCategory : '.json_encode($itemDetail->storeProduct->StoreTypeCategory));
+            Log::info('Listing Item Id : '.json_encode($listingItem->listingItem));
             // Add PrimaryCategory
             $primaryCategory = $item->addChild('PrimaryCategory');
             $primaryCategory->addChild('CategoryID', (isset($listingItem->listingItem->storeProduct->StoreTypeCategory) && !empty($listingItem->listingItem->storeProduct->StoreTypeCategory)) ? $listingItem->listingItem->storeProduct->StoreTypeCategory->store_type_code : '');
