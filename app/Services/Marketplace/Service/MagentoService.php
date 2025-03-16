@@ -7,6 +7,8 @@ use App\Constants\MagentoSyncConstants;
 use App\Models\Listing;
 use App\Models\ListingFeed;
 use App\Models\ListingItemLink;
+use App\Models\ListingItemProductImage;
+use App\Models\StoreCategory;
 use App\Services\Auth\MagentoAuthService;
 use App\Services\Marketplace\Contracts\MarketplaceServiceInterface;
 use App\Utils\FileUtility;
@@ -78,6 +80,7 @@ class MagentoService implements MarketplaceServiceInterface
     {
         // create a feed to insert the products in magento
         $listingItems = ListingItemLink::where('listing_id', $listingId)->cursor();
+        $fileSystem = $listingInfo->store->fileSystem;
 
         $magetoAuthservice = new MagentoAuthService($listingInfo->store->seller_id, $listingInfo->store->secret_key);
 
@@ -104,8 +107,37 @@ class MagentoService implements MarketplaceServiceInterface
             Log::info('Brands Options ID: ' . json_encode($brandsOptionsID));
 
             $BulletPoints = '';
-            foreach ($storeProduct->features as $feature) {
+            foreach ($productData->productKeyFeatures as $feature) {
                 $BulletPoints .= $feature->feature . ',';
+            }
+
+            $categoryIds = [];
+            $categoryId = $storeProduct->store_type_category_id;
+            $storeCategory = StoreCategory::where('id', $categoryId)->first();
+            $categoryIds[] = $storeCategory->sync_id;
+            while ($storeCategory->parent_id != null) {
+                $parentCategory = StoreCategory::where('id', $storeCategory->parent_id)->first();
+                $categoryIds[] = $parentCategory->sync_id;
+                $storeCategory = $parentCategory;
+            }
+            Log::info('Category Ids: ' . json_encode($categoryIds));
+
+            $images = ListingItemProductImage::where('listing_item_id', $itemDetail->id)->get();
+
+            $mediaGalleryEntries = [];
+            foreach ($images as $image) {
+                $imagesPath = $fileSystem->url_base_path . $image->path;
+                $mediaGalleryEntries[] = [
+                    'media_type' => 'image',
+                    'label' => $safeTextTitle,
+                    'position' => 1,
+                    'disabled' => false,
+                    'file' => $imagesPath
+                ];
+
+                if ($image->productImage && $image->productImage->main_image == 0) {
+                    $mediaGalleryEntries[count($mediaGalleryEntries) - 1]['types'] = ['image', 'small_image', 'thumbnail'];
+                }
             }
 
             $jsonFeed[]['product'] = [
@@ -139,10 +171,10 @@ class MagentoService implements MarketplaceServiceInterface
                         'attribute_code' => 'short_description',
                         'value' => $listingItem->description
                     ],
-//                    [
-//                        'attribute_code' => 'category_ids',
-//                        'value' => $listingItem->category_ids
-//                    ],
+                    [
+                        'attribute_code' => 'category_ids',
+                        'value' => $categoryIds
+                    ],
                     [
                         'attribute_code' => 'bullet_points',
                         'value' => $BulletPoints
@@ -173,7 +205,8 @@ class MagentoService implements MarketplaceServiceInterface
                         'qty' => $itemDetail->qty,
                         'is_in_stock' => true
                     ]
-                ]
+                ],
+                'media_gallery_entries' => $mediaGalleryEntries
             ];
         }
 

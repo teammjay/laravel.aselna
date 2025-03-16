@@ -60,6 +60,7 @@ class ListingItemImageCreate implements ShouldQueue
                     switch (strtolower($storeType->name)) {
                         case 'shopify':
                         case 'amazon':
+                        case 'magento':
                         case 'walmart':
                             $path = '/store-images/' . $store->id . '/' . $listingItem->id . '_' . $productImage->id . '.jpg';
                             break;

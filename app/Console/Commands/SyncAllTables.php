@@ -95,7 +95,7 @@ class SyncAllTables extends Command
 //            new ProductSizeSyncJob(),
 //            new ProductMaterialSyncJob(),
 //            new GenerationTypeAndTemplateSync(),
-            new ProductSyncJob(),
+//            new ProductSyncJob(),
 //            new ProductChannelDetailSyncJob(),
 //            new StoreProductSyncJob(),
 //            new ProductInterfaces(),
@@ -104,7 +104,7 @@ class SyncAllTables extends Command
 //            new ProductSearchTermSyncJob(),
 //            new ProductTypeKeywordSyncJob(),
 //            new ProductTagSyncJob(),
-//            new ProductImagesSyncJob(),
+            new ProductImagesSyncJob(),
 //            new ProductAlternativeImagesSyncJob(),
 //            new ListingTemplateSyncJob(),
         ])->dispatch();

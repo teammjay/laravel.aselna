@@ -22,6 +22,7 @@ use App\Models\Manufacturer;
 use App\Models\ProductSearchTerm;
 use App\Models\ProductTitleKeyword;
 use App\Models\ProductType;
+use App\Models\StoreCategory;
 use App\Models\StoreProduct;
 use App\Models\StoreType;
 use App\Models\StoreTypeCategory;
@@ -679,12 +680,19 @@ class ListingController extends Controller
             $query->where('store_product.store_id', $store_id);
             $products = $query->get();
             $storeCategories = [];
+            $store = null;
             if ($store_id) {
-                $storeCategories = StoreTypeCategory::select('store_type_category.*')
-                    ->leftJoin('store_type', 'store_type.id', '=', 'store_type_category.store_type_id')
-                    ->leftJoin('store', 'store_type.id', '=', 'store.store_type_id')
-                    ->where('store.id', $store_id)
-                    ->get();
+                $store = Store::with('storeType')->find($store_id);
+
+                if ($store && $store->storeType->name === 'Magento') {
+                    $storeCategories = StoreCategory::where('store_id', $store_id)->get();
+                } else {
+                    $storeCategories = StoreTypeCategory::select('store_type_category.*')
+                        ->leftJoin('store_type', 'store_type.id', '=', 'store_type_category.store_type_id')
+                        ->leftJoin('store', 'store_type.id', '=', 'store.store_type_id')
+                        ->where('store.id', $store_id)
+                        ->get();
+                }
             }
 
             $storeTypeName = Store::select('store_type.name as storeTypeName')
@@ -695,7 +703,7 @@ class ListingController extends Controller
             if ($step == 2) {
                 $view = view('listing.selected_product_list', compact('products', 'storeCategories','storeTypeName'))->render();
             } else if ($step == 3) {
-                $view = view('listing.select_device_product_list', compact('products', 'storeCategories'))->render();
+                $view = view('listing.select_device_product_list', compact('products', 'storeCategories','storeTypeName'))->render();
             }
 
             if ($request->ajax()) {
