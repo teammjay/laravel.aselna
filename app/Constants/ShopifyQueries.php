@@ -5,14 +5,19 @@ namespace App\Constants;
 class ShopifyQueries
 {
     public static string $saveProduct = <<<GQL
-        mutation productCreate(\$input: ProductInput!) {
-            productCreate(input: \$input) {
+        mutation (\$productSet : ProductSetInput!) {
+            productSet(input : \$productSet) {
                 product {
                     id
                     handle
-                    status
+                    variants(first : 1) {
+                        nodes {
+                            id
+                        }
+                    }
                 }
                 userErrors {
+                    code
                     field
                     message
                 }
@@ -120,6 +125,27 @@ class ShopifyQueries
         }
       }
     }
+    GQL;
+    public static $createCollection = <<<GQL
+        mutation (\$collection : CollectionInput!) {
+            collectionCreate(input : \$collection) {
+                collection {
+                    id
+                }
+            }
+        }
+    GQL;
+
+    public static $getPublications = <<<GQL
+        query {
+            publications (first: 10) {
+                edges {
+                    node {
+                        id
+                    }
+                }
+            }
+        }
     GQL;
 
 }

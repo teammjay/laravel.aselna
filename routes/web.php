@@ -98,6 +98,8 @@ Route::middleware('auth')->group(function () {
         Route::post('/stores/saveLogisticCenter', 'saveLogisticCenter')->name('store.logisticcenter');
         Route::post('/stores/removelogisticcenter', 'removeLogisticCenter')->name('store.removelogisticcenter');
         Route::get('/stores/authorize/{id}', 'authorize')->name('store.authorize');
+        Route::post('/stores/copycategories', 'copyCategories')->name('store.copycategories');
+        Route::post('/stores/synccategories', 'syncCategories')->name('store.synccategories');
         Route::get('/store/handleCallback/', 'handleCallback')->name('store.handleCallback');
         Route::post('/store/getstorepage/', 'getStorePage')->name('store.getstorepage');
     });

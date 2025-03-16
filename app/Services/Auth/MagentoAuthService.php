@@ -20,7 +20,7 @@ class MagentoAuthService
         $this->client = new Client();
         $this->clientId = $clientId;
         $this->clientSecret = $clientSecret;
-        $this->endpoint = env('MAGENTO_API_ENDPOINT');
+//        $this->endpoint = env('MAGENTO_API_ENDPOINT');
         $this->endpoint = 'https://magento.aselna.com';
     }
 
@@ -35,6 +35,8 @@ class MagentoAuthService
             'username' => $this->clientId,
             'password' => $this->clientSecret,
         ];
+
+        Log::info('Request: ' . json_encode($body));
 
         $request = new Request('POST', $this->endpoint . '/rest/V1/integration/admin/token', $headers);
         $res = $this->client->sendAsync($request, ['verify' => false, 'json' => $body])->wait();
@@ -133,6 +135,35 @@ class MagentoAuthService
         } catch (\Exception $e) {
             return false;
         }
+    }
+
+
+    public function createCategory($name, $parent_id = 2)
+    {
+        $accessToken = $this->authenticate();
+        Log::info('Access Token Created ' . $accessToken);
+
+        $headers = [
+            'Content-Type' => 'application/json',
+            'Accept' => 'application/json',
+            'Authorization' => 'Bearer ' . $accessToken,
+        ];
+
+        $body = [
+            'category' => [
+                'parent_id' => $parent_id,
+                'name' => $name,
+                'is_active' => true,
+                'include_in_menu' => $parent_id == 2,
+            ]
+        ];
+
+        Log::info('Request: ' . json_encode($body));
+
+        $request = new Request('POST', $this->endpoint . '/rest/V1/categories', $headers);
+        $response = $this->client->sendAsync($request, ['json' => $body])->wait();
+
+        return json_decode($response->getBody(), true);
     }
 
     public function createAttribute($attributeData)

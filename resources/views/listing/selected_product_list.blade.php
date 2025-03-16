@@ -39,7 +39,11 @@
                     <option value=""></option>
                     @if(count($storeCategories ?? []) > 0)
                         @foreach($storeCategories as $key2=>$sCat)
-                            <option value="{{ $sCat->id }}" {{ ($sCat->id == $product->store_type_category_id) ? 'selected' : '' }}>{{ $sCat->name }}</option>
+                            @if($storeTypeName->storeTypeName === 'Magento')
+                                <option value="{{ $sCat->id }}" {{ ($sCat->id == $product->store_category_id) ? 'selected' : '' }}>{{ $sCat->name }}</option>
+                            @else
+                                <option value="{{ $sCat->id }}" {{ ($sCat->id == $product->store_type_category_id) ? 'selected' : '' }}>{{ $sCat->name }}</option>
+                            @endif
                         @endforeach
                     @endif
                 </select>

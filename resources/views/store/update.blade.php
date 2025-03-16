@@ -865,6 +865,8 @@
                 </div>
                 <div class="tab-pane fade" id="tab10" role="tabpanel" aria-labelledby="categories-tab">
                     <button type="button" class="btn btn-secondary" id="add_category" data-toggle="modal" data-target="#addCategoryModal" ><i class="fa fa-plus-square"></i> Create</button>
+                    <button type="button" class="btn btn-secondary" id="copy_categories" data-toggle="modal" ><i class="fa fa-plus-square"></i> Copy Categories </button>
+                    <button type="button" class="btn btn-secondary" id="sync_to_store" data-toggle="modal" ><i class="fa fa-plus-square"></i>Sync to Store</button>
 {{--                    <button type="button" class="btn btn-secondary" id="add_category" data-toggle="modal" data-target="#selectCategoryModal" ><i class="fa fa-plus-square"></i> Add</button>--}}
                     <table class="table table-bordered mt-2">
                         <thead>
@@ -1428,6 +1430,58 @@
                         }
                     });
                 }
+            });
+
+            $('#copy_categories').click(function() {
+                $.ajax({
+                    type: 'POST',
+                    url: "{{ route('store.copycategories') }}",
+                    data: {
+                        store_id: store_id
+                    },
+                    headers: {
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    },
+                    dataType: 'json',
+                    success: function(response) {
+                        alert(response.message);
+                        location.reload();
+                    },
+                    error: function(xhr) {
+                        if (xhr.status === 422) {
+                            var errors = xhr.responseJSON.errors;
+                            alert(errors[Object.keys(errors)[0]][0]);
+                        } else {
+                            alert('An error occurred while copying categories');
+                        }
+                    }
+                });
+            });
+
+            $('#sync_to_store').click(function() {
+                $.ajax({
+                    type: 'POST',
+                    url: "{{ route('store.synccategories') }}",
+                    data: {
+                        store_id: store_id
+                    },
+                    headers: {
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    },
+                    dataType: 'json',
+                    success: function(response) {
+                        alert(response.message);
+                        location.reload();
+                    },
+                    error: function(xhr) {
+                        if (xhr.status === 422) {
+                            var errors = xhr.responseJSON.errors;
+                            alert(errors[Object.keys(errors)[0]][0]);
+                        } else {
+                            alert('An error occurred while syncing categories');
+                        }
+                    }
+                });
             });
         });
     </script>

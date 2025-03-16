@@ -24,6 +24,7 @@ use App\Jobs\ListingItemLinkSyncJob;
 use App\Jobs\ListingItemProductImageSyncJob;
 use App\Jobs\ListingItemSyncJob;
 use App\Jobs\ListingSyncJob;
+use App\Jobs\ListingTemplateSyncJob;
 use App\Jobs\LogisticCentreSyncJob;
 use App\Jobs\ManufacturerSyncJob;
 use App\Jobs\ProductAlternativeImagesSyncJob;
@@ -32,16 +33,23 @@ use App\Jobs\ProductColorSync;
 use App\Jobs\ProductConditionJob;
 use App\Jobs\ProductImagesSyncJob;
 use App\Jobs\ProductInterfaces;
+use App\Jobs\ProductMaterialSyncJob;
 use App\Jobs\ProductSearchTermSyncJob;
+use App\Jobs\ProductSizeSyncJob;
 use App\Jobs\ProductSyncJob;
 use App\Jobs\ProductTagSyncJob;
 use App\Jobs\ProductTypeKeywordSyncJob;
 use App\Jobs\ShippingCarrierJob;
+use App\Jobs\ShopifyCollectionDeviceSyncJob;
+use App\Jobs\StoreCategorySyncJob;
 use App\Jobs\StoreProductSyncJob;
 use App\Jobs\StoreSyncJob;
 use App\Jobs\StoreTypeListingSyncJob;
 use App\Jobs\StoreTypeSyncJob;
 use App\Jobs\UPCSyncJob;
+use App\Models\ListingTemplate;
+use App\Models\ProductMaterial;
+use App\Models\ProductSize;
 use App\Models\ProductType;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Bus;
@@ -84,6 +92,8 @@ class SyncAllTables extends Command
 //            new CarrierSyncJob(),
 //            new ShippingCarrierJob(),
 //            new ProductColorSync(),
+//            new ProductSizeSyncJob(),
+//            new ProductMaterialSyncJob(),
 //            new GenerationTypeAndTemplateSync(),
 //            new ProductSyncJob(),
 //            new ProductChannelDetailSyncJob(),
@@ -93,27 +103,29 @@ class SyncAllTables extends Command
 //            new LogisticCentreSyncJob(),
 //            new ProductSearchTermSyncJob(),
 //            new ProductTypeKeywordSyncJob(),
-        new ProductTagSyncJob(),
-//            new ProductImagesSyncJob(),
+//            new ProductTagSyncJob(),
+            new ProductImagesSyncJob(),
 //            new ProductAlternativeImagesSyncJob(),
+//            new ListingTemplateSyncJob(),
         ])->dispatch();
 //        Bus::chain([
-            // ListingSyncJob::dispatch(),
-            // ListingItemSyncJob::dispatch(),
-            // ListingItemDataSyncJob::dispatch(),
-            // ListingItemLinkSyncJob::dispatch(),
-            // ListingItemProductImageSyncJob::dispatch(),
-            // StoreTypeListingSyncJob::dispatch(),
-            // ListingFeedSyncJob::dispatch(),
-            // UPCSyncJob::dispatch(),
-            // LogisticCentreSyncJob::dispatch(),
+//            ListingSyncJob::dispatch(),
+//            ListingItemSyncJob::dispatch(),
+//            ListingItemDataSyncJob::dispatch(),
+//            ListingItemLinkSyncJob::dispatch(),
+//            ListingItemProductImageSyncJob::dispatch(),
+//            StoreTypeListingSyncJob::dispatch(),
+//            ListingFeedSyncJob::dispatch(),
+//            UPCSyncJob::dispatch(),
+//            LogisticCentreSyncJob::dispatch(),
 //            ProductImagesSyncJob::dispatch(),
-            // ProductAlternativeImagesSyncJob::dispatch(),
+//            ProductAlternativeImagesSyncJob::dispatch(),
 //        ]);
 //        DataPatch::dispatch();
 //        FeedGenerationJob::dispatch('70ce4255-9a11-415d-8edf-c6f4112da17d');
-//        ListingItemImageCreate::dispatch('31d15228-8b63-4409-8e38-b95a1b2e83fc');
+//        ListingItemImageCreate::dispatch('aae136d8-6f03-4106-904a-8fda6518b031');
 //        FetchAmazonOrdersJob::dispatch();
+//        StoreCategorySyncJob::dispatch('94428796-cdf9-dc2b-a1e7-aa4100066fd9');
 
     }
 }

@@ -26,7 +26,7 @@ class StoreCategory extends Model
         });
     }
 
-    protected $fillable = ['store_id','code','name','url','text_generation_template_id'];
+    protected $fillable = ['store_id','code','name','url','text_generation_template_id','parent_id','sync_id'];
 
     public function store()
     {

@@ -98,6 +98,7 @@ class CategorySyncJob implements ShouldQueue
             [
                 'id' => $storeTypeCategory->id,
                 'store_type_id' => $storeTypeCategory->channel_id,
+                'store_type_code' => $storeTypeCategory->channel_code,
                 'parent_id' => $storeTypeCategory->parent_id ?? null,
                 'name' => $storeTypeCategory->name,
                 'code' => $storeTypeCategory->code
