@@ -41,6 +41,7 @@ use App\Jobs\ProductTagSyncJob;
 use App\Jobs\ProductTypeKeywordSyncJob;
 use App\Jobs\ShippingCarrierJob;
 use App\Jobs\ShopifyCollectionDeviceSyncJob;
+use App\Jobs\StoreCategorySyncJob;
 use App\Jobs\StoreProductSyncJob;
 use App\Jobs\StoreSyncJob;
 use App\Jobs\StoreTypeListingSyncJob;
@@ -94,7 +95,7 @@ class SyncAllTables extends Command
 //            new ProductSizeSyncJob(),
 //            new ProductMaterialSyncJob(),
 //            new GenerationTypeAndTemplateSync(),
-//            new ProductSyncJob(),
+            new ProductSyncJob(),
 //            new ProductChannelDetailSyncJob(),
 //            new StoreProductSyncJob(),
 //            new ProductInterfaces(),
@@ -105,7 +106,7 @@ class SyncAllTables extends Command
 //            new ProductTagSyncJob(),
 //            new ProductImagesSyncJob(),
 //            new ProductAlternativeImagesSyncJob(),
-            new ListingTemplateSyncJob(),
+//            new ListingTemplateSyncJob(),
         ])->dispatch();
 //        Bus::chain([
 //            ListingSyncJob::dispatch(),
@@ -124,7 +125,7 @@ class SyncAllTables extends Command
 //        FeedGenerationJob::dispatch('70ce4255-9a11-415d-8edf-c6f4112da17d');
 //        ListingItemImageCreate::dispatch('aae136d8-6f03-4106-904a-8fda6518b031');
 //        FetchAmazonOrdersJob::dispatch();
-//        ShopifyCollectionDeviceSyncJob::dispatch('6c7009ce-eac1-a995-a986-27d5df0103ac');
+//        StoreCategorySyncJob::dispatch('94428796-cdf9-dc2b-a1e7-aa4100066fd9');
 
     }
 }

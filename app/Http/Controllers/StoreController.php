@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\MarketplaceCategorySyncJob;
+use App\Jobs\StoreCategorySyncJob;
 use App\Models\DeviceTypes;
 use App\Models\ListingTemplate;
 use App\Models\LogisticCenter;
@@ -686,6 +688,22 @@ class StoreController extends Controller
 
         return redirect('/stores');
 
+    }
+
+    public function copyCategories(Request $request) {
+        $store_id = $request->get('store_id');
+        if($store_id) {
+            StoreCategorySyncJob::dispatch($store_id);
+        }
+        return response()->json(['success' => true, 'message' => 'Categories are being copied in the background']);
+    }
+
+    public function syncCategories(Request $request) {
+        $store_id = $request->get('store_id');
+        if($store_id) {
+            MarketplaceCategorySyncJob::dispatch($store_id);
+        }
+        return response()->json(['success' => true, 'message' => 'Categories are being synced in the background']);
     }
 
     // Handle eBay Callback
