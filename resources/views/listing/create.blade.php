@@ -966,6 +966,7 @@
         $(document).ready(function() {
 
             $('#productsTable').DataTable();
+            $('#productListingTable').DataTable({});
             $('#listing_store').select2();
             $(document).on('click', '#searchBtn', function() {
                 if($('#listing_store').val() == ''){
@@ -2247,7 +2248,7 @@
                 productDetail[pid]['price_overwrite'] = price_overwrite;
                 productDetail[pid]['store_type_category_id'] = store_type_category_id;
             });
-            $('#productListingTable').DataTable({});
+
             $("#ajax-preloader").show();
             $.ajax({
                 url: "{{ route('listing.getselectedproducts') }}",
