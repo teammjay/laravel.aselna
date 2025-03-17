@@ -488,7 +488,7 @@
 
                 </div>
                 <div class="tab-pane fade" id="tab3" role="tabpanel" aria-labelledby="variant-tab">
-                    <table class="table table-bordered mt-2">
+                    <table class="table table-bordered mt-2" id="variantTable">
                         <thead>
                             <tr>
                                 <th>Brand</th>
@@ -585,7 +585,21 @@
             $('#last_sale_date').datepicker();
         });
 
-
+        $('#variantTable').DataTable({
+            "lengthChange": false,
+            "autoWidth": false,
+            "processing": false,
+            "serverSide": false,
+            "searching": false,
+            "paging": false,
+            "info": false,
+            /*columnDefs: [
+                {
+                    targets: [5,8,9],
+                    orderable: false
+                }
+            ]*/
+        });
 
     </script>
 @stop
