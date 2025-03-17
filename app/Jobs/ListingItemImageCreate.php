@@ -108,6 +108,8 @@ class ListingItemImageCreate implements ShouldQueue
         $remoteFilePath = $rootPath . $path;
         Log::info("Remote Path :: " . $remoteFilePath);
 
+        $this->createFtpDirectory($ftpConn, dirname($remoteFilePath));
+
         //Upload the file
         if (ftp_put($ftpConn, $remoteFilePath, $localFilePath, FTP_BINARY)) {
             echo "File uploaded successfully to $remoteFilePath";
@@ -117,5 +119,19 @@ class ListingItemImageCreate implements ShouldQueue
 
         // Close FTP connection
         ftp_close($ftpConn);
+    }
+
+    function createFtpDirectory($ftpConn, $dirPath) {
+        $parts = explode('/', $dirPath);
+        $currentDir = '';
+    
+        foreach ($parts as $part) {
+            if (empty($part)) continue;
+            $currentDir .= "/$part";
+    
+            if (!@ftp_chdir($ftpConn, $currentDir)) { // Check if directory exists
+                ftp_mkdir($ftpConn, $currentDir); // Create directory if it does not exist
+            }
+        }
     }
 }
