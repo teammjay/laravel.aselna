@@ -42,7 +42,7 @@ class StorePagesJobSync implements ShouldQueue
             ],[
                 'id' => $storePage->id,
                 'store_id' => $storePage->store_id,
-                'page_type_id' => $storePage->page_type,
+                'page_type' => $storePage->page_type,
                 'title' => $storePage->title,
                 'text' => $storePage->text,
             ]
