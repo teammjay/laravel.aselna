@@ -27,7 +27,7 @@ class StorePage extends Model
         });
     }
 
-    protected $fillable = ['store_id','page_type','title','text','created_by','updated_by','created_at','updated_at'];
+    protected $fillable = ['store_id','page_type','title','text','created_by','updated_by','created_at','updated_at','page_type_id'];
 
     public function PageType()
     {
