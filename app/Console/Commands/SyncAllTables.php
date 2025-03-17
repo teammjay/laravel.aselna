@@ -42,6 +42,7 @@ use App\Jobs\ProductTypeKeywordSyncJob;
 use App\Jobs\ShippingCarrierJob;
 use App\Jobs\ShopifyCollectionDeviceSyncJob;
 use App\Jobs\StoreCategorySyncJob;
+use App\Jobs\StorePagesJobSync;
 use App\Jobs\StoreProductSyncJob;
 use App\Jobs\StoreSyncJob;
 use App\Jobs\StoreTypeListingSyncJob;
@@ -75,10 +76,10 @@ class SyncAllTables extends Command
      */
     public function handle()
     {
-        // Bus::chain([
+        Bus::chain([
 //            new FileSystemSyncJob(),
 //            new StoreTypeSyncJob(),
-//            new StoreSyncJob(),
+//           new StoreSyncJob(),
 //            new ManufacturerSyncJob(),
 //            new DeviceTypesSyncJob(),
 //            new DeviceRatingSyncJob(),
@@ -106,8 +107,9 @@ class SyncAllTables extends Command
 //            new ProductTagSyncJob(),
             // new ProductImagesSyncJob(),
 //            new ProductAlternativeImagesSyncJob(),
-//            new ListingTemplateSyncJob(),
-        // ])->dispatch();
+        //    new ListingTemplateSyncJob(),
+            new StorePagesJobSync(),
+        ])->dispatch();
 //        Bus::chain([
 //            ListingSyncJob::dispatch(),
 //            ListingItemSyncJob::dispatch(),
@@ -122,7 +124,7 @@ class SyncAllTables extends Command
 //            ProductAlternativeImagesSyncJob::dispatch(),
 //        ]);
 //        DataPatch::dispatch();
-       FeedGenerationJob::dispatch('85b7ae75-2bbc-4b03-b9b5-dc81ad5c06b0');
+    //    FeedGenerationJob::dispatch('85b7ae75-2bbc-4b03-b9b5-dc81ad5c06b0');
     //    ListingItemImageCreate::dispatch('c7ace7e0-190b-49f7-9ed9-11bc7d1fd60c');
 //        FetchAmazonOrdersJob::dispatch();
 //        StoreCategorySyncJob::dispatch('94428796-cdf9-dc2b-a1e7-aa4100066fd9');
