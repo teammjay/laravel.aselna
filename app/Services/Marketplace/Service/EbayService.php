@@ -241,7 +241,7 @@ class EbayService implements MarketplaceServiceInterface
                     $variationTitle = $variationtitle.' '.$variant->device->brand->name.' '.$variant->device->name;
                     $variation->addChild('VariationTitle', $variationTitle);
                     $variationDetails = $variation->addChild('VariationProductListingDetails');
-                    $variationDetails->addChild('UPC', $variant->upc);
+                    $variationDetails->addChild('UPC', $itemDetail->upc);
                     $compatibleModels[] = $variant->device->brand->name.' '.$variant->device->name;
                 }
             }
@@ -250,6 +250,8 @@ class EbayService implements MarketplaceServiceInterface
             $variationSpecificsSet = $variations->addChild('VariationSpecificsSet');
             $nameValueList = $variationSpecificsSet->addChild('NameValueList');
             $nameValueList->addChild('Name', 'Compatible Model');
+            // sort the compatible models
+            sort($compatibleModels);
             foreach ($compatibleModels as $model) {
                 $nameValueList->addChild('Value', $model);
             }
@@ -371,8 +373,11 @@ class EbayService implements MarketplaceServiceInterface
         /*echo '<pre>';
         print_r($store);
         echo '</pre>';die;*/
+        $clientId = env('EBAY_CLIENT_ID');
+        $clientSecret = env('EBAY_CLIENT_SECRET');
+        $redirectUri = env('EBAY_REDIRECT_URI');
 
-        $authService = new EbayAuthService($store->seller_id, $store->secret_key,$store->access_key,$store->user_id);
+        $authService = new EbayAuthService($clientId, $clientSecret, $redirectUri,$store->user_id);
 
         $fileName = $listingId.'.xml';
         $filePath = public_path('feeds/ebay/' . $fileName);
@@ -411,12 +416,18 @@ class EbayService implements MarketplaceServiceInterface
         $listingInfo = Listing::where('id', $listingId)->first();
         $store = $listingInfo->store;
 
-        $this->authService = new EbayAuthService($store->seller_id, $store->secret_key,$store->access_key,$store->user_id);
+        $clientId = env('EBAY_CLIENT_ID');
+        $clientSecret = env('EBAY_CLIENT_SECRET');
+        $redirectUri = env('EBAY_REDIRECT_URI');
+
+        $authService = new EbayAuthService($clientId, $clientSecret, $redirectUri,$store->user_id);
 
         $feedInfo = ListingFeed::where('listing_id', $listingId)->first();
+        Log::info('Feed Response :: ' . json_encode($feedInfo));
 
         if($feedInfo){
-            $response = $this->authService->getResultFeed($feedInfo->feed_id,$listingId);
+            Log::info('Feed Id : '.$feedInfo->feed_id);
+            $response = $authService->getResultFeed($feedInfo->feed_id,$listingId);
             //$response = $this->authService->getResultFeed('task-1-1275361',$listingId);
             return $response;
         }
@@ -444,9 +455,9 @@ class EbayService implements MarketplaceServiceInterface
         $listingInfo = Listing::where('id', $listingId)->first();
         $store = $listingInfo->store;
 
-        $this->authService = new EbayAuthService($store->seller_id, $store->secret_key,$store->access_key,$store->user_id);
+        $authService = new EbayAuthService($store->seller_id, $store->secret_key,$store->access_key,$store->user_id);
 
-        $response = $this->authService->downloadInputFeed($taskID,$listingId);
+        $response = $authService->downloadInputFeed($taskID,$listingId);
 
         return $response;
 

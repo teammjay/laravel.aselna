@@ -76,7 +76,7 @@ class SyncAllTables extends Command
      */
     public function handle()
     {
-        Bus::chain([
+        // Bus::chain([
 //            new FileSystemSyncJob(),
 //            new StoreTypeSyncJob(),
 //           new StoreSyncJob(),
@@ -108,8 +108,8 @@ class SyncAllTables extends Command
             // new ProductImagesSyncJob(),
 //            new ProductAlternativeImagesSyncJob(),
         //    new ListingTemplateSyncJob(),
-            new StorePagesJobSync(),
-        ])->dispatch();
+            // new StorePagesJobSync(),
+        // ])->dispatch();
 //        Bus::chain([
 //            ListingSyncJob::dispatch(),
 //            ListingItemSyncJob::dispatch(),
@@ -124,8 +124,8 @@ class SyncAllTables extends Command
 //            ProductAlternativeImagesSyncJob::dispatch(),
 //        ]);
 //        DataPatch::dispatch();
-    //    FeedGenerationJob::dispatch('85b7ae75-2bbc-4b03-b9b5-dc81ad5c06b0');
-    //    ListingItemImageCreate::dispatch('c7ace7e0-190b-49f7-9ed9-11bc7d1fd60c');
+    //    FeedGenerationJob::dispatch('eb617a7e-804b-4a69-bbc2-3f717dc067d2');
+    //    ListingItemImageCreate::dispatch('4aada5a1-ecfb-49f4-a8b7-b700a4fa9c16');
 //        FetchAmazonOrdersJob::dispatch();
 //        StoreCategorySyncJob::dispatch('94428796-cdf9-dc2b-a1e7-aa4100066fd9');
 
