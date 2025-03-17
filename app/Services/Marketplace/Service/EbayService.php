@@ -101,10 +101,27 @@ class EbayService implements MarketplaceServiceInterface
                 $returnsPageContent = \Blade::render($returnsPage->text, compact('store'));
                 $returnsText = explode(PHP_EOL,$returnsPageContent);
                 $paymentText = StorePage::getStorePageByPageType($store_id,4);
-                $feedbackText = StorePage::getStorePageByPageType($store_id,8);;
-                $returnPolicyText = StorePage::getStorePageByPageType($store_id,10);;
+                $feedbackText = StorePage::getStorePageByPageType($store_id,8);
+                $returnPolicyText = StorePage::getStorePageByPageType($store_id,10);
+                $images = ListingItemProductImage::where('listing_item_id', $itemDetail->id)->get();
+                $storeDetails = [
+                    'logoUrl' => '',
+                    'feedbackUrl' => '',
+                    'storeUrl' => '',
+                    'contactUsUrl' => '',
+                    'aboutUsUrl' => '',
+                    'newsletterUrl' => '',
+                    'copyrightText' => ''
+                ];
+                $pimages = [];
+                foreach ($images as $image) {
+                    if ($image->productImage) {
+                        $imagesPath = $fileSystem->url_base_path . $image->path;
+                        $pimages[] = $imagesPath;
+                    }
+                }
 
-                $html = \Blade::render($template, compact('store','productTitle', 'keyFeatures','shippingText','paymentText','feedbackText','returnPolicyText','returnsText','descriptionParagraphs'));
+                $html = \Blade::render($template, compact('store','productTitle', 'keyFeatures','shippingText','paymentText','feedbackText','returnPolicyText','returnsText','descriptionParagraphs','pimages','product','storeDetails'));
                 $description = preg_replace('/\s+/', ' ', trim($html));
             }
 
