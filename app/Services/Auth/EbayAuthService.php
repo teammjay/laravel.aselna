@@ -127,6 +127,7 @@ class EbayAuthService
 
         try {
             $accessToken = $this->refreshToken();
+            Log::info('Access Token ' . $accessToken);
 
             $response = $this->client->post('sell/feed/v1/task', [
                 'verify' => false,
@@ -140,6 +141,7 @@ class EbayAuthService
                     'feedType' => 'LMS_ADD_FIXED_PRICE_ITEM'
                 ],
             ]);
+            Log::info('Task Created ' . $response->getBody());
 
             $headerValue = $response->getHeader('location');
 
@@ -151,6 +153,7 @@ class EbayAuthService
             }
 
         } catch (RequestException $e) {
+            Log::info('Task Created Error ' . $e->getMessage());
             if ($e->hasResponse()) {
                 $errorBody = json_decode($e->getResponse()->getBody()->getContents(), true);
                 $this->handleApiErrors($errorBody);
@@ -187,7 +190,7 @@ class EbayAuthService
 
             if (file_exists($savePath)) {
                 response()->download($savePath);
-                return $savePath;
+                return 'result-feeds/ebay/'.$listingId.'.zip';
             }
 
             return $response->getStatusCode() === 200 ? $savePath : false;
