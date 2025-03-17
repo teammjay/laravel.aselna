@@ -261,7 +261,7 @@ class EbayService implements MarketplaceServiceInterface
     public function generatePriceFeed($listingInfo, $listingId){
 
         $listingItems = ListingItemLink::with('listingItem','listingItem.brand','listingItem.storeProduct','listingItem.storeProduct.product','listingItem.storeProduct.productImages')->where('listing_id', $listingId)->cursor();
-        $version = 1;
+        $version = 1250;
 
         $xml = new \SimpleXMLElement('<?xml version="1.0" encoding="UTF-8"?><BulkDataExchangeRequests xmlns="urn:ebay:apis:eBLBaseComponents"></BulkDataExchangeRequests>');
 
@@ -279,7 +279,7 @@ class EbayService implements MarketplaceServiceInterface
             $addFixedPriceItemRequest = $xml->addChild('ReviseInventoryStatusRequest', null, 'urn:ebay:apis:eBLBaseComponents');
             $addFixedPriceItemRequest->addChild('ErrorLanguage', 'en_US');
             $addFixedPriceItemRequest->addChild('Version', $version);
-            $addFixedPriceItemRequest->addChild('WarningLevel', 'High');
+            //$addFixedPriceItemRequest->addChild('WarningLevel', 'High');
 
             $inventoryStatus = $xml->addChild('InventoryStatus');
             $inventoryStatus->addChild('SKU', $itemDetail->sku);
@@ -298,7 +298,7 @@ class EbayService implements MarketplaceServiceInterface
     public function generateDeleteFeed($listingInfo, $listingId){
 
         $listingItems = ListingItemLink::with('listingItem','listingItem.brand','listingItem.storeProduct','listingItem.storeProduct.product','listingItem.storeProduct.productImages')->where('listing_id', $listingId)->cursor();
-        $version = 1;
+        $version = 1250;
 
         $xml = new \SimpleXMLElement('<?xml version="1.0" encoding="UTF-8"?><BulkDataExchangeRequests xmlns="urn:ebay:apis:eBLBaseComponents"></BulkDataExchangeRequests>');
 
@@ -315,7 +315,7 @@ class EbayService implements MarketplaceServiceInterface
             $addFixedPriceItemRequest = $xml->addChild('EndFixedPriceItemRequest', null, 'urn:ebay:apis:eBLBaseComponents');
             $addFixedPriceItemRequest->addChild('ErrorLanguage', 'en_US');
             $addFixedPriceItemRequest->addChild('Version', $version);
-            $addFixedPriceItemRequest->addChild('WarningLevel', 'High');
+            //$addFixedPriceItemRequest->addChild('WarningLevel', 'High');
             $addFixedPriceItemRequest->addChild('EndingReason', 'NotAvailable');
             $addFixedPriceItemRequest->addChild('SKU', $itemDetail->sku);
         }
@@ -329,7 +329,7 @@ class EbayService implements MarketplaceServiceInterface
     public function generateShipmentUpdateFeed($listingInfo, $listingId){
 
         $listingItems = ListingItemLink::with('listingItem','listingItem.brand','listingItem.storeProduct','listingItem.storeProduct.product','listingItem.storeProduct.productImages')->where('listing_id', $listingId)->cursor();
-        $version = 1;
+        $version = 1250;
 
         $xml = new \SimpleXMLElement('<?xml version="1.0" encoding="UTF-8"?><BulkDataExchangeRequests xmlns="urn:ebay:apis:eBLBaseComponents"></BulkDataExchangeRequests>');
 
@@ -346,7 +346,7 @@ class EbayService implements MarketplaceServiceInterface
             $addFixedPriceItemRequest = $xml->addChild('SetShipmentTrackingInfoRequest');
             $addFixedPriceItemRequest->addChild('ErrorLanguage', 'en_US');
             $addFixedPriceItemRequest->addChild('Version', $version);
-            $addFixedPriceItemRequest->addChild('WarningLevel', 'High');
+            //$addFixedPriceItemRequest->addChild('WarningLevel', 'High');
             $addFixedPriceItemRequest->addChild('OrderID', 'NotAvailable');
 
             $shipment = $xml->addChild('Shipment');
@@ -451,12 +451,7 @@ class EbayService implements MarketplaceServiceInterface
     public function getOrders()
     {
         $this->authService = new EbayAuthService();
-
         $response = $this->authService->getOrders();
-
-        /*echo '<pre>';
-        print_r($response);
-        echo '</pre>';die;*/
 
         return $response;
 

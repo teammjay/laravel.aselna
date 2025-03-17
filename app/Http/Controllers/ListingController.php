@@ -1897,12 +1897,15 @@ class ListingController extends Controller
         return response()->json(['error' => true, 'message' => 'Something went wrong! Please try again!']);
     }
 
-    private function generateMPN($suffix='GI')
+    private function generateMPN($suffix='')
     {
         $randomPart = strtoupper(Str::random(6)); // 6 random alphanumeric characters
         //$suffix = 'GI'; // Fixed suffix
-
-        return "{$randomPart}-{$suffix}";
+        if($suffix != '') {
+            return "{$randomPart}-{$suffix}";
+        }else{
+            return "{$randomPart}";
+        }
     }
 
     public function syncListingPrice(Request $request)
