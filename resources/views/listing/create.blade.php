@@ -810,6 +810,8 @@
                             deviceSeries.push($(this).val())
                         });
 
+                        let store_type = $('#listing_store option:selected').data('storetype');
+
                         if($('#title_template').val() == ''){
                             alert('Please select title template first and update.');
                             return false;
@@ -837,6 +839,7 @@
                                 device_seperator:device_seperator,
                                 selected_device:selected_device,
                                 product_detail:productDetail,
+                                store_type:store_type
                             },
                             /* processData: false,
                              contentType: false,*/
@@ -891,6 +894,8 @@
                             let formData = new FormData(form);
                             formData.append('store_id', $('#listing_store').val());
                             formData.append('product_models', JSON.stringify(product_models));
+                            let store_type = $('#listing_store option:selected').data('storetype');
+                            formData.append('store_type', store_type);
                             $("#ajax-preloader").show();
                             $.ajax({
                                 type: 'POST',
