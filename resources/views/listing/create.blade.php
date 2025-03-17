@@ -2170,6 +2170,7 @@
                             "searching": false,
                             "paging": false,
                             "info": false,
+                            "order": [[ 6, "desc" ]],
                             columnDefs: [
                                 {
                                     targets: [0],
@@ -2472,6 +2473,7 @@
                             "searching": false,
                             "paging": false,
                             "info": false,
+                            "order": [[ 3, "asc" ]],
                             columnDefs: [
                                 {
                                     targets: [0],
