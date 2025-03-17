@@ -811,6 +811,8 @@
                             deviceSeries.push($(this).val())
                         });
 
+                        let store_type = $('#listing_store option:selected').data('storetype');
+
                         if($('#title_template').val() == ''){
                             alert('Please select title template first and update.');
                             return false;
@@ -838,6 +840,7 @@
                                 device_seperator:device_seperator,
                                 selected_device:selected_device,
                                 product_detail:productDetail,
+                                store_type:store_type
                             },
                             /* processData: false,
                              contentType: false,*/
@@ -892,6 +895,8 @@
                             let formData = new FormData(form);
                             formData.append('store_id', $('#listing_store').val());
                             formData.append('product_models', JSON.stringify(product_models));
+                            let store_type = $('#listing_store option:selected').data('storetype');
+                            formData.append('store_type', store_type);
                             $("#ajax-preloader").show();
                             $.ajax({
                                 type: 'POST',
@@ -966,6 +971,8 @@
         }
         $(document).ready(function() {
 
+            $('#productsTable').DataTable();
+            $('#productListingTable').DataTable({});
             $('#listing_store').select2();
             $(document).on('click', '#searchBtn', function() {
                 if($('#listing_store').val() == ''){
@@ -1556,7 +1563,7 @@
 
             });
 
-            $(document).on('change','.default-drop-down',function(e){
+            /*$(document).on('change','.default-drop-down',function(e){
                 e.preventDefault();
                 let ele = $(this);
                 setTimeout(function () {
@@ -1572,8 +1579,8 @@
                             data: {
                                 product_types: product_types
                             },
-                            /* processData: false,
-                             contentType: false,*/
+                            /!* processData: false,
+                             contentType: false,*!/
                             headers: {
                                 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                             },
@@ -1610,14 +1617,14 @@
                                 }
                             },
                             error: function (xhr) {
-                                /*if (xhr.responseJSON?.error) {
+                                /!*if (xhr.responseJSON?.error) {
                                     $('#responseMessage').html('<p style="color:red;">' + xhr.responseJSON.error.image[0] + '</p>');
-                                }*/
+                                }*!/
                             }
                         });
                     }
 
-                    /*if (ele.parents('.prod-sub-type').length) {
+                    /!*if (ele.parents('.prod-sub-type').length) {
                         let product_types = [];
                         ele.parents('.prod-sub-type').find('input[name="product_sub_type[]"]').each(function () {
                             product_types.push($(this).val());
@@ -1665,7 +1672,7 @@
                                 }*!/
                             }
                         });
-                    }*/
+                    }*!/
 
                     if(ele.parents('.prod-sub-sub-type').length) {
                         loadProducts()
@@ -1681,7 +1688,7 @@
 
                 },300);
 
-            });
+            });*/
 
             /*$(document).on('change', '#product_type_filter', function() {
                 let product_type = $(this).val();
@@ -2060,6 +2067,8 @@
                     }
                 });
             });
+
+
         });
 
         function loadTitleTemplate() {
@@ -2127,6 +2136,10 @@
             const form = document.querySelector("#frmproductfilter");
             let formData = new FormData(form);
             $("#ajax-preloader").show();
+            if ($.fn.DataTable.isDataTable('#productsTable')) {
+                $('#productsTable').DataTable().clear().destroy();
+                console.log(1);
+            }
             $.ajax({
                 url: "{{ route('listing.getproducts') }}",
                 type: 'POST',
@@ -2148,6 +2161,22 @@
                             $('.selectproRow').removeClass('bg-blue');
                             $('.proCheck').prop('checked',true);
                         }
+
+                        var proTable = $('#productsTable').DataTable({
+                            "lengthChange": false,
+                            "autoWidth": false,
+                            "processing": false,
+                            "serverSide": false,
+                            "searching": false,
+                            "paging": false,
+                            "info": false,
+                            columnDefs: [
+                                {
+                                    targets: [0],
+                                    orderable: false
+                                }
+                            ]
+                        });
 
                     }
                 },
@@ -2227,6 +2256,7 @@
                 productDetail[pid]['price_overwrite'] = price_overwrite;
                 productDetail[pid]['store_type_category_id'] = store_type_category_id;
             });
+
             $("#ajax-preloader").show();
             $.ajax({
                 url: "{{ route('listing.getselectedproducts') }}",
@@ -2407,6 +2437,9 @@
 
 
             $("#ajax-preloader").show();
+            if ($.fn.DataTable.isDataTable('#productListingTable')) {
+                $('#productListingTable').DataTable().clear().destroy();
+            }
             $.ajax({
                 url: "{{ route('listing.getcompatibledevice') }}",
                 type: 'POST',
@@ -2430,6 +2463,24 @@
                     if (response.success) {
                         $('#listing_list').html(response.html);
                         $('#total_listing_product').html(response.total+' rows');
+
+                        var proListTable = $('#productListingTable').DataTable({
+                            "lengthChange": false,
+                            "autoWidth": false,
+                            "processing": false,
+                            "serverSide": false,
+                            "searching": false,
+                            "paging": false,
+                            "info": false,
+                            columnDefs: [
+                                {
+                                    targets: [0],
+                                    orderable: false
+                                }
+                            ]
+                        });
+
+
                         if(response.total == 0){
                             $('#nextBtn').attr('disabled',true);
                         }else{

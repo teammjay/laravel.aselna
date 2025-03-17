@@ -986,6 +986,7 @@ class ListingController extends Controller
             $device_seperator = $request->input('device_seperator');
             $selected_device = $request->input('selected_device');
             $product_details = $request->input('product_detail');
+            $store_type = $request->input('store_type');
             Log::info(' product_details :: ' . json_encode($product_details));
             /*echo '<pre>';
             print_r($product_ids);
@@ -1068,7 +1069,9 @@ class ListingController extends Controller
                                 }
                                 $query->orderBy('brand_name', 'asc');
                                 $query->orderBy('device.name', 'asc');
-                                //$query->limit(250);
+                                if($store_type == 'Ebay' || $store_type == 'eBay') {
+                                    $query->limit(250);
+                                }
                                 $devices = $query->get();
 
                                 /*echo '<pre>';
@@ -1602,6 +1605,7 @@ class ListingController extends Controller
                     $brand_id = $request->input('final_brand_id');
                     $device_id = $request->input('final_device_id');
                     $store_id = $request->input('store_id');
+                    $store_type = $request->input('store_type');
                     $store_detail = Store::where('id', $store_id)->first();
                     $product_models = $request->input('product_models');
                     if ($product_models) {
@@ -1688,6 +1692,8 @@ class ListingController extends Controller
                             $summary_products[$key]['sku'] = $sku;
                             $summary_products[$key]['product_type'] = $productDetail['product']['product_type']['name'];
                             $summary_products[$key]['product_code'] = $productDetail['product']['product_sku'];
+                            $upc_code = $upcCodes->upc_code;
+                            $upc_id = $upcCodes->upc_code;
                             $listingProductArr = [
                                 'product_name' => $product_name,
                                 'description' => ($productDetail['description'] != '') ? $productDetail['description'] : $productDetail['product']['product_description'],
@@ -1775,26 +1781,16 @@ class ListingController extends Controller
 
                                                 foreach($models as $j=>$model){
 
-                                                    if ($store_detail->upc_usage_type) {
-                                                        switch ($store_detail->upc_usage_type) {
-                                                            case 0:
-                                                                $upcCodes = UPCCodes::where('store', $store_id)->where('is_used', 0)->orderBy('sequence_id', 'asc')->limit(1)->first();
+                                                    if($store_type != ''){
+                                                        switch(strtolower($store_type)){
+                                                            case 'walmart':
+                                                            case 'shopify':
+                                                                $upcCodes = $this->generateUpcCode($store_detail,$store_id);
                                                                 break;
-                                                            case 1:
-                                                                $upcCodes = UPCCodes::where('store', $store_id)->where('is_used', 0)->orderBy('sequence_id', 'asc')->limit(1)->first();
-                                                                break;
-                                                            case 2:
-                                                                $upcCodes = GoodUpc::where('is_used', 0)->orderBy('upc', 'asc')->limit(1)->first();
-                                                                break;
-                                                            case 3:
-                                                                $upcCodes = UPCCodes::where('store', $store_id)->where('is_used', 0)->orderBy('sequence_id', 'asc')->limit(1)->first();
-                                                                break;
-                                                            case 'default':
-                                                                $upcCodes = UPCCodes::where('store', $store_id)->where('is_used', 0)->orderBy('sequence_id', 'asc')->limit(1)->first();
+                                                            default:
+                                                                $upcCodes = $upcCodes;
                                                                 break;
                                                         }
-                                                    } else {
-                                                        $upcCodes = UPCCodes::where('store', $store_id)->where('is_used', 0)->orderBy('sequence_id', 'asc')->limit(1)->first();
                                                     }
 
                                                     /*if(isset($models[0])) {
@@ -1831,7 +1827,7 @@ class ListingController extends Controller
                                                     $itemDetail = array(
                                                         'sku' => $nsku,
                                                         'title' => $product,
-                                                        'upc' => isset($upcCodes['upc_code']) ? $upcCodes['upc_code'] : '',
+                                                        'upc' => isset($upcCodes->upc_code) ? $upcCodes->upc_code : '',
                                                         'device_id' => $model->id,
                                                         'listing_item_id' => $listing_item_id,
                                                         //'store_sku' => $store_id,
@@ -1843,7 +1839,7 @@ class ListingController extends Controller
                                                     Log::info(' Listing Item Detail ID :: ' . $rec->id);
 
                                                     if ($rec) {
-                                                        $record = UPCCodes::find($upcCodes['id']);
+                                                        $record = UPCCodes::find($upcCodes->id);
                                                         $record->update(['is_used' => 1]);
                                                     }
                                                 }
@@ -1908,12 +1904,41 @@ class ListingController extends Controller
         return response()->json(['error' => true, 'message' => 'Something went wrong! Please try again!']);
     }
 
-    private function generateMPN($suffix='GI')
+    private function generateUpcCode($store_detail,$store_id=''){
+        if ($store_detail->upc_usage_type) {
+            switch ($store_detail->upc_usage_type) {
+                case 0:
+                    $upcCodes = UPCCodes::where('store', $store_id)->where('is_used', 0)->orderBy('sequence_id', 'asc')->limit(1)->first();
+                    break;
+                case 1:
+                    $upcCodes = UPCCodes::where('store', $store_id)->where('is_used', 0)->orderBy('sequence_id', 'asc')->limit(1)->first();
+                    break;
+                case 2:
+                    $upcCodes = GoodUpc::where('is_used', 0)->orderBy('upc', 'asc')->limit(1)->first();
+                    break;
+                case 3:
+                    $upcCodes = UPCCodes::where('store', $store_id)->where('is_used', 0)->orderBy('sequence_id', 'asc')->limit(1)->first();
+                    break;
+                case 'default':
+                    $upcCodes = UPCCodes::where('store', $store_id)->where('is_used', 0)->orderBy('sequence_id', 'asc')->limit(1)->first();
+                    break;
+            }
+        } else {
+            $upcCodes = UPCCodes::where('store', $store_id)->where('is_used', 0)->orderBy('sequence_id', 'asc')->limit(1)->first();
+        }
+
+        return $upcCodes;
+    }
+
+    private function generateMPN($suffix='')
     {
         $randomPart = strtoupper(Str::random(6)); // 6 random alphanumeric characters
         //$suffix = 'GI'; // Fixed suffix
-
-        return "{$randomPart}-{$suffix}";
+        if($suffix != '') {
+            return "{$randomPart}-{$suffix}";
+        }else{
+            return "{$randomPart}";
+        }
     }
 
     public function syncListingPrice(Request $request)

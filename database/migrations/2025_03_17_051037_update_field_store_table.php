@@ -12,9 +12,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('store', function (Blueprint $table) {
-            $table->text('api_key',2048)->nullable()->change();
-            $table->text('access_key',2048)->nullable()->change();
-            $table->text('secret_key',2048)->nullable()->change();
+            $table->longText('api_key',2048)->nullable()->change();
+            $table->longText('access_key',2048)->nullable()->change();
+            $table->longText('secret_key',2048)->nullable()->change();
             $table->string('service_url',1000)->nullable()->change();
             $table->string('image_base_path',500)->nullable()->change();
             $table->string('certificate',1024)->nullable()->change();

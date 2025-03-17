@@ -129,7 +129,7 @@
         </table>
     </div>
     <div id="pagination">
-        @include('store.pagination', ['stores' => $stores])
+        {{--@include('store.pagination', ['stores' => $stores])--}}
     </div>
 
 @stop
@@ -150,13 +150,20 @@
                 $('.card-body').toggle();
             });
 
-            /*$('#storeTable').DataTable({});*/
+            $('#storeTable').DataTable({
+                columnDefs: [
+                    {
+                        targets: [5,8,9],
+                        orderable: false
+                    }
+                ]
+            });
 
             // Handle pagination links click
             $(document).on('click', '.pagination a', function(event) {
                 event.preventDefault();
                 var page = $(this).attr('href').split('page=')[1];
-                loadProductsWithPage(page);
+                //loadProductsWithPage(page);
             });
 
             function loadProductsWithPage(page) {
