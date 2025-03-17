@@ -12,6 +12,8 @@ class UPCGenerateJob implements ShouldQueue
 {
     use Queueable;
 
+    public $timeout = 3000;
+
     protected $upcData;
 
     /**

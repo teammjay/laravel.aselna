@@ -38,6 +38,7 @@ use App\Helpers\QueryFilters;
 use Illuminate\Support\Facades\Bus;
 use App\Jobs\ListingItemImageCreate;
 use Illuminate\Support\Str;
+use App\Utils\Spintax;
 
 class ListingController extends Controller
 {
@@ -179,7 +180,7 @@ class ListingController extends Controller
             $query->where('status', $request->listing_status);
         }
 
-//        $query->groupBy('id','title','sku','store_sku','price','sales_count','last_sale_date','products.product_sku', 'products.dimensions_width', 'products.product_color', 'store.name', 'store.marketplace_name');
+    //        $query->groupBy('id','title','sku','store_sku','price','sales_count','last_sale_date','products.product_sku', 'products.dimensions_width', 'products.product_color', 'store.name', 'store.marketplace_name');
 
         if ($columnName != '') {
             switch (strtolower($columnName)) {
@@ -377,13 +378,18 @@ class ListingController extends Controller
 
         // getting only product which are not listed
         if ($request->has('never_listed_product')) {
-            $query->leftJoin('store_product', 'store_product.product_id', '=', 'products.product_id');
-            $query->leftJoin('listing_item', 'listing_item.store_product_id', '=', 'store_product.id');
-            $query->where('listing_item.parent_id');
-            $query->whereNotIn('listing_item.status',['2','3']);
-            if ($request->has('store_id') && $request->input('store_id') != '') {
-                $query->where('store_product.store_id', $request->input('store_id'));
-            }
+            $query->whereNotExists(function($subquery) use ($request) {
+                $subquery->select(DB::raw(1))
+                    ->from('listing_item')
+                    ->join('store_product', 'listing_item.store_product_id', '=', 'store_product.id')
+                    ->whereColumn('store_product.product_id', 'products.product_id')
+                    ->whereNull('listing_item.parent_id')
+                    ->whereNotIn('listing_item.status', ['2','3']);
+                
+                if ($request->has('store_id') && $request->input('store_id') != '') {
+                    $subquery->where('store_product.store_id', $request->input('store_id'));
+                }
+            });
             /*$query->where('(SELECT count(li) FROM listing_item li left join store_product sp ON(sp.id = li.store_product_id) left join products p ON(p.product_id = sp.product_id) left join store s ON (sp.store_id = s.id) where p.id');*/
         }
 
@@ -727,6 +733,7 @@ class ListingController extends Controller
         $long_key_length = $request->input('long_key_length');
         $short_key_length = $request->input('short_key_length');
         $append_front = $request->input('append_front');
+        $spintax = new Spintax();
 
         if (!empty($product_ids)) {
             $short_keyword = [];
@@ -778,11 +785,15 @@ class ListingController extends Controller
             if (!empty($pro_ids)) {
                 foreach ($pro_ids as $id) {
                     if (!empty($short_keyword)) {
-                        $sKeyword[$id] = implode(' ', $short_keyword[$id]);
+                        $temporaryText = implode(' ', $short_keyword[$id]);
+                        $temporaryText = $spintax->process($temporaryText);
+                        $sKeyword[$id]  = $temporaryText;
                     }
 
                     if (!empty($short_keyword)) {
-                        $lKeyword[$id] = implode(' ', $long_keyword[$id]);
+                        $temporaryText = implode(' ', $long_keyword[$id]);
+                        $temporaryText = $spintax->process($temporaryText);
+                        $lKeyword[$id] =  $temporaryText;
                     }
                 }
             }

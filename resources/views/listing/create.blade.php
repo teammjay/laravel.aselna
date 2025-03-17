@@ -645,8 +645,9 @@
                                 <table id="modelTable" class="table table-bordered table-striped">
                                     <thead>
                                     <tr>
-                                        <th>Model Name</th>
-                                        <th>Name</th>
+                                        <th>Brand</th>
+                                        <th>Model</th>
+                                        <th>Carrier</th>
                                     </tr>
                                     </thead>
                                     <tbody id="model_list">
@@ -1114,7 +1115,9 @@
                 //console.log(selModel);
                 let mlist = '';
                 for(i in selModel[key]){
-                    mlist += '<tr><td>'+selModel[key][i]+'</td><td></td></tr>';
+                    let brand = product_models[proid][0][i];
+                    console.log(brand);
+                    mlist += '<tr><td>' + brand['brand_name'] + '</td><td>'+selModel[key][i]+'</td><td></td></tr>';
                 }
                 $('#model_list').html(mlist);
                 $('#total_generate_models').html(selModel[key].length +' rows');

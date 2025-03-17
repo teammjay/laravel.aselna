@@ -161,6 +161,7 @@ class HomeController extends Controller
             // $marketplaceService->getResultFeed($listingId);
             return response()->json(['success' => true]);
         } catch (Exception $e) {
+            Log::info('Error: ' . $e->getMessage());
             return response()->json(['success' => false, 'error' => $e->getMessage()]);
         }
     }
