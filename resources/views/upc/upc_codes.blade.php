@@ -19,16 +19,16 @@
         </tr>
         </thead>
         <tbody>
-        @foreach($upcCodes as $upcCode)
-            <tr>
-                <td>{{$upcCode->company_prefix}}</td>
-                <td>{{$upcCode->product_number}}</td>
-                <td>{{$upcCode->upc_code}}</td>
-                <td>{{$upcCode->is_used ? 'Used' : 'Not Used'}}</td>
-                <td>{{$upcCode->sequence_id}}</td>
-                <td>{{$upcCode->storeData->name}}</td>
-            </tr>
-        @endforeach
+{{--        @foreach($upcCodes as $upcCode)--}}
+{{--            <tr>--}}
+{{--                <td>{{$upcCode->company_prefix}}</td>--}}
+{{--                <td>{{$upcCode->product_number}}</td>--}}
+{{--                <td>{{$upcCode->upc_code}}</td>--}}
+{{--                <td>{{$upcCode->is_used ? 'Used' : 'Not Used'}}</td>--}}
+{{--                <td>{{$upcCode->sequence_id}}</td>--}}
+{{--                <td>{{$upcCode->storeData->name}}</td>--}}
+{{--            </tr>--}}
+{{--        @endforeach--}}
         </tbody>
     </table>
 @stop
@@ -36,7 +36,42 @@
 @section('js')
     <script>
         $(document).ready(function() {
-            $('#upcTable').DataTable();
+            $('#upcTable').DataTable(
+                {
+                    processing: true,
+                    serverSide: true,
+                    searching: false,
+                    ajax: "{{ route('upc-code-data') }}",
+                    columns: [
+                        {
+                            data: 'company_prefix',
+                            name: 'company_prefix'
+                        },
+                        {
+                            data: 'product_number',
+                            name: 'product_number'
+                        },
+                        {
+                            data: 'upc_code',
+                            name: 'upc_code'
+                        },
+                        {
+                            data: 'is_used',
+                            name: 'is_used'
+                        },
+                        {
+                            data: 'sequence_id',
+                            name: 'sequence_id'
+                        },
+                        {
+                            data: null, name: 'store',
+                            render: function (data, type, row) {
+                                return row.store_data.name + " " + row.store_data.store_type.name;
+                            }
+                        }
+                    ]
+                }
+            );
         } );
     </script>
 @stop

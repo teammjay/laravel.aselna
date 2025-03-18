@@ -501,7 +501,8 @@
                                     <div class="d-flex" style="gap:10px;">
                                         <div class="form-group mb-1 mt-3">
                                             <label>Brand</label>
-                                            <select class="form-control" name="brand">
+                                            <select class="form-control" name="brand" id="use-store-brand">
+                                                <option value=""></option>
                                                 <option value="use-store">Use store as brand</option>
                                             </select>
                                         </div>
@@ -840,7 +841,8 @@
                                 device_seperator:device_seperator,
                                 selected_device:selected_device,
                                 product_detail:productDetail,
-                                store_type:store_type
+                                store_type:store_type,
+                                use_store_as_brand:$('#use-store-brand').val(),
                             },
                             /* processData: false,
                              contentType: false,*/

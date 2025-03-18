@@ -385,7 +385,7 @@ class ListingController extends Controller
                     ->whereColumn('store_product.product_id', 'products.product_id')
                     ->whereNull('listing_item.parent_id')
                     ->whereNotIn('listing_item.status', ['2','3']);
-                
+
                 if ($request->has('store_id') && $request->input('store_id') != '') {
                     $subquery->where('store_product.store_id', $request->input('store_id'));
                 }
@@ -987,6 +987,7 @@ class ListingController extends Controller
             $selected_device = $request->input('selected_device');
             $product_details = $request->input('product_detail');
             $store_type = $request->input('store_type');
+            $use_store_as_brand = $request->input('use_store_as_brand');
             Log::info(' product_details :: ' . json_encode($product_details));
             /*echo '<pre>';
             print_r($product_ids);
