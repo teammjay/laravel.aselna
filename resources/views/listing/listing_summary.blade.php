@@ -17,8 +17,8 @@
                             <td></td>
                             <td>{{ $product['product_code'] }}</td>
                             <td>{{ $product['sku'] }}</td>
-                            <td>{{ $product['title'] }}</td>
-                            <td>{{ $product['models'] }}</td>
+                            <td style="white-space: break-spaces;">{{ $product['title'] }}</td>
+                            <td style="white-space: break-spaces;">{{ $product['models'] }}</td>
                         </tr>
                     @endforeach
                 @endif

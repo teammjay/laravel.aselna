@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Jobs\FeedGenerationJob;
 use App\Models\Brand;
+use App\Models\Carrier;
 use App\Models\Catalog;
 use App\Models\Device;
 use App\Models\DeviceRating;
@@ -318,7 +319,8 @@ class ListingController extends Controller
         $listingGenerationTypes = ListingGenerationType::orderBy('code', 'asc')->get();
         $brands = Brand::orderBy('name', 'asc')->get();
         $deviceRating = DeviceRating::orderBy('value', 'asc')->get();
-        return view('listing.create', compact('pageAt', 'stores', 'manufacturers', 'productTypes', 'deviceTypes', 'brands', 'listingGenerationTypes', 'deviceRating'));
+        $carriers = Carrier::orderBy('name', 'asc')->get();
+        return view('listing.create', compact('pageAt', 'stores', 'manufacturers', 'productTypes', 'deviceTypes', 'brands', 'listingGenerationTypes', 'deviceRating','carriers'));
     }
 
     /**
@@ -874,16 +876,29 @@ class ListingController extends Controller
         $deviceSeries = $request->input('device_series');
         $rating = $request->input('rating');
         $popularity = $request->input('popularity');
+        $carriers = $request->input('carriers');
         $is_selected = $request->input('is_selected');
+        $include_carrier = $request->input('include_carrier');
         $selected_device = $request->input('selected_device');
         if ($product_id) {
-            $query = Device::select('device.*', 'product_interface.product_id', 'products.product_sku','carrier.name as carrier_name')->with('brand', 'rating')->with('deviceType', 'deviceSeries');
+            $field = 'products.product_title';
+            if($include_carrier == 1) {
+                $field = 'carrier.name as carrier_name';
+            }
+            $query = Device::select('device.*', 'product_interface.product_id', 'products.product_sku',$field)->with('brand', 'rating')->with('deviceType', 'deviceSeries');
             $query->leftJoin('brands', 'brands.id', '=', 'device.brand_id');
-            $query->leftJoin('device_carrier', 'device_carrier.device_id', '=', 'device.id');
-            $query->leftJoin('carrier', 'carrier.id', '=', 'device_carrier.carrier_id');
             $query->leftJoin('device_interface', 'device_interface.device_id', '=', 'device.id');
             $query->leftJoin('product_interface', 'product_interface.interface_id', '=', 'device_interface.interface_id');
             $query->leftJoin('products', 'product_interface.product_id', '=', 'products.product_id');
+
+            if($include_carrier == 1) {
+                $query->leftJoin('device_carrier', 'device_carrier.device_id', '=', 'device.id');
+                $query->leftJoin('carrier', 'carrier.id', '=', 'device_carrier.carrier_id');
+                if ($carriers) {
+                    $query->whereIn('device_carrier.carrier_id', $carriers);
+                }
+                $query->whereNotNull('carrier.id');
+            }
 
             $query->whereIn('product_interface.product_id', $product_id);
             if ($device_type) {
@@ -910,9 +925,9 @@ class ListingController extends Controller
 
 
             $devices = $query->get();
-//            echo '<pre>';
-//            print_r($devices);
-//            echo '</pre>';die;
+            //echo '<pre>';
+            //print_r($devices);
+           // echo '</pre>';die;
             //echo $query->toSql();die;
             $count = $devices->count();
 
@@ -978,9 +993,11 @@ class ListingController extends Controller
             $deviceSeries = $request->input('device_series');
             $rating = $request->input('rating');
             $popularity = $request->input('popularity');
+            $carriers = $request->input('carriers');
             $store_id = $request->input('store_id');
             $title_templates = $request->input('title_template');
             $compress = $request->input('compress');
+            $include_carrier = $request->input('include_carrier');
             $generate_type = $request->input('generate_type');
             $generate_type_name = $request->input('generate_type_name');
             $brand_seperator = $request->input('brand_seperator');
@@ -1042,10 +1059,26 @@ class ListingController extends Controller
                                     }
                                 }
 
-                                $query = Device::select('device.*', 'brands.name as brand_name')->with('deviceType',  'deviceSeries', 'carriers');
+                                $field = 'brands.order_no';
+                                $field2 = 'brands.notes2';
+                                if($include_carrier == 1) {
+                                    $field = 'carrier.name as carrier_name';
+                                    $field2 = 'carrier.id as carrier_id';
+                                }
+
+                                $query = Device::select('device.*', 'brands.name as brand_name',$field,$field2)->with('deviceType',  'deviceSeries', 'carriers');
                                 $query->leftJoin('brands', 'brands.id', '=', 'device.brand_id');
                                 $query->leftJoin('device_interface', 'device_interface.device_id', '=', 'device.id');
                                 $query->leftJoin('product_interface', 'product_interface.interface_id', '=', 'device_interface.interface_id');
+
+                                if($include_carrier == 1) {
+                                    $query->leftJoin('device_carrier', 'device_carrier.device_id', '=', 'device.id');
+                                    $query->leftJoin('carrier', 'carrier.id', '=', 'device_carrier.carrier_id');
+                                    if ($carriers) {
+                                        $query->whereIn('device_carrier.carrier_id', $carriers);
+                                    }
+                                    $query->whereNotNull('carrier.id');
+                                }
                                 $query->where('product_interface.product_id', $product->product_id);
                                 if (isset($selected_device[$product->product_id]) && !empty($selected_device[$product->product_id])) {
                                     $query->whereIn('device.id', $selected_device[$product->product_id]);
@@ -1832,6 +1865,7 @@ class ListingController extends Controller
                                                         'upc' => isset($upcCodes->upc_code) ? $upcCodes->upc_code : '',
                                                         'device_id' => $model->id,
                                                         'listing_item_id' => $listing_item_id,
+                                                        'device_carrier_id' => $model->carrier_id,
                                                         //'store_sku' => $store_id,
                                                         'created_by' => $created_by
                                                     );
@@ -1862,7 +1896,7 @@ class ListingController extends Controller
                                     }
                                 }
                             }
-                            $summary_products[$key]['models'] = implode(',', $modelNames);
+                            $summary_products[$key]['models'] = implode(', ', $modelNames);
                         }
                         DB::commit();
 

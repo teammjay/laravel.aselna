@@ -1,2 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<BulkDataExchangeRequests xmlns="urn:ebay:apis:eBLBaseComponents"><Header><SiteID>0</SiteID><Version>1250</Version></Header><ReviseInventoryStatusRequest><ErrorLanguage>en_US</ErrorLanguage><Version>1250</Version><WarningLevel>High</WarningLevel></ReviseInventoryStatusRequest><InventoryStatus><SKU>C70-TMLO7R</SKU><StartPrice currencyID="USD">13.99</StartPrice><Quantity>20</Quantity></InventoryStatus></BulkDataExchangeRequests>
