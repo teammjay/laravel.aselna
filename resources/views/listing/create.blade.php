@@ -378,7 +378,7 @@
                                 </div>
                                 <div class="card-body pr-0 pl-0">
                                     <div class="table-responsive" style="max-height: 500px; overflow: auto;">
-                                        <table id="productsTable" class="table table-bordered table-striped">
+                                        <table id="productsTable2" class="table table-bordered table-striped">
                                             <thead>
                                             <tr>
                                                 <th>Image</th>
@@ -536,7 +536,7 @@
                                         </div>
                                         <div class="card-body">
                                             <div style="max-height: 538px; overflow: auto">
-                                                <table id="productsTable" class="table table-bordered table-striped">
+                                                <table id="productsTable3" class="table table-bordered table-striped">
                                                     <thead>
                                                     <tr>
                                                         <th>Image</th>
@@ -1292,7 +1292,7 @@
                 },300);
             });
 
-            $(document).on('change','.list-filter',function(e){
+            $(document).on('change','.list--filter',function(e){
                 e.preventDefault();
                 let ele = $(this);
                 //console.log(ele);
@@ -1547,17 +1547,41 @@
                         });
                     }*/
 
-                    if(ele.parents('.prod-sub-sub-type').length) {
-                        loadProducts()
+
+                    if (ele.parents('.prod-sub-type').length) {
+                        if($('#listing_store').val() != '') {
+                            loadProducts();
+                        }
                     }
 
                     if(ele.parents('.interface-filter').length) {
-                        loadProducts()
+                        if($('#listing_store').val() != '') {
+                            loadProducts();
+                        }
+                    }
+
+                    if(ele.parents('.prod-sub-sub-type').length) {
+                        if($('#listing_store').val() != '') {
+                            loadProducts();
+                        }
+                    }
+
+                    if(ele.parents('.prod-sub-sub-type').length) {
+                        if($('#listing_store').val() != '') {
+                            loadProducts();
+                        }
+                    }
+
+                    if(ele.parents('.manufacture').length) {
+                        if($('#listing_store').val() != '') {
+                            loadProducts();
+                        }
                     }
 
                     if (ele.parents('.pro-brand').length || ele.parents('.pro-rating').length || ele.parents('.pro-popular').length) {
                         loadListingProduct(0);
                     }
+
 
                 },300);
 
@@ -2161,23 +2185,24 @@
                             $('.selectproRow').removeClass('bg-blue');
                             $('.proCheck').prop('checked',true);
                         }
-
-                        var proTable = $('#productsTable').DataTable({
-                            "lengthChange": false,
-                            "autoWidth": false,
-                            "processing": false,
-                            "serverSide": false,
-                            "searching": false,
-                            "paging": false,
-                            "info": false,
-                            "order": [[ 6, "desc" ]],
-                            columnDefs: [
-                                {
-                                    targets: [0],
-                                    orderable: false
-                                }
-                            ]
-                        });
+                        if(response.totalRecords > 0) {
+                            var proTable = $('#productsTable').DataTable({
+                                "lengthChange": false,
+                                "autoWidth": false,
+                                "processing": false,
+                                "serverSide": false,
+                                "searching": false,
+                                "paging": false,
+                                "info": false,
+                                "order": [[6, "desc"]],
+                                columnDefs: [
+                                    {
+                                        targets: [0],
+                                        orderable: false
+                                    }
+                                ]
+                            });
+                        }
 
                     }
                 },
@@ -2464,23 +2489,24 @@
                     if (response.success) {
                         $('#listing_list').html(response.html);
                         $('#total_listing_product').html(response.total+' rows');
-
-                        var proListTable = $('#productListingTable').DataTable({
-                            "lengthChange": false,
-                            "autoWidth": false,
-                            "processing": false,
-                            "serverSide": false,
-                            "searching": false,
-                            "paging": false,
-                            "info": false,
-                            "order": [[ 3, "asc" ]],
-                            columnDefs: [
-                                {
-                                    targets: [0],
-                                    orderable: false
-                                }
-                            ]
-                        });
+                        if(response.total > 0) {
+                            var proListTable = $('#productListingTable').DataTable({
+                                "lengthChange": false,
+                                "autoWidth": false,
+                                "processing": false,
+                                "serverSide": false,
+                                "searching": false,
+                                "paging": false,
+                                "info": false,
+                                "order": [[3, "asc"]],
+                                columnDefs: [
+                                    {
+                                        targets: [0],
+                                        orderable: false
+                                    }
+                                ]
+                            });
+                        }
 
 
                         if(response.total == 0){
