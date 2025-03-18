@@ -287,7 +287,7 @@ class EbayService implements MarketplaceServiceInterface
             $addFixedPriceItemRequest->addChild('Version', $version);
             //$addFixedPriceItemRequest->addChild('WarningLevel', 'High');
 
-            $inventoryStatus = $xml->addChild('InventoryStatus');
+            $inventoryStatus = $addFixedPriceItemRequest->addChild('InventoryStatus');
             $inventoryStatus->addChild('SKU', $itemDetail->sku);
             $inventoryStatus->addChild('StartPrice', $itemDetail->price)->addAttribute('currencyID', 'USD');;
             $inventoryStatus->addChild('Quantity', $itemDetail->quantity);
