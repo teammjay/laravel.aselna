@@ -147,7 +147,8 @@ class StoreController extends Controller
 
         $query->orderBy('id','desc');
 
-        $stores = $query->paginate($perPage); // Paginate results
+        //$stores = $query->paginate($perPage); // Paginate results
+        $stores = $query->get(); // Paginate results
 
         //echo $query->toSql();die;
 
@@ -155,7 +156,7 @@ class StoreController extends Controller
         if ($request->ajax()) {
             return response()->json([
                 'html' => view('store.store_list', compact('stores'))->render(),
-                'pagination' => view('store.pagination', compact('stores'))->render(),
+                //'pagination' => view('store.pagination', compact('stores'))->render(),
             ]);
         }
 
