@@ -385,7 +385,7 @@ class ListingController extends Controller
                     ->whereColumn('store_product.product_id', 'products.product_id')
                     ->whereNull('listing_item.parent_id')
                     ->whereNotIn('listing_item.status', ['2','3']);
-                
+
                 if ($request->has('store_id') && $request->input('store_id') != '') {
                     $subquery->where('store_product.store_id', $request->input('store_id'));
                 }
