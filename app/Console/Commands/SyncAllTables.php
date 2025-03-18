@@ -6,6 +6,7 @@ use App\Jobs\BrandSyncJob;
 use App\Jobs\CarrierSyncJob;
 use App\Jobs\CategorySyncJob;
 use App\Jobs\DataPatch;
+use App\Jobs\DeviceCarrierSyncJob;
 use App\Jobs\DeviceInterfaces;
 use App\Jobs\DeviceRatingSyncJob;
 use App\Jobs\DeviceSeriesSyncJob;
@@ -76,7 +77,7 @@ class SyncAllTables extends Command
      */
     public function handle()
     {
-        // Bus::chain([
+        Bus::chain([
 //            new FileSystemSyncJob(),
 //            new StoreTypeSyncJob(),
 //           new StoreSyncJob(),
@@ -85,7 +86,7 @@ class SyncAllTables extends Command
 //            new DeviceRatingSyncJob(),
 //            new DeviceSeriesSyncJob(),
 //            new BrandSyncJob(),
-        //    new CategorySyncJob(),
+            //    new CategorySyncJob(),
 //            new InterfaceSyncJob(),
 //            new DevicesSyncJob(),
 //            new DeviceInterfaces(),
@@ -93,8 +94,8 @@ class SyncAllTables extends Command
 //            new CarrierSyncJob(),
 //            new ShippingCarrierJob(),
 //            new ProductColorSync(),
-        //    new ProductSizeSyncJob(),
-        //    new ProductMaterialSyncJob(),
+            //    new ProductSizeSyncJob(),
+            //    new ProductMaterialSyncJob(),
 //            new GenerationTypeAndTemplateSync(),
 //            new ProductSyncJob(),
 //            new ProductChannelDetailSyncJob(),
@@ -107,9 +108,10 @@ class SyncAllTables extends Command
 //            new ProductTagSyncJob(),
             // new ProductImagesSyncJob(),
 //            new ProductAlternativeImagesSyncJob(),
-        //    new ListingTemplateSyncJob(),
+            //    new ListingTemplateSyncJob(),
             // new StorePagesJobSync(),
-        // ])->dispatch();
+            new DeviceCarrierSyncJob()
+        ])->dispatch();
 //        Bus::chain([
 //            ListingSyncJob::dispatch(),
 //            ListingItemSyncJob::dispatch(),
@@ -124,8 +126,8 @@ class SyncAllTables extends Command
 //            ProductAlternativeImagesSyncJob::dispatch(),
 //        ]);
 //        DataPatch::dispatch();
-    //    FeedGenerationJob::dispatch('eb617a7e-804b-4a69-bbc2-3f717dc067d2');
-    //    ListingItemImageCreate::dispatch('4aada5a1-ecfb-49f4-a8b7-b700a4fa9c16');
+        //    FeedGenerationJob::dispatch('eb617a7e-804b-4a69-bbc2-3f717dc067d2');
+        //    ListingItemImageCreate::dispatch('4aada5a1-ecfb-49f4-a8b7-b700a4fa9c16');
 //        FetchAmazonOrdersJob::dispatch();
 //        StoreCategorySyncJob::dispatch('94428796-cdf9-dc2b-a1e7-aa4100066fd9');
 

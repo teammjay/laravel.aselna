@@ -8,7 +8,7 @@
                     <input type="checkbox" class="sel-device" name="listing_product_id[]" style="visibility: hidden;" data-proid="{{ $device->product_id }}" value="{{ $device->id }}" checked>
                 @endif
             </td>
-            <td></td>
+            <td>{{$device->carrier_name}}</td>
             <td>{{ $device->product_sku }}</td>
             <td>{{ (isset($device->brand->name)) ? $device->brand->name : '' }}</td>
             <td>{{ $device->deviceType->name }}</td>

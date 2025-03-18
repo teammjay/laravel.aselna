@@ -11,11 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('store', function (Blueprint $table) {
-            $table->uuid('listing_template_id')->nullable()->change();
-            $table->foreign('listing_template_id')->references('id')->on('listing_template');
-            $table->uuid('linked_store_id')->nullable()->change();
-        });
+//        Schema::table('store', function (Blueprint $table) {
+//            $table->uuid('listing_template_id')->nullable()->change();
+//            $table->foreign('listing_template_id')->references('id')->on('listing_template');
+//            $table->uuid('linked_store_id')->nullable()->change();
+//        });
     }
 
     /**
@@ -23,6 +23,10 @@ return new class extends Migration
      */
     public function down(): void
     {
-        //
+        Schema::table('store', function (Blueprint $table) {
+            $table->dropForeign(['listing_template_id']);
+            $table->dropColumn('listing_template_id');
+            $table->dropColumn('linked_store_id');
+        });
     }
 };
