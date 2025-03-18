@@ -38,8 +38,8 @@ class StoreController extends Controller
         $stores = Store::select('*')
             ->with('storeType')
             ->orderBy('id','desc')
-            //->get();
-            ->paginate($this->perPage);
+            ->get();
+            //->paginate($this->perPage);
         $perPage = $this->perPage;
         $store_types = StoreType::all();
 
