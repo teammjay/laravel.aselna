@@ -879,10 +879,11 @@ class ListingController extends Controller
         $carriers = $request->input('carriers');
         $is_selected = $request->input('is_selected');
         $include_carrier = $request->input('include_carrier');
+        $generate_type_name = $request->input('generate_type_name');
         $selected_device = $request->input('selected_device');
         if ($product_id) {
             $field = 'products.product_title';
-            if($include_carrier == 1) {
+            if($include_carrier == 1 || $generate_type_name == 'Carrier Group') {
                 $field = 'carrier.name as carrier_name';
             }
             $query = Device::select('device.*', 'product_interface.product_id', 'products.product_sku',$field)->with('brand', 'rating')->with('deviceType', 'deviceSeries');
@@ -891,7 +892,7 @@ class ListingController extends Controller
             $query->leftJoin('product_interface', 'product_interface.interface_id', '=', 'device_interface.interface_id');
             $query->leftJoin('products', 'product_interface.product_id', '=', 'products.product_id');
 
-            if($include_carrier == 1) {
+            if($include_carrier == 1 || $generate_type_name == 'Carrier Group') {
                 $query->leftJoin('device_carrier', 'device_carrier.device_id', '=', 'device.id');
                 $query->leftJoin('carrier', 'carrier.id', '=', 'device_carrier.carrier_id');
                 if ($carriers) {
@@ -1061,7 +1062,7 @@ class ListingController extends Controller
 
                                 $field = 'brands.order_no';
                                 $field2 = 'brands.notes2';
-                                if($include_carrier == 1) {
+                                if($include_carrier == 1 || $generate_type_name == 'Carrier Group') {
                                     $field = 'carrier.name as carrier_name';
                                     $field2 = 'carrier.id as carrier_id';
                                 }
@@ -1071,7 +1072,7 @@ class ListingController extends Controller
                                 $query->leftJoin('device_interface', 'device_interface.device_id', '=', 'device.id');
                                 $query->leftJoin('product_interface', 'product_interface.interface_id', '=', 'device_interface.interface_id');
 
-                                if($include_carrier == 1) {
+                                if($include_carrier == 1 || $generate_type_name == 'Carrier Group') {
                                     $query->leftJoin('device_carrier', 'device_carrier.device_id', '=', 'device.id');
                                     $query->leftJoin('carrier', 'carrier.id', '=', 'device_carrier.carrier_id');
                                     if ($carriers) {
@@ -1101,6 +1102,9 @@ class ListingController extends Controller
                                 if ($deviceSeries) {
                                     $devices = DevicesLinkedDevice::select('device_id')->whereIn('device_series_id', $deviceSeries)->get();
                                     $query->whereIn('device.id', $devices);
+                                }
+                                if($include_carrier == 1 || $generate_type_name == 'Carrier Group') {
+                                    $query->orderBy('carrier_name', 'asc');
                                 }
                                 $query->orderBy('brand_name', 'asc');
                                 $query->orderBy('device.name', 'asc');
@@ -1140,6 +1144,9 @@ class ListingController extends Controller
                                         case 'brand gruop':
                                             $productsArray[] = $this->generateBrandGroupProductTitles($title_template, $product, $devices, $max_title_length, $brand_seperator, $device_seperator, $compress, $generate_type, $pDetail, $store_product_id);
                                             break;
+                                        case 'carrier group':
+                                            $productsArray[] = $this->generateCarrierGroupProductTitles($title_template, $product, $devices, $generate_type, $pDetail, $store_product_id);
+                                            break;
                                     }
                                 }
                             }
@@ -1147,7 +1154,7 @@ class ListingController extends Controller
                     }
                 }
 
-               /* echo '<pre>';
+                /*echo '<pre>';
                 print_r($productsArray);
                 echo '</pre>';die;*/
 
@@ -1615,6 +1622,51 @@ class ListingController extends Controller
         // Add the last title
         if (!empty($currentTitle)) {
             $titles[$cnt]['title'] = str_replace(['#model_series', '#devices','#device_series'], [implode($separator . ' ', $currentModels), implode($device_seperator . ' ', $currentDevices), implode($device_seperator . ' ', $currentDevices)], $baseTitle);
+        }
+
+        return $titles;
+    }
+
+    private function generateCarrierGroupProductTitles($baseTitle, $product, $devices, $generate_type, $pDetail, $store_product_id)
+    {
+        $titles = [];
+        $lastCarrier = null;
+        $cnt = -1;
+
+        foreach ($devices as $device) {
+            $currentCarrier = $device->carrier_name;
+
+            if ($currentCarrier !== $lastCarrier) {
+                $cnt++;
+
+                $titles[$cnt]['title'] = str_replace('#carrier', $currentCarrier, $baseTitle);
+
+                // Store general product details
+                $titles[$cnt]['product_code'] = $product->product->product_sku;
+                $titles[$cnt]['product_id'] = $product->product_id;
+                $titles[$cnt]['price'] = $pDetail['price'];
+                $titles[$cnt]['price_overwrite'] = $pDetail['price_overwrite'];
+                $titles[$cnt]['store_type_category_id'] = $pDetail['store_type_category_id'];
+                $titles[$cnt]['generate_type'] = $generate_type;
+                $titles[$cnt]['store_product_id'] = $store_product_id;
+                $titles[$cnt]['brand_id'] = $device->brand_id;
+                $titles[$cnt]['device_id'] = $device->id;
+                $titles[$cnt]['model'][] = $device->name;
+                $titles[$cnt]['model_detail'][] = $device;
+            }else{
+                $titles[$cnt]['product_code'] = $product->product->product_sku;
+                $titles[$cnt]['product_id'] = $product->product_id;
+                $titles[$cnt]['price'] = $pDetail['price'];
+                $titles[$cnt]['price_overwrite'] = $pDetail['price_overwrite'];
+                $titles[$cnt]['store_type_category_id'] = $pDetail['store_type_category_id'];
+                $titles[$cnt]['generate_type'] = $generate_type;
+                $titles[$cnt]['store_product_id'] = $store_product_id;
+                $titles[$cnt]['brand_id'] = $device->brand_id;
+                $titles[$cnt]['device_id'] = $device->id;
+                $titles[$cnt]['model'][] = $device->name;
+                $titles[$cnt]['model_detail'][] = $device;
+            }
+            $lastCarrier = $currentCarrier;
         }
 
         return $titles;
