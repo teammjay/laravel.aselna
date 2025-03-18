@@ -287,7 +287,7 @@ class EbayService implements MarketplaceServiceInterface
             $addFixedPriceItemRequest->addChild('Version', $version);
             //$addFixedPriceItemRequest->addChild('WarningLevel', 'High');
 
-            $inventoryStatus = $xml->addChild('InventoryStatus');
+            $inventoryStatus = $addFixedPriceItemRequest->addChild('InventoryStatus');
             $inventoryStatus->addChild('SKU', $itemDetail->sku);
             $inventoryStatus->addChild('StartPrice', $itemDetail->price)->addAttribute('currencyID', 'USD');;
             $inventoryStatus->addChild('Quantity', $itemDetail->quantity);
@@ -355,7 +355,7 @@ class EbayService implements MarketplaceServiceInterface
             //$addFixedPriceItemRequest->addChild('WarningLevel', 'High');
             $addFixedPriceItemRequest->addChild('OrderID', 'NotAvailable');
 
-            $shipment = $xml->addChild('Shipment');
+            $shipment = $addFixedPriceItemRequest->addChild('Shipment');
             $shipment->addChild('ShippingCarrierUsed', 'USPS');
             $shipment->addChild('ShippingServiceUsed', 'First Class');
             $shipment->addChild('ShipmentTrackingNumber', '9400111899561627596553');
