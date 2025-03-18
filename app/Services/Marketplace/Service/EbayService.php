@@ -225,8 +225,10 @@ class EbayService implements MarketplaceServiceInterface
 
             // Add Variations
             $variations = $item->addChild('Variations');
-            $variationData = ListingItemDetail::with('device','device.brand')->where('listing_item_id',$itemDetail->id)->get();
-
+            $variationData = ListingItemDetail::with('device','device.brand','carrier')->where('listing_item_id',$itemDetail->id)->get();
+            /*echo '<pre>';
+            print_r($variationData);
+            echo '</pre>';die;*/
             $compatibleModels = [];
             if(!empty((array) $variationData)) {
                 foreach ($variationData as $variant) {
@@ -235,9 +237,14 @@ class EbayService implements MarketplaceServiceInterface
                     $variation->addChild('StartPrice', $itemDetail->price);
                     $variation->addChild('Quantity', $itemDetail->quantity);
                     $variationSpecifics = $variation->addChild('VariationSpecifics');
-                    $nameValueList = $variationSpecifics->addChild('NameValueList');
-                    $nameValueList->addChild('Name', 'Compatible Model');
-                    $nameValueList->addChild('Value', $variant->device->brand->name.' '.$variant->device->name);
+                    if(isset($variant->carrier)) {
+                        $nameValueList = $variationSpecifics->addChild('NameValueList');
+                        $nameValueList->addChild('Name', 'Choose Your Carrier');
+                        $nameValueList->addChild('Value', htmlspecialchars($variant->carrier->name));
+                    }
+                    $nameValueList1 = $variationSpecifics->addChild('NameValueList');
+                    $nameValueList1->addChild('Name', 'Compatible Model');
+                    $nameValueList1->addChild('Value', $variant->device->brand->name.' '.$variant->device->name);
                     $variationTitle = $variationtitle.' '.$variant->device->brand->name.' '.$variant->device->name;
                     $variation->addChild('VariationTitle', $variationTitle);
                     $variationDetails = $variation->addChild('VariationProductListingDetails');

@@ -99,6 +99,9 @@
         tr.bg-blue {
             background-color: #9dccff !important;
         }
+        .pro-rating.multi-select-filter Select, .pro-popular.multi-select-filter Select{
+            width: 60px !important;
+        }
     </style>
 @stop
 @section('content_header')
@@ -378,7 +381,7 @@
                                 </div>
                                 <div class="card-body pr-0 pl-0">
                                     <div class="table-responsive" style="max-height: 500px; overflow: auto;">
-                                        <table id="productsTable" class="table table-bordered table-striped">
+                                        <table id="productsTable2" class="table table-bordered table-striped">
                                             <thead>
                                             <tr>
                                                 <th>Image</th>
@@ -416,13 +419,16 @@
                                             @endphp
                                             @foreach($listingGenerationTypes as $key=>$ltype)
                                                 <div class="form-group mb-1">
-                                                    <input type="radio" class="mr-1" {{ ($ltype->name == 'Free Group') ? 'checked' : '' }} id="generate_type_{{ $ltype->id }}" name="generate_type" value="{{ $ltype->id }}" data-name="{{ $ltype->name }}"> <label for="generate_type_{{ $ltype->id }}">{{ $ltype->name }}</label>
+                                                    <input type="radio" class="mr-1" {{ ($ltype->name == 'Free Group') ? 'checked' : '' }} id="generate_type_{{ $ltype->id }}" name="generate_type" value="{{ $ltype->id }}" data-name="{{ $ltype->name }}"> <label class="mb-0" for="generate_type_{{ $ltype->id }}">{{ $ltype->name }}</label>
                                                 </div>
                                                 @php
                                                     $count++;
                                                 @endphp
                                             @endforeach
                                         @endif
+                                        <div class="form-group mb-1">
+                                            <input type="checkbox" class="mr-1 mt-1" name="include_carrier" id="include_carrier"><label for="include_carrier">Include carrier</label>
+                                        </div>
                                     </div>
                                     <div class="border p-2">
                                         <div class="form-group mb-0 align-items-center">
@@ -438,7 +444,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="border p-2" style="width: 16%;">
+                                <div class="border p-2" style="width: 13%;">
                                     <label>Device Type</label>
                                     @if(count($deviceTypes ?? []) > 0)
                                         @foreach($deviceTypes as $dType)
@@ -450,7 +456,7 @@
                                 </div>
                                 <div>
                                     <div class="d-flex" style="gap:10px;">
-                                        <div class="border p-2" style="widows: 33.33%;">
+                                        <div class="border p-2" style="width: 26.33%;">
                                             <label>Brand Filter</label>
                                             <div class="row">
                                                 <div class="col-md-12 pro-brand multi-select-filter">
@@ -464,7 +470,7 @@
                                                 </div>
                                             </div>
                                         </div>
-                                        <div class="border p-2" style="widows: 33.33%;">
+                                        <div class="border p-2" style="width: 20%;">
                                             <label>Rating Filter</label>
                                             <div class="row">
                                                 <div class="col-md-12 pro-rating multi-select-filter">
@@ -478,7 +484,7 @@
                                                 </div>
                                             </div>
                                         </div>
-                                        <div class="border p-2" style="widows: 33.33%;">
+                                        <div class="border p-2" style="width: 20%;">
                                             <label>Popularity</label>
                                             <div class="row">
                                                 <div class="col-md-12 pro-popular multi-select-filter">
@@ -496,6 +502,21 @@
                                                     </select>
                                                 </div>
                                             </div>
+                                        </div>
+                                        <div class="border p-2 carr-filter" style="width: 27%; display:none;">
+                                            <label>Carrier</label>
+                                            <div class="row">
+                                                <div class="col-md-12 pro-carrier multi-select-filter">
+                                                    <select class="form-control list-filter" id="carrier_filter" multiple style="height: 235px;">
+                                                        @if(count($carriers ?? []) > 0)
+                                                            @foreach($carriers as $carrier)
+                                                                <option value="{{ $carrier->id }}">{{ $carrier->name }}</option>
+                                                            @endforeach
+                                                        @endif
+                                                    </select>
+                                                </div>
+                                            </div>
+
                                         </div>
                                     </div>
                                     <div class="d-flex" style="gap:10px;">
@@ -536,7 +557,7 @@
                                         </div>
                                         <div class="card-body">
                                             <div style="max-height: 538px; overflow: auto">
-                                                <table id="productsTable" class="table table-bordered table-striped">
+                                                <table id="productsTable3" class="table table-bordered table-striped">
                                                     <thead>
                                                     <tr>
                                                         <th>Image</th>
@@ -782,6 +803,13 @@
                         {
                             popularity.push($(this).val())
                         });
+
+                        let carriers = [];
+                        $("#carrier_filter option").each(function()
+                        {
+                            carriers.push($(this).val())
+                        });
+
                         let store_id = $('#listing_store').val();
                         //let title_template = $('#title_template').val();
                         let brand_seperator = $('#brand_seperator').val();
@@ -813,6 +841,11 @@
 
                         let store_type = $('#listing_store option:selected').data('storetype');
 
+                        let include_carrier = 0;
+                        if($('input[name="include_carrier"]').is(':checked')){
+                            include_carrier = 1;
+                        }
+
                         if($('#title_template').val() == ''){
                             alert('Please select title template first and update.');
                             return false;
@@ -830,6 +863,7 @@
                                 brand:brand,
                                 rating:rating,
                                 popularity:popularity,
+                                carriers:carriers,
                                 store_id:store_id,
                                 title_template:title_template,
                                 compress:compress,
@@ -840,7 +874,8 @@
                                 device_seperator:device_seperator,
                                 selected_device:selected_device,
                                 product_detail:productDetail,
-                                store_type:store_type
+                                store_type:store_type,
+                                include_carrier:include_carrier
                             },
                             /* processData: false,
                              contentType: false,*/
@@ -985,7 +1020,7 @@
                 }
             });
 
-            $("#manufacturer_filter, #product_type_filter, #brand_filter, #rating_filter, #popularity_filter").gs_multiselect();
+            $("#manufacturer_filter, #product_type_filter, #brand_filter, #rating_filter, #popularity_filter, #carrier_filter").gs_multiselect();
 
             $(document).on('click', '#selected_product', function() {
                 if($(this).is(':checked')){
@@ -1048,6 +1083,18 @@
             $(document).on('click', 'input[name="device_type[]"]', function() {
                 loadListingProduct(0);
             });
+
+            $(document).on('click', 'input[name="include_carrier"]', function() {
+
+                if($(this).is(':checked')){
+                    $('.carr-filter').show();
+                }else{
+                    $('.carr-filter').hide();
+                }
+                loadListingProduct(0);
+            });
+
+
 
             $(document).on('click', '#select_all', function() {
                 $('.targetRow').find('.sel-device').prop('checked',true);
@@ -1119,12 +1166,16 @@
                 let key = ele.data('key');
                 let proid = ele.data('proid');
                 let selModel = product_model[proid];
+                let selModels = product_models[proid];
                 //console.log(selModel);
                 let mlist = '';
                 for(i in selModel[key]){
                     let brand = product_models[proid][0][i];
-                    console.log(brand);
-                    mlist += '<tr><td>' + brand['brand_name'] + '</td><td>'+selModel[key][i]+'</td><td></td></tr>';
+                    let cname = '';
+                    if(brand.carrier_name){
+                        cname = brand.carrier_name;
+                    }
+                    mlist += '<tr><td>' + brand['brand_name'] + '</td><td>'+selModel[key][i]+'</td><td>'+cname+'</td></tr>';
                 }
                 $('#model_list').html(mlist);
                 $('#total_generate_models').html(selModel[key].length +' rows');
@@ -1286,13 +1337,13 @@
                         }
                     }
 
-                    if (ele.parents('.pro-brand').length || ele.parents('.pro-rating').length || ele.parents('.pro-popular').length) {
+                    if (ele.parents('.pro-brand').length || ele.parents('.pro-rating').length || ele.parents('.pro-popular').length || ele.parents('.pro-carrier').length) {
                         loadListingProduct(0);
                     }
                 },300);
             });
 
-            $(document).on('change','.list-filter',function(e){
+            $(document).on('change','.list--filter',function(e){
                 e.preventDefault();
                 let ele = $(this);
                 //console.log(ele);
@@ -1431,7 +1482,7 @@
                         }
                     }
 
-                    if (ele.parents('.pro-brand').length || ele.parents('.pro-rating').length || ele.parents('.pro-popular').length) {
+                    if (ele.parents('.pro-brand').length || ele.parents('.pro-rating').length || ele.parents('.pro-popular').length || ele.parents('.pro-carrier').length) {
                         loadListingProduct(0);
                     }
                 },300);
@@ -1547,17 +1598,41 @@
                         });
                     }*/
 
-                    if(ele.parents('.prod-sub-sub-type').length) {
-                        loadProducts()
+
+                    if (ele.parents('.prod-sub-type').length) {
+                        if($('#listing_store').val() != '') {
+                            loadProducts();
+                        }
                     }
 
                     if(ele.parents('.interface-filter').length) {
-                        loadProducts()
+                        if($('#listing_store').val() != '') {
+                            loadProducts();
+                        }
                     }
 
-                    if (ele.parents('.pro-brand').length || ele.parents('.pro-rating').length || ele.parents('.pro-popular').length) {
+                    if(ele.parents('.prod-sub-sub-type').length) {
+                        if($('#listing_store').val() != '') {
+                            loadProducts();
+                        }
+                    }
+
+                    if(ele.parents('.prod-sub-sub-type').length) {
+                        if($('#listing_store').val() != '') {
+                            loadProducts();
+                        }
+                    }
+
+                    if(ele.parents('.manufacture').length) {
+                        if($('#listing_store').val() != '') {
+                            loadProducts();
+                        }
+                    }
+
+                    if (ele.parents('.pro-brand').length || ele.parents('.pro-rating').length || ele.parents('.pro-popular').length || ele.parents('.pro-carrier').length) {
                         loadListingProduct(0);
                     }
+
 
                 },300);
 
@@ -2161,23 +2236,24 @@
                             $('.selectproRow').removeClass('bg-blue');
                             $('.proCheck').prop('checked',true);
                         }
-
-                        var proTable = $('#productsTable').DataTable({
-                            "lengthChange": false,
-                            "autoWidth": false,
-                            "processing": false,
-                            "serverSide": false,
-                            "searching": false,
-                            "paging": false,
-                            "info": false,
-                            "order": [[ 6, "desc" ]],
-                            columnDefs: [
-                                {
-                                    targets: [0],
-                                    orderable: false
-                                }
-                            ]
-                        });
+                        if(response.totalRecords > 0) {
+                            var proTable = $('#productsTable').DataTable({
+                                "lengthChange": false,
+                                "autoWidth": false,
+                                "processing": false,
+                                "serverSide": false,
+                                "searching": false,
+                                "paging": false,
+                                "info": false,
+                                "order": [[6, "desc"]],
+                                columnDefs: [
+                                    {
+                                        targets: [0],
+                                        orderable: false
+                                    }
+                                ]
+                            });
+                        }
 
                     }
                 },
@@ -2424,6 +2500,14 @@
                 popularity.push($(this).val())
             });
 
+            let carriers = [];
+            $("#carrier_filter option").each(function()
+            {
+                carriers.push($(this).val())
+            });
+
+
+
             let devices = [];
             $('input[name="device[]"]').each(function()
             {
@@ -2436,6 +2520,10 @@
                 deviceSeries.push($(this).val())
             });
 
+            let include_carrier = 0;
+            if($('input[name="include_carrier"]').is(':checked')){
+                include_carrier = 1;
+            }
 
             $("#ajax-preloader").show();
             if ($.fn.DataTable.isDataTable('#productListingTable')) {
@@ -2452,8 +2540,10 @@
                     brand:brand,
                     rating:rating,
                     popularity:popularity,
+                    carriers:carriers,
                     selected_device:selected_device,
                     is_selected:is_selected,
+                    include_carrier:include_carrier,
                 },
                 /* processData: false,
                  contentType: false,*/
@@ -2464,23 +2554,24 @@
                     if (response.success) {
                         $('#listing_list').html(response.html);
                         $('#total_listing_product').html(response.total+' rows');
-
-                        var proListTable = $('#productListingTable').DataTable({
-                            "lengthChange": false,
-                            "autoWidth": false,
-                            "processing": false,
-                            "serverSide": false,
-                            "searching": false,
-                            "paging": false,
-                            "info": false,
-                            "order": [[ 3, "asc" ]],
-                            columnDefs: [
-                                {
-                                    targets: [0],
-                                    orderable: false
-                                }
-                            ]
-                        });
+                        if(response.total > 0) {
+                            var proListTable = $('#productListingTable').DataTable({
+                                "lengthChange": false,
+                                "autoWidth": false,
+                                "processing": false,
+                                "serverSide": false,
+                                "searching": false,
+                                "paging": false,
+                                "info": false,
+                                "order": [[3, "asc"]],
+                                columnDefs: [
+                                    {
+                                        targets: [0],
+                                        orderable: false
+                                    }
+                                ]
+                            });
+                        }
 
 
                         if(response.total == 0){
