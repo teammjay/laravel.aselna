@@ -428,6 +428,37 @@ class EbayService implements MarketplaceServiceInterface
         if($feedInfo){
             Log::info('Feed Id : '.$feedInfo->feed_id);
             $response = $authService->getResultFeed($feedInfo->feed_id,$listingId);
+            if($response){
+                $zipPath = public_path($response);
+                $extractPath = public_path('result-feeds/ebay/'.$listingId);
+
+                $zip = new \ZipArchive;
+                if ($zip->open($zipPath) === true) {
+                    $zip->extractTo($extractPath);
+                    $zip->close();
+
+                    $files = scandir($extractPath);
+                    foreach ($files as $file) {
+                        if (pathinfo($file, PATHINFO_EXTENSION) === 'xml') {
+                            $xmlContent = file_get_contents($extractPath . '/' . $file);
+                            $xml = simplexml_load_string($xmlContent);
+
+                            if(isset($xml->AddFixedPriceItemResponse)) {
+                                foreach ($xml->AddFixedPriceItemResponse as $item) {
+                                    if(isset($item->Ack) && $item->Ack == 'Success') {
+                                        $listingItems = ListingItem::where('sku', $item->SKU)->get();
+                                        foreach ($listingItems as $listingItem) {
+                                            $listingItem->update([
+                                                'store_sku' => $item->ItemID
+                                            ]);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
             //$response = $this->authService->getResultFeed('task-1-1275361',$listingId);
             return $response;
         }

@@ -1793,28 +1793,28 @@
             });
 
 
-            $(document).on('blur', '.pro-title', function() {
+            $(document).on('input', '.pro-title', function() {
                 var val = $(this).val();
                 var id = $(this).data('id');
 
                 $('.tLength-'+id).html(val.length);
             });
 
-            $(document).on('blur', '.pro-shortkey', function() {
+            $(document).on('input', '.pro-shortkey', function() {
                 var val = $(this).val();
                 var id = $(this).data('id');
 
                 $('.sLength-'+id).html(val.length);
             });
 
-            $(document).on('blur', '.pro-longkey', function() {
+            $(document).on('input', '.pro-longkey', function() {
                 var val = $(this).val();
                 var id = $(this).data('id');
 
                 $('.lLength-'+id).html(val.length);
             });
 
-            $(document).on('blur', '.pro-list-title', function() {
+            $(document).on('input ', '.pro-list-title', function() {
                 var ele = $(this);
                 var val = $(this).val();
                 var maxlen = $(this).parent().find('.titleLength').data('maxlength');
