@@ -61,7 +61,7 @@ class CatalogController extends Controller
         $columnName = $request['columns'][$columnIndex]['data'];
         $columnSortOrder = $request['order'][0]['dir'];
 
-        $query = Catalog::with('Manufacturer')->select('*');
+        $query = Catalog::with('Manufacturer','productType')->select('*');
         /*$perPage = $request->input('perPage', $this->perPage);*/
 
         // Filter by product title
