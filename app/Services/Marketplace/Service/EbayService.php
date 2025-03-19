@@ -12,6 +12,7 @@ use App\Models\ProductKeyFeatures;
 use App\Models\StorePage;
 use App\Models\StoreProduct;
 use App\Models\StoreType;
+use App\Models\ListingItem;
 use App\Models\SysFile;
 use App\Services\Auth\EbayAuthService;
 use App\Services\Marketplace\Contracts\MarketplaceServiceInterface;
