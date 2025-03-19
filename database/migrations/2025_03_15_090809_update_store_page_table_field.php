@@ -11,10 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('store_page', function (Blueprint $table) {
-            $table->dropColumn('page_type_id');
-            $table->integer('page_type')->after('text');
-        });
+//        Schema::table('store_page', function (Blueprint $table) {
+//            $table->dropColumn('page_type_id');
+//            $table->integer('page_type')->after('text');
+//        });
     }
 
     /**
@@ -22,6 +22,9 @@ return new class extends Migration
      */
     public function down(): void
     {
-        //
+        Schema::table('store_page', function (Blueprint $table) {
+            $table->dropColumn('page_type');
+            $table->uuid('page_type_id')->after('text');
+        });
     }
 };
