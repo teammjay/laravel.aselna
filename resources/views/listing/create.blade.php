@@ -522,7 +522,8 @@
                                     <div class="d-flex" style="gap:10px;">
                                         <div class="form-group mb-1 mt-3">
                                             <label>Brand</label>
-                                            <select class="form-control" name="brand">
+                                            <select class="form-control" name="brand" id="use-store-brand">
+                                                <option value=""></option>
                                                 <option value="use-store">Use store as brand</option>
                                             </select>
                                         </div>
@@ -876,6 +877,7 @@
                                 product_detail:productDetail,
                                 store_type:store_type,
                                 include_carrier:include_carrier
+                                use_store_as_brand:$('#use-store-brand').val(),
                             },
                             /* processData: false,
                              contentType: false,*/
@@ -1868,7 +1870,7 @@
                 $('.lLength-'+id).html(val.length);
             });
 
-            $(document).on('input', '.pro-list-title', function() {
+            $(document).on('input ', '.pro-list-title', function() {
                 var ele = $(this);
                 var val = $(this).val();
                 var maxlen = $(this).parent().find('.titleLength').data('maxlength');

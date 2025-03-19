@@ -182,6 +182,9 @@
                 e.preventDefault(); // Prevent default form submission
                 var perPage =  '{{ $perPage }}';
                 var page =  1;
+                if ($.fn.DataTable.isDataTable('#storeTable')) {
+                    $('#storeTable').DataTable().clear().destroy();
+                }
                 $.ajax({
                     url: "{{ route('stores.filter') }}?page=" + page + "&perPage=" + perPage,
                     method: 'GET',
@@ -189,7 +192,16 @@
                     success: function(response) {
                         // Update the product list and pagination
                         $('#store-list').html(response.html);
-                        $('#pagination').html(response.pagination);
+                        //$('#pagination').html(response.pagination);
+
+                        $('#storeTable').DataTable({
+                            columnDefs: [
+                                {
+                                    targets: [5,8,9],
+                                    orderable: false
+                                }
+                            ]
+                        });
                     },
                     error: function(xhr) {
                         console.error('Error:', xhr);

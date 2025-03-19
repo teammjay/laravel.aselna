@@ -22,5 +22,6 @@ Route::get('/interface-data', [InterfaceController::class, 'getInterfaceData'])-
 Route::get('/device-interface-data', [DeviceInterfaceController::class, 'getDeviceInterfaceData'])->name('device-interface-data');
 Route::get('/device-data', [DeviceController::class, 'getDeviceData'])->name('device-data');
 Route::get('/product-interface-data', [ProductInterfaceController::class, 'getProductInterfaceData'])->name('product-interface-data');
+Route::get('/upc-code-data', [UPCController::class, 'getUpcData'])->name('upc-code-data');
 
 Route::get('/stores', [UPCController::class, 'getStoresData']);
