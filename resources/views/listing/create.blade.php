@@ -1170,7 +1170,7 @@
                 //console.log(selModel);
                 let mlist = '';
                 for(i in selModel[key]){
-                    let brand = product_models[proid][0][i];
+                    let brand = selModels[key][i];
                     let cname = '';
                     if(brand.carrier_name){
                         cname = brand.carrier_name;
@@ -1842,28 +1842,28 @@
             });
 
 
-            $(document).on('blur', '.pro-title', function() {
+            $(document).on('input', '.pro-title', function() {
                 var val = $(this).val();
                 var id = $(this).data('id');
 
                 $('.tLength-'+id).html(val.length);
             });
 
-            $(document).on('blur', '.pro-shortkey', function() {
+            $(document).on('input', '.pro-shortkey', function() {
                 var val = $(this).val();
                 var id = $(this).data('id');
 
                 $('.sLength-'+id).html(val.length);
             });
 
-            $(document).on('blur', '.pro-longkey', function() {
+            $(document).on('input', '.pro-longkey', function() {
                 var val = $(this).val();
                 var id = $(this).data('id');
 
                 $('.lLength-'+id).html(val.length);
             });
 
-            $(document).on('blur', '.pro-list-title', function() {
+            $(document).on('input', '.pro-list-title', function() {
                 var ele = $(this);
                 var val = $(this).val();
                 var maxlen = $(this).parent().find('.titleLength').data('maxlength');
@@ -1893,10 +1893,18 @@
                 $('#title_template').val('');
                 let typeName = $('input[name="generate_type"]:checked').data('name');
 
-                if(typeName == 'Carrier Group' || typeName == 'Product Only' || typeName == 'Title Group' || typeName == 'All Carriers'){
+                if(typeName == 'Product Only' || typeName == 'Title Group' || typeName == 'All Carriers'){
                     alert('This selected generate type is under development meanwhile please use other.');
                     return false;
                 }
+                if(typeName == 'Carrier Group'){
+                    $('#include_carrier').attr('disabled',true);
+                    $('.carr-filter').show();
+                }else{
+                    $('#include_carrier').removeAttr('disabled');
+                    $('.carr-filter').hide();
+                }
+
                 $.ajax({
                     url: "{{ route('listing.gettitletemplate') }}",
                     type: 'POST',
@@ -1942,6 +1950,8 @@
                         }*/
                     }
                 });
+
+                loadListingProduct(0);
             });
 
             $('#product_code_filter').autocomplete({
@@ -2529,6 +2539,7 @@
             if ($.fn.DataTable.isDataTable('#productListingTable')) {
                 $('#productListingTable').DataTable().clear().destroy();
             }
+            let generate_type_name = $('input[name="generate_type"]:checked').data('name');
             $.ajax({
                 url: "{{ route('listing.getcompatibledevice') }}",
                 type: 'POST',
@@ -2544,6 +2555,7 @@
                     selected_device:selected_device,
                     is_selected:is_selected,
                     include_carrier:include_carrier,
+                    generate_type_name:generate_type_name
                 },
                 /* processData: false,
                  contentType: false,*/
