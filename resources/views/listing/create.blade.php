@@ -932,6 +932,11 @@
                             formData.append('product_models', JSON.stringify(product_models));
                             let store_type = $('#listing_store option:selected').data('storetype');
                             formData.append('store_type', store_type);
+                            let include_carrier = 0;
+                            if($('input[name="include_carrier"]').is(':checked')){
+                                include_carrier = 1;
+                            }
+                            formData.append('include_carrier', include_carrier);
                             $("#ajax-preloader").show();
                             $.ajax({
                                 type: 'POST',

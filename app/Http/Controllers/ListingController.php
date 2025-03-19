@@ -1691,6 +1691,7 @@ class ListingController extends Controller
                     $product_ids = $request->input('final_product_id');
                     $brand_id = $request->input('final_brand_id');
                     $device_id = $request->input('final_device_id');
+                    $include_carrier = $request->input('include_carrier');
                     $store_id = $request->input('store_id');
                     $store_type = $request->input('store_type');
                     $store_detail = Store::where('id', $store_id)->first();
@@ -1710,7 +1711,7 @@ class ListingController extends Controller
                         'feed_type' => 1,
                         'status' => 0,
                         'chained' => 1,
-                        'include_carriers' => 0,
+                        'include_carriers' => $include_carrier,
                         'brand_combo' => 0,
                         'carrier_combo' => 0,
                         'created_by' => $created_by,
