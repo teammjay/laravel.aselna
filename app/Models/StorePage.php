@@ -34,6 +34,11 @@ class StorePage extends Model
         return $this->belongsTo(PageType::class);
     }
 
+    public function store()
+    {
+        return $this->belongsTo(Store::class,'store_id');
+    }
+
     public static function getStorePageByPageType($store_id, $page_type){
 
         $page = self::with('PageType')->where('store_id', $store_id)->where('page_type',$page_type)->first();
