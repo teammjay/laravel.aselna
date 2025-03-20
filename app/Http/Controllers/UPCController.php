@@ -58,6 +58,38 @@ class UPCController extends Controller
         ]);
     }
 
+    public function getUpcData(Request $request)
+    {
+        $totalRecords = UPCCodes::query()->count();
+        $query = UPCCodes::query()->with('storeData', 'storeData.storeType');
+
+        $dataTableService = new DataTableService($query, $request);
+
+        $dataTableService->setCustomSorting(function ($query, $request) {
+            $columnIndex = $request->input('order.0.column', 0);
+            $sortColumn = $request->input('columns.' . $columnIndex . '.data', 'id');
+            $columnName = $request->input('columns.' . $columnIndex . '.name', 'id');
+            $sortDirection = $request->input('order.0.dir', 'asc');
+            if ($columnName === 'store') {
+                $query->join('store', 'store.id', '=', 'upc_codes.store')
+                    ->join('store_type', 'store_type.id', '=', 'store.store_type_id')
+                    ->orderByRaw("CONCAT(store.name, ' - ', store_type.name) $sortDirection");
+            } else {
+                // Default sorting logic
+                $query->orderBy($sortColumn, $sortDirection);
+            }
+        });
+
+        $data = $dataTableService->handle();
+
+        return response()->json([
+            'draw' => $request->input('draw'),
+            'recordsTotal' => $totalRecords,
+            'recordsFiltered' => $data->total(),
+            'data' => $data->items(),
+        ]);
+    }
+
     public function upc_generate()
     {
         $upcGenerate = UpcGenerate::all();

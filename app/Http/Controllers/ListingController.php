@@ -954,9 +954,9 @@ class ListingController extends Controller
     {
 
         $generate_type = $request->input('type');
+        $store_type = $request->input('store_type');
         if ($generate_type) {
-
-            $templates = ListingGenerationTypeTemplate::where('generation_type_id', $generate_type)->get();
+            $templates = ListingGenerationTypeTemplate::where('generation_type_id', $generate_type)->whereLike('used_by_store','%' . $store_type.'%')->get();
             $data = [];
             $option = '';
             if (!empty($templates)) {
@@ -1147,6 +1147,8 @@ class ListingController extends Controller
                                             break;
                                         case 'carrier group':
                                             $productsArray[] = $this->generateCarrierGroupProductTitles($title_template, $product, $devices, $generate_type, $pDetail, $store_product_id);
+                                        case 'all carriers':
+                                            $productsArray[] = $this->generateAllCarrierProductTitles($title_template, $product, $devices, $generate_type, $pDetail, $store_product_id);
                                             break;
                                     }
                                 }
@@ -1668,6 +1670,33 @@ class ListingController extends Controller
                 $titles[$cnt]['model_detail'][] = $device;
             }
             $lastCarrier = $currentCarrier;
+        }
+
+        return $titles;
+    }
+
+    private function generateAllCarrierProductTitles($baseTitle, $product, $devices, $generate_type, $pDetail, $store_product_id)
+    {
+        $titles = [];
+        $lastCarrier = null;
+        $cnt = 0;
+
+        foreach ($devices as $device) {
+            $currentCarrier = $device->carrier_name;
+
+            $titles[$cnt]['title'] = str_replace('#carrier', $currentCarrier, $baseTitle);
+
+            $titles[$cnt]['product_code'] = $product->product->product_sku;
+            $titles[$cnt]['product_id'] = $product->product_id;
+            $titles[$cnt]['price'] = $pDetail['price'];
+            $titles[$cnt]['price_overwrite'] = $pDetail['price_overwrite'];
+            $titles[$cnt]['store_type_category_id'] = $pDetail['store_type_category_id'];
+            $titles[$cnt]['generate_type'] = $generate_type;
+            $titles[$cnt]['store_product_id'] = $store_product_id;
+            $titles[$cnt]['brand_id'] = $device->brand_id;
+            $titles[$cnt]['device_id'] = $device->id;
+            $titles[$cnt]['model'][] = $device->name;
+            $titles[$cnt]['model_detail'][] = $device;
         }
 
         return $titles;

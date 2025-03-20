@@ -8,6 +8,8 @@
 
 @section('adminlte_css')
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <!-- Lightbox2 CSS -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.4/css/lightbox.min.css" rel="stylesheet">
     <style>
         .select2-container--default .select2-dropdown .select2-search__field:focus, .select2-container--default .select2-search--inline .select2-search__field:focus {
             outline: 0;
@@ -1036,6 +1038,7 @@
 
                 </div>
             </div>
+            <div id="ajax-gallery" style="display: none;"></div>
         </div>
         <!-- Add channel modal -->
         <div class="modal fade" id="addChannelModal">
@@ -1074,9 +1077,12 @@
                 </div>
             </div>
         </div>
+
 @stop
 @section('adminlte_js')
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <!-- Lightbox2 JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.4/js/lightbox.min.js"></script>
     <script>
         var product_id = "{{ $product->product_id ?? '' }}"; // Passed from controller
 
@@ -1242,9 +1248,7 @@
                         }
                     },
                     error: function (xhr) {
-                        if (xhr.responseJSON?.error) {
-                            $('#responseMessage').html('<p style="color:red;">' + xhr.responseJSON.error.image[0] + '</p>');
-                        }
+
                     }
                 });
             });
@@ -1855,6 +1859,26 @@
                         }
                     });
                 }
+            });
+
+            $(document).on('click','.mainImage',function () {
+
+                const galleryDiv = $('#ajax-gallery'); // Reference to the hidden gallery div
+                galleryDiv.empty();
+
+                const anchor = $('<a>')
+                    .attr('href', $(this).attr('src'))
+                    .attr('data-lightbox', 'gallery')
+                    .attr('data-title', 'Gallery Image');
+
+                const img = $('<img>')
+                    .attr('src', $(this).attr('src'))
+                    .css('display', 'none'); // Hidden thumbnails
+
+                anchor.append(img);
+                galleryDiv.append(anchor);
+                galleryDiv.find('a:first').trigger('click');
+
             });
 
         });

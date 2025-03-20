@@ -6,19 +6,20 @@
     "license": "MIT",
     "require": {
         "php": "^8.2",
+        "ext-dom": "*",
+        "ext-ftp": "*",
+        "ext-libxml": "*",
+        "ext-simplexml": "*",
         "almasaeed2010/adminlte": "~3.0",
         "google/apiclient": "^2.18",
         "guzzlehttp/guzzle": "^7.9",
+        "hashids/hashids": "^5.0",
         "intervention/image": "^3.10",
         "jeroennoten/laravel-adminlte": "^3.14",
         "laravel/framework": "^11.9",
         "laravel/sanctum": "^4.0",
         "laravel/tinker": "^2.9",
-        "league/oauth2-client": "^2.8",
-        "ext-simplexml": "*",
-        "ext-dom": "*",
-        "ext-libxml": "*",
-        "ext-ftp": "*"
+        "league/oauth2-client": "^2.8"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",

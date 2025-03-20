@@ -1900,11 +1900,12 @@
                 $('#title_template').val('');
                 let typeName = $('input[name="generate_type"]:checked').data('name');
 
-                if(typeName == 'Product Only' || typeName == 'Title Group' || typeName == 'All Carriers'){
+                if(typeName == 'Product Only' || typeName == 'Title Group' ){
                     alert('This selected generate type is under development meanwhile please use other.');
                     return false;
                 }
-                if(typeName == 'Carrier Group'){
+                if(typeName == 'Carrier Group' || typeName == 'All Carriers'){
+                    $('#include_carrier').prop('checked',true);
                     $('#include_carrier').attr('disabled',true);
                     $('.carr-filter').show();
                 }else{
@@ -1912,11 +1913,14 @@
                     $('.carr-filter').hide();
                 }
 
+                let store_type = $('#listing_store option:selected').data('storetype');
+
                 $.ajax({
                     url: "{{ route('listing.gettitletemplate') }}",
                     type: 'POST',
                     data: {
-                        type:type
+                        type:type,
+                        store_type:store_type
                     },
                     /* processData: false,
                      contentType: false,*/
@@ -2167,15 +2171,17 @@
             let type = $('input[name="generate_type"]:checked').val();
             let typeName = $('input[name="generate_type"]:checked').data('name');
             $('#title_template').val('');
-            if(typeName == 'Carrier Group' || typeName == 'Product Only' || typeName == 'Title Group' || typeName == 'All Carriers'){
+            if(typeName == 'Product Only' || typeName == 'Title Group'){
                 alert('This selected generate type is under development meanwhile please use other.');
                 return false;
             }
+            let store_type = $('#listing_store option:selected').data('storetype');
             $.ajax({
                 url: "{{ route('listing.gettitletemplate') }}",
                 type: 'POST',
                 data: {
-                    type:type
+                    type:type,
+                    store_type:store_type
                 },
                 /* processData: false,
                  contentType: false,*/
