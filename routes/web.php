@@ -43,6 +43,7 @@ use App\Http\Controllers\ShipmentsController;
 use App\Http\Controllers\ShippingCarrierPackageController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ResetPasswordController;
+use App\Http\Controllers\StorePagesController;
 use App\Services\Auth\EbayAuthService;
 
 Route::middleware('auth')->group(function () {
@@ -207,6 +208,15 @@ Route::middleware('auth')->group(function () {
         Route::get('/store_type/edit/{id}', 'edit')->name('store_type.edit');
         Route::post('/store_type/edit/{id}', 'update')->name('store_type.update');
         Route::get('/store_type/delete/{id}', 'destroy')->name('store_type.delete');
+    });
+
+    Route::controller(StorePagesController::class)->group(function () {
+        Route::get('/store_pages', 'index')->name('store_page.index');
+        Route::get('/store_page/add', 'create')->name('store_page.create');
+        Route::post('/store_page/add', 'store')->name('store_page.store');
+        Route::get('/store_page/edit/{id}', 'edit')->name('store_page.edit');
+        Route::post('/store_page/edit/{id}', 'update')->name('store_page.update');
+        Route::get('/store_page/delete/{id}', 'destroy')->name('store_page.delete');
     });
 
     Route::controller(StoreTypeCategoryController::class)->group(function () {

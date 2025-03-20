@@ -398,7 +398,7 @@ return [
                 ],
                 [
                     'text' => 'Store Pages',
-                    'url' => '#',
+                    'url' => '/store_pages',
                     'icon' => 'far fa-fw fa-file',
                 ]
             ]
