@@ -193,7 +193,7 @@ class EbayAuthService
                 return 'result-feeds/ebay/'.$listingId.'.zip';
             }
 
-            return $response->getStatusCode() === 200 ? $savePath : false;
+            return $response->getStatusCode() === 200 ? 'result-feeds/ebay/'.$listingId.'.zip' : false;
 
         }catch (RequestException $e) {
             if ($e->hasResponse()) {

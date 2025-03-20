@@ -28,7 +28,6 @@ use App\Jobs\ListingSyncJob;
 use App\Jobs\ListingTemplateSyncJob;
 use App\Jobs\LogisticCentreSyncJob;
 use App\Jobs\ManufacturerSyncJob;
-use App\Jobs\PopularDeviceSyncJob;
 use App\Jobs\ProductAlternativeImagesSyncJob;
 use App\Jobs\ProductChannelDetailSyncJob;
 use App\Jobs\ProductColorSync;
@@ -92,7 +91,7 @@ class SyncAllTables extends Command
 //            new DevicesSyncJob(),
 //            new DeviceInterfaces(),
 //            new ProductConditionJob(),
-//            new CarrierSyncJob(),
+           new CarrierSyncJob(),
 //            new ShippingCarrierJob(),
 //            new ProductColorSync(),
             //    new ProductSizeSyncJob(),
@@ -111,8 +110,7 @@ class SyncAllTables extends Command
 //            new ProductAlternativeImagesSyncJob(),
             //    new ListingTemplateSyncJob(),
             // new StorePagesJobSync(),
-//            new DeviceCarrierSyncJob()
-        new PopularDeviceSyncJob()
+            new DeviceCarrierSyncJob()
         ])->dispatch();
 //        Bus::chain([
 //            ListingSyncJob::dispatch(),
@@ -130,6 +128,8 @@ class SyncAllTables extends Command
 //        DataPatch::dispatch();
         //    FeedGenerationJob::dispatch('eb617a7e-804b-4a69-bbc2-3f717dc067d2');
         //    ListingItemImageCreate::dispatch('4aada5a1-ecfb-49f4-a8b7-b700a4fa9c16');
+//       FeedGenerationJob::dispatch('80415096-6ce4-4f55-b862-f1a3d3ba4662');
+    //    ListingItemImageCreate::dispatch('4dcf1d3f-b723-4b31-a075-3702c0746b10');
 //        FetchAmazonOrdersJob::dispatch();
 //        StoreCategorySyncJob::dispatch('94428796-cdf9-dc2b-a1e7-aa4100066fd9');
 
