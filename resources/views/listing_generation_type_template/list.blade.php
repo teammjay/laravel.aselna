@@ -6,6 +6,18 @@
     <h1>Listing Generation Type Template</h1>
 @stop
 
+@section('adminlte_css')
+    <style>
+        .acitve-text{
+            color:green;
+        }
+        .inacitve-text{
+            color:red;
+        }
+
+    </style>
+@stop
+
 @section('content')
     <div class="row my-3">
         <div class="col-md-3">
@@ -23,6 +35,8 @@
                     <th>Code</th>
                     <th>Name</th>
                     <th>Default Template</th>
+                    <th>Used in Store</th>
+                    <th>Status</th>
                     <th>Created By</th>
                     <th>Created Date</th>
                     <th>Action</th>
@@ -30,11 +44,39 @@
                 </thead>
                 <tbody>
                 @foreach($listing_generation_type_templates as $ltype)
+                    @php
+                        /*$storeUsed = '';
+
+                        if(isset($ltype['used_by_store']) && strstr($ltype['used_by_store'], ',') !== false){
+                            $stores = explode(',',$ltype['used_by_store']);
+                        }else{
+                            $stores = (array) $ltype['used_by_store'];
+                        }
+
+                        if(count($store_types ?? []) > 0){
+                            $storeName = array();
+                            foreach($store_types as $stype){
+                                if((in_array($stype->id,$stores))){
+                                    $storeName[] = $stype->name;
+                                }
+                            }
+                            $storeUsed = implode('/',$storeName);
+                        }*/
+
+                    @endphp
                     <tr>
                         <td>{{ $ltype->id }}</td>
                         <td>{{ $ltype->template }}</td>
                         <td>{{ $ltype->listingType->name }}</td>
                         <td>{{ ($ltype->default_template == 1) ? 'Yes' : '' }}</td>
+                        <td>{{ $ltype->used_by_store }}</td>
+                        <td>
+                            @if($ltype->status == 1)
+                                <span class="acitve-text">Active</span>
+                            @else
+                                <span class="inacitve-text">Inactive</span>
+                            @endif
+                        </td>
                         <td>{{ $ltype->created_by  }}</td>
                         <td>{{ $ltype->created_at  }}</td>
                         <td>

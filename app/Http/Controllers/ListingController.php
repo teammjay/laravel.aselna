@@ -954,9 +954,9 @@ class ListingController extends Controller
     {
 
         $generate_type = $request->input('type');
+        $store_type = $request->input('store_type');
         if ($generate_type) {
-
-            $templates = ListingGenerationTypeTemplate::where('generation_type_id', $generate_type)->get();
+            $templates = ListingGenerationTypeTemplate::where('generation_type_id', $generate_type)->whereLike('used_by_store','%' . $store_type.'%')->get();
             $data = [];
             $option = '';
             if (!empty($templates)) {
