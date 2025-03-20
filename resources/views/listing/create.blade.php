@@ -876,7 +876,7 @@
                                 selected_device:selected_device,
                                 product_detail:productDetail,
                                 store_type:store_type,
-                                include_carrier:include_carrier
+                                include_carrier:include_carrier,
                                 use_store_as_brand:$('#use-store-brand').val(),
                             },
                             /* processData: false,
@@ -1900,11 +1900,12 @@
                 $('#title_template').val('');
                 let typeName = $('input[name="generate_type"]:checked').data('name');
 
-                if(typeName == 'Product Only' || typeName == 'Title Group' || typeName == 'All Carriers'){
+                if(typeName == 'Product Only' || typeName == 'Title Group' ){
                     alert('This selected generate type is under development meanwhile please use other.');
                     return false;
                 }
-                if(typeName == 'Carrier Group'){
+                if(typeName == 'Carrier Group' || typeName == 'All Carriers'){
+                    $('#include_carrier').prop('checked',true);
                     $('#include_carrier').attr('disabled',true);
                     $('.carr-filter').show();
                 }else{
@@ -2167,7 +2168,7 @@
             let type = $('input[name="generate_type"]:checked').val();
             let typeName = $('input[name="generate_type"]:checked').data('name');
             $('#title_template').val('');
-            if(typeName == 'Carrier Group' || typeName == 'Product Only' || typeName == 'Title Group' || typeName == 'All Carriers'){
+            if(typeName == 'Product Only' || typeName == 'Title Group'){
                 alert('This selected generate type is under development meanwhile please use other.');
                 return false;
             }
