@@ -1913,11 +1913,14 @@
                     $('.carr-filter').hide();
                 }
 
+                let store_type = $('#listing_store option:selected').data('storetype');
+
                 $.ajax({
                     url: "{{ route('listing.gettitletemplate') }}",
                     type: 'POST',
                     data: {
-                        type:type
+                        type:type,
+                        store_type:store_type
                     },
                     /* processData: false,
                      contentType: false,*/
@@ -2172,11 +2175,13 @@
                 alert('This selected generate type is under development meanwhile please use other.');
                 return false;
             }
+            let store_type = $('#listing_store option:selected').data('storetype');
             $.ajax({
                 url: "{{ route('listing.gettitletemplate') }}",
                 type: 'POST',
                 data: {
-                    type:type
+                    type:type,
+                    store_type:store_type
                 },
                 /* processData: false,
                  contentType: false,*/

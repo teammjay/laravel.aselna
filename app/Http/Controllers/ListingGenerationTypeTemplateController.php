@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\ListingGenerationType;
 use App\Models\ListingGenerationTypeTemplate;
 use App\Http\Requests\ListingGenerationTypeTemplateRequest;
+use App\Models\StoreType;
 use Illuminate\Http\Request;
 
 class ListingGenerationTypeTemplateController extends Controller
@@ -15,8 +16,8 @@ class ListingGenerationTypeTemplateController extends Controller
     public function index()
     {
         $listing_generation_type_templates = ListingGenerationTypeTemplate::with('listingType')->get();
-
-        return view('listing_generation_type_template.list', compact('listing_generation_type_templates'));
+        $store_types = StoreType::orderBy('name','asc')->get();
+        return view('listing_generation_type_template.list', compact('listing_generation_type_templates','store_types'));
     }
 
     /**
@@ -26,7 +27,8 @@ class ListingGenerationTypeTemplateController extends Controller
     {
         $listing_generation_type_templates = ListingGenerationTypeTemplate::all();
         $listing_generation_types = ListingGenerationType::all();
-        return view('listing_generation_type_template.add', compact('listing_generation_type_templates','listing_generation_types'));
+        $store_types = StoreType::orderBy('name','asc')->get();
+        return view('listing_generation_type_template.add', compact('listing_generation_type_templates','listing_generation_types','store_types'));
     }
 
     /**
@@ -37,6 +39,10 @@ class ListingGenerationTypeTemplateController extends Controller
         $request->validated();
 
         $request['default_template'] = $request->has('default_template') ? 1 : 0;
+        $request['status'] = $request->has('status') ? 1 : 0;
+        if($request->has('used_by_store') && is_array($request['used_by_store'])){
+            $request['used_by_store'] = implode(',',$request['used_by_store']);
+        }
 
         $created_by = auth()->user()->name ?? 'admin';
         $request->merge(['created_by' => $created_by, 'updated_by' => $created_by]);
@@ -54,7 +60,8 @@ class ListingGenerationTypeTemplateController extends Controller
     {
         $listing_generation_type_template = ListingGenerationTypeTemplate::findOrFail($id);
         $listing_generation_types = ListingGenerationType::all();
-        return view('listing_generation_type_template.add', compact('listing_generation_type_template','listing_generation_types'));
+        $store_types = StoreType::orderBy('name','asc')->get();
+        return view('listing_generation_type_template.add', compact('listing_generation_type_template','listing_generation_types','store_types'));
     }
 
     /**
@@ -68,6 +75,10 @@ class ListingGenerationTypeTemplateController extends Controller
         $request->merge(['updated_by' => $updated_by]);
 
         $request['default_template'] = $request->has('default_template') ? 1 : 0;
+        $request['status'] = $request->has('status') ? 1 : 0;
+        if($request->has('used_by_store') && is_array($request['used_by_store'])){
+            $request['used_by_store'] = implode(',',$request['used_by_store']);
+        }
 
         ListingGenerationTypeTemplate::findOrFail($id)->update($request->all());
 

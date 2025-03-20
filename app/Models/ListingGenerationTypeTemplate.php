@@ -25,7 +25,7 @@ class ListingGenerationTypeTemplate extends Model
         });
     }
 
-    protected $fillable = ['code','template','default_template','generation_type_id','created_by','updated_by','created_at','updated_at'];
+    protected $fillable = ['code','template','default_template','generation_type_id','used_by_store','status','created_by','updated_by','created_at','updated_at'];
 
     public function listingType()
     {
