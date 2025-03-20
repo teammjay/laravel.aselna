@@ -28,6 +28,7 @@ use App\Jobs\ListingSyncJob;
 use App\Jobs\ListingTemplateSyncJob;
 use App\Jobs\LogisticCentreSyncJob;
 use App\Jobs\ManufacturerSyncJob;
+use App\Jobs\PopularDeviceSyncJob;
 use App\Jobs\ProductAlternativeImagesSyncJob;
 use App\Jobs\ProductChannelDetailSyncJob;
 use App\Jobs\ProductColorSync;
@@ -110,7 +111,8 @@ class SyncAllTables extends Command
 //            new ProductAlternativeImagesSyncJob(),
             //    new ListingTemplateSyncJob(),
             // new StorePagesJobSync(),
-            new DeviceCarrierSyncJob()
+//            new DeviceCarrierSyncJob()
+        new PopularDeviceSyncJob()
         ])->dispatch();
 //        Bus::chain([
 //            ListingSyncJob::dispatch(),
