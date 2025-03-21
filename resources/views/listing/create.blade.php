@@ -876,8 +876,8 @@
                                 selected_device:selected_device,
                                 product_detail:productDetail,
                                 store_type:store_type,
-                                include_carrier:include_carrier,
-                                use_store_as_brand:$('#use-store-brand').val(),
+                                include_carrier:include_carrier
+                                // use_store_as_brand:$('#use-store-brand').val(),
                             },
                             /* processData: false,
                              contentType: false,*/
