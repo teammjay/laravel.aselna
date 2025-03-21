@@ -24,6 +24,40 @@ class DeviceController extends Controller
         return view('device.list', compact('devices'));
     }
 
+    public function getDeviceDetails($id)
+    {
+        $device = Device::with(['deviceType', 'deviceSubType', 'brand', 'rating'])
+            ->findOrFail($id);
+
+        return response()->json([
+            'device_type' => $device->deviceType,
+            'device_sub_type' => $device->deviceSubType,
+            'brand' => $device->brand,
+            'name' => $device->name,
+            'status' => $device->status,
+            'rating' => $device->rating
+        ]);
+    }
+
+    public function getDeviceCarriers($id)
+    {
+        $carriers = Device::findOrFail($id)
+            ->carriers()
+            ->get(['name', 'description', 'status']);
+
+        return response()->json($carriers);
+    }
+
+    public function getDeviceInterfaces($id)
+    {
+        $interfaces = Device::findOrFail($id)
+            ->interfaces()
+            ->with('interfaces:id,name')
+            ->get(['id', 'interface_id', 'created_at']);
+
+        return response()->json($interfaces);
+    }
+
     public function getDeviceData(Request $request)
     {
         $totalRecords = Device::query()->count();
