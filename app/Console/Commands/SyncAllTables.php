@@ -91,7 +91,7 @@ class SyncAllTables extends Command
 //            new DevicesSyncJob(),
 //            new DeviceInterfaces(),
 //            new ProductConditionJob(),
-//            new CarrierSyncJob(),
+           new CarrierSyncJob(),
 //            new ShippingCarrierJob(),
 //            new ProductColorSync(),
             //    new ProductSizeSyncJob(),

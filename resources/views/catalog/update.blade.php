@@ -692,7 +692,7 @@
                                             @foreach($productImages as $images)
                                                 <tr class="pro-img-{{ $images->id }}" data-id="{{ $images->id }}">
                                                     <td><i class="fa fa-sort" title="Drag and drop row up or down to sort"></i></td>
-                                                    <td><img class="mainImage" src="{{ asset('storage/product_images/'. $images->image) }}" alt="{{ $images->image }}" width="70" height="70"></td>
+                                                    <td><img src="{{ asset('storage/product_images/'. $images->imageObj->name) }}" alt="{{ $images->image }}" width="70" height="70"></td>
                                                     <td><input type="checkbox" name="main_image" class="set_main_image" value="{{ $images->id }}" {{ $images->main_image == 1 ? 'checked' : '' }}></td>
                                                     {{--<td><input type="text" class="form-control image-sort-order" readonly="" data-id="{{ $images->id }}" name="sort_order" value="{{ $images->sort_order }}"></td>--}}
                                                     <td>{{ $images->sort_order }}</td>
@@ -730,7 +730,7 @@
                                         @foreach($productAltImages as $images)
                                             <tr class="pro-alt-img-{{ $images->id }}" data-id="{{ $images->id }}">
                                                 <td><i class="fa fa-sort" title="Drag and drop row up or down to sort"></i></td>
-                                                <td><img src="{{ asset('storage/product_additional_images/'. $images->image) }}" alt="{{ $images->image }}" width="70" height="70"></td>
+                                                <td><img src="{{ asset('storage/product_additional_images/'. $images->imageObj->name) }}" alt="{{ $images->image }}" width="70" height="70"></td>
                                                 <td>{{ $images->sort_order }}</td>
                                                 <td><button class="btn btn-danger delete-alt-btn" data-id="{{ $images->id }}"> <i class="fas fa-fw fa-trash"></i></button></td>
                                             </tr>

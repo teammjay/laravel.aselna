@@ -1007,7 +1007,7 @@ class ListingController extends Controller
             $selected_device = $request->input('selected_device');
             $product_details = $request->input('product_detail');
             $store_type = $request->input('store_type');
-            $use_store_as_brand = $request->input('use_store_as_brand');
+            // $use_store_as_brand = $request->input('use_store_as_brand');
             Log::info(' product_details :: ' . json_encode($product_details));
             /*echo '<pre>';
             print_r($product_ids);
