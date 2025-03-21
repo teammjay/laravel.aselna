@@ -4,6 +4,9 @@ namespace App\Console;
 
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
+use App\Jobs\ListingItemSyncJob;
+use App\Jobs\ListingSyncJob;
+use App\Jobs\LogisticCentreSyncJob;
 
 class Kernel extends ConsoleKernel
 {
@@ -13,6 +16,9 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule): void
     {
         $schedule->command('logs:rotate')->everyFourHours();
+        $schedule->job(new ListingItemSyncJob())->daily();
+        $schedule->job(new ListingSyncJob())->daily();
+        $schedule->job(new LogisticCentreSyncJob())->daily();
     }
 
     /**

@@ -463,3 +463,6 @@ Route::get('/forgot-password', [ResetPasswordController::class, 'showForgotForm'
 Route::post('/forgot-password', [ResetPasswordController::class, 'sendResetLink'])->name('password.email');
 Route::get('/reset-password/{token}', [ResetPasswordController::class, 'showResetForm'])->name('password.reset');
 Route::post('/reset-password', [ResetPasswordController::class, 'resetPassword'])->name('password.update');
+
+Route::get('/jobs', [JobSchedulerController::class, 'index'])->name('jobs.index');
+Route::post('/jobs/{job}/run', [JobSchedulerController::class, 'run'])->name('jobs.run');
