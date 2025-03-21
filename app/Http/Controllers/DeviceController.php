@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\QueryFilters;
 use App\Http\Requests\DeviceRequest;
 use App\Models\Brand;
 use App\Models\Device;
@@ -26,7 +27,7 @@ class DeviceController extends Controller
     public function getDeviceData(Request $request)
     {
         $totalRecords = Device::query()->count();
-        $query = Device::query()->with('brand','deviceType');
+        $query = Device::query()->with('brand', 'deviceType');
 
         $dataTableService = new DataTableService($query, $request);
 
@@ -43,6 +44,29 @@ class DeviceController extends Controller
             } else {
                 $query->orderBy($columnName, $sortDirection);
             }
+        });
+
+        $dataTableService->setCustomSearch(function ($query, $request) {
+            $query
+                ->when($request->input('name'), function ($query) use ($request) {
+                    QueryFilters::applyFilter($query, $request, 'name', 'name_operator', 'name');
+                })
+                ->when($request->input('brand_name'), function ($query) use ($request) {
+                    $query->whereHas('brand', function ($q) use ($request) {
+                        QueryFilters::applyFilter($q, $request, 'name', 'brand_name_operator', 'brand_name');
+                    });
+                })
+                ->when($request->input('device_type'), function ($query) use ($request) {
+                    $query->whereHas('deviceType', function ($q) use ($request) {
+                        QueryFilters::applyFilter($q, $request, 'name', 'device_type_operator', 'device_type');
+                    });
+                })
+                ->when($request->input('status'), function ($query) use ($request) {
+                    QueryFilters::applyFilter($query, $request, 'status', 'status_operator', 'status');
+                })
+                ->when($request->input('created_at'), function ($query) use ($request) {
+                    QueryFilters::applyDateFilter($query,$request, 'created_at', $request->input('created_at_operator'), $request->input('created_at'));
+                });
         });
 
         $data = $dataTableService->handle();
