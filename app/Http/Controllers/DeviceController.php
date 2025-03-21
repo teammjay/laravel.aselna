@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Helpers\QueryFilters;
 use App\Http\Requests\DeviceRequest;
 use App\Models\Brand;
+use App\Models\Carrier;
 use App\Models\Device;
 use App\Models\DeviceRating;
 use App\Models\DeviceScreen;
@@ -122,8 +123,10 @@ class DeviceController extends Controller
         $deviceRatings = DeviceRating::all();
         $deviceScreens = DeviceScreen::all();
         $brands = Brand::all();
+        $carriers = Carrier::all();
+        $interfaces = \App\Models\Interfaces::all();
 
-        return view('device.add', compact('deviceTypes', 'deviceSubTypes', 'deviceSeries', 'deviceRatings', 'deviceScreens', 'brands'));
+        return view('device.add', compact('deviceTypes', 'deviceSubTypes', 'deviceSeries', 'deviceRatings', 'deviceScreens', 'brands', 'carriers', 'interfaces'));
     }
 
     public function store(DeviceRequest $request)
@@ -136,7 +139,17 @@ class DeviceController extends Controller
         $created_by = auth()->user()->name ?? 'admin';
         $request->merge(['created_by' => $created_by, 'updated_by' => $created_by, 'status' => $statusCode]);
 
-        Device::create($request->all());
+        $device = Device::create($request->all());
+
+        // Sync carriers
+        if($request->has('carriers')) {
+            $device->carriers()->sync($request->carriers);
+        }
+
+        // Sync interfaces
+        if($request->has('interfaces')) {
+            $device->interfaces()->sync($request->interfaces);
+        }
 
         return redirect()->route('devices.index')
             ->with('success', 'Device created successfully.');
@@ -151,7 +164,9 @@ class DeviceController extends Controller
         $deviceRatings = DeviceRating::all();
         $deviceScreens = DeviceScreen::all();
         $brands = Brand::all();
-        return view('device.add', compact('device', 'deviceTypes', 'deviceSubTypes', 'deviceSeries', 'deviceRatings', 'deviceScreens', 'brands'));
+        $carriers = Carrier::all();
+        $interfaces = \App\Models\Interfaces::all();
+        return view('device.add', compact('device', 'deviceTypes', 'deviceSubTypes', 'deviceSeries', 'deviceRatings', 'deviceScreens', 'brands', 'carriers', 'interfaces'));
     }
 
     public function update(DeviceRequest $request, $id)
@@ -164,7 +179,15 @@ class DeviceController extends Controller
         $updated_by = auth()->user()->name ?? 'admin';
         $request->merge(['updated_by' => $updated_by, 'status' => $statusCode]);
 
-        Device::findOrFail($id)->update($request->all());
+        $device = Device::findOrFail($id);
+
+        $device->update($request->all());
+
+        // Sync carriers
+        $device->carriers()->sync($request->carriers ?? []);
+
+        // Sync interfaces
+        $device->interfaces()->sync($request->interfaces ?? []);
 
         return redirect()->route('devices.index')
             ->with('success', 'Device updated successfully.');
