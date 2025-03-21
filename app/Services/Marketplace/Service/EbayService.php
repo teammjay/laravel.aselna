@@ -396,7 +396,8 @@ class EbayService implements MarketplaceServiceInterface
 
         $taskID = $authService->createTask();
 
-        ListingFeed::findOrFail($feed_id)->update([ 'feed_id' => $taskID]);
+        $feedInfo = ListingFeed::findOrFail($feed_id);
+        $feedInfo->update([ 'feed_id' => $taskID, 'submit_ts'=> now(), 'number_of_attempts' => $feedInfo->number_of_attempts ?? 0 + 1]);
 
         $response = $authService->uploadFile($taskID, $fileName, $filePath);
         Log::info('Feed Submitted : '.$feedId);
