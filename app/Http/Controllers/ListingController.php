@@ -954,9 +954,14 @@ class ListingController extends Controller
     {
 
         $generate_type = $request->input('type');
+        $typeName = $request->input('typeName');
         $store_type = $request->input('store_type');
         if ($generate_type) {
-            $templates = ListingGenerationTypeTemplate::where('generation_type_id', $generate_type)->whereLike('used_by_store','%' . $store_type.'%')->get();
+            if($typeName == 'Free Group'){
+                $templates = ListingGenerationTypeTemplate::where('generation_type_id', $generate_type)->whereLike('used_by_store','%' . $store_type.'%')->get();
+            }else{
+                $templates = ListingGenerationTypeTemplate::where('generation_type_id', $generate_type)->get();
+            }
             $data = [];
             $option = '';
             if (!empty($templates)) {

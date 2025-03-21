@@ -1920,6 +1920,7 @@
                     type: 'POST',
                     data: {
                         type:type,
+                        typeName:typeName,
                         store_type:store_type
                     },
                     /* processData: false,
@@ -2181,6 +2182,7 @@
                 type: 'POST',
                 data: {
                     type:type,
+                    typeName:typeName,
                     store_type:store_type
                 },
                 /* processData: false,

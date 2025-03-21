@@ -75,6 +75,9 @@
             <button type="button" class="btn btn-default" id="edit_order" disabled="">
                 <i class="fas fa-fw fa-pencil-alt"></i> Edit
             </button>
+            <button type="button" class="btn btn-default" id="create_message" disabled="">
+                <i class="fas fa-fw fa-envelope"></i> Create Message
+            </button>
         </div>
     </div>
     <div class="card card-default">
@@ -239,10 +242,12 @@
                 ele.addClass('bg-blue');
                 ele.find('.pro-id').prop('checked', true);
                 $('#edit_order').removeAttr('disabled');
+                $('#create_message').removeAttr('disabled');
             }
 
             if(!$('.pro-id:checked').length){
                 $('#edit_product').attr('disabled',true);
+                $('#create_message').attr('disabled',true);
             }
         });
 
@@ -257,6 +262,20 @@
             });
 
         });
+
+        $('#create_message').on('click',function () {
+            let flag = true;
+            $('input[name="order_id[]"]').each(function () {
+                if($(this).is(':checked')){
+                    flag = false;
+                    let selectedId = $(this).val();
+                    location.href = "{{ url('orders/create_message') }}/" + selectedId;
+                }
+            });
+
+        });
+
+
 
 
         $('#filter-form').on('submit', function(e) {

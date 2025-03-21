@@ -173,4 +173,13 @@ class OrdersController extends Controller
         return view('orders.detail',compact('orderDetail'));
     }
 
+    public function create_message(string $id)
+    {
+        $orderDetail = Order::with('orderItem','orderItem.product','store','store.storeType')->findOrFail($id);
+        /*echo '<pre>';
+        print_r($orderDetail);
+        echo '</pre>';die;*/
+        return view('orders.create_message',compact('orderDetail'));
+    }
+
 }
