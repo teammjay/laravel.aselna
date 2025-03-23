@@ -1903,6 +1903,7 @@ class ListingController extends Controller
                                             if(count($models ?? []) > 0 && is_array($models)){
 
                                                 foreach($models as $j=>$model){
+                                                    Log::info(' Model :: ' . json_encode($model));
 
                                                     if($store_type != ''){
                                                         switch(strtolower($store_type)){
@@ -1953,7 +1954,7 @@ class ListingController extends Controller
                                                         'upc' => isset($upcCodes->upc_code) ? $upcCodes->upc_code : '',
                                                         'device_id' => $model->id,
                                                         'listing_item_id' => $listing_item_id,
-                                                        'device_carrier_id' => $model->carrier_id,
+                                                        'device_carrier_id' => $model->carrier_id ?? null,
                                                         //'store_sku' => $store_id,
                                                         'created_by' => $created_by
                                                     );

@@ -176,6 +176,68 @@
         {{--        @endforeach--}}
         </tbody>
     </table>
+
+    <!-- Device Details Modal -->
+    <div class="modal fade" id="deviceDetailsModal" tabindex="-1" role="dialog" aria-labelledby="deviceDetailsModalLabel">
+        <div class="modal-dialog modal-xl modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header bg-primary">
+                    <h4 class="modal-title text-white" id="deviceDetailsModalLabel">Device Details</h4>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <ul class="nav nav-tabs" id="deviceDetailsTabs" role="tablist">
+                        <li class="nav-item">
+                            <a class="nav-link active" id="general-tab" data-toggle="tab" href="#general" role="tab">General</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" id="carrier-tab" data-toggle="tab" href="#carrier" role="tab">Carrier</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" id="interfaces-tab" data-toggle="tab" href="#interfaces" role="tab">Interfaces</a>
+                        </li>
+                    </ul>
+
+                    <div class="tab-content pt-3" id="deviceDetailsTabsContent">
+                        <div class="tab-pane fade show active" id="general" role="tabpanel">
+                            <div class="row" id="general-content">
+                                <!-- General details will be loaded here -->
+                            </div>
+                        </div>
+                        <div class="tab-pane fade" id="carrier" role="tabpanel">
+                            <table class="table table-bordered" id="carrier-table">
+                                <thead>
+                                    <tr>
+                                        <th>Carrier Name</th>
+                                        <th>Description</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Carrier data will be loaded here -->
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="tab-pane fade" id="interfaces" role="tabpanel">
+                            <table class="table table-bordered" id="interfaces-table">
+                                <thead>
+                                    <tr>
+                                        <th>Interface Name</th>
+                                        <th>Created At</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Interfaces data will be loaded here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 @stop
 
 @section('js')
@@ -220,8 +282,81 @@
                                 '<a href="{{ route('devices.delete', ['id' => ':id']) }}'.replace(':id','') + row.id + '" class="btn btn-danger">Delete</a>';
                         }
                     }
-                ]
+                ],
+                createdRow: function(row, data, dataIndex) {
+                    $(row).data('device-id', data.id);
+                }
             });
+
+            // Device Details Modal Handler
+        $('body').on('click', '#deviceTable tbody tr', function() {
+            const deviceId = $(this).data('device-id');
+            $('#deviceDetailsModal').modal('show');
+
+            // Load general details immediately
+            $.get(`/devices/${deviceId}/details`, function(data) {
+                $('#general-content').html(`
+                    <div class="col-md-4">
+                        <label>Device Type:</label>
+                        <p>${data.device_type?.name || ''}</p>
+                    </div>
+                    <div class="col-md-4">
+                        <label>Sub Type:</label>
+                        <p>${data.device_sub_type?.name || ''}</p>
+                    </div>
+                    <div class="col-md-4">
+                        <label>Brand:</label>
+                        <p>${data.brand?.name || ''}</p>
+                    </div>
+                    <div class="col-md-4">
+                        <label>Device Name:</label>
+                        <p>${data.name || ''}</p>
+                    </div>
+                    <div class="col-md-4">
+                        <label>Status:</label>
+                        <p>${data.status}</p>
+                    </div>
+                    <div class="col-md-4">
+                        <label>Rating:</label>
+                        <p>${data.rating?.name || ''}</p>
+                    </div>
+                `);
+            });
+
+            // Handle tab changes
+            $('#deviceDetailsTabs a').on('shown.bs.tab', function(e) {
+                const target = $(e.target).attr('href');
+
+                if(target === '#carrier' && !$('#carrier-table').data('loaded')) {
+                    $.get(`/devices/${deviceId}/carriers`, function(data) {
+                        $('#carrier-table tbody').html(
+                            data.map(carrier => `
+                                <tr>
+                                    <td>${carrier.name}</td>
+                                    <td>${carrier.description}</td>
+                                    <td>${carrier.status}</td>
+                                </tr>
+                            `).join('')
+                        );
+                        $('#carrier-table').data('loaded', true);
+                    });
+                }
+
+                if(target === '#interfaces' && !$('#interfaces-table').data('loaded')) {
+                    $.get(`/devices/${deviceId}/interfaces`, function(data) {
+                        $('#interfaces-table tbody').html(
+                            data.map(intf => `
+                                <tr>
+                                    <td>${intf.interfaces?.name}</td>
+                                    <td>${intf.created_at}</td>
+                                </tr>
+                            `).join('')
+                        );
+                        $('#interfaces-table').data('loaded', true);
+                    });
+                }
+            });
+        });
 
             $('#apply_filter').on('click', function (event) {
                 event.preventDefault();

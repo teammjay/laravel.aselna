@@ -47,6 +47,9 @@ use App\Http\Controllers\StorePagesController;
 use App\Services\Auth\EbayAuthService;
 
 Route::middleware('auth')->group(function () {
+    Route::get('/devices/{id}/details', [DeviceController::class, 'getDeviceDetails']);
+    Route::get('/devices/{id}/carriers', [DeviceController::class, 'getDeviceCarriers']);
+    Route::get('/devices/{id}/interfaces', [DeviceController::class, 'getDeviceInterfaces']);
     Route::get('/', [HomeController::class, 'index'])->name('home');
     Route::get('/catalog', [CatalogController::class, 'index']);
     Route::get('/catalog', [CatalogController::class, 'index'])->name('catalog.list');

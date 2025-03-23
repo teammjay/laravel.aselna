@@ -55,7 +55,7 @@ class Device extends Model
 
     public function deviceSubType()
     {
-        return $this->belongsTo(DeviceTypes::class);
+        return $this->belongsTo(DeviceSubTypes::class);
     }
 
     public function deviceSeries()
@@ -65,7 +65,7 @@ class Device extends Model
 
     public function rating()
     {
-        return $this->belongsTo(DeviceRating::class,'rating_id');
+        return $this->belongsTo(DeviceRating::class, 'rating_id')->withDefault(['name' => '']);
     }
 
     public function screen()
@@ -81,6 +81,11 @@ class Device extends Model
     public function deviceType()
     {
         return $this->belongsTo(DeviceTypes::class);
+    }
+
+    public function interfaces()
+    {
+        return $this->hasMany(DeviceInterface::class);
     }
 
     public function setReleaseDateAttribute($value)
