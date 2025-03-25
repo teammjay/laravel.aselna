@@ -1170,7 +1170,7 @@
                         return acc;
                     }, []);
 
-                    selected_device[product_id] = newArray;
+                    selected_device[product_id] = [];
 
                     var cArr = selected_carrier[product_id];
                     const newcArray = cArr.reduce((acc, item) => {
@@ -1178,7 +1178,8 @@
                         return acc;
                     }, []);
 
-                    selected_carrier[product_id] = newcArray;
+                    selected_carrier[product_id] = [];
+                    console.log(selected_carrier);
                 });
                 $('.targetRow').removeClass('bg-blue');
             });
