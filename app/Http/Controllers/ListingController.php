@@ -883,10 +883,12 @@ class ListingController extends Controller
         $selected_device = $request->input('selected_device');
         if ($product_id) {
             $field = 'products.product_title';
+            $field2 = 'products.product_title';
             if ($include_carrier == 1 || $generate_type_name == 'Carrier Group') {
                 $field = 'carrier.name as carrier_name';
+                $field2 = 'carrier.id as carrier_id';
             }
-            $query = Device::select('device.*', 'product_interface.product_id', 'products.product_sku', $field)->with('brand', 'rating')->with('deviceType', 'deviceSeries');
+            $query = Device::select('device.*', 'product_interface.product_id', 'products.product_sku', $field,$field2)->with('brand', 'rating')->with('deviceType', 'deviceSeries');
             $query->leftJoin('brands', 'brands.id', '=', 'device.brand_id');
             $query->leftJoin('device_interface', 'device_interface.device_id', '=', 'device.id');
             $query->leftJoin('product_interface', 'product_interface.interface_id', '=', 'device_interface.interface_id');
@@ -958,7 +960,7 @@ class ListingController extends Controller
         $store_type = $request->input('store_type');
         if ($generate_type) {
             if ($typeName == 'Free Group') {
-                $templates = ListingGenerationTypeTemplate::where('generation_type_id', $generate_type)/*->whereLike('used_by_store', '%' . $store_type . '%')*/->get();
+                $templates = ListingGenerationTypeTemplate::where('generation_type_id', $generate_type)->whereLike('used_by_store', '%' . $store_type . '%')->get();
             } else {
                 $templates = ListingGenerationTypeTemplate::where('generation_type_id', $generate_type)->get();
             }
@@ -1010,6 +1012,7 @@ class ListingController extends Controller
             $group_seperator = $request->input('group_seperator');
             $device_seperator = $request->input('device_seperator');
             $selected_device = $request->input('selected_device');
+            $selected_carrier = $request->input('selected_carrier');
             $product_details = $request->input('product_detail');
             $store_type = $request->input('store_type');
             // $use_store_as_brand = $request->input('use_store_as_brand');
@@ -1077,6 +1080,10 @@ class ListingController extends Controller
                                         $query->whereIn('device_carrier.carrier_id', $carriers);
                                     }
                                     $query->whereNotNull('carrier.id');
+
+                                    if (isset($selected_carrier[$product->product_id]) && !empty($selected_carrier[$product->product_id])) {
+                                        $query->whereIn('device_carrier.carrier_id', $selected_carrier[$product->product_id]);
+                                    }
                                 }
                                 $query->where('product_interface.product_id', $product->product_id);
                                 if (isset($selected_device[$product->product_id]) && !empty($selected_device[$product->product_id])) {
@@ -1112,7 +1119,7 @@ class ListingController extends Controller
                                     $query->limit(250);
                                 }
                                 $devices = $query->get();
-
+                                //echo $query->toSql();die;
                                 /*echo '<pre>';
                                 print_r($devices);
                                 echo '<pre>';die;*/
