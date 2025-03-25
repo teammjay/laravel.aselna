@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Models\Catalog;
 use App\Models\ProductSpecification;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -34,11 +35,15 @@ class ProductSpecificationSyncJob implements ShouldQueue
 
     private function createProductSpecification(mixed $productSpecification)
     {
+        if (empty($productSpecification->product_id) || Catalog::where('id', $productSpecification->product_id)->doesntExist()) {
+            return;
+        }
         ProductSpecification::updateOrCreate([
             'id' => $productSpecification->id,
         ], [
             'id' => $productSpecification->id,
             'name' => $productSpecification->name,
+            'product_id' => $productSpecification->product_id,
             'created_at' => now(),
             'updated_at' => now(),
         ]);
