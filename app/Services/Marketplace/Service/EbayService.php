@@ -464,6 +464,8 @@ class EbayService implements MarketplaceServiceInterface
                                     }
                                 }
                             }
+
+                            return 'result-feeds/ebay/' . $listingId . '/' . $file;
                         }
                     }
                 }
