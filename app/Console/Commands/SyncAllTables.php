@@ -37,6 +37,7 @@ use App\Jobs\ProductInterfaces;
 use App\Jobs\ProductMaterialSyncJob;
 use App\Jobs\ProductSearchTermSyncJob;
 use App\Jobs\ProductSizeSyncJob;
+use App\Jobs\ProductSpecificationSyncJob;
 use App\Jobs\ProductSyncJob;
 use App\Jobs\ProductTagSyncJob;
 use App\Jobs\ProductTypeKeywordSyncJob;
@@ -91,7 +92,7 @@ class SyncAllTables extends Command
 //            new DevicesSyncJob(),
 //            new DeviceInterfaces(),
 //            new ProductConditionJob(),
-           new CarrierSyncJob(),
+//           new CarrierSyncJob(),
 //            new ShippingCarrierJob(),
 //            new ProductColorSync(),
             //    new ProductSizeSyncJob(),
@@ -110,7 +111,8 @@ class SyncAllTables extends Command
 //            new ProductAlternativeImagesSyncJob(),
             //    new ListingTemplateSyncJob(),
             // new StorePagesJobSync(),
-            new DeviceCarrierSyncJob()
+//            new DeviceCarrierSyncJob(),
+        new ProductSpecificationSyncJob()
         ])->dispatch();
 //        Bus::chain([
 //            ListingSyncJob::dispatch(),
