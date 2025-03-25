@@ -200,10 +200,15 @@ class EbayService implements MarketplaceServiceInterface
             // Add ItemSpecifics
             if(isset($listingItem->listingItem->storeProduct->StoreTypeCategory) && !empty($listingItem->listingItem->storeProduct->StoreTypeCategory)) {
                 $itemSpecifics = $item->addChild('ItemSpecifics');
+                if(strtolower($listingItem->listingItem->brand->name) == 'apple'){
+                    $fitModel = (isset($listingItem->listingItem->brand)) ? $listingItem->listingItem->device->name : '';
+                }else {
+                    $fitModel = (isset($listingItem->listingItem->brand)) ? $listingItem->listingItem->brand->name . ' ' . $listingItem->listingItem->device->name : '';
+                }
                 $specifics = [
                     ['Type', $listingItem->listingItem->storeProduct->StoreTypeCategory->name],
-                    ['Fits Model', (isset($listingItem->listingItem->brand)) ? $listingItem->listingItem->brand->name.' '.$listingItem->listingItem->device->name : ''],
-                    ['Brand', $listingItem->listingItem->brand->name],
+                    ['Fits Model', $fitModel],
+                    ['Brand', $listingItem->listingItem->storeProduct->store->name],
                     ['MPN', $itemDetail->mpn],
                     ['Model', $itemDetail->mpn],
                 ];
@@ -226,11 +231,11 @@ class EbayService implements MarketplaceServiceInterface
 
             // Add Variations
             $variations = $item->addChild('Variations');
-            $variationData = ListingItemDetail::with('device','device.brand','carrier')->where('listing_item_id',$itemDetail->id)->get();
+            $variationData = ListingItemDetail::with('device','device.brand','carrier')->where('listing_item_id',$itemDetail->id)->orderBy('created_at','ASC')->get();
             /*echo '<pre>';
             print_r($variationData);
             echo '</pre>';die;*/
-            $compatibleModels = [];
+            $compatibleModels = $compatibleCarriers = [];
             if(!empty((array) $variationData)) {
                 foreach ($variationData as $variant) {
                     $variation = $variations->addChild('Variation');
@@ -238,30 +243,52 @@ class EbayService implements MarketplaceServiceInterface
                     $variation->addChild('StartPrice', $itemDetail->price);
                     $variation->addChild('Quantity', $itemDetail->quantity);
                     $variationSpecifics = $variation->addChild('VariationSpecifics');
-                    if($listingInfo->include_carriers && isset($variant->carrier)) {
+                    if($listingInfo->carrier_combo && isset($variant->carrier)) {
                         $nameValueList = $variationSpecifics->addChild('NameValueList');
                         $nameValueList->addChild('Name', 'Choose Your Carrier');
                         $nameValueList->addChild('Value', htmlspecialchars($variant->carrier->name));
                     }
+                    $compatibleCarriers[] = htmlspecialchars($variant->carrier->name);
                     $nameValueList1 = $variationSpecifics->addChild('NameValueList');
                     $nameValueList1->addChild('Name', 'Compatible Model');
-                    $nameValueList1->addChild('Value', $variant->device->brand->name.' '.$variant->device->name);
-                    $variationTitle = $variationtitle.' '.$variant->device->brand->name.' '.$variant->device->name;
+                    if(strtolower($variant->device->brand->name) == 'apple'){
+                        if($listingInfo->include_carriers && isset($variant->carrier)) {
+                            $nameValueList1->addChild('Value', htmlspecialchars($variant->carrier->name).' '.$variant->device->name);
+                            $compatibleModels[] = htmlspecialchars($variant->carrier->name).' '.$variant->device->name;
+                        }else{
+                            $nameValueList1->addChild('Value', $variant->device->name);
+                            $compatibleModels[] = $variant->device->brand->name.' '.$variant->device->name;
+                        }
+                        $variationTitle = $variationtitle.' '.$variant->device->name;
+
+                    }else{
+                        $nameValueList1->addChild('Value', $variant->device->brand->name.' '.$variant->device->name);
+                        $variationTitle = $variationtitle.' '.$variant->device->brand->name.' '.$variant->device->name;
+                        $compatibleModels[] = $variant->device->brand->name.' '.$variant->device->name;
+                    }
+
                     $variation->addChild('VariationTitle', $variationTitle);
                     $variationDetails = $variation->addChild('VariationProductListingDetails');
                     $variationDetails->addChild('UPC', $itemDetail->upc);
-                    $compatibleModels[] = $variant->device->brand->name.' '.$variant->device->name;
                 }
             }
 
             // Add VariationSpecificsSet
             $variationSpecificsSet = $variations->addChild('VariationSpecificsSet');
             $nameValueList = $variationSpecificsSet->addChild('NameValueList');
-            $nameValueList->addChild('Name', 'Compatible Model');
+            if($listingInfo->carrier_combo && isset($variant->carrier)) {
+                $nameValueList->addChild('Name', 'Choose Your Carrier');
+                sort($compatibleCarriers);
+                foreach ($compatibleCarriers as $carrier) {
+                    $nameValueList->addChild('Value', $carrier);
+                }
+            }
+            $nameValueList2 = $variationSpecificsSet->addChild('NameValueList');
+            $nameValueList2->addChild('Name', 'Compatible Model');
             // sort the compatible models
             sort($compatibleModels);
             foreach ($compatibleModels as $model) {
-                $nameValueList->addChild('Value', $model);
+                $nameValueList2->addChild('Value', $model);
             }
 
             $item->addChild('ConditionID', '1000');

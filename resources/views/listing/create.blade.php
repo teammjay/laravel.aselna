@@ -273,7 +273,7 @@
                                 <div class="card-header pl-0 pr-0">
                                     <div class="d-flex justify-content-between">
                                         <div>
-                                            <input type="checkbox" id="selected_product"> Selected Products Only
+                                            <input type="checkbox" id="selected_product"> <label for="selected_product">Selected Products Only</label>
                                         </div>
                                         <div class="float-right" id="total_search_product"></div>
                                     </div>
@@ -426,7 +426,7 @@
                                                 @endphp
                                             @endforeach
                                         @endif
-                                        <div class="form-group mb-1">
+                                        <div class="form-group mb-1 inc_carrier_option">
                                             <input type="checkbox" class="mr-1 mt-1" name="include_carrier" id="include_carrier"><label for="include_carrier">Include carrier</label>
                                         </div>
                                     </div>
@@ -444,15 +444,25 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="border p-2" style="width: 13%;">
-                                    <label>Device Type</label>
-                                    @if(count($deviceTypes ?? []) > 0)
-                                        @foreach($deviceTypes as $dType)
-                                            <div class="form-group d-flex align-items-baseline mb-1">
-                                                <input type="checkbox" class="ml-2 mr-2" name="device_type[]" value="{{ $dType->id }}"> <span>{{ $dType->name }}</span>
-                                            </div>
-                                        @endforeach
-                                    @endif
+                                <div>
+                                    <div class="border p-2" style="max-height: 290px;overflow-y: auto;">
+                                        <label>Device Type</label>
+                                        @if(count($deviceTypes ?? []) > 0)
+                                            @foreach($deviceTypes as $dType)
+                                                <div class="form-group d-flex align-items-baseline mb-1">
+                                                    <input type="checkbox" class="ml-2 mr-2" name="device_type[]" value="{{ $dType->id }}"> <span>{{ $dType->name }}</span>
+                                                </div>
+                                            @endforeach
+                                        @endif
+                                    </div>
+                                    <div class="border p-2 mt-2" id="combo_option">
+                                        <div class="form-group d-flex align-items-baseline mb-1">
+                                            <input type="checkbox" class="ml-2 mr-2" name="brand_combo" id="brand_combo" value=""> <span> Brand Combo</span>
+                                        </div>
+                                        <div class="form-group d-flex align-items-baseline mb-1">
+                                            <input type="checkbox" class="ml-2 mr-2" name="carrier_combo" id="carrier_combo" value=""> <span>Carrier Combo</span>
+                                        </div>
+                                    </div>
                                 </div>
                                 <div>
                                     <div class="d-flex" style="gap:10px;">
@@ -847,6 +857,16 @@
                             include_carrier = 1;
                         }
 
+                        let brand_combo = 0;
+                        if($('input[name="brand_combo"]').is(':checked')){
+                            brand_combo = 1;
+                        }
+
+                        let carrier_combo = 0;
+                        if($('input[name="carrier_combo"]').is(':checked')){
+                            carrier_combo = 1;
+                        }
+
                         if($('#title_template').val() == ''){
                             alert('Please select title template first and update.');
                             return false;
@@ -876,7 +896,9 @@
                                 selected_device:selected_device,
                                 product_detail:productDetail,
                                 store_type:store_type,
-                                include_carrier:include_carrier
+                                include_carrier:include_carrier,
+                                carrier_combo:carrier_combo,
+                                brand_combo:brand_combo,
                                 // use_store_as_brand:$('#use-store-brand').val(),
                             },
                             /* processData: false,
@@ -939,6 +961,17 @@
                                 include_carrier = 1;
                             }
                             formData.append('include_carrier', include_carrier);
+                            let brand_combo = 0;
+                            if($('input[name="brand_combo"]').is(':checked')){
+                                brand_combo = 1;
+
+                            }
+                            formData.append('brand_combo', brand_combo);
+                            let carrier_combo = 0;
+                            if($('input[name="carrier_combo"]').is(':checked')){
+                                carrier_combo = 1;
+                            }
+                            formData.append('carrier_combo', carrier_combo);
                             $("#ajax-preloader").show();
                             $.ajax({
                                 type: 'POST',
@@ -2334,6 +2367,11 @@
             let store_type = $('#listing_store option:selected').data('storetype');
             if(store_type == 'Ebay' || store_type == 'eBay'){
                 $('input[data-name="Combined Devices"]').parent().hide();
+                $('#combo_option').show();
+                $('.inc_carrier_option').show();
+            }else{
+                $('#combo_option').hide();
+                $('.inc_carrier_option').hide();
             }
             $('input[name="selected_store_product[]"]').each(function () {
                 var pid = $(this).val();

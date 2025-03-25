@@ -1070,7 +1070,7 @@ class ListingController extends Controller
                                 $query->leftJoin('device_interface', 'device_interface.device_id', '=', 'device.id');
                                 $query->leftJoin('product_interface', 'product_interface.interface_id', '=', 'device_interface.interface_id');
 
-                                if ($include_carrier == 1 || $generate_type_name == 'Carrier Group') {
+                                if($include_carrier == 1 || strtolower($generate_type_name) == 'carrier group') {
                                     $query->leftJoin('device_carrier', 'device_carrier.device_id', '=', 'device.id');
                                     $query->leftJoin('carrier', 'carrier.id', '=', 'device_carrier.carrier_id');
                                     if ($carriers) {
@@ -1101,12 +1101,14 @@ class ListingController extends Controller
                                     $devices = DevicesLinkedDevice::select('device_id')->whereIn('device_series_id', $deviceSeries)->get();
                                     $query->whereIn('device.id', $devices);
                                 }
-                                if ($include_carrier == 1 || $generate_type_name == 'Carrier Group') {
+                                if($include_carrier == 1 || strtolower($generate_type_name) == 'carrier group') {
+
                                     $query->orderBy('carrier_name', 'asc');
                                 }
                                 $query->orderBy('brand_name', 'asc');
                                 $query->orderBy('device.name', 'asc');
-                                if ($store_type == 'Ebay' || $store_type == 'eBay') {
+                                if(strtolower($store_type) == 'ebay') {
+
                                     $query->limit(250);
                                 }
                                 $devices = $query->get();
@@ -1118,7 +1120,7 @@ class ListingController extends Controller
                                 if ($generate_type_name) {
                                     switch (trim(strtolower($generate_type_name))) {
                                         case 'combined devices':
-                                            $productsArray[] = $this->generateProductTitles($title_template, $product, $devices, $max_title_length, $brand_seperator, $device_seperator, $compress, $generate_type, $pDetail, $store_product_id);
+                                            $productsArray[] = $this->generateProductTitles($title_template, $product, $devices, $max_title_length, $brand_seperator, $device_seperator, $compress, $generate_type, $pDetail, $store_product_id, $store_type);
                                             break;
                                         case 'free group':
                                             $prevBrand = null;
@@ -1134,18 +1136,18 @@ class ListingController extends Controller
                                             if ($flag) {
                                                 continue 2;
                                             }
-                                            $productsArray[] = $this->generateFreeGroupProductTitles($title_template, $product, $devices, $max_title_length, $brand_seperator, $device_seperator, $compress, $generate_type, $pDetail, $store_product_id);
+                                            $productsArray[] = $this->generateFreeGroupProductTitles($title_template, $product, $devices, $max_title_length, $brand_seperator, $device_seperator, $compress, $generate_type, $pDetail, $store_product_id, $store_type);
                                             break;
                                         case 'single device':
-                                            $productsArray[] = $this->generateSingleDeviceProductTitles($title_template, $product, $devices, $max_title_length, $brand_seperator, $device_seperator, $compress, $generate_type, $pDetail, $store_product_id);
+                                            $productsArray[] = $this->generateSingleDeviceProductTitles($title_template, $product, $devices, $max_title_length, $brand_seperator, $device_seperator, $compress, $generate_type, $pDetail, $store_product_id, $store_type);
                                             break;
                                         case 'brand gruop':
-                                            $productsArray[] = $this->generateBrandGroupProductTitles($title_template, $product, $devices, $max_title_length, $brand_seperator, $device_seperator, $compress, $generate_type, $pDetail, $store_product_id);
+                                            $productsArray[] = $this->generateBrandGroupProductTitles($title_template, $product, $devices, $max_title_length, $brand_seperator, $device_seperator, $compress, $generate_type, $pDetail, $store_product_id, $store_type);
                                             break;
                                         case 'carrier group':
-                                            $productsArray[] = $this->generateCarrierGroupProductTitles($title_template, $product, $devices, $generate_type, $pDetail, $store_product_id);
+                                            $productsArray[] = $this->generateCarrierGroupProductTitles($title_template, $product, $devices, $generate_type, $pDetail, $store_product_id, $store_type);
                                         case 'all carriers':
-                                            $productsArray[] = $this->generateAllCarrierProductTitles($title_template, $product, $devices, $generate_type, $pDetail, $store_product_id);
+                                            $productsArray[] = $this->generateAllCarrierProductTitles($title_template, $product, $devices, $generate_type, $pDetail, $store_product_id, $store_type);
                                             break;
                                     }
                                 }
@@ -1358,7 +1360,7 @@ class ListingController extends Controller
         return $titles;
     }
 
-    private function generateSingleDeviceProductTitles($baseTitle, $product, $devices, $charLimit, $brand_seperator, $device_seperator, $compress, $generate_type, $pDetail, $store_product_id)
+    private function generateSingleDeviceProductTitles($baseTitle, $product, $devices, $charLimit, $brand_seperator, $device_seperator, $compress, $generate_type, $pDetail, $store_product_id, $store_type)
     {
         $titles = [];
         $separator = $device_seperator; // Separator between device names
@@ -1389,7 +1391,7 @@ class ListingController extends Controller
         return $titles;
     }
 
-    private function generateFreeGroupProductTitles_old($baseTitle, $product, $devices, $charLimit, $brand_seperator, $device_seperator, $compress, $generate_type, $pDetail, $store_product_id)
+    private function generateFreeGroupProductTitles_old($baseTitle, $product, $devices, $charLimit, $brand_seperator, $device_seperator, $compress, $generate_type, $pDetail, $store_product_id, $store_type)
     {
         $titles = [];
         $separator = $device_seperator; // Separator between device names
@@ -1421,7 +1423,7 @@ class ListingController extends Controller
         return $titles;
     }
 
-    private function generateFreeGroupProductTitles($baseTitle, $product, $devices, $charLimit, $brand_seperator, $device_seperator, $compress, $generate_type, $pDetail, $store_product_id)
+    private function generateFreeGroupProductTitles($baseTitle, $product, $devices, $charLimit, $brand_seperator, $device_seperator, $compress, $generate_type, $pDetail, $store_product_id, $store_type)
     {
         $titles = [];
         $currentModels = [];
@@ -1432,11 +1434,16 @@ class ListingController extends Controller
         $lastModel = null;
         $currentBrand = null;
         $currentMod = null;
+        $allDevice = [];
         $cnt = 0;
 
         foreach ($devices as $key => $device) {
             // Split the device into brand and model
             $currentBrand = $device->brand_name . ' ' . $device->name;
+            if(strtolower($store_type) == 'ebay' && strtolower($device->brand_name) == 'apple'){
+                $currentBrand = $device->name;
+            }
+
             $currentMod = $device->name;
             $parts = explode(' ', $device->name, 2);
             $brand = $parts[0];
@@ -1472,15 +1479,22 @@ class ListingController extends Controller
                 $nameToAdd = $currentBrand;
             }
 
+            //echo '<pre>';
+            //print_r($currentDevices);
+            //echo '</pre>';
+
             //echo $nameToAdd;
+            if(!in_array($currentBrand, $currentDevices) && !in_array($currentBrand, $allDevice)) {
+                $tempDevices = array_merge($currentDevices, [$nameToAdd]);
+                $tempDeviceString = implode($device_seperator . ' ', $tempDevices);
+                $tempTitle = str_replace('#devices', $tempDeviceString, $baseTitle);
+            }
 
-            $tempDevices = array_merge($currentDevices, [$nameToAdd]);
-            $tempDeviceString = implode($device_seperator . ' ', $tempDevices);
-            $tempTitle = str_replace('#devices', $tempDeviceString, $baseTitle);
-
-            $tempDevices = array_merge($currentDevices, [$currentBrand]);
-            $tempDeviceString = implode($device_seperator . ' ', $tempDevices);
-            $tempTitle = str_replace('#device_series', $tempDeviceString, $tempTitle);
+            if(!in_array($currentBrand, $currentDevices) && !in_array($currentBrand, $allDevice)) {
+                $tempDevices = array_merge($currentDevices, [$currentBrand]);
+                $tempDeviceString = implode($device_seperator . ' ', $tempDevices);
+                $tempTitle = str_replace('#device_series', $tempDeviceString, $tempTitle);
+            }
 
 
             $tempModels = array_merge($currentModels, [str_replace($device->brand_name . ' ', '', $currentBrand)]);
@@ -1511,11 +1525,17 @@ class ListingController extends Controller
             }else {
                 $currentDevices[] = $nameToAdd;
             }*/
-
-            $currentDevices[] = $nameToAdd;
+            if(!in_array($currentBrand, $currentDevices) && !in_array($currentBrand, $allDevice)) {
+                $currentDevices[] = $nameToAdd;
+            }
             // Update the last brand
             $lastBrand = $brand;
+            $allDevice[] = $currentBrand;
         }
+
+        /*echo '<pre>';
+        print_r($currentDevices);
+        echo '</pre>';die;*/
 
         // Add the last title
         if (!empty($currentTitle)) {
@@ -1525,7 +1545,7 @@ class ListingController extends Controller
         return $titles;
     }
 
-    private function generateBrandGroupProductTitles($baseTitle, $product, $devices, $charLimit, $brand_seperator, $device_seperator, $compress, $generate_type, $pDetail, $store_product_id)
+    private function generateBrandGroupProductTitles($baseTitle, $product, $devices, $charLimit, $brand_seperator, $device_seperator, $compress, $generate_type, $pDetail, $store_product_id, $store_type)
     {
         $titles = [];
         $currentModels = [];
@@ -1627,7 +1647,7 @@ class ListingController extends Controller
         return $titles;
     }
 
-    private function generateCarrierGroupProductTitles($baseTitle, $product, $devices, $generate_type, $pDetail, $store_product_id)
+    private function generateCarrierGroupProductTitles($baseTitle, $product, $devices, $generate_type, $pDetail, $store_product_id, $store_type)
     {
         $titles = [];
         $lastCarrier = null;
@@ -1672,7 +1692,7 @@ class ListingController extends Controller
         return $titles;
     }
 
-    private function generateAllCarrierProductTitles($baseTitle, $product, $devices, $generate_type, $pDetail, $store_product_id)
+    private function generateAllCarrierProductTitles($baseTitle, $product, $devices, $generate_type, $pDetail, $store_product_id, $store_type)
     {
         $titles = [];
         $lastCarrier = null;
@@ -1719,6 +1739,8 @@ class ListingController extends Controller
                     $brand_id = $request->input('final_brand_id');
                     $device_id = $request->input('final_device_id');
                     $include_carrier = $request->input('include_carrier');
+                    $brand_combo = $request->input('brand_combo');
+                    $carrier_combo = $request->input('carrier_combo');
                     $store_id = $request->input('store_id');
                     $store_type = $request->input('store_type');
                     $store_detail = Store::where('id', $store_id)->first();
@@ -1739,8 +1761,8 @@ class ListingController extends Controller
                         'status' => 0,
                         'chained' => 1,
                         'include_carriers' => $include_carrier,
-                        'brand_combo' => 0,
-                        'carrier_combo' => 0,
+                        'brand_combo' => $brand_combo,
+                        'carrier_combo' => $carrier_combo,
                         'created_by' => $created_by,
                         'updated_by' => $created_by
                     ];
