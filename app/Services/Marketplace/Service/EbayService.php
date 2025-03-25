@@ -302,8 +302,12 @@ class EbayService implements MarketplaceServiceInterface
             if($listingInfo->carrier_combo && isset($variant->carrier)) {
                 $nameValueList->addChild('Name', 'Choose Your Carrier');
                 sort($compatibleCarriers);
+                $lastvariant = null;
                 foreach ($compatibleCarriers as $carrier) {
-                    $nameValueList->addChild('Value', $carrier);
+                    if($lastvariant != $carrier){
+                        $nameValueList->addChild('Value', $carrier);
+                    }
+                    $lastvariant = $carrier;
                 }
             }
             $nameValueList2 = $variationSpecificsSet->addChild('NameValueList');
