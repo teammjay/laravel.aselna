@@ -9,6 +9,7 @@ use App\Models\ListingItemLink;
 use App\Models\ListingItemProductImage;
 use App\Models\ListingTemplate;
 use App\Models\ProductKeyFeatures;
+use App\Models\ProductSpecification;
 use App\Models\StorePage;
 use App\Models\StoreProduct;
 use App\Models\StoreType;
@@ -212,10 +213,32 @@ class EbayService implements MarketplaceServiceInterface
                     ['MPN', $itemDetail->mpn],
                     ['Model', $itemDetail->mpn],
                 ];
+
                 foreach ($specifics as $specific) {
                     $nameValueList = $itemSpecifics->addChild('NameValueList');
                     $nameValueList->addChild('Name', $specific[0]);
                     $nameValueList->addChild('Value', htmlspecialchars($specific[1]));
+                }
+
+                $productSpecification = ProductSpecification::where('product_id',$product->product_id)->get();
+                if(count($productSpecification ?? []) > 0){
+                    foreach($productSpecification as $specificaiton){
+
+                        $nameValueList = $itemSpecifics->addChild('NameValueList');
+                        $nameValueList->addChild('Name', $specificaiton->name);
+                        if(str_contains($specificaiton->value, ',')){
+                            $values = explode(',',$specificaiton->value);
+                            if(is_array($values)){
+                                foreach($values as $val){
+                                    $nameValueList->addChild('Value', htmlspecialchars($val));
+                                }
+                            }else{
+                                $nameValueList->addChild('Value', htmlspecialchars($values));
+                            }
+                        }else{
+                            $nameValueList->addChild('Value', htmlspecialchars($specificaiton->value));
+                        }
+                    }
                 }
             }
 

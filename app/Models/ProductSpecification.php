@@ -10,5 +10,4 @@ class ProductSpecification extends Model
     protected $fillable = ['id', 'name', 'product_id', 'created_at', 'updated_at'];
     public $incrementing = false;
     protected $keyType = 'string';
-    public $timestamps = false;
 }
