@@ -10,6 +10,7 @@ use App\Models\ListingItemProductImage;
 use App\Models\ListingTemplate;
 use App\Models\ProductKeyFeatures;
 use App\Models\ProductSpecification;
+use App\Models\ProductTitleKeyword;
 use App\Models\StorePage;
 use App\Models\StoreProduct;
 use App\Models\StoreType;
@@ -18,6 +19,7 @@ use App\Models\SysFile;
 use App\Services\Auth\EbayAuthService;
 use App\Services\Marketplace\Contracts\MarketplaceServiceInterface;
 use App\Utils\ListingUtility;
+use App\Utils\Spintax;
 use App\Utils\XmlUtility;
 use App\Constants\FeedTypes;
 use Illuminate\Support\Facades\Log;
@@ -133,7 +135,11 @@ class EbayService implements MarketplaceServiceInterface
             $max_title_length = $store_type_detail->max_title_length;
 
             $storeProduct = StoreProduct::where('product_id', $product->product_id)->where('store_id', $store_id)->first();
-            $variationtitle = ListingUtility::generateTitle($storeProduct, true, $max_title_length);
+            //$variationtitle = ListingUtility::generateTitle($storeProduct, true, $max_title_length);
+
+            $shortkeywords = ProductTitleKeyword::select('keyword')->where('product_id', $product->product_id)->orderBy('priority', 'asc')->limit(3)->get()->toArray();
+            $longkeywords = ProductTitleKeyword::select('keyword')->where('product_id', $product->product_id)->orderBy('priority', 'asc')->offset(3)->limit(2)->get()->toArray();
+
 
             ///echo $description;die;
 
@@ -284,11 +290,14 @@ class EbayService implements MarketplaceServiceInterface
                             $nameValueList1->addChild('Value', $variant->device->name);
                             $compatibleModels[] = $variant->device->brand->name.' '.$variant->device->name;
                         }
-                        $variationTitle = $variationtitle.' '.$variant->device->name;
+                        $variationTitle = $this->generateVariationTitle($variant->device->name, $shortkeywords,$longkeywords, $max_title_length);
+                        //$variationTitle = $variationtitle.' '.$variant->device->name;
 
                     }else{
                         $nameValueList1->addChild('Value', $variant->device->brand->name.' '.$variant->device->name);
-                        $variationTitle = $variationtitle.' '.$variant->device->brand->name.' '.$variant->device->name;
+                        //$variationTitle = $variationtitle.' '.$variant->device->brand->name.' '.$variant->device->name;
+                        $deviceName = $variant->device->brand->name.' '.$variant->device->name;
+                        $variationTitle = $this->generateVariationTitle($deviceName, $shortkeywords,$longkeywords, $max_title_length);
                         $compatibleModels[] = $variant->device->brand->name.' '.$variant->device->name;
                     }
 
@@ -326,6 +335,45 @@ class EbayService implements MarketplaceServiceInterface
         $xmlContent = $xml->asXML();
 
         XmlUtility::saveToFile(public_path('feeds/ebay/' . $listingId . '.xml'), $xmlContent);
+    }
+
+    private function generateVariationTitle($device_name, $short_keywords = [], $long_keywords = [], $max_length = 80)
+    {
+        $spintax = new Spintax();
+        $title_template = "For #device_name - #short_keywords #long_keywords";
+
+        $skeywords = $lkeywords = [];
+        if(!empty($short_keywords)){
+            foreach($short_keywords as $skey){
+                $skeywords[] = $skey['keyword'];
+            }
+        }
+        if(!empty($long_keywords)){
+            foreach($long_keywords as $lkey){
+                $lkeywords[] = $lkey['keyword'];
+            }
+        }
+        $short_str = implode(' ', $skeywords);
+        $short_str = $spintax->process($short_str);
+        $long_str = implode(' ', $lkeywords);
+        $long_str = $spintax->process($long_str);
+
+        $title = str_replace(
+            ['#device_name', '#short_keywords', '#long_keywords'],
+            [$device_name, $short_str, $long_str],
+            $title_template
+        );
+
+        /*if (strlen($title) > $max_length) {
+            $title = str_replace($long_str, '', $title);
+            $title = trim(preg_replace('/\s+/', ' ', $title));
+        }
+
+        if (strlen($title) > $max_length) {
+            $title = substr($title, 0, $max_length - 3);
+        }*/
+
+        return $title;
     }
 
     public function generatePriceFeed($listingInfo, $listingId){
