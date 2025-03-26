@@ -873,6 +873,7 @@
                         }
 
                         $("#ajax-preloader").show();
+                        $('#total_generate_models').html('0 rows');
                         $.ajax({
                             url: "{{ route('listing.generateproductlisting') }}",
                             type: 'POST',
@@ -894,6 +895,7 @@
                                 group_seperator:group_seperator,
                                 device_seperator:device_seperator,
                                 selected_device:selected_device,
+                                selected_carrier:selected_carrier,
                                 product_detail:productDetail,
                                 store_type:store_type,
                                 include_carrier:include_carrier,
@@ -1044,6 +1046,13 @@
             }
             selected_device[key].push(value);
         }
+        let selected_carrier = {};
+        function addCarrier(key, value) {
+            if (!selected_carrier[key]) {
+                selected_carrier[key] = [];
+            }
+            selected_carrier[key].push(value);
+        }
         $(document).ready(function() {
 
             $('#productsTable').DataTable();
@@ -1142,6 +1151,10 @@
                 $('.targetRow').find('.sel-device').each(function () {
                     let product_id = $(this).data('proid');
                     addToKey(product_id, $(this).val());
+                    var carrier_id = $(this).data('carrierid');
+                    if(carrier_id != ''){
+                        addCarrier(product_id,carrier_id);
+                    }
                 });
 
                 $('.targetRow').addClass('bg-blue');
@@ -1157,7 +1170,16 @@
                         return acc;
                     }, []);
 
-                    selected_device[product_id] = newArray;
+                    selected_device[product_id] = [];
+
+                    var cArr = selected_carrier[product_id];
+                    const newcArray = cArr.reduce((acc, item) => {
+                        if (item !== $(this).val()) acc.push(item);
+                        return acc;
+                    }, []);
+
+                    selected_carrier[product_id] = [];
+                    console.log(selected_carrier);
                 });
                 $('.targetRow').removeClass('bg-blue');
             });
@@ -1189,12 +1211,24 @@
 
                     selected_device[product_id] = newArray;
                     //console.log('remove-'+selected_device);
+
+                    var ncArr = selected_carrier[product_id];
+                    const newcArray = ncArr.reduce((acc, item) => {
+                        if (item !== valueToRemove) acc.push(item);
+                        return acc;
+                    }, []);
+
+                    selected_carrier[product_id] = newcArray;
                 }else{
                     ele.addClass('bg-blue');
                     ele.find('.sel-device').prop('checked',true);
                     //selected_device.push(ele.find('.sel-device').val());
                     var product_id = ele.find('.sel-device').data('proid');
                     addToKey(product_id, ele.find('.sel-device').val());
+                    var carrier_id = ele.find('.sel-device').data('carrierid');
+                    if(carrier_id != ''){
+                        addCarrier(product_id,carrier_id);
+                    }
                     //console.log('add-'+selected_device);
                 }
             });

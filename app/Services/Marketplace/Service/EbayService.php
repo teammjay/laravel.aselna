@@ -9,6 +9,8 @@ use App\Models\ListingItemLink;
 use App\Models\ListingItemProductImage;
 use App\Models\ListingTemplate;
 use App\Models\ProductKeyFeatures;
+use App\Models\ProductSpecification;
+use App\Models\ProductTitleKeyword;
 use App\Models\StorePage;
 use App\Models\StoreProduct;
 use App\Models\StoreType;
@@ -17,12 +19,15 @@ use App\Models\SysFile;
 use App\Services\Auth\EbayAuthService;
 use App\Services\Marketplace\Contracts\MarketplaceServiceInterface;
 use App\Utils\ListingUtility;
+use App\Utils\Spintax;
 use App\Utils\XmlUtility;
 use App\Constants\FeedTypes;
 use Illuminate\Support\Facades\Log;
 
 class EbayService implements MarketplaceServiceInterface
 {
+
+    private $version = '1250';
 
     public function generateFeed($listingId)
     {
@@ -63,7 +68,7 @@ class EbayService implements MarketplaceServiceInterface
         // Generate feed for Ebay
         $listingItems = ListingItemLink::with('listingItem','listingItem.brand','listingItem.storeProduct','listingItem.storeProduct.product','listingItem.storeProduct.store','listingItem.storeProduct.StoreTypeCategory','listingItem.storeProduct.productImages')->where('listing_id', $listingId)->get();
         $fileSystem = $listingInfo->store->fileSystem;
-        $version = 1250;
+        $version = $this->version;
 
         /*echo '<pre>';
         print_r($listingItems);
@@ -130,7 +135,11 @@ class EbayService implements MarketplaceServiceInterface
             $max_title_length = $store_type_detail->max_title_length;
 
             $storeProduct = StoreProduct::where('product_id', $product->product_id)->where('store_id', $store_id)->first();
-            $variationtitle = ListingUtility::generateTitle($storeProduct, true, $max_title_length);
+            //$variationtitle = ListingUtility::generateTitle($storeProduct, true, $max_title_length);
+
+            $shortkeywords = ProductTitleKeyword::select('keyword')->where('product_id', $product->product_id)->orderBy('priority', 'asc')->limit(3)->get()->toArray();
+            $longkeywords = ProductTitleKeyword::select('keyword')->where('product_id', $product->product_id)->orderBy('priority', 'asc')->offset(3)->limit(2)->get()->toArray();
+
 
             ///echo $description;die;
 
@@ -212,10 +221,32 @@ class EbayService implements MarketplaceServiceInterface
                     ['MPN', $itemDetail->mpn],
                     ['Model', $itemDetail->mpn],
                 ];
+
                 foreach ($specifics as $specific) {
                     $nameValueList = $itemSpecifics->addChild('NameValueList');
                     $nameValueList->addChild('Name', $specific[0]);
                     $nameValueList->addChild('Value', htmlspecialchars($specific[1]));
+                }
+
+                $productSpecification = ProductSpecification::where('product_id',$product->product_id)->get();
+                if(count($productSpecification ?? []) > 0){
+                    foreach($productSpecification as $specificaiton){
+
+                        $nameValueList = $itemSpecifics->addChild('NameValueList');
+                        $nameValueList->addChild('Name', $specificaiton->name);
+                        if(str_contains($specificaiton->value, ',')){
+                            $values = explode(',',$specificaiton->value);
+                            if(is_array($values)){
+                                foreach($values as $val){
+                                    $nameValueList->addChild('Value', htmlspecialchars($val));
+                                }
+                            }else{
+                                $nameValueList->addChild('Value', htmlspecialchars($values));
+                            }
+                        }else{
+                            $nameValueList->addChild('Value', htmlspecialchars($specificaiton->value));
+                        }
+                    }
                 }
             }
 
@@ -259,11 +290,14 @@ class EbayService implements MarketplaceServiceInterface
                             $nameValueList1->addChild('Value', $variant->device->name);
                             $compatibleModels[] = $variant->device->brand->name.' '.$variant->device->name;
                         }
-                        $variationTitle = $variationtitle.' '.$variant->device->name;
+                        $variationTitle = $this->generateVariationTitle($variant->device->name, $shortkeywords,$longkeywords, $max_title_length);
+                        //$variationTitle = $variationtitle.' '.$variant->device->name;
 
                     }else{
                         $nameValueList1->addChild('Value', $variant->device->brand->name.' '.$variant->device->name);
-                        $variationTitle = $variationtitle.' '.$variant->device->brand->name.' '.$variant->device->name;
+                        //$variationTitle = $variationtitle.' '.$variant->device->brand->name.' '.$variant->device->name;
+                        $deviceName = $variant->device->brand->name.' '.$variant->device->name;
+                        $variationTitle = $this->generateVariationTitle($deviceName, $shortkeywords,$longkeywords, $max_title_length);
                         $compatibleModels[] = $variant->device->brand->name.' '.$variant->device->name;
                     }
 
@@ -279,8 +313,12 @@ class EbayService implements MarketplaceServiceInterface
             if($listingInfo->carrier_combo && isset($variant->carrier)) {
                 $nameValueList->addChild('Name', 'Choose Your Carrier');
                 sort($compatibleCarriers);
+                $lastvariant = null;
                 foreach ($compatibleCarriers as $carrier) {
-                    $nameValueList->addChild('Value', $carrier);
+                    if($lastvariant != $carrier){
+                        $nameValueList->addChild('Value', $carrier);
+                    }
+                    $lastvariant = $carrier;
                 }
             }
             $nameValueList2 = $variationSpecificsSet->addChild('NameValueList');
@@ -299,10 +337,49 @@ class EbayService implements MarketplaceServiceInterface
         XmlUtility::saveToFile(public_path('feeds/ebay/' . $listingId . '.xml'), $xmlContent);
     }
 
+    private function generateVariationTitle($device_name, $short_keywords = [], $long_keywords = [], $max_length = 80)
+    {
+        $spintax = new Spintax();
+        $title_template = "For #device_name - #short_keywords #long_keywords";
+
+        $skeywords = $lkeywords = [];
+        if(!empty($short_keywords)){
+            foreach($short_keywords as $skey){
+                $skeywords[] = $skey['keyword'];
+            }
+        }
+        if(!empty($long_keywords)){
+            foreach($long_keywords as $lkey){
+                $lkeywords[] = $lkey['keyword'];
+            }
+        }
+        $short_str = implode(' ', $skeywords);
+        $short_str = $spintax->process($short_str);
+        $long_str = implode(' ', $lkeywords);
+        $long_str = $spintax->process($long_str);
+
+        $title = str_replace(
+            ['#device_name', '#short_keywords', '#long_keywords'],
+            [$device_name, $short_str, $long_str],
+            $title_template
+        );
+
+        /*if (strlen($title) > $max_length) {
+            $title = str_replace($long_str, '', $title);
+            $title = trim(preg_replace('/\s+/', ' ', $title));
+        }
+
+        if (strlen($title) > $max_length) {
+            $title = substr($title, 0, $max_length - 3);
+        }*/
+
+        return $title;
+    }
+
     public function generatePriceFeed($listingInfo, $listingId){
 
         $listingItems = ListingItemLink::with('listingItem','listingItem.brand','listingItem.storeProduct','listingItem.storeProduct.product','listingItem.storeProduct.productImages')->where('listing_id', $listingId)->cursor();
-        $version = 1250;
+        $version = $this->version;
 
         $xml = new \SimpleXMLElement('<?xml version="1.0" encoding="UTF-8"?><BulkDataExchangeRequests xmlns="urn:ebay:apis:eBLBaseComponents"></BulkDataExchangeRequests>');
 
@@ -339,7 +416,7 @@ class EbayService implements MarketplaceServiceInterface
     public function generateDeleteFeed($listingInfo, $listingId){
 
         $listingItems = ListingItemLink::with('listingItem','listingItem.brand','listingItem.storeProduct','listingItem.storeProduct.product','listingItem.storeProduct.productImages')->where('listing_id', $listingId)->cursor();
-        $version = 1250;
+        $version = $this->version;
 
         $xml = new \SimpleXMLElement('<?xml version="1.0" encoding="UTF-8"?><BulkDataExchangeRequests xmlns="urn:ebay:apis:eBLBaseComponents"></BulkDataExchangeRequests>');
 
@@ -370,7 +447,7 @@ class EbayService implements MarketplaceServiceInterface
     public function generateShipmentUpdateFeed($listingInfo, $listingId){
 
         $listingItems = ListingItemLink::with('listingItem','listingItem.brand','listingItem.storeProduct','listingItem.storeProduct.product','listingItem.storeProduct.productImages')->where('listing_id', $listingId)->cursor();
-        $version = 1250;
+        $version = $this->version;
 
         $xml = new \SimpleXMLElement('<?xml version="1.0" encoding="UTF-8"?><BulkDataExchangeRequests xmlns="urn:ebay:apis:eBLBaseComponents"></BulkDataExchangeRequests>');
 
@@ -403,6 +480,7 @@ class EbayService implements MarketplaceServiceInterface
 
     public function submitFeed($feedId,$listingId)
     {
+        $version = $this->version;
         $listingInfo = Listing::where('id', $listingId)->first();
         $store = $listingInfo->store;
         /*echo '<pre>';
@@ -421,7 +499,7 @@ class EbayService implements MarketplaceServiceInterface
         $listingDetail = ListingFeed::where('listing_id',$listingId)->first();
         $feed_id = $listingDetail->id;
 
-        $taskID = $authService->createTask();
+        $taskID = $authService->createTask($version);
 
         $feedInfo = ListingFeed::findOrFail($feed_id);
         $feedInfo->update([ 'feed_id' => $taskID, 'submit_ts'=> now(), 'number_of_attempts' => $feedInfo->number_of_attempts ?? 0 + 1]);
@@ -488,6 +566,8 @@ class EbayService implements MarketplaceServiceInterface
                                                 'store_sku' => $item->ItemID
                                             ]);
                                         }
+                                    }else{
+
                                     }
                                 }
                             }

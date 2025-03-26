@@ -382,6 +382,11 @@ return [
                     'icon' => 'far fa-fw fa-file'
                 ],
                 [
+                    'text' => 'Store Type',
+                    'url' => '/store_type',
+                    'icon' => 'far fa-fw fa-file'
+                ],
+                [
                     'text' => 'UPC Generate',
                     'url' => '/upc_generate',
                     'icon' => 'far fa-fw fa-file',
@@ -409,8 +414,39 @@ return [
         ],
         [
             'text' => 'Listing',
-            'url' => '/listing',
-            'icon' => 'far fa-fw fa-list-alt'
+            'icon' => 'far fa-fw fa-list-alt',
+            'submenu' => [
+                [
+                    'text' => 'Create',
+                    'url' => '/listing/create',
+                    'icon' => 'far fa-fw fa-file',
+                ],
+                [
+                    'text' => 'Active Listing',
+                    'url' => '/listing',
+                    'icon' => 'far fa-fw fa-list-alt',
+                ],
+                [
+                    'text' => 'Suspended Listing',
+                    'url' => '/listing/suspended',
+                    'icon' => 'far fa-fw fa-list-alt',
+                ],
+                [
+                    'text' => 'Generation Type',
+                    'url' => '/list_generate_type',
+                    'icon' => 'far fa-fw fa-file'
+                ],
+                [
+                    'text' => 'Title Template',
+                    'url' => '/title_template',
+                    'icon' => 'far fa-fw fa-file'
+                ],
+                [
+                    'text' => 'Listing Template',
+                    'url' => '/listing_template',
+                    'icon' => 'far fa-fw fa-file'
+                ]
+            ]
         ],
         [
             'text' => 'Shipment',
@@ -512,28 +548,8 @@ return [
                     'icon' => 'far fa-fw fa-file'
                 ],
                 [
-                    'text' => 'Store Type',
-                    'url' => '/store_type',
-                    'icon' => 'far fa-fw fa-file'
-                ],
-                [
                     'text' => 'Manufacturer',
                     'url' => '/manufacturer',
-                    'icon' => 'far fa-fw fa-file'
-                ],
-                [
-                    'text' => 'Listing Generation Type',
-                    'url' => '/list_generate_type',
-                    'icon' => 'far fa-fw fa-file'
-                ],
-                [
-                    'text' => 'Listing Generation Type Template',
-                    'url' => '/list_generate_type_template',
-                    'icon' => 'far fa-fw fa-file'
-                ],
-                [
-                    'text' => 'Listing Template',
-                    'url' => '/listing_template',
                     'icon' => 'far fa-fw fa-file'
                 ]
 
