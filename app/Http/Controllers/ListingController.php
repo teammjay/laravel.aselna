@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Constants\ListingStatus;
+use App\Constants\ListingSyncStatus;
 use App\Helpers\QueryFilters;
 use App\Jobs\FeedGenerationJob;
 use App\Jobs\ListingItemImageCreate;
@@ -64,6 +66,19 @@ class ListingController extends Controller
         $brands = Brand::all();
 
         return view('listing.list', compact('stores', 'device_types', 'product_types', 'manufacturers', 'devices', 'brands'))->with('perPage', $this->perPage);
+    }
+
+    public function suspended_list(){
+        $stores = Store::with('storeType')->where('store_status', 1)->orderBy('name', 'asc')->get();
+        $device_types = DeviceTypes::Where('status', 1)->get();
+        $product_types = ProductType::with('children')->whereIn('parent_id', function ($subquery) {
+            $subquery->select('id')->from('product_type')->where('code', 'cea');
+        })->get();
+        $manufacturers = Manufacturer::all();
+        $devices = Device::all();
+        $brands = Brand::all();
+
+        return view('listing.suspended_list', compact('stores', 'device_types', 'product_types', 'manufacturers', 'devices', 'brands'))->with('perPage', $this->perPage);
     }
 
     /**
@@ -272,10 +287,10 @@ class ListingController extends Controller
                     "product_sku" => (!empty((array)$product->storeProduct) && !empty((array)$product->storeProduct->product)) ? $product->storeProduct->product->product_sku : '',
                     "store_name" => ((!empty((array)$product->storeProduct) && !empty((array)$product->storeProduct->store)) ? $product->storeProduct->store->name : '') . ((!empty((array)$product->storeProduct) && !empty((array)$product->storeProduct->store) && !empty((array)$product->storeProduct->store->storeType)) ? ' - ' . $product->storeProduct->store->storeType->name : ''),
                     "title" => strlen($product->title) > 50 ? substr($product->title, 0, 50) . "..." : $product->title,
-                    "status" => ($product->status == 1) ? 'Active' : 'Inactive',
+                    "status" => ListingStatus::getListingStatusName($product->status),
                     "product_size" => (!empty((array)$product->storeProduct) && !empty((array)$product->storeProduct->product)) ? $product->storeProduct->product->dimensions_width : '',
                     "product_color" => (!empty((array)$product->storeProduct) && !empty((array)$product->storeProduct->product)) ? $product->storeProduct->product->product_color : '',
-                    "sync_status" => '',
+                    "sync_status" => ListingSyncStatus::getListingSyncStatusName($product->sync_status),
                     "generation_type_name" => (!empty($product->generationType)) ? $product->generationType->name : '',
                     "price" => $product->price,
                     "qty" => $product->quantity,
@@ -1765,7 +1780,7 @@ class ListingController extends Controller
                         'store_id' => $store_id,
                         'generation_type_id' => $generation_type_id,
                         'feed_type' => 1,
-                        'status' => 0,
+                        'status' => 1,
                         'chained' => 1,
                         'include_carriers' => $include_carrier,
                         'brand_combo' => $brand_combo,
@@ -1867,7 +1882,7 @@ class ListingController extends Controller
                                     'store_sku' => '',
                                     'price' => $product_prices[$key],
                                     'quantity' => ($store_detail->default_listing_quantity) ? $store_detail->default_listing_quantity : 10,
-                                    'sync_status' => 1,
+                                    'sync_status' => 0,
                                     'store_product_id' => $store_product_ids[$key],
                                     'manufacturer_id' => ($productDetail['manufacturer_id'] != '') ? $productDetail['manufacturer_id'] : $productDetail['product']['manufacturer_id'],
                                     'brand_id' => $brand_id[$key],
@@ -1995,7 +2010,7 @@ class ListingController extends Controller
                                         $itemLink = array(
                                             'item_id' => $listing_item_id,
                                             'listing_id' => $listing_id,
-                                            'sync_status' => 6,
+                                            'sync_status' => 0,
                                             'old_price' => $product_prices[$key],
                                             'created_by' => $created_by
                                         );

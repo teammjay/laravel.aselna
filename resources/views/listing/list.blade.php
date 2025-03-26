@@ -591,11 +591,11 @@
         </div>
     </div>
     <div class="row my-3">
-        <div class="col-md-1">
+        {{--<div class="col-md-1">
             <a href="{{ route('listing.create') }}" class="btn btn-secondary">
                 Create
             </a>
-        </div>
+        </div>--}}
         <div class="col-md-2">
             <select class="form-control" id="listing_store" name="listing_store_id">
                 <option value="">--</option>
@@ -1070,6 +1070,8 @@
                     $.each(formData, function(index, field) {
                         d[field.name] = field.value; // Append form data to the DataTables request
                     });
+
+                    d['listing_status'] = 1;
 
                     var columnValues = [];
                     if (table) {

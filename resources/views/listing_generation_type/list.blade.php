@@ -3,14 +3,14 @@
 @section('title', 'Listing Generation Type')
 
 @section('content_header')
-    <h1>Listing Generation Type</h1>
+    <h1>Generation Type</h1>
 @stop
 
 @section('content')
     <div class="row my-3">
         <div class="col-md-3">
             <a href="{{ route('listing_generation_type.create') }}" class="btn btn-primary">
-                Add Listing Generation Type
+                Add Generation Type
             </a>
         </div>
     </div>
