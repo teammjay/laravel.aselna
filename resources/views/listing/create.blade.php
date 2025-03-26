@@ -2382,6 +2382,7 @@
                     if (response.html) {
                         $('#selected_product_list').html(response.html);
                         generateKeywords();
+                        $('.store-type-category').select2();
                         //generateTitleKeywords();
                     }
                 },

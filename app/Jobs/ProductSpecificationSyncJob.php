@@ -35,7 +35,7 @@ class ProductSpecificationSyncJob implements ShouldQueue
 
     private function createProductSpecification(mixed $productSpecification)
     {
-        if (empty($productSpecification->product_id) || Catalog::where('id', $productSpecification->product_id)->doesntExist()) {
+        if (empty($productSpecification->product_id) || Catalog::where('product_id', $productSpecification->product_id)->doesntExist()) {
             return;
         }
         ProductSpecification::updateOrCreate([
