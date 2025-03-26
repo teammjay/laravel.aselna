@@ -598,7 +598,7 @@
         </div>--}}
         <div class="col-md-2">
             <select class="form-control" id="listing_store" name="listing_store_id">
-                <option value="">--</option>
+                <option value="">- All Store -</option>
                 @if(count($stores ?? []) > 0)
                     @foreach($stores as $store)
                         <option value="{{ $store->id }}">{{ $store->name }}{{ (!empty((array)$store->storeType)) ? ' - '.$store->storeType->name : '' }}</option>

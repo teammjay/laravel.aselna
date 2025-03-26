@@ -25,6 +25,8 @@ use Illuminate\Support\Facades\Log;
 class EbayService implements MarketplaceServiceInterface
 {
 
+    private $version = '1250';
+
     public function generateFeed($listingId)
     {
         $listingInfo = Listing::where('id', $listingId)->first();
@@ -64,7 +66,7 @@ class EbayService implements MarketplaceServiceInterface
         // Generate feed for Ebay
         $listingItems = ListingItemLink::with('listingItem','listingItem.brand','listingItem.storeProduct','listingItem.storeProduct.product','listingItem.storeProduct.store','listingItem.storeProduct.StoreTypeCategory','listingItem.storeProduct.productImages')->where('listing_id', $listingId)->get();
         $fileSystem = $listingInfo->store->fileSystem;
-        $version = 1250;
+        $version = $this->version;
 
         /*echo '<pre>';
         print_r($listingItems);
@@ -329,7 +331,7 @@ class EbayService implements MarketplaceServiceInterface
     public function generatePriceFeed($listingInfo, $listingId){
 
         $listingItems = ListingItemLink::with('listingItem','listingItem.brand','listingItem.storeProduct','listingItem.storeProduct.product','listingItem.storeProduct.productImages')->where('listing_id', $listingId)->cursor();
-        $version = 1250;
+        $version = $this->version;
 
         $xml = new \SimpleXMLElement('<?xml version="1.0" encoding="UTF-8"?><BulkDataExchangeRequests xmlns="urn:ebay:apis:eBLBaseComponents"></BulkDataExchangeRequests>');
 
@@ -366,7 +368,7 @@ class EbayService implements MarketplaceServiceInterface
     public function generateDeleteFeed($listingInfo, $listingId){
 
         $listingItems = ListingItemLink::with('listingItem','listingItem.brand','listingItem.storeProduct','listingItem.storeProduct.product','listingItem.storeProduct.productImages')->where('listing_id', $listingId)->cursor();
-        $version = 1250;
+        $version = $this->version;
 
         $xml = new \SimpleXMLElement('<?xml version="1.0" encoding="UTF-8"?><BulkDataExchangeRequests xmlns="urn:ebay:apis:eBLBaseComponents"></BulkDataExchangeRequests>');
 
@@ -397,7 +399,7 @@ class EbayService implements MarketplaceServiceInterface
     public function generateShipmentUpdateFeed($listingInfo, $listingId){
 
         $listingItems = ListingItemLink::with('listingItem','listingItem.brand','listingItem.storeProduct','listingItem.storeProduct.product','listingItem.storeProduct.productImages')->where('listing_id', $listingId)->cursor();
-        $version = 1250;
+        $version = $this->version;
 
         $xml = new \SimpleXMLElement('<?xml version="1.0" encoding="UTF-8"?><BulkDataExchangeRequests xmlns="urn:ebay:apis:eBLBaseComponents"></BulkDataExchangeRequests>');
 
@@ -430,6 +432,7 @@ class EbayService implements MarketplaceServiceInterface
 
     public function submitFeed($feedId,$listingId)
     {
+        $version = $this->version;
         $listingInfo = Listing::where('id', $listingId)->first();
         $store = $listingInfo->store;
         /*echo '<pre>';
@@ -448,7 +451,7 @@ class EbayService implements MarketplaceServiceInterface
         $listingDetail = ListingFeed::where('listing_id',$listingId)->first();
         $feed_id = $listingDetail->id;
 
-        $taskID = $authService->createTask();
+        $taskID = $authService->createTask($version);
 
         $feedInfo = ListingFeed::findOrFail($feed_id);
         $feedInfo->update([ 'feed_id' => $taskID, 'submit_ts'=> now(), 'number_of_attempts' => $feedInfo->number_of_attempts ?? 0 + 1]);
@@ -515,6 +518,8 @@ class EbayService implements MarketplaceServiceInterface
                                                 'store_sku' => $item->ItemID
                                             ]);
                                         }
+                                    }else{
+
                                     }
                                 }
                             }

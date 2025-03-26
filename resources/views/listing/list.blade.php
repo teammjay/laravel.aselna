@@ -598,7 +598,7 @@
         </div>--}}
         <div class="col-md-2">
             <select class="form-control" id="listing_store" name="listing_store_id">
-                <option value="">--</option>
+                <option value="">- All Store -</option>
                 @if(count($stores ?? []) > 0)
                     @foreach($stores as $store)
                         <option value="{{ $store->id }}">{{ $store->name }}{{ (!empty((array)$store->storeType)) ? ' - '.$store->storeType->name : '' }}</option>
@@ -611,7 +611,7 @@
             <button type="button" class="btn btn-default" id="edit_list" disabled="">
                 <i class="fas fa-fw fa-pencil-alt"></i> Edit
             </button>
-            <button type="button" class="btn btn-default ml-2" id="end_listing">
+            <button type="button" class="btn btn-default ml-2" id="end_listing" disabled>
                 End Listing
             </button>
             <button type="button" class="btn btn-default ml-2" id="re-list">
@@ -779,6 +779,7 @@
                 $(this).find('.proList').prop('checked',true);
             }
             $('#edit_list').removeAttr('disabled');
+            $('#end_listing').removeAttr('disabled');
 
             if (lastChecked && e.shiftKey) {
                 e.preventDefault();
@@ -1039,6 +1040,36 @@
                 }
             });
         });
+
+        $(document).on('click', '#end_listing', function() {
+            let selected_list = [];
+            $('input[name="listing_item[]"]:checked').each(function () {
+                selected_list.push($(this).val())
+            });
+
+            if (confirm("Are you sure you want to end the listing?")) {
+                $.ajax({
+                    url: "{{ url('listing/endlist') }}",
+                    type: 'POST',
+                    data: {
+                        selected_list:selected_list,
+                        "_token": "{{ csrf_token() }}"
+                    },
+                    success: function (response) {
+                        // If success, remove the user row from the table
+                        if (response.success) {
+                            alert('End listing successfully');
+                            location.reload();
+                        }
+                    },
+                    error: function (xhr) {
+                        // Handle error response
+                        alert('Error: ' + xhr.responseJSON.error);
+                    }
+                });
+            }
+        });
+
 
     });
 

@@ -2288,4 +2288,24 @@ class ListingController extends Controller
             'success' => true
         ]);
     }
+
+    public function endList(Request $request){
+
+        $selected_listing = $request->input('selected_list');
+
+        if(!empty($selected_listing)){
+            foreach($selected_listing as $listing_item){
+                $listingItem = ListingItem::findOrFail($listing_item);
+                $listingItem->update(['status' => 3,'sync_status' => 1]);
+            }
+
+            return response()->json([
+                'success' => true
+            ]);
+        }
+
+        return response()->json([
+            'error' => true
+        ]);
+    }
 }

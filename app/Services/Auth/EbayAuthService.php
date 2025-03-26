@@ -123,7 +123,7 @@ class EbayAuthService
         return response()->json(['error' => 'Failed to get access token'], 400);
     }
 
-    public function createTask() {
+    public function createTask($version) {
 
         try {
             $accessToken = $this->refreshToken();
@@ -137,7 +137,7 @@ class EbayAuthService
                     'X-EBAY-C-MARKETPLACE-ID' => 'EBAY_US',
                 ],
                 'json' => [
-                    'schemaVersion' => '1250',
+                    'schemaVersion' => $version,
                     'feedType' => 'LMS_ADD_FIXED_PRICE_ITEM'
                 ],
             ]);

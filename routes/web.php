@@ -131,6 +131,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/listing/synclistinginventory', 'syncListingInventory')->name('listing.synclistinginventory');
         Route::post('/listing/synclistingprice', 'syncListingPrice')->name('listing.synclistingprice');
         Route::post('/listing/updatestoreproduct', 'updateStoreProduct')->name('listing.updatestoreproduct');
+        Route::post('/listing/endlist', 'endList')->name('listing.endlist');
     });
 
     Route::controller(ListingGenerationTypeController::class)->group(function () {
