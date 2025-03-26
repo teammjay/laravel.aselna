@@ -56,87 +56,81 @@ class AmazonService implements MarketplaceServiceInterface
         Log::info('User Identifier: ' . json_encode($listingInfo->store));
         $listingItems = ListingItemLink::where('listing_id', $listingId)->cursor();
 
-        $xml = new SimpleXMLElement('<?xml version="1.0" encoding="UTF-8"?><AmazonEnvelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"></AmazonEnvelope>');
-
-        $header = $xml->addChild('Header');
-        $header->addChild('DocumentVersion', '1.1');
-        $header->addChild('MerchantIdentifier', $userIdentifier);
-
-        $xml->addChild('MessageType', 'Product');
-        $xml->addChild('PurgeAndReplace', 'false');
+        // Build JSON feed structure
+        $feed = [
+            'header' => [
+                'sellerId' => $userIdentifier,
+                'version' => '2.0',
+                'issueLocale' => 'en_US'
+            ],
+            'messages' => []
+        ];
 
         $index = 1;
 
         foreach ($listingItems as $listingItem) {
-            $messages = $xml->addChild('Message');
-            $messages->addChild('MessageID', $index);
             $itemDetail = $listingItem->item;
             $storeProduct = $itemDetail->storeProduct;
             $productData = $itemDetail->storeProduct->product;
 
-            $price = $itemDetail->price;
-            if (!isset($price)) {
-                $price = $itemDetail->storeProduct->price;
-            }
-            if (!isset($price)) {
-                $price = $productData->product_price;
-            }
+            // Build message structure
+            $message = [
+                'messageId' => $index,
+                'sku' => $itemDetail->sku,
+                'operationType' => 'UPDATE',
+                'requirements' => 'LISTING',
+                'attributes' => [
+                    'item_name' => [[
+                        'value' => $itemDetail->title,
+                        'language_tag' => 'en_US',
+                        'marketplace_id' => 'ATVPDKIKX0DER'
+                    ]],
+                    'condition_type' => [['value' => 'new_new']],
+                    'brand' => [['value' => $storeProduct->store->brand_name ?? '']],
+                    'product_description' => [['value' => $productData->product_description]],
+                    'part_number' => [['value' => $itemDetail->mpn]]
+                ]
+            ];
 
-            $product = $messages->addChild('Product');
-            $product->addChild('SKU', $itemDetail->sku);
+            $message['attributes']['product_tax_code'] = [['value' => 2040274]];
 
-            $product->addChild('ProductTaxCode', '2040274');
 
-            $condition = $product->addChild('Condition');
-            $condition->addChild('ConditionType', 'New');
+            $message['attributes']['externally_assigned_product_identifier'] = [[
+                'value' => $itemDetail->upc,
+                'type' => 'UPC'
+            ]];
 
-            if (isset($itemDetail->upc)) {
-                $standardProductID = $product->addChild('StandardProductID');
-                $standardProductID->addChild('Type', 'UPC');
-                $standardProductID->addChild('Value', $itemDetail->upc);
-            }
-
-            $descriptionData = $product->addChild('DescriptionData');
-            $safeText = htmlspecialchars($itemDetail->title, ENT_QUOTES | ENT_XML1, 'UTF-8');
-            $descriptionData->addChild('Title', $safeText);
-
-            $safeText = htmlspecialchars($productData->product_description, ENT_QUOTES | ENT_XML1, 'UTF-8');
-            $descriptionData->addChild('Description', $safeText);
-
-            if (isset($storeProduct->store)) {
-                $safeText = htmlspecialchars($storeProduct->store->brand_name, ENT_QUOTES | ENT_XML1, 'UTF-8');
-                $descriptionData->addChild('Brand', $safeText);
-            }
-
-            $descriptionData->addChild('MfrPartNumber', $itemDetail->mpn);
-            $productKeywords = ProductTypeKeyword::where('product_type_id', $productData->product_type)
-                            ->limit(25) // Ensures only 30 records are fetched
-                            ->get();
-
-            $keywords = $productKeywords->pluck('keyword')->implode(' ');
-            $descriptionData->addChild('SearchTerms', $keywords);
+            // Add pricing information
+            $price = $itemDetail->price ?: $itemDetail->storeProduct->price ?: $productData->product_price;
+            $message['attributes']['standard_price'] = [
+                'value' => number_format($price, 2),
+                'currency' => 'USD'
+            ];
 
             if (isset($productData)) {
-                $packageDimensions = $descriptionData->addChild('PackageDimensions');
-                $packageDimensions->addChild('Length', $productData->package_dimensions_length);
-                $packageDimensions->addChild('Width', $productData->package_dimensions_width);
-                $packageDimensions->addChild('Height', $productData->package_dimensions_height);
-                $packageDimensions->addChild('UnitOfMeasure', 'IN');
+                $message['attributes']['item_package_dimensions'] = [
+                    'length' => ['value' => $productData->package_dimensions_length, 'unit' => 'IN'],
+                    'width' => ['value' => $productData->package_dimensions_width, 'unit' => 'IN'],
+                    'height' => ['value' => $productData->package_dimensions_height, 'unit' => 'IN']
+                ];
             }
 
-            $descriptionData->addChild('MSRP', $itemDetail->price);
+            $message['attributes']['list_price'] = [['value' => number_format($itemDetail->price, 2)]];
             if (isset($storeProduct->store)) {
-                $descriptionData->addChild('Manufacturer', $storeProduct->store->brand_name);
+                $message['attributes']['manufacturer'] = [['value' => $storeProduct->store->brand_name]];
             }
 
             if (isset($productData)) {
+                $bulletPoints = [];
                 foreach ($storeProduct->features as $feature) {
-                    $safeText = htmlspecialchars($feature->value, ENT_QUOTES | ENT_XML1, 'UTF-8'); // Escapes special characters
+                    $safeText = htmlspecialchars($feature->value, ENT_QUOTES | ENT_XML1, 'UTF-8');
                     if (!empty(trim($safeText))) {
-                        $descriptionData->addChild('BulletPoint', $safeText);
+                        $bulletPoints[] = ['value' => $safeText];
                     }
                 }
+                $message['attributes']['bullet_points'] = $bulletPoints;
 
+                // Build category hierarchy
                 $categoryId = $storeProduct->store_type_category_id;
                 $tempCategoryId = $categoryId;
                 $parentCategory = null;
@@ -152,10 +146,11 @@ class AmazonService implements MarketplaceServiceInterface
                     }
                 }
 
-                $productDataElement = $product->addChild('ProductData');
-                $parentCategoryElement = $productDataElement->addChild($parentCategory->name);
-                $productType = $parentCategoryElement->addChild('ProductType');
-                $subCategoryElement = $productType->addChild($subCategory->name);
+                // Log::info('Category Tree: ' . json_encode($categoryTree));
+                if ($currentCategory) {
+                    $message['productType'] = 'WIRELESS_ACCESSORY';
+                    $message['attributes']['item_type_keyword'] = [['value' => $currentCategory->name]];
+                }
 
                 $listingItemDetails = ListingItemDetail::where('listing_item_id', $itemDetail->id)->get();
                 $CompatiblePhoneModels = '';
@@ -165,48 +160,36 @@ class AmazonService implements MarketplaceServiceInterface
                     $CompatiblePhoneModels = $CompatiblePhoneModels . $deviceBrand->name . ' ' . $device->name . ', ';
                 }
                 $CompatiblePhoneModels = rtrim($CompatiblePhoneModels, ', ');
-                $subCategoryElement->addChild('CompatiblePhoneModels', $CompatiblePhoneModels);
+
+                $message['attributes']['compatible_phone_models'] = [['value' => $CompatiblePhoneModels]];
 
                 //combine 5 keywords and add into one element. do this for all the keywords
                 $productKeywords = ProductTypeKeyword::where('product_type_id', $productData->product_type)
-                                    ->limit(30) // Ensures only 30 records are fetched
-                                    ->get();
-                $counter = 0;
-                $keywords = '';
-                foreach ($productKeywords as $productKeyword) {
-                    $counter++;
-                    $keywords = $keywords . $productKeyword->keyword . ' ';
-                    if ($counter % 6 == 0) {
-                        $keywords = rtrim($keywords, ' ');
-                        $subCategoryElement->addChild('Keywords', $keywords);
-                        $keywords = '';
-                    }
-                }
-                // ProductTypeKeyword::where('product_type_id', $productData->product_type)->chunk(6, function ($productKeywords) use ($subCategoryElement) {
-                //     $keywords = '';
-                //     foreach ($productKeywords as $productKeyword) {
-                //         $keywords = $keywords . $productKeyword->keyword . ' ';
-                //     }
-                //     $keywords = rtrim($keywords, ' ');
-                //     $subCategoryElement->addChild('Keywords', $keywords);
-                // });
+                    ->limit(30)
+                    ->get()
+                    ->pluck('keyword');
 
-                $descriptionData->addChild('ItemType', $currentCategory->name);
+                $message['attributes']['subject_keyword'] = $productKeywords->toArray();
 
             }
+
+            $feed['messages'][] = $message;
 
             $index++;
         }
 
-        $xmlContent = $xml->asXML();
+        // $xmlContent = $xml->asXML();
 
-        XmlUtility::saveToFile(public_path('feeds/amazon/' . $listingId . '.xml'), $xmlContent);
+        FileUtility::saveToFile(
+            public_path('feeds/amazon/' . $listingId . '.json'),
+            json_encode($feed, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)
+        );
     }
 
     public function submitFeed($feedId, $listingId)
     {
         Log::info("Started :: ");
-        $filePath = public_path('feeds/amazon/' . $listingId . '.xml');
+        $filePath = public_path('feeds/amazon/' . $listingId . '.json');
 
         $content = file_get_contents($filePath);
         Log::info("Content :: " . $content);
@@ -219,7 +202,7 @@ class AmazonService implements MarketplaceServiceInterface
 
         $feedInfo = ListingFeed::where('listing_id', $listingId)->first();
 
-        if ($feedInfo && isset($feedResponse)) {
+        if ($feedInfo && $feedResponse) {
             $feedInfo->feed_id = $feedResponse['feedId'];
             $feedInfo->save();
             Log::info("Feed ID updated successfully.");
@@ -233,11 +216,8 @@ class AmazonService implements MarketplaceServiceInterface
         $this->authService = new AmazonAuthService();
 
         $feedInfo = ListingFeed::where('listing_id', $listingId)->first();
-        $response = $this->authService->getResultFeed($feedInfo->feed_id);
 
-        FileUtility::saveToFile(public_path('result-feeds/amazon/' . $listingId . '.json'), json_encode($response));
-
-        return 'result-feeds/amazon/' . $listingId . '.json';
+        return $this->authService->getResultFeed($feedInfo->feed_id,$listingId);
     }
 
     private function generateImageUpdateFeed($listingInfo, $listingId)

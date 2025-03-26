@@ -693,12 +693,13 @@ class ListingController extends Controller
                 $store = Store::with('storeType')->find($store_id);
 
                 if ($store && $store->storeType->name === 'Magento') {
-                    $storeCategories = StoreCategory::where('store_id', $store_id)->get();
+                    $storeCategories = StoreCategory::where('store_id', $store_id)->orderBy('name','asc')->get();
                 } else {
                     $storeCategories = StoreTypeCategory::select('store_type_category.*')
                         ->leftJoin('store_type', 'store_type.id', '=', 'store_type_category.store_type_id')
                         ->leftJoin('store', 'store_type.id', '=', 'store.store_type_id')
                         ->where('store.id', $store_id)
+                        ->orderBy('store_type_category.name', 'asc')
                         ->get();
                 }
             }
