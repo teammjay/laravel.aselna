@@ -578,7 +578,7 @@ class EbayService implements MarketplaceServiceInterface
 
                                             $listingItem = ListingItem::findOrFail($item->id);
                                             $listingItem->update([
-                                                'sync_status' => 6
+                                                'sync_status' => 1
                                             ]);
                                         }
                                     }
@@ -589,7 +589,7 @@ class EbayService implements MarketplaceServiceInterface
 
                                             $listingItem = ListingItem::findOrFail($item->id);
                                             $listingItem->update([
-                                                'sync_status' => 6
+                                                'sync_status' => 1
                                             ]);
                                         }
                                     }
