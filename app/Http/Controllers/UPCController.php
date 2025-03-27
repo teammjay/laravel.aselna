@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\QueryFilters;
 use App\Jobs\UPCGenerateJob;
 use App\Models\Store;
 use App\Models\UPCCodes;
@@ -28,6 +29,21 @@ class UPCController extends Controller
         $query = UPCCodes::query()
             ->when($request->input('store_id'), function ($query, $storeId) {
                 $query->where('store', $storeId);
+            })
+            ->when($request->input('prefix'), function ($query) use ($request) {
+                QueryFilters::applyFilter($query, $request, 'company_prefix', 'prefix_operator', 'prefix');
+            })
+            ->when($request->input('product_number'), function ($query, $searchValue) use ($request) {
+                QueryFilters::applyFilter($query, $request, 'product_number', 'product_number_operator', 'product_number');
+            })
+            ->when($request->input('upc_code'), function ($query, $searchValue) use ($request) {
+                QueryFilters::applyFilter($query, $request, 'upc_code', 'upc_code_operator', 'upc_code');
+            })
+            ->when($request->has('is_used') && $request->input('is_used') ?? false, function ($query) use ($request) {
+                $query->where('is_used', $request->input('is_used'));
+            })
+            ->when($request->input('sequence_id'), function ($query, $searchValue) use ($request) {
+                QueryFilters::applyFilter($query, $request, 'sequence_id', 'sequence_id_operator', 'sequence_id');
             })
             ->with('storeData', 'storeData.storeType');
 
@@ -86,3 +102,4 @@ class UPCController extends Controller
         return response()->json($stores);
     }
 }
+

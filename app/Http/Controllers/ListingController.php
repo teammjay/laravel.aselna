@@ -1187,6 +1187,11 @@ class ListingController extends Controller
         $field = 'brands.order_no';
         $field2 = 'brands.notes2';
 
+        if ($include_carrier == 1 || $generate_type_name == 'Carrier Group') {
+            $field = 'carrier.name as carrier_name';
+            $field2 = 'carrier.id as carrier_id';
+        }
+
         $query = Device::select('device.*', 'brands.name as brand_name', $field, $field2)->with('deviceType', 'deviceSeries', 'carriers');
         $query->leftJoin('brands', 'brands.id', '=', 'device.brand_id');
         $query->leftJoin('device_interface', 'device_interface.device_id', '=', 'device.id');

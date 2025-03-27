@@ -102,17 +102,17 @@ class AmazonService implements MarketplaceServiceInterface
 
             // Add pricing information
             $price = $itemDetail->price ?: $itemDetail->storeProduct->price ?: $productData->product_price;
-            $message['attributes']['standard_price'] = [
-                'value' => number_format($price, 2),
-                'currency' => 'USD'
-            ];
+            // $message['attributes']['standard_price'] = [
+            //     'value' => number_format($price, 2),
+            //     'currency' => 'USD'
+            // ];
 
             if (isset($productData)) {
-                $message['attributes']['item_package_dimensions'] = [
+                $message['attributes']['item_package_dimensions'] = [[
                     'length' => ['value' => $productData->package_dimensions_length, 'unit' => 'IN'],
                     'width' => ['value' => $productData->package_dimensions_width, 'unit' => 'IN'],
                     'height' => ['value' => $productData->package_dimensions_height, 'unit' => 'IN']
-                ];
+                ]];
             }
 
             $message['attributes']['list_price'] = [['value' => number_format($itemDetail->price, 2)]];
@@ -128,7 +128,7 @@ class AmazonService implements MarketplaceServiceInterface
                         $bulletPoints[] = ['value' => $safeText];
                     }
                 }
-                $message['attributes']['bullet_points'] = $bulletPoints;
+                $message['attributes']['bullet_point'] = $bulletPoints;
 
                 // Build category hierarchy
                 $categoryId = $storeProduct->store_type_category_id;
@@ -169,7 +169,7 @@ class AmazonService implements MarketplaceServiceInterface
                     ->get()
                     ->pluck('keyword');
 
-                $message['attributes']['subject_keyword'] = $productKeywords->toArray();
+                // $message['attributes']['subject_keyword'] = $productKeywords->toArray();
 
             }
 
