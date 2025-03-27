@@ -278,8 +278,8 @@ class EbayService implements MarketplaceServiceInterface
                         $nameValueList = $variationSpecifics->addChild('NameValueList');
                         $nameValueList->addChild('Name', 'Choose Your Carrier');
                         $nameValueList->addChild('Value', htmlspecialchars($variant->carrier->name));
+                        $compatibleCarriers[] = htmlspecialchars($variant->carrier->name);
                     }
-                    $compatibleCarriers[] = htmlspecialchars($variant->carrier->name);
                     $nameValueList1 = $variationSpecifics->addChild('NameValueList');
                     $nameValueList1->addChild('Name', 'Compatible Model');
                     if(strtolower($variant->device->brand->name) == 'apple'){
