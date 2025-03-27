@@ -278,8 +278,8 @@ class EbayService implements MarketplaceServiceInterface
                         $nameValueList = $variationSpecifics->addChild('NameValueList');
                         $nameValueList->addChild('Name', 'Choose Your Carrier');
                         $nameValueList->addChild('Value', htmlspecialchars($variant->carrier->name));
+                        $compatibleCarriers[] = htmlspecialchars($variant->carrier->name);
                     }
-                    $compatibleCarriers[] = htmlspecialchars($variant->carrier->name);
                     $nameValueList1 = $variationSpecifics->addChild('NameValueList');
                     $nameValueList1->addChild('Name', 'Compatible Model');
                     if(strtolower($variant->device->brand->name) == 'apple'){
@@ -399,10 +399,27 @@ class EbayService implements MarketplaceServiceInterface
             $addFixedPriceItemRequest->addChild('Version', $version);
             //$addFixedPriceItemRequest->addChild('WarningLevel', 'High');
 
-            $inventoryStatus = $addFixedPriceItemRequest->addChild('InventoryStatus');
-            $inventoryStatus->addChild('SKU', $itemDetail->sku);
-            $inventoryStatus->addChild('StartPrice', $itemDetail->price)->addAttribute('currencyID', 'USD');;
-            $inventoryStatus->addChild('Quantity', $itemDetail->quantity);
+            // $inventoryStatus = $addFixedPriceItemRequest->addChild('InventoryStatus');
+            // if(isset($itemDetail->store_sku)) {
+            //     $inventoryStatus->addChild('ItemID', $itemDetail->store_sku);
+            // }
+            // $inventoryStatus->addChild('SKU', $itemDetail->sku);
+            // $inventoryStatus->addChild('StartPrice', $itemDetail->price)->addAttribute('currencyID', 'USD');;
+            // $inventoryStatus->addChild('Quantity', $itemDetail->quantity);
+
+            $variationData = ListingItemDetail::where('listing_item_id','9b07a991-9bec-4d5a-9d4e-7d85600df690')->orderBy('created_at','ASC')->limit(4)->get();
+            Log::info('Variation Data : '.json_encode($variationData));
+            if(!empty((array) $variationData)) {
+                foreach ($variationData as $variant) {
+                    $inventoryStatus = $addFixedPriceItemRequest->addChild('InventoryStatus');
+                    if(isset($itemDetail->store_sku)) {
+                        $inventoryStatus->addChild('ItemID', $itemDetail->store_sku);
+                    }
+                    $inventoryStatus->addChild('SKU', $variant->sku);
+                    $inventoryStatus->addChild('StartPrice', $itemDetail->price)->addAttribute('currencyID', 'USD');;
+                    $inventoryStatus->addChild('Quantity', $itemDetail->quantity);
+                }
+            }
 
             $index ++;
         }
@@ -499,11 +516,12 @@ class EbayService implements MarketplaceServiceInterface
         $listingDetail = ListingFeed::where('listing_id',$listingId)->first();
         $feed_id = $listingDetail->id;
 
-        $taskID = $authService->createTask($version);
+        $taskID = $authService->createTask($version,$listingInfo);
 
         $feedInfo = ListingFeed::findOrFail($feed_id);
         $feedInfo->update([ 'feed_id' => $taskID, 'submit_ts'=> now(), 'number_of_attempts' => $feedInfo->number_of_attempts ?? 0 + 1]);
 
+        Log::info('File Path : '.$filePath);
         $response = $authService->uploadFile($taskID, $fileName, $filePath);
         Log::info('Feed Submitted : '.$feedId);
         //$this->downloadResultFeed($taskID, $listingId);
@@ -542,6 +560,7 @@ class EbayService implements MarketplaceServiceInterface
         if($feedInfo){
             Log::info('Feed Id : '.$feedInfo->feed_id);
             $response = $authService->getResultFeed($feedInfo->feed_id,$listingId);
+            Log::info('Feed Response :: ' . json_encode($response));
             if($response){
                 $zipPath = public_path($response);
                 $extractPath = public_path('result-feeds/ebay/'.$listingId);
@@ -557,17 +576,42 @@ class EbayService implements MarketplaceServiceInterface
                             $xmlContent = file_get_contents($extractPath . '/' . $file);
                             $xml = simplexml_load_string($xmlContent);
 
+
+                            $successSku = array();
                             if(isset($xml->AddFixedPriceItemResponse)) {
                                 foreach ($xml->AddFixedPriceItemResponse as $item) {
                                     if(isset($item->Ack) && $item->Ack == 'Success') {
-                                        $listingItems = ListingItem::where('sku', $item->SKU)->get();
-                                        foreach ($listingItems as $listingItem) {
-                                            $listingItem->update([
-                                                'store_sku' => $item->ItemID
-                                            ]);
-                                        }
-                                    }else{
+                                        $successSku[] = $item->SKU;
+                                        Log::info('SKU : '.$item->SKU);
+                                        $listingItems = ListingItem::where('sku', $item->SKU)->first();
+                                        $listingItems->update([
+                                            'store_sku' => $item->ItemID,
+                                            'sync_status' => 6
+                                        ]);
+                                    }
+                                }
 
+                                if(!empty($successSku)) {
+                                    // $listing_items = ListingItemLink::where('listing_id', $listingId)->whereNotIn('sku', $successSku)->get();
+                                    if (count($listing_items ?? []) > 0) {
+                                        // foreach ($listing_items as $item) {
+
+                                            // $listingItem = ListingItem::findOrFail($item->item_id);
+                                            // $listingItem->update([
+                                            //     'sync_status' => 6
+                                            // ]);
+                                        // }
+                                    }
+                                }else{
+                                    // $listing_items = ListingItemLink::where('listing_id', $listingId)->get();
+                                    if (count($listing_items ?? []) > 0) {
+                                        // foreach ($listing_items as $item) {
+
+                                            // $listingItem = ListingItem::findOrFail($item->item_id);
+                                            // $listingItem->update([
+                                            //     'sync_status' => 6
+                                            // ]);
+                                        // }
                                     }
                                 }
                             }
