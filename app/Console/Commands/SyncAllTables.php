@@ -128,7 +128,7 @@ class SyncAllTables extends Command
 //            ProductAlternativeImagesSyncJob::dispatch(),
 //        ]);
 //        DataPatch::dispatch();
-           FeedGenerationJob::dispatch('4e7f02b9-3530-4e87-ad72-8cf5881ebe66');
+           FeedGenerationJob::dispatch('c0f0c23c-805e-4686-a5b1-e1b3b40a8aa2');
         //    ListingItemImageCreate::dispatch('4aada5a1-ecfb-49f4-a8b7-b700a4fa9c16');
 //       FeedGenerationJob::dispatch('80415096-6ce4-4f55-b862-f1a3d3ba4662');
     //    ListingItemImageCreate::dispatch('4dcf1d3f-b723-4b31-a075-3702c0746b10');
