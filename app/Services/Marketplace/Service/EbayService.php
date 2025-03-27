@@ -557,17 +557,41 @@ class EbayService implements MarketplaceServiceInterface
                             $xmlContent = file_get_contents($extractPath . '/' . $file);
                             $xml = simplexml_load_string($xmlContent);
 
+
+                            $successSku = array();
                             if(isset($xml->AddFixedPriceItemResponse)) {
                                 foreach ($xml->AddFixedPriceItemResponse as $item) {
                                     if(isset($item->Ack) && $item->Ack == 'Success') {
+                                        $successSku[] = $item->SKU;
                                         $listingItems = ListingItem::where('sku', $item->SKU)->get();
-                                        foreach ($listingItems as $listingItem) {
+                                        $listingItems->update([
+                                            'store_sku' => $item->ItemID,
+                                            'sync_status' => 6
+                                        ]);
+                                    }
+                                }
+
+                                if(!empty($successSku)) {
+                                    $listing_items = ListingItemLink::where('listing_id', $listingId)->whereNotIn('sku', $successSku)->get();
+                                    if (count($listing_items ?? []) > 0) {
+                                        foreach ($listing_items as $item) {
+
+                                            $listingItem = ListingItem::findOrFail($item->id);
                                             $listingItem->update([
-                                                'store_sku' => $item->ItemID
+                                                'sync_status' => 6
                                             ]);
                                         }
-                                    }else{
+                                    }
+                                }else{
+                                    $listing_items = ListingItemLink::where('listing_id', $listingId)->get();
+                                    if (count($listing_items ?? []) > 0) {
+                                        foreach ($listing_items as $item) {
 
+                                            $listingItem = ListingItem::findOrFail($item->id);
+                                            $listingItem->update([
+                                                'sync_status' => 6
+                                            ]);
+                                        }
                                     }
                                 }
                             }

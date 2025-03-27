@@ -1182,10 +1182,17 @@ class ListingController extends Controller
         $carriers = $request->input('carriers');
         $include_carrier = $request->input('include_carrier');
         $generate_type_name = $request->input('generate_type_name');
+        $selected_device = $request->input('selected_device');
+        $selected_carrier = $request->input('selected_carrier');
         $store_type = $request->input('store_type');
 
         $field = 'brands.order_no';
         $field2 = 'brands.notes2';
+
+        if ($include_carrier == 1 || $generate_type_name == 'Carrier Group') {
+            $field = 'carrier.name as carrier_name';
+            $field2 = 'carrier.id as carrier_id';
+        }
 
         $query = Device::select('device.*', 'brands.name as brand_name', $field, $field2)->with('deviceType', 'deviceSeries', 'carriers');
         $query->leftJoin('brands', 'brands.id', '=', 'device.brand_id');
@@ -1229,7 +1236,7 @@ class ListingController extends Controller
         }
         if($include_carrier == 1 || strtolower($generate_type_name) == 'carrier group') {
 
-            $query->orderBy('carrier_name', 'asc');
+            $query->orderBy('carrier.name', 'asc');
         }
         $query->orderBy('brand_name', 'asc');
         $query->orderBy('device.name', 'asc');

@@ -2655,6 +2655,11 @@
                         $('#listing_list').html(response.html);
                         $('#total_listing_product').html(response.total+' rows');
                         if(response.total > 0) {
+                            if(include_carrier == 1){
+                                var sortCol = 1;
+                            }else{
+                                var sortCol = 3;
+                            }
                             var proListTable = $('#productListingTable').DataTable({
                                 "lengthChange": false,
                                 "autoWidth": false,
@@ -2663,7 +2668,7 @@
                                 "searching": false,
                                 "paging": false,
                                 "info": false,
-                                "order": [[3, "asc"]],
+                                "order": [[sortCol, "asc"]],
                                 columnDefs: [
                                     {
                                         targets: [0],
