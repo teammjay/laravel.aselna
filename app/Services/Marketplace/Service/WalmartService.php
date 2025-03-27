@@ -25,6 +25,7 @@ class WalmartService implements MarketplaceServiceInterface
         switch ($listingInfo->feed_type) {
             case FeedTypes::CREATE:
                 $this->generateCreateFeed($listingInfo, $listingId);
+                $this->generateInventoryFeed($listingInfo, $listingId);
                 break;
             case FeedTypes::IMAGE_UPDATE:
                 $this->generateImageUpdateFeed($listingInfo, $listingId);

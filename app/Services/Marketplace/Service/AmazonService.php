@@ -93,6 +93,17 @@ class AmazonService implements MarketplaceServiceInterface
             ];
 
             $message['attributes']['product_tax_code'] = [['value' => 2040274]];
+            // Required for Amazon but Not have much information
+            $message['attributes']['number_of_items'] = [['value' => 1]];
+            $message['attributes']['included_components'] = [['value' => 1]];
+            $message['attributes']['item_package_weight'] = [['value' => 1,'unit' => 'pounds']];
+            $message['attributes']['batteries_required'] = [['value' => 'N']];
+            $message['attributes']['number_of_boxes'] = [['value' => 1]];
+            $message['attributes']['merchant_suggested_asin'] = [['value' => 'XXXASINXXX']];
+            $message['attributes']['warranty_description'] = [['value' => 'description']];
+            $message['attributes']['country_of_origin'] = [['value' => 'IN']];
+            $message['attributes']['supplier_declared_dg_hz_regulation'] = [['value' => 'not_applicable']];
+
 
 
             $message['attributes']['externally_assigned_product_identifier'] = [[
@@ -102,16 +113,16 @@ class AmazonService implements MarketplaceServiceInterface
 
             // Add pricing information
             $price = $itemDetail->price ?: $itemDetail->storeProduct->price ?: $productData->product_price;
-            // $message['attributes']['standard_price'] = [
+            // $message['attributes']['externally_assigned_product_identifier'] = [
             //     'value' => number_format($price, 2),
             //     'currency' => 'USD'
             // ];
 
             if (isset($productData)) {
                 $message['attributes']['item_package_dimensions'] = [[
-                    'length' => ['value' => $productData->package_dimensions_length, 'unit' => 'IN'],
-                    'width' => ['value' => $productData->package_dimensions_width, 'unit' => 'IN'],
-                    'height' => ['value' => $productData->package_dimensions_height, 'unit' => 'IN']
+                    'length' => ['value' => $productData->package_dimensions_length, 'unit' => 'inches'],
+                    'width' => ['value' => $productData->package_dimensions_width, 'unit' => 'inches'],
+                    'height' => ['value' => $productData->package_dimensions_height, 'unit' => 'inches']
                 ]];
             }
 
@@ -161,7 +172,7 @@ class AmazonService implements MarketplaceServiceInterface
                 }
                 $CompatiblePhoneModels = rtrim($CompatiblePhoneModels, ', ');
 
-                $message['attributes']['compatible_phone_models'] = [['value' => $CompatiblePhoneModels]];
+                // $message['attributes']['compatible_phone_models'] = [['value' => $CompatiblePhoneModels]];
 
                 //combine 5 keywords and add into one element. do this for all the keywords
                 $productKeywords = ProductTypeKeyword::where('product_type_id', $productData->product_type)
