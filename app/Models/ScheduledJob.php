@@ -12,14 +12,6 @@ class ScheduledJob extends Model
 
     protected $fillable = [
         'name',
-        'status',
-        'last_run',
-        'next_run',
-        'notes'
+        'last_run'
     ];
-
-    public function executions(): HasMany
-    {
-        return $this->hasMany(JobExecution::class);
-    }
 }

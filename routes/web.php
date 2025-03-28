@@ -11,6 +11,7 @@ use App\Http\Controllers\DeviceSeriesController;
 use App\Http\Controllers\DeviceSubTypesController;
 use App\Http\Controllers\DeviceTypesController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\JobSchedulerController;
 use App\Http\Controllers\ProductInterfaceController;
 use App\Http\Controllers\StoreTypeCategoryController;
 use App\Http\Controllers\SubCategoryController;
@@ -466,3 +467,4 @@ Route::post('/reset-password', [ResetPasswordController::class, 'resetPassword']
 
 Route::get('/jobs', [JobSchedulerController::class, 'index'])->name('jobs.index');
 Route::post('/jobs/{job}/run', [JobSchedulerController::class, 'run'])->name('jobs.run');
+Route::post('/jobs/running',[JobSchedulerController::class, 'running'])->name('jobs.running');
