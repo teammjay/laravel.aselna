@@ -180,7 +180,7 @@ class HomeController extends Controller
 
             $marketplaceService = MarketplaceServiceFactory::create($storeType);
 
-            $filePath = $marketplaceService->getResultFeed($listingId);;
+            $filePath = $marketplaceService->getResultFeed($listingId);
 
             return response()->json(['success' => true,'file_path' => $filePath]);
         } catch (\Exception $e) {

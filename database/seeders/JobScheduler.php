@@ -174,10 +174,17 @@ class JobScheduler extends Seeder
                 'description' => 'Sync all device carriers',
                 'class_name' => 'App\Jobs\DeviceCarrierSyncJob',
             ],
+            [
+                'name' => 'Fetch Result Feed Async',
+                'description' => 'Fetch result feed asynchronously',
+                'class_name' => 'App\Jobs\FetchResultFeedAsync',
+            ]
         ];
 
         foreach ($jobs as $job) {
-            ScheduledJob::create($job);
+            ScheduledJob::updateOrCreate([
+                'class_name' => $job['class_name'],
+            ], $job);
         }
     }
 }

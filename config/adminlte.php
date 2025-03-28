@@ -388,7 +388,7 @@ return [
                 ],
                 [
                     'text' => 'UPC Codes',
-                      'url' => '/upc_codes',
+                    'url' => '/upc_codes',
                     'icon' => 'far fa-fw fa-file',
                 ],
                 [
@@ -538,6 +538,17 @@ return [
                 ]
 
             ],
+        ],
+        [
+            'text' => 'Jobs',
+            'icon' => 'fa fa-fw fa-cogs',
+            'submenu' => [
+                [
+                    'text' => 'Saved Jobs',
+                    'url' => '/jobs',
+                    'icon' => 'far fa-fw fa-file'
+                ]
+            ]
         ]
 //        [
 //            'text' => 'pages',

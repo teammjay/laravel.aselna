@@ -16,9 +16,10 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule): void
     {
         $schedule->command('logs:rotate')->everyFourHours();
-        $schedule->job(new ListingItemSyncJob())->daily();
-        $schedule->job(new ListingSyncJob())->daily();
-        $schedule->job(new LogisticCentreSyncJob())->daily();
+        $schedule->command('app:result-feed-sync')->everyMinute();
+//        $schedule->job(new ListingItemSyncJob())->daily();
+//        $schedule->job(new ListingSyncJob())->daily();
+//        $schedule->job(new LogisticCentreSyncJob())->daily();
     }
 
     /**
@@ -26,6 +27,6 @@ class Kernel extends ConsoleKernel
      */
     protected function commands(): void
     {
-        $this->load(__DIR__.'/Commands');
+        $this->load(__DIR__ . '/Commands');
     }
 }

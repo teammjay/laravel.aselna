@@ -12,6 +12,8 @@ class ScheduledJob extends Model
 
     protected $fillable = [
         'name',
-        'last_run'
+        'last_run',
+        'description',
+        'class_name',
     ];
 }
