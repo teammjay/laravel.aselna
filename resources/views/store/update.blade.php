@@ -736,6 +736,21 @@
                                         <input type="text" class="form-control" id="service_url" name="service_url" value="{{ old('service_url',$store->service_url) }}">
                                     </div>
                                 </div>
+                                <div class="row mt-3 g-3 align-items-center">
+                                    <div class="col-md-3">
+                                        <label for="service_url">File system Host</label>
+                                    </div>
+                                    <div class="col-md-7">
+                                        <select type="text" class="form-control" id="file_system_id" name="file_system_id">
+                                            <option value=""></option>
+                                            @if(count($fileSystems ?? []) > 0)
+                                                @foreach($fileSystems as $fs)
+                                                    <option value="{{ $fs->id }}" {{ $fs->id == $store->file_system_id ? 'selected' : '' }}>{{ $fs->host }}</option>
+                                                @endforeach
+                                            @endif
+                                        </select>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                         <div class="card-footer text-center mt-3">

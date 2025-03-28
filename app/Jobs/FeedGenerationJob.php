@@ -50,7 +50,10 @@ class FeedGenerationJob implements ShouldQueue
             'store_id' => $listingInfo->store_id,
             'created_by' => $created_by
         );
-        ListingFeed::updateOrCreate(['listing_id' => $this->listingId], $feedData);
+        ListingFeed::updateOrCreate([
+            'listing_id' => $this->listingId,
+            'feed_type' => $listingInfo->feed_type
+        ], $feedData);
         Log::info('Feed Data Updated');
 
         $marketplaceService->generateFeed($this->listingId);

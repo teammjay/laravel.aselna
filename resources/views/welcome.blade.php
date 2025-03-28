@@ -337,12 +337,14 @@
         $(document).on('click', '.submit-feed-file', function () {
             console.log("Submit Clicked");
             var listingId = $(this).data('listing');
+            var feedId = $(this).data('feed');
             $.ajax({
                 url: "<?= route('submit-feed') ?>",
                 type: 'POST',
                 data: {
                     _token: "<?= csrf_token() ?>",
-                    listing_id: listingId
+                    listing_id: listingId,
+                    feed_id: feedId
                 },
                 success: function (response) {
                     // download the file url php code is  return response()->download($filetPath);

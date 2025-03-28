@@ -159,13 +159,14 @@ class HomeController extends Controller
             ]);
 
             $listingId = $request->listing_id;
+            $feedId = $request->feed_id;
             $listingInfo = Listing::where('id', $listingId)->first();
 
             $storeType = $listingInfo->store->storeType->name;
 
             $marketplaceService = MarketplaceServiceFactory::create($storeType);
 
-            $marketplaceService->submitFeed('', $listingId);
+            $marketplaceService->submitFeed($feedId, $listingId);
 
             // $marketplaceService->getResultFeed($listingId);
             return response()->json(['success' => true]);
@@ -189,7 +190,7 @@ class HomeController extends Controller
 
             $marketplaceService = MarketplaceServiceFactory::create($storeType);
 
-            $filePath = $marketplaceService->getResultFeed($listingId);;
+            $filePath = $marketplaceService->getResultFeed($listingId);
 
             return response()->json(['success' => true,'file_path' => $filePath]);
         } catch (\Exception $e) {
