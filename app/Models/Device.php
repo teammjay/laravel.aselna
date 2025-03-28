@@ -105,6 +105,12 @@ class Device extends Model
         return Carbon::parse($value)->format('m/d/Y');
     }
 
+    public function carriers()
+    {
+        // map to table device_carrier
+        return $this->belongsToMany(Carrier::class, 'device_carrier', 'device_id', 'carrier_id');
+    }
+
     public function devicecarriers()
     {
         // map to table device_carrier
