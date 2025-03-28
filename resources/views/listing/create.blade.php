@@ -102,6 +102,9 @@
         .pro-rating.multi-select-filter Select, .pro-popular.multi-select-filter Select{
             width: 60px !important;
         }
+        .select2-dropdown {
+            z-index: 9999;
+        }
     </style>
 @stop
 @section('content_header')

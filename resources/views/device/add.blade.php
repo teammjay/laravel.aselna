@@ -332,7 +332,7 @@
                             <label>Carriers</label>
                             <select class="form-control pro-carrier" name="carriers[]" multiple="multiple">
                                 @foreach($carriers as $carrier)
-                                    <option value="{{ $carrier->id }}">{{ $carrier->name }}</option>
+                                    <option value="{{ $carrier->id }}" {{ in_array($carrier->id,$deviceCarriers) ? 'selected' : '' }}>{{ $carrier->name }}</option>
                                 @endforeach
                             </select>
                         </div>
@@ -348,7 +348,7 @@
                                     <select class="form-control pro-interface" name="interfaces[]" multiple="multiple">
                                         @if(count($interfaces ?? []) > 0)
                                             @foreach($interfaces as $interface)
-                                                <option value="{{ $interface->id }}">{{ $interface->name }}</option>
+                                                <option value="{{ $interface->id }}" {{ in_array($interface->id,$deviceInterfaces) ? 'selected' : '' }}>{{ $interface->name }}</option>
                                             @endforeach
                                         @endif
                                     </select>

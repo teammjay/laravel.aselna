@@ -7,13 +7,17 @@ use App\Http\Requests\DeviceRequest;
 use App\Models\Brand;
 use App\Models\Carrier;
 use App\Models\Device;
+use App\Models\DeviceCarrier;
+use App\Models\DeviceInterface;
 use App\Models\DeviceRating;
 use App\Models\DeviceScreen;
 use App\Models\DeviceSeries;
 use App\Models\DeviceSubTypes;
 use App\Models\DeviceTypes;
+use App\Models\Interfaces;
 use App\Services\DataTable\DataTableService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 class DeviceController extends Controller
 {
@@ -27,6 +31,7 @@ class DeviceController extends Controller
 
     public function getDeviceDetails($id)
     {
+
         $device = Device::with(['deviceType', 'deviceSubType', 'brand', 'rating'])
             ->findOrFail($id);
 
@@ -42,19 +47,14 @@ class DeviceController extends Controller
 
     public function getDeviceCarriers($id)
     {
-        $carriers = Device::findOrFail($id)
-            ->carriers()
-            ->get(['name', 'description', 'status']);
+        $carriers = DeviceCarrier::with('carrier:id,name')->where('device_id',$id)->get();
 
         return response()->json($carriers);
     }
 
     public function getDeviceInterfaces($id)
     {
-        $interfaces = Device::findOrFail($id)
-            ->interfaces()
-            ->with('interfaces:id,name')
-            ->get(['id', 'interface_id', 'created_at']);
+        $interfaces = DeviceInterface::with('interfaces:id,name')->where('device_id',$id)->get();
 
         return response()->json($interfaces);
     }
@@ -124,7 +124,8 @@ class DeviceController extends Controller
         $deviceScreens = DeviceScreen::all();
         $brands = Brand::all();
         $carriers = Carrier::all();
-        $interfaces = \App\Models\Interfaces::all();
+        $interfaces = Interfaces::all();
+
 
         return view('device.add', compact('deviceTypes', 'deviceSubTypes', 'deviceSeries', 'deviceRatings', 'deviceScreens', 'brands', 'carriers', 'interfaces'));
     }
@@ -139,16 +140,28 @@ class DeviceController extends Controller
         $created_by = auth()->user()->name ?? 'admin';
         $request->merge(['created_by' => $created_by, 'updated_by' => $created_by, 'status' => $statusCode]);
 
+        $carriers = $request->carriers;
+        $interfaces = $request->interfaces;
+        unset($request['carriers'],$request['interfaces']);
+
         $device = Device::create($request->all());
 
         // Sync carriers
-        if($request->has('carriers')) {
-            $device->carriers()->sync($request->carriers);
+        if($carriers) {
+            $syncCarrierData = [];
+            foreach ($carriers as $carrierId) {
+                $syncCarrierData[$carrierId] = ['id' => (string)Str::uuid()];
+            }
+            $device->devicecarriers()->sync($syncCarrierData ?? []);
         }
 
         // Sync interfaces
-        if($request->has('interfaces')) {
-            $device->interfaces()->sync($request->interfaces);
+        if($interfaces) {
+            $syncInterfaceData = [];
+            foreach ($interfaces as $interfaceId) {
+                $syncInterfaceData[$interfaceId] = ['id' => (string)Str::uuid()];
+            }
+            $device->deviceinterfaces()->sync($syncInterfaceData ?? []);
         }
 
         return redirect()->route('devices.index')
@@ -165,8 +178,13 @@ class DeviceController extends Controller
         $deviceScreens = DeviceScreen::all();
         $brands = Brand::all();
         $carriers = Carrier::all();
-        $interfaces = \App\Models\Interfaces::all();
-        return view('device.add', compact('device', 'deviceTypes', 'deviceSubTypes', 'deviceSeries', 'deviceRatings', 'deviceScreens', 'brands', 'carriers', 'interfaces'));
+        $interfaces = Interfaces::all();
+        $deviceCarrier = DeviceCarrier::where('device_id',$id)->get();
+        $deviceCarriers = $deviceCarrier->pluck('carrier_id')->values()->all();
+        $deviceInterface = DeviceInterface::where('device_id',$id)->get();
+        $deviceInterfaces = $deviceInterface->pluck('interface_id')->values()->all();
+
+        return view('device.add', compact('device', 'deviceTypes', 'deviceSubTypes', 'deviceSeries', 'deviceRatings', 'deviceScreens', 'brands', 'carriers', 'interfaces','deviceCarriers','deviceInterfaces'));
     }
 
     public function update(DeviceRequest $request, $id)
@@ -179,15 +197,34 @@ class DeviceController extends Controller
         $updated_by = auth()->user()->name ?? 'admin';
         $request->merge(['updated_by' => $updated_by, 'status' => $statusCode]);
 
+        $request['release_date'] = date('Y-m-d',strtotime($request->release_date));
+
         $device = Device::findOrFail($id);
+
+        $carriers = $request->carriers;
+        $interfaces = $request->interfaces;
+
+        unset($request['carriers'],$request['interfaces']);
 
         $device->update($request->all());
 
         // Sync carriers
-        $device->carriers()->sync($request->carriers ?? []);
+        if($carriers) {
+            $syncCarrierData = [];
+            foreach ($carriers as $carrierId) {
+                $syncCarrierData[$carrierId] = ['id' => (string)Str::uuid()];
+            }
+            $device->devicecarriers()->sync($syncCarrierData ?? []);
+        }
 
         // Sync interfaces
-        $device->interfaces()->sync($request->interfaces ?? []);
+        if($interfaces) {
+            $syncInterfaceData = [];
+            foreach ($interfaces as $interfaceId) {
+                $syncInterfaceData[$interfaceId] = ['id' => (string)Str::uuid()];
+            }
+            $device->deviceinterfaces()->sync($syncInterfaceData ?? []);
+        }
 
         return redirect()->route('devices.index')
             ->with('success', 'Device updated successfully.');

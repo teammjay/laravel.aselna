@@ -94,7 +94,7 @@ class EbayAuthService
         }
     }
 
-    // Redirect User to eBay Authorization Page
+   /* // Redirect User to eBay Authorization Page
     public function redirectToEbay()
     {
         $scope = urlencode('https://api.ebay.com/oauth/api_scope/sell.inventory');
@@ -122,7 +122,7 @@ class EbayAuthService
         }
 
         return response()->json(['error' => 'Failed to get access token'], 400);
-    }
+    }*/
 
     public function createTask($version,$listingInfo) {
 
