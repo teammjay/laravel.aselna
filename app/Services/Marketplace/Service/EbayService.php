@@ -401,7 +401,7 @@ class EbayService implements MarketplaceServiceInterface
             // $inventoryStatus->addChild('StartPrice', $itemDetail->price)->addAttribute('currencyID', 'USD');;
             // $inventoryStatus->addChild('Quantity', $itemDetail->quantity);
 
-            $variationData = ListingItemDetail::where('listing_item_id','9b07a991-9bec-4d5a-9d4e-7d85600df690')->orderBy('created_at','ASC')->limit(4)->get();
+            $variationData = ListingItemDetail::where('listing_item_id','9b07a991-9bec-4d5a-9d4e-7d85600df690')->orderBy('created_at','ASC')->get();
             Log::info('Variation Data : '.json_encode($variationData));
             if(!empty((array) $variationData)) {
                 foreach ($variationData as $variant) {
