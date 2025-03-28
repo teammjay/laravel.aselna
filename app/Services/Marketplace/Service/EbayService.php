@@ -9,6 +9,8 @@ use App\Models\ListingItemLink;
 use App\Models\ListingItemProductImage;
 use App\Models\ListingTemplate;
 use App\Models\ProductKeyFeatures;
+use App\Models\ProductSpecification;
+use App\Models\ProductTitleKeyword;
 use App\Models\StorePage;
 use App\Models\StoreProduct;
 use App\Models\StoreType;
@@ -17,12 +19,15 @@ use App\Models\SysFile;
 use App\Services\Auth\EbayAuthService;
 use App\Services\Marketplace\Contracts\MarketplaceServiceInterface;
 use App\Utils\ListingUtility;
+use App\Utils\Spintax;
 use App\Utils\XmlUtility;
 use App\Constants\FeedTypes;
 use Illuminate\Support\Facades\Log;
 
 class EbayService implements MarketplaceServiceInterface
 {
+
+    private $version = '1250';
 
     public function generateFeed($listingId)
     {
@@ -63,7 +68,7 @@ class EbayService implements MarketplaceServiceInterface
         // Generate feed for Ebay
         $listingItems = ListingItemLink::with('listingItem','listingItem.brand','listingItem.storeProduct','listingItem.storeProduct.product','listingItem.storeProduct.store','listingItem.storeProduct.StoreTypeCategory','listingItem.storeProduct.productImages')->where('listing_id', $listingId)->get();
         $fileSystem = $listingInfo->store->fileSystem;
-        $version = 1250;
+        $version = $this->version;
 
         /*echo '<pre>';
         print_r($listingItems);
@@ -130,7 +135,11 @@ class EbayService implements MarketplaceServiceInterface
             $max_title_length = $store_type_detail->max_title_length;
 
             $storeProduct = StoreProduct::where('product_id', $product->product_id)->where('store_id', $store_id)->first();
-            $variationtitle = ListingUtility::generateTitle($storeProduct, true, $max_title_length);
+            //$variationtitle = ListingUtility::generateTitle($storeProduct, true, $max_title_length);
+
+            $shortkeywords = ProductTitleKeyword::select('keyword')->where('product_id', $product->product_id)->orderBy('priority', 'asc')->limit(3)->get()->toArray();
+            $longkeywords = ProductTitleKeyword::select('keyword')->where('product_id', $product->product_id)->orderBy('priority', 'asc')->offset(3)->limit(2)->get()->toArray();
+
 
             ///echo $description;die;
 
@@ -200,17 +209,44 @@ class EbayService implements MarketplaceServiceInterface
             // Add ItemSpecifics
             if(isset($listingItem->listingItem->storeProduct->StoreTypeCategory) && !empty($listingItem->listingItem->storeProduct->StoreTypeCategory)) {
                 $itemSpecifics = $item->addChild('ItemSpecifics');
+                if(strtolower($listingItem->listingItem->brand->name) == 'apple'){
+                    $fitModel = (isset($listingItem->listingItem->brand)) ? $listingItem->listingItem->device->name : '';
+                }else {
+                    $fitModel = (isset($listingItem->listingItem->brand)) ? $listingItem->listingItem->brand->name . ' ' . $listingItem->listingItem->device->name : '';
+                }
                 $specifics = [
                     ['Type', $listingItem->listingItem->storeProduct->StoreTypeCategory->name],
-                    ['Fits Model', (isset($listingItem->listingItem->brand)) ? $listingItem->listingItem->brand->name.' '.$listingItem->listingItem->device->name : ''],
-                    ['Brand', $listingItem->listingItem->brand->name],
+                    ['Fits Model', $fitModel],
+                    ['Brand', $listingItem->listingItem->storeProduct->store->name],
                     ['MPN', $itemDetail->mpn],
                     ['Model', $itemDetail->mpn],
                 ];
+
                 foreach ($specifics as $specific) {
                     $nameValueList = $itemSpecifics->addChild('NameValueList');
                     $nameValueList->addChild('Name', $specific[0]);
                     $nameValueList->addChild('Value', htmlspecialchars($specific[1]));
+                }
+
+                $productSpecification = ProductSpecification::where('product_id',$product->product_id)->get();
+                if(count($productSpecification ?? []) > 0){
+                    foreach($productSpecification as $specificaiton){
+
+                        $nameValueList = $itemSpecifics->addChild('NameValueList');
+                        $nameValueList->addChild('Name', $specificaiton->name);
+                        if(str_contains($specificaiton->value, ',')){
+                            $values = explode(',',$specificaiton->value);
+                            if(is_array($values)){
+                                foreach($values as $val){
+                                    $nameValueList->addChild('Value', htmlspecialchars($val));
+                                }
+                            }else{
+                                $nameValueList->addChild('Value', htmlspecialchars($values));
+                            }
+                        }else{
+                            $nameValueList->addChild('Value', htmlspecialchars($specificaiton->value));
+                        }
+                    }
                 }
             }
 
@@ -226,11 +262,11 @@ class EbayService implements MarketplaceServiceInterface
 
             // Add Variations
             $variations = $item->addChild('Variations');
-            $variationData = ListingItemDetail::with('device','device.brand','carrier')->where('listing_item_id',$itemDetail->id)->get();
+            $variationData = ListingItemDetail::with('device','device.brand','carrier')->where('listing_item_id',$itemDetail->id)->orderBy('created_at','ASC')->get();
             /*echo '<pre>';
             print_r($variationData);
             echo '</pre>';die;*/
-            $compatibleModels = [];
+            $compatibleModels = $compatibleCarriers = [];
             if(!empty((array) $variationData)) {
                 foreach ($variationData as $variant) {
                     $variation = $variations->addChild('Variation');
@@ -238,30 +274,59 @@ class EbayService implements MarketplaceServiceInterface
                     $variation->addChild('StartPrice', $itemDetail->price);
                     $variation->addChild('Quantity', $itemDetail->quantity);
                     $variationSpecifics = $variation->addChild('VariationSpecifics');
-                    if($listingInfo->include_carriers && isset($variant->carrier)) {
+                    if($listingInfo->carrier_combo && isset($variant->carrier)) {
                         $nameValueList = $variationSpecifics->addChild('NameValueList');
                         $nameValueList->addChild('Name', 'Choose Your Carrier');
                         $nameValueList->addChild('Value', htmlspecialchars($variant->carrier->name));
+                        $compatibleCarriers[] = htmlspecialchars($variant->carrier->name);
                     }
                     $nameValueList1 = $variationSpecifics->addChild('NameValueList');
                     $nameValueList1->addChild('Name', 'Compatible Model');
-                    $nameValueList1->addChild('Value', $variant->device->brand->name.' '.$variant->device->name);
-                    $variationTitle = $variationtitle.' '.$variant->device->brand->name.' '.$variant->device->name;
+                    if(strtolower($variant->device->brand->name) == 'apple'){
+                        if($listingInfo->include_carriers && isset($variant->carrier)) {
+                            $nameValueList1->addChild('Value', htmlspecialchars($variant->carrier->name).' '.$variant->device->name);
+                            $compatibleModels[] = htmlspecialchars($variant->carrier->name).' '.$variant->device->name;
+                        }else{
+                            $nameValueList1->addChild('Value', $variant->device->name);
+                            $compatibleModels[] = $variant->device->brand->name.' '.$variant->device->name;
+                        }
+                        $variationTitle = $this->generateVariationTitle($variant->device->name, $shortkeywords,$longkeywords, $max_title_length);
+                        //$variationTitle = $variationtitle.' '.$variant->device->name;
+
+                    }else{
+                        $nameValueList1->addChild('Value', $variant->device->brand->name.' '.$variant->device->name);
+                        //$variationTitle = $variationtitle.' '.$variant->device->brand->name.' '.$variant->device->name;
+                        $deviceName = $variant->device->brand->name.' '.$variant->device->name;
+                        $variationTitle = $this->generateVariationTitle($deviceName, $shortkeywords,$longkeywords, $max_title_length);
+                        $compatibleModels[] = $variant->device->brand->name.' '.$variant->device->name;
+                    }
+
                     $variation->addChild('VariationTitle', $variationTitle);
                     $variationDetails = $variation->addChild('VariationProductListingDetails');
                     $variationDetails->addChild('UPC', $itemDetail->upc);
-                    $compatibleModels[] = $variant->device->brand->name.' '.$variant->device->name;
                 }
             }
 
             // Add VariationSpecificsSet
             $variationSpecificsSet = $variations->addChild('VariationSpecificsSet');
             $nameValueList = $variationSpecificsSet->addChild('NameValueList');
-            $nameValueList->addChild('Name', 'Compatible Model');
+            if($listingInfo->carrier_combo && isset($variant->carrier)) {
+                $nameValueList->addChild('Name', 'Choose Your Carrier');
+                sort($compatibleCarriers);
+                $lastvariant = null;
+                foreach ($compatibleCarriers as $carrier) {
+                    if($lastvariant != $carrier){
+                        $nameValueList->addChild('Value', $carrier);
+                    }
+                    $lastvariant = $carrier;
+                }
+            }
+            $nameValueList2 = $variationSpecificsSet->addChild('NameValueList');
+            $nameValueList2->addChild('Name', 'Compatible Model');
             // sort the compatible models
             sort($compatibleModels);
             foreach ($compatibleModels as $model) {
-                $nameValueList->addChild('Value', $model);
+                $nameValueList2->addChild('Value', $model);
             }
 
             $item->addChild('ConditionID', '1000');
@@ -272,10 +337,49 @@ class EbayService implements MarketplaceServiceInterface
         XmlUtility::saveToFile(public_path('feeds/ebay/' . $listingId . '.xml'), $xmlContent);
     }
 
+    private function generateVariationTitle($device_name, $short_keywords = [], $long_keywords = [], $max_length = 80)
+    {
+        $spintax = new Spintax();
+        $title_template = "For #device_name - #short_keywords #long_keywords";
+
+        $skeywords = $lkeywords = [];
+        if(!empty($short_keywords)){
+            foreach($short_keywords as $skey){
+                $skeywords[] = $skey['keyword'];
+            }
+        }
+        if(!empty($long_keywords)){
+            foreach($long_keywords as $lkey){
+                $lkeywords[] = $lkey['keyword'];
+            }
+        }
+        $short_str = implode(' ', $skeywords);
+        $short_str = $spintax->process($short_str);
+        $long_str = implode(' ', $lkeywords);
+        $long_str = $spintax->process($long_str);
+
+        $title = str_replace(
+            ['#device_name', '#short_keywords', '#long_keywords'],
+            [$device_name, $short_str, $long_str],
+            $title_template
+        );
+
+        /*if (strlen($title) > $max_length) {
+            $title = str_replace($long_str, '', $title);
+            $title = trim(preg_replace('/\s+/', ' ', $title));
+        }
+
+        if (strlen($title) > $max_length) {
+            $title = substr($title, 0, $max_length - 3);
+        }*/
+
+        return $title;
+    }
+
     public function generatePriceFeed($listingInfo, $listingId){
 
         $listingItems = ListingItemLink::with('listingItem','listingItem.brand','listingItem.storeProduct','listingItem.storeProduct.product','listingItem.storeProduct.productImages')->where('listing_id', $listingId)->cursor();
-        $version = 1250;
+        $version = $this->version;
 
         $xml = new \SimpleXMLElement('<?xml version="1.0" encoding="UTF-8"?><BulkDataExchangeRequests xmlns="urn:ebay:apis:eBLBaseComponents"></BulkDataExchangeRequests>');
 
@@ -289,16 +393,32 @@ class EbayService implements MarketplaceServiceInterface
 
             $itemDetail = $listingItem->item;
 
-            // Add ReviseInventoryStatusRequest
-            $addFixedPriceItemRequest = $xml->addChild('ReviseInventoryStatusRequest', null, 'urn:ebay:apis:eBLBaseComponents');
-            $addFixedPriceItemRequest->addChild('ErrorLanguage', 'en_US');
-            $addFixedPriceItemRequest->addChild('Version', $version);
-            //$addFixedPriceItemRequest->addChild('WarningLevel', 'High');
+            // $inventoryStatus = $addFixedPriceItemRequest->addChild('InventoryStatus');
+            // if(isset($itemDetail->store_sku)) {
+            //     $inventoryStatus->addChild('ItemID', $itemDetail->store_sku);
+            // }
+            // $inventoryStatus->addChild('SKU', $itemDetail->sku);
+            // $inventoryStatus->addChild('StartPrice', $itemDetail->price)->addAttribute('currencyID', 'USD');;
+            // $inventoryStatus->addChild('Quantity', $itemDetail->quantity);
 
-            $inventoryStatus = $addFixedPriceItemRequest->addChild('InventoryStatus');
-            $inventoryStatus->addChild('SKU', $itemDetail->sku);
-            $inventoryStatus->addChild('StartPrice', $itemDetail->price)->addAttribute('currencyID', 'USD');;
-            $inventoryStatus->addChild('Quantity', $itemDetail->quantity);
+            $variationData = ListingItemDetail::where('listing_item_id',$listingId)->orderBy('created_at','ASC')->get();
+            Log::info('Variation Data : '.json_encode($variationData));
+            if(!empty((array) $variationData)) {
+                foreach ($variationData as $variant) {
+                    // Add ReviseInventoryStatusRequest
+                    $addFixedPriceItemRequest = $xml->addChild('ReviseInventoryStatusRequest', null, 'urn:ebay:apis:eBLBaseComponents');
+                    $addFixedPriceItemRequest->addChild('ErrorLanguage', 'en_US');
+                    $addFixedPriceItemRequest->addChild('Version', $version);
+                    //$addFixedPriceItemRequest->addChild('WarningLevel', 'High');
+                    $inventoryStatus = $addFixedPriceItemRequest->addChild('InventoryStatus');
+                    if(isset($itemDetail->store_sku)) {
+                        $inventoryStatus->addChild('ItemID', $itemDetail->store_sku);
+                    }
+                    $inventoryStatus->addChild('SKU', $variant->sku);
+                    $inventoryStatus->addChild('StartPrice', $itemDetail->price)->addAttribute('currencyID', 'USD');;
+                    $inventoryStatus->addChild('Quantity', $itemDetail->quantity);
+                }
+            }
 
             $index ++;
         }
@@ -312,7 +432,7 @@ class EbayService implements MarketplaceServiceInterface
     public function generateDeleteFeed($listingInfo, $listingId){
 
         $listingItems = ListingItemLink::with('listingItem','listingItem.brand','listingItem.storeProduct','listingItem.storeProduct.product','listingItem.storeProduct.productImages')->where('listing_id', $listingId)->cursor();
-        $version = 1250;
+        $version = $this->version;
 
         $xml = new \SimpleXMLElement('<?xml version="1.0" encoding="UTF-8"?><BulkDataExchangeRequests xmlns="urn:ebay:apis:eBLBaseComponents"></BulkDataExchangeRequests>');
 
@@ -343,7 +463,7 @@ class EbayService implements MarketplaceServiceInterface
     public function generateShipmentUpdateFeed($listingInfo, $listingId){
 
         $listingItems = ListingItemLink::with('listingItem','listingItem.brand','listingItem.storeProduct','listingItem.storeProduct.product','listingItem.storeProduct.productImages')->where('listing_id', $listingId)->cursor();
-        $version = 1250;
+        $version = $this->version;
 
         $xml = new \SimpleXMLElement('<?xml version="1.0" encoding="UTF-8"?><BulkDataExchangeRequests xmlns="urn:ebay:apis:eBLBaseComponents"></BulkDataExchangeRequests>');
 
@@ -376,6 +496,7 @@ class EbayService implements MarketplaceServiceInterface
 
     public function submitFeed($feedId,$listingId)
     {
+        $version = $this->version;
         $listingInfo = Listing::where('id', $listingId)->first();
         $store = $listingInfo->store;
         /*echo '<pre>';
@@ -394,11 +515,12 @@ class EbayService implements MarketplaceServiceInterface
         $listingDetail = ListingFeed::where('listing_id',$listingId)->first();
         $feed_id = $listingDetail->id;
 
-        $taskID = $authService->createTask();
+        $taskID = $authService->createTask($version,$listingInfo);
 
         $feedInfo = ListingFeed::findOrFail($feed_id);
         $feedInfo->update([ 'feed_id' => $taskID, 'submit_ts'=> now(), 'number_of_attempts' => $feedInfo->number_of_attempts ?? 0 + 1]);
 
+        Log::info('File Path : '.$filePath);
         $response = $authService->uploadFile($taskID, $fileName, $filePath);
         Log::info('Feed Submitted : '.$feedId);
         //$this->downloadResultFeed($taskID, $listingId);
@@ -437,6 +559,7 @@ class EbayService implements MarketplaceServiceInterface
         if($feedInfo){
             Log::info('Feed Id : '.$feedInfo->feed_id);
             $response = $authService->getResultFeed($feedInfo->feed_id,$listingId);
+            Log::info('Feed Response :: ' . json_encode($response));
             if($response){
                 $zipPath = public_path($response);
                 $extractPath = public_path('result-feeds/ebay/'.$listingId);
@@ -452,18 +575,97 @@ class EbayService implements MarketplaceServiceInterface
                             $xmlContent = file_get_contents($extractPath . '/' . $file);
                             $xml = simplexml_load_string($xmlContent);
 
-                            if(isset($xml->AddFixedPriceItemResponse)) {
-                                foreach ($xml->AddFixedPriceItemResponse as $item) {
-                                    if(isset($item->Ack) && $item->Ack == 'Success') {
-                                        $listingItems = ListingItem::where('sku', $item->SKU)->get();
-                                        foreach ($listingItems as $listingItem) {
-                                            $listingItem->update([
-                                                'store_sku' => $item->ItemID
-                                            ]);
+                            $feedType = $listingInfo->feed_type;
+                            switch ($feedType) {
+                                case FeedTypes::CREATE:
+                                    $successSku = array();
+                                    if(isset($xml->AddFixedPriceItemResponse)) {
+                                        foreach ($xml->AddFixedPriceItemResponse as $item) {
+                                            if(isset($item->Ack) && $item->Ack == 'Success') {
+                                                $successSku[] = $item->SKU;
+                                                Log::info('SKU : '.$item->SKU);
+                                                //$listingItems = ListingItem::where('sku', $item->SKU)->first();
+                                                $listingItems = ListingItem::select('listing_item.*')->leftJoin('listing_item_link', 'listing_item_link.item_id', '=', 'listing_item.id')->where('listing_item.sku', $item->InventoryStatus->SKU)->where('listing_item_link.listing_id', $listingId)->first();
+                                                $listingItems->update([
+                                                    'store_sku' => $item->ItemID,
+                                                    'sync_status' => 6
+                                                ]);
+                                            }
+                                        }
+
+                                        if(!empty($successSku)) {
+                                            $listing_items = ListingItemLink::select('listing_item_link.item_id')->leftJoin('listng_item', 'listng_item.id', '=', 'listing_item_link.item_id')->where('listng_item.listing_id', $listingId)->whereNotIn('listng_item.sku', $successSku)->get();
+                                            if (count($listing_items ?? []) > 0) {
+                                                foreach ($listing_items as $item) {
+                                                    $listingItem = ListingItem::findOrFail($item->item_id);
+                                                    $listingItem->update([
+                                                        'sync_status' => 1
+                                                    ]);
+                                                }
+                                            }
+                                        }else{
+                                            $listing_items = ListingItemLink::select('item_id')->where('listing_id', $listingId)->get();
+                                            if (count($listing_items ?? []) > 0) {
+                                                foreach ($listing_items as $item) {
+
+                                                    $listingItem = ListingItem::findOrFail($item->item_id);
+                                                    $listingItem->update([
+                                                        'sync_status' => 1
+                                                    ]);
+                                                }
+                                            }
                                         }
                                     }
-                                }
+                                case FeedTypes::DELETE:
+                                    break;
+                                case FeedTypes::PRICE:
+                                case FeedTypes::INVENTORY:
+                                    $successSku = array();
+                                    if(isset($xml->ReviseInventoryStatusResponse)) {
+                                        foreach ($xml->ReviseInventoryStatusResponse as $item) {
+                                            if (isset($item->Ack) && $item->Ack == 'Success') {
+                                                $successSku[] = $item->InventoryStatus->SKU;
+                                                Log::info('SKU : ' . $item->InventoryStatus->SKU);
+                                                $listingItems = ListingItem::select('listing_item.*')->leftJoin('listing_item_link', 'listing_item_link.item_id', '=', 'listing_item.id')->where('listing_item.sku', $item->InventoryStatus->SKU)->where('listing_item_link.listing_id', $listingId)->first();
+                                                $listingItems->update([
+                                                    'store_sku' => $item->ItemID,
+                                                    'sync_status' => 6
+                                                ]);
+                                            }
+                                        }
+
+                                        if(!empty($successSku)) {
+                                            $listing_items = ListingItemLink::select('listing_item_link.item_id')->leftJoin('listng_item', 'listng_item.id', '=', 'listing_item_link.item_id')->where('listng_item.listing_id', $listingId)->whereNotIn('listng_item.sku', $successSku)->get();
+                                            if (count($listing_items ?? []) > 0) {
+                                                foreach ($listing_items as $item) {
+                                                    $listingItem = ListingItem::findOrFail($item->item_id);
+                                                    $listingItem->update([
+                                                        'sync_status' => 1
+                                                    ]);
+                                                }
+                                            }
+                                        }else{
+                                            $listing_items = ListingItemLink::select('item_id')->where('listing_id', $listingId)->get();
+                                            if (count($listing_items ?? []) > 0) {
+                                                foreach ($listing_items as $item) {
+
+                                                    $listingItem = ListingItem::findOrFail($item->item_id);
+                                                    $listingItem->update([
+                                                        'sync_status' => 1
+                                                    ]);
+                                                }
+                                            }
+                                        }
+                                    }
+                                    break;
+
+                                default:
+                                    break;
                             }
+
+
+
+                            return 'result-feeds/ebay/' . $listingId . '/' . $file;
                         }
                     }
                 }

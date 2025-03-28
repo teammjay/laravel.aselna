@@ -48,6 +48,9 @@ use App\Http\Controllers\StorePagesController;
 use App\Services\Auth\EbayAuthService;
 
 Route::middleware('auth')->group(function () {
+    Route::get('/devices/{id}/details', [DeviceController::class, 'getDeviceDetails']);
+    Route::get('/devices/{id}/carriers', [DeviceController::class, 'getDeviceCarriers']);
+    Route::get('/devices/{id}/interfaces', [DeviceController::class, 'getDeviceInterfaces']);
     Route::get('/', [HomeController::class, 'index'])->name('home');
     Route::get('/catalog', [CatalogController::class, 'index']);
     Route::get('/catalog', [CatalogController::class, 'index'])->name('catalog.list');
@@ -108,6 +111,7 @@ Route::middleware('auth')->group(function () {
 
     Route::controller(ListingController::class)->group(function () {
         Route::get('/listing', 'index')->name('listing.list');
+        Route::get('/listing/suspended', 'suspended_list')->name('listing.suspended_list');
         Route::get('/listing/create', 'create')->name('listing.create');
         Route::post('/listing/filter', 'filter')->name('listing.filter');
         Route::post('/listing/saveTabData', 'saveTabData')->name('listing.save');
@@ -128,6 +132,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/listing/synclistinginventory', 'syncListingInventory')->name('listing.synclistinginventory');
         Route::post('/listing/synclistingprice', 'syncListingPrice')->name('listing.synclistingprice');
         Route::post('/listing/updatestoreproduct', 'updateStoreProduct')->name('listing.updatestoreproduct');
+        Route::post('/listing/endlist', 'endList')->name('listing.endlist');
     });
 
     Route::controller(ListingGenerationTypeController::class)->group(function () {
@@ -140,12 +145,12 @@ Route::middleware('auth')->group(function () {
     });
 
     Route::controller(ListingGenerationTypeTemplateController::class)->group(function () {
-        Route::get('/list_generate_type_template', 'index')->name('listing_generation_type_template.index');
-        Route::get('/list_generate_type_template/add', 'create')->name('listing_generation_type_template.create');
-        Route::post('/list_generate_type_template/add', 'store')->name('listing_generation_type_template.store');
-        Route::get('/list_generate_type_template/edit/{id}', 'edit')->name('listing_generation_type_template.edit');
-        Route::post('/list_generate_type_template/edit/{id}', 'update')->name('listing_generation_type_template.update');
-        Route::get('/list_generate_type_template/delete/{id}', 'destroy')->name('listing_generation_type_template.delete');
+        Route::get('/title_template', 'index')->name('listing_generation_type_template.index');
+        Route::get('/title_template/add', 'create')->name('listing_generation_type_template.create');
+        Route::post('/title_template/add', 'store')->name('listing_generation_type_template.store');
+        Route::get('/title_template/edit/{id}', 'edit')->name('listing_generation_type_template.edit');
+        Route::post('/title_template/edit/{id}', 'update')->name('listing_generation_type_template.update');
+        Route::get('/title_template/delete/{id}', 'destroy')->name('listing_generation_type_template.delete');
     });
 
     Route::controller(ListingTemplateController::class)->group(function () {

@@ -39,13 +39,13 @@ class DevicesSyncJob implements ShouldQueue
                 }
             });
 
-        DB::connection('fonus_db')->table('tbl_device')
-            ->orderBy('device_id')
-            ->chunk(1000, function ($devices) {
-                foreach ($devices as $device) {
-                    $this->createDevice($device);
-                }
-            });
+//        DB::connection('fonus_db')->table('tbl_device')
+//            ->orderBy('device_id')
+//            ->chunk(1000, function ($devices) {
+//                foreach ($devices as $device) {
+//                    $this->createDevice($device);
+//                }
+//            });
     }
 
     private function createDevice(mixed $device)

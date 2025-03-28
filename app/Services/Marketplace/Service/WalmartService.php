@@ -25,6 +25,7 @@ class WalmartService implements MarketplaceServiceInterface
         switch ($listingInfo->feed_type) {
             case FeedTypes::CREATE:
                 $this->generateCreateFeed($listingInfo, $listingId);
+                $this->generateInventoryFeed($listingInfo, $listingId);
                 break;
             case FeedTypes::IMAGE_UPDATE:
                 $this->generateImageUpdateFeed($listingInfo, $listingId);
@@ -53,13 +54,14 @@ class WalmartService implements MarketplaceServiceInterface
         $feedType = $this->getfeedType($listingInfo->feed_type);
 
         $authService = new WalmartAuthService($store->seller_id, $store->secret_key);
-
         $file = public_path('feeds/walmart/' . $listingId . '.json');
 
         $response = $authService->submitFeed($file,$feedType);
         Log::info('Response ::' . json_encode($response));
 
         $resultFeedId = $response['feedId'];
+
+        $this->submitInventoryFeedAfterCreate($listingId);
 
         $feedInfo = ListingFeed::where('listing_id', $listingId)->first();
 
@@ -69,9 +71,22 @@ class WalmartService implements MarketplaceServiceInterface
             $feedInfo->number_of_attempts = $feedInfo->number_of_attempts ?? 0 + 1;
             $feedInfo->save();
             Log::info("Feed ID updated successfully.");
+            
         } else {
             Log::error("No ListingFeed found for listing_id: " . $listingId);
         }
+    }
+
+    public function submitInventoryFeedAfterCreate($listingId) {
+        $feedType = $this->getfeedType(FeedTypes::INVENTORY);
+        $file = public_path('feeds/walmart/I_' . $listingId . '.json');
+
+        $listingInfo = Listing::where('id', $listingId)->first();
+        $store = $listingInfo->store;
+
+        $authService = new WalmartAuthService($store->seller_id, $store->secret_key);
+        $response = $authService->submitFeed($file,$feedType);
+        Log::info('Response ::' . json_encode($response));
     }
 
     public function getResultFeed(mixed $listingId)
@@ -167,6 +182,7 @@ class WalmartService implements MarketplaceServiceInterface
 
             $keyFeatures = [];
             foreach ($productObj->productKeyFeatures as $feature) {
+                if($feature->value == '' || !isset($feature->value)) continue;
                 $keyFeatures[] = $feature->value;
             }
 
@@ -253,7 +269,12 @@ class WalmartService implements MarketplaceServiceInterface
             $jsonFeed['Inventory'][] = $product;
         }
 
-        FileUtility::saveToFile(public_path('feeds/walmart/' . $listingId . '.json'), json_encode($jsonFeed));
+        Log::info('Listing Feed Type: ' . $listingInfo->feed_type);
+        if($listingInfo->feed_type == FeedTypes::CREATE) {
+            FileUtility::saveToFile(public_path('feeds/walmart/I_' . $listingId . '.json'), json_encode($jsonFeed));
+        } else {
+            FileUtility::saveToFile(public_path('feeds/walmart/' . $listingId . '.json'), json_encode($jsonFeed));
+        }
     }
 
     private function generatePriceFeed($listingInfo, $listingId)

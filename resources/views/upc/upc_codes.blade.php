@@ -33,13 +33,13 @@
                             </div>
                         </div>
                     </div>
-                    <!-- <div class="col-md-4">
+                    <div class="col-md-4">
                         <div class="row">
                             <div class="col-3 text-right ">
-                                Feed Id
+                                Prefix
                             </div>
                             <div class="col-3">
-                                <select class="custom-select" id="" name="feed_id_operator">
+                                <select class="custom-select" id="" name="prefix_operator">
                                     <option value="{{FilterCodes::EQUAL}}">=</option>
                                     <option value="{{FilterCodes::CONTAINS}}">contains</option>
                                     <option value="{{FilterCodes::STARTS_WITH}}">starts with</option>
@@ -47,36 +47,82 @@
                                     <option value="{{FilterCodes::IN}}">in</option>
                                     <option value="{{FilterCodes::NOT_IN}}">not in</option>
                                     <option value="{{FilterCodes::DOESNT_CONTAIN}}">doesn't contain</option>
-                                    <option value="{{FilterCodes::IS_SET}}">is set</option>
                                 </select>
                             </div>
                             <div class="col-6">
-                                <input type="text" name="feed_id" id="feed_id" class="form-control">
+                                <input type="text" name="prefix" id="prefix" class="form-control">
                             </div>
                         </div>
                     </div>
                     <div class="col-md-4">
                         <div class="row">
-                            <div class="col-3 text-right ">
-                                Listing Id
+                            <div class="col-3 text-right">
+                                Used Status
+                            </div>
+                            <div class="col-9">
+                                <select class="custom-select" name="is_used">
+                                    <option value="">All</option>
+                                    <option value="1">Used</option>
+                                    <option value="0">Not Used</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-md-4">
+                        <div class="row">
+                            <div class="col-3 text-right">
+                                Product Number
                             </div>
                             <div class="col-3">
-                                <select class="custom-select" id="" name="listing_id_operator">
+                                <select class="custom-select" name="product_number_operator">
                                     <option value="{{FilterCodes::EQUAL}}">=</option>
                                     <option value="{{FilterCodes::CONTAINS}}">contains</option>
                                     <option value="{{FilterCodes::STARTS_WITH}}">starts with</option>
                                     <option value="{{FilterCodes::ENDS_WITH}}">ends with</option>
-                                    <option value="{{FilterCodes::IN}}">in</option>
-                                    <option value="{{FilterCodes::NOT_IN}}">not in</option>
-                                    <option value="{{FilterCodes::DOESNT_CONTAIN}}">doesn't contain</option>
-                                    <option value="{{FilterCodes::IS_SET}}">is set</option>
                                 </select>
                             </div>
                             <div class="col-6">
-                                <input type="text" name="listing_id" id="listing_id" class="form-control">
+                                <input type="text" name="product_number" class="form-control">
                             </div>
                         </div>
-                    </div> -->
+                    </div>
+                    <div class="col-md-4">
+                        <div class="row">
+                            <div class="col-3 text-right">
+                                UPC Code
+                            </div>
+                            <div class="col-3">
+                                <select class="custom-select" name="upc_code_operator">
+                                    <option value="{{FilterCodes::EQUAL}}">=</option>
+                                    <option value="{{FilterCodes::CONTAINS}}">contains</option>
+                                    <option value="{{FilterCodes::STARTS_WITH}}">starts with</option>
+                                    <option value="{{FilterCodes::ENDS_WITH}}">ends with</option>
+                                </select>
+                            </div>
+                            <div class="col-6">
+                                <input type="text" name="upc_code" class="form-control">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="row">
+                            <div class="col-3 text-right">
+                                Sequence ID
+                            </div>
+                            <div class="col-3">
+                                <select class="custom-select" name="sequence_id_operator">
+                                    <option value="{{FilterCodes::EQUAL}}">=</option>
+                                    <option value="{{FilterCodes::GREATER_THAN}}">></option>
+                                    <option value="{{FilterCodes::LESS_THAN}}"><</option>
+                                </select>
+                            </div>
+                            <div class="col-6">
+                                <input type="text" name="sequence_id" class="form-control">
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 <div class="row">
                     <div class="col-md-2">
@@ -196,3 +242,4 @@
         } );
     </script>
 @stop
+

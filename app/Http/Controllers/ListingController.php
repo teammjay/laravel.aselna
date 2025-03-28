@@ -2,7 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Constants\ListingStatus;
+use App\Constants\ListingSyncStatus;
+use App\Helpers\QueryFilters;
 use App\Jobs\FeedGenerationJob;
+use App\Jobs\ListingItemImageCreate;
 use App\Models\Brand;
 use App\Models\Carrier;
 use App\Models\Catalog;
@@ -20,26 +24,24 @@ use App\Models\ListingItem;
 use App\Models\ListingItemDetail;
 use App\Models\ListingItemLink;
 use App\Models\Manufacturer;
-use App\Models\ProductSearchTerm;
 use App\Models\ProductTitleKeyword;
 use App\Models\ProductType;
+use App\Models\Store;
 use App\Models\StoreCategory;
 use App\Models\StoreProduct;
 use App\Models\StoreType;
 use App\Models\StoreTypeCategory;
 use App\Models\StoreTypeListing;
 use App\Models\UPCCodes;
+use App\Services\Generator\TitleGenerator;
 use App\Utils\ListingUtility;
+use App\Utils\Spintax;
 use Illuminate\Http\Request;
-use App\Models\Store;
+use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Mockery\Exception;
-use App\Helpers\QueryFilters;
-use Illuminate\Support\Facades\Bus;
-use App\Jobs\ListingItemImageCreate;
 use Illuminate\Support\Str;
-use App\Utils\Spintax;
+use Mockery\Exception;
 
 class ListingController extends Controller
 {
@@ -64,6 +66,19 @@ class ListingController extends Controller
         $brands = Brand::all();
 
         return view('listing.list', compact('stores', 'device_types', 'product_types', 'manufacturers', 'devices', 'brands'))->with('perPage', $this->perPage);
+    }
+
+    public function suspended_list(){
+        $stores = Store::with('storeType')->where('store_status', 1)->orderBy('name', 'asc')->get();
+        $device_types = DeviceTypes::Where('status', 1)->get();
+        $product_types = ProductType::with('children')->whereIn('parent_id', function ($subquery) {
+            $subquery->select('id')->from('product_type')->where('code', 'cea');
+        })->get();
+        $manufacturers = Manufacturer::all();
+        $devices = Device::all();
+        $brands = Brand::all();
+
+        return view('listing.suspended_list', compact('stores', 'device_types', 'product_types', 'manufacturers', 'devices', 'brands'))->with('perPage', $this->perPage);
     }
 
     /**
@@ -181,7 +196,7 @@ class ListingController extends Controller
             $query->where('status', $request->listing_status);
         }
 
-    //        $query->groupBy('id','title','sku','store_sku','price','sales_count','last_sale_date','products.product_sku', 'products.dimensions_width', 'products.product_color', 'store.name', 'store.marketplace_name');
+        //        $query->groupBy('id','title','sku','store_sku','price','sales_count','last_sale_date','products.product_sku', 'products.dimensions_width', 'products.product_color', 'store.name', 'store.marketplace_name');
 
         if ($columnName != '') {
             switch (strtolower($columnName)) {
@@ -272,10 +287,10 @@ class ListingController extends Controller
                     "product_sku" => (!empty((array)$product->storeProduct) && !empty((array)$product->storeProduct->product)) ? $product->storeProduct->product->product_sku : '',
                     "store_name" => ((!empty((array)$product->storeProduct) && !empty((array)$product->storeProduct->store)) ? $product->storeProduct->store->name : '') . ((!empty((array)$product->storeProduct) && !empty((array)$product->storeProduct->store) && !empty((array)$product->storeProduct->store->storeType)) ? ' - ' . $product->storeProduct->store->storeType->name : ''),
                     "title" => strlen($product->title) > 50 ? substr($product->title, 0, 50) . "..." : $product->title,
-                    "status" => ($product->status == 1) ? 'Active' : 'Inactive',
+                    "status" => ListingStatus::getListingStatusName($product->status),
                     "product_size" => (!empty((array)$product->storeProduct) && !empty((array)$product->storeProduct->product)) ? $product->storeProduct->product->dimensions_width : '',
                     "product_color" => (!empty((array)$product->storeProduct) && !empty((array)$product->storeProduct->product)) ? $product->storeProduct->product->product_color : '',
-                    "sync_status" => '',
+                    "sync_status" => ListingSyncStatus::getListingSyncStatusName($product->sync_status),
                     "generation_type_name" => (!empty($product->generationType)) ? $product->generationType->name : '',
                     "price" => $product->price,
                     "qty" => $product->quantity,
@@ -320,7 +335,7 @@ class ListingController extends Controller
         $brands = Brand::orderBy('name', 'asc')->get();
         $deviceRating = DeviceRating::orderBy('value', 'asc')->get();
         $carriers = Carrier::orderBy('name', 'asc')->get();
-        return view('listing.create', compact('pageAt', 'stores', 'manufacturers', 'productTypes', 'deviceTypes', 'brands', 'listingGenerationTypes', 'deviceRating','carriers'));
+        return view('listing.create', compact('pageAt', 'stores', 'manufacturers', 'productTypes', 'deviceTypes', 'brands', 'listingGenerationTypes', 'deviceRating', 'carriers'));
     }
 
     /**
@@ -368,7 +383,7 @@ class ListingController extends Controller
 //        $query->leftJoin('product_type', 'products.product_type', '=', 'product_type.id');
 
         //DB::enableQueryLog();
-        $query = Catalog::with('StoreProduct', 'image', 'productType')->select('products.product_id', 'product_sku', 'product_title', 'product_price', 'product_qty', 'products.created_at','product_type','product_image_url')->where('products.product_status', 1);
+        $query = Catalog::with('StoreProduct', 'image', 'productType')->select('products.product_id', 'product_sku', 'product_title', 'product_price', 'product_qty', 'products.created_at', 'product_type', 'product_image_url')->where('products.product_status', 1);
 
 
         // Handle Only Active Products (Remove the bundled products)
@@ -380,13 +395,13 @@ class ListingController extends Controller
 
         // getting only product which are not listed
         if ($request->has('never_listed_product')) {
-            $query->whereNotExists(function($subquery) use ($request) {
+            $query->whereNotExists(function ($subquery) use ($request) {
                 $subquery->select(DB::raw(1))
                     ->from('listing_item')
                     ->join('store_product', 'listing_item.store_product_id', '=', 'store_product.id')
                     ->whereColumn('store_product.product_id', 'products.product_id')
                     ->whereNull('listing_item.parent_id')
-                    ->whereNotIn('listing_item.status', ['2','3']);
+                    ->whereNotIn('listing_item.status', ['2', '3']);
 
                 if ($request->has('store_id') && $request->input('store_id') != '') {
                     $subquery->where('store_product.store_id', $request->input('store_id'));
@@ -658,12 +673,12 @@ class ListingController extends Controller
         $view = '';
         if (!empty($product_ids)) {
             /* check product exist in store product or not*/
-            $productDetails = Catalog::select('product_id','product_type')->whereIn('product_id',$product_ids)->get();
-            if($productDetails){
+            $productDetails = Catalog::select('product_id', 'product_type')->whereIn('product_id', $product_ids)->get();
+            if ($productDetails) {
                 $created_by = auth()->user()->name ?? 'admin';
-                foreach($productDetails as $pid){
-                    $product_exist = StoreProduct::where('product_id',$pid->product_id)->where('store_id',$store_id)->count();
-                    if(!$product_exist){
+                foreach ($productDetails as $pid) {
+                    $product_exist = StoreProduct::where('product_id', $pid->product_id)->where('store_id', $store_id)->count();
+                    if (!$product_exist) {
                         $sPr = [
                             'product_id' => $pid->product_id,
                             'title' => $pid->product_title,
@@ -693,12 +708,13 @@ class ListingController extends Controller
                 $store = Store::with('storeType')->find($store_id);
 
                 if ($store && $store->storeType->name === 'Magento') {
-                    $storeCategories = StoreCategory::where('store_id', $store_id)->get();
+                    $storeCategories = StoreCategory::where('store_id', $store_id)->orderBy('name','asc')->get();
                 } else {
                     $storeCategories = StoreTypeCategory::select('store_type_category.*')
                         ->leftJoin('store_type', 'store_type.id', '=', 'store_type_category.store_type_id')
                         ->leftJoin('store', 'store_type.id', '=', 'store.store_type_id')
                         ->where('store.id', $store_id)
+                        ->orderBy('store_type_category.name', 'asc')
                         ->get();
                 }
             }
@@ -709,9 +725,9 @@ class ListingController extends Controller
                 ->first();
 
             if ($step == 2) {
-                $view = view('listing.selected_product_list', compact('products', 'storeCategories','storeTypeName'))->render();
+                $view = view('listing.selected_product_list', compact('products', 'storeCategories', 'storeTypeName'))->render();
             } else if ($step == 3) {
-                $view = view('listing.select_device_product_list', compact('products', 'storeCategories','storeTypeName'))->render();
+                $view = view('listing.select_device_product_list', compact('products', 'storeCategories', 'storeTypeName'))->render();
             }
 
             if ($request->ajax()) {
@@ -789,13 +805,13 @@ class ListingController extends Controller
                     if (!empty($short_keyword)) {
                         $temporaryText = implode(' ', $short_keyword[$id]);
                         $temporaryText = $spintax->process($temporaryText);
-                        $sKeyword[$id]  = $temporaryText;
+                        $sKeyword[$id] = $temporaryText;
                     }
 
                     if (!empty($short_keyword)) {
                         $temporaryText = implode(' ', $long_keyword[$id]);
                         $temporaryText = $spintax->process($temporaryText);
-                        $lKeyword[$id] =  $temporaryText;
+                        $lKeyword[$id] = $temporaryText;
                     }
                 }
             }
@@ -883,16 +899,18 @@ class ListingController extends Controller
         $selected_device = $request->input('selected_device');
         if ($product_id) {
             $field = 'products.product_title';
-            if($include_carrier == 1 || $generate_type_name == 'Carrier Group') {
+            $field2 = 'products.product_title';
+            if ($include_carrier == 1 || $generate_type_name == 'Carrier Group') {
                 $field = 'carrier.name as carrier_name';
+                $field2 = 'carrier.id as carrier_id';
             }
-            $query = Device::select('device.*', 'product_interface.product_id', 'products.product_sku',$field)->with('brand', 'rating')->with('deviceType', 'deviceSeries');
+            $query = Device::select('device.*', 'product_interface.product_id', 'products.product_sku', $field,$field2)->with('brand', 'rating')->with('deviceType', 'deviceSeries');
             $query->leftJoin('brands', 'brands.id', '=', 'device.brand_id');
             $query->leftJoin('device_interface', 'device_interface.device_id', '=', 'device.id');
             $query->leftJoin('product_interface', 'product_interface.interface_id', '=', 'device_interface.interface_id');
             $query->leftJoin('products', 'product_interface.product_id', '=', 'products.product_id');
 
-            if($include_carrier == 1 || $generate_type_name == 'Carrier Group') {
+            if ($include_carrier == 1 || $generate_type_name == 'Carrier Group') {
                 $query->leftJoin('device_carrier', 'device_carrier.device_id', '=', 'device.id');
                 $query->leftJoin('carrier', 'carrier.id', '=', 'device_carrier.carrier_id');
                 if ($carriers) {
@@ -928,7 +946,7 @@ class ListingController extends Controller
             $devices = $query->get();
             //echo '<pre>';
             //print_r($devices);
-           // echo '</pre>';die;
+            // echo '</pre>';die;
             //echo $query->toSql();die;
             $count = $devices->count();
 
@@ -957,9 +975,9 @@ class ListingController extends Controller
         $typeName = $request->input('typeName');
         $store_type = $request->input('store_type');
         if ($generate_type) {
-            if($typeName == 'Free Group'){
-                $templates = ListingGenerationTypeTemplate::where('generation_type_id', $generate_type)->whereLike('used_by_store','%' . $store_type.'%')->get();
-            }else{
+            if ($typeName == 'Free Group') {
+                $templates = ListingGenerationTypeTemplate::where('generation_type_id', $generate_type)->whereLike('used_by_store', '%' . $store_type . '%')->get();
+            } else {
                 $templates = ListingGenerationTypeTemplate::where('generation_type_id', $generate_type)->get();
             }
             $data = [];
@@ -993,13 +1011,6 @@ class ListingController extends Controller
 
         try {
             $product_ids = $request->input('product_id');
-            $device_type = $request->input('device_type');
-            $brand = $request->input('brand');
-            $device = $request->input('devices');
-            $deviceSeries = $request->input('device_series');
-            $rating = $request->input('rating');
-            $popularity = $request->input('popularity');
-            $carriers = $request->input('carriers');
             $store_id = $request->input('store_id');
             $title_templates = $request->input('title_template');
             $compress = $request->input('compress');
@@ -1010,10 +1021,11 @@ class ListingController extends Controller
             $group_seperator = $request->input('group_seperator');
             $device_seperator = $request->input('device_seperator');
             $selected_device = $request->input('selected_device');
+            $selected_carrier = $request->input('selected_carrier');
             $product_details = $request->input('product_detail');
             $store_type = $request->input('store_type');
             // $use_store_as_brand = $request->input('use_store_as_brand');
-            Log::info(' product_details :: ' . json_encode($product_details));
+//            Log::info(' product_details :: ' . json_encode($product_details));
             /*echo '<pre>';
             print_r($product_ids);
             print_r($product_details);
@@ -1027,7 +1039,7 @@ class ListingController extends Controller
                     //$products = StoreProduct::getStoreProducts($product_ids);
                     $products = StoreProduct::with('product', 'product.productType')->where('store_id', $store_id)->whereIn('product_id', $product_ids)->get();
 //                    echo $query2->toSql();die;
-                    Log::info(' products :: ' . json_encode($products));
+//                    Log::info(' products :: ' . json_encode($products));
 
                     /*echo '<pre>';
                     print_r($product_details);die;*/
@@ -1049,76 +1061,21 @@ class ListingController extends Controller
                                 $product_store_type_category_id = $pDetail['store_type_category_id'];
                                 $title_template = $title_templates[$key];
                                 if ($title_template) {
-                                    if (str_contains($title_template, '#short_keyword')) {
-                                        $title_template = str_replace('#short_keyword', $product_short_keyword, $title_template);
-                                    }
-                                    if (str_contains($title_template, '#long_keyword')) {
-
-                                        $title_template = str_replace('#long_keyword', $product_long_keyword, $title_template);
-                                    }
                                     if (str_contains($title_template, '#unique_code')) {
-
                                         $title_template = str_replace('#unique_code', '[^]', $title_template);
                                     }
-                                    if (str_contains($title_template, '#product')) {
-
-                                        $title_template = str_replace('#product', $product_title, $title_template);
+                                    if ($title_template) {
+                                        $titleGenerator = new TitleGenerator(0, $max_title_length, []);
+                                        $title_template = $titleGenerator->getProductTitle($title_template, $product_title, $product_short_keyword, $product_long_keyword);
                                     }
                                 }
 
-                                $field = 'brands.order_no';
-                                $field2 = 'brands.notes2';
-                                if($include_carrier == 1 || $generate_type_name == 'Carrier Group') {
+                                if ($include_carrier == 1 || $generate_type_name == 'Carrier Group') {
                                     $field = 'carrier.name as carrier_name';
                                     $field2 = 'carrier.id as carrier_id';
                                 }
 
-                                $query = Device::select('device.*', 'brands.name as brand_name',$field,$field2)->with('deviceType',  'deviceSeries', 'carriers');
-                                $query->leftJoin('brands', 'brands.id', '=', 'device.brand_id');
-                                $query->leftJoin('device_interface', 'device_interface.device_id', '=', 'device.id');
-                                $query->leftJoin('product_interface', 'product_interface.interface_id', '=', 'device_interface.interface_id');
-
-                                if($include_carrier == 1 || $generate_type_name == 'Carrier Group') {
-                                    $query->leftJoin('device_carrier', 'device_carrier.device_id', '=', 'device.id');
-                                    $query->leftJoin('carrier', 'carrier.id', '=', 'device_carrier.carrier_id');
-                                    if ($carriers) {
-                                        $query->whereIn('device_carrier.carrier_id', $carriers);
-                                    }
-                                    $query->whereNotNull('carrier.id');
-                                }
-                                $query->where('product_interface.product_id', $product->product_id);
-                                if (isset($selected_device[$product->product_id]) && !empty($selected_device[$product->product_id])) {
-                                    $query->whereIn('device.id', $selected_device[$product->product_id]);
-                                }
-                                if ($device_type) {
-                                    $query->whereIn('device.device_type_id', $device_type);
-                                }
-                                if ($brand) {
-                                    $query->whereIn('device.brand_id', $brand);
-                                }
-                                if ($rating) {
-                                    $query->whereIn('device.rating_id', $rating);
-                                }
-                                if ($popularity) {
-                                    $query->whereIn('device.rating_id', $popularity);
-                                }
-                                if ($device) {
-                                    $query->whereIn('device.id', $device);
-                                }
-                                if ($deviceSeries) {
-                                    $devices = DevicesLinkedDevice::select('device_id')->whereIn('device_series_id', $deviceSeries)->get();
-                                    $query->whereIn('device.id', $devices);
-                                }
-                                if($include_carrier == 1 || $generate_type_name == 'Carrier Group') {
-                                    $query->orderBy('carrier_name', 'asc');
-                                }
-                                $query->orderBy('brand_name', 'asc');
-                                $query->orderBy('device.name', 'asc');
-                                if($store_type == 'Ebay' || $store_type == 'eBay') {
-                                    $query->limit(250);
-                                }
-                                $devices = $query->get();
-
+                                $devices = $this->getDevicesFromRequest($request,$product);
                                 /*echo '<pre>';
                                 print_r($devices);
                                 echo '<pre>';die;*/
@@ -1126,34 +1083,34 @@ class ListingController extends Controller
                                 if ($generate_type_name) {
                                     switch (trim(strtolower($generate_type_name))) {
                                         case 'combined devices':
-                                            $productsArray[] = $this->generateProductTitles($title_template, $product, $devices, $max_title_length, $brand_seperator, $device_seperator, $compress, $generate_type, $pDetail, $store_product_id);
+                                            $productsArray[] = $this->generateProductTitles($title_template, $product, $devices, $max_title_length, $brand_seperator, $device_seperator, $compress, $generate_type, $pDetail, $store_product_id, $store_type);
                                             break;
                                         case 'free group':
                                             $prevBrand = null;
                                             $flag = false;
-                                            foreach ($devices as $key=>$val) {
+                                            foreach ($devices as $key => $val) {
                                                 $brandName = $val->brand_name;
-                                                if($prevBrand != NULL && $brandName != $prevBrand && str_contains($title_template, '#device_series')){
+                                                if ($prevBrand != NULL && $brandName != $prevBrand && str_contains($title_template, '#device_series')) {
                                                     $flag = true;
                                                     break;
                                                 }
                                                 $prevBrand = $brandName;
                                             }
-                                            if($flag){
+                                            if ($flag) {
                                                 continue 2;
                                             }
-                                            $productsArray[] = $this->generateFreeGroupProductTitles($title_template, $product, $devices, $max_title_length, $brand_seperator, $device_seperator, $compress, $generate_type, $pDetail, $store_product_id);
+                                            $productsArray[] = $this->generateFreeGroupProductTitles($title_template, $product, $devices, $max_title_length, $brand_seperator, $device_seperator, $compress, $generate_type, $pDetail, $store_product_id, $store_type);
                                             break;
                                         case 'single device':
-                                            $productsArray[] = $this->generateSingleDeviceProductTitles($title_template, $product, $devices, $max_title_length, $brand_seperator, $device_seperator, $compress, $generate_type, $pDetail, $store_product_id);
+                                            $productsArray[] = $this->generateSingleDeviceProductTitles($title_template, $product, $devices, $max_title_length, $brand_seperator, $device_seperator, $compress, $generate_type, $pDetail, $store_product_id, $store_type);
                                             break;
                                         case 'brand gruop':
-                                            $productsArray[] = $this->generateBrandGroupProductTitles($title_template, $product, $devices, $max_title_length, $brand_seperator, $device_seperator, $compress, $generate_type, $pDetail, $store_product_id);
+                                            $productsArray[] = $this->generateBrandGroupProductTitles($title_template, $product, $devices, $max_title_length, $brand_seperator, $device_seperator, $compress, $generate_type, $pDetail, $store_product_id, $store_type);
                                             break;
                                         case 'carrier group':
-                                            $productsArray[] = $this->generateCarrierGroupProductTitles($title_template, $product, $devices, $generate_type, $pDetail, $store_product_id);
+                                            $productsArray[] = $this->generateCarrierGroupProductTitles($title_template, $product, $devices, $generate_type, $pDetail, $store_product_id, $store_type);
                                         case 'all carriers':
-                                            $productsArray[] = $this->generateAllCarrierProductTitles($title_template, $product, $devices, $generate_type, $pDetail, $store_product_id);
+                                            $productsArray[] = $this->generateAllCarrierProductTitles($title_template, $product, $devices, $generate_type, $pDetail, $store_product_id, $store_type);
                                             break;
                                     }
                                 }
@@ -1214,6 +1171,82 @@ class ListingController extends Controller
         }
     }
 
+    public function getDevicesFromRequest(Request $request, $product)
+    {
+        $device_type = $request->input('device_type');
+        $brand = $request->input('brand');
+        $device = $request->input('devices');
+        $deviceSeries = $request->input('device_series');
+        $rating = $request->input('rating');
+        $popularity = $request->input('popularity');
+        $carriers = $request->input('carriers');
+        $include_carrier = $request->input('include_carrier');
+        $generate_type_name = $request->input('generate_type_name');
+        $selected_device = $request->input('selected_device');
+        $selected_carrier = $request->input('selected_carrier');
+        $store_type = $request->input('store_type');
+
+        $field = 'brands.order_no';
+        $field2 = 'brands.notes2';
+
+        if ($include_carrier == 1 || $generate_type_name == 'Carrier Group') {
+            $field = 'carrier.name as carrier_name';
+            $field2 = 'carrier.id as carrier_id';
+        }
+
+        $query = Device::select('device.*', 'brands.name as brand_name', $field, $field2)->with('deviceType', 'deviceSeries', 'carriers');
+        $query->leftJoin('brands', 'brands.id', '=', 'device.brand_id');
+        $query->leftJoin('device_interface', 'device_interface.device_id', '=', 'device.id');
+        $query->leftJoin('product_interface', 'product_interface.interface_id', '=', 'device_interface.interface_id');
+
+        if($include_carrier == 1 || strtolower($generate_type_name) == 'carrier group') {
+            $query->leftJoin('device_carrier', 'device_carrier.device_id', '=', 'device.id');
+            $query->leftJoin('carrier', 'carrier.id', '=', 'device_carrier.carrier_id');
+            if ($carriers) {
+                $query->whereIn('device_carrier.carrier_id', $carriers);
+            }
+            $query->whereNotNull('carrier.id');
+
+            if (isset($selected_carrier[$product->product_id]) && !empty($selected_carrier[$product->product_id])) {
+                $query->whereIn('device_carrier.carrier_id', $selected_carrier[$product->product_id]);
+            }
+        }
+        $query->where('product_interface.product_id', $product->product_id);
+        if (isset($selected_device[$product->product_id]) && !empty($selected_device[$product->product_id])) {
+            $query->whereIn('device.id', $selected_device[$product->product_id]);
+        }
+        if ($device_type) {
+            $query->whereIn('device.device_type_id', $device_type);
+        }
+        if ($brand) {
+            $query->whereIn('device.brand_id', $brand);
+        }
+        if ($rating) {
+            $query->whereIn('device.rating_id', $rating);
+        }
+        if ($popularity) {
+            $query->whereIn('device.rating_id', $popularity);
+        }
+        if ($device) {
+            $query->whereIn('device.id', $device);
+        }
+        if ($deviceSeries) {
+            $devices = DevicesLinkedDevice::select('device_id')->whereIn('device_series_id', $deviceSeries)->get();
+            $query->whereIn('device.id', $devices);
+        }
+        if($include_carrier == 1 || strtolower($generate_type_name) == 'carrier group') {
+
+            $query->orderBy('carrier.name', 'asc');
+        }
+        $query->orderBy('brand_name', 'asc');
+        $query->orderBy('device.name', 'asc');
+        if(strtolower($store_type) == 'ebay') {
+
+            $query->limit(250);
+        }
+        return $query->get();
+    }
+
 
     private function generateProductTitles($baseTitle, $product, $devices, $charLimit, $brand_seperator, $device_seperator, $compress, $generate_type, $pDetail, $store_product_id)
     {
@@ -1229,7 +1262,7 @@ class ListingController extends Controller
         $lastModel = null;
         $cnt = 0;
 
-        foreach ($devices as $key=>$device) {
+        foreach ($devices as $key => $device) {
             // Split the device into brand and model
             $currentBrand = $device->brand_name . ' ' . $device->name;
             $brandName = $device->brand_name;
@@ -1239,9 +1272,9 @@ class ListingController extends Controller
             $model = $parts[1] ?? '';
 
             if ($compress) {
-                if($prevBrand != null && $brandName != $prevBrand){
-                    $nameToAdd = $brand_seperator . ' ' .$brandName.' '.$currentMod;
-                }else {
+                if ($prevBrand != null && $brandName != $prevBrand) {
+                    $nameToAdd = $brand_seperator . ' ' . $brandName . ' ' . $currentMod;
+                } else {
                     if ($brand === $lastBrand) {
                         $parts2 = explode(' ', $model, 2);
                         if (isset($parts2[1])) {
@@ -1274,11 +1307,11 @@ class ListingController extends Controller
 
             //echo $nameToAdd.'<br>';
 
-            $tempDevices = array_merge($currentDevices, [str_replace($device->brand_name.' ','',$nameToAdd)]);
+            $tempDevices = array_merge($currentDevices, [str_replace($device->brand_name . ' ', '', $nameToAdd)]);
             $tempDeviceString = implode($device_seperator . ' ', $tempDevices);
             $tempTitle = str_replace('#devices', $tempDeviceString, $baseTitle);
 
-            $tempDevices = array_merge($currentDevices, [str_replace($device->brand_name.' ','',$currentBrand)]);
+            $tempDevices = array_merge($currentDevices, [str_replace($device->brand_name . ' ', '', $currentBrand)]);
             $tempDeviceString = implode($device_seperator . ' ', $tempDevices);
             $tempTitle = str_replace('#device_series', $tempDeviceString, $tempTitle);
 
@@ -1309,7 +1342,7 @@ class ListingController extends Controller
 
                 // Save the current title and start a new one
                 //$titles[$cnt]['title'] = rtrim($currentTitle, $separator); // Remove trailing separator
-                $titles[$cnt]['title'] = str_replace(['#model_series', '#devices' ,'#device_series'], [implode($device_seperator . ' ', $currentModels), implode($device_seperator . ' ', $currentDevices), implode($device_seperator . ' ', $currentDevices)], $baseTitle);
+                $titles[$cnt]['title'] = str_replace(['#model_series', '#devices', '#device_series'], [implode($device_seperator . ' ', $currentModels), implode($device_seperator . ' ', $currentDevices), implode($device_seperator . ' ', $currentDevices)], $baseTitle);
 
                 $cnt++;
                 //$currentTitle = $baseTitle . ' ' . $nameToAdd;
@@ -1341,10 +1374,10 @@ class ListingController extends Controller
                 $titles[$cnt]['model'][] = $device->name;
                 $titles[$cnt]['model_detail'][] = $device;
                 //$currentTitle .= ($currentTitle === $baseTitle ? ' ' : ' '.$separator.' ') . $nameToAdd;
-                $currentModels[] = str_replace($device->brand_name.' ','',$nameToAdd);
-                if(empty($currentDevices)){
-                    $currentDevices[] = $device->brand_name.' '.$nameToAdd;
-                }else {
+                $currentModels[] = str_replace($device->brand_name . ' ', '', $nameToAdd);
+                if (empty($currentDevices)) {
+                    $currentDevices[] = $device->brand_name . ' ' . $nameToAdd;
+                } else {
                     $currentDevices[] = $nameToAdd;
                 }
                 //$currentDevices[] = $nameToAdd;
@@ -1359,14 +1392,14 @@ class ListingController extends Controller
         if (!empty($currentTitle)) {
             /*$titles[$cnt]['title'] = rtrim($currentTitle, ' '.$separator.' ');*/
             //$titles[$cnt]['title'] = str_replace('#model_series', implode($separator.' ', $currentModels), $baseTitle);
-            $titles[$cnt]['title'] = str_replace(['#model_series', '#devices','#device_series'], [implode($device_seperator . ' ', $currentModels), implode($device_seperator . ' ', $currentDevices), implode($device_seperator . ' ', $currentDevices)], $baseTitle);
+            $titles[$cnt]['title'] = str_replace(['#model_series', '#devices', '#device_series'], [implode($device_seperator . ' ', $currentModels), implode($device_seperator . ' ', $currentDevices), implode($device_seperator . ' ', $currentDevices)], $baseTitle);
         }
         /*echo '<pre>';
         print_r($titles);die;*/
         return $titles;
     }
 
-    private function generateSingleDeviceProductTitles($baseTitle, $product, $devices, $charLimit, $brand_seperator, $device_seperator, $compress, $generate_type, $pDetail, $store_product_id)
+    private function generateSingleDeviceProductTitles($baseTitle, $product, $devices, $charLimit, $brand_seperator, $device_seperator, $compress, $generate_type, $pDetail, $store_product_id, $store_type)
     {
         $titles = [];
         $separator = $device_seperator; // Separator between device names
@@ -1377,7 +1410,7 @@ class ListingController extends Controller
             $tempTitle = str_replace('#devices', $currentBrand, $tempTitle);
             $tempTitle = str_replace('#model_series', $device->name, $tempTitle);
 
-            if(strlen($tempTitle) > $charLimit){
+            if (strlen($tempTitle) > $charLimit) {
                 continue;
             }
 
@@ -1397,7 +1430,7 @@ class ListingController extends Controller
         return $titles;
     }
 
-    private function generateFreeGroupProductTitles_old($baseTitle, $product, $devices, $charLimit, $brand_seperator, $device_seperator, $compress, $generate_type, $pDetail, $store_product_id)
+    private function generateFreeGroupProductTitles_old($baseTitle, $product, $devices, $charLimit, $brand_seperator, $device_seperator, $compress, $generate_type, $pDetail, $store_product_id, $store_type)
     {
         $titles = [];
         $separator = $device_seperator; // Separator between device names
@@ -1409,7 +1442,7 @@ class ListingController extends Controller
             $tempTitle = str_replace('#devices', $currentBrand, $tempTitle);
             $tempTitle = str_replace('#model_series', $currentBrand, $tempTitle);
 
-            if(strlen($tempTitle) > $charLimit){
+            if (strlen($tempTitle) > $charLimit) {
                 continue;
             }
 
@@ -1429,7 +1462,7 @@ class ListingController extends Controller
         return $titles;
     }
 
-    private function generateFreeGroupProductTitles($baseTitle, $product, $devices, $charLimit, $brand_seperator, $device_seperator, $compress, $generate_type, $pDetail, $store_product_id)
+    private function generateFreeGroupProductTitles($baseTitle, $product, $devices, $charLimit, $brand_seperator, $device_seperator, $compress, $generate_type, $pDetail, $store_product_id, $store_type)
     {
         $titles = [];
         $currentModels = [];
@@ -1440,11 +1473,16 @@ class ListingController extends Controller
         $lastModel = null;
         $currentBrand = null;
         $currentMod = null;
+        $allDevice = [];
         $cnt = 0;
 
-        foreach ($devices as $key=>$device) {
+        foreach ($devices as $key => $device) {
             // Split the device into brand and model
             $currentBrand = $device->brand_name . ' ' . $device->name;
+            if (strtolower($store_type) == 'ebay' && strtolower($device->brand_name) == 'apple') {
+                $currentBrand = $device->name;
+            }
+
             $currentMod = $device->name;
             $parts = explode(' ', $device->name, 2);
             $brand = $parts[0];
@@ -1452,10 +1490,10 @@ class ListingController extends Controller
 
             // Use only the model if the brand is the same as the last one
             if ($compress) {
-                if($brand === $lastBrand){
+                if ($brand === $lastBrand) {
                     $parts2 = explode(' ', $model, 2);
-                    if(isset($parts2[1])) {
-                        if($parts2[0] == $lastModel){
+                    if (isset($parts2[1])) {
+                        if ($parts2[0] == $lastModel) {
                             $model = $parts2[1];
                         }
                         //$model = $parts2[1];
@@ -1466,10 +1504,10 @@ class ListingController extends Controller
                         $model = $parts2[1];
                     }*/
                     $nameToAdd = $model;
-                }else{
-                    if($key == 0){
+                } else {
+                    if ($key == 0) {
                         $nameToAdd = $currentBrand;
-                    }else{
+                    } else {
                         //$nameToAdd = $brand_seperator.' '.$currentBrand;
                         $nameToAdd = $currentMod;
                     }
@@ -1480,22 +1518,29 @@ class ListingController extends Controller
                 $nameToAdd = $currentBrand;
             }
 
+            //echo '<pre>';
+            //print_r($currentDevices);
+            //echo '</pre>';
+
             //echo $nameToAdd;
+            if (!in_array($currentBrand, $currentDevices) && !in_array($currentBrand, $allDevice)) {
+                $tempDevices = array_merge($currentDevices, [$nameToAdd]);
+                $tempDeviceString = implode($device_seperator . ' ', $tempDevices);
+                $tempTitle = str_replace('#devices', $tempDeviceString, $baseTitle);
+            }
 
-            $tempDevices = array_merge($currentDevices, [$nameToAdd]);
-            $tempDeviceString = implode($device_seperator . ' ', $tempDevices);
-            $tempTitle = str_replace('#devices', $tempDeviceString, $baseTitle);
-
-            $tempDevices = array_merge($currentDevices, [$currentBrand]);
-            $tempDeviceString = implode($device_seperator . ' ', $tempDevices);
-            $tempTitle = str_replace('#device_series', $tempDeviceString, $tempTitle);
+            if (!in_array($currentBrand, $currentDevices) && !in_array($currentBrand, $allDevice)) {
+                $tempDevices = array_merge($currentDevices, [$currentBrand]);
+                $tempDeviceString = implode($device_seperator . ' ', $tempDevices);
+                $tempTitle = str_replace('#device_series', $tempDeviceString, $tempTitle);
+            }
 
 
-            $tempModels = array_merge($currentModels, [str_replace($device->brand_name.' ','',$currentBrand)]);
+            $tempModels = array_merge($currentModels, [str_replace($device->brand_name . ' ', '', $currentBrand)]);
             $tempModelString = implode($device_seperator . ' ', $tempModels);
             $tempTitle = str_replace('#model_series', $tempModelString, $tempTitle);
 
-            if(strlen($tempTitle) > $charLimit ||  (!str_contains($baseTitle, '#device_series'))){
+            if (strlen($tempTitle) > $charLimit || (!str_contains($baseTitle, '#device_series'))) {
                 //$cnt++;
                 //continue;
             }
@@ -1512,28 +1557,34 @@ class ListingController extends Controller
             $titles[$cnt]['device_id'] = $device->id;
             $titles[$cnt]['model'][] = $device->name;
             $titles[$cnt]['model_detail'][] = $device;
-            $currentModels[] = str_replace($device->brand_name.' ','',$nameToAdd);
+            $currentModels[] = str_replace($device->brand_name . ' ', '', $nameToAdd);
 
             /*if(empty($currentDevices)){
                 $currentDevices[] = $nameToAdd;
             }else {
                 $currentDevices[] = $nameToAdd;
             }*/
-
-            $currentDevices[] = $nameToAdd;
+            if (!in_array($currentBrand, $currentDevices) && !in_array($currentBrand, $allDevice)) {
+                $currentDevices[] = $nameToAdd;
+            }
             // Update the last brand
             $lastBrand = $brand;
+            $allDevice[] = $currentBrand;
         }
+
+        /*echo '<pre>';
+        print_r($currentDevices);
+        echo '</pre>';die;*/
 
         // Add the last title
         if (!empty($currentTitle)) {
-            $titles[$cnt]['title'] = str_replace(['#model_series', '#devices','#device_series'], [implode($device_seperator . ' ', $currentModels), implode($device_seperator . ' ', $currentDevices), implode($device_seperator . ' ', $currentDevices)], $baseTitle);
+            $titles[$cnt]['title'] = str_replace(['#model_series', '#devices', '#device_series'], [implode($device_seperator . ' ', $currentModels), implode($device_seperator . ' ', $currentDevices), implode($device_seperator . ' ', $currentDevices)], $baseTitle);
         }
 
         return $titles;
     }
 
-    private function generateBrandGroupProductTitles($baseTitle, $product, $devices, $charLimit, $brand_seperator, $device_seperator, $compress, $generate_type, $pDetail, $store_product_id)
+    private function generateBrandGroupProductTitles($baseTitle, $product, $devices, $charLimit, $brand_seperator, $device_seperator, $compress, $generate_type, $pDetail, $store_product_id, $store_type)
     {
         $titles = [];
         $currentModels = [];
@@ -1552,13 +1603,13 @@ class ListingController extends Controller
 
             // Use only the model if the brand is the same as the last one
             if ($compress) {
-                if($brand === $lastBrand){
+                if ($brand === $lastBrand) {
                     $parts2 = explode(' ', $model, 2);
-                    if(isset($parts2[1])) {
+                    if (isset($parts2[1])) {
                         $model = $parts2[1];
                     }
                     $nameToAdd = $model;
-                }else{
+                } else {
                     $nameToAdd = $currentBrand;
                 }
                 //$nameToAdd = ($brand === $lastBrand) ? $model : $currentBrand;
@@ -1584,7 +1635,7 @@ class ListingController extends Controller
                 // Save the current title and start a new one
                 //$titles[$cnt]['title'] = rtrim($currentTitle, $separator); // Remove trailing separator
                 if (!empty($currentDevices)) {
-                    $titles[$cnt]['title'] = str_replace(['#model_series', '#devices','#device_series'], [implode($separator . ' ', $currentModels), implode($device_seperator . ' ', $currentDevices), implode($device_seperator . ' ', $currentDevices)], $baseTitle);
+                    $titles[$cnt]['title'] = str_replace(['#model_series', '#devices', '#device_series'], [implode($separator . ' ', $currentModels), implode($device_seperator . ' ', $currentDevices), implode($device_seperator . ' ', $currentDevices)], $baseTitle);
                 }
                 $cnt++;
                 //$currentTitle = $baseTitle . ' ' . $nameToAdd;
@@ -1615,9 +1666,9 @@ class ListingController extends Controller
                 $titles[$cnt]['model'][] = $device->name;
                 $titles[$cnt]['model_detail'][] = $device;
                 $currentModels[] = $nameToAdd;
-                if(empty($currentDevices)){
-                    $currentDevices[] = $device->brand_name.' '.$nameToAdd;
-                }else {
+                if (empty($currentDevices)) {
+                    $currentDevices[] = $device->brand_name . ' ' . $nameToAdd;
+                } else {
                     $currentDevices[] = $nameToAdd;
                 }
                 //$currentDevices[] = $nameToAdd;
@@ -1629,13 +1680,13 @@ class ListingController extends Controller
 
         // Add the last title
         if (!empty($currentTitle)) {
-            $titles[$cnt]['title'] = str_replace(['#model_series', '#devices','#device_series'], [implode($separator . ' ', $currentModels), implode($device_seperator . ' ', $currentDevices), implode($device_seperator . ' ', $currentDevices)], $baseTitle);
+            $titles[$cnt]['title'] = str_replace(['#model_series', '#devices', '#device_series'], [implode($separator . ' ', $currentModels), implode($device_seperator . ' ', $currentDevices), implode($device_seperator . ' ', $currentDevices)], $baseTitle);
         }
 
         return $titles;
     }
 
-    private function generateCarrierGroupProductTitles($baseTitle, $product, $devices, $generate_type, $pDetail, $store_product_id)
+    private function generateCarrierGroupProductTitles($baseTitle, $product, $devices, $generate_type, $pDetail, $store_product_id, $store_type)
     {
         $titles = [];
         $lastCarrier = null;
@@ -1661,7 +1712,7 @@ class ListingController extends Controller
                 $titles[$cnt]['device_id'] = $device->id;
                 $titles[$cnt]['model'][] = $device->name;
                 $titles[$cnt]['model_detail'][] = $device;
-            }else{
+            } else {
                 $titles[$cnt]['product_code'] = $product->product->product_sku;
                 $titles[$cnt]['product_id'] = $product->product_id;
                 $titles[$cnt]['price'] = $pDetail['price'];
@@ -1680,7 +1731,7 @@ class ListingController extends Controller
         return $titles;
     }
 
-    private function generateAllCarrierProductTitles($baseTitle, $product, $devices, $generate_type, $pDetail, $store_product_id)
+    private function generateAllCarrierProductTitles($baseTitle, $product, $devices, $generate_type, $pDetail, $store_product_id, $store_type)
     {
         $titles = [];
         $lastCarrier = null;
@@ -1727,6 +1778,8 @@ class ListingController extends Controller
                     $brand_id = $request->input('final_brand_id');
                     $device_id = $request->input('final_device_id');
                     $include_carrier = $request->input('include_carrier');
+                    $brand_combo = $request->input('brand_combo');
+                    $carrier_combo = $request->input('carrier_combo');
                     $store_id = $request->input('store_id');
                     $store_type = $request->input('store_type');
                     $store_detail = Store::where('id', $store_id)->first();
@@ -1744,11 +1797,11 @@ class ListingController extends Controller
                         'store_id' => $store_id,
                         'generation_type_id' => $generation_type_id,
                         'feed_type' => 1,
-                        'status' => 0,
+                        'status' => 1,
                         'chained' => 1,
                         'include_carriers' => $include_carrier,
-                        'brand_combo' => 0,
-                        'carrier_combo' => 0,
+                        'brand_combo' => $brand_combo,
+                        'carrier_combo' => $carrier_combo,
                         'created_by' => $created_by,
                         'updated_by' => $created_by
                     ];
@@ -1846,7 +1899,7 @@ class ListingController extends Controller
                                     'store_sku' => '',
                                     'price' => $product_prices[$key],
                                     'quantity' => ($store_detail->default_listing_quantity) ? $store_detail->default_listing_quantity : 10,
-                                    'sync_status' => 1,
+                                    'sync_status' => 0,
                                     'store_product_id' => $store_product_ids[$key],
                                     'manufacturer_id' => ($productDetail['manufacturer_id'] != '') ? $productDetail['manufacturer_id'] : $productDetail['product']['manufacturer_id'],
                                     'brand_id' => $brand_id[$key],
@@ -1900,15 +1953,16 @@ class ListingController extends Controller
                                         }*/
 
                                         foreach ($product_model as $k => $models) {
-                                            if(count($models ?? []) > 0 && is_array($models)){
+                                            if (count($models ?? []) > 0 && is_array($models)) {
 
-                                                foreach($models as $j=>$model){
+                                                foreach ($models as $j => $model) {
+                                                    Log::info(' Model :: ' . json_encode($model));
 
-                                                    if($store_type != ''){
-                                                        switch(strtolower($store_type)){
+                                                    if ($store_type != '') {
+                                                        switch (strtolower($store_type)) {
                                                             case 'walmart':
                                                             case 'shopify':
-                                                                $upcCodes = $this->generateUpcCode($store_detail,$store_id);
+                                                                $upcCodes = $this->generateUpcCode($store_detail, $store_id);
                                                                 break;
                                                             default:
                                                                 $upcCodes = $upcCodes;
@@ -1953,7 +2007,7 @@ class ListingController extends Controller
                                                         'upc' => isset($upcCodes->upc_code) ? $upcCodes->upc_code : '',
                                                         'device_id' => $model->id,
                                                         'listing_item_id' => $listing_item_id,
-                                                        'device_carrier_id' => $model->carrier_id,
+                                                        'device_carrier_id' => $model->carrier_id ?? null,
                                                         //'store_sku' => $store_id,
                                                         'created_by' => $created_by
                                                     );
@@ -1973,7 +2027,7 @@ class ListingController extends Controller
                                         $itemLink = array(
                                             'item_id' => $listing_item_id,
                                             'listing_id' => $listing_id,
-                                            'sync_status' => 6,
+                                            'sync_status' => 0,
                                             'old_price' => $product_prices[$key],
                                             'created_by' => $created_by
                                         );
@@ -2028,7 +2082,8 @@ class ListingController extends Controller
         return response()->json(['error' => true, 'message' => 'Something went wrong! Please try again!']);
     }
 
-    private function generateUpcCode($store_detail,$store_id=''){
+    private function generateUpcCode($store_detail, $store_id = '')
+    {
         if ($store_detail->upc_usage_type) {
             switch ($store_detail->upc_usage_type) {
                 case 0:
@@ -2054,13 +2109,13 @@ class ListingController extends Controller
         return $upcCodes;
     }
 
-    private function generateMPN($suffix='')
+    private function generateMPN($suffix = '')
     {
         $randomPart = strtoupper(Str::random(6)); // 6 random alphanumeric characters
         //$suffix = 'GI'; // Fixed suffix
-        if($suffix != '') {
+        if ($suffix != '') {
             return "{$randomPart}-{$suffix}";
-        }else{
+        } else {
             return "{$randomPart}";
         }
     }
@@ -2159,9 +2214,9 @@ class ListingController extends Controller
             try {
                 Log::info('Inside Inventory Sync ');
                 $listingDetails = Listing::whereIn('id',
-                                    ListingItemLink::select('listing_id')
-                                        ->whereIn('item_id', $selected_listing)
-                                )->get();
+                    ListingItemLink::select('listing_id')
+                        ->whereIn('item_id', $selected_listing)
+                )->get();
                 if (!empty((array)$listingDetails)) {
                     Log::info('Listing Info Found');
                     foreach ($listingDetails as $list) {
@@ -2238,15 +2293,36 @@ class ListingController extends Controller
         ]);
     }
 
-    public function updateStoreProduct(Request $request){
+    public function updateStoreProduct(Request $request)
+    {
 
         $id = $request->input('id');
         $category_id = $request->input('category_id');
         $product = StoreProduct::findOrFail($id); // Retrieve the product by ID
-        $product->update(['store_type_category_id' =>$category_id ]);
+        $product->update(['store_type_category_id' => $category_id]);
 
         return response()->json([
             'success' => true
+        ]);
+    }
+
+    public function endList(Request $request){
+
+        $selected_listing = $request->input('selected_list');
+
+        if(!empty($selected_listing)){
+            foreach($selected_listing as $listing_item){
+                $listingItem = ListingItem::findOrFail($listing_item);
+                $listingItem->update(['status' => 3,'sync_status' => 1]);
+            }
+
+            return response()->json([
+                'success' => true
+            ]);
+        }
+
+        return response()->json([
+            'error' => true
         ]);
     }
 }

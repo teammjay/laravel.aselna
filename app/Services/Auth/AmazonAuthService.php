@@ -6,6 +6,7 @@ use App\Constants\FeedTypes;
 use App\Models\Listing;
 use GuzzleHttp\Client;
 use Illuminate\Support\Facades\Log;
+use App\Utils\FileUtility;
 
 class AmazonAuthService
 {
@@ -82,22 +83,23 @@ class AmazonAuthService
         ];
         Log::info('Feed Submission Data: ' . json_encode($data));
 
-         $response = $this->client->post('/feeds/2021-06-30/feeds', [
-             'headers' => [
-                 'x-amz-access-token' => "{$accessToken}",
-                 'Content-Type' => 'application/json',
-             ],
-             'json' => $data,
-         ]);
+        $response = $this->client->post('/feeds/2021-06-30/feeds', [
+            'headers' => [
+                'x-amz-access-token' => "{$accessToken}",
+                'Content-Type' => 'application/json',
+            ],
+            'json' => $data,
+        ]);
 
-         Log::info('Feed Submission Response: ' . $response->getBody());
+        Log::info('Feed Submission Response: ' . $response->getBody());
 
-         return json_decode($response->getBody()->getContents(), true);
+        return json_decode($response->getBody(), true);
     }
 
-    public function getResultFeed($feedId)
+    public function getResultFeed($feedId, $listingId)
     {
         $accessToken = $this->getAccessToken();
+        $savePath = public_path('result-feeds/amazon/'.$listingId.'.zip');
 
         $response = $this->client->get('/feeds/2021-06-30/feeds/' . $feedId, [
             'headers' => [
@@ -105,8 +107,46 @@ class AmazonAuthService
             ]
         ]);
 
-        Log::info('Feed Status: ' . $response->getBody());
-        return '';
+        $feedResult = json_decode($response->getBody(), true);
+        Log::info('Feed Result: '. json_encode($feedResult));
+        $feedDocumentId = $feedResult['resultFeedDocumentId'];
+
+        $response = $this->client->get('/feeds/2021-06-30/documents/'. $feedDocumentId, [
+            'headers' => [
+                'x-amz-access-token' => "{$accessToken}",
+            ]
+        ]);
+
+        Log::info('Feed Document Response: '. $response->getBody());
+
+        $documentResult = json_decode($response->getBody(), true);
+        $doocumentUrl = $documentResult['url'];
+
+        Log::info('Document URL: '. $doocumentUrl);
+
+        if(isset($documentResult['compressionAlgorithm']) && $documentResult['compressionAlgorithm'] == 'GZIP') {
+
+            $this->client->get($doocumentUrl, [
+                'sink' => $savePath,
+            ]);
+
+            $compressedContent = file_get_contents($savePath);
+            $decompressedContent = gzdecode($compressedContent);
+
+            if ($decompressedContent === false) {
+                Log::error('Failed to decompress GZIP content for feed document ' . $feedDocumentId);
+                return null;
+            }
+
+            FileUtility::saveToFile(public_path('result-feeds/amazon/' . $listingId . '.json'), $decompressedContent);
+            return 'result-feeds/amazon/'. $listingId. '.json';
+        } else {
+            $response = $this->client->get($doocumentUrl, []);
+            Log::info('Feed Document: '. $response->getBody());
+            FileUtility::saveToFile(public_path('result-feeds/amazon/' . $listingId . '.xml'), $response->getBody());
+            return 'result-feeds/amazon/'. $listingId. '.xml';
+        }
+        return null;
     }
 
     private function getMarketplaceIDs()
@@ -138,7 +178,7 @@ class AmazonAuthService
 
         switch ($listingInfo->feed_type) {
             case FeedTypes::CREATE:
-                return 'POST_PRODUCT_DATA';
+                return 'JSON_LISTINGS_FEED';
             case FeedTypes::PRICE:
                 return 'POST_PRODUCT_PRICING_DATA';
             case FeedTypes::INVENTORY:

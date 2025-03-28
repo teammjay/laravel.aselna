@@ -79,4 +79,25 @@ class QueryFilters
             });
         }
     }
+
+    public static function applyDateFilter($query, $request, string $string, $input, $input1)
+    {
+        //handle ht lt and eq
+        if ($request->has($input) && $request->$input != '') {
+            $operator = $request->$input;
+            $value = $request->$input1;
+
+            switch ($operator) {
+                case 'eq':
+                    $query->whereDate($string, $value);
+                    break;
+                case 'lt':
+                    $query->whereDate($string, '<', $value);
+                    break;
+                case 'gt':
+                    $query->whereDate($string, '>', $value);
+                    break;
+            }
+        }
+    }
 }

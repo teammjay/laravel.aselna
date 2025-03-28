@@ -37,6 +37,7 @@ use App\Jobs\ProductInterfaces;
 use App\Jobs\ProductMaterialSyncJob;
 use App\Jobs\ProductSearchTermSyncJob;
 use App\Jobs\ProductSizeSyncJob;
+use App\Jobs\ProductSpecificationSyncJob;
 use App\Jobs\ProductSyncJob;
 use App\Jobs\ProductTagSyncJob;
 use App\Jobs\ProductTypeKeywordSyncJob;
@@ -77,7 +78,7 @@ class SyncAllTables extends Command
      */
     public function handle()
     {
-        Bus::chain([
+        // Bus::chain([
 //            new FileSystemSyncJob(),
 //            new StoreTypeSyncJob(),
 //           new StoreSyncJob(),
@@ -91,7 +92,7 @@ class SyncAllTables extends Command
 //            new DevicesSyncJob(),
 //            new DeviceInterfaces(),
 //            new ProductConditionJob(),
-           new CarrierSyncJob(),
+//           new CarrierSyncJob(),
 //            new ShippingCarrierJob(),
 //            new ProductColorSync(),
             //    new ProductSizeSyncJob(),
@@ -110,8 +111,9 @@ class SyncAllTables extends Command
 //            new ProductAlternativeImagesSyncJob(),
             //    new ListingTemplateSyncJob(),
             // new StorePagesJobSync(),
-            new DeviceCarrierSyncJob()
-        ])->dispatch();
+//            new DeviceCarrierSyncJob(),
+        // new ProductSpecificationSyncJob()
+        // ])->dispatch();
 //        Bus::chain([
 //            ListingSyncJob::dispatch(),
 //            ListingItemSyncJob::dispatch(),
@@ -126,7 +128,7 @@ class SyncAllTables extends Command
 //            ProductAlternativeImagesSyncJob::dispatch(),
 //        ]);
 //        DataPatch::dispatch();
-        //    FeedGenerationJob::dispatch('eb617a7e-804b-4a69-bbc2-3f717dc067d2');
+           FeedGenerationJob::dispatch('c0f0c23c-805e-4686-a5b1-e1b3b40a8aa2');
         //    ListingItemImageCreate::dispatch('4aada5a1-ecfb-49f4-a8b7-b700a4fa9c16');
 //       FeedGenerationJob::dispatch('80415096-6ce4-4f55-b862-f1a3d3ba4662');
     //    ListingItemImageCreate::dispatch('4dcf1d3f-b723-4b31-a075-3702c0746b10');

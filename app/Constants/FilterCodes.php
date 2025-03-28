@@ -14,8 +14,8 @@ class FilterCodes
     const DOESNT_CONTAIN = 'doesnt_contain';
     const IS_SET = 'is_set';
 //    const IS_NOT_SET = 'is_not_set';
-//    const GREATER_THAN = '>';
-//    const LESS_THAN = '<';
+    const GREATER_THAN = '>';
+    const LESS_THAN = '<';
 //    const GREATER_THAN_OR_EQUAL = '>=';
 //    const LESS_THAN_OR_EQUAL = '<=';
 //    const NOT_EQUAL = '!=';

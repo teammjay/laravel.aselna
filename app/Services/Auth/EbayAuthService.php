@@ -6,6 +6,7 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Http\Request;
+use App\Constants\FeedTypes;
 
 class EbayAuthService
 {
@@ -93,7 +94,7 @@ class EbayAuthService
         }
     }
 
-    // Redirect User to eBay Authorization Page
+   /* // Redirect User to eBay Authorization Page
     public function redirectToEbay()
     {
         $scope = urlencode('https://api.ebay.com/oauth/api_scope/sell.inventory');
@@ -121,13 +122,16 @@ class EbayAuthService
         }
 
         return response()->json(['error' => 'Failed to get access token'], 400);
-    }
+    }*/
 
-    public function createTask() {
+    public function createTask($version,$listingInfo) {
 
         try {
             $accessToken = $this->refreshToken();
             Log::info('Access Token ' . $accessToken);
+
+            $feedType = $this->getfeedType($listingInfo->feed_type);
+            Log::info('Feed Type ' . $feedType);
 
             $response = $this->client->post('sell/feed/v1/task', [
                 'verify' => false,
@@ -137,8 +141,8 @@ class EbayAuthService
                     'X-EBAY-C-MARKETPLACE-ID' => 'EBAY_US',
                 ],
                 'json' => [
-                    'schemaVersion' => '1250',
-                    'feedType' => 'LMS_ADD_FIXED_PRICE_ITEM'
+                    'schemaVersion' => $version,
+                    'feedType' => $feedType
                 ],
             ]);
             Log::info('Task Created ' . $response->getBody());
@@ -407,6 +411,24 @@ class EbayAuthService
             Log::error('Error: Unexpected API error structure' );
             return null;
             //throw new \Exception('Unexpected API error structure');
+        }
+    }
+
+    public function getfeedType($feedType)
+    {
+        switch ($feedType) {
+            case FeedTypes::CREATE:
+                return 'LMS_ADD_FIXED_PRICE_ITEM';
+            // case FeedTypes::IMAGE_UPDATE:
+            //     return 'MPItem';
+            case FeedTypes::DELETE:
+                return 'LMS_END_ITEM';
+            case FeedTypes::INVENTORY:
+                return 'LMS_REVISE_INVENTORY_STATUS';
+            case FeedTypes::PRICE:
+                return 'LMS_REVISE_INVENTORY_STATUS';
+            default:
+                return '';
         }
     }
 

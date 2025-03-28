@@ -83,6 +83,9 @@
             font-size: 3rem;
             color: #007bff;
         }
+        [class*=sidebar-dark-] .nav-sidebar>.nav-item>.nav-treeview {
+            background-color: #000000;
+        }
     </style>
 
     {{-- Favicon --}}
