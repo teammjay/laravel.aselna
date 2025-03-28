@@ -211,8 +211,6 @@
                                 <thead>
                                     <tr>
                                         <th>Carrier Name</th>
-                                        <th>Description</th>
-                                        <th>Status</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -225,7 +223,6 @@
                                 <thead>
                                     <tr>
                                         <th>Interface Name</th>
-                                        <th>Created At</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -289,34 +286,38 @@
             });
 
             // Device Details Modal Handler
-        $('body').on('click', '#deviceTable tbody tr', function() {
+        $('body').on('click', '#deviceTable tbody tr', function(e) {
+
+            if ($(e.target).is('a, img')) {
+                return;
+            }
             const deviceId = $(this).data('device-id');
             $('#deviceDetailsModal').modal('show');
 
             // Load general details immediately
-            $.get(`/devices/${deviceId}/details`, function(data) {
+            $.get('devices/'+deviceId+'/details', function(data) {
                 $('#general-content').html(`
-                    <div class="col-md-4">
+                    <div class="col-md-4 mb-3">
                         <label>Device Type:</label>
                         <p>${data.device_type?.name || ''}</p>
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-md-4 mb-3">
                         <label>Sub Type:</label>
                         <p>${data.device_sub_type?.name || ''}</p>
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-md-4 mb-3">
                         <label>Brand:</label>
                         <p>${data.brand?.name || ''}</p>
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-md-4 mb-3">
                         <label>Device Name:</label>
                         <p>${data.name || ''}</p>
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-md-4 mb-3">
                         <label>Status:</label>
                         <p>${data.status}</p>
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-md-4 mb-3">
                         <label>Rating:</label>
                         <p>${data.rating?.name || ''}</p>
                     </div>
@@ -328,13 +329,11 @@
                 const target = $(e.target).attr('href');
 
                 if(target === '#carrier' && !$('#carrier-table').data('loaded')) {
-                    $.get(`/devices/${deviceId}/carriers`, function(data) {
+                    $.get('devices/'+deviceId+'/carriers', function(data) {
                         $('#carrier-table tbody').html(
-                            data.map(carrier => `
+                            data.map(carr => `
                                 <tr>
-                                    <td>${carrier.name}</td>
-                                    <td>${carrier.description}</td>
-                                    <td>${carrier.status}</td>
+                                    <td>${carr.carrier.name}</td>
                                 </tr>
                             `).join('')
                         );
@@ -343,12 +342,11 @@
                 }
 
                 if(target === '#interfaces' && !$('#interfaces-table').data('loaded')) {
-                    $.get(`/devices/${deviceId}/interfaces`, function(data) {
+                    $.get('devices/'+deviceId+'/interfaces', function(data) {
                         $('#interfaces-table tbody').html(
                             data.map(intf => `
                                 <tr>
                                     <td>${intf.interfaces?.name}</td>
-                                    <td>${intf.created_at}</td>
                                 </tr>
                             `).join('')
                         );

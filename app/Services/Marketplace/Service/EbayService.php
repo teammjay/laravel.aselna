@@ -393,12 +393,6 @@ class EbayService implements MarketplaceServiceInterface
 
             $itemDetail = $listingItem->item;
 
-            // Add ReviseInventoryStatusRequest
-            $addFixedPriceItemRequest = $xml->addChild('ReviseInventoryStatusRequest', null, 'urn:ebay:apis:eBLBaseComponents');
-            $addFixedPriceItemRequest->addChild('ErrorLanguage', 'en_US');
-            $addFixedPriceItemRequest->addChild('Version', $version);
-            //$addFixedPriceItemRequest->addChild('WarningLevel', 'High');
-
             // $inventoryStatus = $addFixedPriceItemRequest->addChild('InventoryStatus');
             // if(isset($itemDetail->store_sku)) {
             //     $inventoryStatus->addChild('ItemID', $itemDetail->store_sku);
@@ -411,6 +405,11 @@ class EbayService implements MarketplaceServiceInterface
             Log::info('Variation Data : '.json_encode($variationData));
             if(!empty((array) $variationData)) {
                 foreach ($variationData as $variant) {
+                    // Add ReviseInventoryStatusRequest
+                    $addFixedPriceItemRequest = $xml->addChild('ReviseInventoryStatusRequest', null, 'urn:ebay:apis:eBLBaseComponents');
+                    $addFixedPriceItemRequest->addChild('ErrorLanguage', 'en_US');
+                    $addFixedPriceItemRequest->addChild('Version', $version);
+                    //$addFixedPriceItemRequest->addChild('WarningLevel', 'High');
                     $inventoryStatus = $addFixedPriceItemRequest->addChild('InventoryStatus');
                     if(isset($itemDetail->store_sku)) {
                         $inventoryStatus->addChild('ItemID', $itemDetail->store_sku);
@@ -576,45 +575,58 @@ class EbayService implements MarketplaceServiceInterface
                             $xmlContent = file_get_contents($extractPath . '/' . $file);
                             $xml = simplexml_load_string($xmlContent);
 
+                            $feedType = $this->getfeedType($listingInfo->feed_type);
+                            switch ($feedType) {
+                                case FeedTypes::CREATE:
+                                    $successSku = array();
+                                    if(isset($xml->AddFixedPriceItemResponse)) {
+                                        foreach ($xml->AddFixedPriceItemResponse as $item) {
+                                            if(isset($item->Ack) && $item->Ack == 'Success') {
+                                                $successSku[] = $item->SKU;
+                                                Log::info('SKU : '.$item->SKU);
+                                                $listingItems = ListingItem::where('sku', $item->SKU)->first();
+                                                $listingItems->update([
+                                                    'store_sku' => $item->ItemID,
+                                                    'sync_status' => 6
+                                                ]);
+                                            }
+                                        }
 
-                            $successSku = array();
-                            if(isset($xml->AddFixedPriceItemResponse)) {
-                                foreach ($xml->AddFixedPriceItemResponse as $item) {
-                                    if(isset($item->Ack) && $item->Ack == 'Success') {
-                                        $successSku[] = $item->SKU;
-                                        Log::info('SKU : '.$item->SKU);
-                                        $listingItems = ListingItem::where('sku', $item->SKU)->first();
-                                        $listingItems->update([
-                                            'store_sku' => $item->ItemID,
-                                            'sync_status' => 6
-                                        ]);
-                                    }
-                                }
+                                        if(!empty($successSku)) {
+                                            $listing_items = ListingItemLink::where('listing_id', $listingId)->leftJoin('listng_item', 'listng_item.id', '=', 'listing_item_link.item_id')->whereNotIn('listng_item.sku', $successSku)->get();
+                                            if (count($listing_items ?? []) > 0) {
+                                                foreach ($listing_items as $item) {
 
-                                if(!empty($successSku)) {
-                                    $listing_items = ListingItemLink::where('listing_id', $listingId)->whereNotIn('sku', $successSku)->get();
-                                    if (count($listing_items ?? []) > 0) {
-                                        foreach ($listing_items as $item) {
+                                                    $listingItem = ListingItem::findOrFail($item->id);
+                                                    $listingItem->update([
+                                                        'sync_status' => 1
+                                                    ]);
+                                                }
+                                            }
+                                        }else{
+                                            $listing_items = ListingItemLink::where('listing_id', $listingId)->get();
+                                            if (count($listing_items ?? []) > 0) {
+                                                foreach ($listing_items as $item) {
 
-                                            $listingItem = ListingItem::findOrFail($item->id);
-                                            $listingItem->update([
-                                                'sync_status' => 1
-                                            ]);
+                                                    $listingItem = ListingItem::findOrFail($item->id);
+                                                    $listingItem->update([
+                                                        'sync_status' => 1
+                                                    ]);
+                                                }
+                                            }
                                         }
                                     }
-                                }else{
-                                    $listing_items = ListingItemLink::where('listing_id', $listingId)->get();
-                                    if (count($listing_items ?? []) > 0) {
-                                        foreach ($listing_items as $item) {
-
-                                            $listingItem = ListingItem::findOrFail($item->id);
-                                            $listingItem->update([
-                                                'sync_status' => 1
-                                            ]);
-                                        }
-                                    }
-                                }
+                                case FeedTypes::DELETE:
+                                    break;
+                                case FeedTypes::INVENTORY:
+                                    break;
+                                case FeedTypes::PRICE:
+                                    break;
+                                default:
+                                    break;
                             }
+
+
 
                             return 'result-feeds/ebay/' . $listingId . '/' . $file;
                         }
