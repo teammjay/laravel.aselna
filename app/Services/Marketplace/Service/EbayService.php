@@ -401,7 +401,7 @@ class EbayService implements MarketplaceServiceInterface
             // $inventoryStatus->addChild('StartPrice', $itemDetail->price)->addAttribute('currencyID', 'USD');;
             // $inventoryStatus->addChild('Quantity', $itemDetail->quantity);
 
-            $variationData = ListingItemDetail::where('listing_item_id','9b07a991-9bec-4d5a-9d4e-7d85600df690')->orderBy('created_at','ASC')->get();
+            $variationData = ListingItemDetail::where('listing_item_id',$listingId)->orderBy('created_at','ASC')->get();
             Log::info('Variation Data : '.json_encode($variationData));
             if(!empty((array) $variationData)) {
                 foreach ($variationData as $variant) {
@@ -575,7 +575,7 @@ class EbayService implements MarketplaceServiceInterface
                             $xmlContent = file_get_contents($extractPath . '/' . $file);
                             $xml = simplexml_load_string($xmlContent);
 
-                            $feedType = $this->getfeedType($listingInfo->feed_type);
+                            $feedType = $listingInfo->feed_type;
                             switch ($feedType) {
                                 case FeedTypes::CREATE:
                                     $successSku = array();
@@ -584,7 +584,8 @@ class EbayService implements MarketplaceServiceInterface
                                             if(isset($item->Ack) && $item->Ack == 'Success') {
                                                 $successSku[] = $item->SKU;
                                                 Log::info('SKU : '.$item->SKU);
-                                                $listingItems = ListingItem::where('sku', $item->SKU)->first();
+                                                //$listingItems = ListingItem::where('sku', $item->SKU)->first();
+                                                $listingItems = ListingItem::select('listing_item.*')->leftJoin('listing_item_link', 'listing_item_link.item_id', '=', 'listing_item.id')->where('listing_item.sku', $item->InventoryStatus->SKU)->where('listing_item_link.listing_id', $listingId)->first();
                                                 $listingItems->update([
                                                     'store_sku' => $item->ItemID,
                                                     'sync_status' => 6
@@ -593,22 +594,21 @@ class EbayService implements MarketplaceServiceInterface
                                         }
 
                                         if(!empty($successSku)) {
-                                            $listing_items = ListingItemLink::where('listing_id', $listingId)->leftJoin('listng_item', 'listng_item.id', '=', 'listing_item_link.item_id')->whereNotIn('listng_item.sku', $successSku)->get();
+                                            $listing_items = ListingItemLink::select('listing_item_link.item_id')->leftJoin('listng_item', 'listng_item.id', '=', 'listing_item_link.item_id')->where('listng_item.listing_id', $listingId)->whereNotIn('listng_item.sku', $successSku)->get();
                                             if (count($listing_items ?? []) > 0) {
                                                 foreach ($listing_items as $item) {
-
-                                                    $listingItem = ListingItem::findOrFail($item->id);
+                                                    $listingItem = ListingItem::findOrFail($item->item_id);
                                                     $listingItem->update([
                                                         'sync_status' => 1
                                                     ]);
                                                 }
                                             }
                                         }else{
-                                            $listing_items = ListingItemLink::where('listing_id', $listingId)->get();
+                                            $listing_items = ListingItemLink::select('item_id')->where('listing_id', $listingId)->get();
                                             if (count($listing_items ?? []) > 0) {
                                                 foreach ($listing_items as $item) {
 
-                                                    $listingItem = ListingItem::findOrFail($item->id);
+                                                    $listingItem = ListingItem::findOrFail($item->item_id);
                                                     $listingItem->update([
                                                         'sync_status' => 1
                                                     ]);
@@ -618,10 +618,47 @@ class EbayService implements MarketplaceServiceInterface
                                     }
                                 case FeedTypes::DELETE:
                                     break;
-                                case FeedTypes::INVENTORY:
-                                    break;
                                 case FeedTypes::PRICE:
+                                case FeedTypes::INVENTORY:
+                                    $successSku = array();
+                                    if(isset($xml->ReviseInventoryStatusResponse)) {
+                                        foreach ($xml->ReviseInventoryStatusResponse as $item) {
+                                            if (isset($item->Ack) && $item->Ack == 'Success') {
+                                                $successSku[] = $item->InventoryStatus->SKU;
+                                                Log::info('SKU : ' . $item->InventoryStatus->SKU);
+                                                $listingItems = ListingItem::select('listing_item.*')->leftJoin('listing_item_link', 'listing_item_link.item_id', '=', 'listing_item.id')->where('listing_item.sku', $item->InventoryStatus->SKU)->where('listing_item_link.listing_id', $listingId)->first();
+                                                $listingItems->update([
+                                                    'store_sku' => $item->ItemID,
+                                                    'sync_status' => 6
+                                                ]);
+                                            }
+                                        }
+
+                                        if(!empty($successSku)) {
+                                            $listing_items = ListingItemLink::select('listing_item_link.item_id')->leftJoin('listng_item', 'listng_item.id', '=', 'listing_item_link.item_id')->where('listng_item.listing_id', $listingId)->whereNotIn('listng_item.sku', $successSku)->get();
+                                            if (count($listing_items ?? []) > 0) {
+                                                foreach ($listing_items as $item) {
+                                                    $listingItem = ListingItem::findOrFail($item->item_id);
+                                                    $listingItem->update([
+                                                        'sync_status' => 1
+                                                    ]);
+                                                }
+                                            }
+                                        }else{
+                                            $listing_items = ListingItemLink::select('item_id')->where('listing_id', $listingId)->get();
+                                            if (count($listing_items ?? []) > 0) {
+                                                foreach ($listing_items as $item) {
+
+                                                    $listingItem = ListingItem::findOrFail($item->item_id);
+                                                    $listingItem->update([
+                                                        'sync_status' => 1
+                                                    ]);
+                                                }
+                                            }
+                                        }
+                                    }
                                     break;
+
                                 default:
                                     break;
                             }
