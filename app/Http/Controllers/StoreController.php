@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\FileSystemSyncJob;
 use App\Jobs\MarketplaceCategorySyncJob;
 use App\Jobs\StoreCategorySyncJob;
 use App\Models\DeviceTypes;
+use App\Models\FileSystem;
 use App\Models\ListingTemplate;
 use App\Models\LogisticCenter;
 use App\Models\MessagingAccount;
@@ -72,13 +74,14 @@ class StoreController extends Controller
         $storeCategories = StoreCategory::where('store_id', $store_id)->get();
         $storeMessageAccount = StoreMessageAccount::where('store_id', $store_id)->get();
         $storeLogisticCenters = StoreLogisticCenter::with('LogisticCenter')->where('store_id', $store_id)->get();
+        $fileSystems = FileSystem::all();
         /*$messagerecord = $storeMessageAccount->toArray();
         $incomingAccount = MessagingAccount::where('id', $messagerecord[0]['incoming_account_id'])->get();
         $outgoingAccount = MessagingAccount::where('id', $messagerecord[0]['outgoing_account_id'])->get();*/
         //echo '<pre>';
         //print_r($storeDevices);die;
 
-        return view('store.update', compact('store','devices','storeDevices','shipping_services','storeShippingService','pageTypes','storePages','storeCategories','storeMessageAccount','logisticCenters','storeLogisticCenters','store_types','action','listing_templates'));
+        return view('store.update', compact('store','devices','storeDevices','shipping_services','storeShippingService','pageTypes','storePages','storeCategories','storeMessageAccount','logisticCenters','storeLogisticCenters','store_types','action','listing_templates','fileSystems'));
     }
 
     /**
@@ -327,13 +330,14 @@ class StoreController extends Controller
         $storeCategories = StoreCategory::where('store_id', $id)->get();
         $storeMessageAccount = StoreMessageAccount::where('store_id', $id)->get();
         $storeLogisticCenters = StoreLogisticCenter::with('LogisticCenter')->where('store_id', $id)->get();
+        $fileSystems = FileSystem::all();
         /*$messagerecord = $storeMessageAccount->toArray();
         $incomingAccount = MessagingAccount::where('id', $messagerecord[0]['incoming_account_id'])->get();
         $outgoingAccount = MessagingAccount::where('id', $messagerecord[0]['outgoing_account_id'])->get();*/
         //echo '<pre>';
         //print_r($outgoingAccount);die;
 
-        return view('store.update', compact('store','devices','storeDevices','shipping_services','storeShippingService','pageTypes','storePages','storeCategories','storeMessageAccount','logisticCenters','storeLogisticCenters','store_types','action','listing_templates'));
+        return view('store.update', compact('store','devices','storeDevices','shipping_services','storeShippingService','pageTypes','storePages','storeCategories','storeMessageAccount','logisticCenters','storeLogisticCenters','store_types','action','listing_templates','fileSystems'));
     }
 
     public function saveShippingService(Request $request){
