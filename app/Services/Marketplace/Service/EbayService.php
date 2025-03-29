@@ -580,8 +580,11 @@ class EbayService implements MarketplaceServiceInterface
                                 case FeedTypes::CREATE:
                                     $successSku = array();
                                     if(isset($xml->AddFixedPriceItemResponse)) {
+                                        $successCnt = 0;
+                                        $failCnt = 0;
                                         foreach ($xml->AddFixedPriceItemResponse as $item) {
                                             if(isset($item->Ack) && $item->Ack == 'Success') {
+                                                $successCnt++;
                                                 $successSku[] = $item->SKU;
                                                 Log::info('SKU : '.$item->SKU);
                                                 //$listingItems = ListingItem::where('sku', $item->SKU)->first();
@@ -592,6 +595,8 @@ class EbayService implements MarketplaceServiceInterface
                                                         'sync_status' => 6
                                                     ]);
                                                 }
+                                            }else{
+                                                $failCnt++;
                                             }
                                         }
 
@@ -617,6 +622,11 @@ class EbayService implements MarketplaceServiceInterface
                                                 }
                                             }
                                         }
+
+                                        $feedInfo->update([
+                                            'success_count' => $successCnt,
+                                            'fail_count' => $failCnt
+                                        ]);
                                     }
                                 case FeedTypes::DELETE:
                                     break;
@@ -624,8 +634,11 @@ class EbayService implements MarketplaceServiceInterface
                                 case FeedTypes::INVENTORY:
                                     $successSku = array();
                                     if(isset($xml->ReviseInventoryStatusResponse)) {
+                                        $successCnt = 0;
+                                        $failCnt = 0;
                                         foreach ($xml->ReviseInventoryStatusResponse as $item) {
                                             if (isset($item->Ack) && $item->Ack == 'Success') {
+                                                $successCnt++;
                                                 $successSku[] = $item->InventoryStatus->SKU;
                                                 Log::info('SKU : ' . $item->InventoryStatus->SKU);
                                                 $listingItems = ListingItem::select('listing_item.*')->leftJoin('listing_item_link', 'listing_item_link.item_id', '=', 'listing_item.id')->where('listing_item.sku', $item->InventoryStatus->SKU)->where('listing_item_link.listing_id', $listingId)->first();
@@ -635,6 +648,8 @@ class EbayService implements MarketplaceServiceInterface
                                                         'sync_status' => 6
                                                     ]);
                                                 }
+                                            }else{
+                                                $failCnt++;
                                             }
                                         }
 
@@ -660,6 +675,11 @@ class EbayService implements MarketplaceServiceInterface
                                                 }
                                             }
                                         }
+
+                                        $feedInfo->update([
+                                            'success_count' => $successCnt,
+                                            'fail_count' => $failCnt
+                                        ]);
                                     }
                                     break;
 
