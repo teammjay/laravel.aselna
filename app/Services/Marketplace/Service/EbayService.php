@@ -542,7 +542,7 @@ class EbayService implements MarketplaceServiceInterface
         ], 200);
     }
 
-    public function getResultFeed(mixed $listingId)
+    public function getResultFeed(mixed $listingId,$feedId = null)
     {
         $listingInfo = Listing::where('id', $listingId)->first();
         $store = $listingInfo->store;
@@ -586,10 +586,12 @@ class EbayService implements MarketplaceServiceInterface
                                                 Log::info('SKU : '.$item->SKU);
                                                 //$listingItems = ListingItem::where('sku', $item->SKU)->first();
                                                 $listingItems = ListingItem::select('listing_item.*')->leftJoin('listing_item_link', 'listing_item_link.item_id', '=', 'listing_item.id')->where('listing_item.sku', $item->InventoryStatus->SKU)->where('listing_item_link.listing_id', $listingId)->first();
-                                                $listingItems->update([
-                                                    'store_sku' => $item->ItemID,
-                                                    'sync_status' => 6
-                                                ]);
+                                                if(isset($listingItems)) {
+                                                    $listingItems->update([
+                                                        'store_sku' => $item->ItemID,
+                                                        'sync_status' => 6
+                                                    ]);
+                                                }
                                             }
                                         }
 
@@ -627,10 +629,12 @@ class EbayService implements MarketplaceServiceInterface
                                                 $successSku[] = $item->InventoryStatus->SKU;
                                                 Log::info('SKU : ' . $item->InventoryStatus->SKU);
                                                 $listingItems = ListingItem::select('listing_item.*')->leftJoin('listing_item_link', 'listing_item_link.item_id', '=', 'listing_item.id')->where('listing_item.sku', $item->InventoryStatus->SKU)->where('listing_item_link.listing_id', $listingId)->first();
-                                                $listingItems->update([
-                                                    'store_sku' => $item->ItemID,
-                                                    'sync_status' => 6
-                                                ]);
+                                                if(isset($listingItems)) {
+                                                    $listingItems->update([
+                                                        'store_sku' => $item->ItemID,
+                                                        'sync_status' => 6
+                                                    ]);
+                                                }
                                             }
                                         }
 
@@ -707,8 +711,8 @@ class EbayService implements MarketplaceServiceInterface
 
     public function getOrders()
     {
-        $this->authService = new EbayAuthService();
-        $response = $this->authService->getOrders();
+        // $this->authService = new EbayAuthService();
+        // $response = $this->authService->getOrders();
 
         return $response;
 

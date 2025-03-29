@@ -13,7 +13,7 @@ use App\Services\Marketplace\Contracts\MarketplaceServiceInterface;
 use App\Utils\FileUtility;
 use App\Utils\XmlUtility;
 use Illuminate\Support\Facades\Log;
-use Termwind\Components\Li;
+use App\Constants\FeedStatus;
 
 class WalmartService implements MarketplaceServiceInterface
 {
@@ -77,7 +77,9 @@ class WalmartService implements MarketplaceServiceInterface
     }
 
     public function submitInventoryFeedAfterCreate($listingId,$listingInfo) {
+        Log::info('Submit Inventory Feed After Create');
         $created_by = auth()->user()->name ?? 'admin';
+        Log::info('Created By: ' . $created_by);
 
         $feedData = array(
             'listing_id' => $listingId,
@@ -86,6 +88,7 @@ class WalmartService implements MarketplaceServiceInterface
             'store_id' => $listingInfo->store_id,
             'created_by' => $created_by
         );
+        Log::info('Feed Data: ' . json_encode($feedData));
 
         $newfeed =  ListingFeed::updateOrCreate([
             'listing_id' => $listingId,
@@ -93,18 +96,20 @@ class WalmartService implements MarketplaceServiceInterface
         ], $feedData);
 
         $this->generateInventoryFeed($listingInfo, $listingId,$newfeed);
+        Log::info('Inventory Feed Generated: ' . json_encode($newfeed));
 
         $this->submitFeed($newfeed->id, $listingId);
+        Log::info('Inventory Feed Submitted: ' . json_encode($newfeed));
     }
 
-    public function getResultFeed(mixed $listingId)
+    public function getResultFeed(mixed $listingId,$feedId = null)
     {
         $listingInfo = Listing::where('id', $listingId)->first();
         $store = $listingInfo->store;
 
         $authService = new WalmartAuthService($store->seller_id, $store->secret_key);
 
-        $feedInfo = ListingFeed::where('listing_id', $listingId)->first();
+        $feedInfo = ListingFeed::where('id', $feedId)->first();
 
         $response = $authService->getFeedStatus($feedInfo->feed_id);
         Log::info('Feed Status: ' . json_encode($response));
@@ -118,24 +123,29 @@ class WalmartService implements MarketplaceServiceInterface
             'number_of_items' => $response['itemsReceived'],
         ]);
 
-        foreach ($response['itemDetails']['itemIngestionStatus'] as $item) {
-            $listingItems = ListingItem::where('sku', $item['sku'])->get();
-            foreach($listingItems as $listingItem) {
-                $listingItem->update([
-                    'store_sku' => $item['itemid']
-                ]);
+        if ($feedInfo->feed_type == FeedTypes::CREATE) {
+            foreach ($response['itemDetails']['itemIngestionStatus'] as $item) {
+                $listingItems = ListingItem::where('sku', $item['sku'])->get();
+                foreach($listingItems as $listingItem) {
+                    $listingItem->update([
+                        'store_sku' => $item['itemid']
+                    ]);
+                }
             }
-        }
+        }   
 
         if($feedInfo->feed_type == FeedTypes::CREATE) {
             $this->submitInventoryFeedAfterCreate($listingId,$listingInfo);
         }
 
-
         // save response into folder
-        FileUtility::saveToFile(public_path('result-feeds/walmart/' . $listingId . '.json'), json_encode($response));
+        FileUtility::saveToFile(public_path('result-feeds/walmart/' . $feedInfo->id . '.json'), json_encode($response));
 
-        return 'result-feeds/walmart/' . $listingId . '.json';
+        $feedInfo-> update([
+            'status' => FeedStatus::PROCESSED
+        ]);
+
+        return 'result-feeds/walmart/' . $feedInfo->id . '.json';
     }
 
     private function generateCreateFeed($listingInfo, $listingId)
