@@ -254,6 +254,7 @@
                         });
                     }
                 },
+                "order": [[ 6, "desc" ]],
                 columns: [
                     {
                         data: '', name: 'image', render: function (data, type, row) {
