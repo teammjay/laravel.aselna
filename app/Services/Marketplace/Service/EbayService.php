@@ -601,7 +601,7 @@ class EbayService implements MarketplaceServiceInterface
                                         }
 
                                         if(!empty($successSku)) {
-                                            $listing_items = ListingItemLink::select('listing_item_link.item_id')->leftJoin('listng_item', 'listng_item.id', '=', 'listing_item_link.item_id')->where('listng_item.listing_id', $listingId)->whereNotIn('listng_item.sku', $successSku)->get();
+                                            $listing_items = ListingItemLink::select('listing_item_link.item_id')->leftJoin('listing_item', 'listing_item.id', '=', 'listing_item_link.item_id')->where('listing_item.listing_id', $listingId)->whereNotIn('listing_item.sku', $successSku)->get();
                                             if (count($listing_items ?? []) > 0) {
                                                 foreach ($listing_items as $item) {
                                                     $listingItem = ListingItem::findOrFail($item->item_id);
@@ -654,7 +654,7 @@ class EbayService implements MarketplaceServiceInterface
                                         }
 
                                         if(!empty($successSku)) {
-                                            $listing_items = ListingItemLink::select('listing_item_link.item_id')->leftJoin('listng_item', 'listng_item.id', '=', 'listing_item_link.item_id')->where('listng_item.listing_id', $listingId)->whereNotIn('listng_item.sku', $successSku)->get();
+                                            $listing_items = ListingItemLink::select('listing_item_link.item_id')->leftJoin('listing_item', 'listing_item.id', '=', 'listing_item_link.item_id')->where('listing_item.listing_id', $listingId)->whereNotIn('listing_item.sku', $successSku)->get();
                                             if (count($listing_items ?? []) > 0) {
                                                 foreach ($listing_items as $item) {
                                                     $listingItem = ListingItem::findOrFail($item->item_id);
