@@ -62,7 +62,7 @@ class MagentoService implements MarketplaceServiceInterface
         ListingFeed::where('listing_id', $listingId)->update(['feed_id' => $response['bulk_uuid']]);
     }
 
-    public function getResultFeed(mixed $listingId)
+    public function getResultFeed(mixed $listingId,$feedId = null)
     {
         $listingFeed = ListingFeed::where('listing_id', $listingId)->first();
         $store = $listingFeed->listing->store;

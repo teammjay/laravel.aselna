@@ -21,12 +21,21 @@ use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Log;
+use App\Constants\FeedStatus;
 
 class HomeController extends Controller
 {
     public function index()
     {
         $stores = Store::with('storeType')->orderBy('name', 'asc')->get();
+        // $listingItems = ListingItem::select('listing_item.*')->leftJoin('listing_item_link', 'listing_item_link.item_id', '=', 'listing_item.id')->where('listing_item.sku', 'C39-TUTBHQ')->where('listing_item_link.listing_id', '12617574-4c54-41d6-bde6-d75e0a0ec41e')->first();
+        // $listingItems->update([
+        //     'store_sku' => '167407521461',
+        //     'sync_status' => 6
+        // ]);
+        // echo '<pre>';
+        // print_r($listingItems);
+        // echo '</pre>';die;
         //$eBayServie = new EbayService();
         //$eBayServie->getOrders();
         //$test = $eBayServie->generateFeed('12617574-4c54-41d6-bde6-d75e0a0ec41e');die;
@@ -153,12 +162,18 @@ class HomeController extends Controller
             $listingId = $request->listing_id;
             $feedId = $request->feed_id;
             $listingInfo = Listing::where('id', $listingId)->first();
+            $feedInfo = ListingFeed::where('id', $feedId)->first();
+
 
             $storeType = $listingInfo->store->storeType->name;
 
             $marketplaceService = MarketplaceServiceFactory::create($storeType);
 
             $marketplaceService->submitFeed($feedId, $listingId);
+
+            $feedInfo->update([
+                'status' => FeedStatus::PROCESSING,
+            ]);
 
             // $marketplaceService->getResultFeed($listingId);
             return response()->json(['success' => true]);
@@ -177,14 +192,36 @@ class HomeController extends Controller
 
             $listingId = $request->listing_id;
             $listingFeed = Listing::where('id', $listingId)->first();
+            $feedID = $request->feed_id;
 
             $storeType = $listingFeed->store->storeType->name;
 
-            $marketplaceService = MarketplaceServiceFactory::create($storeType);
+            $fileId = strtolower($storeType) == 'walmart' ? $feedID : $listingId;
 
-            $filePath = $marketplaceService->getResultFeed($listingId);
+            $directory = public_path('result-feeds/' . strtolower($storeType) . '/');
+            $files = [];
+            Log::info('Directory: ' . $directory);
+            if (is_dir($directory)) {
+                Log::info('Directory exists');
+                foreach (scandir($directory) as $file) {
+                    Log::info('File: ' . $file);
+                    if (strpos($file, $fileId) === 0 && preg_match('/\.(json|xml)$/', $file)) {
+                        $files[] = 'result-feeds/' . strtolower($storeType) . '/' . $file;
+                    }
+                }
+            }
 
-            return response()->json(['success' => true,'file_path' => $filePath]);
+            Log::info('Files: ' . json_encode($files));
+            if (!empty($files)) {
+                return response()->json(['success' => true,'file_path' => $files[0]]);
+            } else {
+                $marketplaceService = MarketplaceServiceFactory::create($storeType);
+
+                $filePath = $marketplaceService->getResultFeed($listingId,$feedID);
+
+                return response()->json(['success' => true,'file_path' => $filePath]);
+            }
+
         } catch (\Exception $e) {
             Log::error('Error: ' . $e->getMessage());
             return response()->json(['success' => false, 'error' => $e->getMessage()]);
