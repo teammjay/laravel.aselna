@@ -222,7 +222,7 @@ class AmazonService implements MarketplaceServiceInterface
         }
     }
 
-    public function getResultFeed(mixed $listingId)
+    public function getResultFeed(mixed $listingId,$feedId = null)
     {
         $this->authService = new AmazonAuthService();
 

@@ -247,8 +247,8 @@
                         data: null, name: 'action', orderable: false, searchable: false, render: function (data) {
                             return '<div>' +
                                 '<button class="btn btn-primary generate-feed-file" data-listing="' + data.listing_id + '">Download Feed File</button>' +
-                                '<button class="btn btn-primary generate-result-feed-file" data-listing="' + data.listing_id + '">Download Result Feed File</button>' +
-                                '<button class="btn btn-primary submit-feed-file" data-listing="' + data.listing_id + '">Submit Feed</button>' +
+                                '<button class="btn btn-primary generate-result-feed-file" data-listing="' + data.listing_id + '" data-feed="' + data.id + '">Download Result Feed File</button>' +
+                                '<button class="btn btn-primary submit-feed-file" data-listing="' + data.listing_id + '" data-feed="' + data.id + '">Submit Feed</button>' +
                                 '</div>';
                         }
                     }
@@ -309,12 +309,14 @@
 
         $(document).on('click', '.generate-result-feed-file', function () {
             var listingId = $(this).data('listing');
+            var feedId = $(this).data('feed');
             $.ajax({
                 url: "<?= route('generate-result-feed-file') ?>",
                 type: 'POST',
                 data: {
                     _token: "<?= csrf_token() ?>",
-                    listing_id: listingId
+                    listing_id: listingId,
+                    feed_id: feedId
                 },
                 success: function (response) {
                     if (!response.success) {

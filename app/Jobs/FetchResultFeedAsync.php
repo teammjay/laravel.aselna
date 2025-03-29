@@ -5,8 +5,11 @@ namespace App\Jobs;
 use App\Models\ListingFeed;
 use App\Models\ScheduledJob;
 use App\Services\Marketplace\MarketplaceServiceFactory;
+use Google\Service\Classroom\Feed;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Support\Facades\Log;
+use App\Constants\FeedStatus;
 
 class FetchResultFeedAsync implements ShouldQueue
 {
@@ -25,11 +28,17 @@ class FetchResultFeedAsync implements ShouldQueue
      */
     public function handle(): void
     {
+        Log::info('ResultFeedSync command started');
         ScheduledJob::where('class_name', __CLASS__)
             ->update(['last_run' => now()]);
 
         $listingFeed = ListingFeed::whereNotNull('feed_id')
-            ->whereNull('number_of_attempts')->orWhere('number_of_attempts', '<', 1)
+            ->whereIn('status', [
+                FeedStatus::CREATED,
+                FeedStatus::PROCESSING,
+                FeedStatus::FAILED,
+            ])
+            ->orderBy('submit_ts', 'desc')
             ->limit(5)
             ->get();
 
@@ -40,11 +49,22 @@ class FetchResultFeedAsync implements ShouldQueue
 
     private function fetchFeed(mixed $feed)
     {
-        $listingId = $feed->listing_id;
+        try {
+            $listingId = $feed->listing_id;
 
-        $storeType = $feed->store->storeType->name;
+            $storeType = $feed->store->storeType->name;
+    
+            $marketplaceService = MarketplaceServiceFactory::create($storeType);
+            $marketplaceService->getResultFeed($listingId);
+            $feed->status = FeedStatus::PROCESSED;
+            $feed->save();
+        } catch (\Exception $e) {
+            Log::error('Error fetching result feed: ' . $e->getMessage());
+            $feed->status = FeedStatus::FAILED;
+            $feed->status_check_count = ($feed->status_check_count ?? 0) + 1;
+            $feed->save();
+        }
 
-        $marketplaceService = MarketplaceServiceFactory::create($storeType);
-        $marketplaceService->getResultFeed($listingId);
+        
     }
 }
