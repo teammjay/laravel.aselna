@@ -2,6 +2,8 @@
 
 namespace App\Services\Marketplace\Service;
 
+use App\Constants\FeedStatus;
+use App\Constants\ListingSyncStatus;
 use App\Models\Listing;
 use App\Models\ListingFeed;
 use App\Models\ListingItemDetail;
@@ -583,7 +585,7 @@ class EbayService implements MarketplaceServiceInterface
                                         $successCnt = 0;
                                         $failCnt = 0;
                                         $warningCnt = 0;
-                                        $warningMsg = '';
+                                        $errorMsg = '';
                                         foreach ($xml->AddFixedPriceItemResponse as $item) {
                                             if(isset($item->Ack) && strtolower($item->Ack) == 'success') {
                                                 $successCnt++;
@@ -594,16 +596,19 @@ class EbayService implements MarketplaceServiceInterface
                                                 if(isset($listingItems)) {
                                                     $listingItems->update([
                                                         'store_sku' => $item->ItemID,
-                                                        'sync_status' => 6
+                                                        'sync_status' => ListingSyncStatus::Synchronized
                                                     ]);
                                                 }
                                             }else if(isset($item->Ack) && strtolower($item->Ack) == 'warning'){
                                                 $warningCnt++;
                                                 if(isset($item->Errors)){
-                                                    $warningMsg = $item->Errors->LongMessage;
+                                                    $errorMsg = $item->Errors->LongMessage;
                                                 }
                                             }else{
                                                 $failCnt++;
+                                                if(isset($item->Errors)){
+                                                    $errorMsg = $item->Errors->LongMessage;
+                                                }
                                             }
                                         }
 
@@ -613,7 +618,7 @@ class EbayService implements MarketplaceServiceInterface
                                                 foreach ($listing_items as $item) {
                                                     $listingItem = ListingItem::findOrFail($item->item_id);
                                                     $listingItem->update([
-                                                        'sync_status' => 1
+                                                        'sync_status' => ListingSyncStatus::Unsynchronize
                                                     ]);
                                                 }
                                             }
@@ -624,7 +629,7 @@ class EbayService implements MarketplaceServiceInterface
 
                                                     $listingItem = ListingItem::findOrFail($item->item_id);
                                                     $listingItem->update([
-                                                        'sync_status' => 1
+                                                        'sync_status' => ListingSyncStatus::Unsynchronize
                                                     ]);
                                                 }
                                             }
@@ -635,9 +640,15 @@ class EbayService implements MarketplaceServiceInterface
                                             'warning_count' => $warningCnt,
                                             'status_check_count' => ($feedInfo->status_check_count != '') ? ($feedInfo->status_check_count + 1) : 0,
                                             'fail_count' => $failCnt,
-                                            'error_text' => $warningMsg,
+                                            'error_text' => $errorMsg,
                                             'last_status_check_ts' => date('Y-m-d H:i:s')
                                         ]);
+
+                                        if($successCnt > 0){
+                                            $feedInfo->update([
+                                                'status' => FeedStatus::PROCESSED
+                                            ]);
+                                        }
                                     }
                                 case FeedTypes::DELETE:
                                     break;
@@ -648,7 +659,7 @@ class EbayService implements MarketplaceServiceInterface
                                         $successCnt = 0;
                                         $failCnt = 0;
                                         $warningCnt = 0;
-                                        $warningMsg = '';
+                                        $errorMsg = '';
                                         foreach ($xml->ReviseInventoryStatusResponse as $item) {
                                             if (isset($item->Ack) && strtolower($item->Ack) == 'success') {
                                                 $successCnt++;
@@ -658,16 +669,19 @@ class EbayService implements MarketplaceServiceInterface
                                                 if(isset($listingItems)) {
                                                     $listingItems->update([
                                                         'store_sku' => $item->ItemID,
-                                                        'sync_status' => 6
+                                                        'sync_status' => ListingSyncStatus::Synchronized
                                                     ]);
                                                 }
                                             }else if(isset($item->Ack) && strtolower($item->Ack) == 'warning'){
                                                 $warningCnt++;
                                                 if(isset($item->Errors)){
-                                                    $warningMsg = $item->Errors->LongMessage;
+                                                    $errorMsg = $item->Errors->LongMessage;
                                                 }
                                             }else{
                                                 $failCnt++;
+                                                if(isset($item->Errors)){
+                                                    $errorMsg = $item->Errors->LongMessage;
+                                                }
                                             }
                                         }
 
@@ -677,7 +691,7 @@ class EbayService implements MarketplaceServiceInterface
                                                 foreach ($listing_items as $item) {
                                                     $listingItem = ListingItem::findOrFail($item->item_id);
                                                     $listingItem->update([
-                                                        'sync_status' => 1
+                                                        'sync_status' => ListingSyncStatus::Unsynchronize
                                                     ]);
                                                 }
                                             }
@@ -688,20 +702,28 @@ class EbayService implements MarketplaceServiceInterface
 
                                                     $listingItem = ListingItem::findOrFail($item->item_id);
                                                     $listingItem->update([
-                                                        'sync_status' => 1
+                                                        'sync_status' => ListingSyncStatus::Unsynchronize
                                                     ]);
                                                 }
                                             }
                                         }
+
+
 
                                         $feedInfo->update([
                                             'success_count' => $successCnt,
                                             'warning_count' => $warningCnt,
                                             'status_check_count' => ($feedInfo->status_check_count != '') ? ($feedInfo->status_check_count + 1) : 0,
                                             'fail_count' => $failCnt,
-                                            'error_text' => $warningMsg,
+                                            'error_text' => $errorMsg,
                                             'last_status_check_ts' => date('Y-m-d H:i:s')
                                         ]);
+
+                                        if($successCnt > 0){
+                                            $feedInfo->update([
+                                                'status' => FeedStatus::PROCESSED
+                                            ]);
+                                        }
                                     }
                                     break;
 
