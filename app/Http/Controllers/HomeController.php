@@ -27,14 +27,6 @@ class HomeController extends Controller
     public function index()
     {
         $stores = Store::with('storeType')->orderBy('name', 'asc')->get();
-        $listingItems = ListingItem::select('listing_item.*')->leftJoin('listing_item_link', 'listing_item_link.item_id', '=', 'listing_item.id')->where('listing_item.sku', 'C39-TUTBHQ')->where('listing_item_link.listing_id', '12617574-4c54-41d6-bde6-d75e0a0ec41e')->first();
-        $listingItems->update([
-            'store_sku' => '167407521461',
-            'sync_status' => 6
-        ]);
-        echo '<pre>';
-        print_r($listingItems);
-        echo '</pre>';die;
         //$eBayServie = new EbayService();
         //$eBayServie->getOrders();
         //$test = $eBayServie->generateFeed('12617574-4c54-41d6-bde6-d75e0a0ec41e');die;
