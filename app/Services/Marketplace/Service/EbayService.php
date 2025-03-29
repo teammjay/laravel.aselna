@@ -582,18 +582,25 @@ class EbayService implements MarketplaceServiceInterface
                                     if(isset($xml->AddFixedPriceItemResponse)) {
                                         $successCnt = 0;
                                         $failCnt = 0;
+                                        $warningCnt = 0;
+                                        $warningMsg = '';
                                         foreach ($xml->AddFixedPriceItemResponse as $item) {
-                                            if(isset($item->Ack) && $item->Ack == 'Success') {
+                                            if(isset($item->Ack) && strtolower($item->Ack) == 'success') {
                                                 $successCnt++;
                                                 $successSku[] = $item->SKU;
                                                 Log::info('SKU : '.$item->SKU);
                                                 //$listingItems = ListingItem::where('sku', $item->SKU)->first();
-                                                $listingItems = ListingItem::select('listing_item.*')->leftJoin('listing_item_link', 'listing_item_link.item_id', '=', 'listing_item.id')->where('listing_item.sku', $item->InventoryStatus->SKU)->where('listing_item_link.listing_id', $listingId)->first();
+                                                $listingItems = ListingItem::select('listing_item.*')->leftJoin('listing_item_link', 'listing_item_link.item_id', '=', 'listing_item.id')->where('listing_item.sku', $item->SKU)->where('listing_item_link.listing_id', $listingId)->first();
                                                 if(isset($listingItems)) {
                                                     $listingItems->update([
                                                         'store_sku' => $item->ItemID,
                                                         'sync_status' => 6
                                                     ]);
+                                                }
+                                            }else if(isset($item->Ack) && strtolower($item->Ack) == 'warning'){
+                                                $warningCnt++;
+                                                if(isset($item->Errors)){
+                                                    $warningMsg = $item->Errors->LongMessage;
                                                 }
                                             }else{
                                                 $failCnt++;
@@ -625,7 +632,11 @@ class EbayService implements MarketplaceServiceInterface
 
                                         $feedInfo->update([
                                             'success_count' => $successCnt,
-                                            'fail_count' => $failCnt
+                                            'warning_count' => $warningCnt,
+                                            'status_check_count' => ($feedInfo->status_check_count != '') ? ($feedInfo->status_check_count + 1) : 0,
+                                            'fail_count' => $failCnt,
+                                            'error_text' => $warningMsg,
+                                            'last_status_check_ts' => date('Y-m-d H:i:s')
                                         ]);
                                     }
                                 case FeedTypes::DELETE:
@@ -636,8 +647,10 @@ class EbayService implements MarketplaceServiceInterface
                                     if(isset($xml->ReviseInventoryStatusResponse)) {
                                         $successCnt = 0;
                                         $failCnt = 0;
+                                        $warningCnt = 0;
+                                        $warningMsg = '';
                                         foreach ($xml->ReviseInventoryStatusResponse as $item) {
-                                            if (isset($item->Ack) && $item->Ack == 'Success') {
+                                            if (isset($item->Ack) && strtolower($item->Ack) == 'success') {
                                                 $successCnt++;
                                                 $successSku[] = $item->InventoryStatus->SKU;
                                                 Log::info('SKU : ' . $item->InventoryStatus->SKU);
@@ -647,6 +660,11 @@ class EbayService implements MarketplaceServiceInterface
                                                         'store_sku' => $item->ItemID,
                                                         'sync_status' => 6
                                                     ]);
+                                                }
+                                            }else if(isset($item->Ack) && strtolower($item->Ack) == 'warning'){
+                                                $warningCnt++;
+                                                if(isset($item->Errors)){
+                                                    $warningMsg = $item->Errors->LongMessage;
                                                 }
                                             }else{
                                                 $failCnt++;
@@ -678,7 +696,11 @@ class EbayService implements MarketplaceServiceInterface
 
                                         $feedInfo->update([
                                             'success_count' => $successCnt,
-                                            'fail_count' => $failCnt
+                                            'warning_count' => $warningCnt,
+                                            'status_check_count' => ($feedInfo->status_check_count != '') ? ($feedInfo->status_check_count + 1) : 0,
+                                            'fail_count' => $failCnt,
+                                            'error_text' => $warningMsg,
+                                            'last_status_check_ts' => date('Y-m-d H:i:s')
                                         ]);
                                     }
                                     break;
@@ -686,8 +708,6 @@ class EbayService implements MarketplaceServiceInterface
                                 default:
                                     break;
                             }
-
-
 
                             return 'result-feeds/ebay/' . $listingId . '/' . $file;
                         }
