@@ -315,6 +315,10 @@ class EbayAuthService
         $accessToken = $this->refreshToken();
 
         try {
+
+            $startDate = now()->subDays(7)->toIso8601String();
+            $endDate = now()->toIso8601String();
+
             $response = $this->client->get('/sell/fulfillment/v1/order', [
                 'verify' => false,
                 'headers' => [
@@ -322,6 +326,7 @@ class EbayAuthService
                     'Content-Type' => 'application/json',
                 ],
                 'query' => [
+                    'creationdate'=> "$startDate..$endDate",
                     'limit' => 50, // Fetch max 50 orders
                 ],
             ]);

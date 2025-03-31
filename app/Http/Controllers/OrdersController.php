@@ -182,4 +182,41 @@ class OrdersController extends Controller
         return view('orders.create_message',compact('orderDetail'));
     }
 
+    public function importCsv(){
+        $stores = Store::with('storeType')->where('store_status', 1)->orderBy('name', 'asc')->get();
+
+        return view('orders.upload',compact('stores'));
+    }
+
+    public function upload(Request $request){
+
+        $request->validate([
+            'csv_file' => 'required|mimes:csv,txt'
+        ]);
+        $store_id = $request->input('store_id');
+        $file = $request->file('csv_file');
+        $data = array_map('str_getcsv', file($file));
+
+        $created_by = auth()->user()->name ?? 'admin';
+        /* create order synchronization*/
+        $synchronizeArr = [
+            'store_id' => $store_id,
+            'number_of_items' => '',
+            'synchronization_type' => '',
+            'filter_start_date' => date('Y-m-d H:i:s'),
+            'filter_end_date' => '',
+            'last_order_update_date' => date('Y-m-d H:i:s'),
+            'created_by' => $created_by
+        ];
+        $order_synchronization = OrderSynchronization::create($synchronizeArr);
+        $order_synchronization_id = $order_synchronization->id;
+
+        foreach ($data as $key => $row) {
+            if ($key == 0) continue; // Skip header
+
+        }
+
+        return back()->with('success', 'CSV Imported Successfully');
+    }
+
 }

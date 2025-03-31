@@ -773,8 +773,8 @@ class EbayService implements MarketplaceServiceInterface
 
     public function getOrders()
     {
-        // $this->authService = new EbayAuthService();
-        // $response = $this->authService->getOrders();
+        $this->authService = new EbayAuthService();
+        $response = $this->authService->getOrders();
 
         return $response;
 
