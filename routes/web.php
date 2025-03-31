@@ -432,6 +432,8 @@ Route::middleware('auth')->group(function () {
         Route::get('/orders/create_message/{id}', 'create_message')->name('order.create_message');
         Route::post('/orders/edit', 'update')->name('order.update');
         Route::post('/orders/getimages', 'getImages')->name('order.getimages');
+        Route::get('/orders/importcsv', 'importCsv')->name('order.importcsv');
+        Route::post('/orders/upload', 'upload')->name('order.upload');
     });
 
     Route::controller(ShipmentsController::class)->group(function () {

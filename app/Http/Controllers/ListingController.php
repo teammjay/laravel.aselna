@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Constants\FeedTypes;
 use App\Constants\ListingStatus;
 use App\Constants\ListingSyncStatus;
 use App\Helpers\QueryFilters;
@@ -100,6 +101,7 @@ class ListingController extends Controller
             'storeProduct.store.storeType:id,name',
             'storeProduct.store:id,name,store_type_id',
             'storeProduct.product:product_id,product_status,product_type,product_code,product_sku,dimensions_width,product_color',
+            'storeProduct.product.color:id,name',
             'device.deviceType:id,name',
             'generationType:id,name',
             'manufacturer:id,name'
@@ -289,7 +291,7 @@ class ListingController extends Controller
                     "title" => strlen($product->title) > 50 ? substr($product->title, 0, 50) . "..." : $product->title,
                     "status" => ListingStatus::getListingStatusName($product->status),
                     "product_size" => (!empty((array)$product->storeProduct) && !empty((array)$product->storeProduct->product)) ? $product->storeProduct->product->dimensions_width : '',
-                    "product_color" => (!empty((array)$product->storeProduct) && !empty((array)$product->storeProduct->product)) ? $product->storeProduct->product->product_color : '',
+                    "product_color" => (!empty((array)$product->storeProduct->product->color) && !empty((array)$product->storeProduct->product->color)) ? $product->storeProduct->product->color->name : '',
                     "sync_status" => ListingSyncStatus::getListingSyncStatusName($product->sync_status),
                     "generation_type_name" => (!empty($product->generationType)) ? $product->generationType->name : '',
                     "price" => $product->price,
@@ -1899,7 +1901,7 @@ class ListingController extends Controller
                                     'store_sku' => '',
                                     'price' => $product_prices[$key],
                                     'quantity' => ($store_detail->default_listing_quantity) ? $store_detail->default_listing_quantity : 10,
-                                    'sync_status' => 0,
+                                    'sync_status' => ListingSyncStatus::Synchronizing,
                                     'store_product_id' => $store_product_ids[$key],
                                     'manufacturer_id' => ($productDetail['manufacturer_id'] != '') ? $productDetail['manufacturer_id'] : $productDetail['product']['manufacturer_id'],
                                     'brand_id' => $brand_id[$key],
@@ -1908,7 +1910,7 @@ class ListingController extends Controller
                                     'overwrite_title' => 1,
                                     'overwrite_price' => $product_price_overwrites[$key],
                                     'mpn' => $this->generateMPN($store_detail->short_code),
-                                    'status' => 1,
+                                    'status' => ListingStatus::Active,
                                     'upc' => $upcCodes->upc_code,
                                     'created_by' => $created_by
                                 );
@@ -2027,7 +2029,7 @@ class ListingController extends Controller
                                         $itemLink = array(
                                             'item_id' => $listing_item_id,
                                             'listing_id' => $listing_id,
-                                            'sync_status' => 0,
+                                            'sync_status' => ListingSyncStatus::Synchronizing,
                                             'old_price' => $product_prices[$key],
                                             'created_by' => $created_by
                                         );
@@ -2177,7 +2179,7 @@ class ListingController extends Controller
                             $itemLink = array(
                                 'item_id' => $listing_item_id,
                                 'listing_id' => $listing_id,
-                                'sync_status' => 6,
+                                'sync_status' => ListingSyncStatus::Synchronized,
                                 'old_price' => $updated_price,
                                 'created_by' => $created_by
                             );
@@ -2224,7 +2226,7 @@ class ListingController extends Controller
                         $listingArr = [
                             'store_id' => $list->store_id,
                             'generation_type_id' => $list->generation_type_id,
-                            'feed_type' => 2,
+                            'feed_type' => FeedTypes::INVENTORY,
                             'status' => 0,
                             'chained' => 1,
                             'include_carriers' => 0,
@@ -2262,7 +2264,7 @@ class ListingController extends Controller
                                     $itemLink = array(
                                         'item_id' => $listing_item_id,
                                         'listing_id' => $listing_id,
-                                        'sync_status' => 6,
+                                        'sync_status' => ListingSyncStatus::Synchronized,
                                         'old_price' => $itemRecord->price,
                                         'created_by' => $created_by
                                     );
@@ -2313,7 +2315,7 @@ class ListingController extends Controller
         if(!empty($selected_listing)){
             foreach($selected_listing as $listing_item){
                 $listingItem = ListingItem::findOrFail($listing_item);
-                $listingItem->update(['status' => 3,'sync_status' => 1]);
+                $listingItem->update(['status' => ListingStatus::Deleted,'sync_status' => ListingSyncStatus::Unsynchronize]);
             }
 
             return response()->json([
