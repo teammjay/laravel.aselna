@@ -190,7 +190,7 @@
                                         <label for="status">Status</label>
                                     </div>
                                     <div class="col-md-7">
-                                        <input type="text" class="form-control" id="status" name="status" value="{{ ($productDetail->status == '') ? 'Active' : 'Inactive' }}" readonly>
+                                        <input type="text" class="form-control" id="status" name="status" value="{{ ($productDetail->status == 1) ? 'Active' : 'Inactive' }}" readonly>
                                     </div>
                                 </div>
                                 <div class="row mt-3 g-3 align-items-center">
