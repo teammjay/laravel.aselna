@@ -46,6 +46,7 @@
             <div class="tab-content" id="custom-tabs-one-tabContent">
                 <div class="tab-pane fade show active" id="tab1" role="tabpanel" aria-labelledby="general-tab">
                     <form method="POST" id="frmtab1">
+                        <input type="hidden" name="listing_item_id" value="{{ $productDetail->id }}">
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="row mt-3 g-3 align-items-center">
@@ -309,8 +310,8 @@
                         </div>
 
                         <div class="card-footer text-center mt-3">
-                            <button type="button" class="btn btn-success" onclick="saveStoreTabData(1)">Save</button>
-                            <button type="button" class="btn btn-primary" onclick="finalizeForm()">Submit</button>
+                            <button type="button" class="btn btn-success" onclick="saveListingData(1)">Save</button>
+                            {{--<button type="button" class="btn btn-primary" onclick="finalizeForm()">Submit</button>--}}
                             {{--<button type="reset" class="btn btn-primary">Reset</button>--}}
                             <a href="{{ route('listing.list') }}" class="btn btn-secondary">Cancel</a>
                         </div>
@@ -479,8 +480,8 @@
                         </div>
 
                         <div class="card-footer text-center mt-3">
-                            <button type="button" class="btn btn-success" onclick="saveStoreTabData(2)">Save</button>
-                            <button type="button" class="btn btn-primary" onclick="finalizeForm()">Submit</button>
+                            <button type="button" class="btn btn-success" onclick="saveListingData(2)">Save</button>
+                            {{--<button type="button" class="btn btn-primary" onclick="finalizeForm()">Submit</button>--}}
                             {{--<button type="reset" class="btn btn-primary">Reset</button>--}}
                             <a href="{{ route('listing.list') }}" class="btn btn-secondary">Cancel</a>
                         </div>
@@ -543,15 +544,16 @@
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script>
 
-        function saveStoreTabData(tabId) {
+        function saveListingData(tabId) {
             const form = document.querySelector("#frmtab"+ tabId);
             let formData = new FormData(form);
-            formData.append('store_id', store_id);
+            /*var store_id = '{{ $productDetail->store_id }}';
+            formData.append('store_id', store_id);*/
             formData.append('tab', tabId);
 
             $.ajax({
                 type: 'POST',
-                url: "{{ route('store.save') }}", // Adjust this URL to your endpoint
+                url: "{{ route('listing.save') }}", // Adjust this URL to your endpoint
                 data: formData,
                 processData: false,
                 contentType: false,

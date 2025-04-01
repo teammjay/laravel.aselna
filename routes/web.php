@@ -114,7 +114,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/listing/suspended', 'suspended_list')->name('listing.suspended_list');
         Route::get('/listing/create', 'create')->name('listing.create');
         Route::post('/listing/filter', 'filter')->name('listing.filter');
-        Route::post('/listing/saveTabData', 'saveTabData')->name('listing.save');
+        Route::post('/listing/savelistingdata', 'saveListingData')->name('listing.save');
         Route::post('/listing/finalize', 'finalize')->name('listing.final');
         Route::get('/listing/edit/{id}', 'edit')->name('listing.edit');
         Route::post('/listing/edit/{id}', 'update')->name('listing.update');
@@ -133,6 +133,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/listing/synclistingprice', 'syncListingPrice')->name('listing.synclistingprice');
         Route::post('/listing/updatestoreproduct', 'updateStoreProduct')->name('listing.updatestoreproduct');
         Route::post('/listing/endlist', 'endList')->name('listing.endlist');
+        Route::post('/listing/relist', 'reList')->name('listing.relist');
     });
 
     Route::controller(ListingGenerationTypeController::class)->group(function () {
