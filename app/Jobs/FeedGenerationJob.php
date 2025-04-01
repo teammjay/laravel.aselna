@@ -18,12 +18,15 @@ class FeedGenerationJob implements ShouldQueue
 
     private mixed $listingId;
 
+    private mixed $feedId;
+
     /**
      * Create a new job instance.
      */
-    public function __construct($ListingId)
+    public function __construct($ListingId,$feedId = null)
     {
         $this->listingId = $ListingId;
+        $this->feedId = $feedId;
     }
 
     /**
@@ -50,13 +53,13 @@ class FeedGenerationJob implements ShouldQueue
             'store_id' => $listingInfo->store_id,
             'created_by' => $created_by
         );
-        ListingFeed::updateOrCreate([
+        $feedInfo = ListingFeed::updateOrCreate([
             'listing_id' => $this->listingId,
             'feed_type' => $listingInfo->feed_type
         ], $feedData);
-        Log::info('Feed Data Updated');
+        Log::info('Feed Data Updated' . json_encode($feedInfo));
 
-        $marketplaceService->generateFeed($this->listingId);
+        $marketplaceService->generateFeed($this->listingId,$feedInfo->id);
         Log::info('Feed Generated');
         $itemCount = ListingItemLink::where('listing_id', $this->listingId)->count();
 

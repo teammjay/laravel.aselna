@@ -15,7 +15,7 @@ use Illuminate\Support\Facades\Log;
 
 class ShopifyService implements MarketplaceServiceInterface
 {
-    public function generateFeed($listingId)
+    public function generateFeed($listingId,$feedId = null)
     {
 
     }

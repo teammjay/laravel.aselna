@@ -21,7 +21,7 @@ class AmazonService implements MarketplaceServiceInterface
 {
     private $authService;
 
-    public function generateFeed($listingId)
+    public function generateFeed($listingId,$feedId = null)
     {
         $listingInfo = Listing::where('id', $listingId)->first();
 
@@ -86,8 +86,8 @@ class AmazonService implements MarketplaceServiceInterface
                         'marketplace_id' => 'ATVPDKIKX0DER'
                     ]],
                     'condition_type' => [['value' => 'new_new']],
-                    'brand' => [['value' => $storeProduct->store->brand_name ?? '']],
-                    'product_description' => [['value' => $productData->product_description]],
+                    'brand' => [['value' => $storeProduct->store->brand_name ?? '','language_tag' => 'en_US',]],
+                    'product_description' => [['value' => $productData->product_description,'language_tag' => 'en_US',]],
                     'part_number' => [['value' => $itemDetail->mpn]]
                 ]
             ];
@@ -95,12 +95,12 @@ class AmazonService implements MarketplaceServiceInterface
             $message['attributes']['product_tax_code'] = [['value' => 2040274]];
             // Required for Amazon but Not have much information
             $message['attributes']['number_of_items'] = [['value' => 1]];
-            $message['attributes']['included_components'] = [['value' => 1]];
+            $message['attributes']['included_components'] = [['value' => 'Testing','language_tag' => 'en_US',]];
             $message['attributes']['item_package_weight'] = [['value' => 1,'unit' => 'pounds']];
-            $message['attributes']['batteries_required'] = [['value' => 'N']];
+            $message['attributes']['batteries_required'] = [['value' => false]];
             $message['attributes']['number_of_boxes'] = [['value' => 1]];
             $message['attributes']['merchant_suggested_asin'] = [['value' => 'XXXASINXXX']];
-            $message['attributes']['warranty_description'] = [['value' => 'description']];
+            $message['attributes']['warranty_description'] = [['value' => 'Warranty Description','language_tag' => 'en_US',]];
             $message['attributes']['country_of_origin'] = [['value' => 'IN']];
             $message['attributes']['supplier_declared_dg_hz_regulation'] = [['value' => 'not_applicable']];
 
@@ -126,7 +126,7 @@ class AmazonService implements MarketplaceServiceInterface
                 ]];
             }
 
-            $message['attributes']['list_price'] = [['value' => number_format($itemDetail->price, 2)]];
+            $message['attributes']['list_price'] = [['value' => number_format($itemDetail->price, 2),'currency' => 'USD']];
             if (isset($storeProduct->store)) {
                 $message['attributes']['manufacturer'] = [['value' => $storeProduct->store->brand_name]];
             }

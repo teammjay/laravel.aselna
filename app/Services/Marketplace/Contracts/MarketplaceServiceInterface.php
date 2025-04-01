@@ -4,7 +4,7 @@ namespace App\Services\Marketplace\Contracts;
 
 interface MarketplaceServiceInterface
 {
-    public function generateFeed($listingId);
+    public function generateFeed($listingId,$feedId = null);
 
     public function submitFeed($feedId, $listingId);
 
