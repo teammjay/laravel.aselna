@@ -205,7 +205,7 @@ class HomeController extends Controller
             Log::info('Directory: ' . $directory);
             if (is_dir($directory)) {
                 Log::info('Directory exists');
-                foreach (scandir($directory) as $file) {
+                foreach (scandir($directory, SCANDIR_SORT_DESCENDING) as $file) {
                     Log::info('File: ' . $file);
                     if (strpos($file, $fileId) === 0 && preg_match('/\.(json|xml)$/', $file)) {
                         $files[] = 'result-feeds/' . strtolower($storeType) . '/' . $file;

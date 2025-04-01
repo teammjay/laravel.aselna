@@ -2276,7 +2276,7 @@ class ListingController extends Controller
                                 $clonedRecord->save();
                                 $listing_item_id = $clonedRecord->id;
 
-                                $itemDetails = ListingItemDetail::where('listing_item_id', $listing_item_id)->get();
+                                $itemDetails = ListingItemDetail::where('listing_item_id', $item->item_id)->get();
 
                                 if (!empty((array)$itemDetails)) {
                                     foreach ($itemDetails as $item_detail) {

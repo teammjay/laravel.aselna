@@ -29,6 +29,7 @@ class FetchResultFeedAsync implements ShouldQueue
     public function handle(): void
     {
         Log::info('ResultFeedSync command started');
+        Log::info("get_current_user() : " . get_current_user());
         ScheduledJob::where('class_name', __CLASS__)
             ->update(['last_run' => now()]);
 

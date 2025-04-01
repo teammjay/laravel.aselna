@@ -178,6 +178,7 @@
         var table;
         $(document).ready(function () {
             $('#listing_store').select2();
+            // refresh after every 5 seconds
             table = $('#listingTable').DataTable({
                 processing: true,
                 order: [[5, 'desc']],
