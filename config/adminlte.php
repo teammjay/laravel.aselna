@@ -328,8 +328,19 @@ return [
         ],
         [
             'text' => 'Orders',
-            'url' => '/orders',
-            'icon' => 'fa fa-fw fa-shopping-cart'
+            'icon' => 'fa fa-fw fa-shopping-cart',
+            'submenu' => [
+                [
+                    'text' => 'Orders',
+                    'url' => '/orders',
+                    'icon' => 'fa fa-fw fa-shopping-cart',
+                ],
+                [
+                    'text' => 'Import Amazon Orders',
+                    'url' => '/orders/importcsv',
+                    'icon' => 'far fa-fw fa-file',
+                ]
+            ]
         ],
         [
             'text' => 'Catalog',
@@ -512,7 +523,7 @@ return [
                     'url' => '/device_sub_types',
                     'icon' => 'far fa-fw fa-file'
                 ],
-                [
+                /*[
                     'text' => 'Category',
                     'url' => '/categories',
                     'icon' => 'far fa-fw fa-file'
@@ -521,7 +532,7 @@ return [
                     'text' => 'Subcategory',
                     'url' => '/categories_sub',
                     'icon' => 'far fa-fw fa-file'
-                ],
+                ],*/
                 [
                     'text' => 'Shipping Carrier',
                     'url' => '/shipping_carrier',

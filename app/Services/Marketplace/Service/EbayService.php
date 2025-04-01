@@ -584,31 +584,41 @@ class EbayService implements MarketplaceServiceInterface
                                     if(isset($xml->AddFixedPriceItemResponse)) {
                                         $successCnt = 0;
                                         $failCnt = 0;
+                                        $warningCnt = 0;
+                                        $errorMsg = '';
                                         foreach ($xml->AddFixedPriceItemResponse as $item) {
-                                            if(isset($item->Ack) && $item->Ack == 'Success') {
+                                            if(isset($item->Ack) && strtolower($item->Ack) == 'success') {
                                                 $successCnt++;
                                                 $successSku[] = $item->SKU;
                                                 Log::info('SKU : '.$item->SKU);
                                                 //$listingItems = ListingItem::where('sku', $item->SKU)->first();
-                                                $listingItems = ListingItem::select('listing_item.*')->leftJoin('listing_item_link', 'listing_item_link.item_id', '=', 'listing_item.id')->where('listing_item.sku', $item->InventoryStatus->SKU)->where('listing_item_link.listing_id', $listingId)->first();
+                                                $listingItems = ListingItem::select('listing_item.*')->leftJoin('listing_item_link', 'listing_item_link.item_id', '=', 'listing_item.id')->where('listing_item.sku', $item->SKU)->where('listing_item_link.listing_id', $listingId)->first();
                                                 if(isset($listingItems)) {
                                                     $listingItems->update([
                                                         'store_sku' => $item->ItemID,
-                                                        'sync_status' => 6
+                                                        'sync_status' => ListingSyncStatus::Synchronized
                                                     ]);
+                                                }
+                                            }else if(isset($item->Ack) && strtolower($item->Ack) == 'warning'){
+                                                $warningCnt++;
+                                                if(isset($item->Errors)){
+                                                    $errorMsg = $item->Errors->LongMessage;
                                                 }
                                             }else{
                                                 $failCnt++;
+                                                if(isset($item->Errors)){
+                                                    $errorMsg = $item->Errors->LongMessage;
+                                                }
                                             }
                                         }
 
                                         if(!empty($successSku)) {
-                                            $listing_items = ListingItemLink::select('listing_item_link.item_id')->leftJoin('listng_item', 'listng_item.id', '=', 'listing_item_link.item_id')->where('listng_item.listing_id', $listingId)->whereNotIn('listng_item.sku', $successSku)->get();
+                                            $listing_items = ListingItemLink::select('listing_item_link.item_id')->leftJoin('listing_item', 'listing_item.id', '=', 'listing_item_link.item_id')->where('listing_item_link.listing_id', $listingId)->whereNotIn('listing_item.sku', $successSku)->get();
                                             if (count($listing_items ?? []) > 0) {
                                                 foreach ($listing_items as $item) {
                                                     $listingItem = ListingItem::findOrFail($item->item_id);
                                                     $listingItem->update([
-                                                        'sync_status' => 1
+                                                        'sync_status' => ListingSyncStatus::Unsynchronize
                                                     ]);
                                                 }
                                             }
@@ -619,7 +629,7 @@ class EbayService implements MarketplaceServiceInterface
 
                                                     $listingItem = ListingItem::findOrFail($item->item_id);
                                                     $listingItem->update([
-                                                        'sync_status' => 1
+                                                        'sync_status' => ListingSyncStatus::Unsynchronize
                                                     ]);
                                                 }
                                             }
@@ -763,8 +773,8 @@ class EbayService implements MarketplaceServiceInterface
 
     public function getOrders()
     {
-        // $this->authService = new EbayAuthService();
-        // $response = $this->authService->getOrders();
+        $this->authService = new EbayAuthService();
+        $response = $this->authService->getOrders();
 
         // return $response;
 
