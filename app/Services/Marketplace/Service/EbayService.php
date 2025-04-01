@@ -577,6 +577,14 @@ class EbayService implements MarketplaceServiceInterface
                 Log::info("get_current_user() : " . get_current_user());
                 Log::info("extract Path : " . $extractPath);
 
+                if (!file_exists($extractPath)) {
+                    mkdir($extractPath, 0775, true);
+                    chown($extractPath, 'aselna');
+                    chgrp($extractPath, 'psacln');
+                    chown($zipPath, 'aselna');
+                    chgrp($zipPath, 'psacln');
+                }
+
 
                 $zip = new \ZipArchive;
                 if ($zip->open($zipPath) === true) {
@@ -587,6 +595,11 @@ class EbayService implements MarketplaceServiceInterface
                     $files = scandir($extractPath, SCANDIR_SORT_DESCENDING);
                     foreach ($files as $key=>$file) {
                         if (pathinfo($file, PATHINFO_EXTENSION) === 'xml' && $key == 0) {
+                            $filePath = 'result-feeds/ebay/' . $listingId . '/' . $file;
+                            $filePath = public_path($filePath);
+                            chown($filePath, 'aselna');
+                            chgrp($filePath, 'psacln');
+
                             $xmlContent = file_get_contents($extractPath . '/' . $file);
                             $xml = simplexml_load_string($xmlContent);
 
@@ -606,7 +619,7 @@ class EbayService implements MarketplaceServiceInterface
                                                 Log::info('SKU : '.$item->SKU);
                                                 //$listingItems = ListingItem::where('sku', $item->SKU)->first();
                                                 $listingItems = ListingItem::select('listing_item.*')->leftJoin('listing_item_link', 'listing_item_link.item_id', '=', 'listing_item.id')->where('listing_item.sku', $item->SKU)->where('listing_item_link.listing_id', $listingId)->first();
-                                                if(isset($listingItems)) {
+                                                if(isset($listingItems) && $listingItems->store_sku != $item->ItemID) {
                                                     $listingItems->update([
                                                         'store_sku' => $item->ItemID,
                                                         'sync_status' => ListingSyncStatus::Synchronized
