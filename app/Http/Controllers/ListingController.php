@@ -348,7 +348,7 @@ class ListingController extends Controller
         $pageAt = 'Edit';
         $stores = Store::all();
         $manufacturers = Manufacturer::all();
-        $productDetail = ListingItem::select('listing_item.*', 'products.product_sku', 'products.product_description', 'products.manufacturer_id', 'products.dimensions_width', 'products.product_color', 'store.name as store_name', 'store.marketplace_name', 'listing_generation_type.name as generation_name', 'store_type.product_qty')
+        $productDetail = ListingItem::select('listing_item.*', 'products.product_sku', 'products.product_description', 'products.manufacturer_id', 'products.dimensions_width', 'products.product_color', 'store.id as store_id','store.name as store_name', 'store.marketplace_name', 'listing_generation_type.name as generation_name', 'store_type.product_qty')
             //->leftJoin('listing_item_link','listing_item.id', '=', 'listing_item_link.item_id')
             ->leftJoin('store_product', 'store_product.id', '=', 'listing_item.store_product_id')
             ->leftJoin('products', 'products.product_id', '=', 'store_product.product_id')
@@ -375,6 +375,31 @@ class ListingController extends Controller
             ->first();*/
 
         return view('listing.update', compact('manufacturers', 'pageAt', 'stores', 'productDetail', 'storeTypeDetail', 'productVariants'));
+    }
+
+    public function saveListingData(Request $request){
+
+        $listing_item_id = $request->input('listing_item_id');
+        $tabId = $request->input('tab');
+
+        if ($tabId == 1) {
+
+            $updateRecords = [
+                'title' => $request->input('title'),
+                'description' => $request->input('description'),
+                'store_url' => $request->input('store_url'),
+                'price' => $request->input('price'),
+                'overwrite_price' => ($request->has('overwrite_price')) ? 1 : 0,
+                'overwrite_msrp' => ($request->has('overwrite_msrp')) ? 1 : 0,
+                'overwrite_title' => ($request->has('overwrite_title')) ? 1 : 0,
+                'overwrite_description' => ($request->has('overwrite_description')) ? 1 : 0,
+            ];
+
+            $listingItem = ListingItem::findOrFail($listing_item_id);
+            $listingItem->update($updateRecords);
+
+            return response()->json(['success' => true, 'message' => 'Data saved successfully!']);
+        }
     }
 
     public function getProducts(Request $request)
@@ -2325,6 +2350,81 @@ class ListingController extends Controller
 
         return response()->json([
             'error' => true
+        ]);
+    }
+
+    public function reList(Request $request){
+
+        $selected_listing = $request->input('selected_list');
+
+        if (!empty($selected_listing)) {
+            try {
+                Log::info('Inside Relist Sync ');
+                $listingDetails = ListingItemLink::with('listing')->whereIn('item_id',$selected_listing)->get();
+
+                if (!empty((array)$listingDetails)) {
+                    Log::info('Listing Info Found');
+                    foreach ($listingDetails as $list) {
+                        $created_by = auth()->user()->name ?? 'admin';
+                        $listingArr = [
+                            'store_id' => $list->listing->store_id,
+                            'generation_type_id' => $list->listing->generation_type_id,
+                            'feed_type' => FeedTypes::CREATE,
+                            'status' => 0,
+                            'chained' => 1,
+                            'include_carriers' => $list->listing->include_carriers,
+                            'brand_combo' => $list->listing->brand_combo,
+                            'carrier_combo' => $list->listing->carrier_combo,
+                            'created_by' => $created_by,
+                            'updated_by' => $created_by
+                        ];
+
+                        $listrecord = Listing::create($listingArr);
+                        $listing_id = $listrecord->id;
+
+                        $itemRecord = ListingItem::find($list->item_id);
+
+                        $clonedRecord = $itemRecord->replicate();
+                        $clonedRecord->save();
+                        $listing_item_id = $clonedRecord->id;
+
+                        $itemDetails = ListingItemDetail::where('listing_item_id', $list->item_id)->get();
+
+                        if (!empty((array)$itemDetails)) {
+                            foreach ($itemDetails as $item_detail) {
+                                $itemDetail = ListingItemDetail::find($item_detail->id);
+                                $itemclonedRecord = $itemDetail->replicate();
+                                $itemclonedRecord->listing_item_id = $listing_item_id;
+                                $itemclonedRecord->save();
+                            }
+
+                            $itemLink = array(
+                                'item_id' => $listing_item_id,
+                                'listing_id' => $listing_id,
+                                'sync_status' => ListingSyncStatus::Synchronized,
+                                'created_by' => $created_by
+                            );
+
+                            ListingItemLink::create($itemLink);
+                            FeedGenerationJob::dispatch($listing_id);
+                        }
+                    }
+
+                    return response()->json([
+                        'success' => true,
+                        'message' => 'Re-list successfully!'
+                    ]);
+                }
+            } catch (Exception $e) {
+                return response()->json([
+                    'error' => $e->getMessage(),
+                ], 500);
+            }
+        }
+
+        return response()->json([
+            'error' => true,
+            'message' => 'Something went wrong! Please try again!'
         ]);
     }
 }

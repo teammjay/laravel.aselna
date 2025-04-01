@@ -82,7 +82,7 @@ class MessagesController extends Controller
      */
     public function create()
     {
-        return view('message.add');
+        return view('messages.update');
     }
 
     /**
@@ -108,7 +108,7 @@ class MessagesController extends Controller
     {
         $message = Message::findOrFail($id);
         $messages = Message::all();
-        return view('message.add', compact('message','messages'));
+        return view('messages.update', compact('message','messages'));
     }
 
     /**

@@ -42,4 +42,9 @@ class ListingItemLink extends Model
     {
         return $this->belongsTo(ListingFeed::class);
     }
+
+    public function listing()
+    {
+        return $this->belongsTo(Listing::class,'listing_id');
+    }
 }

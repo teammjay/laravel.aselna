@@ -276,7 +276,7 @@ class EbayService implements MarketplaceServiceInterface
                     $variation->addChild('StartPrice', $itemDetail->price);
                     $variation->addChild('Quantity', $itemDetail->quantity);
                     $variationSpecifics = $variation->addChild('VariationSpecifics');
-                    if($listingInfo->carrier_combo && isset($variant->carrier)) {
+                    if(($listingInfo->carrier_combo || $listingInfo->include_carriers) && isset($variant->carrier)) {
                         $nameValueList = $variationSpecifics->addChild('NameValueList');
                         $nameValueList->addChild('Name', 'Choose Your Carrier');
                         $nameValueList->addChild('Value', htmlspecialchars($variant->carrier->name));
@@ -311,8 +311,8 @@ class EbayService implements MarketplaceServiceInterface
 
             // Add VariationSpecificsSet
             $variationSpecificsSet = $variations->addChild('VariationSpecificsSet');
-            $nameValueList = $variationSpecificsSet->addChild('NameValueList');
-            if($listingInfo->carrier_combo && isset($variant->carrier)) {
+            if(($listingInfo->carrier_combo || $listingInfo->include_carriers) && isset($variant->carrier)) {
+                $nameValueList = $variationSpecificsSet->addChild('NameValueList');
                 $nameValueList->addChild('Name', 'Choose Your Carrier');
                 sort($compatibleCarriers);
                 $lastvariant = null;
@@ -327,8 +327,17 @@ class EbayService implements MarketplaceServiceInterface
             $nameValueList2->addChild('Name', 'Compatible Model');
             // sort the compatible models
             sort($compatibleModels);
+            $lastmodel = null;
             foreach ($compatibleModels as $model) {
-                $nameValueList2->addChild('Value', $model);
+                if($lastmodel != $model) {
+                    if (strpos($model, 'Apple') !== false) {
+                        $newmodel = str_replace('Apple', '', $model);
+                        $nameValueList2->addChild('Value', trim($newmodel));
+                    } else {
+                        $nameValueList2->addChild('Value', trim($model));
+                    }
+                }
+                $lastmodel = $model;
             }
 
             $item->addChild('ConditionID', '1000');
@@ -571,9 +580,10 @@ class EbayService implements MarketplaceServiceInterface
                     $zip->extractTo($extractPath);
                     $zip->close();
 
-                    $files = scandir($extractPath);
-                    foreach ($files as $file) {
-                        if (pathinfo($file, PATHINFO_EXTENSION) === 'xml') {
+                    //$files = scandir($extractPath);
+                    $files = scandir($extractPath, SCANDIR_SORT_DESCENDING);
+                    foreach ($files as $key=>$file) {
+                        if (pathinfo($file, PATHINFO_EXTENSION) === 'xml' && $key == 0) {
                             $xmlContent = file_get_contents($extractPath . '/' . $file);
                             $xml = simplexml_load_string($xmlContent);
 
