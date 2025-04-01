@@ -40,6 +40,9 @@ class UPCGenerateJob implements ShouldQueue
         $i = $product_number;
         while ($numberCount < $number_of_codes) {
             $upcCodesExceptLastOne = $company_prefix . $i;
+            while (strlen($upcCodesExceptLastOne) < 11) {
+                $upcCodesExceptLastOne = $upcCodesExceptLastOne . rand(0, 9); // Add a random digit at the beginning
+            }
             // create check sum digit by this formula
             // The digits in odd positions are: 8, 0, 1, 1, 0, 9, their sum is 19, multiplied by 3 it is 57;
             //The digits in even positions (except the last one) are: 1, 0, 2, 1, 0, their sum is 4, added to the number above it is 61;

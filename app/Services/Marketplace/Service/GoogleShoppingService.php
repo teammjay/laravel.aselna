@@ -19,7 +19,7 @@ use App\Utils\FileUtility;
 class GoogleShoppingService implements MarketplaceServiceInterface
 {
 
-    public function generateFeed($listingId)
+    public function generateFeed($listingId,$feedId = null)
     {
         $listingInfo = Listing::where('id', $listingId)->first();
         // Generate feed for Amazon

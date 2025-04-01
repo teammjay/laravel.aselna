@@ -683,7 +683,7 @@ class ListingController extends Controller
                             'product_id' => $pid->product_id,
                             'title' => $pid->product_title,
                             'store_type_category_id' => $pid->product_type,
-                            'price' => $pid->product_price,
+                            'price' => $pid->product_marketplace_price,
                             'msrp' => $pid->product_msrp,
                             'description' => $pid->product_description,
                             'store_id' => $store_id,

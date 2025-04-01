@@ -17,7 +17,7 @@ use Illuminate\Support\Facades\Log;
 class MagentoService implements MarketplaceServiceInterface
 {
 
-    public function generateFeed($listingId)
+    public function generateFeed($listingId,$feedId = null)
     {
         $listingInfo = Listing::where('id', $listingId)->first();
         switch ($listingInfo->feed_type) {
