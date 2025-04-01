@@ -30,6 +30,21 @@
         table th, table td, .column-no-whitespace{
             white-space: nowrap;
         }
+
+        button#goDownBtn {
+            height: 48px;
+            width: 48px;
+            float: right;
+            position: fixed;
+            margin-bottom: 12px;
+            border-radius: 50px;
+            box-shadow: 0 2px 9px 0 rgba(0, 0, 0, .16);
+            right: 5px;
+            text-align: center;
+            cursor: pointer;
+            opacity: .84;
+            bottom: 0;
+        }
     </style>
 @stop
 
@@ -614,7 +629,7 @@
             <button type="button" class="btn btn-default ml-2" id="end_listing" disabled>
                 End Listing
             </button>
-            <button type="button" class="btn btn-default ml-2" id="re-list">
+            <button type="button" class="btn btn-default ml-2" id="re_list" disabled="">
                 Relist
             </button>
             <button type="button" class="btn btn-default ml-2" id="open_store_page">
@@ -717,6 +732,8 @@
             </div>
         </div>
     </div>
+
+    <button class="btn btn-secondary" id="goDownBtn"><i class="fa fa-arrow-circle-down"></i> </button>
 @stop
 
 @section('adminlte_js')
@@ -739,6 +756,10 @@
                 $(this).find('.fa').addClass('fa-angle-down');
             }
            $('.card-body').toggle();
+        });
+
+        document.getElementById("goDownBtn").addEventListener("click", function() {
+            window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
         });
 
         $('.btn-reset').on('click', function () {
@@ -780,6 +801,7 @@
             }
             $('#edit_list').removeAttr('disabled');
             $('#end_listing').removeAttr('disabled');
+            $('#re_list').removeAttr('disabled');
 
             if (lastChecked && e.shiftKey) {
                 e.preventDefault();
@@ -1068,6 +1090,35 @@
                     }
                 });
             }
+        });
+
+
+
+        $(document).on('click', '#re_list', function() {
+            let selected_list = [];
+            $('input[name="listing_item[]"]:checked').each(function () {
+                selected_list.push($(this).val())
+            });
+
+            $.ajax({
+                url: "{{ url('listing/relist') }}",
+                type: 'POST',
+                data: {
+                    selected_list:selected_list,
+                    "_token": "{{ csrf_token() }}"
+                },
+                success: function (response) {
+                    // If success, remove the user row from the table
+                    if (response.success) {
+                        alert('Re-list successfully');
+                        location.reload();
+                    }
+                },
+                error: function (xhr) {
+                    // Handle error response
+                    alert('Error: ' + xhr.responseJSON.error);
+                }
+            });
         });
 
 
