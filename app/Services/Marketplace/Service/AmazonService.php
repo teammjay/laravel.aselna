@@ -85,9 +85,9 @@ class AmazonService implements MarketplaceServiceInterface
                         'language_tag' => 'en_US',
                         'marketplace_id' => 'ATVPDKIKX0DER'
                     ]],
-                    'condition_type' => [['value' => 'new_new']],
-                    'brand' => [['value' => $storeProduct->store->brand_name ?? '','language_tag' => 'en_US',]],
-                    'product_description' => [['value' => $productData->product_description,'language_tag' => 'en_US',]],
+                    'condition_type' => [['value' => 'New']],
+                    'brand' => [['value' => $storeProduct->store->brand_name ?? '','language_tag' => 'en_US']],
+                    'product_description' => [['value' => $productData->product_description,'language_tag' => 'en_US']],
                     'part_number' => [['value' => $itemDetail->mpn]]
                 ]
             ];
@@ -95,14 +95,15 @@ class AmazonService implements MarketplaceServiceInterface
             $message['attributes']['product_tax_code'] = [['value' => 2040274]];
             // Required for Amazon but Not have much information
             $message['attributes']['number_of_items'] = [['value' => 1]];
-            $message['attributes']['included_components'] = [['value' => 'Testing','language_tag' => 'en_US',]];
+            $message['attributes']['included_components'] = [['value' => 'Dashboard Mount','language_tag' => 'en_US']];
             $message['attributes']['item_package_weight'] = [['value' => 1,'unit' => 'pounds']];
             $message['attributes']['batteries_required'] = [['value' => false]];
-            $message['attributes']['number_of_boxes'] = [['value' => 1]];
-            $message['attributes']['merchant_suggested_asin'] = [['value' => 'XXXASINXXX']];
-            $message['attributes']['warranty_description'] = [['value' => 'Warranty Description','language_tag' => 'en_US',]];
-            $message['attributes']['country_of_origin'] = [['value' => 'IN']];
+            // $message['attributes']['number_of_boxes'] = [['value' => 1]];
+            $message['attributes']['merchant_suggested_asin'] = [['value' => 'B0C5X3K7Q2']];
+            $message['attributes']['warranty_description'] = [['value' => '2 Year Manufacturer','language_tag' => 'en_US']];
+            $message['attributes']['country_of_origin'] = [['value' => 'China']];
             $message['attributes']['supplier_declared_dg_hz_regulation'] = [['value' => 'not_applicable']];
+            $message['attributes']['material'] = [['value' => 'Plastic']];
 
 
 
@@ -124,11 +125,11 @@ class AmazonService implements MarketplaceServiceInterface
                     'width' => ['value' => $productData->package_dimensions_width, 'unit' => 'inches'],
                     'height' => ['value' => $productData->package_dimensions_height, 'unit' => 'inches']
                 ]];
-            }
+            } 
 
             $message['attributes']['list_price'] = [['value' => number_format($itemDetail->price, 2),'currency' => 'USD']];
             if (isset($storeProduct->store)) {
-                $message['attributes']['manufacturer'] = [['value' => $storeProduct->store->brand_name]];
+                $message['attributes']['manufacturer'] = [['value' => $storeProduct->store->brand_name,'language_tag' => 'en_US']];
             }
 
             if (isset($productData)) {
@@ -136,7 +137,7 @@ class AmazonService implements MarketplaceServiceInterface
                 foreach ($storeProduct->features as $feature) {
                     $safeText = htmlspecialchars($feature->value, ENT_QUOTES | ENT_XML1, 'UTF-8');
                     if (!empty(trim($safeText))) {
-                        $bulletPoints[] = ['value' => $safeText];
+                        $bulletPoints[] = ['value' => $safeText,'language_tag' => 'en_US'];
                     }
                 }
                 $message['attributes']['bullet_point'] = $bulletPoints;
@@ -159,7 +160,7 @@ class AmazonService implements MarketplaceServiceInterface
 
                 // Log::info('Category Tree: ' . json_encode($categoryTree));
                 if ($currentCategory) {
-                    $message['productType'] = 'WIRELESS_ACCESSORY';
+                    $message['productType'] = 'PORTABLE_ELECTRONIC_DEVICE_MOUNT';
                     $message['attributes']['item_type_keyword'] = [['value' => $currentCategory->name]];
                 }
 
@@ -172,7 +173,7 @@ class AmazonService implements MarketplaceServiceInterface
                 }
                 $CompatiblePhoneModels = rtrim($CompatiblePhoneModels, ', ');
 
-                // $message['attributes']['compatible_phone_models'] = [['value' => $CompatiblePhoneModels]];
+                $message['attributes']['compatible_phone_models'] = [['value' => $CompatiblePhoneModels]];
 
                 //combine 5 keywords and add into one element. do this for all the keywords
                 $productKeywords = ProductTypeKeyword::where('product_type_id', $productData->product_type)

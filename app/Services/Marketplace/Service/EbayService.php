@@ -311,8 +311,8 @@ class EbayService implements MarketplaceServiceInterface
 
             // Add VariationSpecificsSet
             $variationSpecificsSet = $variations->addChild('VariationSpecificsSet');
-            $nameValueList = $variationSpecificsSet->addChild('NameValueList');
             if($listingInfo->carrier_combo && isset($variant->carrier)) {
+                $nameValueList = $variationSpecificsSet->addChild('NameValueList');
                 $nameValueList->addChild('Name', 'Choose Your Carrier');
                 sort($compatibleCarriers);
                 $lastvariant = null;
@@ -327,8 +327,17 @@ class EbayService implements MarketplaceServiceInterface
             $nameValueList2->addChild('Name', 'Compatible Model');
             // sort the compatible models
             sort($compatibleModels);
+            $lastmodel = null;
             foreach ($compatibleModels as $model) {
-                $nameValueList2->addChild('Value', $model);
+                if($lastmodel != $model) {
+                    if (strpos($model, 'Apple') !== false) {
+                        $newmodel = str_replace('Apple', '', $model);
+                        $nameValueList2->addChild('Value', trim($newmodel));
+                    } else {
+                        $nameValueList2->addChild('Value', trim($model));
+                    }
+                }
+                $lastmodel = $model;
             }
 
             $item->addChild('ConditionID', '1000');
@@ -403,7 +412,7 @@ class EbayService implements MarketplaceServiceInterface
             // $inventoryStatus->addChild('StartPrice', $itemDetail->price)->addAttribute('currencyID', 'USD');;
             // $inventoryStatus->addChild('Quantity', $itemDetail->quantity);
 
-            $variationData = ListingItemDetail::where('listing_item_id',$listingId)->orderBy('created_at','ASC')->get();
+            $variationData = ListingItemDetail::where('listing_item_id',$itemDetail->id)->orderBy('created_at','ASC')->get();
             Log::info('Variation Data : '.json_encode($variationData));
             if(!empty((array) $variationData)) {
                 foreach ($variationData as $variant) {
@@ -565,15 +574,19 @@ class EbayService implements MarketplaceServiceInterface
             if($response){
                 $zipPath = public_path($response);
                 $extractPath = public_path('result-feeds/ebay/'.$listingId);
+                Log::info("get_current_user() : " . get_current_user());
+                Log::info("extract Path : " . $extractPath);
+
 
                 $zip = new \ZipArchive;
                 if ($zip->open($zipPath) === true) {
                     $zip->extractTo($extractPath);
                     $zip->close();
 
-                    $files = scandir($extractPath);
-                    foreach ($files as $file) {
-                        if (pathinfo($file, PATHINFO_EXTENSION) === 'xml') {
+                    $files = scandir($extractPath, SCANDIR_SORT_DESCENDING);
+                    foreach ($files as $key=>$file) {
+                        if (pathinfo($file, PATHINFO_EXTENSION) === 'xml' && $key == 0) {
+                            Log::info('File Name : '.$file);
                             $xmlContent = file_get_contents($extractPath . '/' . $file);
                             $xml = simplexml_load_string($xmlContent);
 
@@ -773,8 +786,8 @@ class EbayService implements MarketplaceServiceInterface
 
     public function getOrders()
     {
-        $this->authService = new EbayAuthService();
-        $response = $this->authService->getOrders();
+        // $this->authService = new EbayAuthService();
+        // $response = $this->authService->getOrders();
 
         // return $response;
 
