@@ -120,10 +120,12 @@ class HomeController extends Controller
         ]);
 
         $listingId = $request->listing_id;
+        $feedId = $request->feed_id;
         $listingFeed = Listing::where('id', $listingId)->first();
+        $feedInfo = ListingFeed::where('id', $feedId)->first();
         $storeType = $listingFeed->store->storeType->name;
 
-        FeedGenerationJob::dispatch($listingId);
+        FeedGenerationJob::dispatch($listingId,$feedId);
 
         Log::info('Store Type: ' . $storeType);
 
@@ -212,7 +214,7 @@ class HomeController extends Controller
             }
 
             Log::info('Files: ' . json_encode($files));
-            if (!empty($files)) {
+            if (!empty($files) && false) {
                 return response()->json(['success' => true,'file_path' => $files[0]]);
             } else {
                 $marketplaceService = MarketplaceServiceFactory::create($storeType);

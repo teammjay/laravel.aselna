@@ -31,7 +31,7 @@ class EbayService implements MarketplaceServiceInterface
 
     private $version = '1250';
 
-    public function generateFeed($listingId)
+    public function generateFeed($listingId,$feedId = null)
     {
         $listingInfo = Listing::where('id', $listingId)->first();
         /*echo '<pre>';
@@ -786,7 +786,7 @@ class EbayService implements MarketplaceServiceInterface
         $this->authService = new EbayAuthService();
         $response = $this->authService->getOrders();
 
-        return $response;
+        // return $response;
 
     }
 

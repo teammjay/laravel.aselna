@@ -18,10 +18,10 @@ use App\Constants\FeedStatus;
 class WalmartService implements MarketplaceServiceInterface
 {
 
-    public function generateFeed($listingId)
+    public function generateFeed($listingId,$feedId = null)
     {
         $listingInfo = Listing::where('id', $listingId)->first();
-        $feedInfo = ListingFeed::where('feed_id', $listingInfo->feed_id)->first();
+        $feedInfo = ListingFeed::where('id', $feedId)->first();
 
         switch ($feedInfo->feed_type) {
             case FeedTypes::CREATE:
@@ -62,7 +62,7 @@ class WalmartService implements MarketplaceServiceInterface
 
         $resultFeedId = $response['feedId'];
 
-        $feedInfo = ListingFeed::where('listing_id', $listingId)->first();
+        $feedInfo = ListingFeed::where('id', $feedId)->first();
 
         if ($feedInfo) {
             $feedInfo->feed_id = $resultFeedId;
@@ -127,14 +127,20 @@ class WalmartService implements MarketplaceServiceInterface
             foreach ($response['itemDetails']['itemIngestionStatus'] as $item) {
                 $listingItems = ListingItem::where('sku', $item['sku'])->get();
                 foreach($listingItems as $listingItem) {
-                    $listingItem->update([
-                        'store_sku' => $item['itemid']
-                    ]);
+                    if($item['ingestionStatus'] && isset($item['itemid'])) {
+                        $listingItem->update([
+                            'store_sku' => $item['itemid']
+                        ]);
+                    } else {
+
+                    }
+                    
                 }
             }
         }   
 
-        if($feedInfo->feed_type == FeedTypes::CREATE) {
+        if($response['feedStatus'] == 'PROCESSED' && intval($response['itemsSucceeded']) > 0 
+                && $feedInfo->feed_type == FeedTypes::CREATE) {
             $this->submitInventoryFeedAfterCreate($listingId,$listingInfo);
         }
 
@@ -177,7 +183,7 @@ class WalmartService implements MarketplaceServiceInterface
                 $price = $item->storeProduct->price;
             }
             if (!isset($price)) {
-                $price = $productObj->product_price;
+                $price = $productObj->product_marketplace_price;
             }
 
 

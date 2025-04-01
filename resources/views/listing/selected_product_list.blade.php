@@ -30,7 +30,7 @@
             <td>
                 <div class="d-flex align-items-center gap-5">
                     <input type="checkbox" class="price-overwrite po-{{ $product->product_id }}" name="price_overwrite[{{ $product->product_id }}]">
-                    <input class="form-control price-{{ $product->product_id }}" type="text" name="prodcut_price[{{ $product->product_id }}]" value="{{ ($product->price != '') ? $product->price : $product->Product->product_price }}" readonly="" style="width:150px;">
+                    <input class="form-control price-{{ $product->product_id }}" type="text" name="prodcut_price[{{ $product->product_id }}]" value="{{ ($product->price != '') ? $product->price : $product->Product->product_marketplace_price }}" readonly="" style="width:150px;">
                 </div>
             </td>
             <td><input type="checkbox" name="product_status[{{ $product->product_id }}]" checked ></td>
