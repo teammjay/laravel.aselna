@@ -68,7 +68,7 @@ class EbayService implements MarketplaceServiceInterface
     public function generateCreateFeed($listingInfo, $listingId)
     {
         // Generate feed for Ebay
-        $listingItems = ListingItemLink::with('listingItem','listingItem.brand','listingItem.storeProduct','listingItem.storeProduct.product','listingItem.storeProduct.store','listingItem.storeProduct.StoreTypeCategory','listingItem.storeProduct.productImages')->where('listing_id', $listingId)->get();
+        $listingItems = ListingItemLink::with('listingItem','listingItem.brand','listingItem.storeProduct','listingItem.storeProduct.product','listingItem.storeProduct.product.color','listingItem.storeProduct.store','listingItem.storeProduct.StoreTypeCategory','listingItem.storeProduct.productImages')->where('listing_id', $listingId)->get();
         $fileSystem = $listingInfo->store->fileSystem;
         $version = $this->version;
 
@@ -223,6 +223,10 @@ class EbayService implements MarketplaceServiceInterface
                     ['MPN', $itemDetail->mpn],
                     ['Model', $itemDetail->mpn],
                 ];
+
+                if(isset($listingItem->listingItem->storeProduct->product->color) && $listingItem->listingItem->storeProduct->product->color->name != ''){
+                    $specifics['Color'] = $listingItem->listingItem->storeProduct->product->color->name;
+                }
 
                 foreach ($specifics as $specific) {
                     $nameValueList = $itemSpecifics->addChild('NameValueList');
