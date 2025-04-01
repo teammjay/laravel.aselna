@@ -412,7 +412,7 @@ class EbayService implements MarketplaceServiceInterface
             // $inventoryStatus->addChild('StartPrice', $itemDetail->price)->addAttribute('currencyID', 'USD');;
             // $inventoryStatus->addChild('Quantity', $itemDetail->quantity);
 
-            $variationData = ListingItemDetail::where('listing_item_id',$listingId)->orderBy('created_at','ASC')->get();
+            $variationData = ListingItemDetail::where('listing_item_id',$itemDetail->id)->orderBy('created_at','ASC')->get();
             Log::info('Variation Data : '.json_encode($variationData));
             if(!empty((array) $variationData)) {
                 foreach ($variationData as $variant) {
@@ -574,6 +574,9 @@ class EbayService implements MarketplaceServiceInterface
             if($response){
                 $zipPath = public_path($response);
                 $extractPath = public_path('result-feeds/ebay/'.$listingId);
+                Log::info("get_current_user() : " . get_current_user());
+                Log::info("extract Path : " . $extractPath);
+
 
                 $zip = new \ZipArchive;
                 if ($zip->open($zipPath) === true) {
@@ -783,8 +786,8 @@ class EbayService implements MarketplaceServiceInterface
 
     public function getOrders()
     {
-        $this->authService = new EbayAuthService();
-        $response = $this->authService->getOrders();
+        // $this->authService = new EbayAuthService();
+        // $response = $this->authService->getOrders();
 
         // return $response;
 

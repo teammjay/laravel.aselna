@@ -12,6 +12,7 @@ class FileUtility
     {
         File::ensureDirectoryExists(dirname($filePath));
         File::put($filePath, $fileContent);
+        // chmod($filePath, 0777);
     }
 
     public static function saveImage($imagePath, $localPath, $fileName)

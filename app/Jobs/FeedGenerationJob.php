@@ -57,6 +57,7 @@ class FeedGenerationJob implements ShouldQueue
             'listing_id' => $this->listingId,
             'feed_type' => $listingInfo->feed_type
         ], $feedData);
+        Log::info("get_current_user() : " . get_current_user());
         Log::info('Feed Data Updated' . json_encode($feedInfo));
 
         $marketplaceService->generateFeed($this->listingId,$feedInfo->id);
