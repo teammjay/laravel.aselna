@@ -137,6 +137,7 @@ class WalmartService implements MarketplaceServiceInterface
                     
                 }
             }
+
         }   
 
         if($response['feedStatus'] == 'PROCESSED' && intval($response['itemsSucceeded']) > 0 
@@ -150,6 +151,32 @@ class WalmartService implements MarketplaceServiceInterface
         $feedInfo-> update([
             'status' => FeedStatus::PROCESSED
         ]);
+
+        /* counting based on store sku*/
+        $listing_items = ListingItemLink::select('item_id')->where('listing_id', $listingId)->get();
+        if (count($listing_items ?? []) > 0) {
+            $successCnt = $failCnt = 0;
+            foreach ($listing_items as $item) {
+
+                $listingItem = ListingItem::findOrFail($item->item_id);
+                if($listingItem->store_sku != ''){
+                    $listingItem->update([
+                        'sync_status' => ListingSyncStatus::Synchronized
+                    ]);
+                    $successCnt++;
+                }else{
+                    $listingItem->update([
+                        'sync_status' => ListingSyncStatus::Unsynchronize
+                    ]);
+                    $failCnt++;
+                }
+            }
+            $feedInfo->update([
+                'success_count' => $successCnt,
+                'fail_count' => $failCnt
+            ]);
+        }
+        /* counting based on store sku*/
 
         return 'result-feeds/walmart/' . $feedInfo->id . '.json';
     }

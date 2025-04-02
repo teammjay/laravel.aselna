@@ -224,14 +224,19 @@ class EbayService implements MarketplaceServiceInterface
                     ['Model', $itemDetail->mpn],
                 ];
 
-                if(isset($listingItem->listingItem->storeProduct->product->color) && $listingItem->listingItem->storeProduct->product->color->name != ''){
-                    $specifics['Color'] = $listingItem->listingItem->storeProduct->product->color->name;
-                }
+
 
                 foreach ($specifics as $specific) {
                     $nameValueList = $itemSpecifics->addChild('NameValueList');
                     $nameValueList->addChild('Name', $specific[0]);
                     $nameValueList->addChild('Value', htmlspecialchars($specific[1]));
+                }
+
+                if(isset($listingItem->listingItem->storeProduct->product->color) && $listingItem->listingItem->storeProduct->product->color->name != ''){
+                    //$specifics['Color'] = $listingItem->listingItem->storeProduct->product->color->name;
+                    $nameValueList = $itemSpecifics->addChild('NameValueList');
+                    $nameValueList->addChild('Name', 'Color');
+                    $nameValueList->addChild('Value', $listingItem->listingItem->storeProduct->product->color->name);
                 }
 
                 $productSpecification = ProductSpecification::where('product_id',$product->product_id)->get();
@@ -742,8 +747,6 @@ class EbayService implements MarketplaceServiceInterface
                                             }
                                         }
 
-
-
                                         $feedInfo->update([
                                             'success_count' => $successCnt,
                                             'warning_count' => $warningCnt,
@@ -764,6 +767,32 @@ class EbayService implements MarketplaceServiceInterface
                                 default:
                                     break;
                             }
+
+                            /* counting based on store sku*/
+                            $listing_items = ListingItemLink::select('item_id')->where('listing_id', $listingId)->get();
+                            if (count($listing_items ?? []) > 0) {
+                                $successCnt = $failCnt = 0;
+                                foreach ($listing_items as $item) {
+
+                                    $listingItem = ListingItem::findOrFail($item->item_id);
+                                    if($listingItem->store_sku != ''){
+                                        $listingItem->update([
+                                            'sync_status' => ListingSyncStatus::Synchronized
+                                        ]);
+                                        $successCnt++;
+                                    }else{
+                                        $listingItem->update([
+                                            'sync_status' => ListingSyncStatus::Unsynchronize
+                                        ]);
+                                        $failCnt++;
+                                    }
+                                }
+                                $feedInfo->update([
+                                    'success_count' => $successCnt,
+                                    'fail_count' => $failCnt
+                                ]);
+                            }
+                            /* counting based on store sku*/
 
                             return 'result-feeds/ebay/' . $listingId . '/' . $file;
                         }
