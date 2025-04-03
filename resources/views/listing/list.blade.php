@@ -1129,7 +1129,7 @@
         $("#productsTable").dataTable().fnDestroy();
 
         var table = $('#productsTable').DataTable({
-            "iDisplayLength": 20,
+            "iDisplayLength": 10,
             "info": true,
             "responsive": true,
             "lengthChange": true,
@@ -1137,7 +1137,7 @@
             "processing": true,
             "serverSide": true,
             "searching": false,
-            "aLengthMenu": [20, 25, 50, 100],
+            "aLengthMenu": [10, 20, 25, 50, 100],
             'ajax': {
                 url: "{{ route('listing.filter') }}",
                 type: "POST",

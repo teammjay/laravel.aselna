@@ -134,6 +134,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/listing/updatestoreproduct', 'updateStoreProduct')->name('listing.updatestoreproduct');
         Route::post('/listing/endlist', 'endList')->name('listing.endlist');
         Route::post('/listing/relist', 'reList')->name('listing.relist');
+        Route::post('/listing/checkupcexist', 'checkUpcExist')->name('listing.checkupcexist');
     });
 
     Route::controller(ListingGenerationTypeController::class)->group(function () {
