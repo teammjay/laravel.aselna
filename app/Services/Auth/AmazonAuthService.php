@@ -4,13 +4,17 @@ namespace App\Services\Auth;
 
 use App\Constants\FeedTypes;
 use App\Models\Listing;
+use App\Utils\FileUtility;
 use GuzzleHttp\Client;
 use Illuminate\Support\Facades\Log;
-use App\Utils\FileUtility;
 
 class AmazonAuthService
 {
     private $client;
+    private $accessToken;
+    private $expireTime;
+
+    private $marketplaceIDs;
 
     public function __construct()
     {
@@ -21,6 +25,10 @@ class AmazonAuthService
 
     public function getAccessToken()
     {
+        if(isset($this->accessToken) && $this->expireTime > time()) {
+            return $this->accessToken;
+        }
+
         $client = new Client([
             'base_uri' => 'https://api.amazon.com',
         ]);
@@ -34,7 +42,10 @@ class AmazonAuthService
             ]
         ]);
 
-        return json_decode($response->getBody()->getContents(), true)['access_token'];
+        $responseBody = json_decode($response->getBody(), true);
+        $this->expireTime = time() + $responseBody['expires_in'];
+
+        return $this->accessToken = $responseBody['access_token'];
     }
 
     public function uploadProductFeed($feedContent)
@@ -108,16 +119,14 @@ class AmazonAuthService
         ]);
 
         $feedResult = json_decode($response->getBody(), true);
-        Log::info('Feed Result: '. json_encode($feedResult));
+        Log::info('Feed Result: ' . json_encode($feedResult));
         $feedDocumentId = $feedResult['resultFeedDocumentId'];
 
-        $response = $this->client->get('/feeds/2021-06-30/documents/'. $feedDocumentId, [
+        $response = $this->client->get('/feeds/2021-06-30/documents/' . $feedDocumentId, [
             'headers' => [
                 'x-amz-access-token' => "{$accessToken}",
             ]
         ]);
-
-        Log::info('Feed Document Response: '. $response->getBody());
 
         $documentResult = json_decode($response->getBody(), true);
         $doocumentUrl = $documentResult['url'];
@@ -146,11 +155,13 @@ class AmazonAuthService
             FileUtility::saveToFile(public_path('result-feeds/amazon/' . $listingId . '.xml'), $response->getBody());
             return 'result-feeds/amazon/'. $listingId. '.xml';
         }
-        return null;
     }
 
     private function getMarketplaceIDs()
     {
+        if(isset($this->marketplaceIDs)) {
+            return $this->marketplaceIDs;
+        }
         $accessToken = $this->getAccessToken();
 
         $response = $this->client->get('/sellers/v1/marketplaceParticipations', [
@@ -169,7 +180,7 @@ class AmazonAuthService
                 $marketplaceIDs[] = $marketplace['marketplace']['id'];
             }
         }
-        return $marketplaceIDs;
+        return $this->marketplaceIDs = $marketplaceIDs;
     }
 
     private function getFeedType($listingId)
@@ -253,4 +264,32 @@ class AmazonAuthService
             ], 500);
         }
     }
+
+    // getProducttypes
+    public function getProductTypes($productType)
+    {
+        $marketPlaceID = $this->getMarketplaceIDs();
+        $accessToken = $this->getAccessToken();
+        Log::info('Access Token Created ' . $accessToken);
+
+        ///definitions/2020-09-01/productTypes?marketplaceIds=ATVPDKIKX0DER&keywords=Wireless&locale=en_US&searchLocale=en_US
+        $response = $this->client->get('/definitions/2020-09-01/productTypes', [
+            'headers' => [
+                'x-amz-access-token' => "{$accessToken}",
+                'Content-Type' => 'application/json',
+
+            ],
+            'query' => [
+                'marketplaceIds' => implode(',', $marketPlaceID),
+                'keywords' => $productType,
+                'locale' => 'en_US',
+                'searchLocale' => 'en_US',
+            ]
+        ]);
+
+        Log::info('Product Type Response: ' . $response->getBody());
+
+        return json_decode($response->getBody(), true);
+    }
+
 }
