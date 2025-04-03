@@ -54,7 +54,7 @@ class DeviceController extends Controller
 
     public function getDeviceInterfaces($id)
     {
-        $interfaces = DeviceInterface::with('interfaces:id,name')->where('device_id',$id)->get();
+        $interfaces = DeviceInterface::with('interfaces:id,name,product_type_id','interfaces.ProductType')->where('device_id',$id)->get();
 
         return response()->json($interfaces);
     }

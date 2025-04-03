@@ -342,12 +342,14 @@
                     });
                 }
 
-                if(target === '#interfaces' && !$('#interfaces-table').data('loaded')) {
+                if(target === '#interfaces') {
                     $.get('devices/'+deviceId+'/interfaces', function(data) {
+
                         $('#interfaces-table tbody').html(
-                            data.map(intf => `
+                            data.map(intf => console.log(intf)+ `
                                 <tr>
                                     <td>${intf.interfaces?.name}</td>
+                                    <td>${intf.interfaces.product_type?.name}</td>
                                 </tr>
                             `).join('')
                         );

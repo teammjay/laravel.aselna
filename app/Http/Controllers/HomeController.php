@@ -28,17 +28,9 @@ class HomeController extends Controller
     public function index()
     {
         $stores = Store::with('storeType')->orderBy('name', 'asc')->get();
-        // $listingItems = ListingItem::select('listing_item.*')->leftJoin('listing_item_link', 'listing_item_link.item_id', '=', 'listing_item.id')->where('listing_item.sku', 'C39-TUTBHQ')->where('listing_item_link.listing_id', '12617574-4c54-41d6-bde6-d75e0a0ec41e')->first();
-        // $listingItems->update([
-        //     'store_sku' => '167407521461',
-        //     'sync_status' => 6
-        // ]);
-        // echo '<pre>';
-        // print_r($listingItems);
-        // echo '</pre>';die;
         //$eBayServie = new EbayService();
         //$eBayServie->getOrders();
-        //$test = $eBayServie->generateFeed('12617574-4c54-41d6-bde6-d75e0a0ec41e');die;
+        //$test = $eBayServie->generateFeed('4da44e6a-c670-4995-be7f-b1a0d0489683');die;
         //$eBayServie->submitFeed('221284a9-d400-4712-9eee-a9850f52dd88','c9a99498-1aac-4a4a-a8f6-a27df41b8763');
         //$eBayServie->getInputFeed('task-1-1274330','c9a99498-1aac-4a4a-a8f6-a27df41b8763');
         //echo 'sd';die;

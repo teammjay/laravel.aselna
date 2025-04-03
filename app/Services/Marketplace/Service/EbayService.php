@@ -68,7 +68,7 @@ class EbayService implements MarketplaceServiceInterface
     public function generateCreateFeed($listingInfo, $listingId)
     {
         // Generate feed for Ebay
-        $listingItems = ListingItemLink::with('listingItem','listingItem.brand','listingItem.storeProduct','listingItem.storeProduct.product','listingItem.storeProduct.product.color','listingItem.storeProduct.store','listingItem.storeProduct.StoreTypeCategory','listingItem.storeProduct.productImages')->where('listing_id', $listingId)->get();
+        $listingItems = ListingItemLink::with('listingItem','listingItem.brand','listingItem.devices','listingItem.devices.device','listingItem.storeProduct','listingItem.storeProduct.product','listingItem.storeProduct.product.color','listingItem.storeProduct.store','listingItem.storeProduct.StoreTypeCategory','listingItem.storeProduct.productImages')->where('listing_id', $listingId)->get();
         $fileSystem = $listingInfo->store->fileSystem;
         $version = $this->version;
 
@@ -208,14 +208,27 @@ class EbayService implements MarketplaceServiceInterface
 
             $item->addChild('DispatchTimeMax', '1');
 
+
+
             // Add ItemSpecifics
             if(isset($listingItem->listingItem->storeProduct->StoreTypeCategory) && !empty($listingItem->listingItem->storeProduct->StoreTypeCategory)) {
                 $itemSpecifics = $item->addChild('ItemSpecifics');
-                if(strtolower($listingItem->listingItem->brand->name) == 'apple'){
-                    $fitModel = (isset($listingItem->listingItem->brand)) ? $listingItem->listingItem->device->name : '';
+                if(isset($listingItem->listingItem->devices) && count($listingItem->listingItem->devices ?? []) > 0){
+                    foreach($listingItem->listingItem->devices as $device){
+                        if (strtolower($listingItem->listingItem->brand->name) == 'apple') {
+                            $fitModel[] = (isset($listingItem->listingItem->brand)) ? $device->device->name : '';
+                        } else {
+                            $fitModel[] = (isset($listingItem->listingItem->brand)) ? $listingItem->listingItem->brand->name . ' ' . $device->device->name : '';
+                        }
+                    }
                 }else {
-                    $fitModel = (isset($listingItem->listingItem->brand)) ? $listingItem->listingItem->brand->name . ' ' . $listingItem->listingItem->device->name : '';
+                    if (strtolower($listingItem->listingItem->brand->name) == 'apple') {
+                        $fitModel[] = (isset($listingItem->listingItem->brand)) ? $listingItem->listingItem->device->name : '';
+                    } else {
+                        $fitModel[] = (isset($listingItem->listingItem->brand)) ? $listingItem->listingItem->brand->name . ' ' . $listingItem->listingItem->device->name : '';
+                    }
                 }
+                sort($fitModel);
                 $specifics = [
                     ['Type', $listingItem->listingItem->storeProduct->StoreTypeCategory->name],
                     ['Fits Model', $fitModel],
@@ -224,12 +237,26 @@ class EbayService implements MarketplaceServiceInterface
                     ['Model', $itemDetail->mpn],
                 ];
 
-
+                /*echo '<pre>';
+                print_r($fitModel);
+                echo '</pre>';die;*/
 
                 foreach ($specifics as $specific) {
                     $nameValueList = $itemSpecifics->addChild('NameValueList');
                     $nameValueList->addChild('Name', $specific[0]);
-                    $nameValueList->addChild('Value', htmlspecialchars($specific[1]));
+                    if($specific[0] == 'Fits Model'){
+                        if(is_array($specific[1])){
+                            $prevModel = [];
+                            foreach($specific[1] as $fmodle){
+                                if(!in_array($fmodle,$prevModel)){
+                                    $nameValueList->addChild('Value', htmlspecialchars($fmodle));
+                                }
+                                $prevModel[] = $fmodle;
+                            }
+                        }
+                    }else {
+                        $nameValueList->addChild('Value', htmlspecialchars($specific[1]));
+                    }
                 }
 
                 if(isset($listingItem->listingItem->storeProduct->product->color) && $listingItem->listingItem->storeProduct->product->color->name != ''){
@@ -289,7 +316,7 @@ class EbayService implements MarketplaceServiceInterface
                     $variation->addChild('StartPrice', $itemDetail->price);
                     $variation->addChild('Quantity', $itemDetail->quantity);
                     $variationSpecifics = $variation->addChild('VariationSpecifics');
-                    if(($listingInfo->carrier_combo || $listingInfo->include_carriers) && isset($variant->carrier)) {
+                    if(($listingInfo->carrier_combo) && isset($variant->carrier)) {
                         $nameValueList = $variationSpecifics->addChild('NameValueList');
                         $nameValueList->addChild('Name', 'Choose Your Carrier');
                         $nameValueList->addChild('Value', htmlspecialchars($variant->carrier->name));
@@ -309,9 +336,13 @@ class EbayService implements MarketplaceServiceInterface
                         //$variationTitle = $variationtitle.' '.$variant->device->name;
 
                     }else{
-                        $nameValueList1->addChild('Value', $variant->device->brand->name.' '.$variant->device->name);
-                        //$variationTitle = $variationtitle.' '.$variant->device->brand->name.' '.$variant->device->name;
-                        $deviceName = $variant->device->brand->name.' '.$variant->device->name;
+                        if($listingInfo->include_carriers && !$listingInfo->carrier_combo && isset($variant->carrier)) {
+                            $deviceName = htmlspecialchars($variant->carrier->name).' '.$variant->device->brand->name . ' ' . $variant->device->name;
+                        }else{
+                            $deviceName = $variant->device->brand->name.' '.$variant->device->name;
+                        }
+
+                        $nameValueList1->addChild('Value', $deviceName);
                         $variationTitle = $this->generateVariationTitle($deviceName, $shortkeywords,$longkeywords, $max_title_length);
                         $compatibleModels[] = $variant->device->brand->name.' '.$variant->device->name;
                     }
