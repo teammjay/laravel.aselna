@@ -2,8 +2,10 @@
 
 namespace App\Services\Marketplace\Service;
 
+use App\Constants\FeedTypes;
 use App\Jobs\ProductInterfaces;
 use App\Models\Listing;
+use App\Models\ListingFeed;
 use App\Models\ListingItemLink;
 use App\Models\ListingItemProductImage;
 use App\Models\ProductInterface;
@@ -23,6 +25,35 @@ class ShopifyService implements MarketplaceServiceInterface
     public function submitFeed($feedId, $listingId)
     {
         $listingInfo = Listing::where('id', $listingId)->first();
+
+        $feedInfo = ListingFeed::where('id', $feedId)->first();
+
+        $fileSystem = $listingInfo->store->fileSystem;
+        $store = $listingInfo->store;
+
+        switch ($feedInfo->feed_type) {
+            case FeedTypes::CREATE:
+                $this->SubmitCreateFeed($listingInfo,$feedInfo, $listingId);
+                break;
+            case FeedTypes::SHIPMENT_UPDATE:
+                $this->submitShipmentUpdateFeed($listingInfo, $listingId);
+                break;
+            case FeedTypes::DELETE:
+                $this->submitDeleteFeed($listingInfo, $listingId);
+                break;
+            case FeedTypes::INVENTORY:
+                $this->subimtPriceFeed($listingInfo, $listingId);
+                break;
+            case FeedTypes::PRICE:
+                $this->submitPriceFeed($listingInfo, $listingId);
+                break;
+            default:
+                break;
+        }
+    }
+
+    public function SubmitCreateFeed($listingInfo,$feedInfo, $listingId)
+    {
         $fileSystem = $listingInfo->store->fileSystem;
         $store = $listingInfo->store;
 
@@ -126,15 +157,24 @@ class ShopifyService implements MarketplaceServiceInterface
             $response = $shopifyAuthService->saveProduct($productNewData);
 //             get handle and id from response and save in listing_item table
             Log::info('Product: ' . json_encode($response));
-
-//            $listingItem->update([
-//                'store_url' => $response['handle'],
+//            $productSetId = $response['productSet']['productSetOperation']['id'];
+//
+//            $feedInfo->update([
+//                'feed_id' => $productSetId
 //            ]);
+            $productId = $response['productSet']['product']['id'];
+
+            $listingItem->update([
+                'store_sku' => $productId,
+                ''
+            ]);
         }
     }
 
     public function getResultFeed(mixed $listingId,$feedId = null)
     {
+//        $feedInfo = ListingFeed::where('id',$feedId)->first();
+//        $productSetID = $feedInfo['feed_id'];
 
     }
 
@@ -200,5 +240,21 @@ class ShopifyService implements MarketplaceServiceInterface
             $deviceData = $device->device;
             Log::info('Device: ' . json_encode($device->device));
         }
+    }
+
+    private function submitShipmentUpdateFeed($listingInfo, $listingId)
+    {
+    }
+
+    private function submitDeleteFeed($listingInfo, $listingId)
+    {
+    }
+
+    private function subimtPriceFeed($listingInfo, $listingId)
+    {
+    }
+
+    private function submitPriceFeed($listingInfo, $listingId)
+    {
     }
 }

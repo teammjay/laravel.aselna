@@ -178,6 +178,11 @@ class JobScheduler extends Seeder
                 'name' => 'Fetch Result Feed Async',
                 'description' => 'Fetch result feed asynchronously',
                 'class_name' => 'App\Jobs\FetchResultFeedAsync',
+            ],
+            [
+                'name' => 'Amazon Product Type Sync',
+                'description' => 'Sync all Amazon product types',
+                'class_name' => 'App\Jobs\AmazonProductTypeSyncJob',
             ]
         ];
 
