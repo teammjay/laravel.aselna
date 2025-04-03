@@ -2406,7 +2406,10 @@ class ListingController extends Controller
                             );
 
                             ListingItemLink::create($itemLink);
-                            FeedGenerationJob::dispatch($listing_id);
+                            Bus::chain([
+                                new ListingItemImageCreate($listing_id),
+                                new FeedGenerationJob($listing_id),
+                            ])->dispatch();
                         }
                     }
 
