@@ -7,6 +7,7 @@ use App\Models\Listing;
 use App\Models\ListingFeed;
 use App\Models\ListingItemDetail;
 use App\Models\ListingItemLink;
+use App\Models\ListingItemProductImage;
 use App\Models\ProductSearchTerm;
 use App\Models\ProductTypeKeyword;
 use App\Models\StoreTypeCategory;
@@ -52,6 +53,7 @@ class AmazonService implements MarketplaceServiceInterface
 
     public function generateCreateFeed($listingInfo, $listingId)
     {
+        $fileSystem = $listingInfo->store->fileSystem;
         $userIdentifier = $listingInfo->store->user_id;
         Log::info('User Identifier: ' . json_encode($listingInfo->store));
         $listingItems = ListingItemLink::where('listing_id', $listingId)->cursor();
@@ -92,6 +94,12 @@ class AmazonService implements MarketplaceServiceInterface
                     'parentage_level' => [['value' => 'parent']],
                     'batteries_required' => [['value' => false]],
                     'variation_theme' => [['name' => 'SIZE']],
+                    'externally_assigned_product_identifier' => [[
+                        'value' => $itemDetail->upc,
+                        'type' => 'UPC'
+                    ]],
+                    'part_number' => [['value' => $itemDetail->mpn]],
+                    'product_tax_code' => [['value' => 2040274]],
                 ]
             ];
             if (isset($productData)) {
@@ -113,6 +121,31 @@ class AmazonService implements MarketplaceServiceInterface
                 $message['attributes']['bullet_point'] = $bulletPoints;
                 $message['attributes']['list_price'] = [['value' => number_format($itemDetail->price, 2), 'currency' => 'USD']];
 
+                $message['attributes']['item_package_dimensions'] = [[
+                    'length' => ['value' => $productData->package_dimensions_length, 'unit' => 'inches'],
+                    'width' => ['value' => $productData->package_dimensions_width, 'unit' => 'inches'],
+                    'height' => ['value' => $productData->package_dimensions_height, 'unit' => 'inches']
+                ]];
+
+                if (isset($storeProduct->store)) {
+                    $message['attributes']['manufacturer'] = [['value' => $storeProduct->store->brand_name, 'language_tag' => 'en_US']];
+                }
+
+                $images = ListingItemProductImage::where('listing_item_id', $itemDetail->id)->get();
+                $other_image_count = 1;
+                foreach ($images as $image) {
+                    if ($image->productImage && $image->productImage->main_image == 0) {
+                        $message['attributes']['main_product_image_locator'] = [[
+                            'media_location' => $fileSystem->url_base_path . $image->path
+                        ]];
+                    } else {
+                        if ($other_image_count <= 8) {
+                            $message['attributes']['other_product_image_locator_'. ($other_image_count++)]  = [[
+                                'media_location' => $fileSystem->url_base_path . $image->path
+                            ]];
+                        }
+                    }
+                }
             }
 
             $feed['messages'][] = $message;
