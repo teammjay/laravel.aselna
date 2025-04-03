@@ -13,8 +13,10 @@ class FileUtility
         File::ensureDirectoryExists(dirname($filePath));
         File::put($filePath, $fileContent);
 
-        chown($filePath, 'aselna');
-        chgrp($filePath, 'psacln');
+        if (env('APP_ENV') !== 'local') {
+            chown($filePath, 'aselna');
+            chgrp($filePath, 'psacln');
+        }
         // chmod($filePath, 0777);
     }
 

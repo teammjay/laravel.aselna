@@ -15,6 +15,8 @@ class AmazonProductTypeSyncJob implements ShouldQueue
 
     private $amazonAuthService;
 
+    public $timeout = 30000;
+
     /**
      * Create a new job instance.
      */
@@ -31,7 +33,9 @@ class AmazonProductTypeSyncJob implements ShouldQueue
         $this->amazonAuthService = new AmazonAuthService();
         StoreTypeCategory::whereIn('store_type_id', function ($subQuery) {
             return $subQuery->select('id')->from('store_type')->where('code', 'amazon');
-        })->orderBy('id')->chunk(1000, function ($storeProductTypes) {
+        })
+            ->whereNull('marketplace_code')
+            ->orderBy('id')->chunk(1000, function ($storeProductTypes) {
             foreach ($storeProductTypes as $storeProductType) {
                 $this->syncAmazonProductType($storeProductType);
                 sleep(1);
@@ -41,7 +45,6 @@ class AmazonProductTypeSyncJob implements ShouldQueue
 
     private function syncAmazonProductType(mixed $storeProductType)
     {
-
 
         Log::info('Syncing Amazon product type' . json_encode($storeProductType));
         $result = $this->amazonAuthService->getProductTypes($storeProductType['name']);

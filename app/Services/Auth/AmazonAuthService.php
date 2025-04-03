@@ -11,6 +11,10 @@ use Illuminate\Support\Facades\Log;
 class AmazonAuthService
 {
     private $client;
+    private $accessToken;
+    private $expireTime;
+
+    private $marketplaceIDs;
 
     public function __construct()
     {
@@ -21,6 +25,10 @@ class AmazonAuthService
 
     public function getAccessToken()
     {
+        if(isset($this->accessToken) && $this->expireTime > time()) {
+            return $this->accessToken;
+        }
+
         $client = new Client([
             'base_uri' => 'https://api.amazon.com',
         ]);
@@ -34,7 +42,10 @@ class AmazonAuthService
             ]
         ]);
 
-        return json_decode($response->getBody()->getContents(), true)['access_token'];
+        $responseBody = json_decode($response->getBody(), true);
+        $this->expireTime = time() + $responseBody['expires_in'];
+
+        return $this->accessToken = $responseBody['access_token'];
     }
 
     public function uploadProductFeed($feedContent)
@@ -148,6 +159,9 @@ class AmazonAuthService
 
     private function getMarketplaceIDs()
     {
+        if(isset($this->marketplaceIDs)) {
+            return $this->marketplaceIDs;
+        }
         $accessToken = $this->getAccessToken();
 
         $response = $this->client->get('/sellers/v1/marketplaceParticipations', [
@@ -166,7 +180,7 @@ class AmazonAuthService
                 $marketplaceIDs[] = $marketplace['marketplace']['id'];
             }
         }
-        return $marketplaceIDs;
+        return $this->marketplaceIDs = $marketplaceIDs;
     }
 
     private function getFeedType($listingId)
