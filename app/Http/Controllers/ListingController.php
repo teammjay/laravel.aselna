@@ -2430,4 +2430,23 @@ class ListingController extends Controller
             'message' => 'Something went wrong! Please try again!'
         ]);
     }
+
+    public function checkUpcExist(Request $request){
+
+        $store_id = $request->input('store_id');
+
+        if($store_id){
+
+            $upc_count = UPCCodes::where('store', $store_id)->where('is_used', 0)->count();
+
+            return response()->json([
+                'success' => true,
+                'upc_cnt' => $upc_count
+            ]);
+        }
+        return response()->json([
+            'error' => true,
+            'message' => 'Something went wrong! Please try again!'
+        ]);
+    }
 }

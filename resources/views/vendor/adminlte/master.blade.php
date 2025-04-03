@@ -165,7 +165,7 @@
             const alert = $('.alert');
             if (alert) {
                 alert.addClass('fade');
-                setTimeout(() => alert.remove(), 500);
+                setTimeout(() => alert.remove(), 1500);
             }
         }, 5000);
 

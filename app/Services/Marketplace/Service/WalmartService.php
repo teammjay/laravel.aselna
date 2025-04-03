@@ -3,6 +3,7 @@
 namespace App\Services\Marketplace\Service;
 
 use App\Constants\FeedTypes;
+use App\Constants\ListingSyncStatus;
 use App\Models\Listing;
 use App\Models\ListingFeed;
 use App\Models\ListingItem;

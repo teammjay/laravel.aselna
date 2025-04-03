@@ -60,7 +60,7 @@
             position: sticky !important;
             bottom: 0;
             background: #fff;
-            z-index: 9999;
+            z-index: 99;
         }
         /*.ui-autocomplete{z-index: 99999; max-height: 250px; overflow: auto;}*/
         #frmproductfilter select.form-control[multiple]{height: 100%;}
@@ -104,6 +104,21 @@
         }
         .select2-dropdown {
             z-index: 9999;
+        }
+        .btn-close {
+            box-sizing: content-box;
+            width: 1em;
+            height: 1em;
+            padding: .25em .25em;
+            color: #000;
+            background: transparent url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23000'%3e%3cpath d='M.293.293a1 1 0 011.414 0L8 6.586 14.293.293a1 1 0 111.414 1.414L9.414 8l6.293 6.293a1 1 0 01-1.414 1.414L8 9.414l-6.293 6.293a1 1 0 01-1.414-1.414L6.586 8 .293 1.707a1 1 0 010-1.414z'/%3e%3c/svg%3e") center/1em auto no-repeat;
+            border: 0;
+            border-radius: .25rem;
+            opacity: .5;
+        }
+        .modal-header .btn-close {
+            padding: .5rem .5rem;
+            margin: -.5rem -.5rem -.5rem auto;
         }
     </style>
 @stop
@@ -709,7 +724,17 @@
         </div>
         <div id="ajax-gallery" style="display: none;"></div>
     </div>
-
+    <div class="modal fade" id="alertModal" tabindex="-1" aria-labelledby="alertModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="alertModalLabel"></h5>
+                    <button type="button" class="btn-close" data-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body"></div>
+            </div>
+        </div>
+    </div>
 @stop
 
 @section('adminlte_js')
@@ -1061,6 +1086,46 @@
             $('#productsTable').DataTable();
             $('#productListingTable').DataTable({});
             $('#listing_store').select2();
+
+            /*$('#listing_store').on('select2:select', function (e) {
+                /!* check selected store upc exist or not*!/
+                var data = e.params.data;
+                var store_id = data.id;
+                $.ajax({
+                    url: "{{ route('listing.checkupcexist') }}",
+                    type: 'POST',
+                    data: {
+                        store_id:store_id,
+                    },
+                    headers: {
+                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                    },
+                    success: function (response) {
+                        if(response.success){
+                            $('#alertModal').find('.modal-header').removeClass('bg-danger').removeClass('bg-info');
+                            if(response.upc_cnt == 0){
+                                $('#alertModal').find('.modal-header').addClass('bg-danger');
+                                $('#alertModalLabel').html('Alert');
+                                $('#alertModal').find('.modal-body').html('Upc code not available for selected store. Please generate upc code first!');
+                            }else{
+                                $('#alertModal').find('.modal-header').addClass('bg-info');
+                                $('#alertModalLabel').html('Information');
+                                $('#alertModal').find('.modal-body').html(response.upc_cnt+' upc code available for selected store. If you require more please generate!');
+                            }
+                            $('#alertModal').modal('show');
+                        }
+                    },
+                    error: function (xhr) {
+                        /!*if (xhr.responseJSON?.error) {
+                            $('#responseMessage').html('<p style="color:red;">' + xhr.responseJSON.error.image[0] + '</p>');
+                        }*!/
+                    },
+                    complete: function () {
+                        $("#ajax-preloader").hide();
+                    }
+                });
+            });*/
+
             $(document).on('click', '#searchBtn', function() {
                 if($('#listing_store').val() == ''){
                     alert('Please select store first.');
@@ -1182,7 +1247,6 @@
                     }, []);
 
                     selected_carrier[product_id] = [];
-                    console.log(selected_carrier);
                 });
                 $('.targetRow').removeClass('bg-blue');
             });
@@ -1213,7 +1277,6 @@
                     }, []);
 
                     selected_device[product_id] = newArray;
-                    //console.log('remove-'+selected_device);
 
                     var ncArr = selected_carrier[product_id];
                     const newcArray = ncArr.reduce((acc, item) => {
@@ -2308,7 +2371,6 @@
             $("#ajax-preloader").show();
             if ($.fn.DataTable.isDataTable('#productsTable')) {
                 $('#productsTable').DataTable().clear().destroy();
-                console.log(1);
             }
             $.ajax({
                 url: "{{ route('listing.getproducts') }}",
