@@ -362,11 +362,16 @@ class ListingController extends Controller
         if ($store_type_listing_id != '') {
             $storeTypeDetail = StoreTypeListing::findOrFail($store_type_listing_id);
         }
-        $productVariants = ListingItemDetail::select('listing_item_detail.*', 'brands.name as brand_name', 'device.name as device_name')
-            ->leftJoin('device', 'device.id', '=', 'listing_item_detail.device_id')
-            ->leftJoin('brands', 'brands.id', '=', 'device.brand_id')
-            ->where('listing_item_detail.listing_item_id', $productDetail->id)
+        $productVariants = ListingItemDetail::with('device','device.brand','carrier')
+            //->leftJoin('device', 'device.id', '=', 'listing_item_detail.device_id')
+            //->leftJoin('brands', 'brands.id', '=', 'device.brand_id')
+            ->where('listing_item_id', $productDetail->id)
+            ->orderBy('created_at','ASC')
             ->get();
+
+        /*echo '<pre>';
+        print_r($productVariants);
+        echo '</pre>';die;*/
 
         /*$productDetail = StoreTypeListing::select('store_type_listing.*','products.product_sku','products.product_description','products.manufacturer_id','products.dimensions_width','products.product_color','store.name as store_name','store.marketplace_name')
             ->leftJoin('products','products.product_id', '=', 'store_type_listing.item_id')

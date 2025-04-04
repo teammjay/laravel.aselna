@@ -223,6 +223,7 @@
                                 <thead>
                                     <tr>
                                         <th>Interface Name</th>
+                                        <th>Product Type</th>
                                     </tr>
                                 </thead>
                                 <tbody>
