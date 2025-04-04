@@ -35,6 +35,20 @@
             background:#ccc !important;
             visibility: initial !important;
         }
+        button#goDownBtn {
+            height: 48px;
+            width: 48px;
+            float: right;
+            position: fixed;
+            margin-bottom: 12px;
+            border-radius: 50px;
+            box-shadow: 0 2px 9px 0 rgba(0, 0, 0, .16);
+            right: 5px;
+            text-align: center;
+            cursor: pointer;
+            opacity: .84;
+            bottom: 0;
+        }
 
     </style>
 @stop
@@ -345,13 +359,34 @@
                                     Interfaces
                                 </div>
                                 <div class="card-body">
-                                    <select class="form-control pro-interface" name="interfaces[]" multiple="multiple">
+                                    <select class="form-control pro-interface">
                                         @if(count($interfaces ?? []) > 0)
+                                            <option value=""></option>
                                             @foreach($interfaces as $interface)
-                                                <option value="{{ $interface->id }}" {{ in_array($interface->id,$deviceInterfaces) ? 'selected' : '' }}>{{ $interface->name }}</option>
+                                                <option value="{{ $interface->id }}">{{ $interface->name }}</option>
                                             @endforeach
                                         @endif
                                     </select>
+                                    <table class="table table-bordered table-hover mt-5" id="table_interface">
+                                        <thead>
+                                            <tr>
+                                                <th>Interface</th>
+                                                <th>Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="interface-list">
+                                            @if(count($interfaces ?? []) > 0)
+                                                @foreach($interfaces as $interface)
+                                                    @if(in_array($interface->id,$deviceInterfaces))
+                                                        <tr class="field-group">
+                                                            <td>{{ $interface->name }}<input type="hidden" name="interfaces[]" value="{{ $interface->id }}"></td>
+                                                            <td><button type="button" class="btn btn-danger remove-interface p-1"> <i class="fas fa-fw fa-trash"></i></button></td>
+                                                        </tr>
+                                                    @endif
+                                                @endforeach
+                                            @endif
+                                        </tbody>
+                                    </table>
                                 </div>
                             </div>
                             </div>
@@ -362,11 +397,14 @@
         </div>
         <div class="card-footer text-center">
             <button type="submit" class="btn btn-success">Submit</button>
+            <a href="{{ route('devices.index') }}" class="btn btn-secondary">Cancel</a>
             @if(!isset($device))
                 <button type="reset" class="btn btn-primary">Reset</button>
             @endif
         </div>
     </form>
+
+    <button class="btn btn-secondary" id="goDownBtn"><i class="fa fa-arrow-circle-down"></i> </button>
 @stop
 
 @section('js')
@@ -378,9 +416,38 @@ $(document).ready(function() {
     });
 
     $('.pro-interface').select2({
+        placeholder: "Select interface",
+        initSelection: function(element, callback) {
+        }
+    });
+    $('.pro-interface').on('select2:select', function (e) {
+        var data = e.params.data;
+        /* check selected store upc exist or not*/
+        //console.log(data); return false;
+        var interface_id = data.id;
+        var interface = data.text;
+        if(interface_id != '' && $('input[name="interfaces[]"][value="'+interface_id+'"]').length == 0) {
+            $('#interface-list').prepend('<tr class="field-group"><td>' + interface + '<input type="hidden" name="interfaces[]" value="' + interface_id + '"></td><td><button type="button" class="btn btn-danger remove-interface p-1"> <i class="fas fa-fw fa-trash"></i></button></td></tr>');
+
+        }
+        setTimeout(function () {
+            $('.pro-interface').val("").trigger('change')
+        },500);
+    });
+
+    $(document).on('click', '.remove-interface', function() {
+        $(this).parents('tr.field-group').remove();
+    });
+
+    document.getElementById("goDownBtn").addEventListener("click", function() {
+        window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+    });
+
+
+    /*$('.pro-interface').select2({
         placeholder: 'Select Interfaces',
         allowClear: true
-    });
+    });*/
 
     $('.pro-carrier').select2({
         placeholder: 'Select Carriers',

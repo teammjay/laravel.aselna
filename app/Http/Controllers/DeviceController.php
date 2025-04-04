@@ -178,7 +178,7 @@ class DeviceController extends Controller
         $deviceScreens = DeviceScreen::all();
         $brands = Brand::all();
         $carriers = Carrier::all();
-        $interfaces = Interfaces::all();
+        $interfaces = Interfaces::orderBy('name','asc')->get();
         $deviceCarrier = DeviceCarrier::where('device_id',$id)->get();
         $deviceCarriers = $deviceCarrier->pluck('carrier_id')->values()->all();
         $deviceInterface = DeviceInterface::where('device_id',$id)->get();
