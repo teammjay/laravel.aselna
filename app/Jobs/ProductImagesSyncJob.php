@@ -36,6 +36,7 @@ class ProductImagesSyncJob implements ShouldQueue
 //        if (env('APP_ENV') === 'local') return;
         $productImagesQ = DB::connection('fonus_db')
             ->table('tbl_product_images')
+            ->where('product_id', '=', '2019')
             ->where('picture_type_id', '=', '1')
             ->orderBy('product_id');
 
@@ -45,6 +46,7 @@ class ProductImagesSyncJob implements ShouldQueue
 
         $productImagesQ->chunk(1000, function ($productImages) {
             foreach ($productImages as $productImage) {
+                Log::info('ProductImagesSyncJob: ' . $productImage->product_id);
                 $this->createProductImage($productImage);
             }
         });
@@ -103,7 +105,7 @@ class ProductImagesSyncJob implements ShouldQueue
             ]);
         }
 
-        
+
         ProductImages::updateOrCreate([
             'product_id' => $product->product_id,
             'sort_order' => $productImage->picture_id

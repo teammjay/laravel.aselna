@@ -93,7 +93,6 @@ class AmazonService implements MarketplaceServiceInterface
                     'supplier_declared_dg_hz_regulation' => [['value' => 'not_applicable']],
                     'parentage_level' => [['value' => 'parent']],
                     'batteries_required' => [['value' => false]],
-                    'variation_theme' => [['name' => 'SIZE']],
                     'externally_assigned_product_identifier' => [[
                         'value' => $itemDetail->upc,
                         'type' => 'UPC'
