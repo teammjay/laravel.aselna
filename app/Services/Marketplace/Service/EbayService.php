@@ -325,14 +325,15 @@ class EbayService implements MarketplaceServiceInterface
                     $nameValueList1 = $variationSpecifics->addChild('NameValueList');
                     $nameValueList1->addChild('Name', 'Compatible Model');
                     if(strtolower($variant->device->brand->name) == 'apple'){
-                        if($listingInfo->include_carriers && isset($variant->carrier)) {
-                            $nameValueList1->addChild('Value', htmlspecialchars($variant->carrier->name).' '.$variant->device->name);
+                        if($listingInfo->include_carriers && !$listingInfo->carrier_combo && isset($variant->carrier)) {
+                            $deviceName = htmlspecialchars($variant->carrier->name).' '.$variant->device->name;
                             $compatibleModels[] = htmlspecialchars($variant->carrier->name).' '.$variant->device->name;
                         }else{
-                            $nameValueList1->addChild('Value', $variant->device->name);
+                            $deviceName = $variant->device->name;
                             $compatibleModels[] = $variant->device->brand->name.' '.$variant->device->name;
                         }
-                        $variationTitle = $this->generateVariationTitle($variant->device->name, $shortkeywords,$longkeywords, $max_title_length);
+                        $nameValueList1->addChild('Value', $deviceName);
+                        $variationTitle = $this->generateVariationTitle($deviceName, $shortkeywords,$longkeywords, $max_title_length);
                         //$variationTitle = $variationtitle.' '.$variant->device->name;
 
                     }else{
@@ -344,7 +345,7 @@ class EbayService implements MarketplaceServiceInterface
 
                         $nameValueList1->addChild('Value', $deviceName);
                         $variationTitle = $this->generateVariationTitle($deviceName, $shortkeywords,$longkeywords, $max_title_length);
-                        $compatibleModels[] = $variant->device->brand->name.' '.$variant->device->name;
+                        $compatibleModels[] = $deviceName;
                     }
 
                     $variation->addChild('VariationTitle', $variationTitle);
@@ -355,7 +356,7 @@ class EbayService implements MarketplaceServiceInterface
 
             // Add VariationSpecificsSet
             $variationSpecificsSet = $variations->addChild('VariationSpecificsSet');
-            if(($listingInfo->carrier_combo || $listingInfo->include_carriers) && isset($variant->carrier)) {
+            if(($listingInfo->carrier_combo) && isset($variant->carrier)) {
                 $nameValueList = $variationSpecificsSet->addChild('NameValueList');
                 $nameValueList->addChild('Name', 'Choose Your Carrier');
                 sort($compatibleCarriers);
