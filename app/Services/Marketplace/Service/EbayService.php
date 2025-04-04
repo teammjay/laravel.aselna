@@ -309,7 +309,7 @@ class EbayService implements MarketplaceServiceInterface
             if($listingInfo->include_carriers || $listingInfo->carrier_combo){
                 $field = 'carrier.name as carrier_name';
             }
-            $variationDataQuery = ListingItemDetail::select('listing_item_detail.*','brands.name as brand_name',$field)->with('device','device.brand','carrier');
+            $variationDataQuery = ListingItemDetail::select('listing_item_detail.*','brands.name as brand_name','device.name as device_name',$field)->with('device','device.brand','carrier');
             $variationDataQuery->leftJoin('device', 'device.id', '=', 'listing_item_detail.device_id');
             $variationDataQuery->leftJoin('brands', 'brands.id', '=', 'device.brand_id');
 
@@ -321,7 +321,8 @@ class EbayService implements MarketplaceServiceInterface
                 $variationDataQuery->orderBy('carrier.name','ASC');
             }
             $variationDataQuery->orderBy('brands.name','ASC');
-            $variationDataQuery->orderBy('listing_item_detail.created_at','ASC');
+            $variationDataQuery->orderBy('device.name','ASC');
+            //$variationDataQuery->orderBy('listing_item_detail.created_at','ASC');
             $variationData = $variationDataQuery->get();
 
             /*echo '<pre>';
