@@ -214,7 +214,8 @@ class EbayService implements MarketplaceServiceInterface
             if(isset($listingItem->listingItem->storeProduct->StoreTypeCategory) && !empty($listingItem->listingItem->storeProduct->StoreTypeCategory)) {
                 $itemSpecifics = $item->addChild('ItemSpecifics');
                 if(isset($listingItem->listingItem->devices) && count($listingItem->listingItem->devices ?? []) > 0){
-                    foreach($listingItem->listingItem->devices as $device){
+                    foreach($listingItem->listingItem->devices as $k=>$device){
+                        if($k >= 30){ break;}
                         if (strtolower($listingItem->listingItem->brand->name) == 'apple') {
                             $fitModel[] = (isset($listingItem->listingItem->brand)) ? $device->device->name : '';
                         } else {
