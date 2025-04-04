@@ -38,7 +38,7 @@ class EbayService implements MarketplaceServiceInterface
         print_r($listingInfo);
         echo '</pre>';die;*/
 
-        // Generate feed for Amazon
+        // Generate feed for eBay
         switch ($listingInfo->feed_type) {
             case FeedTypes::CREATE:
                 $this->generateCreateFeed($listingInfo, $listingId);
@@ -304,7 +304,26 @@ class EbayService implements MarketplaceServiceInterface
 
             // Add Variations
             $variations = $item->addChild('Variations');
-            $variationData = ListingItemDetail::with('device','device.brand','carrier')->where('listing_item_id',$itemDetail->id)->orderBy('created_at','ASC')->get();
+
+            $field = 'brands.id as brand_id';
+            if($listingInfo->include_carriers || $listingInfo->carrier_combo){
+                $field = 'carrier.name as carrier_name';
+            }
+            $variationDataQuery = ListingItemDetail::select('listing_item_detail.*','brands.name as brand_name',$field)->with('device','device.brand','carrier');
+            $variationDataQuery->leftJoin('device', 'device.id', '=', 'listing_item_detail.device_id');
+            $variationDataQuery->leftJoin('brands', 'brands.id', '=', 'device.brand_id');
+
+            if($listingInfo->include_carriers || $listingInfo->carrier_combo){
+                $variationDataQuery->leftJoin('carrier', 'carrier.id', '=', 'listing_item_detail.device_carrier_id');
+            }
+            $variationDataQuery->where('listing_item_id',$itemDetail->id);
+            if($listingInfo->include_carriers || $listingInfo->carrier_combo){
+                $variationDataQuery->orderBy('carrier.name','ASC');
+            }
+            $variationDataQuery->orderBy('brands.name','ASC');
+            $variationDataQuery->orderBy('listing_item_detail.created_at','ASC');
+            $variationData = $variationDataQuery->get();
+
             /*echo '<pre>';
             print_r($variationData);
             echo '</pre>';die;*/

@@ -104,6 +104,46 @@ class ShopifyAuthService
         return $result;
     }
 
+    public function getInventoryItemId($variantId)
+    {
+
+        $variables = ['id' => "gid://shopify/ProductVariant/{$variantId}"];
+        $response = $this->makeGraphQLRequest(ShopifyQueries::$getProductVariant, $variables);
+
+        return $response['data']['productVariant']['inventoryItem']['id'] ?? null;
+    }
+
+    public function getLocationId()
+    {
+
+        $response = $this->makeGraphQLRequest(ShopifyQueries::$getLocation);
+
+        return $response['data']['locations']['edges'][0]['node']['id'] ?? null;
+    }
+
+    public function updateInventory( $inventoryUpdates)
+    {
+
+        $variables = [
+            'input' => [
+                'reason' => 'stock_adjustment',
+                'changes' =>  $inventoryUpdates
+            ]
+        ];
+
+        $response = $this->makeGraphQLRequest(ShopifyQueries::$inventoryAdjustQuantities, $variables);
+
+        return $response;
+    }
+
+    public function updatePrice($priceUpdatesData)
+    {
+
+        $response = $this->query(ShopifyQueries::$productVariantUpdate, $priceUpdatesData);
+
+        return $response;
+    }
+
     public function getOrders()
     {
 

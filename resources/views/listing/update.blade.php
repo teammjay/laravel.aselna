@@ -505,9 +505,9 @@
                             @if(count($productVariants ?? []) > 0)
                                 @foreach($productVariants as $var)
                                     <tr>
-                                        <td>{{ $var->brand_name }}</td>
-                                        <td>{{ $var->device_name }}</td>
-                                        <td></td>
+                                        <td>{{ (isset($var->device->brand)) ? $var->device->brand->name : '' }}</td>
+                                        <td>{{ $var->device->name }}</td>
+                                        <td>{{ (isset($var->carrier)) ? $var->carrier->name : '' }}</td>
                                         <td>{{ $var->sku }}</td>
                                         <td>{{ $productDetail->price }}</td>
                                         <td></td>

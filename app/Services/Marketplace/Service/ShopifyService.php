@@ -42,7 +42,7 @@ class ShopifyService implements MarketplaceServiceInterface
                 $this->submitDeleteFeed($listingInfo, $listingId);
                 break;
             case FeedTypes::INVENTORY:
-                $this->subimtPriceFeed($listingInfo, $listingId);
+                $this->submitInventoryFeed($listingInfo, $listingId);
                 break;
             case FeedTypes::PRICE:
                 $this->submitPriceFeed($listingInfo, $listingId);
@@ -250,11 +250,71 @@ class ShopifyService implements MarketplaceServiceInterface
     {
     }
 
-    private function subimtPriceFeed($listingInfo, $listingId)
+
+    private function submitInventoryFeed($listingInfo, $listingId)
     {
+        $store = $listingInfo->store;
+        $this->authService = new ShopifyAuthService($store->secret_key);
+
+        $listingItems = ListingItemLink::with('listingItem')->where('listing_id', $listingId)->cursor();
+
+        foreach ($listingItems as $listingItem) {
+
+            $itemDetail = $listingItem->item;
+            $variantId = '';
+            $quantity = $itemDetail->quantity;
+
+            if($variantId != ''){
+                // Get required IDs
+                $inventoryItemId = $this->authService->getInventoryItemId($variantId);
+                $locationId = $this->authService->getLocationId();
+
+                if (!$inventoryItemId || !$locationId) {
+                    return response()->json(['error' => "Invalid inventory item or location for variant {$variantId}"], 400);
+                }
+
+                // Prepare inventory update array
+                $inventoryUpdates[] = [
+                    'inventoryItemId' => $inventoryItemId,
+                    'locationId' => $locationId,
+                    'availableDelta' => $quantity
+                ];
+            }
+        }
+
+        // Send the batch update request
+        $response = $this->authService->updateInventory($inventoryUpdates);
+
+        return response()->json($response);
     }
 
     private function submitPriceFeed($listingInfo, $listingId)
     {
+        $store = $listingInfo->store;
+        $this->authService = new ShopifyAuthService($store->secret_key);
+
+        $listingItems = ListingItemLink::with('listingItem')->where('listing_id', $listingId)->cursor();
+
+        foreach ($listingItems as $listingItem) {
+
+            $itemDetail = $listingItem->item;
+            $variantId = '';
+            $price = $itemDetail->price;
+
+            if($variantId != ''){
+
+                // Prepare price update array
+                $priceUpdatesData[] = [
+                    'variantId' => $variantId,
+                    'newPrice' => $price
+                ];
+            }
+        }
+        // Send the batch update request
+        $response = $this->authService->updatePrice($priceUpdatesData);
+
+        return response()->json($response);
     }
+
+
 }

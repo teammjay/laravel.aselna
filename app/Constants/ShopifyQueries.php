@@ -148,4 +148,58 @@ class ShopifyQueries
         }
     GQL;
 
+    public static $getProductVariant = <<<GQL
+        query(\$id: ID!) {
+          productVariant(id: \$id) {
+            inventoryItem {
+              id
+            }
+          }
+        }
+    GQL;
+
+    public static $getLocation = <<<GQL
+        query {
+          locations(first: 10) {
+            edges {
+              node {
+                id
+                name
+              }
+            }
+          }
+        }
+    GQL;
+
+    public static $inventoryAdjustQuantities = <<<GQL
+        mutation inventoryAdjustQuantities(\$input: InventoryAdjustQuantitiesInput!) {
+          inventoryAdjustQuantities(input: \$input) {
+            userErrors {
+              field
+              message
+            }
+            inventoryAdjustmentGroup {
+              changes {
+                availableAfterAdjustment
+              }
+            }
+          }
+        }
+    GQL;
+
+    public static $productVariantUpdate = <<<GQL
+        mutation {
+            productVariantUpdate(input: \$input) {
+                productVariant {
+                    id
+                    price
+                }
+                userErrors {
+                    field
+                    message
+                }
+            }
+        }
+    GQL;
+
 }
