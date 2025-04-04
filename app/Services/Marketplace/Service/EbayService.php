@@ -188,7 +188,7 @@ class EbayService implements MarketplaceServiceInterface
             $shippingDetails->addChild('ShippingType', 'Flat');
 
             $item->addChild('Site', 'US');
-            $item->addChild('Title', $itemDetail->title);
+            $item->addChild('Title', htmlspecialchars($itemDetail->title));
             $item->addChild('SKU', $itemDetail->sku);
 
             // Add PictureDetails
@@ -243,7 +243,7 @@ class EbayService implements MarketplaceServiceInterface
 
                 foreach ($specifics as $specific) {
                     $nameValueList = $itemSpecifics->addChild('NameValueList');
-                    $nameValueList->addChild('Name', $specific[0]);
+                    $nameValueList->addChild('Name', htmlspecialchars($specific[0]));
                     if($specific[0] == 'Fits Model'){
                         if(is_array($specific[1])){
                             $prevModel = [];
@@ -271,7 +271,7 @@ class EbayService implements MarketplaceServiceInterface
                     foreach($productSpecification as $specificaiton){
 
                         $nameValueList = $itemSpecifics->addChild('NameValueList');
-                        $nameValueList->addChild('Name', $specificaiton->name);
+                        $nameValueList->addChild('Name', htmlspecialchars($specificaiton->name));
                         if(str_contains($specificaiton->value, ',')){
                             if(strtolower($specificaiton->name) != 'type') {
                                 $values = explode(',', $specificaiton->value);
@@ -352,7 +352,7 @@ class EbayService implements MarketplaceServiceInterface
                             $deviceName = $variant->device->name;
                             $compatibleModels[] = $variant->device->brand->name.' '.$variant->device->name;
                         }
-                        $nameValueList1->addChild('Value', $deviceName);
+                        $nameValueList1->addChild('Value', htmlspecialchars($deviceName));
                         $variationTitle = $this->generateVariationTitle($deviceName, $shortkeywords,$longkeywords, $max_title_length);
                         //$variationTitle = $variationtitle.' '.$variant->device->name;
 
@@ -363,12 +363,12 @@ class EbayService implements MarketplaceServiceInterface
                             $deviceName = $variant->device->brand->name.' '.$variant->device->name;
                         }
 
-                        $nameValueList1->addChild('Value', $deviceName);
+                        $nameValueList1->addChild('Value', htmlspecialchars($deviceName));
                         $variationTitle = $this->generateVariationTitle($deviceName, $shortkeywords,$longkeywords, $max_title_length);
                         $compatibleModels[] = $deviceName;
                     }
 
-                    $variation->addChild('VariationTitle', $variationTitle);
+                    $variation->addChild('VariationTitle', htmlspecialchars($variationTitle));
                     $variationDetails = $variation->addChild('VariationProductListingDetails');
                     $variationDetails->addChild('UPC', $itemDetail->upc);
                 }
@@ -383,7 +383,7 @@ class EbayService implements MarketplaceServiceInterface
                 $lastvariant = null;
                 foreach ($compatibleCarriers as $carrier) {
                     if($lastvariant != $carrier){
-                        $nameValueList->addChild('Value', $carrier);
+                        $nameValueList->addChild('Value', htmlspecialchars($carrier));
                     }
                     $lastvariant = $carrier;
                 }
@@ -397,9 +397,9 @@ class EbayService implements MarketplaceServiceInterface
                 if($lastmodel != $model) {
                     if (strpos($model, 'Apple') !== false) {
                         $newmodel = str_replace('Apple', '', $model);
-                        $nameValueList2->addChild('Value', trim($newmodel));
+                        $nameValueList2->addChild('Value', trim(htmlspecialchars($newmodel)));
                     } else {
-                        $nameValueList2->addChild('Value', trim($model));
+                        $nameValueList2->addChild('Value', trim(htmlspecialchars($model)));
                     }
                 }
                 $lastmodel = $model;
