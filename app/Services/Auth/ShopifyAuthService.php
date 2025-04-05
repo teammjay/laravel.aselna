@@ -19,6 +19,7 @@ class ShopifyAuthService
     {
         $this->client = new Client(['verify' => false]);
         $this->accessToken = $clientSecret;
+        $this->accessToken = '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';
         //$this->endpoint = env('SHOPIFY_API_ENDPOINT');
         $this->endpoint = 'https://aselna-dev.myshopify.com';
         //$this->apiVersion = env('SHOPIFY_API_VERSION');
@@ -33,12 +34,15 @@ class ShopifyAuthService
             'X-Shopify-Access-Token' => $this->accessToken,
         ];
 
-        $body = array_filter([
-            'query' => $query,
-            'variables' => $variables
-        ], function ($value) {
+        $bodyArray['query'] = $query;
+        if(!empty($variables)){
+            $bodyArray['variables'] = $variables;
+        }
+
+        $body = array_filter($bodyArray, function ($value) {
             return $value !== null;
         });
+
 
         try {
             $request = new Request('POST', $this->endpoint . '/admin/api/' . $this->apiVersion . '/graphql.json', $headers, json_encode($body));
@@ -107,8 +111,11 @@ class ShopifyAuthService
     public function getInventoryItemId($variantId)
     {
 
-        $variables = ['id' => "gid://shopify/ProductVariant/{$variantId}"];
+        $variables = ['id' => $variantId];
+
         $response = $this->makeGraphQLRequest(ShopifyQueries::$getProductVariant, $variables);
+
+        Log::info('Inventory Item: ' .json_encode($response));
 
         return $response['data']['productVariant']['inventoryItem']['id'] ?? null;
     }
@@ -118,20 +125,26 @@ class ShopifyAuthService
 
         $response = $this->makeGraphQLRequest(ShopifyQueries::$getLocation);
 
+        Log::info('Location Item: ' .json_encode($response));
+
         return $response['data']['locations']['edges'][0]['node']['id'] ?? null;
     }
 
-    public function updateInventory( $inventoryUpdates)
+    public function updateInventory($inventoryUpdates)
     {
 
         $variables = [
             'input' => [
-                'reason' => 'stock_adjustment',
-                'changes' =>  $inventoryUpdates
-            ]
+                'reason' => 'correction',
+                'name' => 'available',
+                //'locationId' => $inventoryUpdates['locationId'], // your actual Location GID
+                'changes' => [$inventoryUpdates['changes']],
+            ],
         ];
 
         $response = $this->makeGraphQLRequest(ShopifyQueries::$inventoryAdjustQuantities, $variables);
+
+        Log::info('Inventory Response: ' .json_encode($response));
 
         return $response;
     }
@@ -139,7 +152,9 @@ class ShopifyAuthService
     public function updatePrice($priceUpdatesData)
     {
 
-        $response = $this->query(ShopifyQueries::$productVariantUpdate, $priceUpdatesData);
+        $response = $this->makeGraphQLRequest(ShopifyQueries::$productVariantUpdate, $priceUpdatesData);
+
+        Log::info('Price Update Response: ' .json_encode($response));
 
         return $response;
     }

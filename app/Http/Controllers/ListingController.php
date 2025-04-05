@@ -1890,6 +1890,8 @@ class ListingController extends Controller
                                 $upcCodes = UPCCodes::where('store', $store_id)->where('is_used', 0)->orderBy('sequence_id', 'asc')->first();
                             }
 
+                            Log::info(' UPC Code :: ' . json_encode($upcCodes));
+
                             $productDetail = StoreProduct::with('product', 'product.productType')->where('id', $store_product_ids[$key])->first();
                             $productDetail = $productDetail->toArray();
                             $product_name = $product;
@@ -1993,7 +1995,7 @@ class ListingController extends Controller
                                                     if ($store_type != '') {
                                                         switch (strtolower($store_type)) {
                                                             case 'walmart':
-                                                            case 'shopify':
+                                                            //case 'shopify':
                                                                 $upcCodes = $this->generateUpcCode($store_detail, $store_id);
                                                                 break;
                                                             default:
@@ -2188,7 +2190,7 @@ class ListingController extends Controller
 
                         $itemRecord = ListingItem::find($list->id);
                         $clonedRecord = $itemRecord->replicate();
-                        $clonedRecord->store_sku = NULL;
+                        //$clonedRecord->store_sku = NULL;
                         $clonedRecord->submit_count = 0;
                         $clonedRecord->price = $updated_price;
                         $clonedRecord->created_by = $created_by;
