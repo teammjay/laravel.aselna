@@ -42,13 +42,13 @@ class ListingItemImageCreate implements ShouldQueue
 
     private function createListingItemImage(mixed $listingItemLink, $listingInfo)
     {
-        //Log::info('ListingItemLink :: ' . json_encode($listingItemLink));
+        Log::info('ListingItemLink :: ' . json_encode($listingItemLink));
         $listingItem = $listingItemLink->item;
         $store = $listingInfo->store;
         $storeType = $listingInfo->store->storeType;
         $storeProduct = $listingItem->storeProduct;
         $productData = $storeProduct->product;
-        //Log::info('ProductData :: ' . json_encode($productData));
+        Log::info('ProductData :: ' . json_encode($productData));
         ProductImages::where('product_id', $productData->product_id)
             ->chunk(100, function ($productImages) use ($listingItem, $store, $storeType, $listingItemLink) {
                 if(!isset($store->fileSystem)) return;
@@ -125,11 +125,11 @@ class ListingItemImageCreate implements ShouldQueue
     function createFtpDirectory($ftpConn, $dirPath) {
         $parts = explode('/', $dirPath);
         $currentDir = '';
-    
+
         foreach ($parts as $part) {
             if (empty($part)) continue;
             $currentDir .= "/$part";
-    
+
             if (!@ftp_chdir($ftpConn, $currentDir)) { // Check if directory exists
                 ftp_mkdir($ftpConn, $currentDir); // Create directory if it does not exist
             }

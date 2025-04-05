@@ -13,9 +13,12 @@ use App\Models\ProductTypeKeyword;
 use App\Models\StoreTypeCategory;
 use App\Services\Auth\AmazonAuthService;
 use App\Services\Marketplace\Contracts\MarketplaceServiceInterface;
+use App\Utils\AmazonUtility;
 use App\Utils\FileUtility;
 use App\Utils\XmlUtility;
 use Illuminate\Support\Facades\Log;
+use Opis\JsonSchema\Schema;
+use Opis\JsonSchema\Validator;
 use SimpleXMLElement;
 
 class AmazonService implements MarketplaceServiceInterface
@@ -57,6 +60,7 @@ class AmazonService implements MarketplaceServiceInterface
         $userIdentifier = $listingInfo->store->user_id;
         Log::info('User Identifier: ' . json_encode($listingInfo->store));
         $listingItems = ListingItemLink::where('listing_id', $listingId)->cursor();
+        $this->authService = new AmazonAuthService();
 
         // Build JSON feed structure
         $feed = [
@@ -91,17 +95,16 @@ class AmazonService implements MarketplaceServiceInterface
                     ]],
                     'product_description' => [['value' => $productData->product_description, 'language_tag' => 'en_US']],
                     'supplier_declared_dg_hz_regulation' => [['value' => 'not_applicable']],
-                    'parentage_level' => [['value' => 'parent']],
                     'batteries_required' => [['value' => false]],
-                    'variation_theme' => [['name' => 'SIZE']],
                     'externally_assigned_product_identifier' => [[
                         'value' => $itemDetail->upc,
-                        'type' => 'UPC'
+                        'type' => 'upc'
                     ]],
                     'part_number' => [['value' => $itemDetail->mpn]],
                     'product_tax_code' => [['value' => 2040274]],
                 ]
             ];
+
             if (isset($productData)) {
                 $categoryId = $storeProduct->store_type_category_id;
                 $currentCategory = StoreTypeCategory::where('id', $categoryId)->first();
@@ -110,6 +113,9 @@ class AmazonService implements MarketplaceServiceInterface
                     $message['productType'] = $currentCategory->marketplace_code;
                     $message['attributes']['item_type_keyword'] = [['value' => $currentCategory->name]];
                 }
+
+                $fieldsByProductType = AmazonUtility::getFieldsForProductTypes($currentCategory->marketplace_code, $itemDetail);
+                $message['attributes'] = array_merge($message['attributes'], $fieldsByProductType);
 
                 $bulletPoints = [];
                 foreach ($storeProduct->features as $feature) {
@@ -140,7 +146,7 @@ class AmazonService implements MarketplaceServiceInterface
                         ]];
                     } else {
                         if ($other_image_count <= 8) {
-                            $message['attributes']['other_product_image_locator_'. ($other_image_count++)]  = [[
+                            $message['attributes']['other_product_image_locator_' . ($other_image_count++)] = [[
                                 'media_location' => $fileSystem->url_base_path . $image->path
                             ]];
                         }
@@ -150,8 +156,17 @@ class AmazonService implements MarketplaceServiceInterface
 
             $feed['messages'][] = $message;
 
+//            $schemaJson = $this->authService->getProductTypeSchema($currentCategory->marketplace_code);
+//            $validator = new Validator();
+//            $result = $validator->validate($productData, $schemaJson);
+//            if ($result->isValid()) {
+//                Log::info("Product data is valid.");
+//            } else {
+//                Log::error("Product data is invalid: " . json_encode($result->error()->subErrors()));
+//            }
             $index++;
         }
+
 
         FileUtility::saveToFile(
             public_path('feeds/amazon/' . $listingId . '.json'),

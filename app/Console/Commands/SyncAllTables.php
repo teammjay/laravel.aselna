@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Jobs\AmazonListingItemSyncJob;
 use App\Jobs\BrandSyncJob;
 use App\Jobs\CarrierSyncJob;
 use App\Jobs\CategorySyncJob;
@@ -124,17 +125,18 @@ class SyncAllTables extends Command
 //            ListingFeedSyncJob::dispatch(),
 //            UPCSyncJob::dispatch(),
 //            LogisticCentreSyncJob::dispatch(),
-//            ProductImagesSyncJob::dispatch(),
+//            ProductImagesSyncJob::dispatch();
 //            ProductAlternativeImagesSyncJob::dispatch(),
 //        ]);
 //        DataPatch::dispatch();
-           FeedGenerationJob::dispatch('762ec268-3645-44eb-856f-0ab98d7b8201');
+//           FeedGenerationJob::dispatch('762ec268-3645-44eb-856f-0ab98d7b8201');
         //    FeedGenerationJob::dispatch('4e7f02b9-3530-4e87-ad72-8cf5881ebe66');
-        //    ListingItemImageCreate::dispatch('4e7f02b9-3530-4e87-ad72-8cf5881ebe66');
+//            ListingItemImageCreate::dispatch('219a96c3-2608-4957-ac21-a16b4db5e81f');
 //       FeedGenerationJob::dispatch('80415096-6ce4-4f55-b862-f1a3d3ba4662');
     //    ListingItemImageCreate::dispatch('4dcf1d3f-b723-4b31-a075-3702c0746b10');
 //        FetchAmazonOrdersJob::dispatch();
 //        StoreCategorySyncJob::dispatch('94428796-cdf9-dc2b-a1e7-aa4100066fd9');
+        AmazonListingItemSyncJob::dispatch();
 
     }
 }

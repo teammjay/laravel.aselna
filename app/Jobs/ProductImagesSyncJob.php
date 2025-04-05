@@ -45,6 +45,7 @@ class ProductImagesSyncJob implements ShouldQueue
 
         $productImagesQ->chunk(1000, function ($productImages) {
             foreach ($productImages as $productImage) {
+                Log::info('ProductImagesSyncJob: ' . $productImage->product_id);
                 $this->createProductImage($productImage);
             }
         });
@@ -103,7 +104,7 @@ class ProductImagesSyncJob implements ShouldQueue
             ]);
         }
 
-        
+
         ProductImages::updateOrCreate([
             'product_id' => $product->product_id,
             'sort_order' => $productImage->picture_id

@@ -22,9 +22,9 @@ class FileUtility
 
     public static function saveImage($imagePath, $localPath, $fileName)
     {
-        if (env('APP_ENV') === 'local') {
-            return self::saveImageToLocal($imagePath, $localPath, $fileName);
-        }
+//        if (env('APP_ENV') === 'local') {
+//            return self::saveImageToLocal($imagePath, $localPath, $fileName);
+//        }
         Log::info('FileImageSave: ' . $imagePath);
         $storagePath = storage_path('app/public/' . $localPath . '/' . $fileName);
         $image = file_get_contents($imagePath);
