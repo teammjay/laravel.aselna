@@ -164,7 +164,9 @@ class ShopifyService implements MarketplaceServiceInterface
 //            $productSetId = $response['productSet']['productSetOperation']['id'];
 //
 //            $feedInfo->update([
-//                'feed_id' => $productSetId
+//                'feed_id' => $produc $feedInfo->update([
+////                'feed_id' => $productSetId
+////            ]);
 //            ]);
             if(isset($response['data']) && empty($response['data']['userErrors'])) {
 
