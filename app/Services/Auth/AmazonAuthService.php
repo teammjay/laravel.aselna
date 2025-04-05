@@ -292,4 +292,63 @@ class AmazonAuthService
         return json_decode($response->getBody(), true);
     }
 
+    public function getProductTypeSchema($productType)
+    {
+        $marketPlaceID = $this->getMarketplaceIDs();
+        $accessToken = $this->getAccessToken();
+        Log::info('Access Token Created ' . $accessToken);
+
+        $response = $this->client->get('/definitions/2020-09-01/productTypes/' . $productType, [
+            'headers' => [
+                'x-amz-access-token' => "{$accessToken}",
+                'Content-Type' => 'application/json',
+
+            ],
+            'query' => [
+                'marketplaceIds' => implode(',', $marketPlaceID),
+                'locale' => 'en_US',
+                'searchLocale' => 'en_US',
+            ]
+        ]);
+
+        $data = json_decode($response->getBody(), true);
+        $schemaJsonUrl = $data['schema']['link']['resource'] ?? null;
+        Log::info('Product Type Schema: ' . json_encode($schemaJsonUrl));
+
+        if ($schemaJsonUrl) {
+            $response = $this->client->get($schemaJsonUrl, []);
+
+            $schemaJson = json_decode($response->getBody(), true);
+        } else {
+            $schemaJson = null;
+        }
+
+//        Log::info('Product Type Schema JSON: ' . json_encode($schemaJson));
+
+        return $schemaJson;
+    }
+
+    public function fetchListingInfoBySku($sku,$userIdentifier)
+    {
+        $marketPlaceID = $this->getMarketplaceIDs();
+        $accessToken = $this->getAccessToken();
+        Log::info('Access Token Created ' . $accessToken);
+
+        $response = $this->client->get(
+            '/listings/2021-08-01/items/' . $userIdentifier . '/' . $sku,
+            [
+                'headers' => [
+                    'x-amz-access-token' => "{$accessToken}",
+                    'Content-Type' => 'application/json',
+                ],
+                'query' => [
+                    'marketplaceIds' => implode(',', $marketPlaceID),
+                    'includedData' => 'issues,attributes,summaries,offers,fulfillmentAvailability',
+                ]
+            ]
+        );
+
+        return json_decode($response->getBody(), true);
+    }
+
 }

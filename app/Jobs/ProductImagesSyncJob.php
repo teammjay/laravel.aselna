@@ -36,7 +36,6 @@ class ProductImagesSyncJob implements ShouldQueue
 //        if (env('APP_ENV') === 'local') return;
         $productImagesQ = DB::connection('fonus_db')
             ->table('tbl_product_images')
-            ->where('product_id', '=', '2019')
             ->where('picture_type_id', '=', '1')
             ->orderBy('product_id');
 
