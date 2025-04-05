@@ -2,10 +2,13 @@
 
 namespace App\Services\Marketplace\Service;
 
+use App\Constants\FeedStatus;
 use App\Constants\FeedTypes;
+use App\Constants\ListingSyncStatus;
 use App\Jobs\ProductInterfaces;
 use App\Models\Listing;
 use App\Models\ListingFeed;
+use App\Models\ListingItem;
 use App\Models\ListingItemLink;
 use App\Models\ListingItemProductImage;
 use App\Models\ProductInterface;
@@ -30,7 +33,6 @@ class ShopifyService implements MarketplaceServiceInterface
 
         $fileSystem = $listingInfo->store->fileSystem;
         $store = $listingInfo->store;
-
         switch ($feedInfo->feed_type) {
             case FeedTypes::CREATE:
                 $this->SubmitCreateFeed($listingInfo,$feedInfo, $listingId);
@@ -42,10 +44,10 @@ class ShopifyService implements MarketplaceServiceInterface
                 $this->submitDeleteFeed($listingInfo, $listingId);
                 break;
             case FeedTypes::INVENTORY:
-                $this->submitInventoryFeed($listingInfo, $listingId);
+                $this->submitInventoryFeed($listingInfo, $feedInfo, $listingId);
                 break;
             case FeedTypes::PRICE:
-                $this->submitPriceFeed($listingInfo, $listingId);
+                $this->submitPriceFeed($listingInfo, $feedInfo, $listingId);
                 break;
             default:
                 break;
@@ -90,7 +92,8 @@ class ShopifyService implements MarketplaceServiceInterface
             $productOptions[] = [
                 'name' => 'Color',
                 'values' => [
-                    ['name' => $productData->productColor->name,]
+                    //['name' => $productData->productColor->name,]
+                    ['name' => 'White',]
                 ]
             ];
 
@@ -141,7 +144,8 @@ class ShopifyService implements MarketplaceServiceInterface
                             'optionValues' => [
                                 [
                                     'optionName' => 'Color',
-                                    'name' => $productData->productColor->name,
+                                    //'name' => $productData->productColor->name,
+                                    'name' => 'White',
                                 ]
                             ],
                         ]
@@ -162,12 +166,44 @@ class ShopifyService implements MarketplaceServiceInterface
 //            $feedInfo->update([
 //                'feed_id' => $productSetId
 //            ]);
-            $productId = $response['productSet']['product']['id'];
+            if(isset($response['data']) && empty($response['data']['userErrors'])) {
 
-            $listingItem->update([
-                'store_sku' => $productId,
-                ''
-            ]);
+                $productId = $response['data']['productSet']['product']['id'];
+                $variantId = $response['data']['productSet']['product']['variants']['nodes'][0]['id'];
+
+                $listingItem->update([
+                    'store_sku' => $productId,
+                    'variant_id' => $variantId
+                ]);
+
+                $listing_items = ListingItemLink::select('item_id')->where('listing_id', $listingId)->get();
+                if (count($listing_items ?? []) > 0) {
+                    $successCnt = $failCnt = 0;
+                    foreach ($listing_items as $item) {
+
+                        $listingItem = ListingItem::findOrFail($item->item_id);
+                        if($listingItem->store_sku != ''){
+                            $listingItem->update([
+                                'sync_status' => ListingSyncStatus::Synchronized
+                            ]);
+                            $successCnt++;
+                        }else{
+                            $listingItem->update([
+                                'sync_status' => ListingSyncStatus::Unsynchronize
+                            ]);
+                            $failCnt++;
+                        }
+                    }
+                    $feedInfo->update([
+                        'status' => FeedStatus::PROCESSED,
+                        'success_count' => $successCnt,
+                        'fail_count' => $failCnt,
+                        'number_of_attempts' => $feedInfo->number_of_attempts ?? 0 + 1,
+                        'warning_count' => 0,
+                        'procesing_count' => 0
+                    ]);
+                }
+            }
         }
     }
 
@@ -251,67 +287,158 @@ class ShopifyService implements MarketplaceServiceInterface
     }
 
 
-    private function submitInventoryFeed($listingInfo, $listingId)
+    public function submitInventoryFeed($listingInfo, $feedInfo, $listingId)
     {
+
         $store = $listingInfo->store;
         $this->authService = new ShopifyAuthService($store->secret_key);
 
         $listingItems = ListingItemLink::with('listingItem')->where('listing_id', $listingId)->cursor();
-
+        $cnt = 0;
         foreach ($listingItems as $listingItem) {
 
             $itemDetail = $listingItem->item;
-            $variantId = '';
+            $variantId = $itemDetail->variant_id;
             $quantity = $itemDetail->quantity;
-
+            $inventoryUpdates = [];
             if($variantId != ''){
                 // Get required IDs
                 $inventoryItemId = $this->authService->getInventoryItemId($variantId);
                 $locationId = $this->authService->getLocationId();
 
                 if (!$inventoryItemId || !$locationId) {
-                    return response()->json(['error' => "Invalid inventory item or location for variant {$variantId}"], 400);
+                    Log::info('Invalid inventory item or location for variant '.$variantId.'"]');
+                    return false;
                 }
 
                 // Prepare inventory update array
-                $inventoryUpdates[] = [
+                $inventoryUpdates['locationId'] = $locationId;
+                $inventoryUpdates['changes'] = [
                     'inventoryItemId' => $inventoryItemId,
                     'locationId' => $locationId,
-                    'availableDelta' => $quantity
+                    'delta' => $quantity
                 ];
+
+                $cnt++;
             }
         }
 
         // Send the batch update request
         $response = $this->authService->updateInventory($inventoryUpdates);
 
+        if(isset($response['data']) && empty($response['data']['userErrors'])) {
+
+            $listing_items = ListingItemLink::select('item_id')->where('listing_id', $listingId)->get();
+            if (count($listing_items ?? []) > 0) {
+                $successCnt = $failCnt = 0;
+                foreach ($listing_items as $item) {
+
+                    $listingItem = ListingItem::findOrFail($item->item_id);
+                    if($listingItem->store_sku != ''){
+                        $listingItem->update([
+                            'sync_status' => ListingSyncStatus::Synchronized
+                        ]);
+                        $successCnt++;
+                    }else{
+                        $listingItem->update([
+                            'sync_status' => ListingSyncStatus::Unsynchronize
+                        ]);
+                        $failCnt++;
+                    }
+                }
+                $feedInfo->update([
+                    'status' => FeedStatus::PROCESSED,
+                    'success_count' => $successCnt,
+                    'fail_count' => $failCnt,
+                    'number_of_attempts' => $feedInfo->number_of_attempts ?? 0 + 1,
+                    'warning_count' => 0,
+                    'procesing_count' => 0
+                ]);
+            }
+        }else{
+
+            $feedInfo->update([
+                'success_count' => 0,
+                'fail_count' => 1,
+                'error_text' => isset($response['errors'][0]['message']) ? $response['errors'][0]['message'] : '',
+                'number_of_attempts' => ($feedInfo->number_of_attempts) ? $feedInfo->number_of_attempts + 1 : 0,
+                'warning_count' => 0,
+                'procesing_count' => 0
+            ]);
+        }
+
         return response()->json($response);
     }
 
-    private function submitPriceFeed($listingInfo, $listingId)
+    public function submitPriceFeed($listingInfo, $feedInfo, $listingId)
     {
         $store = $listingInfo->store;
         $this->authService = new ShopifyAuthService($store->secret_key);
 
         $listingItems = ListingItemLink::with('listingItem')->where('listing_id', $listingId)->cursor();
 
+        $priceUpdatesData = [];
         foreach ($listingItems as $listingItem) {
 
             $itemDetail = $listingItem->item;
-            $variantId = '';
+            $variantId = $itemDetail->variant_id;
             $price = $itemDetail->price;
 
             if($variantId != ''){
 
                 // Prepare price update array
-                $priceUpdatesData[] = [
-                    'variantId' => $variantId,
-                    'newPrice' => $price
+                $priceUpdatesData['productId'] = $itemDetail->store_sku;
+                $priceUpdatesData['variant'] = [
+                    [
+                    'id' => $variantId,
+                    'price' => $price
+                    ]
                 ];
             }
         }
         // Send the batch update request
         $response = $this->authService->updatePrice($priceUpdatesData);
+
+        if(isset($response['data']) && empty($response['data']['userErrors'])) {
+
+            $listing_items = ListingItemLink::select('item_id')->where('listing_id', $listingId)->get();
+            if (count($listing_items ?? []) > 0) {
+                $successCnt = $failCnt = 0;
+                foreach ($listing_items as $item) {
+
+                    $listingItem = ListingItem::findOrFail($item->item_id);
+                    if($listingItem->store_sku != ''){
+                        $listingItem->update([
+                            'sync_status' => ListingSyncStatus::Synchronized
+                        ]);
+                        $successCnt++;
+                    }else{
+                        $listingItem->update([
+                            'sync_status' => ListingSyncStatus::Unsynchronize
+                        ]);
+                        $failCnt++;
+                    }
+                }
+                $feedInfo->update([
+                    'status' => FeedStatus::PROCESSED,
+                    'success_count' => $successCnt,
+                    'fail_count' => $failCnt,
+                    'number_of_attempts' => ($feedInfo->number_of_attempts) ? $feedInfo->number_of_attempts + 1 : 0,
+                    'warning_count' => 0,
+                    'procesing_count' => 0
+                ]);
+            }
+        }else{
+
+            $feedInfo->update([
+                'success_count' => 0,
+                'fail_count' => 1,
+                'error_text' => isset($response['errors'][0]['message']) ? $response['errors'][0]['message'] : '',
+                'number_of_attempts' => ($feedInfo->number_of_attempts) ? $feedInfo->number_of_attempts + 1 : 0,
+                'warning_count' => 0,
+                'procesing_count' => 0
+            ]);
+        }
 
         return response()->json($response);
     }
