@@ -115,7 +115,9 @@ class AmazonService implements MarketplaceServiceInterface
                 }
 
                 $fieldsByProductType = AmazonUtility::getFieldsForProductTypes($currentCategory->marketplace_code, $itemDetail);
-                $message['attributes'] = array_merge($message['attributes'], $fieldsByProductType);
+                if (isset($fieldsByProductType)) {
+                    $message['attributes'] = array_merge($message['attributes'], $fieldsByProductType);
+                }
 
                 $bulletPoints = [];
                 foreach ($storeProduct->features as $feature) {

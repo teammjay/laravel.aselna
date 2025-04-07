@@ -5,6 +5,7 @@ namespace App\Jobs;
 use App\Models\Listing;
 use App\Models\ListingItemLink;
 use App\Models\ListingItemProductImage;
+use App\Models\ProductImageAlternative;
 use App\Models\ProductImages;
 use App\Models\SysFile;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -14,6 +15,8 @@ use Illuminate\Support\Facades\Log;
 class ListingItemImageCreate implements ShouldQueue
 {
     use Queueable;
+
+    public $timeout = 30000;
 
     private $listigId;
 
@@ -51,7 +54,7 @@ class ListingItemImageCreate implements ShouldQueue
         Log::info('ProductData :: ' . json_encode($productData));
         ProductImages::where('product_id', $productData->product_id)
             ->chunk(100, function ($productImages) use ($listingItem, $store, $storeType, $listingItemLink) {
-                if(!isset($store->fileSystem)) return;
+                if (!isset($store->fileSystem)) return;
                 foreach ($productImages as $productImage) {
                     $Image = $productImage->imageObj;
                     $path = '';
@@ -66,23 +69,46 @@ class ListingItemImageCreate implements ShouldQueue
                             $path = '/store-images/' . $store->id . '/' . $listingItem->id . '_' . $productImage->id . '.jpg';
                             break;
                     }
-                    $this->uploadImage($store,$Image,$path);
+
+                    $imageData = [
+                        'listing_item_id' => $listingItemLink->item_id,
+                        'product_image_id' => $productImage->id,
+                        'alt_product_image_id' => null,
+                        'image_file_system_id' => $Image->id,
+                        'path' => $path,
+                        'reference_id' => '',
+                    ];
+
+                    Log::info("Main Image :: " . json_encode($productImage));
+
+                    if ($productImage->main_image == 1) {
+                        $imageData['main_image'] = 1;
+                        if ($listingItem->image_version != null) {
+                            Log::info("Version :: " .  $listingItem->image_version);
+                            $alternativeImage = ProductImageAlternative::where('main_image_id', $productImage->id)->where('version_number', $listingItem->image_version)->first();
+
+                            Log::info("Alternative Image :: " . json_encode($alternativeImage));
+                            $path = '/store-images/' . $store->id . '/' . $listingItem->id . '_' . $alternativeImage->id . '.jpg';
+                            $imageData['path'] = $path;
+                            $imageData['product_image_id'] = null;
+                            $imageData['alt_product_image_id'] = $alternativeImage->id;
+                            $this->uploadImage($store, $Image, $path);
+                        } else {
+                            $this->uploadImage($store, $Image, $path);
+                        }
+                    } else {
+                        $this->uploadImage($store, $Image, $path);
+                    }
 
                     ListingItemProductImage::updateOrCreate([
                         'listing_item_id' => $listingItemLink->item_id,
                         'product_image_id' => $productImage->id,
-                    ], [
-                        'listing_item_id' => $listingItemLink->item_id,
-                        'product_image_id' => $productImage->id,
-                        'image_file_system_id' => $Image->id,
-                        'path' => $path,
-                        'reference_id' => '',
-                    ]);
+                    ], $imageData);
                 }
             });
     }
 
-    private function uploadImage($store,$Image,$path)
+    private function uploadImage($store, $Image, $path)
     {
         $storeFileSystem = $store->fileSystem;
         Log::info("File system :: " . json_encode($storeFileSystem));
@@ -122,7 +148,8 @@ class ListingItemImageCreate implements ShouldQueue
         ftp_close($ftpConn);
     }
 
-    function createFtpDirectory($ftpConn, $dirPath) {
+    function createFtpDirectory($ftpConn, $dirPath)
+    {
         $parts = explode('/', $dirPath);
         $currentDir = '';
 
@@ -136,19 +163,20 @@ class ListingItemImageCreate implements ShouldQueue
         }
     }
 
-    private function getProductMainImage($product_code, $listingItemId){
+    private function getProductMainImage($product_code, $listingItemId)
+    {
 
         // Step 1: Fetch the used image_version from listing_item table
         $listingItems = ListingItem::whereLike('sku', $product_code)->get();
         $usedImageVersion = [];
-        if(count($listingItems ?? []) > 0){
-            foreach ($listingItems as $litem){
+        if (count($listingItems ?? []) > 0) {
+            foreach ($listingItems as $litem) {
                 $usedImageVersion = $litem->image_version;
             }
         }
 
         // Step 2: Get all alternate image versions from product_image_alternatives table
-        $alternateImages = ProductImageAlternative::select('product_image_alternatives.product_id','product_image_alternatives.version_number','products.product_id','products.product_sku')->leftJoin('products', 'products.product_id', '=', 'product_image_alternatives.product_id')->where('products.product_sku', $product_code)->get();
+        $alternateImages = ProductImageAlternative::select('product_image_alternatives.product_id', 'product_image_alternatives.version_number', 'products.product_id', 'products.product_sku')->leftJoin('products', 'products.product_id', '=', 'product_image_alternatives.product_id')->where('products.product_sku', $product_code)->get();
 
         // Step 3: Determine the next image_version
         $nextImageVersion = null;
@@ -157,7 +185,7 @@ class ListingItemImageCreate implements ShouldQueue
 
         foreach ($alternateImages as $image) {
             // Collect used and unused image versions
-            if (in_array($image->version_number,$usedImageVersion)) {
+            if (in_array($image->version_number, $usedImageVersion)) {
                 $usedImages[] = $image->version_number;
             } else {
                 $unusedImages[] = $image->version_number;
