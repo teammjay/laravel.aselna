@@ -135,4 +135,46 @@ class ListingItemImageCreate implements ShouldQueue
             }
         }
     }
+
+    private function getProductMainImage($product_code, $listingItemId){
+
+        // Step 1: Fetch the used image_version from listing_item table
+        $listingItems = ListingItem::whereLike('sku', $product_code)->get();
+        $usedImageVersion = [];
+        if(count($listingItems ?? []) > 0){
+            foreach ($listingItems as $litem){
+                $usedImageVersion = $litem->image_version;
+            }
+        }
+
+        // Step 2: Get all alternate image versions from product_image_alternatives table
+        $alternateImages = ProductImageAlternative::select('product_image_alternatives.product_id','product_image_alternatives.version_number','products.product_id','products.product_sku')->leftJoin('products', 'products.product_id', '=', 'product_image_alternatives.product_id')->where('products.product_sku', $product_code)->get();
+
+        // Step 3: Determine the next image_version
+        $nextImageVersion = null;
+        $unusedImages = [];
+        $usedImages = [];
+
+        foreach ($alternateImages as $image) {
+            // Collect used and unused image versions
+            if (in_array($image->version_number,$usedImageVersion)) {
+                $usedImages[] = $image->version_number;
+            } else {
+                $unusedImages[] = $image->version_number;
+            }
+        }
+
+        if (count($unusedImages) > 0) {
+            // If any image version is unused, take the first unused one as next image version
+            $nextImageVersion = $unusedImages[0];
+        } else {
+            // If all images are used, select a random one from the unused images
+            $nextImageVersion = $unusedImages[array_rand($unusedImages)];
+        }
+
+        ListingItem::where('id', $listingItemId)->update(['image_version' => $nextImageVersion]);
+
+        return $nextImageVersion;
+
+    }
 }
