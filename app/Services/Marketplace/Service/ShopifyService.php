@@ -148,6 +148,10 @@ class ShopifyService implements MarketplaceServiceInterface
                                     'name' => 'White',
                                 ]
                             ],
+                            'inventoryItem' => [
+                                'sku' => $listingItem->sku,
+                                'tracked' => true,
+                            ]
                         ]
                     ],
                 ], function ($value) {
@@ -172,13 +176,15 @@ class ShopifyService implements MarketplaceServiceInterface
 
                 $productId = $response['data']['productSet']['product']['id'];
                 $variantId = $response['data']['productSet']['product']['variants']['nodes'][0]['id'];
-
+                Log::info('Variant ID: ' . $variantId);
                 $listingItem->update([
                     'store_sku' => $productId,
                     'variant_id' => $variantId
                 ]);
 
-                $listing_items = ListingItemLink::select('item_id')->where('listing_id', $listingId)->get();
+                $this->submitInventoryFeed($listingInfo, $feedInfo, $listingId);
+
+                /*$listing_items = ListingItemLink::select('item_id')->where('listing_id', $listingId)->get();
                 if (count($listing_items ?? []) > 0) {
                     $successCnt = $failCnt = 0;
                     foreach ($listing_items as $item) {
@@ -204,7 +210,7 @@ class ShopifyService implements MarketplaceServiceInterface
                         'warning_count' => 0,
                         'procesing_count' => 0
                     ]);
-                }
+                }*/
             }
         }
     }
@@ -297,12 +303,13 @@ class ShopifyService implements MarketplaceServiceInterface
 
         $listingItems = ListingItemLink::with('listingItem')->where('listing_id', $listingId)->cursor();
         $cnt = 0;
+        $inventoryUpdates = [];
         foreach ($listingItems as $listingItem) {
 
             $itemDetail = $listingItem->item;
             $variantId = $itemDetail->variant_id;
-            $quantity = $itemDetail->quantity;
-            $inventoryUpdates = [];
+            $quantity = (isset($itemDetail->quantity) && $itemDetail->quantity > 0) ? $itemDetail->quantity : 20;
+
             if($variantId != ''){
                 // Get required IDs
                 $inventoryItemId = $this->authService->getInventoryItemId($variantId);

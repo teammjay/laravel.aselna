@@ -132,31 +132,38 @@ class ShopifyAuthService
 
     public function updateInventory($inventoryUpdates)
     {
+        if(!empty($inventoryUpdates)) {
+            $variables = [
+                'input' => [
+                    'reason' => 'correction',
+                    'name' => 'available',
+                    //'locationId' => $inventoryUpdates['locationId'], // your actual Location GID
+                    'changes' => [$inventoryUpdates['changes']],
+                ],
+            ];
 
-        $variables = [
-            'input' => [
-                'reason' => 'correction',
-                'name' => 'available',
-                //'locationId' => $inventoryUpdates['locationId'], // your actual Location GID
-                'changes' => [$inventoryUpdates['changes']],
-            ],
-        ];
+            $response = $this->makeGraphQLRequest(ShopifyQueries::$inventoryAdjustQuantities, $variables);
 
-        $response = $this->makeGraphQLRequest(ShopifyQueries::$inventoryAdjustQuantities, $variables);
+            Log::info('Inventory Response: ' . json_encode($response));
 
-        Log::info('Inventory Response: ' .json_encode($response));
-
-        return $response;
+            return $response;
+        }else{
+            return false;
+        }
     }
 
     public function updatePrice($priceUpdatesData)
     {
 
-        $response = $this->makeGraphQLRequest(ShopifyQueries::$productVariantUpdate, $priceUpdatesData);
+        if(!empty($priceUpdatesData)) {
+            $response = $this->makeGraphQLRequest(ShopifyQueries::$productVariantUpdate, $priceUpdatesData);
 
-        Log::info('Price Update Response: ' .json_encode($response));
+            Log::info('Price Update Response: ' . json_encode($response));
 
-        return $response;
+            return $response;
+        }else{
+            return false;
+        }
     }
 
     public function getOrders()
