@@ -2389,24 +2389,24 @@ class ListingController extends Controller
                         $listrecord = Listing::create($listingArr);
                         $listing_id = $listrecord->id;
 
-                        $itemRecord = ListingItem::find($list->item_id);
+                        /*$itemRecord = ListingItem::find($list->item_id);
 
                         $clonedRecord = $itemRecord->replicate();
                         $clonedRecord->save();
                         $listing_item_id = $clonedRecord->id;
 
-                        $itemDetails = ListingItemDetail::where('listing_item_id', $list->item_id)->get();
+                        $itemDetails = ListingItemDetail::where('listing_item_id', $list->item_id)->get();*/
 
-                        if (!empty((array)$itemDetails)) {
-                            foreach ($itemDetails as $item_detail) {
+                        if ($listing_id) {
+                            /*foreach ($itemDetails as $item_detail) {
                                 $itemDetail = ListingItemDetail::find($item_detail->id);
                                 $itemclonedRecord = $itemDetail->replicate();
-                                $itemclonedRecord->listing_item_id = $listing_item_id;
+                                $itemclonedRecord->listing_item_id = $list->item_id;
                                 $itemclonedRecord->save();
-                            }
+                            }*/
 
                             $itemLink = array(
-                                'item_id' => $listing_item_id,
+                                'item_id' => $list->item_id,
                                 'listing_id' => $listing_id,
                                 'sync_status' => ListingSyncStatus::Synchronized,
                                 'created_by' => $created_by
