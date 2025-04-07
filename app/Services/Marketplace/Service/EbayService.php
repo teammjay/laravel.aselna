@@ -10,6 +10,7 @@ use App\Models\ListingItemDetail;
 use App\Models\ListingItemLink;
 use App\Models\ListingItemProductImage;
 use App\Models\ListingTemplate;
+use App\Models\ProductImageAlternative;
 use App\Models\ProductKeyFeatures;
 use App\Models\ProductSpecification;
 use App\Models\ProductTitleKeyword;
@@ -413,6 +414,7 @@ class EbayService implements MarketplaceServiceInterface
 
         XmlUtility::saveToFile(public_path('feeds/ebay/' . $listingId . '.xml'), $xmlContent);
     }
+
 
     private function generateVariationTitle($device_name, $short_keywords = [], $long_keywords = [], $max_length = 80)
     {

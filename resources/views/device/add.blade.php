@@ -363,7 +363,7 @@
                                         @if(count($interfaces ?? []) > 0)
                                             <option value=""></option>
                                             @foreach($interfaces as $interface)
-                                                <option value="{{ $interface->id }}">{{ $interface->name }}</option>
+                                                <option value="{{ $interface->id }}" data-producttype="{{ (isset($interface->ProductType)) ? $interface->ProductType->name : '' }}">{{ $interface->name }}</option>
                                             @endforeach
                                         @endif
                                     </select>
@@ -371,6 +371,7 @@
                                         <thead>
                                             <tr>
                                                 <th>Interface</th>
+                                                <th>Product Type</th>
                                                 <th>Action</th>
                                             </tr>
                                         </thead>
@@ -380,6 +381,7 @@
                                                     @if(in_array($interface->id,$deviceInterfaces))
                                                         <tr class="field-group">
                                                             <td>{{ $interface->name }}<input type="hidden" name="interfaces[]" value="{{ $interface->id }}"></td>
+                                                            <td>{{ (isset($interface->ProductType)) ? $interface->ProductType->name : '' }}</td>
                                                             <td><button type="button" class="btn btn-danger remove-interface p-1"> <i class="fas fa-fw fa-trash"></i></button></td>
                                                         </tr>
                                                     @endif
@@ -423,11 +425,14 @@ $(document).ready(function() {
     $('.pro-interface').on('select2:select', function (e) {
         var data = e.params.data;
         /* check selected store upc exist or not*/
-        //console.log(data); return false;
+        var ele = data.element;
+        var productType = $(ele).data('producttype');
+        //console.log(data);
+        //console.log($(ele).data('producttype')); return false;
         var interface_id = data.id;
         var interface = data.text;
         if(interface_id != '' && $('input[name="interfaces[]"][value="'+interface_id+'"]').length == 0) {
-            $('#interface-list').prepend('<tr class="field-group"><td>' + interface + '<input type="hidden" name="interfaces[]" value="' + interface_id + '"></td><td><button type="button" class="btn btn-danger remove-interface p-1"> <i class="fas fa-fw fa-trash"></i></button></td></tr>');
+            $('#interface-list').prepend('<tr class="field-group"><td>' + interface + '<input type="hidden" name="interfaces[]" value="' + interface_id + '"></td><td>'+productType+'</td><td><button type="button" class="btn btn-danger remove-interface p-1"> <i class="fas fa-fw fa-trash"></i></button></td></tr>');
 
         }
         setTimeout(function () {

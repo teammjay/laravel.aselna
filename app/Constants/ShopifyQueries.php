@@ -4,7 +4,7 @@ namespace App\Constants;
 
 class ShopifyQueries
 {
-public static string $saveProduct = <<<GQL
+public static $saveProduct = <<<GQL
     mutation (\$productSet : ProductSetInput!) {
         productSet(input : \$productSet) {
             product {
@@ -91,7 +91,7 @@ public static $getOrders = <<<GQL
     }
 GQL;
 
-public static string $createProductVariant = <<<GQL
+public static $createProductVariant = <<<GQL
     mutation productVariantCreate(\$input: ProductVariantInput!) {
         productVariantCreate(input: \$input) {
             productVariant {
