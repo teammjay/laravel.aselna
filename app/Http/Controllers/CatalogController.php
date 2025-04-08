@@ -897,6 +897,7 @@ class CatalogController extends Controller
                     'image' => $imageName,
                     //'thumbnail_image' => $imageName,
                     'sort_order' => (int) $key + 1,
+                    'version_number' => (int) $key + 1,
                 );
 
                 // Create thumbnail

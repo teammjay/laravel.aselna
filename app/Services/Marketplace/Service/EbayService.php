@@ -194,7 +194,7 @@ class EbayService implements MarketplaceServiceInterface
 
             // Add PictureDetails
             $pictureDetails = $item->addChild('PictureDetails');
-            $images = ListingItemProductImage::leftJoin('product_images', 'product_images.id', '=', 'listing_item_product_images.product_image_id')->where('listing_item_product_images.listing_item_id', $itemDetail->id)->orderBy('product_images.sort_order','asc')->get();
+            $images = ListingItemProductImage::leftJoin('product_images', 'product_images.id', '=', 'listing_item_product_images.product_image_id')->where('listing_item_product_images.listing_item_id', $itemDetail->id)->orderBy('listing_item_product_images.main_image','desc')->get();
             foreach ($images as $image) {
                 if ($image->productImage) {
                     $imagesPath = $fileSystem->url_base_path . $image->path;
