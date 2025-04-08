@@ -140,6 +140,10 @@ class AmazonAuthService
             ]);
 
             $compressedContent = file_get_contents($savePath);
+            if (env('APP_ENV') !== 'local') {
+                chown($savePath, 'aselna');
+                chgrp($savePath, 'psacln');
+            }
             $decompressedContent = gzdecode($compressedContent);
 
             if ($decompressedContent === false) {
@@ -148,6 +152,10 @@ class AmazonAuthService
             }
 
             FileUtility::saveToFile(public_path('result-feeds/amazon/' . $listingId . '.json'), $decompressedContent);
+            if (env('APP_ENV') !== 'local') {
+                chown('result-feeds/amazon/' . $listingId . '.json', 'aselna');
+                chgrp('result-feeds/amazon/' . $listingId . '.json', 'psacln');
+            }
             return 'result-feeds/amazon/'. $listingId. '.json';
         } else {
             $response = $this->client->get($doocumentUrl, []);
