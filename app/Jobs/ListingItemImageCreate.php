@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Models\Listing;
+use App\Models\ListingItem;
 use App\Models\ListingItemLink;
 use App\Models\ListingItemProductImage;
 use App\Models\ProductImageAlternative;
@@ -53,7 +54,7 @@ class ListingItemImageCreate implements ShouldQueue
         $productData = $storeProduct->product;
         Log::info('ProductData :: ' . json_encode($productData));
         ProductImages::where('product_id', $productData->product_id)
-            ->chunk(100, function ($productImages) use ($listingItem, $store, $storeType, $listingItemLink) {
+            ->chunk(100, function ($productImages) use ($listingItem, $store, $storeType, $listingItemLink,$productData) {
                 if (!isset($store->fileSystem)) return;
                 foreach ($productImages as $productImage) {
                     $Image = $productImage->imageObj;
@@ -83,9 +84,10 @@ class ListingItemImageCreate implements ShouldQueue
 
                     if ($productImage->main_image == 1) {
                         $imageData['main_image'] = 1;
-                        if ($listingItem->image_version != null) {
-                            Log::info("Version :: " .  $listingItem->image_version);
-                            $alternativeImage = ProductImageAlternative::where('main_image_id', $productImage->id)->where('version_number', $listingItem->image_version)->first();
+                        $nextImageVersion = $this->getProductMainImage($productData->product_sku,$listingItem->id);
+                        if ($nextImageVersion != null) {
+                            Log::info("Version :: " .  $nextImageVersion);
+                            $alternativeImage = ProductImageAlternative::where('main_image_id', $productImage->id)->where('version_number', $nextImageVersion)->first();
 
                             Log::info("Alternative Image :: " . json_encode($alternativeImage));
                             $path = '/store-images/' . $store->id . '/' . $listingItem->id . '_' . $alternativeImage->id . '.jpg';
@@ -167,7 +169,7 @@ class ListingItemImageCreate implements ShouldQueue
     {
 
         // Step 1: Fetch the used image_version from listing_item table
-        $listingItems = ListingItem::whereLike('sku', $product_code)->get();
+        $listingItems = ListingItem::whereLike('sku', '%' . $product_code . '%')->get();
         $usedImageVersion = [];
         if (count($listingItems ?? []) > 0) {
             foreach ($listingItems as $litem) {
@@ -183,21 +185,25 @@ class ListingItemImageCreate implements ShouldQueue
         $unusedImages = [];
         $usedImages = [];
 
-        foreach ($alternateImages as $image) {
-            // Collect used and unused image versions
-            if (in_array($image->version_number, $usedImageVersion)) {
-                $usedImages[] = $image->version_number;
-            } else {
-                $unusedImages[] = $image->version_number;
+        if (isset($alternateImages) && count($alternateImages) > 0) {
+            foreach ($alternateImages as $image) {
+                // Collect used and unused image versions
+                if (in_array($image->version_number, $usedImageVersion)) {
+                    $usedImages[] = $image->version_number;
+                } else {
+                    $unusedImages[] = $image->version_number;
+                }
             }
         }
 
         if (count($unusedImages) > 0) {
             // If any image version is unused, take the first unused one as next image version
             $nextImageVersion = $unusedImages[0];
-        } else {
+        } else if (count($usedImages) > 0) {
             // If all images are used, select a random one from the unused images
-            $nextImageVersion = $unusedImages[array_rand($unusedImages)];
+            $nextImageVersion = $usedImages[array_rand($usedImages)];
+        } else {
+            return null;
         }
 
         ListingItem::where('id', $listingItemId)->update(['image_version' => $nextImageVersion]);

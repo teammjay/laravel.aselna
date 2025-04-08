@@ -18,6 +18,8 @@ class ProductAlternativeImagesSyncJob implements ShouldQueue
 {
     use Queueable;
 
+    public $timeout = 30000;
+
     /**
      * Create a new job instance.
      */
@@ -31,13 +33,69 @@ class ProductAlternativeImagesSyncJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $productsImagesQ = DB::connection('easyesale_db')->table('product_image_alternative')
-            ->orderBy('id')
-            ->chunk(1000, function ($productsImages) {
+//        $productsImagesQ = DB::connection('easyesale_db')->table('product_image_alternative')
+//            ->orderBy('id')
+//            ->chunk(1000, function ($productsImages) {
+//                foreach ($productsImages as $productImage) {
+//                    $this->createProductImage($productImage);
+//                }
+//            });
+
+        $productImagesQ = DB::connection('fonus_db')
+            ->table('tbl_product_main_images')
+            ->orderBy('product_id');
+
+        $productImagesQ->chunk(1000, function ($productsImages) {
                 foreach ($productsImages as $productImage) {
-                    $this->createProductImage($productImage);
+                    $this->createProductImageFonus($productImage);
                 }
             });
+    }
+
+    private function createProductImageFonus(mixed $productImage)
+    {
+        $product = Catalog::where('product_code', $productImage->product_id)->first();
+        if (!$product) return;
+
+        $ourMainImage = ProductImages::where('product_id',$product->product_id)->where('main_image',1)->first();
+
+        $imageData = [
+            'product_id' => $product->product_id,
+            'version_number' => $productImage->image_id,
+            'main_image_id' => $ourMainImage->id ?? null
+        ];
+
+        try {
+            if (!file_exists(storage_path('app/public/product_images/' . $productImage->picture_name))) {
+                Log::info('ProductImagesSyncJob: ' . $productImage->picture_name);
+                $imagePath = 'https://fonusaccessory.com/inv/inv_images/additional_main_images/' . $productImage->picture_name;
+                $mainImageDetail = FileUtility::saveImage($imagePath, 'product_additional_images', $productImage->picture_name);
+            } else {
+                $mainImageDetail = SysFile::where('name', $productImage->picture_name)->first();
+            }
+
+            $imageData['image'] = $mainImageDetail->id;
+        } catch (Exception $e) {
+            Log::error('ProductImagesSyncJob: ' . $e->getMessage());
+        }
+
+        try {
+            if (!file_exists(storage_path('app/public/product_images/' . $productImage->tn_picture_name))) {
+                $imageThumbnail = 'https://fonusaccessory.com/inv/inv_images/additional_main_images/' . $productImage->tn_picture_name;
+                $thumbnailImageDetail = FileUtility::saveImage($imageThumbnail, 'product_additional_images', $productImage->tn_picture_name);
+            } else {
+                $thumbnailImageDetail = SysFile::where('name', $productImage->thumbnail_picture_name)->first();
+            }
+
+            $imageData['thumbnail_image'] = $thumbnailImageDetail->id;
+        } catch (Exception $e) {
+            Log::error('ProductImagesSyncJob: ' . $e->getMessage());
+        }
+
+        ProductImageAlternative::updateOrCreate([
+            'product_id' => $product->product_id,
+            'version_number' => $productImage->image_id
+        ], array_filter($imageData));
     }
 
     private function createProductImage(mixed $productImage)
@@ -114,4 +172,6 @@ class ProductAlternativeImagesSyncJob implements ShouldQueue
 //        }
 
     }
+
+
 }
