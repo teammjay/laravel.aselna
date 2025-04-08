@@ -24,6 +24,8 @@ class ListingItemProductImage extends Model
         'id',
         'listing_item_id',
         'product_image_id',
+        'alt_product_image_id',
+        'main_image',
         'image_file_system_id',
         'path',
         'reference_id',

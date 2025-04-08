@@ -4,6 +4,7 @@ namespace App\Utils\Amazon;
 
 use App\Constants\LengthUnit;
 use App\Constants\WeightUnit;
+use Illuminate\Support\Facades\Log;
 
 class FieldUtility
 {
@@ -29,4 +30,27 @@ class FieldUtility
             'value' => $productData->product_package_weight ?? 1,
         ]];
     }
+
+    public static function getComaptiblePhoneModels($itemDetail)
+    {
+        $compatible_phones = [];
+        foreach ($itemDetail->devices as $device) {
+            $deviceDetail = $device->device;
+            Log::info("Device :: " . json_encode($deviceDetail));
+            $compatible_phones[] = [
+                'language_tag' => 'en_US',
+                'value' => $deviceDetail->brand->name . ' ' . $deviceDetail->name,
+            ];
+        }
+        return $compatible_phones;
+    }
+
+    public static function getItemHardness(mixed $productData)
+    {
+        return [[
+            'value' => '9H',
+            'language_tag' => 'en_US',
+        ]];
+    }
+
 }
