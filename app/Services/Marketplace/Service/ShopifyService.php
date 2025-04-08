@@ -60,10 +60,11 @@ class ShopifyService implements MarketplaceServiceInterface
         $store = $listingInfo->store;
 
         $listingItems = ListingItemLink::where('listing_id', $listingId)->cursor();
-        foreach ($listingItems as $item) {
+        foreach ($listingItems as $litem) {
             $colorOption = [];
             $productOptions = [];
-            $listingItem = $item->listingItem;
+            $item = $litem->item;
+            $listingItem = $litem->listingItem;
             $storeProduct = $listingItem->storeProduct;
             $productData = $listingItem->storeProduct->product;
             Log::info('Listing Item: ' . json_encode($listingItem));
