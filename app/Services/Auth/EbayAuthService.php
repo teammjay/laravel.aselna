@@ -130,7 +130,7 @@ class EbayAuthService
             $accessToken = $this->refreshToken();
             Log::info('Access Token ' . $accessToken);
 
-            $feedType = $this->getfeedType($listingInfo->feed_type);
+            $feedType = $this->getfeedType($listingInfo);
             Log::info('Feed Type ' . $feedType);
 
             $response = $this->client->post('sell/feed/v1/task', [
@@ -419,11 +419,17 @@ class EbayAuthService
         }
     }
 
-    public function getfeedType($feedType)
+    public function getfeedType($feedInfo)
     {
+
+        $feedType = $feedInfo->feed_type;
         switch ($feedType) {
             case FeedTypes::CREATE:
-                return 'LMS_ADD_FIXED_PRICE_ITEM';
+                if(isset($feedInfo->re_list) && ($feedInfo->re_list == 1)){
+                    return 'LMS_REVISE_FIXED_PRICE_ITEM';
+                }else {
+                    return 'LMS_ADD_FIXED_PRICE_ITEM';
+                }
             // case FeedTypes::IMAGE_UPDATE:
             //     return 'MPItem';
             case FeedTypes::DELETE:

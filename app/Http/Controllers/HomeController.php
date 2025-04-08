@@ -29,23 +29,7 @@ class HomeController extends Controller
     {
         $stores = Store::with('storeType')->orderBy('name', 'asc')->get();
         //$eBayServie = new EbayService();
-        //$eBayServie->getOrders();
-        //$test = $eBayServie->generateFeed('4da44e6a-c670-4995-be7f-b1a0d0489683');die;
-        //$eBayServie->submitFeed('221284a9-d400-4712-9eee-a9850f52dd88','c9a99498-1aac-4a4a-a8f6-a27df41b8763');
-        //$eBayServie->getInputFeed('task-1-1274330','c9a99498-1aac-4a4a-a8f6-a27df41b8763');
-        //echo 'sd';die;
-        //$googleService = new GoogleShoppingAuthService();
-        //$magentoService = new MagentoService();
-        //$magentoService->getOrders();
-        //$shopifyService = new ShopifyService();
-        //$shopifyService->getOrders();
-
-        /*Bus::chain([
-            new FetchShopifyOrders(),
-        ])->dispatch();*/
-
-        //$test = $googleService->generateFeed('0310236d-295f-bd6d-730d-35fcc324bdf9');
-        //echo $test;die;
+        //$eBayServie->generateFeed('5cc5b16a-a618-4e6e-b72d-41385242ffaf');die;
         return view('welcome', compact('stores'));
     }
 

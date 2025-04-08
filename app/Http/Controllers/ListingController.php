@@ -2383,7 +2383,8 @@ class ListingController extends Controller
                             'brand_combo' => $list->listing->brand_combo,
                             'carrier_combo' => $list->listing->carrier_combo,
                             'created_by' => $created_by,
-                            'updated_by' => $created_by
+                            'updated_by' => $created_by,
+                            're_list' => 1
                         ];
 
                         $listrecord = Listing::create($listingArr);
