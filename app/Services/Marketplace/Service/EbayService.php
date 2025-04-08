@@ -205,7 +205,21 @@ class EbayService implements MarketplaceServiceInterface
             foreach ($images as $image) {
                 if ($image->productImage) {
                     $imagesPath = $fileSystem->url_base_path . $image->path;
-                    $pictureDetails->addChild('PictureURL', $imagesPath);
+                    $filename = basename($imagesPath,".jpg");
+                    $clientId = env('EBAY_CLIENT_ID');
+                    $clientSecret = env('EBAY_CLIENT_SECRET');
+                    $redirectUri = env('EBAY_REDIRECT_URI');
+
+                    $authService = new EbayAuthService($clientId, $clientSecret, $redirectUri,$store->user_id);
+                    $epsUrl = $authService->uploadImageToEPS($imagesPath, $filename);
+
+                    if ($epsUrl) {
+                        $hostimage = $epsUrl;
+                    } else {
+                        // Log or handle the failure per image
+                        $hostimage = $imagesPath;
+                    }
+                    $pictureDetails->addChild('PictureURL', $hostimage);
                 }
             }
             /*if(isset($itemDetail->storeProduct->productImages) && !empty($itemDetail->storeProduct->productImages)){
@@ -348,31 +362,31 @@ class EbayService implements MarketplaceServiceInterface
                     if(($listingInfo->carrier_combo) && isset($variant->carrier)) {
                         $nameValueList = $variationSpecifics->addChild('NameValueList');
                         $nameValueList->addChild('Name', 'Choose Your Carrier');
-                        $nameValueList->addChild('Value', htmlspecialchars($variant->carrier->name));
-                        $compatibleCarriers[] = htmlspecialchars($variant->carrier->name);
+                        $nameValueList->addChild('Value', $variant->carrier->name);
+                        $compatibleCarriers[] = $variant->carrier->name;
                     }
                     $nameValueList1 = $variationSpecifics->addChild('NameValueList');
                     $nameValueList1->addChild('Name', 'Compatible Model');
                     if(strtolower($variant->device->brand->name) == 'apple'){
                         if($listingInfo->include_carriers && !$listingInfo->carrier_combo && isset($variant->carrier)) {
-                            $deviceName = htmlspecialchars($variant->carrier->name).' '.$variant->device->name;
-                            $compatibleModels[] = htmlspecialchars($variant->carrier->name).' '.$variant->device->name;
+                            $deviceName = $variant->carrier->name.' '.$variant->device->name;
+                            $compatibleModels[] = $variant->carrier->name.' '.$variant->device->name;
                         }else{
                             $deviceName = $variant->device->name;
                             $compatibleModels[] = $variant->device->brand->name.' '.$variant->device->name;
                         }
-                        $nameValueList1->addChild('Value', htmlspecialchars($deviceName));
+                        $nameValueList1->addChild('Value', $deviceName);
                         $variationTitle = $this->generateVariationTitle($deviceName, $shortkeywords,$longkeywords, $max_title_length);
                         //$variationTitle = $variationtitle.' '.$variant->device->name;
 
                     }else{
                         if($listingInfo->include_carriers && !$listingInfo->carrier_combo && isset($variant->carrier)) {
-                            $deviceName = htmlspecialchars($variant->carrier->name).' '.$variant->device->brand->name . ' ' . $variant->device->name;
+                            $deviceName = $variant->carrier->name.' '.$variant->device->brand->name . ' ' . $variant->device->name;
                         }else{
                             $deviceName = $variant->device->brand->name.' '.$variant->device->name;
                         }
 
-                        $nameValueList1->addChild('Value', htmlspecialchars($deviceName));
+                        $nameValueList1->addChild('Value', $deviceName);
                         $variationTitle = $this->generateVariationTitle($deviceName, $shortkeywords,$longkeywords, $max_title_length);
                         $compatibleModels[] = $deviceName;
                     }
@@ -392,7 +406,7 @@ class EbayService implements MarketplaceServiceInterface
                 $lastvariant = null;
                 foreach ($compatibleCarriers as $carrier) {
                     if($lastvariant != $carrier){
-                        $nameValueList->addChild('Value', htmlspecialchars($carrier));
+                        $nameValueList->addChild('Value', $carrier);
                     }
                     $lastvariant = $carrier;
                 }
@@ -406,9 +420,9 @@ class EbayService implements MarketplaceServiceInterface
                 if($lastmodel != $model) {
                     if (strpos($model, 'Apple') !== false) {
                         $newmodel = str_replace('Apple', '', $model);
-                        $nameValueList2->addChild('Value', trim(htmlspecialchars($newmodel)));
+                        $nameValueList2->addChild('Value', trim($newmodel));
                     } else {
-                        $nameValueList2->addChild('Value', trim(htmlspecialchars($model)));
+                        $nameValueList2->addChild('Value', trim($model));
                     }
                 }
                 $lastmodel = $model;
@@ -422,6 +436,9 @@ class EbayService implements MarketplaceServiceInterface
         XmlUtility::saveToFile(public_path('feeds/ebay/' . $listingId . '.xml'), $xmlContent);
     }
 
+    private function generateSiteHostedImages($imagepath){
+
+    }
 
     private function generateVariationTitle($device_name, $short_keywords = [], $long_keywords = [], $max_length = 80)
     {

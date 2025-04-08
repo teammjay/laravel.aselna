@@ -273,6 +273,48 @@ class EbayAuthService
         }
     }
 
+    public function uploadImageToEPS($imageUrl, $imageName)
+    {
+        $accessToken = $this->refreshToken();
+
+        $headers = [
+            'X-EBAY-API-COMPATIBILITY-LEVEL' => '1147',
+            'X-EBAY-API-CALL-NAME'           => 'UploadSiteHostedPictures',
+            'X-EBAY-API-SITEID'              => '0',
+            'Content-Type'                   => 'text/xml',
+            'X-EBAY-API-IAF-TOKEN'           => $accessToken,
+        ];
+
+        $xml = new \SimpleXMLElement('<?xml version="1.0" encoding="utf-8"?>
+<UploadSiteHostedPicturesRequest xmlns="urn:ebay:apis:eBLBaseComponents"></UploadSiteHostedPicturesRequest>');
+
+        $xml->addChild('PictureName',$imageName);
+        $xml->addChild('ExternalPictureURL',$imageUrl);
+        $xmlContent = $xml->asXML();
+
+        /*$xmlBody = <<<XML
+<?xml version="1.0" encoding="utf-8"?>
+<UploadSiteHostedPicturesRequest xmlns="urn:ebay:apis:eBLBaseComponents">
+  <PictureName>{$imageName}</PictureName>
+  <ExternalPictureURL>{$imageUrl}</ExternalPictureURL>
+</UploadSiteHostedPicturesRequest>
+XML;*/
+
+        $response = $this->client->post('ws/api.dll', [
+            'headers' => $headers,
+            'body'    => $xmlContent,
+        ]);
+
+        $body = $response->getBody()->getContents();
+        $xml = simplexml_load_string($body);
+
+        if ((isset($xml->Ack) && $xml->Ack == 'Success') && isset($xml->SiteHostedPictureDetails->FullURL)) {
+            return (string)$xml->SiteHostedPictureDetails->FullURL;
+        }
+
+        return null;
+    }
+
     public function uploadFile(string $taskId, string $fileName, string $filePath)
     {
         try {
