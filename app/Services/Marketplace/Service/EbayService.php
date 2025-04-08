@@ -205,7 +205,7 @@ class EbayService implements MarketplaceServiceInterface
             foreach ($images as $image) {
                 if ($image->productImage) {
                     $imagesPath = $fileSystem->url_base_path . $image->path;
-                    $filename = basename($imagesPath,".jpg");
+                    /*$filename = basename($imagesPath,".jpg");
                     $clientId = env('EBAY_CLIENT_ID');
                     $clientSecret = env('EBAY_CLIENT_SECRET');
                     $redirectUri = env('EBAY_REDIRECT_URI');
@@ -218,8 +218,8 @@ class EbayService implements MarketplaceServiceInterface
                     } else {
                         // Log or handle the failure per image
                         $hostimage = $imagesPath;
-                    }
-                    $pictureDetails->addChild('PictureURL', $hostimage);
+                    }*/
+                    $pictureDetails->addChild('PictureURL', $imagesPath);
                 }
             }
             /*if(isset($itemDetail->storeProduct->productImages) && !empty($itemDetail->storeProduct->productImages)){
