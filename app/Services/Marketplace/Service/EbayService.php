@@ -727,8 +727,13 @@ class EbayService implements MarketplaceServiceInterface
                                                     $errorMsg = $item->Errors->LongMessage;
                                                 }
                                             }else{
-                                                $failCnt++;
+
                                                 if(isset($item->Errors)){
+                                                    if(isset($item->Errors->ErrorCode) && $item->Errors->ErrorCode == '21916271'){
+                                                        $successCnt++;
+                                                    }else{
+                                                        $failCnt++;
+                                                    }
                                                     $errorMsg = $item->Errors->LongMessage;
                                                 }
                                             }
@@ -769,6 +774,30 @@ class EbayService implements MarketplaceServiceInterface
                                         if($successCnt > 0){
                                             $feedInfo->update([
                                                 'status' => FeedStatus::PROCESSED
+                                            ]);
+                                        }
+
+                                        $listing_items = ListingItemLink::select('item_id')->where('listing_id', $listingId)->get();
+                                        if (count($listing_items ?? []) > 0) {
+                                            $successCnt = $failCnt = 0;
+                                            foreach ($listing_items as $item) {
+
+                                                $listingItem = ListingItem::findOrFail($item->item_id);
+                                                if($listingItem->store_sku != ''){
+                                                    $listingItem->update([
+                                                        'sync_status' => ListingSyncStatus::Synchronized
+                                                    ]);
+                                                    $successCnt++;
+                                                }else{
+                                                    $listingItem->update([
+                                                        'sync_status' => ListingSyncStatus::Unsynchronize
+                                                    ]);
+                                                    $failCnt++;
+                                                }
+                                            }
+                                            $feedInfo->update([
+                                                'success_count' => $successCnt,
+                                                'fail_count' => $failCnt
                                             ]);
                                         }
                                     }
@@ -852,7 +881,7 @@ class EbayService implements MarketplaceServiceInterface
                             }
 
                             /* counting based on store sku*/
-                            $listing_items = ListingItemLink::select('item_id')->where('listing_id', $listingId)->get();
+                            /*$listing_items = ListingItemLink::select('item_id')->where('listing_id', $listingId)->get();
                             if (count($listing_items ?? []) > 0) {
                                 $successCnt = $failCnt = 0;
                                 foreach ($listing_items as $item) {
@@ -874,7 +903,7 @@ class EbayService implements MarketplaceServiceInterface
                                     'success_count' => $successCnt,
                                     'fail_count' => $failCnt
                                 ]);
-                            }
+                            }*/
                             /* counting based on store sku*/
 
                             return 'result-feeds/ebay/' . $listingId . '/' . $file;
