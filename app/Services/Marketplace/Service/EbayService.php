@@ -422,6 +422,8 @@ class EbayService implements MarketplaceServiceInterface
             sort($compatibleModels);
             $lastmodel = null;
             foreach ($compatibleModels as $model) {
+                $model = str_replace('"', '', $model);
+                $model = htmlspecialchars($model);
                 if($lastmodel != $model) {
                     if (strpos($model, 'Apple') !== false) {
                         $newmodel = str_replace('Apple', '', $model);
