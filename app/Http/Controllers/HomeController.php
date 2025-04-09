@@ -6,6 +6,7 @@ use App\Helpers\QueryFilters;
 use App\Jobs\FeedGenerationJob;
 use App\Jobs\FetchMagentoOrderJob;
 use App\Jobs\FetchShopifyOrders;
+use App\Jobs\FetchWalmartOrdersJob;
 use App\Models\Listing;
 use App\Models\ListingFeed;
 use App\Models\ListingItem;
@@ -31,6 +32,13 @@ class HomeController extends Controller
         //$eBayServie = new EbayService();
         //$eBayServie->generateFeed('5cc5b16a-a618-4e6e-b72d-41385242ffaf');die;
         return view('welcome', compact('stores'));
+    }
+
+    public function testfunction(){
+
+        Bus::chain([
+            new FetchWalmartOrdersJob(),
+        ])->dispatch();
     }
 
     public function getListingData(Request $request)

@@ -34,6 +34,9 @@ class FetchWalmartOrdersJob implements ShouldQueue
 
         if(count($stores ?? []) > 0) {
             foreach ($stores as $store) {
+                if($store->name != 'AWAccessory'){
+                    continue;
+                }
                 $created_by = auth()->user()->name ?? 'admin';
                 /* create order synchronization*/
                 $synchronizeArr = [

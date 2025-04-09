@@ -371,10 +371,10 @@ class WalmartService implements MarketplaceServiceInterface
 
     public function getOrders()
     {
-        //$this->authService = new WalmartAuthService();
-        //$response = $this->authService->getOrders();
+        $this->authService = new WalmartAuthService();
+        $response = $this->authService->getOrders();
 
-        // return $response;
+        return $response;
     }
 
     public function syncAttributes($store)

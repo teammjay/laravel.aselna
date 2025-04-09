@@ -9,6 +9,7 @@ use App\Models\ListingItemProductImage;
 use App\Models\ProductImageAlternative;
 use App\Models\ProductImages;
 use App\Models\SysFile;
+use App\Services\Auth\EbayAuthService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Log;
@@ -103,12 +104,36 @@ class ListingItemImageCreate implements ShouldQueue
                         $this->uploadImage($store, $Image, $path);
                     }
 
+                    if($path != '' && strtolower($storeType->name) == 'ebay'){
+                        $himage = $this->generateHostedImage($path,$store->user_id);
+                        $imageData['path'] = $himage;
+                    }
+
                     ListingItemProductImage::updateOrCreate([
                         'listing_item_id' => $listingItemLink->item_id,
                         'product_image_id' => $productImage->id,
                     ], $imageData);
                 }
             });
+    }
+
+    private function generateHostedImage($path,$store_user_id){
+
+        $filename = basename($path,".jpg");
+        $clientId = env('EBAY_CLIENT_ID');
+        $clientSecret = env('EBAY_CLIENT_SECRET');
+        $redirectUri = env('EBAY_REDIRECT_URI');
+
+        $authService = new EbayAuthService($clientId, $clientSecret, $redirectUri,$store_user_id);
+        $epsUrl = $authService->uploadImageToEPS($path, $filename);
+
+        if ($epsUrl) {
+            $hostimage = $epsUrl;
+        } else {
+            $hostimage = $path;
+        }
+
+        return $hostimage;
     }
 
     private function uploadImage($store, $Image, $path)
