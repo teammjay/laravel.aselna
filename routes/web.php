@@ -52,6 +52,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/devices/{id}/carriers', [DeviceController::class, 'getDeviceCarriers']);
     Route::get('/devices/{id}/interfaces', [DeviceController::class, 'getDeviceInterfaces']);
     Route::get('/', [HomeController::class, 'index'])->name('home');
+    Route::get('/home/testfunction', [HomeController::class, 'testfunction'])->name('home.testfunction');
     Route::get('/catalog', [CatalogController::class, 'index']);
     Route::get('/catalog', [CatalogController::class, 'index'])->name('catalog.list');
     Route::post('catalog/filter', [CatalogController::class, 'filter'])->name('catalog.filter');

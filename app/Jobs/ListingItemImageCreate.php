@@ -119,6 +119,9 @@ class ListingItemImageCreate implements ShouldQueue
 
     private function generateHostedImage($path,$store_user_id){
 
+        Log::info("Image path : $path");
+        Log::info("store user id : $store_user_id");
+
         $filename = basename($path,".jpg");
         $clientId = env('EBAY_CLIENT_ID');
         $clientSecret = env('EBAY_CLIENT_SECRET');
@@ -126,6 +129,8 @@ class ListingItemImageCreate implements ShouldQueue
 
         $authService = new EbayAuthService($clientId, $clientSecret, $redirectUri,$store_user_id);
         $epsUrl = $authService->uploadImageToEPS($path, $filename);
+
+        Log::info("Ebay Hosted Image: $epsUrl");
 
         if ($epsUrl) {
             $hostimage = $epsUrl;

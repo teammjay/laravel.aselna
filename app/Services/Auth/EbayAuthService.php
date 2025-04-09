@@ -306,6 +306,7 @@ XML;*/
         ]);
 
         $body = $response->getBody()->getContents();
+        Log::info('UploadSiteHostedPictures Response ' . $response->getBody());
         $xml = simplexml_load_string($body);
 
         if ((isset($xml->Ack) && $xml->Ack == 'Success') && isset($xml->SiteHostedPictureDetails->FullURL)) {

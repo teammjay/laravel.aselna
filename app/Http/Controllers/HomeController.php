@@ -35,7 +35,6 @@ class HomeController extends Controller
     }
 
     public function testfunction(){
-
         Bus::chain([
             new FetchWalmartOrdersJob(),
         ])->dispatch();
