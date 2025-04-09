@@ -290,6 +290,7 @@ class EbayAuthService
 
         $xml->addChild('PictureName',$imageName);
         $xml->addChild('ExternalPictureURL',$imageUrl);
+        $xml->addChild('PictureSet','Supersize');
         $xmlContent = $xml->asXML();
 
         /*$xmlBody = <<<XML
@@ -309,7 +310,7 @@ XML;*/
         Log::info('UploadSiteHostedPictures Response ' . $response->getBody());
         $xml = simplexml_load_string($body);
 
-        if ((isset($xml->Ack) && $xml->Ack == 'Success') && isset($xml->SiteHostedPictureDetails->FullURL)) {
+        if (isset($xml->SiteHostedPictureDetails->FullURL)) {
             return (string)$xml->SiteHostedPictureDetails->FullURL;
         }
 
