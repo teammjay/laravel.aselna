@@ -251,7 +251,7 @@ class WalmartService implements MarketplaceServiceInterface
             $imagesPath = [];
             $mainImagePath = [];
             foreach ($images as $image) {
-                if ($image->productImage && $image->productImage->main_image == 0) {
+                if ($image->productImage && $image->main_image == 0) {
                     $imagesPath[] = $fileSystem->url_base_path . $image->path;
                 } else {
                     $mainImagePath = $fileSystem->url_base_path . $image->path;

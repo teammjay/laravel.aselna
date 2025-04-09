@@ -94,6 +94,7 @@ class ListingItemImageCreate implements ShouldQueue
                             $imageData['path'] = $path;
                             $imageData['product_image_id'] = null;
                             $imageData['alt_product_image_id'] = $alternativeImage->id;
+							$Image = $alternativeImage->imageObj;
                             $this->uploadImage($store, $Image, $path);
                         } else {
                             $this->uploadImage($store, $Image, $path);
@@ -173,9 +174,10 @@ class ListingItemImageCreate implements ShouldQueue
         $usedImageVersion = [];
         if (count($listingItems ?? []) > 0) {
             foreach ($listingItems as $litem) {
-                $usedImageVersion = $litem->image_version;
+                $usedImageVersion[] = $litem->image_version;
             }
         }
+		Log::info("Used Images :: " . json_encode($usedImageVersion));
 
         // Step 2: Get all alternate image versions from product_image_alternatives table
         $alternateImages = ProductImageAlternative::select('product_image_alternatives.product_id', 'product_image_alternatives.version_number', 'products.product_id', 'products.product_sku')->leftJoin('products', 'products.product_id', '=', 'product_image_alternatives.product_id')->where('products.product_sku', $product_code)->get();
@@ -188,7 +190,7 @@ class ListingItemImageCreate implements ShouldQueue
         if (isset($alternateImages) && count($alternateImages) > 0) {
             foreach ($alternateImages as $image) {
                 // Collect used and unused image versions
-                if (in_array($image->version_number, $usedImageVersion)) {
+                if (isset($usedImageVersion) && in_array($image->version_number, $usedImageVersion)) {
                     $usedImages[] = $image->version_number;
                 } else {
                     $unusedImages[] = $image->version_number;

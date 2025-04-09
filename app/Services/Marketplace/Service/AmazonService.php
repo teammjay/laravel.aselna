@@ -142,7 +142,7 @@ class AmazonService implements MarketplaceServiceInterface
                 $images = ListingItemProductImage::where('listing_item_id', $itemDetail->id)->get();
                 $other_image_count = 1;
                 foreach ($images as $image) {
-                    if ($image->productImage && $image->productImage->main_image == 0) {
+                    if ($image->productImage && $image->main_image == 1) {
                         $message['attributes']['main_product_image_locator'] = [[
                             'media_location' => $fileSystem->url_base_path . $image->path
                         ]];
