@@ -26,7 +26,7 @@ class Listing extends Model
     }
 
 
-    protected $fillable = ['id', 'store_id', 'generation_type_id', 'device_id', 'feed_type', 'client', 'status', 'chained', 'include_carriers', 'brand_combo', 'carrier_combo', 'preserve_title_description', 'manufacturer_id', 'feed_execution_delay', 'created_by', 'updated_by', 'created_at', 'updated_at'];
+    protected $fillable = ['id', 'store_id', 'generation_type_id', 'device_id', 'feed_type', 'client', 'status', 'chained', 'include_carriers', 'brand_combo', 'carrier_combo', 'preserve_title_description', 'manufacturer_id', 'feed_execution_delay', 'created_by', 'updated_by', 'created_at', 'updated_at','re_list'];
 
     // add store relationship
     public function store()

@@ -33,4 +33,9 @@ class ProductImageAlternative extends Model
     {
         return $this->belongsTo(ProductImages::class, 'main_image_id', 'id');
     }
+	
+    public function imageObj()
+    {
+        return $this->belongsTo(SysFile::class, 'image');
+    }
 }

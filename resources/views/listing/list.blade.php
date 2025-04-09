@@ -1096,8 +1096,10 @@
 
         $(document).on('click', '#re_list', function() {
             let selected_list = [];
+            let selected_sku = [];
             $('input[name="listing_item[]"]:checked').each(function () {
-                selected_list.push($(this).val())
+                selected_list.push($(this).val());
+                selected_sku.push($(this).data('sku'));
             });
 
             $.ajax({
@@ -1105,6 +1107,7 @@
                 type: 'POST',
                 data: {
                     selected_list:selected_list,
+                    selected_sku:selected_sku,
                     "_token": "{{ csrf_token() }}"
                 },
                 success: function (response) {

@@ -363,7 +363,7 @@
                                         @if(count($interfaces ?? []) > 0)
                                             <option value=""></option>
                                             @foreach($interfaces as $interface)
-                                                <option value="{{ $interface->id }}" data-producttype="{{ (isset($interface->ProductType)) ? $interface->ProductType->name : '' }}">{{ $interface->name }}</option>
+                                                <option value="{{ $interface->id }}" data-producttype="{{ (isset($interface->ProductType)) ? $interface->ProductType->name : '' }}">{{ $interface->name }}{{ (isset($interface->ProductType)) ? ' ( '.$interface->ProductType->name.' )' : '' }}</option>
                                             @endforeach
                                         @endif
                                     </select>

@@ -147,13 +147,20 @@ class EbayService implements MarketplaceServiceInterface
             ///echo $description;die;
 
             // Add AddFixedPriceItemRequest
-            $addFixedPriceItemRequest = $xml->addChild('AddFixedPriceItemRequest', null, 'urn:ebay:apis:eBLBaseComponents');
+            if(isset($itemDetail->store_sku) && $itemDetail->store_sku != ''){
+                $addFixedPriceItemRequest = $xml->addChild('ReviseFixedPriceItemRequest', null, 'urn:ebay:apis:eBLBaseComponents');
+            }else {
+                $addFixedPriceItemRequest = $xml->addChild('AddFixedPriceItemRequest', null, 'urn:ebay:apis:eBLBaseComponents');
+            }
             $addFixedPriceItemRequest->addChild('ErrorLanguage', 'en_US');
             $addFixedPriceItemRequest->addChild('Version', $version);
             //$addFixedPriceItemRequest->addChild('WarningLevel', 'High');
 
             // Add Item details
             $item = $addFixedPriceItemRequest->addChild('Item');
+            if(isset($itemDetail->store_sku) && $itemDetail->store_sku != ''){
+                $item->addChild('ItemID', $itemDetail->store_sku);
+            }
             //$item->addChild('CategoryMappingAllowed', 'true');
             $item->addChild('Country', 'US');
             $item->addChild('Currency', 'USD');
@@ -194,7 +201,7 @@ class EbayService implements MarketplaceServiceInterface
 
             // Add PictureDetails
             $pictureDetails = $item->addChild('PictureDetails');
-            $images = ListingItemProductImage::leftJoin('product_images', 'product_images.id', '=', 'listing_item_product_images.product_image_id')->where('listing_item_product_images.listing_item_id', $itemDetail->id)->orderBy('product_images.sort_order','asc')->get();
+            $images = ListingItemProductImage::leftJoin('product_images', 'product_images.id', '=', 'listing_item_product_images.product_image_id')->where('listing_item_product_images.listing_item_id', $itemDetail->id)->orderBy('listing_item_product_images.main_image','desc')->get();
             foreach ($images as $image) {
                 if ($image->productImage) {
                     $imagesPath = $fileSystem->url_base_path . $image->path;

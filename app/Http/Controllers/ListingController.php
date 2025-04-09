@@ -282,7 +282,7 @@ class ListingController extends Controller
                     $productcode = '';
                 };
                 $data[] = array(
-                    "sku" => $product->sku . '<input type="checkbox" class="proList" name="listing_item[]" data-code="' . $productcode . '" value="' . $product->id . '" style="visibility:hidden;">',
+                    "sku" => $product->sku . '<input type="checkbox" class="proList" name="listing_item[]" data-sku="'.$product->sku.'" data-code="' . $productcode . '" value="' . $product->id . '" style="visibility:hidden;">',
                     "sale_count" => ($product->sale_count) ? $product->sale_count : 0,
                     "last_sale_date" => $product->last_sale_date,
                     "store_sku" => $product->store_sku,
@@ -2363,50 +2363,57 @@ class ListingController extends Controller
     public function reList(Request $request){
 
         $selected_listing = $request->input('selected_list');
+        $selected_sku = $request->input('selected_sku');
 
         if (!empty($selected_listing)) {
             try {
                 Log::info('Inside Relist Sync ');
-                $listingDetails = ListingItemLink::with('listing')->whereIn('item_id',$selected_listing)->get();
+                foreach($selected_listing as $key=>$list){
 
-                if (!empty((array)$listingDetails)) {
-                    Log::info('Listing Info Found');
-                    foreach ($listingDetails as $list) {
+                    $listingDetail = ListingItemLink::select('listing_item_link.*')->with('listing')->leftJoin('listing_item', 'listing_item.id', '=', 'listing_item_link.item_id')->where('listing_item_link.item_id',$list)->where('listing_item.sku',$selected_sku[$key])->first();
+
+                    if($listingDetail){
+                        Log::info('Listing Info Found');
                         $created_by = auth()->user()->name ?? 'admin';
                         $listingArr = [
-                            'store_id' => $list->listing->store_id,
-                            'generation_type_id' => $list->listing->generation_type_id,
+                            'store_id' => $listingDetail->listing->store_id,
+                            'generation_type_id' => $listingDetail->listing->generation_type_id,
                             'feed_type' => FeedTypes::CREATE,
                             'status' => 0,
                             'chained' => 1,
-                            'include_carriers' => $list->listing->include_carriers,
-                            'brand_combo' => $list->listing->brand_combo,
-                            'carrier_combo' => $list->listing->carrier_combo,
+                            'include_carriers' => $listingDetail->listing->include_carriers,
+                            'brand_combo' => $listingDetail->listing->brand_combo,
+                            'carrier_combo' => $listingDetail->listing->carrier_combo,
                             'created_by' => $created_by,
-                            'updated_by' => $created_by
+                            'updated_by' => $created_by,
+                            're_list' => 1
                         ];
+
+                        /*echo '<pre>';
+                        print_r($listingArr);
+                        echo '</pre>';die;*/
 
                         $listrecord = Listing::create($listingArr);
                         $listing_id = $listrecord->id;
 
-                        $itemRecord = ListingItem::find($list->item_id);
+                        /*$itemRecord = ListingItem::find($list->item_id);
 
                         $clonedRecord = $itemRecord->replicate();
                         $clonedRecord->save();
                         $listing_item_id = $clonedRecord->id;
 
-                        $itemDetails = ListingItemDetail::where('listing_item_id', $list->item_id)->get();
+                        $itemDetails = ListingItemDetail::where('listing_item_id', $list->item_id)->get();*/
 
-                        if (!empty((array)$itemDetails)) {
-                            foreach ($itemDetails as $item_detail) {
+                        if ($listing_id) {
+                            /*foreach ($itemDetails as $item_detail) {
                                 $itemDetail = ListingItemDetail::find($item_detail->id);
                                 $itemclonedRecord = $itemDetail->replicate();
-                                $itemclonedRecord->listing_item_id = $listing_item_id;
+                                $itemclonedRecord->listing_item_id = $list->item_id;
                                 $itemclonedRecord->save();
-                            }
+                            }*/
 
                             $itemLink = array(
-                                'item_id' => $listing_item_id,
+                                'item_id' => $listingDetail->item_id,
                                 'listing_id' => $listing_id,
                                 'sync_status' => ListingSyncStatus::Synchronized,
                                 'created_by' => $created_by
@@ -2419,12 +2426,13 @@ class ListingController extends Controller
                             ])->dispatch();
                         }
                     }
-
-                    return response()->json([
-                        'success' => true,
-                        'message' => 'Re-list successfully!'
-                    ]);
                 }
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Re-list successfully!'
+                ]);
+
             } catch (Exception $e) {
                 return response()->json([
                     'error' => $e->getMessage(),

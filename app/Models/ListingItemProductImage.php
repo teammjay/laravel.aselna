@@ -37,10 +37,14 @@ class ListingItemProductImage extends Model
         return $this->belongsTo(ListingItem::class, 'listing_item_id', 'id');
     }
 
-   public function productImage()
-   {
-       return $this->belongsTo(ProductImages::class, 'product_image_id', 'id');
-   }
+    public function productImage()
+    {
+        if ($this->product_image_id) {
+            return $this->belongsTo(ProductImages::class, 'product_image_id');
+        }
+
+        return $this->belongsTo(ProductImageAlternative::class, 'alt_product_image_id');
+    }
 //
 //    public function imageFileSystem()
 //    {
