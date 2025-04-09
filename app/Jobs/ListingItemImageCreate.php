@@ -89,7 +89,6 @@ class ListingItemImageCreate implements ShouldQueue
                         if ($nextImageVersion != null) {
                             Log::info("Version :: " .  $nextImageVersion);
                             $alternativeImage = ProductImageAlternative::where('main_image_id', $productImage->id)->where('version_number', $nextImageVersion)->first();
-
                             Log::info("Alternative Image :: " . json_encode($alternativeImage));
                             $path = '/store-images/' . $store->id . '/' . $listingItem->id . '_' . $alternativeImage->id . '.jpg';
                             $imageData['path'] = $path;
@@ -105,7 +104,7 @@ class ListingItemImageCreate implements ShouldQueue
                     }
 
                     if($path != '' && strtolower($storeType->name) == 'ebay'){
-                        $himage = $this->generateHostedImage($path,$store->user_id);
+                        $himage = $this->generateHostedImage($path,$store);
                         $imageData['path'] = $himage;
                     }
 
@@ -117,9 +116,14 @@ class ListingItemImageCreate implements ShouldQueue
             });
     }
 
-    private function generateHostedImage($path,$store_user_id){
+    private function generateHostedImage($path,$store){
 
-        Log::info("Image path : $path");
+        $storeFileSystem = $store->fileSystem;
+        $store_user_id = $store->user_id;
+
+        $newpath = $storeFileSystem->url_base_path.$path;
+
+        Log::info("Image path : $newpath");
         Log::info("store user id : $store_user_id");
 
         $filename = basename($path,".jpg");
@@ -128,7 +132,7 @@ class ListingItemImageCreate implements ShouldQueue
         $redirectUri = env('EBAY_REDIRECT_URI');
 
         $authService = new EbayAuthService($clientId, $clientSecret, $redirectUri,$store_user_id);
-        $epsUrl = $authService->uploadImageToEPS($path, $filename);
+        $epsUrl = $authService->uploadImageToEPS($newpath, $filename);
 
         Log::info("Ebay Hosted Image: $epsUrl");
 
