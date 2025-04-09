@@ -204,7 +204,11 @@ class EbayService implements MarketplaceServiceInterface
             $images = ListingItemProductImage::leftJoin('product_images', 'product_images.id', '=', 'listing_item_product_images.product_image_id')->where('listing_item_product_images.listing_item_id', $itemDetail->id)->orderBy('listing_item_product_images.main_image','desc')->get();
             foreach ($images as $image) {
                 if ($image->productImage) {
-                    $imagesPath = $fileSystem->url_base_path . $image->path;
+                    if(strpos($image->path,'ebayimg') !== false){
+                        $imagesPath = $image->path;
+                    }else {
+                        $imagesPath = $fileSystem->url_base_path . $image->path;
+                    }
                     /*$filename = basename($imagesPath,".jpg");
                     $clientId = env('EBAY_CLIENT_ID');
                     $clientSecret = env('EBAY_CLIENT_SECRET');
