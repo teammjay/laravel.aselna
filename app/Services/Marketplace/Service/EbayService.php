@@ -380,7 +380,7 @@ class EbayService implements MarketplaceServiceInterface
                             $compatibleModels[] = $variant->device->brand->name.' '.$variant->device->name;
                         }
                         $deviceName = str_replace('"', '', $deviceName);
-                        $nameValueList1->addChild('Value', $deviceName);
+                        $nameValueList1->addChild('Value', htmlspecialchars($deviceName));
                         $variationTitle = $this->generateVariationTitle($deviceName, $shortkeywords,$longkeywords, $max_title_length);
                         //$variationTitle = $variationtitle.' '.$variant->device->name;
 
@@ -391,7 +391,7 @@ class EbayService implements MarketplaceServiceInterface
                             $deviceName = $variant->device->brand->name.' '.$variant->device->name;
                         }
                         $deviceName = str_replace('"', '', $deviceName);
-                        $nameValueList1->addChild('Value', $deviceName);
+                        $nameValueList1->addChild('Value', htmlspecialchars($deviceName));
                         $variationTitle = $this->generateVariationTitle($deviceName, $shortkeywords,$longkeywords, $max_title_length);
                         $compatibleModels[] = $deviceName;
                     }
