@@ -293,14 +293,6 @@ class EbayAuthService
         $xml->addChild('PictureSet','Supersize');
         $xmlContent = $xml->asXML();
 
-        /*$xmlBody = <<<XML
-<?xml version="1.0" encoding="utf-8"?>
-<UploadSiteHostedPicturesRequest xmlns="urn:ebay:apis:eBLBaseComponents">
-  <PictureName>{$imageName}</PictureName>
-  <ExternalPictureURL>{$imageUrl}</ExternalPictureURL>
-</UploadSiteHostedPicturesRequest>
-XML;*/
-
         $response = $this->client->post('ws/api.dll', [
             'headers' => $headers,
             'body'    => $xmlContent,
@@ -311,7 +303,18 @@ XML;*/
         $xml = simplexml_load_string($body);
 
         if (isset($xml->SiteHostedPictureDetails->FullURL)) {
-            return (string)$xml->SiteHostedPictureDetails->FullURL;
+
+            $imageUrl = (string)$xml->SiteHostedPictureDetails->FullURL;
+            $maxSize = 0;
+
+            foreach ($xml->SiteHostedPictureDetails->PictureSetMember as $member) {
+                $size = (int) $member->PictureHeight;
+                if ($size > $maxSize) {
+                    $maxSize = $size;
+                    $imageUrl = (string) $member->MemberURL;
+                }
+            }
+            return $imageUrl;
         }
 
         return null;
