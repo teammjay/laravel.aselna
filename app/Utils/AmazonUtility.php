@@ -17,6 +17,12 @@ class AmazonUtility
                 return self::getElectronicCableFields($itemDetail);
             case 'SCREEN_PROTECTOR':
                 return self::getScreenProtectorsFeildType($itemDetail);
+            case 'HEADPHONES':
+                return self::getHeadphonesFields($itemDetail);
+            case 'PORTABLE_ELECTRONIC_DEVICE_MOUNT':
+                return self::getPortableElectronicDeviceMountFields($itemDetail);
+            case 'CELL_PHONE_HOLSTER' :
+                return self::getCellPhoneHolsterFields($itemDetail);
         }
     }
 
@@ -74,6 +80,72 @@ class AmazonUtility
                 'length' => ['value' => $productData->package_dimensions_length, 'unit' => 'inches'],
                 'width' => ['value' => $productData->package_dimensions_width, 'unit' => 'inches'],
             ]]
+        ];
+    }
+
+    private static function getHeadphonesFields($itemDetail)
+    {
+        $storeProduct = $itemDetail->storeProduct;
+        $productData = $itemDetail->storeProduct->product;
+
+        return [
+            'headphones_ear_placement' => [['value' => 'in_ear']],
+            'warranty_description' => [['value' => 'No Warranty Included', 'language_tag' => 'en_US']],
+            'item_package_weight' => FieldUtility::getItemPackageWeight($productData),
+            'color' => [['value' => $productData->color->name ?? 'Black', 'language_tag' => 'en_US']],
+            'connectivity_technology' => [['value' => 'Wireless', 'language_tag' => 'en_US',]],
+            'headphones_form_factor' => [['value' => 'In Ear', 'language_tag' => 'en_US',]],
+            'model_name' => FieldUtility::getComaptiblePhoneModels($itemDetail),
+            'included_components' => [['value' => 'Heaphones', 'language_tag' => 'en_US']],
+            'number_of_items' => [['value' => 0]],
+            'model_number' => [['value' => $itemDetail->sku]],
+        ];
+    }
+
+    private static function getPortableElectronicDeviceMountFields($itemDetail)
+    {
+        $storeProduct = $itemDetail->storeProduct;
+        $productData = $itemDetail->storeProduct->product;
+
+        $special_features = ProductSpecification::where('product_id', $productData->product_id)
+            ->get()
+            ->map(function ($specification) {
+                return $specification->name . ' : ' . $specification->value;
+            })
+            ->implode(', ');
+        if (isset($special_features) || empty(trim($special_features))) {
+            $special_features = 'Hard Screen Protectors';
+        }
+
+        $mounting_type = ProductSpecification::where('product_id', $productData->product_id)
+            ->where('name', 'Mounting Type')
+            ->first();
+
+        return [
+            'compatible_phone_models' => FieldUtility::getComaptiblePhoneModels($itemDetail),
+            'compatible_devices' => [['value' => 'Smartphones', 'language_tag' => 'en_US']],
+            'special_feature' => [['value' => $special_features, 'language_tag' => 'en_US']],
+            'material' => [['value' => $productData->material ?? 'Glossy', 'language_tag' => 'en_US']],
+            'mounting_type' => [['value' => $mounting_type->value ?? 'Dashboard', 'language_tag' => 'en_US']],
+            'number_of_items' => [['value' => 0]],
+            'included_components' => [['value' => 'Mount', 'language_tag' => 'en_US']],
+            'item_package_weight' => FieldUtility::getItemPackageWeight($productData),
+            'warranty_description' => [['value' => 'No Warranty Included', 'language_tag' => 'en_US']],
+        ];
+    }
+
+    private static function getCellPhoneHolsterFields($itemDetail)
+    {
+        $storeProduct = $itemDetail->storeProduct;
+        $productData = $itemDetail->storeProduct->product;
+
+        return [
+            'item_package_weight' => FieldUtility::getItemPackageWeight($productData),
+            'included_components' => [['value' => 'Cell Phone Hosteler', 'language_tag' => 'en_US']],
+            'compatible_phone_models' => FieldUtility::getComaptiblePhoneModels($itemDetail),
+            'warranty_description' => [['value' => 'No Warranty Included', 'language_tag' => 'en_US']],
+            'fastener' => [['type' => [['value' => 'Magnetic', 'language_tag' => 'en_US',]]]],
+            'number_of_items' => [['value' => 0]],
         ];
     }
 }
