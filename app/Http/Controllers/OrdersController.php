@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Constants\OrderStatus;
+use App\Models\ListingItem;
 use App\Models\Order;
 use App\Models\OrderSynchronization;
 use App\Models\Store;
@@ -196,13 +198,16 @@ class OrdersController extends Controller
         ]);
         $store_id = $request->input('store_id');
         $file = $request->file('csv_file');
-        $data = array_map('str_getcsv', file($file));
+        $handle = fopen($file, 'r');
+
+        // Get the headers (first row of CSV)
+        $headers = fgetcsv($handle);
 
         $created_by = auth()->user()->name ?? 'admin';
         /* create order synchronization*/
-        $synchronizeArr = [
+        /*$synchronizeArr = [
             'store_id' => $store_id,
-            'number_of_items' => '',
+            'number_of_items' => 1,
             'synchronization_type' => '',
             'filter_start_date' => date('Y-m-d H:i:s'),
             'filter_end_date' => '',
@@ -210,10 +215,62 @@ class OrdersController extends Controller
             'created_by' => $created_by
         ];
         $order_synchronization = OrderSynchronization::create($synchronizeArr);
-        $order_synchronization_id = $order_synchronization->id;
+        $order_synchronization_id = $order_synchronization->id;*/
 
-        foreach ($data as $key => $row) {
-            if ($key == 0) continue; // Skip header
+        while (($row = fgetcsv($handle)) !== false) {
+            $data = array_combine($headers, $row);
+
+            /*echo '<pre>';
+            print_r($data);
+            echo '</pre>';die;*/
+
+            /* check order id exist*/
+            $orderExist = Order::where('order_id',$data['order-id'])->count();
+            if($orderExist){
+                $orderDetail = Order::where('order_id',$data['order-id'])->first();
+                $orderObj = Order::findOrFail($orderDetail->id); // Retrieve the product by ID
+                $orderObj->update(['order_status' =>OrderStatus::getOrderStatusId('Pending')]);
+            }else {
+                $orderData = [
+                    'order_id' => $data['order-id'],
+                    'order_date' => date('Y-m-d H:i:s', strtotime($data['purchase-date'])),
+                    'order_status' => OrderStatus::getOrderStatusId('Pending'),
+                    //'order_total' => '',
+                    'buyer_first_name' => $data['buyer-name'],
+                    'buyer_last_name' => '',
+                    'buyer_email' => $data['buyer-email'],
+                    'purchase_order_id' => $data['order-id'],
+                    'store_id' => $store_id,
+                    //'order_synchronization_id' => $order_synchronization_id,
+                ];
+
+                $order_detail = Order::updateOrCreate([
+                    'order_id' => $data['order-id'],
+                ], $orderData);
+
+                /* get order items*/
+                $orderItemData = [
+                    'title' => $data['product-name'],
+                    'order_id' => $order_detail->id,
+//                            'product_id' => $itemDetail->storeProduct->product->product_id,
+//                            'client_id' => $itemDetail->client,
+//                            'listing_item_id' => $itemDetail->id,
+                    'sku' => $data['sku'],
+                    'store_sku' => $data['order-item-id'],
+                    'quantity' => $data['quantity-purchased'],
+                    'id1' => '',
+                    //'item_price' => $item['ItemPrice']['Amount'],
+                    //'shipping_price' => isset($item['ShippingPrice']) ? $item['ShippingPrice']['Amount'] : '0',
+                    //'item_tax' => $item['ItemTax']['Amount'],
+                    //'shipping_tax' => isset($item['ShippingTax']) ? $item['ShippingTax']['Amount'] : '0',
+                    'shipping_quantity' => $data['quantity-shipped'],
+                ];
+
+                $order_item = OrderItem::updateOrCreate([
+                    'order_id' => $order_detail->id
+                ],$orderItemData);
+            }
+
 
         }
 

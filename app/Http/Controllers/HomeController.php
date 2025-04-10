@@ -18,6 +18,7 @@ use App\Services\Marketplace\Service\EbayService;
 use App\Services\Marketplace\Service\GoogleShoppingService;
 use App\Services\Marketplace\Service\MagentoService;
 use App\Services\Marketplace\Service\ShopifyService;
+use App\Services\Marketplace\Service\WalmartService;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Bus;
@@ -35,9 +36,23 @@ class HomeController extends Controller
     }
 
     public function testfunction(){
-        Bus::chain([
+        $stores = Store::select('store.*')->join('store_type', 'store_type.id', '=', 'store.store_type_id')->where('store_type.code','walmart')->get();
+
+        if(count($stores ?? []) > 0) {
+            foreach ($stores as $store) {
+                if ($store->name != 'AWAccessory') {
+                    continue;
+                }
+                $walmartService = new WalmartService();
+                $orders = $walmartService->getOrders($store);
+                echo '<pre>';
+                print_r($orders);
+                echo '</pre>';die;
+            }
+        }
+        /*Bus::chain([
             new FetchWalmartOrdersJob(),
-        ])->dispatch();
+        ])->dispatch();*/
     }
 
     public function getListingData(Request $request)

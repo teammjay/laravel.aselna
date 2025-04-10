@@ -37,6 +37,7 @@ class WalmartAuthService
             'Authorization' => 'Basic ' . base64_encode("{$this->clientId}:{$this->clientSecret}"),
         ];
         $options = [
+            'verify' => false,
             'form_params' => [
                 'grant_type' => 'client_credentials',
             ],
@@ -112,6 +113,7 @@ class WalmartAuthService
             $url = "https://marketplace.walmartapis.com/v3/orders";
 
             $response = $this->client->get($url, [
+                'verify' => false,
                 'headers' => [
                     'WM_SEC.ACCESS_TOKEN' => "{$accessToken}",
                     'Content-Type' => 'application/json',
