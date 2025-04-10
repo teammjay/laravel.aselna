@@ -43,6 +43,7 @@ class AmazonListingItemSyncJob implements ShouldQueue
             ->whereIn('listing_item_link.sync_status', [
                 ListingSyncStatus::Synchronizing,
             ])
+            ->where('listing.status',)
 //            ->whereIn('listing.id', function ($subquery) use ($amazon_store_ids) {
 //                return $subquery->select('listing_id')->from('listing_feed')->whereIn('store_id', $amazon_store_ids);
 //            })
