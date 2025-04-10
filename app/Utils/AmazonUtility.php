@@ -23,6 +23,16 @@ class AmazonUtility
                 return self::getPortableElectronicDeviceMountFields($itemDetail);
             case 'CELL_PHONE_HOLSTER' :
                 return self::getCellPhoneHolsterFields($itemDetail);
+            case 'CHARGING_ADAPTER':
+                return self::getChargingAdapterFields($itemDetail);
+            case 'POWER_BANK':
+                return self::getPowerBankFields($itemDetail);
+            case 'CAMERA_TRIPOD':
+                return self::getCameraTripodFields($itemDetail);
+            case 'PORTABLE_ELECTRONIC_DEVICE_ARMBAND':
+                return self::getPortableElectronicDeviceArmbandFields($itemDetail);
+            case 'PORTABLE_ELECTRONIC_DEVICE_STAND':
+                return self::getPortableElectronicDeviceStandFields($itemDetail);
         }
     }
 
@@ -146,6 +156,123 @@ class AmazonUtility
             'warranty_description' => [['value' => 'No Warranty Included', 'language_tag' => 'en_US']],
             'fastener' => [['type' => [['value' => 'Magnetic', 'language_tag' => 'en_US',]]]],
             'number_of_items' => [['value' => 0]],
+        ];
+    }
+
+    private static function getChargingAdapterFields($itemDetail)
+    {
+        $storeProduct = $itemDetail->storeProduct;
+        $productData = $itemDetail->storeProduct->product;
+
+        return [
+            'warranty_description' => [['value' => 'No Warranty Included', 'language_tag' => 'en_US']],
+            'number_of_items' => '',
+            'connector_type' => '',
+            'connectivity_technology' => '',
+            'number_of_ports' => '',
+            'output_current' => '',
+            'compatible_devices' => '',
+            'input_voltage' => '',
+            'special_feature' => '',
+            'compatible_phone_models' => '',
+            'output_voltage' => '',
+        ];
+    }
+
+    private static function getPowerBankFields($itemDetail)
+    {
+        $storeProduct = $itemDetail->storeProduct;
+        $productData = $itemDetail->storeProduct->product;
+
+        $special_features = ProductSpecification::where('product_id', $productData->product_id)
+            ->get()
+            ->map(function ($specification) {
+                return $specification->name . ' : ' . $specification->value;
+            })
+            ->implode(', ');
+        if (isset($special_features) || empty(trim($special_features))) {
+            $special_features = 'Hard Screen Protectors';
+        }
+
+        return [
+            'warranty_description' => [['value' => 'No Warranty Included', 'language_tag' => 'en_US']],
+            'recommended_uses_for_product' => '',
+            'power_source_type' => '',
+            'connector_type' => '',
+            'item_length_width_thickness' => '',
+            'number_of_ports' => '',
+            'voltage' => '',
+            'battery' => '',
+            'compatible_devices' => '',
+            'special_feature' => '',
+            'number_of_items' => '',
+        ];
+    }
+
+    private static function getCameraTripodFields($itemDetail)
+    {
+        $storeProduct = $itemDetail->storeProduct;
+        $productData = $itemDetail->storeProduct->product;
+
+        return [
+            'warranty_description' => [['value' => 'No Warranty Included', 'language_tag' => 'en_US']],
+            'compatible_devices' => '',
+            'maximum_height' => '',
+            'number_of_items' => '',
+            'material' => '',
+            'included_components' => '',
+
+        ];
+    }
+
+    private static function getPortableElectronicDeviceArmbandFields($itemDetail)
+    {
+        $storeProduct = $itemDetail->storeProduct;
+        $productData = $itemDetail->storeProduct->product;
+
+        $special_features = ProductSpecification::where('product_id', $productData->product_id)
+            ->get()
+            ->map(function ($specification) {
+                return $specification->name . ' : ' . $specification->value;
+            })
+            ->implode(', ');
+        if (isset($special_features) || empty(trim($special_features))) {
+            $special_features = 'Hard Screen Protectors';
+        }
+
+        return [
+            'warranty_description' => [['value' => 'No Warranty Included', 'language_tag' => 'en_US']],
+            'compatible_devices' => '',
+            'form_factor' => '',
+            'special_feature' => '',
+            'number_of_items' => '',
+        ];
+    }
+
+    private static function getPortableElectronicDeviceStandFields($itemDetail)
+    {
+        $storeProduct = $itemDetail->storeProduct;
+        $productData = $itemDetail->storeProduct->product;
+
+        $special_features = ProductSpecification::where('product_id', $productData->product_id)
+            ->get()
+            ->map(function ($specification) {
+                return $specification->name . ' : ' . $specification->value;
+            })
+            ->implode(', ');
+        if (isset($special_features) || empty(trim($special_features))) {
+            $special_features = 'Hard Screen Protectors';
+        }
+
+        return [
+            'warranty_description' => [['value' => 'No Warranty Included', 'language_tag' => 'en_US']],
+            'special_feature' => '',
+            'compatible_phone_models' => '',
+            'included_components' => '',
+            'number_of_items' => '',
+            'material' => '',
+            'mounting_type' => '',
+            'compatible_devices' => '',
         ];
     }
 }
