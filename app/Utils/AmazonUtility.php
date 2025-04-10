@@ -23,6 +23,16 @@ class AmazonUtility
                 return self::getPortableElectronicDeviceMountFields($itemDetail);
             case 'CELL_PHONE_HOLSTER' :
                 return self::getCellPhoneHolsterFields($itemDetail);
+            case 'CHARGING_ADAPTER':
+                return self::getChargingAdapterFields($itemDetail);
+            case 'POWER_BANK':
+                return self::getPowerBankFields($itemDetail);
+            case 'CAMERA_TRIPOD':
+                return self::getCameraTripodFields($itemDetail);
+            case 'PORTABLE_ELECTRONIC_DEVICE_ARMBAND':
+                return self::getPortableElectronicDeviceArmbandFields($itemDetail);
+            case 'PORTABLE_ELECTRONIC_DEVICE_STAND':
+                return self::getPortableElectronicDeviceStandFields($itemDetail);
         }
     }
 
@@ -147,5 +157,30 @@ class AmazonUtility
             'fastener' => [['type' => [['value' => 'Magnetic', 'language_tag' => 'en_US',]]]],
             'number_of_items' => [['value' => 0]],
         ];
+    }
+
+    private static function getChargingAdapterFields($itemDetail)
+    {
+        return [];
+    }
+
+    private static function getPowerBankFields($itemDetail)
+    {
+        return [];
+    }
+
+    private static function getCameraTripodFields($itemDetail)
+    {
+        return [];
+    }
+
+    private static function getPortableElectronicDeviceArmbandFields($itemDetail)
+    {
+        return [];
+    }
+
+    private static function getPortableElectronicDeviceStandFields($itemDetail)
+    {
+        return [];
     }
 }
