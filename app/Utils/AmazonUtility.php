@@ -164,17 +164,27 @@ class AmazonUtility
         $storeProduct = $itemDetail->storeProduct;
         $productData = $itemDetail->storeProduct->product;
 
+        $special_features = ProductSpecification::where('product_id', $productData->product_id)
+            ->get()
+            ->map(function ($specification) {
+                return $specification->name . ' : ' . $specification->value;
+            })
+            ->implode(', ');
+        if (isset($special_features) || empty(trim($special_features))) {
+            $special_features = 'Hard Screen Protectors';
+        }
+
         return [
             'warranty_description' => [['value' => 'No Warranty Included', 'language_tag' => 'en_US']],
-            'number_of_items' => '',
+            'number_of_items' => [['value' => 0]],
             'connector_type' => '',
             'connectivity_technology' => '',
             'number_of_ports' => '',
             'output_current' => '',
             'compatible_devices' => '',
             'input_voltage' => '',
-            'special_feature' => '',
-            'compatible_phone_models' => '',
+            'special_feature' => [['value' => $special_features, 'language_tag' => 'en_US']],
+            'compatible_phone_models' => FieldUtility::getComaptiblePhoneModels($itemDetail),
             'output_voltage' => '',
         ];
     }
@@ -204,8 +214,8 @@ class AmazonUtility
             'voltage' => '',
             'battery' => '',
             'compatible_devices' => '',
-            'special_feature' => '',
-            'number_of_items' => '',
+            'special_feature' => [['value' => $special_features, 'language_tag' => 'en_US']],
+            'number_of_items' => [['value' => 0]],
         ];
     }
 
@@ -218,7 +228,7 @@ class AmazonUtility
             'warranty_description' => [['value' => 'No Warranty Included', 'language_tag' => 'en_US']],
             'compatible_devices' => '',
             'maximum_height' => '',
-            'number_of_items' => '',
+            'number_of_items' => [['value' => 0]],
             'material' => '',
             'included_components' => '',
 
@@ -244,8 +254,8 @@ class AmazonUtility
             'warranty_description' => [['value' => 'No Warranty Included', 'language_tag' => 'en_US']],
             'compatible_devices' => '',
             'form_factor' => '',
-            'special_feature' => '',
-            'number_of_items' => '',
+            'special_feature' => [['value' => $special_features, 'language_tag' => 'en_US']],
+            'number_of_items' => [['value' => 0]],
         ];
     }
 
@@ -264,14 +274,18 @@ class AmazonUtility
             $special_features = 'Hard Screen Protectors';
         }
 
+        $mounting_type = ProductSpecification::where('product_id', $productData->product_id)
+            ->where('name', 'Mounting Type')
+            ->first();
+
         return [
             'warranty_description' => [['value' => 'No Warranty Included', 'language_tag' => 'en_US']],
-            'special_feature' => '',
-            'compatible_phone_models' => '',
+            'special_feature' => [['value' => $special_features, 'language_tag' => 'en_US']],
+            'compatible_phone_models' => FieldUtility::getComaptiblePhoneModels($itemDetail),
             'included_components' => '',
-            'number_of_items' => '',
-            'material' => '',
-            'mounting_type' => '',
+            'number_of_items' => [['value' => 0]],
+            'material' => [['value' => $productData->material ?? 'Glossy', 'language_tag' => 'en_US']],
+            'mounting_type' => [['value' => $mounting_type->value ?? 'Dashboard', 'language_tag' => 'en_US']],
             'compatible_devices' => '',
         ];
     }
