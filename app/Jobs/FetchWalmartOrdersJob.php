@@ -11,6 +11,7 @@ use App\Models\Store;
 use App\Services\Marketplace\Service\WalmartService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Support\Facades\Log;
 
 class FetchWalmartOrdersJob implements ShouldQueue
 {
@@ -30,8 +31,9 @@ class FetchWalmartOrdersJob implements ShouldQueue
     public function handle(): void
     {
         /* get amazon stores*/
-        $stores = Store::join('store_type', 'store_type.id', '=', 'store.store_type_id')->where('store_type.code','walmart')->get();
+        $stores = Store::select('store.*')->join('store_type', 'store_type.id', '=', 'store.store_type_id')->where('store_type.code','walmart')->get();
 
+        Log::info('Walmart Store ' . json_encode($stores));
         if(count($stores ?? []) > 0) {
             foreach ($stores as $store) {
                 if($store->name != 'AWAccessory'){
@@ -52,8 +54,10 @@ class FetchWalmartOrdersJob implements ShouldQueue
                 $order_synchronization_id = $order_synchronization->id;
 
                 // get amazon order
-                $walmartService = new WalmartService();
+                $walmartService = new WalmartService($store);
                 $orders = $walmartService->getOrders();
+
+                Log::info('Walmart Orders ' . json_encode($orders));
 
                 if (!isset($orders['errors']) && isset($orders['elements']['order'])) {
 
