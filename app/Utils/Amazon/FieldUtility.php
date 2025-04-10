@@ -31,16 +31,21 @@ class FieldUtility
         ]];
     }
 
-    public static function getComaptiblePhoneModels($itemDetail)
+    public static function getComaptiblePhoneModels($itemDetail, $maxCount = -1)
     {
         $compatible_phones = [];
+        $index = 0;
         foreach ($itemDetail->devices as $device) {
+            if ($maxCount > 0 && $index >= $maxCount) {
+                break;
+            }
             $deviceDetail = $device->device;
             Log::info("Device :: " . json_encode($deviceDetail));
             $compatible_phones[] = [
                 'language_tag' => 'en_US',
                 'value' => $deviceDetail->brand->name . ' ' . $deviceDetail->name,
             ];
+            $index++;
         }
         return $compatible_phones;
     }
