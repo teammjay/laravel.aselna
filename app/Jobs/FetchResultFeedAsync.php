@@ -40,6 +40,7 @@ class FetchResultFeedAsync implements ShouldQueue
                 FeedStatus::FAILED,
             ])
             ->orderBy('submit_ts', 'desc')
+            ->where('status_check_count', '<', 3)
             ->limit(5)
             ->get();
 
@@ -54,7 +55,7 @@ class FetchResultFeedAsync implements ShouldQueue
             $listingId = $feed->listing_id;
 
             $storeType = $feed->store->storeType->name;
-    
+
             $marketplaceService = MarketplaceServiceFactory::create($storeType);
             $marketplaceService->getResultFeed($listingId, $feed->id);
             $feed->status = FeedStatus::PROCESSED;
@@ -66,6 +67,6 @@ class FetchResultFeedAsync implements ShouldQueue
             $feed->save();
         }
 
-        
+
     }
 }
