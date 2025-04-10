@@ -226,12 +226,11 @@ class AmazonUtility
 
         return [
             'warranty_description' => [['value' => 'No Warranty Included', 'language_tag' => 'en_US']],
-            'compatible_devices' => '',
-            'maximum_height' => '',
+            'compatible_devices' => [['value' => 'Smartphones', 'language_tag' => 'en_US']],
+            'maximum_height' => [['value' => $productData->dimensions_length, 'unit' => LengthUnit::getAmazonUnitName($productData->dimensions_length_unit ?? 1)]],
             'number_of_items' => [['value' => 0]],
-            'material' => '',
-            'included_components' => '',
-
+            'material' => [['value' => $productData->material ?? 'Glossy', 'language_tag' => 'en_US']],
+            'included_components' => [['value' => 'Tripod', 'language_tag' => 'en_US']],
         ];
     }
 
@@ -252,8 +251,8 @@ class AmazonUtility
 
         return [
             'warranty_description' => [['value' => 'No Warranty Included', 'language_tag' => 'en_US']],
-            'compatible_devices' => '',
-            'form_factor' => '',
+            'compatible_devices' => [['value' => 'Smartphones', 'language_tag' => 'en_US']],
+            'form_factor' => [['value' => 'Pouch', 'language_tag' => 'en_US']],
             'special_feature' => [['value' => $special_features, 'language_tag' => 'en_US']],
             'number_of_items' => [['value' => 0]],
         ];
@@ -282,11 +281,11 @@ class AmazonUtility
             'warranty_description' => [['value' => 'No Warranty Included', 'language_tag' => 'en_US']],
             'special_feature' => [['value' => $special_features, 'language_tag' => 'en_US']],
             'compatible_phone_models' => FieldUtility::getComaptiblePhoneModels($itemDetail),
-            'included_components' => '',
+            'included_components' => [['value' => 'Cell Phone Hosteler', 'language_tag' => 'en_US']],
             'number_of_items' => [['value' => 0]],
             'material' => [['value' => $productData->material ?? 'Glossy', 'language_tag' => 'en_US']],
             'mounting_type' => [['value' => $mounting_type->value ?? 'Dashboard', 'language_tag' => 'en_US']],
-            'compatible_devices' => '',
+            'compatible_devices' => [['value' => 'Smartphones', 'language_tag' => 'en_US']],
         ];
     }
 }
