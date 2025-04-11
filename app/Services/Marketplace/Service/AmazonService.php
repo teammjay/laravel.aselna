@@ -334,6 +334,8 @@ class AmazonService implements MarketplaceServiceInterface
 
         if ($feedInfo && $feedResponse) {
             $feedInfo->feed_id = $feedResponse['feedId'];
+            $feedInfo->submit_ts = now();
+            $feedInfo->number_of_attempts = $feedInfo->number_of_attempts ?? 0 + 1;
             $feedInfo->save();
             Log::info("Feed ID updated successfully.");
         } else {
