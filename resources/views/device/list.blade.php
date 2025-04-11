@@ -176,6 +176,7 @@
         {{--        @endforeach--}}
         </tbody>
     </table>
+    <input type="hidden" id="selected_device_id">
 
     <!-- Device Details Modal -->
     <div class="modal fade" id="deviceDetailsModal" tabindex="-1" role="dialog" aria-labelledby="deviceDetailsModalLabel">
@@ -288,50 +289,61 @@
             });
 
             // Device Details Modal Handler
-        $('body').on('click', '#deviceTable tbody tr', function(e) {
+            $('body').on('click', '#deviceTable tbody tr', function(e) {
 
-            if ($(e.target).is('a, img')) {
-                return;
-            }
-            const deviceId = $(this).data('device-id');
-            $('#deviceDetailsModal').modal('show');
+                if ($(e.target).is('a, img')) {
+                    return;
+                }
+                var deviceId = $(this).data('device-id');
+                console.log(deviceId);
+                $('#selected_device_id').val(deviceId);
+                $('#carrier-table').attr('data-loaded', false);
+                $('#interfaces-table').attr('data-loaded', false);
+                $('#deviceDetailsModal').modal('show');
+                $('#deviceDetailsTabs a:first').tab('show');
+                $('#carrier-table tbody').html('');
+                $('#interfaces-table tbody').html('');
 
-            // Load general details immediately
-            $.get('devices/'+deviceId+'/details', function(data) {
-                $('#general-content').html(`
-                    <div class="col-md-4 mb-3">
-                        <label>Device Type:</label>
-                        <p>${data.device_type?.name || ''}</p>
-                    </div>
-                    <div class="col-md-4 mb-3">
-                        <label>Sub Type:</label>
-                        <p>${data.device_sub_type?.name || ''}</p>
-                    </div>
-                    <div class="col-md-4 mb-3">
-                        <label>Brand:</label>
-                        <p>${data.brand?.name || ''}</p>
-                    </div>
-                    <div class="col-md-4 mb-3">
-                        <label>Device Name:</label>
-                        <p>${data.name || ''}</p>
-                    </div>
-                    <div class="col-md-4 mb-3">
-                        <label>Status:</label>
-                        <p>${data.status}</p>
-                    </div>
-                    <div class="col-md-4 mb-3">
-                        <label>Rating:</label>
-                        <p>${data.rating?.name || ''}</p>
-                    </div>
-                `);
+                // Load general details immediately
+                $.get('devices/'+deviceId+'/details', function(data) {
+                    $('#general-content').html(`
+                        <div class="col-md-4 mb-3">
+                            <label>Device Type:</label>
+                            <p>${data.device_type?.name || ''}</p>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label>Sub Type:</label>
+                            <p>${data.device_sub_type?.name || ''}</p>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label>Brand:</label>
+                            <p>${data.brand?.name || ''}</p>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label>Device Name:</label>
+                            <p>${data.name || ''}</p>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label>Status:</label>
+                            <p>${data.status}</p>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label>Rating:</label>
+                            <p>${data.rating?.name || ''}</p>
+                        </div>
+                    `);
+                });
+
+
             });
 
             // Handle tab changes
             $('#deviceDetailsTabs a').on('shown.bs.tab', function(e) {
                 const target = $(e.target).attr('href');
-
+                var device_id = $('#selected_device_id').val();
+                console.log(device_id);
                 if(target === '#carrier' && !$('#carrier-table').data('loaded')) {
-                    $.get('devices/'+deviceId+'/carriers', function(data) {
+                    $.get('devices/'+device_id+'/carriers', function(data) {
                         $('#carrier-table tbody').html(
                             data.map(carr => `
                                 <tr>
@@ -339,26 +351,25 @@
                                 </tr>
                             `).join('')
                         );
-                        $('#carrier-table').data('loaded', true);
+                        $('#carrier-table').attr('data-loaded', true);
                     });
                 }
 
-                if(target === '#interfaces') {
-                    $.get('devices/'+deviceId+'/interfaces', function(data) {
+                if(target === '#interfaces' && !$('#interfaces-table').data('loaded')) {
+                    $.get('devices/'+device_id+'/interfaces', function(data) {
 
                         $('#interfaces-table tbody').html(
-                            data.map(intf => console.log(intf)+ `
+                            data.map(intf => `
                                 <tr>
                                     <td>${intf.interfaces?.name}</td>
                                     <td>${intf.interfaces.product_type?.name}</td>
                                 </tr>
                             `).join('')
                         );
-                        $('#interfaces-table').data('loaded', true);
+                        $('#interfaces-table').attr('data-loaded', true);
                     });
                 }
             });
-        });
 
             $('#apply_filter').on('click', function (event) {
                 event.preventDefault();

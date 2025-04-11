@@ -66,6 +66,13 @@ public static $getOrders = <<<GQL
                         firstName
                         lastName
                     }
+                    shippingAddress{
+                        address1
+                        address2
+                        city
+                        country
+                        zip
+                    }
                     lineItems(first: 10){
                         nodes{
                             id

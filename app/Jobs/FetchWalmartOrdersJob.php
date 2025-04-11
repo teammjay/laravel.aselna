@@ -6,6 +6,8 @@ use App\Constants\OrderStatus;
 use App\Models\ListingItem;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\OrderOperation;
+use App\Models\OrderOperationItem;
 use App\Models\OrderSynchronization;
 use App\Models\Store;
 use App\Services\Marketplace\Service\WalmartService;
@@ -43,8 +45,8 @@ class FetchWalmartOrdersJob implements ShouldQueue
                 /* create order synchronization*/
                 $synchronizeArr = [
                     'store_id' => $store->id,
-                    'number_of_items' => '',
-                    'synchronization_type' => '',
+                    'number_of_items' => 1,
+                    'synchronization_type' => 1,
                     'filter_start_date' => date('Y-m-d H:i:s'),
                     'filter_end_date' => '',
                     'last_order_update_date' => date('Y-m-d H:i:s'),
@@ -106,6 +108,12 @@ class FetchWalmartOrdersJob implements ShouldQueue
                             $orderDetail = Order::where('order_id',$order['purchaseOrderId'])->first();
                             $orderObj = Order::findOrFail($orderDetail->id); // Retrieve the product by ID
                             $orderObj->update(['order_status' =>OrderStatus::getOrderStatusId($order['OrderStatus'])]);
+
+                            /* check order operation for this order*/
+                            $orderOperationDetail = OrderOperation::where('order_id',$orderDetail->id)->count();
+                            if($orderOperationDetail){
+
+                            }
                         }else {
                             $orderData = [
                                 'order_id' => $order['purchaseOrderId'],
@@ -124,34 +132,68 @@ class FetchWalmartOrdersJob implements ShouldQueue
                                 'order_id' => $order['purchaseOrderId'],
                             ], $orderData);
 
+                            /* create order operatation*/
+                            $orderOperationData = [
+                                'order_id' => $order['purchaseOrderId'],
+                                'ship_date' => date('Y-m-d H:i:s', strtotime($order['shippingInfo']['estimatedShipDate'])),
+                                'insurance_value' => $orderTotals,
+                                'status' => 1,
+                                'signature_confirmation' => 1,
+                                'ship_from_id' => '',
+                                'store_id' => $store->id,
+                                'operation_type' => 1,
+                                'label_creation_type' => 1,
+                                'print_to_file' => 0,
+                                'seller_provides_return_label' => 0
+                            ];
+
+                            $order_operation_detail = OrderOperation::updateOrCreate([
+                                'order_id' => $order['purchaseOrderId'],
+                            ], $orderOperationData);
+
                             /* get order items*/
                             $ordersItems = $order['orderLines']['orderLine'];
                             if (!!empty($ordersItems)) {
                                 foreach ($ordersItems as $item) {
-                                    $itemDetail = ListingItem::with('storeProduct', 'storeProduct.product')->where('sku', $item['product_info']['sku']);
-                                    $orderItemData = [
-                                        'title' => $item['item']['productName'],
-                                        'order_id' => $order_detail->id,
-                                        'product_id' => $itemDetail->storeProduct->product->product_id,
-                                        'client_id' => $itemDetail->client,
-                                        'listing_item_id' => $itemDetail->id,
-                                        'sku' => $item['item']['sku'],
-                                        'store_sku' => $item['item']['upc'],
-                                        'quantity' => $item['orderLineQuantity']['amount'],
-                                        'id1' => '',
-                                        'item_price' => ($item['charges']['charge']['chargeType'] == 'PRODUCT') ? $item['charges']['charge']['chargeAmount']['amount'] : 0,
-                                        'shipping_price' => ($item['charges']['charge']['chargeType'] == 'SHIPPING') ? $item['charges']['charge']['chargeAmount']['amount'] : 0,
-                                        'item_tax' => ($item['charges']['charge']['chargeType'] == 'PRODUCT_TAX') ? $item['charges']['charge']['tax']['taxAmount']['amount'] : 0,
-                                        'shipping_tax' => ($item['charges']['charge']['chargeType'] == 'SHIPPING_TAX') ? $item['charges']['charge']['tax']['taxAmount']['amount'] : 0,
-                                        'shipping_quantity' => $item['orderLineQuantity']['amount'],
-                                    ];
+                                    if($item['item']['sku'] != '') {
+                                        $itemDetail = ListingItem::with('storeProduct', 'storeProduct.product')->where('sku', $item['product_info']['sku']);
+                                        $orderItemData = [
+                                            'title' => $item['item']['productName'],
+                                            'order_id' => $order_detail->id,
+                                            'product_id' => $itemDetail->storeProduct->product->product_id,
+                                            'client_id' => $itemDetail->client,
+                                            'listing_item_id' => $itemDetail->id,
+                                            'sku' => $item['item']['sku'],
+                                            'store_sku' => $item['item']['upc'],
+                                            'quantity' => $item['orderLineQuantity']['amount'],
+                                            'id1' => '',
+                                            'item_price' => ($item['charges']['charge']['chargeType'] == 'PRODUCT') ? $item['charges']['charge']['chargeAmount']['amount'] : 0,
+                                            'shipping_price' => ($item['charges']['charge']['chargeType'] == 'SHIPPING') ? $item['charges']['charge']['chargeAmount']['amount'] : 0,
+                                            'item_tax' => ($item['charges']['charge']['chargeType'] == 'PRODUCT_TAX') ? $item['charges']['charge']['tax']['taxAmount']['amount'] : 0,
+                                            'shipping_tax' => ($item['charges']['charge']['chargeType'] == 'SHIPPING_TAX') ? $item['charges']['charge']['tax']['taxAmount']['amount'] : 0,
+                                            'shipping_quantity' => $item['orderLineQuantity']['amount'],
+                                        ];
 
-                                    $order_item = OrderItem::updateOrCreate([
-                                        'order_id' => $order_detail->id,
-                                        'product_id' => $itemDetail->storeProduct->product->product_id,
-                                    ], $orderItemData);
+                                        $order_item = OrderItem::updateOrCreate([
+                                            'order_id' => $order_detail->id,
+                                            'product_id' => $itemDetail->storeProduct->product->product_id,
+                                        ], $orderItemData);
+
+                                        /* create order operation item*/
+                                        if ($order_item->id) {
+                                            $orderOperationItemData = [
+                                                'order_item_id' => $order_item->id,
+                                                'order_operation_id' => $order_operation_detail->id,
+                                                'client_id' => $itemDetail->client,
+                                                'sync_status' => 6
+                                            ];
+
+                                            $order_operation_item = OrderOperationItem::updateOrCreate([
+                                                'order_operation_id' => $order_operation_detail->id
+                                            ], $orderOperationItemData);
+                                        }
+                                    }
                                 }
-
                             }
                         }
                     }
