@@ -37,7 +37,7 @@ class WalmartAuthService
             'Authorization' => 'Basic ' . base64_encode("{$this->clientId}:{$this->clientSecret}"),
         ];
         $options = [
-            'verify' => false,
+            //'verify' => false,
             'form_params' => [
                 'grant_type' => 'client_credentials',
             ],

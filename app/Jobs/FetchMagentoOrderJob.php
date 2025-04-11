@@ -39,8 +39,8 @@ class FetchMagentoOrderJob implements ShouldQueue
                 /* create order synchronization*/
                 $synchronizeArr = [
                     'store_id' => $store->id,
-                    'number_of_items' => '',
-                    'synchronization_type' => '',
+                    'number_of_items' => 1,
+                    'synchronization_type' => 1,
                     'filter_start_date' => date('Y-m-d H:i:s'),
                     'filter_end_date' => '',
                     'last_order_update_date' => date('Y-m-d H:i:s'),

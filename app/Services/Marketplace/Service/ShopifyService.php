@@ -271,9 +271,9 @@ class ShopifyService implements MarketplaceServiceInterface
         return $tags;
     }
 
-    public function getOrders()
+    public function getOrders($store)
     {
-        $this->authService = new ShopifyAuthService('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');
+        $this->authService = new ShopifyAuthService($store->secret_key);
         $response = $this->authService->getOrders();
 
         return $response;

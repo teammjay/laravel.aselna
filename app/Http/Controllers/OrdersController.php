@@ -249,7 +249,38 @@ class OrdersController extends Controller
                 ], $orderData);
 
                 /* get order items*/
-                $orderItemData = [
+                $amazonService = new AmazonService();
+                $ordersItems = $amazonService->getOrderItems($data['order-id']);
+                if (!isset($ordersItems['error'])) {
+                    foreach($ordersItems as $item){
+                        Log::info('Amazon Order Item: ' . json_encode($item));
+//                        $itemDetail = ListingItem::where('sku',$item['SellerSKU']);
+                        $orderItemData = [
+                            'title' => $item['Title'],
+                            'order_id' => $order_detail->id,
+//                            'product_id' => $itemDetail->storeProduct->product->product_id,
+//                            'client_id' => $itemDetail->client,
+//                            'listing_item_id' => $itemDetail->id,
+                            'sku' => $item['SellerSKU'],
+                            'store_sku' => $item['ASIN'],
+                            'quantity' => $item['QuantityOrdered'],
+                            'id1' => $item['OrderItemId'],
+                            'item_price' => $item['ItemPrice']['Amount'],
+                            'shipping_price' => isset($item['ShippingPrice']) ? $item['ShippingPrice']['Amount'] : '0',
+                            'item_tax' => $item['ItemTax']['Amount'],
+                            'shipping_tax' => isset($item['ShippingTax']) ? $item['ShippingTax']['Amount'] : '0',
+                            'shipping_quantity' => $item['QuantityShipped'],
+                        ];
+
+                        $order_item = OrderItem::updateOrCreate([
+                            'order_id' => $order_detail->id
+                        ],$orderItemData);
+                    }
+
+                }
+
+                /* get order items*/
+                /*$orderItemData = [
                     'title' => $data['product-name'],
                     'order_id' => $order_detail->id,
 //                            'product_id' => $itemDetail->storeProduct->product->product_id,
@@ -268,7 +299,7 @@ class OrdersController extends Controller
 
                 $order_item = OrderItem::updateOrCreate([
                     'order_id' => $order_detail->id
-                ],$orderItemData);
+                ],$orderItemData);*/
             }
 
 

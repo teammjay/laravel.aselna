@@ -36,7 +36,7 @@ class HomeController extends Controller
     }
 
     public function testfunction(){
-        $stores = Store::select('store.*')->join('store_type', 'store_type.id', '=', 'store.store_type_id')->where('store_type.code','walmart')->get();
+        /*$stores = Store::select('store.*')->join('store_type', 'store_type.id', '=', 'store.store_type_id')->where('store_type.code','walmart')->get();
 
         if(count($stores ?? []) > 0) {
             foreach ($stores as $store) {
@@ -49,10 +49,26 @@ class HomeController extends Controller
                 print_r($orders);
                 echo '</pre>';die;
             }
+        }*/
+
+        $stores = Store::select('store.*')->join('store_type', 'store_type.id', '=', 'store.store_type_id')->where('store_type.code','shopify')->get();
+
+        if(count($stores ?? []) > 0) {
+            foreach ($stores as $store) {
+                if ($store->name != 'AccessoryWiz') {
+                    continue;
+                }
+                $shopifyService = new ShopifyService();
+                $orders = $shopifyService->getOrders($store);
+                echo '<pre>';
+                print_r($orders);
+                echo '</pre>';
+            }
         }
-        /*Bus::chain([
-            new FetchWalmartOrdersJob(),
-        ])->dispatch();*/
+
+        Bus::chain([
+            new FetchShopifyOrders(),
+        ])->dispatch();
     }
 
     public function getListingData(Request $request)
