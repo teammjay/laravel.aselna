@@ -157,7 +157,7 @@ class AmazonService implements MarketplaceServiceInterface
 
                 $message['attributes']['fulfillment_availability'] = [[
                     'fulfillment_channel_code' => 'DEFAULT',
-                    'is_inventory_available' => true
+                    'quantity' => $itemDetail->quantity
                 ]];
             }
 
