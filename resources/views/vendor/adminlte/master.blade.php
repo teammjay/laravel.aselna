@@ -64,6 +64,29 @@
 
     {{-- Custom Stylesheets (post AdminLTE) --}}
     @yield('adminlte_css')
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.14.0/themes/base/jquery-ui.css">
+    <style>
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 99999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .overlay i {
+            font-size: 3rem;
+            color: #007bff;
+        }
+        [class*=sidebar-dark-] .nav-sidebar>.nav-item>.nav-treeview {
+            background-color: #000000;
+        }
+    </style>
 
     {{-- Favicon --}}
     @if(config('adminlte.use_ico_only'))
@@ -116,8 +139,12 @@
         @endswitch
     @endif
 
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
+
     {{-- Extra Configured Plugins Scripts --}}
     @include('adminlte::plugins', ['type' => 'js'])
+    <script src="https://code.jquery.com/ui/1.14.0/jquery-ui.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.30.0/moment.min.js"></script>
 
     {{-- Livewire Script --}}
     @if(config('adminlte.livewire'))
@@ -130,6 +157,27 @@
 
     {{-- Custom Scripts --}}
     @yield('adminlte_js')
+
+
+    <script>
+        // Automatically hide the alert after 5 seconds
+        setTimeout(function () {
+            const alert = $('.alert');
+            if (alert) {
+                alert.addClass('fade');
+                setTimeout(() => alert.remove(), 1500);
+            }
+        }, 5000);
+
+        $(document).ready(function() {
+
+            $(document).ajaxStart(function () {
+                $("#ajax-preloader").show(); // Show preloader when AJAX starts
+            }).ajaxStop(function () {
+                $("#ajax-preloader").hide(); // Hide preloader when AJAX stops
+            });
+        });
+    </script>
 
 </body>
 

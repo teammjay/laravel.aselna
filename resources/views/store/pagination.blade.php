@@ -1,0 +1,1 @@
+<div>{{ $stores->onEachSide(1)->links('pagination::bootstrap-4') }} <!-- For pagination links --></div>

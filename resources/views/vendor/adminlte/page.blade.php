@@ -6,15 +6,20 @@
 @section('adminlte_css')
     @stack('css')
     @yield('css')
+
 @stop
 
 @section('classes_body', $layoutHelper->makeBodyClasses())
 
 @section('body_data', $layoutHelper->makeBodyData())
 
+@section('plugins.Datatables', true)
+
 @section('body')
     <div class="wrapper">
-
+        <div class="overlay" id="ajax-preloader" style="display: none;">
+            <i class="fas fa-spinner fa-spin"></i>
+        </div>
         {{-- Preloader Animation (fullscreen mode) --}}
         @if($preloaderHelper->isPreloaderEnabled())
             @include('adminlte::partials.common.preloader')

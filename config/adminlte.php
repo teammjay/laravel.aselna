@@ -63,12 +63,12 @@ return [
     |
     */
 
-    'logo' => '<b>EasyEsale</b>',
+    'logo' => '<b>Aselna</b>',
     'logo_img' => 'vendor/adminlte/dist/img/AdminLTELogo.png',
     'logo_img_class' => 'brand-image img-circle elevation-3',
     'logo_img_xl' => null,
     'logo_img_xl_class' => 'brand-image-xs',
-    'logo_img_alt' => 'Admin Logo',
+    'logo_img_alt' => 'Aselna Logo',
 
     /*
     |--------------------------------------------------------------------------
@@ -257,7 +257,7 @@ return [
     */
 
     'use_route_url' => false,
-    'dashboard_url' => 'home',
+    'dashboard_url' => '/',
     'logout_url' => 'logout',
     'login_url' => 'login',
     'register_url' => 'register',
@@ -322,15 +322,261 @@ return [
 //            'can' => 'manage-blog',
 //        ],
         [
-            'text' => 'Catalog',
-            'url' => '/catalog',
-            'icon' => 'far fa-fw fa-file'
+            'text' => 'Messages',
+            'url' => '/messages',
+            'icon' => 'fa fa-fw fa-envelope'
         ],
         [
-            'text' => 'Brands',
-            'url' => '/brands',
-            'icon' => 'far fa-fw fa-file'
+            'text' => 'Orders',
+            'icon' => 'fa fa-fw fa-shopping-cart',
+            'submenu' => [
+                [
+                    'text' => 'Orders',
+                    'url' => '/orders',
+                    'icon' => 'fa fa-fw fa-shopping-cart',
+                ],
+                [
+                    'text' => 'Import Amazon Orders',
+                    'url' => '/orders/importcsv',
+                    'icon' => 'far fa-fw fa-file',
+                ]
+            ]
         ],
+        [
+            'text' => 'Catalog',
+            'icon' => 'fa fa-fw fa-book',
+            'submenu' => [
+                [
+                    'text' => 'Products',
+                    'url' => '/catalog',
+                    'icon' => 'fa fa-fw fa-archive',
+                ],
+                [
+                    'text' => 'Product Attributes',
+                    'url' => '/product_attribute',
+                    'icon' => 'far fa-fw fa-file'
+                ],
+                [
+                    'text' => 'Product Types',
+                    'url' => '/product_type',
+                    'icon' => 'far fa-fw fa-file'
+                ],
+                [
+                    'text' => 'Product Colors',
+                    'url' => '/product_color',
+                    'icon' => 'far fa-fw fa-file'
+                ],
+                [
+                    'text' => 'Product Condition',
+                    'url' => '/product_condition',
+                    'icon' => 'far fa-fw fa-file'
+                ],
+                [
+                    'text' => 'Product Target Audience',
+                    'url' => '/product_target_audience',
+                    'icon' => 'fa fa-fw fa-user-md'
+                ],
+            ]
+        ],
+        [
+            'text' => 'Stores',
+            'icon' => 'far fa-fw fa-building',
+            'submenu' => [
+                [
+                    'text' => 'Stores',
+                    'url' => '/stores',
+                    'icon' => 'far fa-fw fa-file',
+                ],
+                [
+                    'text' => 'Store Type Category',
+                    'url' => '/store_type_category',
+                    'icon' => 'far fa-fw fa-file'
+                ],
+                [
+                    'text' => 'Store Type',
+                    'url' => '/store_type',
+                    'icon' => 'far fa-fw fa-file'
+                ],
+                [
+                    'text' => 'UPC Generate',
+                    'url' => '/upc_generate',
+                    'icon' => 'far fa-fw fa-file',
+                ],
+                [
+                    'text' => 'UPC Codes',
+                    'url' => '/upc_codes',
+                    'icon' => 'far fa-fw fa-file',
+                ],
+                [
+                    'text' => 'Page Templates',
+                    'url' => '#',
+                    'icon' => 'far fa-fw fa-file',
+                ],
+                [
+                    'text' => 'Store Pages',
+                    'url' => '/store_pages',
+                    'icon' => 'far fa-fw fa-file',
+                ]
+            ]
+        ], [
+            'text' => 'Customers',
+            'url' => '/customers',
+            'icon' => 'fa fa-fw fa-users'
+        ],
+        [
+            'text' => 'Listing',
+            'icon' => 'far fa-fw fa-list-alt',
+            'submenu' => [
+                [
+                    'text' => 'Create',
+                    'url' => '/listing/create',
+                    'icon' => 'far fa-fw fa-file',
+                ],
+                [
+                    'text' => 'Active Listing',
+                    'url' => '/listing',
+                    'icon' => 'far fa-fw fa-list-alt',
+                ],
+                [
+                    'text' => 'Suspended Listing',
+                    'url' => '/listing/suspended',
+                    'icon' => 'far fa-fw fa-list-alt',
+                ],
+                [
+                    'text' => 'Generation Type',
+                    'url' => '/list_generate_type',
+                    'icon' => 'far fa-fw fa-file'
+                ],
+                [
+                    'text' => 'Title Template',
+                    'url' => '/title_template',
+                    'icon' => 'far fa-fw fa-file'
+                ],
+                [
+                    'text' => 'Listing Template',
+                    'url' => '/listing_template',
+                    'icon' => 'far fa-fw fa-file'
+                ]
+            ]
+        ],
+        [
+            'text' => 'Shipment',
+            'url' => '/shipment',
+            'icon' => 'fa fa-fw fa-shipping-fast'
+        ],
+        [
+            'text' => 'Master File Settings',
+            'icon' => 'fa fa-fw fa-cogs',
+            'submenu' => [
+                [
+                    'text' => 'Interface',
+                    'url' => '/interface',
+                    'icon' => 'far fa-fw fa-file'
+                ],
+                [
+                    'text' => 'Device Interface',
+                    'url' => '/device_interface',
+                    'icon' => 'far fa-fw fa-file'
+                ],
+                [
+                    'text' => 'Product Interface',
+                    'url' => '/product_interface',
+                    'icon' => 'far fa-fw fa-file'
+                ],
+                [
+                    'text' => 'Brands',
+                    'url' => '/brands',
+                    'icon' => 'far fa-fw fa-file'
+                ],
+                [
+                    'text' => 'Carriers',
+                    'url' => '/carriers',
+                    'icon' => 'far fa-fw fa-file'
+                ],
+                [
+                    'text' => 'Device',
+                    'url' => '/devices',
+                    'icon' => 'far fa-fw fa-file'
+                ],
+                [
+                    'text' => 'Device Screen',
+                    'url' => '/device_screen',
+                    'icon' => 'far fa-fw fa-file'
+                ],
+                [
+                    'text' => 'Devices Rating',
+                    'url' => '/device_ratings',
+                    'icon' => 'far fa-fw fa-file'
+                ],
+                [
+                    'text' => 'Devices Series',
+                    'url' => '/device_series',
+                    'icon' => 'far fa-fw fa-file'
+                ],
+                [
+                    'text' => 'Device Types',
+                    'url' => '/device_types',
+                    'icon' => 'far fa-fw fa-file'
+                ],
+                [
+                    'text' => 'Device Sub Types',
+                    'url' => '/device_sub_types',
+                    'icon' => 'far fa-fw fa-file'
+                ],
+                /*[
+                    'text' => 'Category',
+                    'url' => '/categories',
+                    'icon' => 'far fa-fw fa-file'
+                ],
+                [
+                    'text' => 'Subcategory',
+                    'url' => '/categories_sub',
+                    'icon' => 'far fa-fw fa-file'
+                ],*/
+                [
+                    'text' => 'Shipping Carrier',
+                    'url' => '/shipping_carrier',
+                    'icon' => 'far fa-fw fa-file'
+                ],
+                [
+                    'text' => 'Shipping Carrier Service',
+                    'url' => '/shipping_carrier_service',
+                    'icon' => 'far fa-fw fa-file'
+                ],
+                [
+                    'text' => 'Shipping Carrier Package',
+                    'url' => '/shipping_carrier_package',
+                    'icon' => 'far fa-fw fa-file'
+                ],
+                [
+                    'text' => 'Page Types',
+                    'url' => '/page_type',
+                    'icon' => 'far fa-fw fa-file'
+                ],
+                [
+                    'text' => 'Logistic Center',
+                    'url' => '/logistic_center',
+                    'icon' => 'far fa-fw fa-file'
+                ],
+                [
+                    'text' => 'Manufacturer',
+                    'url' => '/manufacturer',
+                    'icon' => 'far fa-fw fa-file'
+                ]
+
+            ],
+        ],
+        [
+            'text' => 'Jobs',
+            'icon' => 'fa fa-fw fa-cogs',
+            'submenu' => [
+                [
+                    'text' => 'Saved Jobs',
+                    'url' => '/jobs',
+                    'icon' => 'far fa-fw fa-file'
+                ]
+            ]
+        ]
 //        [
 //            'text' => 'pages',
 //            'url' => 'admin/pages',

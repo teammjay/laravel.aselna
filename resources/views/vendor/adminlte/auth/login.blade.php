@@ -2,6 +2,11 @@
 
 @section('adminlte_css_pre')
     <link rel="stylesheet" href="{{ asset('vendor/icheck-bootstrap/icheck-bootstrap.min.css') }}">
+    <style>
+        .login-logo img{
+            margin: 0 auto;
+        }
+    </style>
 @stop
 
 @php( $login_url = View::getSection('login_url') ?? config('adminlte.login_url', 'login') )
@@ -95,10 +100,10 @@
 
     {{-- Register link --}}
     @if($register_url)
-        <p class="my-0">
+        {{--<p class="my-0">
             <a href="{{ $register_url }}">
                 {{ __('adminlte::adminlte.register_a_new_membership') }}
             </a>
-        </p>
+        </p>--}}
     @endif
 @stop
