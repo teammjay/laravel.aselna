@@ -82,7 +82,7 @@ class WalmartAuthService
         return json_decode($res->getBody(), true);
     }
 
-    public function getFeedStatus($feedId)
+    public function getFeedStatus($feedId, $number_of_items = 50)
     {
         $accessToken = $this->authenticate();
 
@@ -94,7 +94,7 @@ class WalmartAuthService
             'WM_QOS.CORRELATION_ID' => uniqid(),
         ];
 
-        $request = new Request('GET', "{$this->endpoint}/feeds/{$feedId}?includeDetails=true", $headers);
+        $request = new Request('GET', "{$this->endpoint}/feeds/{$feedId}?includeDetails=true&limit=".$number_of_items, $headers);
         $response = $this->client->sendAsync($request)->wait();
 
         return json_decode($response->getBody(), true);

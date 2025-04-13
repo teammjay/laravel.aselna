@@ -112,7 +112,7 @@ class WalmartService implements MarketplaceServiceInterface
 
         $feedInfo = ListingFeed::where('id', $feedId)->first();
 
-        $response = $authService->getFeedStatus($feedInfo->feed_id);
+        $response = $authService->getFeedStatus($feedInfo->feed_id,$feedInfo->number_of_items);
         Log::info('Feed Status: ' . json_encode($response));
 
         if ($response['feedStatus'] != 'PROCESSED') return null;
@@ -135,13 +135,13 @@ class WalmartService implements MarketplaceServiceInterface
                     } else {
 
                     }
-                    
+
                 }
             }
 
-        }   
+        }
 
-        if($response['feedStatus'] == 'PROCESSED' && intval($response['itemsSucceeded']) > 0 
+        if($response['feedStatus'] == 'PROCESSED' && intval($response['itemsSucceeded']) > 0
                 && $feedInfo->feed_type == FeedTypes::CREATE) {
             $this->submitInventoryFeedAfterCreate($listingId,$listingInfo);
         }
