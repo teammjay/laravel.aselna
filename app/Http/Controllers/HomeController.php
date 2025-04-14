@@ -7,6 +7,7 @@ use App\Jobs\FeedGenerationJob;
 use App\Jobs\FetchMagentoOrderJob;
 use App\Jobs\FetchShopifyOrders;
 use App\Jobs\FetchWalmartOrdersJob;
+use App\Jobs\SubmitShopifyProductsJob;
 use App\Models\Listing;
 use App\Models\ListingFeed;
 use App\Models\ListingItem;
@@ -51,7 +52,7 @@ class HomeController extends Controller
             }
         }*/
 
-        $stores = Store::select('store.*')->join('store_type', 'store_type.id', '=', 'store.store_type_id')->where('store_type.code','shopify')->get();
+        /*$stores = Store::select('store.*')->join('store_type', 'store_type.id', '=', 'store.store_type_id')->where('store_type.code','shopify')->get();
 
         if(count($stores ?? []) > 0) {
             foreach ($stores as $store) {
@@ -64,11 +65,11 @@ class HomeController extends Controller
                 print_r($orders);
                 echo '</pre>';
             }
-        }
+        }*/
 
-        Bus::chain([
-            new FetchShopifyOrders(),
-        ])->dispatch();
+        /*Bus::chain([
+            new SubmitShopifyProductsJob(),
+        ])->dispatch();*/
     }
 
     public function getListingData(Request $request)
