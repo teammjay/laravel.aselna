@@ -120,6 +120,7 @@
             padding: .5rem .5rem;
             margin: -.5rem -.5rem -.5rem auto;
         }
+        #productListingTable .sticky-top{z-index: 99;}
     </style>
 @stop
 @section('content_header')
@@ -813,6 +814,8 @@
                         currentIndex++;
                         activateTab(currentIndex);
                         $('html, body').animate({ scrollTop: 0 }, 'fast');
+                        let include_carrier = 0;
+                        $('input[name="include_carrier"]').prop('checked',false);
                         loadTitleTemplate();
                     }else if(currentIndex == 2){
 
