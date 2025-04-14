@@ -30,7 +30,7 @@ class FetchShopifyOrders implements ShouldQueue
     public function handle(): void
     {
 
-        /* get amazon stores*/
+        /* get shopify stores*/
         $stores = Store::select('store.*')->join('store_type', 'store_type.id', '=', 'store.store_type_id')->where('store_type.code','shopify')->get();
 
         if(count($stores ?? []) > 0) {
