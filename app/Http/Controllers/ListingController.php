@@ -1297,6 +1297,9 @@ class ListingController extends Controller
         foreach ($devices as $key => $device) {
             // Split the device into brand and model
             $currentBrand = $device->brand_name . ' ' . $device->name;
+            if (strtolower($device->brand_name) == 'apple') {
+                $currentBrand = $device->name;
+            }
             $brandName = $device->brand_name;
             $currentMod = $device->name;
             $parts = explode(' ', $device->name, 2);
@@ -1437,6 +1440,9 @@ class ListingController extends Controller
         $separator = $device_seperator; // Separator between device names
         foreach ($devices as $k => $device) {
             $currentBrand = $device->brand_name . ' ' . $device->name;
+            if (strtolower($device->brand_name) == 'apple') {
+                $currentBrand = $device->name;
+            }
 
             $tempTitle = str_replace('#device_series', $currentBrand, $baseTitle);
             $tempTitle = str_replace('#devices', $currentBrand, $tempTitle);
@@ -1469,6 +1475,9 @@ class ListingController extends Controller
         foreach ($devices as $k => $device) {
 
             $currentBrand = $device->brand_name . ' ' . $device->name;
+            if (strtolower($device->brand_name) == 'apple') {
+                $currentBrand = $device->name;
+            }
 
             $tempTitle = str_replace('#device_series', $currentBrand, $baseTitle);
             $tempTitle = str_replace('#devices', $currentBrand, $tempTitle);
@@ -1511,7 +1520,7 @@ class ListingController extends Controller
         foreach ($devices as $key => $device) {
             // Split the device into brand and model
             $currentBrand = $device->brand_name . ' ' . $device->name;
-            if (strtolower($store_type) == 'ebay' && strtolower($device->brand_name) == 'apple') {
+            if (strtolower($device->brand_name) == 'apple') {
                 $currentBrand = $device->name;
             }
 
@@ -1629,6 +1638,9 @@ class ListingController extends Controller
         foreach ($devices as $device) {
             // Split the device into brand and model
             $currentBrand = $device->brand_name . ' ' . $device->name;
+            if (strtolower($device->brand_name) == 'apple') {
+                $currentBrand = $device->name;
+            }
             $parts = explode(' ', $device->name, 2);
             $brand = $parts[0];
             $model = $parts[1] ?? ''; // If no model, treat as empty
