@@ -319,7 +319,18 @@ class AmazonService implements MarketplaceServiceInterface
     public function submitFeed($feedId, $listingId)
     {
         Log::info("Started :: ");
-        $filePath = public_path('feeds/amazon/' . $listingId . '.json');
+        $directory = public_path('feeds/amazon/');
+        Log::info('Directory: ' . $directory);
+        if (is_dir($directory)) {
+            Log::info('Directory exists');
+            foreach (scandir($directory, SCANDIR_SORT_DESCENDING) as $file) {
+                Log::info('File: ' . $file);
+                if (strpos($file, $listingId) === 0 && preg_match('/\.(json|xml)$/', $file)) {
+                    $files[] = 'result-feeds/amazon/' . $file;
+                }
+            }
+        }
+        $filePath = public_path($files[0]);
 
         $content = file_get_contents($filePath);
         Log::info("Content :: " . $content);
@@ -447,33 +458,16 @@ class AmazonService implements MarketplaceServiceInterface
         $userIdentifier = $listingInfo->store->user_id;
         $listingItems = ListingItemLink::where('listing_id', $listingId)->cursor();
 
-        $xml = new SimpleXMLElement('<?xml version="1.0" encoding="UTF-8"?><AmazonEnvelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"></AmazonEnvelope>');
-
-        $header = $xml->addChild('Header');
-        $header->addChild('DocumentVersion', '1.01');
-        $header->addChild('MerchantIdentifier', $userIdentifier);
-
-        $xml->addChild('MessageType', 'Price');
 
         $index = 1;
         foreach ($listingItems as $listingItem) {
-            $messages = $xml->addChild('Message');
-            $messages->addChild('MessageID', $index);
             $itemDetail = $listingItem->item;
 
-            $price = $messages->addChild('Price');
-            $price->addChild('SKU', $itemDetail->sku);
-            $standardPrice = $price->addChild('StandardPrice');
-            // add current like attribute not element
-            $standardPrice->addAttribute('currency', 'USD');
-            $standardPrice->addChild('Amount', $itemDetail->price);
-
-            $index++;
+//            $price = $messages->addChild('Price');
+//            $price->addChild('SKU', $itemDetail->sku);
         }
 
-        $xmlContent = $xml->asXML();
 
-        XmlUtility::saveToFile(public_path('feeds/amazon/' . $listingId . '.xml'), $xmlContent);
     }
 
 
