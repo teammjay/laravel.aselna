@@ -11,14 +11,15 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('manage_shopify_products', function (Blueprint $table) {
+        Schema::create('manage_marketplace_products', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->uuid('product_id');
             $table->uuid('product_code');
             $table->uuid('sku')->nullable();
             $table->uuid('store_id');
-            $table->string('shopify_product_id')->nullable();
-            $table->string('shopify_variant_id')->nullable();
+            $table->string('device_id')->nullable();
+            $table->string('marketplace_product_id')->nullable();
+            $table->string('marketplace_variant_id')->nullable();
             $table->enum('upload_status', ['pending', 'success', 'failed'])->default('pending');
             $table->integer('upload_attempts')->default(0);
             $table->timestamps();
@@ -30,6 +31,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('manage_shopify_products');
+        Schema::dropIfExists('manage_marketplace_products');
     }
 };
