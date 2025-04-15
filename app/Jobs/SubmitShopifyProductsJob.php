@@ -3,8 +3,10 @@
 namespace App\Jobs;
 
 use App\Models\Catalog;
+use App\Models\GenerateProductImage;
+use App\Models\ProductImageAlternative;
 use App\Models\Store;
-use App\Models\ManageShopifyProduct;
+use App\Models\ManageMarketplaceProduct;
 use App\Models\ProductImages;
 use App\Models\ProductInterface;
 use App\Models\ProductTags;
@@ -43,7 +45,7 @@ class SubmitShopifyProductsJob implements ShouldQueue
                 }
 
                 Log::info('Store IN: ' . $store->name);
-                $pIds = ManageShopifyProduct::select('product_id')->where('upload_status','success')->get();
+                $pIds = ManageMarketplaceProduct::select('product_id')->where('upload_status','success')->get();
                 $products = Catalog::select('*')->with('productType','productKeyFeatures','productColor')
                     ->whereNotIn('product_id', $pIds)
                     ->orderBy('created_at', 'desc')
@@ -66,7 +68,7 @@ class SubmitShopifyProductsJob implements ShouldQueue
     {
         $fileSystem = $store->fileSystem;
 
-        $is_uploaded = ManageShopifyProduct::where('product_id',$productData->product_id)->where('store_id',$store->id)->where('upload_status','success')->count();
+        $is_uploaded = ManageMarketplaceProduct::where('product_id',$productData->product_id)->where('store_id',$store->id)->where('upload_status','success')->count();
 
         Log::info('Count Info: ' . $is_uploaded);
         Log::info('Product Info: ' . json_encode($productData));
@@ -75,7 +77,7 @@ class SubmitShopifyProductsJob implements ShouldQueue
             return true;
         }
 
-        $ManageShopifyProduct = ManageShopifyProduct::create([
+        $ManageMarketplaceProduct = ManageMarketplaceProduct::create([
             'product_id' => $productData->product_id,
             'product_code' => $productData->product_sku,
             'store_id' => $store->id,
@@ -113,14 +115,16 @@ class SubmitShopifyProductsJob implements ShouldQueue
             ]
         ];
 
-        $productImages = ProductImages::where('product_id', $productData->product_id)->orderBy('sort_order','asc')->get();
+        $this->generateProductImages($productData, $store);
+
+        $images = GenerateProductImage::where('product_id', $productData->product_id)->get();
         $files = [];
-        /*foreach ($productImages as $image) {
+        foreach ($images as $image) {
             $files[] = [
                 'contentType' => 'IMAGE',
                 'originalSource' => $fileSystem->url_base_path . $image->path,
             ];
-        }*/
+        }
 
         $sku = StoreTypeListing::generateUniqueAlphabeticSku($productData->product_sku, 6);
         $upcCodes = UPCCodes::where('store', $store->id)->where('is_used', 0)->orderBy('sequence_id', 'asc')->limit(1)->first();
@@ -189,10 +193,10 @@ class SubmitShopifyProductsJob implements ShouldQueue
 
             if(isset($response['data']) && empty($response['data']['userErrors'])) {
                 Log::info('SKU : ' . $sku);
-                $ManageShopifyProduct->update([
+                $ManageMarketplaceProduct->update([
                     'sku' => $sku,
-                    'shopify_product_id' => $productId,
-                    'shopify_variant_id' => $variantId,
+                    'marketplace_product_id' => $productId,
+                    'marketplace_variant_id' => $variantId,
                     'upload_status' => 'success'
                 ]);
             }
@@ -242,5 +246,94 @@ class SubmitShopifyProductsJob implements ShouldQueue
 
         $tags[] = 'upsell-enable';
         return $tags;
+    }
+
+    public function generateProductImages($productData, $store){
+
+        ProductImages::where('product_id', $productData->product_id)
+            ->chunk(100, function ($productImages) use ($store, $productData) {
+                if (!isset($store->fileSystem)) return;
+                foreach ($productImages as $productImage) {
+                    $Image = $productImage->imageObj;
+                    $path = '';
+
+                    $path = '/store-images/' . $store->id . '/' . $productImage->id . '.jpg';
+
+                    $imageData = [
+                        'product_id' => $productData->product_id,
+                        'product_image_id' => $productImage->id,
+                        'alt_product_image_id' => null,
+                        'image_file_system_id' => $Image->id,
+                        'path' => $path,
+                        'reference_id' => '',
+                    ];
+
+                    Log::info("Main Image :: " . json_encode($productImage));
+
+                    if ($productImage->main_image == 1) {
+                        $imageData['main_image'] = 1;
+                    }
+                    $this->uploadImage($store, $Image, $path);
+
+                    GenerateProductImage::updateOrCreate([
+                        'product_image_id' => $productImage->id,
+                    ], $imageData);
+                }
+            });
+    }
+
+    private function uploadImage($store, $Image, $path)
+    {
+        $storeFileSystem = $store->fileSystem;
+        Log::info("File system :: " . json_encode($storeFileSystem));
+        $host = $storeFileSystem->host;
+        $port = $storeFileSystem->port ?? 21;
+        $loginId = $storeFileSystem->login_id;
+        $password = $storeFileSystem->password;
+        $rootPath = $storeFileSystem->root_path;
+        $localFilePath = storage_path('app/public/' . $Image->location . $Image->name);
+
+        $ftpConn = ftp_connect($host, $port);
+        if (!$ftpConn) {
+            Log::info("Could not connect to FTP server: $host");
+        }
+
+        $login = ftp_login($ftpConn, $loginId, $password);
+        if (!$login) {
+            ftp_close($ftpConn);
+            Log::info("Could not login to FTP server with provided credentials.");
+        }
+
+        ftp_pasv($ftpConn, true);
+
+        $remoteFilePath = $rootPath . $path;
+        Log::info("Remote Path :: " . $remoteFilePath);
+
+        $this->createFtpDirectory($ftpConn, dirname($remoteFilePath));
+
+        //Upload the file
+        if (ftp_put($ftpConn, $remoteFilePath, $localFilePath, FTP_BINARY)) {
+            echo "File uploaded successfully to $remoteFilePath";
+        } else {
+            echo "Error uploading file.";
+        }
+
+        // Close FTP connection
+        ftp_close($ftpConn);
+    }
+
+    function createFtpDirectory($ftpConn, $dirPath)
+    {
+        $parts = explode('/', $dirPath);
+        $currentDir = '';
+
+        foreach ($parts as $part) {
+            if (empty($part)) continue;
+            $currentDir .= "/$part";
+
+            if (!@ftp_chdir($ftpConn, $currentDir)) { // Check if directory exists
+                ftp_mkdir($ftpConn, $currentDir); // Create directory if it does not exist
+            }
+        }
     }
 }

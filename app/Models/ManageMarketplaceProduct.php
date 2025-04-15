@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 
-class ManageShopifyProduct extends Model
+class ManageMarketplaceProduct extends Model
 {
     // Set a custom table name
     protected $table = 'manage_shopify_products';
