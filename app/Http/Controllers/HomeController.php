@@ -67,9 +67,9 @@ class HomeController extends Controller
             }
         }*/
 
-        /*Bus::chain([
+        Bus::chain([
             new SubmitShopifyProductsJob(),
-        ])->dispatch();*/
+        ])->dispatch();
     }
 
     public function getListingData(Request $request)

@@ -35,7 +35,7 @@ class SubmitShopifyProductsJob implements ShouldQueue
     public function handle(): void
     {
         /* shopify stores*/
-        $stores = Store::select('store.*')->join('store_type', 'store_type.id', '=', 'store.store_type_id')->where('store_type.code','shopify')->get();
+        $stores = Store::select('store.*')->with('fileSystem','storeType')->join('store_type', 'store_type.id', '=', 'store.store_type_id')->where('store_type.code','shopify')->get();
 
         if(count($stores ?? []) > 0) {
             foreach ($stores as $store) {
@@ -47,6 +47,8 @@ class SubmitShopifyProductsJob implements ShouldQueue
                 Log::info('Store IN: ' . $store->name);
                 $pIds = ManageMarketplaceProduct::select('product_id')->where('upload_status','success')->get();
                 $products = Catalog::select('*')->with('productType','productKeyFeatures','productColor')
+                    ->where('product_status', 1)
+                    //->where('product_sku', 'E74')
                     ->whereNotIn('product_id', $pIds)
                     ->orderBy('created_at', 'desc')
                     ->limit(10)
@@ -56,7 +58,7 @@ class SubmitShopifyProductsJob implements ShouldQueue
                             $this->createFeed($product,$store);
                         }
                     });*/
-                Log::info('Products: ' . json_encode($products));
+                //Log::info('Products: ' . json_encode($products));
                 foreach ($products as $product) {
                     $this->submitFeed($product, $store);
                 }
@@ -86,7 +88,6 @@ class SubmitShopifyProductsJob implements ShouldQueue
         ]);
 
         $productOptions = [];
-        Log::info('Product Info: ' . json_encode($productData));
 
         $descriptionHtml = '';
         if(isset($productData->productKeyFeatures)) {
@@ -249,7 +250,7 @@ class SubmitShopifyProductsJob implements ShouldQueue
     }
 
     public function generateProductImages($productData, $store){
-
+        Log::info('Filesystem : ' . json_encode($store->fileSystem));
         ProductImages::where('product_id', $productData->product_id)
             ->chunk(100, function ($productImages) use ($store, $productData) {
                 if (!isset($store->fileSystem)) return;

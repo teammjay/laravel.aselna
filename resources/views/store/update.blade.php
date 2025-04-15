@@ -79,6 +79,11 @@
                         Devices
                     </a>
                 </li>
+                <li class="nav-item">
+                    <a class="nav-link" id="properties-tab" data-toggle="pill" href="#tab13" role="tab" aria-controls="tab13" aria-selected="false">
+                        Properties
+                    </a>
+                </li>
             </ul>
         </div>
         <div class="card-body">
@@ -957,6 +962,54 @@
                             <a href="{{ route('store.list') }}" class="btn btn-secondary">Cancel</a>
                         </div>
                     </form>
+                </div>
+                <div class="tab-pane fade" id="tab13" role="tabpanel" aria-labelledby="properties-tab">
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="row mt-3 g-3 align-items-center">
+                                <div class="col-md-3">
+                                    <label for="sdoc_contact_name">SDoC Contact Name  </label>
+                                </div>
+                                <div class="col-md-7">
+                                    <input type="text" class="form-control" id="sdoc_contact_name" name="sdoc_contact_name" value="">
+                                </div>
+                            </div>
+                            <div class="row mt-3 g-3 align-items-center">
+                                <div class="col-md-3">
+                                    <label for="sdoc_mailing_address">SDoC Mailing Address</label>
+                                </div>
+                                <div class="col-md-7">
+                                    <textarea class="form-control" name="sdoc_mailing_address" id="sdoc_mailing_address" rows="3"></textarea>
+                                </div>
+                            </div>
+                            <div class="row mt-3 g-3 align-items-center">
+                                <div class="col-md-3">
+                                    <label for="sdoc_email_address">SDoC Email Address</label>
+                                </div>
+                                <div class="col-md-7">
+                                    <input type="text" class="form-control" id="sdoc_email_address" name="sdoc_email_address" value="">
+                                </div>
+                            </div>
+
+                            <div class="row mt-3 g-3 align-items-center">
+                                <div class="col-md-3">
+                                    <label for="sdoc_phone_number">SDoC Phone Number</label>
+                                </div>
+                                <div class="col-md-7">
+                                    <input type="text" class="form-control" id="sdoc_phone_number" name="sdoc_phone_number" value="">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card-footer text-center mt-3">
+                        <button type="button" class="btn btn-success" onclick="saveStoreTabData(13)">Save</button>
+                        <button type="button" class="btn btn-primary" onclick="finalizeForm()">Submit</button>
+                        {{--<button type="reset" class="btn btn-primary">Reset</button>--}}
+                        <a href="{{ route('store.list') }}" class="btn btn-secondary">Cancel</a>
+                    </div>
+
                 </div>
             </div>
         </div>
