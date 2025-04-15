@@ -1027,8 +1027,6 @@
             });
             if (selected_list.length === 0) {
                 alert('Please select listing first.');
-            }else if (is_same_product) {
-                alert('Please select same product for update inventory.');
             }else{
                 $('#syncInventoryModal').modal('show');
             }
