@@ -36,7 +36,13 @@
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" id="history-tab" data-toggle="pill" href="#tab4" role="tab" aria-controls="tab4" aria-selected="false">
-                        History
+                        Feed History
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link" id="listing-history-tab" data-toggle="pill" href="#tab5" role="tab" aria-controls="tab5" aria-selected="false">
+                        Listing History
                     </a>
                 </li>
 
@@ -62,7 +68,7 @@
                                         <label for="product_code">Product Code</label>
                                     </div>
                                     <div class="col-md-7">
-                                        <input type="text" class="form-control" id="product_code" name="product_code" value="{{ old('product_sku',$productDetail->product_sku) }}" readonly>
+                                        <input type="text" class="form-control" id="product_code" name="product_code" value="{{ isset($productDetail->storeProduct->product) ? $productDetail->storeProduct->product->product_sku : '' }}" readonly>
                                         <span class="error-message text-danger" id="product_code-error"></span>
                                     </div>
                                 </div>
@@ -92,7 +98,7 @@
                                         <select class="form-control" name="manufacturer" id="manufacturer">
                                             @if(count($manufacturers ?? []) > 0)
                                                 @foreach($manufacturers as $mf)
-                                                    <option value="{{ $mf->id }}" {{ ($mf->id === $productDetail->manufacturer_id) ? 'selected' :'' }}>{{ $mf->name }}</option>
+                                                    <option value="{{ $mf->id }}" {{ (isset($productDetail->storeProduct->product) && $mf->id === $productDetail->storeProduct->product->manufacturer_id) ? 'selected' :'' }}>{{ $mf->name }}</option>
                                                 @endforeach
                                             @endif
                                         </select>
@@ -103,7 +109,7 @@
                                         <label for="quantity">Quantity</label>
                                     </div>
                                     <div class="col-md-7">
-                                        <input type="text" class="form-control" id="quantity" name="quantity" value="{{ old('price',$productDetail->product_qty) }}">
+                                        <input type="text" class="form-control" id="quantity" name="quantity" value="{{ isset($productDetail->store->storeType) ? $productDetail->store->storeType->product_qty : '' }}">
                                         <span class="error-message text-danger" id="quantity-error"></span>
                                     </div>
                                 </div>
@@ -198,7 +204,7 @@
                                         <label for="generation_type">Generation Type</label>
                                     </div>
                                     <div class="col-md-7">
-                                        <input type="text" class="form-control" id="generation_type" name="generation_type" value="{{ $productDetail->generation_name }}" readonly>
+                                        <input type="text" class="form-control" id="generation_type" name="generation_type" value="{{ (isset($productDetail->generationType)) ? $productDetail->generationType->name : '' }}" readonly>
                                     </div>
                                 </div>
                                 <div class="row mt-3 g-3 align-items-center">
@@ -531,6 +537,54 @@
                                 <th>Old Pr</th>
                             </tr>
                         </thead>
+                        <tbody>
+                            @if(isset($feedHistory) && count($feedHistory ?? []) > 0)
+                                @foreach($feedHistory as $fh)
+                                    <tr>
+                                        <td>{{ isset($fh->feed) ? \App\Constants\FeedTypes::getFeedName($fh->feed->feed_type) : '' }}</td>
+                                        <td>{{ isset($fh->feed) ? \App\Constants\FeedStatus::getStatusName($fh->feed->status) : '' }}</td>
+                                        <td>{{  $fh->feed_id }}</td>
+                                        <td>{{  $fh->created_at }}</td>
+                                        <td> {{ isset($fh->feed) ? \App\Constants\ListingSyncStatus::getListingSyncStatusName($fh->feed->status) : '' }} </td>
+                                        <td></td>
+                                        <td></td>
+                                        <td>{{ $fh->old_price }}</td>
+                                    </tr>
+                                @endforeach
+                            @endif
+                        </tbody>
+                    </table>
+
+                </div>
+
+                <div class="tab-pane fade" id="tab5" role="tabpanel" aria-labelledby="listing-history-tab">
+                    <table class="table table-bordered mt-2">
+                        <thead>
+                        <tr>
+                            <th>SKU</th>
+                            <th>Title</th>
+                            <th>Store SKU</th>
+                            <th>Price</th>
+                            <th>Quantity</th>
+                            <th>Status</th>
+                            <th>Submit Ts</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        @if(isset($listingHistory) && count($listingHistory ?? []) > 0)
+                            @foreach($listingHistory as $lh)
+                                <tr>
+                                    <td>{{ $lh->sku }}</td>
+                                    <td>{{ $lh->title }}</td>
+                                    <td>{{ $lh->store_sku }}</td>
+                                    <td>{{ $lh->price }}</td>
+                                    <td>{{ $lh->quantity }}</td>
+                                    <td> {{ \App\Constants\ListingSyncStatus::getListingSyncStatusName($lh->sync_status) }} </td>
+                                    <td>{{ $fh->created_at }}</td>
+                                </tr>
+                            @endforeach
+                        @endif
+                        </tbody>
                     </table>
 
                 </div>

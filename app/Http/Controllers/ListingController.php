@@ -349,14 +349,14 @@ class ListingController extends Controller
         $pageAt = 'Edit';
         $stores = Store::all();
         $manufacturers = Manufacturer::all();
-        $productDetail = ListingItem::select('listing_item.*', 'products.product_sku', 'products.product_description', 'products.manufacturer_id', 'products.dimensions_width', 'products.product_color', 'store.id as store_id','store.name as store_name', 'store.marketplace_name', 'listing_generation_type.name as generation_name', 'store_type.product_qty')
+        $productDetail = ListingItem::with('storeProduct','storeProduct.product','store','store.storeType','generationType')
             //->leftJoin('listing_item_link','listing_item.id', '=', 'listing_item_link.item_id')
-            ->leftJoin('store_product', 'store_product.id', '=', 'listing_item.store_product_id')
+            /*->leftJoin('store_product', 'store_product.id', '=', 'listing_item.store_product_id')
             ->leftJoin('products', 'products.product_id', '=', 'store_product.product_id')
             ->leftJoin('store', 'store.id', '=', 'store_product.store_id')
             ->leftJoin('store_type', 'store.store_type_id', '=', 'store_type.id')
-            ->leftJoin('listing_generation_type', 'listing_generation_type.code', '=', 'listing_item.generation_type_id')
-            ->where('listing_item.id', $id)
+            ->leftJoin('listing_generation_type', 'listing_generation_type.code', '=', 'listing_item.generation_type_id')*/
+            ->where('id', $id)
             ->first();
         $store_type_listing_id = $productDetail->store_type_listing_id;
         $storeTypeDetail = [];
@@ -370,6 +370,15 @@ class ListingController extends Controller
             ->orderBy('created_at','ASC')
             ->get();
 
+        $feedHistory = ListingItemLink::with('feed')
+            ->where('item_id', $productDetail->id)
+            ->orderBy('created_at','ASC')
+            ->get();
+
+        $listingHistory = ListingItemHistory::where('id', $productDetail->id)
+            ->orderBy('created_at','ASC')
+            ->get();
+
         /*echo '<pre>';
         print_r($productVariants);
         echo '</pre>';die;*/
@@ -380,7 +389,7 @@ class ListingController extends Controller
             ->where('listing_item.id',$id)
             ->first();*/
 
-        return view('listing.update', compact('manufacturers', 'pageAt', 'stores', 'productDetail', 'storeTypeDetail', 'productVariants'));
+        return view('listing.update', compact('manufacturers', 'pageAt', 'stores', 'productDetail', 'storeTypeDetail', 'productVariants','feedHistory','listingHistory'));
     }
 
     public function saveListingData(Request $request){
