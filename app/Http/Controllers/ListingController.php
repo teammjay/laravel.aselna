@@ -23,6 +23,7 @@ use App\Models\ListingGenerationType;
 use App\Models\ListingGenerationTypeTemplate;
 use App\Models\ListingItem;
 use App\Models\ListingItemDetail;
+use App\Models\ListingItemHistory;
 use App\Models\ListingItemLink;
 use App\Models\Manufacturer;
 use App\Models\ProductTitleKeyword;
@@ -2200,7 +2201,11 @@ class ListingController extends Controller
                             $listing_id = $listrecord->id;
                         }
 
+                        // Insert everything from listing_item to listing_item_history
                         $itemRecord = ListingItem::find($list->id);
+                        if ($itemRecord) {
+                            ListingItemHistory::createBackup($itemRecord);
+                        }
                         $itemRecord->price = $updated_price;
                         $itemRecord->updated_by = $created_by;
                         $itemRecord->update();
@@ -2287,6 +2292,9 @@ class ListingController extends Controller
                         }
 
                         $itemRecord = ListingItem::find($list->id);
+                        if ($itemRecord) {
+                            ListingItemHistory::createBackup($itemRecord);
+                        }
                         $itemRecord->quantity = $updated_inventory;
                         $itemRecord->update();
 
