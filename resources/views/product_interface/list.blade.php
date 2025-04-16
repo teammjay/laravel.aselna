@@ -1,3 +1,4 @@
+@php use App\Constants\FilterCodes; @endphp
 @extends('adminlte::page')
 
 @section('title', 'Interface')
@@ -13,6 +14,78 @@
                 Add Product Device
             </a>
         </div>
+    </div>
+    <div class="card card-primary">
+        <div class="card-header">
+            <h3 class="card-title">Filters</h3>
+        </div>
+        {{--        Add search url to this form and pass as post data to search--}}
+        <form id="filter-form">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="row align-items-center">
+                            <div class="col-3">
+                                Product Name
+                            </div>
+                            <div class="col-3">
+                                <select class="custom-select" id="" name="product_name_operator">
+                                    <option value="{{FilterCodes::CONTAINS}}">contains</option>
+                                    <option value="{{FilterCodes::STARTS_WITH}}">starts with</option>
+                                    <option value="{{FilterCodes::ENDS_WITH}}">ends with</option>
+                                    <option value="{{FilterCodes::EQUAL}}">=</option>
+                                    <option value="{{FilterCodes::IN}}">in</option>
+                                    <option value="{{FilterCodes::NOT_IN}}">not in</option>
+                                    <option value="{{FilterCodes::DOESNT_CONTAIN}}">doesn't contain</option>
+                                    <option value="{{FilterCodes::IS_SET}}">is set</option>
+                                </select>
+                            </div>
+                            <div class="col-6">
+                                <input type="text" name="product_name" id="product_name" class="form-control">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <div class="row align-items-center">
+                            <div class="col-3">
+                                Interface Name
+                            </div>
+                            <div class="col-3">
+                                <select class="custom-select" id="" name="interface_name_operator">
+                                    <option value="{{FilterCodes::CONTAINS}}">contains</option>
+                                    <option value="{{FilterCodes::STARTS_WITH}}">starts with</option>
+                                    <option value="{{FilterCodes::ENDS_WITH}}">ends with</option>
+                                    <option value="{{FilterCodes::EQUAL}}">=</option>
+                                    <option value="{{FilterCodes::IN}}">in</option>
+                                    <option value="{{FilterCodes::NOT_IN}}">not in</option>
+                                    <option value="{{FilterCodes::DOESNT_CONTAIN}}">doesn't contain</option>
+                                    <option value="{{FilterCodes::IS_SET}}">is set</option>
+                                </select>
+                            </div>
+                            <div class="col-6">
+                                <input type="text" name="interface_name" id="interface_name" class="form-control">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-2">
+                        <div class="form-group">
+                            <label>&nbsp;</label>
+                            <button type="submit" id="apply_filter" class="form-control btn btn-primary">Filter</button>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="form-group">
+                            <label>&nbsp;</label>
+                            <button type="reset" class="form-control btn  btn-reset btn-secondary">Reset</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
     </div>
     <table id="productInterfaceTable" class="table table-bordered table-striped">
         <thead>
@@ -43,12 +116,21 @@
 
 @section('js')
     <script>
+        var productInterfaceTable = null;
         $(document).ready(function () {
-            $('#productInterfaceTable').DataTable({
+            productInterfaceTable = $('#productInterfaceTable').DataTable({
                 processing: true,
                 serverSide: true,
                 searching: false,
-                ajax: "{{ route('product-interface-data') }}",
+                ajax: {
+                    url: '{{ route('product-interface-data') }}',
+                    data: function (d) {
+                        var formData = $('#filter-form').serializeArray();
+                        $.each(formData, function (index, field) {
+                            d[field.name] = field.value;
+                        });
+                    }
+                },
                 columns: [
                     {
                         data: null, name: 'product_name',
@@ -73,6 +155,22 @@
                         }
                     }
                 ]
+            });
+
+            $('#apply_filter').on('click', function (event) {
+                event.preventDefault();
+                productInterfaceTable.ajax.reload();
+            });
+
+            $('.card-header').on('click', function () {
+                if ($(this).find('.fa').hasClass('fa-angle-down')) {
+                    $(this).find('.fa').removeClass('fa-angle-down');
+                    $(this).find('.fa').addClass('fa-angle-up');
+                } else {
+                    $(this).find('.fa').removeClass('fa-angle-up');
+                    $(this).find('.fa').addClass('fa-angle-down');
+                }
+                $('.card-body').toggle();
             });
         });
     </script>

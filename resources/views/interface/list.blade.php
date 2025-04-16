@@ -20,16 +20,16 @@
             <h3 class="card-title">Filters</h3>
         </div>
         {{--        Add search url to this form and pass as post data to search--}}
-        <form action="{{ route('interface.filter') }}" method="post">
+        <form id="filter-form">
             <div class="card-body">
                 <div class="row">
                     <div class="col-md-4">
-                        <div class="row">
+                        <div class="row align-items-center">
                             <div class="col-3">
                                 Name
                             </div>
                             <div class="col-3">
-                                <select class="custom-select" id="" name="product_code_operator">
+                                <select class="custom-select" id="" name="name_operator">
                                     <option value="{{FilterCodes::CONTAINS}}">contains</option>
                                     <option value="{{FilterCodes::STARTS_WITH}}">starts with</option>
                                     <option value="{{FilterCodes::ENDS_WITH}}">ends with</option>
@@ -46,6 +46,67 @@
                         </div>
                     </div>
 
+                    <div class="col-md-4">
+                        <div class="row align-items-center">
+                            <div class="col-3">
+                                Product Type
+                            </div>
+                            <div class="col-3">
+                                <select class="custom-select" id="" name="product_type_operator">
+                                    <option value="{{FilterCodes::CONTAINS}}">contains</option>
+                                    <option value="{{FilterCodes::STARTS_WITH}}">starts with</option>
+                                    <option value="{{FilterCodes::ENDS_WITH}}">ends with</option>
+                                    <option value="{{FilterCodes::EQUAL}}">=</option>
+                                    <option value="{{FilterCodes::IN}}">in</option>
+                                    <option value="{{FilterCodes::NOT_IN}}">not in</option>
+                                    <option value="{{FilterCodes::DOESNT_CONTAIN}}">doesn't contain</option>
+                                    <option value="{{FilterCodes::IS_SET}}">is set</option>
+                                </select>
+                            </div>
+                            <div class="col-6">
+                                <input type="text" name="product_type" id="product_type" class="form-control">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <div class="row align-items-center">
+                            <div class="col-3 text-right">
+                                Code
+                            </div>
+                            <div class="col-3">
+                                <select class="custom-select" id="" name="code_operator">
+                                    <option value="{{FilterCodes::CONTAINS}}">contains</option>
+                                    <option value="{{FilterCodes::STARTS_WITH}}">starts with</option>
+                                    <option value="{{FilterCodes::ENDS_WITH}}">ends with</option>
+                                    <option value="{{FilterCodes::EQUAL}}">=</option>
+                                    <option value="{{FilterCodes::IN}}">in</option>
+                                    <option value="{{FilterCodes::NOT_IN}}">not in</option>
+                                    <option value="{{FilterCodes::DOESNT_CONTAIN}}">doesn't contain</option>
+                                    <option value="{{FilterCodes::IS_SET}}">is set</option>
+                                </select>
+                            </div>
+                            <div class="col-6">
+                                <input type="text" name="code" id="code" class="form-control">
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="row">
+                    <div class="col-md-2">
+                        <div class="form-group">
+                            <label>&nbsp;</label>
+                            <button type="submit" id="apply_filter" class="form-control btn btn-primary">Filter</button>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="form-group">
+                            <label>&nbsp;</label>
+                            <button type="reset" class="form-control btn  btn-reset btn-secondary">Reset</button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </form>
@@ -86,18 +147,22 @@
 
 @section('js')
     <script>
+        var interfacetable = null;
         $(document).ready(function () {
             // add ajax url to this datatable
             // the last table is not a data it should be generated by the action buttons
-            $('#interfaceTable').DataTable(
+            interfacetable = $('#interfaceTable').DataTable(
                 {
                     processing: true,
                     serverSide: true,
                     searching: false,
-                    "ajax": {
-                        "url": "{{ route('interface-data') }}",
-                        "data": function (d) {
-                            d._token = "{{ csrf_token() }}";
+                    ajax: {
+                        url: '{{ route('interface-data') }}',
+                        data: function (d) {
+                            var formData = $('#filter-form').serializeArray();
+                            $.each(formData, function (index, field) {
+                                d[field.name] = field.value;
+                            });
                         }
                     },
                     "columns": [
@@ -131,6 +196,22 @@
                     ],
                 }
             );
+
+            $('#apply_filter').on('click', function (event) {
+                event.preventDefault();
+                interfacetable.ajax.reload();
+            });
+
+            $('.card-header').on('click', function () {
+                if ($(this).find('.fa').hasClass('fa-angle-down')) {
+                    $(this).find('.fa').removeClass('fa-angle-down');
+                    $(this).find('.fa').addClass('fa-angle-up');
+                } else {
+                    $(this).find('.fa').removeClass('fa-angle-up');
+                    $(this).find('.fa').addClass('fa-angle-down');
+                }
+                $('.card-body').toggle();
+            });
         });
     </script>
 @stop
