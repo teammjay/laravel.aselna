@@ -159,6 +159,12 @@ class AmazonService implements MarketplaceServiceInterface
                     'fulfillment_channel_code' => 'DEFAULT',
                     'quantity' => $itemDetail->quantity
                 ]];
+
+                $message['attributes']['purchasable_offer'] = [[
+                    'audience' => 'ALL',
+                    'currency' => 'USD',
+                    'our_price' => [['schedule' => [['value_with_tax' => number_format($itemDetail->price, 2)]]]],
+                ]];
             }
 
             $feed['messages'][] = $message;
