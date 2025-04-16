@@ -15,11 +15,11 @@
             </a>
         </div>
     </div>
-    <div class="card card-primary">
+    {{--<div class="card card-primary">
         <div class="card-header">
             <h3 class="card-title">Filters</h3>
         </div>
-        {{--        Add search url to this form and pass as post data to search--}}
+        --}}{{--        Add search url to this form and pass as post data to search--}}{{--
         <form action="{{ route('brand.filter') }}" method="post">
             <div class="card-body">
                 <div class="row">
@@ -29,7 +29,7 @@
                                 Name
                             </div>
                             <div class="col-3">
-                                <select class="custom-select" id="" name="product_code_operator">
+                                <select class="custom-select" id="" name="brand_name_operator">
                                     <option value="{{FilterCodes::CONTAINS}}">contains</option>
                                     <option value="{{FilterCodes::STARTS_WITH}}">starts with</option>
                                     <option value="{{FilterCodes::ENDS_WITH}}">ends with</option>
@@ -49,7 +49,7 @@
                 </div>
             </div>
         </form>
-    </div>
+    </div>--}}
     <table id="brandTable" class="table table-bordered table-striped">
         <thead>
         <tr>
@@ -92,7 +92,7 @@
             $('#brandTable').DataTable(
                 {
                     "processing": true,
-                    'searching': false,
+                    'searching': true,
                     // "serverSide": true,
                     "paging": true,
                     {{--"ajax": {--}}

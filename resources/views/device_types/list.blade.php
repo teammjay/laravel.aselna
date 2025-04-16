@@ -81,7 +81,7 @@
             $('#deviceTypeTable').DataTable(
                 {
                     "processing": true,
-                    'searching': false,
+                    'searching': true,
                     "paging": true,
                 }
             );

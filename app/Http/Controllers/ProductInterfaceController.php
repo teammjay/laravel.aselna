@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\QueryFilters;
 use App\Models\ProductInterface;
 use App\Services\DataTable\DataTableService;
 use Illuminate\Http\Request;
@@ -33,6 +34,20 @@ class ProductInterfaceController extends Controller
                 $query->join('interface', 'interface.id', '=', 'product_interface.interface_id')
                     ->orderBy('interface.name', $sortDirection);
             }
+        });
+
+        $dataTableService->setCustomSearch(function ($query, $request) {
+            $query
+                ->when($request->input('product_name'), function ($query) use ($request) {
+                    $query->whereHas('product', function ($q) use ($request) {
+                        QueryFilters::applyFilter($q, $request, 'product_title', 'product_name_operator', 'product_name');
+                    });
+                })
+                ->when($request->input('interface_name'), function ($query) use ($request) {
+                    $query->whereHas('interfaces', function ($q) use ($request) {
+                        QueryFilters::applyFilter($q, $request, 'name', 'interface_name_operator', 'interface_name');
+                    });
+                });
         });
 
         $data = $dataTableService->handle();
