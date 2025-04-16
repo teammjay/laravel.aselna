@@ -166,18 +166,33 @@ class AmazonService implements MarketplaceServiceInterface
                     'currency' => 'USD',
                     'our_price' => [['schedule' => [['value_with_tax' => number_format($itemDetail->price, 2)]]]],
                 ]];
+                //"point_of_contact_address": "222 Universal Dr\nNORTH HAVEN, 06473 CT",
+                //                "point_of_contact_email": "kandalaman@buyselna.com",
+                //                "point_of_contact_name": "Kan Dalaman",
+                //                "point_of_contact_phone_number": "4753088259",
+                //                "registration_status": "fcc_supplier_declaration_of_conformity",
+                //                "marketplace_id": "ATVPDKIKX0DER"
+                if (!$productData->sdoc_enable) {
+                    $message['attributes']['fcc_radio_frequency_emission_compliance'] = [[
+                        'point_of_contact_address' => '222 Universal Dr NORTH HAVEN, 06473 CT',
+                        'point_of_contact_email' => 'kandalaman@buyselna.com',
+                        "point_of_contact_phone_number" => "4753088259",
+                        'point_of_contact_name' => 'Kan Dalaman',
+                        'registration_status' => 'fcc_supplier_declaration_of_conformity'
+                    ]];
+                }
             }
 
             $feed['messages'][] = $message;
 
-//            $schemaJson = $this->authService->getProductTypeSchema($currentCategory->marketplace_code);
-//            $validator = new Validator();
-//            $result = $validator->validate($productData, $schemaJson);
-//            if ($result->isValid()) {
-//                Log::info("Product data is valid.");
-//            } else {
-//                Log::error("Product data is invalid: " . json_encode($result->error()->subErrors()));
-//            }
+            $schemaJson = $this->authService->getProductTypeSchema($currentCategory->marketplace_code);
+            $validator = new Validator();
+            $result = $validator->validate($productData, $schemaJson);
+            if ($result->isValid()) {
+                Log::info("Product data is valid.");
+            } else {
+                Log::error("Product data is invalid: " . json_encode($result->error()->subErrors()));
+            }
             $index++;
         }
 
@@ -333,7 +348,7 @@ class AmazonService implements MarketplaceServiceInterface
             foreach (scandir($directory, SCANDIR_SORT_DESCENDING) as $file) {
                 Log::info('File: ' . $file);
                 if (strpos($file, $listingId) === 0 && preg_match('/\.(json|xml)$/', $file)) {
-                    $files[] = 'result-feeds/amazon/' . $file;
+                    $files[] = 'feeds/amazon/' . $file;
                 }
             }
         }
