@@ -2,6 +2,7 @@
 
 namespace App\Services\Marketplace\Service;
 
+use App\Constants\FeedStatus;
 use App\Constants\FeedTypes;
 use App\Models\Listing;
 use App\Models\ListingFeed;
@@ -366,7 +367,13 @@ class AmazonService implements MarketplaceServiceInterface
 
         $feedInfo = ListingFeed::where('listing_id', $listingId)->first();
 
-        return $this->authService->getResultFeed($feedInfo->feed_id, $listingId);
+        $feedResultFile = $this->authService->getResultFeed($feedInfo->feed_id, $listingId);
+
+        $feedInfo->update([
+            'status' => FeedStatus::PROCESSED
+        ]);
+
+        return $feedResultFile;
     }
 
     private function generateImageUpdateFeed($listingInfo, $listingId)

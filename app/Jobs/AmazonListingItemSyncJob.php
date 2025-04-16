@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Constants\FeedStatus;
 use App\Constants\ListingSyncStatus;
 use App\Models\ListingItem;
 use App\Models\ListingItemLink;
@@ -10,6 +11,7 @@ use App\Services\Auth\AmazonAuthService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Log;
+use const http\Client\Curl\FEATURES;
 
 class AmazonListingItemSyncJob implements ShouldQueue
 {
@@ -28,11 +30,13 @@ class AmazonListingItemSyncJob implements ShouldQueue
      */
     public function handle(): void
     {
+        Log::info('AmazonListingItemSyncJob started');
         $amazon_store_ids = Store::where('store_type_id', function ($subquery) {
             return $subquery->select('id')
                 ->from('store_type')
                 ->where('code', 'amazon');
         })->pluck('id');
+        Log::info('Amazon store ids: ' . json_encode($amazon_store_ids));
 
         //join listing_item_link and listing_item and listing
         ListingItemLink::query()
@@ -40,16 +44,18 @@ class AmazonListingItemSyncJob implements ShouldQueue
             ->join('listing', 'listing_item_link.listing_id', '=', 'listing.id')
             ->whereIn('listing.store_id', $amazon_store_ids)
             ->whereNull('listing_item.store_sku')
-            ->whereIn('listing_item_link.sync_status', [
+            ->whereIn('listing_item.sync_status', [
                 ListingSyncStatus::Synchronizing,
             ])
-//            ->where('listing.status',)
-//            ->whereIn('listing.id', function ($subquery) use ($amazon_store_ids) {
-//                return $subquery->select('listing_id')->from('listing_feed')->whereIn('store_id', $amazon_store_ids);
-//            })
+            ->whereIn('listing.id', function ($subquery) use ($amazon_store_ids) {
+                return $subquery->select('listing_id')->from('listing_feeds')->whereIn('store_id', $amazon_store_ids)->whereIn('status', [
+                    FeedStatus::PROCESSED
+                ]);
+            })
             ->chunk(100, function ($listingItemLinks) {
                 foreach ($listingItemLinks as $listingItemLink) {
-                    $this->syncListingItem($listingItemLink);
+                    Log::info('Syncing Amazon listing item: ' . $listingItemLink->item_id);
+//                    $this->syncListingItem($listingItemLink);
                 }
             });
     }
