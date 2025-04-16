@@ -333,7 +333,7 @@ class AmazonService implements MarketplaceServiceInterface
             foreach (scandir($directory, SCANDIR_SORT_DESCENDING) as $file) {
                 Log::info('File: ' . $file);
                 if (strpos($file, $listingId) === 0 && preg_match('/\.(json|xml)$/', $file)) {
-                    $files[] = 'result-feeds/amazon/' . $file;
+                    $files[] = 'feeds/amazon/' . $file;
                 }
             }
         }
