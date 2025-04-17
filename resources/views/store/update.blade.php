@@ -79,6 +79,11 @@
                         Devices
                     </a>
                 </li>
+                <li class="nav-item">
+                    <a class="nav-link" id="properties-tab" data-toggle="pill" href="#tab13" role="tab" aria-controls="tab13" aria-selected="false">
+                        Properties
+                    </a>
+                </li>
             </ul>
         </div>
         <div class="card-body">
@@ -958,6 +963,67 @@
                         </div>
                     </form>
                 </div>
+                <div class="tab-pane fade" id="tab13" role="tabpanel" aria-labelledby="properties-tab">
+
+                    <form method="POST" id="frmtab13">
+                        <button type="button" class="btn btn-secondary" id="add_properties"> <i class="fa fa-plus-square"></i> Add</button>
+                        <div class="card card-body border mt-2">
+                            <table class="table table-bordered" id="properties_table">
+                                <thead>
+                                <tr>
+                                    <th>Property</th>
+                                    <th>Value</th>
+                                    <th>Action</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                @if(count($propertyValues ?? []) > 0)
+                                    @foreach($propertyValues as $pvalues)
+                                        <tr class="field-group">
+                                            <td>
+                                                <select class="form-control" name="store_property_info_id[]">
+                                                    <option value=""></option>
+                                                    @if(count($propertyInfo ?? []) > 0)
+                                                        @foreach($propertyInfo as $pinfo)
+                                                            <option value="{{ $pinfo->id }}" {{ (isset($pvalues->store_property_info_id) && $pvalues->store_property_info_id == $pinfo->id) ? 'selected' : '' }}>{{ $pinfo->field_local_name }}</option>
+                                                        @endforeach
+                                                    @endif
+
+                                                </select>
+                                            </td>
+                                            <td><input type="text" class="form-control" name="value[]" value="{{ $pvalues->value }}"></td>
+                                            <td><button type="button" class="btn btn-danger remove-property"> <i class="fas fa-fw fa-trash"></i></button></td>
+                                        </tr>
+                                    @endforeach
+                                @else
+                                    <tr>
+                                        <td>
+                                            <select class="form-control" name="store_property_info_id[]">
+                                                <option value=""></option>
+                                                @if(count($propertyInfo ?? []) > 0)
+                                                    @foreach($propertyInfo as $pinfo)
+                                                        <option value="{{ $pinfo->id }}">{{ $pinfo->field_local_name }}</option>
+                                                    @endforeach
+                                                @endif
+
+                                            </select>
+                                        </td>
+                                        <td><input type="text" class="form-control" name="value[]" value=""></td>
+                                        <td></td>
+                                    </tr>
+                                @endif
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="card-footer text-center mt-3">
+                            <button type="button" class="btn btn-success" onclick="saveStoreTabData(13)">Save</button>
+                            <button type="button" class="btn btn-primary" onclick="finalizeForm()">Submit</button>
+                            {{--<button type="reset" class="btn btn-primary">Reset</button>--}}
+                            <a href="{{ route('store.list') }}" class="btn btn-secondary">Cancel</a>
+                        </div>
+                    </form>
+
+                </div>
             </div>
         </div>
     </div>
@@ -1497,6 +1563,33 @@
                         }
                     }
                 });
+            });
+
+            // Add new field group
+            $('#add_properties').click(function() {
+                $('#properties_table tbody').append(`
+                     <tr>
+                                        <td>
+                                            <select class="form-control" name="store_property_info_id[]">
+                                                <option value=""></option>
+                                                @if(count($propertyInfo ?? []) > 0)
+                        @foreach($propertyInfo as $pinfo)
+                    <option value="{{ $pinfo->id }}">{{ $pinfo->field_local_name }}</option>
+                                                    @endforeach
+                        @endif
+
+                    </select>
+                </td>
+                <td><input type="text" class="form-control" name="value[]" value=""></td>
+                <td><button type="button" class="btn btn-danger remove-property"> <i class="fas fa-fw fa-trash"></i></button></td>
+                </tr>
+                `);
+
+            });
+
+            // Remove field group
+            $(document).on('click', '.remove-feature', function() {
+                $(this).parents('tr.field-group').remove();
             });
         });
     </script>

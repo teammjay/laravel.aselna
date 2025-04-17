@@ -135,10 +135,10 @@ class AmazonAuthService
 
         if(isset($documentResult['compressionAlgorithm']) && $documentResult['compressionAlgorithm'] == 'GZIP') {
 
-            if (env('APP_ENV') !== 'local') {
-                chown($savePath, 'aselna');
-                chgrp($savePath, 'psacln');
-            }
+//            if (env('APP_ENV') !== 'local') {
+//                chown($savePath, 'aselna');
+//                chgrp($savePath, 'psacln');
+//            }
 
             $this->client->get($doocumentUrl, [
                 'sink' => $savePath,

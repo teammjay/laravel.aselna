@@ -65,6 +65,7 @@ class FeedGenerationJob implements ShouldQueue
         $itemCount = ListingItemLink::where('listing_id', $this->listingId)->count();
 
         ListingFeed::where(['listing_id' => $this->listingId])->update(['number_of_items' => $itemCount]);
+        ListingItemLink::where('listing_id', $this->listingId)->update(['feed_id' => $feedInfo->id]);
 
 //        $marketplaceService->submitFeed('',$this->listingId);
 //

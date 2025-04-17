@@ -17,6 +17,7 @@ use App\Jobs\DevicesSyncJob;
 use App\Jobs\DeviceTypesSyncJob;
 use App\Jobs\FeedGenerationJob;
 use App\Jobs\FetchAmazonOrdersJob;
+use App\Jobs\FetchWalmartOrdersJob;
 use App\Jobs\FileSystemSyncJob;
 use App\Jobs\GenerationTypeAndTemplateSync;
 use App\Jobs\InterfaceSyncJob;
@@ -132,13 +133,14 @@ class SyncAllTables extends Command
 //        DataPatch::dispatch();
 //           FeedGenerationJob::dispatch('2d075d34-03b5-436e-b5b1-2a45a508beb3');
         //    FeedGenerationJob::dispatch('4e7f02b9-3530-4e87-ad72-8cf5881ebe66');
-        ListingItemImageCreate::dispatch('45a0b556-f1f8-445f-a83f-498ee612e680');
+//        ListingItemImageCreate::dispatch('45a0b556-f1f8-445f-a83f-498ee612e680');
 //       FeedGenerationJob::dispatch('80415096-6ce4-4f55-b862-f1a3d3ba4662');
         //    ListingItemImageCreate::dispatch('4dcf1d3f-b723-4b31-a075-3702c0746b10');
 //        FetchAmazonOrdersJob::dispatch();
 //        StoreCategorySyncJob::dispatch('94428796-cdf9-dc2b-a1e7-aa4100066fd9');
-//        AmazonListingItemSyncJob::dispatch();
+        AmazonListingItemSyncJob::dispatch();
 //        AmazonProductTypeSyncJob::dispatch();
+//        FetchWalmartOrdersJob::dispatch();
 
     }
 }

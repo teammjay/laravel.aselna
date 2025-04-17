@@ -445,6 +445,8 @@ class CatalogController extends Controller
         $tabId = $request->input('tab');
         $request->except('product_id', 'tab');
 
+        Log::info("$request->sdoc_enable");
+
         // Logic to handle saving data based on $tabId
         if ($tabId == 1) {
 
@@ -676,9 +678,9 @@ class CatalogController extends Controller
             foreach ($request->file('images') as $key=>$image) {
                 $extension = $image->getClientOriginalExtension();
                 $imageName = time() . '_' . uniqid() . '.' . $extension;
-                $storagePath = storage_path('app/public/product_images/' . $imageName);
+                $storagePath = public_path('storage/product_images/' . $imageName);
                 /*$image->move(public_path('storage/product_images/'), $imageName);*/
-                $image->move(storage_path('app/public/product_images/'), $imageName);
+                $image->move(public_path('storage/product_images/'), $imageName);
 
                 $fileSize = filesize($storagePath);
                 $filedata = [

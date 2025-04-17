@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\QueryFilters;
 use App\Http\Requests\InterfaceRequest;
 use App\Models\Interfaces;
 use App\Models\ProductType;
@@ -39,6 +40,21 @@ class InterfaceController extends Controller
                 // Default sorting logic
                 $query->orderBy($sortColumn, $sortDirection);
             }
+        });
+
+        $dataTableService->setCustomSearch(function ($query, $request) {
+            $query
+                ->when($request->input('name'), function ($q) use ($request) {
+                    QueryFilters::applyFilter($q, $request, 'name', 'name_operator', 'name');
+                })
+                ->when($request->input('code'), function ($q) use ($request) {
+                    QueryFilters::applyFilter($q, $request, 'code', 'code_operator', 'code');
+                })
+                ->when($request->input('product_type'), function ($query) use ($request) {
+                    $query->whereHas('ProductType', function ($q) use ($request) {
+                        QueryFilters::applyFilter($q, $request, 'name', 'product_type_operator', 'product_type');
+                    });
+                });
         });
 
         $data = $dataTableService->handle();

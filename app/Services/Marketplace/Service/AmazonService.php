@@ -2,6 +2,7 @@
 
 namespace App\Services\Marketplace\Service;
 
+use App\Constants\FeedStatus;
 use App\Constants\FeedTypes;
 use App\Models\Listing;
 use App\Models\ListingFeed;
@@ -10,6 +11,8 @@ use App\Models\ListingItemLink;
 use App\Models\ListingItemProductImage;
 use App\Models\ProductSearchTerm;
 use App\Models\ProductTypeKeyword;
+use App\Models\StorePropertyInfo;
+use App\Models\StorePropertyValues;
 use App\Models\StoreTypeCategory;
 use App\Services\Auth\AmazonAuthService;
 use App\Services\Marketplace\Contracts\MarketplaceServiceInterface;
@@ -159,6 +162,29 @@ class AmazonService implements MarketplaceServiceInterface
                     'fulfillment_channel_code' => 'DEFAULT',
                     'quantity' => $itemDetail->quantity
                 ]];
+
+                $message['attributes']['purchasable_offer'] = [[
+                    'audience' => 'ALL',
+                    'currency' => 'USD',
+                    'our_price' => [['schedule' => [['value_with_tax' => number_format($itemDetail->price, 2)]]]],
+                ]];
+                Log::info('Product Data: ' . json_encode($productData->sdoc_enable));
+                if ($productData->sdoc_enable == 1) {
+                    $propertyValues = StorePropertyValues::join('store_property_info', 'store_property_values.store_property_info_id', '=', 'store_property_info.id')
+                        ->where('store_id', $listingInfo->store->id)->get();
+                    // convert to map
+                    $propertyValuesMap = [];
+                    foreach ($propertyValues as $propertyValue) {
+                        $propertyValuesMap[$propertyValue->field_name] = $propertyValue->value;
+                    }
+                    $message['attributes']['fcc_radio_frequency_emission_compliance'] = [[
+                        'point_of_contact_address' => $propertyValuesMap['fcc_radio_frequency_emission_compliance_registration_status'] ?? '',
+                        'point_of_contact_email' => $propertyValuesMap['fcc_radio_frequency_emission_compliance_point_of_contact_email'] ?? '',
+                        "point_of_contact_phone_number" => $propertyValuesMap['fcc_radio_frequency_emission_compliance_point_of_contact_phone_number'] ?? '',
+                        'point_of_contact_name' => $propertyValuesMap['fcc_radio_frequency_emission_compliance_point_of_contact_name'] ?? '',
+                        'registration_status' => $propertyValuesMap['fcc_radio_frequency_emission_compliance_point_of_contact_address'] ?? ''
+                    ]];
+                }
             }
 
             $feed['messages'][] = $message;
@@ -319,7 +345,18 @@ class AmazonService implements MarketplaceServiceInterface
     public function submitFeed($feedId, $listingId)
     {
         Log::info("Started :: ");
-        $filePath = public_path('feeds/amazon/' . $listingId . '.json');
+        $directory = public_path('feeds/amazon/');
+        Log::info('Directory: ' . $directory);
+        if (is_dir($directory)) {
+            Log::info('Directory exists');
+            foreach (scandir($directory, SCANDIR_SORT_DESCENDING) as $file) {
+                Log::info('File: ' . $file);
+                if (strpos($file, $listingId) === 0 && preg_match('/\.(json|xml)$/', $file)) {
+                    $files[] = 'feeds/amazon/' . $file;
+                }
+            }
+        }
+        $filePath = public_path($files[0]);
 
         $content = file_get_contents($filePath);
         Log::info("Content :: " . $content);
@@ -349,7 +386,13 @@ class AmazonService implements MarketplaceServiceInterface
 
         $feedInfo = ListingFeed::where('listing_id', $listingId)->first();
 
-        return $this->authService->getResultFeed($feedInfo->feed_id, $listingId);
+        $feedResultFile = $this->authService->getResultFeed($feedInfo->feed_id, $listingId);
+
+        $feedInfo->update([
+            'status' => FeedStatus::PROCESSED
+        ]);
+
+        return $feedResultFile;
     }
 
     private function generateImageUpdateFeed($listingInfo, $listingId)
@@ -447,33 +490,16 @@ class AmazonService implements MarketplaceServiceInterface
         $userIdentifier = $listingInfo->store->user_id;
         $listingItems = ListingItemLink::where('listing_id', $listingId)->cursor();
 
-        $xml = new SimpleXMLElement('<?xml version="1.0" encoding="UTF-8"?><AmazonEnvelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"></AmazonEnvelope>');
-
-        $header = $xml->addChild('Header');
-        $header->addChild('DocumentVersion', '1.01');
-        $header->addChild('MerchantIdentifier', $userIdentifier);
-
-        $xml->addChild('MessageType', 'Price');
 
         $index = 1;
         foreach ($listingItems as $listingItem) {
-            $messages = $xml->addChild('Message');
-            $messages->addChild('MessageID', $index);
             $itemDetail = $listingItem->item;
 
-            $price = $messages->addChild('Price');
-            $price->addChild('SKU', $itemDetail->sku);
-            $standardPrice = $price->addChild('StandardPrice');
-            // add current like attribute not element
-            $standardPrice->addAttribute('currency', 'USD');
-            $standardPrice->addChild('Amount', $itemDetail->price);
-
-            $index++;
+//            $price = $messages->addChild('Price');
+//            $price->addChild('SKU', $itemDetail->sku);
         }
 
-        $xmlContent = $xml->asXML();
 
-        XmlUtility::saveToFile(public_path('feeds/amazon/' . $listingId . '.xml'), $xmlContent);
     }
 
 

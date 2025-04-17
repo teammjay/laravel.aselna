@@ -17,6 +17,8 @@ use App\Models\StoreLogisticCenter;
 use App\Models\StorePage;
 use App\Models\PageType;
 use App\Models\StoreMessageAccount;
+use App\Models\StorePropertyInfo;
+use App\Models\StorePropertyValues;
 use App\Models\StoreShippingService;
 use App\Models\StoreType;
 use App\Services\Auth\EbayAuthService;
@@ -75,13 +77,14 @@ class StoreController extends Controller
         $storeMessageAccount = StoreMessageAccount::where('store_id', $store_id)->get();
         $storeLogisticCenters = StoreLogisticCenter::with('LogisticCenter')->where('store_id', $store_id)->get();
         $fileSystems = FileSystem::all();
+        $propertyInfo = StorePropertyInfo::all();
         /*$messagerecord = $storeMessageAccount->toArray();
         $incomingAccount = MessagingAccount::where('id', $messagerecord[0]['incoming_account_id'])->get();
         $outgoingAccount = MessagingAccount::where('id', $messagerecord[0]['outgoing_account_id'])->get();*/
         //echo '<pre>';
         //print_r($storeDevices);die;
 
-        return view('store.update', compact('store','devices','storeDevices','shipping_services','storeShippingService','pageTypes','storePages','storeCategories','storeMessageAccount','logisticCenters','storeLogisticCenters','store_types','action','listing_templates','fileSystems'));
+        return view('store.update', compact('store','devices','storeDevices','shipping_services','storeShippingService','pageTypes','storePages','storeCategories','storeMessageAccount','logisticCenters','storeLogisticCenters','store_types','action','listing_templates','fileSystems','propertyInfo'));
     }
 
     /**
@@ -272,6 +275,20 @@ class StoreController extends Controller
                 // Handle the exception and show an error message
                 return response()->json(['errors' => $e->getMessage()]);
             }
+        }elseif($tabId == 13){
+            $data = [];
+            for($i=0; $i < count($request->store_property_info_id); $i++){
+                $data[] = array(
+                    'id' => (string) Str::uuid(),
+                    'store_id' => $storeId,
+                    'store_property_info_id' => $request->store_property_info_id[$i],
+                    'value' => $request->value[$i],
+                );
+            }
+            StorePropertyValues::where('store_id', $storeId)->delete();
+            StorePropertyValues::insert($data);
+
+            return response()->json(['success' => true, 'message' => 'Data saved successfully!']);
         }
     }
 
@@ -331,13 +348,15 @@ class StoreController extends Controller
         $storeMessageAccount = StoreMessageAccount::where('store_id', $id)->get();
         $storeLogisticCenters = StoreLogisticCenter::with('LogisticCenter')->where('store_id', $id)->get();
         $fileSystems = FileSystem::all();
+        $propertyInfo = StorePropertyInfo::all();
+        $propertyValues = StorePropertyValues::with('propertyInfo')->where('store_id',$id)->get();
         /*$messagerecord = $storeMessageAccount->toArray();
         $incomingAccount = MessagingAccount::where('id', $messagerecord[0]['incoming_account_id'])->get();
         $outgoingAccount = MessagingAccount::where('id', $messagerecord[0]['outgoing_account_id'])->get();*/
         //echo '<pre>';
         //print_r($outgoingAccount);die;
 
-        return view('store.update', compact('store','devices','storeDevices','shipping_services','storeShippingService','pageTypes','storePages','storeCategories','storeMessageAccount','logisticCenters','storeLogisticCenters','store_types','action','listing_templates','fileSystems'));
+        return view('store.update', compact('store','devices','storeDevices','shipping_services','storeShippingService','pageTypes','storePages','storeCategories','storeMessageAccount','logisticCenters','storeLogisticCenters','store_types','action','listing_templates','fileSystems','propertyInfo','propertyValues'));
     }
 
     public function saveShippingService(Request $request){
