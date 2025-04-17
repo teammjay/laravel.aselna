@@ -49,13 +49,18 @@ class AmazonUtility
                 return $specification->name . ' : ' . $specification->value;
             })
             ->implode(', ');
+
+        $items_included = ProductSpecification::where('product_id', $productData->product_id)
+            ->where('name', 'Items Included')
+            ->first();
+
         return [
             'cable' => FieldUtility::getCableFieldValue($productData),
             'item_package_weight' => FieldUtility::getItemPackageWeight($productData),
             'number_of_items' => [['value' => 0]],
             'connector_gender' => [['value' => 'Female-to-Female']],
             'connector_type' => [['value' => 'USB Type C']],
-            'included_components' => [['value' => 'Cable', 'language_tag' => 'en_US']],
+            'included_components' => [['value' => $items_included->value, 'language_tag' => 'en_US']],
             'compatible_devices' => [['value' => 'Smartphone', 'language_tag' => 'en_US']],
             'special_feature' => [['value' => $special_features ?? 'Cables', 'language_tag' => 'en_US']],
         ];
@@ -76,12 +81,16 @@ class AmazonUtility
             $special_features = 'Hard Screen Protectors';
         }
 
+        $items_included = ProductSpecification::where('product_id', $productData->product_id)
+            ->where('name', 'Items Included')
+            ->first();
+
         return [
             'finish_type' => [['value' => $productData->material ?? 'Glossy', 'language_tag' => 'en_US']],
             'warranty_description' => [['value' => 'No Warranty Included', 'language_tag' => 'en_US']],
             'compatible_phone_models' => FieldUtility::getComaptiblePhoneModels($itemDetail),
             'item_package_weight' => FieldUtility::getItemPackageWeight($productData),
-            'included_components' => [['value' => 'Cover', 'language_tag' => 'en_US']],
+            'included_components' => [['value' => $items_included->value, 'language_tag' => 'en_US']],
             'compatible_devices' => [['value' => 'Cellphone', 'language_tag' => 'en_US']],
             'item_hardness' => FieldUtility::getItemHardness($productData),
             'special_feature' => [['value' => $special_features, 'language_tag' => 'en_US']],
@@ -99,6 +108,10 @@ class AmazonUtility
         $storeProduct = $itemDetail->storeProduct;
         $productData = $itemDetail->storeProduct->product;
 
+        $items_included = ProductSpecification::where('product_id', $productData->product_id)
+            ->where('name', 'Items Included')
+            ->first();
+
         return [
             'headphones_ear_placement' => [['value' => 'in_ear']],
             'warranty_description' => [['value' => 'No Warranty Included', 'language_tag' => 'en_US']],
@@ -107,7 +120,7 @@ class AmazonUtility
             'connectivity_technology' => [['value' => 'Wireless', 'language_tag' => 'en_US',]],
             'headphones_form_factor' => [['value' => 'In Ear', 'language_tag' => 'en_US',]],
             'model_name' => FieldUtility::getComaptiblePhoneModels($itemDetail, 1),
-            'included_components' => [['value' => 'Heaphones', 'language_tag' => 'en_US']],
+            'included_components' => [['value' => $items_included->value, 'language_tag' => 'en_US']],
             'number_of_items' => [['value' => 0]],
             'model_number' => [['value' => $itemDetail->sku]],
         ];
@@ -132,6 +145,11 @@ class AmazonUtility
             ->where('name', 'Mounting Type')
             ->first();
 
+        $items_included = ProductSpecification::where('product_id', $productData->product_id)
+            ->where('name', 'Items Included')
+            ->first();
+
+
         return [
             'compatible_phone_models' => FieldUtility::getComaptiblePhoneModels($itemDetail),
             'compatible_devices' => [['value' => 'Smartphones', 'language_tag' => 'en_US']],
@@ -139,7 +157,7 @@ class AmazonUtility
             'material' => [['value' => $productData->material ?? 'Glossy', 'language_tag' => 'en_US']],
             'mounting_type' => [['value' => $mounting_type->value ?? 'Dashboard', 'language_tag' => 'en_US']],
             'number_of_items' => [['value' => 0]],
-            'included_components' => [['value' => 'Mount', 'language_tag' => 'en_US']],
+            'included_components' => [['value' => $items_included->value, 'language_tag' => 'en_US']],
             'item_package_weight' => FieldUtility::getItemPackageWeight($productData),
             'warranty_description' => [['value' => 'No Warranty Included', 'language_tag' => 'en_US']],
         ];
@@ -150,12 +168,20 @@ class AmazonUtility
         $storeProduct = $itemDetail->storeProduct;
         $productData = $itemDetail->storeProduct->product;
 
+        $items_included = ProductSpecification::where('product_id', $productData->product_id)
+            ->where('name', 'Items Included')
+            ->first();
+
+        $fasteners = ProductSpecification::where('product_id', $productData->product_id)
+            ->where('name', 'Fastening')
+            ->first();
+
         return [
             'item_package_weight' => FieldUtility::getItemPackageWeight($productData),
-            'included_components' => [['value' => 'Cell Phone Hosteler', 'language_tag' => 'en_US']],
+            'included_components' => [['value' => $items_included->value, 'language_tag' => 'en_US']],
             'compatible_phone_models' => FieldUtility::getComaptiblePhoneModels($itemDetail),
             'warranty_description' => [['value' => 'No Warranty Included', 'language_tag' => 'en_US']],
-            'fastener' => [['type' => [['value' => 'Magnetic', 'language_tag' => 'en_US',]]]],
+            'fastener' => [['type' => [['value' => $fasteners->value, 'language_tag' => 'en_US',]]]],
             'number_of_items' => [['value' => 0]],
         ];
     }
@@ -179,10 +205,14 @@ class AmazonUtility
             ->where('name', 'Number of Ports')
             ->first();
 
+        $connectivity = ProductSpecification::where('product_id', $productData->product_id)
+            ->where('name', 'Connectivity')
+            ->first();
+
         return [
             'warranty_description' => [['value' => 'No Warranty Included', 'language_tag' => 'en_US']],
             'number_of_items' => [['value' => 0]],
-            'connector_type' => [['value' => 'USB Type C', 'language_tag' => 'en_US']],
+            'connector_type' => [['value' => $connectivity->value, 'language_tag' => 'en_US']],
             'connectivity_technology' => [['value' => 'USB', 'language_tag' => 'en_US']],
             'number_of_ports' => [['value' => $number_of_ports->value ?? '2']],
             'output_current' => [['value' => '2.4', 'unit' => 'amperes']],
@@ -213,11 +243,15 @@ class AmazonUtility
             ->where('name', 'Number of Ports')
             ->first();
 
+        $connectivity = ProductSpecification::where('product_id', $productData->product_id)
+            ->where('name', 'Connectivity')
+            ->first();
+
         return [
             'warranty_description' => [['value' => 'No Warranty Included', 'language_tag' => 'en_US']],
             'recommended_uses_for_product' => [['value' => 'Smartphones', 'language_tag' => 'en_US']],
             'power_source_type' => [['value' => 'Battery', 'language_tag' => 'en_US']],
-            'connector_type' => [['value' => 'USB Type C', 'language_tag' => 'en_US']],
+            'connector_type' => [['value' => $connectivity->value, 'language_tag' => 'en_US']],
             'item_length_width_thickness' => [[
                 'length' => ['value' => $productData->dimensions_length, 'unit' => LengthUnit::getAmazonUnitName($productData->dimensions_length_unit ?? 1)],
                 'width' => ['value' => $productData->dimensions_width, 'unit' => LengthUnit::getAmazonUnitName($productData->dimensions_width_unit ?? 1)],
@@ -239,13 +273,17 @@ class AmazonUtility
         $storeProduct = $itemDetail->storeProduct;
         $productData = $itemDetail->storeProduct->product;
 
+        $items_included = ProductSpecification::where('product_id', $productData->product_id)
+            ->where('name', 'Items Included')
+            ->first();
+
         return [
             'warranty_description' => [['value' => 'No Warranty Included', 'language_tag' => 'en_US']],
             'compatible_devices' => [['value' => 'Smartphones', 'language_tag' => 'en_US']],
             'maximum_height' => [['value' => $productData->dimensions_length, 'unit' => LengthUnit::getAmazonUnitName($productData->dimensions_length_unit ?? 1)]],
             'number_of_items' => [['value' => 0]],
             'material' => [['value' => $productData->material ?? 'Glossy', 'language_tag' => 'en_US']],
-            'included_components' => [['value' => 'Tripod', 'language_tag' => 'en_US']],
+            'included_components' => [['value' => $items_included->value, 'language_tag' => 'en_US']],
         ];
     }
 
@@ -264,10 +302,14 @@ class AmazonUtility
             $special_features = 'Hard Screen Protectors';
         }
 
+        $form_factor = ProductSpecification::where('product_id', $productData->product_id)
+            ->where('name', 'Form Factor')
+            ->first();
+
         return [
             'warranty_description' => [['value' => 'No Warranty Included', 'language_tag' => 'en_US']],
             'compatible_devices' => [['value' => 'Smartphones', 'language_tag' => 'en_US']],
-            'form_factor' => [['value' => 'Pouch', 'language_tag' => 'en_US']],
+            'form_factor' => [['value' => $form_factor->value, 'language_tag' => 'en_US']],
             'special_feature' => [['value' => $special_features, 'language_tag' => 'en_US']],
             'number_of_items' => [['value' => 0]],
         ];
@@ -292,11 +334,15 @@ class AmazonUtility
             ->where('name', 'Mounting Type')
             ->first();
 
+        $items_included = ProductSpecification::where('product_id', $productData->product_id)
+            ->where('name', 'Items Included')
+            ->first();
+
         return [
             'warranty_description' => [['value' => 'No Warranty Included', 'language_tag' => 'en_US']],
             'special_feature' => [['value' => $special_features, 'language_tag' => 'en_US']],
             'compatible_phone_models' => FieldUtility::getComaptiblePhoneModels($itemDetail),
-            'included_components' => [['value' => 'Cell Phone Hosteler', 'language_tag' => 'en_US']],
+            'included_components' => [['value' => $items_included->value, 'language_tag' => 'en_US']],
             'number_of_items' => [['value' => 0]],
             'material' => [['value' => $productData->material ?? 'Glossy', 'language_tag' => 'en_US']],
             'mounting_type' => [['value' => $mounting_type->value ?? 'Dashboard', 'language_tag' => 'en_US']],
