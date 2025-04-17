@@ -43,6 +43,7 @@ class ProductSpecificationSyncJob implements ShouldQueue
         ], [
             'id' => $productSpecification->id,
             'name' => $productSpecification->name,
+            'value' => $productSpecification->value_,
             'product_id' => $productSpecification->product_id,
             'created_at' => now(),
             'updated_at' => now(),
