@@ -43,7 +43,7 @@ class AmazonListingItemSyncJob implements ShouldQueue
             ->join('listing_item', 'listing_item_link.item_id', '=', 'listing_item.id')
             ->join('listing', 'listing_item_link.listing_id', '=', 'listing.id')
             ->whereIn('listing.store_id', $amazon_store_ids)
-            ->whereNull('listing_item.store_sku')
+            //->whereNull('listing_item.store_sku')
             ->whereIn('listing_item.sync_status', [
                 ListingSyncStatus::Synchronizing,
             ])
@@ -55,7 +55,7 @@ class AmazonListingItemSyncJob implements ShouldQueue
             ->chunk(100, function ($listingItemLinks) {
                 foreach ($listingItemLinks as $listingItemLink) {
                     Log::info('Syncing Amazon listing item: ' . $listingItemLink->item_id);
-//                    $this->syncListingItem($listingItemLink);
+                    $this->syncListingItem($listingItemLink);
                 }
             });
     }
@@ -64,8 +64,11 @@ class AmazonListingItemSyncJob implements ShouldQueue
     {
         $store = $listingItemLink->listing->store;
         $itemDetail = $listingItemLink->listingItem;
+        Log::info("Listing Item Sku " . $itemDetail->store_sku != null);
+        if($itemDetail->store_sku != null) return;
 
         try {
+            Log::info("Calling Service");
             $amazonAuthService = new AmazonAuthService();
             $response = $amazonAuthService->fetchListingInfoBySku($itemDetail->sku, $store->user_id);
             Log::info('Summary ::' . json_encode($response['summaries']));
