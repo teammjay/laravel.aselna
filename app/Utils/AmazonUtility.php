@@ -54,12 +54,17 @@ class AmazonUtility
             ->where('name', 'Items Included')
             ->first();
 
+        $connectivity = ProductSpecification::where('product_id', $productData->product_id)
+            ->where('name', 'Connectivity')
+            ->first();
+
+
         return [
             'cable' => FieldUtility::getCableFieldValue($productData),
             'item_package_weight' => FieldUtility::getItemPackageWeight($productData),
             'number_of_items' => [['value' => 0]],
             'connector_gender' => [['value' => 'Female-to-Female']],
-            'connector_type' => [['value' => 'USB Type C']],
+            'connector_type' => [['value' => $connectivity->value]],
             'included_components' => [['value' => $items_included->value, 'language_tag' => 'en_US']],
             'compatible_devices' => [['value' => 'Smartphone', 'language_tag' => 'en_US']],
             'special_feature' => [['value' => $special_features ?? 'Cables', 'language_tag' => 'en_US']],
@@ -112,13 +117,22 @@ class AmazonUtility
             ->where('name', 'Items Included')
             ->first();
 
+        $connectivity = ProductSpecification::where('product_id', $productData->product_id)
+            ->where('name', 'Connectivity')
+            ->first();
+
+        $form_factor = ProductSpecification::where('product_id', $productData->product_id)
+            ->where('name', 'Form Factor')
+            ->first();
+
+
         return [
-            'headphones_ear_placement' => [['value' => 'in_ear']],
+            'headphones_ear_placement' => [['value' => $form_factor->value]],
             'warranty_description' => [['value' => 'No Warranty Included', 'language_tag' => 'en_US']],
             'item_package_weight' => FieldUtility::getItemPackageWeight($productData),
             'color' => [['value' => $productData->color->name ?? 'Black', 'language_tag' => 'en_US']],
-            'connectivity_technology' => [['value' => 'Wireless', 'language_tag' => 'en_US',]],
-            'headphones_form_factor' => [['value' => 'In Ear', 'language_tag' => 'en_US',]],
+            'connectivity_technology' => [['value' => $connectivity->value, 'language_tag' => 'en_US',]],
+            'headphones_form_factor' => [['value' => $form_factor->value, 'language_tag' => 'en_US',]],
             'model_name' => FieldUtility::getComaptiblePhoneModels($itemDetail, 1),
             'included_components' => [['value' => $items_included->value, 'language_tag' => 'en_US']],
             'number_of_items' => [['value' => 0]],
