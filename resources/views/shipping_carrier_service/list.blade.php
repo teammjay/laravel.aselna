@@ -14,7 +14,7 @@
             </a>
         </div>
     </div>
-    <div class="card card-primary">
+    {{--<div class="card card-primary">
         <div class="card-header">
             <h3 class="card-title">Filters</h3>
         </div>
@@ -39,7 +39,7 @@
                 </div>
             </div>
         </div>
-    </div>
+    </div>--}}
     <table id="shippingCarrierServiceTable" class="table table-bordered table-striped">
         <thead>
         <tr>

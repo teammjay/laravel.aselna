@@ -14,7 +14,7 @@
             </a>
         </div>
     </div>
-    <div class="card card-primary">
+    {{--<div class="card card-primary">
         <div class="card-header">
             <h3 class="card-title">Filters</h3>
         </div>
@@ -26,12 +26,12 @@
                             Name
                         </div>
                         <div class="col-2">
-                            {{--                            <select class="custom-select" id="product_code_operator" name="product_code_operator">--}}
-                            {{--                                <option value="=">=</option>--}}
-                            {{--                                <option value="contains">contains</option>--}}
-                            {{--                                <option value="starts_with">starts with</option>--}}
-                            {{--                                <option value="ends_with">ends with</option>--}}
-                            {{--                            </select>--}}
+                            --}}{{--                            <select class="custom-select" id="product_code_operator" name="product_code_operator">--}}{{--
+                            --}}{{--                                <option value="=">=</option>--}}{{--
+                            --}}{{--                                <option value="contains">contains</option>--}}{{--
+                            --}}{{--                                <option value="starts_with">starts with</option>--}}{{--
+                            --}}{{--                                <option value="ends_with">ends with</option>--}}{{--
+                            --}}{{--                            </select>--}}{{--
                         </div>
                         <div class="col-6">
                             <input type="text" name="name" id="name" class="form-control">
@@ -41,7 +41,7 @@
                 </div>
             </div>
         </div>
-    </div>
+    </div>--}}
     <table id="deviceSeriesTable" class="table table-bordered table-striped">
         <thead>
         <tr>
@@ -70,4 +70,17 @@
             </tr>
         @endforeach
         </tbody>
+@stop
+@section('js')
+<script>
+    $(document).ready(function () {
+        $('#deviceSeriesTable').DataTable(
+            {
+                "processing": true,
+                'searching': true,
+                "paging": true,
+            }
+        );
+    });
+</script>
 @stop

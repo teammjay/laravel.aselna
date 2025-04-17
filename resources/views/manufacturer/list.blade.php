@@ -19,7 +19,7 @@
             <table id="manufacturerTable" class="table table-bordered table-striped">
                 <thead>
                 <tr>
-                    <th>ID</th>
+                    {{--<th>ID</th>--}}
                     <th>Name</th>
                     <th>Code</th>
                     <th>Notes</th>
@@ -31,7 +31,7 @@
                 <tbody>
                 @foreach($manufacturers as $manufacture)
                     <tr>
-                        <td>{{ $manufacture->id }}</td>
+                        {{--<td>{{ $manufacture->id }}</td>--}}
                         <td>{{ $manufacture->name }}</td>
                         <td>{{ $manufacture->code }}</td>
                         <td>{{ $manufacture->notes }}</td>

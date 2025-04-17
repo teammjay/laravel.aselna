@@ -53,6 +53,6 @@ class Store extends Model
 
     public function fileSystem()
     {
-        return $this->belongsTo(FileSystem::class, 'file_system_id');
+        return $this->belongsTo(FileSystem::class, 'file_system_id', 'id');
     }
 }

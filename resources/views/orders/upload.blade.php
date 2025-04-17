@@ -36,7 +36,9 @@
                                             <option value="">--</option>
                                             @if(count($stores ?? []) > 0)
                                                 @foreach($stores as $store)
+                                                    @if(isset($store->storeType) && $store->storeType->code == 'amazon')
                                                     <option value="{{ $store->id }}">{{ $store->name }} {{ (!empty((array)$store->storeType)) ? ' - '.$store->storeType->name : '' }}</option>
+                                                    @endif
                                                 @endforeach
                                             @endif
                                         </select>

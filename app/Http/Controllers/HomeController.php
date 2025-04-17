@@ -67,6 +67,13 @@ class HomeController extends Controller
             }
         }*/
 
+        /*$stores = Store::with('fileSystem','storeType')->where('name','AccessoryWiz')->get();
+        //dd($stores);
+        echo '<pre>';
+        print_r($stores);
+        echo '</pre>';die;*/
+
+
         Bus::chain([
             new SubmitShopifyProductsJob(),
         ])->dispatch();
