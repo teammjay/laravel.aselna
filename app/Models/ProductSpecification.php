@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class ProductSpecification extends Model
 {
     protected $table = 'product_specification';
-    protected $fillable = ['id', 'name', 'product_id', 'created_at', 'updated_at'];
+    protected $fillable = ['id', 'name', 'product_id', 'created_at', 'updated_at','value'];
     public $incrementing = false;
     protected $keyType = 'string';
 }
