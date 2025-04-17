@@ -445,6 +445,8 @@ class CatalogController extends Controller
         $tabId = $request->input('tab');
         $request->except('product_id', 'tab');
 
+        Log::info("$request->sdoc_enable");
+
         // Logic to handle saving data based on $tabId
         if ($tabId == 1) {
 

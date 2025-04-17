@@ -11,6 +11,8 @@ use App\Models\ListingItemLink;
 use App\Models\ListingItemProductImage;
 use App\Models\ProductSearchTerm;
 use App\Models\ProductTypeKeyword;
+use App\Models\StorePropertyInfo;
+use App\Models\StorePropertyValues;
 use App\Models\StoreTypeCategory;
 use App\Services\Auth\AmazonAuthService;
 use App\Services\Marketplace\Contracts\MarketplaceServiceInterface;
@@ -166,33 +168,35 @@ class AmazonService implements MarketplaceServiceInterface
                     'currency' => 'USD',
                     'our_price' => [['schedule' => [['value_with_tax' => number_format($itemDetail->price, 2)]]]],
                 ]];
-                //"point_of_contact_address": "222 Universal Dr\nNORTH HAVEN, 06473 CT",
-                //                "point_of_contact_email": "kandalaman@buyselna.com",
-                //                "point_of_contact_name": "Kan Dalaman",
-                //                "point_of_contact_phone_number": "4753088259",
-                //                "registration_status": "fcc_supplier_declaration_of_conformity",
-                //                "marketplace_id": "ATVPDKIKX0DER"
-                if (!$productData->sdoc_enable) {
+                Log::info('Product Data: ' . json_encode($productData->sdoc_enable));
+                if ($productData->sdoc_enable == 1) {
+                    $propertyValues = StorePropertyValues::join('store_property_info', 'store_property_values.store_property_info_id', '=', 'store_property_info.id')
+                        ->where('store_id', $listingInfo->store->id)->get();
+                    // convert to map
+                    $propertyValuesMap = [];
+                    foreach ($propertyValues as $propertyValue) {
+                        $propertyValuesMap[$propertyValue->field_name] = $propertyValue->value;
+                    }
                     $message['attributes']['fcc_radio_frequency_emission_compliance'] = [[
-                        'point_of_contact_address' => '222 Universal Dr NORTH HAVEN, 06473 CT',
-                        'point_of_contact_email' => 'kandalaman@buyselna.com',
-                        "point_of_contact_phone_number" => "4753088259",
-                        'point_of_contact_name' => 'Kan Dalaman',
-                        'registration_status' => 'fcc_supplier_declaration_of_conformity'
+                        'point_of_contact_address' => $propertyValuesMap['fcc_radio_frequency_emission_compliance_registration_status'] ?? '',
+                        'point_of_contact_email' => $propertyValuesMap['fcc_radio_frequency_emission_compliance_point_of_contact_email'] ?? '',
+                        "point_of_contact_phone_number" => $propertyValuesMap['fcc_radio_frequency_emission_compliance_point_of_contact_phone_number'] ?? '',
+                        'point_of_contact_name' => $propertyValuesMap['fcc_radio_frequency_emission_compliance_point_of_contact_name'] ?? '',
+                        'registration_status' => $propertyValuesMap['fcc_radio_frequency_emission_compliance_point_of_contact_address'] ?? ''
                     ]];
                 }
             }
 
             $feed['messages'][] = $message;
 
-            $schemaJson = $this->authService->getProductTypeSchema($currentCategory->marketplace_code);
-            $validator = new Validator();
-            $result = $validator->validate($productData, $schemaJson);
-            if ($result->isValid()) {
-                Log::info("Product data is valid.");
-            } else {
-                Log::error("Product data is invalid: " . json_encode($result->error()->subErrors()));
-            }
+//            $schemaJson = $this->authService->getProductTypeSchema($currentCategory->marketplace_code);
+//            $validator = new Validator();
+//            $result = $validator->validate($productData, $schemaJson);
+//            if ($result->isValid()) {
+//                Log::info("Product data is valid.");
+//            } else {
+//                Log::error("Product data is invalid: " . json_encode($result->error()->subErrors()));
+//            }
             $index++;
         }
 
