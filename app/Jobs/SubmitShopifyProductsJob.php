@@ -44,14 +44,14 @@ class SubmitShopifyProductsJob implements ShouldQueue
                     continue;
                 }
 
-                Log::info('Store IN: ' . $store->name);
+                Log::info('Store IN: ' . json_encode($store));
                 $pIds = ManageMarketplaceProduct::select('product_id')->where('upload_status','success')->get();
                 $products = Catalog::select('*')->with('productType','productKeyFeatures','productColor')
                     ->where('product_status', 1)
                     //->where('product_sku', 'E74')
                     ->whereNotIn('product_id', $pIds)
                     ->orderBy('created_at', 'desc')
-                    ->limit(10)
+                    ->limit(5)
                     ->get();
                     /*->chunk(25, function ($products) use ($store) {
                         foreach ($products as $product) {
@@ -256,8 +256,6 @@ class SubmitShopifyProductsJob implements ShouldQueue
                 if (!isset($store->fileSystem)) return;
                 foreach ($productImages as $productImage) {
                     $Image = $productImage->imageObj;
-                    $path = '';
-
                     $path = '/store-images/' . $store->id . '/' . $productImage->id . '.jpg';
 
                     $imageData = [
@@ -283,7 +281,7 @@ class SubmitShopifyProductsJob implements ShouldQueue
             });
     }
 
-    private function uploadImage($store, $Image, $path)
+    public function uploadImage($store, $Image, $path)
     {
         $storeFileSystem = $store->fileSystem;
         Log::info("File system :: " . json_encode($storeFileSystem));
@@ -294,18 +292,18 @@ class SubmitShopifyProductsJob implements ShouldQueue
         $rootPath = $storeFileSystem->root_path;
         $localFilePath = storage_path('app/public/' . $Image->location . $Image->name);
 
-        $ftpConn = ftp_connect($host, $port);
+        $ftpConn = \ftp_connect($host, $port);
         if (!$ftpConn) {
             Log::info("Could not connect to FTP server: $host");
         }
 
-        $login = ftp_login($ftpConn, $loginId, $password);
+        $login = \ftp_login($ftpConn, $loginId, $password);
         if (!$login) {
             ftp_close($ftpConn);
             Log::info("Could not login to FTP server with provided credentials.");
         }
 
-        ftp_pasv($ftpConn, true);
+        \ftp_pasv($ftpConn, true);
 
         $remoteFilePath = $rootPath . $path;
         Log::info("Remote Path :: " . $remoteFilePath);
@@ -323,7 +321,7 @@ class SubmitShopifyProductsJob implements ShouldQueue
         ftp_close($ftpConn);
     }
 
-    function createFtpDirectory($ftpConn, $dirPath)
+    public function createFtpDirectory($ftpConn, $dirPath)
     {
         $parts = explode('/', $dirPath);
         $currentDir = '';
