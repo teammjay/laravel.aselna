@@ -222,6 +222,14 @@
                                                 </div>
                                             </div>
                                         </div>
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="form-group">
+                                                    <label for="product_status">SDOC Enable? </label>
+                                                    <input type="checkbox" name="sdoc_enable_element" id="sdoc_enable_element" class="sdoc_enable__class" {{ $product->sdoc_enable == 1 ? 'checked' : '' }}>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                     <div class="row pt-2">
                                         <div class="col-md-12">
@@ -1092,6 +1100,10 @@
             formData.append('product_id', product_id);
             formData.append('tab', tabId);
 
+            if(tabId == 1){
+                formData.set('sdoc_enable', $('#sdoc_enable_element').is(':checked') ? 1 : 0);
+            }
+
             if(tabId == 9){
 
                 let store_id = $('.store_row.active').data('id');
@@ -1146,6 +1158,7 @@
             let formData = new FormData(form);
             formData.append('product_id', product_id);
             formData.set('product_status', 'active');
+            formData.set('sdoc_enable', $('#sdoc_enable_element').is(':checked') ? 1 : 0);
 
             $.ajax({
                 type: 'POST',
