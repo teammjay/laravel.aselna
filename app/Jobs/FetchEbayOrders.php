@@ -6,6 +6,8 @@ use App\Constants\OrderStatus;
 use App\Models\ListingItem;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\OrderOperation;
+use App\Models\OrderOperationItem;
 use App\Models\OrderSynchronization;
 use App\Models\Store;
 use App\Services\Marketplace\Service\EbayService;
@@ -55,11 +57,6 @@ class FetchEbayOrders implements ShouldQueue
                 if (!isset($orders['total']) && $orders['total'] > 0) {
 
                     foreach ($orders['orders'] as $order) {
-                        $firstname = $lastname = '';
-                        $orderTotal = 0;
-                        $taxTotal = 0;
-                        $discountTotal = 0;
-                        $orderTotals = 0;
 
                         /* check order id exist*/
                         $orderExist = Order::where('order_id',$order['orderId'])->count();
@@ -84,6 +81,25 @@ class FetchEbayOrders implements ShouldQueue
                             $order_detail = Order::updateOrCreate([
                                 'order_id' => $order['orderId'],
                             ], $orderData);
+
+                            /* create order operatation*/
+                            $orderOperationData = [
+                                'order_id' => $order_detail->id,
+                                'ship_date' => date('Y-m-d H:i:s'),
+                                'insurance_value' => 0,
+                                'status' => 1,
+                                'signature_confirmation' => 1,
+                                'ship_from_id' => '',
+                                'store_id' => $store->id,
+                                'operation_type' => 1,
+                                'label_creation_type' => 1,
+                                'print_to_file' => 0,
+                                'seller_provides_return_label' => 0
+                            ];
+
+                            $order_operation_detail = OrderOperation::updateOrCreate([
+                                'order_id' => $order_detail->id,
+                            ], $orderOperationData);
 
                             /* get order items*/
                             $ordersItems = $order['lineItems'];
@@ -111,8 +127,22 @@ class FetchEbayOrders implements ShouldQueue
                                         'order_id' => $order_detail->id,
                                         'product_id' => $itemDetail->storeProduct->product->product_id,
                                     ], $orderItemData);
-                                }
 
+                                    /* create order operation item*/
+                                    if ($order_item->id) {
+                                        $orderOperationItemData = [
+                                            'order_item_id' => $order_item->id,
+                                            'order_operation_id' => $order_operation_detail->id,
+                                            'quantity' => $item['quantity'],
+                                            'client_id' => '',
+                                            'sync_status' => 6
+                                        ];
+
+                                        $order_operation_item = OrderOperationItem::updateOrCreate([
+                                            'order_operation_id' => $order_operation_detail->id
+                                        ], $orderOperationItemData);
+                                    }
+                                }
                             }
                         }
                     }

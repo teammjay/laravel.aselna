@@ -131,7 +131,7 @@ class ShipmentsController extends Controller
                     "action" => '<button type="button" class="btn btn-warning show-detail" data-id="'.$order->oid.'">Show Detail</button><input type="checkbox" class="pro-id" name="shipment_id[]" value="'.$order->oid.'" style="visibility:hidden;">',
                     "image" => ($image) ? '<div class="main-image"><img src="'.$image.'" alt="'.$imagename.'" class="mainImage" width="70" height="70" data-product-id="'.$product_id.'"></div>' : '',
                     "status" => '',
-                    "carrier_service" => $order->carrierService->name,
+                    "carrier_service" => isset($order->carrierService) ? $order->carrierService->name : '',
                     "store" => $order->store->name.' - '.$storeType,
                     "order_id" => $order->order->order_id,
                     "order_date" => $order->order->order_date,
