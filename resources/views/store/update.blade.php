@@ -1066,7 +1066,7 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="form-group mt-3">
-
+                                    <label>Store Manufacturer</label>
                                     <select class="form-control store-manufacturer" name="manufacturer[]" multiple="multiple">
                                         @if(count($manufacturers ?? []) > 0)
                                             @foreach($manufacturers as $manufacturer)

@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class StoreManufactureLink extends Model
 {
     // Set a custom table name
-    protected $table = 'store_manufacturer_link';
+    protected $table = 'store_manufacturer';
 
     protected $keyType = 'string';
 
