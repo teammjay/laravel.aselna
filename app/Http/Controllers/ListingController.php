@@ -1530,7 +1530,8 @@ class ListingController extends Controller
         foreach ($devices as $key => $device) {
             // Split the device into brand and model
             $currentBrand = $device->brand_name . ' ' . $device->name;
-            if (strtolower($store_type) == 'ebay' && strtolower($device->brand_name) == 'apple') {
+            /*if (strtolower($store_type) == 'ebay' && strtolower($device->brand_name) == 'apple') {*/
+            if (strtolower($device->brand_name) == 'apple') {
                 $currentBrand = $device->name;
             }
             $brandName = $device->brand_name;
