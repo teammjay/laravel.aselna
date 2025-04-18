@@ -236,7 +236,11 @@ class WalmartService implements MarketplaceServiceInterface
 
             $compatibleDevices = [];
             foreach ($item->devices as $device) {
-                $compatibleDevices[] = $device->device->brand->name . ' ' . $device->device->name;
+                if (isset($device->device->brand) && strtolower($device->device->brand->name) == 'apple') {
+                    $compatibleDevices[] = $device->device->name;
+                }else {
+                    $compatibleDevices[] = $device->device->brand->name . ' ' . $device->device->name;
+                }
             }
 
             $keyFeatures = [];
