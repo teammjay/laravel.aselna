@@ -2677,7 +2677,7 @@ class ListingController extends Controller
             if ($request->ajax()) {
                 return response()->json([
                     'success' => true,
-                    'manufacturer' => $option
+                    'option' => $option
                 ]);
             }
         }
