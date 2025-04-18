@@ -6,6 +6,37 @@
     <h1>{{ ($action == 'Edit') ? 'Edit Store' : 'Add Store' }}</h1>
 @stop
 
+@section('adminlte_css')
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <!-- Lightbox2 CSS -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.4/css/lightbox.min.css" rel="stylesheet">
+    <style>
+        .nav-link {
+            padding: 0.5rem 0.9rem !important;
+        }
+        ul.manufacturer-list{list-style: none;}
+        ul.manufacturer-list li{display: inline-block; width:12%; margin-bottom: 10px;}
+        .select2-container--default .select2-dropdown .select2-search__field:focus, .select2-container--default .select2-search--inline .select2-search__field:focus {
+            outline: 0;
+            border: none;
+        }
+        .select2-container{width:100% !important;}
+        .select2-container .select2-selection--single{
+            height: calc(2.25rem + 2px);
+        }
+        .select2-container--default .select2-selection--single .select2-selection__arrow {
+            height: auto;
+            position: absolute;
+            top: 50%;
+            right: 1px;
+            width: 20px;
+            transform: translateY(-50%);
+        }
+        .select2-container--default .select2-selection--multiple .select2-selection__choice__display{color:#333;}
+    </style>
+@stop
+
+
 @section('content')
 
     @csrf
@@ -82,6 +113,11 @@
                 <li class="nav-item">
                     <a class="nav-link" id="properties-tab" data-toggle="pill" href="#tab13" role="tab" aria-controls="tab13" aria-selected="false">
                         Properties
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" id="manufacturer-tab" data-toggle="pill" href="#tab14" role="tab" aria-controls="tab14" aria-selected="false">
+                        Manufacturer
                     </a>
                 </li>
             </ul>
@@ -1024,6 +1060,42 @@
                     </form>
 
                 </div>
+
+                <div class="tab-pane fade" id="tab14" role="tabpanel" aria-labelledby="manufacturer-tab">
+                    <form method="POST" id="frmtab14">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group mt-3">
+
+                                    <select class="form-control store-manufacturer" name="manufacturer[]" multiple="multiple">
+                                        @if(count($manufacturers ?? []) > 0)
+                                            @foreach($manufacturers as $manufacturer)
+                                                <option value="{{ $manufacturer->id }}" @if(is_array($storeManufacturers)){{ in_array($manufacturer->id,($storeManufacturers ?? [])) ? 'selected' : '' }}@endif>{{ $manufacturer->name }}</option>
+                                            @endforeach
+                                        @endif
+
+                                    </select>
+                                </div>
+                               {{-- <ul class="manufacturer-list">
+                                @if(count($manufacturers ?? []) > 0)
+                                    @foreach($manufacturers as $manufacturer)
+                                        <li>
+                                            <input type="checkbox" name="devices[]" value="{{ $manufacturer->id }}" @if(is_array($storeManufacturers)){{ in_array($manufacturer->id,($storeManufacturers ?? [])) ? 'checked' : '' }} @endif>  {{ $manufacturer->name }}
+                                        </li>
+
+                                    @endforeach
+                                @endif
+                                </ul>--}}
+                            </div>
+                        </div>
+                        <div class="card-footer text-center mt-3">
+                            <button type="button" class="btn btn-success" onclick="saveStoreTabData(14)">Save</button>
+                            <button type="button" class="btn btn-primary" onclick="finalizeForm()">Submit</button>
+                            {{--<button type="reset" class="btn btn-primary">Reset</button>--}}
+                            <a href="{{ route('store.list') }}" class="btn btn-secondary">Cancel</a>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
     </div>
@@ -1033,6 +1105,8 @@
 
 @section('adminlte_js')
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <!-- Lightbox2 JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.4/js/lightbox.min.js"></script>
     <script>
         var store_id = "{{ $store->id ?? '' }}"; // Passed from controller
 
@@ -1299,7 +1373,7 @@
 
         $(document).ready(function() {
 
-            $('.pro-tags').select2();
+            $('.store-manufacturer').select2();
             // Add new field group
             $('#add_feature').click(function() {
                 $('#features_table tbody').append(`

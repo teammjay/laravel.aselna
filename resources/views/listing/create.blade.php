@@ -932,7 +932,7 @@
                                 include_carrier:include_carrier,
                                 carrier_combo:carrier_combo,
                                 brand_combo:brand_combo,
-                                // use_store_as_brand:$('#use-store-brand').val(),
+                                manufacturer_id:$('#use-store-brand').val(),
                             },
                             /* processData: false,
                              contentType: false,*/
@@ -1005,6 +1005,7 @@
                                 carrier_combo = 1;
                             }
                             formData.append('carrier_combo', carrier_combo);
+                            formData.append('manufacturer_id', $('#use-store-brand').val());
                             $("#ajax-preloader").show();
                             $.ajax({
                                 type: 'POST',
@@ -2367,6 +2368,27 @@
             });
         }
 
+        function getStoreManufacturer(element){
+            $.ajax({
+                url: "{{ route('listing.getstoremanufacturer') }}",
+                type: 'POST',
+                data: {
+                    store_id: $('#listing_store').val(),
+                    "_token": '{{ csrf_token() }}'
+                },
+                success: function (response) {
+                    // If success, remove the user row from the table
+                    if (response.success) {
+                        $('#use-store-brand').html(response.option);
+                    }
+                },
+                error: function (xhr) {
+                    // Handle error response
+                    alert('Error: ' + xhr.responseJSON.error);
+                }
+            });
+        }
+
         function loadProducts() {
             if($('#listing_store').val() === '') return;
             const form = document.querySelector("#frmproductfilter");
@@ -2476,6 +2498,7 @@
                 $('#combo_option').hide();
                 $('.inc_carrier_option').hide();
             }
+            getStoreManufacturer();
             $('input[name="selected_store_product[]"]').each(function () {
                 var pid = $(this).val();
                 var pro_id = $('.pid-'+pid).val();

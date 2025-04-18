@@ -53,7 +53,7 @@ class OrdersController extends Controller
 
         // Filter by order date
         if ($request->has('order_date') && $request->order_date != '') {
-            $query->where('order_date', $request->order_date);
+            $query->whereDate('order_date', $request->order_date);
         }
 
         // Filter by first name
@@ -73,7 +73,7 @@ class OrdersController extends Controller
 
         // Filter by created date
         if ($request->has('created_at') && $request->created_at != '') {
-            $query->where('created_at', $request->created_at);
+            $query->whereDate('created_at', $request->created_at);
         }
 
         if($columnName != ''){
