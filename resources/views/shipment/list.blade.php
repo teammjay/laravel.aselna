@@ -484,7 +484,7 @@
             url: "{{ route('shipment.getshippingcarrier') }}",
             type: 'POST',
             data: {
-                carrier_id: ele.val(),
+                carrier_id: element.val(),
                 "_token": '{{ csrf_token() }}'
             },
             success: function (response) {
