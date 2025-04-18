@@ -9,11 +9,13 @@ use App\Models\DeviceTypes;
 use App\Models\FileSystem;
 use App\Models\ListingTemplate;
 use App\Models\LogisticCenter;
+use App\Models\Manufacturer;
 use App\Models\MessagingAccount;
 use App\Models\ShippingCarrierService;
 use App\Models\StoreCategory;
 use App\Models\StoreDeviceType;
 use App\Models\StoreLogisticCenter;
+use App\Models\StoreManufactureLink;
 use App\Models\StorePage;
 use App\Models\PageType;
 use App\Models\StoreMessageAccount;
@@ -78,13 +80,15 @@ class StoreController extends Controller
         $storeLogisticCenters = StoreLogisticCenter::with('LogisticCenter')->where('store_id', $store_id)->get();
         $fileSystems = FileSystem::all();
         $propertyInfo = StorePropertyInfo::all();
+        $manufacturers = Manufacturer::orderBy('name','asc')->get();
+        $storeManufacturers = [];
         /*$messagerecord = $storeMessageAccount->toArray();
         $incomingAccount = MessagingAccount::where('id', $messagerecord[0]['incoming_account_id'])->get();
         $outgoingAccount = MessagingAccount::where('id', $messagerecord[0]['outgoing_account_id'])->get();*/
         //echo '<pre>';
         //print_r($storeDevices);die;
 
-        return view('store.update', compact('store','devices','storeDevices','shipping_services','storeShippingService','pageTypes','storePages','storeCategories','storeMessageAccount','logisticCenters','storeLogisticCenters','store_types','action','listing_templates','fileSystems','propertyInfo'));
+        return view('store.update', compact('store','devices','storeDevices','shipping_services','storeShippingService','pageTypes','storePages','storeCategories','storeMessageAccount','logisticCenters','storeLogisticCenters','store_types','action','listing_templates','fileSystems','propertyInfo','manufacturers','storeManufacturers'));
     }
 
     /**
@@ -289,6 +293,18 @@ class StoreController extends Controller
             StorePropertyValues::insert($data);
 
             return response()->json(['success' => true, 'message' => 'Data saved successfully!']);
+        }elseif($tabId == 14){
+            $data = [];
+            for($i=0; $i < count($request->manufacturer); $i++){
+                $data[] = array(
+                    'store_id' => $storeId,
+                    'manufacturer_id' => $request->manufacturer[$i]
+                );
+            }
+            StoreManufactureLink::where('store_id', $storeId)->delete();
+            StoreManufactureLink::insert($data);
+
+            return response()->json(['success' => true, 'message' => 'Data saved successfully!']);
         }
     }
 
@@ -350,13 +366,17 @@ class StoreController extends Controller
         $fileSystems = FileSystem::all();
         $propertyInfo = StorePropertyInfo::all();
         $propertyValues = StorePropertyValues::with('propertyInfo')->where('store_id',$id)->get();
+        $manufacturers = Manufacturer::orderBy('name','asc')->get();
+        $storeManufacturers = StoreManufactureLink::where('store_id',$id)->get();
+        $storeManufacturers = $storeManufacturers->pluck('manufacturer_id')->values()->all();
+        //$storemanufacturers = Manufacturer::all();
         /*$messagerecord = $storeMessageAccount->toArray();
         $incomingAccount = MessagingAccount::where('id', $messagerecord[0]['incoming_account_id'])->get();
         $outgoingAccount = MessagingAccount::where('id', $messagerecord[0]['outgoing_account_id'])->get();*/
         //echo '<pre>';
         //print_r($outgoingAccount);die;
 
-        return view('store.update', compact('store','devices','storeDevices','shipping_services','storeShippingService','pageTypes','storePages','storeCategories','storeMessageAccount','logisticCenters','storeLogisticCenters','store_types','action','listing_templates','fileSystems','propertyInfo','propertyValues'));
+        return view('store.update', compact('store','devices','storeDevices','shipping_services','storeShippingService','pageTypes','storePages','storeCategories','storeMessageAccount','logisticCenters','storeLogisticCenters','store_types','action','listing_templates','fileSystems','propertyInfo','propertyValues','manufacturers','storeManufacturers'));
     }
 
     public function saveShippingService(Request $request){
