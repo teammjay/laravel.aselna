@@ -238,7 +238,7 @@ class AmazonUtility
             'input_voltage' => [['value' => '100', 'unit' => 'volts']],
             'special_feature' => [['value' => $special_features, 'language_tag' => 'en_US']],
             'compatible_phone_models' => FieldUtility::getComaptiblePhoneModels($itemDetail),
-            'output_voltage' => '',
+            'output_voltage' => [['value' => '100', 'unit' => 'volts']],
         ];
     }
 
