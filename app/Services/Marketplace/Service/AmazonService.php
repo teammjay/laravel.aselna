@@ -185,6 +185,20 @@ class AmazonService implements MarketplaceServiceInterface
                         'registration_status' => $propertyValuesMap['fcc_radio_frequency_emission_compliance_point_of_contact_address'] ?? ''
                     ]];
                 }
+
+                $compatibleDevices = [];
+                $count = 0;
+                foreach ($itemDetail->devices as $device) {
+                    $deviceName = $device->device->brand->name . ' ' . $device->device->name;
+                    if (strtolower($device->device->brand->name) == 'apple')
+                        $deviceName = $device->device->name;
+
+                    if ($count < 1000) {
+                        $compatibleDevices[] = ['value' => $deviceName, 'language_tag' => 'en_US'];
+                    } else break;
+                    $count++;;
+                }
+                $message['attributes']['compatible_devices'] = $compatibleDevices;
             }
 
             $feed['messages'][] = $message;
