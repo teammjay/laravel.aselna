@@ -233,12 +233,12 @@ class AmazonUtility
             'connector_type' => [['value' => $connectivity->value, 'language_tag' => 'en_US']],
             'connectivity_technology' => [['value' => 'USB', 'language_tag' => 'en_US']],
             'number_of_ports' => [['value' => $number_of_ports->value ?? '2']],
-            'output_current' => [['value' => '2.4', 'unit' => 'amperes']],
+            'output_current' => [['value' => $productData->output_current_value, 'unit' => $productData->output_current_unit]],
 //            'compatible_devices' => [['value' => 'Smartphones', 'language_tag' => 'en_US']],
-            'input_voltage' => [['value' => '100', 'unit' => 'volts']],
+            'input_voltage' => [['value' => $productData->input_voltage_value, 'unit' => $productData->input_voltage_unit]],
             'special_feature' => [['value' => $special_features, 'language_tag' => 'en_US']],
             'compatible_phone_models' => FieldUtility::getComaptiblePhoneModels($itemDetail),
-            'output_voltage' => '',
+            'output_voltage' => [['value' => $productData->output_voltage_value, 'unit' => $productData->output_voltage_unit]],
         ];
     }
 
