@@ -9,6 +9,7 @@ use App\Models\ListingFeed;
 use App\Models\ListingItemDetail;
 use App\Models\ListingItemLink;
 use App\Models\ListingItemProductImage;
+use App\Models\Manufacturer;
 use App\Models\ProductSearchTerm;
 use App\Models\ProductTypeKeyword;
 use App\Models\StorePropertyInfo;
@@ -89,7 +90,6 @@ class AmazonService implements MarketplaceServiceInterface
                 'operationType' => 'UPDATE',
                 'requirements' => 'LISTING',
                 'attributes' => [
-                    'brand' => [['value' => $storeProduct->store->brand_name ?? '', 'language_tag' => 'en_US']],
                     'country_of_origin' => [['value' => 'CN']],
                     'item_name' => [[
                         'value' => $itemDetail->title,
@@ -138,8 +138,22 @@ class AmazonService implements MarketplaceServiceInterface
                     'height' => ['value' => $productData->package_dimensions_height, 'unit' => 'inches']
                 ]];
 
-                if (isset($storeProduct->store)) {
-                    $message['attributes']['manufacturer'] = [['value' => $storeProduct->store->brand_name, 'language_tag' => 'en_US']];
+                if (isset($listingInfo->manufacturer_id) || isset($storeProduct->store)) {
+                    $brandName = '';
+
+                    Log::info('Manufacturer ID: ' . json_encode($listingInfo->manufacturer_id));
+                    if ($listingInfo->manufacturer_id) {
+                        $manufacturer = Manufacturer::where('id', $listingInfo->manufacturer_id)->first();
+                        Log::info('Manufacturer: ' . json_encode($manufacturer));
+                        if ($manufacturer) {
+                            $brandName = $manufacturer->name;
+                        }
+                    } else {
+                        $brandName = $storeProduct->store->brand_name ?? '';
+                    }
+
+                    $message['attributes']['manufacturer'] = [['value' => $brandName, 'language_tag' => 'en_US']];
+                    $message['attributes']['brand'] = [['value' => $brandName, 'language_tag' => 'en_US']];
                 }
 
                 $images = ListingItemProductImage::where('listing_item_id', $itemDetail->id)->get();
