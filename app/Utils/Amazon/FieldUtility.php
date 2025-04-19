@@ -21,13 +21,13 @@ class FieldUtility
 
         return [[
             'length' => [[
-//                'decimal_value' => str_replace(',', '.', $cable_length->value),
+//                'decimal_value' => 3,
                 'string_value' => $cable_length->value,
-//                'unit' => LengthUnit::getAmazonUnitName($productData->dimensions_length_unit ?? 1),
+//                'unit' => LengthUnit::getAmazonUnitName(5),
             ]],
             'type' => [[
                 'language_tag' => 'en_US',
-                'value' => $type->value
+                'value' => $type->value,
             ]]
         ]];
     }
