@@ -4,21 +4,30 @@ namespace App\Utils\Amazon;
 
 use App\Constants\LengthUnit;
 use App\Constants\WeightUnit;
+use App\Models\ProductSpecification;
 use Illuminate\Support\Facades\Log;
 
 class FieldUtility
 {
     public static function getCableFieldValue($productData)
     {
+        $type = ProductSpecification::where('product_id', $productData->product_id)
+            ->where('name', 'Type')
+            ->first();
+
+        $cable_length = ProductSpecification::where('product_id', $productData->product_id)
+            ->where('name', 'Cable Length')
+            ->first();
+
         return [[
             'length' => [[
-                'decimal_value' => $productData->dimensions_length,
-                'string_value' => $productData->dimensions_length . ' ' . LengthUnit::getAmazonUnitName($productData->dimensions_length_unit ?? 1),
-                'unit' => LengthUnit::getAmazonUnitName($productData->dimensions_length_unit ?? 1),
+//                'decimal_value' => str_replace(',', '.', $cable_length->value),
+                'string_value' => $cable_length->value,
+//                'unit' => LengthUnit::getAmazonUnitName($productData->dimensions_length_unit ?? 1),
             ]],
             'type' => [[
                 'language_tag' => 'en_US',
-                'value' => 'Lightning',
+                'value' => $type->value
             ]]
         ]];
     }
@@ -53,7 +62,7 @@ class FieldUtility
     public static function getItemHardness(mixed $productData)
     {
         return [[
-            'value' => '9H',
+            'value' => '9H Hardness',
             'language_tag' => 'en_US',
         ]];
     }
