@@ -6,6 +6,8 @@ use App\Constants\OrderStatus;
 use App\Models\ListingItem;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\OrderOperation;
+use App\Models\OrderOperationItem;
 use App\Models\OrderSynchronization;
 use App\Models\Store;
 use App\Services\Marketplace\Service\MagentoService;
@@ -83,6 +85,25 @@ class FetchMagentoOrderJob implements ShouldQueue
                                 'order_id' => $order['entity_id'],
                             ], $orderData);
 
+                            /* create order operatation*/
+                            $orderOperationData = [
+                                'order_id' => $order_detail->id,
+                                'ship_date' => date('Y-m-d H:i:s'),
+                                'insurance_value' => 0,
+                                'status' => 1,
+                                'signature_confirmation' => 1,
+                                'ship_from_id' => '',
+                                'store_id' => $store->id,
+                                'operation_type' => 1,
+                                'label_creation_type' => 1,
+                                'print_to_file' => 0,
+                                'seller_provides_return_label' => 0
+                            ];
+
+                            $order_operation_detail = OrderOperation::updateOrCreate([
+                                'order_id' => $order_detail->id,
+                            ], $orderOperationData);
+
                             /* get order items*/
                             if (isset($order['items'])) {
                                 foreach ($order['items'] as $item) {
@@ -105,9 +126,24 @@ class FetchMagentoOrderJob implements ShouldQueue
                                         'shipping_quantity' => $item['qty_shipped'],
                                     ];
 
-                                    $order_item_id = OrderItem::updateOrCreate([
+                                    $order_item = OrderItem::updateOrCreate([
                                         'order_id' => $order_detail->id
                                     ], $orderItemData);
+
+                                    /* create order operation item*/
+                                    if ($order_item->id) {
+                                        $orderOperationItemData = [
+                                            'order_item_id' => $order_item->id,
+                                            'order_operation_id' => $order_operation_detail->id,
+                                            'quantity' => $item['qty_ordered'],
+                                            'client_id' => '',
+                                            'sync_status' => 6
+                                        ];
+
+                                        $order_operation_item = OrderOperationItem::updateOrCreate([
+                                            'order_operation_id' => $order_operation_detail->id
+                                        ], $orderOperationItemData);
+                                    }
                                 }
                             }
                         }
