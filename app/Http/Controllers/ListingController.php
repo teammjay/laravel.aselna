@@ -30,6 +30,7 @@ use App\Models\ProductTitleKeyword;
 use App\Models\ProductType;
 use App\Models\Store;
 use App\Models\StoreCategory;
+use App\Models\StoreManufactureLink;
 use App\Models\StoreProduct;
 use App\Models\StoreType;
 use App\Models\StoreTypeCategory;
@@ -1530,7 +1531,8 @@ class ListingController extends Controller
         foreach ($devices as $key => $device) {
             // Split the device into brand and model
             $currentBrand = $device->brand_name . ' ' . $device->name;
-            if (strtolower($store_type) == 'ebay' && strtolower($device->brand_name) == 'apple') {
+            /*if (strtolower($store_type) == 'ebay' && strtolower($device->brand_name) == 'apple') {*/
+            if (strtolower($device->brand_name) == 'apple') {
                 $currentBrand = $device->name;
             }
             $brandName = $device->brand_name;
@@ -1974,6 +1976,7 @@ class ListingController extends Controller
                     $carrier_combo = $request->input('carrier_combo');
                     $store_id = $request->input('store_id');
                     $store_type = $request->input('store_type');
+                    $manufacturer_id = $request->input('manufacturer_id');
                     $store_detail = Store::where('id', $store_id)->first();
                     $product_models = $request->input('product_models');
                     if ($product_models) {
@@ -1997,6 +2000,11 @@ class ListingController extends Controller
                         'created_by' => $created_by,
                         'updated_by' => $created_by
                     ];
+
+                    if(isset($manufacturer_id) && $manufacturer_id != '' && $manufacturer_id != 'use-store'){
+
+                        $listingArr['manufacturer_id'] = $manufacturer_id;
+                    }
 
                     Log::info(' Listing :: ' . json_encode($listingArr));
                     $lisrecord = Listing::create($listingArr);
@@ -2648,6 +2656,34 @@ class ListingController extends Controller
         return response()->json([
             'error' => true,
             'message' => 'Something went wrong! Please try again!'
+        ]);
+    }
+
+    public function getStoreManufacturer(Request $request)
+    {
+        $store_id = $request->input('store_id');
+
+        if ($store_id != '') {
+
+            $storeManufacturers = StoreManufactureLink::with('manufacturer')->where('store_id',$store_id)->get();
+
+            $option = '<option value=""></option><option value="use-store">Use store as brand</option>';
+            if(!empty($storeManufacturers)){
+                foreach($storeManufacturers as $manufacturer){
+                    $option .= '<option value="'.$manufacturer->manufacturer->id.'">'.$manufacturer->manufacturer->name.'</option>';
+                }
+            }
+
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'option' => $option
+                ]);
+            }
+        }
+
+        return response()->json([
+            'success' => false
         ]);
     }
 }

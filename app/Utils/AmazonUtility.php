@@ -58,15 +58,19 @@ class AmazonUtility
             ->where('name', 'Connectivity')
             ->first();
 
+        $connector_gender = ProductSpecification::where('product_id', $productData->product_id)
+            ->where('name', 'Connector Gender')
+            ->first();
+
 
         return [
             'cable' => FieldUtility::getCableFieldValue($productData),
             'item_package_weight' => FieldUtility::getItemPackageWeight($productData),
-            'number_of_items' => [['value' => 0]],
+            'number_of_items' => [['value' => 1]],
             'connector_gender' => [['value' => 'Female-to-Female']],
             'connector_type' => [['value' => $connectivity->value]],
             'included_components' => [['value' => $items_included->value, 'language_tag' => 'en_US']],
-            'compatible_devices' => [['value' => 'Smartphone', 'language_tag' => 'en_US']],
+//            'compatible_devices' => [['value' => 'Smartphone', 'language_tag' => 'en_US']],
             'special_feature' => [['value' => $special_features ?? 'Cables', 'language_tag' => 'en_US']],
         ];
     }
@@ -96,7 +100,7 @@ class AmazonUtility
             'compatible_phone_models' => FieldUtility::getComaptiblePhoneModels($itemDetail),
             'item_package_weight' => FieldUtility::getItemPackageWeight($productData),
             'included_components' => [['value' => $items_included->value, 'language_tag' => 'en_US']],
-            'compatible_devices' => [['value' => 'Cellphone', 'language_tag' => 'en_US']],
+//            'compatible_devices' => [['value' => 'Cellphone', 'language_tag' => 'en_US']],
             'item_hardness' => FieldUtility::getItemHardness($productData),
             'special_feature' => [['value' => $special_features, 'language_tag' => 'en_US']],
             'material' => [['value' => $productData->material ?? 'Glossy', 'language_tag' => 'en_US']],
@@ -166,7 +170,7 @@ class AmazonUtility
 
         return [
             'compatible_phone_models' => FieldUtility::getComaptiblePhoneModels($itemDetail),
-            'compatible_devices' => [['value' => 'Smartphones', 'language_tag' => 'en_US']],
+//            'compatible_devices' => [['value' => 'Smartphones', 'language_tag' => 'en_US']],
             'special_feature' => [['value' => $special_features, 'language_tag' => 'en_US']],
             'material' => [['value' => $productData->material ?? 'Glossy', 'language_tag' => 'en_US']],
             'mounting_type' => [['value' => $mounting_type->value ?? 'Dashboard', 'language_tag' => 'en_US']],
@@ -229,12 +233,12 @@ class AmazonUtility
             'connector_type' => [['value' => $connectivity->value, 'language_tag' => 'en_US']],
             'connectivity_technology' => [['value' => 'USB', 'language_tag' => 'en_US']],
             'number_of_ports' => [['value' => $number_of_ports->value ?? '2']],
-            'output_current' => [['value' => '2.4', 'unit' => 'amperes']],
-            'compatible_devices' => [['value' => 'Smartphones', 'language_tag' => 'en_US']],
-            'input_voltage' => [['value' => '100', 'unit' => 'volts']],
+            'output_current' => [['value' => $productData->output_current_value, 'unit' => $productData->output_current_unit]],
+//            'compatible_devices' => [['value' => 'Smartphones', 'language_tag' => 'en_US']],
+            'input_voltage' => [['value' => $productData->input_voltage_value, 'unit' => $productData->input_voltage_unit]],
             'special_feature' => [['value' => $special_features, 'language_tag' => 'en_US']],
             'compatible_phone_models' => FieldUtility::getComaptiblePhoneModels($itemDetail),
-            'output_voltage' => '',
+            'output_voltage' => [['value' => $productData->output_voltage_value, 'unit' => $productData->output_voltage_unit]],
         ];
     }
 
@@ -276,7 +280,7 @@ class AmazonUtility
             ]],
             'voltage' => [['value' => '28', 'unit' => 'volts']],
             'battery' => [['value' => '20000', 'unit' => 'amp_hours']],
-            'compatible_devices' => [['value' => 'Smartphones', 'language_tag' => 'en_US']],
+//            'compatible_devices' => [['value' => 'Smartphones', 'language_tag' => 'en_US']],
             'special_feature' => [['value' => $special_features, 'language_tag' => 'en_US']],
             'number_of_items' => [['value' => 0]],
         ];
@@ -293,7 +297,7 @@ class AmazonUtility
 
         return [
             'warranty_description' => [['value' => 'No Warranty Included', 'language_tag' => 'en_US']],
-            'compatible_devices' => [['value' => 'Smartphones', 'language_tag' => 'en_US']],
+//            'compatible_devices' => [['value' => 'Smartphones', 'language_tag' => 'en_US']],
             'maximum_height' => [['value' => $productData->dimensions_length, 'unit' => LengthUnit::getAmazonUnitName($productData->dimensions_length_unit ?? 1)]],
             'number_of_items' => [['value' => 0]],
             'material' => [['value' => $productData->material ?? 'Glossy', 'language_tag' => 'en_US']],
@@ -322,7 +326,7 @@ class AmazonUtility
 
         return [
             'warranty_description' => [['value' => 'No Warranty Included', 'language_tag' => 'en_US']],
-            'compatible_devices' => [['value' => 'Smartphones', 'language_tag' => 'en_US']],
+//            'compatible_devices' => [['value' => 'Smartphones', 'language_tag' => 'en_US']],
             'form_factor' => [['value' => $form_factor->value, 'language_tag' => 'en_US']],
             'special_feature' => [['value' => $special_features, 'language_tag' => 'en_US']],
             'number_of_items' => [['value' => 0]],
@@ -360,7 +364,7 @@ class AmazonUtility
             'number_of_items' => [['value' => 0]],
             'material' => [['value' => $productData->material ?? 'Glossy', 'language_tag' => 'en_US']],
             'mounting_type' => [['value' => $mounting_type->value ?? 'Dashboard', 'language_tag' => 'en_US']],
-            'compatible_devices' => [['value' => 'Smartphones', 'language_tag' => 'en_US']],
+//            'compatible_devices' => [['value' => 'Smartphones', 'language_tag' => 'en_US']],
         ];
     }
 }

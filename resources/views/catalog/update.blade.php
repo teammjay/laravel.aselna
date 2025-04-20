@@ -338,6 +338,46 @@
                                                     </div>
                                                 </div>
                                             </div>
+                                            <div class="col-md-8">
+                                                <div class="form-group">
+                                                    <label for="package__weight">Input Voltage</label>
+                                                    <div class="d-flex">
+                                                        <input type="text" class="form-control mr-1" id="input__voltage" name="input_voltage_value" value="{{ old('input_voltage_value',$product->input_voltage_value) }}" placeholder="">
+                                                        <select class="form-control w-25" id="input_voltage_unit" name="input_voltage_unit">
+                                                            <option value="volts" {{ "volts" == $product->input_voltage_unit ? 'selected' : '' }}> Volts </option>
+                                                            <option value="kilovolts" {{ "kilovolts" == $product->input_voltage_unit ? 'selected' : '' }}> Kilovolts </option>
+                                                            <option value="microvolts" {{ "microvolts" == $product->input_voltage_unit ? 'selected' : '' }}> Microvolts </option>
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-8">
+                                                <div class="form-group">
+                                                    <label for="package__weight">Output Voltage</label>
+                                                    <div class="d-flex">
+                                                        <input type="text" class="form-control mr-1" id="output__voltage" name="output_voltage_value" value="{{ old('output_voltage_value',$product->output_voltage_value) }}" placeholder="">
+                                                        <select class="form-control w-25" id="output_voltage_unit" name="output_voltage_unit">
+                                                            <option value="volts" {{ "volts" == $product->output_voltage_unit ? 'selected' : '' }}> Volts </option>
+                                                            <option value="kilovolts" {{ "kilovolts" == $product->output_voltage_unit ? 'selected' : '' }}> Kilovolts </option>
+                                                            <option value="microvolts" {{ "microvolts" == $product->output_voltage_unit ? 'selected' : '' }}> Microvolts </option>
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-8">
+                                                <div class="form-group">
+                                                    <label for="package__weight">Output Current</label>
+                                                    <div class="d-flex">
+                                                        <input type="text" class="form-control mr-1" id="output__current" name="output_current_value" value="{{ old('output_current_value',$product->output_current_value) }}" placeholder="">
+                                                        <select class="form-control w-25" id="output_current_unit" name="output_current_unit">
+                                                            <option value="amps" {{ "amps" == $product->output_current_unit ? 'selected' : '' }}> Amps </option>
+                                                            <option value="kiloamps" {{ "kiloamps" == $product->output_current_unit ? 'selected' : '' }}> Kiloamps </option>
+                                                            <option value="milliamps" {{ "milliamps" == $product->output_current_unit ? 'selected' : '' }}> Milliamps </option>
+                                                            <option value="microamps" {{ "microamps" == $product->output_current_unit ? 'selected' : '' }}> Microamps </option>
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                            </div>
                                             {{--<div class="col-md-8">
                                                 <div class="form-group">
                                                     <label for="package__weight">Retail Bulk?</label>
