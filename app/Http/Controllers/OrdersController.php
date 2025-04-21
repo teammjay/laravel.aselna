@@ -220,7 +220,14 @@ class OrdersController extends Controller
         $order_synchronization = OrderSynchronization::create($synchronizeArr);
         $order_synchronization_id = $order_synchronization->id;*/
 
+        $rowNumber = 1;
         while (($row = fgetcsv($handle)) !== false) {
+            if (count($row) !== count($headers)) {
+                $rowNumber++;
+                // Skip or handle error
+                Log::info("Row $rowNumber has a column mismatch. Skipping.\n");
+                continue; // or log it
+            }
             $data = array_combine($headers, $row);
 
             /*echo '<pre>';

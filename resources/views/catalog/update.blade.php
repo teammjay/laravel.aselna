@@ -107,6 +107,11 @@
                             Spintex
                         </a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link" id="specification-tab" data-toggle="pill" href="#tab12" role="tab" aria-controls="tab12" aria-selected="false">
+                            Specification
+                        </a>
+                    </li>
                 </ul>
             </div>
             <div class="card-body">
@@ -1084,6 +1089,46 @@
                         </form>
                     </div>
 
+                    <div class="tab-pane fade" id="tab12" role="tabpanel" aria-labelledby="specification-tab">
+                        <form method="POST" id="frmtab12">
+                            <button type="button" class="btn btn-secondary" id="add_specification"> <i class="fa fa-plus-square"></i> Add</button>
+                            <div class="card card-body border mt-2">
+                                <table class="table table-bordered" id="specification_table">
+                                    <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Value</th>
+                                        <th>Action</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    @if(count($specifications ?? []) > 0)
+                                        @foreach($specifications as $specification)
+                                            <tr class="field-group">
+                                                <td><input type="text" class="form-control" name="specification[]" value="{{ $specification->name }}"></td>
+                                                <td><textarea class="form-control" name="specification_value[]">{{ $specification->value }}</textarea></td>
+                                                <td><button type="button" class="btn btn-danger remove-specification"> <i class="fas fa-fw fa-trash"></i></button></td>
+                                            </tr>
+                                        @endforeach
+                                    @else
+                                        <tr>
+                                            <td><input type="text" class="form-control" name="specification[]" value="1"></td>
+                                            <td><textarea class="form-control" name="specification_value[]"></textarea></td>
+                                            <td></td>
+                                        </tr>
+                                    @endif
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="card-footer text-center mt-3">
+                                <button type="button" class="btn btn-success" onclick="saveTabData(12)">Save</button>
+                                <button type="button" class="btn btn-primary" onclick="finalizeForm()">Submit</button>
+                                {{--<button type="reset" class="btn btn-primary">Reset</button>--}}
+                                <a href="{{ route('catalog.list') }}" class="btn btn-secondary">Cancel</a>
+                            </div>
+                        </form>
+                    </div>
+
                 </div>
             </div>
             <div id="ajax-gallery" style="display: none;"></div>
@@ -1932,6 +1977,23 @@
                 galleryDiv.append(anchor);
                 galleryDiv.find('a:first').trigger('click');
 
+            });
+
+            // Add new field group
+            $('#add_specification').click(function() {
+                $('#specification_table tbody').append(`
+                    <tr class="field-group">
+                        <td><input type="text" class="form-control" name="specification[]" value=""></td>
+                        <td><textarea class="form-control" name="specification_value[]"></textarea></td>
+                        <td><button type="button" class="btn btn-danger remove-specification"> <i class="fas fa-fw fa-trash"></i></button></td>
+                    </tr>
+                `);
+
+            });
+
+            // Remove field group
+            $(document).on('click', '.remove-specification', function() {
+                $(this).parents('tr.field-group').remove();
             });
 
         });
