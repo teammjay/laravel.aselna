@@ -52,7 +52,7 @@ class FetchEbayOrders implements ShouldQueue
 
 
                 $ebayService = new EbayService();
-                $orders = $ebayService->getOrders();
+                $orders = $ebayService->getOrders($store);
 
                 if (!isset($orders['total']) && $orders['total'] > 0) {
 

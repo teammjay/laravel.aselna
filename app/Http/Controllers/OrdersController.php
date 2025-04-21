@@ -5,12 +5,14 @@ namespace App\Http\Controllers;
 use App\Constants\OrderStatus;
 use App\Models\ListingItem;
 use App\Models\Order;
+use App\Models\OrderItem;
 use App\Models\OrderSynchronization;
 use App\Models\Store;
 use App\Services\Marketplace\Service\AmazonService;
 use App\Services\Marketplace\Service\EbayService;
 use Illuminate\Http\Request;
 use App\Helpers\QueryFilters;
+use Illuminate\Support\Facades\Log;
 
 class OrdersController extends Controller
 {
@@ -197,6 +199,7 @@ class OrdersController extends Controller
             'csv_file' => 'required|mimes:csv,txt'
         ]);
         $store_id = $request->input('store_id');
+        $store = Store::where('id',$store_id)->first();
         $file = $request->file('csv_file');
         $handle = fopen($file, 'r');
 
@@ -250,7 +253,7 @@ class OrdersController extends Controller
 
                 /* get order items*/
                 $amazonService = new AmazonService();
-                $ordersItems = $amazonService->getOrderItems($data['order-id']);
+                $ordersItems = $amazonService->getOrderItems($data['order-id'],$store);
                 if (!isset($ordersItems['error'])) {
                     foreach($ordersItems as $item){
                         Log::info('Amazon Order Item: ' . json_encode($item));

@@ -13,14 +13,21 @@ class AmazonAuthService
     private $client;
     private $accessToken;
     private $expireTime;
+    private $client_id;
+    private $client_secret;
+    private $refresh_token;
 
     private $marketplaceIDs;
 
-    public function __construct()
+    public function __construct($clientId, $clientSecret,$refresh_token='')
     {
         $this->client = new Client([
             'base_uri' => 'https://sellingpartnerapi-na.amazon.com',
         ]);
+
+        $this->client_id = $clientId;
+        $this->client_secret = $clientSecret;
+        $this->refresh_token = $refresh_token;
     }
 
     public function getAccessToken()
@@ -33,12 +40,21 @@ class AmazonAuthService
             'base_uri' => 'https://api.amazon.com',
         ]);
 
-        $response = $client->post('/auth/o2/token', [
+        /*$response = $client->post('/auth/o2/token', [
             'form_params' => [
                 'grant_type' => 'refresh_token',
                 'refresh_token' => env('AMAZON_REFRESH_TOKEN'),
                 'client_id' => env('AMAZON_CLIENT_ID'),
                 'client_secret' => env('AMAZON_CLIENT_SECRET'),
+            ]
+        ]);*/
+
+        $response = $client->post('/auth/o2/token', [
+            'form_params' => [
+                'grant_type' => 'refresh_token',
+                'refresh_token' => $this->refresh_token,
+                'client_id' => $this->client_id,
+                'client_secret' => $this->client_secret,
             ]
         ]);
 

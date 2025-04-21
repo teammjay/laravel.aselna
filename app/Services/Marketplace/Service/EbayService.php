@@ -949,12 +949,12 @@ class EbayService implements MarketplaceServiceInterface
 
     }
 
-    public function getOrders()
+    public function getOrders($store)
     {
-        // $this->authService = new EbayAuthService();
-        // $response = $this->authService->getOrders();
+        $this->authService = new EbayAuthService($store->seller_id, $store->secret_key,$store->access_key,$store->user_id);
+        $response = $this->authService->getOrders();
 
-        // return $response;
+        return $response;
 
     }
 
