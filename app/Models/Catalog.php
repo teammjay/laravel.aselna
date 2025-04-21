@@ -102,4 +102,9 @@ class Catalog extends Model
         // Add interface relationship one product has many interfaces
         return $this->hasMany(ProductInterface::class, 'product_id', 'product_id');
     }
+
+    public function productSpecification()
+    {
+        return $this->hasMany(ProductSpecification::class, 'product_id', 'product_id');
+    }
 }
