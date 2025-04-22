@@ -51,7 +51,8 @@ class JobSchedulerController extends Controller
     public function edit(ScheduledJob $job)
     {
         $allJobs = ScheduledJob::all();
-        return view('jobs.edit', compact('job', 'allJobs'));
+        $parents = ScheduleParentJob::where('job_id', $job->id)->pluck('parent_id')->toArray();
+        return view('jobs.edit', compact('job', 'allJobs', 'parents'));
     }
 
     public function update(ScheduledJob $job, Request $request)

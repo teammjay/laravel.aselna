@@ -40,15 +40,15 @@ class DeviceTypesSyncJob implements ShouldQueue
             $this->createSyncDeviceSubType($deviceSubType);
         }
 
-        $data = DB::connection('fonus_db')->table('tbl_device_type')->cursor();
-        foreach ($data as $deviceType) {
-            $this->createDeviceType($deviceType);
-        }
-
-        $deviceSubTypes = DB::connection('fonus_db')->table('tbl_device_type_sub')->cursor();
-        foreach ($deviceSubTypes as $deviceSubType) {
-            $this->createDeviceSubType($deviceSubType);
-        }
+//        $data = DB::connection('fonus_db')->table('tbl_device_type')->cursor();
+//        foreach ($data as $deviceType) {
+//            $this->createDeviceType($deviceType);
+//        }
+//
+//        $deviceSubTypes = DB::connection('fonus_db')->table('tbl_device_type_sub')->cursor();
+//        foreach ($deviceSubTypes as $deviceSubType) {
+//            $this->createDeviceSubType($deviceSubType);
+//        }
     }
 
     /**
