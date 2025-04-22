@@ -19,6 +19,8 @@ class FetchWalmartOrdersJob implements ShouldQueue
 {
     use Queueable;
 
+    public $timeout = 3000;
+
     /**
      * Create a new job instance.
      */
@@ -112,7 +114,7 @@ class FetchWalmartOrdersJob implements ShouldQueue
                             /* check order operation for this order*/
                             $orderOperationDetail = OrderOperation::where('order_id',$orderDetail->id)->count();
                             if($orderOperationDetail){
-
+                                $orderOperationDetail->update(['status'=>2]);
                             }
                         }else {
                             $orderData = [
@@ -144,7 +146,8 @@ class FetchWalmartOrdersJob implements ShouldQueue
                                 'operation_type' => 1,
                                 'label_creation_type' => 1,
                                 'print_to_file' => 0,
-                                'seller_provides_return_label' => 0
+                                'seller_provides_return_label' => 0,
+                                'order_synchronization_id' => $order_synchronization_id
                             ];
 
                             $order_operation_detail = OrderOperation::updateOrCreate([

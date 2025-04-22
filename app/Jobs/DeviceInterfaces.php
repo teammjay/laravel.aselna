@@ -62,6 +62,12 @@ class DeviceInterfaces implements ShouldQueue
 
     private function createDeviceInetrface(mixed $deviceInterface)
     {
+        if (Device::where('id', $deviceInterface->device_id)->doesntExist()) {
+            return;
+        }
+        if (Interfaces::where('id', $deviceInterface->cea_interface_id)->doesntExist()) {
+            return;
+        }
         DeviceInterface::updateOrCreate([
             'id' => $deviceInterface->id
         ], [

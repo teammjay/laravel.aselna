@@ -17,6 +17,8 @@ class DeviceTypesSyncJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
+    public $timeout = 3000;
+
     /**
      * Create a new job instance.
      */
@@ -40,15 +42,15 @@ class DeviceTypesSyncJob implements ShouldQueue
             $this->createSyncDeviceSubType($deviceSubType);
         }
 
-        $data = DB::connection('fonus_db')->table('tbl_device_type')->cursor();
-        foreach ($data as $deviceType) {
-            $this->createDeviceType($deviceType);
-        }
-
-        $deviceSubTypes = DB::connection('fonus_db')->table('tbl_device_type_sub')->cursor();
-        foreach ($deviceSubTypes as $deviceSubType) {
-            $this->createDeviceSubType($deviceSubType);
-        }
+//        $data = DB::connection('fonus_db')->table('tbl_device_type')->cursor();
+//        foreach ($data as $deviceType) {
+//            $this->createDeviceType($deviceType);
+//        }
+//
+//        $deviceSubTypes = DB::connection('fonus_db')->table('tbl_device_type_sub')->cursor();
+//        foreach ($deviceSubTypes as $deviceSubType) {
+//            $this->createDeviceSubType($deviceSubType);
+//        }
     }
 
     /**

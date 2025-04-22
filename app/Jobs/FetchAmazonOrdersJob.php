@@ -17,6 +17,8 @@ class FetchAmazonOrdersJob implements ShouldQueue
 {
     use Queueable;
 
+    public $timeout = 3000;
+
     /**
      * Create a new job instance.
      */
@@ -51,7 +53,7 @@ class FetchAmazonOrdersJob implements ShouldQueue
 
                 // get amazon order
                 $amazonService = new AmazonService();
-                $orders = $amazonService->getOrders();
+                $orders = $amazonService->getOrders($store);
 //        Log::info('Amazon Orders: ' . json_encode($orders));
 
                 if (!isset($orders['error'])) {
@@ -90,7 +92,7 @@ class FetchAmazonOrdersJob implements ShouldQueue
                             ], $orderData);
 
                             /* get order items*/
-                            $ordersItems = $amazonService->getOrderItems($order['AmazonOrderId']);
+                            $ordersItems = $amazonService->getOrderItems($order['AmazonOrderId'],$store);
                             if (!isset($ordersItems['error'])) {
                                 foreach($ordersItems as $item){
                                     Log::info('Amazon Order Item: ' . json_encode($item));

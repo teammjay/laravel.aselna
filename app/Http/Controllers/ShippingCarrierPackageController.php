@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\ShippingCarrierPackageRequest;
+use App\Models\ShippingCarrier;
 use App\Models\ShippingCarrierPackage;
 use Illuminate\Http\Request;
 
@@ -22,7 +23,8 @@ class ShippingCarrierPackageController extends Controller
      */
     public function create()
     {
-        return view('shipping_carrier_package.add');
+        $shippingCarrier = ShippingCarrier::orderBy('name')->get();
+        return view('shipping_carrier_package.add',compact('shippingCarrier'));
     }
 
     /**
@@ -48,7 +50,8 @@ class ShippingCarrierPackageController extends Controller
     public function edit(string $id)
     {
         $shipping_carrier_package = ShippingCarrierPackage::findOrFail($id);
-        return view('shipping_carrier_package.add', compact('shipping_carrier_package'));
+        $shippingCarrier = ShippingCarrier::orderBy('name')->get();
+        return view('shipping_carrier_package.add', compact('shipping_carrier_package','shippingCarrier'));
     }
 
     /**

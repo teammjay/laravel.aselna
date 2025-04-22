@@ -42,6 +42,8 @@ use App\Http\Controllers\MessagesController;
 use App\Http\Controllers\OrdersController;
 use App\Http\Controllers\ShipmentsController;
 use App\Http\Controllers\ShippingCarrierPackageController;
+use App\Http\Controllers\ShippingPackageController;
+use App\Http\Controllers\ShippingServiceRulesController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ResetPasswordController;
 use App\Http\Controllers\StorePagesController;
@@ -459,6 +461,24 @@ Route::middleware('auth')->group(function () {
         Route::get('/shipping_carrier_package/delete/{id}', 'destroy')->name('shipping_carrier_package.delete');
     });
 
+    Route::controller(ShippingPackageController::class)->group(function () {
+        Route::get('/shipping_package', 'index')->name('shipping_package.index');
+        Route::get('/shipping_package/add', 'create')->name('shipping_package.create');
+        Route::post('/shipping_package/add', 'store')->name('shipping_package.store');
+        Route::get('/shipping_package/edit/{id}', 'edit')->name('shipping_package.edit');
+        Route::post('/shipping_package/edit/{id}', 'update')->name('shipping_package.update');
+        Route::get('/shipping_package/delete/{id}', 'destroy')->name('shipping_package.delete');
+    });
+
+    Route::controller(ShippingServiceRulesController::class)->group(function () {
+        Route::get('/shipping_service_rule', 'index')->name('shipping_service_rule.index');
+        Route::get('/shipping_service_rule/add', 'create')->name('shipping_service_rule.create');
+        Route::post('/shipping_service_rule/add', 'store')->name('shipping_service_rule.store');
+        Route::get('/shipping_service_rule/edit/{id}', 'edit')->name('shipping_service_rule.edit');
+        Route::post('/shipping_service_rule/edit/{id}', 'update')->name('shipping_service_rule.update');
+        Route::get('/shipping_service_rule/delete/{id}', 'destroy')->name('shipping_service_rule.delete');
+    });
+
     Route::get('/ebay/login', [EbayAuthService::class, 'redirectToEbay'])->name('ebay.login');
     Route::get('/ebay/callback', [EbayAuthService::class, 'handleCallback'])->name('ebay.callback');
     Route::get('/ebay/refresh-token', [EbayAuthService::class, 'refreshToken'])->name('ebay.refresh');
@@ -478,4 +498,7 @@ Route::post('/reset-password', [ResetPasswordController::class, 'resetPassword']
 
 Route::get('/jobs', [JobSchedulerController::class, 'index'])->name('jobs.index');
 Route::post('/jobs/{job}/run', [JobSchedulerController::class, 'run'])->name('jobs.run');
+Route::get('/jobs/{job}/edit', [JobSchedulerController::class, 'edit'])->name('jobs.edit');
+Route::post('/jobs/{job}/update', [JobSchedulerController::class, 'update'])->name('jobs.update');
+Route::post('/jobs/add', [JobSchedulerController::class, 'add'])->name('jobs.add');
 Route::post('/jobs/running',[JobSchedulerController::class, 'running'])->name('jobs.running');

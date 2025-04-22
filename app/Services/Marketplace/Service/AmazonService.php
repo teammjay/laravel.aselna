@@ -64,7 +64,9 @@ class AmazonService implements MarketplaceServiceInterface
         $userIdentifier = $listingInfo->store->user_id;
         Log::info('User Identifier: ' . json_encode($listingInfo->store));
         $listingItems = ListingItemLink::where('listing_id', $listingId)->cursor();
-        $this->authService = new AmazonAuthService();
+
+        $store = $listingInfo->store;
+        $this->authService = new AmazonAuthService($store->seller_id, $store->secret_key,$store->api_key);
 
         // Build JSON feed structure
         $feed = [
@@ -192,11 +194,11 @@ class AmazonService implements MarketplaceServiceInterface
                         $propertyValuesMap[$propertyValue->field_name] = $propertyValue->value;
                     }
                     $message['attributes']['fcc_radio_frequency_emission_compliance'] = [[
-                        'point_of_contact_address' => $propertyValuesMap['fcc_radio_frequency_emission_compliance_registration_status'] ?? '',
+                        'registration_status' => $propertyValuesMap['fcc_radio_frequency_emission_compliance_registration_status'] ?? '',
                         'point_of_contact_email' => $propertyValuesMap['fcc_radio_frequency_emission_compliance_point_of_contact_email'] ?? '',
                         "point_of_contact_phone_number" => $propertyValuesMap['fcc_radio_frequency_emission_compliance_point_of_contact_phone_number'] ?? '',
                         'point_of_contact_name' => $propertyValuesMap['fcc_radio_frequency_emission_compliance_point_of_contact_name'] ?? '',
-                        'registration_status' => $propertyValuesMap['fcc_radio_frequency_emission_compliance_point_of_contact_address'] ?? ''
+                        'point_of_contact_address' => $propertyValuesMap['fcc_radio_frequency_emission_compliance_point_of_contact_address'] ?? ''
                     ]];
                 }
 
@@ -389,7 +391,10 @@ class AmazonService implements MarketplaceServiceInterface
         $content = file_get_contents($filePath);
         Log::info("Content :: " . $content);
 
-        $this->authService = new AmazonAuthService();
+        $listingInfo = Listing::where('id', $listingId)->first();
+        $store = $listingInfo->store;
+
+        $this->authService = new AmazonAuthService($store->seller_id, $store->secret_key,$store->api_key);
         $generatedFeedId = $this->authService->uploadProductFeed($content);
         Log::info("Generated Feed ID :: " . $generatedFeedId);
 
@@ -410,7 +415,10 @@ class AmazonService implements MarketplaceServiceInterface
 
     public function getResultFeed(mixed $listingId, $feedId = null)
     {
-        $this->authService = new AmazonAuthService();
+        $listingInfo = Listing::where('id', $listingId)->first();
+        $store = $listingInfo->store;
+
+        $this->authService = new AmazonAuthService($store->seller_id, $store->secret_key,$store->api_key);
 
         $feedInfo = ListingFeed::where('listing_id', $listingId)->first();
 
@@ -518,30 +526,60 @@ class AmazonService implements MarketplaceServiceInterface
         $userIdentifier = $listingInfo->store->user_id;
         $listingItems = ListingItemLink::where('listing_id', $listingId)->cursor();
 
+        $feed = [
+            'header' => [
+                'sellerId' => $userIdentifier,
+                'version' => '2.0',
+                'issueLocale' => 'en_US'
+            ],
+            'messages' => []
+        ];
 
         $index = 1;
         foreach ($listingItems as $listingItem) {
             $itemDetail = $listingItem->item;
+            $storeProduct = $itemDetail->storeProduct;
+            $productData = $itemDetail->storeProduct->product;
 
-//            $price = $messages->addChild('Price');
-//            $price->addChild('SKU', $itemDetail->sku);
+            $message = [
+                'messageId' => $index,
+                'sku' => $itemDetail->sku,
+                'operationType' => 'PARTIAL_UPDATE',
+            ];
+
+            if (isset($productData)) {
+                $categoryId = $storeProduct->store_type_category_id;
+                $currentCategory = StoreTypeCategory::where('id', $categoryId)->first();
+
+                if ($currentCategory) {
+                    $message['productType'] = $currentCategory->marketplace_code;
+                }
+
+                $message['attributes']['list_price'] = [['value' => number_format($itemDetail->price, 2), 'currency' => 'USD']];
+            }
+
+            $feed['messages'][] = $message;
+            $index++;
         }
 
-
+        FileUtility::saveToFile(
+            public_path('feeds/amazon/' . $listingId . '.json'),
+            json_encode($feed, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)
+        );
     }
 
 
-    public function getOrders()
+    public function getOrders($store)
     {
-        $this->authService = new AmazonAuthService();
+        $this->authService = new AmazonAuthService($store->seller_id, $store->secret_key,$store->api_key);
         $response = $this->authService->getOrders();
 
         return $response;
     }
 
-    public function getOrderItems(mixed $orderId)
+    public function getOrderItems(mixed $orderId, $store)
     {
-        $this->authService = new AmazonAuthService();
+        $this->authService = new AmazonAuthService($store->seller_id, $store->secret_key,$store->api_key);
         $response = $this->authService->getOrderItems($orderId);
 
         return $response;

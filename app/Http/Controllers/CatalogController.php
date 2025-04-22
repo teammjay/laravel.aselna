@@ -11,6 +11,7 @@ use App\Models\ProductCondition;
 use App\Models\ProductInterface;
 use App\Models\ProductKeyFeatures;
 use App\Models\ProductSearchTerm;
+use App\Models\ProductSpecification;
 use App\Models\ProductTags;
 use App\Models\ProductTargetAudience;
 use App\Models\ProductTitleKeyword;
@@ -317,11 +318,12 @@ class CatalogController extends Controller
         $targetAudience = ProductTargetAudience::all();
         $storeTypes = StoreType::all();
         $colors = ProductColor::all();
+        $specifications = ProductSpecification::where('product_id', $pro_id)->orderBy('created_at')->get();
         $productStoreType = DB::table('product_channel_detail')
             ->select('product_channel_detail.id', 'product_channel_detail.status','store_type.name')
             ->leftJoin('store_type','store_type.id','=','product_channel_detail.store_type_id')
             ->where('product_id',$pro_id)->get();
-        return view('catalog.update', compact('product','keyFeatures','searchTerms','productImages','productTags','pageAt','store_details','manufacturers','productTypes','productConditions','titleKeywords','interfaces','productInterfaces','targetAudience','storeTypes','productStoreType','colors','productAltImages'));
+        return view('catalog.update', compact('product','keyFeatures','searchTerms','productImages','productTags','pageAt','store_details','manufacturers','productTypes','productConditions','titleKeywords','interfaces','productInterfaces','targetAudience','storeTypes','productStoreType','colors','productAltImages','specifications'));
     }
 
     /**
@@ -428,12 +430,13 @@ class CatalogController extends Controller
         $targetAudience = ProductTargetAudience::all();
         $storeTypes = StoreType::all();
         $colors = ProductColor::all();
+        $specifications = ProductSpecification::where('product_id', $id)->orderBy('created_at')->get();
         $productStoreType = DB::table('product_channel_detail')
                             ->select('product_channel_detail.id','product_channel_detail.status','store_type.name')
                             ->leftJoin('store_type','store_type.id','=','product_channel_detail.store_type_id')
                             ->where('product_id',$id)->get();
 
-        return view('catalog.update', compact('product','keyFeatures','searchTerms','productImages','productTags','pageAt','store_details','manufacturers','productTypes','productConditions','productStore','productStoreCategory','titleKeywords','interfaces','productInterfaces','targetAudience','storeTypes','productStoreType','colors','productAltImages'));
+        return view('catalog.update', compact('product','keyFeatures','searchTerms','productImages','productTags','pageAt','store_details','manufacturers','productTypes','productConditions','productStore','productStoreCategory','titleKeywords','interfaces','productInterfaces','targetAudience','storeTypes','productStoreType','colors','productAltImages','specifications'));
     }
 
     /**
@@ -595,6 +598,27 @@ class CatalogController extends Controller
                 ProductTitleKeyword::insert($data);
 
                 return response()->json(['success' => true, 'message' => 'Data saved successfully!!']);
+
+            }catch (QueryException $e) {
+                // Handle the exception and show an error message
+                return response()->json(['errors' => $e->getMessage()]);
+            }
+        }elseif ($tabId == 12) {
+
+            try {
+                $data = [];
+                for($i=0; $i < count($request->specification); $i++){
+                    $data[] = array(
+                        'id' => (string) Str::uuid(),
+                        'product_id' => $productId,
+                        'name' => $request->specification[$i],
+                        'value' => $request->specification_value[$i],
+                    );
+                }
+                ProductSpecification::where('product_id', $productId)->delete();
+                ProductSpecification::insert($data);
+
+                return response()->json(['success' => true, 'message' => 'Data saved successfully!']);
 
             }catch (QueryException $e) {
                 // Handle the exception and show an error message

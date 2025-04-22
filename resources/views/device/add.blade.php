@@ -355,42 +355,42 @@
                         <div class="row">
                             <div class="col-md-12">
                                 <div class="card">
-                                <div class="card-header">
-                                    Interfaces
-                                </div>
-                                <div class="card-body">
-                                    <select class="form-control pro-interface">
-                                        @if(count($interfaces ?? []) > 0)
-                                            <option value=""></option>
-                                            @foreach($interfaces as $interface)
-                                                <option value="{{ $interface->id }}" data-producttype="{{ (isset($interface->ProductType)) ? $interface->ProductType->name : '' }}">{{ $interface->name }}{{ (isset($interface->ProductType)) ? ' ( '.$interface->ProductType->name.' )' : '' }}</option>
-                                            @endforeach
-                                        @endif
-                                    </select>
-                                    <table class="table table-bordered table-hover mt-5" id="table_interface">
-                                        <thead>
-                                            <tr>
-                                                <th>Interface</th>
-                                                <th>Product Type</th>
-                                                <th>Action</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody id="interface-list">
+                                    <div class="card-header">
+                                        Interfaces
+                                    </div>
+                                    <div class="card-body">
+                                        <select class="form-control pro-interface">
                                             @if(count($interfaces ?? []) > 0)
+                                                <option value=""></option>
                                                 @foreach($interfaces as $interface)
-                                                    @if(in_array($interface->id,$deviceInterfaces))
-                                                        <tr class="field-group">
-                                                            <td>{{ $interface->name }}<input type="hidden" name="interfaces[]" value="{{ $interface->id }}"></td>
-                                                            <td>{{ (isset($interface->ProductType)) ? $interface->ProductType->name : '' }}</td>
-                                                            <td><button type="button" class="btn btn-danger remove-interface p-1"> <i class="fas fa-fw fa-trash"></i></button></td>
-                                                        </tr>
-                                                    @endif
+                                                    <option value="{{ $interface->id }}" data-producttype="{{ (isset($interface->ProductType)) ? $interface->ProductType->name : '' }}">{{ $interface->name }}{{ (isset($interface->ProductType)) ? ' ( '.$interface->ProductType->name.' )' : '' }}</option>
                                                 @endforeach
                                             @endif
-                                        </tbody>
-                                    </table>
+                                        </select>
+                                        <table class="table table-bordered table-hover mt-5" id="table_interface">
+                                            <thead>
+                                                <tr>
+                                                    <th>Interface</th>
+                                                    <th>Product Type</th>
+                                                    <th>Action</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="interface-list">
+                                                @if(count($interfaces ?? []) > 0)
+                                                    @foreach($interfaces as $interface)
+                                                        @if(in_array($interface->id,$deviceInterfaces))
+                                                            <tr class="field-group">
+                                                                <td>{{ $interface->name }}<input type="hidden" name="interfaces[]" value="{{ $interface->id }}"></td>
+                                                                <td>{{ (isset($interface->ProductType)) ? $interface->ProductType->name : '' }}</td>
+                                                                <td><button type="button" class="btn btn-danger remove-interface p-1"> <i class="fas fa-fw fa-trash"></i></button></td>
+                                                            </tr>
+                                                        @endif
+                                                    @endforeach
+                                                @endif
+                                            </tbody>
+                                        </table>
+                                    </div>
                                 </div>
-                            </div>
                             </div>
                         </div>
                     </div>
