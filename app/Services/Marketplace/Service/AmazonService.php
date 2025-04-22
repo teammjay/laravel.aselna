@@ -66,7 +66,7 @@ class AmazonService implements MarketplaceServiceInterface
         $listingItems = ListingItemLink::where('listing_id', $listingId)->cursor();
 
         $store = $listingInfo->store;
-        $this->authService = new AmazonAuthService($store->seller_id, $store->secret_key,$store->user_id);
+        $this->authService = new AmazonAuthService($store->seller_id, $store->secret_key,$store->api_key);
 
         // Build JSON feed structure
         $feed = [
@@ -394,7 +394,7 @@ class AmazonService implements MarketplaceServiceInterface
         $listingInfo = Listing::where('id', $listingId)->first();
         $store = $listingInfo->store;
 
-        $this->authService = new AmazonAuthService($store->seller_id, $store->secret_key,$store->user_id);
+        $this->authService = new AmazonAuthService($store->seller_id, $store->secret_key,$store->api_key);
         $generatedFeedId = $this->authService->uploadProductFeed($content);
         Log::info("Generated Feed ID :: " . $generatedFeedId);
 
@@ -418,7 +418,7 @@ class AmazonService implements MarketplaceServiceInterface
         $listingInfo = Listing::where('id', $listingId)->first();
         $store = $listingInfo->store;
 
-        $this->authService = new AmazonAuthService($store->seller_id, $store->secret_key,$store->user_id);
+        $this->authService = new AmazonAuthService($store->seller_id, $store->secret_key,$store->api_key);
 
         $feedInfo = ListingFeed::where('listing_id', $listingId)->first();
 
@@ -571,7 +571,7 @@ class AmazonService implements MarketplaceServiceInterface
 
     public function getOrders($store)
     {
-        $this->authService = new AmazonAuthService($store->seller_id, $store->secret_key,$store->user_id);
+        $this->authService = new AmazonAuthService($store->seller_id, $store->secret_key,$store->api_key);
         $response = $this->authService->getOrders();
 
         return $response;
@@ -579,7 +579,7 @@ class AmazonService implements MarketplaceServiceInterface
 
     public function getOrderItems(mixed $orderId, $store)
     {
-        $this->authService = new AmazonAuthService($store->seller_id, $store->secret_key,$store->user_id);
+        $this->authService = new AmazonAuthService($store->seller_id, $store->secret_key,$store->api_key);
         $response = $this->authService->getOrderItems($orderId);
 
         return $response;

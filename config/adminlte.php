@@ -544,6 +544,16 @@ return [
                     'icon' => 'far fa-fw fa-file'
                 ],
                 [
+                    'text' => 'Shipping Service Rules',
+                    'url' => '/shipping_service_rule',
+                    'icon' => 'far fa-fw fa-file'
+                ],
+                [
+                    'text' => 'Shipping Package',
+                    'url' => '/shipping_package',
+                    'icon' => 'far fa-fw fa-file'
+                ],
+                [
                     'text' => 'Shipping Carrier Package',
                     'url' => '/shipping_carrier_package',
                     'icon' => 'far fa-fw fa-file'
