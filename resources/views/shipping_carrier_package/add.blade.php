@@ -37,6 +37,11 @@
                             <label for="shipping_carrier_id">Shipping Carrier</label>
                             <select class="form-control" id="shipping_carrier_id" name="shipping_carrier_id">
                                 <option value=""></option>
+                                @if(count($shippingCarrier ?? []) > 0)
+                                    @foreach($shippingCarrier as $sc)
+                                        <option value="{{ $sc->id }}" @if(isset($shipping_carrier_package['shipping_carrier_id']) && $sc->id == $shipping_carrier_package['shipping_carrier_id']) selected @endif>{{ $sc->name }}</option>
+                                    @endforeach
+                                @endif
                             </select>
                         </div>
                     </div>
