@@ -16,4 +16,9 @@ class ScheduledJob extends Model
         'description',
         'class_name',
     ];
+
+    function parents(): HasMany
+    {
+        return $this->hasMany(ScheduleParentJob::class, 'job_id', 'id');
+    }
 }
