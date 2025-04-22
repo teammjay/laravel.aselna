@@ -4,7 +4,10 @@ namespace App\Jobs;
 
 use App\Models\Catalog;
 use App\Models\Manufacturer;
+use App\Models\ProductCondition;
 use App\Models\ProductKeyFeatures;
+use App\Models\ProductMaterial;
+use App\Models\ProductSize;
 use App\Models\ProductTitleKeyword;
 use App\Models\Store;
 use App\Models\StoreProduct;
@@ -144,6 +147,18 @@ class ProductSyncJob implements ShouldQueue
             // if (Catalog::where('product_sku', $product->code)->exists()) {
             //     return;
             // }
+            if (Manufacturer::where('id', $product->manufacturer_id)->doesntExist()) {
+                return;
+            }
+            if (ProductCondition::where('id', $product->condition_id)->doesntExist()) {
+                return;
+            }
+            if (ProductMaterial::where('id', $product->product_material_id)->doesntExist()) {
+                return;
+            }
+            if (ProductSize::where('id', $product->size_id)->doesntExist()) {
+                return;
+            }
             Catalog::updateOrInsert([
                 'product_id' => $product->id,
             ], [
@@ -159,7 +174,7 @@ class ProductSyncJob implements ShouldQueue
                 'product_mrsp' => $product->msrp,
                 'product_sku' => $product->code,
                 'product_code' => $product->reference_id1,
-    //            'product_image_url' => 'as',
+                //            'product_image_url' => 'as',
                 'product_status' => $product->status == 1 ? 'active' : 'discontinued',
                 'dimensions_length' => $product->dimensions_length,
                 'dimensions_height' => $product->dimensions_height,
@@ -174,12 +189,12 @@ class ProductSyncJob implements ShouldQueue
                 'package_dimensions_height' => $product->package_dimension_height,
                 'package_dimensions_length' => $product->package_dimension_length,
                 'oem_generic' => $product->oem_generic,
-    //            'product_tags'=> $product->weight_weight_unit,
-    //            'target_aud'=> $product->weight_weight_unit,
+                //            'product_tags'=> $product->weight_weight_unit,
+                //            'target_aud'=> $product->weight_weight_unit,
                 'product_color' => $product->color_id,
                 'product_qty' => $product->quantity,
-    //            'product_reorder_qty',
-    //            'product_pick_location' => ,
+                //            'product_reorder_qty',
+                //            'product_pick_location' => ,
                 'title_template' => $product->title_template,
                 'description_template' => $product->description_template,
                 'created_by' => 'system',
@@ -187,7 +202,7 @@ class ProductSyncJob implements ShouldQueue
                 'created_at' => $product->create_ts,
                 'updated_at' => now(),
             ]);
-        } catch(Exception $e) {
+        } catch (Exception $e) {
             Log::info('Test Error ::' . $e->getMessage());
         }
     }
