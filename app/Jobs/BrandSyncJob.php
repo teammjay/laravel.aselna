@@ -32,10 +32,10 @@ class BrandSyncJob implements ShouldQueue
             $this->createSyncBrand($brand);
         }
 
-        $brands = DB::connection('fonus_db')->table('tbl_brand')->cursor();
-        foreach ($brands as $brand) {
-            $this->createBrand($brand);
-        }
+//        $brands = DB::connection('fonus_db')->table('tbl_brand')->cursor();
+//        foreach ($brands as $brand) {
+//            $this->createBrand($brand);
+//        }
     }
 
     private function createBrand(mixed $brand)
