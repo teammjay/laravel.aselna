@@ -20,10 +20,10 @@
             <div class="card-body">
                 <select class="form-control pro-jobs" name="parents[]" multiple="multiple">
                     <option value="">Select Job</option>
-                    @foreach($allJobs as $job)
+                    @foreach($allJobs as $currjJob)
                         <option
-                            value="{{ $job->id }}" {{ isset($device) && $device->id == $job->id ? 'selected' : '' }}>
-                            {{ $job->name }}
+                            value="{{ $currjJob->id }}" {{ isset($parents) && in_array($currjJob->id,$parents) ? 'selected' : '' }}>
+                            {{ $currjJob->name }}
                         </option>
                     @endforeach
                 </select>
@@ -31,9 +31,6 @@
             <div class="card-footer text-center">
                 <button type="submit" class="btn btn-success">Submit</button>
                 <a href="{{ route('devices.index') }}" class="btn btn-secondary">Cancel</a>
-                @if(!isset($device))
-                    <button type="reset" class="btn btn-primary">Reset</button>
-                @endif
             </div>
         </div>
     </form>

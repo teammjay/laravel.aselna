@@ -11,6 +11,8 @@ class CarrierSyncJob implements ShouldQueue
 {
     use Queueable;
 
+    public $timeout = 3000;
+
     /**
      * Create a new job instance.
      */
