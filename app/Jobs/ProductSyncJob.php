@@ -39,7 +39,7 @@ class ProductSyncJob implements ShouldQueue
     {
         $easyesaleProductsQ = DB::connection('easyesale_db')->table('product')
             ->whereNull('deleted_by')
-            ->where('status', '=', '1')->orderBy('id');
+            ->where('status', '=', '1')->orderBy('create_ts', 'desc');
 
         if (env('APP_ENV') === 'local') {
             Log::info('Local Environment');
@@ -49,12 +49,16 @@ class ProductSyncJob implements ShouldQueue
         try {
             $easyesaleProductsQ->chunk(100, function ($easyesaleProducts) {
                 foreach ($easyesaleProducts as $product) {
-                    $this->updateProduct($product);
+                    try {
+                        $this->updateProduct($product);
 
-                    $this->createProductTitleKeywords($product);
+                        $this->createProductTitleKeywords($product);
 
-                    $fonusProduct = DB::connection('fonus_db')->table('tbl_product')->where('custom_label', $product->code)->first();
-                    $this->createProductFeatures($fonusProduct, $product->id);
+                        $fonusProduct = DB::connection('fonus_db')->table('tbl_product')->where('custom_label', $product->code)->first();
+                        $this->createProductFeatures($fonusProduct, $product->id);
+                    } catch (Exception $e) {
+                        Log::error($e->getMessage());
+                    }
                 }
             });
         } catch (Exception $e) {
@@ -147,18 +151,6 @@ class ProductSyncJob implements ShouldQueue
             // if (Catalog::where('product_sku', $product->code)->exists()) {
             //     return;
             // }
-            if (Manufacturer::where('id', $product->manufacturer_id)->doesntExist()) {
-                return;
-            }
-            if (ProductCondition::where('id', $product->condition_id)->doesntExist()) {
-                return;
-            }
-            if (ProductMaterial::where('id', $product->product_material_id)->doesntExist()) {
-                return;
-            }
-            if (ProductSize::where('id', $product->size_id)->doesntExist()) {
-                return;
-            }
             Catalog::updateOrInsert([
                 'product_id' => $product->id,
             ], [
