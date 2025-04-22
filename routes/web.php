@@ -478,4 +478,7 @@ Route::post('/reset-password', [ResetPasswordController::class, 'resetPassword']
 
 Route::get('/jobs', [JobSchedulerController::class, 'index'])->name('jobs.index');
 Route::post('/jobs/{job}/run', [JobSchedulerController::class, 'run'])->name('jobs.run');
+Route::get('/jobs/{job}/edit', [JobSchedulerController::class, 'edit'])->name('jobs.edit');
+Route::post('/jobs/{job}/update', [JobSchedulerController::class, 'update'])->name('jobs.update');
+Route::post('/jobs/add', [JobSchedulerController::class, 'add'])->name('jobs.add');
 Route::post('/jobs/running',[JobSchedulerController::class, 'running'])->name('jobs.running');

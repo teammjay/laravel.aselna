@@ -5,7 +5,6 @@
 @stop
 
 
-
 @section('content')
     @if(session('success'))
         <div class="alert alert-success">{{ session('success') }}</div>
@@ -29,7 +28,10 @@
                 <td>{{ $job->name }}</td>
                 <td>{{ $job->description }}</td>
                 <td>{{ $job->last_run }}</td>
-                <td>
+                <td class="d-flex">
+                    <a href="{{ route('jobs.edit', $job) }}" class="btn btn-warning btn-sm">
+                        Edit
+                    </a>
                     <form method="POST" action="{{ route('jobs.run', $job) }}">
                         @csrf
                         <button type="submit" class="btn btn-primary btn-sm">

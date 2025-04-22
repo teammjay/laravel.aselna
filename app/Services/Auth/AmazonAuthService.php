@@ -204,7 +204,7 @@ class AmazonAuthService
             case FeedTypes::CREATE:
                 return 'JSON_LISTINGS_FEED';
             case FeedTypes::PRICE:
-                return 'POST_PRODUCT_PRICING_DATA';
+                return 'JSON_LISTINGS_FEED';
             case FeedTypes::INVENTORY:
                 return 'POST_INVENTORY_AVAILABILITY_DATA';
             case FeedTypes::IMAGE_UPDATE:

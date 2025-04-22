@@ -41,6 +41,6 @@ class Queue
 
     // Print the queue
     public function printQueue() {
-        echo implode(", ", $this->items) . PHP_EOL;
+        return implode(", ", $this->items) . PHP_EOL;
     }
 }
