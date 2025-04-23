@@ -1142,7 +1142,11 @@ class ListingController extends Controller
                                             if ($flag) {
                                                 continue 2;
                                             }
-                                            $productsArray[] = $this->generateFreeGroupProductTitles($title_template, $product, $devices, $max_title_length, $brand_seperator, $device_seperator, $compress, $generate_type, $pDetail, $store_product_id, $store_type);
+                                            if(strtolower($store_type) == 'ebay'){
+                                                $productsArray[] = $this->generateFreeGroupProductTitlesEbay($title_template, $product, $devices, $max_title_length, $brand_seperator, $device_seperator, $compress, $generate_type, $pDetail, $store_product_id, $store_type);
+                                            }else{
+                                                $productsArray[] = $this->generateFreeGroupProductTitles($title_template, $product, $devices, $max_title_length, $brand_seperator, $device_seperator, $compress, $generate_type, $pDetail, $store_product_id, $store_type);
+                                            }
                                             break;
                                         case 'single device':
                                             $productsArray[] = $this->generateSingleDeviceProductTitles($title_template, $product, $devices, $max_title_length, $brand_seperator, $device_seperator, $compress, $generate_type, $pDetail, $store_product_id, $store_type);
@@ -1653,7 +1657,7 @@ class ListingController extends Controller
         return $titles;
     }
 
-    private function generateFreeGroupProductTitlesBKP($baseTitle, $product, $devices, $charLimit, $brand_seperator, $device_seperator, $compress, $generate_type, $pDetail, $store_product_id, $store_type)
+    private function generateFreeGroupProductTitlesEbay($baseTitle, $product, $devices, $charLimit, $brand_seperator, $device_seperator, $compress, $generate_type, $pDetail, $store_product_id, $store_type)
     {
         $titles = [];
         $currentModels = [];
@@ -1690,10 +1694,10 @@ class ListingController extends Controller
                         //$model = $parts2[1];
                     }
                     $lastModel = $parts2[0];
-                    /*$parts2 = explode(' ', $model, 2);
+                    $parts2 = explode(' ', $model, 2);
                     if(isset($parts2[1])) {
                         $model = $parts2[1];
-                    }*/
+                    }
                     $nameToAdd = $model;
                 } else {
                     if ($key == 0) {
