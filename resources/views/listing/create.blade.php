@@ -1244,13 +1244,15 @@
 
                     selected_device[product_id] = [];
 
-                    var cArr = selected_carrier[product_id];
-                    const newcArray = cArr.reduce((acc, item) => {
-                        if (item !== $(this).val()) acc.push(item);
-                        return acc;
-                    }, []);
+                    if(selected_carrier.length) {
+                        var cArr = selected_carrier[product_id];
+                        const newcArray = cArr.reduce((acc, item) => {
+                            if (item !== $(this).val()) acc.push(item);
+                            return acc;
+                        }, []);
 
-                    selected_carrier[product_id] = [];
+                        selected_carrier[product_id] = [];
+                    }
                 });
                 $('.targetRow').removeClass('bg-blue');
             });
@@ -1282,13 +1284,15 @@
 
                     selected_device[product_id] = newArray;
 
-                    var ncArr = selected_carrier[product_id];
-                    const newcArray = ncArr.reduce((acc, item) => {
-                        if (item !== valueToRemove) acc.push(item);
-                        return acc;
-                    }, []);
+                    if(selected_carrier.length) {
+                        var ncArr = selected_carrier[product_id];
+                        const newcArray = ncArr.reduce((acc, item) => {
+                            if (item !== valueToRemove) acc.push(item);
+                            return acc;
+                        }, []);
 
-                    selected_carrier[product_id] = newcArray;
+                        selected_carrier[product_id] = newcArray;
+                    }
                 }else{
                     ele.addClass('bg-blue');
                     ele.find('.sel-device').prop('checked',true);
