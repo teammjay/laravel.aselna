@@ -18,6 +18,14 @@ class WeightUnit
         self::MG => 'Milligrams',
     ];
 
+    const unitnames = [
+        self::OZ => 'Oz',
+        self::LB => 'Lb',
+        self::G => 'G',
+        self::KG => 'Kg',
+        self::MG => 'Mg',
+    ];
+
     const amazonNames = [
         self::OZ => 'ounces',
         self::LB => 'pounds',
@@ -42,6 +50,11 @@ class WeightUnit
     public function convertTo($toUnit, $value)
     {
         return self::convert($this->id, $toUnit, $value);
+    }
+
+    public static function getUnitSelfName($unitId)
+    {
+        return self::unitnames[$unitId];
     }
 
     public static function getUnitName($unitId)

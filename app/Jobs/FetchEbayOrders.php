@@ -54,7 +54,7 @@ class FetchEbayOrders implements ShouldQueue
 
 
                 $ebayService = new EbayService();
-                $orders = $ebayService->getOrders();
+                $orders = $ebayService->getOrders($store);
 
                 if (!isset($orders['total']) && $orders['total'] > 0) {
 
@@ -66,6 +66,12 @@ class FetchEbayOrders implements ShouldQueue
                             $orderDetail = Order::where('order_id',$order['orderId'])->first();
                             $orderObj = Order::findOrFail($orderDetail->id); // Retrieve the product by ID
                             $orderObj->update(['order_status' =>OrderStatus::getOrderStatusId($order['orderFulfillmentStatus'])]);
+
+                            /* check order operation for this order*/
+                            $orderOperationDetail = OrderOperation::where('order_id',$orderDetail->id)->count();
+                            if($orderOperationDetail){
+                                $orderOperationDetail->update(['status'=>2]);
+                            }
                         }else {
                             $orderData = [
                                 'order_id' => $order['orderId'],
@@ -96,7 +102,8 @@ class FetchEbayOrders implements ShouldQueue
                                 'operation_type' => 1,
                                 'label_creation_type' => 1,
                                 'print_to_file' => 0,
-                                'seller_provides_return_label' => 0
+                                'seller_provides_return_label' => 0,
+                                'order_synchronization_id' => $order_synchronization_id
                             ];
 
                             $order_operation_detail = OrderOperation::updateOrCreate([
