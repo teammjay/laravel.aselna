@@ -155,9 +155,6 @@ class AmazonUtility
                 return $specification->name . ' : ' . $specification->value;
             })
             ->implode(', ');
-        if (isset($special_features) || empty(trim($special_features))) {
-            $special_features = 'Hard Screen Protectors';
-        }
 
         $mounting_type = ProductSpecification::where('product_id', $productData->product_id)
             ->where('name', 'Mounting Type')
@@ -215,9 +212,6 @@ class AmazonUtility
                 return $specification->name . ' : ' . $specification->value;
             })
             ->implode(', ');
-        if (isset($special_features) || empty(trim($special_features))) {
-            $special_features = 'Hard Screen Protectors';
-        }
 
         $number_of_ports = ProductSpecification::where('product_id', $productData->product_id)
             ->where('name', 'Number of Ports')
@@ -253,9 +247,6 @@ class AmazonUtility
                 return $specification->name . ' : ' . $specification->value;
             })
             ->implode(', ');
-        if (isset($special_features) || empty(trim($special_features))) {
-            $special_features = 'Hard Screen Protectors';
-        }
 
         $number_of_ports = ProductSpecification::where('product_id', $productData->product_id)
             ->where('name', 'Number of Ports')
@@ -316,9 +307,6 @@ class AmazonUtility
                 return $specification->name . ' : ' . $specification->value;
             })
             ->implode(', ');
-        if (isset($special_features) || empty(trim($special_features))) {
-            $special_features = 'Hard Screen Protectors';
-        }
 
         $form_factor = ProductSpecification::where('product_id', $productData->product_id)
             ->where('name', 'Form Factor')
@@ -344,9 +332,6 @@ class AmazonUtility
                 return $specification->name . ' : ' . $specification->value;
             })
             ->implode(', ');
-        if (isset($special_features) || empty(trim($special_features))) {
-            $special_features = 'Hard Screen Protectors';
-        }
 
         $mounting_type = ProductSpecification::where('product_id', $productData->product_id)
             ->where('name', 'Mounting Type')
