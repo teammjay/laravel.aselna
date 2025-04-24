@@ -1105,14 +1105,34 @@
                                     @if(count($specifications ?? []) > 0)
                                         @foreach($specifications as $specification)
                                             <tr class="field-group">
-                                                <td><input type="text" class="form-control" name="specification[]" value="{{ $specification->name }}"></td>
+                                                <td>
+                                                    <select class="form-control" name="specification[]">
+                                                        <option value=""></option>
+                                                        @if(count($specificationInfo ?? []) > 0)
+                                                            @foreach($specificationInfo as $spinfo)
+                                                                <option value="{{ $spinfo->field_local_name }}" {{ (isset($specification->name) && $specification->name == $spinfo->field_local_name) ? 'selected' : '' }}>{{ $spinfo->field_local_name }}</option>
+                                                            @endforeach
+                                                        @endif
+
+                                                    </select>
+                                                </td>
                                                 <td><textarea class="form-control" name="specification_value[]">{{ $specification->value }}</textarea></td>
                                                 <td><button type="button" class="btn btn-danger remove-specification"> <i class="fas fa-fw fa-trash"></i></button></td>
                                             </tr>
                                         @endforeach
                                     @else
                                         <tr>
-                                            <td><input type="text" class="form-control" name="specification[]" value="1"></td>
+                                            <td>
+                                                <select class="form-control" name="specification[]">
+                                                    <option value=""></option>
+                                                    @if(count($specificationInfo ?? []) > 0)
+                                                        @foreach($specificationInfo as $spinfo)
+                                                            <option value="{{ $spinfo->field_name }}">{{ $spinfo->field_local_name }}</option>
+                                                        @endforeach
+                                                    @endif
+
+                                                </select>
+                                            </td>
                                             <td><textarea class="form-control" name="specification_value[]"></textarea></td>
                                             <td></td>
                                         </tr>

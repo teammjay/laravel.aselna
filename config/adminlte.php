@@ -376,6 +376,11 @@ return [
                     'url' => '/product_target_audience',
                     'icon' => 'fa fa-fw fa-user-md'
                 ],
+                [
+                    'text' => 'Product Specification Info',
+                    'url' => '/specification_info',
+                    'icon' => 'fa fa-fw fa-file'
+                ],
             ]
         ],
         [

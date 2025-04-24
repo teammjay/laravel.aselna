@@ -12,6 +12,7 @@ use App\Models\ProductInterface;
 use App\Models\ProductKeyFeatures;
 use App\Models\ProductSearchTerm;
 use App\Models\ProductSpecification;
+use App\Models\ProductSpecificationInfo;
 use App\Models\ProductTags;
 use App\Models\ProductTargetAudience;
 use App\Models\ProductTitleKeyword;
@@ -40,8 +41,8 @@ class CatalogController extends Controller
     public function index(Request $request)
     {
         session()->forget('pro_id');
-        $productTypes = ProductType::all();
-        $manufacturers = Manufacturer::all();
+        $productTypes = ProductType::orderBy('name')->get();
+        $manufacturers = Manufacturer::orderBy('name')->get();
         $productConditions = ProductCondition::all();
         $targetAudience = ProductTargetAudience::all();
         $perPage = $this->perPage;
@@ -319,11 +320,12 @@ class CatalogController extends Controller
         $storeTypes = StoreType::all();
         $colors = ProductColor::all();
         $specifications = ProductSpecification::where('product_id', $pro_id)->orderBy('created_at')->get();
+        $specificationInfo = ProductSpecificationInfo::all();
         $productStoreType = DB::table('product_channel_detail')
             ->select('product_channel_detail.id', 'product_channel_detail.status','store_type.name')
             ->leftJoin('store_type','store_type.id','=','product_channel_detail.store_type_id')
             ->where('product_id',$pro_id)->get();
-        return view('catalog.update', compact('product','keyFeatures','searchTerms','productImages','productTags','pageAt','store_details','manufacturers','productTypes','productConditions','titleKeywords','interfaces','productInterfaces','targetAudience','storeTypes','productStoreType','colors','productAltImages','specifications'));
+        return view('catalog.update', compact('product','keyFeatures','searchTerms','productImages','productTags','pageAt','store_details','manufacturers','productTypes','productConditions','titleKeywords','interfaces','productInterfaces','targetAudience','storeTypes','productStoreType','colors','productAltImages','specifications','specificationInfo'));
     }
 
     /**
@@ -431,6 +433,7 @@ class CatalogController extends Controller
         $storeTypes = StoreType::all();
         $colors = ProductColor::all();
         $specifications = ProductSpecification::where('product_id', $id)->orderBy('created_at')->get();
+        //$specificationInfo = ProductSpecificationInfo::where('product_type_id',$product->product_type)->get();
         $productStoreType = DB::table('product_channel_detail')
                             ->select('product_channel_detail.id','product_channel_detail.status','store_type.name')
                             ->leftJoin('store_type','store_type.id','=','product_channel_detail.store_type_id')

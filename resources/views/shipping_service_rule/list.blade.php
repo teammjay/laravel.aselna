@@ -49,9 +49,28 @@
                             <td>{{ \App\Constants\Operators::getOperatorsName($srule->quantity_operator) }}</td>
                             <td>{{ $srule->min_quantity }}</td>
                             <td>{{ $srule->max_quantity }}</td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
+                            <td>{{ isset($srule->packageType) ? $srule->packageType->name : '' }}</td>
+                            <td>
+                                @php
+                                    $sc = '';
+                                    if(isset($srule->signature_confirmation)){
+                                        switch ($srule->signature_confirmation){
+                                            case 0:
+                                                 $sc = 'None';
+                                                break;
+                                            case 1:
+                                                $sc = 'Direct Signature';
+                                                break;
+                                            case 2:
+                                                 $sc = 'Adult Signature';
+                                                break;
+                                        }
+                                    }
+
+                                @endphp
+                                {{ $sc }}
+                            </td>
+                            <td>{{ $srule->color }}</td>
                             <td>
                                 <a href="{{ route('shipping_service_rule.edit', $srule->id) }}" class="btn btn-primary" title="Edit">
                                     <i class="fas fa-fw fa-pencil-alt"></i>
