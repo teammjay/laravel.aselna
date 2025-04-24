@@ -25,7 +25,7 @@ class DeviceCarrier extends Model
         });
     }
 
-    public $fillable = ['device_id','carrier_id', 'carrier_model_number', 'version', 'created_at', 'updated_at'];
+    public $fillable = ['id','device_id','carrier_id', 'carrier_model_number', 'version', 'created_at', 'updated_at'];
 
     public function carrier()
     {
