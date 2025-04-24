@@ -50,6 +50,7 @@ class AmazonUtility
             })
             ->implode(', ');
 
+        // get value of items included
         $items_included = ProductSpecification::where('product_id', $productData->product_id)
             ->where('name', 'Items Included')
             ->first();
@@ -68,9 +69,8 @@ class AmazonUtility
             'item_package_weight' => FieldUtility::getItemPackageWeight($productData),
             'number_of_items' => [['value' => 1]],
             'connector_gender' => [['value' => 'Female-to-Female']],
-            'connector_type' => [['value' => $connectivity->value]],
-            'included_components' => [['value' => $items_included->value, 'language_tag' => 'en_US']],
-//            'compatible_devices' => [['value' => 'Smartphone', 'language_tag' => 'en_US']],
+            'connector_type' => [['value' => $connectivity ? $connectivity->value : '']],
+            'included_components' => [['value' => $items_included ? $items_included->value : '', 'language_tag' => 'en_US']],
             'special_feature' => [['value' => $special_features ?? 'Cables', 'language_tag' => 'en_US']],
         ];
     }
@@ -86,9 +86,6 @@ class AmazonUtility
                 return $specification->name . ' : ' . $specification->value;
             })
             ->implode(', ');
-        if (isset($special_features) || empty(trim($special_features))) {
-            $special_features = 'Hard Screen Protectors';
-        }
 
         $items_included = ProductSpecification::where('product_id', $productData->product_id)
             ->where('name', 'Items Included')

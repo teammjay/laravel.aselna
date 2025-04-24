@@ -12,6 +12,7 @@ use App\Http\Controllers\DeviceSubTypesController;
 use App\Http\Controllers\DeviceTypesController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\JobSchedulerController;
+use App\Http\Controllers\ListingRequirementController;
 use App\Http\Controllers\ProductInterfaceController;
 use App\Http\Controllers\StoreTypeCategoryController;
 use App\Http\Controllers\SubCategoryController;
@@ -478,6 +479,8 @@ Route::middleware('auth')->group(function () {
         Route::post('/shipping_service_rule/edit/{id}', 'update')->name('shipping_service_rule.update');
         Route::get('/shipping_service_rule/delete/{id}', 'destroy')->name('shipping_service_rule.delete');
     });
+
+    Route::resource('listing-requirements', ListingRequirementController::class);
 
     Route::get('/ebay/login', [EbayAuthService::class, 'redirectToEbay'])->name('ebay.login');
     Route::get('/ebay/callback', [EbayAuthService::class, 'handleCallback'])->name('ebay.callback');
