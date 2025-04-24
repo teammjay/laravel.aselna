@@ -430,7 +430,7 @@ class CatalogController extends Controller
         $productInterfaces = ProductInterface::where('product_id', $id)->get();
         $productInterfaces = $productInterfaces->pluck('interface_id')->values()->all();
         $targetAudience = ProductTargetAudience::all();
-        $storeTypes = StoreType::all();
+        $storeTypes = StoreType::orderBy('name')->get();
         $colors = ProductColor::all();
         $specifications = ProductSpecification::where('product_id', $id)->orderBy('created_at')->get();
         //$specificationInfo = ProductSpecificationInfo::where('product_type_id',$product->product_type)->get();
@@ -616,9 +616,10 @@ class CatalogController extends Controller
                         'product_id' => $productId,
                         'name' => $request->specification[$i],
                         'value' => $request->specification_value[$i],
+                        'store_type_id' => $request->specification_store_type_id
                     );
                 }
-                ProductSpecification::where('product_id', $productId)->delete();
+                ProductSpecification::where(['product_id' => $productId,'store_type_id'=> $request->specification_store_type_id])->delete();
                 ProductSpecification::insert($data);
 
                 return response()->json(['success' => true, 'message' => 'Data saved successfully!']);
@@ -983,5 +984,35 @@ class CatalogController extends Controller
             return response()->json(['errors' => $e->getMessage()], 422);
         }
 
+    }
+
+    public function getSpecification(Request $request){
+
+        $store_type_id = $request->input('store_type_id');
+        $product_id = $request->input('product_id');
+        $specifications = ProductSpecification::where('store_type_id',$store_type_id)->where('product_id',$product_id)->get();
+        /*echo '<pre>';
+        print_r($specifications);
+        echo '</pre>';die;*/
+        $specificationInfo = ProductSpecificationInfo::where('store_type_id',$store_type_id)->get();
+        return response()->json([
+            'html' => view('catalog.specification', compact('specifications','specificationInfo'))->render(),
+        ]);
+
+    }
+
+    public function getSpecificationOption(Request $request){
+        $store_type_id = $request->input('store_type_id');
+        $specificationInfo = ProductSpecificationInfo::where('store_type_id',$store_type_id)->get();
+        $option = '<option value=""></option>';
+        if(!empty($specificationInfo)){
+            foreach($specificationInfo as $spec){
+                $option .= '<option value="'.$spec->field_local_name.'">'.$spec->field_local_name.'</option>';
+            }
+        }
+
+        return response()->json([
+            'option' => $option
+        ]);
     }
 }
