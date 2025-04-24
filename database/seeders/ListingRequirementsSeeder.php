@@ -37,6 +37,7 @@ class ListingRequirementsSeeder extends Seeder
                     'type' => $requirement['type'],
                     'column' => $requirement['column'] ?? null,
                     'key_column' => $requirement['key_column'] ?? null,
+                    'key_value' => $requirement['key_value'] ?? null,
                 ],
                 [
                     'category' => $requirement['category'],

@@ -10,20 +10,20 @@
             </td>
             <td>{{ (isset($product->Product->product_sku)) ? $product->Product->product_sku : '' }}</td>
             <td>
-                <div class="d-flex align-items-end gap-5">
-                    <textarea class="form-control pro-title title-{{ $product->product_id }}" data-id="{{ $product->product_id }}" name="product_title[{{ $product->product_id }}]" style="width:200px;">{{ ($product->title != '') ? $product->title : $product->Product->product_title }}</textarea>
+                <div class="d-flex align-items-end flex-column gap-1">
+                    <textarea class="form-control pro-title title-{{ $product->product_id }}" data-id="{{ $product->product_id }}" name="product_title[{{ $product->product_id }}]" style="min-width:200px;">{{ ($product->title != '') ? $product->title : $product->Product->product_title }}</textarea>
                     <span class="tLength-{{ $product->product_id }}">{{ ($product->title != '') ? strlen($product->title) : strlen($product->Product->product_title) }}</span>
                 </div>
             </td>
             <td>
-                <div class="d-flex align-items-end gap-5">
-                    <textarea class="form-control pro-shortkey shortKey-{{ $product->product_id }}" data-id="{{ $product->product_id }}" name="prodcut_short_keyword[{{ $product->product_id }}]" style="width:250px;"></textarea>
+                <div class="d-flex align-items-end flex-column gap-1">
+                    <textarea class="form-control pro-shortkey shortKey-{{ $product->product_id }}" data-id="{{ $product->product_id }}" name="prodcut_short_keyword[{{ $product->product_id }}]" style="min-width:250px;"></textarea>
                     <span class="sLength-{{ $product->product_id }}"></span>
                 </div>
             </td>
             <td>
-                <div class="d-flex align-items-end gap-5">
-                    <textarea class="form-control pro-longkey longKey-{{ $product->product_id }}" data-id="{{ $product->product_id }}" name="prodcut_long_keyword[{{ $product->product_id }}]" style="width:250px;"></textarea>
+                <div class="d-flex align-items-end flex-column gap-1">
+                    <textarea class="form-control pro-longkey longKey-{{ $product->product_id }}" data-id="{{ $product->product_id }}" name="prodcut_long_keyword[{{ $product->product_id }}]" style="min-width:250px;"></textarea>
                     <span class="lLength-{{ $product->product_id }}"></span>
                 </div>
             </td>
@@ -47,6 +47,9 @@
                         @endforeach
                     @endif
                 </select>
+            </td>
+            <td>
+                {{count($issues[$product->product_id] ?? [])}} Errors
             </td>
 
         </tr>

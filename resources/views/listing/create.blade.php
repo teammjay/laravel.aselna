@@ -411,6 +411,7 @@
                                                 <th>Price</th>
                                                 <th>Active</th>
                                                 <th>Channel Category</th>
+                                                <th>Errors</th>
                                             </tr>
                                             </thead>
                                             <tbody id="selected_product_list">

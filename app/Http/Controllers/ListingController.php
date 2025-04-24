@@ -712,6 +712,7 @@ class ListingController extends Controller
         $product_ids = $request->input('product_ids');
         $product_details = $request->input('product_detail');
         $store_id = $request->input('store_id');
+        $store = null;
         $step = $request->input('step');
         $view = '';
         if (!empty($product_ids)) {
@@ -746,10 +747,8 @@ class ListingController extends Controller
             $query->where('store_product.store_id', $store_id);
             $products = $query->get();
             $storeCategories = [];
-            $store = null;
             if ($store_id) {
                 $store = Store::with('storeType')->find($store_id);
-
                 if ($store && $store->storeType->name === 'Magento') {
                     $storeCategories = StoreCategory::where('store_id', $store_id)->orderBy('name','asc')->get();
                 } else {
@@ -768,7 +767,22 @@ class ListingController extends Controller
                 ->first();
 
             if ($step == 2) {
-                $view = view('listing.selected_product_list', compact('products', 'storeCategories', 'storeTypeName'))->render();
+                $issues = [];
+                foreach ($products as $storeProduct) {
+                    $categoryId = $storeProduct->store_type_category_id;
+                    if(isset($categoryId)) {
+                        Log::info("Category ID: " . $categoryId);
+                        $currentCategory = StoreTypeCategory::where('id', $categoryId)->first();
+                        if (isset($currentCategory)) {
+                            if ('Amazon' == $store->storeType->name) {
+                                $issues[$storeProduct->product_id] = ListingUtility::validate($currentCategory->marketplace_code, $storeProduct->product_id);
+                            } else {
+                                $issues[$storeProduct->product_id] = ListingUtility::validate($currentCategory->store_type_code, $storeProduct->product_id);
+                            }
+                        }
+                    }
+                }
+                $view = view('listing.selected_product_list', compact('products', 'storeCategories', 'storeTypeName','issues'))->render();
             } else if ($step == 3) {
                 $view = view('listing.select_device_product_list', compact('products', 'storeCategories', 'storeTypeName'))->render();
             }
