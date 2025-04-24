@@ -399,27 +399,9 @@
                                     <label>Bundle Sperator</label> <input type="text" class="form-control ml-3" name="bundle_seperator" value="w" style="width: 150px;">
                                 </div>
                                 <div class="card-body pr-0 pl-0">
-                                    <div class="table-responsive" style="max-height: 500px; overflow: auto;">
-                                        <table id="productsTable2" class="table table-bordered table-striped">
-                                            <thead>
-                                            <tr>
-                                                <th>Image</th>
-                                                <th>Product Code</th>
-                                                <th>Title</th>
-                                                <th>Short Tail Keyword</th>
-                                                <th>Long Tail Keyword</th>
-                                                <th>Price</th>
-                                                <th>Active</th>
-                                                <th>Channel Category</th>
-                                                <th>Errors</th>
-                                            </tr>
-                                            </thead>
-                                            <tbody id="selected_product_list">
+                                    <div class="table-responsive" id="productsTable2_wrapper" style="max-height: 500px; overflow: auto;">
 
-                                            {{--@include('catalog.product_list', ['products' => $products])--}}
 
-                                            </tbody>
-                                        </table>
                                     </div>
                                 </div>
                             </div>
@@ -2475,10 +2457,14 @@
                 },
                 success: function (response) {
                     if (response.html) {
-                        $('#selected_product_list').html(response.html);
+                        $('#productsTable2_wrapper').html(response.html);
                         generateKeywords();
                         $('.store-type-category').select2();
                         //generateTitleKeywords();
+                        $(document).on('click', '.btn-danger', function () {
+                            const targetModal = $(this).data('bs-target');
+                            $(targetModal).modal('show');
+                        });
                     }
                 },
                 error: function (xhr) {
