@@ -1091,35 +1091,20 @@
 
                     <div class="tab-pane fade" id="tab12" role="tabpanel" aria-labelledby="specification-tab">
                         <form method="POST" id="frmtab12">
-                            <button type="button" class="btn btn-secondary" id="add_specification"> <i class="fa fa-plus-square"></i> Add</button>
-                            <div class="card card-body border mt-2">
-                                <table class="table table-bordered" id="specification_table">
-                                    <thead>
-                                    <tr>
-                                        <th>Name</th>
-                                        <th>Value</th>
-                                        <th>Action</th>
-                                    </tr>
-                                    </thead>
-                                    <tbody>
-                                    @if(count($specifications ?? []) > 0)
-                                        @foreach($specifications as $specification)
-                                            <tr class="field-group">
-                                                <td><input type="text" class="form-control" name="specification[]" value="{{ $specification->name }}"></td>
-                                                <td><textarea class="form-control" name="specification_value[]">{{ $specification->value }}</textarea></td>
-                                                <td><button type="button" class="btn btn-danger remove-specification"> <i class="fas fa-fw fa-trash"></i></button></td>
-                                            </tr>
+                            <div class="form-group w-50">
+                                <label>Store Type</label>
+                                <select class="form-control" name="specification_store_type_id" id="specification_store_type_id">
+                                    @if(count($storeTypes ?? []) > 0)
+                                        @foreach($storeTypes as $sType)
+                                            <option value="{{ $sType->id }}">{{ $sType->name }}</option>
                                         @endforeach
-                                    @else
-                                        <tr>
-                                            <td><input type="text" class="form-control" name="specification[]" value="1"></td>
-                                            <td><textarea class="form-control" name="specification_value[]"></textarea></td>
-                                            <td></td>
-                                        </tr>
                                     @endif
-                                    </tbody>
-                                </table>
+                                </select>
                             </div>
+                            <div id="specification_list">
+
+                            </div>
+
                             <div class="card-footer text-center mt-3">
                                 <button type="button" class="btn btn-success" onclick="saveTabData(12)">Save</button>
                                 <button type="button" class="btn btn-primary" onclick="finalizeForm()">Submit</button>
@@ -1312,6 +1297,31 @@
                 }
             });
 
+        }
+
+        function loadSpecification(){
+
+            $.ajax({
+                url: "{{ route('catalog.getspecification') }}",
+                type: 'POST',
+                data: {
+                    store_type_id : $('#specification_store_type_id').val(),
+                    product_id : '{{ $product->product_id }}'
+                },
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                },
+                success: function (response) {
+                    if(response.html){
+                        $('#specification_list').html(response.html);
+                    }
+                },
+                error: function (xhr) {
+                    if (xhr.responseJSON?.error) {
+                        $('#responseMessage').html('<p style="color:red;">' + xhr.responseJSON.error.image[0] + '</p>');
+                    }
+                }
+            });
         }
 
         $(document).ready(function() {
@@ -1980,20 +1990,34 @@
             });
 
             // Add new field group
-            $('#add_specification').click(function() {
-                $('#specification_table tbody').append(`
-                    <tr class="field-group">
-                        <td><input type="text" class="form-control" name="specification[]" value=""></td>
-                        <td><textarea class="form-control" name="specification_value[]"></textarea></td>
-                        <td><button type="button" class="btn btn-danger remove-specification"> <i class="fas fa-fw fa-trash"></i></button></td>
-                    </tr>
-                `);
+            $(document).on('click', '#add_specification', function() {
+
+                $.ajax({
+                    url: "{{ route('catalog.getspecificationoption') }}",
+                    method: "POST",
+                    data: {
+                        store_type_id: $('#specification_store_type_id').val(),
+                        _token: "{{ csrf_token() }}"
+                    },
+                    success: function (response) {
+
+                        $('#specification_table tbody').append('<tr class="field-group"><td><select class="form-control" name="specification[]">'+response.option+'</select></td><td><textarea class="form-control" name="specification_value[]"></textarea></td><td><button type="button" class="btn btn-danger remove-specification"> <i class="fas fa-fw fa-trash"></i></button></td></tr>');
+                    }
+                });
+
+
 
             });
 
             // Remove field group
             $(document).on('click', '.remove-specification', function() {
                 $(this).parents('tr.field-group').remove();
+            });
+
+            loadSpecification();
+
+            $(document).on('change', '#specification_store_type_id', function() {
+                loadSpecification();
             });
 
             var hash = window.location.hash;
