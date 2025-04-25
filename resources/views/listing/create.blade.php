@@ -778,6 +778,7 @@
                     }else if(currentIndex == 1){
                         /* check channel category selected or not*/
                         let flag = false;
+                        let product_errors = false;
                         $('.store-type-category').each(function () {
                             var storeTypeName = $(this).data('store-type-name').toLowerCase();
 
@@ -788,9 +789,20 @@
                                 flag = true;
                             }
                         });
+                        $('.no_of_errors').each(function () {
+                            console.log($(this).data('error'));
+                            if($(this).data('error') != '0'){
+                                product_errors = true;
+                            }
+                        });
 
                         if(flag){
                             alert('Please select channel category for products');
+                            return false;
+                        }
+
+                        if(product_errors) {
+                            alert('Please resolve errors of products to proceed.');
                             return false;
                         }
                         followThirdStep();
@@ -2267,19 +2279,29 @@
 
             $(document).on('change','.store-type-category',function () {
                 var store_product_id = $(this).data('spid');
+                var product_id = $(this).data('pid');
                 var category_id = $(this).val();
                 $.ajax({
                     url: "{{ route('listing.updatestoreproduct') }}",
                     type: 'POST',
                     data: {
                         category_id:category_id,
-                        id: store_product_id
+                        id: store_product_id,
+                        store_id: $('#listing_store').val(),
                     },
                     headers: {
                         'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                     },
                     success: function (response) {
-
+                        if (response.issues && response.issues.length > 0) {
+                            var buttonId = 'errorButton-' + product_id;
+                            $('button#' + buttonId).removeClass('btn-success').addClass('btn-danger').text(response.issues.length +' Errors').data('error',''+response.issues.length);
+                            $('#errorModal-' +product_id + ' .modal-body').html(response.issue_table_html);
+                        } else {
+                            var buttonId = 'errorButton-' + product_id;
+                            $('button#' + buttonId).removeClass('btn-danger').addClass('btn-success').text('0 Issues').data('error','0');
+                            $('#errorModal-' +product_id + ' .modal-body').html('');
+                        }
                     },
                     error: function (xhr) {
                     },

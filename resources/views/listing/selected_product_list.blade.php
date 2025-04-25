@@ -67,7 +67,7 @@
                 <td><input type="checkbox" name="product_status[{{ $product->product_id }}]" checked></td>
                 <td>
                     <select class="form-control store-type-category stc-{{ $product->product_id }}"
-                            data-spid="{{ $product->id }}" name="store_type_category_id[{{ $product->product_id }}]"
+                            data-spid="{{ $product->id }}" data-pid="{{ $product->product_id }}" name="store_type_category_id[{{ $product->product_id }}]"
                             style="width: 200px;" data-store-type-name="{{ $storeTypeName->storeTypeName }}">
                         <option value=""></option>
                         @if(count($storeCategories ?? []) > 0)
@@ -84,7 +84,11 @@
                     </select>
                 </td>
                 <td>
-                    <button type="button" class="btn btn-danger btn-sm" data-bs-toggle="modal"
+                    <button type="button"
+                            id="errorButton-{{$product->product_id}}"
+                            class="btn btn-sm no_of_errors {{count($issues[$product->product_id] ?? []) > 0 ? 'btn-danger' : 'btn-success' }}"
+                            data-bs-toggle="modal"
+                            data-error="{{ count($issues[$product->product_id] ?? []) }}"
                             data-bs-target="#errorModal-{{ $product->product_id }}">
                         {{ count($issues[$product->product_id] ?? []) }} Errors
                     </button>
@@ -104,7 +108,7 @@
     <!-- Modal for displaying errors -->
     <div class="modal fade" id="errorModal-{{ $product->product_id }}" tabindex="-1"
          aria-labelledby="errorModalLabel-{{ $product->product_id }}" aria-hidden="true">
-        <div class="modal-dialog">
+        <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="errorModalLabel-{{ $product->product_id }}">Errors for Product
@@ -113,13 +117,8 @@
                 </div>
                 <div class="modal-body">
                     @if(!empty($issues[$product->product_id]))
-                        <ul>
-                            <a href="/catalog/edit/{{ $product->product_id }}" target="_blank">
-                                @foreach($issues[$product->product_id] as $issue)
-                                    <li>{{ $issue }}</li>
-                                @endforeach
-                            </a>
-                        </ul>
+                        <!-- Call the error_tables.blade.php file to display the errors -->
+                        @include('listing.error_tables', ['issues' => $issues[$product->product_id], 'product' => $product])
                     @else
                         <p>No errors found.</p>
                     @endif

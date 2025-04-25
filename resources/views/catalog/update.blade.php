@@ -1996,6 +1996,28 @@
                 $(this).parents('tr.field-group').remove();
             });
 
+            var hash = window.location.hash;
+
+            if (hash) {
+                var $tabLink = $('a[href="' + hash + '"]');
+
+                if ($tabLink.length) {
+                    // Deactivate all tabs and tab contents
+                    $('.nav-link').removeClass('active');
+                    $('.tab-pane').removeClass('active show');
+
+                    // Activate selected tab and tab content
+                    $tabLink.addClass('active');
+                    $(hash).addClass('active show');
+                }
+            }
+
+            // When user clicks a tab, update the URL hash
+            $('a[data-toggle="pill"]').on('shown.bs.tab', function (e) {
+                var target = $(e.target).attr("href");
+                window.location.hash = target;
+            });
+
         });
     </script>
 @stop
