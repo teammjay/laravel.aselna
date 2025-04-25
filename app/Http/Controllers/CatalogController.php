@@ -40,7 +40,8 @@ class CatalogController extends Controller
     public function index(Request $request)
     {
         session()->forget('pro_id');
-        $productTypes = ProductType::all();
+        //sore by name
+        $productTypes = ProductType::orderBy('name')->get();
         $manufacturers = Manufacturer::all();
         $productConditions = ProductCondition::all();
         $targetAudience = ProductTargetAudience::all();

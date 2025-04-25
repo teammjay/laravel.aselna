@@ -418,6 +418,7 @@
 @section('adminlte_js')
     <!-- Lightbox2 JS -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.4/js/lightbox.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
 
     <script>
@@ -436,6 +437,8 @@
             dateFormat:'yy-mm-dd',
 
         });
+
+        $('select[name=product_type]').select2();
 
         $(document).on('click','#product-list tr',function (e) {
             let ele = $(this);
