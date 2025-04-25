@@ -10,6 +10,8 @@
 @section('adminlte_css')
     <!-- Lightbox2 CSS -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.4/css/lightbox.min.css" rel="stylesheet">
+    <link href="{{ asset('css/jquery.multiselect.css') }}" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 
     <style>
         .bulk-edit{display: none; width: 150px;}
@@ -21,6 +23,10 @@
             height: 300px;*/
             object-fit: cover;
             cursor: pointer;
+        }
+
+        .select2-container .select2-selection--single {
+            height: auto !important;
         }
 
     </style>
@@ -120,7 +126,7 @@
                                 </select>
                             </div>
                             <div class="col-6">
-                                <select class="form-control" name="product_type">
+                                <select class="form-control" id="product_type" name="product_type">
                                     <option value=""> -- </option>
                                     @if(count($productTypes ?? []) > 0)
                                         @foreach($productTypes as $ptype)
@@ -438,7 +444,9 @@
 
         });
 
-        $('select[name=product_type]').select2();
+        $('#product_type').select2({
+            width: '100%',
+        });
 
         $(document).on('click','#product-list tr',function (e) {
             let ele = $(this);
