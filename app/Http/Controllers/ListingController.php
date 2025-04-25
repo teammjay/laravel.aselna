@@ -71,7 +71,8 @@ class ListingController extends Controller
         return view('listing.list', compact('stores', 'device_types', 'product_types', 'manufacturers', 'devices', 'brands'))->with('perPage', $this->perPage);
     }
 
-    public function suspended_list(){
+    public function suspended_list()
+    {
         $stores = Store::with('storeType')->where('store_status', 1)->orderBy('name', 'asc')->get();
         $device_types = DeviceTypes::Where('status', 1)->get();
         $product_types = ProductType::with('children')->whereIn('parent_id', function ($subquery) {
@@ -284,7 +285,7 @@ class ListingController extends Controller
                     $productcode = '';
                 };
                 $data[] = array(
-                    "sku" => $product->sku . '<input type="checkbox" class="proList" name="listing_item[]" data-sku="'.$product->sku.'" data-code="' . $productcode . '" value="' . $product->id . '" style="visibility:hidden;">',
+                    "sku" => $product->sku . '<input type="checkbox" class="proList" name="listing_item[]" data-sku="' . $product->sku . '" data-code="' . $productcode . '" value="' . $product->id . '" style="visibility:hidden;">',
                     "sale_count" => ($product->sale_count) ? $product->sale_count : 0,
                     "last_sale_date" => $product->last_sale_date,
                     "store_sku" => $product->store_sku,
@@ -350,7 +351,7 @@ class ListingController extends Controller
         $pageAt = 'Edit';
         $stores = Store::all();
         $manufacturers = Manufacturer::all();
-        $productDetail = ListingItem::with('storeProduct','storeProduct.product','store','store.storeType','generationType')
+        $productDetail = ListingItem::with('storeProduct', 'storeProduct.product', 'store', 'store.storeType', 'generationType')
             //->leftJoin('listing_item_link','listing_item.id', '=', 'listing_item_link.item_id')
             /*->leftJoin('store_product', 'store_product.id', '=', 'listing_item.store_product_id')
             ->leftJoin('products', 'products.product_id', '=', 'store_product.product_id')
@@ -364,20 +365,20 @@ class ListingController extends Controller
         if ($store_type_listing_id != '') {
             $storeTypeDetail = StoreTypeListing::findOrFail($store_type_listing_id);
         }
-        $productVariants = ListingItemDetail::with('device','device.brand','carrier')
+        $productVariants = ListingItemDetail::with('device', 'device.brand', 'carrier')
             //->leftJoin('device', 'device.id', '=', 'listing_item_detail.device_id')
             //->leftJoin('brands', 'brands.id', '=', 'device.brand_id')
             ->where('listing_item_id', $productDetail->id)
-            ->orderBy('created_at','ASC')
+            ->orderBy('created_at', 'ASC')
             ->get();
 
         $feedHistory = ListingItemLink::with('feed')
             ->where('item_id', $productDetail->id)
-            ->orderBy('created_at','ASC')
+            ->orderBy('created_at', 'ASC')
             ->get();
 
         $listingHistory = ListingItemHistory::where('id', $productDetail->id)
-            ->orderBy('created_at','ASC')
+            ->orderBy('created_at', 'ASC')
             ->get();
 
         /*echo '<pre>';
@@ -390,10 +391,11 @@ class ListingController extends Controller
             ->where('listing_item.id',$id)
             ->first();*/
 
-        return view('listing.update', compact('manufacturers', 'pageAt', 'stores', 'productDetail', 'storeTypeDetail', 'productVariants','feedHistory','listingHistory'));
+        return view('listing.update', compact('manufacturers', 'pageAt', 'stores', 'productDetail', 'storeTypeDetail', 'productVariants', 'feedHistory', 'listingHistory'));
     }
 
-    public function saveListingData(Request $request){
+    public function saveListingData(Request $request)
+    {
 
         $listing_item_id = $request->input('listing_item_id');
         $tabId = $request->input('tab');
@@ -712,6 +714,7 @@ class ListingController extends Controller
         $product_ids = $request->input('product_ids');
         $product_details = $request->input('product_detail');
         $store_id = $request->input('store_id');
+        $store = null;
         $step = $request->input('step');
         $view = '';
         if (!empty($product_ids)) {
@@ -746,16 +749,19 @@ class ListingController extends Controller
             $query->where('store_product.store_id', $store_id);
             $products = $query->get();
             $storeCategories = [];
-            $store = null;
             if ($store_id) {
                 $store = Store::with('storeType')->find($store_id);
-
                 if ($store && $store->storeType->name === 'Magento') {
-                    $storeCategories = StoreCategory::where('store_id', $store_id)->orderBy('name','asc')->get();
+                    $storeCategories = StoreCategory::where('store_id', $store_id)->orderBy('name', 'asc')->get();
                 } else {
+                    //if the storetype code is amazon then fetch all the categories of specific marketplace codes
                     $storeCategories = StoreTypeCategory::select('store_type_category.*')
                         ->leftJoin('store_type', 'store_type.id', '=', 'store_type_category.store_type_id')
                         ->leftJoin('store', 'store_type.id', '=', 'store.store_type_id')
+                        ->when($store->storeType->name === 'Amazon', function ($query) use ($store) {
+                            $qualifiedcategoryCodes = ['ELECTRONIC_CABLE', 'SCREEN_PROTECTOR', 'HEADPHONES', 'PORTABLE_ELECTRONIC_DEVICE_MOUNT', 'CELL_PHONE_HOLSTER', 'CHARGING_ADAPTER', 'POWER_BANK', 'CAMERA_TRIPOD', 'PORTABLE_ELECTRONIC_DEVICE_ARMBAND', 'PORTABLE_ELECTRONIC_DEVICE_STAND'];
+                            return $query->whereIn('store_type_category.marketplace_code', $qualifiedcategoryCodes);
+                        })
                         ->where('store.id', $store_id)
                         ->orderBy('store_type_category.name', 'asc')
                         ->get();
@@ -768,7 +774,22 @@ class ListingController extends Controller
                 ->first();
 
             if ($step == 2) {
-                $view = view('listing.selected_product_list', compact('products', 'storeCategories', 'storeTypeName'))->render();
+                $issues = [];
+                foreach ($products as $storeProduct) {
+                    $categoryId = $storeProduct->store_type_category_id;
+                    if (isset($categoryId)) {
+                        Log::info("Category ID: " . $categoryId);
+                        $currentCategory = StoreTypeCategory::where('id', $categoryId)->first();
+                        if (isset($currentCategory)) {
+                            if ('Amazon' == $store->storeType->name) {
+                                $issues[$storeProduct->product_id] = ListingUtility::validate($currentCategory->marketplace_code, $storeProduct->product_id);
+                            } else {
+                                $issues[$storeProduct->product_id] = ListingUtility::validate($currentCategory->store_type_code, $storeProduct->product_id);
+                            }
+                        }
+                    }
+                }
+                $view = view('listing.selected_product_list', compact('products', 'storeCategories', 'storeTypeName', 'issues'))->render();
             } else if ($step == 3) {
                 $view = view('listing.select_device_product_list', compact('products', 'storeCategories', 'storeTypeName'))->render();
             }
@@ -947,7 +968,7 @@ class ListingController extends Controller
                 $field = 'carrier.name as carrier_name';
                 $field2 = 'carrier.id as carrier_id';
             }
-            $query = Device::select('device.*', 'product_interface.product_id', 'products.product_sku', $field,$field2)->with('brand', 'rating')->with('deviceType', 'deviceSeries');
+            $query = Device::select('device.*', 'product_interface.product_id', 'products.product_sku', $field, $field2)->with('brand', 'rating')->with('deviceType', 'deviceSeries');
             $query->leftJoin('brands', 'brands.id', '=', 'device.brand_id');
             $query->leftJoin('device_interface', 'device_interface.device_id', '=', 'device.id');
             $query->leftJoin('product_interface', 'product_interface.interface_id', '=', 'device_interface.interface_id');
@@ -1118,7 +1139,7 @@ class ListingController extends Controller
                                     $field2 = 'carrier.id as carrier_id';
                                 }
 
-                                $devices = $this->getDevicesFromRequest($request,$product);
+                                $devices = $this->getDevicesFromRequest($request, $product);
                                 /*echo '<pre>';
                                 print_r($devices);
                                 echo '<pre>';die;*/
@@ -1142,9 +1163,9 @@ class ListingController extends Controller
                                             if ($flag) {
                                                 continue 2;
                                             }
-                                            if(strtolower($store_type) == 'ebay'){
+                                            if (strtolower($store_type) == 'ebay') {
                                                 $productsArray[] = $this->generateFreeGroupProductTitlesEbay($title_template, $product, $devices, $max_title_length, $brand_seperator, $device_seperator, $compress, $generate_type, $pDetail, $store_product_id, $store_type);
-                                            }else{
+                                            } else {
                                                 $productsArray[] = $this->generateFreeGroupProductTitles($title_template, $product, $devices, $max_title_length, $brand_seperator, $device_seperator, $compress, $generate_type, $pDetail, $store_product_id, $store_type);
                                             }
                                             break;
@@ -1246,7 +1267,7 @@ class ListingController extends Controller
         $query->leftJoin('device_interface', 'device_interface.device_id', '=', 'device.id');
         $query->leftJoin('product_interface', 'product_interface.interface_id', '=', 'device_interface.interface_id');
 
-        if($include_carrier == 1 || strtolower($generate_type_name) == 'carrier group') {
+        if ($include_carrier == 1 || strtolower($generate_type_name) == 'carrier group') {
             $query->leftJoin('device_carrier', 'device_carrier.device_id', '=', 'device.id');
             $query->leftJoin('carrier', 'carrier.id', '=', 'device_carrier.carrier_id');
             if ($carriers) {
@@ -1281,13 +1302,13 @@ class ListingController extends Controller
             $devices = DevicesLinkedDevice::select('device_id')->whereIn('device_series_id', $deviceSeries)->get();
             $query->whereIn('device.id', $devices);
         }
-        if($include_carrier == 1 || strtolower($generate_type_name) == 'carrier group') {
+        if ($include_carrier == 1 || strtolower($generate_type_name) == 'carrier group') {
 
             $query->orderBy('carrier.name', 'asc');
         }
         $query->orderBy('brand_name', 'asc');
         $query->orderBy('device.name', 'asc');
-        if(strtolower($store_type) == 'ebay') {
+        if (strtolower($store_type) == 'ebay') {
 
             $query->limit(250);
         }
@@ -1695,7 +1716,7 @@ class ListingController extends Controller
                     }
                     $lastModel = $parts2[0];
                     $parts2 = explode(' ', $model, 2);
-                    if(isset($parts2[1])) {
+                    if (isset($parts2[1])) {
                         $model = $parts2[1];
                     }
                     $nameToAdd = $model;
@@ -2005,7 +2026,7 @@ class ListingController extends Controller
                         'updated_by' => $created_by
                     ];
 
-                    if(isset($manufacturer_id) && $manufacturer_id != '' && $manufacturer_id != 'use-store'){
+                    if (isset($manufacturer_id) && $manufacturer_id != '' && $manufacturer_id != 'use-store') {
 
                         $listingArr['manufacturer_id'] = $manufacturer_id;
                     }
@@ -2167,7 +2188,7 @@ class ListingController extends Controller
                                                     if ($store_type != '') {
                                                         switch (strtolower($store_type)) {
                                                             case 'walmart':
-                                                            //case 'shopify':
+                                                                //case 'shopify':
                                                                 $upcCodes = $this->generateUpcCode($store_detail, $store_id);
                                                                 break;
                                                             default:
@@ -2530,22 +2551,36 @@ class ListingController extends Controller
 
         $id = $request->input('id');
         $category_id = $request->input('category_id');
+        $store_id = $request->input('store_id');
         $product = StoreProduct::findOrFail($id); // Retrieve the product by ID
         $product->update(['store_type_category_id' => $category_id]);
 
+        $store = Store::findOrFail($store_id);
+        $currentCategory = StoreTypeCategory::where('id', $category_id)->first();
+        if ('Amazon' == $store->storeType->name) {
+            $issues = ListingUtility::validate($currentCategory->marketplace_code, $product->product_id);
+        } else {
+            $issues = ListingUtility::validate($currentCategory->store_type_code, $product->product_id);
+        }
+
+        $table_html = view('listing.error_tables', ['issues' => $issues, 'product' => $product])->render();
+
         return response()->json([
-            'success' => true
+            'success' => true,
+            'issues' => $issues,
+            'issue_table_html' => $table_html
         ]);
     }
 
-    public function endList(Request $request){
+    public function endList(Request $request)
+    {
 
         $selected_listing = $request->input('selected_list');
 
-        if(!empty($selected_listing)){
-            foreach($selected_listing as $listing_item){
+        if (!empty($selected_listing)) {
+            foreach ($selected_listing as $listing_item) {
                 $listingItem = ListingItem::findOrFail($listing_item);
-                $listingItem->update(['status' => ListingStatus::Deleted,'sync_status' => ListingSyncStatus::Unsynchronize]);
+                $listingItem->update(['status' => ListingStatus::Deleted, 'sync_status' => ListingSyncStatus::Unsynchronize]);
             }
 
             return response()->json([
@@ -2558,7 +2593,8 @@ class ListingController extends Controller
         ]);
     }
 
-    public function reList(Request $request){
+    public function reList(Request $request)
+    {
 
         $selected_listing = $request->input('selected_list');
         $selected_sku = $request->input('selected_sku');
@@ -2566,11 +2602,11 @@ class ListingController extends Controller
         if (!empty($selected_listing)) {
             try {
                 Log::info('Inside Relist Sync ');
-                foreach($selected_listing as $key=>$list){
+                foreach ($selected_listing as $key => $list) {
 
-                    $listingDetail = ListingItemLink::select('listing_item_link.*')->with('listing')->leftJoin('listing_item', 'listing_item.id', '=', 'listing_item_link.item_id')->where('listing_item_link.item_id',$list)->where('listing_item.sku',$selected_sku[$key])->first();
+                    $listingDetail = ListingItemLink::select('listing_item_link.*')->with('listing')->leftJoin('listing_item', 'listing_item.id', '=', 'listing_item_link.item_id')->where('listing_item_link.item_id', $list)->where('listing_item.sku', $selected_sku[$key])->first();
 
-                    if($listingDetail){
+                    if ($listingDetail) {
                         Log::info('Listing Info Found');
                         $created_by = auth()->user()->name ?? 'admin';
                         $listingArr = [
@@ -2644,11 +2680,12 @@ class ListingController extends Controller
         ]);
     }
 
-    public function checkUpcExist(Request $request){
+    public function checkUpcExist(Request $request)
+    {
 
         $store_id = $request->input('store_id');
 
-        if($store_id){
+        if ($store_id) {
 
             $upc_count = UPCCodes::where('store', $store_id)->where('is_used', 0)->count();
 
@@ -2669,12 +2706,12 @@ class ListingController extends Controller
 
         if ($store_id != '') {
 
-            $storeManufacturers = StoreManufactureLink::with('manufacturer')->where('store_id',$store_id)->get();
+            $storeManufacturers = StoreManufactureLink::with('manufacturer')->where('store_id', $store_id)->get();
 
             $option = '<option value=""></option><option value="use-store">Use store as brand</option>';
-            if(!empty($storeManufacturers)){
-                foreach($storeManufacturers as $manufacturer){
-                    $option .= '<option value="'.$manufacturer->manufacturer->id.'">'.$manufacturer->manufacturer->name.'</option>';
+            if (!empty($storeManufacturers)) {
+                foreach ($storeManufacturers as $manufacturer) {
+                    $option .= '<option value="' . $manufacturer->manufacturer->id . '">' . $manufacturer->manufacturer->name . '</option>';
                 }
             }
 
