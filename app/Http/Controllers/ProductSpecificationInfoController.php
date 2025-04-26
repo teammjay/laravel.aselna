@@ -17,7 +17,7 @@ class ProductSpecificationInfoController extends Controller
      */
     public function index()
     {
-        $specification_infos = ProductSpecificationInfo::with('storeType','productType')->get();
+        $specification_infos = ProductSpecificationInfo::with('storeType')->get();
         return view('specification_info.list', compact('specification_infos'));
     }
 
@@ -27,9 +27,8 @@ class ProductSpecificationInfoController extends Controller
      */
     public function create()
     {
-        $product_types = ProductType::orderBy('name')->get();
         $store_types = StoreType::all();
-        return view('specification_info.add', compact('product_types','store_types'));
+        return view('specification_info.add', compact('store_types'));
     }
 
     /**
@@ -56,9 +55,8 @@ class ProductSpecificationInfoController extends Controller
     public function edit(string $id)
     {
         $specification_info = ProductSpecificationInfo::findOrFail($id);
-        $product_types = ProductType::all();
         $store_types = StoreType::all();
-        return view('specification_info.add', compact('specification_info','product_types','store_types'));
+        return view('specification_info.add', compact('specification_info','store_types'));
     }
 
     /**

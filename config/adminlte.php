@@ -381,6 +381,11 @@ return [
                     'url' => '/specification_info',
                     'icon' => 'fa fa-fw fa-file'
                 ],
+                [
+                    'text' => 'Product Specification Values',
+                    'url' => '/specification_values',
+                    'icon' => 'fa fa-fw fa-file'
+                ],
             ]
         ],
         [
@@ -460,6 +465,11 @@ return [
                 [
                     'text' => 'Listing Template',
                     'url' => '/listing_template',
+                    'icon' => 'far fa-fw fa-file'
+                ],
+                [
+                    'text' => 'Listing Requirements',
+                    'url' => '/listing_requirements',
                     'icon' => 'far fa-fw fa-file'
                 ]
             ]
