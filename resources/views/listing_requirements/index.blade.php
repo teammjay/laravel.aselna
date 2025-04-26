@@ -6,7 +6,7 @@
 
 @section('content')
     <div class="pt-2">
-        <a href="{{ route('listing-requirements.create') }}" class="btn btn-primary mb-3">Add New Requirement</a>
+        <a href="{{ route('listing_requirements.create') }}" class="btn btn-primary mb-3">Add New Requirement</a>
 
         @if (session('success'))
             <div class="alert alert-success">{{ session('success') }}</div>
@@ -36,8 +36,8 @@
                     <td>{{ $req->key_value }}</td>
                     <td>{{ $req->value_column }}</td>
                     <td>
-                        <a href="{{ route('listing-requirements.edit', $req) }}" class="btn btn-sm btn-warning">Edit</a>
-                        <form action="{{ route('listing-requirements.destroy', $req) }}" method="POST" style="display:inline-block;">
+                        <a href="{{ route('listing_requirements.edit', $req) }}" class="btn btn-sm btn-warning">Edit</a>
+                        <form action="{{ route('listing_requirements.destroy', $req) }}" method="POST" style="display:inline-block;">
                             @csrf @method('DELETE')
                             <button class="btn btn-sm btn-danger" onclick="return confirm('Delete this requirement?')">Delete</button>
                         </form>

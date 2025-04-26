@@ -8,7 +8,7 @@
     <div class="container mt-4">
         <h2></h2>
 
-        <form method="POST" action="{{ route('listing-requirements.update', $listingRequirement) }}">
+        <form method="POST" action="{{ route('listing_requirements.update', $listingRequirement) }}">
             @csrf
             @method('PUT')
 

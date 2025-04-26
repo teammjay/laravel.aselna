@@ -7,7 +7,7 @@
 @section('content')
     <div class="mt-4">
 
-        <form method="POST" action="{{ route('listing-requirements.store') }}">
+        <form method="POST" action="{{ route('listing_requirements.store') }}">
             @csrf
 
             @include('listing_requirements.partials.form', ['button' => 'Create'])

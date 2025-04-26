@@ -487,7 +487,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/shipping_service_rule/delete/{id}', 'destroy')->name('shipping_service_rule.delete');
     });
 
-    Route::resource('listing-requirements', ListingRequirementController::class);
+    Route::resource('listing_requirements', ListingRequirementController::class);
 
     Route::controller(ProductSpecificationInfoController::class)->group(function () {
         Route::get('/specification_info', 'index')->name('specification_info.index');
