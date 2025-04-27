@@ -46,6 +46,7 @@ use App\Http\Controllers\ShippingCarrierPackageController;
 use App\Http\Controllers\ShippingPackageController;
 use App\Http\Controllers\ShippingServiceRulesController;
 use App\Http\Controllers\ProductSpecificationInfoController;
+use App\Http\Controllers\ProductSpecificationValueController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ResetPasswordController;
 use App\Http\Controllers\StorePagesController;
@@ -493,6 +494,15 @@ Route::middleware('auth')->group(function () {
         Route::post('/specification_info/edit/{id}', 'update')->name('specification_info.update');
         Route::get('/specification_info/delete/{id}', 'destroy')->name('specification_info.delete');
         Route::get('/specification_info/getinfo', 'getInfo')->name('specification_info.getinfo');
+    });
+
+    Route::controller(ProductSpecificationValueController::class)->group(function () {
+        Route::get('/specification_values', 'index')->name('specification_values.index');
+        Route::get('/specification_values/add', 'create')->name('specification_values.create');
+        Route::post('/specification_values/add', 'store')->name('specification_values.store');
+        Route::get('/specification_values/edit/{id}', 'edit')->name('specification_values.edit');
+        Route::post('/specification_values/edit/{id}', 'update')->name('specification_values.update');
+        Route::get('/specification_values/delete/{id}', 'destroy')->name('specification_values.delete');
     });
 
     Route::get('/ebay/login', [EbayAuthService::class, 'redirectToEbay'])->name('ebay.login');
