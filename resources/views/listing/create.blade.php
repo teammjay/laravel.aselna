@@ -399,26 +399,9 @@
                                     <label>Bundle Sperator</label> <input type="text" class="form-control ml-3" name="bundle_seperator" value="w" style="width: 150px;">
                                 </div>
                                 <div class="card-body pr-0 pl-0">
-                                    <div class="table-responsive" style="max-height: 500px; overflow: auto;">
-                                        <table id="productsTable2" class="table table-bordered table-striped">
-                                            <thead>
-                                            <tr>
-                                                <th>Image</th>
-                                                <th>Product Code</th>
-                                                <th>Title</th>
-                                                <th>Short Tail Keyword</th>
-                                                <th>Long Tail Keyword</th>
-                                                <th>Price</th>
-                                                <th>Active</th>
-                                                <th>Channel Category</th>
-                                            </tr>
-                                            </thead>
-                                            <tbody id="selected_product_list">
+                                    <div class="table-responsive" id="productsTable2_wrapper" style="max-height: 500px; overflow: auto;">
 
-                                            {{--@include('catalog.product_list', ['products' => $products])--}}
 
-                                            </tbody>
-                                        </table>
                                     </div>
                                 </div>
                             </div>
@@ -795,6 +778,7 @@
                     }else if(currentIndex == 1){
                         /* check channel category selected or not*/
                         let flag = false;
+                        let product_errors = false;
                         $('.store-type-category').each(function () {
                             var storeTypeName = $(this).data('store-type-name').toLowerCase();
 
@@ -805,9 +789,20 @@
                                 flag = true;
                             }
                         });
+                        $('.no_of_errors').each(function () {
+                            console.log($(this).data('error'));
+                            if($(this).data('error') != '0'){
+                                product_errors = true;
+                            }
+                        });
 
                         if(flag){
                             alert('Please select channel category for products');
+                            return false;
+                        }
+
+                        if(product_errors) {
+                            alert('Please resolve errors of products to proceed.');
                             return false;
                         }
                         followThirdStep();
@@ -2284,19 +2279,29 @@
 
             $(document).on('change','.store-type-category',function () {
                 var store_product_id = $(this).data('spid');
+                var product_id = $(this).data('pid');
                 var category_id = $(this).val();
                 $.ajax({
                     url: "{{ route('listing.updatestoreproduct') }}",
                     type: 'POST',
                     data: {
                         category_id:category_id,
-                        id: store_product_id
+                        id: store_product_id,
+                        store_id: $('#listing_store').val(),
                     },
                     headers: {
                         'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                     },
                     success: function (response) {
-
+                        if (response.issues && response.issues.length > 0) {
+                            var buttonId = 'errorButton-' + product_id;
+                            $('button#' + buttonId).removeClass('btn-success').addClass('btn-danger').text(response.issues.length +' Errors').data('error',''+response.issues.length);
+                            $('#errorModal-' +product_id + ' .modal-body').html(response.issue_table_html);
+                        } else {
+                            var buttonId = 'errorButton-' + product_id;
+                            $('button#' + buttonId).removeClass('btn-danger').addClass('btn-success').text('0 Issues').data('error','0');
+                            $('#errorModal-' +product_id + ' .modal-body').html('');
+                        }
                     },
                     error: function (xhr) {
                     },
@@ -2474,10 +2479,14 @@
                 },
                 success: function (response) {
                     if (response.html) {
-                        $('#selected_product_list').html(response.html);
+                        $('#productsTable2_wrapper').html(response.html);
                         generateKeywords();
                         $('.store-type-category').select2();
                         //generateTitleKeywords();
+                        $(document).on('click', '.btn-danger', function () {
+                            const targetModal = $(this).data('bs-target');
+                            $(targetModal).modal('show');
+                        });
                     }
                 },
                 error: function (xhr) {

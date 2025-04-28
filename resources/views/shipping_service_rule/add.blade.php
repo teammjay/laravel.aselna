@@ -110,6 +110,12 @@
                             <label for="package_type_filter_id">Package Type Filter</label>
                             <select class="form-control" id="package_type_filter_id" name="package_type_filter_id">
                                 <option value=""></option>
+                                @if(count($ShippingPackages ?? []) > 0)
+                                    @foreach($ShippingPackages as $sPackage)
+                                        <option value="{{ $sPackage->id }}" @if((isset($shipping_service_rule) && $shipping_service_rule['package_type_filter_id'] === $sPackage->id)) selected @endif >{{ $sPackage->name }}</option>
+                                    @endforeach
+                                @endif
+
 
                             </select>
 
@@ -165,7 +171,7 @@
                         <div class="form-group">
                             <label for="color">Color</label>
                             <div id="color-picker"></div>
-                            <input type="hidden" name="color" id="picked-color">
+                            <input type="hidden" name="color" id="picked-color" value="{{ old('color', $shipping_service_rule['color'] ?? '') }}">
                         </div>
                     </div>
                 </div>

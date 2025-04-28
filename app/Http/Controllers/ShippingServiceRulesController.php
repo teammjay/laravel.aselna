@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\ShippingServiceRulesRequest;
 use App\Models\ShippingCarrierService;
+use App\Models\ShippingPackage;
 use App\Models\ShippingServiceRule;
 use Illuminate\Http\Request;
 
@@ -14,7 +15,7 @@ class ShippingServiceRulesController extends Controller
      */
     public function index()
     {
-        $shipping_service_rules = ShippingServiceRule::all();
+        $shipping_service_rules = ShippingServiceRule::with('packageType')->get();
         return view('shipping_service_rule.list', compact('shipping_service_rules'));
     }
 
@@ -49,8 +50,9 @@ class ShippingServiceRulesController extends Controller
     public function edit(string $id)
     {
         $shipping_service_rule = ShippingServiceRule::findOrFail($id);
+        $ShippingPackages = ShippingPackage::orderBy('name')->get();
 
-        return view('shipping_service_rule.add', compact('shipping_service_rule'));
+        return view('shipping_service_rule.add', compact('shipping_service_rule','ShippingPackages'));
     }
 
     /**

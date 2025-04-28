@@ -12,6 +12,8 @@ use App\Models\ProductInterface;
 use App\Models\ProductKeyFeatures;
 use App\Models\ProductSearchTerm;
 use App\Models\ProductSpecification;
+use App\Models\ProductSpecificationInfo;
+use App\Models\ProductSpecificationOption;
 use App\Models\ProductTags;
 use App\Models\ProductTargetAudience;
 use App\Models\ProductTitleKeyword;
@@ -40,9 +42,8 @@ class CatalogController extends Controller
     public function index(Request $request)
     {
         session()->forget('pro_id');
-        //sore by name
         $productTypes = ProductType::orderBy('name')->get();
-        $manufacturers = Manufacturer::all();
+        $manufacturers = Manufacturer::orderBy('name')->get();
         $productConditions = ProductCondition::all();
         $targetAudience = ProductTargetAudience::all();
         $perPage = $this->perPage;
@@ -320,11 +321,12 @@ class CatalogController extends Controller
         $storeTypes = StoreType::all();
         $colors = ProductColor::all();
         $specifications = ProductSpecification::where('product_id', $pro_id)->orderBy('created_at')->get();
+        $specificationInfo = ProductSpecificationInfo::all();
         $productStoreType = DB::table('product_channel_detail')
             ->select('product_channel_detail.id', 'product_channel_detail.status','store_type.name')
             ->leftJoin('store_type','store_type.id','=','product_channel_detail.store_type_id')
             ->where('product_id',$pro_id)->get();
-        return view('catalog.update', compact('product','keyFeatures','searchTerms','productImages','productTags','pageAt','store_details','manufacturers','productTypes','productConditions','titleKeywords','interfaces','productInterfaces','targetAudience','storeTypes','productStoreType','colors','productAltImages','specifications'));
+        return view('catalog.update', compact('product','keyFeatures','searchTerms','productImages','productTags','pageAt','store_details','manufacturers','productTypes','productConditions','titleKeywords','interfaces','productInterfaces','targetAudience','storeTypes','productStoreType','colors','productAltImages','specifications','specificationInfo'));
     }
 
     /**
@@ -429,9 +431,10 @@ class CatalogController extends Controller
         $productInterfaces = ProductInterface::where('product_id', $id)->get();
         $productInterfaces = $productInterfaces->pluck('interface_id')->values()->all();
         $targetAudience = ProductTargetAudience::all();
-        $storeTypes = StoreType::all();
+        $storeTypes = StoreType::orderBy('name')->get();
         $colors = ProductColor::all();
         $specifications = ProductSpecification::where('product_id', $id)->orderBy('created_at')->get();
+        //$specificationInfo = ProductSpecificationInfo::where('product_type_id',$product->product_type)->get();
         $productStoreType = DB::table('product_channel_detail')
                             ->select('product_channel_detail.id','product_channel_detail.status','store_type.name')
                             ->leftJoin('store_type','store_type.id','=','product_channel_detail.store_type_id')
@@ -614,9 +617,10 @@ class CatalogController extends Controller
                         'product_id' => $productId,
                         'name' => $request->specification[$i],
                         'value' => $request->specification_value[$i],
+                        'store_type_id' => $request->specification_store_type_id
                     );
                 }
-                ProductSpecification::where('product_id', $productId)->delete();
+                ProductSpecification::where(['product_id' => $productId,'store_type_id'=> $request->specification_store_type_id])->delete();
                 ProductSpecification::insert($data);
 
                 return response()->json(['success' => true, 'message' => 'Data saved successfully!']);
@@ -981,5 +985,118 @@ class CatalogController extends Controller
             return response()->json(['errors' => $e->getMessage()], 422);
         }
 
+    }
+
+    public function getSpecification(Request $request){
+
+        $store_type_id = $request->input('store_type_id');
+        $product_id = $request->input('product_id');
+        $specifications = ProductSpecification::where('store_type_id',$store_type_id)->where('product_id',$product_id)->orderBy('created_at','asc')->get();
+        /*echo '<pre>';
+        print_r($specifications);
+        echo '</pre>';die;*/
+        $specificationArr = [];
+        if(!empty($specifications)){
+            foreach($specifications as $key=>$spec){
+
+                $specificationArr[$key]= $spec;
+
+                $field_option = ProductSpecificationOption::where('field_local_name',$spec->name)->first();
+                $field = $valoption = '';
+                if(!empty($field_option)){
+                    $optionvalue = $field_option->field_option;
+                    if(str_contains($optionvalue,',')){
+                        $field = 'select';
+                        $optionvalueArr = explode(',',$optionvalue);
+                        $valoption = $optionvalueArr;
+
+                    }else{
+                        $field = 'input';
+                        $valoption = $optionvalue;
+                    }
+                }
+
+                $specificationArr[$key]->field = $field;
+                $specificationArr[$key]->valoption = $valoption;
+            }
+        }
+
+        //$specificationArr = (object)$specificationArr;
+        /*echo '<pre>';
+        print_r((object)$specificationArr);
+        echo '</pre>';die;*/
+        $specificationInfo = ProductSpecificationInfo::where('store_type_id',$store_type_id)->get();
+        return response()->json([
+            'html' => view('catalog.specification', compact('specificationInfo','specificationArr'))->render(),
+        ]);
+
+    }
+
+    public function getSpecificationOption(Request $request){
+        $store_type_id = $request->input('store_type_id');
+        $specificationInfo = ProductSpecificationInfo::where('store_type_id',$store_type_id)->get();
+        $option = '<option value=""></option>';
+        if(!empty($specificationInfo)){
+            foreach($specificationInfo as $spec){
+                $option .= '<option value="'.$spec->field_local_name.'">'.$spec->field_local_name.'</option>';
+
+                $field_option = ProductSpecificationOption::where('field_local_name',$spec->field_local_name)->first();
+                $field = $valoption = '';
+                if(!empty($field_option)){
+                    $optionvalue = $field_option->field_option;
+                    if(str_contains($optionvalue,',')){
+                        $field = 'select';
+                        $optionvalueArr = explode(',',$optionvalue);
+                        if(!empty($optionvalueArr)){
+                            $valoption = '<option value=""></option>';
+                            foreach($optionvalueArr as $val){
+                                $valoption .= '<option value="'.$val.'">'.$val.'</option>';
+                            }
+                        }
+
+                    }else{
+                        $field = 'input';
+                        $valoption = $optionvalue;
+                    }
+                }
+            }
+        }
+
+        return response()->json([
+            'option' => $option,
+            'valueoption' => $valoption,
+            'field' => $field
+        ]);
+    }
+
+    public function getFieldOption(Request $request){
+
+        $field_name = $request->input('field_name');
+        $field = $option = '';
+        if($field_name != ''){
+            $field_option = ProductSpecificationOption::where('field_local_name',$field_name)->first();
+            if(!empty($field_option)){
+                $optionvalue = $field_option->field_option;
+                if(str_contains($optionvalue,',')){
+                    $field = 'select';
+                    $optionvalueArr = explode(',',$optionvalue);
+                    if(!empty($optionvalueArr)){
+                        $option = '<option value=""></option>';
+                        foreach($optionvalueArr as $val){
+                            $option .= '<option value="'.$val.'">'.$val.'</option>';
+                        }
+                    }
+
+                }else{
+                    $field = 'input';
+                    $option = $optionvalue;
+                }
+            }
+
+            return response()->json([
+                'option' => $option,
+                'field' => $field
+            ]);
+        }
     }
 }
