@@ -63,12 +63,15 @@ class AmazonUtility
             ->where('name', 'Connector Gender')
             ->first();
 
+        $items_count = ProductSpecification::where('product_id', $productData->product_id)
+            ->where('name', 'Number of Items')
+            ->first();
 
         return [
             'cable' => FieldUtility::getCableFieldValue($productData),
             'item_package_weight' => FieldUtility::getItemPackageWeight($productData),
-            'number_of_items' => [['value' => 1]],
-            'connector_gender' => [['value' => 'Female-to-Female']],
+            'number_of_items' => [['value' => $items_count->value]],
+            'connector_gender' => [['value' => $connector_gender->value]],
             'connector_type' => [['value' => $connectivity ? $connectivity->value : '']],
             'included_components' => [['value' => $items_included ? $items_included->value : '', 'language_tag' => 'en_US']],
             'special_feature' => [['value' => $special_features ?? 'Cables', 'language_tag' => 'en_US']],
@@ -91,13 +94,16 @@ class AmazonUtility
             ->where('name', 'Items Included')
             ->first();
 
+        $warranty = ProductSpecification::where('product_id', $productData->product_id)
+            ->where('name', 'Warranty')
+            ->first();
+
         return [
             'finish_type' => [['value' => $productData->material ?? 'Glossy', 'language_tag' => 'en_US']],
-            'warranty_description' => [['value' => 'No Warranty Included', 'language_tag' => 'en_US']],
+            'warranty_description' => [['value' => $warranty->value, 'language_tag' => 'en_US']],
             'compatible_phone_models' => FieldUtility::getComaptiblePhoneModels($itemDetail),
             'item_package_weight' => FieldUtility::getItemPackageWeight($productData),
             'included_components' => [['value' => $items_included->value, 'language_tag' => 'en_US']],
-//            'compatible_devices' => [['value' => 'Cellphone', 'language_tag' => 'en_US']],
             'item_hardness' => FieldUtility::getItemHardness($productData),
             'special_feature' => [['value' => $special_features, 'language_tag' => 'en_US']],
             'material' => [['value' => $productData->material ?? 'Glossy', 'language_tag' => 'en_US']],
@@ -126,17 +132,24 @@ class AmazonUtility
             ->where('name', 'Form Factor')
             ->first();
 
+        $items_count = ProductSpecification::where('product_id', $productData->product_id)
+            ->where('name', 'Number of Items')
+            ->first();
+
+        $warranty = ProductSpecification::where('product_id', $productData->product_id)
+            ->where('name', 'Warranty')
+            ->first();
 
         return [
             'headphones_ear_placement' => [['value' => $form_factor->value]],
-            'warranty_description' => [['value' => 'No Warranty Included', 'language_tag' => 'en_US']],
+            'warranty_description' => [['value' => $warranty->value, 'language_tag' => 'en_US']],
             'item_package_weight' => FieldUtility::getItemPackageWeight($productData),
             'color' => [['value' => $productData->color->name ?? 'Black', 'language_tag' => 'en_US']],
             'connectivity_technology' => [['value' => $connectivity->value, 'language_tag' => 'en_US',]],
             'headphones_form_factor' => [['value' => $form_factor->value, 'language_tag' => 'en_US',]],
             'model_name' => FieldUtility::getComaptiblePhoneModels($itemDetail, 1),
             'included_components' => [['value' => $items_included->value, 'language_tag' => 'en_US']],
-            'number_of_items' => [['value' => 0]],
+            'number_of_items' => [['value' => $items_count->value]],
             'model_number' => [['value' => $itemDetail->sku]],
         ];
     }
@@ -161,17 +174,23 @@ class AmazonUtility
             ->where('name', 'Items Included')
             ->first();
 
+        $items_count = ProductSpecification::where('product_id', $productData->product_id)
+            ->where('name', 'Number of Items')
+            ->first();
+
+        $warranty = ProductSpecification::where('product_id', $productData->product_id)
+            ->where('name', 'Warranty')
+            ->first();
 
         return [
             'compatible_phone_models' => FieldUtility::getComaptiblePhoneModels($itemDetail),
-//            'compatible_devices' => [['value' => 'Smartphones', 'language_tag' => 'en_US']],
             'special_feature' => [['value' => $special_features, 'language_tag' => 'en_US']],
             'material' => [['value' => $productData->material ?? 'Glossy', 'language_tag' => 'en_US']],
             'mounting_type' => [['value' => $mounting_type->value ?? 'Dashboard', 'language_tag' => 'en_US']],
-            'number_of_items' => [['value' => 0]],
+            'number_of_items' => [['value' => $items_count->value]],
             'included_components' => [['value' => $items_included->value, 'language_tag' => 'en_US']],
             'item_package_weight' => FieldUtility::getItemPackageWeight($productData),
-            'warranty_description' => [['value' => 'No Warranty Included', 'language_tag' => 'en_US']],
+            'warranty_description' => [['value' => $warranty->value, 'language_tag' => 'en_US']],
         ];
     }
 
@@ -188,13 +207,21 @@ class AmazonUtility
             ->where('name', 'Fastening')
             ->first();
 
+        $items_count = ProductSpecification::where('product_id', $productData->product_id)
+            ->where('name', 'Number of Items')
+            ->first();
+
+        $warranty = ProductSpecification::where('product_id', $productData->product_id)
+            ->where('name', 'Warranty')
+            ->first();
+
         return [
             'item_package_weight' => FieldUtility::getItemPackageWeight($productData),
             'included_components' => [['value' => $items_included->value, 'language_tag' => 'en_US']],
             'compatible_phone_models' => FieldUtility::getComaptiblePhoneModels($itemDetail),
-            'warranty_description' => [['value' => 'No Warranty Included', 'language_tag' => 'en_US']],
+            'warranty_description' => [['value' => $warranty->value, 'language_tag' => 'en_US']],
             'fastener' => [['type' => [['value' => $fasteners->value, 'language_tag' => 'en_US',]]]],
-            'number_of_items' => [['value' => 0]],
+            'number_of_items' => [['value' => $items_count->value]],
         ];
     }
 
@@ -218,14 +245,22 @@ class AmazonUtility
             ->where('name', 'Connectivity')
             ->first();
 
+        $items_count = ProductSpecification::where('product_id', $productData->product_id)
+            ->where('name', 'Number of Items')
+            ->first();
+
+        $warranty = ProductSpecification::where('product_id', $productData->product_id)
+            ->where('name', 'Warranty')
+            ->first();
+
+
         return [
-            'warranty_description' => [['value' => 'No Warranty Included', 'language_tag' => 'en_US']],
-            'number_of_items' => [['value' => 0]],
+            'warranty_description' => [['value' => $warranty->value, 'language_tag' => 'en_US']],
+            'number_of_items' => [['value' => $items_count->value]],
             'connector_type' => [['value' => $connectivity->value, 'language_tag' => 'en_US']],
             'connectivity_technology' => [['value' => 'USB', 'language_tag' => 'en_US']],
             'number_of_ports' => [['value' => $number_of_ports->value ?? '2']],
             'output_current' => [['value' => $productData->output_current_value, 'unit' => $productData->output_current_unit]],
-//            'compatible_devices' => [['value' => 'Smartphones', 'language_tag' => 'en_US']],
             'input_voltage' => [['value' => $productData->input_voltage_value, 'unit' => $productData->input_voltage_unit]],
             'special_feature' => [['value' => $special_features, 'language_tag' => 'en_US']],
             'compatible_phone_models' => FieldUtility::getComaptiblePhoneModels($itemDetail),
@@ -253,10 +288,26 @@ class AmazonUtility
             ->where('name', 'Connectivity')
             ->first();
 
+        $items_count = ProductSpecification::where('product_id', $productData->product_id)
+            ->where('name', 'Number of Items')
+            ->first();
+
+        $warranty = ProductSpecification::where('product_id', $productData->product_id)
+            ->where('name', 'Warranty')
+            ->first();
+
+        $power_source_type = ProductSpecification::where('product_id', $productData->product_id)
+            ->where('name', 'Power Source type')
+            ->first();
+
+        $recommended_use = ProductSpecification::where('product_id', $productData->product_id)
+            ->where('name', 'Recommended Uses')
+            ->first();
+
         return [
-            'warranty_description' => [['value' => 'No Warranty Included', 'language_tag' => 'en_US']],
-            'recommended_uses_for_product' => [['value' => 'Smartphones', 'language_tag' => 'en_US']],
-            'power_source_type' => [['value' => 'Battery', 'language_tag' => 'en_US']],
+            'warranty_description' => [['value' => $warranty->value, 'language_tag' => 'en_US']],
+            'recommended_uses_for_product' => [['value' => $recommended_use->value, 'language_tag' => 'en_US']],
+            'power_source_type' => [['value' => $power_source_type->value, 'language_tag' => 'en_US']],
             'connector_type' => [['value' => $connectivity->value, 'language_tag' => 'en_US']],
             'item_length_width_thickness' => [[
                 'length' => ['value' => $productData->dimensions_length, 'unit' => LengthUnit::getAmazonUnitName($productData->dimensions_length_unit ?? 1)],
@@ -266,11 +317,10 @@ class AmazonUtility
             'number_of_ports' => [[
                 'value' => $number_of_ports->value ?? '2'
             ]],
-            'voltage' => [['value' => '28', 'unit' => 'volts']],
+            'voltage' => [['value' => $productData->output_voltage_value, 'unit' => $productData->output_voltage_unit]],
             'battery' => [['value' => '20000', 'unit' => 'amp_hours']],
-//            'compatible_devices' => [['value' => 'Smartphones', 'language_tag' => 'en_US']],
             'special_feature' => [['value' => $special_features, 'language_tag' => 'en_US']],
-            'number_of_items' => [['value' => 0]],
+            'number_of_items' => [['value' => $items_count->value]],
         ];
     }
 
@@ -283,11 +333,18 @@ class AmazonUtility
             ->where('name', 'Items Included')
             ->first();
 
+        $items_count = ProductSpecification::where('product_id', $productData->product_id)
+            ->where('name', 'Number of Items')
+            ->first();
+
+        $warranty = ProductSpecification::where('product_id', $productData->product_id)
+            ->where('name', 'Warranty')
+            ->first();
+
         return [
-            'warranty_description' => [['value' => 'No Warranty Included', 'language_tag' => 'en_US']],
-//            'compatible_devices' => [['value' => 'Smartphones', 'language_tag' => 'en_US']],
+            'warranty_description' => [['value' => $warranty->value, 'language_tag' => 'en_US']],
             'maximum_height' => [['value' => $productData->dimensions_length, 'unit' => LengthUnit::getAmazonUnitName($productData->dimensions_length_unit ?? 1)]],
-            'number_of_items' => [['value' => 0]],
+            'number_of_items' => [['value' => $items_count->value]],
             'material' => [['value' => $productData->material ?? 'Glossy', 'language_tag' => 'en_US']],
             'included_components' => [['value' => $items_included->value, 'language_tag' => 'en_US']],
         ];
@@ -309,12 +366,19 @@ class AmazonUtility
             ->where('name', 'Form Factor')
             ->first();
 
+        $items_count = ProductSpecification::where('product_id', $productData->product_id)
+            ->where('name', 'Number of Items')
+            ->first();
+
+        $warranty = ProductSpecification::where('product_id', $productData->product_id)
+            ->where('name', 'Warranty')
+            ->first();
+
         return [
-            'warranty_description' => [['value' => 'No Warranty Included', 'language_tag' => 'en_US']],
-//            'compatible_devices' => [['value' => 'Smartphones', 'language_tag' => 'en_US']],
+            'warranty_description' => [['value' => $warranty->value, 'language_tag' => 'en_US']],
             'form_factor' => [['value' => $form_factor->value, 'language_tag' => 'en_US']],
             'special_feature' => [['value' => $special_features, 'language_tag' => 'en_US']],
-            'number_of_items' => [['value' => 0]],
+            'number_of_items' => [['value' => $items_count->value]],
         ];
     }
 
@@ -338,15 +402,22 @@ class AmazonUtility
             ->where('name', 'Items Included')
             ->first();
 
+        $items_count = ProductSpecification::where('product_id', $productData->product_id)
+            ->where('name', 'Number of Items')
+            ->first();
+
+        $warranty = ProductSpecification::where('product_id', $productData->product_id)
+            ->where('name', 'Warranty')
+            ->first();
+
         return [
-            'warranty_description' => [['value' => 'No Warranty Included', 'language_tag' => 'en_US']],
+            'warranty_description' => [['value' => $warranty->value, 'language_tag' => 'en_US']],
             'special_feature' => [['value' => $special_features, 'language_tag' => 'en_US']],
             'compatible_phone_models' => FieldUtility::getComaptiblePhoneModels($itemDetail),
             'included_components' => [['value' => $items_included->value, 'language_tag' => 'en_US']],
-            'number_of_items' => [['value' => 0]],
+            'number_of_items' => [['value' => $items_count->value]],
             'material' => [['value' => $productData->material ?? 'Glossy', 'language_tag' => 'en_US']],
             'mounting_type' => [['value' => $mounting_type->value ?? 'Dashboard', 'language_tag' => 'en_US']],
-//            'compatible_devices' => [['value' => 'Smartphones', 'language_tag' => 'en_US']],
         ];
     }
 }
