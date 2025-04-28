@@ -27,4 +27,8 @@ class ShippingServiceRule extends Model
 
 
     protected $fillable = ['id','min_weight_value','min_weight_weight_unit','max_weight_value','max_weight_weight_unit','priority','min_price','max_price','signature_confirmation','client_id','version','weight_operator','price_operator','round_weight_value','round_weight_weight_unit','package_type_filter_id','shipping_carrier_service_id','color','quantity_operator','min_quantity','max_quantity','created_by','updated_by','deleted_by','deleted_at','created_at','updated_at'];
+
+    public function packageType(){
+        return $this->belongsTo(ShippingPackage::class,'package_type_filter_id');
+    }
 }

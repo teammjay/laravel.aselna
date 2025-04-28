@@ -376,6 +376,16 @@ return [
                     'url' => '/product_target_audience',
                     'icon' => 'fa fa-fw fa-user-md'
                 ],
+                [
+                    'text' => 'Product Specification Info',
+                    'url' => '/specification_info',
+                    'icon' => 'fa fa-fw fa-file'
+                ],
+                [
+                    'text' => 'Product Specification Options',
+                    'url' => '/specification_option',
+                    'icon' => 'fa fa-fw fa-file'
+                ],
             ]
         ],
         [
@@ -456,6 +466,11 @@ return [
                     'text' => 'Listing Template',
                     'url' => '/listing_template',
                     'icon' => 'far fa-fw fa-file'
+                ],
+                [
+                    'text' => 'Listing Requirements',
+                    'url' => '/listing_requirements',
+                    'icon' => 'far fa-fw fa-file'
                 ]
             ]
         ],
@@ -463,6 +478,16 @@ return [
             'text' => 'Shipment',
             'url' => '/shipment',
             'icon' => 'fa fa-fw fa-shipping-fast'
+        ],
+        [
+            'text' => 'Printers',
+            'url' => '/printers',
+            'icon' => 'fa fa-fw fa-print'
+        ],
+        [
+            'text' => 'Printer Clients',
+            'url' => '/printer_clients',
+            'icon' => 'fa fa-fw fa-print'
         ],
         [
             'text' => 'Master File Settings',
@@ -576,6 +601,7 @@ return [
 
             ],
         ],
+
         [
             'text' => 'Jobs',
             'icon' => 'fa fa-fw fa-cogs',

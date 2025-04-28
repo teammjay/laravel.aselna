@@ -2,6 +2,8 @@
 
 namespace App\Utils;
 
+use App\Models\ListingRequirement;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class ListingUtility
@@ -124,6 +126,39 @@ class ListingUtility
         } else {
             return "";
         }
+    }
+
+
+    public static function validate( $category, $productId): array
+    {
+        $requirements = ListingRequirement::where('category', $category)->get();
+        $issues = [];
+
+        foreach ($requirements as $req) {
+            Log::info("Requirement: " . json_encode($req));
+            if ($req->type === 'column') {
+                $value = DB::table($req->table)
+                    ->where('product_id', $productId)
+                    ->value($req->column);
+
+                if (is_null($value) || $value === '') {
+                    $issues[] = "Missing column '{$req->column}' in '{$req->table}'";
+                }
+            }
+
+            if ($req->type === 'key_value') {
+                $value = DB::table($req->table)
+                    ->where('product_id', $productId)
+                    ->where($req->key_column, $req->key_value)
+                    ->value($req->value_column);
+
+                if (is_null($value) || $value === '') {
+                    $issues[] = "Missing value for key '{$req->key_value}' in '{$req->table}'";
+                }
+            }
+        }
+
+        return $issues;
     }
 
 
