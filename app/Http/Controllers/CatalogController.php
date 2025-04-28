@@ -13,6 +13,7 @@ use App\Models\ProductKeyFeatures;
 use App\Models\ProductSearchTerm;
 use App\Models\ProductSpecification;
 use App\Models\ProductSpecificationInfo;
+use App\Models\ProductSpecificationOption;
 use App\Models\ProductTags;
 use App\Models\ProductTargetAudience;
 use App\Models\ProductTitleKeyword;
@@ -990,13 +991,43 @@ class CatalogController extends Controller
 
         $store_type_id = $request->input('store_type_id');
         $product_id = $request->input('product_id');
-        $specifications = ProductSpecification::where('store_type_id',$store_type_id)->where('product_id',$product_id)->get();
+        $specifications = ProductSpecification::where('store_type_id',$store_type_id)->where('product_id',$product_id)->orderBy('created_at','asc')->get();
         /*echo '<pre>';
         print_r($specifications);
         echo '</pre>';die;*/
+        $specificationArr = [];
+        if(!empty($specifications)){
+            foreach($specifications as $key=>$spec){
+
+                $specificationArr[$key]= $spec;
+
+                $field_option = ProductSpecificationOption::where('field_local_name',$spec->name)->first();
+                $field = $valoption = '';
+                if(!empty($field_option)){
+                    $optionvalue = $field_option->field_option;
+                    if(str_contains($optionvalue,',')){
+                        $field = 'select';
+                        $optionvalueArr = explode(',',$optionvalue);
+                        $valoption = $optionvalueArr;
+
+                    }else{
+                        $field = 'input';
+                        $valoption = $optionvalue;
+                    }
+                }
+
+                $specificationArr[$key]->field = $field;
+                $specificationArr[$key]->valoption = $valoption;
+            }
+        }
+
+        //$specificationArr = (object)$specificationArr;
+        /*echo '<pre>';
+        print_r((object)$specificationArr);
+        echo '</pre>';die;*/
         $specificationInfo = ProductSpecificationInfo::where('store_type_id',$store_type_id)->get();
         return response()->json([
-            'html' => view('catalog.specification', compact('specifications','specificationInfo'))->render(),
+            'html' => view('catalog.specification', compact('specificationInfo','specificationArr'))->render(),
         ]);
 
     }
@@ -1008,11 +1039,64 @@ class CatalogController extends Controller
         if(!empty($specificationInfo)){
             foreach($specificationInfo as $spec){
                 $option .= '<option value="'.$spec->field_local_name.'">'.$spec->field_local_name.'</option>';
+
+                $field_option = ProductSpecificationOption::where('field_local_name',$spec->field_local_name)->first();
+                $field = $valoption = '';
+                if(!empty($field_option)){
+                    $optionvalue = $field_option->field_option;
+                    if(str_contains($optionvalue,',')){
+                        $field = 'select';
+                        $optionvalueArr = explode(',',$optionvalue);
+                        if(!empty($optionvalueArr)){
+                            $valoption = '<option value=""></option>';
+                            foreach($optionvalueArr as $val){
+                                $valoption .= '<option value="'.$val.'">'.$val.'</option>';
+                            }
+                        }
+
+                    }else{
+                        $field = 'input';
+                        $valoption = $optionvalue;
+                    }
+                }
             }
         }
 
         return response()->json([
-            'option' => $option
+            'option' => $option,
+            'valueoption' => $valoption,
+            'field' => $field
         ]);
+    }
+
+    public function getFieldOption(Request $request){
+
+        $field_name = $request->input('field_name');
+        $field = $option = '';
+        if($field_name != ''){
+            $field_option = ProductSpecificationOption::where('field_local_name',$field_name)->first();
+            if(!empty($field_option)){
+                $optionvalue = $field_option->field_option;
+                if(str_contains($optionvalue,',')){
+                    $field = 'select';
+                    $optionvalueArr = explode(',',$optionvalue);
+                    if(!empty($optionvalueArr)){
+                        $option = '<option value=""></option>';
+                        foreach($optionvalueArr as $val){
+                            $option .= '<option value="'.$val.'">'.$val.'</option>';
+                        }
+                    }
+
+                }else{
+                    $field = 'input';
+                    $option = $optionvalue;
+                }
+            }
+
+            return response()->json([
+                'option' => $option,
+                'field' => $field
+            ]);
+        }
     }
 }

@@ -381,6 +381,11 @@ return [
                     'url' => '/specification_info',
                     'icon' => 'fa fa-fw fa-file'
                 ],
+                [
+                    'text' => 'Product Specification Options',
+                    'url' => '/specification_option',
+                    'icon' => 'fa fa-fw fa-file'
+                ],
             ]
         ],
         [

@@ -45,6 +45,7 @@ use App\Http\Controllers\ShippingCarrierPackageController;
 use App\Http\Controllers\ShippingPackageController;
 use App\Http\Controllers\ShippingServiceRulesController;
 use App\Http\Controllers\ProductSpecificationInfoController;
+use App\Http\Controllers\ProductSpecificationOptionsController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ResetPasswordController;
 use App\Http\Controllers\StorePagesController;
@@ -84,6 +85,7 @@ Route::middleware('auth')->group(function () {
     Route::post('catalog/altimageorder', [CatalogController::class, 'updateAlternativeImageOrder'])->name('catalog.altimageorder');
     Route::post('catalog/getspecification', [CatalogController::class, 'getSpecification'])->name('catalog.getspecification');
     Route::post('catalog/getspecificationoption', [CatalogController::class, 'getSpecificationOption'])->name('catalog.getspecificationoption');
+    Route::post('catalog/getfieldoption', [CatalogController::class, 'getFieldOption'])->name('catalog.getfieldoption');
 
     Route::post('/generate-feed-file', [HomeController::class, 'generateFeedFile'])->name('generate-feed-file');
     Route::post('/generate-result-feed-file', [HomeController::class, 'generateResultFeedFile'])->name('generate-result-feed-file');
@@ -490,6 +492,16 @@ Route::middleware('auth')->group(function () {
         Route::post('/specification_info/edit/{id}', 'update')->name('specification_info.update');
         Route::get('/specification_info/delete/{id}', 'destroy')->name('specification_info.delete');
         Route::get('/specification_info/getinfo', 'getInfo')->name('specification_info.getinfo');
+    });
+
+    Route::controller(ProductSpecificationOptionsController::class)->group(function () {
+        Route::get('/specification_option', 'index')->name('specification_option.index');
+        Route::get('/specification_option/add', 'create')->name('specification_option.create');
+        Route::post('/specification_option/add', 'store')->name('specification_option.store');
+        Route::get('/specification_option/edit/{id}', 'edit')->name('specification_option.edit');
+        Route::post('/specification_option/edit/{id}', 'update')->name('specification_option.update');
+        Route::get('/specification_option/delete/{id}', 'destroy')->name('specification_option.delete');
+        Route::get('/specification_option/getinfo', 'getInfo')->name('specification_option.getinfo');
     });
 
     Route::get('/ebay/login', [EbayAuthService::class, 'redirectToEbay'])->name('ebay.login');

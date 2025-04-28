@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('product_specification', function (Blueprint $table) {
-            $table->uuid('store_type_id')->nullable();
+            $table->uuid('store_type_id')->nullable()->change();
             $table->foreign('store_type_id')->references('id')->on('store_type')->onDelete('cascade');
         });
     }

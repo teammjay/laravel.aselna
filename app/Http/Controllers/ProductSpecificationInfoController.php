@@ -17,7 +17,7 @@ class ProductSpecificationInfoController extends Controller
      */
     public function index()
     {
-        $specification_infos = ProductSpecificationInfo::with('storeType','productType')->get();
+        $specification_infos = ProductSpecificationInfo::with('storeType')->get();
         return view('specification_info.list', compact('specification_infos'));
     }
 
@@ -84,8 +84,7 @@ class ProductSpecificationInfoController extends Controller
      */
     public function destroy(string $id)
     {
-//        ProductSpecificationInfo::findOrFail($id)->delete();
-
+        ProductSpecificationInfo::findOrFail($id)->delete();
         return redirect()->route('specification_info.index')
             ->with('success', 'Specification info deleted successfully.');
     }

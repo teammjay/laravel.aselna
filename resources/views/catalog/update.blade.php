@@ -2001,7 +2001,22 @@
                     },
                     success: function (response) {
 
-                        $('#specification_table tbody').append('<tr class="field-group"><td><select class="form-control" name="specification[]">'+response.option+'</select></td><td><textarea class="form-control" name="specification_value[]"></textarea></td><td><button type="button" class="btn btn-danger remove-specification"> <i class="fas fa-fw fa-trash"></i></button></td></tr>');
+                        var html = '<tr class="field-group">';
+                        html += '<td><select class="form-control" name="specification[]">'+response.option+'</select></td>';
+                        html += '<td class="field_option">';
+                        if(response.field == 'select'){
+                            html += '<select class="form-control" name="specification_value[]">';
+                            html += response.valueoption;
+                            html += '</select>';
+                        }else{
+                            html += '<textarea class="form-control" name="specification_value[]">';
+                            html += response.valueoption;
+                            html += '</textarea>';
+                        }
+                        html += '</td></tr>';
+
+
+                        $('#specification_table tbody').append(html);
                     }
                 });
 
@@ -2019,6 +2034,34 @@
             $(document).on('change', '#specification_store_type_id', function() {
                 loadSpecification();
             });
+
+            $(document).on('change', 'select[name="specification[]"]', function() {
+                var element = $(this);
+                $.ajax({
+                    url: "{{ route('catalog.getfieldoption') }}",
+                    method: "POST",
+                    data: {
+                        field_name: $(this).val(),
+                        _token: "{{ csrf_token() }}"
+                    },
+                    success: function (response) {
+                        var htmloption = '';
+                        if(response.field == 'select'){
+                            htmloption += '<select class="form-control" name="specification_value[]">';
+                            htmloption += response.option;
+                            htmloption += '</select>';
+                        }else{
+                            htmloption += '<textarea class="form-control" name="specification_value[]">';
+                            htmloption += response.option;
+                            htmloption += '</textarea>';
+                        }
+
+                        element.parents('tr').find('.field_option').html(htmloption);
+                    }
+                });
+            });
+
+
 
         });
     </script>

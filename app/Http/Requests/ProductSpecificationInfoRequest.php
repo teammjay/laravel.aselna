@@ -24,8 +24,7 @@ class ProductSpecificationInfoRequest extends FormRequest
         return [
             'field_name' => 'required',
             'field_local_name' => 'required',
-            'store_type_id' => 'required',
-            'product_type_id' => 'required',
+            'store_type_id' => 'required'
         ];
     }
 }
