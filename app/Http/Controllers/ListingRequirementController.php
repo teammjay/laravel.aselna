@@ -31,7 +31,7 @@ class ListingRequirementController extends Controller
         ]);
 
         ListingRequirement::create($data);
-        return redirect()->route('listing-requirements.index')->with('success', 'Requirement added.');
+        return redirect()->route('listing_requirements.index')->with('success', 'Requirement added.');
     }
 
     public function edit(ListingRequirement $listingRequirement)
@@ -52,12 +52,12 @@ class ListingRequirementController extends Controller
         ]);
 
         $listingRequirement->update($data);
-        return redirect()->route('listing-requirements.index')->with('success', 'Requirement updated.');
+        return redirect()->route('listing_requirements.index')->with('success', 'Requirement updated.');
     }
 
     public function destroy(ListingRequirement $listingRequirement)
     {
         $listingRequirement->delete();
-        return redirect()->route('listing-requirements.index')->with('success', 'Requirement deleted.');
+        return redirect()->route('listing_requirements.index')->with('success', 'Requirement deleted.');
     }
 }

@@ -37,4 +37,4 @@
 </div>
 
 <button class="btn btn-success">{{ $button }}</button>
-<a href="{{ route('listing-requirements.index') }}" class="btn btn-secondary">Cancel</a>
+<a href="{{ route('listing_requirements.index') }}" class="btn btn-secondary">Cancel</a>
