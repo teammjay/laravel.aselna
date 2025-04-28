@@ -296,10 +296,18 @@ class AmazonUtility
             ->where('name', 'Warranty')
             ->first();
 
+        $power_source_type = ProductSpecification::where('product_id', $productData->product_id)
+            ->where('name', 'Power Source type')
+            ->first();
+
+        $recommended_use = ProductSpecification::where('product_id', $productData->product_id)
+            ->where('name', 'Recommended Uses')
+            ->first();
+
         return [
             'warranty_description' => [['value' => $warranty->value, 'language_tag' => 'en_US']],
-            'recommended_uses_for_product' => [['value' => 'Smartphones', 'language_tag' => 'en_US']],
-            'power_source_type' => [['value' => 'Battery', 'language_tag' => 'en_US']],
+            'recommended_uses_for_product' => [['value' => $recommended_use->value, 'language_tag' => 'en_US']],
+            'power_source_type' => [['value' => $power_source_type->value, 'language_tag' => 'en_US']],
             'connector_type' => [['value' => $connectivity->value, 'language_tag' => 'en_US']],
             'item_length_width_thickness' => [[
                 'length' => ['value' => $productData->dimensions_length, 'unit' => LengthUnit::getAmazonUnitName($productData->dimensions_length_unit ?? 1)],
@@ -309,7 +317,7 @@ class AmazonUtility
             'number_of_ports' => [[
                 'value' => $number_of_ports->value ?? '2'
             ]],
-            'voltage' => [['value' => '28', 'unit' => 'volts']],
+            'voltage' => [['value' => $productData->output_voltage_value, 'unit' => $productData->output_voltage_unit]],
             'battery' => [['value' => '20000', 'unit' => 'amp_hours']],
             'special_feature' => [['value' => $special_features, 'language_tag' => 'en_US']],
             'number_of_items' => [['value' => $items_count->value]],
