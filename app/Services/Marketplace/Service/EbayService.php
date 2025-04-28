@@ -706,12 +706,18 @@ class EbayService implements MarketplaceServiceInterface
                             switch ($feedType) {
                                 case FeedTypes::CREATE:
                                     $successSku = array();
-                                    if(isset($xml->AddFixedPriceItemResponse)) {
+                                    if(isset($xml->AddFixedPriceItemResponse)){
+                                        $responseObj = $xml->AddFixedPriceItemResponse;
+                                    }else if(isset($xml->ReviseFixedPriceItemResponse)){
+                                        $responseObj = $xml->ReviseFixedPriceItemResponse;
+                                    }
+                                    if(isset($responseObj)) {
+
                                         $successCnt = 0;
                                         $failCnt = 0;
                                         $warningCnt = 0;
                                         $errorMsg = '';
-                                        foreach ($xml->AddFixedPriceItemResponse as $item) {
+                                        foreach ($responseObj as $item) {
                                             if(isset($item->Ack) && strtolower($item->Ack) == 'success') {
                                                 $successCnt++;
                                                 $successSku[] = $item->SKU;

@@ -47,6 +47,8 @@ use App\Http\Controllers\ShippingPackageController;
 use App\Http\Controllers\ShippingServiceRulesController;
 use App\Http\Controllers\ProductSpecificationInfoController;
 use App\Http\Controllers\ProductSpecificationOptionsController;
+use App\Http\Controllers\PrintersController;
+use App\Http\Controllers\PrinterClientsController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ResetPasswordController;
 use App\Http\Controllers\StorePagesController;
@@ -505,6 +507,24 @@ Route::middleware('auth')->group(function () {
         Route::post('/specification_option/edit/{id}', 'update')->name('specification_option.update');
         Route::get('/specification_option/delete/{id}', 'destroy')->name('specification_option.delete');
         Route::get('/specification_option/getinfo', 'getInfo')->name('specification_option.getinfo');
+    });
+
+    Route::controller(PrintersController::class)->group(function () {
+        Route::get('/printers', 'index')->name('printer.index');
+        Route::get('/printer/add', 'create')->name('printer.create');
+        Route::post('/printer/add', 'store')->name('printer.store');
+        Route::get('/printer/edit/{id}', 'edit')->name('printer.edit');
+        Route::post('/printer/edit/{id}', 'update')->name('printer.update');
+        Route::get('/printer/delete/{id}', 'destroy')->name('printer.delete');
+    });
+
+    Route::controller(PrinterClientsController::class)->group(function () {
+        Route::get('/printer_clients', 'index')->name('printer_client.index');
+        Route::get('/printer_client/add', 'create')->name('printer_client.create');
+        Route::post('/printer_client/add', 'store')->name('printer_client.store');
+        Route::get('/printer_client/edit/{id}', 'edit')->name('printer_client.edit');
+        Route::post('/printer_client/edit/{id}', 'update')->name('printer_client.update');
+        Route::get('/printer_client/delete/{id}', 'destroy')->name('printer_client.delete');
     });
 
     Route::get('/ebay/login', [EbayAuthService::class, 'redirectToEbay'])->name('ebay.login');

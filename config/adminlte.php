@@ -475,6 +475,16 @@ return [
             'icon' => 'fa fa-fw fa-shipping-fast'
         ],
         [
+            'text' => 'Printers',
+            'url' => '/printers',
+            'icon' => 'fa fa-fw fa-print'
+        ],
+        [
+            'text' => 'Printer Clients',
+            'url' => '/printer_clients',
+            'icon' => 'fa fa-fw fa-print'
+        ],
+        [
             'text' => 'Master File Settings',
             'icon' => 'fa fa-fw fa-cogs',
             'submenu' => [
@@ -586,6 +596,7 @@ return [
 
             ],
         ],
+
         [
             'text' => 'Jobs',
             'icon' => 'fa fa-fw fa-cogs',
