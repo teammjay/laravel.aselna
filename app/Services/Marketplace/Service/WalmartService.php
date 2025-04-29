@@ -377,9 +377,9 @@ class WalmartService implements MarketplaceServiceInterface
     {
         $this->authService = new WalmartAuthService($store->seller_id, $store->secret_key);
         $response = $this->authService->getOrders();
-        echo '<pre>';
+        /*echo '<pre>';
         print_r($response);
-        echo '</pre>';die;
+        echo '</pre>';die;*/
 
         return $response;
     }

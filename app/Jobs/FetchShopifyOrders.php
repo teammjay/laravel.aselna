@@ -47,27 +47,26 @@ class FetchShopifyOrders implements ShouldQueue
                     if ($store->name != 'AccessoryWiz') {
                         continue;
                     }
-                    $created_by = auth()->user()->name ?? 'admin';
-                    /* create order synchronization*/
-                    $synchronizeArr = [
-                        'store_id' => $store->id,
-                        'number_of_items' => 1,
-                        'synchronization_type' => 1,
-                        'filter_start_date' => date('Y-m-d H:i:s'),
-                        'filter_end_date' => date('Y-m-d H:i:s'),
-                        'last_order_update_date' => date('Y-m-d H:i:s'),
-                        'created_by' => $created_by
-                    ];
-                    $order_synchronization = OrderSynchronization::create($synchronizeArr);
-                    $order_synchronization_id = $order_synchronization->id;
 
-                    Log::info('order_synchronization_id: ' . json_encode($order_synchronization_id));
                     // get shopify order
                     $shopifyService = new ShopifyService();
                     $orders = $shopifyService->getOrders($store);
 
                     if (isset($orders) && !empty($orders)) {
 
+                        $created_by = auth()->user()->name ?? 'admin';
+                        /* create order synchronization*/
+                        $synchronizeArr = [
+                            'store_id' => $store->id,
+                            'synchronization_type' => 1,
+                            'filter_start_date' => date('Y-m-d H:i:s'),
+                            'created_by' => $created_by
+                        ];
+                        $order_synchronization = OrderSynchronization::create($synchronizeArr);
+                        $order_synchronization_id = $order_synchronization->id;
+
+                        Log::info('order_synchronization_id: ' . json_encode($order_synchronization_id));
+                        $noOfOrder = 0;
                         foreach ($orders as $value) {
 
                             $order = $value['node'];
@@ -171,8 +170,13 @@ class FetchShopifyOrders implements ShouldQueue
                                         }
                                     }
                                 }
+
+
                             }
+                            $noOfOrder++;
                         }
+
+                        $order_synchronization->update(['number_of_items'=>$noOfOrder,'last_order_update_date' => date('Y-m-d H:i:s'), 'filter_end_date' => date('Y-m-d H:i:s')]);
                     }
                 }
             }

@@ -13,7 +13,7 @@
             @foreach($specificationArr as $specification)
                 <tr class="field-group">
                     <td>
-                        <select class="form-control" name="specification[]">
+                        <select class="form-control select2 specification" name="specification[]">
                             <option value=""></option>
                             @if(count($specificationInfo ?? []) > 0)
                                 @foreach($specificationInfo as $spinfo)
@@ -30,7 +30,7 @@
                                 <option value=""></option>
                                 @if(count($specification->valoption ?? []) > 0)
                                     @foreach($specification->valoption as $vopt)
-                                        <option value="{{ $vopt }}" {{ (isset($specification->value) && $specification->value == $vopt) ? 'selected' : '' }}>{{ $vopt }}</option>
+                                        <option value="{{ trim($vopt) }}" {{ (isset($specification->value) && $specification->value == trim($vopt)) ? 'selected' : '' }}>{{ trim($vopt) }}</option>
                                     @endforeach
                                 @endif
                             </select>
@@ -44,7 +44,7 @@
         @else
             <tr>
                 <td>
-                    <select class="form-control" name="specification[]">
+                    <select class="form-control specification" name="specification[]">
                         <option value=""></option>
                         @if(count($specificationInfo ?? []) > 0)
                             @foreach($specificationInfo as $spinfo)
