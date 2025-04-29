@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Constants\OrderStatus;
+use App\Models\Customer;
 use App\Models\ListingItem;
 use App\Models\ManageMarketplaceProduct;
 use App\Models\OrderOperation;
@@ -86,6 +87,21 @@ class FetchShopifyOrders implements ShouldQueue
                                     $orderOperationDetail->update(['status'=>2]);
                                 }
                             } else {
+
+                                /* create customer*/
+
+                                $customerData = [
+                                    'first_name' => isset($order['customer']) ? $order['customer']['firstName'] : '',
+                                    'last_name' => isset($order['customer']) ? $order['customer']['lastName'] : '',
+                                    'full_name' => isset($order['customer']) ? $order['customer']['displayName'] : '',
+                                    'email' => $order['email'],
+                                    'marketplace_customer_id' => isset($order['customer']) ? $order['customer']['id'] : '',
+                                ];
+
+                                $customer_detail = Customer::updateOrCreate([
+                                    'order_id' => $order['id'],
+                                ], $customerData);
+
                                 $orderData = [
                                     'order_id' => $order['id'],
                                     'order_date' => date('Y-m-d H:i:s', strtotime($order['createdAt'])),
@@ -95,7 +111,7 @@ class FetchShopifyOrders implements ShouldQueue
                                     'buyer_first_name' => isset($order['customer']) ? $order['customer']['firstName'] : '',
                                     'buyer_last_name' => isset($order['customer']) ? $order['customer']['lastName'] : '',
                                     'buyer_email' => $order['email'],
-                                    'customer_id' => isset($order['customer']) ? $order['customer']['id'] : '',
+                                    'customer_id' => $customer_detail->id,
                                     'purchase_order_id' => isset($order['poNumber']) ? $order['poNumber'] : '',
                                     'store_id' => $store->id,
                                     'order_synchronization_id' => $order_synchronization_id,
@@ -113,7 +129,6 @@ class FetchShopifyOrders implements ShouldQueue
                                     'insurance_value' => 0,
                                     'status' => 1,
                                     'signature_confirmation' => 1,
-                                    'ship_from_id' => '',
                                     'store_id' => $store->id,
                                     'operation_type' => 1,
                                     'label_creation_type' => 1,
