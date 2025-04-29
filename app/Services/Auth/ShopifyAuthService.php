@@ -188,7 +188,7 @@ class ShopifyAuthService
               }
             }
             GQL;*/
-            $result = $this->makeGraphQLRequest(ShopifyQueries::$getOrders, array('first' => 10));
+            $result = $this->makeGraphQLRequest(ShopifyQueries::$getOrders, array('first' => 50));
             if (!isset($result['errors'])) {
                 return $result['data']['orders']['edges'];
             }

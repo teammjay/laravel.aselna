@@ -13,7 +13,7 @@
             @foreach($specificationArr as $specification)
                 <tr class="field-group">
                     <td>
-                        <select class="form-control specification" name="specification[]">
+                        <select class="form-control select2 specification" name="specification[]">
                             <option value=""></option>
                             @if(count($specificationInfo ?? []) > 0)
                                 @foreach($specificationInfo as $spinfo)

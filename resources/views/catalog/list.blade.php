@@ -472,6 +472,13 @@
             $('.select2').val(null).trigger('change');
         });
 
+        $('.select2').on('select2:open', function () {
+            // Wait for dropdown to render before focusing the search field
+            setTimeout(function () {
+                document.querySelector('.select2-container--open .select2-search__field').focus();
+            }, 0);
+        });
+
         $(document).on('click','#product-list tr',function (e) {
             let ele = $(this);
             console.log($(e.target));
