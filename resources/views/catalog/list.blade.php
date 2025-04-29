@@ -122,17 +122,30 @@
                             <div class="col-3">
                                 <select class="custom-select" id="" name="product_type_operator">
                                     <option value="{{FilterCodes::EQUAL}}">=</option>
-
                                 </select>
                             </div>
                             <div class="col-6">
-                                <select class="form-control" id="product_type" name="product_type">
+                                @php
+                                    function renderCategories($productTypes, $prefix = '') {
+                                        foreach ($productTypes as $ptype) {
+                                            echo '<option value="' . $ptype->id . '">' . $prefix . $ptype->name . '</option>';
+
+                                            if ($ptype->children) {
+                                                renderCategories($ptype->children, $prefix . '-- ');
+                                            }
+                                        }
+                                    }
+                                @endphp
+                                <select class="form-control select2" id="product_type" name="product_type">
                                     <option value=""> -- </option>
-                                    @if(count($productTypes ?? []) > 0)
+                                    @php
+                                        renderCategories($productTypes);
+                                    @endphp
+                                    {{--@if(count($productTypes ?? []) > 0)
                                         @foreach($productTypes as $ptype)
                                             <option value="{{ $ptype->id }}">{{ $ptype->name }}</option>
                                         @endforeach
-                                    @endif
+                                    @endif--}}
                                 </select>
                             </div>
                         </div>
@@ -157,7 +170,7 @@
                                 </select>
                             </div>
                             <div class="col-6">
-                                <select class="form-control" name="manufacturer_id">
+                                <select class="form-control select2" name="manufacturer_id" id="manufacturer_id">
                                     <option value=""> -- </option>
                                     @if(count($manufacturers ?? []) > 0)
                                         @foreach($manufacturers as $mf)
@@ -261,18 +274,25 @@
                             </div>
                             <div class="col-3">
                                 <select class="custom-select" id="" name="product_color_operator">
-                                    <option value="{{FilterCodes::CONTAINS}}">contains</option>
+                                    <option value="{{FilterCodes::EQUAL}}">=</option>
+                                    {{--<option value="{{FilterCodes::CONTAINS}}">contains</option>
                                     <option value="{{FilterCodes::STARTS_WITH}}">starts with</option>
                                     <option value="{{FilterCodes::ENDS_WITH}}">ends with</option>
-                                    <option value="{{FilterCodes::EQUAL}}">=</option>
                                     <option value="{{FilterCodes::IN}}">in</option>
                                     <option value="{{FilterCodes::NOT_IN}}">not in</option>
                                     <option value="{{FilterCodes::DOESNT_CONTAIN}}">doesn't contain</option>
-                                    <option value="{{FilterCodes::IS_SET}}">is set</option>
+                                    <option value="{{FilterCodes::IS_SET}}">is set</option>--}}
                                 </select>
                             </div>
                             <div class="col-6">
-                                <input type="text" name="product_color" id="product_color" class="form-control">
+                                <select class="form-control" name="product_color" id="product_color">
+                                    <option value=""> -- </option>
+                                    @if(count($colors ?? []) > 0)
+                                        @foreach($colors as $color)
+                                            <option value="{{ $color->id }}">{{ $color->name }}</option>
+                                        @endforeach
+                                    @endif
+                                </select>
                             </div>
                         </div>
                     </div>
@@ -377,7 +397,7 @@
                     <div class="col-md-2">
                         <div class="form-group">
                             <label>&nbsp;</label>
-                            <button type="reset" class="form-control btn btn-secondary">Reset</button>
+                            <button type="reset" id="resetBtn" class="form-control btn btn-secondary">Reset</button>
                         </div>
                     </div>
                 </div>
@@ -444,8 +464,12 @@
 
         });
 
-        $('#product_type').select2({
+        $('.select2').select2({
             width: '100%',
+        });
+
+        $('#resetBtn').on('click', function() {
+            $('.select2').val(null).trigger('change');
         });
 
         $(document).on('click','#product-list tr',function (e) {

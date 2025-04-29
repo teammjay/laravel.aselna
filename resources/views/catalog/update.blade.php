@@ -1314,6 +1314,7 @@
                 success: function (response) {
                     if(response.html){
                         $('#specification_list').html(response.html);
+                        $('.specification').select2();
                     }
                 },
                 error: function (xhr) {

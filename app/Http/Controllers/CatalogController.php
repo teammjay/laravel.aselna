@@ -44,11 +44,12 @@ class CatalogController extends Controller
         session()->forget('pro_id');
         $productTypes = ProductType::orderBy('name')->get();
         $manufacturers = Manufacturer::orderBy('name')->get();
+        $colors = ProductColor::orderBy('name')->get();
         $productConditions = ProductCondition::all();
         $targetAudience = ProductTargetAudience::all();
         $perPage = $this->perPage;
 
-        return view('catalog.list',compact('perPage','productTypes','manufacturers','productConditions','targetAudience'));
+        return view('catalog.list',compact('perPage','productTypes','manufacturers','productConditions','targetAudience','colors'));
     }
 
     /**
@@ -74,7 +75,26 @@ class CatalogController extends Controller
         QueryFilters::applyFilter($query, $request, 'product_sku', 'product_sku_operator', 'product_sku');
 
         // Filter by product type
-        QueryFilters::applyFilter($query, $request, 'product_type', 'product_type_operator', 'product_type');
+        if($request->has('product_type') && $request->product_type != '') {
+            $all_product_ids[] = $request->product_type;
+            $product_sub_types = ProductType::select('id')->where('parent_id', $request->product_type)->get()->toArray();
+            if (!empty($product_sub_types)) {
+                foreach ($product_sub_types as $stype) {
+                    $all_product_ids[] = $stype['id'];
+                    $product_sub_sub_types = ProductType::select('id')->where('parent_id', $stype['id'])->get()->toArray();
+                    if (!empty($product_sub_sub_types)) {
+                        foreach ($product_sub_sub_types as $ssubtype) {
+                            $all_product_ids[] = $ssubtype['id'];
+                        }
+                    }
+                }
+            }
+
+            if (!empty($all_product_ids)) {
+                $query->whereIn('product_type', $all_product_ids);
+            }
+        }
+        //QueryFilters::applyFilter($query, $request, 'product_type', 'product_type_operator', 'product_type');
 
         // Filter by color
         QueryFilters::applyFilter($query, $request, 'product_color', 'product_color_operator', 'product_color');
@@ -1025,7 +1045,7 @@ class CatalogController extends Controller
         /*echo '<pre>';
         print_r((object)$specificationArr);
         echo '</pre>';die;*/
-        $specificationInfo = ProductSpecificationInfo::where('store_type_id',$store_type_id)->get();
+        $specificationInfo = ProductSpecificationInfo::where('store_type_id',$store_type_id)->orderBy('field_local_name')->get();
         return response()->json([
             'html' => view('catalog.specification', compact('specificationInfo','specificationArr'))->render(),
         ]);
@@ -1050,7 +1070,7 @@ class CatalogController extends Controller
                         if(!empty($optionvalueArr)){
                             $valoption = '<option value=""></option>';
                             foreach($optionvalueArr as $val){
-                                $valoption .= '<option value="'.$val.'">'.$val.'</option>';
+                                $valoption .= '<option value="'.trim($val).'">'.trim($val).'</option>';
                             }
                         }
 
@@ -1083,7 +1103,7 @@ class CatalogController extends Controller
                     if(!empty($optionvalueArr)){
                         $option = '<option value=""></option>';
                         foreach($optionvalueArr as $val){
-                            $option .= '<option value="'.$val.'">'.$val.'</option>';
+                            $option .= '<option value="'.trim($val).'">'.trim($val).'</option>';
                         }
                     }
 
