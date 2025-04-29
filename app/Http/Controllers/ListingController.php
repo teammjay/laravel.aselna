@@ -1557,9 +1557,11 @@ class ListingController extends Controller
             // Split the device into brand and model
             $currentBrand = $device->brand_name . ' ' . $device->name;
             /*if (strtolower($store_type) == 'ebay' && strtolower($device->brand_name) == 'apple') {*/
+
             if (strtolower($device->brand_name) == 'apple') {
                 $currentBrand = $device->name;
             }
+
             $brandName = $device->brand_name;
             $currentMod = $device->name;
             $parts = explode(' ', $device->name, 2);
@@ -1654,8 +1656,9 @@ class ListingController extends Controller
                 $titles[$cnt]['model_detail'][] = $device;
                 //$currentTitle .= ($currentTitle === $baseTitle ? ' ' : ' '.$separator.' ') . $nameToAdd;
                 $currentModels[] = str_replace($device->brand_name . ' ', '', $nameToAdd);
-                if (empty($currentDevices)) {
-                    $currentDevices[] = $device->brand_name . ' ' . $nameToAdd;
+                if (empty($currentDevices) && strtolower($device->brand_name) != 'apple') {
+
+                    $currentDevices[] = $brandName . ' ' . $nameToAdd;
                 } else {
                     $currentDevices[] = $nameToAdd;
                 }
@@ -1885,7 +1888,7 @@ class ListingController extends Controller
                 $titles[$cnt]['model'][] = $device->name;
                 $titles[$cnt]['model_detail'][] = $device;
                 $currentModels[] = $nameToAdd;
-                if (empty($currentDevices)) {
+                if (empty($currentDevices) && strtolower($device->brand_name) != 'apple') {
                     $currentDevices[] = $device->brand_name . ' ' . $nameToAdd;
                 } else {
                     $currentDevices[] = $nameToAdd;
