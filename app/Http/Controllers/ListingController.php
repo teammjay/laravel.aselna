@@ -1446,7 +1446,7 @@ class ListingController extends Controller
                 $titles[$cnt]['model_detail'][] = $device;
                 //$currentTitle .= ($currentTitle === $baseTitle ? ' ' : ' '.$separator.' ') . $nameToAdd;
                 $currentModels[] = str_replace($device->brand_name . ' ', '', $nameToAdd);
-                if (empty($currentDevices)) {
+                if (empty($currentDevices) && strtolower($device->brand_name) != 'apple') {
                     $currentDevices[] = $device->brand_name . ' ' . $nameToAdd;
                 } else {
                     $currentDevices[] = $nameToAdd;
@@ -1657,7 +1657,6 @@ class ListingController extends Controller
                 //$currentTitle .= ($currentTitle === $baseTitle ? ' ' : ' '.$separator.' ') . $nameToAdd;
                 $currentModels[] = str_replace($device->brand_name . ' ', '', $nameToAdd);
                 if (empty($currentDevices) && strtolower($device->brand_name) != 'apple') {
-
                     $currentDevices[] = $brandName . ' ' . $nameToAdd;
                 } else {
                     $currentDevices[] = $nameToAdd;
