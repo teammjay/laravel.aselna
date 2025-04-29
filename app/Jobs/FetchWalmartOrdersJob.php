@@ -115,6 +115,21 @@ class FetchWalmartOrdersJob implements ShouldQueue
                                 $orderOperationDetail->update(['status'=>2]);
                             }
                         }else {
+
+                            /* create customer*/
+
+                            $customerData = [
+                                'first_name' => $firstname,
+                                'last_name' => $lastname,
+                                'full_name' => $order['postalAddress']['name'],
+                                'email' => $order['customerEmailId'],
+                                'marketplace_customer_id' => isset($order['customer']) ? $order['customer']['id'] : '',
+                            ];
+
+                            $customer_detail = Customer::updateOrCreate([
+                                'order_id' => $order['id'],
+                            ], $customerData);
+
                             $orderData = [
                                 'order_id' => $order['purchaseOrderId'],
                                 'order_date' => date('Y-m-d H:i:s', strtotime($order['orderDate'])),
@@ -122,7 +137,8 @@ class FetchWalmartOrdersJob implements ShouldQueue
                                 'order_total' => $orderTotals,
                                 'buyer_first_name' => $firstname,
                                 'buyer_last_name' => $lastname,
-                                'buyer_email' => '',
+                                'buyer_email' => $order['customerEmailId'],
+                                'customer_id' => $customer_detail->id,
                                 'purchase_order_id' => $order['purchaseOrderId'],
                                 'store_id' => $store->id,
                                 'order_synchronization_id' => $order_synchronization_id
@@ -139,7 +155,6 @@ class FetchWalmartOrdersJob implements ShouldQueue
                                 'insurance_value' => $orderTotals,
                                 'status' => 1,
                                 'signature_confirmation' => 1,
-                                'ship_from_id' => '',
                                 'store_id' => $store->id,
                                 'operation_type' => 1,
                                 'label_creation_type' => 1,

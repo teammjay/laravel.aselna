@@ -1267,6 +1267,15 @@
                 }
             });
 
+            $(document).on('click','.errorModal button', function() {
+                if($(this).data('bs-dismiss') === 'modal') {
+                    var $modal = $(this).closest('.modal');
+                    var modalId = $modal.attr('id');
+                    console.log(modalId);
+                    $('#' + modalId).modal('hide');
+                }
+            })
+
             $(document).on('click', '.targetRow', function() {
                 let ele = $(this);
 

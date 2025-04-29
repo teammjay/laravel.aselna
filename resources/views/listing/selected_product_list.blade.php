@@ -106,7 +106,7 @@
 
 @foreach($products as $product)
     <!-- Modal for displaying errors -->
-    <div class="modal fade" id="errorModal-{{ $product->product_id }}" tabindex="-1"
+    <div class="modal fade errorModal" id="errorModal-{{ $product->product_id }}" tabindex="-1"
          aria-labelledby="errorModalLabel-{{ $product->product_id }}" aria-hidden="true">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
