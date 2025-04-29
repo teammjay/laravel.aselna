@@ -11,9 +11,11 @@ use App\Models\ProductCondition;
 use App\Models\ProductInterface;
 use App\Models\ProductKeyFeatures;
 use App\Models\ProductSearchTerm;
+use App\Models\ProductSpecifcationUniqueInfo;
 use App\Models\ProductSpecification;
 use App\Models\ProductSpecificationInfo;
 use App\Models\ProductSpecificationOption;
+use App\Models\ProductSpecificationValue;
 use App\Models\ProductTags;
 use App\Models\ProductTargetAudience;
 use App\Models\ProductTitleKeyword;
@@ -1093,29 +1095,41 @@ class CatalogController extends Controller
 
         $field_name = $request->input('field_name');
         $field = $option = '';
-        if($field_name != ''){
-            $field_option = ProductSpecificationOption::where('field_local_name',$field_name)->first();
-            if(!empty($field_option)){
-                $optionvalue = $field_option->field_option;
-                if(str_contains($optionvalue,',')){
-                    $field = 'select';
-                    $optionvalueArr = explode(',',$optionvalue);
-                    if(!empty($optionvalueArr)){
-                        $option = '<option value=""></option>';
-                        foreach($optionvalueArr as $val){
-                            $option .= '<option value="'.trim($val).'">'.trim($val).'</option>';
-                        }
-                    }
-
-                }else{
-                    $field = 'input';
-                    $option = $optionvalue;
+        $firstField = ProductSpecifcationUniqueInfo::where('field_name',$field_name)->first();
+        if(isset($firstField)){
+            $field_id = $firstField->id;
+            $field_options = ProductSpecificationValue::where('product_specification_id',$field_id)->get();
+            if(!empty($field_options)){
+                $field = 'select';
+                $option = '<option value=""></option>';
+                foreach ($field_options as $key=>$field_option) {
+                    $option .= '<option value="'.trim($field_option->id).'">'.trim($field_option->field_value).'</option>';
                 }
+//                $optionvalue = $field_option->field_option;
+//                if(str_contains($optionvalue,',')){
+//                    $field = 'select';
+//                    $optionvalueArr = explode(',',$optionvalue);
+//                    if(!empty($optionvalueArr)){
+//                        $option = '<option value=""></option>';
+//                        foreach($optionvalueArr as $val){
+//                            $option .= '<option value="'.trim($val).'">'.trim($val).'</option>';
+//                        }
+//                    }
+
+//                }else{
+//                    $field = 'input';
+//                    $option = $optionvalue;
+//                }
             }
 
             return response()->json([
                 'option' => $option,
                 'field' => $field
+            ]);
+        } else {
+            return response()->json([
+                'option' => '',
+                'field' => ''
             ]);
         }
     }
