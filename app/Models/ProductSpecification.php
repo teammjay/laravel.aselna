@@ -23,7 +23,7 @@ class ProductSpecification extends Model
             }
         });
     }
-    protected $fillable = ['id', 'name', 'product_id', 'created_at', 'updated_at','value'];
+    protected $fillable = ['id','store_type_id', 'name', 'product_id', 'created_at', 'updated_at','value'];
 
     public function product(){
         return $this->belongsTo(Catalog::class,'product_id','product_id');
