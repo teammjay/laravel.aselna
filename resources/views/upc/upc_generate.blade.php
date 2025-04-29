@@ -29,7 +29,7 @@
                 <td>{{$upcGenerate->company_prefix}}</td>
                 <td>{{$upcGenerate->product_number}}</td>
                 <td>{{$upcGenerate->number_of_codes}}</td>
-                <td>{{$upcGenerate->storeData->name}}</td>
+                <td>{{$upcGenerate->storeData->name}} - {{$upcGenerate->storeData->storeType->name}}</td>
             </tr>
         @endforeach
         </tbody>
