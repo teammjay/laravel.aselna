@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Constants\OrderStatus;
+use App\Models\Customer;
 use App\Models\ListingItem;
 use App\Models\ManageMarketplaceProduct;
 use App\Models\OrderOperation;
@@ -47,27 +48,26 @@ class FetchShopifyOrders implements ShouldQueue
                     if ($store->name != 'AccessoryWiz') {
                         continue;
                     }
-                    $created_by = auth()->user()->name ?? 'admin';
-                    /* create order synchronization*/
-                    $synchronizeArr = [
-                        'store_id' => $store->id,
-                        'number_of_items' => 1,
-                        'synchronization_type' => 1,
-                        'filter_start_date' => date('Y-m-d H:i:s'),
-                        'filter_end_date' => date('Y-m-d H:i:s'),
-                        'last_order_update_date' => date('Y-m-d H:i:s'),
-                        'created_by' => $created_by
-                    ];
-                    $order_synchronization = OrderSynchronization::create($synchronizeArr);
-                    $order_synchronization_id = $order_synchronization->id;
 
-                    Log::info('order_synchronization_id: ' . json_encode($order_synchronization_id));
                     // get shopify order
                     $shopifyService = new ShopifyService();
                     $orders = $shopifyService->getOrders($store);
 
                     if (isset($orders) && !empty($orders)) {
 
+                        $created_by = auth()->user()->name ?? 'admin';
+                        /* create order synchronization*/
+                        $synchronizeArr = [
+                            'store_id' => $store->id,
+                            'synchronization_type' => 1,
+                            'filter_start_date' => date('Y-m-d H:i:s'),
+                            'created_by' => $created_by
+                        ];
+                        $order_synchronization = OrderSynchronization::create($synchronizeArr);
+                        $order_synchronization_id = $order_synchronization->id;
+
+                        Log::info('order_synchronization_id: ' . json_encode($order_synchronization_id));
+                        $noOfOrder = 0;
                         foreach ($orders as $value) {
 
                             $order = $value['node'];
@@ -87,6 +87,21 @@ class FetchShopifyOrders implements ShouldQueue
                                     $orderOperationDetail->update(['status'=>2]);
                                 }
                             } else {
+
+                                /* create customer*/
+
+                                $customerData = [
+                                    'first_name' => isset($order['customer']) ? $order['customer']['firstName'] : '',
+                                    'last_name' => isset($order['customer']) ? $order['customer']['lastName'] : '',
+                                    'full_name' => isset($order['customer']) ? $order['customer']['displayName'] : '',
+                                    'email' => $order['email'],
+                                    'marketplace_customer_id' => isset($order['customer']) ? $order['customer']['id'] : '',
+                                ];
+
+                                $customer_detail = Customer::updateOrCreate([
+                                    'order_id' => $order['id'],
+                                ], $customerData);
+
                                 $orderData = [
                                     'order_id' => $order['id'],
                                     'order_date' => date('Y-m-d H:i:s', strtotime($order['createdAt'])),
@@ -96,7 +111,7 @@ class FetchShopifyOrders implements ShouldQueue
                                     'buyer_first_name' => isset($order['customer']) ? $order['customer']['firstName'] : '',
                                     'buyer_last_name' => isset($order['customer']) ? $order['customer']['lastName'] : '',
                                     'buyer_email' => $order['email'],
-                                    'customer_id' => isset($order['customer']) ? $order['customer']['id'] : '',
+                                    'customer_id' => $customer_detail->id,
                                     'purchase_order_id' => isset($order['poNumber']) ? $order['poNumber'] : '',
                                     'store_id' => $store->id,
                                     'order_synchronization_id' => $order_synchronization_id,
@@ -114,7 +129,6 @@ class FetchShopifyOrders implements ShouldQueue
                                     'insurance_value' => 0,
                                     'status' => 1,
                                     'signature_confirmation' => 1,
-                                    'ship_from_id' => '',
                                     'store_id' => $store->id,
                                     'operation_type' => 1,
                                     'label_creation_type' => 1,
@@ -171,8 +185,13 @@ class FetchShopifyOrders implements ShouldQueue
                                         }
                                     }
                                 }
+
+
                             }
+                            $noOfOrder++;
                         }
+
+                        $order_synchronization->update(['number_of_items'=>$noOfOrder,'last_order_update_date' => date('Y-m-d H:i:s'), 'filter_end_date' => date('Y-m-d H:i:s')]);
                     }
                 }
             }

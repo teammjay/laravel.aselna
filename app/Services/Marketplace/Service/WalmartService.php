@@ -236,7 +236,7 @@ class WalmartService implements MarketplaceServiceInterface
 
             $compatibleDevices = [];
             foreach ($item->devices as $device) {
-                if (isset($device->device->brand) && strtolower($device->device->brand->name) == 'apple') {
+                if (isset($device->device->brand) && (strtolower($device->device->brand->name) == 'apple' || strtolower($device->device->brand->name) == 'unlocked')) {
                     $compatibleDevices[] = $device->device->name;
                 }else {
                     $compatibleDevices[] = $device->device->brand->name . ' ' . $device->device->name;
@@ -377,9 +377,9 @@ class WalmartService implements MarketplaceServiceInterface
     {
         $this->authService = new WalmartAuthService($store->seller_id, $store->secret_key);
         $response = $this->authService->getOrders();
-        echo '<pre>';
+        /*echo '<pre>';
         print_r($response);
-        echo '</pre>';die;
+        echo '</pre>';die;*/
 
         return $response;
     }

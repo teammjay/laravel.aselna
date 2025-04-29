@@ -47,6 +47,9 @@ use App\Http\Controllers\ShippingPackageController;
 use App\Http\Controllers\ShippingServiceRulesController;
 use App\Http\Controllers\ProductSpecificationInfoController;
 use App\Http\Controllers\ProductSpecificationValueController;
+use App\Http\Controllers\ProductSpecificationOptionsController;
+use App\Http\Controllers\PrintersController;
+use App\Http\Controllers\PrinterClientsController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ResetPasswordController;
 use App\Http\Controllers\StorePagesController;
@@ -86,6 +89,7 @@ Route::middleware('auth')->group(function () {
     Route::post('catalog/altimageorder', [CatalogController::class, 'updateAlternativeImageOrder'])->name('catalog.altimageorder');
     Route::post('catalog/getspecification', [CatalogController::class, 'getSpecification'])->name('catalog.getspecification');
     Route::post('catalog/getspecificationoption', [CatalogController::class, 'getSpecificationOption'])->name('catalog.getspecificationoption');
+    Route::post('catalog/getfieldoption', [CatalogController::class, 'getFieldOption'])->name('catalog.getfieldoption');
 
     Route::post('/generate-feed-file', [HomeController::class, 'generateFeedFile'])->name('generate-feed-file');
     Route::post('/generate-result-feed-file', [HomeController::class, 'generateResultFeedFile'])->name('generate-result-feed-file');
@@ -503,6 +507,24 @@ Route::middleware('auth')->group(function () {
         Route::get('/specification_values/edit/{id}', 'edit')->name('specification_values.edit');
         Route::post('/specification_values/edit/{id}', 'update')->name('specification_values.update');
         Route::get('/specification_values/delete/{id}', 'destroy')->name('specification_values.delete');
+    });
+
+    Route::controller(PrintersController::class)->group(function () {
+        Route::get('/printers', 'index')->name('printer.index');
+        Route::get('/printer/add', 'create')->name('printer.create');
+        Route::post('/printer/add', 'store')->name('printer.store');
+        Route::get('/printer/edit/{id}', 'edit')->name('printer.edit');
+        Route::post('/printer/edit/{id}', 'update')->name('printer.update');
+        Route::get('/printer/delete/{id}', 'destroy')->name('printer.delete');
+    });
+
+    Route::controller(PrinterClientsController::class)->group(function () {
+        Route::get('/printer_clients', 'index')->name('printer_client.index');
+        Route::get('/printer_client/add', 'create')->name('printer_client.create');
+        Route::post('/printer_client/add', 'store')->name('printer_client.store');
+        Route::get('/printer_client/edit/{id}', 'edit')->name('printer_client.edit');
+        Route::post('/printer_client/edit/{id}', 'update')->name('printer_client.update');
+        Route::get('/printer_client/delete/{id}', 'destroy')->name('printer_client.delete');
     });
 
     Route::get('/ebay/login', [EbayAuthService::class, 'redirectToEbay'])->name('ebay.login');

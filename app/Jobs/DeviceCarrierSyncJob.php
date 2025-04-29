@@ -45,7 +45,10 @@ class DeviceCarrierSyncJob implements ShouldQueue
             return;
         }
         DeviceCarrier::updateOrCreate(
-            ['id' => $deviceCarrier->id],
+            [
+                'device_id' => $deviceCarrier->device_id,
+                'carrier_id' => $deviceCarrier->carrier_id,
+            ],
             [
                 'id' => $deviceCarrier->id,
                 'device_id' => $deviceCarrier->device_id,

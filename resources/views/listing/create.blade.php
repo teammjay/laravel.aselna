@@ -1086,6 +1086,13 @@
             $('#productListingTable').DataTable({});
             $('#listing_store').select2();
 
+            $('#listing_store').on('select2:open', function () {
+                // Wait for dropdown to render before focusing the search field
+                setTimeout(function () {
+                    document.querySelector('.select2-container--open .select2-search__field').focus();
+                }, 0);
+            });
+
             /*$('#listing_store').on('select2:select', function (e) {
                 /!* check selected store upc exist or not*!/
                 var data = e.params.data;

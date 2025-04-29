@@ -43,19 +43,6 @@ class FetchWalmartOrdersJob implements ShouldQueue
                 if($store->name != 'AWAccessory'){
                     continue;
                 }
-                $created_by = auth()->user()->name ?? 'admin';
-                /* create order synchronization*/
-                $synchronizeArr = [
-                    'store_id' => $store->id,
-                    'number_of_items' => 1,
-                    'synchronization_type' => 1,
-                    'filter_start_date' => date('Y-m-d H:i:s'),
-                    'filter_end_date' => '',
-                    'last_order_update_date' => date('Y-m-d H:i:s'),
-                    'created_by' => $created_by
-                ];
-                $order_synchronization = OrderSynchronization::create($synchronizeArr);
-                $order_synchronization_id = $order_synchronization->id;
 
                 // get amazon order
                 $walmartService = new WalmartService($store);
@@ -65,6 +52,17 @@ class FetchWalmartOrdersJob implements ShouldQueue
 
                 if (!isset($orders['errors']) && isset($orders['elements']['order'])) {
 
+                    $created_by = auth()->user()->name ?? 'admin';
+                    /* create order synchronization*/
+                    $synchronizeArr = [
+                        'store_id' => $store->id,
+                        'synchronization_type' => 1,
+                        'filter_start_date' => date('Y-m-d H:i:s'),
+                        'created_by' => $created_by
+                    ];
+                    $order_synchronization = OrderSynchronization::create($synchronizeArr);
+                    $order_synchronization_id = $order_synchronization->id;
+                    $noOfOrder = 0;
                     foreach ($orders['elements']['order'] as $order) {
                         $firstname = $lastname = '';
                         $orderTotal = 0;
@@ -117,6 +115,21 @@ class FetchWalmartOrdersJob implements ShouldQueue
                                 $orderOperationDetail->update(['status'=>2]);
                             }
                         }else {
+
+                            /* create customer*/
+
+                            $customerData = [
+                                'first_name' => $firstname,
+                                'last_name' => $lastname,
+                                'full_name' => $order['postalAddress']['name'],
+                                'email' => $order['customerEmailId'],
+                                'marketplace_customer_id' => isset($order['customer']) ? $order['customer']['id'] : '',
+                            ];
+
+                            $customer_detail = Customer::updateOrCreate([
+                                'order_id' => $order['id'],
+                            ], $customerData);
+
                             $orderData = [
                                 'order_id' => $order['purchaseOrderId'],
                                 'order_date' => date('Y-m-d H:i:s', strtotime($order['orderDate'])),
@@ -124,7 +137,8 @@ class FetchWalmartOrdersJob implements ShouldQueue
                                 'order_total' => $orderTotals,
                                 'buyer_first_name' => $firstname,
                                 'buyer_last_name' => $lastname,
-                                'buyer_email' => '',
+                                'buyer_email' => $order['customerEmailId'],
+                                'customer_id' => $customer_detail->id,
                                 'purchase_order_id' => $order['purchaseOrderId'],
                                 'store_id' => $store->id,
                                 'order_synchronization_id' => $order_synchronization_id
@@ -141,7 +155,6 @@ class FetchWalmartOrdersJob implements ShouldQueue
                                 'insurance_value' => $orderTotals,
                                 'status' => 1,
                                 'signature_confirmation' => 1,
-                                'ship_from_id' => '',
                                 'store_id' => $store->id,
                                 'operation_type' => 1,
                                 'label_creation_type' => 1,
@@ -157,6 +170,7 @@ class FetchWalmartOrdersJob implements ShouldQueue
                             /* get order items*/
                             $ordersItems = $order['orderLines']['orderLine'];
                             if (!!empty($ordersItems)) {
+                                $cnt = 0;
                                 foreach ($ordersItems as $item) {
                                     if($item['item']['sku'] != '') {
                                         $itemDetail = ListingItem::with('storeProduct', 'storeProduct.product')->where('sku', $item['product_info']['sku']);
@@ -195,11 +209,16 @@ class FetchWalmartOrdersJob implements ShouldQueue
                                                 'order_operation_id' => $order_operation_detail->id
                                             ], $orderOperationItemData);
                                         }
+
+                                        $cnt++;
                                     }
                                 }
                             }
                         }
+                        $noOfOrder++;
                     }
+
+                    $order_synchronization->update(['number_of_items'=>$noOfOrder,'last_order_update_date' => date('Y-m-d H:i:s'), 'filter_end_date' => date('Y-m-d H:i:s')]);
                 }
             }
         }

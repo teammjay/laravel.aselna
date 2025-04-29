@@ -82,8 +82,7 @@ class ProductSpecificationInfoController extends Controller
      */
     public function destroy(string $id)
     {
-//        ProductSpecificationInfo::findOrFail($id)->delete();
-
+        ProductSpecificationInfo::findOrFail($id)->delete();
         return redirect()->route('specification_info.index')
             ->with('success', 'Specification info deleted successfully.');
     }

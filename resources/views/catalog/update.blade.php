@@ -11,7 +11,7 @@
     <!-- Lightbox2 CSS -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.4/css/lightbox.min.css" rel="stylesheet">
     <style>
-        .select2-container--default .select2-dropdown .select2-search__field:focus, .select2-container--default .select2-search--inline .select2-search__field:focus {
+        #frmtab8 .select2-container--default .select2-dropdown .select2-search__field:focus, #frmtab8 .select2-container--default .select2-search--inline .select2-search__field:focus {
             outline: 0;
              border: none;
         }
@@ -158,7 +158,7 @@
                                             <div class="col-md-6">
                                                 <div class="form-group">
                                                     <label for="product_type">Product Type</label>
-                                                    <select class="form-control" id="product_type" name="product_type">
+                                                    <select class="form-control select2" id="product_type" name="product_type">
                                                         <option>-- Product Type --</option>
                                                         @php
                                                             renderCategories($productTypes,$product);
@@ -595,7 +595,7 @@
                                             Interfaces
                                         </div>
                                         <div class="card-body">
-                                            <select class="form-control pro-interface" name="interfaces[]" multiple="multiple">
+                                            <select class="form-control select2 pro-interface" name="interfaces[]" multiple="multiple">
                                                 @if(count($interfaces ?? []) > 0)
                                                     @foreach($interfaces as $interface)
                                                         <option value="{{ $interface->id }}" {{ in_array($interface->id,$productInterfaces) ? 'selected' : '' }}>{{ $interface->name }}</option>
@@ -802,7 +802,7 @@
                                     <button type="button" class="btn btn-secondary" id="add_tag"><i class="fa fa-plus-square"></i> Add</button>
                                     <div class="form-group mt-3">
                                         {{--<textarea name="tags" class="form-control"  rows="10"></textarea>--}}
-                                        <select class="form-control pro-tags" name="tags[]" multiple="multiple">
+                                        <select class="form-control select2 pro-tags" name="tags[]" multiple="multiple">
                                             <option value="Apple" {{ in_array('Apple',$productTags) ? 'selected' : '' }}>Apple</option>
                                             <option value="Android" {{ in_array('Android',$productTags) ? 'selected' : '' }}>Android</option>
                                             <option value="Smart" {{ in_array('Smart',$productTags) ? 'selected' : '' }}>Smart</option>
@@ -1314,6 +1314,14 @@
                 success: function (response) {
                     if(response.html){
                         $('#specification_list').html(response.html);
+                        $('.specification').select2();
+                        $('.select2').on('select2:open', function () {
+                            // Wait for dropdown to render before focusing the search field
+                            setTimeout(function () {
+                                document.querySelector('.select2-container--open .select2-search__field').focus();
+                            }, 0);
+                        });
+
                     }
                 },
                 error: function (xhr) {
@@ -1325,6 +1333,13 @@
         }
 
         $(document).ready(function() {
+
+            $('.select2').on('select2:open', function () {
+                // Wait for dropdown to render before focusing the search field
+                setTimeout(function () {
+                    document.querySelector('.select2-container--open .select2-search__field').focus();
+                }, 0);
+            });
 
             $(document).ajaxStart(function () {
                 $("#ajax-preloader").show(); // Show preloader when AJAX starts
@@ -2001,7 +2016,22 @@
                     },
                     success: function (response) {
 
-                        $('#specification_table tbody').append('<tr class="field-group"><td><select class="form-control" name="specification[]">'+response.option+'</select></td><td><textarea class="form-control" name="specification_value[]"></textarea></td><td><button type="button" class="btn btn-danger remove-specification"> <i class="fas fa-fw fa-trash"></i></button></td></tr>');
+                        var html = '<tr class="field-group">';
+                        html += '<td><select class="form-control" name="specification[]">'+response.option+'</select></td>';
+                        html += '<td class="field_option">';
+                        if(response.field == 'select'){
+                            html += '<select class="form-control" name="specification_value[]">';
+                            html += response.valueoption;
+                            html += '</select>';
+                        }else{
+                            html += '<textarea class="form-control" name="specification_value[]">';
+                            html += response.valueoption;
+                            html += '</textarea>';
+                        }
+                        html += '</td></tr>';
+
+
+                        $('#specification_table tbody').append(html);
                     }
                 });
 
@@ -2018,6 +2048,32 @@
 
             $(document).on('change', '#specification_store_type_id', function() {
                 loadSpecification();
+            });
+
+            $(document).on('change', 'select[name="specification[]"]', function() {
+                var element = $(this);
+                $.ajax({
+                    url: "{{ route('catalog.getfieldoption') }}",
+                    method: "POST",
+                    data: {
+                        field_name: $(this).val(),
+                        _token: "{{ csrf_token() }}"
+                    },
+                    success: function (response) {
+                        var htmloption = '';
+                        if(response.field == 'select'){
+                            htmloption += '<select class="form-control" name="specification_value[]">';
+                            htmloption += response.option;
+                            htmloption += '</select>';
+                        }else{
+                            htmloption += '<textarea class="form-control" name="specification_value[]">';
+                            htmloption += response.option;
+                            htmloption += '</textarea>';
+                        }
+
+                        element.parents('tr').find('.field_option').html(htmloption);
+                    }
+                });
             });
 
             var hash = window.location.hash;
