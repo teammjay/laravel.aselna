@@ -73,7 +73,7 @@ public static $getOrders = <<<GQL
                         country
                         zip
                     }
-                    lineItems(first: 10){
+                    lineItems(first: \$first){
                         nodes{
                             id
                             title
@@ -84,7 +84,7 @@ public static $getOrders = <<<GQL
                             variant{
                                 price
                             }
-                            taxLines(first: 10){
+                            taxLines(first: \$first){
                                 title
                                 price
                                 source
