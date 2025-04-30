@@ -1047,13 +1047,29 @@ class CatalogController extends Controller
 
     public function getSpecificationOption(Request $request){
         $store_type_id = $request->input('store_type_id');
-        $specificationInfo = ProductSpecificationInfo::where('store_type_id',$store_type_id)->get();
+        $specificationInfo = ProductSpecificationInfo::where('store_type_id',$store_type_id)->orderBy('field_local_name')->get();
         $option = '<option value=""></option>';
         if(!empty($specificationInfo)){
             foreach($specificationInfo as $spec){
                 $option .= '<option value="'.$spec->field_local_name.'">'.$spec->field_local_name.'</option>';
 
-                $field_option = ProductSpecificationOption::where('field_local_name',$spec->field_local_name)->first();
+                $field_option = ProductSpecifcationUniqueInfo::where('field_name',$spec->name)->first();
+                $field = $valoption = '';
+                if(!empty($field_option)){
+                    $field = 'select';
+                    $optionvalueArr = ProductSpecificationValue::where('product_specification_id',$field_option->id)->get();
+                    if(!empty($optionvalueArr)){
+                        $valoption = '<option value=""></option>';
+                        foreach($optionvalueArr as $val){
+                            $valoption .= '<option value="'.trim($val->id).'">'.trim($val->field_value).'</option>';
+                        }
+                    }
+                }else{
+                    $field = 'input';
+                    $valoption = '';
+                }
+
+                /*$field_option = ProductSpecificationOption::where('field_local_name',$spec->field_local_name)->first();
                 $field = $valoption = '';
                 if(!empty($field_option)){
                     $optionvalue = $field_option->field_option;
@@ -1071,7 +1087,7 @@ class CatalogController extends Controller
                         $field = 'input';
                         $valoption = $optionvalue;
                     }
-                }
+                }*/
             }
         }
 

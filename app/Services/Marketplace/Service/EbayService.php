@@ -293,7 +293,7 @@ class EbayService implements MarketplaceServiceInterface
                     $nameValueList->addChild('Value', $listingItem->listingItem->storeProduct->product->color->name);
                 }
 
-                $productSpecification = ProductSpecification::where('product_id',$product->product_id)->get();
+                $productSpecification = ProductSpecification::where('product_id',$product->product_id)->where('store_type_id',$store_type_detail->id)->get();
                 if(count($productSpecification ?? []) > 0){
                     foreach($productSpecification as $specificaiton){
 

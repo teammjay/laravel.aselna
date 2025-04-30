@@ -74,7 +74,7 @@
                                                     </td>
                                                 </tr>
                                             @endforeach
-                                        @endif
+                                        @else
                                         <tr class="field-group">
                                             <td>
                                                 <textarea class="form-control" name="field_value[]"></textarea>
@@ -84,6 +84,7 @@
                                                         class="fas fa-fw fa-trash"></i></button>
                                             </td>
                                         </tr>
+                                        @endif
                                         </tbody>
                                     </table>
                                 </div>
