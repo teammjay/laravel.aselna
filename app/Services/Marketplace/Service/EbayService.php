@@ -373,8 +373,13 @@ class EbayService implements MarketplaceServiceInterface
                     $nameValueList1->addChild('Name', 'Compatible Model');
                     if(strtolower($variant->device->brand->name) == 'apple' || strtolower($variant->device->brand->name) == 'unlocked'){
                         if($listingInfo->include_carriers && !$listingInfo->carrier_combo && isset($variant->carrier)) {
-                            $deviceName = $variant->carrier->name.' '.$variant->device->name;
-                            $compatibleModels[] = $variant->carrier->name.' '.$variant->device->name;
+                            if(strtolower($variant->carrier->name) == 'unlocked'){
+                                $deviceName = $variant->device->name;
+                                $compatibleModels[] = $variant->device->name;
+                            }else {
+                                $deviceName = $variant->carrier->name . ' ' . $variant->device->name;
+                                $compatibleModels[] = $variant->carrier->name . ' ' . $variant->device->name;
+                            }
                         }else{
                             $deviceName = $variant->device->name;
                             $compatibleModels[] = $variant->device->brand->name.' '.$variant->device->name;
@@ -386,7 +391,11 @@ class EbayService implements MarketplaceServiceInterface
 
                     }else{
                         if($listingInfo->include_carriers && !$listingInfo->carrier_combo && isset($variant->carrier)) {
-                            $deviceName = $variant->carrier->name.' '.$variant->device->brand->name . ' ' . $variant->device->name;
+                            if(strtolower($variant->carrier->name) == 'unlocked') {
+                                $deviceName = $variant->device->brand->name . ' ' . $variant->device->name;
+                            }else{
+                                $deviceName = $variant->carrier->name . ' ' . $variant->device->brand->name . ' ' . $variant->device->name;
+                            }
                         }else{
                             $deviceName = $variant->device->brand->name.' '.$variant->device->name;
                         }
