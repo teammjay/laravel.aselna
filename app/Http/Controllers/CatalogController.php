@@ -1023,21 +1023,12 @@ class CatalogController extends Controller
 
                 $specificationArr[$key]= $spec;
 
-                $field_option = ProductSpecificationOption::where('field_local_name',$spec->name)->first();
+                $field_option = ProductSpecifcationUniqueInfo::where('field_name',$spec->name)->first();
                 $field = $valoption = '';
                 if(!empty($field_option)){
-                    $optionvalue = $field_option->field_option;
-                    if(str_contains($optionvalue,',')){
-                        $field = 'select';
-                        $optionvalueArr = explode(',',$optionvalue);
-                        $valoption = $optionvalueArr;
-
-                    }else{
-                        $field = 'input';
-                        $valoption = $optionvalue;
-                    }
+                    $field = 'select';
+                    $valoption = ProductSpecificationValue::where('product_specification_id',$field_option->id)->get();
                 }
-
                 $specificationArr[$key]->field = $field;
                 $specificationArr[$key]->valoption = $valoption;
             }
@@ -1105,21 +1096,6 @@ class CatalogController extends Controller
                 foreach ($field_options as $key=>$field_option) {
                     $option .= '<option value="'.trim($field_option->id).'">'.trim($field_option->field_value).'</option>';
                 }
-//                $optionvalue = $field_option->field_option;
-//                if(str_contains($optionvalue,',')){
-//                    $field = 'select';
-//                    $optionvalueArr = explode(',',$optionvalue);
-//                    if(!empty($optionvalueArr)){
-//                        $option = '<option value=""></option>';
-//                        foreach($optionvalueArr as $val){
-//                            $option .= '<option value="'.trim($val).'">'.trim($val).'</option>';
-//                        }
-//                    }
-
-//                }else{
-//                    $field = 'input';
-//                    $option = $optionvalue;
-//                }
             }
 
             return response()->json([
