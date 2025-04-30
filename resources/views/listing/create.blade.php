@@ -308,6 +308,7 @@
                                                 <th>Title</th>
                                                 <th>Price</th>
                                                 <th>Quantity</th>
+                                                <th>Interface</th>
                                                 <th>Created At</th>
                                             </tr>
                                             </thead>
@@ -2452,7 +2453,7 @@
                                 "searching": false,
                                 "paging": false,
                                 "info": false,
-                                "order": [[6, "desc"]],
+                                "order": [[7, "desc"]],
                                 columnDefs: [
                                     {
                                         targets: [0],
