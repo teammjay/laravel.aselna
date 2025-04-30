@@ -258,7 +258,7 @@ class EbayService implements MarketplaceServiceInterface
                 sort($fitModel);
                 $specifics = [
                     ['Type', $listingItem->listingItem->storeProduct->StoreTypeCategory->name],
-                    ['Fits Model', $fitModel],
+                   /* ['Fits Model', $fitModel],*/
                     ['Brand', $listingItem->listingItem->storeProduct->store->name],
                     ['MPN', $itemDetail->mpn],
                     ['Model', $itemDetail->mpn],
