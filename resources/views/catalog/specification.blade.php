@@ -30,7 +30,7 @@
                                 <option value=""></option>
                                 @if(count($specification->valoption ?? []) > 0)
                                     @foreach($specification->valoption as $vopt)
-                                        <option value="{{ trim($vopt) }}" {{ (isset($specification->value) && $specification->value == trim($vopt)) ? 'selected' : '' }}>{{ trim($vopt) }}</option>
+                                        <option value="{{ trim($vopt->id) }}" {{ (isset($specification->value) && $specification->value == trim($vopt->id)) ? 'selected' : '' }}>{{ trim($vopt->field_value) }}</option>
                                     @endforeach
                                 @endif
                             </select>
