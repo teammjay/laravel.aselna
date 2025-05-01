@@ -120,4 +120,15 @@ class ProductSpecificationValueController extends Controller
         return redirect()->route('specification_values.index')
             ->with('success', 'Specification value deleted successfully.');
     }
+
+    /**
+     * Remove specification value
+     */
+    public function removeValue(Request $request)
+    {
+        $id = $request->input('id');
+        ProductSpecificationValue::findOrFail($id)->delete();
+
+        return response()->json(['success' => true, 'message' => 'Data saved successfully!']);
+    }
 }
