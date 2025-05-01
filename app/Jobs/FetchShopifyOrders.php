@@ -100,7 +100,7 @@ class FetchShopifyOrders implements ShouldQueue
                                 ];
 
                                 $customer_detail = Customer::updateOrCreate([
-                                    'order_id' => $order['id'],
+                                    'email' => $order['email'],
                                 ], $customerData);
 
                                 $orderData = [
@@ -166,7 +166,8 @@ class FetchShopifyOrders implements ShouldQueue
                                             ];
 
                                             $order_item = OrderItem::updateOrCreate([
-                                                'order_id' => $order_detail->id
+                                                'order_id' => $order_detail->id,
+                                                'sku' => $item['sku'],
                                             ], $orderItemData);
 
                                             /* create order operation item*/
@@ -180,7 +181,8 @@ class FetchShopifyOrders implements ShouldQueue
                                                 ];
 
                                                 $order_operation_item = OrderOperationItem::updateOrCreate([
-                                                    'order_operation_id' => $order_operation_detail->id
+                                                    'order_operation_id' => $order_operation_detail->id,
+                                                    'order_item_id' => $order_item->id,
                                                 ], $orderOperationItemData);
                                             }
                                         }
