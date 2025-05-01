@@ -6,6 +6,39 @@
     <h1>{{ isset($specification_info) ? 'Edit Specification Info' : 'Add Specification Info' }}</h1>
 @stop
 
+@section('adminlte_css')
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <!-- Lightbox2 CSS -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.4/css/lightbox.min.css" rel="stylesheet">
+    <style>
+        .select2-container--default .select2-dropdown .select2-search__field:focus, .select2-container--default .select2-search--inline .select2-search__field:focus {
+            outline: 0;
+            border: none;
+        }
+        .select2-container{width:100% !important;}
+        .select2-container .select2-selection--single{
+            height: calc(2.25rem + 2px);
+        }
+        .select2-container--default .select2-selection--single .select2-selection__arrow {
+            height: auto;
+            position: absolute;
+            top: 50%;
+            right: 1px;
+            width: 20px;
+            transform: translateY(-50%);
+        }
+        .ui-sortable tr:hover{
+            cursor:move;
+        }
+
+        .ui-sortable-placeholder{
+            background:#ccc !important;
+            visibility: initial !important;
+        }
+
+    </style>
+@stop
+
 @section('content')
     <form
         action="{{ isset($specification_info) ? route('specification_info.update',['id' => $specification_info['id']]) : route('specification_info.store') }}"
@@ -47,40 +80,20 @@
                                 <span class="text-danger">{{ $errors->first('store_type_id') }}</span>
                             @endif
                         </div>
-                        {{--@php
-                            function renderCategories($productTypes, $specification_info = [], $prefix = '') {
-                                foreach ($productTypes as $ptype) {
-                                    if(!empty($specification_info) && $specification_info['product_type_id'] == $ptype->id){
-                                        $sel = 'selected';
-                                    }else{
-                                        $sel = '';
-                                    }
-                                    echo '<option value="' . $ptype->id . '" '.$sel.'>' . $prefix . $ptype->name . '</option>';
-
-                                    if ($ptype->children) {
-                                        renderCategories($ptype->children, $specification_info, $prefix . '-- ');
-                                    }
-                                }
-                            }
-                        @endphp
                         <div class="form-group">
                             <label for="product_type_id">Product Type</label>
-                            <select class="form-control" name="product_type_id" id="product_type_id">
+                            <select class="form-control" name="product_type_id[]" id="product_type_id" multiple>
                                 <option>-- Product Type --</option>
-                                @php
-                                    if(!empty($specification_info)){
-                                        $sinfo = $specification_info;
-                                    }else{
-                                        $sinfo= [];
-                                    }
-
-                                    renderCategories($product_types,$sinfo);
-                                @endphp
+                                @if(count($product_types ?? []) > 0)
+                                    @foreach($product_types as $ptype)
+                                        <option value="{{ $ptype->id }}" @if(is_array($info_category)){{ in_array($ptype->id,($info_category ?? [])) ? 'selected' : '' }} @endif>{{ $ptype->name }}</option>
+                                    @endforeach
+                                @endif
                             </select>
                             @if ($errors->has('product_type_id'))
                                 <span class="text-danger">{{ $errors->first('product_type_id') }}</span>
                             @endif
-                        </div>--}}
+                        </div>
 
                         <div class="form-group">
                             <label for="required">Required</label><br>
@@ -101,4 +114,17 @@
             </div>
         </div>
     </form>
+@stop
+
+@section('adminlte_js')
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <!-- Lightbox2 JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.4/js/lightbox.min.js"></script>
+    <script>
+        $(document).ready(function() {
+
+            $('#product_type_id').select2();
+
+        });
+    </script>
 @stop

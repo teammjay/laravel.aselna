@@ -44,4 +44,9 @@ class ProductType extends Model
         return $this->hasOne(Interfaces::class);
     }
 
+    public function ancestors()
+    {
+        return $this->parent()->with('ancestors');
+    }
+
 }
