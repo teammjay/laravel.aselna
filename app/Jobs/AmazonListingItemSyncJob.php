@@ -71,7 +71,7 @@ class AmazonListingItemSyncJob implements ShouldQueue
 
         try {
             Log::info("Calling Service");
-            $amazonAuthService = new AmazonAuthService();
+            $amazonAuthService = new AmazonAuthService($store->seller_id, $store->secret_key,$store->api_key);
             $response = $amazonAuthService->fetchListingInfoBySku($itemDetail->sku, $store->user_id);
             Log::info('Summary ::' . json_encode($response['summaries']));
             if ($response['summaries']) {
