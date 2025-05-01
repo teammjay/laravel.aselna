@@ -308,6 +308,7 @@
                                                 <th>Title</th>
                                                 <th>Price</th>
                                                 <th>Quantity</th>
+                                                <th>Interface</th>
                                                 <th>Created At</th>
                                             </tr>
                                             </thead>
@@ -1266,6 +1267,15 @@
                     $('.targetRow').find('.sel-device').prop('checked',true);
                 }
             });
+
+            $(document).on('click','.errorModal button', function() {
+                if($(this).data('bs-dismiss') === 'modal') {
+                    var $modal = $(this).closest('.modal');
+                    var modalId = $modal.attr('id');
+                    console.log(modalId);
+                    $('#' + modalId).modal('hide');
+                }
+            })
 
             $(document).on('click', '.targetRow', function() {
                 let ele = $(this);
@@ -2443,7 +2453,7 @@
                                 "searching": false,
                                 "paging": false,
                                 "info": false,
-                                "order": [[6, "desc"]],
+                                "order": [[7, "desc"]],
                                 columnDefs: [
                                     {
                                         targets: [0],

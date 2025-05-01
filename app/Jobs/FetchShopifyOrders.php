@@ -67,6 +67,7 @@ class FetchShopifyOrders implements ShouldQueue
                         $order_synchronization_id = $order_synchronization->id;
 
                         Log::info('order_synchronization_id: ' . json_encode($order_synchronization_id));
+
                         $noOfOrder = 0;
                         foreach ($orders as $value) {
 
