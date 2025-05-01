@@ -782,9 +782,9 @@ class ListingController extends Controller
                         $currentCategory = StoreTypeCategory::where('id', $categoryId)->first();
                         if (isset($currentCategory)) {
                             if ('Amazon' == $store->storeType->name) {
-                                $issues[$storeProduct->product_id] = ListingUtility::validate($currentCategory->marketplace_code, $storeProduct->product_id);
+                                $issues[$storeProduct->product_id] = ListingUtility::validate($currentCategory->marketplace_code, $storeProduct->product_id,$store->storeType->id);
                             } else {
-                                $issues[$storeProduct->product_id] = ListingUtility::validate($currentCategory->store_type_code, $storeProduct->product_id);
+                                $issues[$storeProduct->product_id] = ListingUtility::validate($currentCategory->store_type_code, $storeProduct->product_id,$store->storeType->id);
                             }
                         }
                     }
@@ -2558,9 +2558,9 @@ class ListingController extends Controller
         $store = Store::findOrFail($store_id);
         $currentCategory = StoreTypeCategory::where('id', $category_id)->first();
         if ('Amazon' == $store->storeType->name) {
-            $issues = ListingUtility::validate($currentCategory->marketplace_code, $product->product_id);
+            $issues = ListingUtility::validate($currentCategory->marketplace_code, $product->product_id,$store->storeType->id);
         } else {
-            $issues = ListingUtility::validate($currentCategory->store_type_code, $product->product_id);
+            $issues = ListingUtility::validate($currentCategory->store_type_code, $product->product_id,$store->storeType->id);
         }
 
         $table_html = view('listing.error_tables', ['issues' => $issues, 'product' => $product])->render();
