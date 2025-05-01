@@ -1020,9 +1020,7 @@ class CatalogController extends Controller
         $specificationArr = [];
         if(!empty($specifications)){
             foreach($specifications as $key=>$spec){
-
                 $specificationArr[$key]= $spec;
-
                 $field_option = ProductSpecifcationUniqueInfo::where('field_name',$spec->name)->first();
                 $field = $valoption = '';
                 if(!empty($field_option)){
@@ -1038,22 +1036,60 @@ class CatalogController extends Controller
         /*echo '<pre>';
         print_r((object)$specificationArr);
         echo '</pre>';die;*/
-        $specificationInfo = ProductSpecificationInfo::where('store_type_id',$store_type_id)->orderBy('field_local_name')->get();
+
+        $product_detail = Catalog::findOrFail($product_id);
+        $info_category = ProductType::with('children')->whereIn('parent_id', function ($subquery) {
+            $subquery->select('id')->from('product_type')->where('code', 'cea');
+        })->orderBy('name', 'asc')->get();
+        $info_category = $info_category->pluck('id')->values()->all();
+
+        $category = ProductType::with('ancestors')->find($product_detail->product_type);
+        $category_id = $this->getAncestors($category,$info_category);
+
+        $specificationInfo = ProductSpecificationInfo::join('product_specification_info_category_link','product_specification_info_category_link.specification_info_id', '=', 'product_specification_info.id')->where('product_specification_info.store_type_id',$store_type_id)->where('product_specification_info_category_link.product_type_id',$category_id)->orderBy('product_specification_info.field_local_name')->get();
+
         return response()->json([
             'html' => view('catalog.specification', compact('specificationInfo','specificationArr'))->render(),
         ]);
 
     }
 
+    private function getAncestors($category,$info_category)
+    {
+        if ($category->parent) {
+            //echo $category->parent->name . "\n";
+            if(in_array($category->parent->id, $info_category)){
+                return $category->parent->id;
+            }
+            $this->getAncestors($category->parent,$info_category);
+        }
+    }
+
     public function getSpecificationOption(Request $request){
         $store_type_id = $request->input('store_type_id');
-        $specificationInfo = ProductSpecificationInfo::where('store_type_id',$store_type_id)->get();
+        $specificationInfo = ProductSpecificationInfo::where('store_type_id',$store_type_id)->orderBy('field_local_name')->get();
         $option = '<option value=""></option>';
         if(!empty($specificationInfo)){
             foreach($specificationInfo as $spec){
                 $option .= '<option value="'.$spec->field_local_name.'">'.$spec->field_local_name.'</option>';
 
-                $field_option = ProductSpecificationOption::where('field_local_name',$spec->field_local_name)->first();
+                $field_option = ProductSpecifcationUniqueInfo::where('field_name',$spec->name)->first();
+                $field = $valoption = '';
+                if(!empty($field_option)){
+                    $field = 'select';
+                    $optionvalueArr = ProductSpecificationValue::where('product_specification_id',$field_option->id)->get();
+                    if(!empty($optionvalueArr)){
+                        $valoption = '<option value=""></option>';
+                        foreach($optionvalueArr as $val){
+                            $valoption .= '<option value="'.trim($val->id).'">'.trim($val->field_value).'</option>';
+                        }
+                    }
+                }else{
+                    $field = 'input';
+                    $valoption = '';
+                }
+
+                /*$field_option = ProductSpecificationOption::where('field_local_name',$spec->field_local_name)->first();
                 $field = $valoption = '';
                 if(!empty($field_option)){
                     $optionvalue = $field_option->field_option;
@@ -1071,7 +1107,7 @@ class CatalogController extends Controller
                         $field = 'input';
                         $valoption = $optionvalue;
                     }
-                }
+                }*/
             }
         }
 

@@ -23,7 +23,7 @@
 
                         </select>
                     </td>
-                    <td>
+                    <td class="field_option">
                         @if($specification->field == 'select')
 
                             <select class="form-control" name="specification_value[]">
