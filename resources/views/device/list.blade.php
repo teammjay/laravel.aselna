@@ -334,7 +334,8 @@
                     `);
                 });
 
-
+                $('.carrier_count').html('');
+                $('.interface_count').html('');
             });
 
             // Handle tab changes
