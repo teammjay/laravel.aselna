@@ -18,7 +18,7 @@ class ProductSpecificationInfoController extends Controller
      */
     public function index()
     {
-        $specification_infos = ProductSpecificationInfo::with('storeType')->get();
+        $specification_infos = ProductSpecificationInfo::with('storeType','productTypes.productType')->get();
         return view('specification_info.list', compact('specification_infos'));
     }
 

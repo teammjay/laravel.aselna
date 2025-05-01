@@ -13,4 +13,8 @@ class productSpecificationInfoCategoryLink extends Model
     public $incrementing = false;
 
     protected $fillable = ['specification_info_id', 'product_type_id'];
+
+    public function productType(){
+        return $this->belongsTo(ProductType::class, 'product_type_id');
+    }
 }
