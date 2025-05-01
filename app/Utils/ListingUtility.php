@@ -5,6 +5,7 @@ namespace App\Utils;
 use App\Models\ListingRequirement;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 
 class ListingUtility
 {
@@ -129,7 +130,7 @@ class ListingUtility
     }
 
 
-    public static function validate( $category, $productId): array
+    public static function validate($category, $productId, $storeTypeId): array
     {
         $requirements = ListingRequirement::where('category', $category)->get();
         $issues = [];
@@ -147,10 +148,18 @@ class ListingUtility
             }
 
             if ($req->type === 'key_value') {
-                $value = DB::table($req->table)
+                $query = DB::table($req->table)
                     ->where('product_id', $productId)
-                    ->where($req->key_column, $req->key_value)
-                    ->value($req->value_column);
+                    ->where($req->key_column, $req->key_value);
+
+                if (Schema::hasColumn($req->table, 'store_type_id')) {
+                    // Assuming you have the store_type_id value (e.g., from the request)
+                    $query->where('store_type_id', $storeTypeId);
+                }
+
+                Log::info($query->toRawSql());
+
+                $value = $query->value($req->value_column);
 
                 if (is_null($value) || $value === '') {
                     $issues[] = "Missing value for key '{$req->key_value}' in '{$req->table}'";
