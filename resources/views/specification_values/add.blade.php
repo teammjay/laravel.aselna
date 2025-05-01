@@ -68,13 +68,13 @@
                                                               name="field_value[{{$specification_value->id}}]">{{$specification_value->field_value}}</textarea>
                                                     </td>
                                                     <td>
-                                                        <button type="button"
+                                                        <button type="button" data-id="{{$specification_value->id}}"
                                                                 class="btn btn-danger remove-specification"><i
                                                                 class="fas fa-fw fa-trash"></i></button>
                                                     </td>
                                                 </tr>
                                             @endforeach
-                                        @endif
+                                        @else
                                         <tr class="field-group">
                                             <td>
                                                 <textarea class="form-control" name="field_value[]"></textarea>
@@ -84,6 +84,7 @@
                                                         class="fas fa-fw fa-trash"></i></button>
                                             </td>
                                         </tr>
+                                        @endif
                                         </tbody>
                                     </table>
                                 </div>
@@ -117,6 +118,29 @@
             });
 
             $(document).on('click', '.remove-specification', function () {
+                if($(this).data('id')) {
+                    $.ajax({
+                        type: 'POST',
+                        url: "{{ route('specification_values.removevalue') }}",
+                        data: {
+                            id: $(this).data('id')
+                        },
+                        headers: {
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        },
+                        dataType: 'json',
+                        success: function (response) {
+                        },
+                        error: function (xhr) {
+                            if (xhr.status === 422) {
+                                var errors = xhr.responseJSON.errors;
+                                alert(errors[Object.keys(errors)[0]][0]);
+                            } else {
+                                alert('An error occurred while syncing categories');
+                            }
+                        }
+                    });
+                }
                 $(this).parents('tr.field-group').remove();
             });
 

@@ -2017,7 +2017,7 @@
                     success: function (response) {
 
                         var html = '<tr class="field-group">';
-                        html += '<td><select class="form-control" name="specification[]">'+response.option+'</select></td>';
+                        html += '<td><select class="form-control select2 specification" name="specification[]">'+response.option+'</select></td>';
                         html += '<td class="field_option">';
                         if(response.field == 'select'){
                             html += '<select class="form-control" name="specification_value[]">';
@@ -2032,6 +2032,14 @@
 
 
                         $('#specification_table tbody').append(html);
+
+                        $('.specification').select2();
+                        $('.select2').on('select2:open', function () {
+                            // Wait for dropdown to render before focusing the search field
+                            setTimeout(function () {
+                                document.querySelector('.select2-container--open .select2-search__field').focus();
+                            }, 0);
+                        });
                     }
                 });
 
