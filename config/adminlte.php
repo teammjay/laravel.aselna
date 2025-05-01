@@ -382,8 +382,8 @@ return [
                     'icon' => 'fa fa-fw fa-file'
                 ],
                 [
-                    'text' => 'Product Specification Options',
-                    'url' => '/specification_option',
+                    'text' => 'Product Specification Values',
+                    'url' => '/specification_values',
                     'icon' => 'fa fa-fw fa-file'
                 ],
             ]

@@ -194,10 +194,10 @@
                             <a class="nav-link active" id="general-tab" data-toggle="tab" href="#general" role="tab">General</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" id="carrier-tab" data-toggle="tab" href="#carrier" role="tab">Carrier</a>
+                            <a class="nav-link" id="carrier-tab" data-toggle="tab" href="#carrier" role="tab">Carrier <span class="carrier_count"></span> </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" id="interfaces-tab" data-toggle="tab" href="#interfaces" role="tab">Interfaces</a>
+                            <a class="nav-link" id="interfaces-tab" data-toggle="tab" href="#interfaces" role="tab">Interfaces <span class="interface_count"></span></a>
                         </li>
                     </ul>
 
@@ -334,7 +334,8 @@
                     `);
                 });
 
-
+                $('.carrier_count').html('');
+                $('.interface_count').html('');
             });
 
             // Handle tab changes
@@ -344,6 +345,8 @@
                 console.log(device_id);
                 if(target === '#carrier' && !$('#carrier-table').data('loaded')) {
                     $.get('devices/'+device_id+'/carriers', function(data) {
+                        const c_count = data.length;
+                        $('.carrier_count').html('('+c_count+')');
                         $('#carrier-table tbody').html(
                             data.map(carr => `
                                 <tr>
@@ -357,7 +360,8 @@
 
                 if(target === '#interfaces' && !$('#interfaces-table').data('loaded')) {
                     $.get('devices/'+device_id+'/interfaces', function(data) {
-
+                        const i_count = data.length;
+                        $('.interface_count').html('('+i_count+')');
                         $('#interfaces-table tbody').html(
                             data.map(intf => `
                                 <tr>

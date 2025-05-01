@@ -428,7 +428,7 @@ class ListingController extends Controller
 //        $query->leftJoin('product_type', 'products.product_type', '=', 'product_type.id');
 
         //DB::enableQueryLog();
-        $query = Catalog::with('StoreProduct', 'image', 'productType')->select('products.product_id', 'product_sku', 'product_title', 'product_price', 'product_qty', 'products.created_at', 'product_type', 'product_image_url')->where('products.product_status', 1);
+        $query = Catalog::with('StoreProduct', 'image', 'productType','interfaces.interfaces','pinterface.interfaces')->select('products.product_id', 'product_sku', 'product_title', 'product_price', 'product_qty', 'products.created_at', 'product_type', 'product_image_url')->where('products.product_status', 1);
 
 
         // Handle Only Active Products (Remove the bundled products)
@@ -551,10 +551,13 @@ class ListingController extends Controller
         if (!empty($all_product_ids)) {
             $query->whereIn('products.product_type', $all_product_ids);
         }
-
+        //$query->limit(10);
         $products = $query->distinct()->get();
         //dd(DB::getQueryLog());
         //echo $query->toSql();die;
+        /*echo '<pre>';
+        print_r($products);
+        echo '</pre>';die;*/
 
         // Return a view or JSON
         if ($request->ajax()) {
