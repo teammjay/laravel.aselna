@@ -22,12 +22,12 @@ class FieldUtility
         return [[
             'length' => [[
 //                'decimal_value' => 3,
-                'string_value' => $cable_length->value,
+                'string_value' => $cable_length->calculated_value(),
 //                'unit' => LengthUnit::getAmazonUnitName(5),
             ]],
             'type' => [[
                 'language_tag' => 'en_US',
-                'value' => $type->value,
+                'value' => $type->calculated_value(),
             ]]
         ]];
     }
