@@ -6,6 +6,7 @@ use App\Constants\OrderStatus;
 use App\Models\ListingItem;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\OrderOperation;
 use App\Models\OrderSynchronization;
 use App\Models\Store;
 use App\Services\Marketplace\Service\AmazonService;
@@ -241,6 +242,20 @@ class OrdersController extends Controller
                 $orderObj = Order::findOrFail($orderDetail->id); // Retrieve the product by ID
                 $orderObj->update(['order_status' =>OrderStatus::getOrderStatusId('Pending')]);
             }else {
+
+                /* create customer*/
+
+                $customerData = [
+                    'first_name' => isset($data['buyer-name']) ? $data['buyer-name'] : '',
+                    'last_name' => '',
+                    'full_name' => isset($data['buyer-name']) ? $data['buyer-name'] : '',
+                    'email' => $data['buyer-email']
+                ];
+
+                $customer_detail = Customer::updateOrCreate([
+                    'order_id' => $data['order-id'],
+                ], $customerData);
+
                 $orderData = [
                     'order_id' => $data['order-id'],
                     'order_date' => date('Y-m-d H:i:s', strtotime($data['purchase-date'])),
@@ -249,6 +264,7 @@ class OrdersController extends Controller
                     'buyer_first_name' => $data['buyer-name'],
                     'buyer_last_name' => '',
                     'buyer_email' => $data['buyer-email'],
+                    'customer_id' => $customer_detail->id,
                     'purchase_order_id' => $data['order-id'],
                     'store_id' => $store_id,
                     //'order_synchronization_id' => $order_synchronization_id,
@@ -257,6 +273,24 @@ class OrdersController extends Controller
                 $order_detail = Order::updateOrCreate([
                     'order_id' => $data['order-id'],
                 ], $orderData);
+
+                /* create order operatation*/
+                $orderOperationData = [
+                    'order_id' => $order_detail->id,
+                    'ship_date' => date('Y-m-d H:i:s'),
+                    'insurance_value' => 0,
+                    'status' => 1,
+                    'signature_confirmation' => 1,
+                    'store_id' => $store->id,
+                    'operation_type' => 1,
+                    'label_creation_type' => 1,
+                    'print_to_file' => 0,
+                    'seller_provides_return_label' => 0
+                ];
+
+                $order_operation_detail = OrderOperation::updateOrCreate([
+                    'order_id' => $order_detail->id,
+                ], $orderOperationData);
 
                 /* get order items*/
                 $amazonService = new AmazonService();

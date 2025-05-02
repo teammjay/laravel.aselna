@@ -428,7 +428,7 @@ class ListingController extends Controller
 //        $query->leftJoin('product_type', 'products.product_type', '=', 'product_type.id');
 
         //DB::enableQueryLog();
-        $query = Catalog::with('StoreProduct', 'image', 'productType')->select('products.product_id', 'product_sku', 'product_title', 'product_price', 'product_qty', 'products.created_at', 'product_type', 'product_image_url')->where('products.product_status', 1);
+        $query = Catalog::with('StoreProduct', 'image', 'productType','interfaces.interfaces','pinterface.interfaces')->select('products.product_id', 'product_sku', 'product_title', 'product_price', 'product_qty', 'products.created_at', 'product_type', 'product_image_url')->where('products.product_status', 1);
 
 
         // Handle Only Active Products (Remove the bundled products)
@@ -551,10 +551,13 @@ class ListingController extends Controller
         if (!empty($all_product_ids)) {
             $query->whereIn('products.product_type', $all_product_ids);
         }
-
+        //$query->limit(10);
         $products = $query->distinct()->get();
         //dd(DB::getQueryLog());
         //echo $query->toSql();die;
+        /*echo '<pre>';
+        print_r($products);
+        echo '</pre>';die;*/
 
         // Return a view or JSON
         if ($request->ajax()) {
@@ -1446,7 +1449,7 @@ class ListingController extends Controller
                 $titles[$cnt]['model_detail'][] = $device;
                 //$currentTitle .= ($currentTitle === $baseTitle ? ' ' : ' '.$separator.' ') . $nameToAdd;
                 $currentModels[] = str_replace($device->brand_name . ' ', '', $nameToAdd);
-                if (empty($currentDevices)) {
+                if (empty($currentDevices) && strtolower($device->brand_name) != 'apple') {
                     $currentDevices[] = $device->brand_name . ' ' . $nameToAdd;
                 } else {
                     $currentDevices[] = $nameToAdd;
@@ -1557,9 +1560,11 @@ class ListingController extends Controller
             // Split the device into brand and model
             $currentBrand = $device->brand_name . ' ' . $device->name;
             /*if (strtolower($store_type) == 'ebay' && strtolower($device->brand_name) == 'apple') {*/
+
             if (strtolower($device->brand_name) == 'apple') {
                 $currentBrand = $device->name;
             }
+
             $brandName = $device->brand_name;
             $currentMod = $device->name;
             $parts = explode(' ', $device->name, 2);
@@ -1654,8 +1659,8 @@ class ListingController extends Controller
                 $titles[$cnt]['model_detail'][] = $device;
                 //$currentTitle .= ($currentTitle === $baseTitle ? ' ' : ' '.$separator.' ') . $nameToAdd;
                 $currentModels[] = str_replace($device->brand_name . ' ', '', $nameToAdd);
-                if (empty($currentDevices)) {
-                    $currentDevices[] = $device->brand_name . ' ' . $nameToAdd;
+                if (empty($currentDevices) && strtolower($device->brand_name) != 'apple') {
+                    $currentDevices[] = $brandName . ' ' . $nameToAdd;
                 } else {
                     $currentDevices[] = $nameToAdd;
                 }
@@ -1885,7 +1890,7 @@ class ListingController extends Controller
                 $titles[$cnt]['model'][] = $device->name;
                 $titles[$cnt]['model_detail'][] = $device;
                 $currentModels[] = $nameToAdd;
-                if (empty($currentDevices)) {
+                if (empty($currentDevices) && strtolower($device->brand_name) != 'apple') {
                     $currentDevices[] = $device->brand_name . ' ' . $nameToAdd;
                 } else {
                     $currentDevices[] = $nameToAdd;

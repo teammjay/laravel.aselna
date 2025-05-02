@@ -8,6 +8,7 @@ use App\Jobs\FetchMagentoOrderJob;
 use App\Jobs\FetchShopifyOrders;
 use App\Jobs\FetchWalmartOrdersJob;
 use App\Jobs\SubmitShopifyProductsJob;
+use App\Jobs\synccategorytospecification;
 use App\Models\Listing;
 use App\Models\ListingFeed;
 use App\Models\ListingItem;
@@ -94,7 +95,8 @@ class HomeController extends Controller
 
         Bus::chain([
             //new SubmitShopifyProductsJob(),
-            new FetchShopifyOrders()
+            new synccategorytospecification(),
+            //new FetchShopifyOrders()
         ])->dispatch();
     }
 

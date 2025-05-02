@@ -29,4 +29,8 @@ class ProductSpecificationInfo extends Model
         return $this->belongsTo(StoreType::class,'store_type_id');
     }
 
+    public function productTypes(){
+        return $this->hasMany(productSpecificationInfoCategoryLink::class,'specification_info_id','id');
+    }
+
 }

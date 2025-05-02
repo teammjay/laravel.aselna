@@ -15,6 +15,7 @@
             <td>{{ $product->product_title  }}</td>
             <td>{{ $product->product_price }}</td>
             <td>{{ $product->product_qty }}</td>
+            <td>{{ (isset($product->pinterface)) ? $product->pinterface->interfaces->name : '' }}</td>
             <td>{{ $product->created_at }}</td>
 
         </tr>

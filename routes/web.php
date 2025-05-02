@@ -46,6 +46,7 @@ use App\Http\Controllers\ShippingCarrierPackageController;
 use App\Http\Controllers\ShippingPackageController;
 use App\Http\Controllers\ShippingServiceRulesController;
 use App\Http\Controllers\ProductSpecificationInfoController;
+use App\Http\Controllers\ProductSpecificationValueController;
 use App\Http\Controllers\ProductSpecificationOptionsController;
 use App\Http\Controllers\PrintersController;
 use App\Http\Controllers\PrinterClientsController;
@@ -497,16 +498,17 @@ Route::middleware('auth')->group(function () {
         Route::post('/specification_info/edit/{id}', 'update')->name('specification_info.update');
         Route::get('/specification_info/delete/{id}', 'destroy')->name('specification_info.delete');
         Route::get('/specification_info/getinfo', 'getInfo')->name('specification_info.getinfo');
+        //Route::get('/specification_info/fillcategory', 'fillcategory')->name('specification_info.fillcategory');
     });
 
-    Route::controller(ProductSpecificationOptionsController::class)->group(function () {
-        Route::get('/specification_option', 'index')->name('specification_option.index');
-        Route::get('/specification_option/add', 'create')->name('specification_option.create');
-        Route::post('/specification_option/add', 'store')->name('specification_option.store');
-        Route::get('/specification_option/edit/{id}', 'edit')->name('specification_option.edit');
-        Route::post('/specification_option/edit/{id}', 'update')->name('specification_option.update');
-        Route::get('/specification_option/delete/{id}', 'destroy')->name('specification_option.delete');
-        Route::get('/specification_option/getinfo', 'getInfo')->name('specification_option.getinfo');
+    Route::controller(ProductSpecificationValueController::class)->group(function () {
+        Route::get('/specification_values', 'index')->name('specification_values.index');
+        Route::get('/specification_values/add', 'create')->name('specification_values.create');
+        Route::post('/specification_values/add', 'store')->name('specification_values.store');
+        Route::get('/specification_values/edit/{id}', 'edit')->name('specification_values.edit');
+        Route::post('/specification_values/edit/{id}', 'update')->name('specification_values.update');
+        Route::get('/specification_values/delete/{id}', 'destroy')->name('specification_values.delete');
+        Route::post('/specification_values/removevalue', 'removeValue')->name('specification_values.removevalue');
     });
 
     Route::controller(PrintersController::class)->group(function () {

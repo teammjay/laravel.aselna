@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\ProductSpecificationInfoRequest;
+use App\Models\Catalog;
 use App\Models\ProductSpecification;
 use App\Models\ProductSpecificationInfo;
+use App\Models\productSpecificationInfoCategoryLink;
 use App\Models\ProductType;
 use App\Models\StoreType;
 use Illuminate\Http\Request;
@@ -17,7 +19,7 @@ class ProductSpecificationInfoController extends Controller
      */
     public function index()
     {
-        $specification_infos = ProductSpecificationInfo::with('storeType')->get();
+        $specification_infos = ProductSpecificationInfo::with('storeType','productTypes.productType')->get();
         return view('specification_info.list', compact('specification_infos'));
     }
 
@@ -28,7 +30,10 @@ class ProductSpecificationInfoController extends Controller
     public function create()
     {
         $store_types = StoreType::all();
-        return view('specification_info.add', compact('store_types'));
+        $product_types = ProductType::with('children')->whereIn('parent_id', function ($subquery) {
+            $subquery->select('id')->from('product_type')->where('code', 'cea');
+        })->orderBy('name', 'asc')->get();
+        return view('specification_info.add', compact('store_types','product_types'));
     }
 
     /**
@@ -43,7 +48,22 @@ class ProductSpecificationInfoController extends Controller
         $created_by = auth()->user()->name ?? 'admin';
         $request->merge(['created_by' => $created_by, 'updated_by' => $created_by]);
 
-        ProductSpecificationInfo::create($request->all());
+        $info = ProductSpecificationInfo::create($request->except(['product_type_id']));
+        $info_id = $info->id;
+
+        if($request->has('product_type_id')){
+
+            for($i=0; $i < count($request->product_type_id); $i++){
+                $data[] = array(
+                    'specification_info_id' => $info_id,
+                    'product_type_id' => $request->product_type_id[$i]
+                );
+            }
+
+            productSpecificationInfoCategoryLink::where('specification_info_id', $info_id)->delete();
+            productSpecificationInfoCategoryLink::insert($data);
+        }
+
 
         return redirect()->route('specification_info.index')
             ->with('success', 'Specification info created successfully.');
@@ -56,7 +76,13 @@ class ProductSpecificationInfoController extends Controller
     {
         $specification_info = ProductSpecificationInfo::findOrFail($id);
         $store_types = StoreType::all();
-        return view('specification_info.add', compact('specification_info','store_types'));
+        $product_types = ProductType::with('children')->whereIn('parent_id', function ($subquery) {
+            $subquery->select('id')->from('product_type')->where('code', 'cea');
+        })->orderBy('name', 'asc')->get();
+
+        $info_category = productSpecificationInfoCategoryLink::where('specification_info_id', $id)->get();
+        $info_category = $info_category->pluck('product_type_id')->values()->all();
+        return view('specification_info.add', compact('specification_info','store_types','product_types','info_category'));
     }
 
     /**
@@ -71,7 +97,20 @@ class ProductSpecificationInfoController extends Controller
         $updated_by = auth()->user()->name ?? 'admin';
         $request->merge(['updated_by' => $updated_by]);
 
-        ProductSpecificationInfo::findOrFail($id)->update($request->all());
+        ProductSpecificationInfo::findOrFail($id)->update($request->except(['product_type_id']));
+
+        if($request->has('product_type_id')){
+
+            for($i=0; $i < count($request->product_type_id); $i++){
+                $data[] = array(
+                    'specification_info_id' => $id,
+                    'product_type_id' => $request->product_type_id[$i]
+                );
+            }
+
+            productSpecificationInfoCategoryLink::where('specification_info_id', $id)->delete();
+            productSpecificationInfoCategoryLink::insert($data);
+        }
 
         return redirect()->route('specification_info.index')
             ->with('success', 'Specification info updated successfully.');

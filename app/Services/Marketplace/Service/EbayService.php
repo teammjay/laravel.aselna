@@ -242,14 +242,14 @@ class EbayService implements MarketplaceServiceInterface
                 if(isset($listingItem->listingItem->devices) && count($listingItem->listingItem->devices ?? []) > 0){
                     foreach($listingItem->listingItem->devices as $k=>$device){
                         if($k >= 30){ break;}
-                        if (strtolower($listingItem->listingItem->brand->name) == 'apple') {
+                        if (strtolower($listingItem->listingItem->brand->name) == 'apple' || strtolower($listingItem->listingItem->brand->name) == 'unlocked') {
                             $fitModel[] = (isset($listingItem->listingItem->brand)) ? $device->device->name : '';
                         } else {
                             $fitModel[] = (isset($listingItem->listingItem->brand)) ? $listingItem->listingItem->brand->name . ' ' . $device->device->name : '';
                         }
                     }
                 }else {
-                    if (strtolower($listingItem->listingItem->brand->name) == 'apple') {
+                    if (strtolower($listingItem->listingItem->brand->name) == 'apple' || strtolower($listingItem->listingItem->brand->name) == 'unlocked') {
                         $fitModel[] = (isset($listingItem->listingItem->brand)) ? $listingItem->listingItem->device->name : '';
                     } else {
                         $fitModel[] = (isset($listingItem->listingItem->brand)) ? $listingItem->listingItem->brand->name . ' ' . $listingItem->listingItem->device->name : '';
@@ -258,7 +258,7 @@ class EbayService implements MarketplaceServiceInterface
                 sort($fitModel);
                 $specifics = [
                     ['Type', $listingItem->listingItem->storeProduct->StoreTypeCategory->name],
-                    ['Fits Model', $fitModel],
+                   /* ['Fits Model', $fitModel],*/
                     ['Brand', $listingItem->listingItem->storeProduct->store->name],
                     ['MPN', $itemDetail->mpn],
                     ['Model', $itemDetail->mpn],
@@ -293,7 +293,7 @@ class EbayService implements MarketplaceServiceInterface
                     $nameValueList->addChild('Value', $listingItem->listingItem->storeProduct->product->color->name);
                 }
 
-                $productSpecification = ProductSpecification::where('product_id',$product->product_id)->get();
+                $productSpecification = ProductSpecification::where('product_id',$product->product_id)->where('store_type_id',$store_type_detail->id)->get();
                 if(count($productSpecification ?? []) > 0){
                     foreach($productSpecification as $specificaiton){
 
@@ -371,10 +371,15 @@ class EbayService implements MarketplaceServiceInterface
                     }
                     $nameValueList1 = $variationSpecifics->addChild('NameValueList');
                     $nameValueList1->addChild('Name', 'Compatible Model');
-                    if(strtolower($variant->device->brand->name) == 'apple'){
+                    if(strtolower($variant->device->brand->name) == 'apple' || strtolower($variant->device->brand->name) == 'unlocked'){
                         if($listingInfo->include_carriers && !$listingInfo->carrier_combo && isset($variant->carrier)) {
-                            $deviceName = $variant->carrier->name.' '.$variant->device->name;
-                            $compatibleModels[] = $variant->carrier->name.' '.$variant->device->name;
+                            if(strtolower($variant->carrier->name) == 'unlocked'){
+                                $deviceName = $variant->device->name;
+                                $compatibleModels[] = $variant->device->name;
+                            }else {
+                                $deviceName = $variant->carrier->name . ' ' . $variant->device->name;
+                                $compatibleModels[] = $variant->carrier->name . ' ' . $variant->device->name;
+                            }
                         }else{
                             $deviceName = $variant->device->name;
                             $compatibleModels[] = $variant->device->brand->name.' '.$variant->device->name;
@@ -386,7 +391,11 @@ class EbayService implements MarketplaceServiceInterface
 
                     }else{
                         if($listingInfo->include_carriers && !$listingInfo->carrier_combo && isset($variant->carrier)) {
-                            $deviceName = $variant->carrier->name.' '.$variant->device->brand->name . ' ' . $variant->device->name;
+                            if(strtolower($variant->carrier->name) == 'unlocked') {
+                                $deviceName = $variant->device->brand->name . ' ' . $variant->device->name;
+                            }else{
+                                $deviceName = $variant->carrier->name . ' ' . $variant->device->brand->name . ' ' . $variant->device->name;
+                            }
                         }else{
                             $deviceName = $variant->device->brand->name.' '.$variant->device->name;
                         }
@@ -427,6 +436,9 @@ class EbayService implements MarketplaceServiceInterface
                 if($lastmodel != $model) {
                     if (strpos($model, 'Apple') !== false) {
                         $newmodel = str_replace('Apple', '', $model);
+                        $nameValueList2->addChild('Value', trim($newmodel));
+                    }else if(strpos($model, 'UNLOCKED') !== false){
+                        $newmodel = str_replace('UNLOCKED', '', $model);
                         $nameValueList2->addChild('Value', trim($newmodel));
                     } else {
                         $nameValueList2->addChild('Value', trim($model));

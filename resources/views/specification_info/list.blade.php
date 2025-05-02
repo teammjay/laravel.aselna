@@ -22,6 +22,7 @@
                     <th>Field Name</th>
                     <th>Field Local Name</th>
                     <th>Store Type</th>
+                    <th>Product Type</th>
                     <th>Required</th>
                     <th>Action</th>
                 </tr>
@@ -32,6 +33,21 @@
                         <td>{{ $spec_info->field_name }}</td>
                         <td>{{ $spec_info->field_local_name }}</td>
                         <td>{{ (isset($spec_info->storeType)) ? $spec_info->storeType->name : '' }}</td>
+                        <td>
+                            @php
+                                $cat = [];
+                                if(isset($spec_info->productTypes)){
+                                    foreach($spec_info->productTypes as $ptype){
+                                        if(isset($ptype->productType)){
+                                            $cat[]= $ptype->productType->name;
+                                        }
+                                    }
+                                }
+                            @endphp
+
+
+                            {{ implode(',',$cat) }}
+                        </td>
                         <td>{{ ($spec_info->required == 1) ? 'Yes' : 'No' }}</td>
                         <td>
                             <a href="{{ route('specification_info.edit', $spec_info->id) }}" class="btn btn-primary" title="Edit">
