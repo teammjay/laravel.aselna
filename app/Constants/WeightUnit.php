@@ -64,15 +64,15 @@ class WeightUnit
 
     public static function getAmazonUnitName($unitId)
     {
-        if (strtolower($unitId) == 'kg') {
+        if (strtolower($unitId) == 'kg' || $unitId == 3) {
             $unitId = self::KG;
-        } elseif (strtolower($unitId) == 'g') {
+        } elseif (strtolower($unitId) == 'g' || $unitId == 2) {
             $unitId = self::G;
-        } elseif (strtolower($unitId) == 'oz') {
+        } elseif (strtolower($unitId) == 'oz' || $unitId == 0) {
             $unitId = self::OZ;
-        } elseif (strtolower($unitId) == 'lb') {
+        } elseif (strtolower($unitId) == 'lb' || $unitId == 1) {
             $unitId = self::LB;
-        } elseif (strtolower($unitId) == 'mg') {
+        } elseif (strtolower($unitId) == 'mg' || $unitId == 4) {
             $unitId = self::MG;
         }
         return self::amazonNames[$unitId];

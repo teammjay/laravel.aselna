@@ -155,7 +155,7 @@ class FetchShopifyOrders implements ShouldQueue
                                                 'client_id' => '',
                                                 'listing_item_id' => '',
                                                 'sku' => $item['sku'],
-                                                'store_sku' => '',
+                                                'store_sku' => $order['id'],
                                                 'quantity' => $item['quantity'],
                                                 'id1' => $item['id'],
                                                 'item_price' => isset($item['variant']['price']) ? $item['variant']['price'] : 0,
