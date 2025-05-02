@@ -314,8 +314,11 @@
                                                     <div class="d-flex">
                                                         <input type="text" class="form-control mr-1" id="product_weight" name="product_weight" value="{{ old('product_weight',$product->product_weight) }}" placeholder="">
                                                         <select class="form-control w-25" id="product_weight_unit" name="product_weight_unit">
-                                                            <option value="kg" {{ "kg" == $product->product_weight_unit ? 'selected' : '' }}> Kg </option>
-                                                            <option value="oz" {{ "oz" == $product->product_weight_unit ? 'selected' : '' }}> OZ </option>
+                                                            <option value="0" {{ 0 == $product->product_weight_unit ? 'selected' : '' }}>Oz</option>
+                                                            <option value="1" {{ 1 == $product->product_weight_unit ? 'selected' : '' }}>Lb</option>
+                                                            <option value="2" {{ 2 == $product->product_weight_unit ? 'selected' : '' }}>G</option>
+                                                            <option value="3" {{ 3 == $product->product_weight_unit ? 'selected' : '' }}>Kg</option>
+                                                            <option value="4" {{ 4 == $product->product_weight_unit ? 'selected' : '' }}>Mg</option>
                                                         </select>
                                                     </div>
                                                 </div>
@@ -337,8 +340,11 @@
                                                     <div class="d-flex">
                                                         <input type="text" class="form-control mr-1" id="package__weight" name="package_weight" value="{{ old('package_weight',$product->package_weight) }}" placeholder="">
                                                         <select class="form-control w-25" id="package_weight_unit" name="package_weight_unit">
-                                                            <option value="kg" {{ "kg" == $product->package_weight_unit ? 'selected' : '' }}> Kg </option>
-                                                            <option value="oz" {{ "oz" == $product->package_weight_unit ? 'selected' : '' }}> OZ </option>
+                                                            <option value="0" {{ 0 == $product->package_weight_unit ? 'selected' : '' }}>Oz</option>
+                                                            <option value="1" {{ 1 == $product->package_weight_unit ? 'selected' : '' }}>Lb</option>
+                                                            <option value="2" {{ 2 == $product->package_weight_unit ? 'selected' : '' }}>G</option>
+                                                            <option value="3" {{ 3 == $product->package_weight_unit ? 'selected' : '' }}>Kg</option>
+                                                            <option value="4" {{ 4 == $product->package_weight_unit ? 'selected' : '' }}>Mg</option>
                                                         </select>
                                                     </div>
                                                 </div>

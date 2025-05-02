@@ -147,7 +147,7 @@ class AmazonUtility
             'color' => [['value' => $productData->color->name ?? 'Black', 'language_tag' => 'en_US']],
             'connectivity_technology' => [['value' => $connectivity->calculated_value(), 'language_tag' => 'en_US',]],
             'headphones_form_factor' => [['value' => $form_factor->calculated_value(), 'language_tag' => 'en_US',]],
-            'model_name' => FieldUtility::getComaptiblePhoneModels($itemDetail, 1),
+            'model_name' => [['value' => $itemDetail->sku, 'language_tag' => 'en_US']],
             'included_components' => [['value' => $items_included->calculated_value(), 'language_tag' => 'en_US']],
             'number_of_items' => [['value' => $items_count->calculated_value()]],
             'model_number' => [['value' => $itemDetail->sku]],
