@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\ProductSpecificationInfoRequest;
+use App\Models\Catalog;
 use App\Models\ProductSpecification;
 use App\Models\ProductSpecificationInfo;
 use App\Models\productSpecificationInfoCategoryLink;

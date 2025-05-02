@@ -12,6 +12,8 @@ class productSpecificationInfoCategoryLink extends Model
 
     public $incrementing = false;
 
+    public $timestamps = false;
+
     protected $fillable = ['specification_info_id', 'product_type_id'];
 
     public function productType(){

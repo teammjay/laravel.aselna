@@ -498,6 +498,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/specification_info/edit/{id}', 'update')->name('specification_info.update');
         Route::get('/specification_info/delete/{id}', 'destroy')->name('specification_info.delete');
         Route::get('/specification_info/getinfo', 'getInfo')->name('specification_info.getinfo');
+        //Route::get('/specification_info/fillcategory', 'fillcategory')->name('specification_info.fillcategory');
     });
 
     Route::controller(ProductSpecificationValueController::class)->group(function () {
