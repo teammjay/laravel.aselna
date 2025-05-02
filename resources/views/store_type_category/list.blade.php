@@ -36,7 +36,7 @@
                         <td>{{ $sType->name }}</td>
                         <td>{{ isset($sType->parent->name) ? $sType->parent->name : '' }}</td>
                         <td>{{ isset($sType->storetype->name) ? $sType->storetype->name : '' }}</td>
-                        <td>{{ isset($sType->storetype->marketplace_code) ? $sType->storetype->marketplace_code : '' }}</td>
+                        <td>{{ isset($sType->marketplace_code) ? $sType->marketplace_code : '' }}</td>
                         <td>
                             <a href="{{ route('store_type_category.edit', $sType->id) }}" class="btn btn-primary" title="Edit">
                                 <i class="fas fa-fw fa-pencil-alt"></i>
