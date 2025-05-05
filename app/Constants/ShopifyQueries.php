@@ -27,8 +27,8 @@ GQL;
 
     // Query to get orders with a dynamic limit
 public static $getOrders = <<<GQL
-    query getOrders(\$first: Int!) {
-        orders(first: \$first) {
+    query getOrders(\$first: Int!, \$query:String) {
+        orders(first: \$first, query: \$query) {
             edges {
                 node {
                     id

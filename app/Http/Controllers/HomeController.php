@@ -95,8 +95,8 @@ class HomeController extends Controller
 
         Bus::chain([
             //new SubmitShopifyProductsJob(),
-            new synccategorytospecification(),
-            //new FetchShopifyOrders()
+            //new synccategorytospecification(),
+            new FetchShopifyOrders()
         ])->dispatch();
     }
 

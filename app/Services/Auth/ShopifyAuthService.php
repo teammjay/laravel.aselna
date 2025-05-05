@@ -166,7 +166,7 @@ class ShopifyAuthService
         }
     }
 
-    public function getOrders()
+    public function getOrders($sync_start_date, $sync_end_date)
     {
 
         //$fields = $this->getOrdersField();
@@ -188,7 +188,7 @@ class ShopifyAuthService
               }
             }
             GQL;*/
-            $result = $this->makeGraphQLRequest(ShopifyQueries::$getOrders, array('first' => 50));
+            $result = $this->makeGraphQLRequest(ShopifyQueries::$getOrders, array('first' => 50,'query' => 'created_at:>'.$sync_start_date));
             if (!isset($result['errors'])) {
                 return $result['data']['orders']['edges'];
             }

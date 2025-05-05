@@ -38,25 +38,25 @@ class FetchEbayOrders implements ShouldQueue
 
         if(count($stores ?? []) > 0) {
             foreach ($stores as $store) {
-                $created_by = auth()->user()->name ?? 'admin';
-                /* create order synchronization*/
-                $synchronizeArr = [
-                    'store_id' => $store->id,
-                    'number_of_items' => '',
-                    'synchronization_type' => '',
-                    'filter_start_date' => date('Y-m-d H:i:s'),
-                    'filter_end_date' => '',
-                    'last_order_update_date' => date('Y-m-d H:i:s'),
-                    'created_by' => $created_by
-                ];
-                $order_synchronization = OrderSynchronization::create($synchronizeArr);
-                $order_synchronization_id = $order_synchronization->id;
-
 
                 $ebayService = new EbayService();
                 $orders = $ebayService->getOrders($store);
 
                 if (!isset($orders['total']) && $orders['total'] > 0) {
+
+                    $created_by = auth()->user()->name ?? 'admin';
+                    /* create order synchronization*/
+                    $synchronizeArr = [
+                        'store_id' => $store->id,
+                        'number_of_items' => '',
+                        'synchronization_type' => '',
+                        'filter_start_date' => date('Y-m-d H:i:s'),
+                        'filter_end_date' => '',
+                        'last_order_update_date' => date('Y-m-d H:i:s'),
+                        'created_by' => $created_by
+                    ];
+                    $order_synchronization = OrderSynchronization::create($synchronizeArr);
+                    $order_synchronization_id = $order_synchronization->id;
 
                     foreach ($orders['orders'] as $order) {
 
