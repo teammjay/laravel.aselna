@@ -17,6 +17,7 @@ use App\Models\OrderSynchronization;
 use App\Models\Store;
 use Illuminate\Support\Facades\Log;
 use Mockery\Exception;
+use Nette\Utils\DateTime;
 
 class FetchShopifyOrders implements ShouldQueue
 {
@@ -44,14 +45,30 @@ class FetchShopifyOrders implements ShouldQueue
 
             if (count($stores ?? []) > 0) {
                 foreach ($stores as $store) {
-                    Log::info('Store : ' . $store->name);
                     if ($store->name != 'AccessoryWiz') {
                         continue;
                     }
+                    Log::info('Store : ' . $store->name);
+
+                    $ordersyncDetail = OrderSynchronization::where('store_id',$store->id)->orderBy('created_at')->first();
+
+                    if(!empty($ordersyncDetail)){
+                        $start_date = new DateTime($ordersyncDetail->filter_start_date);
+                        $sync_start_date = $start_date->format(DateTime::ATOM);
+                        $end_date = new DateTime($ordersyncDetail->filter_end_date);
+                        $sync_end_date = $end_date->format(DateTime::ATOM);
+                    }else{
+                        $sync_start_date = now()->subDays(7)->toIso8601String();
+                        $sync_end_date = now()->toIso8601String();
+                    }
+
+
+                    Log::info('Start Date : ' . $sync_start_date);
+                    Log::info('End Date : ' . $sync_end_date);
 
                     // get shopify order
                     $shopifyService = new ShopifyService();
-                    $orders = $shopifyService->getOrders($store);
+                    $orders = $shopifyService->getOrders($store, $sync_start_date, $sync_end_date);
 
                     if (isset($orders) && !empty($orders)) {
 
@@ -83,9 +100,10 @@ class FetchShopifyOrders implements ShouldQueue
                                 $orderObj->update(['order_status' => OrderStatus::getOrderStatusId($order['displayFulfillmentStatus'])]);
 
                                 /* check order operation for this order*/
-                                $orderOperationDetail = OrderOperation::where('order_id',$orderDetail->id)->count();
-                                if($orderOperationDetail){
-                                    $orderOperationDetail->update(['status'=>2]);
+                                $orderOperationDetail = OrderOperation::where('order_id',$orderDetail->id)->first();
+                                if(!empty($orderOperationDetail)){
+                                    $orderOpObj = OrderOperation::findOrFail($orderOperationDetail->id);
+                                    $orderOpObj->update(['status'=>2]);
                                 }
                             } else {
 
@@ -151,7 +169,7 @@ class FetchShopifyOrders implements ShouldQueue
                                             $orderItemData = [
                                                 'title' => $item['name'],
                                                 'order_id' => $order_detail->id,
-                                                'product_id' => $itemDetail->product_id,
+                                                //'product_id' => $itemDetail->product_id,
                                                 'client_id' => '',
                                                 'listing_item_id' => '',
                                                 'sku' => $item['sku'],

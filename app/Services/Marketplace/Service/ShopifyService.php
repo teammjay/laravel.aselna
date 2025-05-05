@@ -271,10 +271,10 @@ class ShopifyService implements MarketplaceServiceInterface
         return $tags;
     }
 
-    public function getOrders($store)
+    public function getOrders($store, $sync_start_date, $sync_end_date)
     {
         $this->authService = new ShopifyAuthService($store->secret_key);
-        $response = $this->authService->getOrders();
+        $response = $this->authService->getOrders($sync_start_date, $sync_end_date);
 
         return $response;
     }
