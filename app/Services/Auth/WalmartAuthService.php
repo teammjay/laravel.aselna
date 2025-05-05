@@ -127,7 +127,7 @@ class WalmartAuthService
             ]);
 
             return json_decode($response->getBody(), true);
-        } catch (RequestException $e) {
+        } catch (\Exception $e) {
             return response()->json([
                 'error' => 'Walmart API request failed',
                 'message' => $e->getMessage()

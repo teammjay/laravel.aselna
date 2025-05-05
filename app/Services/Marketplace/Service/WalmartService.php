@@ -9,6 +9,7 @@ use App\Models\ListingFeed;
 use App\Models\ListingItem;
 use App\Models\ListingItemLink;
 use App\Models\ListingItemProductImage;
+use App\Models\OrderSynchronization;
 use App\Services\Auth\WalmartAuthService;
 use App\Services\Marketplace\Contracts\MarketplaceServiceInterface;
 use App\Utils\FileUtility;
@@ -19,7 +20,7 @@ use App\Constants\FeedStatus;
 class WalmartService implements MarketplaceServiceInterface
 {
 
-    public function generateFeed($listingId,$feedId = null)
+    public function generateFeed($listingId, $feedId = null)
     {
         $listingInfo = Listing::where('id', $listingId)->first();
         $feedInfo = ListingFeed::where('id', $feedId)->first();
@@ -35,7 +36,7 @@ class WalmartService implements MarketplaceServiceInterface
                 $this->generateDeleteFeed($listingInfo, $listingId);
                 break;
             case FeedTypes::INVENTORY:
-                $this->generateInventoryFeed($listingInfo, $listingId,$feedInfo);
+                $this->generateInventoryFeed($listingInfo, $listingId, $feedInfo);
                 break;
             case FeedTypes::PRICE:
                 $this->generatePriceFeed($listingInfo, $listingId);
@@ -58,7 +59,7 @@ class WalmartService implements MarketplaceServiceInterface
         $authService = new WalmartAuthService($store->seller_id, $store->secret_key);
         $file = public_path('feeds/walmart/' . $listingId . '.json');
 
-        $response = $authService->submitFeed($file,$feedType);
+        $response = $authService->submitFeed($file, $feedType);
         Log::info('Response ::' . json_encode($response));
 
         $resultFeedId = $response['feedId'];
@@ -77,7 +78,8 @@ class WalmartService implements MarketplaceServiceInterface
         }
     }
 
-    public function submitInventoryFeedAfterCreate($listingId,$listingInfo) {
+    public function submitInventoryFeedAfterCreate($listingId, $listingInfo)
+    {
         Log::info('Submit Inventory Feed After Create');
         $created_by = auth()->user()->name ?? 'admin';
         Log::info('Created By: ' . $created_by);
@@ -91,19 +93,19 @@ class WalmartService implements MarketplaceServiceInterface
         );
         Log::info('Feed Data: ' . json_encode($feedData));
 
-        $newfeed =  ListingFeed::updateOrCreate([
+        $newfeed = ListingFeed::updateOrCreate([
             'listing_id' => $listingId,
             'feed_type' => FeedTypes::INVENTORY
         ], $feedData);
 
-        $this->generateInventoryFeed($listingInfo, $listingId,$newfeed);
+        $this->generateInventoryFeed($listingInfo, $listingId, $newfeed);
         Log::info('Inventory Feed Generated: ' . json_encode($newfeed));
 
         $this->submitFeed($newfeed->id, $listingId);
         Log::info('Inventory Feed Submitted: ' . json_encode($newfeed));
     }
 
-    public function getResultFeed(mixed $listingId,$feedId = null)
+    public function getResultFeed(mixed $listingId, $feedId = null)
     {
         $listingInfo = Listing::where('id', $listingId)->first();
         $store = $listingInfo->store;
@@ -112,7 +114,7 @@ class WalmartService implements MarketplaceServiceInterface
 
         $feedInfo = ListingFeed::where('id', $feedId)->first();
 
-        $response = $authService->getFeedStatus($feedInfo->feed_id,$feedInfo->number_of_items);
+        $response = $authService->getFeedStatus($feedInfo->feed_id, $feedInfo->number_of_items);
         Log::info('Feed Status: ' . json_encode($response));
 
         if ($response['feedStatus'] != 'PROCESSED') return null;
@@ -127,8 +129,8 @@ class WalmartService implements MarketplaceServiceInterface
         if ($feedInfo->feed_type == FeedTypes::CREATE) {
             foreach ($response['itemDetails']['itemIngestionStatus'] as $item) {
                 $listingItems = ListingItem::where('sku', $item['sku'])->get();
-                foreach($listingItems as $listingItem) {
-                    if($item['ingestionStatus'] && isset($item['itemid'])) {
+                foreach ($listingItems as $listingItem) {
+                    if ($item['ingestionStatus'] && isset($item['itemid'])) {
                         $listingItem->update([
                             'store_sku' => $item['itemid']
                         ]);
@@ -141,15 +143,15 @@ class WalmartService implements MarketplaceServiceInterface
 
         }
 
-        if($response['feedStatus'] == 'PROCESSED' && intval($response['itemsSucceeded']) > 0
-                && $feedInfo->feed_type == FeedTypes::CREATE) {
-            $this->submitInventoryFeedAfterCreate($listingId,$listingInfo);
+        if ($response['feedStatus'] == 'PROCESSED' && intval($response['itemsSucceeded']) > 0
+            && $feedInfo->feed_type == FeedTypes::CREATE) {
+            $this->submitInventoryFeedAfterCreate($listingId, $listingInfo);
         }
 
         // save response into folder
         FileUtility::saveToFile(public_path('result-feeds/walmart/' . $feedInfo->id . '.json'), json_encode($response));
 
-        $feedInfo-> update([
+        $feedInfo->update([
             'status' => FeedStatus::PROCESSED
         ]);
 
@@ -160,12 +162,12 @@ class WalmartService implements MarketplaceServiceInterface
             foreach ($listing_items as $item) {
 
                 $listingItem = ListingItem::findOrFail($item->item_id);
-                if($listingItem->store_sku != ''){
+                if ($listingItem->store_sku != '') {
                     $listingItem->update([
                         'sync_status' => ListingSyncStatus::Synchronized
                     ]);
                     $successCnt++;
-                }else{
+                } else {
                     $listingItem->update([
                         'sync_status' => ListingSyncStatus::Unsynchronize
                     ]);
@@ -238,14 +240,14 @@ class WalmartService implements MarketplaceServiceInterface
             foreach ($item->devices as $device) {
                 if (isset($device->device->brand) && (strtolower($device->device->brand->name) == 'apple' || strtolower($device->device->brand->name) == 'unlocked')) {
                     $compatibleDevices[] = $device->device->name;
-                }else {
+                } else {
                     $compatibleDevices[] = $device->device->brand->name . ' ' . $device->device->name;
                 }
             }
 
             $keyFeatures = [];
             foreach ($productObj->productKeyFeatures as $feature) {
-                if($feature->value == '' || !isset($feature->value)) continue;
+                if ($feature->value == '' || !isset($feature->value)) continue;
                 $keyFeatures[] = $feature->value;
             }
 
@@ -333,7 +335,7 @@ class WalmartService implements MarketplaceServiceInterface
         }
 
         Log::info('Listing Feed Type: ' . $feedInfo->feed_type);
-        if($feedInfo->feed_type == FeedTypes::CREATE) {
+        if ($feedInfo->feed_type == FeedTypes::CREATE) {
             FileUtility::saveToFile(public_path('feeds/walmart/I_' . $listingId . '.json'), json_encode($jsonFeed));
         } else {
             FileUtility::saveToFile(public_path('feeds/walmart/' . $listingId . '.json'), json_encode($jsonFeed));
@@ -375,8 +377,12 @@ class WalmartService implements MarketplaceServiceInterface
 
     public function getOrders($store)
     {
-        $this->authService = new WalmartAuthService($store->seller_id, $store->secret_key);
-        $response = $this->authService->getOrders();
+        $authService = new WalmartAuthService($store->seller_id, $store->secret_key);
+        $last_synchronization = OrderSynchronization::where('store_id', $store->id)->orderBy('filter_end_date', 'desc')->first();
+        $last_order_time = isset($last_synchronization) ? $last_synchronization->filter_end_date : date('Y-m-d H:i:s', strtotime('-180 days'));
+        Log::info('Last Sync: ' . $last_order_time);
+
+        $response = $authService->getOrders();
         /*echo '<pre>';
         print_r($response);
         echo '</pre>';die;*/
