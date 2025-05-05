@@ -4,10 +4,28 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
 
 class Customer extends Model
 {
     use HasFactory;
+
+    protected $table = 'customers';
+
+    protected $keyType = 'string';
+
+    public $incrementing = false;
+
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($model) {
+            if (empty($model->id)) {
+                $model->id = (string)Str::uuid();
+            }
+        });
+    }
 
     protected $fillable = [
         'first_name', 'last_name', 'full_name', 'store_id', 'user_id', 'group', 'marketplace_customer_id', 'email'
