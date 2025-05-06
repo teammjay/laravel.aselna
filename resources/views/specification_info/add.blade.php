@@ -83,13 +83,14 @@
                         <div class="form-group">
                             <label for="product_type_id">Product Type</label>
                             <select class="form-control" name="product_type_id[]" id="product_type_id" multiple>
-                                <option>-- Product Type --</option>
+                                <option value="">-- Product Type --</option>
                                 @if(count($product_types ?? []) > 0)
                                     @foreach($product_types as $ptype)
-                                        <option value="{{ $ptype->id }}" @if(is_array($info_category)){{ in_array($ptype->id,($info_category ?? [])) ? 'selected' : '' }} @endif>{{ $ptype->name }}</option>
+                                        <option value="{{ $ptype->id }}" @if(isset($info_category) && is_array($info_category)){{ in_array($ptype->id,($info_category ?? [])) ? 'selected' : '' }} @endif>{{ $ptype->name }}</option>
                                     @endforeach
                                 @endif
                             </select>
+                            <button type="button" class="btn btn-default mt-2" id="add_all_categories">Add All Categories</button>
                             @if ($errors->has('product_type_id'))
                                 <span class="text-danger">{{ $errors->first('product_type_id') }}</span>
                             @endif
@@ -124,6 +125,19 @@
         $(document).ready(function() {
 
             $('#product_type_id').select2();
+
+            $(document).on('click','#add_all_categories',function () {
+                // Get all option values
+                var allValues = $('#product_type_id option').map(function() {
+                    if($(this).val() != ''){
+                        return $(this).val();
+                    }
+
+                }).get();
+
+                // Set them as selected
+                $('#product_type_id').val(allValues).trigger('change');
+            });
 
         });
     </script>

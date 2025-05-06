@@ -52,6 +52,7 @@ use App\Jobs\StoreProductSyncJob;
 use App\Jobs\StoreSyncJob;
 use App\Jobs\StoreTypeListingSyncJob;
 use App\Jobs\StoreTypeSyncJob;
+use App\Jobs\synccategorytospecification;
 use App\Jobs\UPCSyncJob;
 use App\Models\ListingTemplate;
 use App\Models\ProductMaterial;
@@ -141,6 +142,7 @@ class SyncAllTables extends Command
         AmazonListingItemSyncJob::dispatch();
 //        AmazonProductTypeSyncJob::dispatch();
 //        FetchWalmartOrdersJob::dispatch();
+        //synccategorytospecification::dispatch();
 
     }
 }

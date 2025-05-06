@@ -967,10 +967,10 @@ class EbayService implements MarketplaceServiceInterface
 
     }
 
-    public function getOrders($store)
+    public function getOrders($store,$sync_start_date)
     {
         $this->authService = new EbayAuthService($store->seller_id, $store->secret_key,$store->access_key,$store->user_id);
-        $response = $this->authService->getOrders();
+        $response = $this->authService->getOrders($sync_start_date);
 
         return $response;
 
