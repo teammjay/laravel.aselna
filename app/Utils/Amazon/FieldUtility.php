@@ -50,6 +50,7 @@ class FieldUtility
             }
             $deviceDetail = $device->device;
             Log::info("Device :: " . json_encode($deviceDetail));
+
             $compatible_phones[] = [
                 'language_tag' => 'en_US',
                 'value' => $deviceDetail->brand->name . ' ' . $deviceDetail->name,
@@ -57,6 +58,11 @@ class FieldUtility
             $index++;
         }
         return $compatible_phones;
+    }
+
+    function getFullDeviceName()
+    {
+
     }
 
     public static function getItemHardness(mixed $productData)
