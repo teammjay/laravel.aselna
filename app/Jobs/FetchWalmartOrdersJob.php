@@ -119,7 +119,7 @@ class FetchWalmartOrdersJob implements ShouldQueue
                             if ($orderExist) {
                                 $orderDetail = Order::where('order_id', $order['purchaseOrderId'])->first();
                                 $orderObj = Order::findOrFail($orderDetail->id); // Retrieve the product by ID
-                                $orderObj->update(['order_status' => OrderStatus::getOrderStatusId($order['OrderStatus'])]);
+                                $orderObj->update(['order_status' => OrderStatus::Pending]);
 
                                 /* check order operation for this order*/
                                 $orderOperationDetail = OrderOperation::where('order_id', $orderDetail->id)->count();
@@ -142,6 +142,8 @@ class FetchWalmartOrdersJob implements ShouldQueue
                                     'user_id' => $order['customerOrderId'],
                                 ], $customerData);
 
+                                Log::info("Customer Info :: " . json_encode($customer_detail));
+
                                 $orderData = [
                                     'order_id' => $order['purchaseOrderId'],
                                     'order_date' => date('Y-m-d H:i:s', $order['orderDate'] / 1000),
@@ -155,6 +157,7 @@ class FetchWalmartOrdersJob implements ShouldQueue
                                     'store_id' => $store->id,
                                     'order_synchronization_id' => $order_synchronization_id
                                 ];
+                                Log::info('Customer Data :: ' . json_encode($orderData));
 
                                 $order_detail = Order::updateOrCreate([
                                     'order_id' => $order['purchaseOrderId'],
@@ -162,7 +165,7 @@ class FetchWalmartOrdersJob implements ShouldQueue
 
                                 /* create order operatation*/
                                 $orderOperationData = [
-                                    'order_id' => $order['purchaseOrderId'],
+                                    'order_id' => $order_detail->id,
                                     'ship_date' => date('Y-m-d H:i:s', $order['shippingInfo']['estimatedShipDate'] / 1000),
                                     'insurance_value' => $orderTotals,
                                     'status' => 1,
@@ -176,7 +179,7 @@ class FetchWalmartOrdersJob implements ShouldQueue
                                 ];
 
                                 $order_operation_detail = OrderOperation::updateOrCreate([
-                                    'order_id' => $order['purchaseOrderId'],
+                                    'order_id' => $order_detail->id,
                                 ], $orderOperationData);
 
                                 /* get order items*/
@@ -228,10 +231,8 @@ class FetchWalmartOrdersJob implements ShouldQueue
                                 }
                             }
                             $noOfOrder++;
-                            break;
                         } catch (\Exception $e) {
                             Log::info($e->getMessage());
-                            break;
                         }
                     }
 

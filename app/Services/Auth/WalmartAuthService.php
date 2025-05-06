@@ -122,8 +122,7 @@ class WalmartAuthService
                     'WM_QOS.CORRELATION_ID' => uniqid(),
                 ],
                 'query' => [
-                    'createdStartDate' => $last_order_time,
-                    'limit' => 5
+                    'createdStartDate' => $last_order_time
                 ],
             ]);
 

@@ -10,6 +10,9 @@ class Customer extends Model
 {
     use HasFactory;
 
+    protected $table = 'customers';
+    protected $keyType = 'string';
+
     protected $fillable = [
         'id','first_name', 'last_name', 'full_name', 'store_id', 'user_id', 'group'
     ];
