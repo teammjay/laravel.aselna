@@ -33,6 +33,8 @@ class AmazonUtility
                 return self::getPortableElectronicDeviceArmbandFields($itemDetail);
             case 'PORTABLE_ELECTRONIC_DEVICE_STAND':
                 return self::getPortableElectronicDeviceStandFields($itemDetail);
+            case 'CELLULAR_PHONE_CASE':
+                return self::getCellularPhoneCase($itemDetail);
         }
         return [];
     }
@@ -75,6 +77,7 @@ class AmazonUtility
             'connector_type' => [['value' => $connectivity ? $connectivity->calculated_value() : '']],
             'included_components' => [['value' => $items_included ? $items_included->calculated_value() : '', 'language_tag' => 'en_US']],
             'special_feature' => [['value' => $special_features ?? 'Cables', 'language_tag' => 'en_US']],
+            'supplier_declared_dg_hz_regulation' => [['value' => 'not_applicable']],
         ];
     }
 
@@ -111,7 +114,8 @@ class AmazonUtility
             'item_length_width' => [[
                 'length' => ['value' => $productData->package_dimensions_length, 'unit' => 'inches'],
                 'width' => ['value' => $productData->package_dimensions_width, 'unit' => 'inches'],
-            ]]
+            ]],
+            'supplier_declared_dg_hz_regulation' => [['value' => 'not_applicable']],
         ];
     }
 
@@ -151,6 +155,7 @@ class AmazonUtility
             'included_components' => [['value' => $items_included->calculated_value(), 'language_tag' => 'en_US']],
             'number_of_items' => [['value' => $items_count->calculated_value()]],
             'model_number' => [['value' => $itemDetail->sku]],
+            'supplier_declared_dg_hz_regulation' => [['value' => 'not_applicable']],
         ];
     }
 
@@ -191,6 +196,7 @@ class AmazonUtility
             'included_components' => [['value' => $items_included->calculated_value(), 'language_tag' => 'en_US']],
             'item_package_weight' => FieldUtility::getItemPackageWeight($productData),
             'warranty_description' => [['value' => $warranty->calculated_value(), 'language_tag' => 'en_US']],
+            'supplier_declared_dg_hz_regulation' => [['value' => 'not_applicable']],
         ];
     }
 
@@ -222,6 +228,7 @@ class AmazonUtility
             'warranty_description' => [['value' => $warranty->calculated_value(), 'language_tag' => 'en_US']],
             'fastener' => [['type' => [['value' => $fasteners->calculated_value(), 'language_tag' => 'en_US',]]]],
             'number_of_items' => [['value' => $items_count->calculated_value()]],
+            'supplier_declared_dg_hz_regulation' => [['value' => 'not_applicable']],
         ];
     }
 
@@ -265,6 +272,7 @@ class AmazonUtility
             'special_feature' => [['value' => $special_features, 'language_tag' => 'en_US']],
             'compatible_phone_models' => FieldUtility::getComaptiblePhoneModels($itemDetail),
             'output_voltage' => [['value' => $productData->output_voltage_value, 'unit' => $productData->output_voltage_unit]],
+            'supplier_declared_dg_hz_regulation' => [['value' => 'not_applicable']],
         ];
     }
 
@@ -321,6 +329,7 @@ class AmazonUtility
             'battery' => [['value' => '20000', 'unit' => 'amp_hours']],
             'special_feature' => [['value' => $special_features, 'language_tag' => 'en_US']],
             'number_of_items' => [['value' => $items_count->calculated_value()]],
+            'supplier_declared_dg_hz_regulation' => [['value' => 'not_applicable']],
         ];
     }
 
@@ -347,6 +356,7 @@ class AmazonUtility
             'number_of_items' => [['value' => $items_count->calculated_value()]],
             'material' => [['value' => $productData->material ?? 'Glossy', 'language_tag' => 'en_US']],
             'included_components' => [['value' => $items_included->calculated_value(), 'language_tag' => 'en_US']],
+            'supplier_declared_dg_hz_regulation' => [['value' => 'not_applicable']],
         ];
     }
 
@@ -379,6 +389,7 @@ class AmazonUtility
             'form_factor' => [['value' => $form_factor->calculated_value(), 'language_tag' => 'en_US']],
             'special_feature' => [['value' => $special_features, 'language_tag' => 'en_US']],
             'number_of_items' => [['value' => $items_count->calculated_value()]],
+            'supplier_declared_dg_hz_regulation' => [['value' => 'not_applicable']],
         ];
     }
 
@@ -419,6 +430,29 @@ class AmazonUtility
             'number_of_items' => [['value' => $items_count->calculated_value()]],
             'material' => [['value' => $productData->material ?? 'Glossy', 'language_tag' => 'en_US']],
             'mounting_type' => [['value' => $mounting_type->calculated_value() ?? 'Dashboard', 'language_tag' => 'en_US']],
+            'supplier_declared_dg_hz_regulation' => [['value' => 'not_applicable']],
+        ];
+    }
+
+    private static function getCellularPhoneCase($itemDetail)
+    {
+        $storeProduct = $itemDetail->storeProduct;
+        $productData = $itemDetail->storeProduct->product;
+
+        $warranty = ProductSpecification::where('product_id', $productData->product_id)
+            ->where('name', 'Warranty')
+            ->where('store_type_id', $storeProduct->store->store_type_id)->first();
+
+        $items_count = ProductSpecification::where('product_id', $productData->product_id)
+            ->where('name', 'Number of Items')
+            ->where('store_type_id', $storeProduct->store->store_type_id)->first();
+
+        return [
+            'warranty_description' => [['value' => $warranty->calculated_value(), 'language_tag' => 'en_US']],
+            'number_of_items' => [['value' => $items_count->calculated_value()]],
+            'material' => [['value' => $productData->material ?? 'Glossy', 'language_tag' => 'en_US']],
+            'color' => [['value' => $productData->color->name ?? 'Black', 'language_tag' => 'en_US']],
+            'compatible_phone_models' => FieldUtility::getComaptiblePhoneModels($itemDetail),
         ];
     }
 }
