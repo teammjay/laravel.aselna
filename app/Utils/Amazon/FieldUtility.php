@@ -50,13 +50,22 @@ class FieldUtility
             }
             $deviceDetail = $device->device;
             Log::info("Device :: " . json_encode($deviceDetail));
+
             $compatible_phones[] = [
                 'language_tag' => 'en_US',
-                'value' => $deviceDetail->brand->name . ' ' . $deviceDetail->name,
+                'value' => self::getFullDeviceName($deviceDetail),
             ];
             $index++;
         }
         return $compatible_phones;
+    }
+
+    public static function getFullDeviceName($deviceDetail)
+    {
+        if ($deviceDetail->brand->name == 'Apple' || $deviceDetail->brand->name == 'Google') {
+            return $deviceDetail->name;
+        }
+        return $deviceDetail->brand->name . ' ' . $deviceDetail->name;
     }
 
     public static function getItemHardness(mixed $productData)

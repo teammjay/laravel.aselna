@@ -76,7 +76,7 @@ class AmazonUtility
             'connector_gender' => [['value' => $connector_gender->calculated_value()]],
             'connector_type' => [['value' => $connectivity ? $connectivity->calculated_value() : '']],
             'included_components' => [['value' => $items_included ? $items_included->calculated_value() : '', 'language_tag' => 'en_US']],
-            'special_feature' => [['value' => $special_features ?? 'Cables', 'language_tag' => 'en_US']],
+            'special_feature' => [['value' => $special_features, 'language_tag' => 'en_US']],
             'supplier_declared_dg_hz_regulation' => [['value' => 'not_applicable']],
         ];
     }
@@ -102,15 +102,15 @@ class AmazonUtility
             ->where('store_type_id', $storeProduct->store->store_type_id)->first();
 
         return [
-            'finish_type' => [['value' => $productData->material ?? 'Glossy', 'language_tag' => 'en_US']],
+            'finish_type' => [['value' => $productData->material, 'language_tag' => 'en_US']],
             'warranty_description' => [['value' => $warranty->calculated_value(), 'language_tag' => 'en_US']],
             'compatible_phone_models' => FieldUtility::getComaptiblePhoneModels($itemDetail),
             'item_package_weight' => FieldUtility::getItemPackageWeight($productData),
             'included_components' => [['value' => $items_included->calculated_value(), 'language_tag' => 'en_US']],
             'item_hardness' => FieldUtility::getItemHardness($productData),
             'special_feature' => [['value' => $special_features, 'language_tag' => 'en_US']],
-            'material' => [['value' => $productData->material ?? 'Glossy', 'language_tag' => 'en_US']],
-            'color' => [['value' => $productData->color->name ?? 'Black', 'language_tag' => 'en_US']],
+            'material' => [['value' => $productData->material, 'language_tag' => 'en_US']],
+            'color' => [['value' => $productData->color->name, 'language_tag' => 'en_US']],
             'item_length_width' => [[
                 'length' => ['value' => $productData->package_dimensions_length, 'unit' => 'inches'],
                 'width' => ['value' => $productData->package_dimensions_width, 'unit' => 'inches'],
@@ -148,7 +148,7 @@ class AmazonUtility
             'headphones_ear_placement' => [['value' => $form_factor->calculated_value()]],
             'warranty_description' => [['value' => $warranty->calculated_value(), 'language_tag' => 'en_US']],
             'item_package_weight' => FieldUtility::getItemPackageWeight($productData),
-            'color' => [['value' => $productData->color->name ?? 'Black', 'language_tag' => 'en_US']],
+            'color' => [['value' => $productData->color->name, 'language_tag' => 'en_US']],
             'connectivity_technology' => [['value' => $connectivity->calculated_value(), 'language_tag' => 'en_US',]],
             'headphones_form_factor' => [['value' => $form_factor->calculated_value(), 'language_tag' => 'en_US',]],
             'model_name' => [['value' => $itemDetail->sku, 'language_tag' => 'en_US']],
@@ -190,8 +190,8 @@ class AmazonUtility
         return [
             'compatible_phone_models' => FieldUtility::getComaptiblePhoneModels($itemDetail),
             'special_feature' => [['value' => $special_features, 'language_tag' => 'en_US']],
-            'material' => [['value' => $productData->material ?? 'Glossy', 'language_tag' => 'en_US']],
-            'mounting_type' => [['value' => $mounting_type->calculated_value() ?? 'Dashboard', 'language_tag' => 'en_US']],
+            'material' => [['value' => $productData->material, 'language_tag' => 'en_US']],
+            'mounting_type' => [['value' => $mounting_type->calculated_value(), 'language_tag' => 'en_US']],
             'number_of_items' => [['value' => $items_count->calculated_value()]],
             'included_components' => [['value' => $items_included->calculated_value(), 'language_tag' => 'en_US']],
             'item_package_weight' => FieldUtility::getItemPackageWeight($productData),
@@ -266,7 +266,7 @@ class AmazonUtility
             'number_of_items' => [['value' => $items_count->calculated_value()]],
             'connector_type' => [['value' => $connectivity->calculated_value(), 'language_tag' => 'en_US']],
             'connectivity_technology' => [['value' => 'USB', 'language_tag' => 'en_US']],
-            'number_of_ports' => [['value' => $number_of_ports->calculated_value() ?? '2']],
+            'number_of_ports' => [['value' => $number_of_ports->calculated_value()]],
             'output_current' => [['value' => $productData->output_current_value, 'unit' => $productData->output_current_unit]],
             'input_voltage' => [['value' => $productData->input_voltage_value, 'unit' => $productData->input_voltage_unit]],
             'special_feature' => [['value' => $special_features, 'language_tag' => 'en_US']],
@@ -318,12 +318,12 @@ class AmazonUtility
             'power_source_type' => [['value' => $power_source_type->calculated_value(), 'language_tag' => 'en_US']],
             'connector_type' => [['value' => $connectivity->calculated_value(), 'language_tag' => 'en_US']],
             'item_length_width_thickness' => [[
-                'length' => ['value' => $productData->dimensions_length, 'unit' => LengthUnit::getAmazonUnitName($productData->dimensions_length_unit ?? 1)],
-                'width' => ['value' => $productData->dimensions_width, 'unit' => LengthUnit::getAmazonUnitName($productData->dimensions_width_unit ?? 1)],
+                'length' => ['value' => $productData->dimensions_length, 'unit' => LengthUnit::getAmazonUnitName($productData->dimensions_length_unit)],
+                'width' => ['value' => $productData->dimensions_width, 'unit' => LengthUnit::getAmazonUnitName($productData->dimensions_width_unit)],
                 'thickness' => ['value' => '1', 'unit' => 'inches'],
             ]],
             'number_of_ports' => [[
-                'value' => $number_of_ports->calculated_value() ?? '2'
+                'value' => $number_of_ports->calculated_value()
             ]],
             'voltage' => [['value' => $productData->output_voltage_value, 'unit' => $productData->output_voltage_unit]],
             'battery' => [['value' => '20000', 'unit' => 'amp_hours']],
@@ -352,9 +352,9 @@ class AmazonUtility
 
         return [
             'warranty_description' => [['value' => $warranty->calculated_value(), 'language_tag' => 'en_US']],
-            'maximum_height' => [['value' => $productData->dimensions_length, 'unit' => LengthUnit::getAmazonUnitName($productData->dimensions_length_unit ?? 1)]],
+            'maximum_height' => [['value' => $productData->dimensions_length, 'unit' => LengthUnit::getAmazonUnitName($productData->dimensions_length_unit)]],
             'number_of_items' => [['value' => $items_count->calculated_value()]],
-            'material' => [['value' => $productData->material ?? 'Glossy', 'language_tag' => 'en_US']],
+            'material' => [['value' => $productData->material, 'language_tag' => 'en_US']],
             'included_components' => [['value' => $items_included->calculated_value(), 'language_tag' => 'en_US']],
             'supplier_declared_dg_hz_regulation' => [['value' => 'not_applicable']],
         ];
@@ -428,8 +428,8 @@ class AmazonUtility
             'compatible_phone_models' => FieldUtility::getComaptiblePhoneModels($itemDetail),
             'included_components' => [['value' => $items_included->calculated_value(), 'language_tag' => 'en_US']],
             'number_of_items' => [['value' => $items_count->calculated_value()]],
-            'material' => [['value' => $productData->material ?? 'Glossy', 'language_tag' => 'en_US']],
-            'mounting_type' => [['value' => $mounting_type->calculated_value() ?? 'Dashboard', 'language_tag' => 'en_US']],
+            'material' => [['value' => $productData->material, 'language_tag' => 'en_US']],
+            'mounting_type' => [['value' => $mounting_type->calculated_value(), 'language_tag' => 'en_US']],
             'supplier_declared_dg_hz_regulation' => [['value' => 'not_applicable']],
         ];
     }
@@ -450,8 +450,8 @@ class AmazonUtility
         return [
             'warranty_description' => [['value' => $warranty->calculated_value(), 'language_tag' => 'en_US']],
             'number_of_items' => [['value' => $items_count->calculated_value()]],
-            'material' => [['value' => $productData->material ?? 'Glossy', 'language_tag' => 'en_US']],
-            'color' => [['value' => $productData->color->name ?? 'Black', 'language_tag' => 'en_US']],
+            'material' => [['value' => $productData->material, 'language_tag' => 'en_US']],
+            'color' => [['value' => $productData->color->name, 'language_tag' => 'en_US']],
             'compatible_phone_models' => FieldUtility::getComaptiblePhoneModels($itemDetail),
         ];
     }
