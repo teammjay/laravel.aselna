@@ -88,6 +88,8 @@ class ListingRequirementsSeeder extends Seeder
             ['category' => 'PORTABLE_ELECTRONIC_DEVICE_STAND', 'type' => 'key_value', 'table' => 'product_specification', 'key_column' => 'name', 'key_value' => 'Items Included', 'value_column' => 'value'],
             ['category' => 'PORTABLE_ELECTRONIC_DEVICE_STAND', 'type' => 'key_value', 'table' => 'product_specification', 'key_column' => 'name', 'key_value' => 'Number of Items', 'value_column' => 'value'],
             ['category' => 'PORTABLE_ELECTRONIC_DEVICE_STAND', 'type' => 'key_value', 'table' => 'product_specification', 'key_column' => 'name', 'key_value' => 'Warranty', 'value_column' => 'value'],
+            ['category' => 'CELLULAR_PHONE_CASE', 'type' => 'key_value', 'table' => 'product_specification', 'key_column' => 'name', 'key_value' => 'Warranty', 'value_column' => 'value'],
+            ['category' => 'CELLULAR_PHONE_CASE', 'type' => 'key_value', 'table' => 'product_specification', 'key_column' => 'name', 'key_value' => 'Number of Items', 'value_column' => 'value'],
         ];
 
         foreach ($requirements as $requirement) {

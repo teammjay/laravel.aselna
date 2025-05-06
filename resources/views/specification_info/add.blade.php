@@ -86,7 +86,7 @@
                                 <option>-- Product Type --</option>
                                 @if(count($product_types ?? []) > 0)
                                     @foreach($product_types as $ptype)
-                                        <option value="{{ $ptype->id }}" @if(is_array($info_category)){{ in_array($ptype->id,($info_category ?? [])) ? 'selected' : '' }} @endif>{{ $ptype->name }}</option>
+                                        <option value="{{ $ptype->id }}" @if(isset($info_category) && is_array($info_category)){{ in_array($ptype->id,($info_category ?? [])) ? 'selected' : '' }} @endif>{{ $ptype->name }}</option>
                                     @endforeach
                                 @endif
                             </select>
