@@ -39,24 +39,39 @@ class FetchEbayOrders implements ShouldQueue
         if(count($stores ?? []) > 0) {
             foreach ($stores as $store) {
 
+                if ($store->name != 'nismobile') {
+                    continue;
+                }
+                Log::info('Store : ' . $store->name);
+
+                $ordersyncDetail = OrderSynchronization::where('store_id',$store->id)->orderBy('filter_end_date','desc')->first();
+
+                $created_by = auth()->user()->name ?? 'admin';
+                /* create order synchronization*/
+                $synchronizeArr = [
+                    'store_id' => $store->id,
+                    'synchronization_type' => 1,
+                    'filter_start_date' => isset($ordersyncDetail) ? $ordersyncDetail->filter_end_date : date('Y-m-d H:i:s'),
+                    'created_by' => $created_by
+                ];
+                $order_synchronization = OrderSynchronization::create($synchronizeArr);
+                $order_synchronization_id = $order_synchronization->id;
+
+                Log::info('order_synchronization_id: ' . json_encode($order_synchronization_id));
+
+                if(!empty($ordersyncDetail)){
+                    $start_date = new DateTime($ordersyncDetail->filter_end_date);
+                    $sync_start_date = $start_date->format(DateTime::ATOM);
+                }else{
+                    $sync_start_date = now()->subDays(7)->toIso8601String();
+                }
+
+                Log::info('Start Date : ' . $sync_start_date);
+
                 $ebayService = new EbayService();
-                $orders = $ebayService->getOrders($store);
+                $orders = $ebayService->getOrders($store,$sync_start_date);
 
                 if (!isset($orders['total']) && $orders['total'] > 0) {
-
-                    $created_by = auth()->user()->name ?? 'admin';
-                    /* create order synchronization*/
-                    $synchronizeArr = [
-                        'store_id' => $store->id,
-                        'number_of_items' => '',
-                        'synchronization_type' => '',
-                        'filter_start_date' => date('Y-m-d H:i:s'),
-                        'filter_end_date' => '',
-                        'last_order_update_date' => date('Y-m-d H:i:s'),
-                        'created_by' => $created_by
-                    ];
-                    $order_synchronization = OrderSynchronization::create($synchronizeArr);
-                    $order_synchronization_id = $order_synchronization->id;
 
                     foreach ($orders['orders'] as $order) {
 

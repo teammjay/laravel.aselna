@@ -357,13 +357,13 @@ class EbayAuthService
         }
     }
 
-    public function getOrders()
+    public function getOrders($sync_start_date)
     {
         $accessToken = $this->refreshToken();
 
         try {
 
-            $startDate = now()->subDays(7)->toIso8601String();
+            $startDate = $sync_start_date;
             $endDate = now()->toIso8601String();
 
             $response = $this->client->get('/sell/fulfillment/v1/order', [
@@ -374,7 +374,7 @@ class EbayAuthService
                 ],
                 'query' => [
                     'creationdate'=> "$startDate..$endDate",
-                    'limit' => 50, // Fetch max 50 orders
+                    'limit' => 100, // Fetch max 100 orders
                 ],
             ]);
 
