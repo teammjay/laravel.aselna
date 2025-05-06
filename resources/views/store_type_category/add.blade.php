@@ -27,6 +27,17 @@
                     </div>
                     <div class="col-md-6">
                         <div class="form-group">
+                            <label for="code">MarketPlace Code</label>
+                            <input type="text" class="form-control @error('marketplace_code') is-invalid @enderror" id="marketplace_code"
+                                   name="marketplace_code"
+                                   placeholder="Enter Code" value="{{ old('marketplace_code', $store_type_category['marketplace_code'] ?? '') }}">
+                            @if ($errors->has('marketplace_code'))
+                                <span class="text-danger">{{ $errors->first('marketplace_code') }}</span>
+                            @endif
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
                             <label for="name">Name</label>
                             <input type="text" class="form-control @error('name') is-invalid @enderror" id="name"
                                    name="name"
