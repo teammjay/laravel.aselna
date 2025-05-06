@@ -100,7 +100,7 @@ class WalmartAuthService
         return json_decode($response->getBody(), true);
     }
 
-    public function getOrders()
+    public function getOrders($last_order_time)
     {
         try {
             $accessToken = $this->authenticate();
@@ -122,12 +122,12 @@ class WalmartAuthService
                     'WM_QOS.CORRELATION_ID' => uniqid(),
                 ],
                 'query' => [
-                    'createdStartDate' => now()->subDays(7)->toISOString(),
+                    'createdStartDate' => $last_order_time,
                 ],
             ]);
 
             return json_decode($response->getBody(), true);
-        } catch (RequestException $e) {
+        } catch (\Exception $e) {
             return response()->json([
                 'error' => 'Walmart API request failed',
                 'message' => $e->getMessage()

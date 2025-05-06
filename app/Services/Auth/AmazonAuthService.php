@@ -49,6 +49,8 @@ class AmazonAuthService
             ]
         ]);*/
 
+        Log::info('Client Id :: ' . $this->client_id . ' :: ' . $this->client_secret);
+
         $response = $client->post('/auth/o2/token', [
             'form_params' => [
                 'grant_type' => 'refresh_token',

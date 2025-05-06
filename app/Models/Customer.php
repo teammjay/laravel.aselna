@@ -28,7 +28,7 @@ class Customer extends Model
     }
 
     protected $fillable = [
-        'first_name', 'last_name', 'full_name', 'store_id', 'user_id', 'group', 'marketplace_customer_id', 'email'
+        'id','first_name', 'last_name', 'full_name', 'store_id', 'user_id', 'group'
     ];
 
     public function emails()
