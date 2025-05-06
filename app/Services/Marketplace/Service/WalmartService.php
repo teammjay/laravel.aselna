@@ -379,7 +379,9 @@ class WalmartService implements MarketplaceServiceInterface
     {
         $authService = new WalmartAuthService($store->seller_id, $store->secret_key);
         $last_synchronization = OrderSynchronization::where('store_id', $store->id)->orderBy('filter_end_date', 'desc')->first();
-        $last_order_time = isset($last_synchronization) ? $last_synchronization->filter_end_date : date('Y-m-d H:i:s', strtotime('-180 days'));
+        $last_order_time = isset($last_synchronization)
+            ? gmdate('Y-m-d\TH:i:s\Z', strtotime($last_synchronization->filter_end_date))
+            : gmdate('Y-m-d\TH:i:s\Z', strtotime('-180 days'));
         Log::info('Last Sync: ' . $last_order_time);
 
         $response = $authService->getOrders($last_order_time);
