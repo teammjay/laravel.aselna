@@ -69,7 +69,7 @@ class FetchShopifyOrders implements ShouldQueue
                         $start_date = new DateTime($ordersyncDetail->filter_end_date);
                         $sync_start_date = $start_date->format(DateTime::ATOM);
                     }else{
-                        $sync_start_date = now()->subDays(7)->toIso8601String();
+                        $sync_start_date = now()->subDays(15)->toIso8601String();
                     }
 
                     Log::info('Start Date : ' . $sync_start_date);
