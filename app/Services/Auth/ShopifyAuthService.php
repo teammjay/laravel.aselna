@@ -166,7 +166,7 @@ class ShopifyAuthService
         }
     }
 
-    public function getOrders($sync_start_date, $sync_end_date)
+    public function getOrders($sync_start_date)
     {
 
         //$fields = $this->getOrdersField();
