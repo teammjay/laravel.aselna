@@ -62,18 +62,23 @@ class FetchWalmartOrdersJob implements ShouldQueue
                 $walmartService = new WalmartService();
                 $orders = $walmartService->getOrders($store);
 
+                Log::info(json_encode($orders));
+
+                Log::info(gettype($orders));
+
                 if (!isset($orders['errors']) && isset($orders['list']['elements']['order'])) {
                     /* create order synchronization*/
                     $noOfOrder = 0;
                     $last_order_date = $order_synchronization->filter_start_date;
                     foreach ($orders['list']['elements']['order'] as $order) {
+                        Log::info("Order Info Came" . $order['purchaseOrderId']);
                         try {
                             $firstname = $lastname = '';
                             $orderTotal = 0;
                             $taxTotal = 0;
                             $discountTotal = 0;
                             $orderTotals = 0;
-                            $order_date = date('Y-m-d H:i:s',$order['orderDate'] / 1000);
+                            $order_date = date('Y-m-d H:i:s', $order['orderDate'] / 1000);
                             Log::info('Order Date : ' . $order_date . ' Order Date Response : ' . $order['orderDate']);
 
                             foreach ($order['orderLines']['orderLine'] as $line) {
@@ -103,8 +108,8 @@ class FetchWalmartOrdersJob implements ShouldQueue
 
                             $orderTotals = $orderTotal + $taxTotal - $discountTotal;
 
-                            if (isset($order['postalAddress']['name'])) {
-                                $nameArr = explode(' ', $order['postalAddress']['name']);
+                            if (isset($order['shippingInfo']['postalAddress']['name'])) {
+                                $nameArr = explode(' ', $order['shippingInfo']['postalAddress']['name']);
                                 $firstname = $nameArr[0];
                                 $lastname = $nameArr[1];
                             }
@@ -121,28 +126,26 @@ class FetchWalmartOrdersJob implements ShouldQueue
                                 if ($orderOperationDetail) {
                                     $orderOperationDetail->update(['status' => 2]);
                                 }
-                            }
-                            else
-                            {
+                            } else {
 
                                 /* create customer*/
 
                                 $customerData = [
                                     'first_name' => $firstname,
                                     'last_name' => $lastname,
-                                    'full_name' => $order['postalAddress']['name'],
-                                    'email' => $order['customerEmailId'],
-                                    'marketplace_customer_id' => isset($order['customer']) ? $order['customer']['id'] : '',
+                                    'full_name' => $order['shippingInfo']['postalAddress']['name'],
+                                    'user_id' => $order['customerOrderId'],
+//                                    'marketplace_customer_id' => isset($order['customer']) ? $order['customer']['id'] : '',
                                 ];
 
                                 $customer_detail = Customer::updateOrCreate([
-                                    'order_id' => $order['id'],
+                                    'user_id' => $order['customerOrderId'],
                                 ], $customerData);
 
                                 $orderData = [
                                     'order_id' => $order['purchaseOrderId'],
-                                    'order_date' => date('Y-m-d H:i:s', strtotime($order['orderDate'])),
-                                    'order_status' => OrderStatus::getOrderStatusId($order['OrderStatus']),
+                                    'order_date' => date('Y-m-d H:i:s', $order['orderDate'] / 1000),
+                                    'order_status' => OrderStatus::Pending,
                                     'order_total' => $orderTotals,
                                     'buyer_first_name' => $firstname,
                                     'buyer_last_name' => $lastname,
@@ -160,7 +163,7 @@ class FetchWalmartOrdersJob implements ShouldQueue
                                 /* create order operatation*/
                                 $orderOperationData = [
                                     'order_id' => $order['purchaseOrderId'],
-                                    'ship_date' => date('Y-m-d H:i:s', strtotime($order['shippingInfo']['estimatedShipDate'])),
+                                    'ship_date' => date('Y-m-d H:i:s', $order['shippingInfo']['estimatedShipDate'] / 1000),
                                     'insurance_value' => $orderTotals,
                                     'status' => 1,
                                     'signature_confirmation' => 1,
@@ -227,6 +230,7 @@ class FetchWalmartOrdersJob implements ShouldQueue
                             $noOfOrder++;
                             break;
                         } catch (\Exception $e) {
+                            Log::info($e->getMessage());
                             break;
                         }
                     }
