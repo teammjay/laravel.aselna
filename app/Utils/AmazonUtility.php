@@ -101,15 +101,19 @@ class AmazonUtility
             ->where('name', 'Warranty')
             ->where('store_type_id', $storeProduct->store->store_type_id)->first();
 
+        $material = ProductSpecification::where('product_id', $productData->product_id)
+            ->where('name', 'Material')
+            ->where('store_type_id', $storeProduct->store->store_type_id)->first();
+
         return [
-            'finish_type' => [['value' => $productData->material, 'language_tag' => 'en_US']],
+            'finish_type' => [['value' => $material->calculated_value(), 'language_tag' => 'en_US']],
             'warranty_description' => [['value' => $warranty->calculated_value(), 'language_tag' => 'en_US']],
             'compatible_phone_models' => FieldUtility::getComaptiblePhoneModels($itemDetail),
             'item_package_weight' => FieldUtility::getItemPackageWeight($productData),
             'included_components' => [['value' => $items_included->calculated_value(), 'language_tag' => 'en_US']],
             'item_hardness' => FieldUtility::getItemHardness($productData),
             'special_feature' => [['value' => $special_features, 'language_tag' => 'en_US']],
-            'material' => [['value' => $productData->material, 'language_tag' => 'en_US']],
+            'material' => [['value' => $material->calculated_value(), 'language_tag' => 'en_US']],
             'color' => [['value' => $productData->color->name, 'language_tag' => 'en_US']],
             'item_length_width' => [[
                 'length' => ['value' => $productData->package_dimensions_length, 'unit' => 'inches'],
@@ -187,10 +191,14 @@ class AmazonUtility
             ->where('name', 'Warranty')
             ->where('store_type_id', $storeProduct->store->store_type_id)->first();
 
+        $material = ProductSpecification::where('product_id', $productData->product_id)
+            ->where('name', 'Material')
+            ->where('store_type_id', $storeProduct->store->store_type_id)->first();
+
         return [
             'compatible_phone_models' => FieldUtility::getComaptiblePhoneModels($itemDetail),
             'special_feature' => [['value' => $special_features, 'language_tag' => 'en_US']],
-            'material' => [['value' => $productData->material, 'language_tag' => 'en_US']],
+            'material' => [['value' => $material->calculated_value(), 'language_tag' => 'en_US']],
             'mounting_type' => [['value' => $mounting_type->calculated_value(), 'language_tag' => 'en_US']],
             'number_of_items' => [['value' => $items_count->calculated_value()]],
             'included_components' => [['value' => $items_included->calculated_value(), 'language_tag' => 'en_US']],
@@ -350,11 +358,15 @@ class AmazonUtility
             ->where('name', 'Warranty')
             ->where('store_type_id', $storeProduct->store->store_type_id)->first();
 
+        $material = ProductSpecification::where('product_id', $productData->product_id)
+            ->where('name', 'Material')
+            ->where('store_type_id', $storeProduct->store->store_type_id)->first();
+
         return [
             'warranty_description' => [['value' => $warranty->calculated_value(), 'language_tag' => 'en_US']],
             'maximum_height' => [['value' => $productData->dimensions_length, 'unit' => LengthUnit::getAmazonUnitName($productData->dimensions_length_unit)]],
             'number_of_items' => [['value' => $items_count->calculated_value()]],
-            'material' => [['value' => $productData->material, 'language_tag' => 'en_US']],
+            'material' => [['value' => $material->calculated_value(), 'language_tag' => 'en_US']],
             'included_components' => [['value' => $items_included->calculated_value(), 'language_tag' => 'en_US']],
             'supplier_declared_dg_hz_regulation' => [['value' => 'not_applicable']],
         ];
@@ -422,13 +434,17 @@ class AmazonUtility
             ->where('name', 'Warranty')
             ->where('store_type_id', $storeProduct->store->store_type_id)->first();
 
+        $material = ProductSpecification::where('product_id', $productData->product_id)
+            ->where('name', 'Material')
+            ->where('store_type_id', $storeProduct->store->store_type_id)->first();
+
         return [
             'warranty_description' => [['value' => $warranty->calculated_value(), 'language_tag' => 'en_US']],
             'special_feature' => [['value' => $special_features, 'language_tag' => 'en_US']],
             'compatible_phone_models' => FieldUtility::getComaptiblePhoneModels($itemDetail),
             'included_components' => [['value' => $items_included->calculated_value(), 'language_tag' => 'en_US']],
             'number_of_items' => [['value' => $items_count->calculated_value()]],
-            'material' => [['value' => $productData->material, 'language_tag' => 'en_US']],
+            'material' => [['value' => $material->calculated_value(), 'language_tag' => 'en_US']],
             'mounting_type' => [['value' => $mounting_type->calculated_value(), 'language_tag' => 'en_US']],
             'supplier_declared_dg_hz_regulation' => [['value' => 'not_applicable']],
         ];
@@ -447,10 +463,14 @@ class AmazonUtility
             ->where('name', 'Number of Items')
             ->where('store_type_id', $storeProduct->store->store_type_id)->first();
 
+        $material = ProductSpecification::where('product_id', $productData->product_id)
+            ->where('name', 'Material')
+            ->where('store_type_id', $storeProduct->store->store_type_id)->first();
+
         return [
             'warranty_description' => [['value' => $warranty->calculated_value(), 'language_tag' => 'en_US']],
             'number_of_items' => [['value' => $items_count->calculated_value()]],
-            'material' => [['value' => $productData->material, 'language_tag' => 'en_US']],
+            'material' => [['value' => $material->calculated_value(), 'language_tag' => 'en_US']],
             'color' => [['value' => $productData->color->name, 'language_tag' => 'en_US']],
             'compatible_phone_models' => FieldUtility::getComaptiblePhoneModels($itemDetail),
         ];

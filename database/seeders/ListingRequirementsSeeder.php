@@ -22,7 +22,6 @@ class ListingRequirementsSeeder extends Seeder
             ['category' => 'ELECTRONIC_CABLE', 'type' => 'key_value', 'table' => 'product_specification', 'key_column' => 'name', 'key_value' => 'Cable Length', 'value_column' => 'value'],
             ['category' => 'ELECTRONIC_CABLE', 'type' => 'key_value', 'table' => 'product_specification', 'key_column' => 'name', 'key_value' => 'Type', 'value_column' => 'value'],
             ['category' => 'ELECTRONIC_CABLE', 'type' => 'key_value', 'table' => 'product_specification', 'key_column' => 'name', 'key_value' => 'Number of Items', 'value_column' => 'value'],
-            ['category' => 'SCREEN_PROTECTOR', 'type' => 'column', 'table' => 'products', 'column' => 'product_material_id',],
             ['category' => 'SCREEN_PROTECTOR', 'type' => 'column', 'table' => 'products', 'column' => 'product_color',],
             ['category' => 'SCREEN_PROTECTOR', 'type' => 'column', 'table' => 'products', 'column' => 'package_dimensions_length',],
             ['category' => 'SCREEN_PROTECTOR', 'type' => 'column', 'table' => 'products', 'column' => 'package_dimensions_width',],
@@ -30,6 +29,7 @@ class ListingRequirementsSeeder extends Seeder
             ['category' => 'SCREEN_PROTECTOR', 'type' => 'column', 'table' => 'products', 'column' => 'product_package_weight',],
             ['category' => 'SCREEN_PROTECTOR', 'type' => 'key_value', 'table' => 'product_specification', 'key_column' => 'name', 'key_value' => 'Items Included', 'value_column' => 'value'],
             ['category' => 'SCREEN_PROTECTOR', 'type' => 'key_value', 'table' => 'product_specification', 'key_column' => 'name', 'key_value' => 'Warranty', 'value_column' => 'value'],
+            ['category' => 'SCREEN_PROTECTOR', 'type' => 'key_value', 'table' => 'product_specification', 'key_column' => 'name', 'key_value' => 'Material', 'value_column' => 'value'],
             ['category' => 'HEADPHONES', 'type' => 'column', 'table' => 'products', 'column' => 'product_package_weight',],
             ['category' => 'HEADPHONES', 'type' => 'column', 'table' => 'products', 'column' => 'package_weight_unit',],
             ['category' => 'HEADPHONES', 'type' => 'column', 'table' => 'products', 'column' => 'product_color',],
@@ -38,13 +38,13 @@ class ListingRequirementsSeeder extends Seeder
             ['category' => 'HEADPHONES', 'type' => 'key_value', 'table' => 'product_specification', 'key_column' => 'name', 'key_value' => 'Form Factor', 'value_column' => 'value'],
             ['category' => 'HEADPHONES', 'type' => 'key_value', 'table' => 'product_specification', 'key_column' => 'name', 'key_value' => 'Number of Items', 'value_column' => 'value'],
             ['category' => 'HEADPHONES', 'type' => 'key_value', 'table' => 'product_specification', 'key_column' => 'name', 'key_value' => 'Warranty', 'value_column' => 'value'],
-            ['category' => 'PORTABLE_ELECTRONIC_DEVICE_MOUNT', 'type' => 'column', 'table' => 'products', 'column' => 'product_material_id',],
             ['category' => 'PORTABLE_ELECTRONIC_DEVICE_MOUNT', 'type' => 'column', 'table' => 'products', 'column' => 'product_package_weight',],
             ['category' => 'PORTABLE_ELECTRONIC_DEVICE_MOUNT', 'type' => 'column', 'table' => 'products', 'column' => 'package_weight_unit',],
             ['category' => 'PORTABLE_ELECTRONIC_DEVICE_MOUNT', 'type' => 'key_value', 'table' => 'product_specification', 'key_column' => 'name', 'key_value' => 'Mounting Type', 'value_column' => 'value'],
             ['category' => 'PORTABLE_ELECTRONIC_DEVICE_MOUNT', 'type' => 'key_value', 'table' => 'product_specification', 'key_column' => 'name', 'key_value' => 'Items Included', 'value_column' => 'value'],
             ['category' => 'PORTABLE_ELECTRONIC_DEVICE_MOUNT', 'type' => 'key_value', 'table' => 'product_specification', 'key_column' => 'name', 'key_value' => 'Number of Items', 'value_column' => 'value'],
             ['category' => 'PORTABLE_ELECTRONIC_DEVICE_MOUNT', 'type' => 'key_value', 'table' => 'product_specification', 'key_column' => 'name', 'key_value' => 'Warranty', 'value_column' => 'value'],
+            ['category' => 'PORTABLE_ELECTRONIC_DEVICE_MOUNT', 'type' => 'key_value', 'table' => 'product_specification', 'key_column' => 'name', 'key_value' => 'Material', 'value_column' => 'value'],
             ['category' => 'CELL_PHONE_HOLSTER', 'type' => 'column', 'table' => 'products', 'column' => 'package_weight_unit',],
             ['category' => 'CELL_PHONE_HOLSTER', 'type' => 'column', 'table' => 'products', 'column' => 'product_package_weight',],
             ['category' => 'CELL_PHONE_HOLSTER', 'type' => 'key_value', 'table' => 'product_specification', 'key_column' => 'name', 'key_value' => 'Items Included', 'value_column' => 'value'],
@@ -76,22 +76,22 @@ class ListingRequirementsSeeder extends Seeder
             ['category' => 'POWER_BANK', 'type' => 'key_value', 'table' => 'product_specification', 'key_column' => 'name', 'key_value' => 'Recommended Uses', 'value_column' => 'value'],
             ['category' => 'CAMERA_TRIPOD', 'type' => 'column', 'table' => 'products', 'column' => 'dimensions_length',],
             ['category' => 'CAMERA_TRIPOD', 'type' => 'column', 'table' => 'products', 'column' => 'dimensions_length_unit',],
-            ['category' => 'CAMERA_TRIPOD', 'type' => 'column', 'table' => 'products', 'column' => 'product_material_id',],
             ['category' => 'CAMERA_TRIPOD', 'type' => 'key_value', 'table' => 'product_specification', 'key_column' => 'name', 'key_value' => 'Items Included', 'value_column' => 'value'],
             ['category' => 'CAMERA_TRIPOD', 'type' => 'key_value', 'table' => 'product_specification', 'key_column' => 'name', 'key_value' => 'Number of Items', 'value_column' => 'value'],
             ['category' => 'CAMERA_TRIPOD', 'type' => 'key_value', 'table' => 'product_specification', 'key_column' => 'name', 'key_value' => 'Warranty', 'value_column' => 'value'],
+            ['category' => 'CAMERA_TRIPOD', 'type' => 'key_value', 'table' => 'product_specification', 'key_column' => 'name', 'key_value' => 'Material', 'value_column' => 'value'],
             ['category' => 'PORTABLE_ELECTRONIC_DEVICE_ARMBAND', 'type' => 'key_value', 'table' => 'product_specification', 'key_column' => 'name', 'key_value' => 'Form Factor', 'value_column' => 'value'],
             ['category' => 'PORTABLE_ELECTRONIC_DEVICE_ARMBAND', 'type' => 'key_value', 'table' => 'product_specification', 'key_column' => 'name', 'key_value' => 'Number of Items', 'value_column' => 'value'],
             ['category' => 'PORTABLE_ELECTRONIC_DEVICE_ARMBAND', 'type' => 'key_value', 'table' => 'product_specification', 'key_column' => 'name', 'key_value' => 'Warranty', 'value_column' => 'value'],
-            ['category' => 'PORTABLE_ELECTRONIC_DEVICE_STAND', 'type' => 'column', 'table' => 'products', 'column' => 'product_material_id',],
             ['category' => 'PORTABLE_ELECTRONIC_DEVICE_STAND', 'type' => 'key_value', 'table' => 'product_specification', 'key_column' => 'name', 'key_value' => 'Mounting Type', 'value_column' => 'value'],
             ['category' => 'PORTABLE_ELECTRONIC_DEVICE_STAND', 'type' => 'key_value', 'table' => 'product_specification', 'key_column' => 'name', 'key_value' => 'Items Included', 'value_column' => 'value'],
             ['category' => 'PORTABLE_ELECTRONIC_DEVICE_STAND', 'type' => 'key_value', 'table' => 'product_specification', 'key_column' => 'name', 'key_value' => 'Number of Items', 'value_column' => 'value'],
             ['category' => 'PORTABLE_ELECTRONIC_DEVICE_STAND', 'type' => 'key_value', 'table' => 'product_specification', 'key_column' => 'name', 'key_value' => 'Warranty', 'value_column' => 'value'],
-            ['category' => 'CELLULAR_PHONE_CASE', 'type' => 'column', 'table' => 'products', 'column' => 'product_material_id',],
+            ['category' => 'PORTABLE_ELECTRONIC_DEVICE_STAND', 'type' => 'key_value', 'table' => 'product_specification', 'key_column' => 'name', 'key_value' => 'Material', 'value_column' => 'value'],
             ['category' => 'CELLULAR_PHONE_CASE', 'type' => 'column', 'table' => 'products', 'column' => 'product_color',],
             ['category' => 'CELLULAR_PHONE_CASE', 'type' => 'key_value', 'table' => 'product_specification', 'key_column' => 'name', 'key_value' => 'Warranty', 'value_column' => 'value'],
             ['category' => 'CELLULAR_PHONE_CASE', 'type' => 'key_value', 'table' => 'product_specification', 'key_column' => 'name', 'key_value' => 'Number of Items', 'value_column' => 'value'],
+            ['category' => 'CELLULAR_PHONE_CASE', 'type' => 'key_value', 'table' => 'product_specification', 'key_column' => 'name', 'key_value' => 'Material', 'value_column' => 'value'],
         ];
 
         foreach ($requirements as $requirement) {
@@ -114,5 +114,7 @@ class ListingRequirementsSeeder extends Seeder
                 ]
             );
         }
+
+        ListingRequirement::where(['table' => 'products', 'column' => 'product_material_id'])->delete();
     }
 }
