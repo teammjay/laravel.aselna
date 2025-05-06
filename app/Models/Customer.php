@@ -11,7 +11,21 @@ class Customer extends Model
     use HasFactory;
 
     protected $table = 'customers';
+
     protected $keyType = 'string';
+
+    public $incrementing = false;
+
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($model) {
+            if (empty($model->id)) {
+                $model->id = (string)Str::uuid();
+            }
+        });
+    }
 
     protected $fillable = [
         'id','first_name', 'last_name', 'full_name', 'store_id', 'user_id', 'group'

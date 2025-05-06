@@ -17,6 +17,7 @@ use App\Models\OrderSynchronization;
 use App\Models\Store;
 use Illuminate\Support\Facades\Log;
 use Mockery\Exception;
+use Nette\Utils\DateTime;
 
 class FetchShopifyOrders implements ShouldQueue
 {
@@ -44,29 +45,40 @@ class FetchShopifyOrders implements ShouldQueue
 
             if (count($stores ?? []) > 0) {
                 foreach ($stores as $store) {
-                    Log::info('Store : ' . $store->name);
                     if ($store->name != 'AccessoryWiz') {
                         continue;
                     }
+                    Log::info('Store : ' . $store->name);
+
+                    $ordersyncDetail = OrderSynchronization::where('store_id',$store->id)->orderBy('filter_end_date','desc')->first();
+
+                    $created_by = auth()->user()->name ?? 'admin';
+                    /* create order synchronization*/
+                    $synchronizeArr = [
+                        'store_id' => $store->id,
+                        'synchronization_type' => 1,
+                        'filter_start_date' => isset($ordersyncDetail) ? $ordersyncDetail->filter_end_date : date('Y-m-d H:i:s'),
+                        'created_by' => $created_by
+                    ];
+                    $order_synchronization = OrderSynchronization::create($synchronizeArr);
+                    $order_synchronization_id = $order_synchronization->id;
+
+                    Log::info('order_synchronization_id: ' . json_encode($order_synchronization_id));
+
+                    if(!empty($ordersyncDetail)){
+                        $start_date = new DateTime($ordersyncDetail->filter_end_date);
+                        $sync_start_date = $start_date->format(DateTime::ATOM);
+                    }else{
+                        $sync_start_date = now()->subDays(15)->toIso8601String();
+                    }
+
+                    Log::info('Start Date : ' . $sync_start_date);
 
                     // get shopify order
                     $shopifyService = new ShopifyService();
-                    $orders = $shopifyService->getOrders($store);
+                    $orders = $shopifyService->getOrders($store, $sync_start_date);
 
                     if (isset($orders) && !empty($orders)) {
-
-                        $created_by = auth()->user()->name ?? 'admin';
-                        /* create order synchronization*/
-                        $synchronizeArr = [
-                            'store_id' => $store->id,
-                            'synchronization_type' => 1,
-                            'filter_start_date' => date('Y-m-d H:i:s'),
-                            'created_by' => $created_by
-                        ];
-                        $order_synchronization = OrderSynchronization::create($synchronizeArr);
-                        $order_synchronization_id = $order_synchronization->id;
-
-                        Log::info('order_synchronization_id: ' . json_encode($order_synchronization_id));
 
                         $noOfOrder = 0;
                         foreach ($orders as $value) {
@@ -83,9 +95,10 @@ class FetchShopifyOrders implements ShouldQueue
                                 $orderObj->update(['order_status' => OrderStatus::getOrderStatusId($order['displayFulfillmentStatus'])]);
 
                                 /* check order operation for this order*/
-                                $orderOperationDetail = OrderOperation::where('order_id',$orderDetail->id)->count();
-                                if($orderOperationDetail){
-                                    $orderOperationDetail->update(['status'=>2]);
+                                $orderOperationDetail = OrderOperation::where('order_id',$orderDetail->id)->first();
+                                if(!empty($orderOperationDetail)){
+                                    $orderOpObj = OrderOperation::findOrFail($orderOperationDetail->id);
+                                    $orderOpObj->update(['status'=>2]);
                                 }
                             } else {
 
@@ -147,13 +160,13 @@ class FetchShopifyOrders implements ShouldQueue
                                     foreach ($order['lineItems']['nodes'] as $item) {
                                         if ($item['sku'] != '') {
                                             Log::info('Shopify Order Item: ' . json_encode($item));
-                                            $itemDetail = ManageMarketplaceProduct::where('sku', $item['sku'])->first();
+                                            //$itemDetail = ManageMarketplaceProduct::where('sku', $item['sku'])->first();
                                             $orderItemData = [
                                                 'title' => $item['name'],
                                                 'order_id' => $order_detail->id,
-                                                'product_id' => $itemDetail->product_id,
-                                                'client_id' => '',
-                                                'listing_item_id' => '',
+                                                //'product_id' => $itemDetail->product_id,
+                                                /*'client_id' => '',
+                                                'listing_item_id' => '',*/
                                                 'sku' => $item['sku'],
                                                 'store_sku' => $order['id'],
                                                 'quantity' => $item['quantity'],
@@ -176,7 +189,7 @@ class FetchShopifyOrders implements ShouldQueue
                                                     'order_item_id' => $order_item->id,
                                                     'order_operation_id' => $order_operation_detail->id,
                                                     'quantity' => $item['quantity'],
-                                                    'client_id' => '',
+                                                    //'client_id' => '',
                                                     'sync_status' => 6
                                                 ];
 
