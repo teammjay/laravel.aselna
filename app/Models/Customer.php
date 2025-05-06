@@ -28,19 +28,9 @@ class Customer extends Model
     }
 
     protected $fillable = [
-        'id','first_name', 'last_name', 'full_name', 'store_id', 'user_id', 'group'
+        'id','first_name', 'last_name', 'full_name', 'store_id', 'user_id', 'group',
+        'marketplace_customer_id', 'email'
     ];
-
-    protected static function boot()
-    {
-        parent::boot();
-
-        static::creating(function ($model) {
-            if (empty($model->id)) {
-                $model->id = (string) Str::uuid();
-            }
-        });
-    }
 
     public function emails()
     {
