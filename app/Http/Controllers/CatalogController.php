@@ -1013,6 +1013,7 @@ class CatalogController extends Controller
 
         $store_type_id = $request->input('store_type_id');
         $product_id = $request->input('product_id');
+        $category_id = $request->input('category_id');
         $specifications = ProductSpecification::where('store_type_id',$store_type_id)->where('product_id',$product_id)->orderBy('created_at','asc')->get();
         /*echo '<pre>';
         print_r($specifications);
@@ -1037,14 +1038,18 @@ class CatalogController extends Controller
         print_r((object)$specificationArr);
         echo '</pre>';die;*/
 
-        $product_detail = Catalog::findOrFail($product_id);
-        $info_category = ProductType::with('children')->whereIn('parent_id', function ($subquery) {
-            $subquery->select('id')->from('product_type')->where('code', 'cea');
-        })->orderBy('name', 'asc')->get();
-        $info_category = $info_category->pluck('id')->values()->all();
 
-        $category = ProductType::with('ancestors')->find($product_detail->product_type);
-        $category_id = $this->getAncestors($category,$info_category);
+        if(!isset($category_id) && $category_id == ''){
+            $product_detail = Catalog::findOrFail($product_id);
+            $info_category = ProductType::with('children')->whereIn('parent_id', function ($subquery) {
+                $subquery->select('id')->from('product_type')->where('code', 'cea');
+            })->orderBy('name', 'asc')->get();
+            $info_category = $info_category->pluck('id')->values()->all();
+
+            $category = ProductType::with('ancestors')->find($product_detail->product_type);
+            $category_id = $this->getAncestors($category,$info_category);
+        }
+
 
         $specificationInfo = ProductSpecificationInfo::join('product_specification_info_category_link','product_specification_info_category_link.specification_info_id', '=', 'product_specification_info.id')->where('product_specification_info.store_type_id',$store_type_id)->where('product_specification_info_category_link.product_type_id',$category_id)->orderBy('product_specification_info.field_local_name')->get();
 
@@ -1068,23 +1073,28 @@ class CatalogController extends Controller
     public function getSpecificationOption(Request $request){
         $store_type_id = $request->input('store_type_id');
         $product_id = $request->input('product_id');
-        $product_detail = Catalog::findOrFail($product_id);
-        $info_category = ProductType::with('children')->whereIn('parent_id', function ($subquery) {
-            $subquery->select('id')->from('product_type')->where('code', 'cea');
-        })->orderBy('name', 'asc')->get();
-        $info_category = $info_category->pluck('id')->values()->all();
+        $category_id = $request->input('category_id');
 
-        $category = ProductType::with('ancestors')->find($product_detail->product_type);
-        $category_id = $this->getAncestors($category,$info_category);
+        if(!isset($category_id) && $category_id == '') {
+            $product_detail = Catalog::findOrFail($product_id);
+            $info_category = ProductType::with('children')->whereIn('parent_id', function ($subquery) {
+                $subquery->select('id')->from('product_type')->where('code', 'cea');
+            })->orderBy('name', 'asc')->get();
+            $info_category = $info_category->pluck('id')->values()->all();
+
+            $category = ProductType::with('ancestors')->find($product_detail->product_type);
+            $category_id = $this->getAncestors($category, $info_category);
+        }
 
         $specificationInfo = ProductSpecificationInfo::join('product_specification_info_category_link','product_specification_info_category_link.specification_info_id', '=', 'product_specification_info.id')->where('product_specification_info.store_type_id',$store_type_id)->where('product_specification_info_category_link.product_type_id',$category_id)->orderBy('product_specification_info.field_local_name')->get();
         $option = '<option value=""></option>';
+        $field = $valoption = '';
         if(!empty($specificationInfo)){
             foreach($specificationInfo as $spec){
                 $option .= '<option value="'.$spec->field_local_name.'">'.$spec->field_local_name.'</option>';
 
                 $field_option = ProductSpecifcationUniqueInfo::where('field_name',$spec->name)->first();
-                $field = $valoption = '';
+
                 if(!empty($field_option)){
                     $field = 'select';
                     $optionvalueArr = ProductSpecificationValue::where('product_specification_id',$field_option->id)->get();
