@@ -1013,7 +1013,7 @@ class CatalogController extends Controller
 
         $store_type_id = $request->input('store_type_id');
         $product_id = $request->input('product_id');
-        $category_id = $request->input('category_id');
+        $categoryId = $request->input('category_id');
         $specifications = ProductSpecification::where('store_type_id',$store_type_id)->where('product_id',$product_id)->orderBy('created_at','asc')->get();
         /*echo '<pre>';
         print_r($specifications);
@@ -1039,15 +1039,18 @@ class CatalogController extends Controller
         echo '</pre>';die;*/
 
 
-        if(!isset($category_id) && $category_id == ''){
-            $product_detail = Catalog::findOrFail($product_id);
-            $info_category = ProductType::with('children')->whereIn('parent_id', function ($subquery) {
-                $subquery->select('id')->from('product_type')->where('code', 'cea');
-            })->orderBy('name', 'asc')->get();
-            $info_category = $info_category->pluck('id')->values()->all();
+        $info_category = ProductType::with('children')->whereIn('parent_id', function ($subquery) {
+            $subquery->select('id')->from('product_type')->where('code', 'cea');
+        })->orderBy('name', 'asc')->get();
+        $info_category = $info_category->pluck('id')->values()->all();
 
+        if(!isset($categoryId) && $categoryId == '') {
+            $product_detail = Catalog::findOrFail($product_id);
             $category = ProductType::with('ancestors')->find($product_detail->product_type);
-            $category_id = $this->getAncestors($category,$info_category);
+            $category_id = $this->getAncestors($category, $info_category);
+        }else{
+            $category = ProductType::with('ancestors')->find($categoryId);
+            $category_id = $this->getAncestors($category, $info_category);
         }
 
 
@@ -1073,16 +1076,19 @@ class CatalogController extends Controller
     public function getSpecificationOption(Request $request){
         $store_type_id = $request->input('store_type_id');
         $product_id = $request->input('product_id');
-        $category_id = $request->input('category_id');
+        $categoryId = $request->input('category_id');
 
-        if(!isset($category_id) && $category_id == '') {
+        $info_category = ProductType::with('children')->whereIn('parent_id', function ($subquery) {
+            $subquery->select('id')->from('product_type')->where('code', 'cea');
+        })->orderBy('name', 'asc')->get();
+        $info_category = $info_category->pluck('id')->values()->all();
+
+        if(!isset($categoryId) && $categoryId == '') {
             $product_detail = Catalog::findOrFail($product_id);
-            $info_category = ProductType::with('children')->whereIn('parent_id', function ($subquery) {
-                $subquery->select('id')->from('product_type')->where('code', 'cea');
-            })->orderBy('name', 'asc')->get();
-            $info_category = $info_category->pluck('id')->values()->all();
-
             $category = ProductType::with('ancestors')->find($product_detail->product_type);
+            $category_id = $this->getAncestors($category, $info_category);
+        }else{
+            $category = ProductType::with('ancestors')->find($categoryId);
             $category_id = $this->getAncestors($category, $info_category);
         }
 
