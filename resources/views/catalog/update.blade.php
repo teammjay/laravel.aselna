@@ -1312,7 +1312,8 @@
                 type: 'POST',
                 data: {
                     store_type_id : $('#specification_store_type_id').val(),
-                    product_id : '{{ $product->product_id }}'
+                    product_id : '{{ $product->product_id }}',
+                    category_id : $('#product_type').val(),
                 },
                 headers: {
                     'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
@@ -2019,6 +2020,7 @@
                     data: {
                         store_type_id: $('#specification_store_type_id').val(),
                         product_id : '{{ $product->product_id }}',
+                        category_id : $('#product_type').val(),
                         _token: "{{ csrf_token() }}"
                     },
                     success: function (response) {
@@ -2061,7 +2063,7 @@
 
             loadSpecification();
 
-            $(document).on('change', '#specification_store_type_id', function() {
+            $(document).on('change', '#specification_store_type_id, #product_type', function() {
                 loadSpecification();
             });
 
