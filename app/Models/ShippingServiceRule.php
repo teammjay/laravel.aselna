@@ -31,4 +31,12 @@ class ShippingServiceRule extends Model
     public function packageType(){
         return $this->belongsTo(ShippingPackage::class,'package_type_filter_id');
     }
+
+    public function ShippingCarrierService(){
+        return $this->belongsTo(ShippingCarrierService::class,'shipping_carrier_service_id');
+    }
+
+    public function getOrderShippingCarrierService($weight){
+
+    }
 }
