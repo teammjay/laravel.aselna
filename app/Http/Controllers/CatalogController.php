@@ -217,7 +217,9 @@ class CatalogController extends Controller
             }
         }
 
-        $query->where('oem_generic',2);
+//        $query->where('oem_generic',2);
+        $query->whereNull('parent_id');
+        $query->where('product_status','<>','discontinued');
         ///echo $query->toSql();die;
         /*$productsRecord = $query->paginate($perPage); // Paginate results
         $products = $query->skip($start)->take($perPage)->get(); // Paginate results
