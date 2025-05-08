@@ -39,7 +39,7 @@ class ShippingServiceRule extends Model
 
     public static function getOrderShippingCarrierService($weight){
 
-        //$weight= $weight * 0.03527396195;
+        $weight= $weight * 0.03527396195;
         $rules = SELF::with('ShippingCarrierService','ShippingCarrierService.ShippingCarrier')->orderBy('priority','asc')->get();
         if(count($rules ?? []) > 0){
             foreach($rules as $rule){
