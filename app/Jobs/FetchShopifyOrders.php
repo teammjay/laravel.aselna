@@ -182,11 +182,13 @@ class FetchShopifyOrders implements ShouldQueue
                                             $parts = explode('-', $item['sku']);
 
                                             $product_code = isset($parts[0]) ? $parts[0] : '';
-                                            $product_detail = Catalog::where('product_sku',$product_code);
+                                            Log::info('Product Code: ' . $product_code);
+                                            $product_detail = Catalog::where('product_sku',$product_code)->first();
+                                            Log::info('Product Detail: ' . json_encode($product_detail));
                                             $orderItemData = [
                                                 'title' => $item['name'],
                                                 'order_id' => $order_detail->id,
-                                                'product_id' => $product_detail->product_id,
+                                                'product_id' => isset($product_detail->product_id) ? $product_detail->product_id : '',
                                                 /*'client_id' => '',
                                                 'listing_item_id' => '',*/
                                                 'sku' => $item['sku'],
@@ -229,7 +231,8 @@ class FetchShopifyOrders implements ShouldQueue
                             $noOfOrder++;
                         }
 
-                        $order_synchronization->update(['number_of_items'=>$noOfOrder,'last_order_update_date' => date('Y-m-d H:i:s'), 'filter_end_date' => date('Y-m-d H:i:s')]);
+                        $osObject = OrderSynchronization::findOrFail($order_synchronization_id);
+                        $osObject->update(['number_of_items'=>$noOfOrder,'last_order_update_date' => date('Y-m-d H:i:s'), 'filter_end_date' => date('Y-m-d H:i:s')]);
                     }
                 }
             }
