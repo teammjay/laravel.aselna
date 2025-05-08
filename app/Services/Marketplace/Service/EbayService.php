@@ -637,14 +637,20 @@ class EbayService implements MarketplaceServiceInterface
         $listingDetail = ListingFeed::where('listing_id',$listingId)->first();
         $feed_id = $listingDetail->id;
 
-        $taskID = $authService->createTask($version,$listingInfo);
+        if($listingInfo->feed_type == 5){
 
-        $feedInfo = ListingFeed::findOrFail($feed_id);
-        $feedInfo->update([ 'feed_id' => $taskID, 'submit_ts'=> now(), 'number_of_attempts' => $feedInfo->number_of_attempts ?? 0 + 1]);
+        }else {
 
-        Log::info('File Path : '.$filePath);
-        $response = $authService->uploadFile($taskID, $fileName, $filePath);
-        Log::info('Feed Submitted : '.$feedId);
+            $taskID = $authService->createTask($version, $listingInfo);
+
+            $feedInfo = ListingFeed::findOrFail($feed_id);
+            $feedInfo->update(['feed_id' => $taskID, 'submit_ts' => now(), 'number_of_attempts' => $feedInfo->number_of_attempts ?? 0 + 1]);
+
+            Log::info('File Path : ' . $filePath);
+            $response = $authService->uploadFile($taskID, $fileName, $filePath);
+            Log::info('Feed Submitted : ' . $feedId);
+
+        }
         //$this->downloadResultFeed($taskID, $listingId);
         /*if(isset($response['fileUploadStatus']) && $response['fileUploadStatus'] == 'SUCCESS'){
             $updateFeedData = [

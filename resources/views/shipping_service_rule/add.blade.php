@@ -123,6 +123,22 @@
                     </div>
                     <div class="col-md-6">
                         <div class="form-group">
+                            <label for="signature_confirmation">Signature Confirmation</label>
+                            <select class="form-control" id="signature_confirmation" name="signature_confirmation">
+                                <option value="0" @if((isset($shipping_service_rule) && $shipping_service_rule['signature_confirmation'] === 0)) selected @endif>None</option>
+                                <option value="1" @if((isset($shipping_service_rule) && $shipping_service_rule['signature_confirmation'] === 1)) selected @endif>Direct Signature</option>
+                                <option value="2" @if((isset($shipping_service_rule) && $shipping_service_rule['signature_confirmation'] === 2)) selected @endif>Adult Signature</option>
+
+                            </select>
+
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
                             <label for="shipping_carrier_service_id">Carrier Service</label>
                             <select class="form-control" id="shipping_carrier_service_id" name="shipping_carrier_service_id">
                                 <option value="0">None</option>
@@ -131,21 +147,6 @@
                                         <option value="{{ $sCarrierService->id }}" @if((isset($shipping_service_rule) && $shipping_service_rule['shipping_carrier_service_id'] === $sCarrierService->id)) selected @endif >{{ $sCarrierService->name }}</option>
                                     @endforeach
                                 @endif
-                            </select>
-
-                        </div>
-                    </div>
-                </div>
-
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="form-group">
-                            <label for="signature_confirmation">Signature Confirmation</label>
-                            <select class="form-control" id="signature_confirmation" name="signature_confirmation">
-                                <option value="0" @if((isset($shipping_service_rule) && $shipping_service_rule['signature_confirmation'] === 0)) selected @endif>None</option>
-                                <option value="1" @if((isset($shipping_service_rule) && $shipping_service_rule['signature_confirmation'] === 1)) selected @endif>Direct Signature</option>
-                                <option value="2" @if((isset($shipping_service_rule) && $shipping_service_rule['signature_confirmation'] === 2)) selected @endif>Adult Signature</option>
-
                             </select>
 
                         </div>

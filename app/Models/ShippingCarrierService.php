@@ -32,4 +32,5 @@ class ShippingCarrierService extends Model
     {
         return $this->belongsTo(ShippingCarrier::class);
     }
+
 }

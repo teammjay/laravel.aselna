@@ -32,6 +32,8 @@
                         <th>Max. Quantity</th>
                         <th>Package Type Filter</th>
                         <th>Signature Confirmation</th>
+                        <th>Round Weight</th>
+                        <th>Carrier Service</th>
                         <th>Color</th>
                         <th>Action</th>
                     </tr>
@@ -70,6 +72,8 @@
                                 @endphp
                                 {{ $sc }}
                             </td>
+                            <td>{{ $srule->round_weight_value }}</td>
+                            <td>{{ isset($srule->ShippingCarrierService->ShippingCarrier) ? $srule->ShippingCarrierService->ShippingCarrier->name : '' }} {{ isset($srule->ShippingCarrierService) ? $srule->ShippingCarrierService->name : '' }}</td>
                             <td>{{ $srule->color }}</td>
                             <td>
                                 <a href="{{ route('shipping_service_rule.edit', $srule->id) }}" class="btn btn-primary" title="Edit">

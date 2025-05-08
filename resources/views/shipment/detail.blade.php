@@ -7,6 +7,7 @@
                 </div>
                 <div class="col-md-8">
                     <select class="form-control" id="carrier_name" name="carrier_name">
+                        <option value="">--</option>
                         @if(count($shippingCarrier ?? []) > 0)
                             @foreach($shippingCarrier as $sCarrier)
                                 <option value="{{ $sCarrier->id }}" {{ ( $sCarrier->id == $shipmentDetail->shipping_carrier_id ) ? 'selected' : '' }}>{{ $sCarrier->name }}</option>
@@ -21,6 +22,7 @@
                 </div>
                 <div class="col-md-8">
                     <select class="form-control" id="shipment_carrier" name="shipment_carrier">
+                        <option value="">--</option>
                         @if(count($shippingCarrierService ?? []) > 0)
                             @foreach($shippingCarrierService as $sCarrierService)
                                 <option value="{{ $sCarrierService->id }}" {{ ( $sCarrierService->id == $shipmentDetail->shipping_carrier_service_id ) ? 'selected' : '' }}>{{ $sCarrierService->name }}</option>
@@ -62,6 +64,7 @@
                 </div>
                 <div class="col-md-8">
                     <select class="form-control" id="carrier_package" name="carrier_package">
+                        <option value="">--</option>
                         @if(count($shippingCarrierPackage ?? []) > 0)
                             @foreach($shippingCarrierPackage as $sCarrierPackage)
                                 <option value="{{ $sCarrierPackage->id }}" {{ ( $sCarrierPackage->id == $shipmentDetail->shipping_carrier_service_id ) ? 'selected' : '' }}>{{ $sCarrierPackage->name }}</option>
@@ -84,6 +87,7 @@
                 </div>
                 <div class="col-md-8">
                     <select class="form-control" id="shipment_from" name="shipment_from">
+                        <option value="">--</option>
                         @if(count($shipFrom ?? []) > 0)
                             @foreach($shipFrom as $lc)
                                 <option value="{{ $lc->id }}" {{ ( $lc->id == $shipmentDetail->ship_from_id ) ? 'selected' : '' }} >{{ $lc->name }}</option>
