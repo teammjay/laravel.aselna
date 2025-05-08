@@ -3,11 +3,13 @@
 namespace App\Jobs;
 
 use App\Constants\OrderStatus;
+use App\Models\Catalog;
 use App\Models\Customer;
 use App\Models\ListingItem;
 use App\Models\ManageMarketplaceProduct;
 use App\Models\OrderOperation;
 use App\Models\OrderOperationItem;
+use App\Models\ShippingServiceRule;
 use App\Services\Marketplace\Service\ShopifyService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -136,6 +138,9 @@ class FetchShopifyOrders implements ShouldQueue
                                     'order_id' => $order['id'],
                                 ], $orderData);
 
+                                $order_weight = $order['totalWeight'];
+                                $rulesDetails = ShippingServiceRule::getOrderShippingCarrierService($order_weight);
+
                                 /* create order operatation*/
                                 $orderOperationData = [
                                     'order_id' => $order_detail->id,
@@ -151,6 +156,18 @@ class FetchShopifyOrders implements ShouldQueue
                                     'order_synchronization_id' => $order_synchronization_id
                                 ];
 
+                                if(!empty($rulesDetails)){
+                                    if(isset($rulesDetails->package_type_filter_id)){
+                                        $orderOperationData['shipping_package_id'] = $rulesDetails->package_type_filter_id;
+                                    }
+                                    if(isset($rulesDetails->shipping_carrier_service_id)){
+                                        $orderOperationData['shipping_carrier_service_id'] = $rulesDetails->shipping_carrier_service_id;
+                                    }
+                                    if(isset($rulesDetails->ShippingCarrierService->ShippingCarrier)){
+                                        $orderOperationData['shipping_carrier_id'] = $rulesDetails->ShippingCarrierService->ShippingCarrier->id;
+                                    }
+                                }
+
                                 $order_operation_detail = OrderOperation::updateOrCreate([
                                     'order_id' => $order_detail->id,
                                 ], $orderOperationData);
@@ -161,10 +178,15 @@ class FetchShopifyOrders implements ShouldQueue
                                         if ($item['sku'] != '') {
                                             Log::info('Shopify Order Item: ' . json_encode($item));
                                             //$itemDetail = ManageMarketplaceProduct::where('sku', $item['sku'])->first();
+
+                                            $parts = explode('-', $item['sku']);
+
+                                            $product_code = isset($parts[0]) ? $parts[0] : '';
+                                            $product_detail = Catalog::where('product_sku',$product_code);
                                             $orderItemData = [
                                                 'title' => $item['name'],
                                                 'order_id' => $order_detail->id,
-                                                //'product_id' => $itemDetail->product_id,
+                                                'product_id' => $product_detail->product_id,
                                                 /*'client_id' => '',
                                                 'listing_item_id' => '',*/
                                                 'sku' => $item['sku'],

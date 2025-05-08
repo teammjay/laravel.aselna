@@ -2581,11 +2581,51 @@ class ListingController extends Controller
     {
 
         $selected_listing = $request->input('selected_list');
+        $selected_sku = $request->input('selected_sku');
 
         if (!empty($selected_listing)) {
-            foreach ($selected_listing as $listing_item) {
-                $listingItem = ListingItem::findOrFail($listing_item);
-                $listingItem->update(['status' => ListingStatus::Deleted, 'sync_status' => ListingSyncStatus::Unsynchronize]);
+            foreach ($selected_listing as $key=>$listing_item) {
+
+                $listingDetail = ListingItemLink::select('listing_item_link.*')->with('listing')->leftJoin('listing_item', 'listing_item.id', '=', 'listing_item_link.item_id')->where('listing_item_link.item_id', $listing_item)->where('listing_item.sku', $selected_sku[$key])->first();
+
+                if ($listingDetail) {
+                    Log::info('Listing Info Found');
+                    $created_by = auth()->user()->name ?? 'admin';
+                    $listingArr = [
+                        'store_id' => $listingDetail->listing->store_id,
+                        'generation_type_id' => $listingDetail->listing->generation_type_id,
+                        'feed_type' => FeedTypes::DELETE,
+                        'status' => 0,
+                        'chained' => 1,
+                        'include_carriers' => $listingDetail->listing->include_carriers,
+                        'brand_combo' => $listingDetail->listing->brand_combo,
+                        'carrier_combo' => $listingDetail->listing->carrier_combo,
+                        'created_by' => $created_by,
+                        'updated_by' => $created_by
+                    ];
+
+
+                    $listrecord = Listing::create($listingArr);
+                    $listing_id = $listrecord->id;
+
+
+                    if ($listing_id) {
+                        $itemLink = array(
+                            'item_id' => $listingDetail->item_id,
+                            'listing_id' => $listing_id,
+                            'sync_status' => ListingSyncStatus::Synchronized,
+                            'created_by' => $created_by
+                        );
+
+                        ListingItemLink::create($itemLink);
+                        Bus::chain([
+                            new FeedGenerationJob($listing_id),
+                        ])->dispatch();
+                    }
+
+                    $listingItem = ListingItem::findOrFail($listing_item);
+                    $listingItem->update(['status' => ListingStatus::Deleted, 'sync_status' => ListingSyncStatus::Unsynchronize]);
+                }
             }
 
             return response()->json([

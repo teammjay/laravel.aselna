@@ -106,7 +106,7 @@ class ProductSyncJob implements ShouldQueue
 
         foreach ($keywords as $keyword) {
             ProductTitleKeyword::updateOrInsert(
-                ['product_id' => $product->id, 'keyword' => $keyword->keyword],
+                ['id' => $keyword->id,'product_id' => $product->id, 'keyword' => $keyword->keyword],
                 [
                     'id' => $keyword->id,
                     'keyword' => $keyword->keyword,
