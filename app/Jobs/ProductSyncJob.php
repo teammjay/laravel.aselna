@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Constants\CatalogStatus;
 use App\Models\Catalog;
 use App\Models\Manufacturer;
 use App\Models\ProductCondition;
@@ -12,6 +13,7 @@ use App\Models\ProductTitleKeyword;
 use App\Models\Store;
 use App\Models\StoreProduct;
 use Exception;
+use Google\Service\ShoppingContent\ProductStatus;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\DB;
@@ -166,8 +168,9 @@ class ProductSyncJob implements ShouldQueue
                 'product_mrsp' => $product->msrp,
                 'product_sku' => $product->code,
                 'product_code' => $product->reference_id1,
+                'parent_id' => $product->parent_id,
                 //            'product_image_url' => 'as',
-                'product_status' => $product->status == 1 ? 'active' : 'discontinued',
+                'product_status' => CatalogStatus::getStatusName($product->status),
                 'dimensions_length' => $product->dimensions_length,
                 'dimensions_height' => $product->dimensions_height,
                 'dimensions_width' => $product->dimensions_width,
