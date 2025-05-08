@@ -15,6 +15,10 @@ class ShippingServiceRulesController extends Controller
      */
     public function index()
     {
+        /*$val = ShippingServiceRule::getOrderShippingCarrierService(3);
+        echo '<pre>';
+        print_r($val);
+        echo '</pre>';die;*/
         $shipping_service_rules = ShippingServiceRule::with('packageType','ShippingCarrierService','ShippingCarrierService.ShippingCarrier')->get();
         return view('shipping_service_rule.list', compact('shipping_service_rules'));
     }
