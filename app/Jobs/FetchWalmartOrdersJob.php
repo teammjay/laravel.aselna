@@ -35,6 +35,7 @@ class FetchWalmartOrdersJob implements ShouldQueue
      */
     public function handle(): void
     {
+        Log::info("Testing");
         /* get amazon stores*/
         $stores = Store::select('store.*')->join('store_type', 'store_type.id', '=', 'store.store_type_id')->where('store_type.code', 'walmart')->get();
 
