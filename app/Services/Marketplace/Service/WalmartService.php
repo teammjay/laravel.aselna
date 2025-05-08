@@ -223,6 +223,7 @@ class WalmartService implements MarketplaceServiceInterface
                     'brand' => $listingInfo->store->name,
                     'productName' => $item->title,
                     'ShippingWeight' => floatval($productObj->product_weight),
+                    'fulfillmentLagTime' => 1,
                     'productIdentifiers' => [
                         'productId' => $item->upc,
                         'productIdType' => 'UPC'
