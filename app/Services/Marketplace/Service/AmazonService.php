@@ -467,26 +467,34 @@ class AmazonService implements MarketplaceServiceInterface
         $userIdentifier = $listingInfo->store->user_id;
         $listingItems = ListingItemLink::where('listing_id', $listingId)->cursor();
 
-        $xml = new SimpleXMLElement('<?xml version="1.0" encoding="UTF-8"?><AmazonEnvelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"></AmazonEnvelope>');
-
-        $header = $xml->addChild('Header');
-        $header->addChild('DocumentVersion', '1.01');
-        $header->addChild('MerchantIdentifier', $userIdentifier);
-
-        $xml->addChild('MessageType', 'Product');
+        $feed = [
+            'header' => [
+                'sellerId' => $userIdentifier,
+                'version' => '2.0',
+                'issueLocale' => 'en_US'
+            ],
+            'messages' => []
+        ];
 
         $index = 1;
+
         foreach ($listingItems as $listingItem) {
-            $messages = $xml->addChild('Message');
-            $messages->addChild('MessageID', $index);
-            $messages->addChild('OperationType', 'Delete');
             $itemDetail = $listingItem->item;
 
-            $product = $messages->addChild('Product');
-            $product->addChild('SKU', $itemDetail->sku);
+            $message = [
+                'messageId' => $index,
+                'sku' => $itemDetail->sku,
+                'operationType' => 'DELETE',
+            ];
 
+            $feed['messages'][] = $message;
             $index++;
         }
+
+        FileUtility::saveToFile(
+            public_path('feeds/amazon/' . $listingId . '.json'),
+            json_encode($feed, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)
+        );
     }
 
     private function generateInventoryFeed($listingInfo, $listingId)

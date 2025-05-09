@@ -428,7 +428,7 @@ class ListingController extends Controller
 //        $query->leftJoin('product_type', 'products.product_type', '=', 'product_type.id');
 
         //DB::enableQueryLog();
-        $query = Catalog::with('StoreProduct', 'image', 'productType','interfaces.interfaces','pinterface.interfaces')->select('products.product_id', 'product_sku', 'product_title', 'product_price', 'product_qty', 'products.created_at', 'product_type', 'product_image_url')->where('products.product_status', 1);
+        $query = Catalog::with('StoreProduct', 'image', 'productType', 'interfaces.interfaces', 'pinterface.interfaces')->select('products.product_id', 'product_sku', 'product_title', 'product_price', 'product_qty', 'products.created_at', 'product_type', 'product_image_url')->where('products.product_status', 1);
 
 
         // Handle Only Active Products (Remove the bundled products)
@@ -762,7 +762,7 @@ class ListingController extends Controller
                         ->leftJoin('store_type', 'store_type.id', '=', 'store_type_category.store_type_id')
                         ->leftJoin('store', 'store_type.id', '=', 'store.store_type_id')
                         ->when($store->storeType->name === 'Amazon', function ($query) use ($store) {
-                            $qualifiedcategoryCodes = ['ELECTRONIC_CABLE', 'SCREEN_PROTECTOR', 'HEADPHONES', 'PORTABLE_ELECTRONIC_DEVICE_MOUNT', 'CELL_PHONE_HOLSTER', 'CHARGING_ADAPTER', 'POWER_BANK', 'CAMERA_TRIPOD', 'PORTABLE_ELECTRONIC_DEVICE_ARMBAND', 'PORTABLE_ELECTRONIC_DEVICE_STAND','CELLULAR_PHONE_CASE'];
+                            $qualifiedcategoryCodes = ['ELECTRONIC_CABLE', 'SCREEN_PROTECTOR', 'HEADPHONES', 'PORTABLE_ELECTRONIC_DEVICE_MOUNT', 'CELL_PHONE_HOLSTER', 'CHARGING_ADAPTER', 'POWER_BANK', 'CAMERA_TRIPOD', 'PORTABLE_ELECTRONIC_DEVICE_ARMBAND', 'PORTABLE_ELECTRONIC_DEVICE_STAND', 'CELLULAR_PHONE_CASE'];
                             return $query->whereIn('store_type_category.marketplace_code', $qualifiedcategoryCodes);
                         })
                         ->where('store.id', $store_id)
@@ -785,9 +785,9 @@ class ListingController extends Controller
                         $currentCategory = StoreTypeCategory::where('id', $categoryId)->first();
                         if (isset($currentCategory)) {
                             if ('Amazon' == $store->storeType->name) {
-                                $issues[$storeProduct->product_id] = ListingUtility::validate($currentCategory->marketplace_code, $storeProduct->product_id,$store->storeType->id);
+                                $issues[$storeProduct->product_id] = ListingUtility::validate($currentCategory->marketplace_code, $storeProduct->product_id, $store->storeType->id);
                             } else {
-                                $issues[$storeProduct->product_id] = ListingUtility::validate($currentCategory->store_type_code, $storeProduct->product_id,$store->storeType->id);
+                                $issues[$storeProduct->product_id] = ListingUtility::validate($currentCategory->store_type_code, $storeProduct->product_id, $store->storeType->id);
                             }
                         }
                     }
@@ -2563,9 +2563,9 @@ class ListingController extends Controller
         $store = Store::findOrFail($store_id);
         $currentCategory = StoreTypeCategory::where('id', $category_id)->first();
         if ('Amazon' == $store->storeType->name) {
-            $issues = ListingUtility::validate($currentCategory->marketplace_code, $product->product_id,$store->storeType->id);
+            $issues = ListingUtility::validate($currentCategory->marketplace_code, $product->product_id, $store->storeType->id);
         } else {
-            $issues = ListingUtility::validate($currentCategory->store_type_code, $product->product_id,$store->storeType->id);
+            $issues = ListingUtility::validate($currentCategory->store_type_code, $product->product_id, $store->storeType->id);
         }
 
         $table_html = view('listing.error_tables', ['issues' => $issues, 'product' => $product])->render();
@@ -2579,13 +2579,13 @@ class ListingController extends Controller
 
     public function endList(Request $request)
     {
-
+        $created_by = auth()->user()->name ?? 'admin';
         $selected_listing = $request->input('selected_list');
         $selected_sku = $request->input('selected_sku');
 
         if (!empty($selected_listing)) {
             foreach ($selected_listing as $key=>$listing_item) {
-
+                $listingItem = ListingItem::findOrFail($listing_item);
                 $listingDetail = ListingItemLink::select('listing_item_link.*')->with('listing')->leftJoin('listing_item', 'listing_item.id', '=', 'listing_item_link.item_id')->where('listing_item_link.item_id', $listing_item)->where('listing_item.sku', $selected_sku[$key])->first();
 
                 if ($listingDetail) {
@@ -2617,14 +2617,16 @@ class ListingController extends Controller
                             'created_by' => $created_by
                         );
 
+                        $listingItem->update(['status' => ListingStatus::Deleted, 'sync_status' => ListingSyncStatus::Unsynchronize]);
                         ListingItemLink::create($itemLink);
+
                         Bus::chain([
                             new FeedGenerationJob($listing_id),
                         ])->dispatch();
                     }
 
-                    $listingItem = ListingItem::findOrFail($listing_item);
-                    $listingItem->update(['status' => ListingStatus::Deleted, 'sync_status' => ListingSyncStatus::Unsynchronize]);
+
+
                 }
             }
 
