@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Constants\Operators;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 
@@ -30,5 +31,53 @@ class ShippingServiceRule extends Model
 
     public function packageType(){
         return $this->belongsTo(ShippingPackage::class,'package_type_filter_id');
+    }
+
+    public function ShippingCarrierService(){
+        return $this->belongsTo(ShippingCarrierService::class,'shipping_carrier_service_id');
+    }
+
+    public static function getOrderShippingCarrierService($weight){
+
+        $weight= $weight * 0.03527396195;
+        $rules = SELF::with('ShippingCarrierService','ShippingCarrierService.ShippingCarrier')->orderBy('priority','asc')->get();
+        if(count($rules ?? []) > 0){
+            foreach($rules as $rule){
+                $value1 = $rule->min_weight_value;
+                $value2 = $rule->max_weight_value;
+                $operator = Operators::getOperatorsName($rule->weight_operator);
+
+                if (SELF::compareWeight($weight, $operator, $value1, $value2)) {
+                    return $rule;
+                }
+
+            }
+        }
+        return null;
+    }
+
+    public static function compareWeight($weight, $operator, $value1, $value2)
+    {
+        switch ($operator) {
+            case '<':
+                return $weight < $value1;
+            case '<=':
+                return $weight <= $value1;
+            case '>':
+                return $weight > $value1;
+            case '>=':
+                return $weight >= $value1;
+            case '==':
+                return $weight == $value1;
+            case '!=':
+                return $weight != $value1;
+            case 'between':
+                if ($value2 != '') {
+                    return $weight >= $value1 && $weight <= $value2;
+                }
+                return false;
+            default:
+                return false;
+        }
     }
 }

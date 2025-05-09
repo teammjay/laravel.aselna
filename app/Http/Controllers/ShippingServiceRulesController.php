@@ -15,7 +15,11 @@ class ShippingServiceRulesController extends Controller
      */
     public function index()
     {
-        $shipping_service_rules = ShippingServiceRule::with('packageType')->get();
+        /*$val = ShippingServiceRule::getOrderShippingCarrierService(3);
+        echo '<pre>';
+        print_r($val);
+        echo '</pre>';die;*/
+        $shipping_service_rules = ShippingServiceRule::with('packageType','ShippingCarrierService','ShippingCarrierService.ShippingCarrier')->get();
         return view('shipping_service_rule.list', compact('shipping_service_rules'));
     }
 
@@ -51,8 +55,9 @@ class ShippingServiceRulesController extends Controller
     {
         $shipping_service_rule = ShippingServiceRule::findOrFail($id);
         $ShippingPackages = ShippingPackage::orderBy('name')->get();
+        $shippingCarrierServices = ShippingCarrierService::with('ShippingCarrier')->orderBy('name')->get();
 
-        return view('shipping_service_rule.add', compact('shipping_service_rule','ShippingPackages'));
+        return view('shipping_service_rule.add', compact('shipping_service_rule','ShippingPackages','shippingCarrierServices'));
     }
 
     /**

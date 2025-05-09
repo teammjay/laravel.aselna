@@ -2581,51 +2581,53 @@ class ListingController extends Controller
     {
         $created_by = auth()->user()->name ?? 'admin';
         $selected_listing = $request->input('selected_list');
+        $selected_sku = $request->input('selected_sku');
 
         if (!empty($selected_listing)) {
-
-            foreach ($selected_listing as $listing_item) {
+            foreach ($selected_listing as $key=>$listing_item) {
                 $listingItem = ListingItem::findOrFail($listing_item);
-                Log::info('ListingItem :: ' . json_encode($listingItem));
-                $listing = ListingItemLink::where('item_id', $listingItem->id)->first();
-                Log::info('ListingItem :: ' . json_encode($listing));
+                $listingDetail = ListingItemLink::select('listing_item_link.*')->with('listing')->leftJoin('listing_item', 'listing_item.id', '=', 'listing_item_link.item_id')->where('listing_item_link.item_id', $listing_item)->where('listing_item.sku', $selected_sku[$key])->first();
 
-                $listingArr = [
-                    'store_id' => $listing->listing->store_id,
-                    'generation_type_id' => $listing->listing->generation_type_id,
-                    'feed_type' => FeedTypes::DELETE,
-                    'status' => 0,
-                    'chained' => 1,
-                    'include_carriers' => $listing->listing->include_carriers,
-                    'brand_combo' => $listing->listing->brand_combo,
-                    'carrier_combo' => $listing->listing->carrier_combo,
-                    'created_by' => $created_by,
-                    'updated_by' => $created_by,
-                ];
-
-                $listrecord = Listing::create($listingArr);
-                $listing_id = $listrecord->id;
-
-                if ($listing_id) {
-                    $itemLink = array(
-                        'item_id' => $listing->item_id,
-                        'listing_id' => $listing_id,
-                        'sync_status' => ListingSyncStatus::Synchronized,
-                        'created_by' => $created_by
-                    );
-
-                    ListingItemLink::create($itemLink);
-
-                    $listingItem->update(['status' => ListingStatus::Deleted, 'sync_status' => ListingSyncStatus::Unsynchronize]);
+                if ($listingDetail) {
+                    Log::info('Listing Info Found');
+                    $created_by = auth()->user()->name ?? 'admin';
+                    $listingArr = [
+                        'store_id' => $listingDetail->listing->store_id,
+                        'generation_type_id' => $listingDetail->listing->generation_type_id,
+                        'feed_type' => FeedTypes::DELETE,
+                        'status' => 0,
+                        'chained' => 1,
+                        'include_carriers' => $listingDetail->listing->include_carriers,
+                        'brand_combo' => $listingDetail->listing->brand_combo,
+                        'carrier_combo' => $listingDetail->listing->carrier_combo,
+                        'created_by' => $created_by,
+                        'updated_by' => $created_by
+                    ];
 
 
-                    Bus::chain([
-                        new FeedGenerationJob($listing_id),
-                    ])->dispatch();
+                    $listrecord = Listing::create($listingArr);
+                    $listing_id = $listrecord->id;
+
+
+                    if ($listing_id) {
+                        $itemLink = array(
+                            'item_id' => $listingDetail->item_id,
+                            'listing_id' => $listing_id,
+                            'sync_status' => ListingSyncStatus::Synchronized,
+                            'created_by' => $created_by
+                        );
+
+                        $listingItem->update(['status' => ListingStatus::Deleted, 'sync_status' => ListingSyncStatus::Unsynchronize]);
+                        ListingItemLink::create($itemLink);
+
+                        Bus::chain([
+                            new FeedGenerationJob($listing_id),
+                        ])->dispatch();
+                    }
+
+
+
                 }
-
-
-                Log::info('ListingArr :: ' . json_encode($listingArr));
             }
 
             return response()->json([
