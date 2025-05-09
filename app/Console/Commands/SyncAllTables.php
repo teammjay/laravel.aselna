@@ -82,7 +82,7 @@ class SyncAllTables extends Command
      */
     public function handle()
     {
-        // Bus::chain([
+         Bus::chain([
 //            new FileSystemSyncJob(),
 //            new StoreTypeSyncJob(),
 //           new StoreSyncJob(),
@@ -102,7 +102,7 @@ class SyncAllTables extends Command
         //    new ProductSizeSyncJob(),
         //    new ProductMaterialSyncJob(),
 //            new GenerationTypeAndTemplateSync(),
-//            new ProductSyncJob(),
+            new ProductSyncJob(),
 //            new ProductChannelDetailSyncJob(),
 //            new StoreProductSyncJob(),
 //            new ProductInterfaces(),
@@ -117,7 +117,7 @@ class SyncAllTables extends Command
         // new StorePagesJobSync(),
 //            new DeviceCarrierSyncJob(),
         // new ProductSpecificationSyncJob()
-        // ])->dispatch();
+         ])->dispatch();
 //        Bus::chain([
 //            ListingSyncJob::dispatch(),
 //            ListingItemSyncJob::dispatch(),

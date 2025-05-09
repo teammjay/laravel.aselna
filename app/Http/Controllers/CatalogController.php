@@ -217,9 +217,12 @@ class CatalogController extends Controller
             }
         }
 
+        $productTypes = ProductType::select('id')->where('code', 'ceabundle')->get()->toArray();
+        $query->whereNotIn('product_type', $productTypes);
+
 //        $query->where('oem_generic',2);
         $query->whereNull('parent_id');
-        $query->where('product_status','<>','discontinued');
+        $query->where('product_status','!=','discontinued');
         ///echo $query->toSql();die;
         /*$productsRecord = $query->paginate($perPage); // Paginate results
         $products = $query->skip($start)->take($perPage)->get(); // Paginate results

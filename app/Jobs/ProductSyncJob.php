@@ -41,7 +41,8 @@ class ProductSyncJob implements ShouldQueue
     {
         $easyesaleProductsQ = DB::connection('easyesale_db')->table('product')
             ->whereNull('deleted_by')
-            ->where('status', '=', '1')->orderBy('create_ts', 'desc');
+            ->where('status', '=', '1')
+            ->orderBy('create_ts', 'desc');
 
         if (env('APP_ENV') === 'local') {
             Log::info('Local Environment');
@@ -153,6 +154,7 @@ class ProductSyncJob implements ShouldQueue
             // if (Catalog::where('product_sku', $product->code)->exists()) {
             //     return;
             // }
+            Log::info("Product Info :: " . json_encode($product));
             Catalog::updateOrInsert([
                 'product_id' => $product->id,
             ], [
