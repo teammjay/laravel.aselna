@@ -428,7 +428,7 @@ class ListingController extends Controller
 //        $query->leftJoin('product_type', 'products.product_type', '=', 'product_type.id');
 
         //DB::enableQueryLog();
-        $query = Catalog::with('StoreProduct', 'image', 'productType','interfaces.interfaces','pinterface.interfaces')->select('products.product_id', 'product_sku', 'product_title', 'product_price', 'product_qty', 'products.created_at', 'product_type', 'product_image_url')->where('products.product_status', 1);
+        $query = Catalog::with('StoreProduct', 'image', 'productType', 'interfaces.interfaces', 'pinterface.interfaces')->select('products.product_id', 'product_sku', 'product_title', 'product_price', 'product_qty', 'products.created_at', 'product_type', 'product_image_url')->where('products.product_status', 1);
 
 
         // Handle Only Active Products (Remove the bundled products)
@@ -762,7 +762,7 @@ class ListingController extends Controller
                         ->leftJoin('store_type', 'store_type.id', '=', 'store_type_category.store_type_id')
                         ->leftJoin('store', 'store_type.id', '=', 'store.store_type_id')
                         ->when($store->storeType->name === 'Amazon', function ($query) use ($store) {
-                            $qualifiedcategoryCodes = ['ELECTRONIC_CABLE', 'SCREEN_PROTECTOR', 'HEADPHONES', 'PORTABLE_ELECTRONIC_DEVICE_MOUNT', 'CELL_PHONE_HOLSTER', 'CHARGING_ADAPTER', 'POWER_BANK', 'CAMERA_TRIPOD', 'PORTABLE_ELECTRONIC_DEVICE_ARMBAND', 'PORTABLE_ELECTRONIC_DEVICE_STAND','CELLULAR_PHONE_CASE'];
+                            $qualifiedcategoryCodes = ['ELECTRONIC_CABLE', 'SCREEN_PROTECTOR', 'HEADPHONES', 'PORTABLE_ELECTRONIC_DEVICE_MOUNT', 'CELL_PHONE_HOLSTER', 'CHARGING_ADAPTER', 'POWER_BANK', 'CAMERA_TRIPOD', 'PORTABLE_ELECTRONIC_DEVICE_ARMBAND', 'PORTABLE_ELECTRONIC_DEVICE_STAND', 'CELLULAR_PHONE_CASE'];
                             return $query->whereIn('store_type_category.marketplace_code', $qualifiedcategoryCodes);
                         })
                         ->where('store.id', $store_id)
@@ -785,9 +785,9 @@ class ListingController extends Controller
                         $currentCategory = StoreTypeCategory::where('id', $categoryId)->first();
                         if (isset($currentCategory)) {
                             if ('Amazon' == $store->storeType->name) {
-                                $issues[$storeProduct->product_id] = ListingUtility::validate($currentCategory->marketplace_code, $storeProduct->product_id,$store->storeType->id);
+                                $issues[$storeProduct->product_id] = ListingUtility::validate($currentCategory->marketplace_code, $storeProduct->product_id, $store->storeType->id);
                             } else {
-                                $issues[$storeProduct->product_id] = ListingUtility::validate($currentCategory->store_type_code, $storeProduct->product_id,$store->storeType->id);
+                                $issues[$storeProduct->product_id] = ListingUtility::validate($currentCategory->store_type_code, $storeProduct->product_id, $store->storeType->id);
                             }
                         }
                     }
@@ -2563,9 +2563,9 @@ class ListingController extends Controller
         $store = Store::findOrFail($store_id);
         $currentCategory = StoreTypeCategory::where('id', $category_id)->first();
         if ('Amazon' == $store->storeType->name) {
-            $issues = ListingUtility::validate($currentCategory->marketplace_code, $product->product_id,$store->storeType->id);
+            $issues = ListingUtility::validate($currentCategory->marketplace_code, $product->product_id, $store->storeType->id);
         } else {
-            $issues = ListingUtility::validate($currentCategory->store_type_code, $product->product_id,$store->storeType->id);
+            $issues = ListingUtility::validate($currentCategory->store_type_code, $product->product_id, $store->storeType->id);
         }
 
         $table_html = view('listing.error_tables', ['issues' => $issues, 'product' => $product])->render();
@@ -2579,13 +2579,53 @@ class ListingController extends Controller
 
     public function endList(Request $request)
     {
-
+        $created_by = auth()->user()->name ?? 'admin';
         $selected_listing = $request->input('selected_list');
 
         if (!empty($selected_listing)) {
+
             foreach ($selected_listing as $listing_item) {
                 $listingItem = ListingItem::findOrFail($listing_item);
-                $listingItem->update(['status' => ListingStatus::Deleted, 'sync_status' => ListingSyncStatus::Unsynchronize]);
+                Log::info('ListingItem :: ' . json_encode($listingItem));
+                $listing = ListingItemLink::where('item_id', $listingItem->id)->first();
+                Log::info('ListingItem :: ' . json_encode($listing));
+
+                $listingArr = [
+                    'store_id' => $listing->listing->store_id,
+                    'generation_type_id' => $listing->listing->generation_type_id,
+                    'feed_type' => FeedTypes::DELETE,
+                    'status' => 0,
+                    'chained' => 1,
+                    'include_carriers' => $listing->listing->include_carriers,
+                    'brand_combo' => $listing->listing->brand_combo,
+                    'carrier_combo' => $listing->listing->carrier_combo,
+                    'created_by' => $created_by,
+                    'updated_by' => $created_by,
+                ];
+
+                $listrecord = Listing::create($listingArr);
+                $listing_id = $listrecord->id;
+
+                if ($listing_id) {
+                    $itemLink = array(
+                        'item_id' => $listing->item_id,
+                        'listing_id' => $listing_id,
+                        'sync_status' => ListingSyncStatus::Synchronized,
+                        'created_by' => $created_by
+                    );
+
+                    ListingItemLink::create($itemLink);
+
+                    $listingItem->update(['status' => ListingStatus::Deleted, 'sync_status' => ListingSyncStatus::Unsynchronize]);
+
+
+                    Bus::chain([
+                        new FeedGenerationJob($listing_id),
+                    ])->dispatch();
+                }
+
+
+                Log::info('ListingArr :: ' . json_encode($listingArr));
             }
 
             return response()->json([
