@@ -223,6 +223,8 @@ class AmazonAuthService
                 return 'JSON_LISTINGS_FEED';
             case FeedTypes::PRICE:
                 return 'JSON_LISTINGS_FEED';
+            case FeedTypes::DELETE:
+                return 'JSON_LISTINGS_FEED';
             case FeedTypes::INVENTORY:
                 return 'POST_INVENTORY_AVAILABILITY_DATA';
             case FeedTypes::IMAGE_UPDATE:

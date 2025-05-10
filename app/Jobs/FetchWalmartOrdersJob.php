@@ -42,7 +42,7 @@ class FetchWalmartOrdersJob implements ShouldQueue
         Log::info('Walmart Store ' . json_encode($stores));
         if (count($stores ?? []) > 0) {
             foreach ($stores as $store) {
-                if ($store->name != 'AWAccessory') {
+                if ($store->name != 'Accessorychoice') {
                     continue;
                 }
 
@@ -123,7 +123,7 @@ class FetchWalmartOrdersJob implements ShouldQueue
                                 $orderObj->update(['order_status' => OrderStatus::Pending]);
 
                                 /* check order operation for this order*/
-                                $orderOperationDetail = OrderOperation::where('order_id', $orderDetail->id)->count();
+                                $orderOperationDetail = OrderOperation::where('order_id', $orderDetail->id)->first();
                                 if ($orderOperationDetail) {
                                     $orderOperationDetail->update(['status' => 2]);
                                 }
