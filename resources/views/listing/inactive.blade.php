@@ -607,41 +607,38 @@
             </select>
 
         </div>
-        <div class="col-md-1">
-            <select class="form-control" id="listing_status" name="listing_status">
-                <option value="">Suspended</option>
+{{--        <div class="col-md-1">--}}
+{{--            <select class="form-control" id="listing_status" name="listing_status">--}}
+{{--                <option value="">Suspended</option>--}}
 
-            </select>
+{{--            </select>--}}
 
-        </div>
+{{--        </div>--}}
         <div class="col-md-9 d-flex">
             <button type="button" class="btn btn-default" id="edit_list" disabled="">
                 <i class="fas fa-fw fa-pencil-alt"></i> Edit
             </button>
-            <button type="button" class="btn btn-default ml-2" id="end_listing">
-                End Listing
-            </button>
             <button type="button" class="btn btn-default ml-2" id="re-list">
                 Relist
             </button>
-            <button type="button" class="btn btn-default ml-2" id="open_store_page">
+            <button type="button" class="btn btn-default ml-2" id="open_store_page" >
                 Open Store Page
             </button>
-            <button type="button" class="btn btn-default ml-2" id="sync_inventory">
-                Sync Inventory
-            </button>
-            <button type="button" class="btn btn-default ml-2" id="sync_images">
-                Sync Images
-            </button>
-            <button type="button" class="btn btn-default ml-2" id="sync_price">
-                Sync Price
-            </button>
-            <button type="button" class="btn btn-default ml-2" id="select_all">
-                Select All
-            </button>
-            <button type="button" class="btn btn-default ml-2" id="select_none">
-                Select None
-            </button>
+{{--            <button type="button" class="btn btn-default ml-2" id="sync_inventory" disabled>--}}
+{{--                Sync Inventory--}}
+{{--            </button>--}}
+{{--            <button type="button" class="btn btn-default ml-2" id="sync_images" disabled>--}}
+{{--                Sync Images--}}
+{{--            </button>--}}
+{{--            <button type="button" class="btn btn-default ml-2" id="sync_price" disabled>--}}
+{{--                Sync Price--}}
+{{--            </button>--}}
+{{--            <button type="button" class="btn btn-default ml-2" id="select_all" disabled>--}}
+{{--                Select All--}}
+{{--            </button>--}}
+{{--            <button type="button" class="btn btn-default ml-2" id="select_none" disabled>--}}
+{{--                Select None--}}
+{{--            </button>--}}
         </div>
     </div>
     <div class="table-responsive">
