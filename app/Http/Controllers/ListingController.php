@@ -85,6 +85,20 @@ class ListingController extends Controller
         return view('listing.suspended_list', compact('stores', 'device_types', 'product_types', 'manufacturers', 'devices', 'brands'))->with('perPage', $this->perPage);
     }
 
+    public function inactive()
+    {
+        $stores = Store::with('storeType')->where('store_status', 1)->orderBy('name', 'asc')->get();
+        $device_types = DeviceTypes::Where('status', 1)->get();
+        $product_types = ProductType::with('children')->whereIn('parent_id', function ($subquery) {
+            $subquery->select('id')->from('product_type')->where('code', 'cea');
+        })->get();
+        $manufacturers = Manufacturer::all();
+        $devices = Device::all();
+        $brands = Brand::all();
+
+        return view('listing.inactive', compact('stores', 'device_types', 'product_types', 'manufacturers', 'devices', 'brands'))->with('perPage', $this->perPage);
+    }
+
     /**
      * Filter listing.
      */
