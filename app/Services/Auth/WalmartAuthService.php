@@ -100,7 +100,7 @@ class WalmartAuthService
         return json_decode($response->getBody(), true);
     }
 
-    public function getOrders($last_order_time)
+    public function getOrders($last_order_time, $cursor)
     {
         try {
             $accessToken = $this->authenticate();
@@ -111,6 +111,18 @@ class WalmartAuthService
             }
 
             $url = "https://marketplace.walmartapis.com/v3/orders";
+            $queryData = [];
+
+            if (isset($cursor)) {
+                parse_str(parse_url($cursor, PHP_URL_QUERY), $queryData);
+            } else {
+                $queryData = [
+                    'createdStartDate' => $last_order_time,
+                    'limit' => 100
+                ];
+            }
+
+            Log::info('Query Data: ' . json_encode($queryData));
 
             $response = $this->client->get($url, [
                 'verify' => false,
@@ -121,9 +133,7 @@ class WalmartAuthService
                     'WM_SVC.NAME' => 'Walmart Marketplace',
                     'WM_QOS.CORRELATION_ID' => uniqid(),
                 ],
-                'query' => [
-                    'createdStartDate' => $last_order_time
-                ],
+                'query' => $queryData,
             ]);
 
             return json_decode($response->getBody(), true);

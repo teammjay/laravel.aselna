@@ -4,15 +4,19 @@ namespace App\Services\Marketplace\Service;
 
 use App\Constants\FeedTypes;
 use App\Constants\ListingSyncStatus;
+use App\Constants\OrderStatus;
+use App\Constants\OrderSyncronisationType;
 use App\Models\Listing;
 use App\Models\ListingFeed;
 use App\Models\ListingItem;
 use App\Models\ListingItemLink;
 use App\Models\ListingItemProductImage;
+use App\Models\Order;
 use App\Models\OrderSynchronization;
 use App\Services\Auth\WalmartAuthService;
 use App\Services\Marketplace\Contracts\MarketplaceServiceInterface;
 use App\Utils\FileUtility;
+use App\Utils\OrderUtility;
 use App\Utils\XmlUtility;
 use Illuminate\Support\Facades\Log;
 use App\Constants\FeedStatus;
@@ -378,19 +382,83 @@ class WalmartService implements MarketplaceServiceInterface
 
     public function getOrders($store)
     {
-        $authService = new WalmartAuthService($store->seller_id, $store->secret_key);
-        $last_synchronization = OrderSynchronization::where('store_id', $store->id)->orderBy('filter_end_date', 'desc')->first();
-        $last_order_time = isset($last_synchronization)
-            ? gmdate('Y-m-d\TH:i:s\Z', strtotime($last_synchronization->filter_end_date))
-            : gmdate('Y-m-d\TH:i:s\Z', strtotime('-180 days'));
-        Log::info('Last Sync: ' . $last_order_time);
+        try {
+            if (!isset($store->seller_id) || !isset($store->secret_key)) {
+                Log::info("Error in Walmart Orders : No Secret Key Found");
+                return null;
+            }
+            $authService = new WalmartAuthService($store->seller_id, $store->secret_key);
+            $last_synchronization = OrderSynchronization::where('store_id', $store->id)->where('synchronization_type', OrderSyncronisationType::ORDER)->orderBy('last_order_update_date', 'desc')->first();
+            $filterStartDate = OrderUtility::getLastSyncDate($store->id, OrderSyncronisationType::ORDER);
+            $filterStartDateFormatted = gmdate('Y-m-d\TH:i:s\Z', strtotime($filterStartDate));
 
-        $response = $authService->getOrders($last_order_time);
-        /*echo '<pre>';
-        print_r($response);
-        echo '</pre>';die;*/
+            $response = $authService->getOrders($filterStartDateFormatted, $last_synchronization->cursor ?? null);
 
-        return $response;
+            if (!isset($response)) {
+                Log::info("Error in Walmart Orders : ");
+                return null;
+            }
+
+            if (isset($response['list']['meta']['totalCount']) && $response['list']['meta']['totalCount'] == 0) {
+                Log::info("No Orders Found");
+                return null;
+            }
+
+            $nextCursor = $response['list']['meta']['nextCursor'];
+
+            $created_by = auth()->user()->name ?? 'admin';
+            $synchronizeArr = [
+                'store_id' => $store->id,
+                'synchronization_type' => OrderSyncronisationType::ORDER,
+                'filter_start_date' => $filterStartDate,
+                'filter_end_date' => now(),
+                'created_by' => $created_by,
+                'cursor' => $nextCursor
+            ];
+            Log::info('Order Synchronization: ' . json_encode($synchronizeArr));
+            $order_synchronization = OrderSynchronization::create($synchronizeArr);
+
+            if (isset($response['list']['elements']['order'])) {
+                $noOfOrder = 0;
+                $last_order_update_date = $order_synchronization->last_order_update_date ?? null;
+                foreach ($response['list']['elements']['order'] as $sorder) {
+                    $purchaseOrderId = $sorder['purchaseOrderId'];
+                    $order = Order::where('order_id', $sorder['purchaseOrderId'])->first();
+
+                    $persist = false;
+                    $statusChange = false;
+
+                    if ($order == null) {
+                        $order = Order::create([
+                            'order_id' => $sorder['purchaseOrderId'],
+                            'order_date' => date('Y-m-d H:i:s', $sorder['orderDate'] / 1000),
+                            'order_status' => OrderStatus::Synchronizing,
+                            'store_id' => $store->id,
+                            'order_synchronization_id' => $order_synchronization->id
+                        ]);
+                        $persist = true;
+                        $statusChange = true;
+                    } else {
+                        // TODO Need To implement status change
+                    }
+
+                    if ($statusChange) {
+                        OrderUtility::mapOrders($order, $sorder, $store);
+                    }
+
+                    if ($last_order_update_date === null || strtotime($sorder['orderDate'] / 1000) > strtotime($last_order_update_date)) {
+                        $last_order_update_date = date('Y-m-d H:i:s', $sorder['orderDate'] / 1000);
+                    }
+                    $noOfOrder++;
+                }
+                $order_synchronization->update(['number_of_items' => $noOfOrder, 'last_order_update_date' => $last_order_update_date]);
+            }
+
+            return $response;
+        } catch (\Exception $e) {
+            Log::error("Error in Walmart Orders: " . $e->getTraceAsString());
+            return null;
+        }
     }
 
     public function syncAttributes($store)
