@@ -448,6 +448,11 @@ return [
                     'icon' => 'far fa-fw fa-list-alt',
                 ],
                 [
+                    'text' => 'Inactive Listing',
+                    'url' => '/listing/inactive',
+                    'icon' => 'far fa-fw fa-list-alt',
+                ],
+                [
                     'text' => 'Suspended Listing',
                     'url' => '/listing/suspended',
                     'icon' => 'far fa-fw fa-list-alt',
