@@ -185,7 +185,7 @@
                                             </td>
                                             <td>{{ $oitem->orderItem->sku }}</td>
                                             <td><input type="text" class="form-control" name="quantity" value="{{ $oitem->orderItem->quantity }}"></td>
-                                            <td>{{ $oitem->sync_status }}</td>
+                                            <td>{{ \App\Constants\OrderSyncStatus::getOrderSyncStatusName($oitem->sync_status) }}</td>
                                             <td>{{ $oitem->sync_message }}</td>
                                         </tr>
                                     @endforeach

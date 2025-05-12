@@ -232,6 +232,25 @@
             </div>
         </div>
     </div>
+
+    <!-- Mark as shipped modal -->
+    <div class="modal fade" id="cancelShipmentModal">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="cancelShipmentModalLabel">Cancel Order</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancle</button>
+                    <button type="button" class="btn btn-primary" id="cancelOrder"><i class="fa fa-check"></i> Ok </button>
+                </div>
+            </div>
+        </div>
+    </div>
     <div id="ajax-gallery" style="display: none;"></div>
 @stop
 
@@ -321,6 +340,42 @@
             }
         });
 
+        $(document).on('click','#cancel_selected',function () {
+            var shipment_id = $('input[name="shipment_id[]"]:checked').val();
+            if(shipment_id != '' && shipment_id != null){
+                $.ajax({
+                    url: "{{ route('shipment.getcancelshipmentdetail') }}",
+                    type: 'POST',
+                    data: {
+                        operation_id: shipment_id,
+                        "_token": '{{ csrf_token() }}'
+                    },
+                    success: function (response) {
+                        // If success, remove the user row from the table
+                        if (response.success) {
+                            $('#cancelShipmentModal').find('.modal-body').html(response.html);
+                            $('#canceldate').datetimepicker({
+                                format:'Y-m-d H:i',
+                                /* minDate: 'now', */
+                                step:10,
+                                onSelectTime: function(dp,$input) {
+                                    var sel_date = $input.val();
+                                    $('#canceldate').val(sel_date);
+                                }
+                            });
+                            $('#cancelShipmentModal').modal('show');
+                        }
+                    },
+                    error: function (xhr) {
+                        // Handle error response
+                        alert('Error: ' + xhr.responseJSON.error);
+                    }
+                });
+            }else{
+                alert('Please select shipment first');
+            }
+        });
+
 
 
         $('#filter-form').on('submit', function(e) {
@@ -348,7 +403,7 @@
                         $('#shippingDetailModal').find('.modal-body').html(response.html);
                         $('#ship_date').datetimepicker({
                             format:'Y-m-d H:i',
-                            /* minDate: 'now', */
+                            minDate: 'now',
                             step:10,
                             onSelectTime: function(dp,$input) {
                                 var sel_date = $input.val();
@@ -356,6 +411,33 @@
                             }
                         });
                         $('#shippingDetailModal').modal('show');
+                    }
+                },
+                error: function (xhr) {
+                    // Handle error response
+                    alert('Error: ' + xhr.responseJSON.error);
+                }
+            });
+        });
+
+        $(document).on('click','#cancelOrder',function () {
+
+            const form = document.querySelector("#frmCancelShipment");
+            let formData = new FormData(form);
+            $.ajax({
+                url: "{{ route('shipment.cancelshipment') }}",
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                },
+                success: function (response) {
+                    // If success, remove the user row from the table
+                    if (response.success) {
+                        alert('Records updated successfully!!');
+                        location.reload();
                     }
                 },
                 error: function (xhr) {

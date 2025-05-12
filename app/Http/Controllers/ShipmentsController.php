@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\LogisticCenter;
 use App\Models\OrderOperation;
+use App\Models\OrderOperationReason;
 use App\Models\ShippingCarrier;
 use App\Models\ShippingCarrierPackage;
 use App\Models\ShippingCarrierService;
@@ -223,6 +224,30 @@ class ShipmentsController extends Controller
             'success' => true,
             'html' => $view
         ]);
+
+    }
+
+    public function getCancelShipmentDetail(Request $request){
+
+        $order_opration_id = $request->input('operation_id');
+
+        $shipmentDetail = OrderOperation::with('operationItem','store.storeType','order','operationItem.orderItem','operationItem.orderItem.product')->where('id',$order_opration_id)->first();
+
+        $reasons= [];
+        if(isset($shipmentDetail->store->storeType)){
+            $store_type = $shipmentDetail->store->storeType->id;
+            $reasons = OrderOperationReason::where('store_type_id',$store_type)->get();
+        }
+
+        $view = view('shipment.cancel_shipment', compact('shipmentDetail','reasons'))->render();
+
+        return response()->json([
+            'success' => true,
+            'html' => $view
+        ]);
+    }
+
+    public function cancelShipment(Request $request){
 
     }
 }
