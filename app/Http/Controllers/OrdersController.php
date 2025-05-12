@@ -153,7 +153,7 @@ class OrdersController extends Controller
                     "buyer_last_name" => $order->buyer_last_name,
                     "state" => '',
                     "purchase_order_id" => $order->purchase_order_id,
-                    "customer" => '',
+                    "customer" => $order->customer->full_name ?? '',
                 );
             }
         }
@@ -172,7 +172,7 @@ class OrdersController extends Controller
 
     public function edit(string $id)
     {
-        $orderDetail = Order::with('orderItem','orderItem.product','store','store.storeType')->findOrFail($id);
+        $orderDetail = Order::with('orderItem','orderItem.product','store','store.storeType','customerAddress')->findOrFail($id);
         /*echo '<pre>';
         print_r($orderDetail);
         echo '</pre>';die;*/
@@ -181,7 +181,7 @@ class OrdersController extends Controller
 
     public function create_message(string $id)
     {
-        $orderDetail = Order::with('orderItem','orderItem.product','store','store.storeType')->findOrFail($id);
+        $orderDetail = Order::with('orderItem','orderItem.product','store','store.storeType','customerAddress')->findOrFail($id);
         /*echo '<pre>';
         print_r($orderDetail);
         echo '</pre>';die;*/
