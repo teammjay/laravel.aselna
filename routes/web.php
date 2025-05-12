@@ -459,7 +459,9 @@ Route::middleware('auth')->group(function () {
         Route::post('/shipment/edit', 'update')->name('shipment.update');
         Route::post('/shipment/getshippingcarrier', 'getShippingCarrier')->name('shipment.getshippingcarrier');
         Route::post('/shipment/getshippingdetail', 'getShippingDetail')->name('shipment.getshippingdetail');
+        Route::post('/shipment/getcancelshipmentdetail', 'getCancelShipmentDetail')->name('shipment.getcancelshipmentdetail');
         Route::post('/shipment/updateshippingdetails', 'updateShippingDetails')->name('shipment.updateshippingdetails');
+        Route::post('/shipment/cancelshipment', 'cancelShipment')->name('shipment.cancelshipment');
     });
 
     Route::controller(ShippingCarrierPackageController::class)->group(function () {

@@ -351,6 +351,22 @@
                                             </div>
                                             <div class="col-md-8">
                                                 <div class="form-group">
+                                                    <label>Carrier Package</label>
+                                                    <div class="d-flex">
+                                                        <select class="form-control" id="shipping_package_id" name="shipping_package_id">
+                                                            <option value="">--</option>
+                                                            @if(count($shippingCarrierPackage ?? []) > 0)
+                                                                @foreach($shippingCarrierPackage as $sCarrierPackage)
+                                                                    <option value="{{ $sCarrierPackage->id }}" {{ ( $sCarrierPackage->id == $product->shipping_package_id ) ? 'selected' : '' }}>{{ $sCarrierPackage->name }}</option>
+                                                                @endforeach
+                                                            @endif
+                                                        </select>
+
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-8">
+                                                <div class="form-group">
                                                     <label for="package__weight">Input Voltage</label>
                                                     <div class="d-flex">
                                                         <input type="text" class="form-control mr-1" id="input__voltage" name="input_voltage_value" value="{{ old('input_voltage_value',$product->input_voltage_value) }}" placeholder="">
@@ -401,6 +417,7 @@
                                                     </div>
                                                 </div>
                                             </div>--}}
+
                                         </div>
                                     </div>
                                     <div class="card-body border mt-2">

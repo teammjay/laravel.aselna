@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Constants\OrderStatus;
+use App\Constants\OrderSyncronisationType;
 use App\Models\Catalog;
 use App\Models\Customer;
 use App\Models\ListingItem;
@@ -11,6 +12,7 @@ use App\Models\OrderOperation;
 use App\Models\OrderOperationItem;
 use App\Models\ShippingServiceRule;
 use App\Services\Marketplace\Service\ShopifyService;
+use App\Utils\OrderUtility;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use App\Models\Order;
@@ -53,12 +55,14 @@ class FetchShopifyOrders implements ShouldQueue
                     Log::info('Store : ' . $store->name);
 
                     $ordersyncDetail = OrderSynchronization::where('store_id',$store->id)->orderBy('filter_end_date','desc')->first();
+                    $filterStartDate = OrderUtility::getLastSyncDate($store->id, OrderSyncronisationType::ORDER);
+                    $filterStartDateFormatted = gmdate('Y-m-d\TH:i:s\Z', strtotime($filterStartDate));
 
                     $created_by = auth()->user()->name ?? 'admin';
                     /* create order synchronization*/
                     $synchronizeArr = [
                         'store_id' => $store->id,
-                        'synchronization_type' => 1,
+                        'synchronization_type' => OrderSyncronisationType::ORDER,
                         'filter_start_date' => isset($ordersyncDetail) ? $ordersyncDetail->filter_end_date : date('Y-m-d H:i:s'),
                         'created_by' => $created_by
                     ];
@@ -67,12 +71,14 @@ class FetchShopifyOrders implements ShouldQueue
 
                     Log::info('order_synchronization_id: ' . json_encode($order_synchronization_id));
 
-                    if(!empty($ordersyncDetail)){
+                    /*if(!empty($ordersyncDetail)){
                         $start_date = new DateTime($ordersyncDetail->filter_end_date);
                         $sync_start_date = $start_date->format(DateTime::ATOM);
                     }else{
                         $sync_start_date = now()->subDays(15)->toIso8601String();
-                    }
+                    }*/
+
+                    $sync_start_date = $filterStartDateFormatted;
 
                     Log::info('Start Date : ' . $sync_start_date);
 
@@ -86,6 +92,9 @@ class FetchShopifyOrders implements ShouldQueue
                         foreach ($orders as $value) {
 
                             $order = $value['node'];
+                            $gid = $order['id'];
+                            $parts = explode('/', $gid);
+                            $order['id'] = end($parts);
                             Log::info('Shopify shopping Order: ' . json_encode($order));
 
                             /* check order id exist*/
@@ -122,7 +131,7 @@ class FetchShopifyOrders implements ShouldQueue
                                     'order_id' => $order['id'],
                                     'order_date' => date('Y-m-d H:i:s', strtotime($order['createdAt'])),
                                     //'order_status' => OrderStatus::getOrderStatusId($order['displayFulfillmentStatus']),
-                                    'order_status' => OrderStatus::getOrderStatusId('Pending'),
+                                    'order_status' => OrderStatus::Synchronizing,
                                     'order_total' => $order['totalPrice'],
                                     'buyer_first_name' => isset($order['customer']) ? $order['customer']['firstName'] : '',
                                     'buyer_last_name' => isset($order['customer']) ? $order['customer']['lastName'] : '',
@@ -233,6 +242,8 @@ class FetchShopifyOrders implements ShouldQueue
 
                         $osObject = OrderSynchronization::findOrFail($order_synchronization_id);
                         $osObject->update(['number_of_items'=>$noOfOrder,'last_order_update_date' => date('Y-m-d H:i:s'), 'filter_end_date' => date('Y-m-d H:i:s')]);
+                    }else{
+                        Log::info("No Orders Found");
                     }
                 }
             }

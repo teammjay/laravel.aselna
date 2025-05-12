@@ -273,6 +273,10 @@ class ShopifyService implements MarketplaceServiceInterface
 
     public function getOrders($store, $sync_start_date)
     {
+        if (!isset($store->seller_id) || !isset($store->secret_key)) {
+            Log::info("Error in Shopify Orders : No Secret Key Found");
+            return null;
+        }
         $this->authService = new ShopifyAuthService($store->secret_key);
         $response = $this->authService->getOrders($sync_start_date);
 
