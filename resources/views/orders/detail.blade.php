@@ -190,7 +190,12 @@
                                     <label for="order_id">Shipping Address</label>
                                 </div>
                                 <div class="col-md-9">
-
+                                    @if(isset($orderDetail->customerAddress))
+                                        <a href="#">
+                                            {{ $orderDetail->customerAddress->address_combined }} {{$orderDetail->customerAddress->city}} {{$orderDetail->customerAddress->state}}
+                                            {{$orderDetail->customerAddress->country}} {{$orderDetail->customerAddress->zip_code}}
+                                        </a>
+                                    @endif
                                 </div>
                             </div>
                             <div class="row mt-3 g-3 align-items-center">

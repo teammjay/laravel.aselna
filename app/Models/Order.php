@@ -31,6 +31,16 @@ class Order extends Model
         return $this->belongsTo(Store::class,'store_id');
     }
 
+    public function customer()
+    {
+        return $this->belongsTo(Customer::class,'customer_id');
+    }
+
+    public function customerAddress()
+    {
+        return $this->belongsTo(CustomerAddress::class,'shipping_address_id');
+    }
+
     public function orderItem()
     {
         return $this->hasMany(OrderItem::class,'order_id');
