@@ -34,6 +34,9 @@ class ListingItemDataSyncJob implements ShouldQueue
             Log::info("Came HEre");
             $listingItemDataQ->whereRaw('listing_item_id in (select id from oydera_listing_item where id in (select item_id from oydera_listing_item_link where listing_id = \'1dd2cd15-757d-d9fc-02af-21a1eba741e7\'))');
 //            $listingItemDataQ->whereRaw('listing_item_id in (select id from oydera_listing_item where store_product_id in (select id from oydera_store_product where product_id in (select id from oydera_product where oem_generic = 2)))');
+        } else {
+            // get Last 2 years only
+            $listingItemDataQ->where('create_ts', '>=', now()->subYears(2));
         }
 
         $listingItemDataQ->chunk(1000, function ($listingItemDatas) {

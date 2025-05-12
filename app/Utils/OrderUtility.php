@@ -9,6 +9,7 @@ use App\Models\OrderItem;
 use App\Models\OrderOperation;
 use App\Models\OrderOperationItem;
 use App\Models\OrderSynchronization;
+use Illuminate\Support\Facades\Log;
 
 class OrderUtility
 {
@@ -110,16 +111,18 @@ class OrderUtility
         ], $orderOperationData);
 
         $ordersItems = $sorder['orderLines']['orderLine'];
-        if (!!empty($ordersItems)) {
+        if (!empty($ordersItems)) {
             foreach ($ordersItems as $item) {
+                Log::info("Order Item: " . json_encode($item));
                 if ($item['item']['sku'] != '') {
-                    $itemDetail = ListingItem::with('storeProduct', 'storeProduct.product')->where('sku', $item['product_info']['sku']);
+                    $itemDetail = ListingItem::with('storeProduct', 'storeProduct.product')->where('sku', $item['item']['sku']);
+                    Log::info($itemDetail);
                     $orderItemData = [
                         'title' => $item['item']['productName'],
                         'order_id' => $order->id,
-                        'product_id' => $itemDetail->storeProduct->product->product_id,
-                        'client_id' => $itemDetail->client,
-                        'listing_item_id' => $itemDetail->id,
+                        'product_id' => $itemDetail->storeProduct->product->product_id ?? '',
+                        'client_id' => $itemDetail->client ?? '',
+                        'listing_item_id' => $itemDetail->id ?? '',
                         'sku' => $item['item']['sku'],
                         'store_sku' => $item['item']['upc'],
                         'quantity' => $item['orderLineQuantity']['amount'],
