@@ -4,11 +4,13 @@ namespace App\Utils;
 
 use App\Constants\OrderSyncronisationType;
 use App\Models\Customer;
+use App\Models\CustomerAddress;
 use App\Models\ListingItem;
 use App\Models\OrderItem;
 use App\Models\OrderOperation;
 use App\Models\OrderOperationItem;
 use App\Models\OrderSynchronization;
+use Illuminate\Support\Facades\Log;
 
 class OrderUtility
 {
@@ -79,6 +81,23 @@ class OrderUtility
             'user_id' => $sorder['customerOrderId'],
         ], $customerData);
 
+        $customer_address_data = [
+            'address_line_1' => $sorder['shippingInfo']['postalAddress']['address1'],
+            'address_line_2' => $sorder['shippingInfo']['postalAddress']['address2'],
+            'city' => $sorder['shippingInfo']['postalAddress']['city'],
+            'state' => $sorder['shippingInfo']['postalAddress']['state'],
+            'zip' => $sorder['shippingInfo']['postalAddress']['postalCode'],
+            'country' => $sorder['shippingInfo']['postalAddress']['country'],
+            'address_combined' => $sorder['shippingInfo']['postalAddress']['address1'] . ' ' . $sorder['shippingInfo']['postalAddress']['address2'],
+        ];
+
+        Log::info("Data " . json_encode($customer_address_data));
+
+        $customer_address = CustomerAddress::updateOrCreate([
+            'customer_id' => $customer_detail->id,
+            'address_combined' => $sorder['shippingInfo']['postalAddress']['address1'] . ' ' . $sorder['shippingInfo']['postalAddress']['address2'],
+        ], $customer_address_data);
+
         $orderData = [
             'order_date' => date('Y-m-d H:i:s', $sorder['orderDate'] / 1000),
             'order_total' => $orderTotals,
@@ -87,6 +106,7 @@ class OrderUtility
             'buyer_email' => $sorder['customerEmailId'],
             'customer_id' => $customer_detail->id,
             'purchase_order_id' => $sorder['purchaseOrderId'],
+            'shipping_address_id' => $customer_address->id,
         ];
 
         $order->update($orderData);
@@ -110,16 +130,18 @@ class OrderUtility
         ], $orderOperationData);
 
         $ordersItems = $sorder['orderLines']['orderLine'];
-        if (!!empty($ordersItems)) {
+        if (empty($ordersItems)) {
             foreach ($ordersItems as $item) {
+                Log::info("Order Item: " . json_encode($item));
                 if ($item['item']['sku'] != '') {
-                    $itemDetail = ListingItem::with('storeProduct', 'storeProduct.product')->where('sku', $item['product_info']['sku']);
+                    $itemDetail = ListingItem::with('storeProduct', 'storeProduct.product')->where('sku', $item['item']['sku']);
+
                     $orderItemData = [
                         'title' => $item['item']['productName'],
                         'order_id' => $order->id,
-                        'product_id' => $itemDetail->storeProduct->product->product_id,
-                        'client_id' => $itemDetail->client,
-                        'listing_item_id' => $itemDetail->id,
+                        'product_id' => $itemDetail->storeProduct->product->product_id ?? '',
+                        'client_id' => $itemDetail->client ?? '',
+                        'listing_item_id' => $itemDetail->id ?? '',
                         'sku' => $item['item']['sku'],
                         'store_sku' => $item['item']['upc'],
                         'quantity' => $item['orderLineQuantity']['amount'],

@@ -422,15 +422,14 @@ class WalmartService implements MarketplaceServiceInterface
                 $noOfOrder = 0;
                 $last_order_update_date = $order_synchronization->last_order_update_date ?? null;
                 foreach ($response['list']['elements']['order'] as $sorder) {
-                    $purchaseOrderId = $sorder['purchaseOrderId'];
-                    $order = Order::where('order_id', $sorder['purchaseOrderId'])->first();
+                    $order = Order::where('order_id', $sorder['customerOrderId'])->first();
 
                     $persist = false;
                     $statusChange = false;
 
                     if ($order == null) {
                         $order = Order::create([
-                            'order_id' => $sorder['purchaseOrderId'],
+                            'order_id' => $sorder['customerOrderId'],
                             'order_date' => date('Y-m-d H:i:s', $sorder['orderDate'] / 1000),
                             'order_status' => OrderStatus::Synchronizing,
                             'store_id' => $store->id,
@@ -456,7 +455,7 @@ class WalmartService implements MarketplaceServiceInterface
 
             return $response;
         } catch (\Exception $e) {
-            Log::error("Error in Walmart Orders: " . $e->getTraceAsString());
+            Log::error("Error in Walmart Orders: " . $e->getMessage());
             return null;
         }
     }
