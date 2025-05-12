@@ -36,215 +36,218 @@ class FetchWalmartOrdersJob implements ShouldQueue
     public function handle(): void
     {
         Log::info("Testing");
-        /* get amazon stores*/
         $stores = Store::select('store.*')->join('store_type', 'store_type.id', '=', 'store.store_type_id')->where('store_type.code', 'walmart')->get();
 
-        Log::info('Walmart Store ' . json_encode($stores));
         if (count($stores ?? []) > 0) {
             foreach ($stores as $store) {
-                if ($store->name != 'AWAccessory') {
-                    continue;
-                }
 
-                $last_synchronization = OrderSynchronization::where('store_id', $store->id)->orderBy('filter_end_date', 'desc')->first();
-
-                $created_by = auth()->user()->name ?? 'admin';
-                $synchronizeArr = [
-                    'store_id' => $store->id,
-                    'synchronization_type' => 1,
-                    'filter_start_date' => isset($last_synchronization) ? $last_synchronization->filter_end_date : date('Y-m-d H:i:s'),
-                    'created_by' => $created_by
-                ];
-                Log::info("Syncronisation :: " . json_encode($synchronizeArr));
-                $order_synchronization = OrderSynchronization::create($synchronizeArr);
-                $order_synchronization_id = $order_synchronization->id;
-
-                // get amazon order
                 $walmartService = new WalmartService();
                 $orders = $walmartService->getOrders($store);
 
-                Log::info(json_encode($orders));
-
-                Log::info(gettype($orders));
-
-                if (!isset($orders['errors']) && isset($orders['list']['elements']['order'])) {
-                    /* create order synchronization*/
-                    $noOfOrder = 0;
-                    $last_order_date = $order_synchronization->filter_start_date;
-                    foreach ($orders['list']['elements']['order'] as $order) {
-                        Log::info("Order Info Came" . $order['purchaseOrderId']);
-                        try {
-                            $firstname = $lastname = '';
-                            $orderTotal = 0;
-                            $taxTotal = 0;
-                            $discountTotal = 0;
-                            $orderTotals = 0;
-                            $order_date = date('Y-m-d H:i:s', $order['orderDate'] / 1000);
-                            Log::info('Order Date : ' . $order_date . ' Order Date Response : ' . $order['orderDate']);
-
-                            foreach ($order['orderLines']['orderLine'] as $line) {
-                                $itemTotal = 0;
-                                foreach ($line['charges']['charge'] as $charge) {
-                                    $amount = (float)$charge['chargeAmount']['amount'];
-
-                                    if ($charge['chargeType'] === 'PRODUCT') {
-                                        $itemTotal += $amount;
-                                    }
-
-                                    if ($charge['chargeType'] === 'PRODUCT_TAX' || $charge['chargeType'] === 'SHIPPING_TAX') {
-                                        $taxTotal += $amount;
-                                    }
-
-                                    if ($charge['chargeType'] === 'SHIPPING') {
-                                        $orderTotal += $amount;
-                                    }
-
-                                    if ($charge['chargeType'] === 'DISCOUNT') {
-                                        $discountTotal += $amount; // Discount is negative, so adding reduces total
-                                    }
-                                }
-
-                                $orderTotal += $itemTotal;
-                            }
-
-                            $orderTotals = $orderTotal + $taxTotal - $discountTotal;
-
-                            if (isset($order['shippingInfo']['postalAddress']['name'])) {
-                                $nameArr = explode(' ', $order['shippingInfo']['postalAddress']['name']);
-                                $firstname = $nameArr[0];
-                                $lastname = $nameArr[1];
-                            }
-
-                            /* check order id exist*/
-                            $orderExist = Order::where('order_id', $order['purchaseOrderId'])->count();
-                            if ($orderExist) {
-                                $orderDetail = Order::where('order_id', $order['purchaseOrderId'])->first();
-                                $orderObj = Order::findOrFail($orderDetail->id); // Retrieve the product by ID
-                                $orderObj->update(['order_status' => OrderStatus::Pending]);
-
-                                /* check order operation for this order*/
-                                $orderOperationDetail = OrderOperation::where('order_id', $orderDetail->id)->count();
-                                if ($orderOperationDetail) {
-                                    $orderOperationDetail->update(['status' => 2]);
-                                }
-                            } else {
-
-                                /* create customer*/
-
-                                $customerData = [
-                                    'first_name' => $firstname,
-                                    'last_name' => $lastname,
-                                    'full_name' => $order['shippingInfo']['postalAddress']['name'],
-                                    'user_id' => $order['customerOrderId'],
-//                                    'marketplace_customer_id' => isset($order['customer']) ? $order['customer']['id'] : '',
-                                ];
-
-                                $customer_detail = Customer::updateOrCreate([
-                                    'user_id' => $order['customerOrderId'],
-                                ], $customerData);
-
-                                Log::info("Customer Info :: " . json_encode($customer_detail));
-
-                                $orderData = [
-                                    'order_id' => $order['purchaseOrderId'],
-                                    'order_date' => date('Y-m-d H:i:s', $order['orderDate'] / 1000),
-                                    'order_status' => OrderStatus::Pending,
-                                    'order_total' => $orderTotals,
-                                    'buyer_first_name' => $firstname,
-                                    'buyer_last_name' => $lastname,
-                                    'buyer_email' => $order['customerEmailId'],
-                                    'customer_id' => $customer_detail->id,
-                                    'purchase_order_id' => $order['purchaseOrderId'],
-                                    'store_id' => $store->id,
-                                    'order_synchronization_id' => $order_synchronization_id
-                                ];
-                                Log::info('Customer Data :: ' . json_encode($orderData));
-
-                                $order_detail = Order::updateOrCreate([
-                                    'order_id' => $order['purchaseOrderId'],
-                                ], $orderData);
-
-                                /* create order operatation*/
-                                $orderOperationData = [
-                                    'order_id' => $order_detail->id,
-                                    'ship_date' => date('Y-m-d H:i:s', $order['shippingInfo']['estimatedShipDate'] / 1000),
-                                    'insurance_value' => $orderTotals,
-                                    'status' => 1,
-                                    'signature_confirmation' => 1,
-                                    'store_id' => $store->id,
-                                    'operation_type' => 1,
-                                    'label_creation_type' => 1,
-                                    'print_to_file' => 0,
-                                    'seller_provides_return_label' => 0,
-                                    'order_synchronization_id' => $order_synchronization_id
-                                ];
-
-                                $order_operation_detail = OrderOperation::updateOrCreate([
-                                    'order_id' => $order_detail->id,
-                                ], $orderOperationData);
-
-                                /* get order items*/
-                                $ordersItems = $order['orderLines']['orderLine'];
-                                if (!!empty($ordersItems)) {
-                                    $cnt = 0;
-                                    foreach ($ordersItems as $item) {
-                                        if ($item['item']['sku'] != '') {
-                                            $itemDetail = ListingItem::with('storeProduct', 'storeProduct.product')->where('sku', $item['product_info']['sku']);
-                                            $orderItemData = [
-                                                'title' => $item['item']['productName'],
-                                                'order_id' => $order_detail->id,
-                                                'product_id' => $itemDetail->storeProduct->product->product_id,
-                                                'client_id' => $itemDetail->client,
-                                                'listing_item_id' => $itemDetail->id,
-                                                'sku' => $item['item']['sku'],
-                                                'store_sku' => $item['item']['upc'],
-                                                'quantity' => $item['orderLineQuantity']['amount'],
-                                                'id1' => '',
-                                                'item_price' => ($item['charges']['charge']['chargeType'] == 'PRODUCT') ? $item['charges']['charge']['chargeAmount']['amount'] : 0,
-                                                'shipping_price' => ($item['charges']['charge']['chargeType'] == 'SHIPPING') ? $item['charges']['charge']['chargeAmount']['amount'] : 0,
-                                                'item_tax' => ($item['charges']['charge']['chargeType'] == 'PRODUCT_TAX') ? $item['charges']['charge']['tax']['taxAmount']['amount'] : 0,
-                                                'shipping_tax' => ($item['charges']['charge']['chargeType'] == 'SHIPPING_TAX') ? $item['charges']['charge']['tax']['taxAmount']['amount'] : 0,
-                                                'shipping_quantity' => $item['orderLineQuantity']['amount'],
-                                            ];
-
-                                            $order_item = OrderItem::updateOrCreate([
-                                                'order_id' => $order_detail->id,
-                                                'product_id' => $itemDetail->storeProduct->product->product_id,
-                                            ], $orderItemData);
-
-                                            /* create order operation item*/
-                                            if ($order_item->id) {
-                                                $orderOperationItemData = [
-                                                    'order_item_id' => $order_item->id,
-                                                    'order_operation_id' => $order_operation_detail->id,
-                                                    'client_id' => $itemDetail->client,
-                                                    'sync_status' => 6
-                                                ];
-
-                                                $order_operation_item = OrderOperationItem::updateOrCreate([
-                                                    'order_operation_id' => $order_operation_detail->id
-                                                ], $orderOperationItemData);
-                                            }
-
-                                            $cnt++;
-                                        }
-                                    }
-                                }
-                            }
-                            $noOfOrder++;
-                        } catch (\Exception $e) {
-                            Log::info($e->getMessage());
-                        }
-                    }
-
-                    $order_synchronization->update(['number_of_items' => $noOfOrder, 'last_order_update_date' => date('Y-m-d H:i:s'), 'filter_end_date' => date('Y-m-d H:i:s')]);
-                } else {
-                    $order_synchronization->update([
-                        'number_of_items' => 0,
-                        'last_order_update_date' => isset($last_synchronization) ? $last_synchronization->filter_end_date : date('Y-m-d H:i:s'),
-                        'filter_end_date' => isset($last_synchronization) ? $last_synchronization->filter_end_date : date('Y-m-d H:i:s')
-                    ]);
+                if (!isset($orders) || !isset($orders['list'])) {
+                    Log::info("Error in Walmart Orders : " . json_encode($orders));
+                    continue;
                 }
+
+//                $last_synchronization = OrderSynchronization::where('store_id', $store->id)->orderBy('filter_end_date', 'desc')->first();
+
+
+
+                // get amazon order
+
+
+//                Log::info("Syncronisation :: " . json_encode($synchronizeArr));
+//                $order_synchronization = OrderSynchronization::create($synchronizeArr);
+//                $order_synchronization_id = $order_synchronization->id;
+//
+//                $queryParams = [];
+//                parse_str(parse_url($orders['list']['meta']['nextCursor'], PHP_URL_QUERY), $queryParams);
+//
+//                if (isset($queryParams['cursor'])) {
+//                    Log::info('Cursor ' . $queryParams['cursor']);
+//                    $order_synchronization->update(['cursor' => $queryParams['cursor']]);
+//                }
+
+//                Log::info(json_encode($orders));
+
+//                if (!isset($orders['errors']) && isset($orders['list']['elements']['order'])) {
+//                    /* create order synchronization*/
+//                    $noOfOrder = 0;
+//                    $last_order_date = $order_synchronization->filter_start_date;
+//                    foreach ($orders['list']['elements']['order'] as $order) {
+//                        Log::info("Order Info Came" . $order['purchaseOrderId']);
+//                        try {
+//                            $firstname = $lastname = '';
+//                            $orderTotal = 0;
+//                            $taxTotal = 0;
+//                            $discountTotal = 0;
+//                            $orderTotals = 0;
+//                            $order_date = date('Y-m-d H:i:s', $order['orderDate'] / 1000);
+////                            Log::info('Order Date : ' . $order_date . ' Order Date Response : ' . $order['orderDate']);
+//
+//                            foreach ($order['orderLines']['orderLine'] as $line) {
+//                                $itemTotal = 0;
+//                                foreach ($line['charges']['charge'] as $charge) {
+//                                    $amount = (float)$charge['chargeAmount']['amount'];
+//
+//                                    if ($charge['chargeType'] === 'PRODUCT') {
+//                                        $itemTotal += $amount;
+//                                    }
+//
+//                                    if ($charge['chargeType'] === 'PRODUCT_TAX' || $charge['chargeType'] === 'SHIPPING_TAX') {
+//                                        $taxTotal += $amount;
+//                                    }
+//
+//                                    if ($charge['chargeType'] === 'SHIPPING') {
+//                                        $orderTotal += $amount;
+//                                    }
+//
+//                                    if ($charge['chargeType'] === 'DISCOUNT') {
+//                                        $discountTotal += $amount; // Discount is negative, so adding reduces total
+//                                    }
+//                                }
+//
+//                                $orderTotal += $itemTotal;
+//                            }
+//
+//                            $orderTotals = $orderTotal + $taxTotal - $discountTotal;
+//
+//                            if (isset($order['shippingInfo']['postalAddress']['name'])) {
+//                                $nameArr = explode(' ', $order['shippingInfo']['postalAddress']['name']);
+//                                $firstname = $nameArr[0];
+//                                $lastname = $nameArr[1];
+//                            }
+//
+//                            /* check order id exist*/
+//                            $orderExist = Order::where('order_id', $order['purchaseOrderId'])->count();
+//                            if ($orderExist) {
+//                                $orderDetail = Order::where('order_id', $order['purchaseOrderId'])->first();
+//                                $orderObj = Order::findOrFail($orderDetail->id); // Retrieve the product by ID
+//                                $orderObj->update(['order_status' => OrderStatus::Pending]);
+//
+//                                /* check order operation for this order*/
+//                                $orderOperationDetail = OrderOperation::where('order_id', $orderDetail->id)->first();
+//                                if ($orderOperationDetail) {
+//                                    $orderOperationDetail->update(['status' => 2]);
+//                                }
+//                            } else {
+//
+//                                /* create customer*/
+//
+//                                $customerData = [
+//                                    'first_name' => $firstname,
+//                                    'last_name' => $lastname,
+//                                    'full_name' => $order['shippingInfo']['postalAddress']['name'],
+//                                    'user_id' => $order['customerOrderId'],
+////                                    'marketplace_customer_id' => isset($order['customer']) ? $order['customer']['id'] : '',
+//                                ];
+//
+//                                $customer_detail = Customer::updateOrCreate([
+//                                    'user_id' => $order['customerOrderId'],
+//                                ], $customerData);
+//
+////                                Log::info("Customer Info :: " . json_encode($customer_detail));
+//
+//                                $orderData = [
+//                                    'order_id' => $order['purchaseOrderId'],
+//                                    'order_date' => date('Y-m-d H:i:s', $order['orderDate'] / 1000),
+//                                    'order_status' => OrderStatus::Pending,
+//                                    'order_total' => $orderTotals,
+//                                    'buyer_first_name' => $firstname,
+//                                    'buyer_last_name' => $lastname,
+//                                    'buyer_email' => $order['customerEmailId'],
+//                                    'customer_id' => $customer_detail->id,
+//                                    'purchase_order_id' => $order['purchaseOrderId'],
+//                                    'store_id' => $store->id,
+//                                    'order_synchronization_id' => $order_synchronization_id
+//                                ];
+////                                Log::info('Customer Data :: ' . json_encode($orderData));
+//
+//                                $order_detail = Order::updateOrCreate([
+//                                    'order_id' => $order['purchaseOrderId'],
+//                                ], $orderData);
+//
+//                                /* create order operatation*/
+//                                $orderOperationData = [
+//                                    'order_id' => $order_detail->id,
+//                                    'ship_date' => date('Y-m-d H:i:s', $order['shippingInfo']['estimatedShipDate'] / 1000),
+//                                    'insurance_value' => $orderTotals,
+//                                    'status' => 1,
+//                                    'signature_confirmation' => 1,
+//                                    'store_id' => $store->id,
+//                                    'operation_type' => 1,
+//                                    'label_creation_type' => 1,
+//                                    'print_to_file' => 0,
+//                                    'seller_provides_return_label' => 0,
+//                                    'order_synchronization_id' => $order_synchronization_id
+//                                ];
+//
+//                                $order_operation_detail = OrderOperation::updateOrCreate([
+//                                    'order_id' => $order_detail->id,
+//                                ], $orderOperationData);
+//
+//                                /* get order items*/
+//                                $ordersItems = $order['orderLines']['orderLine'];
+//                                if (!!empty($ordersItems)) {
+//                                    $cnt = 0;
+//                                    foreach ($ordersItems as $item) {
+//                                        if ($item['item']['sku'] != '') {
+//                                            $itemDetail = ListingItem::with('storeProduct', 'storeProduct.product')->where('sku', $item['product_info']['sku']);
+//                                            $orderItemData = [
+//                                                'title' => $item['item']['productName'],
+//                                                'order_id' => $order_detail->id,
+//                                                'product_id' => $itemDetail->storeProduct->product->product_id,
+//                                                'client_id' => $itemDetail->client,
+//                                                'listing_item_id' => $itemDetail->id,
+//                                                'sku' => $item['item']['sku'],
+//                                                'store_sku' => $item['item']['upc'],
+//                                                'quantity' => $item['orderLineQuantity']['amount'],
+//                                                'id1' => '',
+//                                                'item_price' => ($item['charges']['charge']['chargeType'] == 'PRODUCT') ? $item['charges']['charge']['chargeAmount']['amount'] : 0,
+//                                                'shipping_price' => ($item['charges']['charge']['chargeType'] == 'SHIPPING') ? $item['charges']['charge']['chargeAmount']['amount'] : 0,
+//                                                'item_tax' => ($item['charges']['charge']['chargeType'] == 'PRODUCT_TAX') ? $item['charges']['charge']['tax']['taxAmount']['amount'] : 0,
+//                                                'shipping_tax' => ($item['charges']['charge']['chargeType'] == 'SHIPPING_TAX') ? $item['charges']['charge']['tax']['taxAmount']['amount'] : 0,
+//                                                'shipping_quantity' => $item['orderLineQuantity']['amount'],
+//                                            ];
+//
+//                                            $order_item = OrderItem::updateOrCreate([
+//                                                'order_id' => $order_detail->id,
+//                                                'product_id' => $itemDetail->storeProduct->product->product_id,
+//                                            ], $orderItemData);
+//
+//                                            /* create order operation item*/
+//                                            if ($order_item->id) {
+//                                                $orderOperationItemData = [
+//                                                    'order_item_id' => $order_item->id,
+//                                                    'order_operation_id' => $order_operation_detail->id,
+//                                                    'client_id' => $itemDetail->client,
+//                                                    'sync_status' => 6
+//                                                ];
+//
+//                                                $order_operation_item = OrderOperationItem::updateOrCreate([
+//                                                    'order_operation_id' => $order_operation_detail->id
+//                                                ], $orderOperationItemData);
+//                                            }
+//
+//                                            $cnt++;
+//                                        }
+//                                    }
+//                                }
+//                            }
+//                            $noOfOrder++;
+//                        } catch (\Exception $e) {
+//                            Log::info($e->getMessage());
+//                        }
+//                    }
+//
+//                    $order_synchronization->update(['number_of_items' => $noOfOrder, 'last_order_update_date' => date('Y-m-d H:i:s'), 'filter_end_date' => date('Y-m-d H:i:s')]);
+//                } else {
+//                    $order_synchronization->update([
+//                        'number_of_items' => 0,
+//                        'last_order_update_date' => isset($last_synchronization) ? $last_synchronization->filter_end_date : date('Y-m-d H:i:s'),
+//                        'filter_end_date' => isset($last_synchronization) ? $last_synchronization->filter_end_date : date('Y-m-d H:i:s')
+//                    ]);
+//                }
             }
         }
     }

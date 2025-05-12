@@ -35,6 +35,8 @@ class AmazonUtility
                 return self::getPortableElectronicDeviceStandFields($itemDetail);
             case 'CELLULAR_PHONE_CASE':
                 return self::getCellularPhoneCase($itemDetail);
+            case 'PHONE_ACCESSORY':
+                return self::getPhoneAccessory($itemDetail);
         }
         return [];
     }
@@ -50,7 +52,7 @@ class AmazonUtility
             ->map(function ($specification) {
                 return $specification->name . ' : ' . $specification->calculated_value();
             })
-            ->where('store_type_id',$storeProduct->store->store_type_id)->first();
+            ->where('store_type_id', $storeProduct->store->store_type_id)->first();
 
         // get value of items included
         $items_included = ProductSpecification::where('product_id', $productData->product_id)
@@ -91,7 +93,7 @@ class AmazonUtility
             ->map(function ($specification) {
                 return $specification->name . ' : ' . $specification->calculated_value();
             })
-            ->where('store_type_id',$storeProduct->store->store_type_id)->first();
+            ->where('store_type_id', $storeProduct->store->store_type_id)->first();
 
         $items_included = ProductSpecification::where('product_id', $productData->product_id)
             ->where('name', 'Items Included')
@@ -173,7 +175,7 @@ class AmazonUtility
             ->map(function ($specification) {
                 return $specification->name . ' : ' . $specification->calculated_value();
             })
-            ->where('store_type_id',$storeProduct->store->store_type_id)->first();
+            ->where('store_type_id', $storeProduct->store->store_type_id)->first();
 
         $mounting_type = ProductSpecification::where('product_id', $productData->product_id)
             ->where('name', 'Mounting Type')
@@ -250,7 +252,7 @@ class AmazonUtility
             ->map(function ($specification) {
                 return $specification->name . ' : ' . $specification->calculated_value();
             })
-            ->where('store_type_id',$storeProduct->store->store_type_id)->first();
+            ->where('store_type_id', $storeProduct->store->store_type_id)->first();
 
         $number_of_ports = ProductSpecification::where('product_id', $productData->product_id)
             ->where('name', 'Number of Ports')
@@ -294,7 +296,7 @@ class AmazonUtility
             ->map(function ($specification) {
                 return $specification->name . ' : ' . $specification->calculated_value();
             })
-            ->where('store_type_id',$storeProduct->store->store_type_id)->first();
+            ->where('store_type_id', $storeProduct->store->store_type_id)->first();
 
         $number_of_ports = ProductSpecification::where('product_id', $productData->product_id)
             ->where('name', 'Number of Ports')
@@ -382,7 +384,7 @@ class AmazonUtility
             ->map(function ($specification) {
                 return $specification->name . ' : ' . $specification->calculated_value();
             })
-            ->where('store_type_id',$storeProduct->store->store_type_id)->first();
+            ->where('store_type_id', $storeProduct->store->store_type_id)->first();
 
         $form_factor = ProductSpecification::where('product_id', $productData->product_id)
             ->where('name', 'Form Factor')
@@ -415,7 +417,7 @@ class AmazonUtility
             ->map(function ($specification) {
                 return $specification->name . ' : ' . $specification->calculated_value();
             })
-            ->where('store_type_id',$storeProduct->store->store_type_id)->first();
+            ->where('store_type_id', $storeProduct->store->store_type_id)->first();
 
         $mounting_type = ProductSpecification::where('product_id', $productData->product_id)
             ->where('name', 'Mounting Type')
@@ -473,6 +475,13 @@ class AmazonUtility
             'material' => [['value' => $material->calculated_value(), 'language_tag' => 'en_US']],
             'color' => [['value' => $productData->color->name, 'language_tag' => 'en_US']],
             'compatible_phone_models' => FieldUtility::getComaptiblePhoneModels($itemDetail),
+        ];
+    }
+
+    private static function getPhoneAccessory($itemDetail)
+    {
+        return [
+
         ];
     }
 }

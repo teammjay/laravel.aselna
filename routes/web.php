@@ -124,6 +124,7 @@ Route::middleware('auth')->group(function () {
     Route::controller(ListingController::class)->group(function () {
         Route::get('/listing', 'index')->name('listing.list');
         Route::get('/listing/suspended', 'suspended_list')->name('listing.suspended_list');
+        Route::get('/listing/inactive', 'inactive')->name('listing.inactive');
         Route::get('/listing/create', 'create')->name('listing.create');
         Route::post('/listing/filter', 'filter')->name('listing.filter');
         Route::post('/listing/savelistingdata', 'saveListingData')->name('listing.save');
