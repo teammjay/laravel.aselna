@@ -133,7 +133,7 @@ class OrdersController extends Controller
                         if(isset($oitem->product) && !empty($oitem->product)){
                             if($oitem->product->product_image_url != ''){
                                 $image = '<div class="main-image">
-                                                <img src="'.asset('storage/product_images/'. $oitem->orderItem->product->product_image_url).'" alt="'.$oitem->orderItem->product->product_image_url.'" class="mainImage" width="70" height="70" data-product-id="'.$oitem->orderItem->product->product_id.'">
+                                                <img src="'.asset('storage/product_images/'. $oitem->product->product_image_url).'" alt="'.$oitem->product->product_image_url.'" class="mainImage" width="70" height="70" data-product-id="'.$oitem->product->product_id.'">
                                             </div>';
                             }
                         }

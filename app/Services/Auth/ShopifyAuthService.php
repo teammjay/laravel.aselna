@@ -19,7 +19,7 @@ class ShopifyAuthService
     {
         $this->client = new Client(['verify' => false]);
         $this->accessToken = $clientSecret;
-        $this->accessToken = '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';
+        //$this->accessToken = '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';
         //$this->endpoint = env('SHOPIFY_API_ENDPOINT');
         $this->endpoint = 'https://aselna-dev.myshopify.com';
         //$this->apiVersion = env('SHOPIFY_API_VERSION');

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Catalog;
 use App\Models\LogisticCenter;
 use App\Models\OrderOperation;
 use App\Models\OrderOperationReason;
@@ -209,16 +210,35 @@ class ShipmentsController extends Controller
         $shipFrom = LogisticCenter::all();
         $shippingCarrierPackage = ShippingCarrierPackage::all();
         $shipmentDetail = OrderOperation::with('operationItem','order','carrierService','store','operationItem.orderItem','operationItem.orderItem.product')->where('id',$order_opration_id)->first();
+
+        $package_id = '';
+        $product_total_weight = 0;
+        //print_r($shipmentDetail->operationItem);
+        if(count($shipmentDetail->operationItem ?? []) > 0){
+            $product_weight = 0;
+            foreach($shipmentDetail->operationItem as $oitem){
+                $product_id = $oitem->orderItem->product->product_id;
+                if($product_id){
+                    $product_detail = Catalog::findOrFail($product_id);
+                    if($product_detail->product_weight > $product_weight){
+                        $package_id = $product_detail->shipping_package_id;
+                    }
+                    $product_weight = $product_detail->product_weight;
+                    $product_total_weight = $product_total_weight + $product_weight;
+                }
+            }
+        }
         /*echo '<pre>';
         print_r($shipmentDetail);
         echo '</pre>';die;*/
         $shipping_carrier_id = $shipmentDetail->shipping_carrier_id;
         $shippingCarrierService = ShippingCarrierService::where('shipping_carrier_id',$shipping_carrier_id)->orderBy('name','asc')->get();
 
+
         if($request->input('mark_as_ship')){
-            $view = view('shipment.mark_as_shipped', compact('shipmentDetail','shippingCarrier','shippingCarrierService','shippingCarrierPackage','shipFrom'))->render();
+            $view = view('shipment.mark_as_shipped', compact('shipmentDetail','shippingCarrier','shippingCarrierService','shippingCarrierPackage','shipFrom','package_id','product_total_weight'))->render();
         }else {
-            $view = view('shipment.detail', compact('shipmentDetail', 'shippingCarrier', 'shippingCarrierService', 'shippingCarrierPackage', 'shipFrom'))->render();
+            $view = view('shipment.detail', compact('shipmentDetail', 'shippingCarrier', 'shippingCarrierService', 'shippingCarrierPackage', 'shipFrom','package_id','product_total_weight'))->render();
         }
         return response()->json([
             'success' => true,
