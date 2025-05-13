@@ -63,7 +63,6 @@
                                                     <div class="main-image">
                                                         <img src="{{ asset('storage/' .$oitem->orderItem->product->image->getFileUrl()) }}" alt="{{ asset('storage/' .$product->image->getFileUrl())}}" loading="lazy" width="50" height="50" class="mainImage" data-product-id="{{ $oitem->orderItem->product->product_id }}">
 
-                                                        <img src="{{  asset('storage/product_images/'. $oitem->orderItem->product->product_image_url) }}" alt="{{  $oitem->orderItem->product->product_image_url }}" class="mainImage" width="70" height="70" data-product-id="{{ $oitem->orderItem->product->product_id }}">
                                                     </div>
                                                 @endif
                                             </td>

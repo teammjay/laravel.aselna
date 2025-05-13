@@ -478,7 +478,7 @@
 
             // Fetch images via AJAX
             $.ajax({
-                url: '{{ route('order.getimages') }}',
+                url: '{{ route('catalog.getimages') }}',
                 method: 'POST',
                 data:{
                     productId : productId,
@@ -517,48 +517,6 @@
 
         $("#shipmentTable").dataTable();
 
-        $(document).on('click','.mainImage',function () {
-            const productId = $(this).data('product-id'); // Get the product ID
-            const galleryDiv = $('#ajax-gallery'); // Reference to the hidden gallery div
-
-            // Fetch images via AJAX
-            $.ajax({
-                url: '{{ route('catalog.getimages') }}',
-                method: 'POST',
-                data:{
-                    productId : productId,
-                    "_token": '{{ csrf_token() }}'
-                },
-                success: function (images) {
-                    galleryDiv.empty(); // Clear any existing content
-
-                    // Append images to the gallery div
-                    $.each(images, function (index, image) {
-                        const anchor = $('<a>')
-                            .attr('href', image)
-                            .attr('data-lightbox', 'gallery')
-                            .attr('data-title', 'Gallery Image');
-
-                        const img = $('<img>')
-                            .attr('src', image)
-                            .css('display', 'none'); // Hidden thumbnails
-
-                        anchor.append(img);
-                        galleryDiv.append(anchor);
-                    });
-
-                    // Trigger Lightbox by simulating a click on the first image
-                    if (images.length > 0) {
-                        galleryDiv.find('a:first').trigger('click');
-                    } else {
-                        alert('No images found for this product.');
-                    }
-                },
-                error: function () {
-                    alert('Failed to load images.');
-                }
-            });
-        });
     });
 
     function getShippingCarrierService(element){
