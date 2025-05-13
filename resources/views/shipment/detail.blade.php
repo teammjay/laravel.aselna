@@ -52,9 +52,13 @@
                     <label for="weight">Weight</label>
                 </div>
                 <div class="col-md-8 d-flex" style="gap:10px;">
-                    <input type="text" class="form-control" id="weight" name="weight" value="{{ $shipmentDetail->weight_value }}">
+                    <input type="text" class="form-control" id="weight" name="weight" value="{{ ($shipmentDetail->weight_value) ? $shipmentDetail->weight_value : $product_total_weight }}">
                     <select class="form-control" id="weight_type" name="weight_type">
-
+                        <option value="0">Oz</option>
+                        <option value="1">Lb</option>
+                        <option value="2">G</option>
+                        <option value="3">Kg</option>
+                        <option value="4">Mg</option>
                     </select>
                 </div>
             </div>
@@ -67,7 +71,7 @@
                         <option value="">--</option>
                         @if(count($shippingCarrierPackage ?? []) > 0)
                             @foreach($shippingCarrierPackage as $sCarrierPackage)
-                                <option value="{{ $sCarrierPackage->id }}" {{ ( $sCarrierPackage->id == $shipmentDetail->shipping_carrier_service_id ) ? 'selected' : '' }}>{{ $sCarrierPackage->name }}</option>
+                                <option value="{{ $sCarrierPackage->id }}" {{ ( $sCarrierPackage->id == $shipmentDetail->shipping_carrier_service_id || ($package_id != '' && $package_id == $sCarrierPackage->id) ) ? 'selected' : '' }}>{{ $sCarrierPackage->name }}</option>
                             @endforeach
                         @endif
                     </select>
