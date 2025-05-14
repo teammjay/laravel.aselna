@@ -149,10 +149,10 @@ class OrdersController extends Controller
                     "order_status" =>  $order->order_status,
                     "first_name" => $order->buyer_first_name,
                     "last_name" =>  $order->buyer_last_name,
-                    "phone" => '',
+                    "phone" => $order->customer->phones[0]->phone_no ?? '',
                     "order_total" => $order->order_total,
                     "buyer_last_name" => $order->buyer_last_name,
-                    "state" => '',
+                    "state" => isset($order->customerAddress) ? $order->customerAddress->state : '',
                     "purchase_order_id" => $order->purchase_order_id,
                     "customer" => $order->customer->full_name ?? '',
                 );

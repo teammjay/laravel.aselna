@@ -10,7 +10,10 @@ class CustomerAddress extends Model
 {
     use HasFactory;
 
+    protected $keyType = 'string';
+
     protected $fillable = [
+        'id',
         'customer_id',
         'address_combined',
         'address_type',
