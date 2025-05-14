@@ -233,7 +233,7 @@
         </div>
     </div>
 
-    <!-- Mark as shipped modal -->
+    <!-- Mark as cancel shipment modal -->
     <div class="modal fade" id="cancelShipmentModal">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
@@ -247,6 +247,25 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancle</button>
                     <button type="button" class="btn btn-primary" id="cancelOrder"><i class="fa fa-check"></i> Ok </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mark as edit postal address modal -->
+    <div class="modal fade" id="editPostalAddressModal">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editPostalAddressModalLabel">Postal Address</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancle</button>
+                    <button type="button" class="btn btn-primary" id="saveShipping"><i class="fa fa-check"></i> Ok </button>
                 </div>
             </div>
         </div>
@@ -517,6 +536,31 @@
 
         $("#shipmentTable").dataTable();
 
+        $(document).on('click','#edit_address',function () {
+            var address_id = $(this).data('id');
+            if(address_id != '' && address_id != null){
+                $.ajax({
+                    url: "{{ route('shipment.getshippingaddress') }}",
+                    type: 'POST',
+                    data: {
+                        address_id: address_id,
+                        "_token": '{{ csrf_token() }}'
+                    },
+                    success: function (response) {
+                        // If success, remove the user row from the table
+                        if (response.success) {
+                            $('#editPostalAddressModal').find('.modal-body').html(response.html);
+                            $('#editPostalAddressModal').modal('show');
+                        }
+                    },
+                    error: function (xhr) {
+                        // Handle error response
+                        alert('Error: ' + xhr.responseJSON.error);
+                    }
+                });
+            }
+        });
+
     });
 
     function getShippingCarrierService(element){
@@ -646,7 +690,7 @@
             "autoWidth": false,
             "processing": true,
             "serverSide": true,
-            "searching": false,
+            "searching": true,
             "aLengthMenu": [20, 25, 50, 100],
             'ajax': {
                 url: "{{ route('shipment.filter') }}",

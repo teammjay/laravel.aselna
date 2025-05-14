@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Catalog;
+use App\Models\CustomerAddress;
 use App\Models\LogisticCenter;
 use App\Models\OrderOperation;
 use App\Models\OrderOperationReason;
@@ -209,7 +210,7 @@ class ShipmentsController extends Controller
         $shippingCarrier = ShippingCarrier::all();
         $shipFrom = LogisticCenter::all();
         $shippingCarrierPackage = ShippingCarrierPackage::all();
-        $shipmentDetail = OrderOperation::with('operationItem','order','carrierService','store','operationItem.orderItem','operationItem.orderItem.product')->where('id',$order_opration_id)->first();
+        $shipmentDetail = OrderOperation::with('operationItem','order','order.customerAddress','carrierService','store','operationItem.orderItem','operationItem.orderItem.product')->where('id',$order_opration_id)->first();
 
         $package_id = '';
         $product_total_weight = 0;
@@ -245,6 +246,20 @@ class ShipmentsController extends Controller
             'html' => $view
         ]);
 
+    }
+
+    public function getShippingAddress(Request $request){
+        $address_id = $request->input('address_id');
+        if($address_id){
+            $addressDetail = CustomerAddress::with('customer')->where('id',$address_id)->first();
+
+            $view = view('shipment.edit_shipping_address', compact('addressDetail'))->render();
+
+            return response()->json([
+                'success' => true,
+                'html' => $view
+            ]);
+        }
     }
 
     public function getCancelShipmentDetail(Request $request){

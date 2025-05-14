@@ -7,7 +7,7 @@
                 </div>
                 <div class="col-md-8">
                     <select class="form-control" id="carrier_name" name="carrier_name">
-                        <option value="">--</option>
+                        {{--<option value="">--</option>--}}
                         @if(count($shippingCarrier ?? []) > 0)
                             @foreach($shippingCarrier as $sCarrier)
                                 <option value="{{ $sCarrier->id }}" {{ ( $sCarrier->id == $shipmentDetail->shipping_carrier_id ) ? 'selected' : '' }}>{{ $sCarrier->name }}</option>
@@ -22,7 +22,7 @@
                 </div>
                 <div class="col-md-8">
                     <select class="form-control" id="shipment_carrier" name="shipment_carrier">
-                        <option value="">--</option>
+                        {{--<option value="">--</option>--}}
                         @if(count($shippingCarrierService ?? []) > 0)
                             @foreach($shippingCarrierService as $sCarrierService)
                                 <option value="{{ $sCarrierService->id }}" {{ ( $sCarrierService->id == $shipmentDetail->shipping_carrier_service_id ) ? 'selected' : '' }}>{{ $sCarrierService->name }}</option>
@@ -105,7 +105,12 @@
                     <label for="shipping_address">Shipping Address</label>
                 </div>
                 <div class="col-md-8">
-
+                    @if(isset($shipmentDetail->order->customerAddress))
+                        <a href="javascript:void(0);" id="edit_address" data-id="{{ $shipmentDetail->order->customerAddress->id }}">
+                            {{ $shipmentDetail->order->customerAddress->address_combined }} {{$shipmentDetail->order->customerAddress->city}} {{$shipmentDetail->order->customerAddress->state}}
+                            {{$shipmentDetail->order->customerAddress->country}} {{$shipmentDetail->order->customerAddress->zip_code}}
+                        </a>
+                    @endif
                 </div>
             </div>
 

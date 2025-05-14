@@ -6,6 +6,8 @@ use App\Constants\OrderStatus;
 use App\Constants\OrderSyncronisationType;
 use App\Models\Catalog;
 use App\Models\Customer;
+use App\Models\CustomerAddress;
+use App\Models\CustomerPhone;
 use App\Models\ListingItem;
 use App\Models\ManageMarketplaceProduct;
 use App\Models\OrderOperation;
@@ -127,6 +129,40 @@ class FetchShopifyOrders implements ShouldQueue
                                     'email' => $order['email'],
                                 ], $customerData);
 
+                                /* start - add customer shipping address*/
+                                $customer_address_data = [
+                                    'first_name' => isset($order['shippingAddress']['firstName']) ? $order['shippingAddress']['firstName'] : NULL,
+                                    'last_name' => isset($order['shippingAddress']['lastName']) ? $order['shippingAddress']['lastName'] : NULL,
+                                    'address_line_1' => $order['shippingAddress']['address1'],
+                                    'address_line_2' => $order['shippingAddress']['address2'],
+                                    'city' => $order['shippingAddress']['city'],
+                                    'state' => $order['shippingAddress']['province'],
+                                    'state_code' => $order['shippingAddress']['provinceCode'],
+                                    'zip' => $order['shippingAddress']['zip'],
+                                    'country' => $order['shippingAddress']['country'],
+                                    'country_code' => $order['shippingAddress']['countryCodeV2'],
+                                    'address_combined' => $order['shippingAddress']['address1'] . ' ' . $order['shippingAddress']['address2'],
+                                ];
+
+                                Log::info("Data " . json_encode($customer_address_data));
+
+                                $customer_address = CustomerAddress::updateOrCreate([
+                                    'customer_id' => $customer_detail->id,
+                                    'address_combined' => $order['shippingAddress']['address1'] . ' ' . $order['shippingAddress']['address2'],
+                                ], $customer_address_data);
+
+                                /* end - add customer shipping address*/
+
+                                /* start - add customers phone records*/
+                                $customer_phone_data = [
+                                    'customer_id' => $customer_detail->id,
+                                    'phone_no' => $order['phone'],
+                                ];
+
+                                CustomerPhone::updateOrCreate($customer_phone_data, $customer_phone_data);
+
+                                /* end - add customers phone records*/
+
                                 $orderData = [
                                     'order_id' => $order['id'],
                                     'order_date' => date('Y-m-d H:i:s', strtotime($order['createdAt'])),
@@ -140,6 +176,7 @@ class FetchShopifyOrders implements ShouldQueue
                                     'purchase_order_id' => isset($order['poNumber']) ? $order['poNumber'] : '',
                                     'store_id' => $store->id,
                                     'order_synchronization_id' => $order_synchronization_id,
+                                    'shipping_address_id' => $customer_address->id,
                                 ];
                                 Log::info('Order Data: ' . json_encode($orderData));
 
