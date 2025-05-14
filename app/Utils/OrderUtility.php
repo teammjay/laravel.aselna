@@ -5,6 +5,7 @@ namespace App\Utils;
 use App\Constants\OrderSyncronisationType;
 use App\Models\Customer;
 use App\Models\CustomerAddress;
+use App\Models\CustomerPhone;
 use App\Models\ListingItem;
 use App\Models\OrderItem;
 use App\Models\OrderOperation;
@@ -97,6 +98,13 @@ class OrderUtility
             'customer_id' => $customer_detail->id,
             'address_combined' => $sorder['shippingInfo']['postalAddress']['address1'] . ' ' . $sorder['shippingInfo']['postalAddress']['address2'],
         ], $customer_address_data);
+
+        $customer_phone_data = [
+            'customer_id' => $customer_detail->id,
+            'phone_no' => $sorder['shippingInfo']['phone'],
+        ];
+
+        CustomerPhone::updateOrCreate($customer_phone_data, $customer_phone_data);
 
         $orderData = [
             'order_date' => date('Y-m-d H:i:s', $sorder['orderDate'] / 1000),
