@@ -38,7 +38,7 @@ class ListingItemSyncJob implements ShouldQueue
 //            $listingItemsQ->whereRaw('store_product_id in (select id from oydera_store_product where product_id in (select id from oydera_product where oem_generic = 2))');
         } else {
             // get Last 2 years only
-            $listingItemsQ->where('create_ts', '>=', now()->subYears(2));
+//            $listingItemsQ->where('create_ts', '>=', now()->subYears(2));
         }
 
         $listingItemsQ->chunk(1000, function ($listingItems) {
