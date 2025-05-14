@@ -462,6 +462,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/shipment/getcancelshipmentdetail', 'getCancelShipmentDetail')->name('shipment.getcancelshipmentdetail');
         Route::post('/shipment/updateshippingdetails', 'updateShippingDetails')->name('shipment.updateshippingdetails');
         Route::post('/shipment/cancelshipment', 'cancelShipment')->name('shipment.cancelshipment');
+        Route::post('/shipment/getshippingaddress', 'getShippingAddress')->name('shipment.getshippingaddress');
     });
 
     Route::controller(ShippingCarrierPackageController::class)->group(function () {
