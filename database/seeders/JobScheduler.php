@@ -185,7 +185,7 @@ class JobScheduler extends Seeder
                 'class_name' => 'App\Jobs\AmazonProductTypeSyncJob',
             ],
             [
-                'name' => 'Listing Item Sync Job',
+                'name' => 'Listing Sync Job',
                 'description' => 'Sync all listing items',
                 'class_name' => 'App\Jobs\ListingSyncJob',
             ],
