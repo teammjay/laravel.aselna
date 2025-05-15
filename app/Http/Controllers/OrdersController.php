@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Constants\OrderStatus;
+use App\Models\Customer;
+use App\Models\CustomerPhone;
 use App\Models\ListingItem;
 use App\Models\Order;
 use App\Models\OrderItem;
@@ -173,7 +175,7 @@ class OrdersController extends Controller
 
     public function edit(string $id)
     {
-        $orderDetail = Order::with('orderItem','orderItem.product','store','store.storeType','customerAddress')->findOrFail($id);
+        $orderDetail = Order::with('orderItem','orderItem.product','store','store.storeType','customer','customerAddress')->findOrFail($id);
         /*echo '<pre>';
         print_r($orderDetail);
         echo '</pre>';die;*/
@@ -351,6 +353,41 @@ class OrdersController extends Controller
         }
 
         return back()->with('success', 'CSV Imported Successfully');
+    }
+
+    public function getCustomerDetail(Request $request){
+        $customer_id = $request->input('customer_id');
+        if($customer_id){
+            $customerDetail = Customer::with('phones')->where('id',$customer_id)->first();
+
+            $view = view('orders.edit_customer', compact('customerDetail'))->render();
+
+            return response()->json([
+                'success' => true,
+                'html' => $view
+            ]);
+        }
+    }
+
+    public function saveCustomer(Request $request){
+
+        $id = $request->input('id');
+        try {
+            $customer = Customer::findOrFail($id);
+            $name = $request['full_name'] = $request['first_name'].' '.$request['last_name'];
+            $customer->update($request->except(['phone', 'id']));
+            if(isset($request->phone)){
+               foreach ($request->phone as $key=>$value){
+                    $customerPhone = CustomerPhone::findOrFail($key);
+                    $customerPhone->update(['phone_no'=>$value]);
+                }
+            }
+            return response()->json(['success' => true,'name'=>$name, 'message' => 'Data saved successfully!']);
+
+        }catch (QueryException $e) {
+            // Handle the exception and show an error message
+            return response()->json(['errors' => $e->getMessage()]);
+        }
     }
 
 }
