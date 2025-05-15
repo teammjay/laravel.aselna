@@ -439,10 +439,11 @@ class WalmartService implements MarketplaceServiceInterface
                         $statusChange = true;
                     } else {
                         // TODO Need To implement status change
+                        $statusChange = true;
                     }
 
                     if ($statusChange) {
-                        OrderUtility::mapOrders($order, $sorder, $store);
+                        OrderUtility::mapWalmartOrders($order, $sorder, $store);
                     }
 
                     if ($last_order_update_date === null || strtotime($sorder['orderDate'] / 1000) > strtotime($last_order_update_date)) {

@@ -42,12 +42,7 @@ class FetchWalmartOrdersJob implements ShouldQueue
             foreach ($stores as $store) {
 
                 $walmartService = new WalmartService();
-                $orders = $walmartService->getOrders($store);
-
-                if (!isset($orders) || !isset($orders['list'])) {
-                    Log::info("Error in Walmart Orders : " . json_encode($orders));
-                    continue;
-                }
+                $walmartService->getOrders($store);
 
 //                $last_synchronization = OrderSynchronization::where('store_id', $store->id)->orderBy('filter_end_date', 'desc')->first();
 
