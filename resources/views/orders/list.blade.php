@@ -339,6 +339,7 @@
             });
 
             loadDatatables();
+
         });
 
         function loadDatatables() {

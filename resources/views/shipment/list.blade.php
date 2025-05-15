@@ -264,8 +264,8 @@
 
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancle</button>
-                    <button type="button" class="btn btn-primary" id="saveShipping"><i class="fa fa-check"></i> Ok </button>
+                    <button type="button" class="btn btn-secondary closeaddressbtn" data-dismiss="modal">Cancle</button>
+                    <button type="button" class="btn btn-primary" id="saveAddress"><i class="fa fa-check"></i> Ok </button>
                 </div>
             </div>
         </div>
@@ -560,6 +560,43 @@
                 });
             }
         });
+
+
+        $(document).on('click','#saveAddress',function () {
+
+            const form = document.querySelector("#frmEditAddress");
+            let formData = new FormData(form);
+            $.ajax({
+                url: "{{ route('shipment.saveaddress') }}",
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                },
+                success: function (response) {
+                    // If success, remove the user row from the table
+                    if (response.success) {
+                        $('#edit_address').html(response.address);
+                        $('#editPostalAddressModal').modal('hide');
+                        $(body).addClass('modal-open');
+
+                    }
+                },
+                error: function (xhr) {
+                    // Handle error response
+                    alert('Error: ' + xhr.responseJSON.error);
+                }
+            });
+        });
+
+        $(document).on('click','.closeaddressbtn',function () {
+            setTimeout(function(){
+                $('body').addClass('modal-open');
+            },500);
+        });
+
 
     });
 

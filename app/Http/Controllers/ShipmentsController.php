@@ -251,7 +251,7 @@ class ShipmentsController extends Controller
     public function getShippingAddress(Request $request){
         $address_id = $request->input('address_id');
         if($address_id){
-            $addressDetail = CustomerAddress::with('customer')->where('id',$address_id)->first();
+            $addressDetail = CustomerAddress::with('customer','customerPhone')->where('id',$address_id)->first();
 
             $view = view('shipment.edit_shipping_address', compact('addressDetail'))->render();
 
@@ -259,6 +259,22 @@ class ShipmentsController extends Controller
                 'success' => true,
                 'html' => $view
             ]);
+        }
+    }
+
+    public function saveAddress(Request $request){
+
+        $id = $request->input('id');
+        try {
+            $address = CustomerAddress::findOrFail($id);
+            $request['address_combined'] = $address_combined = $request['address_line_1'] . ' ' .  $request['address_line_2'];
+            $address_combined = $address_combined.' '.$request['city'].' '.$request['state'].' '.$address->country.' '.$request['zip_code'];
+            $address->update($request->except(['phone', 'id']));
+            return response()->json(['success' => true,'address'=>$address_combined, 'message' => 'Data saved successfully!']);
+
+        }catch (QueryException $e) {
+            // Handle the exception and show an error message
+            return response()->json(['errors' => $e->getMessage()]);
         }
     }
 

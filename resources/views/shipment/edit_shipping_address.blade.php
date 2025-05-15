@@ -1,4 +1,4 @@
-<form id="frmShippingDetail">
+<form id="frmEditAddress">
     <div class="row">
         <div class="col-md-12">
             <div class="row mt-3 g-3 align-items-center">
@@ -6,6 +6,7 @@
                     <label for="first_name">First Name</label>
                 </div>
                 <div class="col-md-8">
+                    <input type="hidden" name="id" value="{{ $addressDetail->id }}">
                     <input type="text" class="form-control" name="first_name" id="first_name" value="{{ $addressDetail->first_name }}">
                 </div>
             </div>
@@ -57,14 +58,14 @@
                     <input type="text" class="form-control" name="country_code" id="country_code" value="{{ $addressDetail->country_code }}">
                 </div>
             </div>
-            <div class="row mt-3 g-3 align-items-center">
+            {{--<div class="row mt-3 g-3 align-items-center">
                 <div class="col-md-4">
                     <label for="phone">Phone</label>
                 </div>
                 <div class="col-md-8">
-                    <input type="text" class="form-control" name="phone" id="phone" value="{{ $addressDetail->customer->phone }}">
+                    <input type="text" class="form-control" name="phone" id="phone" value="{{ $addressDetail->customerPhone->phone_no }}">
                 </div>
-            </div>
+            </div>--}}
         </div>
 
     </div>
