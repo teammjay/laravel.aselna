@@ -1137,9 +1137,9 @@ class ListingController extends Controller
                                 $product_short_keyword = isset($pDetail['short_keyword']) ? $pDetail['short_keyword'] : '';
                                 $product_long_keyword = isset($pDetail['long_keyword']) ? $pDetail['long_keyword'] : '';
                                 $product_title = $pDetail['title'];
-                                $product_price = $pDetail['price'];
+                                /*$product_price = $pDetail['price'];
                                 $product_price_overwrite = $pDetail['price_overwrite'];
-                                $product_store_type_category_id = $pDetail['store_type_category_id'];
+                                $product_store_type_category_id = $pDetail['store_type_category_id'];*/
                                 $title_template = $title_templates[$key];
                                 if ($title_template) {
                                     if (str_contains($title_template, '#unique_code')) {
