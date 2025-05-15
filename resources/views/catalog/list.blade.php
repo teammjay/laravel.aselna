@@ -418,8 +418,9 @@
                     <th>Type</th>
                     <th>Title</th>
                     <th>Status</th>
-                    <th>configurable</th>
+                    <th>Marketplace Price</th>
                     <th>Price</th>
+                    <th>Interface</th>
                     <th>Manufacturer</th>
                     <th>Color</th>
                     <th>Created Date</th>
@@ -737,8 +738,9 @@
                 { data: 'product_type' },
                 { data: 'product_title' },
                 { data: 'product_status' },
-                { data: 'configurable' },
+                { data: 'marketplace_price' },
                 { data: 'product_price' },
+                { data: 'interface' },
                 { data: 'manufacture_name' },
                 { data: 'product_color' },
                 { data: 'created_at' },

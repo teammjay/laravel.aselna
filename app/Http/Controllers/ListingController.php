@@ -759,7 +759,7 @@ class ListingController extends Controller
             }
 
             /* check product exist in store product or not*/
-            $query = StoreProduct::select('store_product.id', 'store_product.store_type_category_id', 'store_product.product_id', 'store_product.title', 'store_product.price', 'store_product.created_at', 'product_type.name as ProductType')->with('Product');
+            $query = StoreProduct::select('store_product.id', 'store_product.store_type_category_id', 'store_product.product_id', 'store_product.title', 'store_product.price','store_product.overwrite_price', 'store_product.created_at', 'product_type.name as ProductType')->with('Product');
             $query->leftJoin('products', 'products.product_id', '=', 'store_product.product_id');
             $query->leftJoin('product_type', 'products.product_type', '=', 'product_type.id');
             $query->whereIn('store_product.product_id', $product_ids);
@@ -1134,8 +1134,8 @@ class ListingController extends Controller
                                 /*echo '<pre>';
                                 print_r($product_details[$store_product_id]);
                                 echo '</pre>';*/
-                                $product_short_keyword = $pDetail['short_keyword'];
-                                $product_long_keyword = $pDetail['long_keyword'];
+                                $product_short_keyword = isset($pDetail['short_keyword']) ? $pDetail['short_keyword'] : '';
+                                $product_long_keyword = isset($pDetail['long_keyword']) ? $pDetail['long_keyword'] : '';
                                 $product_title = $pDetail['title'];
                                 $product_price = $pDetail['price'];
                                 $product_price_overwrite = $pDetail['price_overwrite'];
@@ -1149,11 +1149,6 @@ class ListingController extends Controller
                                         $titleGenerator = new TitleGenerator(0, $max_title_length, []);
                                         $title_template = $titleGenerator->getProductTitle($title_template, $product_title, $product_short_keyword, $product_long_keyword);
                                     }
-                                }
-
-                                if ($include_carrier == 1 || $generate_type_name == 'Carrier Group') {
-                                    $field = 'carrier.name as carrier_name';
-                                    $field2 = 'carrier.id as carrier_id';
                                 }
 
                                 $devices = $this->getDevicesFromRequest($request, $product);
@@ -1728,16 +1723,20 @@ class ListingController extends Controller
                 if ($brand === $lastBrand) {
                     $parts2 = explode(' ', $model, 2);
                     if (isset($parts2[1])) {
+                        //echo $parts2[0] .'=='. $lastModel.'<br>';
                         if ($parts2[0] == $lastModel) {
                             $model = $parts2[1];
+                        }else{
+                            //$model = $parts2[0];
                         }
                         //$model = $parts2[1];
                     }
+                    //echo $model.'<br>';
                     $lastModel = $parts2[0];
-                    $parts2 = explode(' ', $model, 2);
+                    /*$parts2 = explode(' ', $model, 2);
                     if (isset($parts2[1])) {
                         $model = $parts2[1];
-                    }
+                    }*/
                     $nameToAdd = $model;
                 } else {
                     if ($key == 0) {
