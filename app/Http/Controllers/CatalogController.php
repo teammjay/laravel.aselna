@@ -68,7 +68,7 @@ class CatalogController extends Controller
         $columnName = $request['columns'][$columnIndex]['data'];
         $columnSortOrder = $request['order'][0]['dir'];
 
-        $query = Catalog::with('Manufacturer','productType')->select('*');
+        $query = Catalog::with('Manufacturer','productType','interfaces.interfaces', 'pinterface.interfaces')->select('*');
         /*$perPage = $request->input('perPage', $this->perPage);*/
 
         // Filter by product title
@@ -254,8 +254,10 @@ class CatalogController extends Controller
                         <option value="active"> Active </option>
                         <option value="discontinued"> Discontinued </option>
                         <option value="out_of_stock"> Out of stock </option></select>' ,
-                    "configurable" => '<input type="checkbox" class="configurable" data-id="'.$product->product_id.'" '.$checked.'>',
+                    /*"configurable" => '<input type="checkbox" class="configurable" data-id="'.$product->product_id.'" '.$checked.'>',*/
+                    "marketplace_price" => $product->product_marketplace_price,
                     "product_price" => '<span class="prVal">'.$product->product_price.'</span><input type="text" class="form-control bulk-edit" name="product['.$key.'][product_price]" value="'.$product->product_price.'" disabled>',
+                    "interface" => (isset($product->pinterface)) ? $product->pinterface->interfaces->name : '',
                     "manufacture_name" => isset($product->Manufacturer->name) ? $product->Manufacturer->name : '',
                     "product_color" => isset($product->color) ? $product->color->name : '',
                     "created_at" => date('Y-m-d H:i:s',strtotime($product->created_at)),
