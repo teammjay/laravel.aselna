@@ -1865,8 +1865,10 @@ class ListingController extends Controller
         $groups = [];
 
         foreach ($devices as $key=>$device) {
-            $fullName = ucwords(strtolower($device->name));
-            $brand = ucwords($device->brand_name);
+//            $fullName = strtolower($device->name);
+            $fullName = $device->name;
+            Log::info('Device :: ' . $fullName);
+            $brand = $device->brand_name;
             if($brand === 'Apple') {
                 $parts = explode(' ', $fullName, 2);
             }else{
@@ -1882,6 +1884,9 @@ class ListingController extends Controller
             if(strtolower($brand) == 'apple'){
                 $groupKey = $prefix;
             }
+            Log::info('Grouped cook' . $brand . $prefix);
+
+            Log::info('Model' . json_encode($model));
 
             $grouped[$groupKey][$suffix][] = $model;
         }
@@ -1893,6 +1898,7 @@ class ListingController extends Controller
         $result = [];
 
         foreach ($grouped as $groupLabel => $suffixes) {
+            Log::info("Suffixes" . json_encode($suffixes));
             $cnt = 0;
             foreach ($suffixes as $suffix => $models) {
                 if($cnt > 0){
@@ -1907,6 +1913,7 @@ class ListingController extends Controller
                 if ($suffix !== '__base__') {
                     $full .= ' ' . $suffix;
                 }
+                Log::info('Full' . json_encode($full));
                 $result[] = trim($full);
                 $cnt++;
             }
