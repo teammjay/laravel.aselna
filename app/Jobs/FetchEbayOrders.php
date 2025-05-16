@@ -43,9 +43,9 @@ class FetchEbayOrders implements ShouldQueue
         if(count($stores ?? []) > 0) {
             foreach ($stores as $store) {
 
-                if ($store->name != 'nismobile') {
-                    continue;
-                }
+//                if ($store->name != 'nismobile') {
+//                    continue;
+//                }
                 Log::info('Store : ' . $store->name);
 
                 $ebayService = new EbayService();

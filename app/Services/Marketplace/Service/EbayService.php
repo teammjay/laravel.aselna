@@ -989,6 +989,9 @@ class EbayService implements MarketplaceServiceInterface
         $last_synchronization = OrderSynchronization::where('store_id', $store->id)->where('synchronization_type', OrderSyncronisationType::ORDER)->orderByRaw('COALESCE(last_order_update_date,filter_end_date) desc')->first();
         $filterStartDate = OrderUtility::getLastSyncDate($store->id, OrderSyncronisationType::ORDER);
         $filterStartDateFormatted = gmdate('Y-m-d\TH:i:s\Z', strtotime($filterStartDate));
+        if (env('APP_ENV') !== 'local' && (!isset($store->seller_id)) || (!isset($store->secret_key)) || (!isset($store->access_key))) {
+            return null;
+        }
 
         $this->authService = new EbayAuthService($store->seller_id, $store->secret_key, $store->access_key, $store->user_id);
         $orders = $this->authService->getOrders($filterStartDateFormatted, $last_synchronization->cursor ?? null);
