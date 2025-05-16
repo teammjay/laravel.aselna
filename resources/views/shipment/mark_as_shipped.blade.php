@@ -18,7 +18,7 @@
                                     <label for="date">Date</label>
                                 </div>
                                 <div class="col-md-8">
-                                    <input type="text" class="form-control" name="date" id="date" value="{{ $shipmentDetail->order->order_date }}" readonly="">
+                                    <input type="text" class="form-control" name="order_date" id="order_date" value="{{ $shipmentDetail->order->order_date }}" readonly="">
                                 </div>
                             </div>
                             <div class="row mt-3 g-3 align-items-center">
@@ -26,7 +26,7 @@
                                     <label for="status">Status</label>
                                 </div>
                                 <div class="col-md-8">
-                                    <input type="text" class="form-control" name="status" id="status" value="{{ $shipmentDetail->order->order_status }}" readonly="">
+                                    <input type="text" class="form-control" name="status" id="status" value="{{ \App\Constants\OrderStatus::getOrderStatusName($shipmentDetail->order->order_status) }}" readonly="">
                                 </div>
                             </div>
                             <div class="row mt-3 g-3 align-items-center">
@@ -103,9 +103,13 @@
                                     <label for="weight">Weight</label>
                                 </div>
                                 <div class="col-md-8 d-flex" style="gap:10px;">
-                                    <input type="text" class="form-control" id="weight" name="weight" value="{{ $shipmentDetail->weight_value }}">
+                                    <input type="text" class="form-control" id="weight" name="weight" value="{{ ($shipmentDetail->weight_value) ? $shipmentDetail->weight_value : $product_total_weight }}">
                                     <select class="form-control" id="weight_type" name="weight_type">
-
+                                        <option value="0">Oz</option>
+                                        <option value="1">Lb</option>
+                                        <option value="2">G</option>
+                                        <option value="3">Kg</option>
+                                        <option value="4">Mg</option>
                                     </select>
                                 </div>
                             </div>
@@ -117,7 +121,7 @@
                                     <select class="form-control" id="carrier_package" name="carrier_package">
                                         @if(count($shippingCarrierPackage ?? []) > 0)
                                             @foreach($shippingCarrierPackage as $sCarrierPackage)
-                                                <option value="{{ $sCarrierPackage->id }}" {{ ( $sCarrierPackage->id == $shipmentDetail->shipping_carrier_service_id ) ? 'selected' : '' }}>{{ $sCarrierPackage->name }}</option>
+                                                <option value="{{ $sCarrierPackage->id }}" {{ ( $sCarrierPackage->id == $shipmentDetail->shipping_carrier_service_id || ($package_id != '' && $package_id == $sCarrierPackage->id) ) ? 'selected' : '' }}>{{ $sCarrierPackage->name }}</option>
                                             @endforeach
                                         @endif
                                     </select>
@@ -152,7 +156,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-12 mt-5">
+        <div class="col-md-12 mt-3">
             <div class="card">
                 <div class="card-header">
                     Items
@@ -178,14 +182,12 @@
                                                 @if($oitem->orderItem->product->image != '')
                                                     <div class="main-image">
                                                         <img src="{{ asset('storage/' .$oitem->orderItem->product->image->getFileUrl()) }}" alt="{{ asset('storage/' .$product->image->getFileUrl())}}" loading="lazy" width="50" height="50" class="mainImage" data-product-id="{{ $oitem->orderItem->product->product_id }}">
-
-                                                        <img src="{{  asset('storage/product_images/'. $oitem->orderItem->product->product_image_url) }}" alt="{{  $oitem->orderItem->product->product_image_url }}" class="mainImage" width="70" height="70" data-product-id="{{ $oitem->orderItem->product->product_id }}">
                                                     </div>
                                                 @endif
                                             </td>
                                             <td>{{ $oitem->orderItem->sku }}</td>
                                             <td><input type="text" class="form-control" name="quantity" value="{{ $oitem->orderItem->quantity }}"></td>
-                                            <td>{{ $oitem->sync_status }}</td>
+                                            <td>{{ \App\Constants\OrderSyncStatus::getOrderSyncStatusName($oitem->sync_status) }}</td>
                                             <td>{{ $oitem->sync_message }}</td>
                                         </tr>
                                     @endforeach

@@ -301,7 +301,7 @@
 
                 // Fetch images via AJAX
                 $.ajax({
-                    url: '{{ route('order.getimages') }}',
+                    url: '{{ route('catalog.getimages') }}',
                     method: 'POST',
                     data: {
                         productId: productId,
@@ -339,6 +339,7 @@
             });
 
             loadDatatables();
+
         });
 
         function loadDatatables() {

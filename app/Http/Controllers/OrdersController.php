@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Constants\OrderStatus;
+use App\Models\Customer;
+use App\Models\CustomerPhone;
 use App\Models\ListingItem;
 use App\Models\Order;
 use App\Models\OrderItem;
@@ -131,9 +133,10 @@ class OrdersController extends Controller
                     foreach($order->orderItem as $oitem){
                         $sku .= $oitem->sku.' x '.$oitem->quantity.'<br>';
                         if(isset($oitem->product) && !empty($oitem->product)){
-                            if($oitem->product->product_image_url != ''){
+                            if(!empty($oitem->product->image)) {
+                                $imagename = $oitem->product->product_image;
                                 $image = '<div class="main-image">
-                                                <img src="'.asset('storage/product_images/'. $oitem->orderItem->product->product_image_url).'" alt="'.$oitem->orderItem->product->product_image_url.'" class="mainImage" width="70" height="70" data-product-id="'.$oitem->orderItem->product->product_id.'">
+                                                <img src="'.asset('storage/'. $oitem->product->image->getFileUrl()).'" alt="'.$imagename.'" class="mainImage" width="70" height="70" data-product-id="'.$oitem->product->product_id.'">
                                             </div>';
                             }
                         }
@@ -172,7 +175,7 @@ class OrdersController extends Controller
 
     public function edit(string $id)
     {
-        $orderDetail = Order::with('orderItem','orderItem.product','store','store.storeType','customerAddress')->findOrFail($id);
+        $orderDetail = Order::with('orderItem','orderItem.product','store','store.storeType','customer','customerAddress')->findOrFail($id);
         /*echo '<pre>';
         print_r($orderDetail);
         echo '</pre>';die;*/
@@ -350,6 +353,41 @@ class OrdersController extends Controller
         }
 
         return back()->with('success', 'CSV Imported Successfully');
+    }
+
+    public function getCustomerDetail(Request $request){
+        $customer_id = $request->input('customer_id');
+        if($customer_id){
+            $customerDetail = Customer::with('phones')->where('id',$customer_id)->first();
+
+            $view = view('orders.edit_customer', compact('customerDetail'))->render();
+
+            return response()->json([
+                'success' => true,
+                'html' => $view
+            ]);
+        }
+    }
+
+    public function saveCustomer(Request $request){
+
+        $id = $request->input('id');
+        try {
+            $customer = Customer::findOrFail($id);
+            $name = $request['full_name'] = $request['first_name'].' '.$request['last_name'];
+            $customer->update($request->except(['phone', 'id']));
+            if(isset($request->phone)){
+               foreach ($request->phone as $key=>$value){
+                    $customerPhone = CustomerPhone::findOrFail($key);
+                    $customerPhone->update(['phone_no'=>$value]);
+                }
+            }
+            return response()->json(['success' => true,'name'=>$name, 'message' => 'Data saved successfully!']);
+
+        }catch (QueryException $e) {
+            // Handle the exception and show an error message
+            return response()->json(['errors' => $e->getMessage()]);
+        }
     }
 
 }

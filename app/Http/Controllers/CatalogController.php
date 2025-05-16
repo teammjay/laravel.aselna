@@ -22,6 +22,7 @@ use App\Models\ProductTitleKeyword;
 use App\Models\ProductImages;
 use App\Models\ProductType;
 use App\Models\ProductImageAlternative;
+use App\Models\ShippingCarrierPackage;
 use App\Models\Store;
 use App\Models\StoreProduct;
 use App\Models\StoreType;
@@ -67,7 +68,7 @@ class CatalogController extends Controller
         $columnName = $request['columns'][$columnIndex]['data'];
         $columnSortOrder = $request['order'][0]['dir'];
 
-        $query = Catalog::with('Manufacturer','productType')->select('*');
+        $query = Catalog::with('Manufacturer','productType','interfaces.interfaces', 'pinterface.interfaces')->select('*');
         /*$perPage = $request->input('perPage', $this->perPage);*/
 
         // Filter by product title
@@ -253,8 +254,10 @@ class CatalogController extends Controller
                         <option value="active"> Active </option>
                         <option value="discontinued"> Discontinued </option>
                         <option value="out_of_stock"> Out of stock </option></select>' ,
-                    "configurable" => '<input type="checkbox" class="configurable" data-id="'.$product->product_id.'" '.$checked.'>',
+                    /*"configurable" => '<input type="checkbox" class="configurable" data-id="'.$product->product_id.'" '.$checked.'>',*/
+                    "marketplace_price" => $product->product_marketplace_price,
                     "product_price" => '<span class="prVal">'.$product->product_price.'</span><input type="text" class="form-control bulk-edit" name="product['.$key.'][product_price]" value="'.$product->product_price.'" disabled>',
+                    "interface" => (isset($product->pinterface)) ? $product->pinterface->interfaces->name : '',
                     "manufacture_name" => isset($product->Manufacturer->name) ? $product->Manufacturer->name : '',
                     "product_color" => isset($product->color) ? $product->color->name : '',
                     "created_at" => date('Y-m-d H:i:s',strtotime($product->created_at)),
@@ -349,11 +352,12 @@ class CatalogController extends Controller
         $colors = ProductColor::all();
         $specifications = ProductSpecification::where('product_id', $pro_id)->orderBy('created_at')->get();
         $specificationInfo = ProductSpecificationInfo::all();
+        $shippingCarrierPackage = ShippingCarrierPackage::orderBy('name')->get();
         $productStoreType = DB::table('product_channel_detail')
             ->select('product_channel_detail.id', 'product_channel_detail.status','store_type.name')
             ->leftJoin('store_type','store_type.id','=','product_channel_detail.store_type_id')
             ->where('product_id',$pro_id)->get();
-        return view('catalog.update', compact('product','keyFeatures','searchTerms','productImages','productTags','pageAt','store_details','manufacturers','productTypes','productConditions','titleKeywords','interfaces','productInterfaces','targetAudience','storeTypes','productStoreType','colors','productAltImages','specifications','specificationInfo'));
+        return view('catalog.update', compact('product','keyFeatures','searchTerms','productImages','productTags','pageAt','store_details','manufacturers','productTypes','productConditions','titleKeywords','interfaces','productInterfaces','targetAudience','storeTypes','productStoreType','colors','productAltImages','specifications','specificationInfo','shippingCarrierPackage'));
     }
 
     /**
@@ -462,12 +466,13 @@ class CatalogController extends Controller
         $colors = ProductColor::all();
         $specifications = ProductSpecification::where('product_id', $id)->orderBy('created_at')->get();
         //$specificationInfo = ProductSpecificationInfo::where('product_type_id',$product->product_type)->get();
+        $shippingCarrierPackage = ShippingCarrierPackage::orderBy('name')->get();
         $productStoreType = DB::table('product_channel_detail')
                             ->select('product_channel_detail.id','product_channel_detail.status','store_type.name')
                             ->leftJoin('store_type','store_type.id','=','product_channel_detail.store_type_id')
                             ->where('product_id',$id)->get();
 
-        return view('catalog.update', compact('product','keyFeatures','searchTerms','productImages','productTags','pageAt','store_details','manufacturers','productTypes','productConditions','productStore','productStoreCategory','titleKeywords','interfaces','productInterfaces','targetAudience','storeTypes','productStoreType','colors','productAltImages','specifications'));
+        return view('catalog.update', compact('product','keyFeatures','searchTerms','productImages','productTags','pageAt','store_details','manufacturers','productTypes','productConditions','productStore','productStoreCategory','titleKeywords','interfaces','productInterfaces','targetAudience','storeTypes','productStoreType','colors','productAltImages','specifications','shippingCarrierPackage'));
     }
 
     /**

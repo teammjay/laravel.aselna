@@ -759,7 +759,7 @@ class ListingController extends Controller
             }
 
             /* check product exist in store product or not*/
-            $query = StoreProduct::select('store_product.id', 'store_product.store_type_category_id', 'store_product.product_id', 'store_product.title', 'store_product.price', 'store_product.created_at', 'product_type.name as ProductType')->with('Product');
+            $query = StoreProduct::select('store_product.id', 'store_product.store_type_category_id', 'store_product.product_id', 'store_product.title', 'store_product.price','store_product.overwrite_price', 'store_product.created_at', 'product_type.name as ProductType')->with('Product');
             $query->leftJoin('products', 'products.product_id', '=', 'store_product.product_id');
             $query->leftJoin('product_type', 'products.product_type', '=', 'product_type.id');
             $query->whereIn('store_product.product_id', $product_ids);
@@ -1134,12 +1134,12 @@ class ListingController extends Controller
                                 /*echo '<pre>';
                                 print_r($product_details[$store_product_id]);
                                 echo '</pre>';*/
-                                $product_short_keyword = $pDetail['short_keyword'];
-                                $product_long_keyword = $pDetail['long_keyword'];
+                                $product_short_keyword = isset($pDetail['short_keyword']) ? $pDetail['short_keyword'] : '';
+                                $product_long_keyword = isset($pDetail['long_keyword']) ? $pDetail['long_keyword'] : '';
                                 $product_title = $pDetail['title'];
-                                $product_price = $pDetail['price'];
+                                /*$product_price = $pDetail['price'];
                                 $product_price_overwrite = $pDetail['price_overwrite'];
-                                $product_store_type_category_id = $pDetail['store_type_category_id'];
+                                $product_store_type_category_id = $pDetail['store_type_category_id'];*/
                                 $title_template = $title_templates[$key];
                                 if ($title_template) {
                                     if (str_contains($title_template, '#unique_code')) {
@@ -1149,11 +1149,6 @@ class ListingController extends Controller
                                         $titleGenerator = new TitleGenerator(0, $max_title_length, []);
                                         $title_template = $titleGenerator->getProductTitle($title_template, $product_title, $product_short_keyword, $product_long_keyword);
                                     }
-                                }
-
-                                if ($include_carrier == 1 || $generate_type_name == 'Carrier Group') {
-                                    $field = 'carrier.name as carrier_name';
-                                    $field2 = 'carrier.id as carrier_id';
                                 }
 
                                 $devices = $this->getDevicesFromRequest($request, $product);
@@ -1697,6 +1692,139 @@ class ListingController extends Controller
         return $titles;
     }
 
+    private function generateFreeGroupProductTitlesEbayBKP($baseTitle, $product, $devices, $charLimit, $brand_seperator, $device_seperator, $compress, $generate_type, $pDetail, $store_product_id, $store_type)
+    {
+        $titles = [];
+        $currentModels = [];
+        $currentDevices = [];
+        $currentTitle = $baseTitle;
+        $separator = $brand_seperator; // Separator between device names
+        $lastBrand = null;
+        $lastModel = null;
+        $currentBrand = null;
+        $currentMod = null;
+        $allDevice = [];
+        $cnt = 0;
+
+        foreach ($devices as $key => $device) {
+            // Split the device into brand and model
+            $currentBrand = $device->brand_name . ' ' . $device->name;
+            if (strtolower($device->brand_name) == 'apple') {
+                $currentBrand = $device->name;
+            }
+
+            $currentMod = $device->name;
+            $parts = explode(' ', $device->name, 2);
+            $brand = $parts[0];
+            $model = $parts[1] ?? '';
+
+            // Use only the model if the brand is the same as the last one
+            if ($compress) {
+                if ($brand === $lastBrand) {
+                    // Match model suffix like 'Plus', 'Ultra', etc.
+                    preg_match('/\s+(Plus|Ultra|Pro|FE|4G|5G)$/i', $currentMod, $matches);
+                    $suffix = $matches[1] ?? '';
+
+                    // Extract model number only (S20, S21, etc.)
+                    preg_match('/S\d{2}/i', $currentMod, $modelMatch);
+                    $modelNumber = $modelMatch[0] ?? $currentMod;
+                    //echo $suffix.'<br>';
+                    if ($suffix) {
+                        /*if($lastModel == $suffix){
+                            $nameToAdd = $modelNumber;
+                        }else{
+                            $nameToAdd = $modelNumber.' '.$suffix;
+                        }*/
+                        $nameToAdd = $modelNumber;
+                        $lastModel = $suffix;
+                    } else {
+                        $nameToAdd = $currentMod;
+                    }
+                } else {
+                    if ($key == 0) {
+                        $parts2 = explode(' ', $model, 2);
+                        if (isset($parts2[0])) {
+                            $modelname = $parts2[0];
+                        }
+                        /*$nameToAdd = $device->brand_name.' '.$brand.' '.$modelname;*/
+                        $nameToAdd = $currentBrand;
+                    } else {
+                        //$nameToAdd = $brand_seperator.' '.$currentBrand;
+                        $nameToAdd = $currentMod;
+                    }
+                    //$nameToAdd = $currentMod;
+                }
+                //$nameToAdd = ($brand === $lastBrand) ? $model : $currentBrand;
+            } else {
+                $nameToAdd = $currentBrand;
+            }
+
+            //echo '<pre>';
+            //print_r($currentDevices);
+            //echo '</pre>';
+
+            //echo $nameToAdd;
+            if (!in_array($currentBrand, $currentDevices) && !in_array($currentBrand, $allDevice)) {
+                $tempDevices = array_merge($currentDevices, [$nameToAdd]);
+                $tempDeviceString = implode($device_seperator, $tempDevices);
+                $tempTitle = str_replace('#devices', $tempDeviceString, $baseTitle);
+            }
+
+            if (!in_array($currentBrand, $currentDevices) && !in_array($currentBrand, $allDevice)) {
+                $tempDevices = array_merge($currentDevices, [$currentBrand]);
+                $tempDeviceString = implode($device_seperator, $tempDevices);
+                $tempTitle = str_replace('#device_series', $tempDeviceString, $tempTitle);
+            }
+
+
+            $tempModels = array_merge($currentModels, [str_replace($device->brand_name . ' ', '', $currentBrand)]);
+            $tempModelString = implode($device_seperator, $tempModels);
+            $tempTitle = str_replace('#model_series', $tempModelString, $tempTitle);
+
+            if (strlen($tempTitle) > $charLimit || (!str_contains($baseTitle, '#device_series'))) {
+                //$cnt++;
+                //continue;
+            }
+
+            $titles[$cnt]['title'] = $tempTitle;
+            $titles[$cnt]['product_code'] = $product->product->product_sku;
+            $titles[$cnt]['product_id'] = $product->product_id;
+            $titles[$cnt]['price'] = $pDetail['price'];
+            $titles[$cnt]['price_overwrite'] = $pDetail['price_overwrite'];
+            $titles[$cnt]['store_type_category_id'] = $pDetail['store_type_category_id'];
+            $titles[$cnt]['generate_type'] = $generate_type;
+            $titles[$cnt]['store_product_id'] = $store_product_id;
+            $titles[$cnt]['brand_id'] = $device->brand_id;
+            $titles[$cnt]['device_id'] = $device->id;
+            $titles[$cnt]['model'][] = $device->name;
+            $titles[$cnt]['model_detail'][] = $device;
+            $currentModels[] = str_replace($device->brand_name . ' ', '', $nameToAdd);
+
+            /*if(empty($currentDevices)){
+                $currentDevices[] = $nameToAdd;
+            }else {
+                $currentDevices[] = $nameToAdd;
+            }*/
+            if (!in_array($currentBrand, $currentDevices) && !in_array($currentBrand, $allDevice)) {
+                $currentDevices[] = $nameToAdd;
+            }
+            // Update the last brand
+            $lastBrand = $brand;
+            $allDevice[] = $currentBrand;
+        }
+
+        /*echo '<pre>';
+        print_r($currentDevices);
+        echo '</pre>';die;*/
+
+        // Add the last title
+        if (!empty($currentTitle)) {
+            $titles[$cnt]['title'] = str_replace(['#model_series', '#devices', '#device_series'], [implode($device_seperator, $currentModels), implode($device_seperator, $currentDevices), implode($device_seperator, $currentDevices)], $baseTitle);
+        }
+
+        return $titles;
+    }
+
     private function generateFreeGroupProductTitlesEbay($baseTitle, $product, $devices, $charLimit, $brand_seperator, $device_seperator, $compress, $generate_type, $pDetail, $store_product_id, $store_type)
     {
         $titles = [];
@@ -1727,17 +1855,22 @@ class ListingController extends Controller
             if ($compress) {
                 if ($brand === $lastBrand) {
                     $parts2 = explode(' ', $model, 2);
+
                     if (isset($parts2[1])) {
+                        //echo $parts2[0] .'=='. $lastModel.'<br>';
                         if ($parts2[0] == $lastModel) {
                             $model = $parts2[1];
+                        }else{
+                            //$model = $parts2[0];
                         }
                         //$model = $parts2[1];
                     }
+                    //echo $model.'<br>';
                     $lastModel = $parts2[0];
-                    $parts2 = explode(' ', $model, 2);
+                    /*$parts2 = explode(' ', $model, 2);
                     if (isset($parts2[1])) {
                         $model = $parts2[1];
-                    }
+                    }*/
                     $nameToAdd = $model;
                 } else {
                     if ($key == 0) {

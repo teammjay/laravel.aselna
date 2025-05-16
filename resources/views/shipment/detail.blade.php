@@ -7,7 +7,7 @@
                 </div>
                 <div class="col-md-8">
                     <select class="form-control" id="carrier_name" name="carrier_name">
-                        <option value="">--</option>
+                        {{--<option value="">--</option>--}}
                         @if(count($shippingCarrier ?? []) > 0)
                             @foreach($shippingCarrier as $sCarrier)
                                 <option value="{{ $sCarrier->id }}" {{ ( $sCarrier->id == $shipmentDetail->shipping_carrier_id ) ? 'selected' : '' }}>{{ $sCarrier->name }}</option>
@@ -22,7 +22,7 @@
                 </div>
                 <div class="col-md-8">
                     <select class="form-control" id="shipment_carrier" name="shipment_carrier">
-                        <option value="">--</option>
+                        {{--<option value="">--</option>--}}
                         @if(count($shippingCarrierService ?? []) > 0)
                             @foreach($shippingCarrierService as $sCarrierService)
                                 <option value="{{ $sCarrierService->id }}" {{ ( $sCarrierService->id == $shipmentDetail->shipping_carrier_service_id ) ? 'selected' : '' }}>{{ $sCarrierService->name }}</option>
@@ -52,9 +52,13 @@
                     <label for="weight">Weight</label>
                 </div>
                 <div class="col-md-8 d-flex" style="gap:10px;">
-                    <input type="text" class="form-control" id="weight" name="weight" value="{{ $shipmentDetail->weight_value }}">
+                    <input type="text" class="form-control" id="weight" name="weight" value="{{ ($shipmentDetail->weight_value) ? $shipmentDetail->weight_value : $product_total_weight }}">
                     <select class="form-control" id="weight_type" name="weight_type">
-
+                        <option value="0">Oz</option>
+                        <option value="1">Lb</option>
+                        <option value="2">G</option>
+                        <option value="3">Kg</option>
+                        <option value="4">Mg</option>
                     </select>
                 </div>
             </div>
@@ -67,7 +71,7 @@
                         <option value="">--</option>
                         @if(count($shippingCarrierPackage ?? []) > 0)
                             @foreach($shippingCarrierPackage as $sCarrierPackage)
-                                <option value="{{ $sCarrierPackage->id }}" {{ ( $sCarrierPackage->id == $shipmentDetail->shipping_carrier_service_id ) ? 'selected' : '' }}>{{ $sCarrierPackage->name }}</option>
+                                <option value="{{ $sCarrierPackage->id }}" {{ ( $sCarrierPackage->id == $shipmentDetail->shipping_carrier_service_id || ($package_id != '' && $package_id == $sCarrierPackage->id) ) ? 'selected' : '' }}>{{ $sCarrierPackage->name }}</option>
                             @endforeach
                         @endif
                     </select>
@@ -101,7 +105,12 @@
                     <label for="shipping_address">Shipping Address</label>
                 </div>
                 <div class="col-md-8">
-
+                    @if(isset($shipmentDetail->order->customerAddress))
+                        <a href="javascript:void(0);" id="edit_address" data-id="{{ $shipmentDetail->order->customerAddress->id }}">
+                            {{ $shipmentDetail->order->customerAddress->address_combined }} {{$shipmentDetail->order->customerAddress->city}} {{$shipmentDetail->order->customerAddress->state}}
+                            {{$shipmentDetail->order->customerAddress->country}} {{$shipmentDetail->order->customerAddress->zip_code}}
+                        </a>
+                    @endif
                 </div>
             </div>
 
@@ -151,9 +160,9 @@
                                     @foreach($shipmentDetail->operationItem as $oitem)
                                         <tr>
                                             <td>
-                                                @if(isset($oitem->orderItem->product) && $oitem->orderItem->product->product_image_url != '')
+                                                @if(isset($oitem->orderItem->product) && !empty($oitem->orderItem->product->image))
                                                     <div class="main-image">
-                                                        <img src="{{  asset('storage/product_images/'. $oitem->orderItem->product->product_image_url) }}" alt="{{  $oitem->orderItem->product->product_image_url }}" class="mainImage" width="70" height="70" data-product-id="{{ $oitem->orderItem->product->product_id }}">
+                                                        <img src="{{  asset('storage/'. $oitem->orderItem->product->image->getFileUrl()) }}" alt="{{  $oitem->orderItem->product->product_image_url }}" class="mainImage" width="70" height="70" data-product-id="{{ $oitem->orderItem->product->product_id }}">
                                                     </div>
                                                 @endif
                                             </td>

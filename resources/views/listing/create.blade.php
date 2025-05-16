@@ -293,6 +293,7 @@
                                     <div class="d-flex justify-content-between">
                                         <div>
                                             <input type="checkbox" id="selected_product"> <label for="selected_product">Selected Products Only</label>
+                                            <button class="btn btn-default" id="select_all_product">Select All</button>
                                         </div>
                                         <div class="float-right" id="total_search_product"></div>
                                     </div>
@@ -1155,6 +1156,16 @@
                     $('.proCheck').prop('checked',true);
                 }
             });
+
+            $(document).on('click', '#select_all_product', function() {
+                $('#selected_product').prop('checked',true);
+                $('.proCheck').each(function () {
+                    $(this).prop('checked',true);
+                    $(this).parents('.selectproRow').addClass('bg-blue');
+                });
+            });
+
+
 
             $(document).on('click', '.selectproRow', function(e) {
                 let ele = $(this);
@@ -2529,6 +2540,7 @@
                 $('.inc_carrier_option').hide();
             }
             getStoreManufacturer();
+            productDetail = {};
             $('input[name="selected_store_product[]"]').each(function () {
                 var pid = $(this).val();
                 var pro_id = $('.pid-'+pid).val();

@@ -232,6 +232,44 @@
             </div>
         </div>
     </div>
+
+    <!-- Mark as cancel shipment modal -->
+    <div class="modal fade" id="cancelShipmentModal">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="cancelShipmentModalLabel">Cancel Order</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancle</button>
+                    <button type="button" class="btn btn-primary" id="cancelOrder"><i class="fa fa-check"></i> Ok </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mark as edit postal address modal -->
+    <div class="modal fade" id="editPostalAddressModal">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editPostalAddressModalLabel">Postal Address</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary closeaddressbtn" data-dismiss="modal">Cancle</button>
+                    <button type="button" class="btn btn-primary" id="saveAddress"><i class="fa fa-check"></i> Ok </button>
+                </div>
+            </div>
+        </div>
+    </div>
     <div id="ajax-gallery" style="display: none;"></div>
 @stop
 
@@ -321,6 +359,42 @@
             }
         });
 
+        $(document).on('click','#cancel_selected',function () {
+            var shipment_id = $('input[name="shipment_id[]"]:checked').val();
+            if(shipment_id != '' && shipment_id != null){
+                $.ajax({
+                    url: "{{ route('shipment.getcancelshipmentdetail') }}",
+                    type: 'POST',
+                    data: {
+                        operation_id: shipment_id,
+                        "_token": '{{ csrf_token() }}'
+                    },
+                    success: function (response) {
+                        // If success, remove the user row from the table
+                        if (response.success) {
+                            $('#cancelShipmentModal').find('.modal-body').html(response.html);
+                            $('#canceldate').datetimepicker({
+                                format:'Y-m-d H:i',
+                                /* minDate: 'now', */
+                                step:10,
+                                onSelectTime: function(dp,$input) {
+                                    var sel_date = $input.val();
+                                    $('#canceldate').val(sel_date);
+                                }
+                            });
+                            $('#cancelShipmentModal').modal('show');
+                        }
+                    },
+                    error: function (xhr) {
+                        // Handle error response
+                        alert('Error: ' + xhr.responseJSON.error);
+                    }
+                });
+            }else{
+                alert('Please select shipment first');
+            }
+        });
+
 
 
         $('#filter-form').on('submit', function(e) {
@@ -348,7 +422,7 @@
                         $('#shippingDetailModal').find('.modal-body').html(response.html);
                         $('#ship_date').datetimepicker({
                             format:'Y-m-d H:i',
-                            /* minDate: 'now', */
+                            minDate: 'now',
                             step:10,
                             onSelectTime: function(dp,$input) {
                                 var sel_date = $input.val();
@@ -356,6 +430,33 @@
                             }
                         });
                         $('#shippingDetailModal').modal('show');
+                    }
+                },
+                error: function (xhr) {
+                    // Handle error response
+                    alert('Error: ' + xhr.responseJSON.error);
+                }
+            });
+        });
+
+        $(document).on('click','#cancelOrder',function () {
+
+            const form = document.querySelector("#frmCancelShipment");
+            let formData = new FormData(form);
+            $.ajax({
+                url: "{{ route('shipment.cancelshipment') }}",
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                },
+                success: function (response) {
+                    // If success, remove the user row from the table
+                    if (response.success) {
+                        alert('Records updated successfully!!');
+                        location.reload();
                     }
                 },
                 error: function (xhr) {
@@ -389,51 +490,6 @@
         $(document).on('change','#carrier_name',function () {
             loadServiceCarrier();
         });
-
-        $(document).on('click','.mainImage',function () {
-            const productId = $(this).data('product-id'); // Get the product ID
-            const galleryDiv = $('#ajax-gallery'); // Reference to the hidden gallery div
-
-            // Fetch images via AJAX
-            $.ajax({
-                url: '{{ route('order.getimages') }}',
-                method: 'POST',
-                data:{
-                    productId : productId,
-                    "_token": '{{ csrf_token() }}'
-                },
-                success: function (images) {
-                    galleryDiv.empty(); // Clear any existing content
-
-                    // Append images to the gallery div
-                    $.each(images, function (index, image) {
-                        const anchor = $('<a>')
-                            .attr('href', image)
-                            .attr('data-lightbox', 'gallery')
-                            .attr('data-title', 'Gallery Image');
-
-                        const img = $('<img>')
-                            .attr('src', image)
-                            .css('display', 'none'); // Hidden thumbnails
-
-                        anchor.append(img);
-                        galleryDiv.append(anchor);
-                    });
-
-                    // Trigger Lightbox by simulating a click on the first image
-                    if (images.length > 0) {
-                        galleryDiv.find('a:first').trigger('click');
-                    } else {
-                        alert('No images found for this product.');
-                    }
-                },
-                error: function () {
-                    alert('Failed to load images.');
-                }
-            });
-        });
-
-        $("#shipmentTable").dataTable();
 
         $(document).on('click','.mainImage',function () {
             const productId = $(this).data('product-id'); // Get the product ID
@@ -477,6 +533,71 @@
                 }
             });
         });
+
+        $("#shipmentTable").dataTable();
+
+        $(document).on('click','#edit_address',function () {
+            var address_id = $(this).data('id');
+            if(address_id != '' && address_id != null){
+                $.ajax({
+                    url: "{{ route('shipment.getshippingaddress') }}",
+                    type: 'POST',
+                    data: {
+                        address_id: address_id,
+                        "_token": '{{ csrf_token() }}'
+                    },
+                    success: function (response) {
+                        // If success, remove the user row from the table
+                        if (response.success) {
+                            $('#editPostalAddressModal').find('.modal-body').html(response.html);
+                            $('#editPostalAddressModal').modal('show');
+                        }
+                    },
+                    error: function (xhr) {
+                        // Handle error response
+                        alert('Error: ' + xhr.responseJSON.error);
+                    }
+                });
+            }
+        });
+
+
+        $(document).on('click','#saveAddress',function () {
+
+            const form = document.querySelector("#frmEditAddress");
+            let formData = new FormData(form);
+            $.ajax({
+                url: "{{ route('shipment.saveaddress') }}",
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                },
+                success: function (response) {
+                    // If success, remove the user row from the table
+                    if (response.success) {
+                        $('#edit_address').html(response.address);
+                        $('#editPostalAddressModal').modal('hide');
+                        $(body).addClass('modal-open');
+
+                    }
+                },
+                error: function (xhr) {
+                    // Handle error response
+                    alert('Error: ' + xhr.responseJSON.error);
+                }
+            });
+        });
+
+        $(document).on('click','.closeaddressbtn',function () {
+            setTimeout(function(){
+                $('body').addClass('modal-open');
+            },500);
+        });
+
+
     });
 
     function getShippingCarrierService(element){
@@ -606,7 +727,7 @@
             "autoWidth": false,
             "processing": true,
             "serverSide": true,
-            "searching": false,
+            "searching": true,
             "aLengthMenu": [20, 25, 50, 100],
             'ajax': {
                 url: "{{ route('shipment.filter') }}",
