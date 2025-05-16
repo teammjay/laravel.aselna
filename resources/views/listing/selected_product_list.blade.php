@@ -60,7 +60,7 @@
                                name="price_overwrite[{{ $product->product_id }}]">
                         <input class="form-control price-{{ $product->product_id }}" type="text"
                                name="prodcut_price[{{ $product->product_id }}]"
-                               value="{{ ($product->price != '') ? $product->price : $product->Product->product_marketplace_price }}"
+                               value="{{ ($product->price != '' && $product->overwrite_price == 1) ? $product->price : $product->Product->product_marketplace_price }}"
                                readonly="" style="width:150px;">
                     </div>
                 </td>

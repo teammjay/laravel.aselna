@@ -67,11 +67,17 @@ public static $getOrders = <<<GQL
                         lastName
                     }
                     shippingAddress{
+                        firstName
+                        lastName
                         address1
                         address2
                         city
                         country
+                        countryCodeV2
                         zip
+                        phone
+                        province
+                        provinceCode
                     }
                     lineItems(first: \$first){
                         nodes{
@@ -200,6 +206,21 @@ public static $productVariantUpdate = <<<GQL
         productVariants {
           id
           price
+        }
+        userErrors {
+          field
+          message
+        }
+      }
+    }
+GQL;
+
+public static $cancelFullfillment = <<<GQL
+    mutation fulfillmentCancel(\$id: ID!) {
+      fulfillmentCancel(id: \$id) {
+        fulfillment {
+          id
+          status
         }
         userErrors {
           field

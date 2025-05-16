@@ -21,6 +21,11 @@ class EbayAuthService
     {
 //        $this->client = new Client(['base_uri' => 'https://api.sandbox.ebay.com/']);
         $this->client = new Client(['base_uri' => 'https://api.ebay.com/']);
+        if (env('APP_ENV') == 'local') {
+            $clientId = env('EBAY_CLIENT_ID');
+            $clientSecret = env('EBAY_CLIENT_SECRET');
+            $redirectUri = env('EBAY_REDIRECT_URI');
+        }
         $this->clientId = $clientId;
         $this->clientSecret = $clientSecret;
         $this->redirectUri = $redirectUri;
@@ -390,14 +395,27 @@ class EbayAuthService
         }
     }
 
-    public function getOrders($sync_start_date)
+    public function getOrders($sync_start_date,$cursor = null)
     {
         $accessToken = $this->refreshToken();
 
         try {
 
-            $startDate = $sync_start_date;
-            $endDate = now()->toIso8601String();
+            $queryData = [];
+
+            if (isset($cursor)) {
+                parse_str(parse_url($cursor, PHP_URL_QUERY), $queryData);
+            } else {
+                $startDate = $sync_start_date;
+                $endDate = gmdate('Y-m-d\TH:i:s\Z', strtotime(now()));
+
+                $queryData = [
+                    'filter'=> "creationdate:[$startDate..$endDate]",
+                    'limit' => 10, // Fetch max 100 orders
+                ];
+            }
+
+            Log::info('Query Data: ' . json_encode($queryData));
 
             $response = $this->client->get('/sell/fulfillment/v1/order', [
                 'verify' => false,
@@ -405,10 +423,7 @@ class EbayAuthService
                     'Authorization' => "Bearer $accessToken",
                     'Content-Type' => 'application/json',
                 ],
-                'query' => [
-                    'creationdate'=> "$startDate..$endDate",
-                    'limit' => 100, // Fetch max 100 orders
-                ],
+                'query' => $queryData,
             ]);
 
             return json_decode($response->getBody(), true);

@@ -28,6 +28,7 @@ class ListingSyncJob implements ShouldQueue
     {
         $listings = DB::connection('easyesale_db')
             ->table('listing')
+//            ->where('create_ts', '>=', now()->subYears(2))
             ->orderBy('id')
             ->chunk(1000, function ($listings) {
                 foreach ($listings as $listing) {

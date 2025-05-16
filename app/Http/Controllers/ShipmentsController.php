@@ -2,8 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Catalog;
+use App\Models\CustomerAddress;
 use App\Models\LogisticCenter;
 use App\Models\OrderOperation;
+use App\Models\OrderOperationReason;
 use App\Models\ShippingCarrier;
 use App\Models\ShippingCarrierPackage;
 use App\Models\ShippingCarrierService;
@@ -207,22 +210,95 @@ class ShipmentsController extends Controller
         $shippingCarrier = ShippingCarrier::all();
         $shipFrom = LogisticCenter::all();
         $shippingCarrierPackage = ShippingCarrierPackage::all();
-        $shipmentDetail = OrderOperation::with('operationItem','order','carrierService','store','operationItem.orderItem','operationItem.orderItem.product')->where('id',$order_opration_id)->first();
+        $shipmentDetail = OrderOperation::with('operationItem','order','order.customerAddress','carrierService','store','operationItem.orderItem','operationItem.orderItem.product')->where('id',$order_opration_id)->first();
+
+        $package_id = '';
+        $product_total_weight = 0;
+        //print_r($shipmentDetail->operationItem);
+        if(count($shipmentDetail->operationItem ?? []) > 0){
+            $product_weight = 0;
+            foreach($shipmentDetail->operationItem as $oitem){
+                $product_id = $oitem->orderItem->product->product_id;
+                if($product_id){
+                    $product_detail = Catalog::findOrFail($product_id);
+                    if($product_detail->product_weight > $product_weight){
+                        $package_id = $product_detail->shipping_package_id;
+                    }
+                    $product_weight = $product_detail->product_weight;
+                    $product_total_weight = $product_total_weight + $product_weight;
+                }
+            }
+        }
         /*echo '<pre>';
         print_r($shipmentDetail);
         echo '</pre>';die;*/
         $shipping_carrier_id = $shipmentDetail->shipping_carrier_id;
         $shippingCarrierService = ShippingCarrierService::where('shipping_carrier_id',$shipping_carrier_id)->orderBy('name','asc')->get();
 
+
         if($request->input('mark_as_ship')){
-            $view = view('shipment.mark_as_shipped', compact('shipmentDetail','shippingCarrier','shippingCarrierService','shippingCarrierPackage','shipFrom'))->render();
+            $view = view('shipment.mark_as_shipped', compact('shipmentDetail','shippingCarrier','shippingCarrierService','shippingCarrierPackage','shipFrom','package_id','product_total_weight'))->render();
         }else {
-            $view = view('shipment.detail', compact('shipmentDetail', 'shippingCarrier', 'shippingCarrierService', 'shippingCarrierPackage', 'shipFrom'))->render();
+            $view = view('shipment.detail', compact('shipmentDetail', 'shippingCarrier', 'shippingCarrierService', 'shippingCarrierPackage', 'shipFrom','package_id','product_total_weight'))->render();
         }
         return response()->json([
             'success' => true,
             'html' => $view
         ]);
+
+    }
+
+    public function getShippingAddress(Request $request){
+        $address_id = $request->input('address_id');
+        if($address_id){
+            $addressDetail = CustomerAddress::with('customer','customerPhone')->where('id',$address_id)->first();
+
+            $view = view('shipment.edit_shipping_address', compact('addressDetail'))->render();
+
+            return response()->json([
+                'success' => true,
+                'html' => $view
+            ]);
+        }
+    }
+
+    public function saveAddress(Request $request){
+
+        $id = $request->input('id');
+        try {
+            $address = CustomerAddress::findOrFail($id);
+            $request['address_combined'] = $address_combined = $request['address_line_1'] . ' ' .  $request['address_line_2'];
+            $address_combined = $address_combined.' '.$request['city'].' '.$request['state'].' '.$address->country.' '.$request['zip_code'];
+            $address->update($request->except(['phone', 'id']));
+            return response()->json(['success' => true,'address'=>$address_combined, 'message' => 'Data saved successfully!']);
+
+        }catch (QueryException $e) {
+            // Handle the exception and show an error message
+            return response()->json(['errors' => $e->getMessage()]);
+        }
+    }
+
+    public function getCancelShipmentDetail(Request $request){
+
+        $order_opration_id = $request->input('operation_id');
+
+        $shipmentDetail = OrderOperation::with('operationItem','store.storeType','order','operationItem.orderItem','operationItem.orderItem.product')->where('id',$order_opration_id)->first();
+
+        $reasons= [];
+        if(isset($shipmentDetail->store->storeType)){
+            $store_type = $shipmentDetail->store->storeType->id;
+            $reasons = OrderOperationReason::where('store_type_id',$store_type)->get();
+        }
+
+        $view = view('shipment.cancel_shipment', compact('shipmentDetail','reasons'))->render();
+
+        return response()->json([
+            'success' => true,
+            'html' => $view
+        ]);
+    }
+
+    public function cancelShipment(Request $request){
 
     }
 }

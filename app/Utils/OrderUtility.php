@@ -2,13 +2,15 @@
 
 namespace App\Utils;
 
-use App\Constants\OrderSyncronisationType;
 use App\Models\Customer;
+use App\Models\CustomerAddress;
+use App\Models\CustomerPhone;
 use App\Models\ListingItem;
 use App\Models\OrderItem;
 use App\Models\OrderOperation;
 use App\Models\OrderOperationItem;
 use App\Models\OrderSynchronization;
+use Illuminate\Support\Facades\Log;
 
 class OrderUtility
 {
@@ -27,7 +29,7 @@ class OrderUtility
         }
     }
 
-    public static function mapOrders($order, mixed $sorder, $store)
+    public static function mapWalmartOrders($order, mixed $sorder, $store)
     {
         $firstname = $lastname = '';
         $orderTotal = 0;
@@ -79,6 +81,30 @@ class OrderUtility
             'user_id' => $sorder['customerOrderId'],
         ], $customerData);
 
+        $customer_address_data = [
+            'address_line_1' => $sorder['shippingInfo']['postalAddress']['address1'],
+            'address_line_2' => $sorder['shippingInfo']['postalAddress']['address2'],
+            'city' => $sorder['shippingInfo']['postalAddress']['city'],
+            'state' => $sorder['shippingInfo']['postalAddress']['state'],
+            'zip' => $sorder['shippingInfo']['postalAddress']['postalCode'],
+            'country' => $sorder['shippingInfo']['postalAddress']['country'],
+            'address_combined' => $sorder['shippingInfo']['postalAddress']['address1'] . ' ' . $sorder['shippingInfo']['postalAddress']['address2'],
+        ];
+
+        Log::info("Data " . json_encode($customer_address_data));
+
+        $customer_address = CustomerAddress::updateOrCreate([
+            'customer_id' => $customer_detail->id,
+            'address_combined' => $sorder['shippingInfo']['postalAddress']['address1'] . ' ' . $sorder['shippingInfo']['postalAddress']['address2'],
+        ], $customer_address_data);
+
+        $customer_phone_data = [
+            'customer_id' => $customer_detail->id,
+            'phone_no' => $sorder['shippingInfo']['phone'],
+        ];
+
+        CustomerPhone::updateOrCreate($customer_phone_data, $customer_phone_data);
+
         $orderData = [
             'order_date' => date('Y-m-d H:i:s', $sorder['orderDate'] / 1000),
             'order_total' => $orderTotals,
@@ -87,6 +113,7 @@ class OrderUtility
             'buyer_email' => $sorder['customerEmailId'],
             'customer_id' => $customer_detail->id,
             'purchase_order_id' => $sorder['purchaseOrderId'],
+            'shipping_address_id' => $customer_address->id,
         ];
 
         $order->update($orderData);
@@ -110,30 +137,32 @@ class OrderUtility
         ], $orderOperationData);
 
         $ordersItems = $sorder['orderLines']['orderLine'];
-        if (!!empty($ordersItems)) {
+        if (!empty($ordersItems)) {
             foreach ($ordersItems as $item) {
+                Log::info("Order Item: " . json_encode($item));
                 if ($item['item']['sku'] != '') {
-                    $itemDetail = ListingItem::with('storeProduct', 'storeProduct.product')->where('sku', $item['product_info']['sku']);
+                    $itemDetail = ListingItem::where('sku', $item['item']['sku'])->first();
+
                     $orderItemData = [
                         'title' => $item['item']['productName'],
                         'order_id' => $order->id,
-                        'product_id' => $itemDetail->storeProduct->product->product_id,
-                        'client_id' => $itemDetail->client,
-                        'listing_item_id' => $itemDetail->id,
+                        'product_id' => $itemDetail->storeProduct->product->product_id ?? '',
+                        'client_id' => $itemDetail->client ?? '',
+                        'listing_item_id' => $itemDetail->id ?? '',
                         'sku' => $item['item']['sku'],
-                        'store_sku' => $item['item']['upc'],
+                        //'store_sku' => $item['item']['upc'],
                         'quantity' => $item['orderLineQuantity']['amount'],
                         'id1' => '',
-                        'item_price' => ($item['charges']['charge']['chargeType'] == 'PRODUCT') ? $item['charges']['charge']['chargeAmount']['amount'] : 0,
-                        'shipping_price' => ($item['charges']['charge']['chargeType'] == 'SHIPPING') ? $item['charges']['charge']['chargeAmount']['amount'] : 0,
-                        'item_tax' => ($item['charges']['charge']['chargeType'] == 'PRODUCT_TAX') ? $item['charges']['charge']['tax']['taxAmount']['amount'] : 0,
-                        'shipping_tax' => ($item['charges']['charge']['chargeType'] == 'SHIPPING_TAX') ? $item['charges']['charge']['tax']['taxAmount']['amount'] : 0,
+                        'item_price' => ($item['charges']['charge'][0]['chargeType'] == 'PRODUCT') ? $item['charges']['charge'][0]['chargeAmount']['amount'] : 0,
+                        'shipping_price' => ($item['charges']['charge'][0]['chargeType'] == 'SHIPPING') ? $item['charges']['charge'][0]['chargeAmount']['amount'] : 0,
+                        'item_tax' => ($item['charges']['charge'][0]['chargeType'] == 'PRODUCT_TAX') ? $item['charges']['charge']['tax'][0]['taxAmount']['amount'] : 0,
+                        'shipping_tax' => ($item['charges']['charge'][0]['chargeType'] == 'SHIPPING_TAX') ? $item['charges']['charge'][0]['tax']['taxAmount']['amount'] : 0,
                         'shipping_quantity' => $item['orderLineQuantity']['amount'],
                     ];
 
                     $order_item = OrderItem::updateOrCreate([
                         'order_id' => $order->id,
-                        'product_id' => $itemDetail->storeProduct->product->product_id,
+                        'sku' => $item['item']['sku'],
                     ], $orderItemData);
 
                     if ($order_item->id) {
@@ -148,6 +177,164 @@ class OrderUtility
                             'order_operation_id' => $order_operation_detail->id
                         ], $orderOperationItemData);
                     }
+                }
+            }
+        }
+    }
+
+    public static function mapEbayOrders($order, $sorder, $store)
+    {
+        $firstname = $lastname = '';
+        $customer_address = null;
+        $customer_detail = null;
+
+        if ($sorder['buyer']) {
+            $addressDetails = $sorder['buyer']['buyerRegistrationAddress'];
+            if (isset($addressDetails['fullName'])) {
+                $nameArr = explode(' ', $addressDetails['fullName']);
+                $firstname = $nameArr[0];
+                $lastname = $nameArr[1];
+            }
+
+            $customerData = [
+                'first_name' => $firstname,
+                'last_name' => $lastname,
+                'full_name' => $addressDetails['fullName'],
+                'user_id' => $sorder['buyer']['username'],
+            ];
+
+            $customer_detail = Customer::updateOrCreate([
+                'user_id' => $sorder['buyer']['username'],
+            ], $customerData);
+
+            $addressLine1 = $addressDetails['contactAddress']['addressLine1'] ?? '';
+            $addressLine2 = $addressDetails['contactAddress']['addressLine2'] ?? '';
+
+            $customer_address_data = [
+                'full_name' => $firstname . ' ' . $lastname,
+                'address_line_1' => $addressLine1,
+                'address_line_2' => $addressLine2,
+                'city' => $addressDetails['contactAddress']['city'],
+                'state' => $addressDetails['contactAddress']['stateOrProvince'],
+                'zip' => $addressDetails['contactAddress']['postalCode'],
+                'country_code' => $addressDetails['contactAddress']['countryCode'],
+                'address_combined' => $addressLine1 . ' ' . $addressLine2,
+            ];
+
+            CustomerAddress::updateOrCreate([
+                'customer_id' => $customer_detail->id,
+                'address_combined' => $addressLine1 . ' ' . $addressLine2,
+            ], $customer_address_data);
+
+            $customer_phone_data = [
+                'customer_id' => $customer_detail->id,
+                'phone_no' => $addressDetails['primaryPhone']['phoneNumber'],
+            ];
+
+            CustomerPhone::updateOrCreate($customer_phone_data, $customer_phone_data);
+        }
+
+        if ($sorder['fulfillmentStartInstructions']) {
+            $shipTo = $sorder['fulfillmentStartInstructions'][0]['shippingStep']['shipTo'];
+            $full_name = $shipTo['fullName'] ?? '';
+            $addressLine1 = $shipTo['contactAddress']['addressLine1'] ?? '';
+            $addressLine2 = $shipTo['contactAddress']['addressLine2'] ?? '';
+            $customer_address_data = [
+                'full_name' => $full_name,
+                'address_line_1' => $addressLine1,
+                'address_line_2' => $addressLine2,
+                'city' => $shipTo['contactAddress']['city'],
+                'state' => $shipTo['contactAddress']['stateOrProvince'],
+                'zip' => $shipTo['contactAddress']['postalCode'],
+                'country_code' => $shipTo['contactAddress']['countryCode'],
+                'address_combined' => $addressLine1 . ' ' . $addressLine2,
+                'phone_no' => $shipTo['primaryPhone']['phoneNumber'] ?? '',
+            ];
+
+            $customer_address = CustomerAddress::updateOrCreate([
+                'customer_id' => $customer_detail->id,
+                'address_combined' => $addressLine1 . ' ' . $addressLine2,
+            ], $customer_address_data);
+
+            $customer_phone_data = [
+                'customer_id' => $customer_detail->id,
+                'phone_no' => $shipTo['primaryPhone']['phoneNumber'],
+            ];
+
+            CustomerPhone::updateOrCreate($customer_phone_data, $customer_phone_data);
+        }
+
+        $orderData = [
+//            'order_date' => date('Y-m-d H:i:s', $sorder['orderDate'] / 1000),
+//            'order_total' => $orderTotals,
+            'buyer_first_name' => $firstname,
+            'buyer_last_name' => $lastname,
+//            'buyer_email' => $sorder['customerEmailId'],
+            'customer_id' => $customer_detail->id ?? null,
+            'purchase_order_id' => $sorder['orderId'],
+            'shipping_address_id' => $customer_address->id ?? null,
+        ];
+
+        $order->update($orderData);
+
+        /* create order operatation*/
+        $orderOperationData = [
+            'order_id' => $order->id,
+            'ship_date' => date('Y-m-d H:i:s'),
+            'insurance_value' => 0,
+            'status' => 1,
+            'signature_confirmation' => 1,
+//            'ship_from_id' => '',
+            'store_id' => $store->id,
+            'operation_type' => 1,
+            'label_creation_type' => 1,
+            'print_to_file' => 0,
+            'seller_provides_return_label' => 0,
+            'order_synchronization_id' => $order->order_synchronization_id
+        ];
+
+        $order_operation_detail = OrderOperation::updateOrCreate([
+            'order_id' => $order->id,
+        ], $orderOperationData);
+
+        $ordersItems = $sorder['lineItems'];
+        if (!empty($ordersItems)) {
+            foreach ($ordersItems as $item) {
+                $itemDetail = ListingItem::with('storeProduct', 'storeProduct.product')->where('sku', $item['product_info']['sku']);
+                $orderItemData = [
+                    'title' => $item['title'],
+                    'order_id' => $order->id,
+                    'product_id' => $itemDetail->storeProduct->product->product_id,
+                    'client_id' => $itemDetail->client,
+                    'listing_item_id' => $itemDetail->id,
+                    'sku' => $item['sku'],
+                    'store_sku' => $item['lineItemId'],
+                    'quantity' => $item['quantity'],
+                    'id1' => '',
+                    'item_price' => $item['lineItemCost']['value'],
+                    'shipping_price' => $item['deliveryCost']['shippingCost']['value'],
+                    'item_tax' => 0,
+                    'shipping_tax' => 0,
+                    'shipping_quantity' => $item['quantity'],
+                ];
+
+                $order_item = OrderItem::updateOrCreate([
+                    'order_id' => $order->id,
+                    'product_id' => $itemDetail->storeProduct->product->product_id,
+                ], $orderItemData);
+
+                if ($order_item->id) {
+                    $orderOperationItemData = [
+                        'order_item_id' => $order_item->id,
+                        'order_operation_id' => $order_operation_detail->id,
+                        'quantity' => $item['quantity'],
+                        'client_id' => '',
+                        'sync_status' => 6
+                    ];
+
+                    $order_operation_item = OrderOperationItem::updateOrCreate([
+                        'order_operation_id' => $order_operation_detail->id
+                    ], $orderOperationItemData);
                 }
             }
         }
