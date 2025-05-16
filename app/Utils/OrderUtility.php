@@ -185,6 +185,8 @@ class OrderUtility
     public static function mapEbayOrders($order, $sorder, $store)
     {
         $firstname = $lastname = '';
+        $customer_address = null;
+        $customer_detail = null;
 
         if ($sorder['buyer']) {
             $addressDetails = $sorder['buyer']['buyerRegistrationAddress'];
@@ -205,29 +207,75 @@ class OrderUtility
                 'user_id' => $sorder['buyer']['username'],
             ], $customerData);
 
-            $addressLine1 = $addressDetails['addressLine1'] ?? '';
-            $addressLine2 = $addressDetails['addressLine2'] ?? '';
+            $addressLine1 = $addressDetails['contactAddress']['addressLine1'] ?? '';
+            $addressLine2 = $addressDetails['contactAddress']['addressLine2'] ?? '';
 
-//            $customer_address_data = [
-//                'address_line_1' => $addressLine1,
-//                'address_line_2' => $addressLine2,
-//                'city' => $addressDetails['city'],
-//                'state' => $addressDetails['stateOrProvince'],
-//                'zip' => $addressDetails['postalCode'],
-//                'country_code' => $addressDetails['countryCode'],
-//                'address_combined' => $addressLine1 . ' ' . $addressLine2,
-//            ];
-//
-//            $customer_address = CustomerAddress::updateOrCreate([
-//                'customer_id' => $customer_detail->id,
-//                'address_combined' => $addressLine1 . ' ' . $addressLine2,
-//            ], $customer_address_data);
-//
-//            $customer_phone_data = [
-//                'customer_id' => $customer_detail->id,
-//                'phone_no' => $sorder['shippingInfo']['phone'],
-//            ];
+            $customer_address_data = [
+                'full_name' => $firstname . ' ' . $lastname,
+                'address_line_1' => $addressLine1,
+                'address_line_2' => $addressLine2,
+                'city' => $addressDetails['contactAddress']['city'],
+                'state' => $addressDetails['contactAddress']['stateOrProvince'],
+                'zip' => $addressDetails['contactAddress']['postalCode'],
+                'country_code' => $addressDetails['contactAddress']['countryCode'],
+                'address_combined' => $addressLine1 . ' ' . $addressLine2,
+            ];
+
+            CustomerAddress::updateOrCreate([
+                'customer_id' => $customer_detail->id,
+                'address_combined' => $addressLine1 . ' ' . $addressLine2,
+            ], $customer_address_data);
+
+            $customer_phone_data = [
+                'customer_id' => $customer_detail->id,
+                'phone_no' => $addressDetails['primaryPhone']['phoneNumber'],
+            ];
+
+            CustomerPhone::updateOrCreate($customer_phone_data, $customer_phone_data);
         }
+
+        if ($sorder['fulfillmentStartInstructions']) {
+            $shipTo = $sorder['fulfillmentStartInstructions'][0]['shippingStep']['shipTo'];
+            $full_name = $shipTo['fullName'] ?? '';
+            $addressLine1 = $shipTo['contactAddress']['addressLine1'] ?? '';
+            $addressLine2 = $shipTo['contactAddress']['addressLine2'] ?? '';
+            $customer_address_data = [
+                'full_name' => $full_name,
+                'address_line_1' => $addressLine1,
+                'address_line_2' => $addressLine2,
+                'city' => $shipTo['contactAddress']['city'],
+                'state' => $shipTo['contactAddress']['stateOrProvince'],
+                'zip' => $shipTo['contactAddress']['postalCode'],
+                'country_code' => $shipTo['contactAddress']['countryCode'],
+                'address_combined' => $addressLine1 . ' ' . $addressLine2,
+                'phone_no' => $shipTo['primaryPhone']['phoneNumber'] ?? '',
+            ];
+
+            $customer_address = CustomerAddress::updateOrCreate([
+                'customer_id' => $customer_detail->id,
+                'address_combined' => $addressLine1 . ' ' . $addressLine2,
+            ], $customer_address_data);
+
+            $customer_phone_data = [
+                'customer_id' => $customer_detail->id,
+                'phone_no' => $shipTo['primaryPhone']['phoneNumber'],
+            ];
+
+            CustomerPhone::updateOrCreate($customer_phone_data, $customer_phone_data);
+        }
+
+        $orderData = [
+//            'order_date' => date('Y-m-d H:i:s', $sorder['orderDate'] / 1000),
+//            'order_total' => $orderTotals,
+            'buyer_first_name' => $firstname,
+            'buyer_last_name' => $lastname,
+//            'buyer_email' => $sorder['customerEmailId'],
+            'customer_id' => $customer_detail->id ?? null,
+            'purchase_order_id' => $sorder['orderId'],
+            'shipping_address_id' => $customer_address->id ?? null,
+        ];
+
+        $order->update($orderData);
 
         /* create order operatation*/
         $orderOperationData = [
@@ -250,7 +298,7 @@ class OrderUtility
         ], $orderOperationData);
 
         $ordersItems = $sorder['lineItems'];
-        if (empty($ordersItems)) {
+        if (!empty($ordersItems)) {
             foreach ($ordersItems as $item) {
                 $itemDetail = ListingItem::with('storeProduct', 'storeProduct.product')->where('sku', $item['product_info']['sku']);
                 $orderItemData = [
