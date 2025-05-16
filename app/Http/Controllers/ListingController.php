@@ -1130,11 +1130,12 @@ class ListingController extends Controller
 
                         //foreach ($products as $key => $product) {
                             $store_product_id = trim($product->id);
-                            //Log::info(' store_product_id : ' . $store_product_id);
+                            Log::info(' store_product_id : ' . $store_product_id);
                             if (array_key_exists($store_product_id, $product_details)) {
                                 $pDetail = $product_details[$store_product_id];
-                                //Log::info('Product Detail:'. json_encode($pDetail));
+                                Log::info('Product Detail:'. json_encode($pDetail));
                                 if(empty($pDetail)){
+                                    Log::info('SKIP Product Detail:');
                                     continue;
                                 }
                                 /*echo '<pre>';
