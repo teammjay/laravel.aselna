@@ -1113,24 +1113,30 @@ class ListingController extends Controller
             echo '</pre>';*/
 
             if ($store_id && $product_ids) {
-                foreach ($product_ids as $index => $product_id) {
+                $productsArray = [];
+                foreach ($product_ids as $key => $product_id) {
 
                     $store_type_detail = StoreType::getStoreTypeDetailById($store_id);
                     $max_title_length = $store_type_detail->max_title_length;
                     //$products = StoreProduct::getStoreProducts($product_ids);
-                    $products = StoreProduct::with('product', 'product.productType')->where('store_id', $store_id)->whereIn('product_id', $product_ids)->get();
+                    $product = StoreProduct::with('product', 'product.productType')->where('store_id', $store_id)->where('product_id', $product_id)->first();
 //                    echo $query2->toSql();die;
 //                    Log::info(' products :: ' . json_encode($products));
 
                     /*echo '<pre>';
-                    print_r($product_details);die;*/
-                    if (count($products ?? []) > 0) {
-                        $productsArray = [];
-                        foreach ($products as $key => $product) {
+                    print_r($products);die;*/
+                    /*if (count($products ?? []) > 0) {*/
+                    if (!empty($product)) {
+
+                        //foreach ($products as $key => $product) {
                             $store_product_id = trim($product->id);
-                            Log::info(' store_product_id : ' . $store_product_id);
+                            //Log::info(' store_product_id : ' . $store_product_id);
                             if (array_key_exists($store_product_id, $product_details)) {
                                 $pDetail = $product_details[$store_product_id];
+                                //Log::info('Product Detail:'. json_encode($pDetail));
+                                if(empty($pDetail)){
+                                    continue;
+                                }
                                 /*echo '<pre>';
                                 print_r($product_details[$store_product_id]);
                                 echo '</pre>';*/
@@ -1195,7 +1201,7 @@ class ListingController extends Controller
                                     }
                                 }
                             }
-                        }
+                        //}
                     }
                 }
 
@@ -1692,7 +1698,7 @@ class ListingController extends Controller
         return $titles;
     }
 
-    private function generateFreeGroupProductTitlesEbayBKP($baseTitle, $product, $devices, $charLimit, $brand_seperator, $device_seperator, $compress, $generate_type, $pDetail, $store_product_id, $store_type)
+    private function generateFreeGroupProductTitlesEbayBKP1($baseTitle, $product, $devices, $charLimit, $brand_seperator, $device_seperator, $compress, $generate_type, $pDetail, $store_product_id, $store_type)
     {
         $titles = [];
         $currentModels = [];
@@ -1825,6 +1831,67 @@ class ListingController extends Controller
         return $titles;
     }
 
+    private function compressModelsBySuffix($devices): string {
+        $modelGroups = [];
+
+        foreach ($devices as $device) {
+            $currentBrand = $device->brand_name . ' ' . $device->name;
+            $parts = explode(' ', $currentBrand);
+            if (count($parts) >= 2) {
+                $suffix = array_pop($parts); // Last word as suffix
+                $base = array_pop($parts);   // Second-last word as model (e.g., S20, S21)
+            } else {
+                $suffix = '';
+                $base = $currentBrand;
+            }
+
+            $modelGroups[$suffix][] = $base;
+        }
+
+        // Build output strings per suffix group
+        $resultParts = [];
+        foreach ($modelGroups as $suffix => $models) {
+            $uniqueModels = array_unique($models);
+            $joined = implode('/', $uniqueModels);
+            $resultParts[] = $suffix ? "$joined $suffix" : $joined;
+        }
+
+        return implode(', ', $resultParts);
+    }
+
+    private function groupDeviceModels($devices, $deviceSeparator): array
+    {
+        $groups = [];
+
+        foreach ($devices as $device) {
+            $fullName = ucwords(strtolower($device->name));
+            $brand = ucwords($device->brand_name);
+            $parts = explode(' ', $fullName);
+
+            $prefix = $brand === 'Apple' ? 'iPhone' : $parts[0];
+            $model = $parts[1] ?? '';
+            $suffix = implode(' ', array_slice($parts, 2)) ?: '__base__';
+
+            $groups[$prefix][$suffix][] = $model;
+        }
+
+        $result = [];
+
+        foreach ($groups as $prefix => $suffixSet) {
+            foreach ($suffixSet as $suffix => $models) {
+                sort($models, SORT_NATURAL);
+                $uniqueModels = array_unique($models);
+                $label = $prefix . ' ' . implode($deviceSeparator, $uniqueModels);
+                if ($suffix !== '__base__') {
+                    $label .= ' ' . $suffix;
+                }
+                $result[] = $label;
+            }
+        }
+
+        return $result;
+    }
+
     private function generateFreeGroupProductTitlesEbay($baseTitle, $product, $devices, $charLimit, $brand_seperator, $device_seperator, $compress, $generate_type, $pDetail, $store_product_id, $store_type)
     {
         $titles = [];
@@ -1836,6 +1903,47 @@ class ListingController extends Controller
         $lastModel = null;
         $currentBrand = null;
         $currentMod = null;
+        $suffix = null;
+        $allDevice = [];
+        $cnt = 0;
+
+        foreach ($devices as $key => $device) {
+            $titles[$cnt]['title'] = $baseTitle;
+            $titles[$cnt]['product_code'] = $product->product->product_sku;
+            $titles[$cnt]['product_id'] = $product->product_id;
+            $titles[$cnt]['price'] = $pDetail['price'];
+            $titles[$cnt]['price_overwrite'] = $pDetail['price_overwrite'];
+            $titles[$cnt]['store_type_category_id'] = $pDetail['store_type_category_id'];
+            $titles[$cnt]['generate_type'] = $generate_type;
+            $titles[$cnt]['store_product_id'] = $store_product_id;
+            $titles[$cnt]['brand_id'] = $device->brand_id;
+            $titles[$cnt]['device_id'] = $device->id;
+            $titles[$cnt]['model'][] = $device->name;
+            $titles[$cnt]['model_detail'][] = $device;
+        }
+
+        $deviceSeries = $this->groupDeviceModels($devices,$device_seperator);
+
+        // Add the last title
+        if (!empty($currentTitle)) {
+            $titles[$cnt]['title'] = str_replace('#device_series', implode($brand_seperator, $deviceSeries), $baseTitle);
+        }
+
+        return $titles;
+    }
+
+    private function generateFreeGroupProductTitlesEbayBKP($baseTitle, $product, $devices, $charLimit, $brand_seperator, $device_seperator, $compress, $generate_type, $pDetail, $store_product_id, $store_type)
+    {
+        $titles = [];
+        $currentModels = [];
+        $currentDevices = [];
+        $currentTitle = $baseTitle;
+        $separator = $brand_seperator; // Separator between device names
+        $lastBrand = null;
+        $lastModel = null;
+        $currentBrand = null;
+        $currentMod = null;
+        $suffix = null;
         $allDevice = [];
         $cnt = 0;
 
@@ -1859,9 +1967,9 @@ class ListingController extends Controller
                     if (isset($parts2[1])) {
                         //echo $parts2[0] .'=='. $lastModel.'<br>';
                         if ($parts2[0] == $lastModel) {
-                            $model = $parts2[1];
+                            $model = $suffix = $parts2[1];
                         }else{
-                            //$model = $parts2[0];
+                            $model = $parts2[0];
                         }
                         //$model = $parts2[1];
                     }
@@ -1871,6 +1979,7 @@ class ListingController extends Controller
                     if (isset($parts2[1])) {
                         $model = $parts2[1];
                     }*/
+                    //echo count($devices) .'=='. ($key + 1).'</br>';
                     $nameToAdd = $model;
                 } else {
                     if ($key == 0) {
