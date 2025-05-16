@@ -1863,21 +1863,56 @@ class ListingController extends Controller
     {
         $groups = [];
 
-        foreach ($devices as $device) {
+        foreach ($devices as $key=>$device) {
             $fullName = ucwords(strtolower($device->name));
             $brand = ucwords($device->brand_name);
-            $parts = explode(' ', $fullName);
+            if($brand === 'Apple') {
+                $parts = explode(' ', $fullName, 2);
+            }else{
+                $parts = explode(' ', $fullName);
+            }
 
             $prefix = $brand === 'Apple' ? 'iPhone' : $parts[0];
+            //$prefix = $parts[0];
             $model = $parts[1] ?? '';
             $suffix = implode(' ', array_slice($parts, 2)) ?: '__base__';
 
-            $groups[$prefix][$suffix][] = $model;
+            $groupKey = $brand . ' ' . $prefix;
+            if(strtolower($brand) == 'apple'){
+                $groupKey = $prefix;
+            }
+
+            $grouped[$groupKey][$suffix][] = $model;
         }
+
+        /*echo '<pre>';
+        print_r($grouped);
+        echo '</pre>';*/
 
         $result = [];
 
-        foreach ($groups as $prefix => $suffixSet) {
+        foreach ($grouped as $groupLabel => $suffixes) {
+            $cnt = 0;
+            foreach ($suffixes as $suffix => $models) {
+                if($cnt > 0){
+                    $bpart = explode(' ',$groupLabel);
+                    $groupLabel = array_pop($bpart);
+                    //echo $groupLabel;die;
+                }
+                sort($models, SORT_NATURAL);
+                $uniqueModels = array_unique($models);
+                $groupText = implode($deviceSeparator, $uniqueModels);
+                $full = $groupLabel . ' ' . $groupText;
+                if ($suffix !== '__base__') {
+                    $full .= ' ' . $suffix;
+                }
+                $result[] = trim($full);
+                $cnt++;
+            }
+
+        }
+
+        /*foreach ($groups as $prefix => $suffixSet) {
             foreach ($suffixSet as $suffix => $models) {
                 sort($models, SORT_NATURAL);
                 $uniqueModels = array_unique($models);
@@ -1885,9 +1920,9 @@ class ListingController extends Controller
                 if ($suffix !== '__base__') {
                     $label .= ' ' . $suffix;
                 }
-                $result[] = $label;
+                $result[] = trim($label);
             }
-        }
+        }*/
 
         return $result;
     }
