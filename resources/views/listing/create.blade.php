@@ -902,7 +902,6 @@
 
                         $("#ajax-preloader").show();
                         $('#total_generate_models').html('0 rows');
-                        console.log(productDetail.length);
                         $.ajax({
                             url: "{{ route('listing.generateproductlisting') }}",
                             type: 'POST',
