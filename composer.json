@@ -20,6 +20,7 @@
         "laravel/sanctum": "^4.0",
         "laravel/tinker": "^2.9",
         "league/oauth2-client": "^2.8",
+        "opcodesio/log-viewer": "^3.17",
         "opis/json-schema": "^2.4"
     },
     "require-dev": {
