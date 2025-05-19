@@ -1183,7 +1183,7 @@ class ListingController extends Controller
                                             if ($flag) {
                                                 continue 2;
                                             }
-                                            if (strtolower($store_type) == 'ebay' && strtolower($brandName) !='google') {
+                                            if (strtolower($store_type) == 'ebay' && (strtolower($brandName) !='google')) {
                                                 $productsArray[] = $this->generateFreeGroupProductTitlesEbay($title_template, $product, $devices, $max_title_length, $brand_seperator, $device_seperator, $compress, $generate_type, $pDetail, $store_product_id, $store_type);
                                             } else {
                                                 $productsArray[] = $this->generateFreeGroupProductTitles($title_template, $product, $devices, $max_title_length, $brand_seperator, $device_seperator, $compress, $generate_type, $pDetail, $store_product_id, $store_type);
@@ -1863,12 +1863,11 @@ class ListingController extends Controller
 
     private function groupDeviceModels($devices, $deviceSeparator='/'): array
     {
-        $groups = [];
+        $grouped = [];
 
         foreach ($devices as $key=>$device) {
-//            $fullName = strtolower($device->name);
             $fullName = $device->name;
-            Log::info('Device :: ' . $fullName);
+            //Log::info('Device :: ' . $fullName);
             $brand = $device->brand_name;
             if($brand === 'Apple') {
                 $parts = explode(' ', $fullName, 3);
@@ -1876,7 +1875,7 @@ class ListingController extends Controller
                 $parts = explode(' ', $fullName);
             }
 
-            /*echo '<pre>';
+           /* echo '<pre>';
             print_r($parts);
             echo '</pre>';*/
 
@@ -1896,6 +1895,8 @@ class ListingController extends Controller
             $grouped[$groupKey][$suffix][] = $model;
         }
 
+        //Log::info("grouped" . json_encode($grouped));
+
         /*echo '<pre>';
         print_r($grouped);
         echo '</pre>';*/
@@ -1905,20 +1906,38 @@ class ListingController extends Controller
         foreach ($grouped as $groupLabel => $suffixes) {
             //Log::info("Suffixes" . json_encode($suffixes));
             $cnt = 0;
+
             foreach ($suffixes as $suffix => $models) {
                 if($cnt > 0){
                     $bpart = explode(' ',$groupLabel);
                     $groupLabel = array_pop($bpart);
                 }
+
                 sort($models, SORT_NATURAL);
-                $uniqueModels = array_unique($models);
+                $lastModel = null;
+                $newmodels = [];
+                //print_r($models);
+                foreach($models as $key=>$model){
+                    if($key == 0){
+                        $lastModel = $model;
+                    }
+                    if(str_contains($model,$lastModel)){
+                        $gpart = explode(' ',$model);
+                        $model = array_pop($gpart);
+                    }
+                    $newmodels[] = $model;
+                    $lastModel = $model;
+                }
+
+                $uniqueModels = array_unique($newmodels);
                 $groupText = implode($deviceSeparator, $uniqueModels);
+                //Log::info("Group Label - " . $groupLabel);
                 $full = $groupLabel . ' ' . $groupText;
                 //echo $full;
                 if ($suffix !== '__base__') {
                     $full .= ' ' . $suffix;
                 }
-                Log::info('Full' . json_encode($full));
+                //Log::info('Full' . json_encode($full));
                 $result[] = trim($full);
                 $cnt++;
             }
