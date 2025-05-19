@@ -1868,18 +1868,22 @@ class ListingController extends Controller
         foreach ($devices as $key=>$device) {
 //            $fullName = strtolower($device->name);
             $fullName = $device->name;
-            //Log::info('Device :: ' . $fullName);
+            Log::info('Device :: ' . $fullName);
             $brand = $device->brand_name;
             if($brand === 'Apple') {
-                $parts = explode(' ', $fullName, 2);
+                $parts = explode(' ', $fullName, 3);
             }else{
                 $parts = explode(' ', $fullName);
             }
 
+            /*echo '<pre>';
+            print_r($parts);
+            echo '</pre>';*/
+
             $prefix = $brand === 'Apple' ? 'iPhone' : $parts[0];
             //$prefix = $parts[0];
             $model = $parts[1] ?? '';
-            $suffix = implode(' ', array_slice($parts, 3)) ?: '__base__';
+            $suffix = implode(' ', array_slice($parts, 2)) ?: '__base__';
 
             $groupKey = $brand . ' ' . $prefix;
             if(strtolower($brand) == 'apple'){
