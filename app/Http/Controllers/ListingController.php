@@ -2501,7 +2501,7 @@ class ListingController extends Controller
 
                                         foreach ($product_model as $k => $models) {
                                             if (count($models ?? []) > 0 && is_array($models)) {
-
+                                                $newupcCodes = $upcCodes;
                                                 foreach ($models as $j => $model) {
                                                     Log::info(' Model :: ' . json_encode($model));
 
@@ -2509,10 +2509,10 @@ class ListingController extends Controller
                                                         switch (strtolower($store_type)) {
                                                             case 'walmart':
                                                                 //case 'shopify':
-                                                                $upcCodes = $this->generateUpcCode($store_detail, $store_id);
+                                                                $newupcCodes = $this->generateUpcCode($store_detail, $store_id);
                                                                 break;
                                                             default:
-                                                                $upcCodes = $upcCodes;
+                                                                $newupcCodes = $upcCodes;
                                                                 break;
                                                         }
                                                     }
@@ -2551,7 +2551,7 @@ class ListingController extends Controller
                                                     $itemDetail = array(
                                                         'sku' => $nsku,
                                                         'title' => $product,
-                                                        'upc' => isset($upcCodes->upc_code) ? $upcCodes->upc_code : '',
+                                                        'upc' => isset($newupcCodes->upc_code) ? $newupcCodes->upc_code : '',
                                                         'device_id' => $model->id,
                                                         'listing_item_id' => $listing_item_id,
                                                         'device_carrier_id' => $model->carrier_id ?? null,
@@ -2563,8 +2563,8 @@ class ListingController extends Controller
                                                     $rec = ListingItemDetail::create($itemDetail);
                                                     Log::info(' Listing Item Detail ID :: ' . $rec->id);
 
-                                                    if ($rec) {
-                                                        $record = UPCCodes::find($upcCodes->id);
+                                                    if ($rec && isset($newupcCodes->id)) {
+                                                        $record = UPCCodes::find($newupcCodes->id);
                                                         $record->update(['is_used' => 1]);
                                                     }
                                                 }
