@@ -145,6 +145,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/listing/synclistinginventory', 'syncListingInventory')->name('listing.synclistinginventory');
         Route::post('/listing/synclistingprice', 'syncListingPrice')->name('listing.synclistingprice');
         Route::post('/listing/updatestoreproduct', 'updateStoreProduct')->name('listing.updatestoreproduct');
+        Route::post('/listing/updateallstoreproduct', 'updateAllStoreProduct')->name('listing.updateallstoreproduct');
         Route::post('/listing/endlist', 'endList')->name('listing.endlist');
         Route::post('/listing/relist', 'reList')->name('listing.relist');
         Route::post('/listing/checkupcexist', 'checkUpcExist')->name('listing.checkupcexist');
