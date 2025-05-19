@@ -1171,6 +1171,7 @@ class ListingController extends Controller
                                         case 'free group':
                                             $prevBrand = null;
                                             $flag = false;
+                                            $brandName = null;
                                             foreach ($devices as $key => $val) {
                                                 $brandName = $val->brand_name;
                                                 if ($prevBrand != NULL && $brandName != $prevBrand && str_contains($title_template, '#device_series')) {
@@ -1182,7 +1183,7 @@ class ListingController extends Controller
                                             if ($flag) {
                                                 continue 2;
                                             }
-                                            if (strtolower($store_type) == 'ebay') {
+                                            if (strtolower($store_type) == 'ebay' && strtolower($brandName) !='google') {
                                                 $productsArray[] = $this->generateFreeGroupProductTitlesEbay($title_template, $product, $devices, $max_title_length, $brand_seperator, $device_seperator, $compress, $generate_type, $pDetail, $store_product_id, $store_type);
                                             } else {
                                                 $productsArray[] = $this->generateFreeGroupProductTitles($title_template, $product, $devices, $max_title_length, $brand_seperator, $device_seperator, $compress, $generate_type, $pDetail, $store_product_id, $store_type);
@@ -1860,14 +1861,14 @@ class ListingController extends Controller
         return implode(', ', $resultParts);
     }
 
-    private function groupDeviceModels($devices, $deviceSeparator): array
+    private function groupDeviceModels($devices, $deviceSeparator='/'): array
     {
         $groups = [];
 
         foreach ($devices as $key=>$device) {
 //            $fullName = strtolower($device->name);
             $fullName = $device->name;
-            Log::info('Device :: ' . $fullName);
+            //Log::info('Device :: ' . $fullName);
             $brand = $device->brand_name;
             if($brand === 'Apple') {
                 $parts = explode(' ', $fullName, 2);
@@ -1878,15 +1879,15 @@ class ListingController extends Controller
             $prefix = $brand === 'Apple' ? 'iPhone' : $parts[0];
             //$prefix = $parts[0];
             $model = $parts[1] ?? '';
-            $suffix = implode(' ', array_slice($parts, 2)) ?: '__base__';
+            $suffix = implode(' ', array_slice($parts, 3)) ?: '__base__';
 
             $groupKey = $brand . ' ' . $prefix;
             if(strtolower($brand) == 'apple'){
                 $groupKey = $prefix;
             }
-            Log::info('Grouped cook' . $brand . $prefix);
+            //Log::info('Grouped cook' . $brand . $prefix);
 
-            Log::info('Model' . json_encode($model));
+            //Log::info('Model' . json_encode($model));
 
             $grouped[$groupKey][$suffix][] = $model;
         }
@@ -1898,18 +1899,18 @@ class ListingController extends Controller
         $result = [];
 
         foreach ($grouped as $groupLabel => $suffixes) {
-            Log::info("Suffixes" . json_encode($suffixes));
+            //Log::info("Suffixes" . json_encode($suffixes));
             $cnt = 0;
             foreach ($suffixes as $suffix => $models) {
                 if($cnt > 0){
                     $bpart = explode(' ',$groupLabel);
                     $groupLabel = array_pop($bpart);
-                    //echo $groupLabel;die;
                 }
                 sort($models, SORT_NATURAL);
                 $uniqueModels = array_unique($models);
                 $groupText = implode($deviceSeparator, $uniqueModels);
                 $full = $groupLabel . ' ' . $groupText;
+                //echo $full;
                 if ($suffix !== '__base__') {
                     $full .= ' ' . $suffix;
                 }
@@ -1920,17 +1921,9 @@ class ListingController extends Controller
 
         }
 
-        /*foreach ($groups as $prefix => $suffixSet) {
-            foreach ($suffixSet as $suffix => $models) {
-                sort($models, SORT_NATURAL);
-                $uniqueModels = array_unique($models);
-                $label = $prefix . ' ' . implode($deviceSeparator, $uniqueModels);
-                if ($suffix !== '__base__') {
-                    $label .= ' ' . $suffix;
-                }
-                $result[] = trim($label);
-            }
-        }*/
+        /*echo '<pre>';
+        print_r($result);
+        echo '</pre>';*/
 
         return $result;
     }
