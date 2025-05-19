@@ -2,6 +2,8 @@
 
 namespace App\Utils;
 
+use App\Constants\OrderStatus;
+use App\Models\Catalog;
 use App\Models\Customer;
 use App\Models\CustomerAddress;
 use App\Models\CustomerPhone;
@@ -269,6 +271,7 @@ class OrderUtility
 //            'order_total' => $orderTotals,
             'buyer_first_name' => $firstname,
             'buyer_last_name' => $lastname,
+            'order_status' => OrderStatus::Synchronizing,
 //            'buyer_email' => $sorder['customerEmailId'],
             'customer_id' => $customer_detail->id ?? null,
             'purchase_order_id' => $sorder['orderId'],
@@ -297,44 +300,95 @@ class OrderUtility
             'order_id' => $order->id,
         ], $orderOperationData);
 
+        Log::info("Came Till Here");
+
         $ordersItems = $sorder['lineItems'];
         if (!empty($ordersItems)) {
             foreach ($ordersItems as $item) {
-                $itemDetail = ListingItem::with('storeProduct', 'storeProduct.product')->where('sku', $item['product_info']['sku']);
-                $orderItemData = [
-                    'title' => $item['title'],
-                    'order_id' => $order->id,
-                    'product_id' => $itemDetail->storeProduct->product->product_id,
-                    'client_id' => $itemDetail->client,
-                    'listing_item_id' => $itemDetail->id,
-                    'sku' => $item['sku'],
-                    'store_sku' => $item['lineItemId'],
-                    'quantity' => $item['quantity'],
-                    'id1' => '',
-                    'item_price' => $item['lineItemCost']['value'],
-                    'shipping_price' => $item['deliveryCost']['shippingCost']['value'],
-                    'item_tax' => 0,
-                    'shipping_tax' => 0,
-                    'shipping_quantity' => $item['quantity'],
-                ];
-
-                $order_item = OrderItem::updateOrCreate([
-                    'order_id' => $order->id,
-                    'product_id' => $itemDetail->storeProduct->product->product_id,
-                ], $orderItemData);
-
-                if ($order_item->id) {
-                    $orderOperationItemData = [
-                        'order_item_id' => $order_item->id,
-                        'order_operation_id' => $order_operation_detail->id,
+                //Log:info("Inside Order :: " . json_encode($item));
+                $itemDetail = ListingItem::with('storeProduct', 'storeProduct.product')->where('sku', $item['sku'])->first();
+                Log::info("Came Till Here 1 :: " . json_encode($itemDetail));
+                if (isset($itemDetail)) {
+                    $orderItemData = [
+                        'title' => $item['title'],
+                        'order_id' => $order->id,
+                        'product_id' => $itemDetail->storeProduct->product->product_id,
+                        'client_id' => $itemDetail->client,
+                        'listing_item_id' => $itemDetail->id,
+                        'sku' => $item['sku'],
+                        'store_sku' => $item['lineItemId'],
                         'quantity' => $item['quantity'],
-                        'client_id' => '',
-                        'sync_status' => 6
+                        'id1' => '',
+                        'item_price' => $item['lineItemCost']['value'],
+                        'shipping_price' => $item['deliveryCost']['shippingCost']['value'],
+                        'item_tax' => 0,
+                        'shipping_tax' => 0,
+                        'shipping_quantity' => $item['quantity'],
+                    ];
+                    Log::info("Came Till Here 2 :: " . json_encode($orderItemData));
+
+                    $order_item = OrderItem::updateOrCreate([
+                        'order_id' => $order->id,
+                        'product_id' => $itemDetail->storeProduct->product->product_id,
+                    ], $orderItemData);
+                    Log::info("Came Till Here 3 :: " . json_encode($order_item));
+
+                    if ($order_item->id) {
+                        $orderOperationItemData = [
+                            'order_item_id' => $order_item->id,
+                            'order_operation_id' => $order_operation_detail->id,
+                            'quantity' => $item['quantity'],
+                            'client_id' => '',
+                            'sync_status' => 6
+                        ];
+
+                        $order_operation_item = OrderOperationItem::updateOrCreate([
+                            'order_operation_id' => $order_operation_detail->id
+                        ], $orderOperationItemData);
+                    }
+                } else {
+                    Log::info("Item Not Found :: " . json_encode($item));
+                    // split the sku from ES56_li to ES56
+                    $sku = preg_split('/[_-]/', $item['sku'])[0];
+                    Log::info("Item SKU :: " . json_encode($sku));
+                    $catalog = Catalog::where('product_sku', $sku)->first();
+                    Log::info("Catalog Found :: " . json_encode($catalog));
+
+                    $orderItemData = [
+                        'title' => $item['title'],
+                        'order_id' => $order->id,
+                        'product_id' => $catalog->product_id,
+                        'client_id' => null,
+//                        'listing_item_id' => $itemDetail->id,
+                        'sku' => $item['sku'],
+                        'store_sku' => $item['lineItemId'],
+                        'quantity' => $item['quantity'],
+                        'id1' => '',
+                        'item_price' => $item['lineItemCost']['value'],
+                        'shipping_price' => $item['deliveryCost']['shippingCost']['value'],
+                        'item_tax' => 0,
+                        'shipping_tax' => 0,
+                        'shipping_quantity' => $item['quantity'],
                     ];
 
-                    $order_operation_item = OrderOperationItem::updateOrCreate([
-                        'order_operation_id' => $order_operation_detail->id
-                    ], $orderOperationItemData);
+                    $order_item = OrderItem::updateOrCreate([
+                        'order_id' => $order->id,
+                        'product_id' => $catalog->product_id,
+                    ], $orderItemData);
+
+                    if ($order_item->id) {
+                        $orderOperationItemData = [
+                            'order_item_id' => $order_item->id,
+                            'order_operation_id' => $order_operation_detail->id,
+                            'quantity' => $item['quantity'],
+                            'client_id' => null,
+                            'sync_status' => 6
+                        ];
+
+                        $order_operation_item = OrderOperationItem::updateOrCreate([
+                            'order_operation_id' => $order_operation_detail->id
+                        ], $orderOperationItemData);
+                    }
                 }
             }
         }
