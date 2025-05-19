@@ -402,9 +402,19 @@
                         </div>
                         <div class="col-md-12">
                             <div class="">
-                                <div class="card-header d-flex align-items-center pr-0 pl-0">
-                                    <label>Bundle Sperator</label> <input type="text" class="form-control ml-3" name="bundle_seperator" value="w" style="width: 150px;">
-                                    <span class="total_product"></span>
+                                <div class="card-header d-flex align-items-center justify-content-between pr-0 pl-0">
+                                    <div class="d-flex align-items-center">
+                                        <label>Bundle Sperator</label> <input type="text" class="form-control ml-3" name="bundle_seperator" value="w" style="width: 150px;">
+                                        <span class="total_product"></span>
+                                    </div>
+                                    <div class="float-right">
+                                        <div class="d-flex align-items-center" style="gap:15px;">
+                                            <select class="form-control" id="store_category">
+
+                                            </select>
+                                            <button class="btn btn-secondary" id="apply_all">Apply to all</button>
+                                        </div>
+                                    </div>
                                 </div>
                                 <div class="card-body pr-0 pl-0">
                                     <div class="table-responsive" id="productsTable2_wrapper" style="max-height: 500px; overflow: auto;">
@@ -2366,6 +2376,60 @@
                 });
             });
 
+            $(document).on('click','#apply_all',function () {
+                var category_id = $('#store_category').val();
+                let selected_product = [];
+                $('input[name="selected_product[]"]').each(function () {
+                    selected_product.push($(this).val());
+                });
+
+                let selected_store_product = [];
+                $('input[name="selected_store_product[]"]').each(function () {
+                    selected_store_product.push($(this).val());
+                });
+
+                $.ajax({
+                    url: "{{ route('listing.updateallstoreproduct') }}",
+                    type: 'POST',
+                    data: {
+                        category_id:category_id,
+                        product_ids: selected_product,
+                        store_product_ids: selected_store_product,
+                        store_id: $('#listing_store').val(),
+                    },
+                    headers: {
+                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                    },
+                    success: function (response) {
+                        for (let i = 0; i < selected_product.length; i++) {
+                            var product_id = selected_product[i];
+
+                            if (response.issues.product_id && response.issues.product_id.length > 0) {
+                                var buttonId = 'errorButton-' + product_id;
+                                $('button#' + buttonId).removeClass('btn-success').addClass('btn-danger').text(response.issues.product_id.length +' Errors').data('error',''+response.issues.product_id.length);
+                                $('#errorModal-' +product_id + ' .modal-body').html(response.issue_table_html);
+                            } else {
+                                var buttonId = 'errorButton-' + product_id;
+                                $('button#' + buttonId).removeClass('btn-danger').addClass('btn-success').text('0 Issues').data('error','0');
+                                $('#errorModal-' +product_id + ' .modal-body').html('');
+                            }
+                        }
+
+                        $('.store-type-category').each(function(){
+                            $(this).val(category_id).trigger('change');
+                        });
+
+                        //$('.store-type-category').select2();
+
+                    },
+                    error: function (xhr) {
+                    },
+                    complete: function () {
+                        $("#ajax-preloader").hide();
+                    }
+                });
+
+            });
 
         });
 
@@ -2540,6 +2604,10 @@
                         $('#productsTable2_wrapper').html(response.html);
                         generateKeywords();
                         $('.store-type-category').select2();
+                        if(response.storeCategories){
+                            $('#store_category').html(response.storeCategories);
+                            $('#store_category').select2();
+                        }
                         //generateTitleKeywords();
                         $(document).on('click', '.btn-danger', function () {
                             const targetModal = $(this).data('bs-target');

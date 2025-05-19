@@ -268,7 +268,7 @@
                                         <label for="store_sku">Store SKU</label>
                                     </div>
                                     <div class="col-md-7">
-                                        <input type="text" class="form-control" id="store_sku" name="store_sku" value="{{ old('store_sku',$productDetail->store_sku) }}" readonly>
+                                        <input type="text" class="form-control" id="store_sku" name="store_sku" value="{{ old('store_sku',$productDetail->store_sku) }}">
                                     </div>
                                 </div>
                                 <div class="row mt-3 g-3 align-items-center">

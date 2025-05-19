@@ -420,6 +420,7 @@ class ListingController extends Controller
                 'title' => $request->input('title'),
                 'description' => $request->input('description'),
                 'store_url' => $request->input('store_url'),
+                'store_sku' => $request->input('store_sku'),
                 'price' => $request->input('price'),
                 'overwrite_price' => ($request->has('overwrite_price')) ? 1 : 0,
                 'overwrite_msrp' => ($request->has('overwrite_msrp')) ? 1 : 0,
@@ -765,7 +766,14 @@ class ListingController extends Controller
             $query->whereIn('store_product.product_id', $product_ids);
             $query->where('store_product.store_id', $store_id);
             $products = $query->get();
+
+            $storeTypeName = Store::select('store_type.name as storeTypeName')
+                ->leftJoin('store_type', 'store_type.id', '=', 'store.store_type_id')
+                ->where('store.id', $store_id)
+                ->first();
+
             $storeCategories = [];
+            $cat_option = '';
             if ($store_id) {
                 $store = Store::with('storeType')->find($store_id);
                 if ($store && $store->storeType->name === 'Magento') {
@@ -783,12 +791,20 @@ class ListingController extends Controller
                         ->orderBy('store_type_category.name', 'asc')
                         ->get();
                 }
+
+
+                if(count($storeCategories ?? []) > 0){
+                    foreach($storeCategories as $key2=>$sCat){
+                        if($storeTypeName->storeTypeName === 'Magento'){
+                            $cat_option .= '<option value="'.$sCat->id.'">'.$sCat->name.'</option>';
+                        }else{
+                            $cat_option .= '<option value="'.$sCat->id.'">'.$sCat->name.'</option>';
+                        }
+                    }
+                }
             }
 
-            $storeTypeName = Store::select('store_type.name as storeTypeName')
-                ->leftJoin('store_type', 'store_type.id', '=', 'store.store_type_id')
-                ->where('store.id', $store_id)
-                ->first();
+
 
             if ($step == 2) {
                 $issues = [];
@@ -814,7 +830,8 @@ class ListingController extends Controller
             if ($request->ajax()) {
                 return response()->json([
                     'success' => true,
-                    'html' => $view
+                    'html' => $view,
+                    'storeCategories' => $cat_option,
                 ]);
             }
 
@@ -2884,6 +2901,40 @@ class ListingController extends Controller
         }
 
         $table_html = view('listing.error_tables', ['issues' => $issues, 'product' => $product])->render();
+
+        return response()->json([
+            'success' => true,
+            'issues' => $issues,
+            'issue_table_html' => $table_html
+        ]);
+    }
+
+    public function updateAllStoreProduct(Request $request)
+    {
+
+        $store_product_ids = $request->input('store_product_ids');
+        $category_id = $request->input('category_id');
+        $store_id = $request->input('store_id');
+        $issues = $table_html = [];
+        if(!empty($store_product_ids)){
+            foreach($store_product_ids as $id) {
+                $product = StoreProduct::findOrFail($id); // Retrieve the product by ID
+                $product->update(['store_type_category_id' => $category_id]);
+
+                $store = Store::findOrFail($store_id);
+                $currentCategory = StoreTypeCategory::where('id', $category_id)->first();
+                if ('Amazon' == $store->storeType->name) {
+                    $issues[$product->product_id] = ListingUtility::validate($currentCategory->marketplace_code, $product->product_id, $store->storeType->id);
+                } else {
+                    $issues[$product->product_id] = ListingUtility::validate($currentCategory->store_type_code, $product->product_id, $store->storeType->id);
+                }
+
+                $table_html[$product->product_id] = view('listing.error_tables', ['issues' => $issues[$product->product_id],'Product'=>$product])->render();
+            }
+        }
+
+
+
 
         return response()->json([
             'success' => true,
