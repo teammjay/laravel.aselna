@@ -41,6 +41,8 @@ class FetchWalmartOrdersJob implements ShouldQueue
         if (count($stores ?? []) > 0) {
             foreach ($stores as $store) {
 
+//                if ()
+
                 $walmartService = new WalmartService();
                 $walmartService->getOrders($store);
 
