@@ -420,6 +420,7 @@ class ListingController extends Controller
                 'title' => $request->input('title'),
                 'description' => $request->input('description'),
                 'store_url' => $request->input('store_url'),
+                'store_sku' => $request->input('store_sku'),
                 'price' => $request->input('price'),
                 'overwrite_price' => ($request->has('overwrite_price')) ? 1 : 0,
                 'overwrite_msrp' => ($request->has('overwrite_msrp')) ? 1 : 0,
@@ -765,7 +766,14 @@ class ListingController extends Controller
             $query->whereIn('store_product.product_id', $product_ids);
             $query->where('store_product.store_id', $store_id);
             $products = $query->get();
+
+            $storeTypeName = Store::select('store_type.name as storeTypeName')
+                ->leftJoin('store_type', 'store_type.id', '=', 'store.store_type_id')
+                ->where('store.id', $store_id)
+                ->first();
+
             $storeCategories = [];
+            $cat_option = '';
             if ($store_id) {
                 $store = Store::with('storeType')->find($store_id);
                 if ($store && $store->storeType->name === 'Magento') {
@@ -783,12 +791,20 @@ class ListingController extends Controller
                         ->orderBy('store_type_category.name', 'asc')
                         ->get();
                 }
+
+
+                if(count($storeCategories ?? []) > 0){
+                    foreach($storeCategories as $key2=>$sCat){
+                        if($storeTypeName->storeTypeName === 'Magento'){
+                            $cat_option .= '<option value="'.$sCat->id.'">'.$sCat->name.'</option>';
+                        }else{
+                            $cat_option .= '<option value="'.$sCat->id.'">'.$sCat->name.'</option>';
+                        }
+                    }
+                }
             }
 
-            $storeTypeName = Store::select('store_type.name as storeTypeName')
-                ->leftJoin('store_type', 'store_type.id', '=', 'store.store_type_id')
-                ->where('store.id', $store_id)
-                ->first();
+
 
             if ($step == 2) {
                 $issues = [];
@@ -814,7 +830,8 @@ class ListingController extends Controller
             if ($request->ajax()) {
                 return response()->json([
                     'success' => true,
-                    'html' => $view
+                    'html' => $view,
+                    'storeCategories' => $cat_option,
                 ]);
             }
 
@@ -1171,6 +1188,7 @@ class ListingController extends Controller
                                         case 'free group':
                                             $prevBrand = null;
                                             $flag = false;
+                                            $brandName = null;
                                             foreach ($devices as $key => $val) {
                                                 $brandName = $val->brand_name;
                                                 if ($prevBrand != NULL && $brandName != $prevBrand && str_contains($title_template, '#device_series')) {
@@ -1182,7 +1200,7 @@ class ListingController extends Controller
                                             if ($flag) {
                                                 continue 2;
                                             }
-                                            if (strtolower($store_type) == 'ebay') {
+                                            if (strtolower($store_type) == 'ebay' && (strtolower($brandName) !='google')) {
                                                 $productsArray[] = $this->generateFreeGroupProductTitlesEbay($title_template, $product, $devices, $max_title_length, $brand_seperator, $device_seperator, $compress, $generate_type, $pDetail, $store_product_id, $store_type);
                                             } else {
                                                 $productsArray[] = $this->generateFreeGroupProductTitles($title_template, $product, $devices, $max_title_length, $brand_seperator, $device_seperator, $compress, $generate_type, $pDetail, $store_product_id, $store_type);
@@ -1860,20 +1878,23 @@ class ListingController extends Controller
         return implode(', ', $resultParts);
     }
 
-    private function groupDeviceModels($devices, $deviceSeparator): array
+    private function groupDeviceModels($devices, $deviceSeparator='/'): array
     {
-        $groups = [];
+        $grouped = [];
 
         foreach ($devices as $key=>$device) {
-//            $fullName = strtolower($device->name);
             $fullName = $device->name;
-            Log::info('Device :: ' . $fullName);
+            //Log::info('Device :: ' . $fullName);
             $brand = $device->brand_name;
             if($brand === 'Apple') {
-                $parts = explode(' ', $fullName, 2);
+                $parts = explode(' ', $fullName, 3);
             }else{
                 $parts = explode(' ', $fullName);
             }
+
+           /* echo '<pre>';
+            print_r($parts);
+            echo '</pre>';*/
 
             $prefix = $brand === 'Apple' ? 'iPhone' : $parts[0];
             //$prefix = $parts[0];
@@ -1884,12 +1905,14 @@ class ListingController extends Controller
             if(strtolower($brand) == 'apple'){
                 $groupKey = $prefix;
             }
-            Log::info('Grouped cook' . $brand . $prefix);
+            //Log::info('Grouped cook' . $brand . $prefix);
 
-            Log::info('Model' . json_encode($model));
+            //Log::info('Model' . json_encode($model));
 
             $grouped[$groupKey][$suffix][] = $model;
         }
+
+        //Log::info("grouped" . json_encode($grouped));
 
         /*echo '<pre>';
         print_r($grouped);
@@ -1898,39 +1921,49 @@ class ListingController extends Controller
         $result = [];
 
         foreach ($grouped as $groupLabel => $suffixes) {
-            Log::info("Suffixes" . json_encode($suffixes));
+            //Log::info("Suffixes" . json_encode($suffixes));
             $cnt = 0;
+
             foreach ($suffixes as $suffix => $models) {
                 if($cnt > 0){
                     $bpart = explode(' ',$groupLabel);
                     $groupLabel = array_pop($bpart);
-                    //echo $groupLabel;die;
                 }
+
                 sort($models, SORT_NATURAL);
-                $uniqueModels = array_unique($models);
+                $lastModel = null;
+                $newmodels = [];
+                //print_r($models);
+                foreach($models as $key=>$model){
+                    if($key == 0){
+                        $lastModel = $model;
+                    }
+                    if(str_contains($model,$lastModel)){
+                        $gpart = explode(' ',$model);
+                        $model = array_pop($gpart);
+                    }
+                    $newmodels[] = $model;
+                    $lastModel = $model;
+                }
+
+                $uniqueModels = array_unique($newmodels);
                 $groupText = implode($deviceSeparator, $uniqueModels);
+                //Log::info("Group Label - " . $groupLabel);
                 $full = $groupLabel . ' ' . $groupText;
+                //echo $full;
                 if ($suffix !== '__base__') {
                     $full .= ' ' . $suffix;
                 }
-                Log::info('Full' . json_encode($full));
+                //Log::info('Full' . json_encode($full));
                 $result[] = trim($full);
                 $cnt++;
             }
 
         }
 
-        /*foreach ($groups as $prefix => $suffixSet) {
-            foreach ($suffixSet as $suffix => $models) {
-                sort($models, SORT_NATURAL);
-                $uniqueModels = array_unique($models);
-                $label = $prefix . ' ' . implode($deviceSeparator, $uniqueModels);
-                if ($suffix !== '__base__') {
-                    $label .= ' ' . $suffix;
-                }
-                $result[] = trim($label);
-            }
-        }*/
+        /*echo '<pre>';
+        print_r($result);
+        echo '</pre>';*/
 
         return $result;
     }
@@ -2485,7 +2518,7 @@ class ListingController extends Controller
 
                                         foreach ($product_model as $k => $models) {
                                             if (count($models ?? []) > 0 && is_array($models)) {
-
+                                                $newupcCodes = $upcCodes;
                                                 foreach ($models as $j => $model) {
                                                     Log::info(' Model :: ' . json_encode($model));
 
@@ -2493,10 +2526,10 @@ class ListingController extends Controller
                                                         switch (strtolower($store_type)) {
                                                             case 'walmart':
                                                                 //case 'shopify':
-                                                                $upcCodes = $this->generateUpcCode($store_detail, $store_id);
+                                                                $newupcCodes = $this->generateUpcCode($store_detail, $store_id);
                                                                 break;
                                                             default:
-                                                                $upcCodes = $upcCodes;
+                                                                $newupcCodes = $upcCodes;
                                                                 break;
                                                         }
                                                     }
@@ -2535,7 +2568,7 @@ class ListingController extends Controller
                                                     $itemDetail = array(
                                                         'sku' => $nsku,
                                                         'title' => $product,
-                                                        'upc' => isset($upcCodes->upc_code) ? $upcCodes->upc_code : '',
+                                                        'upc' => isset($newupcCodes->upc_code) ? $newupcCodes->upc_code : '',
                                                         'device_id' => $model->id,
                                                         'listing_item_id' => $listing_item_id,
                                                         'device_carrier_id' => $model->carrier_id ?? null,
@@ -2547,8 +2580,8 @@ class ListingController extends Controller
                                                     $rec = ListingItemDetail::create($itemDetail);
                                                     Log::info(' Listing Item Detail ID :: ' . $rec->id);
 
-                                                    if ($rec) {
-                                                        $record = UPCCodes::find($upcCodes->id);
+                                                    if ($rec && isset($newupcCodes->id)) {
+                                                        $record = UPCCodes::find($newupcCodes->id);
                                                         $record->update(['is_used' => 1]);
                                                     }
                                                 }
@@ -2868,6 +2901,40 @@ class ListingController extends Controller
         }
 
         $table_html = view('listing.error_tables', ['issues' => $issues, 'product' => $product])->render();
+
+        return response()->json([
+            'success' => true,
+            'issues' => $issues,
+            'issue_table_html' => $table_html
+        ]);
+    }
+
+    public function updateAllStoreProduct(Request $request)
+    {
+
+        $store_product_ids = $request->input('store_product_ids');
+        $category_id = $request->input('category_id');
+        $store_id = $request->input('store_id');
+        $issues = $table_html = [];
+        if(!empty($store_product_ids)){
+            foreach($store_product_ids as $id) {
+                $product = StoreProduct::findOrFail($id); // Retrieve the product by ID
+                $product->update(['store_type_category_id' => $category_id]);
+
+                $store = Store::findOrFail($store_id);
+                $currentCategory = StoreTypeCategory::where('id', $category_id)->first();
+                if ('Amazon' == $store->storeType->name) {
+                    $issues[$product->product_id] = ListingUtility::validate($currentCategory->marketplace_code, $product->product_id, $store->storeType->id);
+                } else {
+                    $issues[$product->product_id] = ListingUtility::validate($currentCategory->store_type_code, $product->product_id, $store->storeType->id);
+                }
+
+                $table_html[$product->product_id] = view('listing.error_tables', ['issues' => $issues[$product->product_id],'Product'=>$product])->render();
+            }
+        }
+
+
+
 
         return response()->json([
             'success' => true,

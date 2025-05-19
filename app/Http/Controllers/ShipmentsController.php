@@ -39,10 +39,12 @@ class ShipmentsController extends Controller
 
         $query = OrderOperation::with([
             'order:id,order_id,order_date,buyer_first_name,buyer_last_name',
+            'order.customer',
             'order.orderItem',
             'order.orderItem.product',
             'order.orderItem.product.image',
-            'carrierService:id,name',
+            'carrierService:id,name,shipping_carrier_id',
+            'carrierService.ShippingCarrier',
             'store:id,name,store_type_id',
         ])->select('order_operation.*','order_operation.id as oid');
 
@@ -116,6 +118,7 @@ class ShipmentsController extends Controller
                 $storeType = (isset($order->store->storeType) && !empty($order->store->storeType)) ? $order->store->storeType->name : '';
                 $code = '';
                 $image = $product_id = '';
+                $product_total_weight = 0;
                 if(isset($order->order->orderItem) && !empty($order->order->orderItem)){
                     foreach($order->order->orderItem as $oitem){
                         if(isset($oitem->product) && !empty($oitem->product)){
@@ -127,6 +130,9 @@ class ShipmentsController extends Controller
                             if($oitem->product->product_sku != ''){
                                 $code .= $oitem->product->product_sku.' x '.$oitem->quantity.'<br>';
                             }
+
+                            $product_weight = $oitem->product->product_weight;
+                            $product_total_weight = $product_total_weight + $product_weight;
                         }
                     }
                 }
@@ -134,15 +140,15 @@ class ShipmentsController extends Controller
                     "action" => '<button type="button" class="btn btn-warning show-detail" data-id="'.$order->oid.'">Show Detail</button><input type="checkbox" class="pro-id" name="shipment_id[]" value="'.$order->oid.'" style="visibility:hidden;">',
                     "image" => ($image) ? '<div class="main-image"><img src="'.$image.'" alt="'.$imagename.'" class="mainImage" width="70" height="70" data-product-id="'.$product_id.'"></div>' : '',
                     "status" => '',
-                    "carrier_service" => isset($order->carrierService) ? $order->carrierService->name : '',
+                    "carrier_service" => isset($order->carrierService) ? $order->carrierService->ShippingCarrier->name.' '.$order->carrierService->name : '',
                     "store" => $order->store->name.' - '.$storeType,
                     "order_id" => $order->order->order_id,
                     "order_date" => $order->order->order_date,
                     "product_code" =>  $code,
-                    "weight" =>  $order->weight_value,
+                    "weight" =>  ($order->weight_value) ? $order->weight_value : $product_total_weight,
                     "first_name" => (isset($order->order) && !empty($order->order)) ? $order->order->buyer_first_name : '',
                     "last_name" =>  (isset($order->order) && !empty($order->order)) ? $order->order->buyer_last_name : '',
-                    "city" => ''
+                    "city" => (isset($order->order->customer) && !empty($order->order->customer)) ? $order->order->customer->city : '',
                 );
             }
         }
