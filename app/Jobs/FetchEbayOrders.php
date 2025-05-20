@@ -2,18 +2,8 @@
 
 namespace App\Jobs;
 
-use App\Constants\OrderStatus;
-use App\Constants\OrderSyncronisationType;
-use App\Models\ListingItem;
-use App\Models\Order;
-use App\Models\OrderItem;
-use App\Models\OrderOperation;
-use App\Models\OrderOperationItem;
-use App\Models\OrderSynchronization;
 use App\Models\Store;
 use App\Services\Marketplace\Service\EbayService;
-use App\Utils\OrderUtility;
-use DateTime;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Log;

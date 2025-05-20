@@ -1,4 +1,6 @@
+@php use App\Constants\ShippingLabelCreationType; @endphp
 <form id="frmMarkasShipped">
+    <input type="hidden" name="order_operation_id" value="{{ $shipmentDetail->id }}">
     <div class="row">
         <div class="col-md-12">
             <div class="card">
@@ -11,7 +13,8 @@
                                 </div>
                                 <div class="col-md-8">
                                     <input type="hidden" name="id" value="{{ $shipmentDetail->id }}">
-                                    <input type="text" class="form-control" name="order_id" id="order_id" value="{{ $shipmentDetail->order->order_id }}" readonly="">
+                                    <input type="text" class="form-control" name="order_id" id="order_id"
+                                           value="{{ $shipmentDetail->order->order_id }}" readonly="">
                                 </div>
                             </div>
                             <div class="row mt-3 g-3 align-items-center">
@@ -55,11 +58,13 @@
                                 <div class="border-dark border-width-2">
                                     <div class="d-flex flex-column">
                                         <div>
-                                            <input type="radio" name="label_generation" value="create_label" checked="">
+                                            <input type="radio" name="label_generation"
+                                                   value="<?= ShippingLabelCreationType::CreateLabel ?>" checked="">
                                             Create Label
                                         </div>
                                         <div>
-                                            <input type="radio" name="label_generation" value="mark_shipped" checked="">
+                                            <input type="radio" name="label_generation"
+                                                   value="<?= ShippingLabelCreationType::MarkAsShipped ?>" checked="">
                                             Mark As Shipped
                                         </div>
                                     </div>
@@ -161,7 +166,8 @@
                                 </div>
                                 <div class="col-md-8">
                                     @if(isset($shipmentDetail->order->customerAddress))
-                                        <a href="javascript:void(0);" class="text-blue" id="edit_address" data-id="{{ $shipmentDetail->order->customerAddress->id }}">
+                                        <a href="javascript:void(0);" class="text-blue" id="edit_address"
+                                           data-id="{{ $shipmentDetail->order->customerAddress->id }}">
                                             {{ $shipmentDetail->order->customerAddress->address_combined }} {{$shipmentDetail->order->customerAddress->city}} {{$shipmentDetail->order->customerAddress->state}}
                                             {{$shipmentDetail->order->customerAddress->country}} {{$shipmentDetail->order->customerAddress->zip_code}}
                                         </a>
@@ -216,7 +222,7 @@
                                                 <div class="main-image">
                                                     <img
                                                         src="{{ asset('storage/' .$oitem->orderItem->product->image->getFileUrl()) }}"
-                                                        alt="{{ asset('storage/' .$product->image->getFileUrl())}}"
+                                                        {{--                                                        alt="{{ asset('storage/' .$product->image->getFileUrl())}}"--}}
                                                         loading="lazy" width="50" height="50" class="mainImage"
                                                         data-product-id="{{ $oitem->orderItem->product->product_id }}">
                                                 </div>
