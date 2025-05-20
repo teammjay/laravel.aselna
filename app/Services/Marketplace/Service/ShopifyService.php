@@ -527,10 +527,6 @@ class ShopifyService implements MarketplaceServiceInterface
 
             $response = $this->authService->updateFullfillment($variables);
 
-            if(){
-                
-            }
-
             echo '<pre>';
             print_r($response);
             echo '</pre>';die;
