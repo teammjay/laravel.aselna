@@ -10,7 +10,8 @@
                                     <label for="order_id">Order ID</label>
                                 </div>
                                 <div class="col-md-8">
-                                    <input type="text" class="form-control" name="order_id" id="order_id" value="{{ $shipmentDetail->order->order_id }}" readonly="">
+                                    <input type="text" class="form-control" name="order_id" id="order_id"
+                                           value="{{ $shipmentDetail->order->order_id }}" readonly="">
                                 </div>
                             </div>
                             <div class="row mt-3 g-3 align-items-center">
@@ -18,7 +19,8 @@
                                     <label for="date">Date</label>
                                 </div>
                                 <div class="col-md-8">
-                                    <input type="text" class="form-control" name="order_date" id="order_date" value="{{ $shipmentDetail->order->order_date }}" readonly="">
+                                    <input type="text" class="form-control" name="order_date" id="order_date"
+                                           value="{{ $shipmentDetail->order->order_date }}" readonly="">
                                 </div>
                             </div>
                             <div class="row mt-3 g-3 align-items-center">
@@ -26,7 +28,9 @@
                                     <label for="status">Status</label>
                                 </div>
                                 <div class="col-md-8">
-                                    <input type="text" class="form-control" name="status" id="status" value="{{ \App\Constants\OrderStatus::getOrderStatusName($shipmentDetail->order->order_status) }}" readonly="">
+                                    <input type="text" class="form-control" name="status" id="status"
+                                           value="{{ \App\Constants\OrderStatus::getOrderStatusName($shipmentDetail->order->order_status) }}"
+                                           readonly="">
                                 </div>
                             </div>
                             <div class="row mt-3 g-3 align-items-center">
@@ -37,10 +41,28 @@
                                     <select class="form-control" id="shipment_from" name="shipment_from">
                                         @if(count($shipFrom ?? []) > 0)
                                             @foreach($shipFrom as $lc)
-                                                <option value="{{ $lc->id }}" {{ ( $lc->id == $shipmentDetail->ship_from_id ) ? 'selected' : '' }} >{{ $lc->name }}</option>
+                                                <option
+                                                    value="{{ $lc->id }}" {{ ( $lc->id == $shipmentDetail->ship_from_id ) ? 'selected' : '' }} >{{ $lc->name }}</option>
                                             @endforeach
                                         @endif
                                     </select>
+                                </div>
+                            </div>
+                            <div class="row mt-3 g-3 align-items-center">
+                                <div class="col-md-4">
+                                    <label for="shipment_from">Create Label?</label>
+                                </div>
+                                <div class="border-dark border-width-2">
+                                    <div class="d-flex flex-column">
+                                        <div>
+                                            <input type="radio" name="label_generation" value="create_label" checked="">
+                                            Create Label
+                                        </div>
+                                        <div>
+                                            <input type="radio" name="label_generation" value="mark_shipped" checked="">
+                                            Mark As Shipped
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -53,7 +75,8 @@
                                     <select class="form-control" id="carrier_name" name="carrier_name">
                                         @if(count($shippingCarrier ?? []) > 0)
                                             @foreach($shippingCarrier as $sCarrier)
-                                                <option value="{{ $sCarrier->id }}" {{ ( $sCarrier->id == $shipmentDetail->shipping_carrier_id ) ? 'selected' : '' }}>{{ $sCarrier->name }}</option>
+                                                <option
+                                                    value="{{ $sCarrier->id }}" {{ ( $sCarrier->id == $shipmentDetail->shipping_carrier_id ) ? 'selected' : '' }}>{{ $sCarrier->name }}</option>
                                             @endforeach
                                         @endif
                                     </select>
@@ -64,10 +87,12 @@
                                     <label for="shipping_carrier_service">Shipping Carrie Service</label>
                                 </div>
                                 <div class="col-md-8">
-                                    <select class="form-control" id="shipping_carrier_service" name="shipping_carrier_service">
+                                    <select class="form-control" id="shipping_carrier_service"
+                                            name="shipping_carrier_service">
                                         @if(count($shippingCarrierService ?? []) > 0)
                                             @foreach($shippingCarrierService as $sCarrierService)
-                                                <option value="{{ $sCarrierService->id }}" {{ ( $sCarrierService->id == $shipmentDetail->shipping_carrier_service_id ) ? 'selected' : '' }}>{{ $sCarrierService->name }}</option>
+                                                <option
+                                                    value="{{ $sCarrierService->id }}" {{ ( $sCarrierService->id == $shipmentDetail->shipping_carrier_service_id ) ? 'selected' : '' }}>{{ $sCarrierService->name }}</option>
                                             @endforeach
                                         @endif
                                     </select>
@@ -95,7 +120,8 @@
                                     <label for="insurance_value">Insurance Value</label>
                                 </div>
                                 <div class="col-md-8">
-                                    <input type="text" class="form-control" id="insurance_value" name="insurance_value" value="{{ $shipmentDetail->insurance_value }}">
+                                    <input type="text" class="form-control" id="insurance_value" name="insurance_value"
+                                           value="{{ $shipmentDetail->insurance_value }}">
                                 </div>
                             </div>
                             <div class="row mt-3 g-3 align-items-center">
@@ -103,7 +129,8 @@
                                     <label for="weight">Weight</label>
                                 </div>
                                 <div class="col-md-8 d-flex" style="gap:10px;">
-                                    <input type="text" class="form-control" id="weight" name="weight" value="{{ ($shipmentDetail->weight_value) ? $shipmentDetail->weight_value : $product_total_weight }}">
+                                    <input type="text" class="form-control" id="weight" name="weight"
+                                           value="{{ ($shipmentDetail->weight_value) ? $shipmentDetail->weight_value : $product_total_weight }}">
                                     <select class="form-control" id="weight_type" name="weight_type">
                                         <option value="0">Oz</option>
                                         <option value="1">Lb</option>
@@ -121,7 +148,8 @@
                                     <select class="form-control" id="carrier_package" name="carrier_package">
                                         @if(count($shippingCarrierPackage ?? []) > 0)
                                             @foreach($shippingCarrierPackage as $sCarrierPackage)
-                                                <option value="{{ $sCarrierPackage->id }}" {{ ( $sCarrierPackage->id == $shipmentDetail->shipping_carrier_service_id || ($package_id != '' && $package_id == $sCarrierPackage->id) ) ? 'selected' : '' }}>{{ $sCarrierPackage->name }}</option>
+                                                <option
+                                                    value="{{ $sCarrierPackage->id }}" {{ ( $sCarrierPackage->id == $shipmentDetail->shipping_carrier_service_id || ($package_id != '' && $package_id == $sCarrierPackage->id) ) ? 'selected' : '' }}>{{ $sCarrierPackage->name }}</option>
                                             @endforeach
                                         @endif
                                     </select>
@@ -132,7 +160,12 @@
                                     <label for="shipping_address">Shipping Address</label>
                                 </div>
                                 <div class="col-md-8">
-
+                                    @if(isset($shipmentDetail->order->customerAddress))
+                                        <a href="javascript:void(0);" class="text-blue" id="edit_address" data-id="{{ $shipmentDetail->order->customerAddress->id }}">
+                                            {{ $shipmentDetail->order->customerAddress->address_combined }} {{$shipmentDetail->order->customerAddress->city}} {{$shipmentDetail->order->customerAddress->state}}
+                                            {{$shipmentDetail->order->customerAddress->country}} {{$shipmentDetail->order->customerAddress->zip_code}}
+                                        </a>
+                                    @endif
                                 </div>
                             </div>
                             <div class="row mt-3 g-3 align-items-center">
@@ -175,23 +208,28 @@
                             </thead>
                             <tbody id="shipment-item-list">
 
-                                @if(count($shipmentDetail->operationItem ?? []) > 0)
-                                    @foreach($shipmentDetail->operationItem as $oitem)
-                                        <tr>
-                                            <td>
-                                                @if($oitem->orderItem->product->image != '')
-                                                    <div class="main-image">
-                                                        <img src="{{ asset('storage/' .$oitem->orderItem->product->image->getFileUrl()) }}" alt="{{ asset('storage/' .$product->image->getFileUrl())}}" loading="lazy" width="50" height="50" class="mainImage" data-product-id="{{ $oitem->orderItem->product->product_id }}">
-                                                    </div>
-                                                @endif
-                                            </td>
-                                            <td>{{ $oitem->orderItem->sku }}</td>
-                                            <td><input type="text" class="form-control" name="quantity" value="{{ $oitem->orderItem->quantity }}"></td>
-                                            <td>{{ \App\Constants\OrderSyncStatus::getOrderSyncStatusName($oitem->sync_status) }}</td>
-                                            <td>{{ $oitem->sync_message }}</td>
-                                        </tr>
-                                    @endforeach
-                                @endif
+                            @if(count($shipmentDetail->operationItem ?? []) > 0)
+                                @foreach($shipmentDetail->operationItem as $oitem)
+                                    <tr>
+                                        <td>
+                                            @if($oitem->orderItem->product->image != '')
+                                                <div class="main-image">
+                                                    <img
+                                                        src="{{ asset('storage/' .$oitem->orderItem->product->image->getFileUrl()) }}"
+                                                        alt="{{ asset('storage/' .$product->image->getFileUrl())}}"
+                                                        loading="lazy" width="50" height="50" class="mainImage"
+                                                        data-product-id="{{ $oitem->orderItem->product->product_id }}">
+                                                </div>
+                                            @endif
+                                        </td>
+                                        <td>{{ $oitem->orderItem->sku }}</td>
+                                        <td><input type="text" class="form-control" name="quantity"
+                                                   value="{{ $oitem->orderItem->quantity }}"></td>
+                                        <td>{{ \App\Constants\OrderSyncStatus::getOrderSyncStatusName($oitem->sync_status) }}</td>
+                                        <td>{{ $oitem->sync_message }}</td>
+                                    </tr>
+                                @endforeach
+                            @endif
                             </tbody>
                         </table>
                     </div>
