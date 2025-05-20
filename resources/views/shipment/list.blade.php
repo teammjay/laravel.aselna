@@ -227,7 +227,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancle</button>
-                    <button type="button" class="btn btn-primary" id="shipMarkAsShippedForm"><i class="fa fa-check"></i> Ok </button>
+                    <button type="button" class="btn btn-primary" id="mark_shipped"><i class="fa fa-check"></i> Ok </button>
                 </div>
             </div>
         </div>
@@ -323,6 +323,12 @@
         });
 
         $(document).on('click','#mark_as_shipped',function () {
+            if($('input[name="shipment_id[]"]:checked').length > 1){
+                alert('Please select one shipment to make "Mark as Shipped"');
+                $('input[name="shipment_id[]"]').prop('checked',false);
+                $('input[name="shipment_id[]"]').parents('tr').removeClass('bg-blue');
+                return false;
+            }
             var shipment_id = $('input[name="shipment_id[]"]:checked').val();
             if(shipment_id != '' && shipment_id != null){
                 $.ajax({
@@ -347,6 +353,8 @@
                                 }
                             });
                             $('#markAsShippedModal').modal('show');
+
+                            getShippingCarrierService($('#carrier_name_ms'));
                         }
                     },
                     error: function (xhr) {
@@ -481,17 +489,17 @@
             getShippingCarrierService(ele);
         });
 
-        $(document).on('change','#carrier_name',function () {
+        $(document).on('change','#carrier_name, #carrier_name_ms',function () {
             var ele = $(this);
             getShippingCarrierService(ele);
         });
 
 
         loadDatatables();
-        loadServiceCarrier();
+        loadServiceCarrier($('#carrier_name').val());
 
-        $(document).on('change','#carrier_name',function () {
-            loadServiceCarrier();
+        $(document).on('change','#carrier_name, #carrier_name_ms',function () {
+            loadServiceCarrier($(this).val());
         });
 
         $(document).on('click','.mainImage',function () {
@@ -600,23 +608,49 @@
             },500);
         });
 
-        $(document).on('click','#shipMarkAsShippedForm', function () {
-            // get value of the form
-            var formData = $('#frmMarkasShipped').serializeArray();
-            var keyValueData = {};
-            $.each(formData, function(index, field) {
-                keyValueData[field.name] = field.value; // Append form data to the DataTables request
-            });
-            console.log(keyValueData);
+        $(document).on('click','#mark_shipped',function () {
+
+            const form = document.querySelector("#frmMarkasShipped");
+            let formData = new FormData(form);
+
+            const trackingNumber = formData.get("tracking_number");
+
+            if (!trackingNumber || trackingNumber.trim() === "") {
+                $('#tracking_number').addClass('error');
+                alert("Tracking number is required.");
+                return;
+            }
+
+            const orderId = formData.get("order_id");
+
+            if (isNaN(orderId) || parseInt(orderId) <= 0) {
+                $('#order_id').addClass('error');
+                alert("Please enter a valid Order ID.");
+                return;
+            }
+
             $.ajax({
-                url: "{{ route('shipment.markAsShipped') }}",
+                url: "{{ route('shipment.markshipped') }}",
                 type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
                 headers: {
                     'X-CSRF-TOKEN': '{{ csrf_token() }}',
                 },
-                data: keyValueData,
+                success: function (response) {
+                    // If success, remove the user row from the table
+                    if (response.success) {
+                        alert('Records updated successfully!!');
+                        location.reload();
+                    }
+                },
+                error: function (xhr) {
+                    // Handle error response
+                    alert('Error: ' + xhr.responseJSON.error);
+                }
             });
-        })
+        });
 
     });
 
@@ -632,6 +666,7 @@
                 // If success, remove the user row from the table
                 if (response.success) {
                     $('#carrier_service_id').html(response.option);
+                    $('#shipping_carrier_service').html(response.option);
                 }
             },
             error: function (xhr) {
@@ -713,8 +748,7 @@
         });
     }
 
-    function loadServiceCarrier(){
-        var carrier = $('#carrier_name').val();
+    function loadServiceCarrier(carrier){
         $.ajax({
             url: "{{ route('shipment.getshippingcarrier') }}",
             type: 'POST',

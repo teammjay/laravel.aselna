@@ -2522,7 +2522,7 @@ class ListingController extends Controller
                                                 foreach ($models as $j => $model) {
                                                     Log::info(' Model :: ' . json_encode($model));
 
-                                                    if ($store_type != '') {
+                                                    /*if ($store_type != '') {
                                                         switch (strtolower($store_type)) {
                                                             case 'walmart':
                                                                 //case 'shopify':
@@ -2532,7 +2532,7 @@ class ListingController extends Controller
                                                                 $newupcCodes = $upcCodes;
                                                                 break;
                                                         }
-                                                    }
+                                                    }*/
 
                                                     /*if(isset($models[0])) {
                                                         $model = $models[0];
@@ -2983,7 +2983,7 @@ class ListingController extends Controller
                             'created_by' => $created_by
                         );
 
-                        $listingItem->update(['status' => ListingStatus::Deleted, 'sync_status' => ListingSyncStatus::Unsynchronize]);
+                        //$listingItem->update(['status' => ListingStatus::Deleted, 'sync_status' => ListingSyncStatus::Unsynchronize]);
                         ListingItemLink::create($itemLink);
 
                         Bus::chain([

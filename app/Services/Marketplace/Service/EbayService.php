@@ -2,10 +2,13 @@
 
 namespace App\Services\Marketplace\Service;
 
+use App\Constants\ListingStatus;
+use App\Constants\OrderStatus;
+use App\Models\Order;
+use DateTime;
 use App\Constants\FeedStatus;
 use App\Constants\FeedTypes;
 use App\Constants\ListingSyncStatus;
-use App\Constants\OrderStatus;
 use App\Constants\OrderSyncronisationType;
 use App\Models\Listing;
 use App\Models\ListingFeed;
@@ -14,7 +17,6 @@ use App\Models\ListingItemDetail;
 use App\Models\ListingItemLink;
 use App\Models\ListingItemProductImage;
 use App\Models\ListingTemplate;
-use App\Models\Order;
 use App\Models\OrderSynchronization;
 use App\Models\ProductImageAlternative;
 use App\Models\ProductKeyFeatures;
@@ -839,6 +841,77 @@ class EbayService implements MarketplaceServiceInterface
                                         }
                                     }
                                 case FeedTypes::DELETE:
+                                    $successSku = array();
+                                    if (isset($xml->EndFixedPriceItemResponse)) {
+                                        $successCnt = 0;
+                                        $failCnt = 0;
+                                        $warningCnt = 0;
+                                        $errorMsg = '';
+                                        foreach ($xml->EndFixedPriceItemResponse as $item) {
+                                            if (isset($item->Ack) && strtolower($item->Ack) == 'success') {
+                                                $successCnt++;
+                                                $successSku[] = $item->SKU;
+                                                Log::info('SKU : ' . $item->SKU);
+                                                $listingItems = ListingItem::select('listing_item.*')->leftJoin('listing_item_link', 'listing_item_link.item_id', '=', 'listing_item.id')->where('listing_item.sku', $item->SKU)->where('listing_item_link.listing_id', $listingId)->first();
+                                                if (isset($listingItems)) {
+                                                    $listingItems->update([
+                                                        'status' => ListingStatus::Deleted,
+                                                        'sync_status' => ListingSyncStatus::Unsynchronize
+                                                    ]);
+                                                }
+                                            } else if (isset($item->Ack) && strtolower($item->Ack) == 'warning') {
+                                                $warningCnt++;
+                                                if (isset($item->Errors)) {
+                                                    $errorMsg = $item->Errors->LongMessage;
+                                                }
+                                            } else {
+                                                $failCnt++;
+                                                if (isset($item->Errors)) {
+                                                    $errorMsg = $item->Errors->LongMessage;
+                                                }
+                                            }
+                                        }
+
+                                        if (!empty($successSku)) {
+                                            $listing_items = ListingItemLink::select('listing_item_link.item_id')->leftJoin('listing_item', 'listing_item.id', '=', 'listing_item_link.item_id')->where('listing_item_link.listing_id', $listingId)->whereNotIn('listing_item.sku', $successSku)->get();
+                                            if (count($listing_items ?? []) > 0) {
+                                                foreach ($listing_items as $item) {
+                                                    $listingItem = ListingItem::findOrFail($item->item_id);
+                                                    $listingItem->update([
+                                                        'status' => ListingStatus::Deleted,
+                                                        'sync_status' => ListingSyncStatus::Unsynchronize
+                                                    ]);
+                                                }
+                                            }
+                                        } else {
+                                            $listing_items = ListingItemLink::select('item_id')->where('listing_id', $listingId)->get();
+                                            if (count($listing_items ?? []) > 0) {
+                                                foreach ($listing_items as $item) {
+
+                                                    $listingItem = ListingItem::findOrFail($item->item_id);
+                                                    $listingItem->update([
+                                                        'status' => ListingStatus::Deleted,
+                                                        'sync_status' => ListingSyncStatus::Unsynchronize
+                                                    ]);
+                                                }
+                                            }
+                                        }
+
+                                        $feedInfo->update([
+                                            'success_count' => $successCnt,
+                                            'warning_count' => $warningCnt,
+                                            'status_check_count' => ($feedInfo->status_check_count != '') ? ($feedInfo->status_check_count + 1) : 0,
+                                            'fail_count' => $failCnt,
+                                            'error_text' => $errorMsg,
+                                            'last_status_check_ts' => date('Y-m-d H:i:s')
+                                        ]);
+
+                                        if ($successCnt > 0) {
+                                            $feedInfo->update([
+                                                'status' => FeedStatus::PROCESSED
+                                            ]);
+                                        }
+                                    }
                                     break;
                                 case FeedTypes::PRICE:
                                 case FeedTypes::INVENTORY:
