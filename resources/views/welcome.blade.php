@@ -146,9 +146,10 @@
                         <th>Listing Id</th>
                         <th>Feed type</th>
                         <th>Store</th>
+                        <th>Relist</th>
                         <th>Status</th>
                         <th>created At</th>
-                        <th> Submit At</th>
+                        <th>Submit At</th>
                         <th>Number Of Items</th>
                         <th>Processing Count</th>
                         <th>Success</th>
@@ -216,6 +217,7 @@
                             return row.store.name + ' - ' + row.store.store_type.name;
                         }
                     },
+                    {data: 're_list', name: 'relist'},
                     {
                         data: 'status', name: 'status', render: function (data) {
                             const statusJson = '<?= json_encode(FeedStatus::names) ?>';

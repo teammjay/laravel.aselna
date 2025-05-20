@@ -11,6 +11,7 @@ use App\Models\ShippingCarrier;
 use App\Models\ShippingCarrierPackage;
 use App\Models\ShippingCarrierService;
 use App\Models\Store;
+use App\Services\Marketplace\Service\ShopifyService;
 use Illuminate\Http\Request;
 
 class ShipmentsController extends Controller
@@ -310,13 +311,49 @@ class ShipmentsController extends Controller
         ]);
     }
 
-    public function cancelShipment(Request $request)
-    {
+    public function markShipped(Request $request){
 
+        $selected_shipment_id = $request->input('id');
+        $carrier_id = $request->input('carrier_name');
+        $carrier_package = $request->input('carrier_package');
+        $carrier_service_id = $request->input('shipping_carrier_service');
+        $tracking_number = $request->input('tracking_number');
+        $shipment_from = $request->input('shipment_from');
+        $weight = $request->input('weight');
+        $weight_type = $request->input('weight_type');
+        $order_id = $request->input('order_id');
+
+        if($selected_shipment_id){
+            $updateRecord = array(
+                'tracking_number' => $tracking_number,
+                'shipping_carrier_id' => $carrier_id,
+                'shipping_carrier_service_id' => $carrier_service_id,
+                'shipping_package_id' => $carrier_package,
+                'ship_from_id' => $shipment_from,
+                'weight_value' => $weight,
+                'weight_weight_unit' => $weight_type,
+            );
+
+            $shipmentDetail = OrderOperation::with('order','store','store.storeType')->where('id',$selected_shipment_id)->first();
+            $shipmentDetail->update($updateRecord);
+
+            if(isset($shipmentDetail->order) && isset($shipmentDetail->store->storeType)){
+                $storeType = $shipmentDetail->store->storeType->name;
+                if(strtolower($storeType) == 'shopify'){
+                    $shopifyServie = new ShopifyService();
+                    $shopifyServie->updateFullfillment($shipmentDetail->order_id);
+                }else{
+
+                }
+            }
+
+            return response()->json([
+                'success' => true
+            ]);
+        }
     }
 
-    public function markAsShipped(Request $request)
-    {
+    public function cancelShipment(Request $request){
 
     }
 }

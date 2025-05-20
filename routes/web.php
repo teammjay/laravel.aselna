@@ -467,7 +467,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/shipment/cancelshipment', 'cancelShipment')->name('shipment.cancelshipment');
         Route::post('/shipment/getshippingaddress', 'getShippingAddress')->name('shipment.getshippingaddress');
         Route::post('/shipment/saveaddress', 'saveAddress')->name('shipment.saveaddress');
-        Route::post('/shipment/markAsShipped', 'markAsShipped')->name('shipment.markAsShipped');
+        Route::post('/shipment/markshipped', 'markShipped')->name('shipment.markshipped');
     });
 
     Route::controller(ShippingCarrierPackageController::class)->group(function () {
