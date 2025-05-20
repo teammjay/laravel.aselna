@@ -227,7 +227,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancle</button>
-                    <button type="button" class="btn btn-primary" id="shipThis"><i class="fa fa-check"></i> Ok </button>
+                    <button type="button" class="btn btn-primary" id="shipMarkAsShippedForm"><i class="fa fa-check"></i> Ok </button>
                 </div>
             </div>
         </div>
@@ -600,6 +600,11 @@
             },500);
         });
 
+        $(document).on('click','#shipMarkAsShippedForm', function () {
+            // get value of the form
+            var formData = $('#frmMarkasShipped').serializeArray();
+            console.log(formData);
+        })
 
     });
 
