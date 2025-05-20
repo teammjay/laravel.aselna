@@ -8,22 +8,18 @@ use App\Models\Catalog;
 use App\Models\Customer;
 use App\Models\CustomerAddress;
 use App\Models\CustomerPhone;
-use App\Models\ListingItem;
-use App\Models\ManageMarketplaceProduct;
-use App\Models\OrderOperation;
-use App\Models\OrderOperationItem;
-use App\Models\ShippingServiceRule;
-use App\Services\Marketplace\Service\ShopifyService;
-use App\Utils\OrderUtility;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Foundation\Queue\Queueable;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\OrderOperation;
+use App\Models\OrderOperationItem;
 use App\Models\OrderSynchronization;
+use App\Models\ShippingServiceRule;
 use App\Models\Store;
+use App\Services\Marketplace\Service\ShopifyService;
+use App\Utils\order\OrderUtility;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Log;
-use Mockery\Exception;
-use Nette\Utils\DateTime;
 
 class FetchShopifyOrders implements ShouldQueue
 {

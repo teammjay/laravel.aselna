@@ -2,18 +2,19 @@
 
 namespace App\Services\Marketplace\Service;
 
-use App\Constants\OrderStatus;
-use App\Models\Order;
-use DateTime;
 use App\Constants\FeedStatus;
+use App\Constants\FeedTypes;
 use App\Constants\ListingSyncStatus;
+use App\Constants\OrderStatus;
 use App\Constants\OrderSyncronisationType;
 use App\Models\Listing;
 use App\Models\ListingFeed;
+use App\Models\ListingItem;
 use App\Models\ListingItemDetail;
 use App\Models\ListingItemLink;
 use App\Models\ListingItemProductImage;
 use App\Models\ListingTemplate;
+use App\Models\Order;
 use App\Models\OrderSynchronization;
 use App\Models\ProductImageAlternative;
 use App\Models\ProductKeyFeatures;
@@ -22,15 +23,13 @@ use App\Models\ProductTitleKeyword;
 use App\Models\StorePage;
 use App\Models\StoreProduct;
 use App\Models\StoreType;
-use App\Models\ListingItem;
 use App\Models\SysFile;
 use App\Services\Auth\EbayAuthService;
 use App\Services\Marketplace\Contracts\MarketplaceServiceInterface;
 use App\Utils\ListingUtility;
-use App\Utils\OrderUtility;
+use App\Utils\order\OrderUtility;
 use App\Utils\Spintax;
 use App\Utils\XmlUtility;
-use App\Constants\FeedTypes;
 use Illuminate\Support\Facades\Log;
 
 class EbayService implements MarketplaceServiceInterface

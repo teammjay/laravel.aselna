@@ -1,4 +1,5 @@
 <form id="frmMarkasShipped">
+    <input type="hidden" name="order_operation_id" value="{{ $shipmentDetail->id }}">
     <div class="row">
         <div class="col-md-12">
             <div class="card">
@@ -216,7 +217,7 @@
                                                 <div class="main-image">
                                                     <img
                                                         src="{{ asset('storage/' .$oitem->orderItem->product->image->getFileUrl()) }}"
-                                                        alt="{{ asset('storage/' .$product->image->getFileUrl())}}"
+{{--                                                        alt="{{ asset('storage/' .$product->image->getFileUrl())}}"--}}
                                                         loading="lazy" width="50" height="50" class="mainImage"
                                                         data-product-id="{{ $oitem->orderItem->product->product_id }}">
                                                 </div>

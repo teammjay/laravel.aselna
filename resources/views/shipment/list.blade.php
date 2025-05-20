@@ -603,7 +603,19 @@
         $(document).on('click','#shipMarkAsShippedForm', function () {
             // get value of the form
             var formData = $('#frmMarkasShipped').serializeArray();
-            console.log(formData);
+            var keyValueData = {};
+            $.each(formData, function(index, field) {
+                keyValueData[field.name] = field.value; // Append form data to the DataTables request
+            });
+            console.log(keyValueData);
+            $.ajax({
+                url: "{{ route('shipment.markAsShipped') }}",
+                type: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                },
+                data: keyValueData,
+            });
         })
 
     });

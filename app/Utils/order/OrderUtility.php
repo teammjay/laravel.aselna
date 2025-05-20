@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Utils;
+namespace App\Utils\order;
 
 use App\Constants\OrderStatus;
 use App\Models\Catalog;

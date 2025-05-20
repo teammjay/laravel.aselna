@@ -2929,7 +2929,7 @@ class ListingController extends Controller
                     $issues[$product->product_id] = ListingUtility::validate($currentCategory->store_type_code, $product->product_id, $store->storeType->id);
                 }
 
-                $table_html[$product->product_id] = view('listing.error_tables', ['issues' => $issues[$product->product_id],'Product'=>$product])->render();
+                $table_html[$product->product_id] = view('listing.error_tables', ['issues' => $issues[$product->product_id],'product'=>$product])->render();
             }
         }
 
