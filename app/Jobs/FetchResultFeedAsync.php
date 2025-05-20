@@ -62,9 +62,11 @@ class FetchResultFeedAsync implements ShouldQueue
             $storeType = $feed->store->storeType->name;
 
             $marketplaceService = MarketplaceServiceFactory::create($storeType);
-            $marketplaceService->getResultFeed($listingId, $feed->id);
-            $feed->status = FeedStatus::PROCESSED;
-            $feed->save();
+            $response = $marketplaceService->getResultFeed($listingId, $feed->id);
+            if (isset($response)) {
+                $feed->status = FeedStatus::PROCESSED;
+                $feed->save();
+            }
         } catch (\Exception $e) {
             Log::error('Error fetching result feed: ' . $e->getMessage());
             $feed->status = FeedStatus::FAILED;
