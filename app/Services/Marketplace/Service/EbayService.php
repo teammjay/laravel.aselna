@@ -153,7 +153,7 @@ class EbayService implements MarketplaceServiceInterface
             ///echo $description;die;
 
             // Add AddFixedPriceItemRequest
-            if (isset($itemDetail->store_sku) && $itemDetail->store_sku != '') {
+            if(isset($listingInfo->re_list) && ($listingInfo->re_list == 1)){
                 $addFixedPriceItemRequest = $xml->addChild('ReviseFixedPriceItemRequest', null, 'urn:ebay:apis:eBLBaseComponents');
             } else {
                 $addFixedPriceItemRequest = $xml->addChild('AddFixedPriceItemRequest', null, 'urn:ebay:apis:eBLBaseComponents');
@@ -648,9 +648,9 @@ class EbayService implements MarketplaceServiceInterface
         $listingDetail = ListingFeed::where('listing_id', $listingId)->first();
         $feed_id = $listingDetail->id;
 
-        if ($listingInfo->feed_type == 5) {
-
-        } else {
+//        if ($listingInfo->feed_type == 5) {
+//
+//        } else {
 
             $taskID = $authService->createTask($version, $listingInfo);
 
@@ -661,7 +661,7 @@ class EbayService implements MarketplaceServiceInterface
             $response = $authService->uploadFile($taskID, $fileName, $filePath);
             Log::info('Feed Submitted : ' . $feedId);
 
-        }
+//        }
         //$this->downloadResultFeed($taskID, $listingId);
         /*if(isset($response['fileUploadStatus']) && $response['fileUploadStatus'] == 'SUCCESS'){
             $updateFeedData = [
