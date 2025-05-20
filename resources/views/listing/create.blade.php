@@ -121,6 +121,10 @@
             margin: -.5rem -.5rem -.5rem auto;
         }
         #productListingTable .sticky-top{z-index: 99;}
+        .total_sel_product, .total_product{
+            font-size: 16px !important;
+        }
+        .total_sel_product b, .total_product b{ font-size: 18px;}
     </style>
 @stop
 @section('content_header')
@@ -294,6 +298,7 @@
                                         <div>
                                             <input type="checkbox" id="selected_product"> <label for="selected_product">Selected Products Only</label>
                                             <button class="btn btn-default" id="select_all_product">Select All</button>
+                                            <span class="total_sel_product"></span>
                                         </div>
                                         <div class="float-right" id="total_search_product"></div>
                                     </div>
@@ -397,8 +402,19 @@
                         </div>
                         <div class="col-md-12">
                             <div class="">
-                                <div class="card-header d-flex align-items-center pr-0 pl-0">
-                                    <label>Bundle Sperator</label> <input type="text" class="form-control ml-3" name="bundle_seperator" value="w" style="width: 150px;">
+                                <div class="card-header d-flex align-items-center justify-content-between pr-0 pl-0">
+                                    <div class="d-flex align-items-center">
+                                        <label>Bundle Sperator</label> <input type="text" class="form-control ml-3" name="bundle_seperator" value="w" style="width: 150px;">
+                                        <span class="total_product"></span>
+                                    </div>
+                                    <div class="float-right">
+                                        <div class="d-flex align-items-center" style="gap:15px;">
+                                            <select class="form-control" id="store_category">
+
+                                            </select>
+                                            <button class="btn btn-secondary" id="apply_all">Apply to all</button>
+                                        </div>
+                                    </div>
                                 </div>
                                 <div class="card-body pr-0 pl-0">
                                     <div class="table-responsive" id="productsTable2_wrapper" style="max-height: 500px; overflow: auto;">
@@ -568,7 +584,7 @@
                                 <div class="col-md-5">
                                     <div class="card">
                                         <div class="card-header">
-                                            Products
+                                            Products <span class="total_product"></span>
                                         </div>
                                         <div class="card-body">
                                             <div style="max-height: 538px; overflow: auto">
@@ -703,7 +719,8 @@
                         <button type="button" class="btn btn-warning lbtn" id="prevBtn">Prev</button>
                         <button type="button" class="btn btn-success lbtn" id="nextBtn">Next</button>
                         <a href="{{ route('listing.list') }}" class="btn btn-secondary lbtn">Cancel</a>
-                        <a href="{{ route('listing.list') }}" class="btn btn-warning donebtn" style="display: none;">Done</a>
+                        {{--<a href="{{ route('listing.list') }}" class="btn btn-warning donebtn" style="display: none;">Done</a>--}}
+                        <button type="button" class="btn btn-warning donebtn" id="doneBtn" style="display: none;">Done</button>
                     </div>
                 </div>
             </div>
@@ -975,7 +992,7 @@
                                 flag = true;
                             }
                         });
-
+                        console.log(flag);
                         if(flag){
                             alert('The title length is greater than maximum length so product can not generated');
                             return false;
@@ -1063,6 +1080,14 @@
                 }
             });
 
+            document.getElementById('doneBtn').addEventListener('click', () => {
+                $('#nextBtn').html('Next');
+                $('.lbtn').show();
+                $('.donebtn').hide();
+                currentIndex = 0;
+                activateTab(0);
+            });
+
             // Initialize by activating the first tab
             activateTab(currentIndex);
 
@@ -1083,6 +1108,7 @@
             selected_carrier[key].push(value);
         }
         $(document).ready(function() {
+
 
             $('#productsTable').DataTable();
             $('#productListingTable').DataTable({});
@@ -1148,13 +1174,18 @@
             $("#manufacturer_filter, #product_type_filter, #brand_filter, #rating_filter, #popularity_filter, #carrier_filter").gs_multiselect();
 
             $(document).on('click', '#selected_product', function() {
-                if($(this).is(':checked')){
-                    $('.selectproRow').removeClass('bg-blue');
-                    $('.proCheck').prop('checked',false);
+                /*if($(this).is(':checked')){
+
                 }else{
                     $('.selectproRow').removeClass('bg-blue');
                     $('.proCheck').prop('checked',true);
-                }
+                }*/
+
+                $('.selectproRow').removeClass('bg-blue');
+                $('.proCheck').prop('checked',false);
+
+                //let totalCnt = $('input[name="products[]"]:checked').length;
+                $('.total_sel_product').html('(Selected <b>0</b> item)');
             });
 
             $(document).on('click', '#select_all_product', function() {
@@ -1163,6 +1194,9 @@
                     $(this).prop('checked',true);
                     $(this).parents('.selectproRow').addClass('bg-blue');
                 });
+
+                let totalCnt = $('input[name="products[]"]:checked').length;
+                $('.total_sel_product').html('(Selected <b>'+totalCnt+'</b> item)');
             });
 
 
@@ -1183,8 +1217,11 @@
                     }
                 }else{
                     ele.removeClass('bg-blue');
-                    $(this).find('.proCheck').prop('checked',true);
+                    $(this).find('.proCheck').prop('checked',false);
                 }
+
+                let totalCnt = $('input[name="products[]"]:checked').length;
+                $('.total_sel_product').html('(Selected <b>'+totalCnt+'</b> item)');
             });
 
             $(document).on('click', '.sprolistRow', function() {
@@ -2339,6 +2376,60 @@
                 });
             });
 
+            $(document).on('click','#apply_all',function () {
+                var category_id = $('#store_category').val();
+                let selected_product = [];
+                $('input[name="selected_product[]"]').each(function () {
+                    selected_product.push($(this).val());
+                });
+
+                let selected_store_product = [];
+                $('input[name="selected_store_product[]"]').each(function () {
+                    selected_store_product.push($(this).val());
+                });
+
+                $.ajax({
+                    url: "{{ route('listing.updateallstoreproduct') }}",
+                    type: 'POST',
+                    data: {
+                        category_id:category_id,
+                        product_ids: selected_product,
+                        store_product_ids: selected_store_product,
+                        store_id: $('#listing_store').val(),
+                    },
+                    headers: {
+                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                    },
+                    success: function (response) {
+                        for (let i = 0; i < selected_product.length; i++) {
+                            var product_id = selected_product[i];
+
+                            if (response.issues.product_id && response.issues.product_id.length > 0) {
+                                var buttonId = 'errorButton-' + product_id;
+                                $('button#' + buttonId).removeClass('btn-success').addClass('btn-danger').text(response.issues.product_id.length +' Errors').data('error',''+response.issues.product_id.length);
+                                $('#errorModal-' +product_id + ' .modal-body').html(response.issue_table_html);
+                            } else {
+                                var buttonId = 'errorButton-' + product_id;
+                                $('button#' + buttonId).removeClass('btn-danger').addClass('btn-success').text('0 Issues').data('error','0');
+                                $('#errorModal-' +product_id + ' .modal-body').html('');
+                            }
+                        }
+
+                        $('.store-type-category').each(function(){
+                            $(this).val(category_id).trigger('change');
+                        });
+
+                        //$('.store-type-category').select2();
+
+                    },
+                    error: function (xhr) {
+                    },
+                    complete: function () {
+                        $("#ajax-preloader").hide();
+                    }
+                });
+
+            });
 
         });
 
@@ -2434,6 +2525,7 @@
             if ($.fn.DataTable.isDataTable('#productsTable')) {
                 $('#productsTable').DataTable().clear().destroy();
             }
+            $('.total_sel_product').html('(Selected <b>0</b> item)');
             $.ajax({
                 url: "{{ route('listing.getproducts') }}",
                 type: 'POST',
@@ -2493,6 +2585,8 @@
             $('input[name="products[]"]:checked').each(function () {
                 selected_product.push($(this).val())
             });
+
+            $('.total_product').html('(<b>'+selected_product.length+'</b> item)');
             $('#ajax-preloader').show();
             $.ajax({
                 url: "{{ route('listing.getselectedproducts') }}",
@@ -2510,6 +2604,10 @@
                         $('#productsTable2_wrapper').html(response.html);
                         generateKeywords();
                         $('.store-type-category').select2();
+                        if(response.storeCategories){
+                            $('#store_category').html(response.storeCategories);
+                            $('#store_category').select2();
+                        }
                         //generateTitleKeywords();
                         $(document).on('click', '.btn-danger', function () {
                             const targetModal = $(this).data('bs-target');
@@ -2787,6 +2885,7 @@
                     if (response.success) {
                         $('#listing_list').html(response.html);
                         $('#total_listing_product').html(response.total+' rows');
+                        $('.total_sel_product').html('(Selected <b>0</b> item)');
                         if(response.total > 0) {
                             if(include_carrier == 1){
                                 var sortCol = 1;

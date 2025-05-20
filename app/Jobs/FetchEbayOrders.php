@@ -43,13 +43,17 @@ class FetchEbayOrders implements ShouldQueue
         if(count($stores ?? []) > 0) {
             foreach ($stores as $store) {
 
-//                if ($store->name != 'nismobile') {
-//                    continue;
-//                }
+                if (env('APP_ENV') === 'local' && $store->name != 'nismobile') {
+                    continue;
+                }
                 Log::info('Store : ' . $store->name);
 
-                $ebayService = new EbayService();
-                $orders = $ebayService->getOrders($store);
+                try {
+                    $ebayService = new EbayService();
+                    $orders = $ebayService->getOrders($store);
+                } catch (\Exception $e) {
+                    Log::info('Error : ' . $e->getMessage());
+                }
 
 //                $ordersyncDetail = OrderSynchronization::where('store_id',$store->id)->orderBy('filter_end_date','desc')->first();
 //

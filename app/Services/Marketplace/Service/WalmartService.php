@@ -12,6 +12,7 @@ use App\Models\ListingItem;
 use App\Models\ListingItemLink;
 use App\Models\ListingItemProductImage;
 use App\Models\Order;
+use App\Models\OrderItem;
 use App\Models\OrderSynchronization;
 use App\Services\Auth\WalmartAuthService;
 use App\Services\Marketplace\Contracts\MarketplaceServiceInterface;
@@ -41,6 +42,12 @@ class WalmartService implements MarketplaceServiceInterface
                 break;
             case FeedTypes::INVENTORY:
                 $this->generateInventoryFeed($listingInfo, $listingId, $feedInfo);
+                break;
+            case FeedTypes::SHIPMENT_UPDATE:
+                $this->callShipmentUpdateFeed($feedId);
+                break;
+            case FeedTypes::ORDER_CANCEL:
+                $this->callOrderCancelFeed($feedId);
                 break;
             case FeedTypes::PRICE:
                 $this->generatePriceFeed($listingInfo, $listingId);
@@ -475,6 +482,8 @@ class WalmartService implements MarketplaceServiceInterface
             //     return 'MPItem';
             case FeedTypes::DELETE:
                 return 'RETIRE_ITEM';
+            case FeedTypes::SHIPMENT_UPDATE:
+                return 'RETIRE_ITEM';
             case FeedTypes::INVENTORY:
                 return 'inventory';
             case FeedTypes::PRICE:
@@ -482,5 +491,40 @@ class WalmartService implements MarketplaceServiceInterface
             default:
                 return '';
         }
+    }
+
+    private function callShipmentUpdateFeed($feedId)
+    {
+        $listingInfo = ListingFeed::where('id', $feedId)->first();
+        $store = $listingInfo->store;
+
+        $orderItems = OrderItem::where('order_id', $listingInfo->listing_id)->get();
+
+        foreach ($orderItems as $item) {
+            $orderLine = [
+                'lineNumber' => 1,
+                'orderLineStatuses' => [
+                    'orderLineStatus' => [
+                        [
+                            'cancellationReason' => 'CANCEL_REQUESTED_BY_CUSTOMER',
+                            'statusCode' => 'CANCELLED',
+                            'status' => 'CANCELLED',
+                            'statusQuantity' => [
+                                'amount' => 10
+                            ]
+                        ]
+                    ]
+                ]
+            ];
+        }
+
+        $cancelOrder = [
+            'orderCancellation'
+        ];
+    }
+
+    private function callOrderCancelFeed(mixed $feedId)
+    {
+
     }
 }

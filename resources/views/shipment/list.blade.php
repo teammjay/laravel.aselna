@@ -430,6 +430,8 @@
                             }
                         });
                         $('#shippingDetailModal').modal('show');
+
+                        getShippingCarrierService($('#carrier_name'));
                     }
                 },
                 error: function (xhr) {
@@ -483,6 +485,7 @@
             var ele = $(this);
             getShippingCarrierService(ele);
         });
+
 
         loadDatatables();
         loadServiceCarrier();

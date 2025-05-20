@@ -528,7 +528,7 @@ class EbayAuthService
             // case FeedTypes::IMAGE_UPDATE:
             //     return 'MPItem';
             case FeedTypes::DELETE:
-                return 'LMS_END_ITEM';
+                return 'LMS_END_FIXED_PRICE_ITEM';
             case FeedTypes::INVENTORY:
                 return 'LMS_REVISE_INVENTORY_STATUS';
             case FeedTypes::PRICE:

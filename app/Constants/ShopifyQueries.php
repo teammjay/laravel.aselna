@@ -230,4 +230,25 @@ public static $cancelFullfillment = <<<GQL
     }
 GQL;
 
+public static $createFullfillment = <<<GQL
+    mutation fulfillmentCreate(\$fulfillment: FulfillmentInput!) {
+      fulfillmentCreate(fulfillment: \$fulfillment) {
+        fulfillment {
+          id
+          status
+          trackingInfo {
+            number
+            url
+            company
+          }
+        }
+        userErrors {
+          field
+          message
+        }
+      }
+    }
+GQL;
+
+
 }
