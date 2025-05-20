@@ -10,6 +10,7 @@
                                     <label for="order_id">Order ID</label>
                                 </div>
                                 <div class="col-md-8">
+                                    <input type="hidden" name="id" value="{{ $shipmentDetail->id }}">
                                     <input type="text" class="form-control" name="order_id" id="order_id" value="{{ $shipmentDetail->order->order_id }}" readonly="">
                                 </div>
                             </div>
@@ -43,6 +44,15 @@
                                     </select>
                                 </div>
                             </div>
+                            <div class="row mt-3 g-3 align-items-center">
+                                <div class="col-md-4">
+                                    <label for="operation_type">Operation Type</label>
+                                </div>
+                                <div class="col-md-8">
+                                    <input type="radio" name="operation_type"> Create Lable <br>
+                                    <input type="radio" name="operation_type" checked> Mark Shipped
+                                </div>
+                            </div>
                         </div>
                         <div class="col-md-7">
                             <div class="row mt-3 g-3 align-items-center">
@@ -50,7 +60,7 @@
                                     <label for="carrier_name">Carrier Name</label>
                                 </div>
                                 <div class="col-md-8">
-                                    <select class="form-control" id="carrier_name" name="carrier_name">
+                                    <select class="form-control" id="carrier_name_ms" name="carrier_name">
                                         @if(count($shippingCarrier ?? []) > 0)
                                             @foreach($shippingCarrier as $sCarrier)
                                                 <option value="{{ $sCarrier->id }}" {{ ( $sCarrier->id == $shipmentDetail->shipping_carrier_id ) ? 'selected' : '' }}>{{ $sCarrier->name }}</option>
@@ -82,14 +92,14 @@
                                 </div>
                             </div>
 
-                            <div class="row mt-3 g-3 align-items-center">
+                            {{--<div class="row mt-3 g-3 align-items-center">
                                 <div class="col-md-4">
                                     <label for="cost">Cost</label>
                                 </div>
                                 <div class="col-md-8">
                                     <input type="text" class="form-control" name="cost" id="cost">
                                 </div>
-                            </div>
+                            </div>--}}
                             <div class="row mt-3 g-3 align-items-center">
                                 <div class="col-md-4">
                                     <label for="insurance_value">Insurance Value</label>
@@ -132,7 +142,12 @@
                                     <label for="shipping_address">Shipping Address</label>
                                 </div>
                                 <div class="col-md-8">
-
+                                    @if(isset($shipmentDetail->order->customerAddress))
+                                        <a href="javascript:void(0);" id="edit_address" data-id="{{ $shipmentDetail->order->customerAddress->id }}">
+                                            {{ $shipmentDetail->order->customerAddress->address_combined }} {{$shipmentDetail->order->customerAddress->city}} {{$shipmentDetail->order->customerAddress->state}}
+                                            {{$shipmentDetail->order->customerAddress->country}} {{$shipmentDetail->order->customerAddress->zip_code}}
+                                        </a>
+                                    @endif
                                 </div>
                             </div>
                             <div class="row mt-3 g-3 align-items-center">

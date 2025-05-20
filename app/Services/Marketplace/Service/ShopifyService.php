@@ -11,6 +11,7 @@ use App\Models\ListingFeed;
 use App\Models\ListingItem;
 use App\Models\ListingItemLink;
 use App\Models\ListingItemProductImage;
+use App\Models\OrderOperation;
 use App\Models\ProductInterface;
 use App\Models\ProductTags;
 use App\Models\ProductTypeKeyword;
@@ -455,6 +456,86 @@ class ShopifyService implements MarketplaceServiceInterface
         }
 
         return response()->json($response);
+    }
+
+    public function updateFullfillment($orderId)
+    {
+        if($orderId) {
+            Log::info("Order ID : ". json_encode($orderId));
+            $shipmentDetail = OrderOperation::with('operationItem','order','order.customerAddress','carrierService','store','operationItem.orderItem','operationItem.orderItem.product')->where('order_id',$orderId)->first();
+
+            Log::info("SHipment Detail : ". json_encode($shipmentDetail));
+
+            $store = $shipmentDetail->store;
+            $this->authService = new ShopifyAuthService($store->secret_key);
+            $orderId = "gid://shopify/Order/".$shipmentDetail->order->order_id;
+            //$locationId = $this->authService->getLocationId();
+            $forders_response = $this->authService->getFullfillmentOrders($orderId);
+
+            /*echo '<pre>';
+            print_r($forders_response);
+            echo '</pre>';die;*/
+
+            $fulfillmentOrder = $forders_response['data']['order']['fulfillmentOrders']['nodes'][0] ?? null;
+
+            if (!$fulfillmentOrder) {
+                return response()->json(['error' => 'No fulfillment order found'], 404);
+            }
+
+
+            $fulfillmentOrderId = $fulfillmentOrder['id'];
+            $lineItems = array_map(function ($edge) {
+                return [
+                    'id' => $edge['node']['id'],
+                    'quantity' => $edge['node']['lineItem']['quantity']
+                ];
+            }, $fulfillmentOrder['lineItems']['edges']);
+
+            /*$orderItems = [];
+            if(count($shipmentDetail->operationItem ?? []) > 0){
+                foreach($shipmentDetail->operationItem as $oitem){
+                    $order_item = $oitem->orderItem;
+                    if($order_item){
+                        $orderItems[] = [
+                            "id" => $order_item->id1,
+                            "quantity" => $order_item->quantity
+                        ];
+                    }
+                }
+            }*/
+            $variables = [
+                "fulfillment" => [
+                    "lineItemsByFulfillmentOrder" => [
+                        "fulfillmentOrderId" => $fulfillmentOrderId,
+                        "fulfillmentOrderLineItems" => $lineItems
+                    ],
+                    "notifyCustomer" => true,
+                    "trackingInfo" => [
+                        "company" => $shipmentDetail->carrierService->ShippingCarrier->name,
+                        "number" => $shipmentDetail->tracking_number,
+                        "url" => "https://tools.usps.com/go/TrackConfirmAction_input?qtc_tLabels1=".$shipmentDetail->tracking_number
+                    ]
+                ]
+            ];
+
+            /*echo '<pre>';
+            print_r($variables);
+            echo '</pre>';die;*/
+
+
+            Log::info("Variables : ". json_encode($variables));
+
+            $response = $this->authService->updateFullfillment($variables);
+
+            if(){
+                
+            }
+
+            echo '<pre>';
+            print_r($response);
+            echo '</pre>';die;
+
+        }
     }
 
 

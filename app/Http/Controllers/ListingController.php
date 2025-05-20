@@ -2983,7 +2983,7 @@ class ListingController extends Controller
                             'created_by' => $created_by
                         );
 
-                        $listingItem->update(['status' => ListingStatus::Deleted, 'sync_status' => ListingSyncStatus::Unsynchronize]);
+                        //$listingItem->update(['status' => ListingStatus::Deleted, 'sync_status' => ListingSyncStatus::Unsynchronize]);
                         ListingItemLink::create($itemLink);
 
                         Bus::chain([

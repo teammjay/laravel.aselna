@@ -215,6 +215,31 @@ public static $productVariantUpdate = <<<GQL
     }
 GQL;
 
+public static $getFullfillmentOrders = <<<GQL
+    query getFulfillmentOrders(\$id: ID!) {
+      order(id: \$id) {
+        id
+        fulfillmentOrders(first: 5) {
+          nodes {
+            id
+            lineItems(first: 10) {
+              edges {
+                node {
+                  id
+                  lineItem {
+                    id
+                    title
+                    quantity
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+GQL;
+
 public static $cancelFullfillment = <<<GQL
     mutation fulfillmentCancel(\$id: ID!) {
       fulfillmentCancel(id: \$id) {
