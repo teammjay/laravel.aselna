@@ -113,6 +113,10 @@ class WalmartService implements MarketplaceServiceInterface
 
         $this->submitFeed($newfeed->id, $listingId);
         Log::info('Inventory Feed Submitted: ' . json_encode($newfeed));
+
+        $newfeed->update([
+            'status' => FeedStatus::PROCESSING,
+        ]);
     }
 
     public function getResultFeed(mixed $listingId, $feedId = null)

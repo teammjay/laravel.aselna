@@ -1,6 +1,7 @@
 <?php
 
 use App\Jobs\AmazonListingItemSyncJob;
+use App\Jobs\FetchResultFeedAsync;
 use App\Jobs\FetchWalmartOrdersJob;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
@@ -15,6 +16,7 @@ Schedule::command('logs:rotate')->everyFourHours();
 
 
 Schedule::job(new AmazonListingItemSyncJob())->everyFiveMinutes();
+Schedule::job(new FetchResultFeedAsync())->everyFiveMinutes();
 Schedule::command('app:result-feed-sync')->everyMinute();
 
 //Schedule::job(new FetchWalmartOrdersJob())->hourly();

@@ -35,4 +35,19 @@ class OrderOperationType
     {
         return array_search($orderStatusName, self::names);
     }
+
+    public static function isReturn($type)
+    {
+        return $type === self::OrderReturn;
+    }
+
+    public static function isShipment($type)
+    {
+        return $type === self::OrderShipment;
+    }
+
+    public static function isRefund($type)
+    {
+        return $type === self::OrderRefund || $type === self::OrderReturnRefund;
+    }
 }

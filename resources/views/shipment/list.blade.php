@@ -623,11 +623,11 @@
 
             const orderId = formData.get("order_id");
 
-            if (isNaN(orderId) || parseInt(orderId) <= 0) {
-                $('#order_id').addClass('error');
-                alert("Please enter a valid Order ID.");
-                return;
-            }
+            // if (isNaN(orderId) || parseInt(orderId) <= 0) {
+            //     $('#order_id').addClass('error');
+            //     alert("Please enter a valid Order ID.");
+            //     return;
+            // }
 
             $.ajax({
                 url: "{{ route('shipment.markshipped') }}",
@@ -647,7 +647,12 @@
                 },
                 error: function (xhr) {
                     // Handle error response
-                    alert('Error: ' + xhr.responseJSON.error);
+                    const response = xhr.responseJSON;
+                    if ( response.errors) {
+                        alert(response.message);
+                    } else {
+                        alert('Error: ' + response.message);
+                    }
                 }
             });
         });
