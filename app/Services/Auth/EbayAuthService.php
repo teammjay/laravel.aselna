@@ -503,4 +503,71 @@ class EbayAuthService
                 return '';
         }
     }
+
+    public function fetchListingInfoBySku($sku)
+    {
+
+        try {
+
+            $accessToken = $this->refreshToken();
+
+            $response = $this->client->post("/sell/inventory/v1/inventory_item/".$sku, [
+                'verify' => false,
+                'headers' => [
+                    'Authorization' => 'Bearer ' . $accessToken,
+                    'Content-Type'  => 'application/json',
+                ]
+            ]);
+
+            Log::info('Inventory Item Detail ' . $response->getBody());
+            return json_decode($response->getBody(), true);
+
+        } catch (RequestException $e) {
+            if ($e->hasResponse()) {
+                $errorBody = json_decode($e->getResponse()->getBody()->getContents(), true);
+                $this->handleApiErrors($errorBody);
+            } else {
+                Log::error('Error: ' . $e->getMessage());
+                return null;
+                /*throw new \Exception('Unexpected error occurred: ' . $e->getMessage());*/
+            }
+        }
+
+    }
+
+    public function getListingItemId($sku){
+
+        try {
+
+            $accessToken = $this->refreshToken();
+            $response = $this->client->get('/sell/inventory/v1/offer', [
+                'verify' => false,
+                'headers' => [
+                    'Authorization' => 'Bearer ' . $accessToken,
+                    'Content-Type' => 'application/json',
+                ],
+                'query' => [
+                    'sku' => $sku,
+                ]
+            ]);
+
+            $data = json_decode($response->getBody(), true);
+
+            Log::info('Offer Item Detail ' . $response->getBody());
+
+            $itemId = $data['offers'][0]['listing']['listingId'] ?? null;
+
+            return $itemId;
+
+        }catch (RequestException $e) {
+            if ($e->hasResponse()) {
+                $errorBody = json_decode($e->getResponse()->getBody()->getContents(), true);
+                $this->handleApiErrors($errorBody);
+            } else {
+                Log::error('Error: ' . $e->getMessage());
+                return null;
+                /*throw new \Exception('Unexpected error occurred: ' . $e->getMessage());*/
+            }
+        }
+    }
 }
