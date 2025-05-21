@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Helpers\QueryFilters;
+use App\Jobs\EbayListingItemSyncJob;
 use App\Jobs\FeedGenerationJob;
 use App\Jobs\FetchMagentoOrderJob;
 use App\Jobs\FetchShopifyOrders;
@@ -96,7 +97,8 @@ class HomeController extends Controller
         Bus::chain([
             //new SubmitShopifyProductsJob(),
             //new synccategorytospecification(),
-            new FetchShopifyOrders()
+            //new FetchShopifyOrders(),
+            new EbayListingItemSyncJob()
         ])->dispatch();
     }
 
