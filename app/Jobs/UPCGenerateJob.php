@@ -55,6 +55,7 @@ class UPCGenerateJob implements ShouldQueue
             $checkSum = $checkSum % 10;
             $checkSum = $checkSum === 0 ? 0 : 10 - $checkSum;
             if (UPCCodes::where('upc_code', $upcCodesExceptLastOne . $checkSum)->exists()) {
+                $i++;
                 continue;
             }
             $upcCodes[] = [
