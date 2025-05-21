@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Utils;
+namespace App\Utils\order;
 
+use App\Constants\OrderOperationStatus;
 use App\Constants\OrderStatus;
 use App\Models\Catalog;
 use App\Models\Customer;
@@ -124,7 +125,7 @@ class OrderUtility
             'order_id' => $order->id,
             'ship_date' => date('Y-m-d H:i:s', $sorder['shippingInfo']['estimatedShipDate'] / 1000),
             'insurance_value' => $orderTotals,
-            'status' => 1,
+            'status' => OrderOperationStatus::Created,
             'signature_confirmation' => 1,
             'store_id' => $store->id,
             'operation_type' => 1,
@@ -285,7 +286,7 @@ class OrderUtility
             'order_id' => $order->id,
             'ship_date' => date('Y-m-d H:i:s'),
             'insurance_value' => 0,
-            'status' => 1,
+            'status' => OrderOperationStatus::Created,
             'signature_confirmation' => 1,
 //            'ship_from_id' => '',
             'store_id' => $store->id,

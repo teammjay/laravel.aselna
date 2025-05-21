@@ -40,7 +40,7 @@
                             <select class="form-control" name="generation_type_id" id="generation_type_id">
                                 @if(count($listing_generation_types ?? []) > 0)
                                     @foreach($listing_generation_types as $gtype)
-                                        <option value="{{ $gtype->id }}" {{ ($gtype->id == $listing_generation_type_template['generation_type_id']) ? 'selected' : ''}}>{{ $gtype->name }}</option>
+                                        <option value="{{ $gtype->id }}" {{ (isset($listing_generation_type_template['generation_type_id']) && $gtype->id == $listing_generation_type_template['generation_type_id']) ? 'selected' : ''}}>{{ $gtype->name }}</option>
                                     @endforeach
                                 @endif
 
@@ -59,11 +59,14 @@
                                     <ul class="stores">
                                         @if(count($store_types ?? []) > 0)
                                             @php
-                                                if(isset($listing_generation_type_template['used_by_store']) && strstr($listing_generation_type_template['used_by_store'], ',') !== false){
-                                                    $stores = explode(',',$listing_generation_type_template['used_by_store']);
-                                                }else{
-                                                    $stores[] = $listing_generation_type_template['used_by_store'];
-                                                }
+                                                $stores = [];
+                                                if(isset($listing_generation_type_template['used_by_store'])){
+                                                    if(strstr($listing_generation_type_template['used_by_store'], ',') !== false){
+                                                        $stores = explode(',',$listing_generation_type_template['used_by_store']);
+                                                    }else{
+                                                        $stores[] = $listing_generation_type_template['used_by_store'];
+                                                    }
+                                             }
                                             @endphp
                                             @foreach($store_types as $stype)
                                                 <li><input type="checkbox" name="used_by_store[]" value="{{ $stype->name }}" {{ (in_array($stype->name,$stores)) ? 'checked' : '' }}> {{ $stype->name }}</li>

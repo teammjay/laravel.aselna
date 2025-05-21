@@ -174,39 +174,6 @@ class EbayAuthService
         }
     }
 
-    public function submitDeleteFeed()
-    {
-        try {
-            $accessToken = $this->refreshToken();
-            $response = $this->client->get("https://api.ebay.com/ws/api.dll", [
-                'verify' => false,
-                'headers' => [
-                    'Authorization' => 'Bearer ' . $accessToken,
-                    'X-EBAY-API-CALL-NAME' => 'EndFixedPriceItem',
-                    'X-EBAY-API-SITEID' => '0',
-                    'X-EBAY-API-DEV-NAME' => env('EBAY_DEV_ID'),
-                    'X-EBAY-API-APP-NAME' => env('EBAY_APP_ID'),
-                    'X-EBAY-API-CERT-NAME' => env('EBAY_CERT_ID'),
-                    'X-EBAY-API-COMPATIBILITY-LEVEL' => '967',
-                    'Content-Type' => 'text/xml'
-                ],
-            ]);
-
-            Log::info('Task Detail ' . $response->getBody());
-
-            return json_decode($response->getBody(), true);
-        } catch (RequestException $e) {
-            if ($e->hasResponse()) {
-                $errorBody = json_decode($e->getResponse()->getBody()->getContents(), true);
-                $this->handleApiErrors($errorBody);
-            } else {
-                Log::error('Error: ' . $e->getMessage());
-                return null;
-                /*throw new \Exception('Unexpected error occurred: ' . $e->getMessage());*/
-            }
-        }
-    }
-
     public function getResultFeed(string $taskId, string $listingId) {
 
         $savePath = public_path('result-feeds/ebay/'.$listingId.'.zip');
@@ -398,9 +365,7 @@ class EbayAuthService
     public function getOrders($sync_start_date,$cursor = null)
     {
         $accessToken = $this->refreshToken();
-
         try {
-
             $queryData = [];
 
             if (isset($cursor)) {
@@ -516,7 +481,6 @@ class EbayAuthService
 
     public function getfeedType($feedInfo)
     {
-
         $feedType = $feedInfo->feed_type;
         switch ($feedType) {
             case FeedTypes::CREATE:
@@ -525,6 +489,8 @@ class EbayAuthService
                 }else {
                     return 'LMS_ADD_FIXED_PRICE_ITEM';
                 }
+            case FeedTypes::SHIPMENT_UPDATE:
+                return 'LMS_SET_SHIPMENT_TRACKING_INFO';
             // case FeedTypes::IMAGE_UPDATE:
             //     return 'MPItem';
             case FeedTypes::DELETE:
@@ -537,5 +503,4 @@ class EbayAuthService
                 return '';
         }
     }
-
 }

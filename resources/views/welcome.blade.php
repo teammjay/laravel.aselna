@@ -148,7 +148,7 @@
                         <th>Store</th>
                         <th>Status</th>
                         <th>created At</th>
-                        <th> Submit At</th>
+                        <th>Submit At</th>
                         <th>Number Of Items</th>
                         <th>Processing Count</th>
                         <th>Success</th>

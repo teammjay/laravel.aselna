@@ -2,6 +2,7 @@
 
 namespace App\Services\Marketplace\Service;
 
+use App\Constants\FeedStatus;
 use App\Constants\FeedTypes;
 use App\Constants\ListingSyncStatus;
 use App\Constants\OrderStatus;
@@ -17,10 +18,8 @@ use App\Models\OrderSynchronization;
 use App\Services\Auth\WalmartAuthService;
 use App\Services\Marketplace\Contracts\MarketplaceServiceInterface;
 use App\Utils\FileUtility;
-use App\Utils\OrderUtility;
-use App\Utils\XmlUtility;
+use App\Utils\order\OrderUtility;
 use Illuminate\Support\Facades\Log;
-use App\Constants\FeedStatus;
 
 class WalmartService implements MarketplaceServiceInterface
 {
@@ -114,6 +113,10 @@ class WalmartService implements MarketplaceServiceInterface
 
         $this->submitFeed($newfeed->id, $listingId);
         Log::info('Inventory Feed Submitted: ' . json_encode($newfeed));
+
+        $newfeed->update([
+            'status' => FeedStatus::PROCESSING,
+        ]);
     }
 
     public function getResultFeed(mixed $listingId, $feedId = null)

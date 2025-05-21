@@ -5,12 +5,15 @@ namespace App\Http\Controllers;
 use App\Models\Catalog;
 use App\Models\CustomerAddress;
 use App\Models\LogisticCenter;
+use App\Models\Order;
 use App\Models\OrderOperation;
 use App\Models\OrderOperationReason;
 use App\Models\ShippingCarrier;
 use App\Models\ShippingCarrierPackage;
 use App\Models\ShippingCarrierService;
 use App\Models\Store;
+use App\Utils\order\OrderOperationUtility;
+use App\Services\Marketplace\Service\ShopifyService;
 use Illuminate\Http\Request;
 
 class ShipmentsController extends Controller
@@ -24,7 +27,7 @@ class ShipmentsController extends Controller
         $shippingCarrier = ShippingCarrier::all();
         $shipFrom = LogisticCenter::all();
 
-        return view('shipment.list',compact('perPage','stores','shippingCarrier','shipFrom'));
+        return view('shipment.list', compact('perPage', 'stores', 'shippingCarrier', 'shipFrom'));
     }
 
     public function filter(Request $request)
@@ -46,15 +49,15 @@ class ShipmentsController extends Controller
             'carrierService:id,name,shipping_carrier_id',
             'carrierService.ShippingCarrier',
             'store:id,name,store_type_id',
-        ])->select('order_operation.*','order_operation.id as oid');
+        ])->select('order_operation.*', 'order_operation.id as oid');
 
         // Filter by store
         if ($request->has('store_id') && $request->store_id != '') {
             $query->where('order_operation.store_id', $request->store_id);
         }
 
-        if($columnName != ''){
-            switch(strtolower($columnName)){
+        if ($columnName != '') {
+            switch (strtolower($columnName)) {
                 case 'order_id':
                     $query->join('order', 'order.id', '=', 'order_operation.order_id')
                         ->orderBy('order.order_id', $columnSortOrder);
@@ -113,22 +116,22 @@ class ShipmentsController extends Controller
         echo '</pre>';die;*/
 
         $data = [];
-        if(!empty((array) $order_operations)){
-            foreach($order_operations as $key=>$order) {
+        if (!empty((array)$order_operations)) {
+            foreach ($order_operations as $key => $order) {
                 $storeType = (isset($order->store->storeType) && !empty($order->store->storeType)) ? $order->store->storeType->name : '';
                 $code = '';
                 $image = $product_id = '';
                 $product_total_weight = 0;
-                if(isset($order->order->orderItem) && !empty($order->order->orderItem)){
-                    foreach($order->order->orderItem as $oitem){
-                        if(isset($oitem->product) && !empty($oitem->product)){
+                if (isset($order->order->orderItem) && !empty($order->order->orderItem)) {
+                    foreach ($order->order->orderItem as $oitem) {
+                        if (isset($oitem->product) && !empty($oitem->product)) {
                             $imagename = $oitem->product->product_image;
-                            if(!empty($oitem->product->image)) {
+                            if (!empty($oitem->product->image)) {
                                 $image = asset('storage/' . $oitem->product->image->getFileUrl());
                                 $product_id = $oitem->product->product_id;
                             }
-                            if($oitem->product->product_sku != ''){
-                                $code .= $oitem->product->product_sku.' x '.$oitem->quantity.'<br>';
+                            if ($oitem->product->product_sku != '') {
+                                $code .= $oitem->product->product_sku . ' x ' . $oitem->quantity . '<br>';
                             }
 
                             $product_weight = $oitem->product->product_weight;
@@ -137,17 +140,17 @@ class ShipmentsController extends Controller
                     }
                 }
                 $data[] = array(
-                    "action" => '<button type="button" class="btn btn-warning show-detail" data-id="'.$order->oid.'">Show Detail</button><input type="checkbox" class="pro-id" name="shipment_id[]" value="'.$order->oid.'" style="visibility:hidden;">',
-                    "image" => ($image) ? '<div class="main-image"><img src="'.$image.'" alt="'.$imagename.'" class="mainImage" width="70" height="70" data-product-id="'.$product_id.'"></div>' : '',
+                    "action" => '<button type="button" class="btn btn-warning show-detail" data-id="' . $order->oid . '">Show Detail</button><input type="checkbox" class="pro-id" name="shipment_id[]" value="' . $order->oid . '" style="visibility:hidden;">',
+                    "image" => ($image) ? '<div class="main-image"><img src="' . $image . '" alt="' . $imagename . '" class="mainImage" width="70" height="70" data-product-id="' . $product_id . '"></div>' : '',
                     "status" => '',
-                    "carrier_service" => isset($order->carrierService) ? $order->carrierService->ShippingCarrier->name.' '.$order->carrierService->name : '',
-                    "store" => $order->store->name.' - '.$storeType,
+                    "carrier_service" => isset($order->carrierService) ? $order->carrierService->ShippingCarrier->name . ' ' . $order->carrierService->name : '',
+                    "store" => $order->store->name . ' - ' . $storeType,
                     "order_id" => $order->order->order_id,
                     "order_date" => $order->order->order_date,
-                    "product_code" =>  $code,
-                    "weight" =>  ($order->weight_value) ? $order->weight_value : $product_total_weight,
+                    "product_code" => $code,
+                    "weight" => ($order->weight_value) ? $order->weight_value : $product_total_weight,
                     "first_name" => (isset($order->order) && !empty($order->order)) ? $order->order->buyer_first_name : '',
-                    "last_name" =>  (isset($order->order) && !empty($order->order)) ? $order->order->buyer_last_name : '',
+                    "last_name" => (isset($order->order) && !empty($order->order)) ? $order->order->buyer_last_name : '',
                     "city" => (isset($order->order->customer) && !empty($order->order->customer)) ? $order->order->customer->city : '',
                 );
             }
@@ -170,15 +173,16 @@ class ShipmentsController extends Controller
         return view('shipment.detail');
     }
 
-    public function updateShippingDetails(Request $request){
+    public function updateShippingDetails(Request $request)
+    {
         $selected_shipment = $request->input('selected_shipment');
         $carrier_id = $request->input('carrier_id');
         $carrier_service_id = $request->input('carrier_service_id');
         $ship_from = $request->input('ship_from');
         $ship_option = $request->input('ship_option');
 
-        if(!empty($selected_shipment)){
-            foreach($selected_shipment as $id){
+        if (!empty($selected_shipment)) {
+            foreach ($selected_shipment as $id) {
                 $updateRecord = array(
                     'shipping_carrier_id' => $carrier_id,
                     'shipping_carrier_service_id' => $carrier_service_id,
@@ -196,13 +200,14 @@ class ShipmentsController extends Controller
         ]);
     }
 
-    public function getShippingCarrier(Request $request){
+    public function getShippingCarrier(Request $request)
+    {
         $shipping_carrier_id = $request->input('carrier_id');
-        $carrier_servie = ShippingCarrierService::where('shipping_carrier_id',$shipping_carrier_id)->orderBy('name','asc')->get();
+        $carrier_servie = ShippingCarrierService::where('shipping_carrier_id', $shipping_carrier_id)->orderBy('name', 'asc')->get();
         $option = '';
-        if(!empty($carrier_servie)){
-            foreach($carrier_servie as $service){
-                $option .= '<option value="'.$service->id.'">'.$service->name.'</option>';
+        if (!empty($carrier_servie)) {
+            foreach ($carrier_servie as $service) {
+                $option .= '<option value="' . $service->id . '">' . $service->name . '</option>';
             }
         }
         return response()->json([
@@ -211,23 +216,24 @@ class ShipmentsController extends Controller
         ]);
     }
 
-    public function getShippingDetail(Request $request){
+    public function getShippingDetail(Request $request)
+    {
         $order_opration_id = $request->input('operation_id');
         $shippingCarrier = ShippingCarrier::all();
         $shipFrom = LogisticCenter::all();
         $shippingCarrierPackage = ShippingCarrierPackage::all();
-        $shipmentDetail = OrderOperation::with('operationItem','order','order.customerAddress','carrierService','store','operationItem.orderItem','operationItem.orderItem.product')->where('id',$order_opration_id)->first();
+        $shipmentDetail = OrderOperation::with('operationItem', 'order', 'order.customerAddress', 'carrierService', 'store', 'operationItem.orderItem', 'operationItem.orderItem.product')->where('id', $order_opration_id)->first();
 
         $package_id = '';
         $product_total_weight = 0;
         //print_r($shipmentDetail->operationItem);
-        if(count($shipmentDetail->operationItem ?? []) > 0){
+        if (count($shipmentDetail->operationItem ?? []) > 0) {
             $product_weight = 0;
-            foreach($shipmentDetail->operationItem as $oitem){
+            foreach ($shipmentDetail->operationItem as $oitem) {
                 $product_id = $oitem->orderItem->product->product_id;
-                if($product_id){
+                if ($product_id) {
                     $product_detail = Catalog::findOrFail($product_id);
-                    if($product_detail->product_weight > $product_weight){
+                    if ($product_detail->product_weight > $product_weight) {
                         $package_id = $product_detail->shipping_package_id;
                     }
                     $product_weight = $product_detail->product_weight;
@@ -239,13 +245,13 @@ class ShipmentsController extends Controller
         print_r($shipmentDetail);
         echo '</pre>';die;*/
         $shipping_carrier_id = $shipmentDetail->shipping_carrier_id;
-        $shippingCarrierService = ShippingCarrierService::where('shipping_carrier_id',$shipping_carrier_id)->orderBy('name','asc')->get();
+        $shippingCarrierService = ShippingCarrierService::where('shipping_carrier_id', $shipping_carrier_id)->orderBy('name', 'asc')->get();
 
 
-        if($request->input('mark_as_ship')){
-            $view = view('shipment.mark_as_shipped', compact('shipmentDetail','shippingCarrier','shippingCarrierService','shippingCarrierPackage','shipFrom','package_id','product_total_weight'))->render();
-        }else {
-            $view = view('shipment.detail', compact('shipmentDetail', 'shippingCarrier', 'shippingCarrierService', 'shippingCarrierPackage', 'shipFrom','package_id','product_total_weight'))->render();
+        if ($request->input('mark_as_ship')) {
+            $view = view('shipment.mark_as_shipped', compact('shipmentDetail', 'shippingCarrier', 'shippingCarrierService', 'shippingCarrierPackage', 'shipFrom', 'package_id', 'product_total_weight'))->render();
+        } else {
+            $view = view('shipment.detail', compact('shipmentDetail', 'shippingCarrier', 'shippingCarrierService', 'shippingCarrierPackage', 'shipFrom', 'package_id', 'product_total_weight'))->render();
         }
         return response()->json([
             'success' => true,
@@ -254,10 +260,11 @@ class ShipmentsController extends Controller
 
     }
 
-    public function getShippingAddress(Request $request){
+    public function getShippingAddress(Request $request)
+    {
         $address_id = $request->input('address_id');
-        if($address_id){
-            $addressDetail = CustomerAddress::with('customer','customerPhone')->where('id',$address_id)->first();
+        if ($address_id) {
+            $addressDetail = CustomerAddress::with('customer', 'customerPhone')->where('id', $address_id)->first();
 
             $view = view('shipment.edit_shipping_address', compact('addressDetail'))->render();
 
@@ -268,40 +275,92 @@ class ShipmentsController extends Controller
         }
     }
 
-    public function saveAddress(Request $request){
+    public function saveAddress(Request $request)
+    {
 
         $id = $request->input('id');
         try {
             $address = CustomerAddress::findOrFail($id);
-            $request['address_combined'] = $address_combined = $request['address_line_1'] . ' ' .  $request['address_line_2'];
-            $address_combined = $address_combined.' '.$request['city'].' '.$request['state'].' '.$address->country.' '.$request['zip_code'];
+            $request['address_combined'] = $address_combined = $request['address_line_1'] . ' ' . $request['address_line_2'];
+            $address_combined = $address_combined . ' ' . $request['city'] . ' ' . $request['state'] . ' ' . $address->country . ' ' . $request['zip_code'];
             $address->update($request->except(['phone', 'id']));
-            return response()->json(['success' => true,'address'=>$address_combined, 'message' => 'Data saved successfully!']);
+            return response()->json(['success' => true, 'address' => $address_combined, 'message' => 'Data saved successfully!']);
 
-        }catch (QueryException $e) {
+        } catch (QueryException $e) {
             // Handle the exception and show an error message
             return response()->json(['errors' => $e->getMessage()]);
         }
     }
 
-    public function getCancelShipmentDetail(Request $request){
+    public function getCancelShipmentDetail(Request $request)
+    {
 
         $order_opration_id = $request->input('operation_id');
 
-        $shipmentDetail = OrderOperation::with('operationItem','store.storeType','order','operationItem.orderItem','operationItem.orderItem.product')->where('id',$order_opration_id)->first();
+        $shipmentDetail = OrderOperation::with('operationItem', 'store.storeType', 'order', 'operationItem.orderItem', 'operationItem.orderItem.product')->where('id', $order_opration_id)->first();
 
-        $reasons= [];
-        if(isset($shipmentDetail->store->storeType)){
+        $reasons = [];
+        if (isset($shipmentDetail->store->storeType)) {
             $store_type = $shipmentDetail->store->storeType->id;
-            $reasons = OrderOperationReason::where('store_type_id',$store_type)->get();
+            $reasons = OrderOperationReason::where('store_type_id', $store_type)->get();
         }
 
-        $view = view('shipment.cancel_shipment', compact('shipmentDetail','reasons'))->render();
+        $view = view('shipment.cancel_shipment', compact('shipmentDetail', 'reasons'))->render();
 
         return response()->json([
             'success' => true,
             'html' => $view
         ]);
+    }
+
+    public function markShipped(Request $request){
+
+        $request->validate([
+            'id' => 'required',
+            'carrier_name' => 'required',
+//            'carrier_package' => 'required',
+            'shipping_carrier_service' => 'required',
+            'tracking_number' => 'required',
+            'shipment_from' => 'required',
+            'weight' => 'required|numeric|gt:0',
+            'weight_type' => 'required'
+        ]);
+
+        $selected_shipment_id = $request->input('id');
+
+        try {
+            if($selected_shipment_id){
+                $orderOperation = OrderOperation::with('order','store','store.storeType')->where('id',$selected_shipment_id)->first();
+                OrderOperationUtility::processShipment($orderOperation, $request);
+//
+//            $shipmentDetail = OrderOperation::with('order','store','store.storeType')->where('id',$selected_shipment_id)->first();
+//            $shipmentDetail->update($updateRecord);
+//
+//            if(isset($shipmentDetail->order) && isset($shipmentDetail->store->storeType)){
+//                $storeType = $shipmentDetail->store->storeType->name;
+//                if(strtolower($storeType) == 'shopify'){
+//                    $shopifyServie = new ShopifyService();
+//                    $shopifyServie->updateFullfillment($shipmentDetail->order_id);
+//                }else{
+//
+//                }
+//            }
+
+                return response()->json([
+                    'success' => true
+                ]);
+            } else {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Please select shipment'
+                ]);
+            }
+        } catch (\Exception $exception) {
+            return response()->json([
+                'success' => false,
+                'message' => $exception->getMessage()
+            ]);
+        }
     }
 
     public function cancelShipment(Request $request){
