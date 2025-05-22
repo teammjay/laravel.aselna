@@ -55,7 +55,7 @@ class WalmartAuthService
         return $data['access_token'];
     }
 
-    public function submitFeed($fileName,$feedType)
+    public function submitFeed($fileName, $feedType)
     {
         $client = new Client();
         $accessToken = $this->authenticate();
@@ -76,7 +76,7 @@ class WalmartAuthService
                     'filename' => $fileName,
                 ]
             ]];
-        $request = new Request('POST', 'https://marketplace.walmartapis.com/v3/feeds?feedType='.$feedType, $headers);
+        $request = new Request('POST', 'https://marketplace.walmartapis.com/v3/feeds?feedType=' . $feedType, $headers);
         $res = $client->sendAsync($request, $options)->wait();
 
         return json_decode($res->getBody(), true);
@@ -94,7 +94,7 @@ class WalmartAuthService
             'WM_QOS.CORRELATION_ID' => uniqid(),
         ];
 
-        $request = new Request('GET', "{$this->endpoint}/feeds/{$feedId}?includeDetails=true&limit=".$number_of_items, $headers);
+        $request = new Request('GET', "{$this->endpoint}/feeds/{$feedId}?includeDetails=true&limit=" . $number_of_items, $headers);
         $response = $this->client->sendAsync($request)->wait();
 
         return json_decode($response->getBody(), true);
@@ -143,5 +143,26 @@ class WalmartAuthService
                 'message' => $e->getMessage()
             ], 500);
         }
+    }
+
+    public function shipOrder($purchaseOrderId, $data)
+    {
+        $client = new Client();
+        $accessToken = $this->authenticate();
+
+        $headers = [
+            'WM_SEC.ACCESS_TOKEN' => "{$accessToken}",
+            'Content-Type' => 'application/json',
+            'Accept' => 'application/json',
+            'WM_SVC.NAME' => 'Walmart Marketplace',
+            'WM_QOS.CORRELATION_ID' => uniqid(),
+        ];
+
+        Log::info('Order Data' . json_encode($data));
+
+        $request = new Request('POST', "{$this->endpoint}/orders/{$purchaseOrderId}/shipping", $headers);
+//        $res = $client->sendAsync($request, $data)->wait();
+
+//        $response = json_decode($res->getBody(), true);
     }
 }

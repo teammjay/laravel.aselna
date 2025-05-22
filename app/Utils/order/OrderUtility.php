@@ -2,6 +2,7 @@
 
 namespace App\Utils\order;
 
+use App\Constants\OrderOperationType;
 use App\Constants\OrderOperationStatus;
 use App\Constants\OrderStatus;
 use App\Models\Catalog;
@@ -146,39 +147,82 @@ class OrderUtility
                 if ($item['item']['sku'] != '') {
                     $itemDetail = ListingItem::where('sku', $item['item']['sku'])->first();
 
-                    $orderItemData = [
-                        'title' => $item['item']['productName'],
-                        'order_id' => $order->id,
-                        'product_id' => $itemDetail->storeProduct->product->product_id ?? '',
-                        'client_id' => $itemDetail->client ?? '',
-                        'listing_item_id' => $itemDetail->id ?? '',
-                        'sku' => $item['item']['sku'],
-                        //'store_sku' => $item['item']['upc'],
-                        'quantity' => $item['orderLineQuantity']['amount'],
-                        'id1' => '',
-                        'item_price' => ($item['charges']['charge'][0]['chargeType'] == 'PRODUCT') ? $item['charges']['charge'][0]['chargeAmount']['amount'] : 0,
-                        'shipping_price' => ($item['charges']['charge'][0]['chargeType'] == 'SHIPPING') ? $item['charges']['charge'][0]['chargeAmount']['amount'] : 0,
-                        'item_tax' => ($item['charges']['charge'][0]['chargeType'] == 'PRODUCT_TAX') ? $item['charges']['charge']['tax'][0]['taxAmount']['amount'] : 0,
-                        'shipping_tax' => ($item['charges']['charge'][0]['chargeType'] == 'SHIPPING_TAX') ? $item['charges']['charge'][0]['tax']['taxAmount']['amount'] : 0,
-                        'shipping_quantity' => $item['orderLineQuantity']['amount'],
-                    ];
+                    if (isset($itemDetail)) {
 
-                    $order_item = OrderItem::updateOrCreate([
-                        'order_id' => $order->id,
-                        'sku' => $item['item']['sku'],
-                    ], $orderItemData);
 
-                    if ($order_item->id) {
-                        $orderOperationItemData = [
-                            'order_item_id' => $order_item->id,
-                            'order_operation_id' => $order_operation_detail->id,
-                            'client_id' => $itemDetail->client,
-                            'sync_status' => 6
+                        $orderItemData = [
+                            'title' => $item['item']['productName'],
+                            'order_id' => $order->id,
+                            'product_id' => $itemDetail->storeProduct->product->product_id ?? '',
+                            'client_id' => $itemDetail->client ?? '',
+                            'listing_item_id' => $itemDetail->id ?? '',
+                            'sku' => $item['item']['sku'],
+                            //'store_sku' => $item['item']['upc'],
+                            'quantity' => $item['orderLineQuantity']['amount'],
+                            'id1' => '',
+                            'item_price' => ($item['charges']['charge'][0]['chargeType'] == 'PRODUCT') ? $item['charges']['charge'][0]['chargeAmount']['amount'] : 0,
+                            'shipping_price' => ($item['charges']['charge'][0]['chargeType'] == 'SHIPPING') ? $item['charges']['charge'][0]['chargeAmount']['amount'] : 0,
+                            'item_tax' => ($item['charges']['charge'][0]['chargeType'] == 'PRODUCT_TAX') ? $item['charges']['charge']['tax'][0]['taxAmount']['amount'] : 0,
+                            'shipping_tax' => ($item['charges']['charge'][0]['chargeType'] == 'SHIPPING_TAX') ? $item['charges']['charge'][0]['tax']['taxAmount']['amount'] : 0,
+                            'shipping_quantity' => $item['orderLineQuantity']['amount'],
                         ];
 
-                        $order_operation_item = OrderOperationItem::updateOrCreate([
-                            'order_operation_id' => $order_operation_detail->id
-                        ], $orderOperationItemData);
+                        $order_item = OrderItem::updateOrCreate([
+                            'order_id' => $order->id,
+                            'sku' => $item['item']['sku'],
+                        ], $orderItemData);
+
+                        if ($order_item->id) {
+                            $orderOperationItemData = [
+                                'order_item_id' => $order_item->id,
+                                'order_operation_id' => $order_operation_detail->id,
+                                'client_id' => $itemDetail->client,
+                                'sync_status' => 6
+                            ];
+
+                            $order_operation_item = OrderOperationItem::updateOrCreate([
+                                'order_operation_id' => $order_operation_detail->id
+                            ], $orderOperationItemData);
+                        }
+                    } else {
+                        $sku = preg_split('/[_-]/', $item['item']['sku'])[0];
+                        $catalog = Catalog::where('product_sku', $sku)->first();
+
+                        $orderItemData = [
+                            'title' => $item['item']['productName'],
+                            'order_id' => $order->id,
+                            'product_id' => $catalog->product_id,
+                            'client_id' => null,
+//                            'listing_item_id' => $itemDetail->id ?? '',
+                            'sku' => $item['item']['sku'],
+                            //'store_sku' => $item['item']['upc'],
+                            'quantity' => $item['orderLineQuantity']['amount'],
+                            'id1' => '',
+                            'item_price' => ($item['charges']['charge'][0]['chargeType'] == 'PRODUCT') ? $item['charges']['charge'][0]['chargeAmount']['amount'] : 0,
+                            'shipping_price' => ($item['charges']['charge'][0]['chargeType'] == 'SHIPPING') ? $item['charges']['charge'][0]['chargeAmount']['amount'] : 0,
+                            'item_tax' => ($item['charges']['charge'][0]['chargeType'] == 'PRODUCT_TAX') ? $item['charges']['charge']['tax'][0]['taxAmount']['amount'] : 0,
+                            'shipping_tax' => ($item['charges']['charge'][0]['chargeType'] == 'SHIPPING_TAX') ? $item['charges']['charge'][0]['tax']['taxAmount']['amount'] : 0,
+                            'shipping_quantity' => $item['orderLineQuantity']['amount'],
+                        ];
+
+                        $order_item = OrderItem::updateOrCreate([
+                            'order_id' => $order->id,
+                            'sku' => $item['item']['sku'],
+                        ], $orderItemData);
+
+                        if ($order_item->id) {
+                            $orderOperationItemData = [
+                                'order_item_id' => $order_item->id,
+                                'order_operation_id' => $order_operation_detail->id,
+//                                'client_id' => $itemDetail->client,
+                                'quantity' => $item['orderLineQuantity']['amount'],
+                                'sync_status' => 6
+                            ];
+
+                            $order_operation_item = OrderOperationItem::updateOrCreate([
+                                'order_operation_id' => $order_operation_detail->id
+                            ], $orderOperationItemData);
+                        }
                     }
                 }
             }
@@ -290,7 +334,7 @@ class OrderUtility
             'signature_confirmation' => 1,
 //            'ship_from_id' => '',
             'store_id' => $store->id,
-            'operation_type' => 1,
+            'operation_type' => OrderOperationType::OrderShipment,
             'label_creation_type' => 1,
             'print_to_file' => 0,
             'seller_provides_return_label' => 0,
