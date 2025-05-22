@@ -25,10 +25,10 @@ class ListingGenerationTypeTemplateController extends Controller
      */
     public function create()
     {
-        $listing_generation_type_templates = ListingGenerationTypeTemplate::all();
+        //$listing_generation_type_template = ListingGenerationTypeTemplate::all();
         $listing_generation_types = ListingGenerationType::all();
         $store_types = StoreType::orderBy('name','asc')->get();
-        return view('listing_generation_type_template.add', compact('listing_generation_type_templates','listing_generation_types','store_types'));
+        return view('listing_generation_type_template.add', compact('listing_generation_types','store_types'));
     }
 
     /**
@@ -91,7 +91,7 @@ class ListingGenerationTypeTemplateController extends Controller
      */
     public function destroy(string $id)
     {
-//        ListingGenerationTypeTemplate::findOrFail($id)->delete();
+        //ListingGenerationTypeTemplate::findOrFail($id)->delete();
 
         return redirect()->route('listing_generation_type_template.index')
             ->with('success', 'Listing Generation Type deleted successfully.');

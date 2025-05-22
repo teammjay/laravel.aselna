@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Constants\OrderOperationStatus;
 use App\Constants\OrderStatus;
 use App\Constants\OrderSyncronisationType;
 use App\Models\Catalog;
@@ -188,7 +189,7 @@ class FetchShopifyOrders implements ShouldQueue
                                     'order_id' => $order_detail->id,
                                     'ship_date' => date('Y-m-d H:i:s'),
                                     'insurance_value' => 0,
-                                    'status' => 1,
+                                    'status' => OrderOperationStatus::Created,
                                     'signature_confirmation' => 1,
                                     'store_id' => $store->id,
                                     'operation_type' => 1,
