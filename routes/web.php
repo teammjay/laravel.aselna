@@ -45,6 +45,8 @@ use App\Http\Controllers\ShipmentsController;
 use App\Http\Controllers\ShippingCarrierPackageController;
 use App\Http\Controllers\ShippingPackageController;
 use App\Http\Controllers\ShippingServiceRulesController;
+use App\Http\Controllers\ShippingSolutionController;
+use App\Http\Controllers\ShippingAccountController;
 use App\Http\Controllers\ProductSpecificationInfoController;
 use App\Http\Controllers\ProductSpecificationValueController;
 use App\Http\Controllers\ProductSpecificationOptionsController;
@@ -536,6 +538,24 @@ Route::middleware('auth')->group(function () {
         Route::get('/printer_client/edit/{id}', 'edit')->name('printer_client.edit');
         Route::post('/printer_client/edit/{id}', 'update')->name('printer_client.update');
         Route::get('/printer_client/delete/{id}', 'destroy')->name('printer_client.delete');
+    });
+
+    Route::controller(ShippingSolutionController::class)->group(function () {
+        Route::get('/shipping_solution', 'index')->name('shipping_solution.index');
+        Route::get('/shipping_solution/add', 'create')->name('shipping_solution.create');
+        Route::post('/shipping_solution/add', 'store')->name('shipping_solution.store');
+        Route::get('/shipping_solution/edit/{id}', 'edit')->name('shipping_solution.edit');
+        Route::post('/shipping_solution/edit/{id}', 'update')->name('shipping_solution.update');
+        Route::get('/shipping_solution/delete/{id}', 'destroy')->name('shipping_solution.delete');
+    });
+
+    Route::controller(ShippingAccountController::class)->group(function () {
+        Route::get('/shipping_account', 'index')->name('shipping_account.index');
+        Route::get('/shipping_account/add', 'create')->name('shipping_account.create');
+        Route::post('/shipping_account/add', 'store')->name('shipping_account.store');
+        Route::get('/shipping_account/edit/{id}', 'edit')->name('shipping_account.edit');
+        Route::post('/shipping_account/edit/{id}', 'update')->name('shipping_account.update');
+        Route::get('/shipping_account/delete/{id}', 'destroy')->name('shipping_account.delete');
     });
 
     Route::get('/ebay/login', [EbayAuthService::class, 'redirectToEbay'])->name('ebay.login');

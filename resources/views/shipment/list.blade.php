@@ -270,7 +270,6 @@
             </div>
         </div>
     </div>
-    <div id="ajax-gallery" style="display: none;"></div>
 @stop
 
 @section('adminlte_js')

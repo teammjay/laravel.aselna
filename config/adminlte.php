@@ -482,7 +482,24 @@ return [
         [
             'text' => 'Shipment',
             'url' => '/shipment',
-            'icon' => 'fa fa-fw fa-shipping-fast'
+            'icon' => 'fa fa-fw fa-shipping-fast',
+            'submenu' => [
+                [
+                    'text' => 'Shipment',
+                    'url' => '/shipment',
+                    'icon' => 'fa fa-fw fa-shipping-fast',
+                ],
+                [
+                    'text' => 'Shipping Account',
+                    'url' => '/shipping_account',
+                    'icon' => 'fa fa-fw fa-file',
+                ],
+                [
+                    'text' => 'Shipping Solutions',
+                    'url' => '/shipping_solution',
+                    'icon' => 'fa fa-fw fa-truck',
+                ]
+            ]
         ],
         [
             'text' => 'Printers',
