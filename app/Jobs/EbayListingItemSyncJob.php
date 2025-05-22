@@ -41,9 +41,10 @@ class EbayListingItemSyncJob implements ShouldQueue
             ->join('listing_item', 'listing_item_link.item_id', '=', 'listing_item.id')
             ->join('listing', 'listing_item_link.listing_id', '=', 'listing.id')
             ->whereIn('listing.store_id', $ebay_store_ids)
-            //->whereNull('listing_item.store_sku')
+            ->whereNull('listing_item.store_sku')
             ->whereIn('listing_item.sync_status', [
                 ListingSyncStatus::Synchronizing,
+                ListingSyncStatus::Unsynchronize,
             ])
             ->whereIn('listing.id', function ($subquery) use ($ebay_store_ids) {
                 return $subquery->select('listing_id')->from('listing_feeds')->whereIn('store_id', $ebay_store_ids)->whereIn('status', [
@@ -62,19 +63,21 @@ class EbayListingItemSyncJob implements ShouldQueue
     {
         $store = $listingItemLink->listing->store;
         $itemDetail = $listingItemLink->listingItem;
-        Log::info("Listing Item Sku " . $itemDetail->store_sku != null);
+        Log::info("Listing Item Sku " . $itemDetail->store_sku);
         if($itemDetail->store_sku != null) return;
 
         try {
             Log::info("Calling Service");
             $ebayAuthService =  new EbayAuthService($store->seller_id, $store->secret_key, $store->access_key, $store->user_id);
-            $response = $ebayAuthService->fetchListingInfoBySku($itemDetail->sku);
+            $response = $ebayAuthService->getListingItemId($itemDetail->sku);
             Log::info('Response ::' . json_encode($response));
-            if ($response) {
-                /*$itemDetail->update([
-                    'store_sku' => '',
-                    'sync_status' => ListingSyncStatus::Synchronized,
-                ]);*/
+            if (isset($response['Ack']) && $response['Ack'] == 'Success' ) {
+                if(isset($response['Item']['ItemID'])) {
+                    $itemDetail->update([
+                        'store_sku' => $response['Item']['ItemID'],
+                        'sync_status' => ListingSyncStatus::Synchronized,
+                    ]);
+                }
             }
 
         } catch (\Exception $e) {

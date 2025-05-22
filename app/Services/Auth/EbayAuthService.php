@@ -540,24 +540,34 @@ class EbayAuthService
         try {
 
             $accessToken = $this->refreshToken();
-            $response = $this->client->get('/sell/inventory/v1/offer', [
+
+            $xml = new \SimpleXMLElement('<?xml version="1.0" encoding="UTF-8"?><GetItemRequest xmlns="urn:ebay:apis:eBLBaseComponents"></GetItemRequest>');
+            $xml->addChild('SKU',$sku);
+            $xml->addChild('IncludeItemSpecifics','true');
+
+            $xmlRequest = $xml->asXML();
+
+            $response = $this->client->post('ws/api.dll', [
                 'verify' => false,
                 'headers' => [
-                    'Authorization' => 'Bearer ' . $accessToken,
+                    'X-EBAY-API-COMPATIBILITY-LEVEL' => '967',
+                    'X-EBAY-API-CALL-NAME' => 'GetItem',
+                    'X-EBAY-API-SITEID' => '0',
+                    'X-EBAY-API-IAF-TOKEN' => $accessToken,
                     'Content-Type' => 'application/json',
                 ],
-                'query' => [
-                    'sku' => $sku,
-                ]
+                'body' => $xmlRequest
             ]);
 
-            $data = json_decode($response->getBody(), true);
+            $body = $response->getBody()->getContents();
+            $xml = simplexml_load_string($body);
+            $data = json_decode(json_encode($xml), true);
 
-            Log::info('Offer Item Detail ' . $response->getBody());
+            Log::info('Offer Item Detail ' . json_encode($xml));
 
-            $itemId = $data['offers'][0]['listing']['listingId'] ?? null;
+            //$itemId = $data['Item']['ItemID'] ?? null;
 
-            return $itemId;
+            return $data;
 
         }catch (RequestException $e) {
             if ($e->hasResponse()) {
