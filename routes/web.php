@@ -566,6 +566,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/shipping_account_transactions/edit/{id}', 'edit')->name('shipping_account_transactions.edit');
         Route::post('/shipping_account_transactions/edit/{id}', 'update')->name('shipping_account_transactions.update');
         Route::get('/shipping_account_transactions/delete/{id}', 'destroy')->name('shipping_account_transactions.delete');
+        Route::post('/shipping_account_transactions/filter', 'filter')->name('shipping_account_transactions.filter');
     });
 
     Route::get('/ebay/login', [EbayAuthService::class, 'redirectToEbay'])->name('ebay.login');
