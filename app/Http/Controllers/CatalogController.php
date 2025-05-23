@@ -22,7 +22,7 @@ use App\Models\ProductTitleKeyword;
 use App\Models\ProductImages;
 use App\Models\ProductType;
 use App\Models\ProductImageAlternative;
-use App\Models\ShippingCarrierPackage;
+use App\Models\ShippingPackage;
 use App\Models\Store;
 use App\Models\StoreProduct;
 use App\Models\StoreType;
@@ -352,7 +352,7 @@ class CatalogController extends Controller
         $colors = ProductColor::all();
         $specifications = ProductSpecification::where('product_id', $pro_id)->orderBy('created_at')->get();
         $specificationInfo = ProductSpecificationInfo::all();
-        $shippingCarrierPackage = ShippingCarrierPackage::orderBy('name')->get();
+        $shippingCarrierPackage = ShippingPackage::orderBy('name')->get();
         $productStoreType = DB::table('product_channel_detail')
             ->select('product_channel_detail.id', 'product_channel_detail.status','store_type.name')
             ->leftJoin('store_type','store_type.id','=','product_channel_detail.store_type_id')
@@ -466,7 +466,7 @@ class CatalogController extends Controller
         $colors = ProductColor::all();
         $specifications = ProductSpecification::where('product_id', $id)->orderBy('created_at')->get();
         //$specificationInfo = ProductSpecificationInfo::where('product_type_id',$product->product_type)->get();
-        $shippingCarrierPackage = ShippingCarrierPackage::orderBy('name')->get();
+        $shippingCarrierPackage = ShippingPackage::orderBy('name')->get();
         $productStoreType = DB::table('product_channel_detail')
                             ->select('product_channel_detail.id','product_channel_detail.status','store_type.name')
                             ->leftJoin('store_type','store_type.id','=','product_channel_detail.store_type_id')

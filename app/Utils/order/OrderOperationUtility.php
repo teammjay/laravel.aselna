@@ -86,7 +86,40 @@ class OrderOperationUtility
 
     private static function cancelOrder($orderOperation)
     {
+        $store = $orderOperation->store;
+        $storeType = $orderOperation->store->storeType->name;
+        switch (strtolower($storeType)) {
+            case 'shopify':
+                break;
+            case 'walmart':
+                $finalData = [];
+                $count = 1;
+                foreach ($orderOperation->operationItem as $item) {
+                    $orderLine = [
+                        'lineNumber' => $count,
+                        'orderLineStatuses' => [
+                            'orderLineStatus' => [
+                                [
+                                    'status' => 'Cancelled',
+                                    'cancellationReason' => 'CUSTOMER_REQUESTED_SELLER_TO_CANCEL',
+                                    'statusQuantity' => [
+                                        'unitOfMeasure' => 'EACH',
+                                        'amount' => $item->quantity
+                                    ]
+                                ]
+                            ]
+                        ]
+                    ];
 
+                    $finalData['orderCancellation']['orderLines']['orderLine'][] = $orderLine;
+                    $count++;
+                }
+                $authService = new WalmartAuthService($store->seller_id, $store->secret_key);
+                $authService->cancelOrder($finalData);
+                break;
+            case 'ebay':
+                break;
+        }
     }
 
     private static function refundOrder($orderOperation)
@@ -110,9 +143,15 @@ class OrderOperationUtility
                 $finalData = [];
                 $count = 1;
                 foreach ($orderOperation->operationItem as $item) {
+                    $channels = $orderOperation->carrierService->carrierServiceChannel;
+                    $channel = null;
+                    // first channel
+                    if (count($channels) > 0) {
+                        $channel = $channels[0];
+                    }
                     $orderLine = [
                         'lineNumber' => $count,
-                        'sellerOrderId' => '',
+//                        'sellerOrderId' => ,
                         'orderLineStatuses' => [
                             'orderLineStatus' => [
                                 [
@@ -124,9 +163,9 @@ class OrderOperationUtility
                                     'trackingInfo' => [
                                         "shipDateTime" => date('Y-m-d\TH:i:sP'),
                                         "carrierName" => [
-                                            "carrier" => $orderOperation->carrierService->name,
+                                            "carrier" => $orderOperation->carrier->name,
                                         ],
-                                        "methodCode" => $orderOperation->carrierService->generic_service_method,
+                                        "methodCode" => $channel->code,
                                         "trackingNumber" => $orderOperation->tracking_number,
                                     ]
                                 ]
@@ -139,7 +178,6 @@ class OrderOperationUtility
                 }
 
                 $authService = new WalmartAuthService($store->seller_id, $store->secret_key);
-
                 $authService->shipOrder($orderOperation->order->purchase_order_id, $finalData);
                 break;
             case 'ebay':

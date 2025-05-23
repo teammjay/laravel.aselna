@@ -55,10 +55,10 @@ class ProductSyncJob implements ShouldQueue
                     try {
                         $this->updateProduct($product);
 
-                        $this->createProductTitleKeywords($product);
-
-                        $fonusProduct = DB::connection('fonus_db')->table('tbl_product')->where('custom_label', $product->code)->first();
-                        $this->createProductFeatures($fonusProduct, $product->id);
+//                        $this->createProductTitleKeywords($product);
+//
+//                        $fonusProduct = DB::connection('fonus_db')->table('tbl_product')->where('custom_label', $product->code)->first();
+//                        $this->createProductFeatures($fonusProduct, $product->id);
                     } catch (Exception $e) {
                         Log::error($e->getMessage());
                     }
@@ -185,6 +185,7 @@ class ProductSyncJob implements ShouldQueue
                 'package_dimensions_width' => $product->package_dimension_width,
                 'package_dimensions_height' => $product->package_dimension_height,
                 'package_dimensions_length' => $product->package_dimension_length,
+                'shipping_package_id' => $product->shipping_package_id,
                 'oem_generic' => $product->oem_generic,
                 //            'product_tags'=> $product->weight_weight_unit,
                 //            'target_aud'=> $product->weight_weight_unit,

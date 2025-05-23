@@ -46,7 +46,7 @@ class WalmartAuthService
         Log::info("Headers: " . json_encode($headers));
         Log::info("Options: " . json_encode($options));
 
-        $request = new Request('POST', 'https://marketplace.walmartapis.com/v3/token', $headers);
+        $request = new Request('POST', $this->endpoint . '/token', $headers);
         $res = $this->client->sendAsync($request, $options)->wait();
         Log::info('Response: ' . $res->getBody());
 
@@ -76,7 +76,7 @@ class WalmartAuthService
                     'filename' => $fileName,
                 ]
             ]];
-        $request = new Request('POST', 'https://marketplace.walmartapis.com/v3/feeds?feedType=' . $feedType, $headers);
+        $request = new Request('POST', $this->endpoint . '/feeds?feedType=' . $feedType, $headers);
         $res = $client->sendAsync($request, $options)->wait();
 
         return json_decode($res->getBody(), true);
@@ -110,7 +110,7 @@ class WalmartAuthService
                 return null;
             }
 
-            $url = "https://marketplace.walmartapis.com/v3/orders";
+            $url = $this->endpoint . "/orders";
             $queryData = [];
 
             if (isset($cursor)) {
@@ -161,6 +161,27 @@ class WalmartAuthService
         Log::info('Order Data' . json_encode($data));
 
         $request = new Request('POST', "{$this->endpoint}/orders/{$purchaseOrderId}/shipping", $headers);
+//        $res = $client->sendAsync($request, $data)->wait();
+
+//        $response = json_decode($res->getBody(), true);
+    }
+
+    public function cancelOrder($purchaseOrderId, $data)
+    {
+        $client = new Client();
+        $accessToken = $this->authenticate();
+
+        $headers = [
+            'WM_SEC.ACCESS_TOKEN' => "{$accessToken}",
+            'Content-Type' => 'application/json',
+            'Accept' => 'application/json',
+            'WM_SVC.NAME' => 'Walmart Marketplace',
+            'WM_QOS.CORRELATION_ID' => uniqid(),
+        ];
+
+        Log::info('Order Data' . json_encode($data));
+
+        $request = new Request('POST', "{$this->endpoint}/orders/{$purchaseOrderId}/cancel", $headers);
 //        $res = $client->sendAsync($request, $data)->wait();
 
 //        $response = json_decode($res->getBody(), true);

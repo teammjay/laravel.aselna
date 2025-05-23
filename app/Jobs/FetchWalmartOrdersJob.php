@@ -41,7 +41,7 @@ class FetchWalmartOrdersJob implements ShouldQueue
         if (count($stores ?? []) > 0) {
             foreach ($stores as $store) {
 
-                if (env('APP_ENV') === 'local' && $store->name != 'OdeMobile') {
+                if (env('APP_ENV') === 'local' && $store->name != 'Accessorychoice') {
                     continue;
                 }
 
