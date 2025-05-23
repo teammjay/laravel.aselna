@@ -11,6 +11,8 @@ use App\Models\OrderOperationReason;
 use App\Models\ShippingCarrier;
 use App\Models\ShippingCarrierPackage;
 use App\Models\ShippingCarrierService;
+use App\Models\ShippingPackage;
+use App\Models\ShippingPackageShippingCarrierPackageLink;
 use App\Models\Store;
 use App\Utils\order\OrderOperationUtility;
 use App\Services\Marketplace\Service\ShopifyService;
@@ -236,6 +238,19 @@ class ShipmentsController extends Controller
                     if ($product_detail->product_weight > $product_weight) {
                         $package_id = $product_detail->shipping_package_id;
                     }
+                    if ($package_id) {
+//                        $shippingPackage = ShippingPackage::findOrFail($package_id);
+                        $shippingCarrierPackageLink = ShippingPackageShippingCarrierPackageLink::where('shipping_package_id', $package_id)->first();
+                        if ($shippingCarrierPackageLink) {
+                            $shippingCPackage = ShippingCarrierPackage::findOrFail($shippingCarrierPackageLink->shipping_carrier_package_id);
+                            if (!isset($shipmentDetail->shipping_package_id)) {
+                                $package_id = $shippingCPackage->id;
+                                $shipmentDetail->shipping_package_id = $shippingCPackage->id;
+                                $shipmentDetail->save();
+                            }
+                        }
+                    }
+
                     $product_weight = $product_detail->product_weight;
                     $product_total_weight = $product_total_weight + $product_weight;
                 }

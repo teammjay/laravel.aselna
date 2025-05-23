@@ -3,7 +3,11 @@
 namespace App\Jobs;
 
 use App\Models\ShippingCarrier;
+use App\Models\ShippingCarrierPackage;
 use App\Models\ShippingCarrierService;
+use App\Models\ShippingCarrierServiceChannelDetail;
+use App\Models\ShippingPackage;
+use App\Models\ShippingPackageShippingCarrierPackageLink;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\DB;
@@ -27,6 +31,11 @@ class ShippingCarrierJob implements ShouldQueue
      */
     public function handle(): void
     {
+        $shippingPackage = DB::connection('easyesale_db')->table('shipping_package')->get();
+        foreach ($shippingPackage as $shippingCarrierPackage) {
+            $this->createShippingPackage($shippingCarrierPackage);
+        }
+
         $shippingCarriers = DB::connection('easyesale_db')->table('shipping_carrier')->cursor();
         foreach ($shippingCarriers as $shippingCarrier) {
             $this->createShippingCarrier($shippingCarrier);
@@ -35,6 +44,21 @@ class ShippingCarrierJob implements ShouldQueue
         $shippingCarrierServices = DB::connection('easyesale_db')->table('shipping_carrier_service')->cursor();
         foreach ($shippingCarrierServices as $shippingCarrierService) {
             $this->createShippingCarrierService($shippingCarrierService);
+        }
+
+        $shippingCarrierPackages = DB::connection('easyesale_db')->table('shipping_carrier_package')->cursor();
+        foreach ($shippingCarrierPackages as $shippingCarrierPackage) {
+            $this->createShippingCarrierPackage($shippingCarrierPackage);
+        }
+
+        $shippingCarrierServiceChannelDetails = DB::connection('easyesale_db')->table('shipping_carrier_service_channel_detail')->get();
+        foreach ($shippingCarrierServiceChannelDetails as $shippingCarrierServiceChannelDetail) {
+            $this->createShippingCarrierServiceChannelDetail($shippingCarrierServiceChannelDetail);
+        }
+
+        $shippingPackageLinks = DB::connection('easyesale_db')->table('shipping_package_shipping_carrier_package_link')->get();
+        foreach ($shippingPackageLinks as $shippingPackageLink) {
+            $this->createShippingPackageShippingCarrierPackageLink($shippingPackageLink);
         }
     }
 
@@ -70,6 +94,68 @@ class ShippingCarrierJob implements ShouldQueue
             'name' => $shippingCarrierService->name,
             'service_level' => $shippingCarrierService->service_level,
             'shipping_carrier_id' => $shippingCarrierService->shipping_carrier_id,
+        ]);
+    }
+
+    private function createShippingCarrierPackage(\stdClass $shippingCarrierPackage)
+    {
+        $shippingCarrierPackageId = $shippingCarrierPackage->id;
+        ShippingCarrierPackage::updateOrCreate([
+            'id' => $shippingCarrierPackageId,
+        ], [
+            'id' => $shippingCarrierPackageId,
+            'shipping_carrier_id' => $shippingCarrierPackage->shipping_carrier_id,
+            'name' => $shippingCarrierPackage->name,
+            'dimensions_length' => $shippingCarrierPackage->dimensions_length,
+            'dimensions_width' => $shippingCarrierPackage->dimensions_width,
+            'dimensions_height' => $shippingCarrierPackage->dimensions_height,
+            'dimensions_length_unit' => $shippingCarrierPackage->dimensions_length_unit,
+            'max_weight_value' => $shippingCarrierPackage->max_weight_value,
+            'max_weight_weight_unit' => $shippingCarrierPackage->max_weight_weight_unit,
+            'non_machinable' => $shippingCarrierPackage->non_machinable
+        ]);
+    }
+
+    private function createShippingPackage($shippingCarrierPackage)
+    {
+        Log::info('Shipping Package: ' . json_encode($shippingCarrierPackage));
+        ShippingPackage::updateOrCreate([
+            'id' => $shippingCarrierPackage->id,
+        ], [
+            'id' => $shippingCarrierPackage->id,
+            'name' => $shippingCarrierPackage->name,
+            'client' => $shippingCarrierPackage->client,
+            'dimensions_length' => $shippingCarrierPackage->dimensions_length,
+            'dimensions_width' => $shippingCarrierPackage->dimensions_width,
+            'dimensions_height' => $shippingCarrierPackage->dimensions_height,
+            'dimensions_length_unit' => $shippingCarrierPackage->dimensions_length_unit,
+            'weight_value' => $shippingCarrierPackage->weight_value,
+            'weight_weight_unit' => $shippingCarrierPackage->weight_weight_unit,
+        ]);
+    }
+
+    private function createShippingPackageShippingCarrierPackageLink(mixed $shippingPackageLink)
+    {
+        ShippingPackageShippingCarrierPackageLink::updateOrCreate([
+            'shipping_package_id' => $shippingPackageLink->shipping_package_id,
+            'shipping_carrier_package_id' => $shippingPackageLink->shipping_carrier_package_id,
+        ], [
+            'shipping_package_id' => $shippingPackageLink->shipping_package_id,
+            'shipping_carrier_package_id' => $shippingPackageLink->shipping_carrier_package_id,
+        ]);
+    }
+
+    private function createShippingCarrierServiceChannelDetail(mixed $shippingCarrierServiceChannelDetail)
+    {
+        ShippingCarrierServiceChannelDetail::updateOrCreate([
+            'id' => $shippingCarrierServiceChannelDetail->id,
+            'carrier_service_id' => $shippingCarrierServiceChannelDetail->shipping_carrier_service_id,
+            'store_type_id' => $shippingCarrierServiceChannelDetail->channel_id,
+        ], [
+            'id' => $shippingCarrierServiceChannelDetail->id,
+            'carrier_service_id' => $shippingCarrierServiceChannelDetail->shipping_carrier_service_id,
+            'store_type_id' => $shippingCarrierServiceChannelDetail->channel_id,
+            'code' => $shippingCarrierServiceChannelDetail->code,
         ]);
     }
 }

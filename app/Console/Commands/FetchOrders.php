@@ -29,7 +29,7 @@ class FetchOrders extends Command
     public function handle()
     {
 //         FetchShopifyOrders::dispatch();
-//         FetchWalmartOrdersJob::dispatch();
-         FetchEbayOrders::dispatch();
+         FetchWalmartOrdersJob::dispatch();
+//         FetchEbayOrders::dispatch();
     }
 }

@@ -13,6 +13,8 @@ class ShippingPackageShippingCarrierPackageLink extends Model
 
     public $incrementing = false;
 
+    public $timestamps = false;
+
     protected $fillable = ['shipping_package_id','shipping_carrier_package_id'];
 
 
