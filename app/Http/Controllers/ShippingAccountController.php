@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\ShippingAccountRequest;
 use App\Models\ShippingAccount;
+use App\Models\ShippingSolution;
 use Illuminate\Http\Request;
 
 class ShippingAccountController extends Controller
@@ -13,7 +14,7 @@ class ShippingAccountController extends Controller
      */
     public function index()
     {
-        $shipping_accounts = ShippingAccount::all();
+        $shipping_accounts = ShippingAccount::with('shippingSolution')->get();
         return view('shipping_account.list', compact('shipping_accounts'));
     }
 
@@ -22,7 +23,8 @@ class ShippingAccountController extends Controller
      */
     public function create()
     {
-        return view('shipping_account.add');
+        $shipping_solutions = ShippingSolution::all();
+        return view('shipping_account.add', compact('shipping_solutions'));
     }
 
     /**
@@ -30,7 +32,11 @@ class ShippingAccountController extends Controller
      */
     public function store(ShippingAccountRequest $request)
     {
-        $request->validated();
+
+        $request['sandbox_account'] = $request->has('sandbox_account') ? 1 : 0;
+        $request['auto_recharge'] = $request->has('auto_recharge') ? 1 : 0;
+
+        $validator = $request->validated();
 
         ShippingAccount::create($request->all());
 
@@ -44,7 +50,8 @@ class ShippingAccountController extends Controller
     public function edit(string $id)
     {
         $shipping_account = ShippingAccount::findOrFail($id);
-        return view('shipping_account.add', compact('shipping_account'));
+        $shipping_solutions = ShippingSolution::all();
+        return view('shipping_account.add', compact('shipping_account','shipping_solutions'));
     }
 
     /**
@@ -52,7 +59,10 @@ class ShippingAccountController extends Controller
      */
     public function update(ShippingAccountRequest $request, string $id)
     {
-        $request->validated();
+        $request['sandbox_account'] = $request->has('sandbox_account') ? 1 : 0;
+        $request['auto_recharge'] = $request->has('auto_recharge') ? 1 : 0;
+
+        $validator = $request->validated();
 
         $request['shipment_estimate_available'] = $request->has('shipment_estimate_available') ? 1 : 0;
 

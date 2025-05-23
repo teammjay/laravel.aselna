@@ -68,7 +68,11 @@ class EbayListingItemSyncJob implements ShouldQueue
 
         try {
             Log::info("Calling Service");
-            $ebayAuthService =  new EbayAuthService($store->seller_id, $store->secret_key, $store->access_key, $store->user_id);
+            $clientId = env('EBAY_CLIENT_ID');
+            $clientSecret = env('EBAY_CLIENT_SECRET');
+            $redirectUri = env('EBAY_REDIRECT_URI');
+
+            $ebayAuthService =  new EbayAuthService($clientId, $clientSecret, $redirectUri, $store->user_id);
             $response = $ebayAuthService->getListingItemId($itemDetail->sku);
             Log::info('Response ::' . json_encode($response));
             if (isset($response['Ack']) && $response['Ack'] == 'Success' ) {

@@ -27,4 +27,8 @@ class ShippingAccount extends Model
 
 
     protected $fillable = ['id','name','user_id','password','api_key','client','shipping_solution_id','account_id','pass_phrase','requester_id','dazzle_client_id','sandbox_account','maximum_allowable_balance','auto_recharge','auto_recharge_threshold'];
+
+    public function shippingSolution(){
+        return $this->belongsTo(ShippingSolution::class,'shipping_solution_id');
+    }
 }

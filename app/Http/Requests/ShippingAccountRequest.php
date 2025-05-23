@@ -11,7 +11,7 @@ class ShippingAccountRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return false;
+        return true;
     }
 
     /**
@@ -22,7 +22,10 @@ class ShippingAccountRequest extends FormRequest
     public function rules(): array
     {
         return [
-            //
+            /*'sandbox_account' => 'required',
+            'maximum_allowable_balance' => 'required',
+            'auto_recharge' => 'required',
+            'auto_recharge_threshold' => 'required'*/
         ];
     }
 }

@@ -27,37 +27,96 @@
 
                     <div class="col-md-6">
                         <div class="form-group">
-                            <label for="code">Code</label>
-                            <input type="text" class="form-control @error('code') is-invalid @enderror" id="code"  name="code"
-                                   placeholder="Enter Shipping Solution Name" value="{{ old('name', $shipping_account['code'] ?? '') }}">
-                            @if ($errors->has('code'))
-                                <span class="text-danger">{{ $errors->first('code') }}</span>
-                            @endif
+                            <label for="api_key">API Key</label>
+                            <input type="text" class="form-control" id="api_key"  name="api_key"
+                                   placeholder="Enter API Key" value="{{ old('api_key', $shipping_account['api_key'] ?? '') }}">
                         </div>
                     </div>
                 </div>
                 <div class="row">
                     <div class="col-md-6">
                         <div class="form-group">
-                            <label for="production_service_url">Production Service Url</label>
-                            <input type="text" class="form-control" id="production_service_url"  name="production_service_url"
-                                   placeholder="Enter Production Service Url" value="{{ old('production_service_url', $shipping_account['production_service_url'] ?? '') }}">
+                            <label for="user_id">User Id</label>
+                            <input type="text" class="form-control" id="user_id"  name="user_id"
+                                   placeholder="Enter User ID" value="{{ old('user_id', $shipping_account['user_id'] ?? '') }}">
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="password">Password</label>
+                            <input type="text" class="form-control" id="password"  name="password"
+                                   placeholder="Enter Password" value="{{ old('password', $shipping_account['password'] ?? '') }}">
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="shipping_solution_id">Shipping Solution</label>
+                            <select class="form-control" name="shipping_solution_id" id="shipping_solution_id">
+                                <option value="">--</option>
+                                @if(count($shipping_solutions ?? []) > 0)
+                                    @foreach($shipping_solutions as $ss)
+                                        <option value="{{ $ss->id }}" @if(isset($shipping_account['shipping_solution_id']) && $shipping_account['shipping_solution_id'] == $ss->id) selected @endif >{{ $ss->name }}</option>
+                                    @endforeach
+                                @endif
+                            </select>
                         </div>
                     </div>
 
                     <div class="col-md-6">
                         <div class="form-group">
-                            <label for="production_service_url">Sandbox Service Url</label>
-                            <input type="text" class="form-control" id="sandbox_service_url"  name="sandbox_service_url"
-                                   placeholder="Enter Sandbox Service Url" value="{{ old('sandbox_service_url', $shipping_account['sandbox_service_url'] ?? '') }}">
+                            <label for="account_id">Account ID</label>
+                            <input type="text" class="form-control" id="account_id"  name="account_id"
+                                   placeholder="Enter Account ID" value="{{ old('account_id', $shipping_account['account_id'] ?? '') }}">
                         </div>
                     </div>
                 </div>
                 <div class="row">
                     <div class="col-md-6">
                         <div class="form-group">
-                            <label for="shipment_estimate_available">Shipment Estimate Available</label>
-                            <input type="checkbox" class="custom-control" name="shipment_estimate_available" id="shipment_estimate_available" @if((isset($shipping_account) && $shipping_account['shipment_estimate_available'] === 1)) checked @endif >
+                            <label for="pass_phrase">Pass Phrase</label>
+                            <input type="text" class="form-control" id="pass_phrase"  name="pass_phrase"
+                                   placeholder="Enter Pass Phrase" value="{{ old('pass_phrase', $shipping_account['pass_phrase'] ?? '') }}">
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="requester_id">Requester ID</label>
+                            <input type="text" class="form-control" id="requester_id"  name="requester_id"
+                                   placeholder="Enter Requester ID" value="{{ old('requester_id', $shipping_account['requester_id'] ?? '') }}">
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="maximum_allowable_balance">Maximum Allowable Balance</label>
+                            <input type="text" class="form-control" id="maximum_allowable_balance"  name="maximum_allowable_balance"
+                                   placeholder="Enter Maximum Allowable Balance" value="{{ old('maximum_allowable_balance', $shipping_account['maximum_allowable_balance'] ?? '') }}">
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="auto_recharge_threshold">Auto Recharge Threshold</label>
+                            <input type="text" class="form-control" id="auto_recharge_threshold"  name="auto_recharge_threshold"
+                                   placeholder="Enter Auto Recharge Threshold" value="{{ old('auto_recharge_threshold', $shipping_account['auto_recharge_threshold'] ?? '') }}">
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="sandbox_account">Sandbox Account</label>
+                            <input type="checkbox" class="custom-control" name="sandbox_account" id="sandbox_account" @if((isset($shipping_account) && $shipping_account['sandbox_account'] === 1)) checked @endif >
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="auto_recharge">Auto Recharge</label>
+                            <input type="checkbox" class="custom-control" name="auto_recharge" id="auto_recharge" @if((isset($shipping_account) && $shipping_account['auto_recharge'] === 1)) checked @endif >
                         </div>
                     </div>
                 </div>
