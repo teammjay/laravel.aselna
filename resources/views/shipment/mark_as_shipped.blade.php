@@ -151,10 +151,11 @@
                                 </div>
                                 <div class="col-md-8">
                                     <select class="form-control" id="carrier_package" name="carrier_package">
+                                        <option value="">--</option>
                                         @if(count($shippingCarrierPackage ?? []) > 0)
                                             @foreach($shippingCarrierPackage as $sCarrierPackage)
                                                 <option
-                                                    value="{{ $sCarrierPackage->id }}" {{ ( $sCarrierPackage->id == $shipmentDetail->shipping_carrier_service_id || ($package_id != '' && $package_id == $sCarrierPackage->id) ) ? 'selected' : '' }}>{{ $sCarrierPackage->name }}</option>
+                                                    value="{{ $sCarrierPackage->id }}" {{ ( $sCarrierPackage->id == $shipmentDetail->shipping_package_id || ($package_id != '' && $package_id == $sCarrierPackage->id) ) ? 'selected' : '' }}>{{ $sCarrierPackage->name }}</option>
                                             @endforeach
                                         @endif
                                     </select>
