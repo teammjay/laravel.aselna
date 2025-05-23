@@ -1,0 +1,277 @@
+@php use App\Constants\FilterCodes; @endphp
+@extends('adminlte::page')
+
+@section('title', 'Shipping Account Transaction')
+
+@section('content_header')
+    <h1>Shipping Account Transaction</h1>
+@stop
+
+@section('content')
+    @csrf
+    @if (session('success'))
+        <div class="alert alert-success alert-dismissible fade show">{{ session('success') }}</div>
+    @endif
+
+    @if (session('error'))
+        <div class="alert alert-danger alert-dismissible fade show">{{ session('error') }}</div>
+    @endif
+    <div class="row my-3">
+        <div class="col-md-2">
+            <button class="btn btn-primary">
+                Void
+            </button>
+        </div>
+
+    </div>
+
+    <div class="card card-default">
+        <div class="card-header">
+            <h3 class="card-title"><a href="javascript:void(0);" class="text-blue">Add search condition</a></h3>
+            <i class="fa fa-angle-down float-right"></i>
+        </div>
+        <div class="card-body" style="display: none;">
+            <form id="filter-form">
+                <input type="hidden" name="store_id" id="store_id">
+                <div class="row pt-3">
+                    <div class="col-md-4">
+                        <div class="row">
+                            <div class="col-4 text-right">
+                                Shipping Account
+                            </div>
+                            <div class="col-8">
+                                <select class="form-control" name="">
+                                    <option value="">--</option>
+                                    @if(count($shipping_account ?? []) > 0)
+                                        @foreach($shipping_account as $sa)
+                                            <option value="{{ $sa->id }}">{{ $sa->name }}</option>
+                                        @endforeach
+                                    @endif
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="row">
+                            <div class="col-4 text-right">
+                                Tracking Number
+                            </div>
+                            <div class="col-8">
+                                <input type="text" name="tracking_number" id="tracking_number" class="form-control">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="row">
+                            <div class="col-4 text-right">
+                                Transaction Date
+                            </div>
+                            <div class="col-8">
+                                <input type="text" name="transaction_date" id="transaction_date" class="form-control">
+                            </div>
+                        </div>
+                    </div>
+
+
+
+                </div>
+
+                <div class="row pt-3">
+                    <div class="col-md-4">
+                        <div class="row">
+                            <div class="col-4 text-right">
+                                Transaction ID
+                            </div>
+                            <div class="col-8">
+                                <input type="text" name="transaction_id" id="transaction_id" class="form-control">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="row">
+                            <div class="col-4 text-right">
+                                Cancelled Date
+                            </div>
+                            <div class="col-8">
+                                <input type="text" name="cancelled_date" id="cancelled_date" class="form-control">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="row">
+                            <div class="col-4 text-right">
+                                Address
+                            </div>
+                            <div class="col-8">
+                                <input type="text" name="address" id="address" class="form-control">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row pt-3">
+                    <div class="col-md-4">
+                        <div class="row">
+                            <div class="col-4 text-right">
+                                Created Date
+                            </div>
+                            <div class="col-8">
+                                <input type="text" name="created_at" id="created_at" class="form-control">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row pt-3">
+                    <div class="col-md-2">
+                        <div class="form-group">
+                            <label>&nbsp;</label>
+                            <button type="submit" class="form-control btn btn-primary">Apply Filter</button>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="form-group">
+                            <label>&nbsp;</label>
+                            <button type="reset" class="form-control btn btn-secondary">Reset</button>
+                        </div>
+                    </div>
+                </div>
+
+
+            </form>
+        </div>
+    </div>
+
+
+    <div class="table-responsive">
+        <table id="transactionsTable" class="table table-bordered table-striped">
+            <thead>
+            <tr>
+                <th>Shuipping Account</th>
+                <th>Tracking Number</th>
+                <th>Transaction Date</th>
+                <th>Transaction ID</th>
+                <th>Transaction Amount</th>
+                <th>Transaction Address</th>
+                <th>Cancelled</th>
+                <th>Cancelled Date</th>
+                <th>Created Date</th>
+            </tr>
+            </thead>
+            <tbody id="transaction-list">
+                @if(count($shipping_account_transactions ?? []) > 0)
+                    @foreach($shipping_account_transactions as $ship_transaction)
+                        <tr data-id="{{ $ship_transaction->id }}">
+                            <td>{{ $ship_transaction->shippingAccount->name }}</td>
+                            <td>{{ $ship_transaction->tracking_number }}</td>
+                            <td>{{ $ship_transaction->transaction_date }}</td>
+                            <td>{{ $ship_transaction->transaction_id }}</td>
+                            <td>{{ $ship_transaction->amount }}</td>
+                            <td>{{ $ship_transaction->address }}</td>
+                            <td><input type="checkbox" name="canceled" @if($ship_transaction->canceled == 1) checked @endif /></td>
+                            <td>{{ $ship_transaction->canceled_date }}</td>
+                            <td>{{ $ship_transaction->created_at }}</td>
+                        </tr>
+                    @endforeach
+                @endif
+            </tbody>
+        </table>
+    </div>
+@stop
+
+@section('adminlte_js')
+    <script>
+        $(document).ready(function() {
+
+            $('.card-header').on('click', function () {
+                if ($(this).find('.fa').hasClass('fa-angle-down')) {
+                    $(this).find('.fa').removeClass('fa-angle-down');
+                    $(this).find('.fa').addClass('fa-angle-up');
+                } else {
+                    $(this).find('.fa').removeClass('fa-angle-up');
+                    $(this).find('.fa').addClass('fa-angle-down');
+                }
+                $('.card-body').toggle();
+            });
+            $('#created_at, #transaction_date, #cancelled_date').datepicker({
+                dateFormat: 'yy-mm-dd',
+            });
+
+            $(document).on('click','#transaction-list tr',function (e) {
+                let ele = $(this);
+
+                if ($(e.target).is('input, textarea, select, checkbox, a, i, button, img')) {
+                    return;
+                }
+                //$('#account-list tr').removeClass('active bg-blue');
+                if(!ele.hasClass('active bg-blue')){
+                    ele.addClass('active bg-blue');
+                }else{
+                    ele.removeClass('active bg-blue');
+                }
+
+            });
+
+            $("#transactionsTable").dataTable();
+
+            $('#filter-form').on('submit', function (e) {
+                e.preventDefault(); // Prevent default form submission
+                loadTransactions();
+            });
+
+            function loadTransactions(){
+
+                if ($.fn.DataTable.isDataTable('#transactionsTable')) {
+                    $('#transactionsTable').DataTable().clear().destroy();
+                }
+
+                const form = document.querySelector("#filter-form");
+                let formData = new FormData(form);
+
+                $.ajax({
+                    url: "{{ route('shipping_account_transactions.filter') }}",
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    headers: {
+                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                    },
+                    success: function (response) {
+                        if (response.html) {
+                            $('#transaction-list').html(response.html);
+
+                            if(response.totalRecords > 0) {
+                                var proTable = $('#transactionsTable').DataTable({
+                                    "lengthChange": false,
+                                    "autoWidth": false,
+                                    "processing": false,
+                                    "serverSide": false,
+                                    "searching": false,
+                                    "paging": false,
+                                    "info": false,
+                                    "order": [[8, "desc"]],
+                                    /*columnDefs: [
+                                        {
+                                            targets: [0],
+                                            orderable: false
+                                        }
+                                    ]*/
+                                });
+                            }
+
+                        }
+                    },
+                    error: function (xhr) {
+                        /*if (xhr.responseJSON?.error) {
+                            $('#responseMessage').html('<p style="color:red;">' + xhr.responseJSON.error.image[0] + '</p>');
+                        }*/
+                    },
+                    complete: function () {
+                        $("#ajax-preloader").hide();
+                    }
+                });
+            }
+        });
+
+    </script>
+@stop

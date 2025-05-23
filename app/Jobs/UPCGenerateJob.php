@@ -61,23 +61,29 @@ class UPCGenerateJob implements ShouldQueue
             $upcCodes[] = [
                 'upc_code' => $upcCodesExceptLastOne . $checkSum,
                 'product_number' => $i
-                ];
+            ];
             $i++;
             $numberCount++;
         }
 
+        $lastSequenceId = UPCCodes::where('store', $store)->orderBy('sequence_id', 'desc')->first();
+        $nextSequenceId = $lastSequenceId ? $lastSequenceId->sequence_id + 1 : 1;
+
+        $bulkData = [];
         foreach ($upcCodes as $upcCode) {
-            DB::transaction(function () use ($store, $upcCode,$company_prefix) {
-                $lastsequenceId = UPCCodes::where('store', $store)->orderBy('sequence_id', 'desc')->first();
-                $nextSequenceId = $lastsequenceId ? $lastsequenceId->sequence_id + 1 : 1;
-                UPCCodes::create([
-                    'upc_code' => $upcCode['upc_code'],
-                    'company_prefix' => $company_prefix,
-                    'product_number' => $upcCode['product_number'],
-                    'sequence_id' => $nextSequenceId,
-                    'store' => $store,
-                ]);
-            });
+            $bulkData[] = [
+                'upc_code' => $upcCode['upc_code'],
+                'company_prefix' => $company_prefix,
+                'product_number' => $upcCode['product_number'],
+                'sequence_id' => $nextSequenceId++,
+                'store' => $store,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ];
         }
+
+        DB::transaction(function () use ($bulkData) {
+            UPCCodes::insert($bulkData);
+        });
     }
 }

@@ -20,12 +20,12 @@ class OrderOperationItem extends Model
 
         static::creating(function ($model) {
             if (empty($model->id)) {
-                $model->id = (string) Str::uuid();
+                $model->id = (string)Str::uuid();
             }
         });
     }
 
-    protected $fillable = ['order_item_id','order_operation_id','client_id','sync_status','sync_message','quantity','creation_retry_count','returned_quantity','item_price','shipping_price','item_tax_price','shipping_tax_price','reason_id','notes','refund_feedback_id','return_operation_item_id','created_by','updated_by','created_at','updated_at'];
+    protected $fillable = ['order_item_id', 'order_operation_id', 'client_id', 'sync_status', 'sync_message', 'quantity', 'creation_retry_count', 'returned_quantity', 'item_price', 'shipping_price', 'item_tax_price', 'shipping_tax_price', 'reason_id', 'notes', 'refund_feedback_id', 'return_operation_item_id', 'created_by', 'updated_by', 'created_at', 'updated_at'];
 
     public function orderOperation()
     {
@@ -34,6 +34,6 @@ class OrderOperationItem extends Model
 
     public function orderItem()
     {
-        return $this->belongsTo(OrderItem::class,'order_item_id');
+        return $this->belongsTo(OrderItem::class, 'order_item_id');
     }
 }

@@ -6,6 +6,8 @@ use App\Constants\OrderOperationStatus;
 use App\Constants\OrderOperationType;
 use App\Constants\OrderStatus;
 use App\Constants\ShippingLabelCreationType;
+use App\Models\OrderItem;
+use App\Services\Auth\WalmartAuthService;
 use App\Services\Marketplace\Service\ShopifyService;
 use Illuminate\Support\Facades\Log;
 
@@ -84,7 +86,40 @@ class OrderOperationUtility
 
     private static function cancelOrder($orderOperation)
     {
+        $store = $orderOperation->store;
+        $storeType = $orderOperation->store->storeType->name;
+        switch (strtolower($storeType)) {
+            case 'shopify':
+                break;
+            case 'walmart':
+                $finalData = [];
+                $count = 1;
+                foreach ($orderOperation->operationItem as $item) {
+                    $orderLine = [
+                        'lineNumber' => $count,
+                        'orderLineStatuses' => [
+                            'orderLineStatus' => [
+                                [
+                                    'status' => 'Cancelled',
+                                    'cancellationReason' => 'CUSTOMER_REQUESTED_SELLER_TO_CANCEL',
+                                    'statusQuantity' => [
+                                        'unitOfMeasure' => 'EACH',
+                                        'amount' => $item->quantity
+                                    ]
+                                ]
+                            ]
+                        ]
+                    ];
 
+                    $finalData['orderCancellation']['orderLines']['orderLine'][] = $orderLine;
+                    $count++;
+                }
+                $authService = new WalmartAuthService($store->seller_id, $store->secret_key);
+                $authService->cancelOrder($finalData);
+                break;
+            case 'ebay':
+                break;
+        }
     }
 
     private static function refundOrder($orderOperation)
@@ -94,10 +129,10 @@ class OrderOperationUtility
 
     private static function createShipment($orderOperation)
     {
-        Log::info('Create shipment :: ' . json_encode($orderOperation));
         if ($orderOperation->label_creation_type == ShippingLabelCreationType::CreateLabel) {
             // TODO Create a label
         }
+        $store = $orderOperation->store;
         $storeType = $orderOperation->store->storeType->name;
         switch (strtolower($storeType)) {
             case 'shopify':
@@ -105,6 +140,45 @@ class OrderOperationUtility
                 $shopifyServie->updateFullfillment($orderOperation->order_id);
                 break;
             case 'walmart':
+                $finalData = [];
+                $count = 1;
+                foreach ($orderOperation->operationItem as $item) {
+                    $channels = $orderOperation->carrierService->carrierServiceChannel;
+                    $channel = null;
+                    // first channel
+                    if (count($channels) > 0) {
+                        $channel = $channels[0];
+                    }
+                    $orderLine = [
+                        'lineNumber' => $count,
+//                        'sellerOrderId' => ,
+                        'orderLineStatuses' => [
+                            'orderLineStatus' => [
+                                [
+                                    'status' => 'Shipped',
+                                    'statusQuantity' => [
+                                        'unitOfMeasure' => 'EACH',
+                                        'amount' => $item->quantity
+                                    ],
+                                    'trackingInfo' => [
+                                        "shipDateTime" => date('Y-m-d\TH:i:sP'),
+                                        "carrierName" => [
+                                            "carrier" => $orderOperation->carrier->name,
+                                        ],
+                                        "methodCode" => $channel->code,
+                                        "trackingNumber" => $orderOperation->tracking_number,
+                                    ]
+                                ]
+                            ]
+                        ]
+                    ];
+
+                    $finalData['orderShipment']['orderLines']['orderLine'][] = $orderLine;
+                    $count++;
+                }
+
+                $authService = new WalmartAuthService($store->seller_id, $store->secret_key);
+                $authService->shipOrder($orderOperation->order->purchase_order_id, $finalData);
                 break;
             case 'ebay':
                 break;

@@ -1,6 +1,7 @@
 <?php
 
 use App\Jobs\AmazonListingItemSyncJob;
+use App\Jobs\EbayListingItemSyncJob;
 use App\Jobs\FetchResultFeedAsync;
 use App\Jobs\FetchWalmartOrdersJob;
 use Illuminate\Foundation\Inspiring;
@@ -16,6 +17,7 @@ Schedule::command('logs:rotate')->everyFourHours();
 
 
 Schedule::job(new AmazonListingItemSyncJob())->everyFiveMinutes();
+Schedule::job(new EbayListingItemSyncJob())->everyFiveMinutes();
 Schedule::job(new FetchResultFeedAsync())->everyFiveMinutes();
 Schedule::command('app:result-feed-sync')->everyMinute();
 
