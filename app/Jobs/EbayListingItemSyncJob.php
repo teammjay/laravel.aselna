@@ -5,9 +5,11 @@ namespace App\Jobs;
 use App\Constants\FeedStatus;
 use App\Constants\ListingSyncStatus;
 use App\Models\ListingItemLink;
+use App\Models\Store;
 use App\Services\Auth\EbayAuthService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Support\Facades\Log;
 
 class EbayListingItemSyncJob implements ShouldQueue
 {
