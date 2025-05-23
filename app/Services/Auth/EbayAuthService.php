@@ -16,6 +16,8 @@ class EbayAuthService
     protected $scope;
     private $redirectUri;
     private $ebay_refresh_token;
+    private $accessToken;
+    private $expireTime;
 
     public function __construct($clientId, $clientSecret,$redirectUri,$refresh_token='')
     {
@@ -72,6 +74,12 @@ class EbayAuthService
     private function refreshToken()
     {
         try {
+
+            if(isset($this->accessToken) && $this->expireTime > time()) {
+                Log::info('Exist Token ' . $this->accessToken);
+                return $this->accessToken;
+            }
+
             $response = $this->client->post("identity/v1/oauth2/token", [
                 'verify' => false,
                 'headers' => [
@@ -88,6 +96,8 @@ class EbayAuthService
             Log::info('Token Refresh ' . $response->getBody());
 
             if (isset($data['access_token'])) {
+                $this->accessToken = $data['access_token'];
+                $this->expireTime = time() + $data['expires_in'];
                 return $data['access_token'];
             }
 
@@ -563,9 +573,7 @@ class EbayAuthService
             $xml = simplexml_load_string($body);
             $data = json_decode(json_encode($xml), true);
 
-            Log::info('Offer Item Detail ' . json_encode($xml));
-
-            //$itemId = $data['Item']['ItemID'] ?? null;
+            Log::info('Item Detail ' . json_encode($xml));
 
             return $data;
 

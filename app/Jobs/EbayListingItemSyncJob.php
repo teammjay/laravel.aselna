@@ -44,15 +44,17 @@ class EbayListingItemSyncJob implements ShouldQueue
             ->join('listing', 'listing_item_link.listing_id', '=', 'listing.id')
             ->whereIn('listing.store_id', $ebay_store_ids)
             ->whereNull('listing_item.store_sku')
-            ->whereIn('listing_item.sync_status', [
-                ListingSyncStatus::Synchronizing,
-                ListingSyncStatus::Unsynchronize,
+            ->orWhere('listing_item.store_sku','')
+            //->orderBy('listing_item.created_at','desc')
+            ->whereNotIn('listing_item.sync_status', [
+                ListingSyncStatus::CreationError,
+                //ListingSyncStatus::Unsynchronize,
             ])
-            ->whereIn('listing.id', function ($subquery) use ($ebay_store_ids) {
+            /*->whereIn('listing.id', function ($subquery) use ($ebay_store_ids) {
                 return $subquery->select('listing_id')->from('listing_feeds')->whereIn('store_id', $ebay_store_ids)->whereIn('status', [
                     FeedStatus::PROCESSED
                 ]);
-            })
+            })*/
             ->chunk(100, function ($listingItemLinks) {
                 foreach ($listingItemLinks as $listingItemLink) {
                     Log::info('Syncing Ebay listing item: ' . $listingItemLink->item_id);
@@ -67,6 +69,8 @@ class EbayListingItemSyncJob implements ShouldQueue
         $itemDetail = $listingItemLink->listingItem;
         Log::info("Listing Item Sku " . $itemDetail->store_sku);
         if($itemDetail->store_sku != null) return;
+        if(!isset($store->user_id)) return;
+        if($store->name == 'nismobile') return;
 
         try {
             Log::info("Calling Service");
@@ -75,6 +79,7 @@ class EbayListingItemSyncJob implements ShouldQueue
             $redirectUri = env('EBAY_REDIRECT_URI');
 
             $ebayAuthService =  new EbayAuthService($clientId, $clientSecret, $redirectUri, $store->user_id);
+            Log::info("Listing Item Sku " . $itemDetail->sku);
             $response = $ebayAuthService->getListingItemId($itemDetail->sku);
             Log::info('Response ::' . json_encode($response));
             if (isset($response['Ack']) && $response['Ack'] == 'Success' ) {
