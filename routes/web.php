@@ -47,6 +47,7 @@ use App\Http\Controllers\ShippingPackageController;
 use App\Http\Controllers\ShippingServiceRulesController;
 use App\Http\Controllers\ShippingSolutionController;
 use App\Http\Controllers\ShippingAccountController;
+use App\Http\Controllers\AccountTransactionController;
 use App\Http\Controllers\ProductSpecificationInfoController;
 use App\Http\Controllers\ProductSpecificationValueController;
 use App\Http\Controllers\ProductSpecificationOptionsController;
@@ -556,6 +557,15 @@ Route::middleware('auth')->group(function () {
         Route::get('/shipping_account/edit/{id}', 'edit')->name('shipping_account.edit');
         Route::post('/shipping_account/edit/{id}', 'update')->name('shipping_account.update');
         Route::get('/shipping_account/delete/{id}', 'destroy')->name('shipping_account.delete');
+    });
+
+    Route::controller(AccountTransactionController::class)->group(function () {
+        Route::get('/shipping_account_transactions/{id}', 'index')->name('shipping_account_transactions.index');
+        Route::get('/shipping_account_transactions/add', 'create')->name('shipping_account_transactions.create');
+        Route::post('/shipping_account_transactions/add', 'store')->name('shipping_account_transactions.store');
+        Route::get('/shipping_account_transactions/edit/{id}', 'edit')->name('shipping_account_transactions.edit');
+        Route::post('/shipping_account_transactions/edit/{id}', 'update')->name('shipping_account_transactions.update');
+        Route::get('/shipping_account_transactions/delete/{id}', 'destroy')->name('shipping_account_transactions.delete');
     });
 
     Route::get('/ebay/login', [EbayAuthService::class, 'redirectToEbay'])->name('ebay.login');
