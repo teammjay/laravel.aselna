@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Jobs\EbayListingItemSyncJob;
 use App\Jobs\FetchEbayOrders;
 use App\Jobs\FetchShopifyOrders;
 use App\Jobs\FetchWalmartOrdersJob;
@@ -29,7 +30,8 @@ class FetchOrders extends Command
     public function handle()
     {
 //         FetchShopifyOrders::dispatch();
-         FetchWalmartOrdersJob::dispatch();
+        EbayListingItemSyncJob::dispatch();
+//        FetchWalmartOrdersJob::dispatch();
 //         FetchEbayOrders::dispatch();
     }
 }
