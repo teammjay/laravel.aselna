@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Constants\FeedStatus;
 use App\Constants\ListingSyncStatus;
+use App\Models\ListingItem;
 use App\Models\ListingItemLink;
 use App\Models\Store;
 use App\Services\Auth\EbayAuthService;
@@ -38,67 +39,94 @@ class EbayListingItemSyncJob implements ShouldQueue
         })->pluck('id');
         Log::info('Ebay store ids: ' . json_encode($ebay_store_ids));
 
-        //join listing_item_link and listing_item and listing
-        ListingItemLink::query()
-            ->join('listing_item', 'listing_item_link.item_id', '=', 'listing_item.id')
-            ->join('listing', 'listing_item_link.listing_id', '=', 'listing.id')
-            ->whereIn('listing.store_id', $ebay_store_ids)
-            ->whereNull('listing_item.store_sku')
-            ->orWhere('listing_item.store_sku','')
-            //->orderBy('listing_item.created_at','desc')
-            ->whereNotIn('listing_item.sync_status', [
-                ListingSyncStatus::CreationError,
-                //ListingSyncStatus::Unsynchronize,
-            ])
-            /*->whereIn('listing.id', function ($subquery) use ($ebay_store_ids) {
-                return $subquery->select('listing_id')->from('listing_feeds')->whereIn('store_id', $ebay_store_ids)->whereIn('status', [
-                    FeedStatus::PROCESSED
-                ]);
-            })*/
-            ->chunk(100, function ($listingItemLinks) {
-                foreach ($listingItemLinks as $listingItemLink) {
-                    Log::info('Syncing Ebay listing item: ' . $listingItemLink->item_id);
-                    $this->syncListingItem($listingItemLink);
-                }
-            });
+        foreach ($ebay_store_ids as $storeId) {
+            $store = Store::find($storeId);
+
+            if (!isset($store->user_id)) continue;
+            if (env('APP_ENV') === 'local' && $store->name == 'nismobile') continue;
+
+            $listingItemLinks = ListingItemLink::query()
+                ->join('listing_item', 'listing_item_link.item_id', '=', 'listing_item.id')
+                ->join('listing', 'listing_item_link.listing_id', '=', 'listing.id')
+                ->whereIn('listing.store_id', [$storeId])
+                ->where(function ($query) {
+                    return $query->whereNull('listing_item.store_sku')
+                        ->orWhere('listing_item.store_sku', '');
+                })
+                ->where(function ($query) {
+                    return $query
+                        ->where('listing_item.creation_retry_count', '<', 3)->orWhereNull('listing_item.creation_retry_count');
+                })
+                ->whereNotIn('listing_item.sync_status', [
+                    ListingSyncStatus::CreationError,
+                ])
+                ->limit(100)
+                ->get();
+
+//            Log::info("Listing Item Links Query: " . $listingItemLinks);
+//            continue;
+
+            $this->syncListingItem($listingItemLinks, $store);
+        }
+
     }
 
-    private function syncListingItem(mixed $listingItemLink)
+    private function syncListingItem($listingItemLinks, $store)
     {
-        $store = $listingItemLink->listing->store;
-        $itemDetail = $listingItemLink->listingItem;
-        Log::info("Listing Item Sku " . $itemDetail->store_sku);
-        if($itemDetail->store_sku != null) return;
-        if(!isset($store->user_id)) return;
-        if($store->name == 'nismobile') return;
+        $skuArray = [];
+        foreach ($listingItemLinks as $listingItemLink) {
+            $itemDetail = $listingItemLink->listingItem;
+            if ($itemDetail->store_sku != null) continue;
+            $skuArray[] = $itemDetail->sku;
+
+            $retry_count = $itemDetail->creation_retry_count ?? 0;
+
+            $itemDetail->update([
+                'creation_retry_count' => $retry_count + 1,
+            ]);
+        }
+        Log::info("Listing Item Sku Array " . json_encode($skuArray));
+
+        if (count($skuArray) == 0) {
+            Log::info("No items to sync for store: " . $store->name);
+            return;
+        }
+
 
         try {
             Log::info("Calling Service");
+
             $clientId = env('EBAY_CLIENT_ID');
             $clientSecret = env('EBAY_CLIENT_SECRET');
             $redirectUri = env('EBAY_REDIRECT_URI');
 
-            $ebayAuthService =  new EbayAuthService($clientId, $clientSecret, $redirectUri, $store->user_id);
-            Log::info("Listing Item Sku " . $itemDetail->sku);
-            $response = $ebayAuthService->getListingItemId($itemDetail->sku);
-            Log::info('Response ::' . json_encode($response));
-            if (isset($response['Ack']) && $response['Ack'] == 'Success' ) {
-                if(isset($response['Item']['ItemID'])) {
-                    $itemDetail->update([
-                        'store_sku' => $response['Item']['ItemID'],
-                        'sync_status' => ListingSyncStatus::Synchronized,
-                    ]);
+            $ebayAuthService = new EbayAuthService($clientId, $clientSecret, $redirectUri, $store->user_id);
+            $response = $ebayAuthService->getListingItems($skuArray);
+
+            if (isset($response) && isset($response['Ack']) && $response['Ack'] == 'Success') {
+                if (isset($response['ItemArray']) && count($response['ItemArray']['Item']) > 0) {
+                    foreach ($response['ItemArray']['Item'] as $item) {
+                        if ($item['SKU'] == null || $item['SKU'] == '') {
+                            Log::info("Item SKU is null or empty, skipping item.");
+                            continue;
+                        }
+                        $itemDetail = ListingItem::where('sku', $item['SKU'])->first();
+                        if ($itemDetail) {
+                            $itemDetail->update([
+                                'store_sku' => $item['ItemID'],
+                                'sync_status' => ListingSyncStatus::Synchronized,
+                            ]);
+                            Log::info("Updated item with SKU: " . $item['SKU'] . " and ItemID: " . $item['ItemID']);
+                        } else {
+                            Log::info("No item found for SKU: " . $item['SKU']);
+                        }
+                    }
                 }
             }
 
         } catch (\Exception $e) {
-            $itemDetail->update([
-                'sync_status' => ListingSyncStatus::CreationError,
-            ]);
             Log::error('Error syncing Ebay listing item: ' . $e->getMessage(), [
-                'listing_item_id' => $itemDetail->id,
                 'store_id' => $store->id,
-                'sku' => $itemDetail->sku,
             ]);
         }
     }

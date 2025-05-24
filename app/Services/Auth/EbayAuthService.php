@@ -545,15 +545,28 @@ class EbayAuthService
 
     }
 
-    public function getListingItemId($sku){
+    public function getListingItems($skuList){
 
         try {
 
             $accessToken = $this->refreshToken();
 
-            $xml = new \SimpleXMLElement('<?xml version="1.0" encoding="UTF-8"?><GetItemRequest xmlns="urn:ebay:apis:eBLBaseComponents"></GetItemRequest>');
-            $xml->addChild('SKU',$sku);
-            $xml->addChild('IncludeItemSpecifics','true');
+            if (!isset($accessToken)) return null;
+
+            $xml = new \SimpleXMLElement('<?xml version="1.0" encoding="UTF-8"?><GetSellerListRequest xmlns="urn:ebay:apis:eBLBaseComponents"></GetSellerListRequest>');
+            $skuArray = $xml->addChild('SKUArray');
+            foreach ($skuList as $sku) {
+                $skuArray->addChild('SKU', $sku);
+            }
+            $pagination = $xml->addChild('Pagination');
+            $pagination->addChild('EntriesPerPage', '100');
+            $pagination->addChild('PageNumber', '1');
+//            $xml->addChild('IncludeItemSpecifics','true');
+
+            $xml->addChild('StartTimeFrom', gmdate('Y-m-d\TH:i:s\Z', strtotime('-119 days')));
+            $xml->addChild('StartTimeTo', gmdate('Y-m-d\TH:i:s\Z', strtotime('now')));
+
+            $outPutSelector = $xml->addChild('GranularityLevel', 'Coarse');
 
             $xmlRequest = $xml->asXML();
 
@@ -561,7 +574,7 @@ class EbayAuthService
                 'verify' => false,
                 'headers' => [
                     'X-EBAY-API-COMPATIBILITY-LEVEL' => '967',
-                    'X-EBAY-API-CALL-NAME' => 'GetItem',
+                    'X-EBAY-API-CALL-NAME' => 'GetSellerList',
                     'X-EBAY-API-SITEID' => '0',
                     'X-EBAY-API-IAF-TOKEN' => $accessToken,
                     'Content-Type' => 'application/json',
@@ -573,7 +586,7 @@ class EbayAuthService
             $xml = simplexml_load_string($body);
             $data = json_decode(json_encode($xml), true);
 
-            Log::info('Item Detail ' . json_encode($xml));
+//            Log::info('Item Detail ' . json_encode($xml));
 
             return $data;
 
