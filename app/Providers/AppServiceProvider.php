@@ -2,12 +2,17 @@
 
 namespace App\Providers;
 
+
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
 use Monolog\Logger;
 use Monolog\Handler\StreamHandler;
 use Opcodes\LogViewer\Facades\LogViewer;
+use App\Models\User;
+use Opcodes\LogViewer\LogFolder;
+use Illuminate\Support\Facades\Gate;
+
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -27,12 +32,16 @@ class AppServiceProvider extends ServiceProvider
         //
         Schema::defaultStringLength(225);
 
-            LogViewer::auth(function ($request) {
-                return $request->user()
-                    && in_array($request->user()->email, [
-                        'admin@example.com',
-                    ]);
-            });
+        LogViewer::auth(function ($request) {
+            return $request->user()
+                && in_array($request->user()->email, [
+                    'admin@example.com',
+                ]);
+        });
+        Gate::define('downloadLogFolder', function (?User $user, LogFolder $folder) {
+            // return true if the user is allowed to download the whole folder.
+            return true;
+        });
         // DB::connection()->enableQueryLog();
         DB::listen(function ($query) {
             if (strtoupper(substr($query->sql, 0, 6)) === 'DELETE') {
@@ -52,9 +61,9 @@ class AppServiceProvider extends ServiceProvider
 
                 // Prepare log message
                 $logMessage = '[' . now() . '] ' . $query->sql .
-                              ' | Bindings: ' . json_encode($query->bindings) .
-                              ' | Time: ' . $query->time . 'ms' .
-                              ' | Class History: ' . implode(' -> ', array_reverse($classHistory));
+                    ' | Bindings: ' . json_encode($query->bindings) .
+                    ' | Time: ' . $query->time . 'ms' .
+                    ' | Class History: ' . implode(' -> ', array_reverse($classHistory));
 
                 $monolog->info($logMessage);
             }
