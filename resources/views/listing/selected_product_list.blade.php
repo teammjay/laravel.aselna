@@ -6,7 +6,7 @@
         <th>Title</th>
         <th>Short Tail Keyword</th>
         <th>Long Tail Keyword</th>
-        <th>Price</th>
+        <th>Price <span class="float-right"><input type="checkbox" id="select_all_pricebox"> Select All</span></th>
         <th>Active</th>
         <th>Channel Category</th>
         <th>Errors</th>
@@ -58,7 +58,7 @@
                     <div class="d-flex align-items-center gap-5">
                         <input type="checkbox" class="price-overwrite po-{{ $product->product_id }}"
                                name="price_overwrite[{{ $product->product_id }}]">
-                        <input class="form-control price-{{ $product->product_id }}" type="text"
+                        <input class="form-control pro-price price-{{ $product->product_id }}" type="text"
                                name="prodcut_price[{{ $product->product_id }}]"
                                value="{{ ($product->price != '' && $product->overwrite_price == 1) ? $product->price : $product->Product->product_marketplace_price }}"
                                readonly="" style="width:150px;">
