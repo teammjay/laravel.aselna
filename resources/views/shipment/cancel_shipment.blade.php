@@ -10,6 +10,7 @@
                                     <label for="order_id">Order ID</label>
                                 </div>
                                 <div class="col-md-8">
+                                    <input type="hidden" name="id" value="{{ $shipmentDetail->id }}">
                                     <input type="text" class="form-control" name="order_id" id="order_id" value="{{ $shipmentDetail->order->order_id }}" readonly="">
                                 </div>
                             </div>
@@ -59,7 +60,7 @@
                                     @foreach($shipmentDetail->operationItem as $oitem)
                                         <tr>
                                             <td>
-                                                @if($oitem->orderItem->product->image != '')
+                                                @if(isset($oitem->orderItem->product) && $oitem->orderItem->product->image != '')
                                                     <div class="main-image">
                                                         <img src="{{ asset('storage/' .$oitem->orderItem->product->image->getFileUrl()) }}" alt="{{ asset('storage/' .$product->image->getFileUrl())}}" loading="lazy" width="50" height="50" class="mainImage" data-product-id="{{ $oitem->orderItem->product->product_id }}">
 
@@ -73,7 +74,7 @@
                                                     <option value=""></option>
                                                     @if(count($reasons ?? []) > 0)
                                                         @foreach($reasons as $reason)
-                                                            <option value="{{ $reason->id }}">{{ $reason->name }}</option>
+                                                            <option value="{{ $reason->channel_code }}">{{ $reason->name }}</option>
                                                         @endforeach
                                                     @endif
                                                 </select>
