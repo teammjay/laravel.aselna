@@ -230,4 +230,29 @@ class ShopifyAuthService
             return false;
         }
     }
+
+    public function cancelOrder($orderId, $reason){
+
+        if(!empty($orderId)) {
+            $variable = [
+                'notifyCustomer' => true,
+                'orderId' => "gid://shopify/Order/".$orderId,
+                'reason' => 'CUSTOMER', // CUSTOMER, DECLINED, FRAUD, INVENTORY, OTHER, STAFF
+                'refund' => true,
+                "restock" => true,
+                'staffNote' => 'Order Cancelled',
+            ];
+            $response = $this->makeGraphQLRequest(ShopifyQueries::$cancelOrder, $variable);
+
+            Log::info('Cancel Orders Response: ' . json_encode($response));
+
+            /*echo '<pre>';
+            print_r($response);
+            echo '</pre>';*/
+
+            return $response;
+        }else{
+            return false;
+        }
+    }
 }
