@@ -7,7 +7,7 @@
                 </div>
                 <div class="col-md-8">
                     <input type="hidden" name="id" value="{{ $addressDetail->id }}">
-                    <input type="text" class="form-control" name="first_name" id="first_name" value="{{ $addressDetail->first_name }}">
+                    <input type="text" class="form-control" name="first_name" id="first_name" value="{{ isset($addressDetail->first_name) ? $addressDetail->first_name : $addressDetail->customer->first_name }}">
                 </div>
             </div>
             <div class="row mt-3 g-3 align-items-center">
@@ -15,7 +15,7 @@
                     <label for="last_name">Last Name</label>
                 </div>
                 <div class="col-md-8">
-                    <input type="text" class="form-control" name="last_name" id="last_name" value="{{ $addressDetail->last_name }}">
+                    <input type="text" class="form-control" name="last_name" id="last_name" value="{{ isset($addressDetail->last_name) ? $addressDetail->last_name : $addressDetail->customer->last_name }}">
                 </div>
             </div>
             <div class="row mt-3 g-3 align-items-center">
@@ -48,6 +48,14 @@
                 </div>
                 <div class="col-md-8">
                     <input type="text" class="form-control" name="state" id="state" value="{{ $addressDetail->state }}">
+                </div>
+            </div>
+            <div class="row mt-3 g-3 align-items-center">
+                <div class="col-md-4">
+                    <label for="zip">Zip</label>
+                </div>
+                <div class="col-md-8">
+                    <input type="text" class="form-control" name="zip" id="zip" value="{{ $addressDetail->zip }}">
                 </div>
             </div>
             <div class="row mt-3 g-3 align-items-center">

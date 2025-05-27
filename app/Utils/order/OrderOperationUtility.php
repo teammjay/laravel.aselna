@@ -140,6 +140,28 @@ class OrderOperationUtility
                 $authService->cancelOrder($orderOperation->order->purchase_order_id, $finalData);
                 break;
             case 'ebay':
+
+                $clientId = env('EBAY_CLIENT_ID');
+                $clientSecret = env('EBAY_CLIENT_SECRET');
+                $redirectUri = env('EBAY_REDIRECT_URI');
+
+                $authService = new EbayAuthService($clientId, $clientSecret, $redirectUri, $store->user_id);
+                $payload = [
+                    'cancelReason' => 'BUYER_CANCEL_OR_ADDRESS_ISSUE',
+                    'legacyOrderId' => $orderOperation->order->order_id,
+                ];
+                $response = $authService->cancelOrder($payload);
+
+                if (!isset($response['cancelId'])) {
+
+                    Log::info('Shopify cancer order error:'.json_encode($response['warnings']));
+                    return false;
+                } else {
+                    //echo "Order canceled successfully!";
+                    Log::info('Shopify cancer order successful:');
+                    return true;
+                }
+
                 break;
         }
     }
@@ -161,7 +183,11 @@ class OrderOperationUtility
                 $shopifyServie = new ShopifyService();
                 $response = $shopifyServie->updateFullfillment($orderOperation->order_id);
 
-                //$orderOperation->update(['status'=>OrderOperationStatus::MarkAsShipped]);
+                if(!isset($response['errors'])){
+                    $orderOperation->update(['status'=>OrderOperationStatus::MarkAsShipped]);
+                }
+
+
                 break;
             case 'walmart':
                 $finalData = [];
@@ -221,9 +247,9 @@ class OrderOperationUtility
 
                 }
 
-                echo '<pre>';
+                /*echo '<pre>';
                 print_r($payload);
-                echo '</pre>';die;
+                echo '</pre>';die;*/
 
                 $clientId = env('EBAY_CLIENT_ID');
                 $clientSecret = env('EBAY_CLIENT_SECRET');

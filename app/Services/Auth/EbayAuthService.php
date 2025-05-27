@@ -542,6 +542,34 @@ class EbayAuthService
         }
     }
 
+    public function cancelOrder($data)
+    {
+
+        try {
+            $accessToken = $this->refreshToken();
+
+            $response = $this->client->post("/post-order/v2/cancellation", [
+                'verify' => false,
+                'headers' => [
+                    'Authorization' => 'Bearer ' . $accessToken,
+                    'Content-Type'  => 'application/json',
+                ],
+                'json' => $data,
+            ]);
+
+            Log::info('Cancel Order Response: ' . $response->getBody());
+
+            return json_decode($response->getBody(), true);
+
+        } catch (RequestException $e) {
+            if ($e->hasResponse()) {
+                $error = json_decode($e->getResponse()->getBody(), true);
+                return ['error' => $error];
+            }
+            return ['error' => $e->getMessage()];
+        }
+    }
+
     public function fetchListingInfoBySku($sku)
     {
 
