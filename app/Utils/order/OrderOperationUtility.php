@@ -8,6 +8,7 @@ use App\Constants\OrderStatus;
 use App\Constants\ShippingLabelCreationType;
 use App\Models\OrderItem;
 use App\Models\OrderOperation;
+use App\Services\Auth\EbayAuthService;
 use App\Services\Auth\ShopifyAuthService;
 use App\Services\Auth\WalmartAuthService;
 use App\Services\Marketplace\Service\ShopifyService;
@@ -158,7 +159,9 @@ class OrderOperationUtility
         switch (strtolower($storeType)) {
             case 'shopify':
                 $shopifyServie = new ShopifyService();
-                $shopifyServie->updateFullfillment($orderOperation->order_id);
+                $response = $shopifyServie->updateFullfillment($orderOperation->order_id);
+
+                //$orderOperation->update(['status'=>OrderOperationStatus::MarkAsShipped]);
                 break;
             case 'walmart':
                 $finalData = [];
@@ -202,6 +205,37 @@ class OrderOperationUtility
                 $authService->shipOrder($orderOperation->order->purchase_order_id, $finalData);
                 break;
             case 'ebay':
+
+                $payload = [
+                    "shippedDate" => now()->toIso8601ZuluString(),
+                    "shippingCarrierCode" => $orderOperation->carrier->name,
+                    "trackingNumber" => $orderOperation->tracking_number
+                ];
+
+                foreach ($orderOperation->operationItem as $item) {
+
+                    $payload["lineItems"][] = [
+                        "lineItemId" => $item->orderItem->store_sku,
+                        "quantity" => $item->quantity,
+                    ];
+
+                }
+
+                echo '<pre>';
+                print_r($payload);
+                echo '</pre>';die;
+
+                $clientId = env('EBAY_CLIENT_ID');
+                $clientSecret = env('EBAY_CLIENT_SECRET');
+                $redirectUri = env('EBAY_REDIRECT_URI');
+
+                $authService = new EbayAuthService($clientId, $clientSecret, $redirectUri, $store->user_id);
+                $result = $authService->createShippingFulfillment($orderOperation->order->order_id, $payload);
+
+                if (!isset($result['error'])) {
+                    $orderOperation->update(['status'=>OrderOperationStatus::MarkAsShipped]);
+                }
+
                 break;
         }
         return true;

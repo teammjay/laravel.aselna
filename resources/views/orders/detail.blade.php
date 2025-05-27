@@ -266,11 +266,11 @@
                                 @foreach($orderDetail->orderItem as $item)
                                     <tr>
                                         <td>
-                                            @if(isset($item->product) && $item->product->product_image_url != '')
+                                            @if(isset($item->product) && $item->product->image != '')
                                                 <div class="main-image">
                                                     <img
-                                                        src="{{  asset('storage/product_images/'. $item->product->product_image_url) }}"
-                                                        alt="{{  $item->product->product_image_url }}" class="mainImage"
+                                                        src="{{  asset('storage/'. $item->product->image->getFileUrl()) }}"
+                                                        alt="{{  $item->product->product_image }}" class="mainImage"
                                                         width="70" height="70"
                                                         data-product-id="{{ $item->product->product_id }}">
                                                 </div>
