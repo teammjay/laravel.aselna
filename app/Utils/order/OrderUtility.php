@@ -129,7 +129,7 @@ class OrderUtility
             'status' => OrderOperationStatus::Created,
             'signature_confirmation' => 1,
             'store_id' => $store->id,
-            'operation_type' => 1,
+            'operation_type' => OrderOperationType::OrderShipment,
             'label_creation_type' => 1,
             'print_to_file' => 0,
             'seller_provides_return_label' => 0,
@@ -188,10 +188,11 @@ class OrderUtility
                         $sku = preg_split('/[_-]/', $item['item']['sku'])[0];
                         $catalog = Catalog::where('product_sku', $sku)->first();
 
+
                         $orderItemData = [
                             'title' => $item['item']['productName'],
                             'order_id' => $order->id,
-                            'product_id' => $catalog->product_id,
+                            'product_id' => $catalog->product_id ?? '03673b75-decc-0fe9-a6b0-7a97a0e3dc11',
                             'client_id' => null,
 //                            'listing_item_id' => $itemDetail->id ?? '',
                             'sku' => $item['item']['sku'],

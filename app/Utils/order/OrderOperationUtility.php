@@ -63,6 +63,7 @@ class OrderOperationUtility
     public static function instantSynchronization($orderOperation)
     {
         $operationType = $orderOperation->operation_type;
+        Log::info('Instant synchronization for operation type: ' . $operationType);
 
         if ($operationType === OrderOperationType::OrderCancellation) {
             self::cancelOrder($orderOperation);
@@ -115,7 +116,7 @@ class OrderOperationUtility
                     $count++;
                 }
                 $authService = new WalmartAuthService($store->seller_id, $store->secret_key);
-                $authService->cancelOrder($finalData);
+                $authService->cancelOrder($orderOperation->order->purchase_order_id, $finalData);
                 break;
             case 'ebay':
                 break;

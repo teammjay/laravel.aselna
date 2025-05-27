@@ -147,23 +147,33 @@ class WalmartAuthService
 
     public function shipOrder($purchaseOrderId, $data)
     {
-        $client = new Client();
-        $accessToken = $this->authenticate();
+        try {
+            $client = new Client();
+            $accessToken = $this->authenticate();
 
-        $headers = [
-            'WM_SEC.ACCESS_TOKEN' => "{$accessToken}",
-            'Content-Type' => 'application/json',
-            'Accept' => 'application/json',
-            'WM_SVC.NAME' => 'Walmart Marketplace',
-            'WM_QOS.CORRELATION_ID' => uniqid(),
-        ];
+            $headers = [
+                'WM_SEC.ACCESS_TOKEN' => "{$accessToken}",
+                'WM_QOS.CORRELATION_ID' => uniqid(),
+                'WM_SVC.NAME' => 'Walmart Service Name',
+                'Accept' => 'application/json'
+            ];
 
-        Log::info('Order Data' . json_encode($data));
+            Log::info('Order Data' . json_encode($data));
 
-        $request = new Request('POST', "{$this->endpoint}/orders/{$purchaseOrderId}/shipping", $headers);
-//        $res = $client->sendAsync($request, $data)->wait();
+            $request = new Request('POST', "{$this->endpoint}/orders/{$purchaseOrderId}/shipping", $headers);
+            $options = [
+                'json' => $data,
+            ];
 
-//        $response = json_decode($res->getBody(), true);
+            $res = $client->sendAsync($request, $options)->wait();
+
+            $response = json_decode($res->getBody(), true);
+            Log::info('Response from Walmart: ' . json_encode($response));
+        }
+        catch (\Exception $e) {
+            Log::error('Error shipping order: ' . $e->getMessage());
+//            return response()->json(['error' => 'Failed to ship order'], 500);
+        }
     }
 
     public function cancelOrder($purchaseOrderId, $data)
