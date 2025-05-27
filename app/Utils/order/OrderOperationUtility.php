@@ -7,6 +7,8 @@ use App\Constants\OrderOperationType;
 use App\Constants\OrderStatus;
 use App\Constants\ShippingLabelCreationType;
 use App\Models\OrderItem;
+use App\Models\OrderOperation;
+use App\Services\Auth\ShopifyAuthService;
 use App\Services\Auth\WalmartAuthService;
 use App\Services\Marketplace\Service\ShopifyService;
 use Illuminate\Support\Facades\Log;
@@ -85,12 +87,30 @@ class OrderOperationUtility
 
     }
 
-    private static function cancelOrder($orderOperation)
+    public static function cancelOrder($orderOperation)
     {
         $store = $orderOperation->store;
         $storeType = $orderOperation->store->storeType->name;
         switch (strtolower($storeType)) {
             case 'shopify':
+
+                $orderId = $orderOperation->order_id;
+                $shipmentDetail = OrderOperation::with('operationItem','order','order.customerAddress','carrierService','store','operationItem.orderItem','operationItem.orderItem.product')->where('order_id',$orderId)->first();
+
+                $shopifyServie = new ShopifyAuthService($store->secret_key);
+                $response = $shopifyServie->cancelOrder($shipmentDetail->order->order_id);
+
+                if (!empty($response['data']['orderCancel']['orderCancelUserErrors'])) {
+                    foreach ($response['data']['orderCancel']['orderCancelUserErrors'] as $error) {
+                        //echo "Error: {$error['message']}\n";
+                        Log::info('Shopify cancer order error:'.json_encode($error));
+                        return false;
+                    }
+                } else {
+                    //echo "Order canceled successfully!";
+                    Log::info('Shopify cancer order successful:');
+                    return true;
+                }
                 break;
             case 'walmart':
                 $finalData = [];

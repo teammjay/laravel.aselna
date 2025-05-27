@@ -19,6 +19,7 @@ Schedule::command('logs:rotate')->everyFourHours();
 Schedule::job(new AmazonListingItemSyncJob())->everyFiveMinutes();
 Schedule::job(new FetchResultFeedAsync())->everyFiveMinutes();
 Schedule::command('app:result-feed-sync')->everyMinute();
+Schedule::command('app:fetch-orders')->hourly();
 
 
 Schedule::job(new EbayListingItemSyncJob())->hourly();
