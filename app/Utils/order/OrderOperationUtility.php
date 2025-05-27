@@ -217,7 +217,7 @@ class OrderOperationUtility
                                         "carrierName" => [
                                             "carrier" => $orderOperation->carrier->name,
                                         ],
-                                        "methodCode" => $channel->code,
+                                        "methodCode" => 'Standard',
                                         "trackingNumber" => $orderOperation->tracking_number,
                                     ]
                                 ]
