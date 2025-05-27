@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Jobs\FetchWalmartOrdersJob;
 use App\Models\ScheduledJob;
 use Illuminate\Database\Seeder;
 
@@ -198,6 +199,21 @@ class JobScheduler extends Seeder
                 'name' => 'Listing Item Link sync Job',
                 'description' => 'Sync all listing item links',
                 'class_name' => 'App\Jobs\ListingItemLinkSyncJob',
+            ],
+            [
+                'name' => 'Fetch Walmart Orders Sync Job',
+                'description' => 'Fetch Walmart orders',
+                'class_name' => 'App\Jobs\FetchWalmartOrdersJob',
+            ],
+            [
+                'name' => 'Fetch Shopify Orders Sync Job',
+                'description' => 'Fetch Shopify orders',
+                'class_name' => 'App\Jobs\FetchShopifyOrders',
+            ],
+            [
+                'name' => 'Fetch Ebay Orders Sync Job',
+                'description' => 'Fetch Ebay orders',
+                'class_name' => 'App\Jobs\FetchEbayOrders',
             ]
         ];
 
