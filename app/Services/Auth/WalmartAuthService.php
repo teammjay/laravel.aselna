@@ -4,6 +4,7 @@ namespace App\Services\Auth;
 
 use App\Utils\FileUtility;
 use GuzzleHttp\Client;
+use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Psr7\Utils;
 use Illuminate\Support\Facades\Log;
 use GuzzleHttp\Psr7\Request;
@@ -155,25 +156,36 @@ class WalmartAuthService
                 'WM_SEC.ACCESS_TOKEN' => "{$accessToken}",
                 'WM_QOS.CORRELATION_ID' => uniqid(),
                 'WM_SVC.NAME' => 'Walmart Service Name',
-                'Accept' => 'application/json'
+                'Accept' => 'application/json',
+                'Content-Type' => 'application/json'
             ];
 
             Log::info('Order Data' . json_encode($data));
 
-            $request = new Request('POST', "{$this->endpoint}/orders/{$purchaseOrderId}/shipping", $headers);
-            $options = [
-                'json' => $data,
-            ];
+            $request = new Request('POST', "{$this->endpoint}/orders/{$purchaseOrderId}/shipping", $headers, json_encode($data));
 
-            $res = $client->sendAsync($request, $options)->wait();
+            if (env('APP_ENV') !== 'local') {
+                $res = $client->sendAsync($request)->wait();
 
-            $response = json_decode($res->getBody(), true);
-            Log::info('Response from Walmart: ' . json_encode($response));
-        }
-        catch (\Exception $e) {
+                $response = json_decode($res->getBody(), true);
+                Log::info('Response from Walmart: ' . json_encode($response));
+                return true;
+            }
+
+        } catch (RequestException $e) {
+            // Log full error response (if available)
+            if ($e->hasResponse()) {
+                $status = $e->getResponse()->getStatusCode();
+                $body = (string)$e->getResponse()->getBody();
+                Log::error("Walmart API error ({$status}): " . $body);
+            } else {
+                Log::error('Request error (no response): ' . $e->getMessage());
+            }
+
+        } catch (\Exception $e) {
             Log::error('Error shipping order: ' . $e->getMessage());
-//            return response()->json(['error' => 'Failed to ship order'], 500);
         }
+        return false;
     }
 
     public function cancelOrder($purchaseOrderId, $data)
@@ -192,8 +204,10 @@ class WalmartAuthService
         Log::info('Order Data' . json_encode($data));
 
         $request = new Request('POST', "{$this->endpoint}/orders/{$purchaseOrderId}/cancel", $headers);
-//        $res = $client->sendAsync($request, $data)->wait();
-
-//        $response = json_decode($res->getBody(), true);
+        //add local env condition
+        if (env('APP_ENV') !== 'local') {
+            $res = $client->sendAsync($request, $data)->wait();
+            $response = json_decode($res->getBody(), true);
+        }
     }
 }
