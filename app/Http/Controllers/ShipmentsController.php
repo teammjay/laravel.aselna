@@ -349,7 +349,7 @@ class ShipmentsController extends Controller
 
         try {
             if ($selected_shipment_id) {
-                $orderOperation = OrderOperation::with('order', 'store', 'store.storeType')->where('id', $selected_shipment_id)->first();
+                $orderOperation = OrderOperation::with('order','store','store.storeType','operationItem','operationItem.orderItem','carrier','carrierService')->where('id',$selected_shipment_id)->first();
                 $isSuccess = OrderOperationUtility::processShipment($orderOperation, $request);
 
                 if (!$isSuccess) {
@@ -386,7 +386,8 @@ class ShipmentsController extends Controller
                 $orderOperation = OrderOperation::with('order', 'store', 'store.storeType')->where('id', $selected_shipment_id)->first();
                 $response = OrderOperationUtility::cancelOrder($orderOperation);
 
-                if ($response) {
+                if($response){
+                    $orderOperation->update(['status'=>OrderOperationStatus::Canceled]);
                     return response()->json([
                         'success' => true,
                         'message' => 'Order Cancelled Successfully',

@@ -512,8 +512,7 @@ class ShopifyService implements MarketplaceServiceInterface
                     "notifyCustomer" => true,
                     "trackingInfo" => [
                         "company" => $shipmentDetail->carrierService->ShippingCarrier->name,
-                        "number" => $shipmentDetail->tracking_number,
-                        "url" => "https://tools.usps.com/go/TrackConfirmAction_input?qtc_tLabels1=".$shipmentDetail->tracking_number
+                        "number" => $shipmentDetail->tracking_number
                     ]
                 ]
             ];
