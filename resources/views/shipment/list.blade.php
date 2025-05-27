@@ -643,6 +643,9 @@
                         alert('Records updated successfully!!');
                         location.reload();
                     }
+                     else {
+                         alert(response.message);
+                    }
                 },
                 error: function (xhr) {
                     // Handle error response

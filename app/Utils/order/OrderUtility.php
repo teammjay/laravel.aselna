@@ -233,11 +233,13 @@ class OrderUtility
                 if ($item['orderLineStatuses'] && $item['orderLineStatuses']['orderLineStatus']) {
                     $lineStatus = $item['orderLineStatuses']['orderLineStatus'][0];
                     if ($lineStatus['status'] === 'Shipped') {
+                        $order->status = OrderStatus::Shipped;
                         $order_operation_detail->status = OrderOperationStatus::MarkAsShipped;
                         if ($lineStatus['trackingInfo']) {
                             $trackingNumber = $lineStatus['trackingInfo']['trackingNumber'] ?? '';
                             $order_operation_detail->tracking_number = $trackingNumber;
                         }
+                        $order->save();
                         $order_operation_detail->save();
                     }
                     Log::info("Order Line Cancelled: " . json_encode($item));

@@ -82,7 +82,7 @@ class OrderOperationUtility
         if (OrderOperationType::isShipment($operationType)) {
             return self::createShipment($orderOperation);
         }
-        return true;
+        return false;
     }
 
     public static function createLabel()
