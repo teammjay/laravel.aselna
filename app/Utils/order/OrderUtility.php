@@ -177,6 +177,7 @@ class OrderUtility
                                 'order_item_id' => $order_item->id,
                                 'order_operation_id' => $order_operation_detail->id,
                                 'client_id' => $itemDetail->client,
+                                'quantity' => $item['orderLineQuantity']['amount'],
                                 'sync_status' => 6
                             ];
 
@@ -184,7 +185,9 @@ class OrderUtility
                                 'order_operation_id' => $order_operation_detail->id
                             ], $orderOperationItemData);
                         }
-                    } else {
+                    }
+                    else
+                    {
                         $sku = preg_split('/[_-]/', $item['item']['sku'])[0];
                         $catalog = Catalog::where('product_sku', $sku)->first();
 
@@ -225,6 +228,19 @@ class OrderUtility
                             ], $orderOperationItemData);
                         }
                     }
+                }
+
+                if ($item['orderLineStatuses'] && $item['orderLineStatuses']['orderLineStatus']) {
+                    $lineStatus = $item['orderLineStatuses']['orderLineStatus'][0];
+                    if ($lineStatus['status'] === 'Shipped') {
+                        $order_operation_detail->status = OrderOperationStatus::MarkAsShipped;
+                        if ($lineStatus['trackingInfo']) {
+                            $trackingNumber = $lineStatus['trackingInfo']['trackingNumber'] ?? '';
+                            $order_operation_detail->tracking_number = $trackingNumber;
+                        }
+                        $order_operation_detail->save();
+                    }
+                    Log::info("Order Line Cancelled: " . json_encode($item));
                 }
             }
         }

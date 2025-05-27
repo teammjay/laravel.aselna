@@ -22,7 +22,7 @@ class OrderOperationUtility
             if (isset($orderOperation->order->contingent) && $orderOperation->order->contingent) {
                 $orderOperation->status = OrderOperationStatus::Error;
                 $orderOperation->save();
-                return;
+                return false;
             }
         }
 
@@ -58,9 +58,10 @@ class OrderOperationUtility
 
         $instantSync = self::instantSynchronization($orderOperation);
         if ($instantSync) {
-
+            return true;
+        } else {
+            return false;
         }
-
     }
 
     public static function instantSynchronization($orderOperation)
@@ -81,6 +82,7 @@ class OrderOperationUtility
         if (OrderOperationType::isShipment($operationType)) {
             return self::createShipment($orderOperation);
         }
+        return true;
     }
 
     public static function createLabel()
@@ -96,15 +98,15 @@ class OrderOperationUtility
             case 'shopify':
 
                 $orderId = $orderOperation->order_id;
-                $shipmentDetail = OrderOperation::with('operationItem','order','order.customerAddress','carrierService','store','operationItem.orderItem','operationItem.orderItem.product')->where('order_id',$orderId)->first();
+                $shipmentDetail = OrderOperation::with('operationItem', 'order', 'order.customerAddress', 'carrierService', 'store', 'operationItem.orderItem', 'operationItem.orderItem.product')->where('order_id', $orderId)->first();
 
                 $shopifyServie = new ShopifyAuthService($store->secret_key);
-                $response = $shopifyServie->cancelOrder($shipmentDetail->order->order_id);
+                $response = $shopifyServie->cancelOrder($orderOperation->order->purchase_order_id, $shipmentDetail->order->order_id);
 
                 if (!empty($response['data']['orderCancel']['orderCancelUserErrors'])) {
                     foreach ($response['data']['orderCancel']['orderCancelUserErrors'] as $error) {
                         //echo "Error: {$error['message']}\n";
-                        Log::info('Shopify cancer order error:'.json_encode($error));
+                        Log::info('Shopify cancer order error:' . json_encode($error));
                         return false;
                     }
                 } else {
@@ -207,7 +209,7 @@ class OrderOperationUtility
                                 [
                                     'status' => 'Shipped',
                                     'statusQuantity' => [
-                                        'unitOfMeasure' => 'EACH',
+                                        'unitOfMeasurement' => 'EACH',
                                         'amount' => $item->quantity
                                     ],
                                     'trackingInfo' => [
@@ -228,8 +230,7 @@ class OrderOperationUtility
                 }
 
                 $authService = new WalmartAuthService($store->seller_id, $store->secret_key);
-                $authService->shipOrder($orderOperation->order->purchase_order_id, $finalData);
-                break;
+                return $authService->shipOrder($orderOperation->order->purchase_order_id, $finalData);
             case 'ebay':
 
                 $payload = [

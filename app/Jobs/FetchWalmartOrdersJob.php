@@ -26,9 +26,7 @@ class FetchWalmartOrdersJob implements ShouldQueue
      * Create a new job instance.
      */
     public function __construct()
-    {
-        //
-    }
+    {}
 
     /**
      * Execute the job.
@@ -41,7 +39,7 @@ class FetchWalmartOrdersJob implements ShouldQueue
         if (count($stores ?? []) > 0) {
             foreach ($stores as $store) {
 
-                if (env('APP_ENV') === 'local' && $store->name != 'Accessorychoice') {
+                if (env('APP_ENV') === 'local' && $store->name != 'OdeMobile') {
                     continue;
                 }
 

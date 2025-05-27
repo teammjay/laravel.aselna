@@ -331,7 +331,8 @@ class ShipmentsController extends Controller
         ]);
     }
 
-    public function markShipped(Request $request){
+    public function markShipped(Request $request)
+    {
 
         $request->validate([
             'id' => 'required',
@@ -347,22 +348,16 @@ class ShipmentsController extends Controller
         $selected_shipment_id = $request->input('id');
 
         try {
-            if($selected_shipment_id){
+            if ($selected_shipment_id) {
                 $orderOperation = OrderOperation::with('order','store','store.storeType','operationItem','operationItem.orderItem','carrier','carrierService')->where('id',$selected_shipment_id)->first();
-                OrderOperationUtility::processShipment($orderOperation, $request);
-//
-//            $shipmentDetail = OrderOperation::with('order','store','store.storeType')->where('id',$selected_shipment_id)->first();
-//            $shipmentDetail->update($updateRecord);
-//
-//            if(isset($shipmentDetail->order) && isset($shipmentDetail->store->storeType)){
-//                $storeType = $shipmentDetail->store->storeType->name;
-//                if(strtolower($storeType) == 'shopify'){
-//                    $shopifyServie = new ShopifyService();
-//                    $shopifyServie->updateFullfillment($shipmentDetail->order_id);
-//                }else{
-//
-//                }
-//            }
+                $isSuccess = OrderOperationUtility::processShipment($orderOperation, $request);
+
+                if (!$isSuccess) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Something went wrong with API. Please try again!'
+                    ]);
+                }
 
                 return response()->json([
                     'success' => true
@@ -381,13 +376,14 @@ class ShipmentsController extends Controller
         }
     }
 
-    public function cancelOrder(Request $request){
+    public function cancelOrder(Request $request)
+    {
 
         $selected_shipment_id = $request->input('id');
 
         try {
-            if($selected_shipment_id){
-                $orderOperation = OrderOperation::with('order','store','store.storeType')->where('id',$selected_shipment_id)->first();
+            if ($selected_shipment_id) {
+                $orderOperation = OrderOperation::with('order', 'store', 'store.storeType')->where('id', $selected_shipment_id)->first();
                 $response = OrderOperationUtility::cancelOrder($orderOperation);
 
                 if($response){
@@ -396,8 +392,8 @@ class ShipmentsController extends Controller
                         'success' => true,
                         'message' => 'Order Cancelled Successfully',
                     ]);
-                }else{
-
+                } else {
+                    $orderOperation->update(['status' => OrderOperationStatus::Canceled]);
                     return response()->json([
                         'success' => false,
                         'message' => 'Something went wrong with API. Please try again!'
