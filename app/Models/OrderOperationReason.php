@@ -26,4 +26,8 @@ class OrderOperationReason extends Model
     }
 
     protected $fillable = ['store_type_id', 'operation_type', 'name', 'channel_code', 'created_at', 'updated_at'];
+
+    public function storeType(){
+        return $this->belongsTo(StoreType::class,'store_type_id');
+    }
 }

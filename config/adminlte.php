@@ -498,6 +498,11 @@ return [
                     'text' => 'Shipping Solutions',
                     'url' => '/shipping_solution',
                     'icon' => 'fa fa-fw fa-truck',
+                ],
+                [
+                    'text' => 'Order Operation Reason',
+                    'url' => '/order_operation_reason',
+                    'icon' => 'fa fa-fw fa-file',
                 ]
             ]
         ],

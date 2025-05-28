@@ -6,6 +6,7 @@ use App\Constants\OrderOperationStatus;
 use App\Constants\OrderOperationType;
 use App\Constants\OrderStatus;
 use App\Constants\ShippingLabelCreationType;
+use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\OrderOperation;
 use App\Services\Auth\EbayAuthService;
@@ -187,6 +188,10 @@ class OrderOperationUtility
 
                 if(!isset($response['errors'])){
                     $orderOperation->update(['status'=>OrderOperationStatus::MarkAsShipped]);
+                    if(isset($orderOperation->order_id)) {
+                        $order = Order::findOrFail($orderOperation->order_id);
+                        $order->update(['order_status' => OrderStatus::Shipped]);
+                    }
                 }
 
 
@@ -261,6 +266,10 @@ class OrderOperationUtility
 
                 if (!isset($result['error'])) {
                     $orderOperation->update(['status'=>OrderOperationStatus::MarkAsShipped]);
+                    if(isset($orderOperation->order_id)) {
+                        $order = Order::findOrFail($orderOperation->order_id);
+                        $order->update(['order_status' => OrderStatus::Shipped]);
+                    }
                 }
 
                 break;

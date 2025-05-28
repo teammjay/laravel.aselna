@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Constants\OrderOperationStatus;
+use App\Constants\OrderStatus;
 use App\Models\Catalog;
 use App\Models\CustomerAddress;
 use App\Models\LogisticCenter;
@@ -388,12 +389,15 @@ class ShipmentsController extends Controller
 
                 if($response){
                     $orderOperation->update(['status'=>OrderOperationStatus::Canceled]);
+                    if(isset($orderOperation->order->id)){
+                        $order = Order::findOrFail($orderOperation->order->id);
+                        $order->update(['order_status'=>OrderStatus::Canceled]);
+                    }
                     return response()->json([
                         'success' => true,
                         'message' => 'Order Cancelled Successfully',
                     ]);
                 } else {
-                    $orderOperation->update(['status' => OrderOperationStatus::Canceled]);
                     return response()->json([
                         'success' => false,
                         'message' => 'Something went wrong with API. Please try again!'
