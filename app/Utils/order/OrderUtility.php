@@ -182,6 +182,7 @@ class OrderUtility
                             ];
 
                             $order_operation_item = OrderOperationItem::updateOrCreate([
+                                'order_item_id' => $order_item->id,
                                 'order_operation_id' => $order_operation_detail->id
                             ], $orderOperationItemData);
                         }
@@ -224,6 +225,7 @@ class OrderUtility
                             ];
 
                             $order_operation_item = OrderOperationItem::updateOrCreate([
+                                'order_item_id' => $order_item->id,
                                 'order_operation_id' => $order_operation_detail->id
                             ], $orderOperationItemData);
                         }
@@ -407,6 +409,7 @@ class OrderUtility
                         ];
 
                         $order_operation_item = OrderOperationItem::updateOrCreate([
+                            'order_item_id' => $order_item->id,
                             'order_operation_id' => $order_operation_detail->id
                         ], $orderOperationItemData);
                     }
@@ -450,6 +453,7 @@ class OrderUtility
                         ];
 
                         $order_operation_item = OrderOperationItem::updateOrCreate([
+                            'order_item_id' => $order_item->id,
                             'order_operation_id' => $order_operation_detail->id
                         ], $orderOperationItemData);
                     }
