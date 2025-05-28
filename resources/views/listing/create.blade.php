@@ -407,12 +407,20 @@
                                         <label>Bundle Sperator</label> <input type="text" class="form-control ml-3" name="bundle_seperator" value="w" style="width: 150px;">
                                         <span class="total_product"></span>
                                     </div>
-                                    <div class="float-right">
+                                    <div class="float-right d-flex align-items-center" style="gap:15px;">
                                         <div class="d-flex align-items-center" style="gap:15px;">
                                             <select class="form-control" id="store_category">
 
                                             </select>
                                             <button class="btn btn-secondary" id="apply_all">Apply to all</button>
+                                        </div>
+                                        <div class="d-flex align-items-center" style="gap:15px;">
+                                            <select id="price_type" class="form-control">
+                                                <option value="fixed">Fixed</option>
+                                                <option value="percentage">Percentage</option>
+                                            </select>
+                                            <input type="text" class="form-control" id="price_to_increase" placeholder="Price to increase">
+                                            <button class="btn btn-secondary" id="apply_price">Apply to selected</button>
                                         </div>
                                     </div>
                                 </div>
@@ -2429,6 +2437,48 @@
                     }
                 });
 
+            });
+
+            $(document).on('click','#apply_price',function () {
+                var new_price = $('#price_to_increase').val();
+                var price_type = $('#price_type').val();
+
+                if(price_type == 'fixed'){
+
+                    $('.sproRow').each(function () {
+                        let ele = $(this);
+                        if(ele.find('.price-overwrite').is(':checked')) {
+                            var currentvalue = ele.find('.pro-price').val();
+                            var newvalue = parseFloat(currentvalue) + parseFloat(new_price);
+                            ele.find('.pro-price').val(parseFloat(newvalue).toFixed(2));
+                        }
+                    });
+
+                }else{
+
+                    $('.sproRow').each(function () {
+                        let ele = $(this);
+                        if(ele.find('.price-overwrite').is(':checked')) {
+                            var currentvalue = ele.find('.pro-price').val();
+                            var newPrice = (parseFloat(currentvalue) * new_price) / 100;
+                            var newvalue = parseFloat(currentvalue) + parseFloat(newPrice);
+                            ele.find('.pro-price').val(parseFloat(newvalue).toFixed(2));
+                        }
+                    });
+                }
+            });
+
+            $(document).on('click','#select_all_pricebox',function () {
+
+                $('.sproRow').each(function () {
+                    if($(this).find('.price-overwrite').is(':checked')){
+                        $(this).find('.price-overwrite').prop('checked',false);
+                        $(this).parent().find('input[type="text"]').attr('readonly',true);
+                    }else{
+                        $(this).find('.price-overwrite').prop('checked',true);
+                        $(this).parent().find('input[type="text"]').removeAttr('readonly');
+                    }
+                });
             });
 
         });

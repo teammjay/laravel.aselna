@@ -7,6 +7,9 @@ use App\Constants\OrderOperationType;
 use App\Constants\OrderStatus;
 use App\Constants\ShippingLabelCreationType;
 use App\Models\OrderItem;
+use App\Models\OrderOperation;
+use App\Services\Auth\EbayAuthService;
+use App\Services\Auth\ShopifyAuthService;
 use App\Services\Auth\WalmartAuthService;
 use App\Services\Marketplace\Service\ShopifyService;
 use Illuminate\Support\Facades\Log;
@@ -19,7 +22,7 @@ class OrderOperationUtility
             if (isset($orderOperation->order->contingent) && $orderOperation->order->contingent) {
                 $orderOperation->status = OrderOperationStatus::Error;
                 $orderOperation->save();
-                return;
+                return false;
             }
         }
 
@@ -55,14 +58,16 @@ class OrderOperationUtility
 
         $instantSync = self::instantSynchronization($orderOperation);
         if ($instantSync) {
-
+            return true;
+        } else {
+            return false;
         }
-
     }
 
     public static function instantSynchronization($orderOperation)
     {
         $operationType = $orderOperation->operation_type;
+        Log::info('Instant synchronization for operation type: ' . $operationType);
 
         if ($operationType === OrderOperationType::OrderCancellation) {
             self::cancelOrder($orderOperation);
@@ -77,6 +82,7 @@ class OrderOperationUtility
         if (OrderOperationType::isShipment($operationType)) {
             return self::createShipment($orderOperation);
         }
+        return false;
     }
 
     public static function createLabel()
@@ -84,12 +90,30 @@ class OrderOperationUtility
 
     }
 
-    private static function cancelOrder($orderOperation)
+    public static function cancelOrder($orderOperation)
     {
         $store = $orderOperation->store;
         $storeType = $orderOperation->store->storeType->name;
         switch (strtolower($storeType)) {
             case 'shopify':
+
+                $orderId = $orderOperation->order_id;
+                $shipmentDetail = OrderOperation::with('operationItem', 'order', 'order.customerAddress', 'carrierService', 'store', 'operationItem.orderItem', 'operationItem.orderItem.product')->where('order_id', $orderId)->first();
+
+                $shopifyServie = new ShopifyAuthService($store->secret_key);
+                $response = $shopifyServie->cancelOrder($orderOperation->order->purchase_order_id, $shipmentDetail->order->order_id);
+
+                if (!empty($response['data']['orderCancel']['orderCancelUserErrors'])) {
+                    foreach ($response['data']['orderCancel']['orderCancelUserErrors'] as $error) {
+                        //echo "Error: {$error['message']}\n";
+                        Log::info('Shopify cancer order error:' . json_encode($error));
+                        return false;
+                    }
+                } else {
+                    //echo "Order canceled successfully!";
+                    Log::info('Shopify cancer order successful:');
+                    return true;
+                }
                 break;
             case 'walmart':
                 $finalData = [];
@@ -115,9 +139,31 @@ class OrderOperationUtility
                     $count++;
                 }
                 $authService = new WalmartAuthService($store->seller_id, $store->secret_key);
-                $authService->cancelOrder($finalData);
+                $authService->cancelOrder($orderOperation->order->purchase_order_id, $finalData);
                 break;
             case 'ebay':
+
+                $clientId = env('EBAY_CLIENT_ID');
+                $clientSecret = env('EBAY_CLIENT_SECRET');
+                $redirectUri = env('EBAY_REDIRECT_URI');
+
+                $authService = new EbayAuthService($clientId, $clientSecret, $redirectUri, $store->user_id);
+                $payload = [
+                    'cancelReason' => 'BUYER_CANCEL_OR_ADDRESS_ISSUE',
+                    'legacyOrderId' => $orderOperation->order->order_id,
+                ];
+                $response = $authService->cancelOrder($payload);
+
+                if (!isset($response['cancelId'])) {
+
+                    Log::info('Shopify cancer order error:'.json_encode($response['warnings']));
+                    return false;
+                } else {
+                    //echo "Order canceled successfully!";
+                    Log::info('Shopify cancer order successful:');
+                    return true;
+                }
+
                 break;
         }
     }
@@ -137,7 +183,13 @@ class OrderOperationUtility
         switch (strtolower($storeType)) {
             case 'shopify':
                 $shopifyServie = new ShopifyService();
-                $shopifyServie->updateFullfillment($orderOperation->order_id);
+                $response = $shopifyServie->updateFullfillment($orderOperation->order_id);
+
+                if(!isset($response['errors'])){
+                    $orderOperation->update(['status'=>OrderOperationStatus::MarkAsShipped]);
+                }
+
+
                 break;
             case 'walmart':
                 $finalData = [];
@@ -157,7 +209,7 @@ class OrderOperationUtility
                                 [
                                     'status' => 'Shipped',
                                     'statusQuantity' => [
-                                        'unitOfMeasure' => 'EACH',
+                                        'unitOfMeasurement' => 'EACH',
                                         'amount' => $item->quantity
                                     ],
                                     'trackingInfo' => [
@@ -165,7 +217,7 @@ class OrderOperationUtility
                                         "carrierName" => [
                                             "carrier" => $orderOperation->carrier->name,
                                         ],
-                                        "methodCode" => $channel->code,
+                                        "methodCode" => 'Standard',
                                         "trackingNumber" => $orderOperation->tracking_number,
                                     ]
                                 ]
@@ -178,9 +230,39 @@ class OrderOperationUtility
                 }
 
                 $authService = new WalmartAuthService($store->seller_id, $store->secret_key);
-                $authService->shipOrder($orderOperation->order->purchase_order_id, $finalData);
-                break;
+                return $authService->shipOrder($orderOperation->order->purchase_order_id, $finalData);
             case 'ebay':
+
+                $payload = [
+                    "shippedDate" => now()->toIso8601ZuluString(),
+                    "shippingCarrierCode" => $orderOperation->carrier->name,
+                    "trackingNumber" => $orderOperation->tracking_number
+                ];
+
+                foreach ($orderOperation->operationItem as $item) {
+
+                    $payload["lineItems"][] = [
+                        "lineItemId" => $item->orderItem->store_sku,
+                        "quantity" => $item->quantity,
+                    ];
+
+                }
+
+                /*echo '<pre>';
+                print_r($payload);
+                echo '</pre>';die;*/
+
+                $clientId = env('EBAY_CLIENT_ID');
+                $clientSecret = env('EBAY_CLIENT_SECRET');
+                $redirectUri = env('EBAY_REDIRECT_URI');
+
+                $authService = new EbayAuthService($clientId, $clientSecret, $redirectUri, $store->user_id);
+                $result = $authService->createShippingFulfillment($orderOperation->order->order_id, $payload);
+
+                if (!isset($result['error'])) {
+                    $orderOperation->update(['status'=>OrderOperationStatus::MarkAsShipped]);
+                }
+
                 break;
         }
         return true;

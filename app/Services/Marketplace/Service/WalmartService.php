@@ -409,7 +409,7 @@ class WalmartService implements MarketplaceServiceInterface
                 return null;
             }
 
-            Log::info('Walmart Orders Response: ' . json_encode($response));
+//            Log::info('Walmart Orders Response: ' . json_encode($response));
             if (isset($response['list']['meta']['totalCount']) && $response['list']['meta']['totalCount'] == 0) {
                 Log::info("No Orders Found");
                 return null;

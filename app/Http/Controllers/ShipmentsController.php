@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Constants\OrderOperationStatus;
 use App\Models\Catalog;
 use App\Models\CustomerAddress;
 use App\Models\LogisticCenter;
@@ -52,6 +53,8 @@ class ShipmentsController extends Controller
             'carrierService.ShippingCarrier',
             'store:id,name,store_type_id',
         ])->select('order_operation.*', 'order_operation.id as oid');
+
+        $query->where('order_operation.status', 0);
 
         // Filter by store
         if ($request->has('store_id') && $request->store_id != '') {
@@ -328,7 +331,8 @@ class ShipmentsController extends Controller
         ]);
     }
 
-    public function markShipped(Request $request){
+    public function markShipped(Request $request)
+    {
 
         $request->validate([
             'id' => 'required',
@@ -344,22 +348,16 @@ class ShipmentsController extends Controller
         $selected_shipment_id = $request->input('id');
 
         try {
-            if($selected_shipment_id){
-                $orderOperation = OrderOperation::with('order','store','store.storeType')->where('id',$selected_shipment_id)->first();
-                OrderOperationUtility::processShipment($orderOperation, $request);
-//
-//            $shipmentDetail = OrderOperation::with('order','store','store.storeType')->where('id',$selected_shipment_id)->first();
-//            $shipmentDetail->update($updateRecord);
-//
-//            if(isset($shipmentDetail->order) && isset($shipmentDetail->store->storeType)){
-//                $storeType = $shipmentDetail->store->storeType->name;
-//                if(strtolower($storeType) == 'shopify'){
-//                    $shopifyServie = new ShopifyService();
-//                    $shopifyServie->updateFullfillment($shipmentDetail->order_id);
-//                }else{
-//
-//                }
-//            }
+            if ($selected_shipment_id) {
+                $orderOperation = OrderOperation::with('order','store','store.storeType','operationItem','operationItem.orderItem','carrier','carrierService')->where('id',$selected_shipment_id)->first();
+                $isSuccess = OrderOperationUtility::processShipment($orderOperation, $request);
+
+                if (!$isSuccess) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Something went wrong with API. Please try again!'
+                    ]);
+                }
 
                 return response()->json([
                     'success' => true
@@ -378,7 +376,41 @@ class ShipmentsController extends Controller
         }
     }
 
-    public function cancelShipment(Request $request){
+    public function cancelOrder(Request $request)
+    {
 
+        $selected_shipment_id = $request->input('id');
+
+        try {
+            if ($selected_shipment_id) {
+                $orderOperation = OrderOperation::with('order', 'store', 'store.storeType')->where('id', $selected_shipment_id)->first();
+                $response = OrderOperationUtility::cancelOrder($orderOperation);
+
+                if($response){
+                    $orderOperation->update(['status'=>OrderOperationStatus::Canceled]);
+                    return response()->json([
+                        'success' => true,
+                        'message' => 'Order Cancelled Successfully',
+                    ]);
+                } else {
+                    $orderOperation->update(['status' => OrderOperationStatus::Canceled]);
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Something went wrong with API. Please try again!'
+                    ]);
+                }
+
+            } else {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Please select shipment'
+                ]);
+            }
+        } catch (\Exception $exception) {
+            return response()->json([
+                'success' => false,
+                'message' => $exception->getMessage()
+            ]);
+        }
     }
 }

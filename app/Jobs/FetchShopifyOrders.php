@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Constants\OrderOperationStatus;
+use App\Constants\OrderOperationType;
 use App\Constants\OrderStatus;
 use App\Constants\OrderSyncronisationType;
 use App\Models\Catalog;
@@ -53,22 +54,9 @@ class FetchShopifyOrders implements ShouldQueue
                     }
                     Log::info('Store : ' . $store->name);
 
-                    $ordersyncDetail = OrderSynchronization::where('store_id',$store->id)->orderBy('filter_end_date','desc')->first();
+                    $ordersyncDetail = OrderSynchronization::where('store_id',$store->id)->where('synchronization_type', OrderSyncronisationType::ORDER)->orderByRaw('COALESCE(last_order_update_date,filter_end_date) desc')->first();
                     $filterStartDate = OrderUtility::getLastSyncDate($store->id, OrderSyncronisationType::ORDER);
                     $filterStartDateFormatted = gmdate('Y-m-d\TH:i:s\Z', strtotime($filterStartDate));
-
-                    $created_by = auth()->user()->name ?? 'admin';
-                    /* create order synchronization*/
-                    $synchronizeArr = [
-                        'store_id' => $store->id,
-                        'synchronization_type' => OrderSyncronisationType::ORDER,
-                        'filter_start_date' => isset($ordersyncDetail) ? $ordersyncDetail->filter_end_date : date('Y-m-d H:i:s'),
-                        'created_by' => $created_by
-                    ];
-                    $order_synchronization = OrderSynchronization::create($synchronizeArr);
-                    $order_synchronization_id = $order_synchronization->id;
-
-                    Log::info('order_synchronization_id: ' . json_encode($order_synchronization_id));
 
                     /*if(!empty($ordersyncDetail)){
                         $start_date = new DateTime($ordersyncDetail->filter_end_date);
@@ -87,7 +75,22 @@ class FetchShopifyOrders implements ShouldQueue
 
                     if (isset($orders) && !empty($orders)) {
 
+                        $created_by = auth()->user()->name ?? 'admin';
+                        /* create order synchronization*/
+                        $synchronizeArr = [
+                            'store_id' => $store->id,
+                            'synchronization_type' => OrderSyncronisationType::ORDER,
+                            'filter_start_date' => $filterStartDate,
+                            'filter_end_date' => now(),
+                            'created_by' => $created_by
+                        ];
+                        $order_synchronization = OrderSynchronization::create($synchronizeArr);
+                        $order_synchronization_id = $order_synchronization->id;
+
+                        Log::info('order_synchronization_id: ' . json_encode($order_synchronization_id));
+
                         $noOfOrder = 0;
+                        $last_order_update_date = null;
                         foreach ($orders as $value) {
 
                             $order = $value['node'];
@@ -192,7 +195,7 @@ class FetchShopifyOrders implements ShouldQueue
                                     'status' => OrderOperationStatus::Created,
                                     'signature_confirmation' => 1,
                                     'store_id' => $store->id,
-                                    'operation_type' => 1,
+                                    'operation_type' => OrderOperationType::OrderShipment,
                                     'label_creation_type' => 1,
                                     'print_to_file' => 0,
                                     'seller_provides_return_label' => 0,
@@ -271,11 +274,16 @@ class FetchShopifyOrders implements ShouldQueue
 
 
                             }
+
+                            if ($last_order_update_date === null || strtotime($order['createdAt']) > strtotime($last_order_update_date)) {
+                                $last_order_update_date = date('Y-m-d H:i:s', strtotime($order['createdAt']));
+                            }
+
                             $noOfOrder++;
                         }
 
                         $osObject = OrderSynchronization::findOrFail($order_synchronization_id);
-                        $osObject->update(['number_of_items'=>$noOfOrder,'last_order_update_date' => date('Y-m-d H:i:s'), 'filter_end_date' => date('Y-m-d H:i:s')]);
+                        $osObject->update(['number_of_items'=>$noOfOrder,'last_order_update_date' => $last_order_update_date]);
                     }else{
                         Log::info("No Orders Found");
                     }

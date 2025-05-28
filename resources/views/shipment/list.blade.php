@@ -453,7 +453,7 @@
             const form = document.querySelector("#frmCancelShipment");
             let formData = new FormData(form);
             $.ajax({
-                url: "{{ route('shipment.cancelshipment') }}",
+                url: "{{ route('shipment.cancelorder') }}",
                 type: 'POST',
                 data: formData,
                 processData: false,
@@ -463,8 +463,8 @@
                 },
                 success: function (response) {
                     // If success, remove the user row from the table
+                    alert(response.message);
                     if (response.success) {
-                        alert('Records updated successfully!!');
                         location.reload();
                     }
                 },
@@ -642,6 +642,9 @@
                     if (response.success) {
                         alert('Records updated successfully!!');
                         location.reload();
+                    }
+                     else {
+                         alert(response.message);
                     }
                 },
                 error: function (xhr) {

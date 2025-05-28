@@ -30,8 +30,8 @@ class FetchOrders extends Command
     public function handle()
     {
 //         FetchShopifyOrders::dispatch();
-        EbayListingItemSyncJob::dispatch();
-//        FetchWalmartOrdersJob::dispatch();
+//        EbayListingItemSyncJob::dispatch();
+        FetchWalmartOrdersJob::dispatch();
 //         FetchEbayOrders::dispatch();
     }
 }
