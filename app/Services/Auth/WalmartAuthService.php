@@ -169,7 +169,7 @@ class WalmartAuthService
 
                 $response = json_decode($res->getBody(), true);
                 Log::info('Response from Walmart: ' . json_encode($response));
-                return true;
+                return $response;
             }
 
         } catch (RequestException $e) {

@@ -12,6 +12,7 @@ use App\Services\Auth\EbayAuthService;
 use App\Services\Auth\ShopifyAuthService;
 use App\Services\Auth\WalmartAuthService;
 use App\Services\Marketplace\Service\ShopifyService;
+use App\Utils\EndicialabelService;
 use Illuminate\Support\Facades\Log;
 
 class OrderOperationUtility
@@ -44,24 +45,21 @@ class OrderOperationUtility
             'weight_value' => $weight,
             'weight_weight_unit' => $weight_type,
         );
+        $orderOperation->update($updateRecord);
 
-        $label_generation = $request->input('label_generation');
-        if ($label_generation) {
-            $updateRecord['label_creation_type'] = ShippingLabelCreationType::getShippingLabelCreationTypeId($label_generation);
-        } else {
-            $updateRecord['label_creation_type'] = ShippingLabelCreationType::NoLabel;
-        }
 
         Log::info('Updated record :: ' . json_encode($updateRecord));
 
-        $orderOperation->update($updateRecord);
-
-        $instantSync = self::instantSynchronization($orderOperation);
-        if ($instantSync) {
-            return true;
+        $label_generation = $request->input('label_generation');
+        if ($label_generation) {
+            $orderOperation->label_creation_type = ShippingLabelCreationType::getShippingLabelCreationTypeId($label_generation);
         } else {
-            return false;
+            $orderOperation->label_creation_type = ShippingLabelCreationType::NoLabel;
         }
+
+        $orderOperation->save();
+
+        return self::instantSynchronization($orderOperation);
     }
 
     public static function instantSynchronization($orderOperation)
@@ -85,9 +83,48 @@ class OrderOperationUtility
         return false;
     }
 
-    public static function createLabel()
+    public static function createLabel($orderOperation)
     {
+        $shipmentDetails = [];
 
+        $shipmentDetails['MailClass'] = $orderOperation->carrierService->name;
+        $shipmentDetails['WeightOz'] = $orderOperation->weight_value;
+        $shipmentDetails['MailpieceShape'] = 'Package';
+        $shipmentDetails['Services'] = $orderOperation->carrierService->service_name;
+        $shipmentDetails['Value'] = $orderOperation->cost;
+        $shipmentDetails['Description'] = 'Order #' . $orderOperation->order_id;
+        $shipmentDetails['PartnerCustomerID'] = $orderOperation->order->customerAddress->customer_id;
+        $shipmentDetails['PartnerTransactionID'] = $orderOperation->order->order_id;
+        $shipmentDetails['ToName'] = $orderOperation->order->customerAddress->name;
+        $shipmentDetails['ToCompany'] = $orderOperation->order->customerAddress->company ?? '';
+//        $shipmentDetails['ToAddress1'] = $orderOperation->order->customerAddress->address1;
+        $shipmentDetails['ToAddress2'] = $orderOperation->order->customerAddress->address2 ?? '';
+        $shipmentDetails['ToCity'] = $orderOperation->order->customerAddress->city;
+        $shipmentDetails['ToState'] = $orderOperation->order->customerAddress->state;
+        $shipmentDetails['ToPostalCode'] = $orderOperation->order->customerAddress->postal_code;
+        $shipmentDetails['ToCountry'] = $orderOperation->order->customerAddress->country;
+        $shipmentDetails['ToPhone'] = $orderOperation->order->customerAddress->phone ?? '';
+        $shipmentDetails['FromName'] = $orderOperation->store->name;
+        $shipmentDetails['FromCompany'] = $orderOperation->store->company ?? '';
+//        $shipmentDetails['ReturnAddress1'] = $orderOperation->shipFrom->address1;
+        $shipmentDetails['ReturnAddress2'] = $orderOperation->shipFrom->address2 ?? '';
+//        $shipmentDetails['FromCity'] = $orderOperation->shipFrom->city;
+//        $shipmentDetails['FromState'] = $orderOperation->shipFrom->state;
+//        $shipmentDetails['FromPostalCode'] = $orderOperation->shipFrom->postal_code;
+//        $shipmentDetails['FromCountry'] = $orderOperation->shipFrom->country;
+        $shipmentDetails['FromPhone'] = $orderOperation->shipFrom->phone ?? '';
+        $shipmentDetails['PrintLayout'] = 'Normal';
+        $shipmentDetails['ImageFormat'] = 'PDF';
+        $shipmentDetails['ImageResolution'] = 300;
+        $shipmentDetails['LabelType'] = 'Default';
+        $shipmentDetails['Test'] = false;
+
+        Log::info('Shipment details for label creation: ' . json_encode($shipmentDetails));
+
+        $endiciaClient = new EndicialabelService();
+        $response = $endiciaClient->createLabel($shipmentDetails);
+
+        Log::info($response);
     }
 
     public static function cancelOrder($orderOperation)
@@ -156,7 +193,7 @@ class OrderOperationUtility
 
                 if (!isset($response['cancelId'])) {
 
-                    Log::info('Shopify cancer order error:'.json_encode($response['warnings']));
+                    Log::info('Shopify cancer order error:' . json_encode($response['warnings']));
                     return false;
                 } else {
                     //echo "Order canceled successfully!";
@@ -175,7 +212,9 @@ class OrderOperationUtility
 
     private static function createShipment($orderOperation)
     {
+        Log::info('Creating shipment for order operation: ' . $orderOperation->label_creation_type);
         if ($orderOperation->label_creation_type == ShippingLabelCreationType::CreateLabel) {
+//            self::createLabel($orderOperation);
             // TODO Create a label
         }
         $store = $orderOperation->store;
@@ -185,8 +224,8 @@ class OrderOperationUtility
                 $shopifyServie = new ShopifyService();
                 $response = $shopifyServie->updateFullfillment($orderOperation->order_id);
 
-                if(!isset($response['errors'])){
-                    $orderOperation->update(['status'=>OrderOperationStatus::MarkAsShipped]);
+                if (!isset($response['errors'])) {
+                    $orderOperation->update(['status' => OrderOperationStatus::MarkAsShipped]);
                 }
 
 
@@ -230,7 +269,14 @@ class OrderOperationUtility
                 }
 
                 $authService = new WalmartAuthService($store->seller_id, $store->secret_key);
-                return $authService->shipOrder($orderOperation->order->purchase_order_id, $finalData);
+                $response = $authService->shipOrder($orderOperation->order->purchase_order_id, $finalData);
+
+                Log::info('Walmart ship order response: ' . json_encode($response));
+                if (isset($response['order'][0])) {
+                    $orderOperation->update(['status' => OrderOperationStatus::MarkAsShipped]);
+                    return true;
+                }
+                return false;
             case 'ebay':
 
                 $payload = [
@@ -260,7 +306,7 @@ class OrderOperationUtility
                 $result = $authService->createShippingFulfillment($orderOperation->order->order_id, $payload);
 
                 if (!isset($result['error'])) {
-                    $orderOperation->update(['status'=>OrderOperationStatus::MarkAsShipped]);
+                    $orderOperation->update(['status' => OrderOperationStatus::MarkAsShipped]);
                 }
 
                 break;
