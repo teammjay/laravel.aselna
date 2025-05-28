@@ -51,6 +51,7 @@ use App\Http\Controllers\AccountTransactionController;
 use App\Http\Controllers\ProductSpecificationInfoController;
 use App\Http\Controllers\ProductSpecificationValueController;
 use App\Http\Controllers\ProductSpecificationOptionsController;
+use App\Http\Controllers\OrderOperationReasonController;
 use App\Http\Controllers\PrintersController;
 use App\Http\Controllers\PrinterClientsController;
 use App\Http\Controllers\AuthController;
@@ -567,6 +568,15 @@ Route::middleware('auth')->group(function () {
         Route::post('/shipping_account_transactions/edit/{id}', 'update')->name('shipping_account_transactions.update');
         Route::get('/shipping_account_transactions/delete/{id}', 'destroy')->name('shipping_account_transactions.delete');
         Route::post('/shipping_account_transactions/filter', 'filter')->name('shipping_account_transactions.filter');
+    });
+
+    Route::controller(OrderOperationReasonController::class)->group(function () {
+        Route::get('/order_operation_reason', 'index')->name('order_operation_reason.index');
+        Route::get('/order_operation_reason/add', 'create')->name('order_operation_reason.create');
+        Route::post('/order_operation_reason/add', 'store')->name('order_operation_reason.store');
+        Route::get('/order_operation_reason/edit/{id}', 'edit')->name('order_operation_reason.edit');
+        Route::post('/order_operation_reason/edit/{id}', 'update')->name('order_operation_reason.update');
+        Route::get('/order_operation_reason/delete/{id}', 'destroy')->name('order_operation_reason.delete');
     });
 
     Route::get('/ebay/login', [EbayAuthService::class, 'redirectToEbay'])->name('ebay.login');

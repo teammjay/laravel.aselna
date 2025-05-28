@@ -108,7 +108,6 @@
                         <div class="d-flex align-items-center justify-content-between">
                             <label for="carrier_id" class="m-0">Carrier</label>
                             <select class="form-control w-75" id="carrier_id">
-                                <option value="">--</option>
                                 @if(count($shippingCarrier ?? []) > 0)
                                     @foreach($shippingCarrier as $sCarrier)
                                         <option value="{{ $sCarrier->id }}">{{ $sCarrier->name }}</option>
@@ -483,6 +482,8 @@
             updateRecord('all');
         });
 
+        getShippingCarrierService($('#carrier_id'));
+
         $(document).on('change','#carrier_id',function () {
             var ele = $(this);
             getShippingCarrierService(ele);
@@ -590,7 +591,7 @@
                     if (response.success) {
                         $('#edit_address').html(response.address);
                         $('#editPostalAddressModal').modal('hide');
-                        $(body).addClass('modal-open');
+                        $('body').addClass('modal-open');
 
                     }
                 },
