@@ -105,14 +105,29 @@ class FetchShopifyOrders implements ShouldQueue
                                 Log::info('Existing Order: ' . $orderExist);
                                 $orderDetail = Order::where('order_id', $order['id'])->first();
                                 $orderObj = Order::findOrFail($orderDetail->id); // Retrieve the product by ID
-                                $orderObj->update(['order_status' => OrderStatus::getOrderStatusId($order['displayFulfillmentStatus'])]);
-
-                                /* check order operation for this order*/
                                 $orderOperationDetail = OrderOperation::where('order_id',$orderDetail->id)->first();
-                                if(!empty($orderOperationDetail)){
-                                    $orderOpObj = OrderOperation::findOrFail($orderOperationDetail->id);
-                                    $orderOpObj->update(['status'=>2]);
+
+                                if(isset($order['displayFulfillmentStatus'])){
+                                    switch (strtolower($order['displayFulfillmentStatus'])){
+                                        case 'fulfilled';
+                                            $orderObj->update(['order_status' => OrderStatus::Shipped]);
+                                            /* check order operation for this order*/
+                                            if(!empty($orderOperationDetail)){
+                                                $orderOpObj = OrderOperation::findOrFail($orderOperationDetail->id);
+                                                $orderOpObj->update(['status'=>OrderOperationStatus::MarkAsShipped]);
+                                            }
+                                            break;
+                                    }
                                 }
+
+                                if(isset($order['cancelledAt']) && $order['cancelledAt'] != null){
+                                    $orderObj->update(['order_status' => OrderStatus::Canceled]);
+                                    if(!empty($orderOperationDetail)){
+                                        $orderOpObj = OrderOperation::findOrFail($orderOperationDetail->id);
+                                        $orderOpObj->update(['status'=>OrderOperationStatus::Canceled]);
+                                    }
+                                }
+
                             } else {
 
                                 /* create customer*/

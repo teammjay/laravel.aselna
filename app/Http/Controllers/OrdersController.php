@@ -51,6 +51,11 @@ class OrdersController extends Controller
             $query->where('store_id', $request->store_id);
         }
 
+        // Filter by sku
+        if ($request->has('sku') && $request->sku != '') {
+            $query->whereRelation('orderItem', 'sku', $request->sku);
+        }
+
         // Filter by order id
         if ($request->has('order_id') && $request->order_id != '') {
             $query->where('order_id', $request->order_id);
@@ -74,6 +79,11 @@ class OrdersController extends Controller
         // Filter by purchase order id
         if ($request->has('purchase_order_id') && $request->purchase_order_id != '') {
             $query->where('purchase_order_id', $request->purchase_order_id);
+        }
+
+        // Filter by purchase order id
+        if ($request->has('order_status') && $request->order_status != '') {
+            $query->where('order_status', $request->order_status);
         }
 
         // Filter by created date

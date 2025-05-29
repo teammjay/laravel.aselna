@@ -437,7 +437,7 @@
                         });
                         $('#shippingDetailModal').modal('show');
 
-                        getShippingCarrierService($('#carrier_name'));
+                        loadServiceCarrier($('#carrier_name').val());
                     }
                 },
                 error: function (xhr) {
