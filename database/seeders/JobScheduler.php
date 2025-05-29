@@ -214,6 +214,11 @@ class JobScheduler extends Seeder
                 'name' => 'Fetch Ebay Orders Sync Job',
                 'description' => 'Fetch Ebay orders',
                 'class_name' => 'App\Jobs\FetchEbayOrders',
+            ],
+            [
+                'name' => 'Addresses Sync Job',
+                'description' => 'Sync all addresses',
+                'class_name' => 'App\Jobs\AddressesSyncJob',
             ]
         ];
 

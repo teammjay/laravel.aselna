@@ -87,38 +87,39 @@ class OrderOperationUtility
     public static function createLabel($orderOperation)
     {
         $shipmentDetails = [];
+        $errorMessages = ShippingUtility::assignSolutionService($orderOperation);
 
-        $shipmentDetails['MailClass'] = $orderOperation->carrierService->name;
-        $shipmentDetails['WeightOz'] = $orderOperation->weight_value;
-        $shipmentDetails['MailpieceShape'] = 'Package';
-        $shipmentDetails['Services'] = $orderOperation->carrierService->service_name;
-        $shipmentDetails['Value'] = $orderOperation->cost;
-        $shipmentDetails['Description'] = 'Order #' . $orderOperation->order_id;
-        $shipmentDetails['PartnerCustomerID'] = $orderOperation->order->customerAddress->customer_id;
-        $shipmentDetails['PartnerTransactionID'] = $orderOperation->order->order_id;
-        $shipmentDetails['ToName'] = $orderOperation->order->customerAddress->name;
-        $shipmentDetails['ToCompany'] = $orderOperation->order->customerAddress->company ?? '';
-//        $shipmentDetails['ToAddress1'] = $orderOperation->order->customerAddress->address1;
-        $shipmentDetails['ToAddress2'] = $orderOperation->order->customerAddress->address2 ?? '';
-        $shipmentDetails['ToCity'] = $orderOperation->order->customerAddress->city;
-        $shipmentDetails['ToState'] = $orderOperation->order->customerAddress->state;
-        $shipmentDetails['ToPostalCode'] = $orderOperation->order->customerAddress->postal_code;
-        $shipmentDetails['ToCountry'] = $orderOperation->order->customerAddress->country;
-        $shipmentDetails['ToPhone'] = $orderOperation->order->customerAddress->phone ?? '';
-        $shipmentDetails['FromName'] = $orderOperation->store->name;
-        $shipmentDetails['FromCompany'] = $orderOperation->store->company ?? '';
-//        $shipmentDetails['ReturnAddress1'] = $orderOperation->shipFrom->address1;
-        $shipmentDetails['ReturnAddress2'] = $orderOperation->shipFrom->address2 ?? '';
-//        $shipmentDetails['FromCity'] = $orderOperation->shipFrom->city;
-//        $shipmentDetails['FromState'] = $orderOperation->shipFrom->state;
-//        $shipmentDetails['FromPostalCode'] = $orderOperation->shipFrom->postal_code;
-//        $shipmentDetails['FromCountry'] = $orderOperation->shipFrom->country;
-        $shipmentDetails['FromPhone'] = $orderOperation->shipFrom->phone ?? '';
-        $shipmentDetails['PrintLayout'] = 'Normal';
-        $shipmentDetails['ImageFormat'] = 'PDF';
-        $shipmentDetails['ImageResolution'] = 300;
-        $shipmentDetails['LabelType'] = 'Default';
-        $shipmentDetails['Test'] = false;
+        $operation_type = $orderOperation->operation_type;
+        $shipFrom = $orderOperation->shipFrom;
+
+        if (OrderOperationType::isReturn($operation_type)) {
+            $shipmentDetails['fromAddress'] = self::getAddress($shipFrom->returnAddress);
+            $shipmentDetails['toAddress'] = self::mapCustomerAddress($orderOperation);
+        } else {
+            $shipmentDetails['fromAddress'] = self::getAddress($shipFrom->fromAddress);
+            $shipmentDetails['toAddress'] = self::mapCustomerAddress($orderOperation);
+        }
+
+        $shippingPackage = $orderOperation->shippingPackage;
+        if (isset($shippingPackage)) {
+            if ($shippingPackage->id == '718d3e95-a328-e6a8-c96b-3638fec677f7') {
+                $shipmentDetails['dimensions'] = [
+                    'length' => $orderOperation->own_packaging_dimensions_length,
+                    'width' => $orderOperation->own_packaging_dimensions_width,
+                    'height' => $orderOperation->own_packaging_dimensions_height,
+                    'unit' => $orderOperation->own_packaging_dimensions_length_unit,
+                ];
+            } else {
+                $shipmentDetails['dimensions'] = [
+                    'length' => $shippingPackage->dimensions_length,
+                    'width' => $shippingPackage->dimensions_width,
+                    'height' => $shippingPackage->dimensions_height,
+                    'unit' => $shippingPackage->dimensions_length_unit,
+                ];
+            }
+        }
+
+//        if (isset($orderOperation->carre))
 
         Log::info('Shipment details for label creation: ' . json_encode($shipmentDetails));
 
@@ -215,7 +216,7 @@ class OrderOperationUtility
     {
         Log::info('Creating shipment for order operation: ' . $orderOperation->label_creation_type);
         if ($orderOperation->label_creation_type == ShippingLabelCreationType::CreateLabel) {
-//            self::createLabel($orderOperation);
+            self::createLabel($orderOperation);
             // TODO Create a label
         }
         $store = $orderOperation->store;
@@ -225,9 +226,9 @@ class OrderOperationUtility
                 $shopifyServie = new ShopifyService();
                 $response = $shopifyServie->updateFullfillment($orderOperation->order_id);
 
-                if(!isset($response['errors'])){
-                    $orderOperation->update(['status'=>OrderOperationStatus::MarkAsShipped]);
-                    if(isset($orderOperation->order_id)) {
+                if (!isset($response['errors'])) {
+                    $orderOperation->update(['status' => OrderOperationStatus::MarkAsShipped]);
+                    if (isset($orderOperation->order_id)) {
                         $order = Order::findOrFail($orderOperation->order_id);
                         $order->update(['order_status' => OrderStatus::Shipped]);
                     }
@@ -239,15 +240,8 @@ class OrderOperationUtility
                 $finalData = [];
                 $count = 1;
                 foreach ($orderOperation->operationItem as $item) {
-                    $channels = $orderOperation->carrierService->carrierServiceChannel;
-                    $channel = null;
-                    // first channel
-                    if (count($channels) > 0) {
-                        $channel = $channels[0];
-                    }
                     $orderLine = [
                         'lineNumber' => $count,
-//                        'sellerOrderId' => ,
                         'orderLineStatuses' => [
                             'orderLineStatus' => [
                                 [
@@ -277,9 +271,16 @@ class OrderOperationUtility
                 $response = $authService->shipOrder($orderOperation->order->purchase_order_id, $finalData);
 
                 Log::info('Walmart ship order response: ' . json_encode($response));
+                foreach ($response['order'] as $order) {
+                    if (isset($order['orderId']) && $order['orderId'] == $orderOperation->order->purchase_order_id) {
+                        Log::info('Walmart ship order successful: ' . json_encode($order));
+                        break;
+                    }
+                }
+
                 if (isset($response['order'][0])) {
                     $orderOperation->update(['status' => OrderOperationStatus::MarkAsShipped]);
-                    if(isset($orderOperation->order_id)) {
+                    if (isset($orderOperation->order_id)) {
                         $order = Order::findOrFail($orderOperation->order_id);
                         $order->update(['order_status' => OrderStatus::Shipped]);
                     }
@@ -315,8 +316,8 @@ class OrderOperationUtility
                 $result = $authService->createShippingFulfillment($orderOperation->order->order_id, $payload);
 
                 if (!isset($result['error'])) {
-                    $orderOperation->update(['status'=>OrderOperationStatus::MarkAsShipped]);
-                    if(isset($orderOperation->order_id)) {
+                    $orderOperation->update(['status' => OrderOperationStatus::MarkAsShipped]);
+                    if (isset($orderOperation->order_id)) {
                         $order = Order::findOrFail($orderOperation->order_id);
                         $order->update(['order_status' => OrderStatus::Shipped]);
                     }
@@ -325,5 +326,47 @@ class OrderOperationUtility
                 break;
         }
         return true;
+    }
+
+    /**
+     * @param mixed $shipFrom
+     * @return array
+     */
+    public static function getAddress(mixed $shipAddress): array
+    {
+        if (is_null($shipAddress)) {
+            return [];
+        }
+        return [
+            'name' => $shipAddress->name,
+            'address1' => $shipAddress->address1,
+            'address2' => $shipAddress->address2 ?? '',
+            'city' => $shipAddress->city,
+            'state' => $shipAddress->state,
+            'postalCode' => $shipAddress->postal_code,
+            'country' => $shipAddress->country,
+            'phone' => $shipAddress->phone,
+        ];
+    }
+
+    /**
+     * @param $orderOperation
+     * @return array
+     */
+    public static function mapCustomerAddress($orderOperation): array
+    {
+        if (!isset($orderOperation->order->customerAddress)) {
+            return [];
+        }
+        return [
+            'name' => $orderOperation->order->customerAddress->name,
+            'address1' => $orderOperation->order->customerAddress->address1,
+            'address2' => $orderOperation->order->customerAddress->address2 ?? '',
+            'city' => $orderOperation->order->customerAddress->city,
+            'state' => $orderOperation->order->customerAddress->state,
+            'postalCode' => $orderOperation->order->customerAddress->postal_code,
+            'country' => $orderOperation->order->customerAddress->country,
+            'phone' => $orderOperation->order->customerAddress->phone,
+        ];
     }
 }

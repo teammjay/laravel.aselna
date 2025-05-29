@@ -46,6 +46,16 @@ class OrderOperation extends Model
         return $this->belongsTo(ShippingCarrierService::class,'shipping_carrier_service_id');
     }
 
+    public function shippingPackage()
+    {
+        return $this->belongsTo(ShippingCarrierPackage::class,'shipping_package_id');
+    }
+
+    public function shipFrom(){
+        return $this->belongsTo(LogisticCenter::class,'ship_from_id');
+    }
+
+
     public function store(){
 
         return $this->belongsTo(Store::class,'store_id');

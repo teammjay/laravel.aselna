@@ -31,42 +31,7 @@ class EndicialabelService
 
     public function createLabel(array $request)
     {
-//        $request = [
-//            'RequesterID' => $this->accountId,
-//            'AccountID' => $this->accountId,
-//            'PassPhrase' => $this->passphrase,
-//            'MailClass' => $shipmentDetails['MailClass'],
-//            'WeightOz' => $shipmentDetails['WeightOz'],
-//            'MailpieceShape' => $shipmentDetails['MailpieceShape'],
-//            'Services' => $shipmentDetails['Services'] ?? '',
-//            'Value' => $shipmentDetails['Value'] ?? 0,
-//            'Description' => $shipmentDetails['Description'] ?? '',
-//            'PartnerCustomerID' => $shipmentDetails['PartnerCustomerID'] ?? '',
-//            'PartnerTransactionID' => $shipmentDetails['PartnerTransactionID'] ?? '',
-//            'ToName' => $shipmentDetails['ToName'],
-//            'ToCompany' => $shipmentDetails['ToCompany'] ?? '',
-//            'ToAddress1' => $shipmentDetails['ToAddress1'],
-//            'ToAddress2' => $shipmentDetails['ToAddress2'] ?? '',
-//            'ToCity' => $shipmentDetails['ToCity'],
-//            'ToState' => $shipmentDetails['ToState'],
-//            'ToPostalCode' => $shipmentDetails['ToPostalCode'],
-//            'ToCountry' => $shipmentDetails['ToCountry'],
-//            'ToPhone' => $shipmentDetails['ToPhone'] ?? '',
-//            'FromName' => $shipmentDetails['FromName'],
-//            'FromCompany' => $shipmentDetails['FromCompany'] ?? '',
-//            'ReturnAddress1' => $shipmentDetails['ReturnAddress1'],
-//            'ReturnAddress2' => $shipmentDetails['ReturnAddress2'] ?? '',
-//            'FromCity' => $shipmentDetails['FromCity'],
-//            'FromState' => $shipmentDetails['FromState'],
-//            'FromPostalCode' => $shipmentDetails['FromPostalCode'],
-//            'FromCountry' => $shipmentDetails['FromCountry'],
-//            'FromPhone' => $shipmentDetails['FromPhone'] ?? '',
-//            'PrintLayout' => $shipmentDetails['PrintLayout'] ?? 'Normal',
-//            'ImageFormat' => $shipmentDetails['ImageFormat'] ?? 'PDF',
-//            'ImageResolution' => $shipmentDetails['ImageResolution'] ?? 300,
-//            'LabelType' => $shipmentDetails['LabelType'] ?? 'Default',
-//            'Test' => $shipmentDetails['Test'] ?? false,
-//        ];
+        $xmlString = $this->buildXmlRequest($request);
         if (env('APP_ENV') === 'local') {
             return;
         } else {
@@ -90,5 +55,27 @@ class EndicialabelService
             // Handle SOAP request errors
             throw new Exception('Error creating label: ' . $e->getMessage());
         }
+    }
+
+    private function buildXmlRequest(array $request)
+    {
+        $xml = new \SimpleXMLElement('<?xml version="1.0" encoding="utf-8"?><soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"/>');
+        $body = $xml->addChild('soap:Body', null, 'http://schemas.xmlsoap.org/soap/envelope/');
+        $request = $body->addChild('GetPostageLabel', null, 'www.envmgr.com/LabelService');
+        $labelRequest = $request->addChild('LabelRequest');
+
+        $labelRequest->addAttribute('Test', 'YES');
+        $labelRequest->addAttribute('LabelType', 'Default');
+
+        $labelRequest->addChild('RequesterID', 'lxxx');
+        $labelRequest->addChild('AccountID', '2533763');
+        $labelRequest->addChild('PassPhrase', 'ajshd823rha!d33');
+
+        $dimensions = $labelRequest->addChild('MailpieceDimensions');
+        $dimensions->addChild('Length', '1');
+        $dimensions->addChild('Width', '1');
+        $dimensions->addChild('Height', '1');
+
+        return $xml->asXML();
     }
 }
