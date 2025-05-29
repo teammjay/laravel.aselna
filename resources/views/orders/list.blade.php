@@ -153,6 +153,38 @@
                     <div class="col-md-3">
                         <div class="row">
                             <div class="col-4 text-right">
+                                SKU
+                            </div>
+                            <div class="col-8">
+                                <input type="text" name="sku" id="sku" class="form-control">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="row">
+                            <div class="col-4 text-right">
+                                Order Status
+                            </div>
+                            <div class="col-8">
+                                <select class="form-control" name="order_status" id="order_status">
+                                    <option value="">--</option>
+                                    <option value="1">Pending</option>
+                                    <option value="2">Ready</option>
+                                    <option value="3">Acknowledged</option>
+                                    <option value="4">Shipped</option>
+                                    <option value="5">Canceled</option>
+                                    <option value="6">Synchronizing</option>
+                                    <option value="7">PartiallyShipped</option>
+                                    <option value="8">SynchronizatonFailed</option>
+                                    <option value="9">Refund</option>
+                                    <option value="10">Replaced</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="row">
+                            <div class="col-4 text-right">
                                 Created Date
                             </div>
                             <div class="col-8">

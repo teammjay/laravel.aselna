@@ -381,11 +381,12 @@ class ShipmentsController extends Controller
     {
 
         $selected_shipment_id = $request->input('id');
+        $reason = $request->input('reason');
 
         try {
             if ($selected_shipment_id) {
                 $orderOperation = OrderOperation::with('order', 'store', 'store.storeType')->where('id', $selected_shipment_id)->first();
-                $response = OrderOperationUtility::cancelOrder($orderOperation);
+                $response = OrderOperationUtility::cancelOrder($orderOperation,$reason);
 
                 if($response){
                     $orderOperation->update(['status'=>OrderOperationStatus::Canceled]);
