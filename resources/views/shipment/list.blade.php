@@ -167,6 +167,8 @@
             <button type="button" class="btn btn-default" id="cancel_selected">
                 Cancel Selected
             </button>
+
+            <span id="total_selected">( 0 selected )</span>
         </div>
     </div>
 
@@ -314,6 +316,9 @@
                 ele.addClass('bg-blue');
                 ele.find('.pro-id').prop('checked', true);
             }
+
+            let totalCnt = $('input[name="shipment_id[]"]:checked').length;
+            $('#total_selected').html('( <b>'+totalCnt+'</b> selected )');
         });
 
         $(document).on('click','#refresh_list',function () {
@@ -437,7 +442,7 @@
                         });
                         $('#shippingDetailModal').modal('show');
 
-                        getShippingCarrierService($('#carrier_name'));
+                        loadServiceCarrier($('#carrier_name').val());
                     }
                 },
                 error: function (xhr) {
@@ -649,6 +654,48 @@
                     }
                      else {
                          alert(response.message);
+                    }
+                },
+                error: function (xhr) {
+                    // Handle error response
+                    const response = xhr.responseJSON;
+                    if ( response.errors) {
+                        alert(response.message);
+                    } else {
+                        alert('Error: ' + response.message);
+                    }
+                }
+            });
+        });
+
+
+        $(document).on('click','#ship_selected',function () {
+
+            let shipment_ids = [];
+            $('input[name="shipment_id[]"]').each(function () {
+                shipment_ids.push($(this).val())
+            });
+
+            if(shipment_ids.length == 0){
+                alert('Please select shipment first.');
+                return false;
+            }
+
+            $.ajax({
+                url: "{{ route('shipment.shipselected') }}",
+                type: 'POST',
+                data: {
+                    shipment_ids:shipment_ids,
+                    "_token": '{{ csrf_token() }}'
+                },
+                success: function (response) {
+                    // If success, remove the user row from the table
+                    if (response.success) {
+                        alert('Records updated successfully!!');
+                        location.reload();
+                    }
+                    else {
+                        alert(response.message);
                     }
                 },
                 error: function (xhr) {

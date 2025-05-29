@@ -381,11 +381,12 @@ class ShipmentsController extends Controller
     {
 
         $selected_shipment_id = $request->input('id');
+        $reason = $request->input('reason');
 
         try {
             if ($selected_shipment_id) {
                 $orderOperation = OrderOperation::with('order', 'store', 'store.storeType')->where('id', $selected_shipment_id)->first();
-                $response = OrderOperationUtility::cancelOrder($orderOperation);
+                $response = OrderOperationUtility::cancelOrder($orderOperation,$reason);
 
                 if($response){
                     $orderOperation->update(['status'=>OrderOperationStatus::Canceled]);
@@ -414,6 +415,61 @@ class ShipmentsController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => $exception->getMessage()
+            ]);
+        }
+    }
+
+    public function shipSelected(Request $request){
+
+        $selected_shipment_id = $request->input('shipment_ids');
+
+        $orderOperations = OrderOperation::with('order', 'store', 'store.storeType')->whereIn('id', $selected_shipment_id)->get();
+
+        if(count($orderOperations ?? []) > 0){
+            $isSuccess = false;
+            foreach($orderOperations as $operation){
+
+               $package_id = '';
+               $product_total_weight = 0;
+               //print_r($shipmentDetail->operationItem);
+                if (count($operation->operationItem ?? []) > 0) {
+                    $product_weight = 0;
+                    foreach ($operation->operationItem as $oitem) {
+                        $product_id = $oitem->orderItem->product->product_id;
+                        if ($product_id) {
+                            $product_detail = Catalog::findOrFail($product_id);
+                            if ($product_detail->product_weight > $product_weight) {
+                               $package_id = $product_detail->shipping_package_id;
+                            }
+                            if ($package_id) {
+                               $request['carrier_package'] = $package_id;
+                            }
+                            $product_weight = $product_detail->product_weight;
+                            $product_total_weight = $product_total_weight + $product_weight;
+                        }
+                    }
+                }
+
+                $request['carrier_name'] = $operation->shipping_carrier_id;
+                $request['shipping_carrier_service'] = $operation->shipping_carrier_service_id;
+                $request['weight'] = $product_total_weight;
+                $request['weight_type'] = $operation->weight_weight_unit;
+                $request['label_generation'] = 1;
+                $request['tracking_number'] = null;
+                $request['shipment_from'] = $operation->ship_from_id;
+
+                $isSuccess = OrderOperationUtility::processShipment($operation, $request);
+            }
+
+            if (!$isSuccess) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Something went wrong with API. Please try again!'
+                ]);
+            }
+
+            return response()->json([
+                'success' => true
             ]);
         }
     }

@@ -129,7 +129,7 @@ class OrderOperationUtility
         Log::info($response);
     }
 
-    public static function cancelOrder($orderOperation)
+    public static function cancelOrder($orderOperation, $reason)
     {
         $store = $orderOperation->store;
         $storeType = $orderOperation->store->storeType->name;
@@ -140,7 +140,7 @@ class OrderOperationUtility
                 $shipmentDetail = OrderOperation::with('operationItem', 'order', 'order.customerAddress', 'carrierService', 'store', 'operationItem.orderItem', 'operationItem.orderItem.product')->where('order_id', $orderId)->first();
 
                 $shopifyServie = new ShopifyAuthService($store->secret_key);
-                $response = $shopifyServie->cancelOrder($orderOperation->order->purchase_order_id, $shipmentDetail->order->order_id);
+                $response = $shopifyServie->cancelOrder($shipmentDetail->order->order_id, $reason);
 
                 if (!empty($response['data']['orderCancel']['orderCancelUserErrors'])) {
                     foreach ($response['data']['orderCancel']['orderCancelUserErrors'] as $error) {
@@ -188,7 +188,7 @@ class OrderOperationUtility
 
                 $authService = new EbayAuthService($clientId, $clientSecret, $redirectUri, $store->user_id);
                 $payload = [
-                    'cancelReason' => 'BUYER_CANCEL_OR_ADDRESS_ISSUE',
+                    'cancelReason' => $reason,
                     'legacyOrderId' => $orderOperation->order->order_id,
                 ];
                 $response = $authService->cancelOrder($payload);

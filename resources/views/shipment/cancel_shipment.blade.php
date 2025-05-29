@@ -68,9 +68,9 @@
                                                 @endif
                                             </td>
                                             <td>{{ $oitem->orderItem->sku }}</td>
-                                            <td><input type="text" class="form-control" name="quantity" value="{{ $oitem->orderItem->quantity }}"></td>
+                                            <td><input type="text" class="form-control" name="quantity" readonly="" value="{{ $oitem->orderItem->quantity }}"></td>
                                             <td>
-                                                <select class="form-control" name="reason" id="reason" style="width:150px;">
+                                                <select class="form-control" name="reason" style="width:150px;">
                                                     <option value=""></option>
                                                     @if(count($reasons ?? []) > 0)
                                                         @foreach($reasons as $reason)
