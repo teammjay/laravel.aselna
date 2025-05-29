@@ -2,9 +2,9 @@
 
 namespace App\Jobs;
 
+use App\Models\AccountTransaction;
 use App\Models\ShippingAccount;
 use App\Models\ShippingAccountPurchase;
-use App\Models\ShippingAccountTransaction;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\DB;
@@ -36,7 +36,7 @@ class ShippingAccountsSyncJob implements ShouldQueue
                 }
             });
 
-        DB::connection('easyesale_db')->table('shipping_account_purchase')
+        DB::connection('easyesale_db')->table('shipping_account_purhcase')
             ->orderBy('create_ts', 'desc')
             ->chunk(100, function ($shippingAccountPurchases) {
                 foreach ($shippingAccountPurchases as $shippingAccountPurchase) {
@@ -90,13 +90,14 @@ class ShippingAccountsSyncJob implements ShouldQueue
                 'shipping_account_id' => $shippingAccountPurchase->shipping_account_id,
                 'purchase_date' => $shippingAccountPurchase->purchase_date,
                 'amount' => $shippingAccountPurchase->amount,
+                'errors' => $shippingAccountPurchase->errors,
             ]
         );
     }
 
     private function createSyncShippingAccountTransaction(mixed $shippingAccountTransaction)
     {
-        ShippingAccountTransaction::updateOrCreate(
+        AccountTransaction::updateOrCreate(
             [
                 'id' => $shippingAccountTransaction->id
             ],
@@ -105,10 +106,14 @@ class ShippingAccountsSyncJob implements ShouldQueue
                 'shipping_account_id' => $shippingAccountTransaction->shipping_account_id,
                 'transaction_date' => $shippingAccountTransaction->transaction_date,
                 'amount' => $shippingAccountTransaction->amount,
-                'currency' => $shippingAccountTransaction->currency,
-                'type' => $shippingAccountTransaction->type,
-                'description' => $shippingAccountTransaction->description,
-                'client' => $shippingAccountTransaction->client,
+                'tracking_number' => $shippingAccountTransaction->tracking_number,
+                'transaction_id' => $shippingAccountTransaction->transaction_id,
+                'address' => $shippingAccountTransaction->address,
+                'canceled' => $shippingAccountTransaction->canceled,
+                'canceled_date' => $shippingAccountTransaction->canceled_date,
+                'created_by' => $shippingAccountTransaction->created_by,
+                'created_at' => $shippingAccountTransaction->created_at,
+                'updated_at' => $shippingAccountTransaction->updated_at
             ]
         );
     }

@@ -219,6 +219,21 @@ class JobScheduler extends Seeder
                 'name' => 'Addresses Sync Job',
                 'description' => 'Sync all addresses',
                 'class_name' => 'App\Jobs\AddressesSyncJob',
+            ],
+            [
+                'name' => 'Shipping Account Sync Job',
+                'description' => 'Sync all shipping accounts',
+                'class_name' => 'App\Jobs\ShippingAccountsSyncJob',
+            ],
+            [
+                'name' => 'Shipping Solution Sync Job',
+                'description' => 'Sync all shipping solutions',
+                'class_name' => 'App\Jobs\ShippingSolutionSyncJob',
+            ],
+            [
+                'name' => 'Client Sync Job',
+                'description' => 'Sync all clients',
+                'class_name' => 'App\Jobs\ClientSyncJob',
             ]
         ];
 
