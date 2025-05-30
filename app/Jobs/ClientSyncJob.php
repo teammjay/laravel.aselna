@@ -1,0 +1,52 @@
+<?php
+
+namespace App\Jobs;
+
+use App\Models\Client;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Support\Facades\DB;
+
+class ClientSyncJob implements ShouldQueue
+{
+    use Queueable;
+
+    /**
+     * Create a new job instance.
+     */
+    public function __construct()
+    {
+        //
+    }
+
+    /**
+     * Execute the job.
+     */
+    public function handle(): void
+    {
+        DB::connection('easyesale_db')->table('client')
+            ->orderBy('create_ts', 'desc')
+            ->chunk(100, function ($clients) {
+                foreach ($clients as $client) {
+                    $this->createSyncClient($client);
+                }
+            });
+    }
+
+    private function createSyncClient(mixed $client)
+    {
+        if (!isset($client->name)) {
+            return;
+        }
+        Client::updateOrCreate(
+            [
+                'id' => $client->id
+            ],
+            [
+                'id' => $client->id,
+                'name' => $client->name,
+                'simple_product_code_generation_template' => $client->simple_product_code_generation_template,
+            ]
+        );
+    }
+}

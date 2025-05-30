@@ -619,11 +619,14 @@
             let formData = new FormData(form);
 
             const trackingNumber = formData.get("tracking_number");
+            const label_generation = formData.get("label_generation");
 
-            if (!trackingNumber || trackingNumber.trim() === "") {
-                $('#tracking_number').addClass('error');
-                alert("Tracking number is required.");
-                return;
+            if(label_generation.trim() != 1) {
+                if (!trackingNumber || trackingNumber.trim() === "") {
+                    $('#tracking_number').addClass('error');
+                    alert("Tracking number is required.");
+                    return;
+                }
             }
 
             const orderId = formData.get("order_id");

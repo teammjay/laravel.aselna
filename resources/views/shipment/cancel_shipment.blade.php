@@ -62,7 +62,7 @@
                                             <td>
                                                 @if(isset($oitem->orderItem->product) && $oitem->orderItem->product->image != '')
                                                     <div class="main-image">
-                                                        <img src="{{ asset('storage/' .$oitem->orderItem->product->image->getFileUrl()) }}" alt="{{ $oitem->product->product_image}}" loading="lazy" width="50" height="50" class="mainImage" data-product-id="{{ $oitem->orderItem->product->product_id }}">
+                                                        <img src="{{ asset('storage/' .$oitem->orderItem->product->image->getFileUrl()) }}" alt="{{ $oitem->orderItem->product->product_image}}" loading="lazy" width="50" height="50" class="mainImage" data-product-id="{{ $oitem->orderItem->product->product_id }}">
 
                                                     </div>
                                                 @endif

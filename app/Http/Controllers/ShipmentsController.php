@@ -340,7 +340,7 @@ class ShipmentsController extends Controller
             'carrier_name' => 'required',
 //            'carrier_package' => 'required',
             'shipping_carrier_service' => 'required',
-            'tracking_number' => 'required',
+//            'tracking_number' => 'required',
             'shipment_from' => 'required',
             'weight' => 'required|numeric|gt:0',
             'weight_type' => 'required'
