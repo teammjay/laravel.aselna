@@ -151,7 +151,7 @@ class OrderOperationUtility
         return null;
     }
 
-    public static function cancelOrder($orderOperation, $reason)
+    public static function cancelOrder($orderOperation, $reason = 'CUSTOMER_REQUESTED_SELLER_TO_CANCEL')
     {
         $store = $orderOperation->store;
         $storeType = $orderOperation->store->storeType->name;
@@ -186,9 +186,9 @@ class OrderOperationUtility
                             'orderLineStatus' => [
                                 [
                                     'status' => 'Cancelled',
-                                    'cancellationReason' => 'CUSTOMER_REQUESTED_SELLER_TO_CANCEL',
+                                    'cancellationReason' => $reason,
                                     'statusQuantity' => [
-                                        'unitOfMeasure' => 'EACH',
+                                        'unitOfMeasurement' => 'EACH',
                                         'amount' => $item->quantity
                                     ]
                                 ]
@@ -200,8 +200,25 @@ class OrderOperationUtility
                     $count++;
                 }
                 $authService = new WalmartAuthService($store->seller_id, $store->secret_key);
-                $authService->cancelOrder($orderOperation->order->purchase_order_id, $finalData);
-                break;
+                $response = $authService->cancelOrder($orderOperation->order->purchase_order_id, $finalData);
+                if (isset($response)) {
+                    Log::info('Walmart cancel order response: ' . json_encode($response));
+                    if (isset($response['order'][0]) && isset($response['order'][0]['purchaseOrderId']) && $response['order'][0]['purchaseOrderId'] == $orderOperation->order->purchase_order_id) {
+                        Log::info('Walmart cancel order successful: ' . json_encode($response['order'][0]));
+                        $orderOperation->update(['status' => OrderOperationStatus::Canceled]);
+                        if (isset($orderOperation->order_id)) {
+                            $order = Order::findOrFail($orderOperation->order_id);
+                            $order->update(['order_status' => OrderStatus::Canceled]);
+                        }
+                        return true;
+                    } else {
+                        Log::info('Walmart cancel order error: ' . json_encode($response));
+                        return false;
+                    }
+                } else {
+                    Log::info('Walmart cancel order error: No response received');
+                    return false;
+                }
             case 'ebay':
 
                 $clientId = env('EBAY_CLIENT_ID');
@@ -296,22 +313,25 @@ class OrderOperationUtility
                 $response = $authService->shipOrder($orderOperation->order->purchase_order_id, $finalData);
 
                 Log::info('Walmart ship order response: ' . json_encode($response));
-                foreach ($response['order'] as $order) {
-                    if (isset($order['orderId']) && $order['orderId'] == $orderOperation->order->purchase_order_id) {
-                        Log::info('Walmart ship order successful: ' . json_encode($order));
-                        break;
-                    }
-                }
 
-                if (isset($response['order'][0])) {
-                    $orderOperation->update(['status' => OrderOperationStatus::MarkAsShipped]);
-                    if (isset($orderOperation->order_id)) {
-                        $order = Order::findOrFail($orderOperation->order_id);
-                        $order->update(['order_status' => OrderStatus::Shipped]);
+                if (isset($response)) {
+                    Log::info('Walmart cancel order response: ' . json_encode($response));
+                    if (isset($response['order'][0]) && isset($response['order'][0]['purchaseOrderId']) && $response['order'][0]['purchaseOrderId'] == $orderOperation->order->purchase_order_id) {
+                        Log::info('Walmart cancel order successful: ' . json_encode($response['order'][0]));
+                        $orderOperation->update(['status' => OrderOperationStatus::MarkAsShipped]);
+                        if (isset($orderOperation->order_id)) {
+                            $order = Order::findOrFail($orderOperation->order_id);
+                            $order->update(['order_status' => OrderStatus::Shipped]);
+                        }
+                        return true;
+                    } else {
+                        Log::info('Walmart cancel order error: ' . json_encode($response));
+                        return false;
                     }
-                    return true;
+                } else {
+                    Log::info('Walmart cancel order error: No response received');
+                    return false;
                 }
-                return false;
             case 'ebay':
 
                 $payload = [

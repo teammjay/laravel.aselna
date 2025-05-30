@@ -190,24 +190,39 @@ class WalmartAuthService
 
     public function cancelOrder($purchaseOrderId, $data)
     {
-        $client = new Client();
-        $accessToken = $this->authenticate();
+        try {
+            $client = new Client();
+            $accessToken = $this->authenticate();
 
-        $headers = [
-            'WM_SEC.ACCESS_TOKEN' => "{$accessToken}",
-            'Content-Type' => 'application/json',
-            'Accept' => 'application/json',
-            'WM_SVC.NAME' => 'Walmart Marketplace',
-            'WM_QOS.CORRELATION_ID' => uniqid(),
-        ];
+            $headers = [
+                'WM_SEC.ACCESS_TOKEN' => "{$accessToken}",
+                'Content-Type' => 'application/json',
+                'Accept' => 'application/json',
+                'WM_SVC.NAME' => 'Walmart Marketplace',
+                'WM_QOS.CORRELATION_ID' => uniqid(),
+            ];
 
-        Log::info('Order Data' . json_encode($data));
+            Log::info('Order Data' . json_encode($data));
 
-        $request = new Request('POST', "{$this->endpoint}/orders/{$purchaseOrderId}/cancel", $headers);
-        //add local env condition
-        if (env('APP_ENV') !== 'local') {
-            $res = $client->sendAsync($request, $data)->wait();
+            $request = new Request('POST', "{$this->endpoint}/orders/{$purchaseOrderId}/cancel", $headers, json_encode($data));
+            $res = $client->sendAsync($request)->wait();
             $response = json_decode($res->getBody(), true);
+            Log::info('Response from Walmart: ' . json_encode($response));
+            return $response;
+        } catch (RequestException $e) {
+            // Log full error response (if available)
+            if ($e->hasResponse()) {
+                $status = $e->getResponse()->getStatusCode();
+                $body = (string)$e->getResponse()->getBody();
+                Log::error("Walmart API error ({$status}): " . $body);
+            } else {
+                Log::error('Request error (no response): ' . $e->getMessage());
+            }
+
+        } catch (\Exception $e) {
+            Log::error('Error shipping order: ' . $e->getMessage());
         }
+        return null;
+
     }
 }

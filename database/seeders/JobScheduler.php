@@ -234,6 +234,11 @@ class JobScheduler extends Seeder
                 'name' => 'Client Sync Job',
                 'description' => 'Sync all clients',
                 'class_name' => 'App\Jobs\ClientSyncJob',
+            ],
+            [
+                'name' => 'Order Operation Reason Sync Job',
+                'description' => 'Sync all order operation reasons',
+                'class_name' => 'App\Jobs\OperationReasonSyncJob',
             ]
         ];
 
