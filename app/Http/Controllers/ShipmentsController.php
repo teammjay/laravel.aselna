@@ -133,7 +133,7 @@ class ShipmentsController extends Controller
                 $storeType = (isset($order->store->storeType) && !empty($order->store->storeType)) ? $order->store->storeType->name : '';
                 $code = '';
                 $onlycode = '';
-                $image = $product_id = '';
+                $image = $imagename = $product_id = '';
                 $product_total_weight = 0;
                 if (isset($order->order->orderItem) && !empty($order->order->orderItem)) {
                     foreach ($order->order->orderItem as $oitem) {
