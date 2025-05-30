@@ -6,6 +6,7 @@ use App\Constants\OrderOperationStatus;
 use App\Constants\OrderOperationType;
 use App\Constants\OrderStatus;
 use App\Constants\ShippingLabelCreationType;
+use App\Constants\WeightUnit;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\OrderOperation;
@@ -88,6 +89,9 @@ class OrderOperationUtility
     {
         $shipmentDetails = [];
         $errorMessages = ShippingUtility::assignSolutionService($orderOperation);
+        if (isset($errorMessages) && !empty($errorMessages)) {
+            return $errorMessages;
+        }
 
         $operation_type = $orderOperation->operation_type;
         $shipFrom = $orderOperation->shipFrom;
@@ -119,7 +123,24 @@ class OrderOperationUtility
             }
         }
 
-//        if (isset($orderOperation->carre))
+        $shipmentDetails['MailClass'] = $orderOperation->carrierService->name;
+        $shipmentDetails['transactionId'] = $orderOperation->order->order_id;
+
+        $shipmentDetails['non_machinable'] = false;
+
+        $shipmentDetails['weight'] = [
+            'value' => $orderOperation->weight_value,
+            'unit' => WeightUnit::getUnitName($orderOperation->weight_weight_unit),
+        ];
+
+        if ($orderOperation->shipping_solution_carrier_package) {
+            $shipmentDetails['packageType'] = $orderOperation->shipping_solution_carrier_package->solution_code;
+            $shipmentDetails['label_size'] = $orderOperation->shipping_solution_carrier_package->label_size;
+        }
+
+        $shipmentDetails['ImageRotation'] = null;
+
+        $shipmentDetails['labelFormat'] = 'JPEG';
 
         Log::info('Shipment details for label creation: ' . json_encode($shipmentDetails));
 
@@ -127,6 +148,7 @@ class OrderOperationUtility
         $response = $endiciaClient->createLabel($shipmentDetails);
 
         Log::info($response);
+        return null;
     }
 
     public static function cancelOrder($orderOperation, $reason)
@@ -216,8 +238,11 @@ class OrderOperationUtility
     {
         Log::info('Creating shipment for order operation: ' . $orderOperation->label_creation_type);
         if ($orderOperation->label_creation_type == ShippingLabelCreationType::CreateLabel) {
-            self::createLabel($orderOperation);
-            // TODO Create a label
+            $errors = self::createLabel($orderOperation);
+            if (isset($errors) && !empty($errors)) {
+                Log::error('Error creating label: ' . $errors);
+                return false;
+            }
         }
         $store = $orderOperation->store;
         $storeType = $orderOperation->store->storeType->name;
@@ -339,12 +364,12 @@ class OrderOperationUtility
         }
         return [
             'name' => $shipAddress->name,
-            'address1' => $shipAddress->address1,
-            'address2' => $shipAddress->address2 ?? '',
+            'address1' => $shipAddress->address_line_1,
+            'address2' => $shipAddress->address_line_2 ?? '',
             'city' => $shipAddress->city,
-            'state' => $shipAddress->state,
+            'state' => $shipAddress->state_or_region,
             'postalCode' => $shipAddress->postal_code,
-            'country' => $shipAddress->country,
+            'country' => $shipAddress->country_code,
             'phone' => $shipAddress->phone,
         ];
     }

@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Models\ShippingSettingCarrierAccount;
 use App\Models\ShippingSolution;
 use App\Models\ShippingSolutionCarrierPackage;
 use App\Models\ShippingSolutionCarrierService;
@@ -51,6 +52,14 @@ class ShippingSolutionSyncJob implements ShouldQueue
                     $this->createSyncShippingSolutionCarrierService($shippingSolutionCarrierService);
                 }
             });
+
+        DB::connection('easyesale_db')->table('shipping_setting_carrier_account')
+            ->orderBy('id', 'desc')
+            ->chunk(100, function ($shippingSettingCarrierAccounts) {
+                foreach ($shippingSettingCarrierAccounts as $shippingSettingCarrierAccount) {
+                    $this->createSyncShippingSettingCarrierAccount($shippingSettingCarrierAccount);
+                }
+            });
     }
 
     private function createSyncShippingSolution(mixed $shippingSolution)
@@ -98,6 +107,20 @@ class ShippingSolutionSyncJob implements ShouldQueue
                 'solution_code' => $shippingSolutionCarrierService->solution_code,
                 'shipping_service_id' => $shippingSolutionCarrierService->shipping_service_id,
                 'solution_carrier_code' => $shippingSolutionCarrierService->solution_carrier_code,
+            ]
+        );
+    }
+
+    private function createSyncShippingSettingCarrierAccount(mixed $shippingSettingCarrierAccount)
+    {
+        ShippingSettingCarrierAccount::updateOrCreate(
+            [
+                'id' => $shippingSettingCarrierAccount->id
+            ],
+            [
+                'id' => $shippingSettingCarrierAccount->id,
+                'shipping_carrier_id' => $shippingSettingCarrierAccount->shipping_carrier_id,
+                'shipping_account_id' => $shippingSettingCarrierAccount->shipping_account_id,
             ]
         );
     }
