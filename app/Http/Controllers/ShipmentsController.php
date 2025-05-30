@@ -265,27 +265,29 @@ class ShipmentsController extends Controller
         if (count($shipmentDetail->operationItem ?? []) > 0) {
             $product_weight = 0;
             foreach ($shipmentDetail->operationItem as $oitem) {
-                $product_id = $oitem->orderItem->product->product_id;
-                if ($product_id) {
-                    $product_detail = Catalog::findOrFail($product_id);
-                    if ($product_detail->product_weight > $product_weight) {
-                        $package_id = $product_detail->shipping_package_id;
-                    }
-                    if ($package_id) {
+                if(isset($oitem->orderItem->product)) {
+                    $product_id = $oitem->orderItem->product->product_id;
+                    if ($product_id) {
+                        $product_detail = Catalog::findOrFail($product_id);
+                        if ($product_detail->product_weight > $product_weight) {
+                            $package_id = $product_detail->shipping_package_id;
+                        }
+                        if ($package_id) {
 //                        $shippingPackage = ShippingPackage::findOrFail($package_id);
-                        $shippingCarrierPackageLink = ShippingPackageShippingCarrierPackageLink::where('shipping_package_id', $package_id)->first();
-                        if ($shippingCarrierPackageLink) {
-                            $shippingCPackage = ShippingCarrierPackage::findOrFail($shippingCarrierPackageLink->shipping_carrier_package_id);
-                            if (!isset($shipmentDetail->shipping_package_id)) {
-                                $package_id = $shippingCPackage->id;
-                                $shipmentDetail->shipping_package_id = $shippingCPackage->id;
-                                $shipmentDetail->save();
+                            $shippingCarrierPackageLink = ShippingPackageShippingCarrierPackageLink::where('shipping_package_id', $package_id)->first();
+                            if ($shippingCarrierPackageLink) {
+                                $shippingCPackage = ShippingCarrierPackage::findOrFail($shippingCarrierPackageLink->shipping_carrier_package_id);
+                                if (!isset($shipmentDetail->shipping_package_id)) {
+                                    $package_id = $shippingCPackage->id;
+                                    $shipmentDetail->shipping_package_id = $shippingCPackage->id;
+                                    $shipmentDetail->save();
+                                }
                             }
                         }
-                    }
 
-                    $product_weight = $product_detail->product_weight;
-                    $product_total_weight = $product_total_weight + $product_weight;
+                        $product_weight = $product_detail->product_weight;
+                        $product_total_weight = $product_total_weight + $product_weight;
+                    }
                 }
             }
         }
