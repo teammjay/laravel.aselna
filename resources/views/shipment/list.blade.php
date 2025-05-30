@@ -927,7 +927,7 @@
                             "autoWidth": false,
                             "processing": false,
                             "serverSide": false,
-                            "searching": false,
+                            "searching": true,
                             "paging": false,
                             "info": false,
                             "order": [[6, "desc"]],
@@ -936,8 +936,14 @@
                                     targets: [0,1],
                                     orderable: false
                                 }
-                            ]
+                            ],
+                            drawCallback: function(settings) {
+                                let info = this.api().page.info();
+                                $('#shipmentTable_wrapper').find('.row div:first').html('Total : <b>' + info.recordsDisplay + '</b>');
+                            }
                         });
+
+                        //$('#shipmentTable_wrapper').find('.row div:first').html('Total : <b>' + response.totalRecords + '</b>');
                     }
 
                 }
