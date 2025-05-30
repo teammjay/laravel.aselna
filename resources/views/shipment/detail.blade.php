@@ -1,4 +1,5 @@
 <form id="frmShippingDetail">
+    <input type="hidden" name="id" value="{{ $shipmentDetail->id }}">
     <div class="row">
         <div class="col-md-12">
             <div class="row mt-3 g-3 align-items-center">
@@ -21,7 +22,7 @@
                     <label for="shipment_carrier">Shipping Carrier</label>
                 </div>
                 <div class="col-md-8">
-                    <select class="form-control" id="shipment_carrier" name="shipment_carrier">
+                    <select class="form-control" id="shipment_carrier" name="shipping_carrier_service">
                         {{--<option value="">--</option>--}}
                         @if(count($shippingCarrierService ?? []) > 0)
                             @foreach($shippingCarrierService as $sCarrierService)

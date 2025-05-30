@@ -50,6 +50,8 @@
             cursor: pointer;
         }
 
+        .error{border-color:red;}
+
     </style>
 @stop
 
@@ -172,7 +174,7 @@
         </div>
     </div>
 
-    <div class="table-responsive">
+    <div class="table-responsive pb-5" style="max-height: 500px; overflow: auto;">
         <table id="shipmentTable" class="table table-bordered table-striped">
             <thead>
             <tr>
@@ -550,8 +552,6 @@
             });
         });
 
-        $("#shipmentTable").dataTable();
-
         $(document).on('click','#edit_address',function () {
             var address_id = $(this).data('id');
             if(address_id != '' && address_id != null){
@@ -622,6 +622,7 @@
             const label_generation = formData.get("label_generation");
 
             if(label_generation.trim() != 1) {
+                $('#tracking_number').removeClass('error');
                 if (!trackingNumber || trackingNumber.trim() === "") {
                     $('#tracking_number').addClass('error');
                     alert("Tracking number is required.");
@@ -649,7 +650,7 @@
                 success: function (response) {
                     // If success, remove the user row from the table
                     if (response.success) {
-                        alert('Records updated successfully!!');
+                        alert('Order marked as shipped successfully!!');
                         location.reload();
                     }
                      else {
@@ -658,21 +659,41 @@
                 },
                 error: function (xhr) {
                     // Handle error response
-                    const response = xhr.responseJSON;
+                    if (xhr.status === 422) {
+                        let errors = xhr.responseJSON.errors;
+                        $.each(errors, function (key, messages) {
+                            alert(key + ': ' + messages[0]);
+                        });
+                    }
+                    /*const response = xhr.responseJSON;
                     if ( response.errors) {
                         alert(response.message);
                     } else {
                         alert('Error: ' + response.message);
-                    }
+                    }*/
                 }
             });
         });
 
 
-        $(document).on('click','#ship_selected',function () {
+
+        $(document).keydown(function(e) {
+            if (e.ctrlKey && e.key === 'a') {
+                e.preventDefault(); // prevent the default browser "Select All"
+                $('#shipment-list tr').addClass('bg-blue');
+                $('#shipment-list tr').find('.pro-id').prop('checked', true);
+
+                let totalCnt = $('input[name="shipment_id[]"]:checked').length;
+                $('#total_selected').html('( <b>'+totalCnt+'</b> selected )');
+            }
+        });
+
+
+
+        $(document).on('click','#ship_selected, #ship_all',function () {
 
             let shipment_ids = [];
-            $('input[name="shipment_id[]"]').each(function () {
+            $('input[name="shipment_id[]"]:checked').each(function () {
                 shipment_ids.push($(this).val())
             });
 
@@ -691,7 +712,7 @@
                 success: function (response) {
                     // If success, remove the user row from the table
                     if (response.success) {
-                        alert('Records updated successfully!!');
+                        alert('Order shipped successfully!!');
                         location.reload();
                     }
                     else {
@@ -706,6 +727,57 @@
                     } else {
                         alert('Error: ' + response.message);
                     }
+                }
+            });
+        });
+
+        $(document).on('click','#shipThis',function () {
+
+            const form = document.querySelector("#frmShippingDetail");
+            let formData = new FormData(form);
+
+            const carrier_package = formData.get("carrier_package");
+            const label_generation = formData.get("label_generation");
+
+            if (!carrier_package || carrier_package.trim() === "") {
+                alert("Carrier package is required.");
+                return;
+            }
+
+
+            $.ajax({
+                url: "{{ route('shipment.shipthis') }}",
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                },
+                success: function (response) {
+                    // If success, remove the user row from the table
+                    if (response.success) {
+                        alert('Order shipped successfully!!');
+                        location.reload();
+                    }
+                    else {
+                        alert(response.message);
+                    }
+                },
+                error: function (xhr) {
+                    // Handle error response
+                    if (xhr.status === 422) {
+                        let errors = xhr.responseJSON.errors;
+                        $.each(errors, function (key, messages) {
+                            alert(key + ': ' + messages[0]);
+                        });
+                    }
+                    /*const response = xhr.responseJSON;
+                    if ( response.errors) {
+                        alert(response.message);
+                    } else {
+                        alert('Error: ' + response.message);
+                    }*/
                 }
             });
         });
@@ -829,10 +901,59 @@
 
     function loadDatatables(){
 
-        $("#shipmentTable").dataTable().fnDestroy();
+        //$("#shipmentTable").dataTable().fnDestroy();
 
-        var table = $('#shipmentTable').DataTable({
-            "iDisplayLength": 20,
+        $("#ajax-preloader").show();
+        if ($.fn.DataTable.isDataTable('#shipmentTable')) {
+            $('#shipmentTable').DataTable().clear().destroy();
+        }
+        $.ajax({
+            url: "{{ route('shipment.filter') }}",
+            type: 'POST',
+            data: {
+                'store_id':$('#listing_store').val()
+            },
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            },
+            success: function (response) {
+                if (response.html) {
+                    $('#shipment-list').html(response.html);
+
+                    if(response.totalRecords > 0) {
+                        var proTable = $('#shipmentTable').DataTable({
+                            "iDisplayLength": 100,
+                            "lengthChange": true,
+                            "autoWidth": false,
+                            "processing": false,
+                            "serverSide": false,
+                            "searching": false,
+                            "paging": false,
+                            "info": false,
+                            "order": [[6, "desc"]],
+                            columnDefs: [
+                                {
+                                    targets: [0,1],
+                                    orderable: false
+                                }
+                            ]
+                        });
+                    }
+
+                }
+            },
+            error: function (xhr) {
+                /*if (xhr.responseJSON?.error) {
+                    $('#responseMessage').html('<p style="color:red;">' + xhr.responseJSON.error.image[0] + '</p>');
+                }*/
+            },
+            complete: function () {
+                $("#ajax-preloader").hide();
+            }
+        });
+
+        /*var table = $('#shipmentTable').DataTable({
+            "iDisplayLength": 100,
             "info": true,
             "responsive": true,
             "lengthChange": true,
@@ -898,11 +1019,11 @@
                     orderable: false // Disable sorting
                 }
             ]
-        });
+        });*/
 
-        $( '#shipmentTable_wrapper').removeClass( 'form-inline' );
+        //$( '#shipmentTable_wrapper').removeClass( 'form-inline' );
 
-        $.fn.dataTable.ext.errMode = 'throw';
+        //$.fn.dataTable.ext.errMode = 'throw';
     }
 </script>
 @stop
