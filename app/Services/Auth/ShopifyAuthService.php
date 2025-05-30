@@ -231,13 +231,13 @@ class ShopifyAuthService
         }
     }
 
-    public function cancelOrder($orderId, $reason){
+    public function cancelOrder($orderId, $reason= 'CUSTOMER'){
 
         if(!empty($orderId)) {
             $variable = [
                 'notifyCustomer' => true,
                 'orderId' => "gid://shopify/Order/".$orderId,
-                'reason' => 'CUSTOMER', // CUSTOMER, DECLINED, FRAUD, INVENTORY, OTHER, STAFF
+                'reason' => $reason, // CUSTOMER, DECLINED, FRAUD, INVENTORY, OTHER, STAFF
                 'refund' => true,
                 "restock" => true,
                 'staffNote' => 'Order Cancelled',

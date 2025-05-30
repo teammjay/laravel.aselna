@@ -52,6 +52,13 @@
 
         .error{border-color:red;}
 
+        #shipmentTable thead th {
+            position: sticky;
+            top: 0;
+            background: white; /* Or your table's background */
+            z-index: 10;
+        }
+
     </style>
 @stop
 

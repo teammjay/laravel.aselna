@@ -227,7 +227,7 @@ class OrderOperationUtility
 
                 $authService = new EbayAuthService($clientId, $clientSecret, $redirectUri, $store->user_id);
                 $payload = [
-                    'cancelReason' => $reason,
+                    'cancelReason' => ($reason != '') ? $reason : 'BUYER_ASKED_CANCEL',
                     'legacyOrderId' => $orderOperation->order->order_id,
                 ];
                 $response = $authService->cancelOrder($payload);
