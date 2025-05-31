@@ -43,7 +43,7 @@ class StoreMessageAccountSyncJob implements ShouldQueue
                 'store_id' => $storeMessageAccount->store_id,
                 'name' => $storeMessageAccount->name,
                 'email' => $storeMessageAccount->email,
-                'client_id' => $storeMessageAccount->client_id,
+                'client_id' => $storeMessageAccount->client,
                 'incoming_account_id' => $storeMessageAccount->incoming_account_id,
                 'outgoing_account_id' => $storeMessageAccount->outgoing_account_id,
                 'api_account' => $storeMessageAccount->api_account,
