@@ -6,6 +6,7 @@
                 <button type="button" class="btn btn-warning show-detail" data-id="{{ $shipment['oid'] }}">Show Detail</button><input type="checkbox" class="pro-id" name="shipment_id[]" value="{{ $shipment['oid'] }}" style="visibility:hidden;">
             </td>
             <td>
+                <div class="d-flex" style="gap:5px">
                 @if(!empty($shipment['image']))
                     @foreach($shipment['image'] as $key=>$img)
                         @if($img != '')
@@ -15,6 +16,7 @@
                         @endif
                     @endforeach
                 @endif
+                </div>
             </td>
             <td>{{ $shipment['status'] }}</td>
             <td>{{ $shipment['carrier_service'] }}</td>
