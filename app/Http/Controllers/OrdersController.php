@@ -138,7 +138,7 @@ class OrdersController extends Controller
             foreach($orders as $key=>$order) {
                 $storeType = (isset($order->store->storeType) && !empty($order->store->storeType)) ? $order->store->storeType->name : '';
                 $sku = '';
-                $image = '';
+                $image = '<div class="d-flex" style="gap:5px">';
                 if(isset($order->orderItem) && !empty($order->orderItem)){
                     foreach($order->orderItem as $oitem){
                         $sku .= $oitem->sku.' x '.$oitem->quantity.'<br>';
@@ -152,6 +152,7 @@ class OrdersController extends Controller
                         }
                     }
                 }
+                $image .= '</div>';
                 $data[] = array(
                     "order_id" => $order->order_id.'<input type="checkbox" class="pro-id" name="order_id[]" value="'.$order->id.'" style="visibility:hidden;">',
                     "store" => $order->store->name.' - '.$storeType,
