@@ -163,7 +163,7 @@ class SubmitShopifyProductsJob implements ShouldQueue
 
         Log::info('Product Data: ' . json_encode($productNewData));
 
-        $shopifyAuthService = new ShopifyAuthService($store->secret_key);
+        $shopifyAuthService = new ShopifyAuthService($store->secret_key, $store->service_url);
         $response = $shopifyAuthService->saveProduct($productNewData);
         Log::info('Product: ' . json_encode($response));
 

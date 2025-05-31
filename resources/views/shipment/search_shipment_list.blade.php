@@ -6,8 +6,14 @@
                 <button type="button" class="btn btn-warning show-detail" data-id="{{ $shipment['oid'] }}">Show Detail</button><input type="checkbox" class="pro-id" name="shipment_id[]" value="{{ $shipment['oid'] }}" style="visibility:hidden;">
             </td>
             <td>
-                @if(isset($shipment['image']) && $shipment['image'] != '')
-                <div class="main-image"><img src="{{ $shipment['image'] }}" alt="{{ $shipment['imagename'] }}" class="mainImage" width="70" height="70" data-product-id="{{ $shipment['product_id'] }}"></div>
+                @if(!empty($shipment['image']))
+                    @foreach($shipment['image'] as $key=>$img)
+                        @if($img != '')
+                            <div class="main-image">
+                                <img src="{{ $img }}" alt="{{ $shipment['imagename'][$key] }}" class="mainImage" width="70" height="70" data-product-id="{{ $shipment['product_ids'][$key] }}">
+                            </div>
+                        @endif
+                    @endforeach
                 @endif
             </td>
             <td>{{ $shipment['status'] }}</td>

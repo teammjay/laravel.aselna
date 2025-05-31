@@ -161,7 +161,7 @@ class OrderOperationUtility
                 $orderId = $orderOperation->order_id;
                 $shipmentDetail = OrderOperation::with('operationItem', 'order', 'order.customerAddress', 'carrierService', 'store', 'operationItem.orderItem', 'operationItem.orderItem.product')->where('order_id', $orderId)->first();
 
-                $shopifyServie = new ShopifyAuthService($store->secret_key);
+                $shopifyServie = new ShopifyAuthService($store->secret_key, $store->service_url);
                 $response = $shopifyServie->cancelOrder($shipmentDetail->order->order_id, $reason);
 
                 if (!empty($response['data']['orderCancel']['orderCancelUserErrors'])) {

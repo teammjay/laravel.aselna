@@ -133,15 +133,15 @@ class ShipmentsController extends Controller
                 $storeType = (isset($order->store->storeType) && !empty($order->store->storeType)) ? $order->store->storeType->name : '';
                 $code = '';
                 $onlycode = '';
-                $image = $imagename = $product_id = '';
+                $image = $imagename = $product_ids = [];
                 $product_total_weight = 0;
                 if (isset($order->order->orderItem) && !empty($order->order->orderItem)) {
                     foreach ($order->order->orderItem as $oitem) {
                         if (isset($oitem->product) && !empty($oitem->product)) {
-                            $imagename = $oitem->product->product_image;
+                            $imagename[] = $oitem->product->product_image;
                             if (!empty($oitem->product->image)) {
-                                $image = asset('storage/' . $oitem->product->image->getFileUrl());
-                                $product_id = $oitem->product->product_id;
+                                $image[] = asset('storage/' . $oitem->product->image->getFileUrl());
+                                $product_ids[] = $oitem->product->product_id;
                             }
                             if ($oitem->product->product_sku != '') {
                                 $code .= $oitem->product->product_sku . ' x ' . $oitem->quantity . PHP_EOL;
@@ -155,9 +155,9 @@ class ShipmentsController extends Controller
                 }
                 $shipments[] = array(
                     "oid" => $order->oid,
-                    "image" => ($image) ? $image : '',
-                    "imagename" => ($imagename) ? $imagename : '',
-                    "product_id" => $product_id,
+                    "image" => (!empty($image)) ? $image : '',
+                    "imagename" => (!empty($imagename)) ? $imagename : '',
+                    "product_id" => (!empty($product_ids)) ? $product_ids : '',
                     "status" => '',
                     "carrier_service" => isset($order->carrierService) ? $order->carrierService->ShippingCarrier->name . ' ' . $order->carrierService->name : '',
                     "store" => $order->store->name . ' - ' . $storeType,
@@ -171,6 +171,10 @@ class ShipmentsController extends Controller
                 );
             }
         }
+
+        /*echo '<pre>';
+        print_r($shipments);
+        echo '</pre>';die;*/
 
         if ($request->ajax()) {
             return response()->json([

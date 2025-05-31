@@ -12,8 +12,10 @@ use Exception;
 class EmailMessageUtility
 {
     protected $smtpConfig;
+    protected $imapConfig;
+    protected $client;
 
-    public function __construct(array $smtpConfig, array $imapConfig = [])
+    public function __construct(array $smtpConfig = [], array $imapConfig = [])
     {
         $this->smtpConfig = $smtpConfig;
         $this->imapConfig = $imapConfig;
@@ -85,12 +87,16 @@ class EmailMessageUtility
             $emails = [];
             foreach ($messages as $message) {
                 $emails[] = [
-                    'subject' => $message->getSubject(),
+                    'subject' => $message->subject->first(),
                     'from' => $message->getFrom()[0]->mail ?? null,
                     'body' => $message->getTextBody(),
-                    'date' => $message->getDate()->format('Y-m-d H:i:s'),
+                    'date' => date('Y-m-d H:i:s',strtotime($message->getDate())),
                 ];
             }
+
+            echo '<pre>';
+            print_r($emails);
+            echo '</pre>';die;
 
             return $emails;
         } catch (Exception $e) {

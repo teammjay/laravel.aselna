@@ -49,7 +49,7 @@ class FetchShopifyOrders implements ShouldQueue
 
             if (count($stores ?? []) > 0) {
                 foreach ($stores as $store) {
-                    if ($store->name != 'AccessoryWiz') {
+                    if ($store->name != 'AccessoryChoice') {
                         continue;
                     }
                     Log::info('Store : ' . $store->name);
@@ -178,11 +178,23 @@ class FetchShopifyOrders implements ShouldQueue
 
                                 /* end - add customers phone records*/
 
+                                $orderstatus = OrderStatus::Synchronizing;
+                                $orderOperationstatus = OrderOperationStatus::Created;
+
+                                if(isset($order['displayFulfillmentStatus'])){
+                                    switch (strtolower($order['displayFulfillmentStatus'])){
+                                        case 'fulfilled';
+                                            $orderstatus = OrderStatus::Shipped;
+                                            $orderOperationstatus = OrderOperationStatus::MarkAsShipped;
+                                            break;
+                                    }
+                                }
+
                                 $orderData = [
                                     'order_id' => $order['id'],
                                     'order_date' => date('Y-m-d H:i:s', strtotime($order['createdAt'])),
                                     //'order_status' => OrderStatus::getOrderStatusId($order['displayFulfillmentStatus']),
-                                    'order_status' => OrderStatus::Synchronizing,
+                                    'order_status' => $orderstatus,
                                     'order_total' => $order['totalPrice'],
                                     'buyer_first_name' => isset($order['customer']) ? $order['customer']['firstName'] : '',
                                     'buyer_last_name' => isset($order['customer']) ? $order['customer']['lastName'] : '',
@@ -207,7 +219,7 @@ class FetchShopifyOrders implements ShouldQueue
                                     'order_id' => $order_detail->id,
                                     'ship_date' => date('Y-m-d H:i:s'),
                                     'insurance_value' => 0,
-                                    'status' => OrderOperationStatus::Created,
+                                    'status' => $orderOperationstatus,
                                     'signature_confirmation' => 1,
                                     'store_id' => $store->id,
                                     'operation_type' => OrderOperationType::OrderShipment,
