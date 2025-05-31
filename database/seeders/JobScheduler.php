@@ -239,6 +239,16 @@ class JobScheduler extends Seeder
                 'name' => 'Order Operation Reason Sync Job',
                 'description' => 'Sync all order operation reasons',
                 'class_name' => 'App\Jobs\OperationReasonSyncJob',
+            ],
+            [
+                'name' => 'Messaging Account Sync Job',
+                'description' => 'Sync all messaging account',
+                'class_name' => 'App\Jobs\MessagingAccountSyncJob',
+            ],
+            [
+                'name' => 'Store Message Account Sync Job',
+                'description' => 'Sync all store message account',
+                'class_name' => 'App\Jobs\StoreMessageAccountSyncJob',
             ]
         ];
 

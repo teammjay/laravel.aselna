@@ -28,4 +28,12 @@ class StoreMessageAccount extends Model
 
     protected $fillable = ['store_id','name','email','client_id','incoming_account_id','outgoing_account_id','api_account','active','version','created_by','updated_by'];
 
+    public function incomingAccount(){
+        return $this->belongsTo(MessagingAccount::class,'incoming_account_id');
+    }
+
+    public function outgoingAccount(){
+        return $this->belongsTo(MessagingAccount::class,'outgoing_account_id');
+    }
+
 }
