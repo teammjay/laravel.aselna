@@ -21,7 +21,7 @@ class EndicialabelService
         $this->client = new Client();
     }
 
-    public function createLabel(array $request)
+    public function createLabel(array $request,$orderOperation)
     {
         $xmlString = $this->buildXmlRequest($request);
         Log::info('Endicia Label Request XML: ' . $xmlString);
@@ -30,7 +30,7 @@ class EndicialabelService
             $response = $this->client->post('https://LabelServer.Endicia.com/LabelService/EwsLabelService.asmx', [
                 'headers' => [
                     'Content-Type' => 'text/xml; charset=utf-8',
-                    'SOAPAction' => 'http://www.envmgr.com/LabelService/GetPostageLabel',
+                    'SOAPAction' => '"www.envmgr.com/LabelService/GetPostageLabel"',
                 ],
                 'body' => $xmlString,
                 'verify' => false,
@@ -38,14 +38,17 @@ class EndicialabelService
 
             $body = $response->getBody()->getContents();
             Log::info('Endicia Label Response XML: ' . $body);
-            return $this->parseSoapResponse($body);
+            return $this->parseSoapResponse($body, $orderOperation);
         } catch (Exception $e) {
             // Handle SOAP request errors
+            if ($e->hasResponse()) {
+                Log::error('SOAP Error Response: ' . $e->getResponse()->getBody()->getContents());
+            }
             throw new Exception('Error creating label: ' . $e->getMessage());
         }
     }
 
-    private function parseSoapResponse($response)
+    public function parseSoapResponse($response, $orderOperation)
     {
         libxml_use_internal_errors(true);
         $xml = simplexml_load_string($response);
@@ -54,7 +57,29 @@ class EndicialabelService
             return ['error' => 'Failed to parse XML'];
         }
 
-        return json_decode(json_encode($xml), true);
+        $xml->registerXPathNamespace('ns', 'www.envmgr.com/LabelService');
+
+        $base64Image = (string)$xml->xpath('//ns:Base64LabelImage')[0];
+        $trackingNumber = (string)$xml->xpath('//ns:TrackingNumber')[0];
+
+        Log::info('Tracking Number: ' . $trackingNumber);
+        $orderOperation->tracking_number = $trackingNumber;
+        $orderOperation->save();
+
+        try {
+            $imageData = base64_decode($base64Image);
+            file_put_contents(storage_path('app/public/labels/' . $trackingNumber . '.png'), $imageData);
+
+        } catch (Exception $e) {
+            Log::error('Error saving label image: ' . $e->getMessage());
+            return ['error' => 'Failed to save label image'];
+        }
+
+        return [
+            'trackingNumber' => $trackingNumber,
+            'labelType' => (string)$xml->xpath('//ns:LabelType')[0] ?? null,
+            'error' => null,
+        ];
     }
 
     private function buildXmlRequest(array $shipmentDetails)

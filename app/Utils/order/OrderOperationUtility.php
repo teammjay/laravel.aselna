@@ -163,7 +163,7 @@ class OrderOperationUtility
         Log::info('Shipment details for label creation: ' . json_encode($shipmentDetails));
 
         $endiciaClient = new EndicialabelService();
-        $response = $endiciaClient->createLabel($shipmentDetails);
+        $response = $endiciaClient->createLabel($shipmentDetails,$orderOperation);
 
         Log::info($response);
         return null;
@@ -423,12 +423,12 @@ class OrderOperationUtility
             return [];
         }
         return [
-            'name' => $orderOperation->order->customerAddress->name,
+            'name' => $orderOperation->order->customerAddress->full_name,
             'address1' => $orderOperation->order->customerAddress->address_line_1,
             'address2' => $orderOperation->order->customerAddress->address_line_2 ?? '',
             'city' => $orderOperation->order->customerAddress->city,
             'state' => $orderOperation->order->customerAddress->state,
-            'postalCode' => $orderOperation->order->customerAddress->postal_code,
+            'postalCode' => $orderOperation->order->customerAddress->zip,
             'country' => $orderOperation->order->customerAddress->country,
             'phone' => $orderOperation->order->customerAddress->phone,
             'comapany' => $orderOperation->order->customerAddress->company ?? ''
