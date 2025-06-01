@@ -111,9 +111,9 @@ class ShippingAccountsSyncJob implements ShouldQueue
                 'address' => $shippingAccountTransaction->address,
                 'canceled' => $shippingAccountTransaction->canceled,
                 'canceled_date' => $shippingAccountTransaction->canceled_date,
-                'created_by' => $shippingAccountTransaction->created_by,
-                'created_at' => $shippingAccountTransaction->created_at,
-                'updated_at' => $shippingAccountTransaction->updated_at
+//                'created_by' => $shippingAccountTransaction->created_by,
+//                'created_at' => $shippingAccountTransaction->created_at,
+//                'updated_at' => $shippingAccountTransaction->updated_at
             ]
         );
     }

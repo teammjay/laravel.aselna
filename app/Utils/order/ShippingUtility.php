@@ -2,6 +2,7 @@
 
 namespace App\Utils\order;
 
+use App\Models\ShippingCarrierPackage;
 use App\Models\ShippingPackageShippingCarrierPackageLink;
 use App\Models\ShippingSettingCarrierAccount;
 use App\Models\ShippingSolutionCarrierPackage;
@@ -10,11 +11,11 @@ use Illuminate\Support\Facades\Log;
 
 class ShippingUtility
 {
-    public static function assignSolutionService($orderOperation)
+    public static function assignSolutionService(&$orderOperation)
     {
         $shippingCarrier = $orderOperation->carrier;
         Log::info('Carrier Id :: ' . $shippingCarrier->id);
-        $carrierAccount = ShippingSettingCarrierAccount::where('shipping_carrier_id', $shippingCarrier->id)->first();
+        $carrierAccount = ShippingSettingCarrierAccount::where('shipping_carrier_id', $shippingCarrier->id)->where('shipping_setting_id','a0b5fa27-69cc-06f7-8b6b-eb7fca661ea9')->first();
         if (!isset($carrierAccount)) {
             return 'Shipping Account is not assigned for ' . $shippingCarrier->name . '. Please assign an active shipping account for this carrier.';
         }
@@ -23,28 +24,34 @@ class ShippingUtility
         $shippingSolution = $shippingAccount->shippingSolution;
         $shippingCarrierService = ShippingSolutionCarrierService::where('shipping_service_id', $orderOperation->shipping_carrier_service_id)
             ->where('shipping_solution_id', $shippingSolution->id)->first();
+        Log::info('Shipping solution id :: ' . json_encode($shippingCarrierService));
         if (!isset($shippingCarrierService)) {
             return "Unable Shipping Account is not assigned for '.$shippingCarrier->name.'. Please assing an active shipping account for this carrier.";
         }
 
-        $shippingCarrierPackage = $orderOperation->shippingPackage;
-        Log::info('Shipping carrier Package Id :: ' . $shippingCarrierPackage->id);
-//        Log::info('Shipping carrier service :: ' . $shippingCarrier->id);
+        $shippingPackage = $orderOperation->shippingPackage;
+//        Log::info('Shipping carrier Package Id :: ' . $shippingCarrierPackage->id);
+        Log::info('Shipping carrier service :: ' . $shippingPackage->id);
 
-//        $shippingCarrierPackages = ShippingPackageShippingCarrierPackageLink::where('shipping_package_id', $shippingPackage->id)
-//            ->whereIn('shipping_carrier_package_id', function ($query) use ($shippingCarrier) {
-//                $query->select('id')->from('shipping_carrier_package')->where('shipping_carrier_id', $shippingCarrier->id);
-//            })->get();
-//        if ($shippingCarrierPackages->isEmpty()) {
-//            return $shippingPackage->name . ' is not compatible with shipping solution ' . $shippingSolution->name;
-//        }
+        $shippingCarrierPackages = ShippingPackageShippingCarrierPackageLink::where('shipping_package_id', $shippingPackage->id)
+            ->whereIn('shipping_carrier_package_id', function ($query) use ($shippingCarrier) {
+                $query->select('id')->from('shipping_carrier_package')->where('shipping_carrier_id', $shippingCarrier->id);
+            })->get();
+        if ($shippingCarrierPackages->isEmpty()) {
+            return $shippingPackage->name . ' is not compatible with shipping solution ' . $shippingSolution->name;
+        }
+        $shippingCarrierPackageId= $shippingCarrierPackages[0]->shipping_carrier_package_id;
+        $orderOperation->shipping_carrier_package = ShippingCarrierPackage::where('id', $shippingCarrierPackageId)->first();
+        Log::info('Shipping carrier package :: ' . json_encode($orderOperation->shipping_carrier_package) ?? 'null');
 
+        Log::info('Shipping carrier package :: ' . $orderOperation->shipping_carrier_package->id ?? 'null');
+        Log::info('Shipping solution id :: ' . $shippingSolution->id ?? 'null');
         $shippingSolutionCarrierPackage = ShippingSolutionCarrierPackage::where('shipping_solution_id', $shippingSolution->id)
-            ->where('carrier_package_id', $shippingCarrierPackage->id)
+            ->where('carrier_package_id', $orderOperation->shipping_carrier_package->id)
             ->first();
         Log::info('Shipping solution carrier package :: ' . $shippingSolutionCarrierPackage->id ?? 'null');
         if (!isset($shippingSolutionCarrierPackage)) {
-            return $shippingCarrierPackage->name . ' is not compatible with shipping solution ' . $shippingSolution->name . '. Please assign a compatible shipping package for this shipping solution.';
+            return $orderOperation->shipping_carrier_package->name . ' is not compatible with shipping solution ' . $shippingSolution->name . '. Please assign a compatible shipping package for this shipping solution.';
         }
 
 
@@ -52,7 +59,7 @@ class ShippingUtility
         $orderOperation->shipping_account = $shippingAccount;
         $orderOperation->shipping_solution_carrier_service = $shippingCarrierService;
         $orderOperation->shipping_solution_carrier_package = $shippingSolutionCarrierPackage;
-//        $orderOperation->shipping_carrier_package = $shippingCarrierPackages->first();
+
 
         Log::info('Shipping solution service assigned', [
             'order_operation_id' => $orderOperation->id,

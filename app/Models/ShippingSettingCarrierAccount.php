@@ -29,6 +29,7 @@ class ShippingSettingCarrierAccount extends Model
         'id',
         'shipping_carrier_id',
         'shipping_account_id',
+        'shipping_setting_id'
     ];
 
     public function shippingCarrier()

@@ -123,7 +123,8 @@ class OrderOperationUtility
             }
         }
 
-        $shipmentDetails['MailClass'] = $orderOperation->carrierService->name;
+        $shipmentDetails['MailClass'] = $orderOperation->shipping_solution_carrier_service->solution_code;
+        $shipmentDetails['MailpieceShape'] = $orderOperation->shipping_solution_carrier_package->solution_code;
         $shipmentDetails['transactionId'] = $orderOperation->order->order_id;
 
         $shipmentDetails['non_machinable'] = false;
@@ -138,9 +139,26 @@ class OrderOperationUtility
             $shipmentDetails['label_size'] = $orderOperation->shipping_solution_carrier_package->label_size;
         }
 
+        if($orderOperation->shipping_account) {
+            $shipmentDetails['accountId'] = $orderOperation->shipping_account->account_id;
+            $shipmentDetails['passPhrase'] = $orderOperation->shipping_account->pass_phrase;
+            $shipmentDetails['requesterId'] = $orderOperation->shipping_account->requester_id;
+        } else {
+            Log::error('Shipping account not found for order operation: ' . $orderOperation->id);
+            return 'Shipping account not found for order operation.';
+        }
+
         $shipmentDetails['ImageRotation'] = null;
 
         $shipmentDetails['labelFormat'] = 'JPEG';
+
+        $shipmentDetails['returnAddress'] = [
+            'address1' => '590 Hatton Ln',
+            'address2' => '',
+            'city' => 'Junction City',
+            'state' => 'OR',
+            'postalCode' => '97448',
+        ];
 
         Log::info('Shipment details for label creation: ' . json_encode($shipmentDetails));
 
@@ -391,6 +409,7 @@ class OrderOperationUtility
             'postalCode' => $shipAddress->postal_code,
             'country' => $shipAddress->country_code,
             'phone' => $shipAddress->phone,
+            'company' => $shipAddress->company
         ];
     }
 
@@ -405,13 +424,14 @@ class OrderOperationUtility
         }
         return [
             'name' => $orderOperation->order->customerAddress->name,
-            'address1' => $orderOperation->order->customerAddress->address1,
-            'address2' => $orderOperation->order->customerAddress->address2 ?? '',
+            'address1' => $orderOperation->order->customerAddress->address_line_1,
+            'address2' => $orderOperation->order->customerAddress->address_line_2 ?? '',
             'city' => $orderOperation->order->customerAddress->city,
             'state' => $orderOperation->order->customerAddress->state,
             'postalCode' => $orderOperation->order->customerAddress->postal_code,
             'country' => $orderOperation->order->customerAddress->country,
             'phone' => $orderOperation->order->customerAddress->phone,
+            'comapany' => $orderOperation->order->customerAddress->company ?? ''
         ];
     }
 }

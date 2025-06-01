@@ -27,7 +27,7 @@ class EndicialabelService
         Log::info('Endicia Label Request XML: ' . $xmlString);
 
         try {
-            $response = $this->client->post('https://elstestserver.endicia.com/LabelService/EwsLabelService.asmx', [
+            $response = $this->client->post('https://LabelServer.Endicia.com/LabelService/EwsLabelService.asmx', [
                 'headers' => [
                     'Content-Type' => 'text/xml; charset=utf-8',
                     'SOAPAction' => 'http://www.envmgr.com/LabelService/GetPostageLabel',
@@ -37,6 +37,7 @@ class EndicialabelService
             ]);
 
             $body = $response->getBody()->getContents();
+            Log::info('Endicia Label Response XML: ' . $body);
             return $this->parseSoapResponse($body);
         } catch (Exception $e) {
             // Handle SOAP request errors
@@ -66,14 +67,15 @@ class EndicialabelService
         $labelRequest->addChild('Test', 'YES');
 //        $labelRequest->addAttribute('LabelType', $shipmentDetails['']);
 
-        $labelRequest->addChild('RequesterID', 'lxxx');
-        $labelRequest->addChild('AccountID', '2533763');
-        $labelRequest->addChild('PassPhrase', 'ajshd823rha!d33');
+        $labelRequest->addChild('RequesterID', $shipmentDetails['requesterId']);
+        $labelRequest->addChild('AccountID', $shipmentDetails['accountId']);
+        $labelRequest->addChild('PassPhrase', $shipmentDetails['passPhrase']);
 
         $labelRequest->addChild('MailClass', $shipmentDetails['MailClass']);
+        $labelRequest->addChild('MailpieceShape', $shipmentDetails['MailpieceShape'] ?? 'Package');
         $labelRequest->addChild('WeightOz', $shipmentDetails['weight']['value']);
 
-        $labelRequest->addChild('MailpieceShape','Package');
+//        $labelRequest->addChild('MailpieceShape','');
 
         $labelRequest->addChild('PartnerTransactionID', $shipmentDetails['transactionId']);
 
@@ -102,6 +104,16 @@ class EndicialabelService
             $labelRequest->addChild('ToCity', $shipmentDetails['toAddress']['city']);
             $labelRequest->addChild('ToState', $shipmentDetails['toAddress']['state']);
             $labelRequest->addChild('ToPostalCode', $shipmentDetails['toAddress']['postalCode']);
+        }
+
+        if (isset($shipmentDetails['returnAddress'])) {
+//            $labelRequest->addChild('ReturnName', $shipmentDetails['returnAddress']['name']);
+//            $labelRequest->addChild('ReturnCompany', $shipmentDetails['returnAddress']['company'] ?? '');
+            $labelRequest->addChild('ReturnAddress1', $shipmentDetails['returnAddress']['address1']);
+            $labelRequest->addChild('ReturnToCity', $shipmentDetails['returnAddress']['city']);
+            $labelRequest->addChild('ReturnToState', $shipmentDetails['returnAddress']['state']);
+//            $labelRequest->addChild('ReturnToCountryCode', $shipmentDetails['returnAddress']['countryCode']);
+            $labelRequest->addChild('ReturnToPostalCode', $shipmentDetails['returnAddress']['postalCode']);
         }
 
         return $xml->asXML();

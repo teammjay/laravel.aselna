@@ -8,7 +8,7 @@ use Illuminate\Support\Str;
 class ShippingAccountPurchase extends Model
 {
     // Set a custom table name
-    protected $table = 'shipping_account_purchase';
+    protected $table = 'shipping_account_purhcase';
 
     protected $keyType = 'string';
 

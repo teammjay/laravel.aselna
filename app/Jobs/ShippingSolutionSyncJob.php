@@ -121,6 +121,7 @@ class ShippingSolutionSyncJob implements ShouldQueue
                 'id' => $shippingSettingCarrierAccount->id,
                 'shipping_carrier_id' => $shippingSettingCarrierAccount->shipping_carrier_id,
                 'shipping_account_id' => $shippingSettingCarrierAccount->shipping_account_id,
+                'shipping_setting_id' => $shippingSettingCarrierAccount->shipping_setting_id,
             ]
         );
     }

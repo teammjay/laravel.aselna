@@ -145,7 +145,7 @@ class ShipmentsController extends Controller
                             }
                             if ($oitem->product->product_sku != '') {
                                 $code .= $oitem->product->product_sku . ' x ' . $oitem->quantity . PHP_EOL;
-                                $onlycode .= $oitem->product->product_sku.'<br>';
+                                $onlycode .= $oitem->product->product_sku . '<br>';
                             }
 
                             $product_weight = $oitem->product->product_weight;
@@ -167,7 +167,8 @@ class ShipmentsController extends Controller
                     "weight" => ($order->weight_value) ? $order->weight_value : $product_total_weight,
                     "first_name" => (isset($order->order) && !empty($order->order)) ? $order->order->buyer_first_name : '',
                     "last_name" => (isset($order->order) && !empty($order->order)) ? $order->order->buyer_last_name : '',
-                    "city" => (isset($order->order->customer) && !empty($order->order->customer)) ? $order->order->customer->city : ''
+                    "city" => (isset($order->order->customer) && !empty($order->order->customer)) ? $order->order->customer->city : '',
+                    'product_ids' => $product_ids,
                 );
             }
         }
@@ -192,7 +193,6 @@ class ShipmentsController extends Controller
         /*echo '<pre>';
         print_r($order_operations);
         echo '</pre>';die;*/
-
 
 
         /*$response = array(
@@ -260,7 +260,7 @@ class ShipmentsController extends Controller
         $order_opration_id = $request->input('operation_id');
         $shippingCarrier = ShippingCarrier::all();
         $shipFrom = LogisticCenter::all();
-        $shippingCarrierPackage = ShippingCarrierPackage::all();
+        $shippingCarrierPackage = ShippingPackage::all();
         $shipmentDetail = OrderOperation::with('operationItem', 'order', 'order.customerAddress', 'carrierService', 'store', 'operationItem.orderItem', 'operationItem.orderItem.product')->where('id', $order_opration_id)->first();
 
         $package_id = '';
@@ -269,7 +269,7 @@ class ShipmentsController extends Controller
         if (count($shipmentDetail->operationItem ?? []) > 0) {
             $product_weight = 0;
             foreach ($shipmentDetail->operationItem as $oitem) {
-                if(isset($oitem->orderItem->product)) {
+                if (isset($oitem->orderItem->product)) {
                     $product_id = $oitem->orderItem->product->product_id;
                     if ($product_id) {
                         $product_detail = Catalog::findOrFail($product_id);
@@ -277,16 +277,18 @@ class ShipmentsController extends Controller
                             $package_id = $product_detail->shipping_package_id;
                         }
                         if ($package_id) {
-//                        $shippingPackage = ShippingPackage::findOrFail($package_id);
-                            $shippingCarrierPackageLink = ShippingPackageShippingCarrierPackageLink::where('shipping_package_id', $package_id)->first();
-                            if ($shippingCarrierPackageLink) {
-                                $shippingCPackage = ShippingCarrierPackage::findOrFail($shippingCarrierPackageLink->shipping_carrier_package_id);
-                                if (!isset($shipmentDetail->shipping_package_id)) {
-                                    $package_id = $shippingCPackage->id;
-                                    $shipmentDetail->shipping_package_id = $shippingCPackage->id;
-                                    $shipmentDetail->save();
-                                }
-                            }
+                            $shipmentDetail->shipping_package_id = $package_id;
+                            $shipmentDetail->save();
+//                          $shippingPackage = ShippingPackage::findOrFail($package_id);
+//                            $shippingCarrierPackageLink = ShippingPackageShippingCarrierPackageLink::where('shipping_package_id', $package_id)->first();
+//                            if ($shippingCarrierPackageLink) {
+//                                $shippingCPackage = ShippingCarrierPackage::findOrFail($shippingCarrierPackageLink->shipping_carrier_package_id);
+//                                if (!isset($shipmentDetail->shipping_package_id)) {
+//                                    $package_id = $shippingCPackage->id;
+//                                    $shipmentDetail->shipping_package_id = $shippingCPackage->id;
+//                                    $shipmentDetail->save();
+//                                }
+//                            }
                         }
 
                         $product_weight = $product_detail->product_weight;
@@ -357,7 +359,7 @@ class ShipmentsController extends Controller
         $reasons = [];
         if (isset($shipmentDetail->store->storeType)) {
             $store_type = $shipmentDetail->store->storeType->id;
-            $reasons = OrderOperationReason::where('store_type_id', $store_type)->where('operation_type',1)->get();
+            $reasons = OrderOperationReason::where('store_type_id', $store_type)->where('operation_type', 1)->get();
         }
 
         $view = view('shipment.cancel_shipment', compact('shipmentDetail', 'reasons'))->render();
@@ -404,7 +406,7 @@ class ShipmentsController extends Controller
 
         try {
             if ($selected_shipment_id) {
-                $orderOperation = OrderOperation::with('order','store','store.storeType','operationItem','operationItem.orderItem','carrier','carrierService')->where('id',$selected_shipment_id)->first();
+                $orderOperation = OrderOperation::with('order', 'store', 'store.storeType', 'operationItem', 'operationItem.orderItem', 'carrier', 'carrierService')->where('id', $selected_shipment_id)->first();
                 $isSuccess = OrderOperationUtility::processShipment($orderOperation, $request);
 
                 if (!$isSuccess) {
@@ -440,13 +442,13 @@ class ShipmentsController extends Controller
         try {
             if ($selected_shipment_id) {
                 $orderOperation = OrderOperation::with('order', 'store', 'store.storeType')->where('id', $selected_shipment_id)->first();
-                $response = OrderOperationUtility::cancelOrder($orderOperation,$reason);
+                $response = OrderOperationUtility::cancelOrder($orderOperation, $reason);
 
-                if($response){
-                    $orderOperation->update(['status'=>OrderOperationStatus::Canceled]);
-                    if(isset($orderOperation->order->id)){
+                if ($response) {
+                    $orderOperation->update(['status' => OrderOperationStatus::Canceled]);
+                    if (isset($orderOperation->order->id)) {
                         $order = Order::findOrFail($orderOperation->order->id);
-                        $order->update(['order_status'=>OrderStatus::Canceled]);
+                        $order->update(['order_status' => OrderStatus::Canceled]);
                     }
                     return response()->json([
                         'success' => true,
@@ -473,19 +475,20 @@ class ShipmentsController extends Controller
         }
     }
 
-    public function shipSelected(Request $request){
+    public function shipSelected(Request $request)
+    {
 
         $selected_shipment_id = $request->input('shipment_ids');
 
         $orderOperations = OrderOperation::with('order', 'store', 'store.storeType')->whereIn('id', $selected_shipment_id)->get();
 
-        if(count($orderOperations ?? []) > 0){
+        if (count($orderOperations ?? []) > 0) {
             $isSuccess = false;
-            foreach($orderOperations as $operation){
+            foreach ($orderOperations as $operation) {
 
-               $package_id = '';
-               $product_total_weight = 0;
-               //print_r($shipmentDetail->operationItem);
+                $package_id = '';
+                $product_total_weight = 0;
+                //print_r($shipmentDetail->operationItem);
                 if (count($operation->operationItem ?? []) > 0) {
                     $product_weight = 0;
                     foreach ($operation->operationItem as $oitem) {
@@ -493,10 +496,10 @@ class ShipmentsController extends Controller
                         if ($product_id) {
                             $product_detail = Catalog::findOrFail($product_id);
                             if ($product_detail->product_weight > $product_weight) {
-                               $package_id = $product_detail->shipping_package_id;
+                                $package_id = $product_detail->shipping_package_id;
                             }
                             if ($package_id) {
-                               $request['carrier_package'] = $package_id;
+                                $request['carrier_package'] = $package_id;
                             }
                             $product_weight = $product_detail->product_weight;
                             $product_total_weight = $product_total_weight + $product_weight;
@@ -528,7 +531,8 @@ class ShipmentsController extends Controller
         }
     }
 
-    public function shipThis(Request $request){
+    public function shipThis(Request $request)
+    {
 
         $validator = Validator::make($request->all(), [
             'id' => 'required',
