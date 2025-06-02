@@ -15,7 +15,7 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule): void
     {
-        $schedule->command('logs:rotate')->everyFourHours();
+        $schedule->command('logs:rotate')->everyOddHour();
         $schedule->command('app:result-feed-sync')->everyMinute();
 //        $schedule->job(new ListingItemSyncJob())->daily();
 //        $schedule->job(new ListingSyncJob())->daily();
