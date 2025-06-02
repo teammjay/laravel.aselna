@@ -29,7 +29,6 @@ class ShippingCarrierPackage extends Model
     protected $fillable = ['id','name','shipping_carrier_id','dimensions_length','dimensions_width','dimensions_height','dimensions_length_unit','max_weight_value','max_weight_weight_unit','non_machinable','created_at','updated_at'];
 
     public function shippingCarrier(){
-
         return $this->belongsTo(ShippingCarrier::class,'shipping_carrier_id');
     }
 

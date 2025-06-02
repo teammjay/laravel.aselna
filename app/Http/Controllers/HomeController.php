@@ -14,6 +14,7 @@ use App\Models\Listing;
 use App\Models\ListingFeed;
 use App\Models\ListingItem;
 use App\Models\Store;
+use App\Models\StoreMessageAccount;
 use App\Services\Auth\GoogleShoppingAuthService;
 use App\Services\DataTable\DataTableService;
 use App\Services\Marketplace\MarketplaceServiceFactory;
@@ -22,6 +23,7 @@ use App\Services\Marketplace\Service\GoogleShoppingService;
 use App\Services\Marketplace\Service\MagentoService;
 use App\Services\Marketplace\Service\ShopifyService;
 use App\Services\Marketplace\Service\WalmartService;
+use App\Utils\EmailMessageUtility;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Bus;
@@ -39,6 +41,38 @@ class HomeController extends Controller
     }
 
     public function testfunction(){
+
+        $smtpConfig = [
+            /*'host' => 'smtp.gmail.com',
+            'port' => 587,
+            'encryption' => 'tls',
+            'username' => 'odemobile.wm@gmail.com',
+            'password' => 'tcogxvjrbwxwudgh',
+            'from_address' => 'odemobile.wm@gmail.com',
+            'from_name' => 'Odemobile Walmart',*/
+        ];
+
+        $imapConfig = [
+            'host' => 'imap.gmail.com',
+            'port' => 993,
+            'encryption' => 'ssl',
+            'username' => 'awaccessory@gmail.com',
+            'password' => 'qbdpyazqodnwsnju',
+        ];
+
+        $connector = new EmailMessageUtility($smtpConfig, $imapConfig);
+        $emails = $connector->fetchEmails();
+        //dd($emails);
+
+        /*$stores = Store::select('store.*')->join('store_type', 'store_type.id', '=', 'store.store_type_id')->where('store_type.code', 'shopify')->get();
+        if (count($stores ?? []) > 0) {
+            foreach ($stores as $store) {
+                $storeMessageAccount = StoreMessageAccount::with('incomingAccount', 'outgoingAccount')->where('store_id', $store->id)->get();
+                echo '<pre>';
+                print_r($storeMessageAccount);
+                echo '</pre>';
+            }die;
+        }*/
 
         /*$stores = Store::select('store.*')->join('store_type', 'store_type.id', '=', 'store.store_type_id')->where('store_type.code','shopify')->get();
 
@@ -94,12 +128,12 @@ class HomeController extends Controller
         echo '</pre>';die;*/
 
 
-        Bus::chain([
+        /*Bus::chain([
             //new SubmitShopifyProductsJob(),
             //new synccategorytospecification(),
-            //new FetchShopifyOrders(),
-            new EbayListingItemSyncJob()
-        ])->dispatch();
+            new FetchShopifyOrders(),
+            //new EbayListingItemSyncJob()
+        ])->dispatch();*/
     }
 
     public function getListingData(Request $request)

@@ -87,7 +87,7 @@ class OrderUtility
 
         $customer_address_data = [
             'address_line_1' => $sorder['shippingInfo']['postalAddress']['address1'],
-            'address_line_2' => $sorder['shippingInfo']['postalAddress']['address2'],
+            'address_line_2' => $sorder['shippingInfo']['postalAddress']['address2'] ?? '',
             'city' => $sorder['shippingInfo']['postalAddress']['city'],
             'state' => $sorder['shippingInfo']['postalAddress']['state'],
             'zip' => $sorder['shippingInfo']['postalAddress']['postalCode'],
@@ -141,6 +141,7 @@ class OrderUtility
         ], $orderOperationData);
 
         $ordersItems = $sorder['orderLines']['orderLine'];
+        //duplicate the order items
         if (!empty($ordersItems)) {
             foreach ($ordersItems as $item) {
                 Log::info("Order Item: " . json_encode($item));
@@ -182,6 +183,7 @@ class OrderUtility
                             ];
 
                             $order_operation_item = OrderOperationItem::updateOrCreate([
+                                'order_item_id' => $order_item->id,
                                 'order_operation_id' => $order_operation_detail->id
                             ], $orderOperationItemData);
                         }
@@ -189,6 +191,9 @@ class OrderUtility
                     else
                     {
                         $sku = preg_split('/[_-]/', $item['item']['sku'])[0];
+                        if (env('APP_ENV') == 'local') {
+                            $sku = 'Z67';
+                        }
                         $catalog = Catalog::where('product_sku', $sku)->first();
 
 
@@ -224,6 +229,7 @@ class OrderUtility
                             ];
 
                             $order_operation_item = OrderOperationItem::updateOrCreate([
+                                'order_item_id' => $order_item->id,
                                 'order_operation_id' => $order_operation_detail->id
                             ], $orderOperationItemData);
                         }
@@ -407,6 +413,7 @@ class OrderUtility
                         ];
 
                         $order_operation_item = OrderOperationItem::updateOrCreate([
+                            'order_item_id' => $order_item->id,
                             'order_operation_id' => $order_operation_detail->id
                         ], $orderOperationItemData);
                     }
@@ -450,6 +457,7 @@ class OrderUtility
                         ];
 
                         $order_operation_item = OrderOperationItem::updateOrCreate([
+                            'order_item_id' => $order_item->id,
                             'order_operation_id' => $order_operation_detail->id
                         ], $orderOperationItemData);
                     }

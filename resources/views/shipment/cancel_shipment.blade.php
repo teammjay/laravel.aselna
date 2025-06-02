@@ -62,15 +62,15 @@
                                             <td>
                                                 @if(isset($oitem->orderItem->product) && $oitem->orderItem->product->image != '')
                                                     <div class="main-image">
-                                                        <img src="{{ asset('storage/' .$oitem->orderItem->product->image->getFileUrl()) }}" alt="{{ asset('storage/' .$product->image->getFileUrl())}}" loading="lazy" width="50" height="50" class="mainImage" data-product-id="{{ $oitem->orderItem->product->product_id }}">
+                                                        <img src="{{ asset('storage/' .$oitem->orderItem->product->image->getFileUrl()) }}" alt="{{ $oitem->orderItem->product->product_image}}" loading="lazy" width="50" height="50" class="mainImage" data-product-id="{{ $oitem->orderItem->product->product_id }}">
 
                                                     </div>
                                                 @endif
                                             </td>
                                             <td>{{ $oitem->orderItem->sku }}</td>
-                                            <td><input type="text" class="form-control" name="quantity" value="{{ $oitem->orderItem->quantity }}"></td>
+                                            <td><input type="text" class="form-control" name="quantity" readonly="" value="{{ $oitem->orderItem->quantity }}"></td>
                                             <td>
-                                                <select class="form-control" name="reason" id="reason" style="width:150px;">
+                                                <select class="form-control" name="reason" style="width:150px;">
                                                     <option value=""></option>
                                                     @if(count($reasons ?? []) > 0)
                                                         @foreach($reasons as $reason)

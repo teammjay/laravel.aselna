@@ -163,7 +163,7 @@ class ShopifyService implements MarketplaceServiceInterface
 
             Log::info('Product Data: ' . json_encode($productNewData));
 
-            $shopifyAuthService = new ShopifyAuthService($store->secret_key);
+            $shopifyAuthService = new ShopifyAuthService($store->secret_key, $store->service_url);
             $response = $shopifyAuthService->saveProduct($productNewData);
 //             get handle and id from response and save in listing_item table
             Log::info('Product: ' . json_encode($response));
@@ -278,7 +278,7 @@ class ShopifyService implements MarketplaceServiceInterface
             Log::info("Error in Shopify Orders : No Secret Key Found");
             return null;
         }
-        $this->authService = new ShopifyAuthService($store->secret_key);
+        $this->authService = new ShopifyAuthService($store->secret_key, $store->service_url);
         $response = $this->authService->getOrders($sync_start_date);
 
         return $response;
@@ -305,7 +305,7 @@ class ShopifyService implements MarketplaceServiceInterface
     {
 
         $store = $listingInfo->store;
-        $this->authService = new ShopifyAuthService($store->secret_key);
+        $this->authService = new ShopifyAuthService($store->secret_key, $store->service_url);
 
         $listingItems = ListingItemLink::with('listingItem')->where('listing_id', $listingId)->cursor();
         $cnt = 0;
@@ -388,7 +388,7 @@ class ShopifyService implements MarketplaceServiceInterface
     public function submitPriceFeed($listingInfo, $feedInfo, $listingId)
     {
         $store = $listingInfo->store;
-        $this->authService = new ShopifyAuthService($store->secret_key);
+        $this->authService = new ShopifyAuthService($store->secret_key, $store->service_url);
 
         $listingItems = ListingItemLink::with('listingItem')->where('listing_id', $listingId)->cursor();
 
@@ -467,7 +467,7 @@ class ShopifyService implements MarketplaceServiceInterface
             Log::info("SHipment Detail : ". json_encode($shipmentDetail));
 
             $store = $shipmentDetail->store;
-            $this->authService = new ShopifyAuthService($store->secret_key);
+            $this->authService = new ShopifyAuthService($store->secret_key, $store->service_url);
             $orderId = "gid://shopify/Order/".$shipmentDetail->order->order_id;
             //$locationId = $this->authService->getLocationId();
             $forders_response = $this->authService->getFullfillmentOrders($orderId);

@@ -214,6 +214,46 @@ class JobScheduler extends Seeder
                 'name' => 'Fetch Ebay Orders Sync Job',
                 'description' => 'Fetch Ebay orders',
                 'class_name' => 'App\Jobs\FetchEbayOrders',
+            ],
+            [
+                'name' => 'Addresses Sync Job',
+                'description' => 'Sync all addresses',
+                'class_name' => 'App\Jobs\AddressesSyncJob',
+            ],
+            [
+                'name' => 'Shipping Account Sync Job',
+                'description' => 'Sync all shipping accounts',
+                'class_name' => 'App\Jobs\ShippingAccountsSyncJob',
+            ],
+            [
+                'name' => 'Shipping Solution Sync Job',
+                'description' => 'Sync all shipping solutions',
+                'class_name' => 'App\Jobs\ShippingSolutionSyncJob',
+            ],
+            [
+                'name' => 'Client Sync Job',
+                'description' => 'Sync all clients',
+                'class_name' => 'App\Jobs\ClientSyncJob',
+            ],
+            [
+                'name' => 'Order Operation Reason Sync Job',
+                'description' => 'Sync all order operation reasons',
+                'class_name' => 'App\Jobs\OperationReasonSyncJob',
+            ],
+            [
+                'name' => 'Messaging Account Sync Job',
+                'description' => 'Sync all messaging account',
+                'class_name' => 'App\Jobs\MessagingAccountSyncJob',
+            ],
+            [
+                'name' => 'Store Message Account Sync Job',
+                'description' => 'Sync all store message account',
+                'class_name' => 'App\Jobs\StoreMessageAccountSyncJob',
+            ],
+            [
+                'name' => 'Printer Sync Job',
+                'description' => 'Sync all printer',
+                'class_name' => 'App\Jobs\PrinterSyncJob',
             ]
         ];
 

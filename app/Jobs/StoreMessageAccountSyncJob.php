@@ -1,0 +1,56 @@
+<?php
+
+namespace App\Jobs;
+
+use App\Models\StoreMessageAccount;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Support\Facades\DB;
+
+class StoreMessageAccountSyncJob implements ShouldQueue
+{
+    use Queueable;
+
+    /**
+     * Create a new job instance.
+     */
+    public function __construct()
+    {
+        //
+    }
+
+    /**
+     * Execute the job.
+     */
+    public function handle(): void
+    {
+        DB::connection('easyesale_db')->table('store_message_account')->orderBy('id')
+            ->chunk(100, function ($storeMessageAccounts) {
+                foreach ($storeMessageAccounts as $storeMessageAccount) {
+                    $this->createSyncStoreMessageAccount($storeMessageAccount);
+                }
+            });
+    }
+
+    private function createSyncStoreMessageAccount(mixed $storeMessageAccount)
+    {
+        $created_by = auth()->user()->name ?? 'admin';
+
+        StoreMessageAccount::updateOrCreate(
+            ['id' => $storeMessageAccount->id],
+            [
+                'id' => $storeMessageAccount->id,
+                'store_id' => $storeMessageAccount->store_id,
+                'name' => $storeMessageAccount->name,
+                'email' => $storeMessageAccount->email,
+                'client_id' => $storeMessageAccount->client,
+                'incoming_account_id' => $storeMessageAccount->incoming_account_id,
+                'outgoing_account_id' => $storeMessageAccount->outgoing_account_id,
+                'api_account' => $storeMessageAccount->api_account,
+                'active' => $storeMessageAccount->active,
+                'version' => $storeMessageAccount->version,
+                'created_by' => $created_by
+            ]
+        );
+    }
+}

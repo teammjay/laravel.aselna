@@ -1,4 +1,5 @@
 <form id="frmShippingDetail">
+    <input type="hidden" name="id" value="{{ $shipmentDetail->id }}">
     <div class="row">
         <div class="col-md-12">
             <div class="row mt-3 g-3 align-items-center">
@@ -21,7 +22,7 @@
                     <label for="shipment_carrier">Shipping Carrier</label>
                 </div>
                 <div class="col-md-8">
-                    <select class="form-control" id="shipment_carrier" name="shipment_carrier">
+                    <select class="form-control" id="shipment_carrier" name="shipping_carrier_service">
                         {{--<option value="">--</option>--}}
                         @if(count($shippingCarrierService ?? []) > 0)
                             @foreach($shippingCarrierService as $sCarrierService)
@@ -71,7 +72,7 @@
                         <option value="">--</option>
                         @if(count($shippingCarrierPackage ?? []) > 0)
                             @foreach($shippingCarrierPackage as $sCarrierPackage)
-                                <option value="{{ $sCarrierPackage->id }}" {{ ( $sCarrierPackage->id == $shipmentDetail->shipping_carrier_service_id || ($package_id != '' && $package_id == $sCarrierPackage->id) ) ? 'selected' : '' }}>{{ $sCarrierPackage->name }}</option>
+                                <option value="{{ $sCarrierPackage->id }}" {{ ( $sCarrierPackage->id == $shipmentDetail->shipping_package_id || ($package_id != '' && $package_id == $sCarrierPackage->id) ) ? 'selected' : '' }}>{{ $sCarrierPackage->name }}</option>
                             @endforeach
                         @endif
                     </select>
@@ -107,8 +108,7 @@
                 <div class="col-md-8">
                     @if(isset($shipmentDetail->order->customerAddress))
                         <a href="javascript:void(0);" id="edit_address" data-id="{{ $shipmentDetail->order->customerAddress->id }}">
-                            {{ $shipmentDetail->order->customerAddress->address_combined }} {{$shipmentDetail->order->customerAddress->city}} {{$shipmentDetail->order->customerAddress->state}}
-                            {{$shipmentDetail->order->customerAddress->country}} {{$shipmentDetail->order->customerAddress->zip_code}}
+                            {{ $shipmentDetail->order->customerAddress->address_combined }} {{$shipmentDetail->order->customerAddress->city}} {{$shipmentDetail->order->customerAddress->state}} {{$shipmentDetail->order->customerAddress->zip}}
                         </a>
                     @endif
                 </div>

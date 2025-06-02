@@ -51,6 +51,11 @@ class OrdersController extends Controller
             $query->where('store_id', $request->store_id);
         }
 
+        // Filter by sku
+        if ($request->has('sku') && $request->sku != '') {
+            $query->whereRelation('orderItem', 'sku', $request->sku);
+        }
+
         // Filter by order id
         if ($request->has('order_id') && $request->order_id != '') {
             $query->where('order_id', $request->order_id);
@@ -74,6 +79,11 @@ class OrdersController extends Controller
         // Filter by purchase order id
         if ($request->has('purchase_order_id') && $request->purchase_order_id != '') {
             $query->where('purchase_order_id', $request->purchase_order_id);
+        }
+
+        // Filter by purchase order id
+        if ($request->has('order_status') && $request->order_status != '') {
+            $query->where('order_status', $request->order_status);
         }
 
         // Filter by created date
@@ -128,20 +138,21 @@ class OrdersController extends Controller
             foreach($orders as $key=>$order) {
                 $storeType = (isset($order->store->storeType) && !empty($order->store->storeType)) ? $order->store->storeType->name : '';
                 $sku = '';
-                $image = '';
+                $image = '<div class="d-flex" style="gap:5px">';
                 if(isset($order->orderItem) && !empty($order->orderItem)){
                     foreach($order->orderItem as $oitem){
                         $sku .= $oitem->sku.' x '.$oitem->quantity.'<br>';
                         if(isset($oitem->product) && !empty($oitem->product)){
                             if(!empty($oitem->product->image)) {
                                 $imagename = $oitem->product->product_image;
-                                $image = '<div class="main-image">
+                                $image .= '<div class="main-image">
                                                 <img src="'.asset('storage/'. $oitem->product->image->getFileUrl()).'" alt="'.$imagename.'" class="mainImage" width="70" height="70" data-product-id="'.$oitem->product->product_id.'">
                                             </div>';
                             }
                         }
                     }
                 }
+                $image .= '</div>';
                 $data[] = array(
                     "order_id" => $order->order_id.'<input type="checkbox" class="pro-id" name="order_id[]" value="'.$order->id.'" style="visibility:hidden;">',
                     "store" => $order->store->name.' - '.$storeType,

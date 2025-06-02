@@ -1,0 +1,60 @@
+<?php
+
+namespace App\Jobs;
+
+use App\Models\MessagingAccount;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Support\Facades\DB;
+
+class MessagingAccountSyncJob implements ShouldQueue
+{
+    use Queueable;
+
+    /**
+     * Create a new job instance.
+     */
+    public function __construct()
+    {
+        //
+    }
+
+    /**
+     * Execute the job.
+     */
+    public function handle(): void
+    {
+        DB::connection('easyesale_db')->table('messaging_account')->orderBy('id')
+            ->chunk(100, function ($messagingAccounts) {
+                foreach ($messagingAccounts as $messagingAccount) {
+                    $this->createSyncMessagingAccount($messagingAccount);
+                }
+            });
+    }
+
+    private function createSyncMessagingAccount(mixed $messagingAccount)
+    {
+        $created_by = auth()->user()->name ?? 'admin';
+        MessagingAccount::updateOrCreate(
+            ['id' => $messagingAccount->id],
+            [
+                'id' => $messagingAccount->id,
+                'protocol' => $messagingAccount->protocol,
+                'email' => $messagingAccount->email,
+                'user_id' => $messagingAccount->user_id,
+                'password' => $messagingAccount->password,
+                'server' => $messagingAccount->server,
+                'port' => $messagingAccount->port,
+                'requires_ssl' => $messagingAccount->requires_ssl,
+                'requires_tls' => $messagingAccount->requires_tls,
+                'requires_authentication' => $messagingAccount->requires_authentication,
+                'ssl_port' => $messagingAccount->ssl_port,
+                'tls_port' => $messagingAccount->tls_port,
+                'filter_from_date' => $messagingAccount->filter_from_date,
+                'folders' => $messagingAccount->folders,
+                'last_sync_date' => $messagingAccount->last_sync_date,
+                'created_by' => $created_by,
+            ]
+        );
+    }
+}

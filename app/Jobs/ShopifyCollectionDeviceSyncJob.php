@@ -84,6 +84,6 @@ class ShopifyCollectionDeviceSyncJob implements ShouldQueue
     private function setVariables()
     {
         $this->store = Store::find($this->storeID);
-        $this->shopifyAuthService = new ShopifyAuthService($this->store->secret_key);
+        $this->shopifyAuthService = new ShopifyAuthService($this->store->secret_key,$this->store->service_url);
     }
 }

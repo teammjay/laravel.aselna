@@ -23,4 +23,9 @@ class ShippingPackageShippingCarrierPackageLink extends Model
         return $this->belongsTo(ShippingCarrierPackage::class,'shipping_carrier_package_id');
     }
 
+    public function ShippingPackage()
+    {
+        return $this->belongsTo(ShippingPackage::class,'shipping_package_id');
+    }
+
 }

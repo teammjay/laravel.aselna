@@ -50,6 +50,15 @@
             cursor: pointer;
         }
 
+        .error{border-color:red;}
+
+        #shipmentTable thead th {
+            position: sticky;
+            top: 0;
+            background: white; /* Or your table's background */
+            z-index: 10;
+        }
+
     </style>
 @stop
 
@@ -108,7 +117,6 @@
                         <div class="d-flex align-items-center justify-content-between">
                             <label for="carrier_id" class="m-0">Carrier</label>
                             <select class="form-control w-75" id="carrier_id">
-                                <option value="">--</option>
                                 @if(count($shippingCarrier ?? []) > 0)
                                     @foreach($shippingCarrier as $sCarrier)
                                         <option value="{{ $sCarrier->id }}">{{ $sCarrier->name }}</option>
@@ -168,10 +176,12 @@
             <button type="button" class="btn btn-default" id="cancel_selected">
                 Cancel Selected
             </button>
+
+            <span id="total_selected">( 0 selected )</span>
         </div>
     </div>
 
-    <div class="table-responsive">
+    <div class="table-responsive pb-5" style="max-height: 500px; overflow: auto;">
         <table id="shipmentTable" class="table table-bordered table-striped">
             <thead>
             <tr>
@@ -315,6 +325,9 @@
                 ele.addClass('bg-blue');
                 ele.find('.pro-id').prop('checked', true);
             }
+
+            let totalCnt = $('input[name="shipment_id[]"]:checked').length;
+            $('#total_selected').html('( <b>'+totalCnt+'</b> selected )');
         });
 
         $(document).on('click','#refresh_list',function () {
@@ -438,7 +451,7 @@
                         });
                         $('#shippingDetailModal').modal('show');
 
-                        getShippingCarrierService($('#carrier_name'));
+                        loadServiceCarrier($('#carrier_name').val());
                     }
                 },
                 error: function (xhr) {
@@ -482,6 +495,8 @@
         $(document).on('click','#update_all',function () {
             updateRecord('all');
         });
+
+        getShippingCarrierService($('#carrier_id'));
 
         $(document).on('change','#carrier_id',function () {
             var ele = $(this);
@@ -544,8 +559,6 @@
             });
         });
 
-        $("#shipmentTable").dataTable();
-
         $(document).on('click','#edit_address',function () {
             var address_id = $(this).data('id');
             if(address_id != '' && address_id != null){
@@ -590,7 +603,7 @@
                     if (response.success) {
                         $('#edit_address').html(response.address);
                         $('#editPostalAddressModal').modal('hide');
-                        $(body).addClass('modal-open');
+                        $('body').addClass('modal-open');
 
                     }
                 },
@@ -613,11 +626,15 @@
             let formData = new FormData(form);
 
             const trackingNumber = formData.get("tracking_number");
+            const label_generation = formData.get("label_generation");
 
-            if (!trackingNumber || trackingNumber.trim() === "") {
-                $('#tracking_number').addClass('error');
-                alert("Tracking number is required.");
-                return;
+            if(label_generation.trim() != 1) {
+                $('#tracking_number').removeClass('error');
+                if (!trackingNumber || trackingNumber.trim() === "") {
+                    $('#tracking_number').addClass('error');
+                    alert("Tracking number is required.");
+                    return;
+                }
             }
 
             const orderId = formData.get("order_id");
@@ -640,11 +657,73 @@
                 success: function (response) {
                     // If success, remove the user row from the table
                     if (response.success) {
-                        alert('Records updated successfully!!');
+                        alert('Order marked as shipped successfully!!');
                         location.reload();
                     }
                      else {
                          alert(response.message);
+                    }
+                },
+                error: function (xhr) {
+                    // Handle error response
+                    if (xhr.status === 422) {
+                        let errors = xhr.responseJSON.errors;
+                        $.each(errors, function (key, messages) {
+                            alert(key + ': ' + messages[0]);
+                        });
+                    }
+                    /*const response = xhr.responseJSON;
+                    if ( response.errors) {
+                        alert(response.message);
+                    } else {
+                        alert('Error: ' + response.message);
+                    }*/
+                }
+            });
+        });
+
+
+
+        $(document).keydown(function(e) {
+            if (e.ctrlKey && e.key === 'a') {
+                e.preventDefault(); // prevent the default browser "Select All"
+                $('#shipment-list tr').addClass('bg-blue');
+                $('#shipment-list tr').find('.pro-id').prop('checked', true);
+
+                let totalCnt = $('input[name="shipment_id[]"]:checked').length;
+                $('#total_selected').html('( <b>'+totalCnt+'</b> selected )');
+            }
+        });
+
+
+
+        $(document).on('click','#ship_selected, #ship_all',function () {
+
+            let shipment_ids = [];
+            $('input[name="shipment_id[]"]:checked').each(function () {
+                shipment_ids.push($(this).val())
+            });
+
+            if(shipment_ids.length == 0){
+                alert('Please select shipment first.');
+                return false;
+            }
+
+            $.ajax({
+                url: "{{ route('shipment.shipselected') }}",
+                type: 'POST',
+                data: {
+                    shipment_ids:shipment_ids,
+                    "_token": '{{ csrf_token() }}'
+                },
+                success: function (response) {
+                    // If success, remove the user row from the table
+                    if (response.success) {
+                        alert('Order shipped successfully!!');
+                        location.reload();
+                    }
+                    else {
+                        alert(response.message);
                     }
                 },
                 error: function (xhr) {
@@ -655,6 +734,57 @@
                     } else {
                         alert('Error: ' + response.message);
                     }
+                }
+            });
+        });
+
+        $(document).on('click','#shipThis',function () {
+
+            const form = document.querySelector("#frmShippingDetail");
+            let formData = new FormData(form);
+
+            const carrier_package = formData.get("carrier_package");
+            const label_generation = formData.get("label_generation");
+
+            if (!carrier_package || carrier_package.trim() === "") {
+                alert("Carrier package is required.");
+                return;
+            }
+
+
+            $.ajax({
+                url: "{{ route('shipment.shipthis') }}",
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                },
+                success: function (response) {
+                    // If success, remove the user row from the table
+                    if (response.success) {
+                        alert('Order shipped successfully!!');
+                        location.reload();
+                    }
+                    else {
+                        alert(response.message);
+                    }
+                },
+                error: function (xhr) {
+                    // Handle error response
+                    if (xhr.status === 422) {
+                        let errors = xhr.responseJSON.errors;
+                        $.each(errors, function (key, messages) {
+                            alert(key + ': ' + messages[0]);
+                        });
+                    }
+                    /*const response = xhr.responseJSON;
+                    if ( response.errors) {
+                        alert(response.message);
+                    } else {
+                        alert('Error: ' + response.message);
+                    }*/
                 }
             });
         });
@@ -778,10 +908,65 @@
 
     function loadDatatables(){
 
-        $("#shipmentTable").dataTable().fnDestroy();
+        //$("#shipmentTable").dataTable().fnDestroy();
 
-        var table = $('#shipmentTable').DataTable({
-            "iDisplayLength": 20,
+        $("#ajax-preloader").show();
+        if ($.fn.DataTable.isDataTable('#shipmentTable')) {
+            $('#shipmentTable').DataTable().clear().destroy();
+        }
+        $.ajax({
+            url: "{{ route('shipment.filter') }}",
+            type: 'POST',
+            data: {
+                'store_id':$('#listing_store').val()
+            },
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            },
+            success: function (response) {
+                if (response.html) {
+                    $('#shipment-list').html(response.html);
+
+                    if(response.totalRecords > 0) {
+                        var proTable = $('#shipmentTable').DataTable({
+                            "iDisplayLength": 100,
+                            "lengthChange": true,
+                            "autoWidth": false,
+                            "processing": false,
+                            "serverSide": false,
+                            "searching": true,
+                            "paging": false,
+                            "info": false,
+                            "order": [[6, "desc"]],
+                            columnDefs: [
+                                {
+                                    targets: [0,1],
+                                    orderable: false
+                                }
+                            ],
+                            drawCallback: function(settings) {
+                                let info = this.api().page.info();
+                                $('#shipmentTable_wrapper').find('.row div:first').html('Total : <b>' + info.recordsDisplay + '</b>');
+                            }
+                        });
+
+                        //$('#shipmentTable_wrapper').find('.row div:first').html('Total : <b>' + response.totalRecords + '</b>');
+                    }
+
+                }
+            },
+            error: function (xhr) {
+                /*if (xhr.responseJSON?.error) {
+                    $('#responseMessage').html('<p style="color:red;">' + xhr.responseJSON.error.image[0] + '</p>');
+                }*/
+            },
+            complete: function () {
+                $("#ajax-preloader").hide();
+            }
+        });
+
+        /*var table = $('#shipmentTable').DataTable({
+            "iDisplayLength": 100,
             "info": true,
             "responsive": true,
             "lengthChange": true,
@@ -847,11 +1032,11 @@
                     orderable: false // Disable sorting
                 }
             ]
-        });
+        });*/
 
-        $( '#shipmentTable_wrapper').removeClass( 'form-inline' );
+        //$( '#shipmentTable_wrapper').removeClass( 'form-inline' );
 
-        $.fn.dataTable.ext.errMode = 'throw';
+        //$.fn.dataTable.ext.errMode = 'throw';
     }
 </script>
 @stop

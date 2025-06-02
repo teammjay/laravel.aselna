@@ -196,8 +196,7 @@
                                 <div class="col-md-9">
                                     @if(isset($orderDetail->customerAddress))
                                         <a href="javascript:void(0);" class="text-blue" id="edit_address" data-id="{{ $orderDetail->customerAddress->id }}">
-                                            {{ $orderDetail->customerAddress->address_combined }} {{$orderDetail->customerAddress->city}} {{$orderDetail->customerAddress->state}}
-                                            {{$orderDetail->customerAddress->country}} {{$orderDetail->customerAddress->zip_code}}
+                                            {{ $orderDetail->customerAddress->address_combined }} {{$orderDetail->customerAddress->city}} {{$orderDetail->customerAddress->state}} {{$orderDetail->customerAddress->zip}}
                                         </a>
                                     @endif
                                 </div>

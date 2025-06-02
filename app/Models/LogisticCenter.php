@@ -32,4 +32,14 @@ class LogisticCenter extends Model
     {
         return $this->hasOne(StoreLogisticCenter::class);
     }
+
+    public function fromAddress()
+    {
+        return $this->belongsTo(PostalAddress::class, 'from_address_id');
+    }
+
+    public function returnAddress()
+    {
+        return $this->belongsTo(PostalAddress::class, 'return_address_id');
+    }
 }
