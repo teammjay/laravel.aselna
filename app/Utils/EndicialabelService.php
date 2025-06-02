@@ -141,6 +141,19 @@ class EndicialabelService
             $labelRequest->addChild('ReturnToPostalCode', $shipmentDetails['returnAddress']['postalCode']);
         }
 
+
+        if (isset($shipmentDetails['CustomsInfo'])) {
+            $customsInfo = $labelRequest->addChild('CustomsInfo');
+            $customsInfo->addChild('ContentsType', $shipmentDetails['CustomsInfo']['contentsType']);
+            $customsItems = $customsInfo->addChild('CustomsItems');
+
+            foreach ($shipmentDetails['CustomsInfo']['items'] as $item) {
+                $customsItem = $customsItems->addChild('CustomsItem');
+                $customsItem->addChild('Quantity', $item['quantity']);
+                $customsItem->addChild('SKU', $item['sku']);
+            }
+        }
+
         return $xml->asXML();
     }
 }

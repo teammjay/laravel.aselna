@@ -97,10 +97,14 @@ class OrderUtility
 
         Log::info("Data " . json_encode($customer_address_data));
 
-        $customer_address = CustomerAddress::updateOrCreate([
+        CustomerAddress::updateOrCreate([
             'customer_id' => $customer_detail->id,
             'address_combined' => $sorder['shippingInfo']['postalAddress']['address1'] . ' ' . $sorder['shippingInfo']['postalAddress']['address2'],
         ], $customer_address_data);
+
+        $customer_address = CustomerAddress::where('customer_id', $customer_detail->id)
+            ->where('address_combined', $sorder['shippingInfo']['postalAddress']['address1'] . ' ' . $sorder['shippingInfo']['postalAddress']['address2'])
+            ->first();
 
         $customer_phone_data = [
             'customer_id' => $customer_detail->id,
@@ -239,7 +243,7 @@ class OrderUtility
                 if ($item['orderLineStatuses'] && $item['orderLineStatuses']['orderLineStatus']) {
                     $lineStatus = $item['orderLineStatuses']['orderLineStatus'][0];
                     if ($lineStatus['status'] === 'Shipped') {
-                        $order->status = OrderStatus::Shipped;
+                        $order->order_status = OrderStatus::Shipped;
                         $order_operation_detail->status = OrderOperationStatus::MarkAsShipped;
                         if ($lineStatus['trackingInfo']) {
                             $trackingNumber = $lineStatus['trackingInfo']['trackingNumber'] ?? '';

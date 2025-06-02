@@ -160,12 +160,24 @@ class OrderOperationUtility
             'postalCode' => '97448',
         ];
 
+        $shipmentDetails['CustomsInfo'] = [
+            'contentsType' => 'Merchandise',
+            'items' => [],
+        ];
+
+        foreach ($orderOperation->operationItem as $item) {
+            $shipmentDetails['CustomsInfo']['items'][] = [
+                'sku' => $item->orderItem->product->product_sku,
+                'quantity' => $item->quantity,
+            ];
+        }
+
         Log::info('Shipment details for label creation: ' . json_encode($shipmentDetails));
 
         $endiciaClient = new EndicialabelService();
-        $response = $endiciaClient->createLabel($shipmentDetails,$orderOperation);
+//        $response = $endiciaClient->createLabel($shipmentDetails,$orderOperation);
 
-        Log::info($response);
+//        Log::info($response);
         return null;
     }
 
