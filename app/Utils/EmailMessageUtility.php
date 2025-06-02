@@ -76,20 +76,35 @@ class EmailMessageUtility
 
 
 
-    public function fetchEmails($folderName = 'INBOX', $limit = 10)
+    public function fetchEmails($folderName = 'INBOX', $limit = 50)
     {
         try {
             $this->client->connect();
 
+            $fromDate = \Carbon\Carbon::parse(date('Y-m-d', strtotime('-10days')));
+            $toDate = \Carbon\Carbon::parse(date('Y-m-d'));
+
             $folder = $this->client->getFolder($folderName);
-            $messages = $folder->messages()->all()->limit($limit)->get();
+            $messages = $folder->messages()
+                        ->since($fromDate)
+                        ->before($toDate)
+                        ->limit($limit)->get();
 
             $emails = [];
             foreach ($messages as $message) {
+                /*echo '<pre>';
+                print_r($message);
+                echo '</pre>';*/
+                $body = $message->getTextBody();
+                if (empty($message->getTextBody())) {
+                    $html = $message->getHtmlBody();
+                    $body = strip_tags($html); // fallback to text-like content
+                }
+
                 $emails[] = [
                     'subject' => $message->subject->first(),
                     'from' => $message->getFrom()[0]->mail ?? null,
-                    'body' => $message->getTextBody(),
+                    'body' => $body,
                     'date' => date('Y-m-d H:i:s',strtotime($message->getDate())),
                 ];
             }
@@ -100,6 +115,9 @@ class EmailMessageUtility
 
             return $emails;
         } catch (Exception $e) {
+            /*echo '<pre>';
+            print_r($e->getMessage());
+            echo '</pre>';die;*/
             return ['error' => 'Failed to fetch emails: ' . $e->getMessage()];
         }
     }

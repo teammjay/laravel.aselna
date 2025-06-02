@@ -108,8 +108,7 @@
                 <div class="col-md-8">
                     @if(isset($shipmentDetail->order->customerAddress))
                         <a href="javascript:void(0);" id="edit_address" data-id="{{ $shipmentDetail->order->customerAddress->id }}">
-                            {{ $shipmentDetail->order->customerAddress->address_combined }} {{$shipmentDetail->order->customerAddress->city}} {{$shipmentDetail->order->customerAddress->state}}
-                            {{$shipmentDetail->order->customerAddress->country}} {{$shipmentDetail->order->customerAddress->zip_code}}
+                            {{ $shipmentDetail->order->customerAddress->address_combined }} {{$shipmentDetail->order->customerAddress->city}} {{$shipmentDetail->order->customerAddress->state}} {{$shipmentDetail->order->customerAddress->zip}}
                         </a>
                     @endif
                 </div>
