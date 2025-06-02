@@ -11,7 +11,7 @@
                     @foreach($shipment['image'] as $key=>$img)
                         @if($img != '')
                             <div class="main-image">
-                                <img src="{{ $img }}" alt="{{ $shipment['imagename'][$key] }}" class="mainImage" width="70" height="70" data-product-id="{{ $shipment['product_ids'][$key] }}">
+                                <img src="{{ $img }}" alt="{{ $shipment['imagename'][$key] }}" class="mainImage" width="70" height="70" data-product-id="{{ $shipment['product_id'][$key] }}">
                             </div>
                         @endif
                     @endforeach
