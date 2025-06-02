@@ -428,7 +428,7 @@ class ShipmentsController extends Controller
         } catch (\Exception $exception) {
             return response()->json([
                 'success' => false,
-                'message' => $exception->getMessage()
+                'message' => $exception->getTrace()
             ]);
         }
     }
