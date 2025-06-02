@@ -23,4 +23,4 @@ Schedule::command('app:fetch-orders')->hourly();
 
 
 Schedule::job(new EbayListingItemSyncJob())->hourly();
-//Schedule::job(new FetchWalmartOrdersJob())->hourly();
+Schedule::job(new FetchWalmartOrdersJob())->hourly();

@@ -21,30 +21,34 @@ class EndicialabelService
         $this->client = new Client();
     }
 
-    public function createLabel(array $request)
+    public function createLabel(array $request,$orderOperation)
     {
         $xmlString = $this->buildXmlRequest($request);
         Log::info('Endicia Label Request XML: ' . $xmlString);
 
         try {
-            $response = $this->client->post('https://elstestserver.endicia.com/LabelService/EwsLabelService.asmx', [
+            $response = $this->client->post('https://LabelServer.Endicia.com/LabelService/EwsLabelService.asmx', [
                 'headers' => [
                     'Content-Type' => 'text/xml; charset=utf-8',
-                    'SOAPAction' => 'http://www.envmgr.com/LabelService/GetPostageLabel',
+                    'SOAPAction' => '"www.envmgr.com/LabelService/GetPostageLabel"',
                 ],
                 'body' => $xmlString,
                 'verify' => false,
             ]);
 
             $body = $response->getBody()->getContents();
-            return $this->parseSoapResponse($body);
+            Log::info('Endicia Label Response XML: ' . $body);
+            return $this->parseSoapResponse($body, $orderOperation);
         } catch (Exception $e) {
             // Handle SOAP request errors
+            if ($e->hasResponse()) {
+                Log::error('SOAP Error Response: ' . $e->getResponse()->getBody()->getContents());
+            }
             throw new Exception('Error creating label: ' . $e->getMessage());
         }
     }
 
-    private function parseSoapResponse($response)
+    public function parseSoapResponse($response, $orderOperation)
     {
         libxml_use_internal_errors(true);
         $xml = simplexml_load_string($response);
@@ -53,7 +57,29 @@ class EndicialabelService
             return ['error' => 'Failed to parse XML'];
         }
 
-        return json_decode(json_encode($xml), true);
+        $xml->registerXPathNamespace('ns', 'www.envmgr.com/LabelService');
+
+        $base64Image = (string)$xml->xpath('//ns:Base64LabelImage')[0];
+        $trackingNumber = (string)$xml->xpath('//ns:TrackingNumber')[0];
+
+        Log::info('Tracking Number: ' . $trackingNumber);
+        $orderOperation->tracking_number = $trackingNumber;
+        $orderOperation->save();
+
+        try {
+            $imageData = base64_decode($base64Image);
+            file_put_contents(storage_path('app/public/labels/' . $trackingNumber . '.png'), $imageData);
+
+        } catch (Exception $e) {
+            Log::error('Error saving label image: ' . $e->getMessage());
+            return ['error' => 'Failed to save label image'];
+        }
+
+        return [
+            'trackingNumber' => $trackingNumber,
+            'labelType' => (string)$xml->xpath('//ns:LabelType')[0] ?? null,
+            'error' => null,
+        ];
     }
 
     private function buildXmlRequest(array $shipmentDetails)
@@ -66,14 +92,15 @@ class EndicialabelService
         $labelRequest->addChild('Test', 'YES');
 //        $labelRequest->addAttribute('LabelType', $shipmentDetails['']);
 
-        $labelRequest->addChild('RequesterID', 'lxxx');
-        $labelRequest->addChild('AccountID', '2533763');
-        $labelRequest->addChild('PassPhrase', 'ajshd823rha!d33');
+        $labelRequest->addChild('RequesterID', $shipmentDetails['requesterId']);
+        $labelRequest->addChild('AccountID', $shipmentDetails['accountId']);
+        $labelRequest->addChild('PassPhrase', $shipmentDetails['passPhrase']);
 
         $labelRequest->addChild('MailClass', $shipmentDetails['MailClass']);
+        $labelRequest->addChild('MailpieceShape', $shipmentDetails['MailpieceShape'] ?? 'Package');
         $labelRequest->addChild('WeightOz', $shipmentDetails['weight']['value']);
 
-        $labelRequest->addChild('MailpieceShape','Package');
+//        $labelRequest->addChild('MailpieceShape','');
 
         $labelRequest->addChild('PartnerTransactionID', $shipmentDetails['transactionId']);
 
@@ -102,6 +129,29 @@ class EndicialabelService
             $labelRequest->addChild('ToCity', $shipmentDetails['toAddress']['city']);
             $labelRequest->addChild('ToState', $shipmentDetails['toAddress']['state']);
             $labelRequest->addChild('ToPostalCode', $shipmentDetails['toAddress']['postalCode']);
+        }
+
+        if (isset($shipmentDetails['returnAddress'])) {
+//            $labelRequest->addChild('ReturnName', $shipmentDetails['returnAddress']['name']);
+//            $labelRequest->addChild('ReturnCompany', $shipmentDetails['returnAddress']['company'] ?? '');
+            $labelRequest->addChild('ReturnAddress1', $shipmentDetails['returnAddress']['address1']);
+            $labelRequest->addChild('ReturnToCity', $shipmentDetails['returnAddress']['city']);
+            $labelRequest->addChild('ReturnToState', $shipmentDetails['returnAddress']['state']);
+//            $labelRequest->addChild('ReturnToCountryCode', $shipmentDetails['returnAddress']['countryCode']);
+            $labelRequest->addChild('ReturnToPostalCode', $shipmentDetails['returnAddress']['postalCode']);
+        }
+
+
+        if (isset($shipmentDetails['CustomsInfo'])) {
+            $customsInfo = $labelRequest->addChild('CustomsInfo');
+            $customsInfo->addChild('ContentsType', $shipmentDetails['CustomsInfo']['contentsType']);
+            $customsItems = $customsInfo->addChild('CustomsItems');
+
+            foreach ($shipmentDetails['CustomsInfo']['items'] as $item) {
+                $customsItem = $customsItems->addChild('CustomsItem');
+                $customsItem->addChild('Quantity', $item['quantity']);
+                $customsItem->addChild('SKU', $item['sku']);
+            }
         }
 
         return $xml->asXML();
