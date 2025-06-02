@@ -251,6 +251,15 @@ class OrderUtility
                         }
                         $order->save();
                         $order_operation_detail->save();
+                    } else if ($lineStatus['status'] === 'Delivered') {
+                        $order->order_status = OrderStatus::Shipped;
+                        $order_operation_detail->status = OrderOperationStatus::Delivered;
+                        if ($lineStatus['trackingInfo']) {
+                            $trackingNumber = $lineStatus['trackingInfo']['trackingNumber'] ?? '';
+                            $order_operation_detail->tracking_number = $trackingNumber;
+                        }
+                        $order->save();
+                        $order_operation_detail->save();
                     }
                     Log::info("Order Line Cancelled: " . json_encode($item));
                 }
