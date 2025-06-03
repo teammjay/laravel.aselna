@@ -134,8 +134,8 @@ class HomeController extends Controller
             //new synccategorytospecification(),
             //new FetchShopifyOrders(),
             //new EbayListingItemSyncJob()
-            //new SyncAllOrderStatusJob()
-            new FetchWalmartOrdersJob()
+            new SyncAllOrderStatusJob()
+            //new FetchWalmartOrdersJob()
         ])->dispatch();
     }
 
