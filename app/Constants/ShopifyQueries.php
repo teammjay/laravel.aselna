@@ -291,4 +291,33 @@ public static $cancelOrder =<<<GQL
     }
 GQL;
 
+public static $getOrderDetail =<<<GQL
+    query getOrder(\$id: ID!) {
+      order(id: \$id) {
+        id
+        name
+        createdAt
+        displayFinancialStatus
+        displayFulfillmentStatus
+        fulfillments {
+          id
+          status
+          trackingInfo {
+            company
+            number
+            url
+          }
+        }
+        lineItems(first: 10) {
+          edges {
+            node {
+              title
+              quantity
+            }
+          }
+        }
+      }
+    }
+GQL;
+
 }

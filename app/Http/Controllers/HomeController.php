@@ -9,6 +9,7 @@ use App\Jobs\FetchMagentoOrderJob;
 use App\Jobs\FetchShopifyOrders;
 use App\Jobs\FetchWalmartOrdersJob;
 use App\Jobs\SubmitShopifyProductsJob;
+use App\Jobs\SyncAllOrderStatusJob;
 use App\Jobs\synccategorytospecification;
 use App\Models\Listing;
 use App\Models\ListingFeed;
@@ -43,28 +44,28 @@ class HomeController extends Controller
     public function testfunction(){
 
         /*$smtpConfig = [
-            'host' => 'smtp.gmail.com',
-            'port' => 587,
-            'encryption' => 'tls',
-            'username' => 'odemobile.wm@gmail.com',
-            'password' => 'tcogxvjrbwxwudgh',
-            'from_address' => 'odemobile.wm@gmail.com',
-            'from_name' => 'Odemobile Walmart',
+//            'host' => 'smtp.gmail.com',
+//            'port' => 587,
+//            'encryption' => 'tls',
+//            'username' => 'odemobile.wm@gmail.com',
+//            'password' => 'tcogxvjrbwxwudgh',
+//            'from_address' => 'odemobile.wm@gmail.com',
+//            'from_name' => 'Odemobile Walmart',
         ];
 
         $imapConfig = [
             'host' => 'imap.gmail.com',
             'port' => 993,
             'encryption' => 'ssl',
-            'username' => 'odemobile.wm@gmail.com',
-            'password' => 'tcogxvjrbwxwudgh',
+            'username' => 'awaccessory@gmail.com',
+            'password' => 'qbdpyazqodnwsnju',
         ];
 
         $connector = new EmailMessageUtility($smtpConfig, $imapConfig);
-        $emails = $connector->fetchEmails();
-        dd($emails);*/
+        $emails = $connector->fetchEmails();*/
+        //dd($emails);
 
-        $stores = Store::select('store.*')->join('store_type', 'store_type.id', '=', 'store.store_type_id')->where('store_type.code', 'shopify')->get();
+        /*$stores = Store::select('store.*')->join('store_type', 'store_type.id', '=', 'store.store_type_id')->where('store_type.code', 'shopify')->get();
         if (count($stores ?? []) > 0) {
             foreach ($stores as $store) {
                 $storeMessageAccount = StoreMessageAccount::with('incomingAccount', 'outgoingAccount')->where('store_id', $store->id)->get();
@@ -72,7 +73,7 @@ class HomeController extends Controller
                 print_r($storeMessageAccount);
                 echo '</pre>';
             }die;
-        }
+        }*/
 
         /*$stores = Store::select('store.*')->join('store_type', 'store_type.id', '=', 'store.store_type_id')->where('store_type.code','shopify')->get();
 
@@ -128,12 +129,14 @@ class HomeController extends Controller
         echo '</pre>';die;*/
 
 
-        /*Bus::chain([
+        Bus::chain([
             //new SubmitShopifyProductsJob(),
             //new synccategorytospecification(),
-            new FetchShopifyOrders(),
+            //new FetchShopifyOrders(),
             //new EbayListingItemSyncJob()
-        ])->dispatch();*/
+            new SyncAllOrderStatusJob()
+            //new FetchWalmartOrdersJob()
+        ])->dispatch();
     }
 
     public function getListingData(Request $request)

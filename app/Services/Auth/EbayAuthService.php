@@ -657,4 +657,35 @@ class EbayAuthService
             }
         }
     }
+
+    public function getOrderDetail($orderID)
+    {
+
+        try {
+
+            $accessToken = $this->refreshToken();
+
+            $response = $this->client->post("/sell/fulfillment/v1/order/".$orderID, [
+                'verify' => false,
+                'headers' => [
+                    'Authorization' => 'Bearer ' . $accessToken,
+                    'Content-Type'  => 'application/json',
+                ]
+            ]);
+
+            Log::info('eBay Order Detail Response ' . $response->getBody());
+            return json_decode($response->getBody(), true);
+
+        } catch (RequestException $e) {
+            if ($e->hasResponse()) {
+                $errorBody = json_decode($e->getResponse()->getBody()->getContents(), true);
+                $this->handleApiErrors($errorBody);
+            } else {
+                Log::error('Error: ' . $e->getMessage());
+                return null;
+                /*throw new \Exception('Unexpected error occurred: ' . $e->getMessage());*/
+            }
+        }
+
+    }
 }

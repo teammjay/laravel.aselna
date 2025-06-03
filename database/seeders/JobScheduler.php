@@ -249,6 +249,11 @@ class JobScheduler extends Seeder
                 'name' => 'Store Message Account Sync Job',
                 'description' => 'Sync all store message account',
                 'class_name' => 'App\Jobs\StoreMessageAccountSyncJob',
+            ],
+            [
+                'name' => 'Printer Sync Job',
+                'description' => 'Sync all printer',
+                'class_name' => 'App\Jobs\PrinterSyncJob',
             ]
         ];
 
