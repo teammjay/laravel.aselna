@@ -36,7 +36,7 @@ class OrderStatus
         self::Ready => 'Ready',
         self::Acknowledged => 'Acknowledged',
         self::Shipped => 'Shipped',
-        self::Canceled => 'Canceled',
+        self::Canceled => 'Cancelled',
         self::Synchronizing => 'Synchronizing',
         self::PartiallyShipped => 'Partially Shipped',
         self::SynchronizatonFailed => 'Synchronizaton Failed',
