@@ -61,7 +61,7 @@ class OrderOperationUtility
 
         $orderOperation->save();
 
-        $orderOperation = OrderOperation::with('order', 'store', 'store.storeType')->where('id', $orderOperation->id)->first();
+        $orderOperation = OrderOperation::with('order', 'store', 'store.storeType','carrier')->where('id', $orderOperation->id)->first();
 
         return self::instantSynchronization($orderOperation);
     }
@@ -314,6 +314,7 @@ class OrderOperationUtility
                 $finalData = [];
                 $count = 1;
                 foreach ($orderOperation->operationItem as $item) {
+                    Log::info('Itema data for the operation :: ' . json_encode($item));
                     $orderLine = [
                         'lineNumber' => $count,
                         'orderLineStatuses' => [
@@ -340,6 +341,8 @@ class OrderOperationUtility
                     $finalData['orderShipment']['orderLines']['orderLine'][] = $orderLine;
                     $count++;
                 }
+
+                Log::info('Final data for the operation change :: ' . json_encode($finalData));
 
                 $authService = new WalmartAuthService($store->seller_id, $store->secret_key);
                 $response = $authService->shipOrder($orderOperation->order->purchase_order_id, $finalData);
