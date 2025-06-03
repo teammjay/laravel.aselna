@@ -61,6 +61,8 @@ class OrderOperationUtility
 
         $orderOperation->save();
 
+        $orderOperation = OrderOperation::with('order', 'store', 'store.storeType')->where('id', $orderOperation->id)->first();
+
         return self::instantSynchronization($orderOperation);
     }
 
@@ -346,8 +348,12 @@ class OrderOperationUtility
 
                 if (isset($response)) {
                     Log::info('Walmart Ship order response: ' . json_encode($response));
-                    if (isset($response['order']) && isset($response['order']['purchaseOrderId']) && $response['order']['purchaseOrderId'] == $orderOperation->order->purchase_order_id) {
-                        Log::info('Walmart cancel order successful: ' . json_encode($response['order']));
+                    $orderResp = $response['order'];
+                    if (is_array($response['order'])) {
+                        $orderResp = $response['order'][0];
+                    }
+                    if (isset($orderResp) && isset($orderResp['purchaseOrderId']) && $orderResp['purchaseOrderId'] == $orderOperation->order->purchase_order_id) {
+                        Log::info('Walmart ship order successful: ' . json_encode($orderResp));
                         $orderOperation->update(['status' => OrderOperationStatus::MarkAsShipped]);
                         if (isset($orderOperation->order_id)) {
                             $order = Order::findOrFail($orderOperation->order_id);
