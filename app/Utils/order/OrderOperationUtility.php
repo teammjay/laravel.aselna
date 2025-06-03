@@ -61,7 +61,7 @@ class OrderOperationUtility
 
         $orderOperation->save();
 
-        $orderOperation = OrderOperation::with('order', 'store', 'store.storeType')->where('id', $orderOperation->id)->first();
+        $orderOperation = OrderOperation::with('order', 'store', 'store.storeType','carrier')->where('id', $orderOperation->id)->first();
 
         return self::instantSynchronization($orderOperation);
     }
