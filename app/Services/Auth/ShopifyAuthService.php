@@ -255,4 +255,21 @@ class ShopifyAuthService
             return false;
         }
     }
+
+    public function getOrderDetail($orderID)
+    {
+
+        try {
+            $orderID = "gid://shopify/Order/".$orderID;
+            $result = $this->makeGraphQLRequest(ShopifyQueries::$getOrderDetail, array('id' => $orderID));
+            if (!isset($result['errors'])) {
+                Log::info('Shopify Orders Detail Response: ' . json_encode($result));
+                return $result['data']['order'];
+            }
+
+        } catch (\Exception $e) {
+            Log::error('Error: ' . $e->getMessage());
+            return null;
+        }
+    }
 }
