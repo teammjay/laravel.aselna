@@ -61,7 +61,7 @@ class OrderOperationUtility
 
         $orderOperation->save();
 
-        $orderOperation = OrderOperation::with('order', 'store', 'store.storeType', 'carrier')->where('id', $orderOperation->id)->first();
+        $orderOperation = OrderOperation::with('order','order.customer','order.customerAddress', 'store', 'store.storeType', 'carrier','shipFrom','shipFrom.returnAddress','shipFrom.fromAddress')->where('id', $orderOperation->id)->first();
 
         return self::instantSynchronization($orderOperation);
     }
@@ -89,6 +89,7 @@ class OrderOperationUtility
 
     public static function createLabel($orderOperation)
     {
+
         $shipmentDetails = [];
         $errorMessages = ShippingUtility::assignSolutionService($orderOperation);
         if (isset($errorMessages) && !empty($errorMessages)) {
@@ -164,10 +165,14 @@ class OrderOperationUtility
 
         self::setRubberStampInfo($orderOperation, $shipmentDetails);
 
+        /*echo '<pre>';
+        print_r($shipmentDetails);
+        echo '</pre>';die;*/
+
         Log::info('Shipment details for label creation: ' . json_encode($shipmentDetails));
 
         $endiciaClient = new EndicialabelService();
-        $response = $endiciaClient->createLabel($shipmentDetails,$orderOperation);
+        $response = $endiciaClient->createLabel($shipmentDetails,$orderOperation->id);
         if (isset($response['trackingNumber'])) {
             Log::info('Label created successfully for order operation: ' . $orderOperation->id);
             $orderOperation->tracking_number = $response['trackingNumber'];
@@ -271,7 +276,10 @@ class OrderOperationUtility
     {
         // Split code line if it's too long for a single rubber stamp field
         if (strlen($codesLine) <= 50) {
-            $request['RubberStamp2'] = $codesLine;
+            $request['RubberStamp3'] = $codesLine;
+        }
+        /*if (strlen($codesLine) <= 50) {
+            $request['RubberStamp3'] = $codesLine;
         } else if (strlen($codesLine) <= 100) {
             $request['RubberStamp2'] = substr($codesLine, 0, 50);
             $request['RubberStamp3'] = substr($codesLine, 50);
@@ -281,12 +289,11 @@ class OrderOperationUtility
         } else {
             $request['RubberStamp2'] = substr($codesLine, 0, 50);
             $request['RubberStamp3'] = substr($codesLine, 50, 50);
-        }
+        }*/
     }
 
 
-    public
-    static function cancelOrder($orderOperation, $reason = 'CUSTOMER_REQUESTED_SELLER_TO_CANCEL')
+    public static function cancelOrder($orderOperation, $reason = 'CUSTOMER_REQUESTED_SELLER_TO_CANCEL')
     {
         $store = $orderOperation->store;
         $storeType = $orderOperation->store->storeType->name;
@@ -381,14 +388,12 @@ class OrderOperationUtility
         }
     }
 
-    private
-    static function refundOrder($orderOperation)
+    private static function refundOrder($orderOperation)
     {
 
     }
 
-    private
-    static function createShipment($orderOperation)
+    private static function createShipment($orderOperation)
     {
         Log::info('Creating shipment for order operation: ' . $orderOperation->label_creation_type);
         if ($orderOperation->label_creation_type == ShippingLabelCreationType::CreateLabel) {
@@ -521,8 +526,7 @@ class OrderOperationUtility
      * @param mixed $shipFrom
      * @return array
      */
-    public
-    static function getAddress(mixed $shipAddress): array
+    public static function getAddress(mixed $shipAddress): array
     {
         if (is_null($shipAddress)) {
             return [];
@@ -538,20 +542,20 @@ class OrderOperationUtility
             'phone' => $shipAddress->phone,
             'company' => $shipAddress->company
         ];
+
     }
 
     /**
      * @param $orderOperation
      * @return array
      */
-    public
-    static function mapCustomerAddress($orderOperation): array
+    public static function mapCustomerAddress($orderOperation): array
     {
         if (!isset($orderOperation->order->customerAddress)) {
             return [];
         }
         return [
-            'name' => $orderOperation->order->customerAddress->full_name,
+            'name' => (isset($orderOperation->order->customerAddress) && $orderOperation->order->customerAddress->full_name != '' ) ? $orderOperation->order->customerAddress->full_name : $orderOperation->order->customer->full_name,
             'address1' => $orderOperation->order->customerAddress->address_line_1,
             'address2' => $orderOperation->order->customerAddress->address_line_2 ?? '',
             'city' => $orderOperation->order->customerAddress->city,
