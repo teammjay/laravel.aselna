@@ -528,10 +528,10 @@ class OrderOperationUtility
      */
     public static function getAddress(mixed $shipAddress): array
     {
-        /*if (is_null($shipAddress)) {
+        if (is_null($shipAddress)) {
             return [];
-        }*/
-        /*return [
+        }
+        return [
             'name' => $shipAddress->name,
             'address1' => $shipAddress->address_line_1,
             'address2' => $shipAddress->address_line_2 ?? '',
@@ -541,19 +541,8 @@ class OrderOperationUtility
             'country' => $shipAddress->country_code,
             'phone' => $shipAddress->phone,
             'company' => $shipAddress->company
-        ];*/
-
-        return [
-            'name' => '',
-            'address1' => '222 Universal Dr',
-            'address2' => '',
-            'city' => 'North Haven',
-            'state' => 'CT',
-            'postalCode' => '06473',
-            'country' => '',
-            'phone' => '',
-            'company' => 'Fulfillment Center'
         ];
+
     }
 
     /**
