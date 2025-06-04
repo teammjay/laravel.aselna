@@ -50,6 +50,7 @@ class EndicialabelService
 
     public function parseSoapResponse($response, $orderOperation)
     {
+
         libxml_use_internal_errors(true);
         $xml = simplexml_load_string($response);
 
@@ -141,17 +142,14 @@ class EndicialabelService
             $labelRequest->addChild('ReturnToPostalCode', $shipmentDetails['returnAddress']['postalCode']);
         }
 
-
-        if (isset($shipmentDetails['CustomsInfo'])) {
-            $customsInfo = $labelRequest->addChild('CustomsInfo');
-            $customsInfo->addChild('ContentsType', $shipmentDetails['CustomsInfo']['contentsType']);
-            $customsItems = $customsInfo->addChild('CustomsItems');
-
-            foreach ($shipmentDetails['CustomsInfo']['items'] as $item) {
-                $customsItem = $customsItems->addChild('CustomsItem');
-                $customsItem->addChild('Quantity', $item['quantity']);
-                $customsItem->addChild('SKU', $item['sku']);
-            }
+        if (isset($shipmentDetails['RubberStamp1'])) {
+            $labelRequest->addChild('RubberStamp1', $shipmentDetails['RubberStamp1']);
+        }
+        if (isset($shipmentDetails['RubberStamp2'])) {
+            $labelRequest->addChild('RubberStamp2', $shipmentDetails['RubberStamp2']);
+        }
+        if (isset($shipmentDetails['RubberStamp3'])) {
+            $labelRequest->addChild('RubberStamp3', $shipmentDetails['RubberStamp3']);
         }
 
         return $xml->asXML();
