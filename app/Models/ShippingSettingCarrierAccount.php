@@ -8,6 +8,7 @@ use Illuminate\Support\Str;
 class ShippingSettingCarrierAccount extends Model
 {
     protected $table = 'shipping_setting_carrier_account';
+
     protected $keyType = 'string';
 
     public $incrementing = false;
@@ -28,8 +29,7 @@ class ShippingSettingCarrierAccount extends Model
     protected $fillable = [
         'id',
         'shipping_carrier_id',
-        'shipping_account_id',
-        'shipping_setting_id'
+        'shipping_account_id'
     ];
 
     public function shippingCarrier()

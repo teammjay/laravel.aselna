@@ -2,6 +2,7 @@
 
 namespace App\Utils;
 
+use App\Models\OrderOperation;
 use GuzzleHttp\Client;
 use Illuminate\Support\Facades\Log;
 use SoapClient;
@@ -21,7 +22,7 @@ class EndicialabelService
         $this->client = new Client();
     }
 
-    public function createLabel(array $request,$orderOperation)
+    public function createLabel(array $request,$orderOperationId)
     {
         $xmlString = $this->buildXmlRequest($request);
         Log::info('Endicia Label Request XML: ' . $xmlString);
@@ -38,7 +39,7 @@ class EndicialabelService
 
             $body = $response->getBody()->getContents();
             Log::info('Endicia Label Response XML: ' . $body);
-            return $this->parseSoapResponse($body, $orderOperation);
+            return $this->parseSoapResponse($body, $orderOperationId);
         } catch (Exception $e) {
             // Handle SOAP request errors
             if ($e->hasResponse()) {
@@ -48,7 +49,7 @@ class EndicialabelService
         }
     }
 
-    public function parseSoapResponse($response, $orderOperation)
+    public function parseSoapResponse($response, $orderOperationId)
     {
 
         libxml_use_internal_errors(true);
@@ -64,6 +65,7 @@ class EndicialabelService
         $trackingNumber = (string)$xml->xpath('//ns:TrackingNumber')[0];
 
         Log::info('Tracking Number: ' . $trackingNumber);
+        $orderOperation = OrderOperation::findOrFail($orderOperationId);
         $orderOperation->tracking_number = $trackingNumber;
         $orderOperation->save();
 

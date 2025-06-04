@@ -14,6 +14,7 @@ use App\Jobs\synccategorytospecification;
 use App\Models\Listing;
 use App\Models\ListingFeed;
 use App\Models\ListingItem;
+use App\Models\OrderOperation;
 use App\Models\Store;
 use App\Models\StoreMessageAccount;
 use App\Services\Auth\GoogleShoppingAuthService;
@@ -25,11 +26,13 @@ use App\Services\Marketplace\Service\MagentoService;
 use App\Services\Marketplace\Service\ShopifyService;
 use App\Services\Marketplace\Service\WalmartService;
 use App\Utils\EmailMessageUtility;
+use App\Utils\order\OrderOperationUtility;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Log;
 use App\Constants\FeedStatus;
+use Tests\Utils\order\OrderOperationUtilityTest;
 
 class HomeController extends Controller
 {
@@ -43,7 +46,13 @@ class HomeController extends Controller
 
     public function testfunction(){
 
-        /*$smtpConfig = [
+        /*$orderOperation = OrderOperation::with('order', 'store', 'store.storeType', 'operationItem', 'operationItem.orderItem', 'carrier', 'carrierService','shippingPackage','shipFrom')->where('id', '5574654f-48a2-4e1b-bb08-7fba27048cb4')->first();
+        Log::info('Order Operation:'.json_encode($orderOperation));
+        $utility = new OrderOperationUtility();
+        $utility->createLabel($orderOperation);*/
+
+
+        $smtpConfig = [
 //            'host' => 'smtp.gmail.com',
 //            'port' => 587,
 //            'encryption' => 'tls',
@@ -62,7 +71,7 @@ class HomeController extends Controller
         ];
 
         $connector = new EmailMessageUtility($smtpConfig, $imapConfig);
-        $emails = $connector->fetchEmails();*/
+        //$emails = $connector->fetchEmails();
         //dd($emails);
 
         /*$stores = Store::select('store.*')->join('store_type', 'store_type.id', '=', 'store.store_type_id')->where('store_type.code', 'shopify')->get();
@@ -129,14 +138,14 @@ class HomeController extends Controller
         echo '</pre>';die;*/
 
 
-        Bus::chain([
+        /*Bus::chain([
             //new SubmitShopifyProductsJob(),
             //new synccategorytospecification(),
             //new FetchShopifyOrders(),
             //new EbayListingItemSyncJob()
             new SyncAllOrderStatusJob()
             //new FetchWalmartOrdersJob()
-        ])->dispatch();
+        ])->dispatch();*/
     }
 
     public function getListingData(Request $request)
