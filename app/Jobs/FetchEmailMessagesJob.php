@@ -10,6 +10,7 @@ use App\Models\StoreMessageAccount;
 use App\Utils\EmailMessageUtility;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Support\Facades\Log;
 
 class FetchEmailMessagesJob implements ShouldQueue
 {
@@ -32,7 +33,7 @@ class FetchEmailMessagesJob implements ShouldQueue
     {
         try {
             /* get shopify stores*/
-            $stores = Store::select('store.*')->join('store_type', 'store_type.id', '=', 'store.store_type_id')->where('store_type.code', 'shopify')->get();
+            $stores = Store::with('storeType')->where('store_id','')->get();
             if (count($stores ?? []) > 0) {
                 foreach ($stores as $store) {
                     $storeMessageAccount = StoreMessageAccount::with('incomingAccount','outgoingAccount')->where('store_id', $store->id)->get();
@@ -68,23 +69,24 @@ class FetchEmailMessagesJob implements ShouldQueue
                                     if(count($receiveEmails ?? []) > 0){
                                         foreach($receiveEmails as $email){
                                             /* create ticket*/
-                                            $order_id = $po_no = $store_id = $reason = $customer_id = '';
+                                            $order_id = $related_order_id = $po_no = $store_id = $reason = $customer_id = '';
                                             if(isset($email['parsedData']) && !empty($email['parsedData'])){
                                                 if(isset($email['parsedData']['customer_order_number'])){
-                                                    $order_id = $email['parsedData']['customer_order_number'];
-                                                    $orderDetail = Order::with('customer')->where('order_id',trim($order_id));
-                                                    if(isset($orderDetail)){
+                                                    $related_order_id = html_entity_decode($email['parsedData']['customer_order_number']);
+                                                    $orderDetail = Order::with('customer')->where('order_id',trim($related_order_id))->first();
+                                                    if($orderDetail){
+                                                        $order_id = $orderDetail->id;
                                                         $store_id = $orderDetail->store_id;
                                                         $customer_id = isset($orderDetail->customer) ? $orderDetail->customer->id : '';
                                                     }
                                                 }
 
                                                 if(isset($email['parsedData']['purchase_order_number'])){
-                                                    $po_no = $email['parsedData']['purchase_order_number'];
+                                                    $po_no = html_entity_decode($email['parsedData']['purchase_order_number']);
                                                 }
 
                                                 if(isset($email['parsedData']['reason'])){
-                                                    $reason = $email['parsedData']['reason'];
+                                                    $reason = html_entity_decode($email['parsedData']['reason']);
                                                 }
 
 
@@ -93,6 +95,7 @@ class FetchEmailMessagesJob implements ShouldQueue
                                                 'ticket_type_id' => 1,
                                                 'ticket_email' => $email['from'],
                                                 'status' => 1,
+                                                'related_order_id' => $related_order_id,
                                                 'subject' => $email['subject'],
                                                 'message_id' => 1,
                                                 'notes' => $email['body'],
@@ -132,7 +135,7 @@ class FetchEmailMessagesJob implements ShouldQueue
                                                     'draft' => 0
                                                 ];
 
-                                                $hd_ticket = HDMessage::create($ticketData);
+                                                $hd_ticket = HDMessage::create($hdMessageData);
                                             }
                                         }
                                     }

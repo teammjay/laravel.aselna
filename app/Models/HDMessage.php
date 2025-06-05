@@ -25,5 +25,5 @@ class HDMessage extends Model
         });
     }
 
-    protected $fillable = ['id','ticket_type_id','ticket_email','status','subject','message_id','notes','reference_code','related_order_operation_id','order_id','store_id','ticket_date','ticket_code','message_read','replies','last_message_date','important','customer_merge_status','ticket_user_id','sku','related_listing_item_id','created_by','updated_by','deleted_by','deleted_at','created_at','updated_at'];
+    protected $fillable = ['id','client_id','ticket_id','subject','message_date','to_','cc','bcc','message_id','messaging_account_id','message_hash_id','from_email','from_name','message','previous_message','in_reply_to','draft','to_name','links','from_message_user_id','to_message_user_id','author','order_operation_action','parsed_message','reply_to_name','reply_to_email','created_by','updated_by','deleted_by','deleted_at','created_at','updated_at'];
 }
