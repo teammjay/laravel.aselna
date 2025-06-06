@@ -49,13 +49,16 @@ class HomeController extends Controller
 
     public function testfunction(){
 
-        /*$orderOperation = OrderOperation::with('order', 'store', 'store.storeType', 'operationItem', 'operationItem.orderItem', 'carrier', 'carrierService','shippingPackage','shipFrom')->where('id', '5574654f-48a2-4e1b-bb08-7fba27048cb4')->first();
+        $orderOperation = OrderOperation::with('order', 'store', 'store.storeType', 'operationItem', 'operationItem.orderItem', 'carrier', 'carrierService','shippingPackage','shipFrom')->where('id', 'bf9525a0-27f3-4ea6-87be-9db88bfda601')->first();
         Log::info('Order Operation:'.json_encode($orderOperation));
+        /*echo '<pre>';
+        print_r($orderOperation);
+        echo '</pre>';die;*/
         $utility = new OrderOperationUtility();
-        $utility->createLabel($orderOperation);*/
+        $utility->createLabel($orderOperation);
 
 
-        $smtpConfig = [
+        /*$smtpConfig = [
 //            'host' => 'smtp.gmail.com',
 //            'port' => 587,
 //            'encryption' => 'tls',
@@ -79,7 +82,7 @@ class HomeController extends Controller
 
         if(count($receiveEmails ?? []) > 0){
             foreach($receiveEmails as $email){
-                /* create ticket*/
+
                 $order_id = $related_order_id = $po_no = $store_id = $reason = $customer_id = '';
                 if(isset($email['parsedData']) && !empty($email['parsedData'])){
                     if(isset($email['parsedData']['customer_order_number'])){
@@ -149,7 +152,7 @@ class HomeController extends Controller
                     $hd_ticket = HDMessage::create($hdMessageData);
                 }
             }
-        }
+        }*/
         //dd($emails);
 
         /*$stores = Store::select('store.*')->join('store_type', 'store_type.id', '=', 'store.store_type_id')->where('store_type.code', 'shopify')->get();
