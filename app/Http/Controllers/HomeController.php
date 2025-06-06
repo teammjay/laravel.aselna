@@ -29,6 +29,7 @@ use App\Services\Marketplace\Service\MagentoService;
 use App\Services\Marketplace\Service\ShopifyService;
 use App\Services\Marketplace\Service\WalmartService;
 use App\Utils\EmailMessageUtility;
+use App\Utils\EndicialabelService;
 use App\Utils\order\OrderOperationUtility;
 use Exception;
 use Illuminate\Http\Request;
@@ -36,6 +37,7 @@ use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Log;
 use App\Constants\FeedStatus;
 use Tests\Utils\order\OrderOperationUtilityTest;
+use Illuminate\Support\Str;
 
 class HomeController extends Controller
 {
@@ -49,13 +51,29 @@ class HomeController extends Controller
 
     public function testfunction(){
 
+        /*$requestId = (string) Str::uuid();
+        $data = [
+            'requesterId' => 'Iweb',
+            'accountId' => '1257538',
+            'requestId' => $requestId,
+            'passPhrase' => 'Ag7ycm1274r2!a8hser2m',
+            'transaction_id' => '431030',
+            'pic_no' => '9400150105496000076315',
+        ];
+        $endicia = new EndicialabelService();
+        $result = $endicia->cancelLabel($data);
+        echo '<pre>';
+        print_r($result);
+        echo '</pre>';
+        echo 'here'; die;*/
+
         $orderOperation = OrderOperation::with('order', 'store', 'store.storeType', 'operationItem', 'operationItem.orderItem', 'carrier', 'carrierService','shippingPackage','shipFrom')->where('id', 'bf9525a0-27f3-4ea6-87be-9db88bfda601')->first();
         Log::info('Order Operation:'.json_encode($orderOperation));
         /*echo '<pre>';
         print_r($orderOperation);
         echo '</pre>';die;*/
         $utility = new OrderOperationUtility();
-        $utility->createLabel($orderOperation);
+        //$utility->createLabel($orderOperation);
 
 
         /*$smtpConfig = [

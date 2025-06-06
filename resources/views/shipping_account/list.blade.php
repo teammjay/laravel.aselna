@@ -53,7 +53,7 @@
                             @foreach($shipping_accounts as $ship_acc)
                                 <tr data-id="{{ $ship_acc->id }}">
                                     <td>{{ $ship_acc->name }}</td>
-                                    <td>{{ $ship_acc->shippingSolution->name }}</td>
+                                    <td>{{ isset($ship_acc->shippingSolution) ? $ship_acc->shippingSolution->name : '' }}</td>
                                     <td><input type="checkbox" name="sandbox_account" data-id="{{ $ship_acc->id }}" @if($ship_acc->sandbox_account == 1) checked @endif /></td>
                                     <td>
                                         <a href="{{ route('shipping_account.edit', $ship_acc->id) }}" class="btn btn-primary" title="Edit">

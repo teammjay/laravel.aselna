@@ -5,6 +5,7 @@ namespace App\Utils;
 use App\Models\AccountTransaction;
 use App\Models\OrderOperation;
 use GuzzleHttp\Client;
+use GuzzleHttp\Exception\RequestException;
 use Illuminate\Support\Facades\Log;
 use SoapClient;
 use Exception;
@@ -43,7 +44,7 @@ class EndicialabelService
             return $this->parseSoapResponse($body, $request, $orderOperationId);
         } catch (Exception $e) {
             // Handle SOAP request errors
-            if ($e->hasResponse()) {
+            if ($e instanceof RequestException && $e->hasResponse()) {
                 Log::error('SOAP Error Response: ' . $e->getResponse()->getBody()->getContents());
             }
             throw new Exception('Error creating label: ' . $e->getMessage());
@@ -116,8 +117,8 @@ class EndicialabelService
         $labelRequest = $request->addChild('LabelRequest');
 
         $labelRequest->addChild('Test', 'YES');
-        $labelRequest->addChild('ImageFormat', 'ZPLII');
-        $labelRequest->addChild('LabelSize', '4x6');
+        $labelRequest->addChild('ImageFormat', $shipmentDetails['labelFormat']);
+        $labelRequest->addChild('LabelSize', $shipmentDetails['label_size']);
 //        $labelRequest->addAttribute('LabelType', $shipmentDetails['']);
 
         $labelRequest->addChild('RequesterID', $shipmentDetails['requesterId']);
@@ -212,11 +213,13 @@ class EndicialabelService
             $returnData = [];
             foreach ($refunds as $refund) {
                 $transactionId = (string)$refund['TransactionId'];
+                $PicNumber = (string)$refund['PicNumber'];
                 $status = (string)$refund->RefundStatus;
                 $message = (string)$refund->RefundStatusMessage;
 
                 $returnData[] = [
                     'transactionId' => $transactionId,
+                    'PicNumber' => $PicNumber,
                     'status' => $status,
                     'message' => $message,
                 ];
@@ -226,7 +229,7 @@ class EndicialabelService
 
         } catch (Exception $e) {
             // Handle SOAP request errors
-            if ($e->hasResponse()) {
+            if ($e instanceof RequestException && $e->hasResponse()) {
                 Log::error('SOAP Error Response: ' . $e->getResponse()->getBody()->getContents());
             }
             throw new Exception('Error creating label: ' . $e->getMessage());
@@ -240,13 +243,17 @@ class EndicialabelService
         $labelRequest = $request->addChild('RefundRequest');
 
         $labelRequest->addChild('RequesterID', $labelDetails['requesterId']);
+        $labelRequest->addChild('RequestID', $labelDetails['requestId']);
         $CertifiedIntermediary = $labelRequest->addChild('CertifiedIntermediary');
 
         $CertifiedIntermediary->addChild('AccountID', $labelDetails['accountId']);
         $CertifiedIntermediary->addChild('PassPhrase', $labelDetails['passPhrase']);
 
-        $transactionIDs = $labelRequest->addChild('TransactionIds');
-        $transactionIDs->addChild('TransactionId', $labelDetails['transaction_id']);
+        $picNumbers = $labelRequest->addChild('PicNumbers');
+        $picNumbers->addChild('PicNumber', $labelDetails['pic_no']);
+
+        //$transactionIDs = $labelRequest->addChild('TransactionIds');
+        //$transactionIDs->addChild('TransactionId', $labelDetails['transaction_id']);
 
         return $xml->asXML();
 

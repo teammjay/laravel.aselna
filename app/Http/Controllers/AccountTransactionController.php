@@ -61,6 +61,7 @@ class AccountTransactionController extends Controller
 
     public function cancelTransaction(Request $request){
         $transaction_id = $request->input('transaction_id');
+        $id = $request->input('id');
         $account_id = $request->input('account_id');
         if($transaction_id){
 
@@ -71,7 +72,7 @@ class AccountTransactionController extends Controller
                 'accountId' => $shippingAccount->account_id,
                 'passPhrase' => $shippingAccount->pass_phrase,
                 'requesterId' => $shippingAccount->requester_id,
-                'transaction_id' => $transaction_id,
+                'pic_no' => $transaction_id,
             ];
 
             $endiciaClient = new EndicialabelService();
@@ -80,20 +81,17 @@ class AccountTransactionController extends Controller
             if(!empty($response)){
                 $flag = false;
                 foreach($response as $trans){
-                    if(isset($trans['transactionId']) && $trans['transactionId'] != ''){
-                        $transaction = AccountTransaction::where('transaction_id',$trans['transactionId'])->first();
-                        if(isset($trans['status'])){
-                            switch ($trans['status']){
-                                case 'Approved':
-                                    $transaction->update(['canceled'=>1,'canceled_date' => date('Y-m-d H:i:s')]);
-                                    $flag = true;
-                                    break;
-                                case 'DeniedInvalid':
-                                    $flag = false;
-                                    break;
-                            }
+                    if(isset($trans['status']) && $trans['status'] != ''){
+                        $transaction = AccountTransaction::findOrFail($id);
+                        switch ($trans['status']){
+                            case 'Approved':
+                                $transaction->update(['canceled'=>1,'canceled_date' => date('Y-m-d H:i:s')]);
+                                $flag = true;
+                                break;
+                            case 'DeniedInvalid':
+                                $flag = false;
+                                break;
                         }
-
                     }
                 }
 

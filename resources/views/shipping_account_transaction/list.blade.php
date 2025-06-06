@@ -161,7 +161,7 @@
                 @if(count($shipping_account_transactions ?? []) > 0)
                     @foreach($shipping_account_transactions as $ship_transaction)
                         <tr data-id="{{ $ship_transaction->id }}">
-                            <td>{{ $ship_transaction->shippingAccount->name }}<input type="checkbox" name="transaction_id[]" style="visibility: hidden;" value="{{ $ship_transaction->transaction_id }}"></td>
+                            <td>{{ $ship_transaction->shippingAccount->name }}<input type="checkbox" data-id="{{ $ship_transaction->id }}" name="transaction_id[]" style="visibility: hidden;" value="{{ $ship_transaction->tracking_number }}"></td>
                             <td>{{ $ship_transaction->tracking_number }}</td>
                             <td>{{ $ship_transaction->transaction_date }}</td>
                             <td>{{ $ship_transaction->transaction_id }}</td>
@@ -215,11 +215,13 @@
 
             $(document).on('click','#cancleLabel',function () {
                 var transaction_id  = $('input[name="transaction_id[]"]:checked').val();
+                var id  = $('input[name="transaction_id[]"]:checked').data('id');
                 alert(transaction_id);
                 $.ajax({
                     url: "{{ route('shipping_account_transactions.cancellabel') }}",
                     type: 'POST',
                     data: {
+                        id: id,
                         transaction_id: transaction_id,
                         account_id: '{{ $account_id }}',
                         "_token": '{{ csrf_token() }}'
