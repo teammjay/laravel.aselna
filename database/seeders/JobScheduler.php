@@ -254,6 +254,11 @@ class JobScheduler extends Seeder
                 'name' => 'Printer Sync Job',
                 'description' => 'Sync all printer',
                 'class_name' => 'App\Jobs\PrinterSyncJob',
+            ],
+            [
+                'name' => 'Shipment Document Setting Sync Job',
+                'description' => 'Sync all shipment document settings',
+                'class_name' => 'App\Jobs\ShipmentDocuemntSettingSyncJob',
             ]
         ];
 
