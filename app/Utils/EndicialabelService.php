@@ -116,6 +116,8 @@ class EndicialabelService
         $labelRequest = $request->addChild('LabelRequest');
 
         $labelRequest->addChild('Test', 'YES');
+        $labelRequest->addChild('ImageFormat', 'ZPLII');
+        $labelRequest->addChild('LabelSize', '4x6');
 //        $labelRequest->addAttribute('LabelType', $shipmentDetails['']);
 
         $labelRequest->addChild('RequesterID', $shipmentDetails['requesterId']);
