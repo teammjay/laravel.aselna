@@ -15,6 +15,7 @@ use App\Services\Auth\ShopifyAuthService;
 use App\Services\Auth\WalmartAuthService;
 use App\Services\Marketplace\Service\ShopifyService;
 use App\Utils\EndicialabelService;
+use App\Utils\shipment\ShipmentDocumentsCreator;
 use Illuminate\Support\Facades\Log;
 
 class OrderOperationUtility
@@ -95,6 +96,10 @@ class OrderOperationUtility
         if (isset($errorMessages) && !empty($errorMessages)) {
             return $errorMessages;
         }
+
+        $shippingDocumentCreator =  new ShipmentDocumentsCreator($orderOperation);
+        $imageFormat = $shippingDocumentCreator->getLabelFormat();
+        $rotate = $shippingDocumentCreator->getImageRotate();
 
         $operation_type = $orderOperation->operation_type;
         $shipFrom = $orderOperation->shipFrom;
