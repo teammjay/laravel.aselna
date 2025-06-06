@@ -158,7 +158,7 @@ class OrderOperationUtility
 
         $shipmentDetails['ImageRotation'] = null;
 
-        $shipmentDetails['labelFormat'] = 'JPEG';
+        $shipmentDetails['labelFormat'] = 'ZPLII';
 
         $shipmentDetails['returnAddress'] = [
             'address1' => '590 Hatton Ln',
