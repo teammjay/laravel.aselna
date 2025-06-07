@@ -67,16 +67,16 @@ class HomeController extends Controller
         echo '</pre>';
         echo 'here'; die;*/
 
-        $orderOperation = OrderOperation::with('order', 'store', 'store.storeType', 'operationItem', 'operationItem.orderItem', 'carrier', 'carrierService','shippingPackage','shipFrom')->where('id', 'bf9525a0-27f3-4ea6-87be-9db88bfda601')->first();
-        Log::info('Order Operation:'.json_encode($orderOperation));
+        //$orderOperation = OrderOperation::with('order', 'store', 'store.storeType', 'operationItem', 'operationItem.orderItem', 'carrier', 'carrierService','shippingPackage','shipFrom')->where('id', 'bf9525a0-27f3-4ea6-87be-9db88bfda601')->first();
+        //Log::info('Order Operation:'.json_encode($orderOperation));
         /*echo '<pre>';
         print_r($orderOperation);
         echo '</pre>';die;*/
-        $utility = new OrderOperationUtility();
+       // $utility = new OrderOperationUtility();
         //$utility->createLabel($orderOperation);
 
 
-        /*$smtpConfig = [
+        $smtpConfig = [
 //            'host' => 'smtp.gmail.com',
 //            'port' => 587,
 //            'encryption' => 'tls',
@@ -170,7 +170,7 @@ class HomeController extends Controller
                     $hd_ticket = HDMessage::create($hdMessageData);
                 }
             }
-        }*/
+        }
         //dd($emails);
 
         /*$stores = Store::select('store.*')->join('store_type', 'store_type.id', '=', 'store.store_type_id')->where('store_type.code', 'shopify')->get();

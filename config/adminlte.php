@@ -323,8 +323,24 @@ return [
 //        ],
         [
             'text' => 'Messages',
-            'url' => '/messages',
-            'icon' => 'fa fa-fw fa-envelope'
+            'icon' => 'fa fa-fw fa-envelope',
+            'submenu' => [
+                [
+                    'text' => 'Messages',
+                    'url' => '/messages',
+                    'icon' => 'fa fa-fw fa-envelope',
+                ],
+                [
+                    'text' => 'Message Template',
+                    'url' => '/hd_message_template',
+                    'icon' => 'fa fa-fw fa-file',
+                ],
+                [
+                    'text' => 'Ticket Label',
+                    'url' => '/hd_ticket_label',
+                    'icon' => 'fa fa-fw fa-file',
+                ],
+            ]
         ],
         [
             'text' => 'Orders',

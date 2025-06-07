@@ -54,6 +54,8 @@ use App\Http\Controllers\ProductSpecificationOptionsController;
 use App\Http\Controllers\OrderOperationReasonController;
 use App\Http\Controllers\PrintersController;
 use App\Http\Controllers\PrinterClientsController;
+use App\Http\Controllers\HdMessageTemplateController;
+use App\Http\Controllers\HdTicketLabelController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ResetPasswordController;
 use App\Http\Controllers\StorePagesController;
@@ -290,6 +292,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/messages/edit/{id}', 'edit')->name('message.edit');
         Route::post('/messages/edit/{id}', 'update')->name('message.update');
         Route::get('/messages/delete/{id}', 'destroy')->name('message.delete');
+        Route::get('/messages/detail/{id}', 'detail')->name('message.detail');
     });
 
     Route::controller(PageTypesController::class)->group(function () {
@@ -580,6 +583,24 @@ Route::middleware('auth')->group(function () {
         Route::get('/order_operation_reason/edit/{id}', 'edit')->name('order_operation_reason.edit');
         Route::post('/order_operation_reason/edit/{id}', 'update')->name('order_operation_reason.update');
         Route::get('/order_operation_reason/delete/{id}', 'destroy')->name('order_operation_reason.delete');
+    });
+
+    Route::controller(HdMessageTemplateController::class)->group(function () {
+        Route::get('/hd_message_template', 'index')->name('hd_message_template.index');
+        Route::get('/hd_message_template/add', 'create')->name('hd_message_template.create');
+        Route::post('/hd_message_template/add', 'store')->name('hd_message_template.store');
+        Route::get('/hd_message_template/edit/{id}', 'edit')->name('hd_message_template.edit');
+        Route::post('/hd_message_template/edit/{id}', 'update')->name('hd_message_template.update');
+        Route::get('/hd_message_template/delete/{id}', 'destroy')->name('hd_message_template.delete');
+    });
+
+    Route::controller(HdTicketLabelController::class)->group(function () {
+        Route::get('/hd_ticket_label', 'index')->name('hd_ticket_label.index');
+        Route::get('/hd_ticket_label/add', 'create')->name('hd_ticket_label.create');
+        Route::post('/hd_ticket_label/add', 'store')->name('hd_ticket_label.store');
+        Route::get('/hd_ticket_label/edit/{id}', 'edit')->name('hd_ticket_label.edit');
+        Route::post('/hd_ticket_label/edit/{id}', 'update')->name('hd_ticket_label.update');
+        Route::get('/hd_ticket_label/delete/{id}', 'destroy')->name('hd_ticket_label.delete');
     });
 
     Route::get('/ebay/login', [EbayAuthService::class, 'redirectToEbay'])->name('ebay.login');
