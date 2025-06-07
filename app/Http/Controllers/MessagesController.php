@@ -106,9 +106,8 @@ class MessagesController extends Controller
      */
     public function edit(string $id)
     {
-        $message = Message::findOrFail($id);
-        $messages = Message::all();
-        return view('messages.update', compact('message','messages'));
+        $ticket = Message::findOrFail($id);
+        return view('messages.edit', compact('ticket'));
     }
 
     /**
@@ -136,5 +135,10 @@ class MessagesController extends Controller
 
         return redirect()->route('message.index')
             ->with('success', 'Message deleted successfully.');
+    }
+
+    public function detail(string $id)
+    {
+        return view('messages.detail');
     }
 }

@@ -17,12 +17,12 @@ return new class extends Migration
             $table->foreign('ticket_type_id')->references('id')->on('hd_ticket_type')->onDelete('cascade');
             $table->string('ticket_email')->nullable();
             $table->integer('status');
-//            $table->uuid('related_order_id')->nullable();
+            $table->uuid('related_order_id')->nullable();
 //            $table->foreign('related_order_id')->references('id')->on('order')->onDelete('cascade');
             $table->string('subject');
             $table->text('message_id')->nullable();
             $table->text('notes')->nullable();
-//            $table->uuid('customer_id')->nullable();
+            $table->uuid('customer_id')->nullable();
 //            $table->foreign('customer_id')->references('id')->on('customer')->onDelete('cascade');
             $table->string('reference_code')->nullable();
             $table->uuid('related_order_operation_id')->nullable();
