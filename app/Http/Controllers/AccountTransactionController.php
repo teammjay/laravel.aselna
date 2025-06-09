@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\AccountTransaction;
 use App\Models\ShippingAccount;
+use App\Models\ShippingSettingCarrierAccount;
+use App\Utils\EndicialabelService;
 use Illuminate\Http\Request;
 
 class AccountTransactionController extends Controller
@@ -16,8 +18,7 @@ class AccountTransactionController extends Controller
         $account_id = $id;
         $shipping_account_transactions = AccountTransaction::with('shippingAccount')->where('shipping_account_id',$account_id)->get();
         $shipping_account = ShippingAccount::all();
-        return view('shipping_account_transaction.list', compact('shipping_account_transactions','shipping_account'));
-        return view('shipping_account_transaction.list', compact('shipping_account_transactions','shipping_account'));
+        return view('shipping_account_transaction.list', compact('shipping_account_transactions','shipping_account','account_id'));
     }
 
     public function filter(Request $request){
@@ -54,6 +55,63 @@ class AccountTransactionController extends Controller
             return response()->json([
                 'html' => view('shipping_account_transaction.search_list', compact('transactions'))->render(),
                 'totalRecords' => $transactions->count()
+            ]);
+        }
+    }
+
+    public function cancelTransaction(Request $request){
+        $transaction_id = $request->input('transaction_id');
+        $id = $request->input('id');
+        $account_id = $request->input('account_id');
+        if($transaction_id){
+
+            $carrierAccount = ShippingSettingCarrierAccount::with('shippingAccount','shippingAccount.shippingSolution')->where('shipping_account_id',$account_id)->first();
+            $shippingAccount = $carrierAccount->shippingAccount;
+
+            $transactionDetail = [
+                'accountId' => $shippingAccount->account_id,
+                'passPhrase' => $shippingAccount->pass_phrase,
+                'requesterId' => $shippingAccount->requester_id,
+                'pic_no' => $transaction_id,
+            ];
+
+            $endiciaClient = new EndicialabelService();
+            $response = $endiciaClient->cancelLabel($transactionDetail);
+
+            if(!empty($response)){
+                $flag = false;
+                foreach($response as $trans){
+                    if(isset($trans['status']) && $trans['status'] != ''){
+                        $transaction = AccountTransaction::findOrFail($id);
+                        switch ($trans['status']){
+                            case 'Approved':
+                                $transaction->update(['canceled'=>1,'canceled_date' => date('Y-m-d H:i:s')]);
+                                $flag = true;
+                                break;
+                            case 'DeniedInvalid':
+                                $flag = false;
+                                break;
+                        }
+                    }
+                }
+
+                if($flag){
+                    return response()->json([
+                        'success' => true,
+                        'message' => 'Transaction voided successfully!'
+                    ]);
+                }else{
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Transaction Denied!'
+                    ]);
+                }
+
+            }
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Something went wrong with API. Please try again later.'
             ]);
         }
     }

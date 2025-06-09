@@ -423,8 +423,8 @@
                 }
             },
             columns: [
-                {data: 'store', name: 'name'},
-                {data: 'first_name', name: 'brand.name'},
+                {data: 'store', name: 'store'},
+                {data: 'first_name', name: 'first_name'},
                 {data: 'last_name', name: 'device_type.name'},
                 {data: 'subject', name: 'status'},
                 {data: 'received', name: 'status'},

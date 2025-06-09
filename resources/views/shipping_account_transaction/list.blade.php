@@ -18,7 +18,7 @@
     @endif
     <div class="row my-3">
         <div class="col-md-2">
-            <button class="btn btn-primary">
+            <button class="btn btn-primary" id="cancleLabel">
                 Void
             </button>
         </div>
@@ -150,8 +150,8 @@
                 <th>Tracking Number</th>
                 <th>Transaction Date</th>
                 <th>Transaction ID</th>
-                <th>Transaction Amount</th>
-                <th>Transaction Address</th>
+                <th>Amount</th>
+                <th>Address</th>
                 <th>Cancelled</th>
                 <th>Cancelled Date</th>
                 <th>Created Date</th>
@@ -161,13 +161,13 @@
                 @if(count($shipping_account_transactions ?? []) > 0)
                     @foreach($shipping_account_transactions as $ship_transaction)
                         <tr data-id="{{ $ship_transaction->id }}">
-                            <td>{{ $ship_transaction->shippingAccount->name }}</td>
+                            <td>{{ $ship_transaction->shippingAccount->name }}<input type="checkbox" data-id="{{ $ship_transaction->id }}" name="transaction_id[]" style="visibility: hidden;" value="{{ $ship_transaction->tracking_number }}"></td>
                             <td>{{ $ship_transaction->tracking_number }}</td>
                             <td>{{ $ship_transaction->transaction_date }}</td>
                             <td>{{ $ship_transaction->transaction_id }}</td>
                             <td>{{ $ship_transaction->amount }}</td>
                             <td>{{ $ship_transaction->address }}</td>
-                            <td><input type="checkbox" name="canceled" @if($ship_transaction->canceled == 1) checked @endif /></td>
+                            <td><input type="checkbox" name="canceled" disabled @if($ship_transaction->canceled == 1) checked @endif /></td>
                             <td>{{ $ship_transaction->canceled_date }}</td>
                             <td>{{ $ship_transaction->created_at }}</td>
                         </tr>
@@ -205,11 +205,41 @@
                 //$('#account-list tr').removeClass('active bg-blue');
                 if(!ele.hasClass('active bg-blue')){
                     ele.addClass('active bg-blue');
+                    ele.find('input[name="transaction_id[]"]').prop('checked',true);
                 }else{
                     ele.removeClass('active bg-blue');
+                    ele.find('input[name="transaction_id[]"]').prop('checked',false);
                 }
 
             });
+
+            $(document).on('click','#cancleLabel',function () {
+                var transaction_id  = $('input[name="transaction_id[]"]:checked').val();
+                var id  = $('input[name="transaction_id[]"]:checked').data('id');
+                alert(transaction_id);
+                $.ajax({
+                    url: "{{ route('shipping_account_transactions.cancellabel') }}",
+                    type: 'POST',
+                    data: {
+                        id: id,
+                        transaction_id: transaction_id,
+                        account_id: '{{ $account_id }}',
+                        "_token": '{{ csrf_token() }}'
+                    },
+                    success: function (response) {
+                        // If success, remove the user row from the table
+                        alert(response.message);
+                        if (response.success) {
+                            location.reload();
+                        }
+                    },
+                    error: function (xhr) {
+                        // Handle error response
+                        alert('Error: ' + xhr.responseJSON.error);
+                    }
+                });
+            });
+
 
             $("#transactionsTable").dataTable();
 

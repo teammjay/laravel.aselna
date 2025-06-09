@@ -101,18 +101,29 @@ class EmailMessageUtility
                     $body = strip_tags($html); // fallback to text-like content
                 }
 
+                $parsedData = $this->parseEscalationEmail($body);
+
+                /*echo '<pre>';
+                print_r($parsedData);
+                echo '</pre>';*/
+
                 $emails[] = [
                     'subject' => $message->subject->first(),
+                    'name' => $message->getFrom()[0]->personal ?? null,
                     'from' => $message->getFrom()[0]->mail ?? null,
+                    'to' => $message->getTo()[0]->mail ?? null,
+                    'cc' => $message->getCc()[0]->mail ?? null,
+                    'bcc' => $message->getBcc()[0]->mail ?? null,
                     'body' => $body,
                     'date' => date('Y-m-d H:i:s',strtotime($message->getDate())),
+                    'parsedData' => $parsedData,
                 ];
+
             }
 
             echo '<pre>';
             print_r($emails);
             echo '</pre>';die;
-
             return $emails;
         } catch (Exception $e) {
             /*echo '<pre>';
@@ -120,5 +131,52 @@ class EmailMessageUtility
             echo '</pre>';die;*/
             return ['error' => 'Failed to fetch emails: ' . $e->getMessage()];
         }
+    }
+
+    private function parseEscalationEmail($emailBody){
+
+        $data = [];
+
+        // Extract Customer Name
+        if (preg_match('/Customer Name:\s*(.+)/', $emailBody, $matches)) {
+            $data['customer_name'] = trim($matches[1]);
+        }
+
+        // Extract Customer Order Number
+        if (preg_match('/Customer Order Number:\s*(.+)/', $emailBody, $matches)) {
+            $data['customer_order_number'] = html_entity_decode(str_replace("&nbsp;", "", trim($matches[1])));
+        }
+
+        // Extract Customer Order Number
+        if (preg_match('/Sales Order #:\s*(.+)/', $emailBody, $matches)) {
+            $data['customer_order_number'] = html_entity_decode(str_replace("&nbsp;", "", trim($matches[1])));
+        }
+
+        // Extract Purchase Order No
+        if (preg_match('/Purchase Order No:\s*(.+)/', $emailBody, $matches)) {
+            $data['purchase_order_number'] = html_entity_decode(str_replace("&nbsp;", "", trim($matches[1])));
+        }
+
+        // Extract Reason for Contact
+        if (preg_match('/Reason for Contact:\s*(.+)/', $emailBody, $matches)) {
+            $data['reason'] = html_entity_decode(str_replace("&nbsp;", "", trim($matches[1])));
+        }
+
+        // Extract Item Name/Number
+        if (preg_match('/Item name\/number:\s*(.+)/', $emailBody, $matches)) {
+            $data['item_name'] = html_entity_decode(str_replace("&nbsp;", "", trim($matches[1])));
+        }
+
+        // Extract Item ID
+        if (preg_match('/Item ID:\s*(.+)/', $emailBody, $matches)) {
+            $data['item_id'] = html_entity_decode(str_replace("&nbsp;", "", trim($matches[1])));
+        }
+
+        // Extract Agent Message
+        if (preg_match('/Agent message:\s*(.+)/', $emailBody, $matches)) {
+            $data['agent_message'] = html_entity_decode(str_replace("&nbsp;", "", trim($matches[1])));
+        }
+
+        return $data;
     }
 }

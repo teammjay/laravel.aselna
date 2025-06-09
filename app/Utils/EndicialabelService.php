@@ -2,7 +2,10 @@
 
 namespace App\Utils;
 
+use App\Models\AccountTransaction;
+use App\Models\OrderOperation;
 use GuzzleHttp\Client;
+use GuzzleHttp\Exception\RequestException;
 use Illuminate\Support\Facades\Log;
 use SoapClient;
 use Exception;
@@ -21,7 +24,7 @@ class EndicialabelService
         $this->client = new Client();
     }
 
-    public function createLabel(array $request,$orderOperation)
+    public function createLabel(array $request,$orderOperationId)
     {
         $xmlString = $this->buildXmlRequest($request);
         Log::info('Endicia Label Request XML: ' . $xmlString);
@@ -38,18 +41,20 @@ class EndicialabelService
 
             $body = $response->getBody()->getContents();
             Log::info('Endicia Label Response XML: ' . $body);
-            return $this->parseSoapResponse($body, $orderOperation);
+            return $this->parseSoapResponse($body, $request, $orderOperationId);
         } catch (Exception $e) {
             // Handle SOAP request errors
-            if ($e->hasResponse()) {
+            if ($e instanceof RequestException && $e->hasResponse()) {
                 Log::error('SOAP Error Response: ' . $e->getResponse()->getBody()->getContents());
             }
             throw new Exception('Error creating label: ' . $e->getMessage());
         }
     }
 
-    public function parseSoapResponse($response, $orderOperation)
+
+    public function parseSoapResponse($response, $shippingDetail, $orderOperationId)
     {
+
         libxml_use_internal_errors(true);
         $xml = simplexml_load_string($response);
 
@@ -61,10 +66,32 @@ class EndicialabelService
 
         $base64Image = (string)$xml->xpath('//ns:Base64LabelImage')[0];
         $trackingNumber = (string)$xml->xpath('//ns:TrackingNumber')[0];
+        $transactionCost = (string)$xml->xpath('//ns:FinalPostage')[0];
+        $transactionID = (string)$xml->xpath('//ns:TransactionID')[0];
+        $transactionDate = (string)$xml->xpath('//ns:TransactionDateTime')[0];
 
         Log::info('Tracking Number: ' . $trackingNumber);
+        $orderOperation = OrderOperation::findOrFail($orderOperationId);
         $orderOperation->tracking_number = $trackingNumber;
         $orderOperation->save();
+
+        /* create transaction entry*/
+
+        $address = $shippingDetail['fromAddress']['name'].' '.$shippingDetail['fromAddress']['address1'].' '.$shippingDetail['fromAddress']['address2'].' '.$shippingDetail['fromAddress']['city'].' '.$shippingDetail['fromAddress']['state'].' '.$shippingDetail['fromAddress']['postalCode'].' '.$shippingDetail['fromAddress']['country'];
+        $transactionData = [
+            'shipping_account_id' => $shippingDetail['accountId'],
+            'tracking_number' => $trackingNumber,
+            'transaction_date' => date('Y-m-d H:i:s',strtotime($transactionDate)),
+            'transaction_id' => $transactionID,
+            'amount' => $transactionCost,
+            'address' => $address,
+            'canceled' => 0,
+        ];
+
+        AccountTransaction::updateOrCreate([
+            'tracking_number' => $trackingNumber,
+            'transaction_id' => $transactionID,
+        ],$transactionData);
 
         try {
             $imageData = base64_decode($base64Image);
@@ -90,6 +117,8 @@ class EndicialabelService
         $labelRequest = $request->addChild('LabelRequest');
 
         $labelRequest->addChild('Test', 'YES');
+        $labelRequest->addChild('ImageFormat', $shipmentDetails['labelFormat']);
+        $labelRequest->addChild('LabelSize', $shipmentDetails['label_size']);
 //        $labelRequest->addAttribute('LabelType', $shipmentDetails['']);
 
         $labelRequest->addChild('RequesterID', $shipmentDetails['requesterId']);
@@ -141,19 +170,92 @@ class EndicialabelService
             $labelRequest->addChild('ReturnToPostalCode', $shipmentDetails['returnAddress']['postalCode']);
         }
 
-
-        if (isset($shipmentDetails['CustomsInfo'])) {
-            $customsInfo = $labelRequest->addChild('CustomsInfo');
-            $customsInfo->addChild('ContentsType', $shipmentDetails['CustomsInfo']['contentsType']);
-            $customsItems = $customsInfo->addChild('CustomsItems');
-
-            foreach ($shipmentDetails['CustomsInfo']['items'] as $item) {
-                $customsItem = $customsItems->addChild('CustomsItem');
-                $customsItem->addChild('Quantity', $item['quantity']);
-                $customsItem->addChild('SKU', $item['sku']);
-            }
+        if (isset($shipmentDetails['RubberStamp1'])) {
+            $labelRequest->addChild('RubberStamp1', $shipmentDetails['RubberStamp1']);
+        }
+        if (isset($shipmentDetails['RubberStamp2'])) {
+            $labelRequest->addChild('RubberStamp2', $shipmentDetails['RubberStamp2']);
+        }
+        if (isset($shipmentDetails['RubberStamp3'])) {
+            $labelRequest->addChild('RubberStamp3', $shipmentDetails['RubberStamp3']);
         }
 
         return $xml->asXML();
+    }
+
+    public function cancelLabel(array $request){
+        $xmlString = $this->buildCancelXmlRequest($request);
+        Log::info('Endicia Cancel Label Request XML: ' . $xmlString);
+
+        try {
+            $response = $this->client->post('https://LabelServer.Endicia.com/LabelService/EwsLabelService.asmx', [
+                'headers' => [
+                    'Content-Type' => 'text/xml; charset=utf-8',
+                    'SOAPAction' => '"www.envmgr.com/LabelService/GetRefund"',
+                ],
+                'body' => $xmlString,
+                'verify' => false,
+            ]);
+
+            $body = $response->getBody()->getContents();
+            Log::info('Endicia Label Response XML: ' . $body);
+
+            libxml_use_internal_errors(true);
+            $xml = simplexml_load_string($body);
+
+            if ($xml === false) {
+                return ['error' => 'Failed to parse XML'];
+            }
+
+            $xml->registerXPathNamespace('ns', 'www.envmgr.com/LabelService');
+
+            $refunds = (string)$xml->xpath('//ns:Refund');
+            $returnData = [];
+            foreach ($refunds as $refund) {
+                $transactionId = (string)$refund['TransactionId'];
+                $PicNumber = (string)$refund['PicNumber'];
+                $status = (string)$refund->RefundStatus;
+                $message = (string)$refund->RefundStatusMessage;
+
+                $returnData[] = [
+                    'transactionId' => $transactionId,
+                    'PicNumber' => $PicNumber,
+                    'status' => $status,
+                    'message' => $message,
+                ];
+            }
+
+            return $returnData;
+
+        } catch (Exception $e) {
+            // Handle SOAP request errors
+            if ($e instanceof RequestException && $e->hasResponse()) {
+                Log::error('SOAP Error Response: ' . $e->getResponse()->getBody()->getContents());
+            }
+            throw new Exception('Error creating label: ' . $e->getMessage());
+        }
+    }
+
+    private function buildCancelXmlRequest(array $labelDetails){
+        $xml = new \SimpleXMLElement('<?xml version="1.0" encoding="utf-8"?><soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"/>');
+        $body = $xml->addChild('soap:Body', null, 'http://schemas.xmlsoap.org/soap/envelope/');
+        $request = $body->addChild('GetRefund', null, 'www.envmgr.com/LabelService');
+        $labelRequest = $request->addChild('RefundRequest');
+
+        $labelRequest->addChild('RequesterID', $labelDetails['requesterId']);
+        $labelRequest->addChild('RequestID', $labelDetails['requestId']);
+        $CertifiedIntermediary = $labelRequest->addChild('CertifiedIntermediary');
+
+        $CertifiedIntermediary->addChild('AccountID', $labelDetails['accountId']);
+        $CertifiedIntermediary->addChild('PassPhrase', $labelDetails['passPhrase']);
+
+        $picNumbers = $labelRequest->addChild('PicNumbers');
+        $picNumbers->addChild('PicNumber', $labelDetails['pic_no']);
+
+        //$transactionIDs = $labelRequest->addChild('TransactionIds');
+        //$transactionIDs->addChild('TransactionId', $labelDetails['transaction_id']);
+
+        return $xml->asXML();
+
     }
 }

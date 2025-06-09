@@ -15,6 +15,7 @@ use App\Services\Auth\ShopifyAuthService;
 use App\Services\Auth\WalmartAuthService;
 use App\Services\Marketplace\Service\ShopifyService;
 use App\Utils\EndicialabelService;
+use App\Utils\shipment\ShipmentDocumentsCreator;
 use Illuminate\Support\Facades\Log;
 
 class OrderOperationUtility
@@ -61,7 +62,7 @@ class OrderOperationUtility
 
         $orderOperation->save();
 
-        $orderOperation = OrderOperation::with('order', 'store', 'store.storeType','carrier')->where('id', $orderOperation->id)->first();
+        $orderOperation = OrderOperation::with('order','order.customer','order.customerAddress', 'store', 'store.storeType', 'carrier','shipFrom','shipFrom.returnAddress','shipFrom.fromAddress')->where('id', $orderOperation->id)->first();
 
         return self::instantSynchronization($orderOperation);
     }
@@ -89,11 +90,17 @@ class OrderOperationUtility
 
     public static function createLabel($orderOperation)
     {
+
         $shipmentDetails = [];
         $errorMessages = ShippingUtility::assignSolutionService($orderOperation);
         if (isset($errorMessages) && !empty($errorMessages)) {
             return $errorMessages;
         }
+
+//        $shippingDocumentCreator =  new ShipmentDocumentsCreator($orderOperation);
+//        $imageFormat = $shippingDocumentCreator->getLabelFormat();
+//        $rotate = $shippingDocumentCreator->getImageRotate();
+//        Log::info('Image format for label: ' . $imageFormat);
 
         $operation_type = $orderOperation->operation_type;
         $shipFrom = $orderOperation->shipFrom;
@@ -141,7 +148,7 @@ class OrderOperationUtility
             $shipmentDetails['label_size'] = $orderOperation->shipping_solution_carrier_package->label_size;
         }
 
-        if($orderOperation->shipping_account) {
+        if ($orderOperation->shipping_account) {
             $shipmentDetails['accountId'] = $orderOperation->shipping_account->account_id;
             $shipmentDetails['passPhrase'] = $orderOperation->shipping_account->pass_phrase;
             $shipmentDetails['requesterId'] = $orderOperation->shipping_account->requester_id;
@@ -152,7 +159,7 @@ class OrderOperationUtility
 
         $shipmentDetails['ImageRotation'] = null;
 
-        $shipmentDetails['labelFormat'] = 'JPEG';
+        $shipmentDetails['labelFormat'] = 'PDF';
 
         $shipmentDetails['returnAddress'] = [
             'address1' => '590 Hatton Ln',
@@ -162,26 +169,131 @@ class OrderOperationUtility
             'postalCode' => '97448',
         ];
 
-        $shipmentDetails['CustomsInfo'] = [
-            'contentsType' => 'Merchandise',
-            'items' => [],
-        ];
-
-        foreach ($orderOperation->operationItem as $item) {
-            $shipmentDetails['CustomsInfo']['items'][] = [
-                'sku' => $item->orderItem->product->product_sku,
-                'quantity' => $item->quantity,
-            ];
-        }
+        self::setRubberStampInfo($orderOperation, $shipmentDetails);
 
         Log::info('Shipment details for label creation: ' . json_encode($shipmentDetails));
 
         $endiciaClient = new EndicialabelService();
-//        $response = $endiciaClient->createLabel($shipmentDetails,$orderOperation);
-
-//        Log::info($response);
-        return null;
+        $response = $endiciaClient->createLabel($shipmentDetails,$orderOperation->id);
+        if (isset($response['trackingNumber'])) {
+            Log::info('Label created successfully for order operation: ' . $orderOperation->id);
+            $orderOperation->tracking_number = $response['trackingNumber'];
+            $orderOperation->save();
+            return [];
+        } else {
+            Log::error('Error creating label for order operation: ' . $orderOperation->id . ' - ' . json_encode($response));
+            return $response['errors'] ?? ['Error creating label.'];
+        }
     }
+
+    public static function setRubberStampInfo($orderOperation, &$shipmentDetails)
+    {
+        $storeType = $orderOperation->store->storeType;
+
+        // Group products by code and sum quantities
+        $productMap = [];
+        foreach ($orderOperation->operationItem as $item) {
+            $product = $item->orderItem->product;
+            $code = $product ? $product->product_sku : $item->orderItem->sku;
+
+            if (!isset($productMap[$code])) {
+                $productMap[$code] = 0;
+            }
+            $productMap[$code] += $item->orderItem->quantity;
+        }
+
+        // Get or generate product codes line
+        $codesLine = $orderOperation->products_rubber_stamp ?? '';
+
+        if (empty(trim($codesLine))) {
+            $codes = [];
+
+            // Sort product codes alphabetically
+            ksort($productMap);
+
+            foreach ($productMap as $code => $quantity) {
+                $codes[] = "({$code} x {$quantity})";
+            }
+
+            $codesLine = implode(' ', $codes);
+        }
+
+        // Get store name for label
+        $storeName = $orderOperation->store->label_order_prefix ?? $storeType->name;
+
+        // Create order ID line
+        $orderIds = [];
+        foreach ($orderOperation->operationItem as $item) {
+            $orderId = self::getOrderIdForStamp($item->orderItem->order, $storeType, false);
+            if (!in_array($orderId, $orderIds)) {
+                $orderIds[] = $orderId;
+            }
+        }
+
+        $orderIdLine = $storeName . ' ' . implode(' ', $orderIds);
+
+        // If order ID line is too long, use shortened version
+        if (strlen($orderIdLine) > 50) {
+            $orderIds = [];
+            foreach ($orderOperation->operationItem as $item) {
+                $orderId = self::getOrderIdForStamp($item->orderItem->order, $storeType, true);
+                if (!in_array($orderId, $orderIds)) {
+                    $orderIds[] = $orderId;
+                }
+            }
+
+            $orderIdLine = $storeName . ' ' . implode(' ', $orderIds);
+        }
+
+        // Add RMA number if present
+        $rma = $orderOperation->rma_number;
+        if (!empty($rma)) {
+            $shipmentDetails['RubberStamp1'] = "RMA {$rma} {$orderIdLine}";
+        } else {
+            $shipmentDetails['RubberStamp1'] = $orderIdLine;
+        }
+
+        // Assign product codes to appropriate rubber stamp fields
+        self::assignProductCodesStamps($codesLine, $shipmentDetails);
+    }
+
+    private static function getOrderIdForStamp($order, $storeType, $shorten = false)
+    {
+        $orderId = $order->order_id;
+
+        // Format order ID based on store type and shorten flag
+        switch (strtolower($storeType->name)) {
+            case 'ebay':
+                return $shorten ? substr($orderId, -8) : $orderId;
+            case 'amazon':
+                return $shorten ? substr($orderId, -5) : $orderId;
+            case 'walmart':
+                return $shorten ? substr($orderId, -6) : $orderId;
+            default:
+                return $shorten ? substr($orderId, -5) : $orderId;
+        }
+    }
+
+    private static function assignProductCodesStamps($codesLine, &$request)
+    {
+        // Split code line if it's too long for a single rubber stamp field
+//        if (strlen($codesLine) <= 50) {
+//            $request['RubberStamp3'] = $codesLine;
+//        }
+        /*if (strlen($codesLine) <= 50) {
+            $request['RubberStamp3'] = $codesLine;
+        } else if (strlen($codesLine) <= 100) {
+            $request['RubberStamp2'] = substr($codesLine, 0, 50);
+            $request['RubberStamp3'] = substr($codesLine, 50);
+        } else if (strlen($codesLine) <= 150) {
+            $request['RubberStamp2'] = substr($codesLine, 0, 50);
+            $request['RubberStamp3'] = substr($codesLine, 50, 50);
+        } else {
+            $request['RubberStamp2'] = substr($codesLine, 0, 50);
+            $request['RubberStamp3'] = substr($codesLine, 50, 50);
+        }*/
+    }
+
 
     public static function cancelOrder($orderOperation, $reason = 'CUSTOMER_REQUESTED_SELLER_TO_CANCEL')
     {
@@ -290,7 +402,7 @@ class OrderOperationUtility
             $errors = self::createLabel($orderOperation);
             if (isset($errors) && !empty($errors)) {
                 Log::error('Error creating label: ' . $errors);
-                return false;
+                throw new \Exception('Error creating label: ' . json_encode($errors));
             }
         }
         $store = $orderOperation->store;
@@ -350,11 +462,8 @@ class OrderOperationUtility
                 Log::info('Walmart ship order response: ' . json_encode($response));
 
                 if (isset($response)) {
-                    Log::info('Walmart Ship order response: ' . json_encode($response));
                     $orderResp = $response['order'];
-                    if (is_array($response['order'])) {
-                        $orderResp = $response['order'][0];
-                    }
+                    Log::info('Walmart Ship order response: ' . json_encode($orderResp));
                     if (isset($orderResp) && isset($orderResp['purchaseOrderId']) && $orderResp['purchaseOrderId'] == $orderOperation->order->purchase_order_id) {
                         Log::info('Walmart ship order successful: ' . json_encode($orderResp));
                         $orderOperation->update(['status' => OrderOperationStatus::MarkAsShipped]);
@@ -432,6 +541,7 @@ class OrderOperationUtility
             'phone' => $shipAddress->phone,
             'company' => $shipAddress->company
         ];
+
     }
 
     /**
@@ -444,7 +554,7 @@ class OrderOperationUtility
             return [];
         }
         return [
-            'name' => $orderOperation->order->customerAddress->full_name,
+            'name' => (isset($orderOperation->order->customerAddress) && $orderOperation->order->customerAddress->full_name != '' ) ? $orderOperation->order->customerAddress->full_name : $orderOperation->order->customer->full_name,
             'address1' => $orderOperation->order->customerAddress->address_line_1,
             'address2' => $orderOperation->order->customerAddress->address_line_2 ?? '',
             'city' => $orderOperation->order->customerAddress->city,

@@ -11,9 +11,13 @@ use App\Jobs\FetchWalmartOrdersJob;
 use App\Jobs\SubmitShopifyProductsJob;
 use App\Jobs\SyncAllOrderStatusJob;
 use App\Jobs\synccategorytospecification;
+use App\Models\HDMessage;
 use App\Models\Listing;
 use App\Models\ListingFeed;
 use App\Models\ListingItem;
+use App\Models\Message;
+use App\Models\Order;
+use App\Models\OrderOperation;
 use App\Models\Store;
 use App\Models\StoreMessageAccount;
 use App\Services\Auth\GoogleShoppingAuthService;
@@ -25,11 +29,15 @@ use App\Services\Marketplace\Service\MagentoService;
 use App\Services\Marketplace\Service\ShopifyService;
 use App\Services\Marketplace\Service\WalmartService;
 use App\Utils\EmailMessageUtility;
+use App\Utils\EndicialabelService;
+use App\Utils\order\OrderOperationUtility;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Log;
 use App\Constants\FeedStatus;
+use Tests\Utils\order\OrderOperationUtilityTest;
+use Illuminate\Support\Str;
 
 class HomeController extends Controller
 {
@@ -43,7 +51,32 @@ class HomeController extends Controller
 
     public function testfunction(){
 
-        /*$smtpConfig = [
+        /*$requestId = (string) Str::uuid();
+        $data = [
+            'requesterId' => 'Iweb',
+            'accountId' => '1257538',
+            'requestId' => $requestId,
+            'passPhrase' => 'Ag7ycm1274r2!a8hser2m',
+            'transaction_id' => '431030',
+            'pic_no' => '9400150105496000076315',
+        ];
+        $endicia = new EndicialabelService();
+        $result = $endicia->cancelLabel($data);
+        echo '<pre>';
+        print_r($result);
+        echo '</pre>';
+        echo 'here'; die;*/
+
+        //$orderOperation = OrderOperation::with('order', 'store', 'store.storeType', 'operationItem', 'operationItem.orderItem', 'carrier', 'carrierService','shippingPackage','shipFrom')->where('id', 'bf9525a0-27f3-4ea6-87be-9db88bfda601')->first();
+        //Log::info('Order Operation:'.json_encode($orderOperation));
+        /*echo '<pre>';
+        print_r($orderOperation);
+        echo '</pre>';die;*/
+       // $utility = new OrderOperationUtility();
+        //$utility->createLabel($orderOperation);
+
+
+        $smtpConfig = [
 //            'host' => 'smtp.gmail.com',
 //            'port' => 587,
 //            'encryption' => 'tls',
@@ -62,7 +95,82 @@ class HomeController extends Controller
         ];
 
         $connector = new EmailMessageUtility($smtpConfig, $imapConfig);
-        $emails = $connector->fetchEmails();*/
+        $receiveEmails = $connector->fetchEmails();
+
+
+        if(count($receiveEmails ?? []) > 0){
+            foreach($receiveEmails as $email){
+
+                $order_id = $related_order_id = $po_no = $store_id = $reason = $customer_id = '';
+                if(isset($email['parsedData']) && !empty($email['parsedData'])){
+                    if(isset($email['parsedData']['customer_order_number'])){
+                        $related_order_id = $email['parsedData']['customer_order_number'];
+                        $orderDetail = Order::with('customer')->where('order_id',trim($related_order_id))->first();
+                        if($orderDetail){
+                            $order_id = $orderDetail->id;
+                            $store_id = $orderDetail->store_id;
+                            $customer_id = isset($orderDetail->customer) ? $orderDetail->customer->id : '';
+                        }
+                    }
+
+                    if(isset($email['parsedData']['purchase_order_number'])){
+                        $po_no = $email['parsedData']['purchase_order_number'];
+                    }
+
+                    if(isset($email['parsedData']['reason'])){
+                        $reason = $email['parsedData']['reason'];
+                    }
+
+
+                }
+                $ticketData = [
+                    'ticket_type_id' => 1,
+                    'ticket_email' => $email['from'],
+                    'status' => 1,
+                    'related_order_id' => html_entity_decode($related_order_id),
+                    'subject' => $email['subject'],
+                    'message_id' => 1,
+                    'notes' => $email['body'],
+                    'reference_code' => 1,
+                    'related_order_operation_id' => 1,
+                    'order_id' => $order_id,
+                    'store_id' => $store_id,
+                    'ticket_date' => date('Y-m-d H:i:s'),
+                    'ticket_code' => 1,
+                    'message_read' => 0,
+                    'replies' => 0,
+                    'important' => 0,
+                    'customer_merge_status' => 0,
+                    'ticket_user_id' => $customer_id,
+                    'sku' => 0,
+                    'related_listing_item_id' => 0,
+                ];
+
+                $hd_ticket = Message::updateOrCreate([
+                    'ticket_email' => $email['from'],
+                ],$ticketData);
+
+                if(isset($hd_ticket->id)) {
+                    $hdMessageData = [
+                        'ticket_id' => $hd_ticket->id,
+                        'subject' => $email['subject'],
+                        'message_date' => $email['date'],
+                        'to_' => $email['to'],
+                        'cc' => $email['cc'],
+                        'bcc' => $email['bcc'],
+                        'message_id' => '',
+                        'messaging_account_id' => 'bea29234-1700-c078-9a74-13b52b47e85a',
+                        'from_email' => $email['from'],
+                        'from_name' => $email['name'],
+                        'message' => $email['body'],
+                        'in_reply_to' => '',
+                        'draft' => 0
+                    ];
+
+                    $hd_ticket = HDMessage::create($hdMessageData);
+                }
+            }
+        }
         //dd($emails);
 
         /*$stores = Store::select('store.*')->join('store_type', 'store_type.id', '=', 'store.store_type_id')->where('store_type.code', 'shopify')->get();
@@ -129,14 +237,14 @@ class HomeController extends Controller
         echo '</pre>';die;*/
 
 
-        Bus::chain([
+        /*Bus::chain([
             //new SubmitShopifyProductsJob(),
             //new synccategorytospecification(),
             //new FetchShopifyOrders(),
             //new EbayListingItemSyncJob()
             new SyncAllOrderStatusJob()
             //new FetchWalmartOrdersJob()
-        ])->dispatch();
+        ])->dispatch();*/
     }
 
     public function getListingData(Request $request)

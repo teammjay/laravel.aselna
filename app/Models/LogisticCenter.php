@@ -42,4 +42,9 @@ class LogisticCenter extends Model
     {
         return $this->belongsTo(PostalAddress::class, 'return_address_id');
     }
+
+    public function documents()
+    {
+        return $this->hasMany(ShipmentDocumentSetting::class, 'shipping_from_location_id');
+    }
 }

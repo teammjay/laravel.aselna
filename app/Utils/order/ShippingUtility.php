@@ -15,7 +15,8 @@ class ShippingUtility
     {
         $shippingCarrier = $orderOperation->carrier;
         Log::info('Carrier Id :: ' . $shippingCarrier->id);
-        $carrierAccount = ShippingSettingCarrierAccount::where('shipping_carrier_id', $shippingCarrier->id)->where('shipping_setting_id','a0b5fa27-69cc-06f7-8b6b-eb7fca661ea9')->first();
+       /* $carrierAccount = ShippingSettingCarrierAccount::with('shippingAccount','shippingAccount.shippingSolution')->where('shipping_carrier_id', $shippingCarrier->id)->where('shipping_setting_id','a0b5fa27-69cc-06f7-8b6b-eb7fca661ea9')->first();*/
+        $carrierAccount = ShippingSettingCarrierAccount::with('shippingAccount','shippingAccount.shippingSolution')->where('shipping_carrier_id', $shippingCarrier->id)->where('shipping_account_id','6af8e570-2505-ebab-a60f-3a7f0a5e8da6')->first();
         if (!isset($carrierAccount)) {
             return 'Shipping Account is not assigned for ' . $shippingCarrier->name . '. Please assign an active shipping account for this carrier.';
         }
