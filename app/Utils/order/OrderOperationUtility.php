@@ -97,9 +97,10 @@ class OrderOperationUtility
             return $errorMessages;
         }
 
-        $shippingDocumentCreator =  new ShipmentDocumentsCreator($orderOperation);
-        $imageFormat = $shippingDocumentCreator->getLabelFormat();
-        $rotate = $shippingDocumentCreator->getImageRotate();
+//        $shippingDocumentCreator =  new ShipmentDocumentsCreator($orderOperation);
+//        $imageFormat = $shippingDocumentCreator->getLabelFormat();
+//        $rotate = $shippingDocumentCreator->getImageRotate();
+//        Log::info('Image format for label: ' . $imageFormat);
 
         $operation_type = $orderOperation->operation_type;
         $shipFrom = $orderOperation->shipFrom;
@@ -158,7 +159,7 @@ class OrderOperationUtility
 
         $shipmentDetails['ImageRotation'] = null;
 
-        $shipmentDetails['labelFormat'] = 'ZPLII';
+        $shipmentDetails['labelFormat'] = 'PDF';
 
         $shipmentDetails['returnAddress'] = [
             'address1' => '590 Hatton Ln',
@@ -169,10 +170,6 @@ class OrderOperationUtility
         ];
 
         self::setRubberStampInfo($orderOperation, $shipmentDetails);
-
-        /*echo '<pre>';
-        print_r($shipmentDetails);
-        echo '</pre>';die;*/
 
         Log::info('Shipment details for label creation: ' . json_encode($shipmentDetails));
 
@@ -185,7 +182,7 @@ class OrderOperationUtility
             return [];
         } else {
             Log::error('Error creating label for order operation: ' . $orderOperation->id . ' - ' . json_encode($response));
-            return isset($response['errors']) ? $response['errors'] : ['Error creating label.'];
+            return $response['errors'] ?? ['Error creating label.'];
         }
     }
 
@@ -280,9 +277,9 @@ class OrderOperationUtility
     private static function assignProductCodesStamps($codesLine, &$request)
     {
         // Split code line if it's too long for a single rubber stamp field
-        if (strlen($codesLine) <= 50) {
-            $request['RubberStamp3'] = $codesLine;
-        }
+//        if (strlen($codesLine) <= 50) {
+//            $request['RubberStamp3'] = $codesLine;
+//        }
         /*if (strlen($codesLine) <= 50) {
             $request['RubberStamp3'] = $codesLine;
         } else if (strlen($codesLine) <= 100) {
@@ -465,11 +462,8 @@ class OrderOperationUtility
                 Log::info('Walmart ship order response: ' . json_encode($response));
 
                 if (isset($response)) {
-                    Log::info('Walmart Ship order response: ' . json_encode($response));
                     $orderResp = $response['order'];
-                    if (is_array($response['order'])) {
-                        $orderResp = $response['order'][0];
-                    }
+                    Log::info('Walmart Ship order response: ' . json_encode($orderResp));
                     if (isset($orderResp) && isset($orderResp['purchaseOrderId']) && $orderResp['purchaseOrderId'] == $orderOperation->order->purchase_order_id) {
                         Log::info('Walmart ship order successful: ' . json_encode($orderResp));
                         $orderOperation->update(['status' => OrderOperationStatus::MarkAsShipped]);
