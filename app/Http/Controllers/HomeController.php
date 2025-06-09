@@ -147,7 +147,7 @@ class HomeController extends Controller
                 ];
 
                 $hd_ticket = Message::updateOrCreate([
-                    'subject' => $email['subject'],
+                    'ticket_email' => $email['from'],
                 ],$ticketData);
 
                 if(isset($hd_ticket->id)) {

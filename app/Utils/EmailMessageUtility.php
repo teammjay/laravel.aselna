@@ -121,9 +121,9 @@ class EmailMessageUtility
 
             }
 
-           /* echo '<pre>';
+            echo '<pre>';
             print_r($emails);
-            echo '</pre>';die;*/
+            echo '</pre>';die;
             return $emails;
         } catch (Exception $e) {
             /*echo '<pre>';
@@ -144,37 +144,37 @@ class EmailMessageUtility
 
         // Extract Customer Order Number
         if (preg_match('/Customer Order Number:\s*(.+)/', $emailBody, $matches)) {
-            $data['customer_order_number'] = trim($matches[1]);
+            $data['customer_order_number'] = html_entity_decode(str_replace("&nbsp;", "", trim($matches[1])));
         }
 
         // Extract Customer Order Number
         if (preg_match('/Sales Order #:\s*(.+)/', $emailBody, $matches)) {
-            $data['customer_order_number'] = trim($matches[1]);
+            $data['customer_order_number'] = html_entity_decode(str_replace("&nbsp;", "", trim($matches[1])));
         }
 
         // Extract Purchase Order No
         if (preg_match('/Purchase Order No:\s*(.+)/', $emailBody, $matches)) {
-            $data['purchase_order_number'] = trim($matches[1]);
+            $data['purchase_order_number'] = html_entity_decode(str_replace("&nbsp;", "", trim($matches[1])));
         }
 
         // Extract Reason for Contact
         if (preg_match('/Reason for Contact:\s*(.+)/', $emailBody, $matches)) {
-            $data['reason'] = trim($matches[1]);
+            $data['reason'] = html_entity_decode(str_replace("&nbsp;", "", trim($matches[1])));
         }
 
         // Extract Item Name/Number
         if (preg_match('/Item name\/number:\s*(.+)/', $emailBody, $matches)) {
-            $data['item_name'] = trim($matches[1]);
+            $data['item_name'] = html_entity_decode(str_replace("&nbsp;", "", trim($matches[1])));
         }
 
         // Extract Item ID
         if (preg_match('/Item ID:\s*(.+)/', $emailBody, $matches)) {
-            $data['item_id'] = trim($matches[1]);
+            $data['item_id'] = html_entity_decode(str_replace("&nbsp;", "", trim($matches[1])));
         }
 
         // Extract Agent Message
         if (preg_match('/Agent message:\s*(.+)/', $emailBody, $matches)) {
-            $data['agent_message'] = trim($matches[1]);
+            $data['agent_message'] = html_entity_decode(str_replace("&nbsp;", "", trim($matches[1])));
         }
 
         return $data;

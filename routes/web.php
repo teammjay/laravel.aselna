@@ -293,6 +293,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/messages/edit/{id}', 'update')->name('message.update');
         Route::get('/messages/delete/{id}', 'destroy')->name('message.delete');
         Route::get('/messages/detail/{id}', 'detail')->name('message.detail');
+        Route::post('/messages/searchorder', 'searchOrder')->name('message.searchorder');
     });
 
     Route::controller(PageTypesController::class)->group(function () {
