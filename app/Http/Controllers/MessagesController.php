@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Constants\OrderStatus;
+use App\Models\HdMessageTemplate;
 use App\Models\Message;
 use App\Models\Order;
+use App\Models\OrderOperation;
 use App\Models\Store;
 use Illuminate\Http\Request;
 use App\Services\DataTable\DataTableService;
@@ -141,7 +143,8 @@ class MessagesController extends Controller
 
     public function detail(string $id)
     {
-        return view('messages.detail');
+        $message_template = HdMessageTemplate::all();
+        return view('messages.detail', compact('message_template'));
     }
 
     public function searchOrder(Request $request){
@@ -150,18 +153,20 @@ class MessagesController extends Controller
 
         if($order_id){
 
-            $orderDetail = Order::with('orderItem','orderItem.product','orderItem.product.image')->where('order_id',$order_id)->first();
+            $orderDetail = Order::with('orderItem','orderItem.product','orderItem.product.image','customer','customerAddress')->where('order_id',$order_id)->first();
             /*echo '<pre>';
             print_r($orderDetail);
             echo '</pre>';die;*/
 
             if($orderDetail){
+                $orderOperation = OrderOperation::with('carrier')->where('order_id',$orderDetail->id)->first();
                 $data['items'] = view('messages.order_items', ['orderDetail' => $orderDetail])->render();
                 $data['orderId'] = $orderDetail->order_id;
                 $data['orderDate'] = $orderDetail->order_date;
                 $data['orderStatus'] = OrderStatus::getOrderStatusName($orderDetail->order_status);
                 $data['orderTotal'] = $orderDetail->order_total;
                 $data['orderPOId'] = $orderDetail->purchase_order_id;
+                $data['orderOperation'] = view('messages.order_operation', ['orderDetail' => $orderDetail,'orderOperation' => $orderOperation])->render();
 
                 return response()->json([
                     'success' => true,
@@ -169,5 +174,22 @@ class MessagesController extends Controller
                 ]);
             }
         }
+    }
+
+    public function getMessageTemplate(Request $request){
+        $template_id = $request->input('template_id');
+        if($template_id){
+            $templateDetail = HdMessageTemplate::findOrFail($template_id);
+            if($templateDetail){
+                return response()->json([
+                    'success' => true,
+                    'templateCode' => $templateDetail->template_code
+                ]);
+            }
+        }
+
+        return response()->json([
+            'success' => false
+        ]);
     }
 }

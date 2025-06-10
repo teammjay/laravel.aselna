@@ -294,6 +294,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/messages/delete/{id}', 'destroy')->name('message.delete');
         Route::get('/messages/detail/{id}', 'detail')->name('message.detail');
         Route::post('/messages/searchorder', 'searchOrder')->name('message.searchorder');
+        Route::post('/messages/getmessagetemplate', 'getMessageTemplate')->name('message.getmessagetemplate');
     });
 
     Route::controller(PageTypesController::class)->group(function () {

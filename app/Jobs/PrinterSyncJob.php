@@ -5,6 +5,7 @@ namespace App\Jobs;
 use App\Models\Printer;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Support\Facades\DB;
 
 class PrinterSyncJob implements ShouldQueue
 {

@@ -162,10 +162,14 @@ class FetchShopifyOrders implements ShouldQueue
 
                                 Log::info("Data " . json_encode($customer_address_data));
 
-                                $customer_address = CustomerAddress::updateOrCreate([
+                                CustomerAddress::updateOrCreate([
                                     'customer_id' => $customer_detail->id,
                                     'address_combined' => $order['shippingAddress']['address1'] . ' ' . $order['shippingAddress']['address2'],
                                 ], $customer_address_data);
+
+                                $customer_address = CustomerAddress::where('customer_id', $customer_detail->id)
+                                    ->where('address_combined', $order['shippingAddress']['address1'] . ' ' . $order['shippingAddress']['address2'])
+                                    ->first();
 
                                 /* end - add customer shipping address*/
 

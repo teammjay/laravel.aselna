@@ -68,4 +68,12 @@ class OrderOperationStatus
         self::PENDING => 'Pending'
 
     ];
+
+    public static function getOrderStatusName($orderStatusId)
+    {
+        if (!array_key_exists($orderStatusId, self::names)) {
+            return null;
+        }
+        return self::names[$orderStatusId];
+    }
 }

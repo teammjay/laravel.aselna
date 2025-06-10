@@ -64,7 +64,12 @@
                                                 </div>
                                                 <div class="col-md-8">
                                                     <select class="form-control" name="message_template" id="message_template">
-
+                                                        <option value=""></option>
+                                                        @if(count($message_template ?? []) > 0)
+                                                            @foreach($message_template as $temp)
+                                                                <option value="{{ $temp->id }}">{{ $temp->name }}</option>
+                                                            @endforeach
+                                                        @endif
                                                     </select>
                                                 </div>
                                             </div>
@@ -190,7 +195,7 @@
                 <div class="card-header">
                     Operations
                 </div>
-                <div class="card-body">
+                <div class="card-body" id="order_operation">
 
                 </div>
             </div>
@@ -222,7 +227,6 @@
                     },
 
                     success: function(data) {
-                        console.log();
                         if(data.success){
 
                             $('#order_item_table').html(data.orderDetail.items);
@@ -230,6 +234,7 @@
                             $('#order_status').val(data.orderDetail.orderStatus);
                             $('#order_total').val(data.orderDetail.orderTotal);
                             $('#purchase_order_id').val(data.orderDetail.orderPOId);
+                            $('#order_operation').html(data.orderDetail.orderOperation);
                         }
                     },
                     error: function (xhr) {
@@ -239,6 +244,33 @@
                     }
                 });
             });
+
+            $(document).on('change','#message_template',function () {
+                var template_id = $(this).val();
+                $.ajax({
+                    type: "POST",
+                    url: "{{ route('message.getmessagetemplate') }}",
+                    data: {
+                        template_id: template_id
+                    },
+                    headers: {
+                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                    },
+
+                    success: function(data) {
+                        if(data.success){
+
+                            $('#message_to_send').html(data.templateCode);
+                        }
+                    },
+                    error: function (xhr) {
+                    },
+                    complete: function () {
+                        $("#ajax-preloader").hide();
+                    }
+                });
+            });
+
         });
     </script>
 @stop
