@@ -337,9 +337,22 @@ class ShipmentsController extends Controller
 
         $id = $request->input('id');
         try {
-            $address = CustomerAddress::findOrFail($id);
+            $address = CustomerAddress::with('customer')->where('id',$id)->first();
             $request['address_combined'] = $address_combined = $request['address_line_1'] . ' ' . $request['address_line_2'];
-            $address_combined = $address_combined . ' ' . $request['city'] . ' ' . $request['state'] . ' ' . $address->country . ' ' . $request['zip_code'];
+            $fullname = $address1 = $address2 = '';
+            if(isset($address->customer)){
+                $fullname = $address->customer->full_name.', <br>';
+            }
+
+            if(isset($request['address_line_1']) && $request['address_line_1'] != ''){
+                $address1 = $request['address_line_1'].',<br>';
+            }
+
+            if(isset($request['address_line_2']) && $request['address_line_2'] != ''){
+                $address2 = $request['address_line_2'].',<br>';
+            }
+
+            $address_combined = $fullname.$address1.$address2. $request['city'] . ', ' . $request['state'] . ' ' . $request['zip_code'];
             $address->update($request->except(['phone', 'id']));
             return response()->json(['success' => true, 'address' => $address_combined, 'message' => 'Data saved successfully!']);
 
