@@ -171,7 +171,10 @@
                                            data-id="{{ $shipmentDetail->order->customerAddress->id }}">
                                             {{ $shipmentDetail->order->customer->first_name }} {{ $shipmentDetail->order->customer->last_name }}<br>
                                             {{ $shipmentDetail->order->customerAddress->address_line_1 }},<br>
-                                            {{ ($shipmentDetail->order->customerAddress->address_line_2 != '') ? $shipmentDetail->order->customerAddress->address_line_2.',<br>' : '' }}                                        {{$shipmentDetail->order->customerAddress->city}},
+                                            @if($shipmentDetail->order->customerAddress->address_line_2 != '')
+                                                {{ $shipmentDetail->order->customerAddress->address_line_2 }},<br>
+                                            @endif
+                                            {{$shipmentDetail->order->customerAddress->city}},
                                             {{$shipmentDetail->order->customerAddress->state}} {{$shipmentDetail->order->customerAddress->zip}}
                                         </a>
                                     @endif

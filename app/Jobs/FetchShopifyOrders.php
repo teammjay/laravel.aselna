@@ -146,6 +146,7 @@ class FetchShopifyOrders implements ShouldQueue
 
                                 /* start - add customer shipping address*/
                                 $customer_address_data = [
+                                    'customer_id' => $customer_detail->id,
                                     'first_name' => isset($order['shippingAddress']['firstName']) ? $order['shippingAddress']['firstName'] : NULL,
                                     'last_name' => isset($order['shippingAddress']['lastName']) ? $order['shippingAddress']['lastName'] : NULL,
                                     'address_line_1' => $order['shippingAddress']['address1'],
@@ -161,20 +162,26 @@ class FetchShopifyOrders implements ShouldQueue
 
                                 Log::info("Data " . json_encode($customer_address_data));
 
-                                $customer_address = CustomerAddress::updateOrCreate([
+                                CustomerAddress::updateOrCreate([
                                     'customer_id' => $customer_detail->id,
                                     'address_combined' => $order['shippingAddress']['address1'] . ' ' . $order['shippingAddress']['address2'],
                                 ], $customer_address_data);
 
+                                $customer_address = CustomerAddress::where('customer_id', $customer_detail->id)
+                                    ->where('address_combined', $order['shippingAddress']['address1'] . ' ' . $order['shippingAddress']['address2'])
+                                    ->first();
+
                                 /* end - add customer shipping address*/
 
                                 /* start - add customers phone records*/
-                                $customer_phone_data = [
-                                    'customer_id' => $customer_detail->id,
-                                    'phone_no' => $order['phone'],
-                                ];
+                                if(isset($order['phone']) && $order['phone'] != NULL) {
+                                    $customer_phone_data = [
+                                        'customer_id' => $customer_detail->id,
+                                        'phone_no' => $order['phone'],
+                                    ];
 
-                                CustomerPhone::updateOrCreate($customer_phone_data, $customer_phone_data);
+                                    CustomerPhone::updateOrCreate($customer_phone_data, $customer_phone_data);
+                                }
 
                                 /* end - add customers phone records*/
 
@@ -261,7 +268,7 @@ class FetchShopifyOrders implements ShouldQueue
                                             $orderItemData = [
                                                 'title' => $item['name'],
                                                 'order_id' => $order_detail->id,
-                                                'product_id' => isset($product_detail->product_id) ? $product_detail->product_id : '',
+                                                'product_id' => isset($product_detail->product_id) ? $product_detail->product_id : NULL,
                                                 /*'client_id' => '',
                                                 'listing_item_id' => '',*/
                                                 'sku' => $item['sku'],

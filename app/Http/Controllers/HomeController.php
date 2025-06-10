@@ -94,7 +94,7 @@ class HomeController extends Controller
             'password' => 'qbdpyazqodnwsnju',
         ];
 
-        $connector = new EmailMessageUtility($smtpConfig, $imapConfig);
+        /*$connector = new EmailMessageUtility($smtpConfig, $imapConfig);
         $receiveEmails = $connector->fetchEmails();
 
 
@@ -170,7 +170,7 @@ class HomeController extends Controller
                     $hd_ticket = HDMessage::create($hdMessageData);
                 }
             }
-        }
+        }*/
         //dd($emails);
 
         /*$stores = Store::select('store.*')->join('store_type', 'store_type.id', '=', 'store.store_type_id')->where('store_type.code', 'shopify')->get();
@@ -237,14 +237,14 @@ class HomeController extends Controller
         echo '</pre>';die;*/
 
 
-        /*Bus::chain([
+        Bus::chain([
             //new SubmitShopifyProductsJob(),
             //new synccategorytospecification(),
-            //new FetchShopifyOrders(),
+            new FetchShopifyOrders(),
             //new EbayListingItemSyncJob()
-            new SyncAllOrderStatusJob()
+            //new SyncAllOrderStatusJob()
             //new FetchWalmartOrdersJob()
-        ])->dispatch();*/
+        ])->dispatch();
     }
 
     public function getListingData(Request $request)

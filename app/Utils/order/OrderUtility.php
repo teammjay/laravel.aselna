@@ -86,6 +86,7 @@ class OrderUtility
         ], $customerData);
 
         $customer_address_data = [
+            'customer_id' => $customer_detail->id,
             'address_line_1' => $sorder['shippingInfo']['postalAddress']['address1'],
             'address_line_2' => $sorder['shippingInfo']['postalAddress']['address2'] ?? '',
             'city' => $sorder['shippingInfo']['postalAddress']['city'],
@@ -106,12 +107,14 @@ class OrderUtility
             ->where('address_combined', $sorder['shippingInfo']['postalAddress']['address1'] . ' ' . $sorder['shippingInfo']['postalAddress']['address2'])
             ->first();
 
-        $customer_phone_data = [
-            'customer_id' => $customer_detail->id,
-            'phone_no' => $sorder['shippingInfo']['phone'],
-        ];
+        if(isset($sorder['shippingInfo']['phone']) && $sorder['shippingInfo']['phone'] != null) {
+            $customer_phone_data = [
+                'customer_id' => $customer_detail->id,
+                'phone_no' => $sorder['shippingInfo']['phone'],
+            ];
 
-        CustomerPhone::updateOrCreate($customer_phone_data, $customer_phone_data);
+            CustomerPhone::updateOrCreate($customer_phone_data, $customer_phone_data);
+        }
 
         $orderData = [
             'order_date' => date('Y-m-d H:i:s', $sorder['orderDate'] / 1000),
@@ -296,6 +299,7 @@ class OrderUtility
             $addressLine2 = $addressDetails['contactAddress']['addressLine2'] ?? '';
 
             $customer_address_data = [
+                'customer_id' => $customer_detail->id,
                 'full_name' => $firstname . ' ' . $lastname,
                 'address_line_1' => $addressLine1,
                 'address_line_2' => $addressLine2,
@@ -311,12 +315,14 @@ class OrderUtility
                 'address_combined' => $addressLine1 . ' ' . $addressLine2,
             ], $customer_address_data);
 
-            $customer_phone_data = [
-                'customer_id' => $customer_detail->id,
-                'phone_no' => $addressDetails['primaryPhone']['phoneNumber'],
-            ];
+            if(isset($addressDetails['primaryPhone']['phoneNumber']) && $addressDetails['primaryPhone']['phoneNumber'] != null) {
+                $customer_phone_data = [
+                    'customer_id' => $customer_detail->id,
+                    'phone_no' => $addressDetails['primaryPhone']['phoneNumber'],
+                ];
 
-            CustomerPhone::updateOrCreate($customer_phone_data, $customer_phone_data);
+                CustomerPhone::updateOrCreate($customer_phone_data, $customer_phone_data);
+            }
         }
 
         if ($sorder['fulfillmentStartInstructions']) {
@@ -325,6 +331,7 @@ class OrderUtility
             $addressLine1 = $shipTo['contactAddress']['addressLine1'] ?? '';
             $addressLine2 = $shipTo['contactAddress']['addressLine2'] ?? '';
             $customer_address_data = [
+                'customer_id' => $customer_detail->id,
                 'full_name' => $full_name,
                 'address_line_1' => $addressLine1,
                 'address_line_2' => $addressLine2,
@@ -341,12 +348,14 @@ class OrderUtility
                 'address_combined' => $addressLine1 . ' ' . $addressLine2,
             ], $customer_address_data);
 
-            $customer_phone_data = [
-                'customer_id' => $customer_detail->id,
-                'phone_no' => $shipTo['primaryPhone']['phoneNumber'],
-            ];
+            if(isset($shipTo['primaryPhone']['phoneNumber']) && $shipTo['primaryPhone']['phoneNumber'] != null) {
+                $customer_phone_data = [
+                    'customer_id' => $customer_detail->id,
+                    'phone_no' => $shipTo['primaryPhone']['phoneNumber'],
+                ];
 
-            CustomerPhone::updateOrCreate($customer_phone_data, $customer_phone_data);
+                CustomerPhone::updateOrCreate($customer_phone_data, $customer_phone_data);
+            }
         }
 
         $orderData = [

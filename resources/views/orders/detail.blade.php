@@ -198,7 +198,9 @@
                                         <a href="javascript:void(0);" class="text-blue" id="edit_address" data-id="{{ $orderDetail->customerAddress->id }}">
                                             {{ $orderDetail->customer->first_name }} {{ $orderDetail->customer->last_name }}<br>
                                             {{ $orderDetail->customerAddress->address_line_1 }},<br>
-                                            {{ ($orderDetail->customerAddress->address_line_2 != '') ? $orderDetail->customerAddress->address_line_2.',<br> ' : '' }}
+                                            @if($orderDetail->customerAddress->address_line_2 != '')
+                                                {{ $orderDetail->customerAddress->address_line_2 }},<br>
+                                            @endif
                                             {{ $orderDetail->customerAddress->city}}, {{$orderDetail->customerAddress->state}} {{$orderDetail->customerAddress->zip}}
                                         </a>
                                     @endif
