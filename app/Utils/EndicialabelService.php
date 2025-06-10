@@ -24,8 +24,9 @@ class EndicialabelService
         $this->client = new Client();
     }
 
-    public function createLabel(array $request,$orderOperationId)
+    public function createLabel(array $request, $orderOperationId)
     {
+        Log::info('Creating Endicia label with request: ' . json_encode($request));
         $xmlString = $this->buildXmlRequest($request);
         Log::info('Endicia Label Request XML: ' . $xmlString);
 
@@ -54,7 +55,6 @@ class EndicialabelService
 
     public function parseSoapResponse($response, $shippingDetail, $orderOperationId)
     {
-
         libxml_use_internal_errors(true);
         $xml = simplexml_load_string($response);
 
@@ -76,7 +76,6 @@ class EndicialabelService
         $orderOperation->save();
 
         /* create transaction entry*/
-
         $address = $shippingDetail['fromAddress']['name'].' '.$shippingDetail['fromAddress']['address1'].' '.$shippingDetail['fromAddress']['address2'].' '.$shippingDetail['fromAddress']['city'].' '.$shippingDetail['fromAddress']['state'].' '.$shippingDetail['fromAddress']['postalCode'].' '.$shippingDetail['fromAddress']['country'];
         $transactionData = [
             'shipping_account_id' => $shippingDetail['accountId'],
@@ -95,7 +94,13 @@ class EndicialabelService
 
         try {
             $imageData = base64_decode($base64Image);
-            file_put_contents(storage_path('app/public/labels/' . $trackingNumber . '.png'), $imageData);
+            $imagePath = storage_path('app/public/labels/' . $trackingNumber . '.png');
+            file_put_contents($imagePath, $imageData);
+
+            if (isset($shippingDetail['RubberStamp3'])) {
+                $this->generateStampImage($imagePath,$shippingDetail['RubberStamp3']);
+            }
+
 
         } catch (Exception $e) {
             Log::error('Error saving label image: ' . $e->getMessage());
@@ -109,7 +114,48 @@ class EndicialabelService
         ];
     }
 
-    private function buildXmlRequest(array $shipmentDetails)
+    private function generateStampImage($imagePath, $text)
+    {
+        try {
+            // Load the original image
+            $image = imagecreatefrompng($imagePath);
+            if (!$image) {
+                throw new Exception('Failed to load image');
+            }
+
+            // Get image dimensions
+            $width = imagesx($image);
+            $height = imagesy($image);
+
+            // Set up text properties
+            $textColor = imagecolorallocate($image, 0, 0, 0); // Black text
+            $fontSize = 20;
+            $fontFile = storage_path('app/fonts/arial.ttf');
+            $x = 50;
+            $y = $height - 90;
+
+            if (!file_exists($fontFile)) {
+                Log::info('Custom font file not found, using default font.');
+                imagestring($image, 5, $x, $y, $text, $textColor);
+            } else {
+                Log::info('Custom font file found, using default font.');
+
+                imagettftext($image, $fontSize, 0, $x, $y, $textColor, $fontFile, $text);
+            }
+
+            imagepng($image, $imagePath);
+            imagedestroy($image);
+
+            Log::info('Added text directly to label image: ' . $imagePath);
+            return $imagePath;
+        } catch (Exception $e) {
+            Log::error('Error editing label image: ' . $e->getMessage());
+            throw $e;
+        }
+    }
+
+    private
+    function buildXmlRequest(array $shipmentDetails)
     {
         $xml = new \SimpleXMLElement('<?xml version="1.0" encoding="utf-8"?><soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"/>');
         $body = $xml->addChild('soap:Body', null, 'http://schemas.xmlsoap.org/soap/envelope/');
@@ -183,7 +229,8 @@ class EndicialabelService
         return $xml->asXML();
     }
 
-    public function cancelLabel(array $request){
+    public function cancelLabel(array $request)
+    {
         $xmlString = $this->buildCancelXmlRequest($request);
         Log::info('Endicia Cancel Label Request XML: ' . $xmlString);
 
@@ -236,7 +283,8 @@ class EndicialabelService
         }
     }
 
-    private function buildCancelXmlRequest(array $labelDetails){
+    private function buildCancelXmlRequest(array $labelDetails)
+    {
         $xml = new \SimpleXMLElement('<?xml version="1.0" encoding="utf-8"?><soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"/>');
         $body = $xml->addChild('soap:Body', null, 'http://schemas.xmlsoap.org/soap/envelope/');
         $request = $body->addChild('GetRefund', null, 'www.envmgr.com/LabelService');
