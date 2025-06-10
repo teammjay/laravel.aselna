@@ -196,7 +196,10 @@
                                 <div class="col-md-9">
                                     @if(isset($orderDetail->customerAddress))
                                         <a href="javascript:void(0);" class="text-blue" id="edit_address" data-id="{{ $orderDetail->customerAddress->id }}">
-                                            {{ $orderDetail->customer->first_name }} {{ $orderDetail->customer->last_name }} {{ $orderDetail->customerAddress->address_combined }} {{$orderDetail->customerAddress->city}} {{$orderDetail->customerAddress->state}} {{$orderDetail->customerAddress->zip}}
+                                            {{ $orderDetail->customer->first_name }} {{ $orderDetail->customer->last_name }}<br>
+                                            {{ $orderDetail->customerAddress->address_line_1 }},<br>
+                                            {{ ($orderDetail->customerAddress->address_line_2 != '') ? $orderDetail->customerAddress->address_line_2.',<br> ' : '' }}
+                                            {{ $orderDetail->customerAddress->city}}, {{$orderDetail->customerAddress->state}} {{$orderDetail->customerAddress->zip}}
                                         </a>
                                     @endif
                                 </div>

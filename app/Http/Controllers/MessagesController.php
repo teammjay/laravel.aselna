@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Constants\OrderStatus;
 use App\Models\Message;
+use App\Models\Order;
 use App\Models\Store;
 use Illuminate\Http\Request;
 use App\Services\DataTable\DataTableService;
@@ -140,5 +142,32 @@ class MessagesController extends Controller
     public function detail(string $id)
     {
         return view('messages.detail');
+    }
+
+    public function searchOrder(Request $request){
+
+        $order_id = $request->input('order_id');
+
+        if($order_id){
+
+            $orderDetail = Order::with('orderItem','orderItem.product','orderItem.product.image')->where('order_id',$order_id)->first();
+            /*echo '<pre>';
+            print_r($orderDetail);
+            echo '</pre>';die;*/
+
+            if($orderDetail){
+                $data['items'] = view('messages.order_items', ['orderDetail' => $orderDetail])->render();
+                $data['orderId'] = $orderDetail->order_id;
+                $data['orderDate'] = $orderDetail->order_date;
+                $data['orderStatus'] = OrderStatus::getOrderStatusName($orderDetail->order_status);
+                $data['orderTotal'] = $orderDetail->order_total;
+                $data['orderPOId'] = $orderDetail->purchase_order_id;
+
+                return response()->json([
+                    'success' => true,
+                    'orderDetail' => $data
+                ]);
+            }
+        }
     }
 }

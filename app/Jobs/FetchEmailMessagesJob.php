@@ -69,15 +69,16 @@ class FetchEmailMessagesJob implements ShouldQueue
                                     if(count($receiveEmails ?? []) > 0){
                                         foreach($receiveEmails as $email){
                                             /* create ticket*/
-                                            $order_id = $related_order_id = $po_no = $store_id = $reason = $customer_id = '';
+                                            $order_id = $related_order_id = $po_no = $store_id = $reason = $customer_id = $order_operation_id = NULL;
                                             if(isset($email['parsedData']) && !empty($email['parsedData'])){
                                                 if(isset($email['parsedData']['customer_order_number'])){
                                                     $related_order_id = html_entity_decode($email['parsedData']['customer_order_number']);
-                                                    $orderDetail = Order::with('customer')->where('order_id',trim($related_order_id))->first();
+                                                    $orderDetail = Order::with('customer','orderOperation')->where('order_id',trim($related_order_id))->first();
                                                     if($orderDetail){
                                                         $order_id = $orderDetail->id;
                                                         $store_id = $orderDetail->store_id;
                                                         $customer_id = isset($orderDetail->customer) ? $orderDetail->customer->id : '';
+                                                        $order_operation_id = isset($orderDetail->orderOperation) ? $orderDetail->orderOperation->id : '';
                                                     }
                                                 }
 
@@ -100,7 +101,7 @@ class FetchEmailMessagesJob implements ShouldQueue
                                                 'message_id' => 1,
                                                 'notes' => $email['body'],
                                                 'reference_code' => 1,
-                                                'related_order_operation_id' => 1,
+                                                'related_order_operation_id' => $order_operation_id,
                                                 'order_id' => $order_id,
                                                 'store_id' => $store_id,
                                                 'ticket_date' => date('Y-m-d H:i:s'),
@@ -114,9 +115,14 @@ class FetchEmailMessagesJob implements ShouldQueue
                                                 'related_listing_item_id' => 0,
                                             ];
 
-                                            $hd_ticket = Message::updateOrCreate([
-                                                'subject' => $email['subject'],
-                                            ],$ticketData);
+                                            $ticketDetail = Message::where('ticket_email',$email['from'])->first();
+
+                                            if($ticketDetail){
+                                                $hd_ticket = $ticketDetail;
+                                            }else{
+                                                $hd_ticket = Message::create($ticketData);
+                                            }
+
 
                                             if(isset($hd_ticket->id)) {
                                                 $hdMessageData = [
@@ -124,8 +130,8 @@ class FetchEmailMessagesJob implements ShouldQueue
                                                     'subject' => $email['subject'],
                                                     'message_date' => $email['date'],
                                                     'to_' => $email['to'],
-                                                    'cc' => $email['cc'],
-                                                    'bcc' => $email['bcc'],
+                                                    'cc' => isset($email['cc']) ? $email['cc'] : NULL,
+                                                    'bcc' => isset($email['bcc']) ? $email['bcc'] : NULL,
                                                     'message_id' => '',
                                                     'messaging_account_id' => $maccount->id,
                                                     'from_email' => $email['from'],
