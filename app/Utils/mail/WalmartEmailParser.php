@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Utils\email;
+namespace App\Utils\mail;
 
 
 use App\Constants\HdTicketTypeCode;
@@ -8,10 +8,11 @@ use App\Constants\PrintStatus;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
-class WalmartEmailParser
+class WalmartEmailParser extends ReceivedMessageParser
 {
-    protected $orderId;
+    protected $customer_order_number;
     protected $message;
+    protected $parsedMessage;
     protected static $escalationEmails = ['help@walmart.com'];
     protected static $marketplaceEmails = ['newsletters@em.walmart.com'];
     protected static $ticketTypeMap = [
@@ -22,18 +23,19 @@ class WalmartEmailParser
         'request refund' => HdTicketTypeCode::ORDER_REFUND_REQUEST,
         'request a refund' => HdTicketTypeCode::ORDER_REFUND_REQUEST,
         'track order' => HdTicketTypeCode::SHIPPING,
-        'ask question' => HdTicketTypeCode::ORDER_INFORMATION,
+        'ask a question' => HdTicketTypeCode::ORDER_INFORMATION,
         'feedback' => HdTicketTypeCode::FEEDBACK,
         'escalation' => HdTicketTypeCode::ESCALATION,
-        'where is my order,' => HdTicketTypeCode::ORDER_INFORMATION,
+        'where is my order' => HdTicketTypeCode::ORDER_INFORMATION,
     ];
     const PREFIXES = [
         'customer_order_number' => 'Customer Order Number:',
+        'purchase_order_number' => 'Purchase Order No:',
         'item_id' => 'Item ID:',
         'item_title' => 'Item name/number:',
         'message' => 'Customer Message:',
         'note' => 'What you need to do now:',
-        'ref_id' => 'RefID:',
+        'ref_id' => 'Ref ID:',
     ];
 
     const ESCALATION_LABELS = ['this is an escalation', 'as an escalation'];
@@ -56,7 +58,8 @@ class WalmartEmailParser
     {
         $subject = strtolower($this->message->subject->first() ?? '');
         $from = strtolower($this->message->getFrom()[0]->mail ?? '');
-
+        //echo $subject.'<br>';
+       // echo $from;
         if (in_array($from, self::$escalationEmails)) {
             $isTransferred = str_starts_with($subject, 'confirmation of customer transferred to your team');
             $parsed = $this->parseEscalation($text, $isTransferred);
@@ -69,12 +72,16 @@ class WalmartEmailParser
         if (str_starts_with($subject, 'message from walmart.com customer:')) {
             $remaining = trim(substr($subject, strlen('message from walmart.com customer:')));
             $parts = explode(',', $remaining);
-
+            /*echo '<pre>';
+            print_r($parts);
+            echo '</pre>';*/
             if (count($parts) === 2) {
                 $ticketTypeKey = trim(strtolower($parts[0]));
                 $this->ticketTypeCode = self::$ticketTypeMap[$ticketTypeKey] ?? null;
+                $this->addEntity(trim($this->ticketTypeCode), 'ticket_type_id');
                 $this->addEntity(trim($parts[1]), 'order_id');
             }
+
 
             return $this->parseCustomerMessage($text);
         }
@@ -84,13 +91,13 @@ class WalmartEmailParser
             return parent::getMessage($text);
         }
 
-        $parsedText = parent::getMessage($text);
+        /*$parsedText = parent::getMessage($text);
         $this->processExtractors($parsedText);
         if ($subject) {
             $this->processExtractors($subject);
         }
 
-        return $parsedText;
+        return $parsedText;*/
     }
 
     protected function parseEscalation($text, $transferred)
@@ -191,21 +198,35 @@ class WalmartEmailParser
         $itemTitle = [];
         $messageStarted = false;
 
+        /*echo '<pre>';
+        echo 'lines';
+        print_r($lines);
+        echo '</pre>';*/
+        
+
         foreach ($lines as $line) {
             if (str_starts_with($line, self::PREFIXES['customer_order_number'])) {
-                $this->orderId = trim(substr($line, strlen(self::PREFIXES['customer_order_number'])));
-                $this->addEntity($this->orderId, 'order_id');
+                $this->customer_order_number = trim(substr($line, strlen(self::PREFIXES['customer_order_number'])));
+                $this->addEntity($this->customer_order_number, 'order_id');
+            }elseif (str_starts_with($line, self::PREFIXES['purchase_order_number'])) {
+                $this->purchase_order_number = trim(substr($line, strlen(self::PREFIXES['purchase_order_number'])));
+                $this->addEntity($this->purchase_order_number, 'purchase_order_number');
             } elseif (str_starts_with($line, self::PREFIXES['item_id'])) {
-                $this->itemId = trim(substr($line, strlen(self::PREFIXES['item_id'])));
+                $this->item_id = trim(substr($line, strlen(self::PREFIXES['item_id'])));
+                $this->addEntity($this->item_id, 'item_id');
             } elseif (str_starts_with($line, self::PREFIXES['item_title'])) {
-                $itemTitle[] = trim(substr($line, strlen(self::PREFIXES['item_title'])));
+                $this->item_title = trim(substr($line, strlen(self::PREFIXES['item_title'])));
+                $itemTitle[] = $this->item_title;
+                $this->addEntity($this->item_title, 'item_title');
             } elseif (str_starts_with($line, self::PREFIXES['message'])) {
                 $messageStarted = true;
-                $this->itemTitle = implode(" ", $itemTitle);
+                $this->item_title = implode(" ", $itemTitle);
+                $this->addEntity($this->item_title, 'item_title');
             } elseif (str_starts_with($line, self::PREFIXES['note'])) {
                 $messageStarted = false;
             } elseif (str_starts_with($line, self::PREFIXES['ref_id'])) {
-                $this->referenceId = trim(substr($line, strlen(self::PREFIXES['ref_id'])));
+                $this->reference_id = trim(substr($line, strlen(self::PREFIXES['ref_id'])));
+                $this->addEntity($this->reference_id, 'ref_id');
             } elseif ($messageStarted) {
                 $message[] = $line;
             } elseif (!empty($itemTitle)) {
@@ -213,12 +234,18 @@ class WalmartEmailParser
             }
         }
 
+        /*echo '<pre>';
+        echo 'message';
+        print_r($message);
+        echo '</pre>';*/
+
         $this->parsedMessage = true;
         return implode("\n", $message);
     }
 
+
     protected function addEntity($value, $type)
     {
-        $this->entities[] = new Entity($value, $type);
+        $this->entities[$type] = html_entity_decode(str_replace("&nbsp;", "", trim($value)));;
     }
 }

@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Constants\HdTicketTypeCode;
 use App\Helpers\QueryFilters;
 use App\Jobs\EbayListingItemSyncJob;
 use App\Jobs\FeedGenerationJob;
+use App\Jobs\FetchEmailMessagesJob;
 use App\Jobs\FetchMagentoOrderJob;
 use App\Jobs\FetchShopifyOrders;
 use App\Jobs\FetchWalmartOrdersJob;
@@ -12,12 +14,14 @@ use App\Jobs\SubmitShopifyProductsJob;
 use App\Jobs\SyncAllOrderStatusJob;
 use App\Jobs\synccategorytospecification;
 use App\Models\HDMessage;
+use App\Models\HdTicketType;
 use App\Models\Listing;
 use App\Models\ListingFeed;
 use App\Models\ListingItem;
 use App\Models\Message;
 use App\Models\Order;
 use App\Models\OrderOperation;
+use App\Models\Sequence;
 use App\Models\Store;
 use App\Models\StoreMessageAccount;
 use App\Services\Auth\GoogleShoppingAuthService;
@@ -34,6 +38,7 @@ use App\Utils\order\OrderOperationUtility;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Bus;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Constants\FeedStatus;
 use Tests\Utils\order\OrderOperationUtilityTest;
@@ -94,61 +99,83 @@ class HomeController extends Controller
             'password' => 'qbdpyazqodnwsnju',
         ];
 
-        /*$connector = new EmailMessageUtility($smtpConfig, $imapConfig);
-        $receiveEmails = $connector->fetchEmails();
+        $connector = new EmailMessageUtility($smtpConfig, $imapConfig);
+        $receiveEmails = $connector->fetchEmails('Walmart');
 
-
+        $store = Store::with('storeType')->where('id','0dd4de79-bba1-c47a-a7aa-822e6f015b8e')->first();
+        $store_id = $store->id;
         if(count($receiveEmails ?? []) > 0){
             foreach($receiveEmails as $email){
 
-                $order_id = $related_order_id = $po_no = $store_id = $reason = $customer_id = '';
+                Log::info('Emails :'.json_encode($email));
+                /* create ticket*/
+                $order_id = $related_order_id = $po_no = $reason = $customer_id = $order_operation_id = $reference_code = NULL;
+                $ticket_type_code = HdTicketTypeCode::CUSTOMER_SERVICE;
                 if(isset($email['parsedData']) && !empty($email['parsedData'])){
                     if(isset($email['parsedData']['customer_order_number'])){
-                        $related_order_id = $email['parsedData']['customer_order_number'];
-                        $orderDetail = Order::with('customer')->where('order_id',trim($related_order_id))->first();
+                        $related_order_id = html_entity_decode($email['parsedData']['customer_order_number']);
+                        $orderDetail = Order::with('customer','orderOperation')->where('order_id',trim($related_order_id))->first();
                         if($orderDetail){
                             $order_id = $orderDetail->id;
                             $store_id = $orderDetail->store_id;
-                            $customer_id = isset($orderDetail->customer) ? $orderDetail->customer->id : '';
+                            $customer_id = isset($orderDetail->customer) ? $orderDetail->customer->id : NULL;
+                            $order_operation_id = isset($orderDetail->orderOperation) ? $orderDetail->orderOperation->id : NULL;
                         }
                     }
 
                     if(isset($email['parsedData']['purchase_order_number'])){
-                        $po_no = $email['parsedData']['purchase_order_number'];
+                        $po_no = html_entity_decode($email['parsedData']['purchase_order_number']);
                     }
 
                     if(isset($email['parsedData']['reason'])){
-                        $reason = $email['parsedData']['reason'];
+                        $reason = html_entity_decode($email['parsedData']['reason']);
                     }
 
+                    if(isset($email['parsedData']['ticket_type_id'])){
+                        $ticket_type_code = html_entity_decode($email['parsedData']['ticket_type_id']);
+                    }
 
+                    if(isset($email['parsedData']['reference_id'])){
+                        $reference_code = html_entity_decode($email['parsedData']['reference_id']);
+                    }
                 }
+
+                $ticket_code = $store->short_code.'-'.$this->getNextTicketNumberForStore($store->id);
+                $ticketTypeDetail = HdTicketType::where('code',$ticket_type_code)->first();
                 $ticketData = [
-                    'ticket_type_id' => 1,
+                    'ticket_type_id' => $ticketTypeDetail->id,
                     'ticket_email' => $email['from'],
                     'status' => 1,
-                    'related_order_id' => html_entity_decode($related_order_id),
+                    'related_order_id' => $related_order_id,
                     'subject' => $email['subject'],
-                    'message_id' => 1,
+                    'message_id' => $email['message_id'],
                     'notes' => $email['body'],
-                    'reference_code' => 1,
-                    'related_order_operation_id' => 1,
+                    'reference_code' => $reference_code,
+                    'related_order_operation_id' => $order_operation_id,
                     'order_id' => $order_id,
                     'store_id' => $store_id,
-                    'ticket_date' => date('Y-m-d H:i:s'),
-                    'ticket_code' => 1,
+                    'ticket_date' => $email['date'],
+                    'ticket_code' => $ticket_code,
                     'message_read' => 0,
                     'replies' => 0,
                     'important' => 0,
                     'customer_merge_status' => 0,
                     'ticket_user_id' => $customer_id,
-                    'sku' => 0,
-                    'related_listing_item_id' => 0,
+                    'sku' => NULL,
+                    'related_listing_item_id' => NULL,
                 ];
 
-                $hd_ticket = Message::updateOrCreate([
-                    'ticket_email' => $email['from'],
-                ],$ticketData);
+                $ticketDetail = Message::where('ticket_email',$email['from'])->first();
+
+                if($ticketDetail){
+                    Log::info('Ticket Exist');
+                    $hd_ticket = $ticketDetail;
+                }else{
+                    Log::info('New Ticket');
+                    $hd_ticket = Message::create($ticketData);
+                }
+
+                Log::info('Ticket Detail :'.json_encode($hd_ticket));
 
                 if(isset($hd_ticket->id)) {
                     $hdMessageData = [
@@ -156,21 +183,25 @@ class HomeController extends Controller
                         'subject' => $email['subject'],
                         'message_date' => $email['date'],
                         'to_' => $email['to'],
-                        'cc' => $email['cc'],
-                        'bcc' => $email['bcc'],
-                        'message_id' => '',
-                        'messaging_account_id' => 'bea29234-1700-c078-9a74-13b52b47e85a',
+                        'cc' => isset($email['cc']) ? $email['cc'] : NULL,
+                        'bcc' => isset($email['bcc']) ? $email['bcc'] : NULL,
+                        'message_id' => $email['message_id'],
+                        'messaging_account_id' => '9c59102d-016d-fd1b-acf5-fd1064ebaf5d',
                         'from_email' => $email['from'],
                         'from_name' => $email['name'],
                         'message' => $email['body'],
-                        'in_reply_to' => '',
-                        'draft' => 0
+                        'in_reply_to' => NULL,
+                        'draft' => 0,
+                        'reply_to_name' => $email['name'],
+                        'reply_to_email' => $email['from'],
                     ];
+
+                    Log::info('Ticket Detail :'.json_encode($hdMessageData));
 
                     $hd_ticket = HDMessage::create($hdMessageData);
                 }
             }
-        }*/
+        }
         //dd($emails);
 
         /*$stores = Store::select('store.*')->join('store_type', 'store_type.id', '=', 'store.store_type_id')->where('store_type.code', 'shopify')->get();
@@ -237,14 +268,34 @@ class HomeController extends Controller
         echo '</pre>';die;*/
 
 
-        Bus::chain([
+       /* Bus::chain([
             //new SubmitShopifyProductsJob(),
             //new synccategorytospecification(),
-            new FetchShopifyOrders(),
+            //new FetchShopifyOrders(),
             //new EbayListingItemSyncJob()
             //new SyncAllOrderStatusJob()
             //new FetchWalmartOrdersJob()
-        ])->dispatch();
+            new FetchEmailMessagesJob()
+        ])->dispatch();*/
+    }
+
+    function getNextTicketNumberForStore($storeId) {
+        $key = 'ticket_' . str_replace('-', '', $storeId);
+
+        return DB::transaction(function () use ($key) {
+            $sequence = Sequence::lockForUpdate()->find($key);
+
+            if (!$sequence) {
+                $sequence = Sequence::create([
+                    'key' => $key,
+                    'number' => 1
+                ]);
+            } else {
+                $sequence->increment('number');
+            }
+
+            return $sequence->number;
+        });
     }
 
     public function getListingData(Request $request)

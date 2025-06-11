@@ -264,6 +264,11 @@ class JobScheduler extends Seeder
                 'name' => 'HD Message Template Sync Job',
                 'description' => 'Sync all hd message templates',
                 'class_name' => 'App\Jobs\SyncMessageTemplateJob',
+            ],
+            [
+                'name' => 'Sync all order status',
+                'description' => 'Sync all order status',
+                'class_name' => 'App\Jobs\SyncAllOrderStatusJob',
             ]
         ];
 
