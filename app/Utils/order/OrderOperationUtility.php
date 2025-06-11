@@ -54,8 +54,9 @@ class OrderOperationUtility
         Log::info('Updated record :: ' . json_encode($updateRecord));
 
         $label_generation = $request->input('label_generation');
-        if ($label_generation) {
-            $orderOperation->label_creation_type = ShippingLabelCreationType::getShippingLabelCreationTypeId($label_generation);
+        Log::info('Label generation type: ' . $label_generation);
+        if (isset($label_generation)) {
+            $orderOperation->label_creation_type = $label_generation;
         } else {
             $orderOperation->label_creation_type = ShippingLabelCreationType::NoLabel;
         }
@@ -97,10 +98,10 @@ class OrderOperationUtility
             return $errorMessages;
         }
 
-//        $shippingDocumentCreator =  new ShipmentDocumentsCreator($orderOperation);
-//        $imageFormat = $shippingDocumentCreator->getLabelFormat();
-//        $rotate = $shippingDocumentCreator->getImageRotate();
-//        Log::info('Image format for label: ' . $imageFormat);
+       $shippingDocumentCreator =  new ShipmentDocumentsCreator($orderOperation);
+    //    $imageFormat = $shippingDocumentCreator->getLabelFormat();
+    //    $rotate = $shippingDocumentCreator->getImageRotate();
+    //    Log::info('Image format for label: ' . $imageFormat);
 
         $operation_type = $orderOperation->operation_type;
         $shipFrom = $orderOperation->shipFrom;
@@ -112,6 +113,8 @@ class OrderOperationUtility
             $shipmentDetails['fromAddress'] = self::getAddress($shipFrom->fromAddress);
             $shipmentDetails['toAddress'] = self::mapCustomerAddress($orderOperation);
         }
+
+        Log::info('Image creation error 1');
 
         $shippingPackage = $orderOperation->shippingPackage;
         if (isset($shippingPackage)) {
@@ -131,12 +134,15 @@ class OrderOperationUtility
                 ];
             }
         }
+        Log::info('Image creation error 2');
 
         $shipmentDetails['MailClass'] = $orderOperation->shipping_solution_carrier_service->solution_code;
         $shipmentDetails['MailpieceShape'] = $orderOperation->shipping_solution_carrier_package->solution_code;
         $shipmentDetails['transactionId'] = $orderOperation->order->order_id;
 
         $shipmentDetails['non_machinable'] = false;
+
+        Log::info('Image creation error 1');
 
         $shipmentDetails['weight'] = [
             'value' => $orderOperation->weight_value,
@@ -152,6 +158,7 @@ class OrderOperationUtility
             $shipmentDetails['accountId'] = $orderOperation->shipping_account->account_id;
             $shipmentDetails['passPhrase'] = $orderOperation->shipping_account->pass_phrase;
             $shipmentDetails['requesterId'] = $orderOperation->shipping_account->requester_id;
+            $shipmentDetails['account_info'] = $orderOperation->shipping_account->id;
         } else {
             Log::error('Shipping account not found for order operation: ' . $orderOperation->id);
             return 'Shipping account not found for order operation.';
@@ -175,8 +182,15 @@ class OrderOperationUtility
 
         $endiciaClient = new EndicialabelService();
         $response = $endiciaClient->createLabel($shipmentDetails,$orderOperation->id);
+        Log::info('Response from Endicia label creation: ' . json_encode($response));
         if (isset($response['trackingNumber'])) {
             Log::info('Label created successfully for order operation: ' . $orderOperation->id);
+            // Unsetting because of the issue with the label creation
+            unset($orderOperation->shipping_carrier_package);
+            unset($orderOperation->shipping_account);
+            unset($orderOperation->shipping_solution_carrier_package);
+            unset($orderOperation->shipping_solution_carrier_service);
+
             $orderOperation->tracking_number = $response['trackingNumber'];
             $orderOperation->save();
             return [];
@@ -473,11 +487,11 @@ class OrderOperationUtility
                         }
                         return true;
                     } else {
-                        Log::info('Walmart cancel order error: ' . json_encode($response));
+                        Log::info('Walmart ship order error: ' . json_encode($response));
                         return false;
                     }
                 } else {
-                    Log::info('Walmart cancel order error: No response received');
+                    Log::info('Walmart ship order error: No response received');
                     return false;
                 }
             case 'ebay':
