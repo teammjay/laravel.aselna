@@ -277,9 +277,9 @@ class OrderOperationUtility
     private static function assignProductCodesStamps($codesLine, &$request)
     {
         // Split code line if it's too long for a single rubber stamp field
-//        if (strlen($codesLine) <= 50) {
-//            $request['RubberStamp3'] = $codesLine;
-//        }
+        if (strlen($codesLine) <= 50) {
+            $request['RubberStamp3'] = $codesLine;
+        }
         /*if (strlen($codesLine) <= 50) {
             $request['RubberStamp3'] = $codesLine;
         } else if (strlen($codesLine) <= 100) {

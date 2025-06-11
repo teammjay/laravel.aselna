@@ -19,6 +19,7 @@ use App\Models\Store;
 use App\Utils\order\OrderOperationUtility;
 use App\Services\Marketplace\Service\ShopifyService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
 class ShipmentsController extends Controller
@@ -439,6 +440,7 @@ class ShipmentsController extends Controller
                 ]);
             }
         } catch (\Exception $exception) {
+            Log::error('Shipment Marked Error: ' . $exception->getMessage());
             return response()->json([
                 'success' => false,
                 'message' => $exception->getMessage()
