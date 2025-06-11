@@ -2,6 +2,7 @@
 
 namespace App\Utils;
 
+use App\Utils\mail\WalmartEmailParser;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Config;
@@ -91,19 +92,37 @@ class EmailMessageUtility
                         ->limit($limit)->get();
 
             $emails = [];
-            foreach ($messages as $message) {
+            foreach ($messages as $key=>$message) {
+                //if($key == 0) continue;
                 /*echo '<pre>';
                 print_r($message);
                 echo '</pre>';*/
+
+
+
                 $body = $message->getTextBody();
                 if (empty($message->getTextBody())) {
                     $html = $message->getHtmlBody();
                     $body = strip_tags($html); // fallback to text-like content
                 }
 
-                $parsedData = $this->parseEscalationEmail($body);
+                $parsedData = [];
+                if($store_type != ''){
+                    switch (strtolower($store_type)){
+                        case 'walmart':
+                            $walmartEmailParser = new WalmartEmailParser($message);
+                            $walmartEmailParser->getMessage($body);
+                            $parsedData = $walmartEmailParser->getEntities();
+                            /*echo '<pre>';
+                            print_r($parsedData);
+                            echo '</pre>';*/
+                            break;
+                    }
+                }
 
-                /*echo '<pre>';
+                //$parsedData = $this->parseEscalationEmail($body);
+
+               /* echo '<pre>';
                 print_r($parsedData);
                 echo '</pre>';*/
 
@@ -115,15 +134,16 @@ class EmailMessageUtility
                     'cc' => $message->getCc()[0]->mail ?? null,
                     'bcc' => $message->getBcc()[0]->mail ?? null,
                     'body' => $body,
+                    'message_id' => $message->getMessageId(),
                     'date' => date('Y-m-d H:i:s',strtotime($message->getDate())),
                     'parsedData' => $parsedData,
                 ];
 
             }
 
-            echo '<pre>';
+            /*echo '<pre>';
             print_r($emails);
-            echo '</pre>';die;
+            echo '</pre>';die;*/
             return $emails;
         } catch (Exception $e) {
             /*echo '<pre>';

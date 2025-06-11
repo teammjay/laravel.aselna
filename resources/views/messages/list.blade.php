@@ -326,6 +326,7 @@
         <table id="messageTable" class="table table-bordered table-striped">
             <thead>
             <tr>
+                <th></th>
                 <th>Store</th>
                 <th>First Name</th>
                 <th>Last Name</th>
@@ -335,6 +336,7 @@
                 <th>Status</th>
                 <th>Order Id</th>
                 <th>Ticket Code</th>
+                <th>Created At</th>
             </tr>
             </thead>
             <tbody id="message-list">
@@ -375,26 +377,27 @@
         $(document).on('click','#message-list tr',function () {
            let ele = $(this);
            $('#message-list tr').removeClass('bg-blue');
-           $('input[name="messages_item[]"]').prop('checked',false);
+           $('input[name="message_id[]"]').prop('checked',false);
            ele.addClass('bg-blue');
-           ele.find('input[name="messages_item[]"]').prop('checked',true);
+           ele.find('input[name="message_id[]"]').prop('checked',true);
            $('#open_message').removeAttr('disabled');
         });
 
         $('#open_message').on('click',function () {
             let flag = true;
-            $('input[name="messages_item[]"]').each(function () {
+            $('input[name="message_id[]"]').each(function () {
                 if($(this).is(':checked')){
                     flag = false;
                     let selectedId = $(this).val();
-                    location.href = "{{ url('messages/edit') }}/" + selectedId;
+                    location.href = "{{ url('messages/detail') }}/" + selectedId;
                 }
             });
         });
 
-        table = $('#messageTable').DataTable({
+        /*table = $('#messageTable').DataTable({
             processing: true,
             serverSide: true,
+            order: [[9, 'desc']],
             ajax: {
                 url: '{{ route('message.getdata') }}',
                 type: "POST",
@@ -425,20 +428,22 @@
             columns: [
                 {data: 'store', name: 'store'},
                 {data: 'first_name', name: 'first_name'},
-                {data: 'last_name', name: 'device_type.name'},
-                {data: 'subject', name: 'status'},
-                {data: 'received', name: 'status'},
-                {data: 'ticket_type', name: 'status'},
+                {data: 'last_name', name: 'last_name'},
+                {data: 'subject', name: 'subject'},
+                {data: 'received', name: 'received'},
+                {data: 'ticket_type', name: 'ticket_type'},
                 {data: 'status', name: 'status'},
-                {data: 'order_id', name: 'status'},
-                {data: 'ticket_code', name: 'status'}
+                {data: 'order_id', name: 'order_id'},
+                {data: 'ticket_code', name: 'ticket_code'},
+                {data: 'created_at', name: 'created_at'}
             ]
-        });
+        });*/
 
+        loadDatatables();
 
         $('#messages_store').on('change',function () {
             $('#store_id').val($(this).val());
-            table.ajax.reload();
+            loadDatatables();
         });
 
         $(document).on('change', '#per_page', function(event) {
@@ -447,10 +452,81 @@
 
         $('#filter-form').on('submit', function(e) {
             e.preventDefault(); // Prevent default form submission
-            table.ajax.reload();
+            loadDatatables();
         });
 
     });
+
+    function loadDatatables() {
+
+        $("#messageTable").dataTable().fnDestroy();
+
+        var table = $('#messageTable').DataTable({
+            "iDisplayLength": 20,
+            "info": true,
+            "responsive": true,
+            "lengthChange": true,
+            "autoWidth": false,
+            "processing": true,
+            "serverSide": true,
+            "searching": false,
+            "aLengthMenu": [20, 25, 50, 100],
+            'ajax': {
+                url: "{{ route('message.getdata') }}",
+                type: "POST",
+                //dataType:'json',
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                },
+                data: function (d) {
+                    // Create a FormData object
+                    var formData = $('#filter-form').serializeArray(); // Serialize form inputs
+
+                    // Add form data to the DataTable's request payload
+                    $.each(formData, function (index, field) {
+                        d[field.name] = field.value; // Append form data to the DataTables request
+                    });
+
+                    var columnValues = [];
+                    if (table) {
+                        table.rows({search: 'applied'}).every(function (rowIdx) {
+                            var rowData = this.data();
+                            columnValues.push(rowData.id);
+                        });
+                    }
+
+                    // Add to the request payload
+                    d.columnValues = columnValues;
+                },
+                //processData: false,
+                //contentType: false
+            },
+            "order": [[9, "desc"]],
+            columns: [
+                {data: 'message_id'},
+                {data: 'store'},
+                {data: 'first_name'},
+                {data: 'last_name'},
+                {data: 'subject'},
+                {data: 'ticket_date'},
+                {data: 'ticket_type'},
+                {data: 'status'},
+                {data: 'order_id'},
+                {data: 'ticket_code'},
+                {data: 'created_at'}
+            ],
+            columnDefs: [
+                {
+                    targets: [0], // Index of the column you want to disable sorting for
+                    orderable: false // Disable sorting
+                }
+            ]
+        });
+
+        $('#messageTable_wrapper').removeClass('form-inline');
+
+        $.fn.dataTable.ext.errMode = 'throw';
+    }
 
 </script>
 @stop

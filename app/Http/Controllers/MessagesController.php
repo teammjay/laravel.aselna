@@ -24,8 +24,15 @@ class MessagesController extends Controller
 
     public function getMessageData(Request $request)
     {
-        $totalRecords = Message::query()->count();
-        $query = Message::query();
+
+        $draw = $request['draw'];
+        $start = $request['start'];
+        $perPage = $request['length'];
+        $columnIndex = $request['order'][0]['column'];
+        $columnName = $request['columns'][$columnIndex]['data'];
+        $columnSortOrder = $request['order'][0]['dir'];
+
+        $query = Message::with('store','ticketType');
 
         // Filter by ticket email
         if ($request->has('sender_email') && $request->input('sender_email') != '') {
@@ -62,23 +69,54 @@ class MessagesController extends Controller
             $query->where('customer_id', $request->input('user_id'));
         }
 
-        $dataTableService = new DataTableService($query, $request);
+        //$dataTableService = new DataTableService($query, $request);
 
-        $dataTableService->setCustomSorting(function ($query, $request) {
+        /*$dataTableService->setCustomSorting(function ($query, $request) {
             $columnIndex = $request->input('order.0.column', 0);
             $columnName = $request->input('columns.' . $columnIndex . '.name', 'id');
             $sortDirection = $request->input('order.0.dir', 'asc');
             $query->orderBy($columnName, $sortDirection);
-        });
+        });*/
 
-        $data = $dataTableService->handle();
+        //$data = $dataTableService->handle();
 
-        return response()->json([
-            'draw' => $request->input('draw'),
-            'recordsTotal' => $totalRecords,
-            'recordsFiltered' => $data->total(),
-            'data' => $data->items(),
-        ]);
+        $totalRecords = $query->count();
+        $messages = $query->orderBy($columnName, $columnSortOrder)
+            ->skip($start)
+            ->take($perPage)
+            ->get();
+        $totalRecordwithFilter = $totalRecords;
+
+        $data = [];
+        if(!empty((array) $messages)){
+            foreach($messages as $key=>$message) {
+                $data[] = array(
+                    "message_id" => '<input type="checkbox" class="message-id" name="message_id[]" value="'.$message->id.'" style="visibility:hidden;">',
+                    "store" => $message->store->name,
+                    "first_name" => '',
+                    "last_name" => '',
+                    "subject" => $message->subject,
+                    "ticket_date" =>  date('Y-m-d H:i',strtotime($message->ticket_date)),
+                    "ticket_type" => $message->ticketType->name,
+                    "status" =>  'Needs Action',//$message->status,
+                    "order_id" => $message->order_id,
+                    "ticket_code" => $message->ticket_code,
+                    "created_at" => date('Y-m-d H:i',strtotime($message->created_at))
+                );
+            }
+        }
+
+        /*echo '<pre>';
+        print_r($data);
+        echo '<pre>';die;*/
+
+        $response = array(
+            "draw" => intval($draw),
+            "iTotalRecords" => $totalRecordwithFilter,
+            "iTotalDisplayRecords" => $totalRecordwithFilter,
+            "aaData" => $data
+        );
+        return $response;
     }
 
     /**
