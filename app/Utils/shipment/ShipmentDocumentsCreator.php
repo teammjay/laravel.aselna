@@ -26,6 +26,7 @@ class ShipmentDocumentsCreator
         $this->storage = Storage::disk('local');
 
         $shipFromDocs = $this->getDocumentsSettings($shipment);
+        Log::info('Shipment Documents Creator :: ' . json_encode($shipFromDocs));
         $labelDoc = $shipFromDocs[0];
         $packingSlipDoc = $shipFromDocs[1];
 
