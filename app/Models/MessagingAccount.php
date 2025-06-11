@@ -26,7 +26,7 @@ class MessagingAccount extends Model
     }
 
 
-    protected $fillable = ['protocol','email','user_id','password','server','port','requires_ssl','requires_tls','requires_authentication','ssl_port','tls_port','filter_from_date','folders','last_sync_date','created_by','updated_by'];
+    protected $fillable = ['id','protocol','email','user_id','password','server','port','requires_ssl','requires_tls','requires_authentication','ssl_port','tls_port','filter_from_date','folders','last_sync_date','created_by','updated_by'];
 
 
 }
