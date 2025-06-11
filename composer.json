@@ -10,6 +10,7 @@
         "ext-ftp": "*",
         "ext-libxml": "*",
         "ext-simplexml": "*",
+        "ext-soap": "*",
         "almasaeed2010/adminlte": "~3.0",
         "google/apiclient": "^2.18",
         "guzzlehttp/guzzle": "^7.9",
@@ -22,7 +23,7 @@
         "league/oauth2-client": "^2.8",
         "opcodesio/log-viewer": "^3.17",
         "opis/json-schema": "^2.4",
-        "ext-soap": "*",
+        "setasign/fpdf": "^1.8",
         "webklex/laravel-imap": "^6.2"
     },
     "require-dev": {
