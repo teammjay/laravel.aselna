@@ -503,7 +503,7 @@ class ListingController extends Controller
         }
 
         if ($request->has('device') && $request->device != '') {
-            if($request->has('interface') && $request->interface == '') {
+            if(!$request->has('interface') || $request->interface == ''){
                 $query->leftJoin('product_interface', 'product_interface.product_id', '=', 'products.product_id');
             }
             $query->leftJoin('device_interface', 'device_interface.interface_id', '=', 'product_interface.interface_id');
