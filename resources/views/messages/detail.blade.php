@@ -7,7 +7,45 @@
 @stop
 
 @section('adminlte_css')
-
+<style>
+    .ticket-title{
+        font-size:20px;
+    }
+    .msg-container {
+        border: 2px solid #dedede;
+        background-color: #eaeaea;
+        border-radius: 5px;
+        padding: 10px;
+        margin: 10px 0;
+    }
+    .darker {
+        border-color: #ccc;
+        background-color: #fff;
+    }
+    .msg-container::after {
+        content: "";
+        clear: both;
+        display: table;
+    }
+    .time-right {
+        float: right;
+        color: #aaa;
+    }
+    .time-left {
+        float: left;
+        color: #999;
+    }
+    .time-center{
+        text-align: center;
+        font-size: 18px;
+        color: #333;
+        font-weight: bold;
+    }
+    .mail-box{
+        max-height: 500px;
+        overflow: auto;
+    }
+</style>
 @stop
 
 @section('content')
@@ -24,12 +62,21 @@
         <div class="col-md-8">
             <div class="card">
                 <div class="card-header">
-                    General
+                    <h2 class="ticket-title">ON <strong>{{ $ticketDetail->ticket_code }}</strong>    {{ $ticketDetail->subject }}</h2>
                 </div>
                 <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-12">
 
+                    <div class="row">
+                        <div class="col-md-12 mail-box">
+                            @if(count($messages ?? []) > 0)
+                                @foreach($messages as $key=>$message)
+                                    <div class="time-center">{{ $message->message_date }}</div>
+                                    <div class="msg-container @if(($key % 2)) darker @endif">
+                                        {!! nl2br(html_entity_decode($message->message)) !!}
+                                    </div>
+
+                                @endforeach
+                            @endif
 
                         </div>
                     </div>
@@ -85,7 +132,11 @@
                                     </div>
                                 </div>
                                 <div class="tab-pane fad" id="tab2" role="tabpanel" aria-labelledby="internalNotes-tab">
-
+                                    <div class="row pt-3">
+                                        <div class="col-md-12">
+                                            <textarea class="form-control" rows="10" id="internal_notes" name="internal_notes"></textarea>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
 
@@ -103,10 +154,19 @@
                         <div class="col-md-7">
                             <div class="d-flex align-items-center" style="gap:10px;">
                                 <select class="form-control" name="ticket_type" id="ticket_type">
+                                    @if(count($ticketTypeCode ?? []) >0)
+                                        @foreach($ticketTypeCode as $tcode)
+                                            <option value="{{ $tcode->code }}">{{ $tcode->name }}</option>
+                                        @endforeach
+                                    @endif
 
                                 </select>
                                 <select class="form-control" name="action_type" id="action_type">
-
+                                    <option value="0">Needs Action</option>
+                                    <option value="1">Awaiting Customer</option>
+                                    <option value="2">Closed</option>
+                                    <option value="3">Deleted</option>
+                                    <option value="4">Spam</option>
                                 </select>
                                 <button type="button" class="btn btn-default" name="revert" id="revert">Revert</button>
                                 <button type="button" class="btn btn-default" name="close" id="close">Close</button>
@@ -123,14 +183,15 @@
                     Customer
                 </div>
                 <div class="card-body">
-                    <div class="row">
+                    <div class="row pt-3" >
                         <div class="col-md-12">
-                            Customer Name
+                            {{ $ticketDetail->ticket_email }}
                         </div>
                     </div>
                     <div class="row pt-3" >
-                        <div class="col-md-12">
+                        <div class="col-md-12 d-flex">
                             <input type="text" class="form-control" name="customer" id="customer">
+                            <button type="button" class="btn btn-default" id="search_customer"><i class="fa fa-search"></i></button>
                         </div>
                     </div>
                 </div>
@@ -146,7 +207,7 @@
                             <label for="carrier_name">Order ID</label>
                         </div>
                         <div class="col-md-8 d-flex align-items-center">
-                            <input type="text" class="form-control" name="order_id" id="order_id">
+                            <input type="text" class="form-control" name="order_id" id="order_id" value="{{ ($ticketDetail->order_id != '') ? $ticketDetail->order_id : '' }}">
                             <button type="button" class="btn btn-default" id="search_order"><i class="fa fa-search"></i></button>
                         </div>
                     </div>
@@ -215,35 +276,22 @@
     <script>
         $(document).ready(function () {
             $(document).on('click','#search_order',function () {
-                let order_id = $('#order_id').val();
-                $.ajax({
-                    type: "POST",
-                    url: "{{ route('message.searchorder') }}",
-                    data: {
-                        order_id: order_id
-                    },
-                    headers: {
-                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                    },
-
-                    success: function(data) {
-                        if(data.success){
-
-                            $('#order_item_table').html(data.orderDetail.items);
-                            $('#order_date').val(data.orderDetail.orderDate);
-                            $('#order_status').val(data.orderDetail.orderStatus);
-                            $('#order_total').val(data.orderDetail.orderTotal);
-                            $('#purchase_order_id').val(data.orderDetail.orderPOId);
-                            $('#order_operation').html(data.orderDetail.orderOperation);
-                        }
-                    },
-                    error: function (xhr) {
-                    },
-                    complete: function () {
-                        $("#ajax-preloader").hide();
-                    }
-                });
+                loadOrderDetail();
             });
+
+            $(document).on('click','#internalNotes-tab',function () {
+                $('#rma').hide();
+                $('#replacement').hide();
+                $('#refund').hide();
+            });
+
+            $(document).on('click','#composeMessage-tab',function () {
+                $('#rma').show();
+                $('#replacement').show();
+                $('#refund').show();
+            });
+
+            loadOrderDetail();
 
             $(document).on('change','#message_template',function () {
                 var template_id = $(this).val();
@@ -272,5 +320,38 @@
             });
 
         });
+
+        function loadOrderDetail(){
+            let order_id = $('#order_id').val();
+            if(order_id != '') {
+                $.ajax({
+                    type: "POST",
+                    url: "{{ route('message.searchorder') }}",
+                    data: {
+                        order_id: order_id
+                    },
+                    headers: {
+                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                    },
+
+                    success: function (data) {
+                        if (data.success) {
+
+                            $('#order_item_table').html(data.orderDetail.items);
+                            $('#order_date').val(data.orderDetail.orderDate);
+                            $('#order_status').val(data.orderDetail.orderStatus);
+                            $('#order_total').val(data.orderDetail.orderTotal);
+                            $('#purchase_order_id').val(data.orderDetail.orderPOId);
+                            $('#order_operation').html(data.orderDetail.orderOperation);
+                        }
+                    },
+                    error: function (xhr) {
+                    },
+                    complete: function () {
+                        $("#ajax-preloader").hide();
+                    }
+                });
+            }
+        }
     </script>
 @stop

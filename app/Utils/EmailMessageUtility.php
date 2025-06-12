@@ -77,7 +77,7 @@ class EmailMessageUtility
 
 
 
-    public function fetchEmails($store_type, $folderName = 'INBOX', $limit = 50)
+    public function fetchEmails($store_type, $folderName = 'INBOX', $limit = 100)
     {
         try {
             $this->client->connect();
@@ -103,7 +103,7 @@ class EmailMessageUtility
                 $body = $message->getTextBody();
                 if (empty($message->getTextBody())) {
                     $html = $message->getHtmlBody();
-                    $body = strip_tags($html); // fallback to text-like content
+                    $body = $html; // fallback to text-like content
                 }
 
                 $parsedData = [];
@@ -111,7 +111,7 @@ class EmailMessageUtility
                     switch (strtolower($store_type)){
                         case 'walmart':
                             $walmartEmailParser = new WalmartEmailParser($message);
-                            $walmartEmailParser->getMessage($body);
+                            $walmartEmailParser->getMessage(strip_tags($body));
                             $parsedData = $walmartEmailParser->getEntities();
                             /*echo '<pre>';
                             print_r($parsedData);

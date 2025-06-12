@@ -2,8 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Constants\HdTicketTypeCode;
 use App\Constants\OrderStatus;
+use App\Models\HDMessage;
 use App\Models\HdMessageTemplate;
+use App\Models\HdTicketType;
 use App\Models\Message;
 use App\Models\Order;
 use App\Models\OrderOperation;
@@ -181,8 +184,12 @@ class MessagesController extends Controller
 
     public function detail(string $id)
     {
-        $message_template = HdMessageTemplate::all();
-        return view('messages.detail', compact('message_template'));
+        $ticketDetail = Message::with('store','store.storeType')->where('id',$id)->first();
+        $store_type_id = $ticketDetail->store->storeType->id;
+        $message_template = HdMessageTemplate::where('store_type_id',$store_type_id)->get();
+        $messages = HDMessage::where('ticket_id',$id)->orderBy('message_date','desc')->get();
+        $ticketTypeCode = HdTicketType::orderBy('name')->get();
+        return view('messages.detail', compact('message_template','ticketDetail','messages','ticketTypeCode'));
     }
 
     public function searchOrder(Request $request){
@@ -212,6 +219,10 @@ class MessagesController extends Controller
                 ]);
             }
         }
+
+        return response()->json([
+            'success' => false
+        ]);
     }
 
     public function getMessageTemplate(Request $request){

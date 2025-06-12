@@ -125,6 +125,16 @@
             font-size: 16px !important;
         }
         .total_sel_product b, .total_product b{ font-size: 18px;}
+        .multi-select-filter input[type="button"] {
+            padding: 0px 4px;
+            border: 2px solid #ccc;
+            background: #f1f1f1;
+            font-size: 16px;
+            line-height: 1;
+            margin-bottom: 2px;
+            width: 30px;
+            height: 30px;
+        }
     </style>
 @stop
 @section('content_header')
