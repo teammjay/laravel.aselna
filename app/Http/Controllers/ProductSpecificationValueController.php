@@ -88,7 +88,7 @@ class ProductSpecificationValueController extends Controller
 
         foreach ($request->get('field_value') as $key => $value) {
             if (!isset($value)) continue;
-            if (ProductSpecificationValue::where('id', $key)->exists()) {
+            if (uuid_is_valid($key) && ProductSpecificationValue::where('id', $key)->exists()) {
                 $specificationValue = ProductSpecificationValue::where('id', $key)->first();
                 Log::info($specificationValue);
                 Log::info($value);
