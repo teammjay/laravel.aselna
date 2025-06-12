@@ -380,7 +380,9 @@
            $('input[name="message_id[]"]').prop('checked',false);
            ele.addClass('bg-blue');
            ele.find('input[name="message_id[]"]').prop('checked',true);
-           $('#open_message').removeAttr('disabled');
+            $('#open_message').removeAttr('disabled');
+            var ticket_id = ele.find('input[name="message_id[]"]').val();
+            location.href = "{{ url('messages/detail') }}/" + ticket_id;
         });
 
         $('#open_message').on('click',function () {

@@ -50,12 +50,18 @@
 			$(this).html('');
 			from_sel.style.height=to_sel.style.height=rh+'px';
 			from_sel.style.width=to_sel.style.width=rw+'px';
+			var btl_all=$('<input type="button" class="btn-all-val-add" value=">>">').get(0);
+			var btr_all=$('<input type="button" class="btn-all-val-remove" value="<<">').get(0);
 			var fb=$('<input type="button" class="btn-val-add" value=">">');
 			var bb=$('<input type="button" class="btn-val-remove" value="<">');
-			mc.appendChild(fb.get(0));
-			mc.appendChild(document.createElement('br'));
+            mc.appendChild(fb.get(0));
+            mc.appendChild(document.createElement('br'));
+            mc.appendChild(btl_all);
+            mc.appendChild(document.createElement('br'));
 			mc.appendChild(bb.get(0));
-			var list=from_sel.cloneNode(true);
+            mc.appendChild(document.createElement('br'));
+            mc.appendChild(btr_all);
+            var list=from_sel.cloneNode(true);
 			//if (list.innerHTML!='') $(list).filter('option').each(function (i) {
 			if (list.innerHTML!='') $('option',list).each(function (i) {
 				list_options[this.value]=i;
@@ -131,6 +137,23 @@
 			// end of functions
 			fb.click(fbutton);
 			bb.click(bbutton);
+			btl_all.onclick=function () {
+                $('option',from_sel).each(function() {this.selected=!this.selected;});
+                $('option',to_sel).attr('selected',false);
+                setTimeout(function(){
+                    fb.trigger('click');
+				},300);
+
+            }
+            btr_all.onclick=function () {
+                $('option',from_sel).attr('selected',false);
+                $('option',to_sel).each(function() {this.selected=!this.selected;});
+                //bb.trigger('click');
+                setTimeout(function(){
+                    bb.trigger('click');
+                },300);
+            }
+
 			//$(from_sel).dblclick(fbutton);
 			//$(to_sel).dblclick(bbutton);
 			fbutton();
@@ -140,7 +163,6 @@
 	
 	
 	$.fn.gs_multiselect.defaults = {
-		
 	};
 	
 })(jQuery);

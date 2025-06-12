@@ -13,6 +13,7 @@ use App\Jobs\FetchWalmartOrdersJob;
 use App\Jobs\SubmitShopifyProductsJob;
 use App\Jobs\SyncAllOrderStatusJob;
 use App\Jobs\synccategorytospecification;
+use App\Models\Customer;
 use App\Models\HDMessage;
 use App\Models\HdTicketType;
 use App\Models\Listing;
@@ -111,12 +112,17 @@ class HomeController extends Controller
                 /* create ticket*/
                 $order_id = $related_order_id = $po_no = $reason = $customer_id = $order_operation_id = $reference_code = NULL;
                 $ticket_type_code = HdTicketTypeCode::CUSTOMER_SERVICE;
+                $customerDetail = Customer::whereLike('email','%'.$email['from'].'%')->first();
+
+                if($customerDetail){
+                    $customer_id = $customerDetail->id;
+                }
                 if(isset($email['parsedData']) && !empty($email['parsedData'])){
                     if(isset($email['parsedData']['customer_order_number'])){
-                        $related_order_id = html_entity_decode($email['parsedData']['customer_order_number']);
+                        $order_id = html_entity_decode($email['parsedData']['customer_order_number']);
                         $orderDetail = Order::with('customer','orderOperation')->where('order_id',trim($related_order_id))->first();
                         if($orderDetail){
-                            $order_id = $orderDetail->id;
+                            $related_order_id = $orderDetail->id;
                             $store_id = $orderDetail->store_id;
                             $customer_id = isset($orderDetail->customer) ? $orderDetail->customer->id : NULL;
                             $order_operation_id = isset($orderDetail->orderOperation) ? $orderDetail->orderOperation->id : NULL;
@@ -145,7 +151,7 @@ class HomeController extends Controller
                 $ticketData = [
                     'ticket_type_id' => $ticketTypeDetail->id,
                     'ticket_email' => $email['from'],
-                    'status' => 1,
+                    'status' => 0,
                     'related_order_id' => $related_order_id,
                     'subject' => $email['subject'],
                     'message_id' => $email['message_id'],
@@ -198,7 +204,12 @@ class HomeController extends Controller
 
                     Log::info('Ticket Detail :'.json_encode($hdMessageData));
 
-                    $hd_ticket = HDMessage::create($hdMessageData);
+                    /*$hd_ticket = HDMessage::create($hdMessageData);*/
+
+                    $hd_ticket = HDMessage::updateOrCreate([
+                        'ticket_id' => $hd_ticket->id,
+                        'message_id' => $email['message_id'],
+                    ], $hdMessageData);
                 }
             }
         }
