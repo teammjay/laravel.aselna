@@ -77,7 +77,7 @@ class EmailMessageUtility
 
 
 
-    public function fetchEmails($store_type, $folderName = 'INBOX', $limit = 50)
+    public function fetchEmails($store_type, $folderName = 'INBOX', $limit = 100)
     {
         try {
             $this->client->connect();
@@ -141,9 +141,9 @@ class EmailMessageUtility
 
             }
 
-            echo '<pre>';
+            /*echo '<pre>';
             print_r($emails);
-            echo '</pre>';die;
+            echo '</pre>';die;*/
             return $emails;
         } catch (Exception $e) {
             /*echo '<pre>';
