@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Helpers\QueryFilters;
 use App\Models\Catalog;
+use App\Models\Device;
 use App\Models\Interfaces;
 use App\Models\Manufacturer;
 use App\Models\ProductColor;
@@ -50,9 +51,11 @@ class CatalogController extends Controller
         $colors = ProductColor::orderBy('name')->get();
         $productConditions = ProductCondition::all();
         $targetAudience = ProductTargetAudience::all();
+        $interfaces = Interfaces::all();
+        $devices = Device::all();
         $perPage = $this->perPage;
 
-        return view('catalog.list',compact('perPage','productTypes','manufacturers','productConditions','targetAudience','colors'));
+        return view('catalog.list',compact('perPage','productTypes','manufacturers','productConditions','targetAudience','colors','interfaces', 'devices'));
     }
 
     /**
@@ -162,6 +165,21 @@ class CatalogController extends Controller
         if ($request->has('package_dimensions_length') && $request->package_dimensions_length != '') {
             $query->where('package_dimensions_length', $request->package_dimensions_length);
         }
+
+        if ($request->has('interface') && $request->interface != '') {
+            $query->leftJoin('product_interface', 'product_interface.product_id', '=', 'products.product_id');
+            $query->where('product_interface.interface_id', $request->interface);
+            QueryFilters::applyFilter($query, $request, 'product_interface.interface_id', 'interface_operator', 'interface');
+        }
+
+        if ($request->has('device') && $request->device != '') {
+            if(!$request->has('interface') || $request->interface == ''){
+                $query->leftJoin('product_interface', 'product_interface.product_id', '=', 'products.product_id');
+            }
+            $query->leftJoin('device_interface', 'device_interface.interface_id', '=', 'product_interface.interface_id');
+            QueryFilters::applyFilter($query, $request, 'device_interface.device_id', 'device_operator', 'device');
+        }
+
 
         // Filter by created date
         if ($request->has('created_at') && $request->created_at != '') {
