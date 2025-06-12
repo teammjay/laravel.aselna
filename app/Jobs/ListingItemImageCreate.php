@@ -89,7 +89,7 @@ class ListingItemImageCreate implements ShouldQueue
                         if ($nextImageVersion != null) {
                             Log::info("Version :: " .  $nextImageVersion);
                             $alternativeImage = ProductImageAlternative::where('main_image_id', $productImage->id)->where('version_number', $nextImageVersion)->first();
-                            if($alternativeImage) {
+                            if(isset($alternativeImage) && isset($alternativeImage->imageObj)) {
                                 Log::info("Alternative Image :: " . json_encode($alternativeImage));
                                 $path = '/store-images/' . $store->id . '/' . $listingItem->id . '_' . $alternativeImage->id . '.jpg';
                                 $imageData['path'] = $path;
