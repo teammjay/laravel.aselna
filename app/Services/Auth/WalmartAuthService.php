@@ -83,9 +83,13 @@ class WalmartAuthService
         return json_decode($res->getBody(), true);
     }
 
-    public function getFeedStatus($feedId, $number_of_items = 50)
+    public function getFeedStatus($feedId, $number_of_items = 150)
     {
         $accessToken = $this->authenticate();
+
+        if (!isset($number_of_items)) {
+            $number_of_items = 150;
+        }
 
         $headers = [
             'WM_SEC.ACCESS_TOKEN' => "{$accessToken}",

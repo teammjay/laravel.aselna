@@ -88,7 +88,7 @@ class WalmartService implements MarketplaceServiceInterface
         }
     }
 
-    public function submitInventoryFeedAfterCreate($listingId, $listingInfo)
+    public function submitInventoryFeedAfterCreate($listingId, $listingInfo, $feedInfo)
     {
         Log::info('Submit Inventory Feed After Create');
         $created_by = auth()->user()->name ?? 'admin';
@@ -99,6 +99,7 @@ class WalmartService implements MarketplaceServiceInterface
             'status' => 0,
             'feed_type' => FeedTypes::INVENTORY,
             'store_id' => $listingInfo->store_id,
+            'number_of_items' => $feedInfo->number_of_items,
             'created_by' => $created_by
         );
         Log::info('Feed Data: ' . json_encode($feedData));
@@ -159,7 +160,7 @@ class WalmartService implements MarketplaceServiceInterface
 
         if ($response['feedStatus'] == 'PROCESSED' && intval($response['itemsSucceeded']) > 0
             && $feedInfo->feed_type == FeedTypes::CREATE) {
-            $this->submitInventoryFeedAfterCreate($listingId, $listingInfo);
+            $this->submitInventoryFeedAfterCreate($listingId, $listingInfo, $feedInfo);
         }
 
         // save response into folder
