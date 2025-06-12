@@ -103,7 +103,7 @@ class EmailMessageUtility
                 $body = $message->getTextBody();
                 if (empty($message->getTextBody())) {
                     $html = $message->getHtmlBody();
-                    $body = strip_tags($html); // fallback to text-like content
+                    $body = $html; // fallback to text-like content
                 }
 
                 $parsedData = [];
@@ -111,7 +111,7 @@ class EmailMessageUtility
                     switch (strtolower($store_type)){
                         case 'walmart':
                             $walmartEmailParser = new WalmartEmailParser($message);
-                            $walmartEmailParser->getMessage($body);
+                            $walmartEmailParser->getMessage(strip_tags($body));
                             $parsedData = $walmartEmailParser->getEntities();
                             /*echo '<pre>';
                             print_r($parsedData);
@@ -141,9 +141,9 @@ class EmailMessageUtility
 
             }
 
-            /*echo '<pre>';
+            echo '<pre>';
             print_r($emails);
-            echo '</pre>';die;*/
+            echo '</pre>';die;
             return $emails;
         } catch (Exception $e) {
             /*echo '<pre>';
