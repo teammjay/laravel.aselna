@@ -49,6 +49,7 @@ class WalmartEmailParser extends ReceivedMessageParser
         'phone' => ['customer phone number:', 'customer phone:'],
         'reason' => 'reason for contact:',
     ];
+
     public function __construct($message)
     {
         $this->message = $message;
@@ -246,6 +247,6 @@ class WalmartEmailParser extends ReceivedMessageParser
 
     protected function addEntity($value, $type)
     {
-        $this->entities[$type] = html_entity_decode(str_replace("&nbsp;", "", trim($value)));;
+        $this->entities[$type] = str_replace("&nbsp; ", "", html_entity_decode(trim($value)));
     }
 }
