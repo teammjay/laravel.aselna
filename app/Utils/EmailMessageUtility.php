@@ -82,23 +82,29 @@ class EmailMessageUtility
         try {
             $this->client->connect();
 
-            $fromDate = \Carbon\Carbon::parse(date('Y-m-d', strtotime('-10days')));
+            $fromDate = \Carbon\Carbon::parse(date('Y-m-d', strtotime('-3 days')));
             $toDate = \Carbon\Carbon::parse(date('Y-m-d'));
 
             $folder = $this->client->getFolder($folderName);
             $messages = $folder->messages()
                         ->since($fromDate)
                         ->before($toDate)
-                        ->limit($limit)->get();
+                        ->limit($limit)
+                        ->get()
+                        ->sortByDesc(function($msg) {
+                            return optional($msg->getDate()->get())->getTimestamp(); // safe
+                        })
+                        ->values(); // reindex after sorting
 
+            /*echo '<pre>';
+            print_r($messages);
+            echo '</pre>';die;*/
             $emails = [];
             foreach ($messages as $key=>$message) {
                 //if($key == 0) continue;
-                /*echo '<pre>';
+               /* echo '<pre>';
                 print_r($message);
                 echo '</pre>';*/
-
-
 
                 $body = $message->getTextBody();
                 if (empty($message->getTextBody())) {
@@ -122,21 +128,28 @@ class EmailMessageUtility
 
                 //$parsedData = $this->parseEscalationEmail($body);
 
-               /* echo '<pre>';
-                print_r($parsedData);
-                echo '</pre>';*/
+                $part = $message->getStructure()->parts[0];
 
+                $parts = [
+                    'mime_type' => $part->content_type,
+                    'content' => $part->content,
+                    'charset' => $part->charset,
+                ];
                 $emails[] = [
                     'subject' => $message->subject->first(),
+                    'full_name' => $message->fromaddress->first(),
                     'name' => $message->getFrom()[0]->personal ?? null,
                     'from' => $message->getFrom()[0]->mail ?? null,
+                    'reply_to' => $message->getReplyTo()[0]->mail ?? null,
+                    'reply_to_name' => $message->getReplyTo()[0]->full ?? null,
                     'to' => $message->getTo()[0]->mail ?? null,
                     'cc' => $message->getCc()[0]->mail ?? null,
                     'bcc' => $message->getBcc()[0]->mail ?? null,
-                    'body' => $body,
-                    'message_id' => $message->getMessageId(),
+                    'message_id' => $message->message_id->first(),
                     'date' => date('Y-m-d H:i:s',strtotime($message->getDate())),
                     'parsedData' => $parsedData,
+                    'parts' => $parts,
+                    'body' => $body,
                 ];
 
             }
