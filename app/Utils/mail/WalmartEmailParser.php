@@ -4,7 +4,6 @@ namespace App\Utils\mail;
 
 
 use App\Constants\HdTicketTypeCode;
-use App\Constants\PrintStatus;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
@@ -78,7 +77,12 @@ class WalmartEmailParser extends ReceivedMessageParser
             echo '</pre>';*/
             if (count($parts) === 2) {
                 $ticketTypeKey = trim(strtolower($parts[0]));
+                //echo $ticketTypeKey;
                 $this->ticketTypeCode = self::$ticketTypeMap[$ticketTypeKey] ?? null;
+                if ($this->ticketTypeCode == null) {
+                    //$this->ticketTypeCode= HdTicketTypeCode::MARKETPLACE_NOTIFICATION;
+                    //return parent::getMessage($text);
+                }
                 $this->addEntity(trim($this->ticketTypeCode), 'ticket_type_id');
                 $this->addEntity(trim($parts[1]), 'order_id');
             }
@@ -206,32 +210,32 @@ class WalmartEmailParser extends ReceivedMessageParser
         
 
         foreach ($lines as $line) {
-            if (str_starts_with($line, self::PREFIXES['customer_order_number'])) {
-                $this->customer_order_number = trim(substr($line, strlen(self::PREFIXES['customer_order_number'])));
+            if (str_starts_with(trim($line), self::PREFIXES['customer_order_number'])) {
+                $this->customer_order_number = trim(substr(trim($line), strlen(self::PREFIXES['customer_order_number'])));
                 $this->addEntity($this->customer_order_number, 'order_id');
-            }elseif (str_starts_with($line, self::PREFIXES['purchase_order_number'])) {
-                $this->purchase_order_number = trim(substr($line, strlen(self::PREFIXES['purchase_order_number'])));
+            }elseif (str_starts_with(trim($line), self::PREFIXES['purchase_order_number'])) {
+                $this->purchase_order_number = trim(substr(trim($line), strlen(self::PREFIXES['purchase_order_number'])));
                 $this->addEntity($this->purchase_order_number, 'purchase_order_number');
-            } elseif (str_starts_with($line, self::PREFIXES['item_id'])) {
-                $this->item_id = trim(substr($line, strlen(self::PREFIXES['item_id'])));
+            } elseif (str_starts_with(trim($line), self::PREFIXES['item_id'])) {
+                $this->item_id = trim(substr(trim($line), strlen(self::PREFIXES['item_id'])));
                 $this->addEntity($this->item_id, 'item_id');
-            } elseif (str_starts_with($line, self::PREFIXES['item_title'])) {
-                $this->item_title = trim(substr($line, strlen(self::PREFIXES['item_title'])));
+            } elseif (str_starts_with(trim($line), self::PREFIXES['item_title'])) {
+                $this->item_title = trim(substr(trim($line), strlen(self::PREFIXES['item_title'])));
                 $itemTitle[] = $this->item_title;
                 $this->addEntity($this->item_title, 'item_title');
-            } elseif (str_starts_with($line, self::PREFIXES['message'])) {
+            } elseif (str_starts_with(trim($line), self::PREFIXES['message'])) {
                 $messageStarted = true;
                 $this->item_title = implode(" ", $itemTitle);
                 $this->addEntity($this->item_title, 'item_title');
-            } elseif (str_starts_with($line, self::PREFIXES['note'])) {
+            } elseif (str_starts_with(trim($line), self::PREFIXES['note'])) {
                 $messageStarted = false;
-            } elseif (str_starts_with($line, self::PREFIXES['ref_id'])) {
-                $this->reference_id = trim(substr($line, strlen(self::PREFIXES['ref_id'])));
+            } elseif (str_starts_with(trim($line), self::PREFIXES['ref_id'])) {
+                $this->reference_id = trim(substr(trim($line), strlen(self::PREFIXES['ref_id'])));
                 $this->addEntity($this->reference_id, 'ref_id');
             } elseif ($messageStarted) {
                 $message[] = $line;
             } elseif (!empty($itemTitle)) {
-                $itemTitle[] = $line;
+                $itemTitle[] = trim($line);
             }
         }
 
@@ -247,6 +251,6 @@ class WalmartEmailParser extends ReceivedMessageParser
 
     protected function addEntity($value, $type)
     {
-        $this->entities[$type] = str_replace("&nbsp; ", "", html_entity_decode(trim($value)));
+        $this->entities[$type] = str_replace("&nbsp; ", "", trim($value));
     }
 }
