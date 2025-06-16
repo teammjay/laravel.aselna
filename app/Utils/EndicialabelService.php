@@ -6,7 +6,9 @@ use App\Models\AccountTransaction;
 use App\Models\OrderOperation;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use SoapClient;
 use Exception;
 
@@ -76,21 +78,21 @@ class EndicialabelService
         $orderOperation->save();
 
         /* create transaction entry*/
-        $address = $shippingDetail['fromAddress']['name'].' '.$shippingDetail['fromAddress']['address1'].' '.$shippingDetail['fromAddress']['address2'].' '.$shippingDetail['fromAddress']['city'].' '.$shippingDetail['fromAddress']['state'].' '.$shippingDetail['fromAddress']['postalCode'].' '.$shippingDetail['fromAddress']['country'];
-        $transactionData = [
-            'shipping_account_id' => $shippingDetail['account_info'],
-            'tracking_number' => $trackingNumber,
-            'transaction_date' => date('Y-m-d H:i:s',strtotime($transactionDate)),
-            'transaction_id' => $transactionID,
-            'amount' => $transactionCost,
-            'address' => $address,
-            'canceled' => 0,
-        ];
-
-        AccountTransaction::updateOrCreate([
-            'tracking_number' => $trackingNumber,
-            'transaction_id' => $transactionID,
-        ],$transactionData);
+//        $address = $shippingDetail['fromAddress']['name'] . ' ' . $shippingDetail['fromAddress']['address1'] . ' ' . $shippingDetail['fromAddress']['address2'] . ' ' . $shippingDetail['fromAddress']['city'] . ' ' . $shippingDetail['fromAddress']['state'] . ' ' . $shippingDetail['fromAddress']['postalCode'] . ' ' . $shippingDetail['fromAddress']['country'];
+//        $transactionData = [
+//            'shipping_account_id' => $shippingDetail['account_info'],
+//            'tracking_number' => $trackingNumber,
+//            'transaction_date' => date('Y-m-d H:i:s', strtotime($transactionDate)),
+//            'transaction_id' => $transactionID,
+//            'amount' => $transactionCost,
+//            'address' => $address,
+//            'canceled' => 0,
+//        ];
+//
+//        AccountTransaction::updateOrCreate([
+//            'tracking_number' => $trackingNumber,
+//            'transaction_id' => $transactionID,
+//        ], $transactionData);
 
         try {
             $imageData = base64_decode($base64Image);
@@ -98,8 +100,23 @@ class EndicialabelService
             file_put_contents($imagePath, $imageData);
 
             if (isset($shippingDetail['RubberStamp3'])) {
-                $this->generateStampImage($imagePath,$shippingDetail['RubberStamp3']);
+                $this->generateStampImage($imagePath, $shippingDetail['RubberStamp3']);
             }
+
+            $imageUrl = asset('storage/labels/' . $trackingNumber . '.png');
+            Log::info('Label image saved to: ' . $imageUrl);
+
+            DB::connection('aselna_printer_db')->table('PrintJobs')->insert([
+                'id' => (string)Str::uuid(),
+                'fileName' => $trackingNumber . '.png',
+                'filePath' => $imagePath,
+                'status' => 'pending',
+                'createdAt' => now(),
+                'updatedAt' => now(),
+                'fileSize' => 0
+//                'printerId' => $shippingDetail['printer_id'] ?? null,
+//                'systemId' => $shippingDetail['system_id'] ?? null,
+            ]);
 
 
         } catch (Exception $e) {

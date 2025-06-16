@@ -112,6 +112,26 @@ return [
             'sslmode' => 'prefer',
         ],
 
+        'aselna_printer_db' => [
+            'driver' => 'mysql',
+            'url' => env('DB_PRINTER_URL'),
+            'host' => env('DB_PRINTER_HOST', '127.0.0.1'),
+            'port' => env('DB_PRINTER_PORT', '3306'),
+            'database' => env('DB_PRINTER_DATABASE', 'laravel'),
+            'username' => env('DB_PRINTER_USERNAME', 'root'),
+            'password' => env('DB_PRINTER_PASSWORD', ''),
+            'unix_socket' => env('DB_PRINTER_SOCKET', ''),
+            'charset' => env('DB_PRINTER_CHARSET', 'utf8mb4'),
+            'collation' => env('DB_PRINTER_COLLATION', 'utf8mb4_unicode_ci'),
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'strict' => true,
+            'engine' => null,
+            'options' => extension_loaded('pdo_mysql') ? array_filter([
+                PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
+            ]) : [],
+        ],
+
         'mariadb' => [
             'driver' => 'mariadb',
             'url' => env('DB_URL'),
