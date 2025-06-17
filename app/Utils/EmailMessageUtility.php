@@ -2,6 +2,8 @@
 
 namespace App\Utils;
 
+use App\Utils\mail\AmazonEmailParser;
+use App\Utils\mail\ShopifyEmailParser;
 use App\Utils\mail\WalmartEmailParser;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
@@ -82,7 +84,7 @@ class EmailMessageUtility
         try {
             $this->client->connect();
 
-            $fromDate = \Carbon\Carbon::parse(date('Y-m-d', strtotime('-3 days')));
+            $fromDate = \Carbon\Carbon::parse(date('Y-m-d', strtotime('-10 days')));
             $toDate = \Carbon\Carbon::parse(date('Y-m-d'));
 
             $folder = $this->client->getFolder($folderName);
@@ -119,6 +121,22 @@ class EmailMessageUtility
                             $walmartEmailParser = new WalmartEmailParser($message);
                             $walmartEmailParser->getMessage(strip_tags($body));
                             $parsedData = $walmartEmailParser->getEntities();
+                            /*echo '<pre>';
+                            print_r($parsedData);
+                            echo '</pre>';*/
+                            break;
+                        case 'amazon':
+                            $amazonEmailParser = new AmazonEmailParser($message);
+                            $amazonEmailParser->getMessage(strip_tags($body));
+                            $parsedData = $amazonEmailParser->getEntities();
+                            /*echo '<pre>';
+                            print_r($parsedData);
+                            echo '</pre>';*/
+                            break;
+                        case 'shopify':
+                            $shopifyEmailParser = new ShopifyEmailParser($message);
+                            $shopifyEmailParser->getMessage(strip_tags($body));
+                            $parsedData = $shopifyEmailParser->getEntities();
                             /*echo '<pre>';
                             print_r($parsedData);
                             echo '</pre>';*/

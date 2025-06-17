@@ -198,11 +198,12 @@ class HomeController extends Controller
 
                 if($ticketDetail){
                     Log::info('Ticket Exist');
+                    $hd_ticket = $ticketDetail;
                     if($order_id){
                         $ticketDetail->order_id = $order_id;
                         $ticketDetail->save();
                     }
-                    $hd_ticket = $ticketDetail;
+
                 }else{
                     Log::info('New Ticket');
                     $hd_ticket = Message::create($ticketData);

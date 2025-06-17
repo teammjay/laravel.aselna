@@ -100,7 +100,7 @@ class ReceivedMessageParser
         }
     }
 
-    protected function getMessage(string $text)
+    protected function getMessage($text)
     {
         $result = [];
         $previous = [];
