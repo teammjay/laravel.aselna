@@ -214,9 +214,18 @@ class MessagesController extends Controller
                 $data['orderPOId'] = $orderDetail->purchase_order_id;
                 $data['orderOperation'] = view('messages.order_operation', ['orderDetail' => $orderDetail,'orderOperation' => $orderOperation])->render();
 
+                $ticketHistory = '';
+                if(isset($orderDetail->customer_id)){
+                    $ticket_list = Message::where('customer_id',$orderDetail->customer_id)->get();
+                    if($ticket_list){
+                        $ticketHistory = view('messages.ticket_history', ['ticket_list' => $ticket_list])->render();
+                    }
+                }
+
                 return response()->json([
                     'success' => true,
-                    'orderDetail' => $data
+                    'orderDetail' => $data,
+                    'ticketHistory' => $ticketHistory,
                 ]);
             }
         }
@@ -228,12 +237,22 @@ class MessagesController extends Controller
 
     public function getMessageTemplate(Request $request){
         $template_id = $request->input('template_id');
+        $store_name = $request->input('store_name');
+        $customer_name = $request->input('customer_name');
         if($template_id){
             $templateDetail = HdMessageTemplate::findOrFail($template_id);
             if($templateDetail){
+                $data = [
+                    'customer_firstName' => $customer_name,
+                    'store_name' => $store_name,
+                    'marketplaceName' => '',
+                    'shipment_address' => '',
+                    'trackingNumber' => '',
+                ];
+                $template_code = \Blade::render($templateDetail->template_code, $data);
                 return response()->json([
                     'success' => true,
-                    'templateCode' => $templateDetail->template_code
+                    'templateCode' => $template_code
                 ]);
             }
         }

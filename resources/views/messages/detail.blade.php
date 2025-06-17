@@ -186,6 +186,9 @@
                     <div class="row pt-3" >
                         <div class="col-md-12">
                             {{ $ticketDetail->ticket_email }}
+                            <input type="hidden" id="customer_id" value="{{ $ticketDetail->customer_id }}">
+                            <input type="hidden" id="customer_name" value="{{ isset($ticketDetail->customer) ? $ticketDetail->customer->first_name : '' }}">
+                            <input type="hidden" id="store_name" value="{{ isset($ticketDetail->store) ? $ticketDetail->store->name : '' }}">
                         </div>
                     </div>
                     <div class="row pt-3" >
@@ -245,7 +248,7 @@
                     </div>
                     <div class="border mt-3 p-3">
                         <p>Items:</p>
-                        <table class="table" id="order_item_table">
+                        <table class="table table-bordered" id="order_item_table">
 
                         </table>
                     </div>
@@ -265,7 +268,9 @@
                     Ticket History
                 </div>
                 <div class="card-body">
+                    <table class="table table-bordered" id="ticket_history_table">
 
+                    </table>
                 </div>
             </div>
         </div>
@@ -295,11 +300,15 @@
 
             $(document).on('change','#message_template',function () {
                 var template_id = $(this).val();
+                var customer_name = $('#customer_name').val();
+                var store_name = $('#store_name').val();
                 $.ajax({
                     type: "POST",
                     url: "{{ route('message.getmessagetemplate') }}",
                     data: {
-                        template_id: template_id
+                        template_id: template_id,
+                        customer_name: customer_name,
+                        store_name: store_name,
                     },
                     headers: {
                         'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
@@ -343,6 +352,8 @@
                             $('#order_total').val(data.orderDetail.orderTotal);
                             $('#purchase_order_id').val(data.orderDetail.orderPOId);
                             $('#order_operation').html(data.orderDetail.orderOperation);
+                            if(data.ticketHistory != '')
+                                $('#ticket_history_table').html(data.ticketHistory);
                         }
                     },
                     error: function (xhr) {

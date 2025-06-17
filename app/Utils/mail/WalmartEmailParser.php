@@ -65,6 +65,7 @@ class WalmartEmailParser extends ReceivedMessageParser
             $parsed = $this->parseEscalation($text, $isTransferred);
             if ($parsed) {
                 $this->ticketTypeCode = HdTicketTypeCode::ESCALATION;
+                $this->addEntity(trim($this->ticketTypeCode), 'ticket_type_id');
                 return $parsed;
             }
         }
@@ -93,6 +94,7 @@ class WalmartEmailParser extends ReceivedMessageParser
 
         if (in_array($from, self::$marketplaceEmails)) {
             $this->ticketTypeCode = HdTicketTypeCode::MARKETPLACE_NOTIFICATION;
+            $this->addEntity(trim($this->ticketTypeCode), 'ticket_type_id');
             return parent::getMessage($text);
         }
 
