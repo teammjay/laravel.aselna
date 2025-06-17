@@ -14,6 +14,7 @@ use App\Jobs\SubmitShopifyProductsJob;
 use App\Jobs\SyncAllOrderStatusJob;
 use App\Jobs\synccategorytospecification;
 use App\Models\Customer;
+use App\Models\CustomerEmail;
 use App\Models\HDMessage;
 use App\Models\HdMessagePart;
 use App\Models\HdTicketType;
@@ -112,32 +113,11 @@ class HomeController extends Controller
                 Log::info('Emails :'.json_encode($email));
                 /* create ticket*/
                 $order_id = $related_order_id = $po_no = $reason = $customer_id = $order_operation_id = $reference_code = NULL;
-                $ticket_type_code = HdTicketTypeCode::ORDER_INFORMATION;
+                $ticket_type_code = HdTicketTypeCode::MARKETPLACE_NOTIFICATION;
                 $customerDetail = Customer::whereLike('email','%'.$email['from'].'%')->first();
 
                 if($customerDetail){
                     $customer_id = $customerDetail->id;
-                }else{
-
-                    if (isset($email['name'])) {
-                        $nameArr = explode(' ', $email['name']);
-                        $firstname = $nameArr[0];
-                        $lastname = (isset($nameArr[1])) ? $nameArr[1] : '';
-                    }
-
-                    $customerData = [
-                        'first_name' => $firstname,
-                        'last_name' => $lastname,
-                        'full_name' => isset($email['name']) ? $email['name'] : '',
-                        'email' => $email['from'],
-                        'user_id' => $email['from']
-                    ];
-
-                    $customer_detail = Customer::updateOrCreate([
-                        'email' => $email['from'],
-                    ], $customerData);
-
-                    $customer_id = $customer_detail->id;
                 }
 
                 if(isset($email['parsedData']) && !empty($email['parsedData'])){
@@ -169,6 +149,41 @@ class HomeController extends Controller
                     }
                 }
 
+                if($customer_id == NULL){
+
+                    if (isset($email['name'])) {
+                        $nameArr = explode(' ', $email['name']);
+                        $firstname = $nameArr[0];
+                        $lastname = $nameArr[1];
+                    }
+
+                    $customerData = [
+                        'first_name' => $firstname,
+                        'last_name' => $lastname,
+                        'full_name' => isset($email['name']) ? $email['name'] : '',
+                        'email' => $email['from'],
+                        'user_id' => $email['from']
+                    ];
+
+                    $customer_detail = Customer::updateOrCreate([
+                        'email' => $email['from'],
+                    ], $customerData);
+
+                    $customer_id = $customer_detail->id;
+                }else{
+                    $customerDetail = Customer::findOrFail($customer_id);
+                    if($customerDetail->email != $email['from']){
+                        $customerEmailData = [
+                            'customer_id' => $customer_id,
+                            'email_address' => $email['from'],
+                        ];
+                        CustomerEmail::updateOrCreate([
+                            'customer_id' => $customer_id,
+                            'email_address' => $email['from']
+                        ],$customerEmailData);
+                    }
+                }
+
                 $ticket_code = $store->short_code.'-'.$this->getNextTicketNumberForStore($store->id);
                 $ticketTypeDetail = HdTicketType::where('code',$ticket_type_code)->first();
                 $ticketData = [
@@ -179,6 +194,7 @@ class HomeController extends Controller
                     'subject' => trim($email['subject']),
                     'message_id' => trim($email['message_id']),
                     'notes' => $email['body'],
+                    'customer_id' => $customer_id,
                     'reference_code' => $reference_code,
                     'related_order_operation_id' => $order_operation_id,
                     'order_id' => trim($order_id),
@@ -201,6 +217,7 @@ class HomeController extends Controller
                     $hd_ticket = $ticketDetail;
                     if($order_id){
                         $ticketDetail->order_id = $order_id;
+                        $ticketDetail->ticket_type_id = $ticketTypeDetail->id;
                         $ticketDetail->save();
                     }
 

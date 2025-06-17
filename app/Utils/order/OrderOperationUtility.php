@@ -406,7 +406,81 @@ class OrderOperationUtility
 
     private static function refundOrder($orderOperation)
     {
+        $store = $orderOperation->store;
+        $storeType = $orderOperation->store->storeType->name;
+        switch (strtolower($storeType)) {
+            case 'shopify':
+                break;
+            case 'walmart':
+                $finalData = [
+                    'orderRefund'=> [
+                        'purchaseOrderId' => $orderOperation->order->purchase_order_id
+                    ]
+                ];
+                $count = 1;
+                foreach ($orderOperation->operationItem as $item) {
+                    Log::info('Itema data for refund operation :: ' . json_encode($item));
+                    $orderLine = [
+                        'lineNumber' => $count,
+                        'refundReason' => 'CustomerReturn',
+                        'refunds' => [
+                            'refund' => [
+                                [
+                                    'refundCharges' =>[
+                                        'refundCharge' => [
+                                            'refundReason' => 'CustomerReturn',
+                                            'charge' => [
+                                                [
+                                                    'chargeType' => 'PRODUCT',
+                                                    'chargeName' => 'ItemPrice',
+                                                    'chargeAmount' => [
+                                                        'currency' => 'USD',
+                                                        'amount' => $orderOperation->order->order_total,
+                                                    ]
+                                                ]
+                                            ]
+                                        ]
+                                    ]
+                                ]
+                            ]
+                        ]
+                    ];
 
+                    $finalData['orderRefund']['orderLines']['orderLine'][] = $orderLine;
+                    $count++;
+                }
+
+                Log::info('Final data for the refund operation :: ' . json_encode($finalData));
+
+                $authService = new WalmartAuthService($store->seller_id, $store->secret_key);
+                $response = $authService->shipOrder($orderOperation->order->purchase_order_id, $finalData);
+
+                Log::info('Walmart refund order response: ' . json_encode($response));
+
+                if (isset($response)) {
+                    $orderResp = $response['order'];
+                    Log::info('Walmart refund order response: ' . json_encode($orderResp));
+                    if (isset($orderResp) && isset($orderResp['purchaseOrderId']) && $orderResp['purchaseOrderId'] == $orderOperation->order->purchase_order_id) {
+                        Log::info('Walmart refund order successful: ' . json_encode($orderResp));
+                        $orderOperation->update(['status' => OrderOperationStatus::REFUNDED]);
+                        if (isset($orderOperation->order_id)) {
+                            $order = Order::findOrFail($orderOperation->order_id);
+                            $order->update(['order_status' => OrderStatus::Refund]);
+                        }
+                        return true;
+                    } else {
+                        Log::info('Walmart refund order error: ' . json_encode($response));
+                        return false;
+                    }
+                } else {
+                    Log::info('Walmart refund order error: No response received');
+                    return false;
+                }
+
+                break;
+            case 'ebay':
+                break;
+        }
     }
 
     private static function createShipment($orderOperation)

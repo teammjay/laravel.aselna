@@ -1,4 +1,5 @@
 @if(count($orderDetail->orderItem ?? []) > 0)
+    <tbody>
     @foreach($orderDetail->orderItem as $oitem)
         <tr>
             <td>
@@ -17,4 +18,5 @@
             <td>{{ $oitem->product->product_title }}</td>
         </tr>
     @endforeach
+    </tbody>
 @endif
