@@ -503,7 +503,7 @@
                 //processData: false,
                 //contentType: false
             },
-            "order": [[9, "desc"]],
+            "order": [[5, "desc"]],
             columns: [
                 {data: 'message_id'},
                 {data: 'store'},

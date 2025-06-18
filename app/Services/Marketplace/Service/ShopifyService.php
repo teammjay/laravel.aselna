@@ -11,6 +11,8 @@ use App\Models\ListingFeed;
 use App\Models\ListingItem;
 use App\Models\ListingItemLink;
 use App\Models\ListingItemProductImage;
+use App\Models\Order;
+use App\Models\OrderItem;
 use App\Models\OrderOperation;
 use App\Models\ProductInterface;
 use App\Models\ProductTags;
@@ -527,6 +529,52 @@ class ShopifyService implements MarketplaceServiceInterface
             $response = $this->authService->updateFullfillment($variables);
 
             return $response;
+
+        }
+    }
+
+
+    public function refundOrder($order_id,$store)
+    {
+        if($order_id) {
+            Log::info("Order ID : ". $order_id);
+
+            $this->authService = new ShopifyAuthService($store->secret_key, $store->service_url);
+            $orderId = "gid://shopify/Order/".$order_id;
+
+            if($orderId){
+                $orderDetail = Order::with('orderItem')->where('order_id',$order_id)->first();
+                $items= [];
+                if($orderDetail){
+                    if(isset($orderDetail->orderItem)){
+                        foreach($orderDetail->orderItem as $item){
+                            $items[] = [
+                                'lineItemId' => $item->id1,
+                                'quantity' => $item->quantity
+                            ];
+                        }
+                    }
+                }
+                $variables = [
+                    'input' => [
+                        'orderId' => $orderId,
+                        'refundLineItems' => $items,
+                        'transactions' => []
+                    ]
+                ];
+                /*echo '<pre>';
+                print_r($variables);
+                echo '</pre>';die;*/
+                $refundId = $this->authService->createRefund($orderId, $variables);
+                if($refundId){
+                    //$refund_response = $this->authService->refundOrder($refundId);
+
+                    return $refundId;
+                }else{
+                    return false;
+                }
+
+            }
 
         }
     }

@@ -272,4 +272,43 @@ class ShopifyAuthService
             return null;
         }
     }
+
+    public function createRefund($orderId, $variables)
+    {
+        if(!empty($orderId)) {
+
+            $response = $this->makeGraphQLRequest(ShopifyQueries::$createRefund, $variables);
+
+            Log::info('Create Refund Response: ' . json_encode($response));
+            /*echo '<pre>';
+            print_r($response);
+            echo '</pre>';die;*/
+            if(!isset($response['error'])){
+                return $response['data']['refundCreate']['refund']['id'] ?? null;
+            }else{
+                return false;
+            }
+        }else{
+            return false;
+        }
+    }
+
+    public function refundOrder($refundId){
+
+        if(!empty($refundId)) {
+            $variable = [
+                'id' => $refundId
+            ];
+            $response = $this->makeGraphQLRequest(ShopifyQueries::$refundOrder, $variable);
+
+            Log::info('Refund Orders Response: ' . json_encode($response));
+
+            echo '<pre>';
+            print_r($response);
+            echo '</pre>';die;
+            return $response;
+        }else{
+            return false;
+        }
+    }
 }

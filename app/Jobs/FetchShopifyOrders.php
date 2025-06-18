@@ -49,7 +49,7 @@ class FetchShopifyOrders implements ShouldQueue
 
             if (count($stores ?? []) > 0) {
                 foreach ($stores as $store) {
-                    if ($store->name != 'AccessoryChoice') {
+                    if ($store->name != 'AccessoryWiz') {
                         continue;
                     }
                     Log::info('Store : ' . $store->name);

@@ -153,7 +153,7 @@ class EmailMessageUtility
                     'content' => $part->content,
                     'charset' => $part->charset,
                 ];
-                $emails[] = [
+                $eData = [
                     'subject' => $message->subject->first(),
                     'full_name' => $message->fromaddress->first(),
                     'name' => $message->getFrom()[0]->personal ?? null,
@@ -170,11 +170,15 @@ class EmailMessageUtility
                     'body' => $body,
                 ];
 
+                /*echo '<pre>';
+                print_r($eData);
+                echo '</pre>';*/
+
+                $emails[] = $eData;
+
             }
 
-            /*echo '<pre>';
-            print_r($emails);
-            echo '</pre>';die;*/
+            //die;
             return $emails;
         } catch (Exception $e) {
             /*echo '<pre>';

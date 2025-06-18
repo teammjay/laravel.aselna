@@ -59,6 +59,11 @@ class HomeController extends Controller
 
     public function testfunction(){
 
+        /*$store = Store::findOrFail('3fab8878-e036-58c7-db30-addd3058875c');
+        $shopifyService = new ShopifyService();
+        $shopifyService->refundOrder('6665896263985',$store);
+        die;*/
+
         /*$requestId = (string) Str::uuid();
         $data = [
             'requesterId' => 'Iweb',
@@ -154,7 +159,7 @@ class HomeController extends Controller
                     if (isset($email['name'])) {
                         $nameArr = explode(' ', $email['name']);
                         $firstname = $nameArr[0];
-                        $lastname = $nameArr[1];
+                        $lastname = isset($nameArr[1]) ? $nameArr[1] : '';
                     }
 
                     $customerData = [
@@ -170,6 +175,15 @@ class HomeController extends Controller
                     ], $customerData);
 
                     $customer_id = $customer_detail->id;
+
+                    $customerEmailData = [
+                        'customer_id' => $customer_id,
+                        'email_address' => $email['from'],
+                    ];
+                    CustomerEmail::updateOrCreate([
+                        'customer_id' => $customer_id,
+                        'email_address' => $email['from']
+                    ],$customerEmailData);
                 }else{
                     $customerDetail = Customer::findOrFail($customer_id);
                     if($customerDetail->email != $email['from']){
