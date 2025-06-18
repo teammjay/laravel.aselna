@@ -31,8 +31,9 @@
                 <tbody>
                 @foreach($printers as $sType)
                     <tr>
-                        <td>{{ $sType->printerClient->name }}</td>
+                        <td></td>
                         <td>{{ $sType->name }}</td>
+
                         <td>{{ $sType->label_format }}</td>
                         <td>{{ $sType->status }}</td>
                         <td>{{ $sType->dpi }}</td>

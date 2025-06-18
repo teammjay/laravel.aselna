@@ -78,21 +78,23 @@ class EndicialabelService
         $orderOperation->save();
 
         /* create transaction entry*/
-//        $address = $shippingDetail['fromAddress']['name'] . ' ' . $shippingDetail['fromAddress']['address1'] . ' ' . $shippingDetail['fromAddress']['address2'] . ' ' . $shippingDetail['fromAddress']['city'] . ' ' . $shippingDetail['fromAddress']['state'] . ' ' . $shippingDetail['fromAddress']['postalCode'] . ' ' . $shippingDetail['fromAddress']['country'];
-//        $transactionData = [
-//            'shipping_account_id' => $shippingDetail['account_info'],
-//            'tracking_number' => $trackingNumber,
-//            'transaction_date' => date('Y-m-d H:i:s', strtotime($transactionDate)),
-//            'transaction_id' => $transactionID,
-//            'amount' => $transactionCost,
-//            'address' => $address,
-//            'canceled' => 0,
-//        ];
-//
-//        AccountTransaction::updateOrCreate([
-//            'tracking_number' => $trackingNumber,
-//            'transaction_id' => $transactionID,
-//        ], $transactionData);
+        if (env('APP_ENV') !== 'local') {
+            $address = $shippingDetail['fromAddress']['name'] . ' ' . $shippingDetail['fromAddress']['address1'] . ' ' . $shippingDetail['fromAddress']['address2'] . ' ' . $shippingDetail['fromAddress']['city'] . ' ' . $shippingDetail['fromAddress']['state'] . ' ' . $shippingDetail['fromAddress']['postalCode'] . ' ' . $shippingDetail['fromAddress']['country'];
+            $transactionData = [
+                'shipping_account_id' => $shippingDetail['account_info'],
+                'tracking_number' => $trackingNumber,
+                'transaction_date' => date('Y-m-d H:i:s', strtotime($transactionDate)),
+                'transaction_id' => $transactionID,
+                'amount' => $transactionCost,
+                'address' => $address,
+                'canceled' => 0,
+            ];
+
+            AccountTransaction::updateOrCreate([
+                'tracking_number' => $trackingNumber,
+                'transaction_id' => $transactionID,
+            ], $transactionData);
+        }
 
         try {
             $imageData = base64_decode($base64Image);
