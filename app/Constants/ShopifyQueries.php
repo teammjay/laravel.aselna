@@ -320,4 +320,42 @@ public static $getOrderDetail =<<<GQL
     }
 GQL;
 
+
+public static $createRefund =<<<GQL
+    mutation RefundLineItem(\$input: RefundInput!) {
+      refundCreate(input: \$input) {
+        refund {
+          id
+          totalRefundedSet {
+            presentmentMoney {
+              amount
+              currencyCode
+            }
+          }
+        }
+        userErrors {
+          field
+          message
+        }
+      }
+    }
+GQL;
+
+public static $refundOrder =<<<GQL
+    query refund(\$id: ID!) {
+      refund(id: \$id) {
+        duties {
+          originalDuty {
+            countryCodeOfOrigin
+          }
+          amountSet {
+            shopMoney {
+              amount
+            }
+          }
+        }
+      }
+    }
+GQL;
+
 }

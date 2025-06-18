@@ -410,6 +410,19 @@ class OrderOperationUtility
         $storeType = $orderOperation->store->storeType->name;
         switch (strtolower($storeType)) {
             case 'shopify':
+                $orderId = $orderOperation->order_id;
+                $shipmentDetail = OrderOperation::with('operationItem', 'order', 'order.customerAddress', 'carrierService', 'store', 'operationItem.orderItem', 'operationItem.orderItem.product')->where('order_id', $orderId)->first();
+
+                $shopifyServie = new ShopifyService($store->secret_key, $store->service_url);
+                $response = $shopifyServie->refundOrder($shipmentDetail->order->order_id, $store);
+
+                if ($response) {
+                    //echo "Order canceled successfully!";
+                    Log::info('Shopify order refunded successful:');
+                    return true;
+                }else{
+                    return false;
+                }
                 break;
             case 'walmart':
                 $finalData = [

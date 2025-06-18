@@ -85,7 +85,7 @@ class FetchEmailMessagesJob implements ShouldQueue
                                             /* create ticket*/
                                             $order_id = $related_order_id = $po_no = $reason = $customer_id = $order_operation_id = $reference_code = NULL;
                                             $ticket_type_code = HdTicketTypeCode::MARKETPLACE_NOTIFICATION;
-                                            $customerDetail = Customer::whereLike('email','%'.$email['from'].'%')->first();
+                                            $customerDetail = Customer::select('customers.*')->join('customer_emails as CE', 'CE.customer_id', '=', 'customers.id','left')->whereLike('customers.email','%'.$email['from'].'%')->orWhere('CE.email_address','like','%'.$email['from'].'%')->first();
 
                                             if($customerDetail){
                                                 $customer_id = $customerDetail->id;
@@ -141,6 +141,16 @@ class FetchEmailMessagesJob implements ShouldQueue
                                                 ], $customerData);
 
                                                 $customer_id = $customer_detail->id;
+
+                                                $customerEmailData = [
+                                                    'customer_id' => $customer_id,
+                                                    'email_address' => $email['from'],
+                                                ];
+                                                CustomerEmail::updateOrCreate([
+                                                    'customer_id' => $customer_id,
+                                                    'email_address' => $email['from']
+                                                ],$customerEmailData);
+
                                             }else{
                                                 $customerDetail = Customer::findOrFail($customer_id);
                                                 if($customerDetail->email != $email['from']){

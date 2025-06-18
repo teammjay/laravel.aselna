@@ -17,6 +17,7 @@ class WalmartEmailParser extends ReceivedMessageParser
     protected static $ticketTypeMap = [
         'cancel my order' => HdTicketTypeCode::ORDER_CANCELLATION_REQUEST,
         'cancel order' => HdTicketTypeCode::ORDER_CANCELLATION_REQUEST,
+        'request cancel' => HdTicketTypeCode::ORDER_CANCELLATION_REQUEST,
         'initiate return' => HdTicketTypeCode::RETURN_REQUEST,
         'initiate a return' => HdTicketTypeCode::RETURN_REQUEST,
         'request refund' => HdTicketTypeCode::ORDER_REFUND_REQUEST,
@@ -89,7 +90,24 @@ class WalmartEmailParser extends ReceivedMessageParser
             }
 
 
-            return $this->parseCustomerMessage($text);
+            //return $this->parseCustomerMessage($text);
+        }
+
+        if (str_starts_with($subject, 'please contact the customer')) {
+            $remaining = trim(substr($subject, strlen('please contact the customer')));
+            $parts = explode('-', $remaining);
+            /*echo '<pre>';
+            print_r($parts);
+            echo '</pre>';*/
+            if (count($parts) === 2) {
+                $ticketTypeKey = trim(strtolower($parts[1]));
+                //echo $ticketTypeKey;
+                $this->ticketTypeCode = self::$ticketTypeMap[$ticketTypeKey] ?? null;
+                $this->addEntity(trim($this->ticketTypeCode), 'ticket_type_id');
+            }
+
+
+            //return $this->parseCustomerMessage($text);
         }
 
         if (in_array($from, self::$marketplaceEmails)) {
@@ -97,6 +115,8 @@ class WalmartEmailParser extends ReceivedMessageParser
             $this->addEntity(trim($this->ticketTypeCode), 'ticket_type_id');
             return parent::getMessage($text);
         }
+
+        return $this->parseCustomerMessage($text);
 
         /*$parsedText = parent::getMessage($text);
         $this->processExtractors($parsedText);
