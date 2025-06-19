@@ -72,7 +72,7 @@
                                 Last Name
                             </div>
                             <div class="col-3">
-                                <select class="custom-select" id="" name="last_name_sku_operator">
+                                <select class="custom-select" id="" name="last_name_operator">
                                     <option value="{{FilterCodes::EQUAL}}">=</option>
                                     <option value="{{FilterCodes::CONTAINS}}">contains</option>
                                     <option value="{{FilterCodes::STARTS_WITH}}">starts with</option>
@@ -94,7 +94,7 @@
                                 Subject
                             </div>
                             <div class="col-3">
-                                <select class="custom-select" id="" name="store_operator">
+                                <select class="custom-select" id="" name="subject_operator">
                                     <option value="{{FilterCodes::CONTAINS}}">contains</option>
                                     <option value="{{FilterCodes::STARTS_WITH}}">starts with</option>
                                     <option value="{{FilterCodes::ENDS_WITH}}">ends with</option>
@@ -152,14 +152,19 @@
                                 </select>
                             </div>
                             <div class="col-6">
-                                <input type="text" name="order_id" id="ticket_code" class="form-control">
+                                <input type="text" name="ticket_code" id="ticket_code" class="form-control">
                             </div>
                         </div>
                     </div>
                     <div class="col-md-4">
                         <div class="row">
-                            <div class="col-6 text-right">
+                            <div class="col-3 text-right">
                                 Body
+                            </div>
+                            <div class="col-3">
+                                <select class="custom-select" id="" name="body_operator">
+                                    <option value="{{FilterCodes::CONTAINS}}">contains</option>
+                                </select>
                             </div>
                             <div class="col-6">
                                 <input type="text" name="body" id="body" class="form-control">
@@ -197,7 +202,12 @@
                             </div>
                             <div class="col-6">
                                 <select class="form-control" name="ticket_type">
-
+                                    <option value=""></option>
+                                    @if(count($ticketTypes ?? []) > 0)
+                                        @foreach($ticketTypes as $tt)
+                                            <option value="{{ $tt->id }}">{{ $tt->name }}</option>
+                                        @endforeach
+                                    @endif
                                 </select>
                             </div>
                         </div>
