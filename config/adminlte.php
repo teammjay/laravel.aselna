@@ -326,9 +326,14 @@ return [
             'icon' => 'fa fa-fw fa-envelope',
             'submenu' => [
                 [
-                    'text' => 'Messages',
+                    'text' => 'Need Action',
                     'url' => '/messages',
-                    'icon' => 'fa fa-fw fa-envelope',
+                    'icon' => 'fa fa-fw fa-exclamation',
+                ],
+                [
+                    'text' => 'Awaiting',
+                    'url' => '/awaiting_messages',
+                    'icon' => 'fa fa-fw fa-hourglass-start',
                 ],
                 [
                     'text' => 'Message Template',

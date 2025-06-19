@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Constants\HdTicketStatus;
 use App\Constants\HdTicketTypeCode;
 use App\Constants\OrderStatus;
+use App\Helpers\QueryFilters;
 use App\Models\HDMessage;
 use App\Models\HdMessageTemplate;
 use App\Models\HdTicketType;
@@ -23,7 +24,8 @@ class MessagesController extends Controller
     public function index()
     {
         $stores = Store::orderBy('name','asc')->get();
-        return view('messages.list', compact('stores'));
+        $ticketTypes = HdTicketType::all();
+        return view('messages.list', compact('stores','ticketTypes'));
     }
 
     public function getMessageData(Request $request)
@@ -39,38 +41,55 @@ class MessagesController extends Controller
         $query = Message::with('store','store.storeType','ticketType','customer');
 
         // Filter by ticket email
-        if ($request->has('sender_email') && $request->input('sender_email') != '') {
-            $query->where('ticket_email', $request->input('sender_email'));
-        }
+        QueryFilters::applyFilter($query, $request, 'sender_email', 'sender_email_operator', 'sender_email');
 
         // Filter by ticket type
-        if ($request->has('ticket_type') && $request->input('ticket_type') != '') {
-            $query->where('ticket_type_id', $request->input('ticket_type'));
-        }
+        QueryFilters::applyFilter($query, $request, 'ticket_type', 'ticket_type_operator', 'ticket_type');
 
         // Filter by ticket code
-        if ($request->has('ticket_code') && $request->input('ticket_code') != '') {
-            $query->where('ticket_code', $request->input('ticket_code'));
-        }
+        QueryFilters::applyFilter($query, $request, 'ticket_code', 'ticket_code_operator', 'ticket_code');
 
         // Filter by order id
-        if ($request->has('order_id') && $request->input('order_id') != '') {
-            $query->where('order_id', $request->input('order_id'));
-        }
+        QueryFilters::applyFilter($query, $request, 'order_id', 'order_id_operator', 'order_id');
 
         // Filter by subject
-        if ($request->has('subject') && $request->input('subject') != '') {
-            $query->where('subject', $request->input('subject'));
-        }
+        QueryFilters::applyFilter($query, $request, 'subject', 'subject_operator', 'subject');
 
         // Filter by notes
-        if ($request->has('body') && $request->input('body') != '') {
-            $query->where('notes', $request->input('body'));
-        }
+        QueryFilters::applyFilter($query, $request, 'notes', 'body_operator', 'body');
 
-        // Filter by notes
-        if ($request->has('user_id') && $request->input('user_id') != '') {
-            $query->where('customer_id', $request->input('user_id'));
+        // Filter by user id
+        QueryFilters::applyFilter($query, $request, 'user_id', 'user_id_operator', 'user_id');
+
+        QueryFilters::applyRelationFilter($query, $request, 'customer', 'first_name', 'first_name_operator', 'first_name');
+        QueryFilters::applyRelationFilter($query, $request, 'customer', 'last_name', 'last_name_operator', 'last_name');
+
+        if ($columnName != '') {
+            switch (strtolower($columnName)) {
+                case 'first_name':
+
+                    $query->join('customers', 'customers.id', '=', 'hd_ticket.customer_id','left')
+                        ->orderBy('customers.first_name', $columnSortOrder);
+                    break;
+                case 'last_name':
+
+                    $query->join('customers', 'customers.id', '=', 'hd_ticket.customer_id','left')
+                        ->orderBy('customers.last_name', $columnSortOrder);
+
+                    break;
+
+                case 'store':
+                    $query->join('store', 'hd_ticket.store_id', '=', 'store.id')
+                        ->orderBy('store.name', $columnSortOrder);
+
+                    break;
+                case 'ticket_type':
+                    $query->join('hd_ticket_type', 'hd_ticket_type.id', '=', 'hd_ticket.ticket_type_id')
+                        ->orderBy('hd_ticket_type.name', $columnSortOrder);
+                    break;
+            }
+
+
         }
 
         //$dataTableService = new DataTableService($query, $request);

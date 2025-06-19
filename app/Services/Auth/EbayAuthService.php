@@ -688,4 +688,32 @@ class EbayAuthService
         }
 
     }
+
+    public function issueRefund($orderId, array $data)
+    {
+        try {
+
+            $accessToken = $this->refreshToken();
+
+            $response = $this->client->post("/sell/fulfillment/v1/order/{$orderId}/issue_refund", [
+                'verify' => false,
+                'headers' => [
+                    'Authorization' => 'Bearer ' . $accessToken,
+                    'Content-Type'  => 'application/json',
+                ],
+                'json' => $data,
+            ]);
+
+            Log::info('Refund Response: ' . $response->getBody());
+
+            return json_decode($response->getBody(), true);
+
+        } catch (RequestException $e) {
+            if ($e->hasResponse()) {
+                $error = json_decode($e->getResponse()->getBody(), true);
+                return ['error' => $error];
+            }
+            return ['error' => $e->getMessage()];
+        }
+    }
 }

@@ -492,6 +492,39 @@ class OrderOperationUtility
 
                 break;
             case 'ebay':
+
+                $payload = [
+                    "reasonForRefund" => "BUYER_CANCEL"
+                ];
+
+                foreach ($orderOperation->operationItem as $item) {
+
+                    $payload["refundItems"][] = [
+                        "lineItemId" => $item->orderItem->store_sku,
+                        "refundAmount" => $item->item_price,
+                    ];
+
+                }
+
+                /*echo '<pre>';
+                print_r($payload);
+                echo '</pre>';die;*/
+
+                $clientId = env('EBAY_CLIENT_ID');
+                $clientSecret = env('EBAY_CLIENT_SECRET');
+                $redirectUri = env('EBAY_REDIRECT_URI');
+
+                $authService = new EbayAuthService($clientId, $clientSecret, $redirectUri, $store->user_id);
+                $result = $authService->issueRefund($orderOperation->order->order_id, $payload);
+
+                if (!isset($result['error'])) {
+                    $orderOperation->update(['status' => OrderOperationStatus::REFUNDED]);
+                    if (isset($orderOperation->order_id)) {
+                        $order = Order::findOrFail($orderOperation->order_id);
+                        $order->update(['order_status' => OrderStatus::Refund]);
+                    }
+                }
+
                 break;
         }
     }
