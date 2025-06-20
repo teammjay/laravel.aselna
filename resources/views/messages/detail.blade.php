@@ -156,7 +156,7 @@
                                 <select class="form-control" name="ticket_type" id="ticket_type">
                                     @if(count($ticketTypeCode ?? []) >0)
                                         @foreach($ticketTypeCode as $tcode)
-                                            <option value="{{ $tcode->code }}">{{ $tcode->name }}</option>
+                                            <option value="{{ $tcode->id }}">{{ $tcode->name }}</option>
                                         @endforeach
                                     @endif
 
@@ -168,8 +168,8 @@
                                     <option value="3">Deleted</option>
                                     <option value="4">Spam</option>
                                 </select>
-                                <button type="button" class="btn btn-default" name="revert" id="revert">Revert</button>
-                                <button type="button" class="btn btn-default" name="close" id="close">Close</button>
+                                <button type="button" class="btn btn-default" name="revert" id="revert_ticket">Revert</button>
+                                <button type="button" class="btn btn-default" name="close" id="close_ticket">Close</button>
                             </div>
                         </div>
                     </div>
@@ -326,6 +326,39 @@
                         $("#ajax-preloader").hide();
                     }
                 });
+            });
+
+
+            $(document).on('click','#close_ticket',function () {
+                let ticket_type = $('#ticket_type').val();
+                let status = $('#action_type').val();
+                let ticket_id = '{{ $ticketDetail->id }}';
+
+                if(ticket_id != '') {
+                    $.ajax({
+                        type: "POST",
+                        url: "{{ route('message.updateticket') }}",
+                        data: {
+                            ticket_id: ticket_id,
+                            status: status,
+                            ticket_type: ticket_type,
+                        },
+                        headers: {
+                            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                        },
+
+                        success: function (data) {
+                            if (data.success) {
+                                window.location.href = "{{ route('message.index') }}";
+                            }
+                        },
+                        error: function (xhr) {
+                        },
+                        complete: function () {
+                            $("#ajax-preloader").hide();
+                        }
+                    });
+                }
             });
 
         });

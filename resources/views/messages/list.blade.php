@@ -30,6 +30,17 @@
         table th, table td, .column-no-whitespace{
             white-space: nowrap;
         }
+
+        table tbody tr{
+            background-color: rgba(0,0,0,0.051) !important;
+        }
+        .unread {
+            background-color: #fff !important;
+            font-weight: 600;
+        }
+        tr.bg-blue {
+            background-color: #007bff!important;
+        }
     </style>
 @stop
 
@@ -326,14 +337,30 @@
 
         </div>
         <div class="col-md-9 d-flex">
-            <button type="button" class="btn btn-default" id="open_message" disabled="">
+            <button type="button" class="btn btn-default mr-2" id="open_message" disabled="">
                 <i class="fas fa-fw fa-pencil-alt"></i> Open
+            </button>
+
+            <button type="button" class="btn btn-default mr-2" data-status="4" id="mark_as_spam" disabled="">
+                <i class="fas fa-fw fa-exclamation"></i> Spam
+            </button>
+
+            <button type="button" class="btn btn-default mr-2" id="delete_ticket" disabled="">
+                <i class="fas fa-fw fa-trash"></i> Delete
+            </button>
+
+            <button type="button" class="btn btn-default mr-2" id="mark_as_important" disabled="">
+                <i class="fas fa-fw fa-star"></i> Mark As Important
+            </button>
+
+            <button type="button" class="btn btn-default" id="mark_as_unread" disabled="">
+                <i class="fas fa-fw fa-envelope"></i> Mark As Unread
             </button>
 
         </div>
     </div>
     <div class="table-responsive">
-        <table id="messageTable" class="table table-bordered table-striped">
+        <table id="messageTable" class="table table-bordered">
             <thead>
             <tr>
                 <th></th>
@@ -391,8 +418,12 @@
            ele.addClass('bg-blue');
            ele.find('input[name="message_id[]"]').prop('checked',true);
             $('#open_message').removeAttr('disabled');
+            $('#mark_as_spam').removeAttr('disabled');
+            $('#delete_ticket').removeAttr('disabled');
+            $('#mark_as_important').removeAttr('disabled');
+            $('#mark_as_unread').removeAttr('disabled');
             var ticket_id = ele.find('input[name="message_id[]"]').val();
-            location.href = "{{ url('messages/detail') }}/" + ticket_id;
+            //location.href = "{{ url('messages/detail') }}/" + ticket_id;
         });
 
         $('#open_message').on('click',function () {
@@ -404,6 +435,43 @@
                     location.href = "{{ url('messages/detail') }}/" + selectedId;
                 }
             });
+        });
+
+
+        $(document).on('click','#mark_as_spam',function () {
+            var ticket_id = $('input[name="message_id[]"]:checked').val();
+            var status = $(this).data('status');
+            var data = {
+                ticket_id: ticket_id,
+                status: 4
+            };
+            if(ticket_id != '') {
+                updateTicket(data);
+            }
+        });
+
+        $(document).on('click','#mark_as_important',function () {
+            var ticket_id = $('input[name="message_id[]"]:checked').val();
+            var data = {
+                ticket_id: ticket_id,
+                important: 1
+            };
+
+            if(ticket_id != '') {
+                updateTicket(data);
+            }
+        });
+
+        $(document).on('click','#mark_as_unread',function () {
+            var ticket_id = $('input[name="message_id[]"]:checked').val();
+            var data = {
+                ticket_id: ticket_id,
+                message_read: 0
+            };
+
+            if(ticket_id != '') {
+                updateTicket(data);
+            }
         });
 
         /*table = $('#messageTable').DataTable({
@@ -469,6 +537,32 @@
 
     });
 
+    function updateTicket(data) {
+        let ticket_id = $('input[name="message_id[]"]:checked').val();
+
+        if(ticket_id != '') {
+            $.ajax({
+                type: "POST",
+                url: "{{ route('message.updateticket') }}",
+                data: data,
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                },
+
+                success: function (data) {
+                    if (data.success) {
+                        location.reload();
+                    }
+                },
+                error: function (xhr) {
+                },
+                complete: function () {
+                    $("#ajax-preloader").hide();
+                }
+            });
+        }
+    }
+
     function loadDatatables() {
 
         $("#messageTable").dataTable().fnDestroy();
@@ -498,6 +592,7 @@
                     $.each(formData, function (index, field) {
                         d[field.name] = field.value; // Append form data to the DataTables request
                     });
+
 
                     var columnValues = [];
                     if (table) {
@@ -532,7 +627,13 @@
                     targets: [0], // Index of the column you want to disable sorting for
                     orderable: false // Disable sorting
                 }
-            ]
+            ],
+            createdRow: function(row, data, dataIndex) {
+                if (!data.read) {
+                    // Add class to the row if message is not read
+                    $(row).addClass('unread');
+                }
+            }
         });
 
         $('#messageTable_wrapper').removeClass('form-inline');
