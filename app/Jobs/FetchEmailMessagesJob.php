@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Constants\HdTicketStatus;
 use App\Constants\HdTicketTypeCode;
 use App\Models\Customer;
 use App\Models\CustomerEmail;
@@ -170,7 +171,7 @@ class FetchEmailMessagesJob implements ShouldQueue
                                             $ticketData = [
                                                 'ticket_type_id' => $ticketTypeDetail->id,
                                                 'ticket_email' => trim($email['from']),
-                                                'status' => 0,
+                                                'status' => HdTicketStatus::NEEDS_ACTION,
                                                 'related_order_id' => $related_order_id,
                                                 'subject' => trim($email['subject']),
                                                 'message_id' => trim($email['message_id']),

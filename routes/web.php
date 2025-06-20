@@ -286,6 +286,11 @@ Route::middleware('auth')->group(function () {
 
     Route::controller(MessagesController::class)->group(function () {
         Route::get('/messages', 'index')->name('message.index');
+        Route::get('/messages/need_action', 'need_action_list')->name('message.need_action');
+        Route::get('/messages/awaiting', 'awaiting_list')->name('message.awaiting');
+        Route::get('/messages/closed', 'closed_list')->name('message.closed');
+        Route::get('/messages/spam', 'spam_list')->name('message.spam');
+        Route::get('/messages/trash', 'trash_list')->name('message.trash');
         Route::get('/messages/add', 'create')->name('message.create');
         Route::post('/messages/add', 'store')->name('message.store');
         Route::post('/messages/getdata', 'getMessageData')->name('message.getdata');
@@ -295,6 +300,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/messages/detail/{id}', 'detail')->name('message.detail');
         Route::post('/messages/searchorder', 'searchOrder')->name('message.searchorder');
         Route::post('/messages/getmessagetemplate', 'getMessageTemplate')->name('message.getmessagetemplate');
+        Route::post('/messages/updateticket', 'updateTicket')->name('message.updateticket');
     });
 
     Route::controller(PageTypesController::class)->group(function () {

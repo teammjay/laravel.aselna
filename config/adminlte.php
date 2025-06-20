@@ -326,14 +326,34 @@ return [
             'icon' => 'fa fa-fw fa-envelope',
             'submenu' => [
                 [
-                    'text' => 'Need Action',
+                    'text' => 'All',
                     'url' => '/messages',
+                    'icon' => 'fa fa-fw fa-envelope',
+                ],
+                [
+                    'text' => 'Need Action',
+                    'url' => '/messages/need_action',
                     'icon' => 'fa fa-fw fa-exclamation',
                 ],
                 [
                     'text' => 'Awaiting',
-                    'url' => '/awaiting_messages',
+                    'url' => '/messages/awaiting',
                     'icon' => 'fa fa-fw fa-hourglass-start',
+                ],
+                [
+                    'text' => 'Closed',
+                    'url' => '/messages/closed',
+                    'icon' => 'fa fa-fw fa-check',
+                ],
+                [
+                    'text' => 'Spam',
+                    'url' => '/messages/spam',
+                    'icon' => 'fa fa-fw fa-exclamation-circle',
+                ],
+                [
+                    'text' => 'Trash',
+                    'url' => '/messages/trash',
+                    'icon' => 'fa fa-fw fa-trash',
                 ],
                 [
                     'text' => 'Message Template',

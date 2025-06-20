@@ -40,6 +40,9 @@ class MessagesController extends Controller
 
         $query = Message::with('store','store.storeType','ticketType','customer');
 
+        if($request->has('status') && $request->status != ''){
+            $query->where('status',$request->status);
+        }
         // Filter by ticket email
         QueryFilters::applyFilter($query, $request, 'sender_email', 'sender_email_operator', 'sender_email');
 
@@ -113,8 +116,12 @@ class MessagesController extends Controller
         $data = [];
         if(!empty((array) $messages)){
             foreach($messages as $key=>$message) {
+                $important = '';
+                if($message->important){
+                    $important = '<i class="fa fa-star"></i>';
+                }
                 $data[] = array(
-                    "message_id" => '<input type="checkbox" class="message-id" name="message_id[]" value="'.$message->id.'" style="visibility:hidden;">',
+                    "message_id" => '<input type="checkbox" class="message-id" name="message_id[]" value="'.$message->id.'" style="visibility:hidden;">'.$important,
                     "store" => $message->store->name.'-'.$message->store->storeType->name,
                     "first_name" => isset($message->customer) ? $message->customer->first_name : '' ,
                     "last_name" => isset($message->customer) ? $message->customer->last_name : '',
@@ -124,6 +131,7 @@ class MessagesController extends Controller
                     "status" =>  HdTicketStatus::getTicketStatus($message->status),
                     "order_id" => $message->order_id,
                     "ticket_code" => $message->ticket_code,
+                    "read" => $message->message_read,
                     "created_at" => date('Y-m-d H:i',strtotime($message->created_at))
                 );
             }
@@ -140,6 +148,41 @@ class MessagesController extends Controller
             "aaData" => $data
         );
         return $response;
+    }
+
+    public function need_action_list()
+    {
+        $stores = Store::orderBy('name','asc')->get();
+        $ticketTypes = HdTicketType::all();
+        return view('messages.action_list', compact('stores','ticketTypes'));
+    }
+
+    public function awaiting_list()
+    {
+        $stores = Store::orderBy('name','asc')->get();
+        $ticketTypes = HdTicketType::all();
+        return view('messages.awaiting_list', compact('stores','ticketTypes'));
+    }
+
+    public function closed_list()
+    {
+        $stores = Store::orderBy('name','asc')->get();
+        $ticketTypes = HdTicketType::all();
+        return view('messages.closed_list', compact('stores','ticketTypes'));
+    }
+
+    public function spam_list()
+    {
+        $stores = Store::orderBy('name','asc')->get();
+        $ticketTypes = HdTicketType::all();
+        return view('messages.spam_list', compact('stores','ticketTypes'));
+    }
+
+    public function trash_list()
+    {
+        $stores = Store::orderBy('name','asc')->get();
+        $ticketTypes = HdTicketType::all();
+        return view('messages.trash_list', compact('stores','ticketTypes'));
     }
 
     /**
@@ -205,6 +248,7 @@ class MessagesController extends Controller
     public function detail(string $id)
     {
         $ticketDetail = Message::with('store','store.storeType')->where('id',$id)->first();
+        $ticketDetail->update(['message_read' => 1]);
         $store_type_id = $ticketDetail->store->storeType->id;
         $message_template = HdMessageTemplate::where('store_type_id',$store_type_id)->get();
         $messages = HDMessage::where('ticket_id',$id)->orderBy('message_date','desc')->get();
@@ -274,6 +318,49 @@ class MessagesController extends Controller
                     'templateCode' => $template_code
                 ]);
             }
+        }
+
+        return response()->json([
+            'success' => false
+        ]);
+    }
+
+    public function updateTicket(Request $request){
+
+        $ticket_id= $request->input('ticket_id');
+        $status = $request->input('status');
+        $ticket_type_id = $request->input('ticket_type');
+        $message_read = $request->input('message_read');
+        $important = $request->input('important');
+        if($ticket_id){
+
+            $updated_by = auth()->user()->name ?? 'admin';
+
+            $updatedData = [
+                'updated_by' => $updated_by
+            ];
+
+            if(isset($status) && $status){
+                $updatedData['status'] = $status;
+            }
+
+            if(isset($message_read)){
+                $updatedData['message_read'] = $message_read;
+            }
+
+            if(isset($important) && $important){
+                $updatedData['important'] = $important;
+            }
+
+            if(isset($ticket_type_id) && $ticket_type_id){
+                $updatedData['ticket_type_id'] = $updatedData;
+            }
+
+            Message::findOrFail($ticket_id)->update($updatedData);
+
+            return response()->json([
+                'success' => true
+            ]);
         }
 
         return response()->json([
