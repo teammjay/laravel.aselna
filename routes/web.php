@@ -60,6 +60,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ResetPasswordController;
 use App\Http\Controllers\StorePagesController;
 use App\Services\Auth\EbayAuthService;
+use App\Http\Controllers\LogisticCenterDocumentController;
 
 Route::middleware('auth')->group(function () {
     Route::get('/devices/{id}/details', [DeviceController::class, 'getDeviceDetails']);
@@ -628,3 +629,13 @@ Route::get('/jobs/{job}/edit', [JobSchedulerController::class, 'edit'])->name('j
 Route::post('/jobs/{job}/update', [JobSchedulerController::class, 'update'])->name('jobs.update');
 Route::post('/jobs/add', [JobSchedulerController::class, 'add'])->name('jobs.add');
 Route::post('/jobs/running',[JobSchedulerController::class, 'running'])->name('jobs.running');
+
+Route::prefix('logistic_center_document')->group(function () {
+    Route::get('/', [LogisticCenterDocumentController::class, 'index'])->name('logistic_center_document.index');
+    Route::get('/create', [LogisticCenterDocumentController::class, 'create'])->name('logistic_center_document.create');
+    Route::post('/store', [LogisticCenterDocumentController::class, 'store'])->name('logistic_center_document.store');
+    Route::get('/edit/{id}', [LogisticCenterDocumentController::class, 'edit'])->name('logistic_center_document.edit');
+    Route::post('/update/{id}', [LogisticCenterDocumentController::class, 'update'])->name('logistic_center_document.update');
+    Route::get('/delete/{id}', [LogisticCenterDocumentController::class, 'destroy'])->name('logistic_center_document.delete');
+});
+
