@@ -52,17 +52,6 @@ class FetchEmailMessagesJob implements ShouldQueue
                     if(count($storeMessageAccount ?? []) > 0){
                         foreach($storeMessageAccount as $maccount){
                             $smtpConfig = $imapConfig = [];
-                            /*if($maccount->outgoing_account_id !='') {
-                                $smtpConfig = [
-                                    'host' => $maccount->incomingAccount->server,
-                                    'port' => $maccount->incomingAccount->port,
-                                    'encryption' => 'tls',
-                                    'username' => $maccount->incomingAccount->user_id,
-                                    'password' => $maccount->incomingAccount->password,
-                                    'from_address' => $maccount->incomingAccount->email,
-                                    'from_name' => $store->name,
-                                ];
-                            }*/
 
                             if($maccount->incoming_account_id !='') {
                                 if(isset($maccount->incomingAccount)) {
@@ -126,7 +115,7 @@ class FetchEmailMessagesJob implements ShouldQueue
                                                 if (isset($email['name'])) {
                                                     $nameArr = explode(' ', $email['name']);
                                                     $firstname = $nameArr[0];
-                                                    $lastname = $nameArr[1];
+                                                    $lastname = isset($nameArr[1]) ? $nameArr[1] : '';
                                                 }
 
                                                 $customerData = [
@@ -228,7 +217,7 @@ class FetchEmailMessagesJob implements ShouldQueue
                                                     'reply_to_email' => $email['reply_to'],
                                                 ];
 
-                                                Log::info('Ticket Detail :'.json_encode($hdMessageData));
+                                                Log::info('Ticket Message Detail :'.json_encode($hdMessageData));
 
                                                 $hd_message = HDMessage::updateOrCreate([
                                                     'ticket_id' => $hd_ticket->id,
@@ -243,8 +232,6 @@ class FetchEmailMessagesJob implements ShouldQueue
                                                 }
 
                                             }
-
-
                                         }
                                     }
                                 }
@@ -253,7 +240,6 @@ class FetchEmailMessagesJob implements ShouldQueue
                     }
                 }
             }
-
         }catch (\Exception $e) {
             Log::error('Error: ' . $e->getMessage());
         }

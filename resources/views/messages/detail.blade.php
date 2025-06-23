@@ -361,6 +361,42 @@
                 }
             });
 
+            $(document).on('click','#submit_message',function () {
+                var template_id = $('#message_template').val();
+                var message_to_send = $('#message_to_send').val();
+                var customer_id = $('#customer_id').val();
+                var ticket_id = '{{ $ticketDetail->id }}';
+                if(message_to_send == ''){
+                    alert('Please add text to send message');
+                    return false;
+                }
+                $.ajax({
+                    type: "POST",
+                    url: "{{ route('message.sendmessagetemplate') }}",
+                    data: {
+                        template_id: template_id,
+                        message_to_send: message_to_send,
+                        customer_id: customer_id,
+                        ticket_id: ticket_id,
+                    },
+                    headers: {
+                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                    },
+
+                    success: function(data) {
+                        if(data.success){
+
+                            $('#message_to_send').html(data.templateCode);
+                        }
+                    },
+                    error: function (xhr) {
+                    },
+                    complete: function () {
+                        $("#ajax-preloader").hide();
+                    }
+                });
+            });
+
         });
 
         function loadOrderDetail(){

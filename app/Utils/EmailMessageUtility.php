@@ -63,17 +63,19 @@ class EmailMessageUtility
         ]);
     }
 
-    public function sendTestEmail(string $toEmail)
+    public function sendEmail($toEmail, $subject = '', $message = '')
     {
         try {
-            Mail::raw('This is a test email from SMTP connector.', function ($message) use ($toEmail) {
-                $message->to($toEmail)
-                    ->subject('SMTP Test Email');
-            });
-
-            return "Email sent successfully to {$toEmail}.";
+            if($toEmail) {
+                Mail::raw($message, function ($message) use ($toEmail, $subject) {
+                    $message->to($toEmail)->subject($subject);
+                });
+            }
+            Log::info("Email sent successfully to {$toEmail}.");
+            return true;
         } catch (Exception $e) {
-            return "Failed to send email: " . $e->getMessage();
+            Log::info("Failed to send email: " . $e->getMessage());
+            return false;
         }
     }
 

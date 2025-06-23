@@ -13,6 +13,8 @@ use App\Models\Message;
 use App\Models\Order;
 use App\Models\OrderOperation;
 use App\Models\Store;
+use App\Models\StoreMessageAccount;
+use App\Utils\EmailMessageUtility;
 use Illuminate\Http\Request;
 use App\Services\DataTable\DataTableService;
 
@@ -47,7 +49,7 @@ class MessagesController extends Controller
         QueryFilters::applyFilter($query, $request, 'sender_email', 'sender_email_operator', 'sender_email');
 
         // Filter by ticket type
-        QueryFilters::applyFilter($query, $request, 'ticket_type', 'ticket_type_operator', 'ticket_type');
+        QueryFilters::applyFilter($query, $request, 'ticket_type', 'ticket_type_operator', 'ticket_type_id');
 
         // Filter by ticket code
         QueryFilters::applyFilter($query, $request, 'ticket_code', 'ticket_code_operator', 'ticket_code');
@@ -363,6 +365,45 @@ class MessagesController extends Controller
             ]);
         }
 
+        return response()->json([
+            'success' => false
+        ]);
+    }
+
+    public function sendMessageTemplate(Request $request){
+        $ticket_id = $request->input('ticket_id');
+        $message_to_send = $request->input('message_to_send');
+        $customer_id = $request->input('customer_id');
+        $template_id = $request->input('template_id');
+
+        if($ticket_id){
+            $ticketDetail = Message::with('store')->where('id',$ticket_id)->first();
+            $store= $ticketDetail->store;
+            $storeMessageAccount = StoreMessageAccount::with('outgoingAccount')->where('store_id', $store->id)->first();
+
+            //if(isset($storeMessageAccount->outgoingAccount)){
+                $smtpConfig = [
+                    'host' => 'smtp.gmail.com',
+                    'port' => 465,
+                    'encryption' => 'ssl',
+                    'username' => 'common.mritu@gmail.com',
+                    'password' => 'jodgvobhealitnjk',
+                    'from_address' => 'common.mritu@gmail.com',
+                    'from_name' => 'Common Mritu',
+                ];
+
+                $imapConfig = [];
+
+                $connector = new EmailMessageUtility($smtpConfig, $imapConfig);
+                $response = $connector->sendEmail('jayesh11787@gmail.com','Test Mail',$message_to_send);
+
+                if($response){
+                    return response()->json([
+                        'success' => true
+                    ]);
+                }
+           // }
+        }
         return response()->json([
             'success' => false
         ]);
