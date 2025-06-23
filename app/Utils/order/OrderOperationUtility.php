@@ -16,6 +16,7 @@ use App\Services\Auth\WalmartAuthService;
 use App\Services\Marketplace\Service\ShopifyService;
 use App\Utils\EndicialabelService;
 use App\Utils\shipment\ShipmentDocumentsCreator;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class OrderOperationUtility
@@ -98,10 +99,23 @@ class OrderOperationUtility
             return $errorMessages;
         }
 
-       $shippingDocumentCreator =  new ShipmentDocumentsCreator($orderOperation);
+        $shippingDocumentCreator = new ShipmentDocumentsCreator($orderOperation);
     //    $imageFormat = $shippingDocumentCreator->getLabelFormat();
     //    $rotate = $shippingDocumentCreator->getImageRotate();
     //    Log::info('Image format for label: ' . $imageFormat);
+
+        $printer = $shippingDocumentCreator->getPrinter();
+        if (isset($printer)) {
+            $shipmentDetails['printerId'] = $printer->id;
+            $printerInfo = DB::connection('aselna_printer_db')->table('Printers')->where('id', $printer->id)->first();
+            Log::info('Printer info for label creation: ' . json_encode($printerInfo));
+            if (isset($printerInfo)) {
+                $shipmentDetails['systemId'] = $printerInfo->systemId;
+            }
+        } else {
+            Log::error('Printer not found for order operation: ' . $orderOperation->id);
+            return 'Printer not found for order operation.';
+        }
 
         $operation_type = $orderOperation->operation_type;
         $shipFrom = $orderOperation->shipFrom;
