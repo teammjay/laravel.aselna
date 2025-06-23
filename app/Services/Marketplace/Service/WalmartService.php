@@ -440,7 +440,9 @@ class WalmartService implements MarketplaceServiceInterface
                     $statusChange = false;
 
                     if ($order == null) {
-                        $order = Order::create([
+                        $order = Order::updateOrCreate([
+                            'order_id' => $sorder['customerOrderId'],
+                        ],[
                             'order_id' => $sorder['customerOrderId'],
                             'order_date' => date('Y-m-d H:i:s', $sorder['orderDate'] / 1000),
                             'order_status' => OrderStatus::Synchronizing,

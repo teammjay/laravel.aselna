@@ -115,9 +115,9 @@ class EndicialabelService
                 'status' => 'pending',
                 'createdAt' => now(),
                 'updatedAt' => now(),
-                'fileSize' => 0
-//                'printerId' => $shippingDetail['printer_id'] ?? null,
-//                'systemId' => $shippingDetail['system_id'] ?? null,
+                'fileSize' => 0,
+                'printerId' => $shippingDetail['printerId'] ?? null,
+                'systemId' => $shippingDetail['systemId'] ?? null,
             ]);
 
 
