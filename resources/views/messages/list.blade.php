@@ -474,6 +474,18 @@
             }
         });
 
+        $(document).on('click','#delete_ticket',function () {
+            var ticket_id = $('input[name="message_id[]"]:checked').val();
+            var data = {
+                ticket_id: ticket_id,
+                status: 3
+            };
+
+            if(ticket_id != '') {
+                updateTicket(data);
+            }
+        });
+
         /*table = $('#messageTable').DataTable({
             processing: true,
             serverSide: true,

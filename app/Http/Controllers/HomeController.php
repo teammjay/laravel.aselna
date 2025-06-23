@@ -276,8 +276,6 @@ class HomeController extends Controller
                     }
 
                 }
-
-
             }
         }
         //dd($emails);
