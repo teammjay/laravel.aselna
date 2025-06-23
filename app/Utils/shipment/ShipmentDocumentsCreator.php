@@ -15,6 +15,8 @@ class ShipmentDocumentsCreator
 {
     private $storage;
     private $shipment;
+
+    private $printer;
     private $labelFormat;
     private $imageRotate;
     private $labelDocumentBuilder = null;
@@ -28,7 +30,10 @@ class ShipmentDocumentsCreator
         $shipFromDocs = $this->getDocumentsSettings($shipment);
         Log::info('Shipment Documents Creator :: ' . json_encode($shipFromDocs));
         $labelDoc = $shipFromDocs[0];
+        Log::info('Label Document :: ' . json_encode($labelDoc));
         $packingSlipDoc = $shipFromDocs[1];
+
+        $this->printer = $labelDoc ? $labelDoc->printer : null;
 
 //        $useDazzle = $shipment->shippingAccount->shippingSolution->isEndiciaDazzle();
         $this->labelFormat = $labelDoc->printer->labelFormat;
@@ -87,6 +92,11 @@ class ShipmentDocumentsCreator
     public function getLabelFormat()
     {
         return $this->labelFormat;
+    }
+
+    public function getPrinter()
+    {
+        return $this->printer;
     }
 
     public function buildDocuments(): array
