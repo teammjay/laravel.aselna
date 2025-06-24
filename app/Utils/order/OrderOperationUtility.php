@@ -375,8 +375,8 @@ class OrderOperationUtility
                 $response = $authService->cancelOrder($orderOperation->order->purchase_order_id, $finalData);
                 if (isset($response)) {
                     Log::info('Walmart cancel order response: ' . json_encode($response));
-                    if (isset($response['order'][0]) && isset($response['order'][0]['purchaseOrderId']) && $response['order'][0]['purchaseOrderId'] == $orderOperation->order->purchase_order_id) {
-                        Log::info('Walmart cancel order successful: ' . json_encode($response['order'][0]));
+                    if (isset($response['order']) && isset($response['order']['purchaseOrderId']) && $response['order']['purchaseOrderId'] == $orderOperation->order->purchase_order_id) {
+                        Log::info('Walmart cancel order successful: ' . json_encode($response['order']));
                         $orderOperation->update(['status' => OrderOperationStatus::Canceled]);
                         if (isset($orderOperation->order_id)) {
                             $order = Order::findOrFail($orderOperation->order_id);
