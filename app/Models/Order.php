@@ -48,7 +48,7 @@ class Order extends Model
 
     public function orderOperation()
     {
-        return $this->hasOne(OrderOperation::class,'id');
+        return $this->hasOne(OrderOperation::class,'order_id');
     }
 
 }

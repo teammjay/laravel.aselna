@@ -6,12 +6,17 @@ use App\Constants\HdTicketStatus;
 use App\Constants\HdTicketTypeCode;
 use App\Constants\OrderStatus;
 use App\Helpers\QueryFilters;
+use App\Models\Catalog;
 use App\Models\HDMessage;
 use App\Models\HdMessageTemplate;
 use App\Models\HdTicketType;
+use App\Models\LogisticCenter;
 use App\Models\Message;
 use App\Models\Order;
 use App\Models\OrderOperation;
+use App\Models\ShippingCarrier;
+use App\Models\ShippingCarrierService;
+use App\Models\ShippingPackage;
 use App\Models\Store;
 use App\Models\StoreMessageAccount;
 use App\Utils\EmailMessageUtility;
@@ -121,6 +126,9 @@ class MessagesController extends Controller
                 $important = '';
                 if($message->important){
                     $important = '<i class="fa fa-star"></i>';
+                }
+                if($message->notes != ''){
+                    $important .= '<i class="fa fa-exclamation-triangle"></i>';
                 }
                 $data[] = array(
                     "message_id" => '<input type="checkbox" class="message-id" name="message_id[]" value="'.$message->id.'" style="visibility:hidden;">'.$important,
@@ -334,6 +342,7 @@ class MessagesController extends Controller
         $ticket_type_id = $request->input('ticket_type');
         $message_read = $request->input('message_read');
         $important = $request->input('important');
+        $notes = $request->input('notes');
         if($ticket_id){
 
             $updated_by = auth()->user()->name ?? 'admin';
@@ -356,6 +365,10 @@ class MessagesController extends Controller
 
             if(isset($ticket_type_id) && $ticket_type_id){
                 $updatedData['ticket_type_id'] = $updatedData;
+            }
+
+            if(isset($notes) && $notes != ''){
+                $updatedData['notes'] = $notes;
             }
 
             Message::findOrFail($ticket_id)->update($updatedData);
@@ -404,6 +417,70 @@ class MessagesController extends Controller
                 }
            // }
         }
+        return response()->json([
+            'success' => false
+        ]);
+    }
+
+    public function getShippingDetail(Request $request)
+    {
+
+        $order_id = $request->input('order_id');
+        $orderDetail = Order::with('orderOperation')->where('order_id',$order_id)->first();
+
+        /*echo '<pre>';
+        print_r($orderDetail);
+        echo '</pre>';die;*/
+        if(isset($orderDetail->orderOperation)){
+            $order_opration_id = $orderDetail->orderOperation->id;
+            $shippingCarrier = ShippingCarrier::all();
+            $shipFrom = LogisticCenter::all();
+            $shippingCarrierPackage = ShippingPackage::all();
+            $shipmentDetail = OrderOperation::with('operationItem', 'order', 'order.customerAddress', 'carrierService', 'store', 'operationItem.orderItem', 'operationItem.orderItem.product')->where('id', $order_opration_id)->first();
+
+            $package_id = '';
+            $product_total_weight = 0;
+            //print_r($shipmentDetail->operationItem);
+            if (count($shipmentDetail->operationItem ?? []) > 0) {
+                $product_weight = 0;
+                foreach ($shipmentDetail->operationItem as $oitem) {
+                    if (isset($oitem->orderItem->product)) {
+                        $product_id = $oitem->orderItem->product->product_id;
+                        if ($product_id) {
+                            $product_detail = Catalog::findOrFail($product_id);
+                            if ($product_detail->product_weight > $product_weight) {
+                                $package_id = $product_detail->shipping_package_id;
+                            }
+                            if ($package_id) {
+                                $shipmentDetail->shipping_package_id = $package_id;
+                                $shipmentDetail->save();
+                            }
+
+                            $product_weight = $product_detail->product_weight;
+                            $product_total_weight = $product_total_weight + $product_weight;
+                        }
+                    }
+                }
+            }
+
+            /*echo '<pre>';
+            print_r($shipmentDetail);
+            echo '</pre>';die;*/
+            $shipping_carrier_id = $shipmentDetail->shipping_carrier_id;
+            $shippingCarrierService = ShippingCarrierService::where('shipping_carrier_id', $shipping_carrier_id)->orderBy('name', 'asc')->get();
+
+            if($request->input('rma')){
+                $view = view('messages.make_rma', compact('shipmentDetail', 'shippingCarrier', 'shippingCarrierService', 'shippingCarrierPackage', 'shipFrom', 'package_id', 'product_total_weight'))->render();
+            }else{
+                $view = view('messages.order_refund', compact('shipmentDetail'))->render();
+            }
+
+            return response()->json([
+                'success' => true,
+                'html' => $view
+            ]);
+        }
+
         return response()->json([
             'success' => false
         ]);
