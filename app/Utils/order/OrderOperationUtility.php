@@ -16,6 +16,7 @@ use App\Services\Auth\WalmartAuthService;
 use App\Services\Marketplace\Service\ShopifyService;
 use App\Utils\EndicialabelService;
 use App\Utils\shipment\ShipmentDocumentsCreator;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class OrderOperationUtility
@@ -98,10 +99,23 @@ class OrderOperationUtility
             return $errorMessages;
         }
 
-       $shippingDocumentCreator =  new ShipmentDocumentsCreator($orderOperation);
+        $shippingDocumentCreator = new ShipmentDocumentsCreator($orderOperation);
     //    $imageFormat = $shippingDocumentCreator->getLabelFormat();
     //    $rotate = $shippingDocumentCreator->getImageRotate();
     //    Log::info('Image format for label: ' . $imageFormat);
+
+        $printer = $shippingDocumentCreator->getPrinter();
+        if (isset($printer)) {
+            $shipmentDetails['printerId'] = $printer->id;
+            $printerInfo = DB::connection('aselna_printer_db')->table('Printers')->where('id', $printer->id)->first();
+            Log::info('Printer info for label creation: ' . json_encode($printerInfo));
+            if (isset($printerInfo)) {
+                $shipmentDetails['systemId'] = $printerInfo->systemId;
+            }
+        } else {
+            Log::error('Printer not found for order operation: ' . $orderOperation->id);
+            return 'Printer not found for order operation.';
+        }
 
         $operation_type = $orderOperation->operation_type;
         $shipFrom = $orderOperation->shipFrom;
@@ -361,8 +375,8 @@ class OrderOperationUtility
                 $response = $authService->cancelOrder($orderOperation->order->purchase_order_id, $finalData);
                 if (isset($response)) {
                     Log::info('Walmart cancel order response: ' . json_encode($response));
-                    if (isset($response['order'][0]) && isset($response['order'][0]['purchaseOrderId']) && $response['order'][0]['purchaseOrderId'] == $orderOperation->order->purchase_order_id) {
-                        Log::info('Walmart cancel order successful: ' . json_encode($response['order'][0]));
+                    if (isset($response['order']) && isset($response['order']['purchaseOrderId']) && $response['order']['purchaseOrderId'] == $orderOperation->order->purchase_order_id) {
+                        Log::info('Walmart cancel order successful: ' . json_encode($response['order']));
                         $orderOperation->update(['status' => OrderOperationStatus::Canceled]);
                         if (isset($orderOperation->order_id)) {
                             $order = Order::findOrFail($orderOperation->order_id);
@@ -406,7 +420,127 @@ class OrderOperationUtility
 
     private static function refundOrder($orderOperation)
     {
+        $store = $orderOperation->store;
+        $storeType = $orderOperation->store->storeType->name;
+        switch (strtolower($storeType)) {
+            case 'shopify':
+                $orderId = $orderOperation->order_id;
+                $shipmentDetail = OrderOperation::with('operationItem', 'order', 'order.customerAddress', 'carrierService', 'store', 'operationItem.orderItem', 'operationItem.orderItem.product')->where('order_id', $orderId)->first();
 
+                $shopifyServie = new ShopifyService($store->secret_key, $store->service_url);
+                $response = $shopifyServie->refundOrder($shipmentDetail->order->order_id, $store);
+
+                if ($response) {
+                    //echo "Order canceled successfully!";
+                    Log::info('Shopify order refunded successful:');
+                    return true;
+                }else{
+                    return false;
+                }
+                break;
+            case 'walmart':
+                $finalData = [
+                    'orderRefund'=> [
+                        'purchaseOrderId' => $orderOperation->order->purchase_order_id
+                    ]
+                ];
+                $count = 1;
+                foreach ($orderOperation->operationItem as $item) {
+                    Log::info('Itema data for refund operation :: ' . json_encode($item));
+                    $orderLine = [
+                        'lineNumber' => $count,
+                        'refundReason' => 'CustomerReturn',
+                        'refunds' => [
+                            'refund' => [
+                                [
+                                    'refundCharges' =>[
+                                        'refundCharge' => [
+                                            'refundReason' => 'CustomerReturn',
+                                            'charge' => [
+                                                [
+                                                    'chargeType' => 'PRODUCT',
+                                                    'chargeName' => 'ItemPrice',
+                                                    'chargeAmount' => [
+                                                        'currency' => 'USD',
+                                                        'amount' => $orderOperation->order->order_total,
+                                                    ]
+                                                ]
+                                            ]
+                                        ]
+                                    ]
+                                ]
+                            ]
+                        ]
+                    ];
+
+                    $finalData['orderRefund']['orderLines']['orderLine'][] = $orderLine;
+                    $count++;
+                }
+
+                Log::info('Final data for the refund operation :: ' . json_encode($finalData));
+
+                $authService = new WalmartAuthService($store->seller_id, $store->secret_key);
+                $response = $authService->shipOrder($orderOperation->order->purchase_order_id, $finalData);
+
+                Log::info('Walmart refund order response: ' . json_encode($response));
+
+                if (isset($response)) {
+                    $orderResp = $response['order'];
+                    Log::info('Walmart refund order response: ' . json_encode($orderResp));
+                    if (isset($orderResp) && isset($orderResp['purchaseOrderId']) && $orderResp['purchaseOrderId'] == $orderOperation->order->purchase_order_id) {
+                        Log::info('Walmart refund order successful: ' . json_encode($orderResp));
+                        $orderOperation->update(['status' => OrderOperationStatus::REFUNDED]);
+                        if (isset($orderOperation->order_id)) {
+                            $order = Order::findOrFail($orderOperation->order_id);
+                            $order->update(['order_status' => OrderStatus::Refund]);
+                        }
+                        return true;
+                    } else {
+                        Log::info('Walmart refund order error: ' . json_encode($response));
+                        return false;
+                    }
+                } else {
+                    Log::info('Walmart refund order error: No response received');
+                    return false;
+                }
+
+                break;
+            case 'ebay':
+
+                $payload = [
+                    "reasonForRefund" => "BUYER_CANCEL"
+                ];
+
+                foreach ($orderOperation->operationItem as $item) {
+
+                    $payload["refundItems"][] = [
+                        "lineItemId" => $item->orderItem->store_sku,
+                        "refundAmount" => $item->item_price,
+                    ];
+
+                }
+
+                /*echo '<pre>';
+                print_r($payload);
+                echo '</pre>';die;*/
+
+                $clientId = env('EBAY_CLIENT_ID');
+                $clientSecret = env('EBAY_CLIENT_SECRET');
+                $redirectUri = env('EBAY_REDIRECT_URI');
+
+                $authService = new EbayAuthService($clientId, $clientSecret, $redirectUri, $store->user_id);
+                $result = $authService->issueRefund($orderOperation->order->order_id, $payload);
+
+                if (!isset($result['error'])) {
+                    $orderOperation->update(['status' => OrderOperationStatus::REFUNDED]);
+                    if (isset($orderOperation->order_id)) {
+                        $order = Order::findOrFail($orderOperation->order_id);
+                        $order->update(['order_status' => OrderStatus::Refund]);
+                    }
+                }
+
+                break;
+        }
     }
 
     private static function createShipment($orderOperation)

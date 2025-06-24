@@ -30,6 +30,17 @@
         table th, table td, .column-no-whitespace{
             white-space: nowrap;
         }
+
+        table tbody tr{
+            background-color: rgba(0,0,0,0.051) !important;
+        }
+        .unread {
+            background-color: #fff !important;
+            font-weight: 600;
+        }
+        tr.bg-blue {
+            background-color: #007bff!important;
+        }
     </style>
 @stop
 
@@ -72,7 +83,7 @@
                                 Last Name
                             </div>
                             <div class="col-3">
-                                <select class="custom-select" id="" name="last_name_sku_operator">
+                                <select class="custom-select" id="" name="last_name_operator">
                                     <option value="{{FilterCodes::EQUAL}}">=</option>
                                     <option value="{{FilterCodes::CONTAINS}}">contains</option>
                                     <option value="{{FilterCodes::STARTS_WITH}}">starts with</option>
@@ -94,7 +105,7 @@
                                 Subject
                             </div>
                             <div class="col-3">
-                                <select class="custom-select" id="" name="store_operator">
+                                <select class="custom-select" id="" name="subject_operator">
                                     <option value="{{FilterCodes::CONTAINS}}">contains</option>
                                     <option value="{{FilterCodes::STARTS_WITH}}">starts with</option>
                                     <option value="{{FilterCodes::ENDS_WITH}}">ends with</option>
@@ -152,14 +163,19 @@
                                 </select>
                             </div>
                             <div class="col-6">
-                                <input type="text" name="order_id" id="ticket_code" class="form-control">
+                                <input type="text" name="ticket_code" id="ticket_code" class="form-control">
                             </div>
                         </div>
                     </div>
                     <div class="col-md-4">
                         <div class="row">
-                            <div class="col-6 text-right">
+                            <div class="col-3 text-right">
                                 Body
+                            </div>
+                            <div class="col-3">
+                                <select class="custom-select" id="" name="body_operator">
+                                    <option value="{{FilterCodes::CONTAINS}}">contains</option>
+                                </select>
                             </div>
                             <div class="col-6">
                                 <input type="text" name="body" id="body" class="form-control">
@@ -197,7 +213,12 @@
                             </div>
                             <div class="col-6">
                                 <select class="form-control" name="ticket_type">
-
+                                    <option value=""></option>
+                                    @if(count($ticketTypes ?? []) > 0)
+                                        @foreach($ticketTypes as $tt)
+                                            <option value="{{ $tt->id }}">{{ $tt->name }}</option>
+                                        @endforeach
+                                    @endif
                                 </select>
                             </div>
                         </div>
@@ -316,14 +337,30 @@
 
         </div>
         <div class="col-md-9 d-flex">
-            <button type="button" class="btn btn-default" id="open_message" disabled="">
+            <button type="button" class="btn btn-default mr-2" id="open_message" disabled="">
                 <i class="fas fa-fw fa-pencil-alt"></i> Open
+            </button>
+
+            <button type="button" class="btn btn-default mr-2" data-status="4" id="mark_as_spam" disabled="">
+                <i class="fas fa-fw fa-exclamation"></i> Spam
+            </button>
+
+            <button type="button" class="btn btn-default mr-2" id="delete_ticket" disabled="">
+                <i class="fas fa-fw fa-trash"></i> Delete
+            </button>
+
+            <button type="button" class="btn btn-default mr-2" id="mark_as_important" disabled="">
+                <i class="fas fa-fw fa-star"></i> Mark As Important
+            </button>
+
+            <button type="button" class="btn btn-default" id="mark_as_unread" disabled="">
+                <i class="fas fa-fw fa-envelope"></i> Mark As Unread
             </button>
 
         </div>
     </div>
     <div class="table-responsive">
-        <table id="messageTable" class="table table-bordered table-striped">
+        <table id="messageTable" class="table table-bordered">
             <thead>
             <tr>
                 <th></th>
@@ -381,8 +418,12 @@
            ele.addClass('bg-blue');
            ele.find('input[name="message_id[]"]').prop('checked',true);
             $('#open_message').removeAttr('disabled');
+            $('#mark_as_spam').removeAttr('disabled');
+            $('#delete_ticket').removeAttr('disabled');
+            $('#mark_as_important').removeAttr('disabled');
+            $('#mark_as_unread').removeAttr('disabled');
             var ticket_id = ele.find('input[name="message_id[]"]').val();
-            location.href = "{{ url('messages/detail') }}/" + ticket_id;
+            //location.href = "{{ url('messages/detail') }}/" + ticket_id;
         });
 
         $('#open_message').on('click',function () {
@@ -394,6 +435,55 @@
                     location.href = "{{ url('messages/detail') }}/" + selectedId;
                 }
             });
+        });
+
+
+        $(document).on('click','#mark_as_spam',function () {
+            var ticket_id = $('input[name="message_id[]"]:checked').val();
+            var status = $(this).data('status');
+            var data = {
+                ticket_id: ticket_id,
+                status: 4
+            };
+            if(ticket_id != '') {
+                updateTicket(data);
+            }
+        });
+
+        $(document).on('click','#mark_as_important',function () {
+            var ticket_id = $('input[name="message_id[]"]:checked').val();
+            var data = {
+                ticket_id: ticket_id,
+                important: 1
+            };
+
+            if(ticket_id != '') {
+                updateTicket(data);
+            }
+        });
+
+        $(document).on('click','#mark_as_unread',function () {
+            var ticket_id = $('input[name="message_id[]"]:checked').val();
+            var data = {
+                ticket_id: ticket_id,
+                message_read: 0
+            };
+
+            if(ticket_id != '') {
+                updateTicket(data);
+            }
+        });
+
+        $(document).on('click','#delete_ticket',function () {
+            var ticket_id = $('input[name="message_id[]"]:checked').val();
+            var data = {
+                ticket_id: ticket_id,
+                status: 3
+            };
+
+            if(ticket_id != '') {
+                updateTicket(data);
+            }
         });
 
         /*table = $('#messageTable').DataTable({
@@ -459,6 +549,32 @@
 
     });
 
+    function updateTicket(data) {
+        let ticket_id = $('input[name="message_id[]"]:checked').val();
+
+        if(ticket_id != '') {
+            $.ajax({
+                type: "POST",
+                url: "{{ route('message.updateticket') }}",
+                data: data,
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                },
+
+                success: function (data) {
+                    if (data.success) {
+                        location.reload();
+                    }
+                },
+                error: function (xhr) {
+                },
+                complete: function () {
+                    $("#ajax-preloader").hide();
+                }
+            });
+        }
+    }
+
     function loadDatatables() {
 
         $("#messageTable").dataTable().fnDestroy();
@@ -489,6 +605,7 @@
                         d[field.name] = field.value; // Append form data to the DataTables request
                     });
 
+
                     var columnValues = [];
                     if (table) {
                         table.rows({search: 'applied'}).every(function (rowIdx) {
@@ -503,7 +620,7 @@
                 //processData: false,
                 //contentType: false
             },
-            "order": [[9, "desc"]],
+            "order": [[5, "desc"]],
             columns: [
                 {data: 'message_id'},
                 {data: 'store'},
@@ -522,7 +639,13 @@
                     targets: [0], // Index of the column you want to disable sorting for
                     orderable: false // Disable sorting
                 }
-            ]
+            ],
+            createdRow: function(row, data, dataIndex) {
+                if (!data.read) {
+                    // Add class to the row if message is not read
+                    $(row).addClass('unread');
+                }
+            }
         });
 
         $('#messageTable_wrapper').removeClass('form-inline');

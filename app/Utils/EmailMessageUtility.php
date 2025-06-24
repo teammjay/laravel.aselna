@@ -2,6 +2,8 @@
 
 namespace App\Utils;
 
+use App\Utils\mail\AmazonEmailParser;
+use App\Utils\mail\ShopifyEmailParser;
 use App\Utils\mail\WalmartEmailParser;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
@@ -61,17 +63,19 @@ class EmailMessageUtility
         ]);
     }
 
-    public function sendTestEmail(string $toEmail)
+    public function sendEmail($toEmail, $subject = '', $message = '')
     {
         try {
-            Mail::raw('This is a test email from SMTP connector.', function ($message) use ($toEmail) {
-                $message->to($toEmail)
-                    ->subject('SMTP Test Email');
-            });
-
-            return "Email sent successfully to {$toEmail}.";
+            if($toEmail) {
+                Mail::raw($message, function ($message) use ($toEmail, $subject) {
+                    $message->to($toEmail)->subject($subject);
+                });
+            }
+            Log::info("Email sent successfully to {$toEmail}.");
+            return true;
         } catch (Exception $e) {
-            return "Failed to send email: " . $e->getMessage();
+            Log::info("Failed to send email: " . $e->getMessage());
+            return false;
         }
     }
 
@@ -82,23 +86,29 @@ class EmailMessageUtility
         try {
             $this->client->connect();
 
-            $fromDate = \Carbon\Carbon::parse(date('Y-m-d', strtotime('-10days')));
+            $fromDate = \Carbon\Carbon::parse(date('Y-m-d', strtotime('-10 days')));
             $toDate = \Carbon\Carbon::parse(date('Y-m-d'));
 
             $folder = $this->client->getFolder($folderName);
             $messages = $folder->messages()
                         ->since($fromDate)
                         ->before($toDate)
-                        ->limit($limit)->get();
+                        ->limit($limit)
+                        ->get()
+                        ->sortByDesc(function($msg) {
+                            return optional($msg->getDate()->get())->getTimestamp(); // safe
+                        })
+                        ->values(); // reindex after sorting
 
+            /*echo '<pre>';
+            print_r($messages);
+            echo '</pre>';die;*/
             $emails = [];
             foreach ($messages as $key=>$message) {
                 //if($key == 0) continue;
-                /*echo '<pre>';
+               /* echo '<pre>';
                 print_r($message);
                 echo '</pre>';*/
-
-
 
                 $body = $message->getTextBody();
                 if (empty($message->getTextBody())) {
@@ -117,33 +127,60 @@ class EmailMessageUtility
                             print_r($parsedData);
                             echo '</pre>';*/
                             break;
+                        case 'amazon':
+                            $amazonEmailParser = new AmazonEmailParser($message);
+                            $amazonEmailParser->getMessage(strip_tags($body));
+                            $parsedData = $amazonEmailParser->getEntities();
+                            /*echo '<pre>';
+                            print_r($parsedData);
+                            echo '</pre>';*/
+                            break;
+                        case 'shopify':
+                            $shopifyEmailParser = new ShopifyEmailParser($message);
+                            $shopifyEmailParser->getMessage(strip_tags($body));
+                            $parsedData = $shopifyEmailParser->getEntities();
+                            /*echo '<pre>';
+                            print_r($parsedData);
+                            echo '</pre>';*/
+                            break;
                     }
                 }
 
                 //$parsedData = $this->parseEscalationEmail($body);
 
-               /* echo '<pre>';
-                print_r($parsedData);
-                echo '</pre>';*/
+                $part = $message->getStructure()->parts[0];
 
-                $emails[] = [
+                $parts = [
+                    'mime_type' => $part->content_type,
+                    'content' => $part->content,
+                    'charset' => $part->charset,
+                ];
+                $eData = [
                     'subject' => $message->subject->first(),
+                    'full_name' => $message->fromaddress->first(),
                     'name' => $message->getFrom()[0]->personal ?? null,
                     'from' => $message->getFrom()[0]->mail ?? null,
+                    'reply_to' => $message->getReplyTo()[0]->mail ?? null,
+                    'reply_to_name' => $message->getReplyTo()[0]->full ?? null,
                     'to' => $message->getTo()[0]->mail ?? null,
                     'cc' => $message->getCc()[0]->mail ?? null,
                     'bcc' => $message->getBcc()[0]->mail ?? null,
-                    'body' => $body,
-                    'message_id' => $message->getMessageId(),
+                    'message_id' => $message->message_id->first(),
                     'date' => date('Y-m-d H:i:s',strtotime($message->getDate())),
                     'parsedData' => $parsedData,
+                    'parts' => $parts,
+                    'body' => $body,
                 ];
+
+                /*echo '<pre>';
+                print_r($eData);
+                echo '</pre>';*/
+
+                $emails[] = $eData;
 
             }
 
-            /*echo '<pre>';
-            print_r($emails);
-            echo '</pre>';die;*/
+            //die;
             return $emails;
         } catch (Exception $e) {
             /*echo '<pre>';

@@ -2,7 +2,7 @@
 
 namespace App\Constants;
 
-class HdTicketSatus
+class HdTicketStatus
 {
     const NEEDS_ACTION = 0;
     const AWAITING_CUSTOMER = 1;

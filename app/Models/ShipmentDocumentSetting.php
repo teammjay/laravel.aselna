@@ -46,6 +46,11 @@ class ShipmentDocumentSetting extends Model
         return $this->belongsTo(Printer::class, 'printer_id');
     }
 
+    public function logisticCenter()
+    {
+        return $this->belongsTo(LogisticCenter::class, 'shipping_from_location_id');
+    }
+
     public function getLabelFormatAttribute($value)
     {
         return $value ?? ShippingLabelFormat::PDF;

@@ -14,7 +14,9 @@ use App\Jobs\SubmitShopifyProductsJob;
 use App\Jobs\SyncAllOrderStatusJob;
 use App\Jobs\synccategorytospecification;
 use App\Models\Customer;
+use App\Models\CustomerEmail;
 use App\Models\HDMessage;
+use App\Models\HdMessagePart;
 use App\Models\HdTicketType;
 use App\Models\Listing;
 use App\Models\ListingFeed;
@@ -56,6 +58,11 @@ class HomeController extends Controller
     }
 
     public function testfunction(){
+
+        /*$store = Store::findOrFail('3fab8878-e036-58c7-db30-addd3058875c');
+        $shopifyService = new ShopifyService();
+        $shopifyService->refundOrder('6665896263985',$store);
+        die;*/
 
         /*$requestId = (string) Str::uuid();
         $data = [
@@ -111,16 +118,17 @@ class HomeController extends Controller
                 Log::info('Emails :'.json_encode($email));
                 /* create ticket*/
                 $order_id = $related_order_id = $po_no = $reason = $customer_id = $order_operation_id = $reference_code = NULL;
-                $ticket_type_code = HdTicketTypeCode::CUSTOMER_SERVICE;
+                $ticket_type_code = HdTicketTypeCode::MARKETPLACE_NOTIFICATION;
                 $customerDetail = Customer::whereLike('email','%'.$email['from'].'%')->first();
 
                 if($customerDetail){
                     $customer_id = $customerDetail->id;
                 }
+
                 if(isset($email['parsedData']) && !empty($email['parsedData'])){
-                    if(isset($email['parsedData']['customer_order_number'])){
-                        $order_id = html_entity_decode($email['parsedData']['customer_order_number']);
-                        $orderDetail = Order::with('customer','orderOperation')->where('order_id',trim($related_order_id))->first();
+                    if(isset($email['parsedData']['order_id'])){
+                        $order_id = html_entity_decode($email['parsedData']['order_id']);
+                        $orderDetail = Order::with('customer','orderOperation')->where('order_id',trim($order_id))->first();
                         if($orderDetail){
                             $related_order_id = $orderDetail->id;
                             $store_id = $orderDetail->store_id;
@@ -146,19 +154,64 @@ class HomeController extends Controller
                     }
                 }
 
+                if($customer_id == NULL){
+
+                    if (isset($email['name'])) {
+                        $nameArr = explode(' ', $email['name']);
+                        $firstname = $nameArr[0];
+                        $lastname = isset($nameArr[1]) ? $nameArr[1] : '';
+                    }
+
+                    $customerData = [
+                        'first_name' => $firstname,
+                        'last_name' => $lastname,
+                        'full_name' => isset($email['name']) ? $email['name'] : '',
+                        'email' => $email['from'],
+                        'user_id' => $email['from']
+                    ];
+
+                    $customer_detail = Customer::updateOrCreate([
+                        'email' => $email['from'],
+                    ], $customerData);
+
+                    $customer_id = $customer_detail->id;
+
+                    $customerEmailData = [
+                        'customer_id' => $customer_id,
+                        'email_address' => $email['from'],
+                    ];
+                    CustomerEmail::updateOrCreate([
+                        'customer_id' => $customer_id,
+                        'email_address' => $email['from']
+                    ],$customerEmailData);
+                }else{
+                    $customerDetail = Customer::findOrFail($customer_id);
+                    if($customerDetail->email != $email['from']){
+                        $customerEmailData = [
+                            'customer_id' => $customer_id,
+                            'email_address' => $email['from'],
+                        ];
+                        CustomerEmail::updateOrCreate([
+                            'customer_id' => $customer_id,
+                            'email_address' => $email['from']
+                        ],$customerEmailData);
+                    }
+                }
+
                 $ticket_code = $store->short_code.'-'.$this->getNextTicketNumberForStore($store->id);
                 $ticketTypeDetail = HdTicketType::where('code',$ticket_type_code)->first();
                 $ticketData = [
                     'ticket_type_id' => $ticketTypeDetail->id,
-                    'ticket_email' => $email['from'],
+                    'ticket_email' => trim($email['from']),
                     'status' => 0,
                     'related_order_id' => $related_order_id,
-                    'subject' => $email['subject'],
-                    'message_id' => $email['message_id'],
-                    'notes' => $email['body'],
+                    'subject' => trim($email['subject']),
+                    'message_id' => trim($email['message_id']),
+                    'notes' => NULL,
+                    'customer_id' => $customer_id,
                     'reference_code' => $reference_code,
                     'related_order_operation_id' => $order_operation_id,
-                    'order_id' => $order_id,
+                    'order_id' => trim($order_id),
                     'store_id' => $store_id,
                     'ticket_date' => $email['date'],
                     'ticket_code' => $ticket_code,
@@ -171,11 +224,17 @@ class HomeController extends Controller
                     'related_listing_item_id' => NULL,
                 ];
 
-                $ticketDetail = Message::where('ticket_email',$email['from'])->first();
+                $ticketDetail = Message::where('ticket_email',trim($email['from']))->first();
 
                 if($ticketDetail){
                     Log::info('Ticket Exist');
                     $hd_ticket = $ticketDetail;
+                    if($order_id){
+                        $ticketDetail->order_id = $order_id;
+                        $ticketDetail->ticket_type_id = $ticketTypeDetail->id;
+                        $ticketDetail->save();
+                    }
+
                 }else{
                     Log::info('New Ticket');
                     $hd_ticket = Message::create($ticketData);
@@ -191,25 +250,31 @@ class HomeController extends Controller
                         'to_' => $email['to'],
                         'cc' => isset($email['cc']) ? $email['cc'] : NULL,
                         'bcc' => isset($email['bcc']) ? $email['bcc'] : NULL,
-                        'message_id' => $email['message_id'],
+                        'message_id' => trim($email['message_id']),
                         'messaging_account_id' => '9c59102d-016d-fd1b-acf5-fd1064ebaf5d',
-                        'from_email' => $email['from'],
-                        'from_name' => $email['name'],
+                        'from_email' => trim($email['from']),
+                        'from_name' => trim($email['name']),
                         'message' => $email['body'],
-                        'in_reply_to' => NULL,
+                        'in_reply_to' => $email['reply_to'],
                         'draft' => 0,
-                        'reply_to_name' => $email['name'],
-                        'reply_to_email' => $email['from'],
+                        'reply_to_name' => $email['reply_to_name'],
+                        'reply_to_email' => $email['reply_to'],
                     ];
 
-                    Log::info('Ticket Detail :'.json_encode($hdMessageData));
+                    Log::info('Ticket Message Detail :'.json_encode($hdMessageData));
 
-                    /*$hd_ticket = HDMessage::create($hdMessageData);*/
-
-                    $hd_ticket = HDMessage::updateOrCreate([
+                    $hd_message = HDMessage::updateOrCreate([
                         'ticket_id' => $hd_ticket->id,
-                        'message_id' => $email['message_id'],
+                        'message_id' => trim($email['message_id']),
                     ], $hdMessageData);
+
+                    if(isset($hd_message->id) && !empty($email['parts'])){
+                        $email['parts']['message_id'] = $hd_message->id;
+                        HdMessagePart::updateOrCreate([
+                            'message_id' => $hd_message->id,
+                        ], $email['parts']);
+                    }
+
                 }
             }
         }

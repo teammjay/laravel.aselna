@@ -53,6 +53,7 @@ use App\Jobs\StoreSyncJob;
 use App\Jobs\StoreTypeListingSyncJob;
 use App\Jobs\StoreTypeSyncJob;
 use App\Jobs\synccategorytospecification;
+use App\Jobs\SystemPrinterSyncJob;
 use App\Jobs\UPCSyncJob;
 use App\Models\ListingTemplate;
 use App\Models\ProductMaterial;
@@ -82,7 +83,7 @@ class SyncAllTables extends Command
      */
     public function handle()
     {
-         Bus::chain([
+//         Bus::chain([
 //            new FileSystemSyncJob(),
 //            new StoreTypeSyncJob(),
 //           new StoreSyncJob(),
@@ -102,7 +103,7 @@ class SyncAllTables extends Command
         //    new ProductSizeSyncJob(),
         //    new ProductMaterialSyncJob(),
 //            new GenerationTypeAndTemplateSync(),
-            new ProductSyncJob(),
+//            new ProductSyncJob(),
 //            new ProductChannelDetailSyncJob(),
 //            new StoreProductSyncJob(),
 //            new ProductInterfaces(),
@@ -117,7 +118,7 @@ class SyncAllTables extends Command
         // new StorePagesJobSync(),
 //            new DeviceCarrierSyncJob(),
         // new ProductSpecificationSyncJob()
-         ])->dispatch();
+//         ])->dispatch();
 //        Bus::chain([
 //            ListingSyncJob::dispatch(),
 //            ListingItemSyncJob::dispatch(),
@@ -139,10 +140,10 @@ class SyncAllTables extends Command
         //    ListingItemImageCreate::dispatch('4dcf1d3f-b723-4b31-a075-3702c0746b10');
 //        FetchAmazonOrdersJob::dispatch();
 //        StoreCategorySyncJob::dispatch('94428796-cdf9-dc2b-a1e7-aa4100066fd9');
-        AmazonListingItemSyncJob::dispatch();
+//        AmazonListingItemSyncJob::dispatch();
 //        AmazonProductTypeSyncJob::dispatch();
 //        FetchWalmartOrdersJob::dispatch();
         //synccategorytospecification::dispatch();
-
+        SystemPrinterSyncJob::dispatch();
     }
 }

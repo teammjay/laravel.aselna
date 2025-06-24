@@ -35,5 +35,7 @@ class Message extends Model
         return $this->belongsTo(HdTicketType::class, 'ticket_type_id');
     }
 
-
+    public function customer(){
+        return $this->belongsTo(Customer::class, 'customer_id');
+    }
 }

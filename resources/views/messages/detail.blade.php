@@ -95,8 +95,8 @@
                                     </a>
                                 </li>
                                 <li class="nav-item">
-                                    <a class="nav-link" id="internalNotes-tab" data-toggle="pill" href="#tab2" role="tab" aria-controls="tab2" aria-selected="false">
-                                        Internal Notes
+                                    <a class="nav-link @if($ticketDetail->notes !='' && $ticketDetail->notes != NULL) text-red @endif" id="internalNotes-tab" data-toggle="pill" href="#tab2" role="tab" aria-controls="tab2" aria-selected="false">
+                                        @if($ticketDetail->notes !='' && $ticketDetail->notes != NULL) <i class="fa fa-exclamation-triangle"></i> @endif Internal Notes
                                     </a>
                                 </li>
                             </ul>
@@ -134,7 +134,7 @@
                                 <div class="tab-pane fad" id="tab2" role="tabpanel" aria-labelledby="internalNotes-tab">
                                     <div class="row pt-3">
                                         <div class="col-md-12">
-                                            <textarea class="form-control" rows="10" id="internal_notes" name="internal_notes"></textarea>
+                                            <textarea class="form-control" rows="10" id="internal_notes" name="internal_notes">{{ $ticketDetail->notes }}</textarea>
                                         </div>
                                     </div>
                                 </div>
@@ -142,21 +142,29 @@
 
                         </div>
                     </div>
-                    <div class="row pt-3">
-                        <div class="col-md-5 border-r">
+                    <div class="row btn-sec pt-3">
+                        <div class="col-md-8 border-r">
                             <div class="d-flex align-items-center" style="gap:10px;">
-                                <button type="button" class="btn btn-primary" name="submit_message" id="submit_message"> Submit</button>
+                                {{--<div class="btn-group" role="group">
+                                    <button id="btnGroupDrop1" type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="fa fa-paper-plane"></i> Submit</button>
+                                    <div class="dropdown-menu" aria-labelledby="btnGroupDrop1">
+                                        <a class="dropdown-item" href="#">Submit and close ticket</a>
+                                        <a class="dropdown-item" href="#">Dropdown link</a>
+                                    </div>
+                                </div>--}}
+
+                                <button type="button" class="btn btn-primary" name="submit_message" id="submit_message"><i class="fa fa-paper-plane"></i> Submit</button>
                                 <button type="button" class="btn btn-default" name="rma" id="rma">RMA</button>
                                 <button type="button" class="btn btn-default" name="replacement" id="replacement">Replacement</button>
                                 <button type="button" class="btn btn-default" name="refund" id="refund">Refund</button>
                             </div>
                         </div>
-                        <div class="col-md-7">
-                            <div class="d-flex align-items-center" style="gap:10px;">
-                                <select class="form-control" name="ticket_type" id="ticket_type">
+                        <div class="col-md-4">
+                            <div class="d-flex align-items-center float-right" style="gap:10px;">
+                                {{--<select class="form-control" name="ticket_type" id="ticket_type">
                                     @if(count($ticketTypeCode ?? []) >0)
                                         @foreach($ticketTypeCode as $tcode)
-                                            <option value="{{ $tcode->code }}">{{ $tcode->name }}</option>
+                                            <option value="{{ $tcode->id }}">{{ $tcode->name }}</option>
                                         @endforeach
                                     @endif
 
@@ -168,8 +176,8 @@
                                     <option value="3">Deleted</option>
                                     <option value="4">Spam</option>
                                 </select>
-                                <button type="button" class="btn btn-default" name="revert" id="revert">Revert</button>
-                                <button type="button" class="btn btn-default" name="close" id="close">Close</button>
+                                <button type="button" class="btn btn-default" name="revert" id="revert_ticket">Revert</button>--}}
+                                <button type="button" class="btn btn-default" name="close" id="close_ticket">Close</button>
                             </div>
                         </div>
                     </div>
@@ -186,6 +194,9 @@
                     <div class="row pt-3" >
                         <div class="col-md-12">
                             {{ $ticketDetail->ticket_email }}
+                            <input type="hidden" id="customer_id" value="{{ $ticketDetail->customer_id }}">
+                            <input type="hidden" id="customer_name" value="{{ isset($ticketDetail->customer) ? $ticketDetail->customer->first_name : '' }}">
+                            <input type="hidden" id="store_name" value="{{ isset($ticketDetail->store) ? $ticketDetail->store->name : '' }}">
                         </div>
                     </div>
                     <div class="row pt-3" >
@@ -245,7 +256,7 @@
                     </div>
                     <div class="border mt-3 p-3">
                         <p>Items:</p>
-                        <table class="table" id="order_item_table">
+                        <table class="table table-bordered" id="order_item_table">
 
                         </table>
                     </div>
@@ -265,14 +276,18 @@
                     Ticket History
                 </div>
                 <div class="card-body">
+                    <table class="table table-bordered" id="ticket_history_table">
 
+                    </table>
                 </div>
             </div>
         </div>
     </div>
 
+    @include('messages.modals', ['ticketDetail' => $ticketDetail])
 @stop
 @section('adminlte_js')
+    <script src="{{ asset('js/jquery.datetimepicker.full.js') }}"></script>
     <script>
         $(document).ready(function () {
             $(document).on('click','#search_order',function () {
@@ -280,26 +295,26 @@
             });
 
             $(document).on('click','#internalNotes-tab',function () {
-                $('#rma').hide();
-                $('#replacement').hide();
-                $('#refund').hide();
+                $('.btn-sec').hide();
             });
 
             $(document).on('click','#composeMessage-tab',function () {
-                $('#rma').show();
-                $('#replacement').show();
-                $('#refund').show();
+                $('.btn-sec').show();
             });
 
             loadOrderDetail();
 
             $(document).on('change','#message_template',function () {
                 var template_id = $(this).val();
+                var customer_name = $('#customer_name').val();
+                var store_name = $('#store_name').val();
                 $.ajax({
                     type: "POST",
                     url: "{{ route('message.getmessagetemplate') }}",
                     data: {
-                        template_id: template_id
+                        template_id: template_id,
+                        customer_name: customer_name,
+                        store_name: store_name,
                     },
                     headers: {
                         'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
@@ -319,7 +334,198 @@
                 });
             });
 
+            $(document).on('click','#close_ticket',function () {
+                window.location.href = '{{ route('message.index') }}';
+            });
+
+            $(document).on('blur','#internal_notes',function () {
+                var notes = $(this).val();
+                if(notes != '') {
+                    let ticket_id = '{{ $ticketDetail->id }}';
+                    $.ajax({
+                        type: "POST",
+                        url: "{{ route('message.updateticket') }}",
+                        data: {
+                            ticket_id: ticket_id,
+                            notes: notes
+                        },
+                        headers: {
+                            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                        },
+
+                        success: function (data) {
+                            if (data.success) {
+
+                            }
+                        },
+                        error: function (xhr) {
+                        },
+                        complete: function () {
+                            $("#ajax-preloader").hide();
+                        }
+                    });
+                }
+            });
+
+
+
+            /*$(document).on('click','#close_ticket',function () {
+                let ticket_type = $('#ticket_type').val();
+                let status = $('#action_type').val();
+                let ticket_id = '{{ $ticketDetail->id }}';
+
+                if(ticket_id != '') {
+                    $.ajax({
+                        type: "POST",
+                        url: "{{ route('message.updateticket') }}",
+                        data: {
+                            ticket_id: ticket_id,
+                            status: status,
+                            ticket_type: ticket_type,
+                        },
+                        headers: {
+                            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                        },
+
+                        success: function (data) {
+                            if (data.success) {
+                                window.location.href = "{{ route('message.index') }}";
+                            }
+                        },
+                        error: function (xhr) {
+                        },
+                        complete: function () {
+                            $("#ajax-preloader").hide();
+                        }
+                    });
+                }
+            });*/
+
+            $(document).on('click','#submit_message',function () {
+                var template_id = $('#message_template').val();
+                var message_to_send = $('#message_to_send').val();
+                var customer_id = $('#customer_id').val();
+                var ticket_id = '{{ $ticketDetail->id }}';
+                if(message_to_send == ''){
+                    alert('Please add text to send message');
+                    return false;
+                }
+                $.ajax({
+                    type: "POST",
+                    url: "{{ route('message.sendmessagetemplate') }}",
+                    data: {
+                        template_id: template_id,
+                        message_to_send: message_to_send,
+                        customer_id: customer_id,
+                        ticket_id: ticket_id,
+                    },
+                    headers: {
+                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                    },
+
+                    success: function(data) {
+                        if(data.success){
+
+                            $('#message_to_send').html(data.templateCode);
+                        }
+                    },
+                    error: function (xhr) {
+                    },
+                    complete: function () {
+                        $("#ajax-preloader").hide();
+                    }
+                });
+            });
+
+            $(document).on('click','#rma',function () {
+                var order_id = $('#order_id').val();
+                if(order_id != '' && order_id != null){
+                    $.ajax({
+                        url: "{{ route('message.getshippingdetail') }}",
+                        type: 'POST',
+                        data: {
+                            order_id: order_id,
+                            rma: 1,
+                            "_token": '{{ csrf_token() }}'
+                        },
+                        success: function (response) {
+                            // If success, remove the user row from the table
+                            if (response.success) {
+                                $('#makeRMAModal').find('.modal-body').html(response.html);
+                                $('#date').datetimepicker({
+                                    format:'Y-m-d H:i',
+                                    /* minDate: 'now', */
+                                    step:10,
+                                    onSelectTime: function(dp,$input) {
+                                        var sel_date = $input.val();
+                                        $('#date').val(sel_date);
+                                    }
+                                });
+                                $('#makeRMAModal').modal('show');
+
+                                getShippingCarrierService($('#carrier_name_ms'));
+                            }
+                        },
+                        error: function (xhr) {
+                            // Handle error response
+                            alert('Error: ' + xhr.responseJSON.error);
+                        }
+                    });
+                }else{
+                    alert('There were no order found.');
+                }
+            });
+
+            $(document).on('click','#refund',function () {
+                var order_id = $('#order_id').val();
+                if(order_id != '' && order_id != null){
+                    $.ajax({
+                        url: "{{ route('message.getshippingdetail') }}",
+                        type: 'POST',
+                        data: {
+                            order_id: order_id,
+                            "_token": '{{ csrf_token() }}'
+                        },
+                        success: function (response) {
+                            // If success, remove the user row from the table
+                            if (response.success) {
+                                $('#orderRefundModal').find('.modal-body').html(response.html);
+                                $('#orderRefundModal').modal('show');
+                            }
+                        },
+                        error: function (xhr) {
+                            // Handle error response
+                            alert('Error: ' + xhr.responseJSON.error);
+                        }
+                    });
+                }else{
+                    alert('There were no order found.');
+                }
+            });
+
         });
+
+        function getShippingCarrierService(element){
+            $.ajax({
+                url: "<?php echo e(route('shipment.getshippingcarrier')); ?>",
+                type: 'POST',
+                data: {
+                    carrier_id: element.val(),
+                    "_token": '<?php echo e(csrf_token()); ?>'
+                },
+                success: function (response) {
+                    // If success, remove the user row from the table
+                    if (response.success) {
+                        $('#carrier_service_id').html(response.option);
+                        $('#shipping_carrier_service').html(response.option);
+                    }
+                },
+                error: function (xhr) {
+                    // Handle error response
+                    alert('Error: ' + xhr.responseJSON.error);
+                }
+            });
+        }
 
         function loadOrderDetail(){
             let order_id = $('#order_id').val();
@@ -343,6 +549,8 @@
                             $('#order_total').val(data.orderDetail.orderTotal);
                             $('#purchase_order_id').val(data.orderDetail.orderPOId);
                             $('#order_operation').html(data.orderDetail.orderOperation);
+                            if(data.ticketHistory != '')
+                                $('#ticket_history_table').html(data.ticketHistory);
                         }
                     },
                     error: function (xhr) {

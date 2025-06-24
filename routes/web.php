@@ -60,6 +60,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ResetPasswordController;
 use App\Http\Controllers\StorePagesController;
 use App\Services\Auth\EbayAuthService;
+use App\Http\Controllers\LogisticCenterDocumentController;
 
 Route::middleware('auth')->group(function () {
     Route::get('/devices/{id}/details', [DeviceController::class, 'getDeviceDetails']);
@@ -286,6 +287,11 @@ Route::middleware('auth')->group(function () {
 
     Route::controller(MessagesController::class)->group(function () {
         Route::get('/messages', 'index')->name('message.index');
+        Route::get('/messages/need_action', 'need_action_list')->name('message.need_action');
+        Route::get('/messages/awaiting', 'awaiting_list')->name('message.awaiting');
+        Route::get('/messages/closed', 'closed_list')->name('message.closed');
+        Route::get('/messages/spam', 'spam_list')->name('message.spam');
+        Route::get('/messages/trash', 'trash_list')->name('message.trash');
         Route::get('/messages/add', 'create')->name('message.create');
         Route::post('/messages/add', 'store')->name('message.store');
         Route::post('/messages/getdata', 'getMessageData')->name('message.getdata');
@@ -295,6 +301,9 @@ Route::middleware('auth')->group(function () {
         Route::get('/messages/detail/{id}', 'detail')->name('message.detail');
         Route::post('/messages/searchorder', 'searchOrder')->name('message.searchorder');
         Route::post('/messages/getmessagetemplate', 'getMessageTemplate')->name('message.getmessagetemplate');
+        Route::post('/messages/updateticket', 'updateTicket')->name('message.updateticket');
+        Route::post('/messages/sendmessagetemplate', 'sendMessageTemplate')->name('message.sendmessagetemplate');
+        Route::post('/messages/getshippingdetail', 'getShippingDetail')->name('message.getshippingdetail');
     });
 
     Route::controller(PageTypesController::class)->group(function () {
@@ -628,3 +637,13 @@ Route::get('/jobs/{job}/edit', [JobSchedulerController::class, 'edit'])->name('j
 Route::post('/jobs/{job}/update', [JobSchedulerController::class, 'update'])->name('jobs.update');
 Route::post('/jobs/add', [JobSchedulerController::class, 'add'])->name('jobs.add');
 Route::post('/jobs/running',[JobSchedulerController::class, 'running'])->name('jobs.running');
+
+Route::prefix('logistic_center_document')->group(function () {
+    Route::get('/', [LogisticCenterDocumentController::class, 'index'])->name('logistic_center_document.index');
+    Route::get('/create', [LogisticCenterDocumentController::class, 'create'])->name('logistic_center_document.create');
+    Route::post('/store', [LogisticCenterDocumentController::class, 'store'])->name('logistic_center_document.store');
+    Route::get('/edit/{id}', [LogisticCenterDocumentController::class, 'edit'])->name('logistic_center_document.edit');
+    Route::post('/update/{id}', [LogisticCenterDocumentController::class, 'update'])->name('logistic_center_document.update');
+    Route::get('/delete/{id}', [LogisticCenterDocumentController::class, 'destroy'])->name('logistic_center_document.delete');
+});
+
