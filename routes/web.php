@@ -303,6 +303,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/messages/getmessagetemplate', 'getMessageTemplate')->name('message.getmessagetemplate');
         Route::post('/messages/updateticket', 'updateTicket')->name('message.updateticket');
         Route::post('/messages/sendmessagetemplate', 'sendMessageTemplate')->name('message.sendmessagetemplate');
+        Route::post('/messages/getshippingdetail', 'getShippingDetail')->name('message.getshippingdetail');
     });
 
     Route::controller(PageTypesController::class)->group(function () {

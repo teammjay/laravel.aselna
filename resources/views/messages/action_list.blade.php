@@ -336,7 +336,21 @@
             <button type="button" class="btn btn-default" id="open_message" disabled="">
                 <i class="fas fa-fw fa-pencil-alt"></i> Open
             </button>
+            <button type="button" class="btn btn-default mr-2" data-status="4" id="mark_as_spam" disabled="">
+                <i class="fas fa-fw fa-exclamation"></i> Spam
+            </button>
 
+            <button type="button" class="btn btn-default mr-2" id="delete_ticket" disabled="">
+                <i class="fas fa-fw fa-trash"></i> Delete
+            </button>
+
+            <button type="button" class="btn btn-default mr-2" id="mark_as_important" disabled="">
+                <i class="fas fa-fw fa-star"></i> Mark As Important
+            </button>
+
+            <button type="button" class="btn btn-default" id="mark_as_unread" disabled="">
+                <i class="fas fa-fw fa-envelope"></i> Mark As Unread
+            </button>
         </div>
     </div>
     <div class="table-responsive">

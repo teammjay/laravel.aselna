@@ -32,7 +32,7 @@
                                 </div>
                                 <div class="col-md-8">
                                     <input type="text" class="form-control" name="status" id="status"
-                                           value="{{ \App\Constants\OrderStatus::getOrderStatusName($shipmentDetail->order->order_status) }}"
+                                           value="{{ \App\Constants\OrderOperationStatus::getOrderStatusName($shipmentDetail->status) }}"
                                            readonly="">
                                 </div>
                             </div>

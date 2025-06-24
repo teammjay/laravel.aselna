@@ -164,7 +164,7 @@ class FetchEmailMessagesJob implements ShouldQueue
                                                 'related_order_id' => $related_order_id,
                                                 'subject' => trim($email['subject']),
                                                 'message_id' => trim($email['message_id']),
-                                                'notes' => $email['body'],
+                                                'notes' => NULL,
                                                 'customer_id' => $customer_id,
                                                 'reference_code' => $reference_code,
                                                 'related_order_operation_id' => $order_operation_id,
