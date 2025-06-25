@@ -46,6 +46,11 @@ class Store extends Model
         return $this->hasOne(StoreType::class,'id','store_type_id');
     }*/
 
+    public function logisticCenters()
+    {
+        return $this->hasMany(StoreLogisticCenter::class, 'store_id', 'id');
+    }
+
     public function storeType()
     {
         return $this->belongsTo(StoreType::class, 'store_type_id');
