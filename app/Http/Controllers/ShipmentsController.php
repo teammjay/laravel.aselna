@@ -501,6 +501,8 @@ class ShipmentsController extends Controller
             $isSuccess = false;
             foreach ($orderOperations as $operation) {
 
+                $store = $operation->store;
+
                 $package_id = '';
                 $product_total_weight = 0;
                 //print_r($shipmentDetail->operationItem);
@@ -518,6 +520,7 @@ class ShipmentsController extends Controller
                             }
                             $product_weight = $product_detail->product_weight;
                             $product_total_weight = $product_total_weight + $product_weight;
+
                         }
                     }
                 }
@@ -529,6 +532,18 @@ class ShipmentsController extends Controller
                 $request['label_generation'] = 1;
                 $request['tracking_number'] = null;
                 $request['shipment_from'] = $operation->ship_from_id;
+                Log::info('Shipment From ID: ' . $request['shipment_from']);
+                if (!isset($request['shipment_from']) || $request['shipment_from'] == '') {
+                    $storeLogisticCenter = $store->logisticCenters->first();
+                    Log::info('Store Logistic Center: ' . json_encode($storeLogisticCenter));
+                    if (isset($storeLogisticCenter->logistic_center_id)) {
+                        $request['shipment_from'] = $storeLogisticCenter->logistic_center_id;
+                    } else {
+                        continue;
+                    }
+                }
+
+                Log::info('Shipment Request Data: ' . json_encode($request->all()));
 
                 $isSuccess = OrderOperationUtility::processShipment($operation, $request);
             }
