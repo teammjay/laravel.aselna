@@ -21,6 +21,7 @@ use App\Models\ShippingPackage;
 use App\Models\Store;
 use App\Models\StoreMessageAccount;
 use App\Utils\EmailMessageUtility;
+use App\Utils\RmaNumberGenerator;
 use Illuminate\Http\Request;
 use App\Services\DataTable\DataTableService;
 
@@ -453,7 +454,7 @@ class MessagesController extends Controller
             $orderOperation = $orderDetail->orderOperation;
             $order_opration_id = $orderOperation->id;
             if($request->input('rma')){
-                $rma_number = 'XYDHASK';
+                $rma_number = RmaNumberGenerator::generate($orderDetail->store_id);
                 $clonedOrderOperation = [
                     'ship_date' => $orderOperation->ship_date,
                     'client' => $orderOperation->client,
@@ -511,11 +512,7 @@ class MessagesController extends Controller
                 }
             }else{
                 if($request->input('rma')) {
-                    //echo $orderOperation->id;
                     $newshipmentDetail = OrderOperation::with('operationItem','operationItem.orderItem')->where('id', $orderOperation->id)->first();
-                    /*echo '<pre>';
-                    print_r($newshipmentDetail);
-                    echo '</pre>';*/
                     if (count($newshipmentDetail->operationItem ?? []) > 0) {
                         foreach ($newshipmentDetail->operationItem as $oitem) {
 
@@ -526,10 +523,6 @@ class MessagesController extends Controller
                                 'sync_status' => $oitem->sync_status,
                                 'quantity' => $oitem->quantity,
                             ];
-
-                            /*echo '<pre>';
-                            print_r($newOrderItem);
-                            echo '</pre>';die;*/
 
                             OrderOperationItem::updateOrCreate([
                                 'order_item_id' => $oitem->order_item_id,
