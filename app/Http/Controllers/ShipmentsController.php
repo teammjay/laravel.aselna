@@ -505,7 +505,6 @@ class ShipmentsController extends Controller
 
                 $package_id = '';
                 $product_total_weight = 0;
-                //print_r($shipmentDetail->operationItem);
                 if (count($operation->operationItem ?? []) > 0) {
                     $product_weight = 0;
                     foreach ($operation->operationItem as $oitem) {
