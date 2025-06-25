@@ -243,9 +243,9 @@ class EndicialabelService
         if (isset($shipmentDetails['RubberStamp2'])) {
             $labelRequest->addChild('RubberStamp2', $shipmentDetails['RubberStamp2']);
         }
-        if (isset($shipmentDetails['RubberStamp3'])) {
-            $labelRequest->addChild('RubberStamp3', $shipmentDetails['RubberStamp3']);
-        }
+//        if (isset($shipmentDetails['RubberStamp3'])) {
+//            $labelRequest->addChild('RubberStamp3', $shipmentDetails['RubberStamp3']);
+//        }
 
         return $xml->asXML();
     }

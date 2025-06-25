@@ -700,7 +700,7 @@
         $(document).on('click','#ship_selected, #ship_all',function () {
 
             let shipment_ids = [];
-            $('input[name="shipment_id[]"]:checked').each(function () {
+            $('input[name="shipment_id[]"]').each(function () {
                 shipment_ids.push($(this).val())
             });
 
