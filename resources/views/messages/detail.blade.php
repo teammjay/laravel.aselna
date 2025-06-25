@@ -45,6 +45,9 @@
         max-height: 500px;
         overflow: auto;
     }
+    #btnGroupDrop2::after{
+        display:none;
+    }
 </style>
 @stop
 
@@ -154,9 +157,22 @@
                                 </div>--}}
 
                                 <button type="button" class="btn btn-primary" name="submit_message" id="submit_message"><i class="fa fa-paper-plane"></i> Submit</button>
-                                <button type="button" class="btn btn-default" name="rma" id="rma">RMA</button>
-                                <button type="button" class="btn btn-default" name="replacement" id="replacement">Replacement</button>
-                                <button type="button" class="btn btn-default" name="refund" id="refund">Refund</button>
+
+                                @if(isset($action['canbeReturned']) && $action['canbeReturned'] > 0)
+                                    <button type="button" class="btn btn-default" name="rma" id="rma">RMA</button>
+                                @endif
+                                @if(isset($action['canbeReplace']) && $action['canbeReplace'] > 0)
+                                    <button type="button" class="btn btn-default" name="replacement" id="replacement">Replacement</button>
+                                @endif
+                                @if(isset($action['canbeRefund']) && $action['canbeRefund'] > 0 && strtolower($store_type_name) != 'ebay')
+                                    <button type="button" class="btn btn-default" name="refund" id="refund">Refund</button>
+                                @endif
+                                @if(isset($action['canbeShipped']) && $action['canbeShipped'] > 0)
+                                    <button type="button" class="btn btn-default" name="ship_order" id="ship_order">Ship Order</button>
+                                @endif
+                                @if((isset($action['canbeShipped']) && $action['canbeShipped'] > 0) || (isset($action['canbeRefund']) && $action['canbeRefund'] > 0 && strtolower($store_type_name) != 'ebay'))
+                                <button type="button" class="btn btn-default" name="cancel_order" id="cancel_order">Cancel Order</button>
+                                @endif
                             </div>
                         </div>
                         <div class="col-md-4">
