@@ -63,13 +63,17 @@ class EmailMessageUtility
         ]);
     }
 
-    public function sendEmail($toEmail, $subject = '', $message = '')
+    public function sendEmail($toEmail, $subject = '', $message = '', $message_id = '')
     {
         try {
             if($toEmail) {
-                Mail::raw($message, function ($message) use ($toEmail, $subject) {
+                Mail::raw($message, function ($message) use ($toEmail, $subject, $message_id) {
                     $message->to($toEmail)->subject($subject);
+                    $message->getHeaders()->addTextHeader('In-Reply-To', $message_id);
+                    $message->getHeaders()->addTextHeader('References', $message_id);
                 });
+
+
             }
             Log::info("Email sent successfully to {$toEmail}.");
             return true;
