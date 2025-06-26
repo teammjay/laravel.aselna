@@ -426,6 +426,11 @@
             //location.href = "{{ url('messages/detail') }}/" + ticket_id;
         });
 
+        $(document).on('dblclick','#message-list tr',function () {
+            var ticket_id = $(this).find('input[name="message_id[]"]').val();
+            location.href = "{{ url('messages/detail') }}/" + ticket_id;
+        });
+
         $('#open_message').on('click',function () {
             let flag = true;
             $('input[name="message_id[]"]').each(function () {

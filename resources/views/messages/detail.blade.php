@@ -121,6 +121,7 @@
                                                             @endforeach
                                                         @endif
                                                     </select>
+                                                    <input type="hidden" id="template_id" value="">
                                                 </div>
                                             </div>
                                         </div>
@@ -217,7 +218,7 @@
                     </div>
                     <div class="row pt-3" >
                         <div class="col-md-12 d-flex">
-                            <input type="text" class="form-control" name="customer" id="customer">
+                            <input type="text" class="form-control" name="customer" id="customer" value="{{ isset($ticketDetail->customer) ? $ticketDetail->customer->full_name : '' }}">
                             <button type="button" class="btn btn-default" id="search_customer"><i class="fa fa-search"></i></button>
                         </div>
                     </div>
@@ -467,6 +468,10 @@
                         success: function (response) {
                             // If success, remove the user row from the table
                             if (response.success) {
+                                if(response.template_code != ''){
+                                    $('#template_id').val(response.template_id);
+                                    $('#message_to_send').html(response.template_code);
+                                }
                                 $('#makeRMAModal').find('.modal-body').html(response.html);
                                 $('#date').datetimepicker({
                                     format:'Y-m-d H:i',
@@ -491,6 +496,39 @@
                     alert('There were no order found.');
                 }
             });
+
+            $(document).on('click','#regenerate_rma_message',function () {
+                var template_id = $('#template_id').val();
+                var customer_name = $('#customer_name').val();
+                var store_name = $('#store_name').val();
+                var rma_number = $('#rma_number').val();
+                $.ajax({
+                    type: "POST",
+                    url: "{{ route('message.getmessagetemplate') }}",
+                    data: {
+                        template_id: template_id,
+                        customer_name: customer_name,
+                        store_name: store_name,
+                        rma_number: rma_number,
+                    },
+                    headers: {
+                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                    },
+
+                    success: function(data) {
+                        if(data.success){
+                            $('#message_to_send').html(data.templateCode);
+                        }
+                    },
+                    error: function (xhr) {
+                    },
+                    complete: function () {
+                        $("#ajax-preloader").hide();
+                    }
+                });
+            });
+
+
 
             $(document).on('click','#refund',function () {
                 var order_id = $('#order_id').val();

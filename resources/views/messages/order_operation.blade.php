@@ -10,7 +10,7 @@
                             <div class="btn-group float-right" role="group">
                                 <button id="btnGroupDrop2" type="button" class="dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="fa fa-ellipsis-v"></i></button>
                                 <div class="dropdown-menu" aria-labelledby="btnGroupDrop2">
-                                    <a class="dropdown-item" href="#">Regenerate</a>
+                                    <a class="dropdown-item" href="javascript:void(0)" id="regenerate_rma_message">Regenerate</a>
                                 </div>
                             </div>
                         </div>
@@ -18,6 +18,7 @@
                     <div class="row pt-3">
                         <div class="col-md-12">
                             RMA : {{ $order_operation->rma_number }}
+                            <input type="hidden" id="rma_number" value="{{ $order_operation->rma_number }}">
                         </div>
                     </div>
                 </div>

@@ -261,6 +261,7 @@ public static $createFullfillment = <<<GQL
         fulfillment {
           id
           status
+          totalQuantity
           trackingInfo {
             number
             url
