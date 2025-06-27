@@ -300,7 +300,7 @@ class EndicialabelService
             if ($e instanceof RequestException && $e->hasResponse()) {
                 Log::error('SOAP Error Response: ' . $e->getResponse()->getBody()->getContents());
             }
-            throw new Exception('Error creating label: ' . $e->getMessage());
+//            throw new Exception('Error creating label: ' . $e->getMessage());
         }
     }
 
