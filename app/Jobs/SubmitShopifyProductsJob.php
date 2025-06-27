@@ -49,7 +49,6 @@ class SubmitShopifyProductsJob implements ShouldQueue
                 $pIds = ManageMarketplaceProduct::select('product_id')->where('upload_status','success')->get();
                 $productTypes = ProductType::select('id')->where('code', 'ceabundle')->get()->toArray();
                 $products = Catalog::select('*')->with('productType','productKeyFeatures','productColor')
-                    ->where('code', 'ceabundle')
                     ->whereNotIn('product_type', $productTypes)
                     ->whereNull('parent_id')
                     ->where('product_status','!=','discontinued')
