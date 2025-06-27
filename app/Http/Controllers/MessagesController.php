@@ -15,6 +15,7 @@ use App\Models\Message;
 use App\Models\Order;
 use App\Models\OrderOperation;
 use App\Models\OrderOperationItem;
+use App\Models\OrderOperationReason;
 use App\Models\ShippingCarrier;
 use App\Models\ShippingCarrierService;
 use App\Models\ShippingPackage;
@@ -560,6 +561,8 @@ class MessagesController extends Controller
 
             if($request->input('rma')){
                 $view = view('messages.make_rma', compact('shipmentDetail', 'shippingCarrier', 'shippingCarrierService', 'shippingCarrierPackage', 'shipFrom', 'package_id', 'product_total_weight'))->render();
+            }else if($request->input('ship_order')){
+                $view = view('messages.ship_order', compact('shipmentDetail', 'shippingCarrier', 'shippingCarrierService', 'shippingCarrierPackage', 'shipFrom', 'package_id', 'product_total_weight'))->render();
             }else{
                 $view = view('messages.order_refund', compact('shipmentDetail'))->render();
             }
@@ -574,6 +577,29 @@ class MessagesController extends Controller
 
         return response()->json([
             'success' => false
+        ]);
+    }
+
+    public function getCancelOrderDetail(Request $request)
+    {
+        $order_id = $request->input('order_id');
+        $orderDetail = Order::with('orderOperation','customer','store')->where('order_id',$order_id)->first();
+
+        $order_opration_id = $orderDetail->orderOperation->id;
+
+        $shipmentDetail = OrderOperation::with('operationItem', 'store.storeType', 'order', 'operationItem.orderItem', 'operationItem.orderItem.product')->where('id', $order_opration_id)->first();
+
+        $reasons = [];
+        if (isset($shipmentDetail->store->storeType)) {
+            $store_type = $shipmentDetail->store->storeType->id;
+            $reasons = OrderOperationReason::where('store_type_id', $store_type)->where('operation_type', 1)->get();
+        }
+
+        $view = view('messages.cancel_order', compact('shipmentDetail', 'reasons'))->render();
+
+        return response()->json([
+            'success' => true,
+            'html' => $view
         ]);
     }
 }
