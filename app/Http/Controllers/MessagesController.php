@@ -14,12 +14,14 @@ use App\Models\LogisticCenter;
 use App\Models\Message;
 use App\Models\Order;
 use App\Models\OrderOperation;
+use App\Models\OrderOperationItem;
 use App\Models\ShippingCarrier;
 use App\Models\ShippingCarrierService;
 use App\Models\ShippingPackage;
 use App\Models\Store;
 use App\Models\StoreMessageAccount;
 use App\Utils\EmailMessageUtility;
+use App\Utils\RmaNumberGenerator;
 use Illuminate\Http\Request;
 use App\Services\DataTable\DataTableService;
 
@@ -260,10 +262,27 @@ class MessagesController extends Controller
         $ticketDetail = Message::with('store','store.storeType')->where('id',$id)->first();
         $ticketDetail->update(['message_read' => 1]);
         $store_type_id = $ticketDetail->store->storeType->id;
+        $store_type_name = $ticketDetail->store->storeType->name;
         $message_template = HdMessageTemplate::where('store_type_id',$store_type_id)->get();
         $messages = HDMessage::where('ticket_id',$id)->orderBy('message_date','desc')->get();
         $ticketTypeCode = HdTicketType::orderBy('name')->get();
-        return view('messages.detail', compact('message_template','ticketDetail','messages','ticketTypeCode'));
+        $action = [];
+        if(isset($ticketDetail->order_id) && $ticketDetail->order_id != NULL && $ticketDetail->order_id !=''){
+            $order_id = $ticketDetail->order_id;
+            $orderDetail = Order::with('orderItem','orderItem.product','orderItem.product.image','customer','customerAddress')->where('order_id',$order_id)->first();
+
+            if(isset($orderDetail->orderItem)){
+                foreach($orderDetail->orderItem as $oitem){
+                    $action['canbeShipped'] = $oitem->quantity - $oitem->shipped_quantity - $oitem->canceled_quantity;
+                    $action['canbeRefund'] = $oitem->shipped_quantity - $oitem->canceled_quantity;
+                    $action['canbeReplace'] = $oitem->shipped_quantity - $oitem->canceled_quantity;
+                    $action['canbeReturned'] = $oitem->shipped_quantity - $oitem->refund_quantity - $oitem->return_request_quantity;
+                }
+            }
+        }
+
+        print_r($action);
+        return view('messages.detail', compact('message_template','ticketDetail','messages','ticketTypeCode','action','store_type_name'));
     }
 
     public function searchOrder(Request $request){
@@ -278,7 +297,7 @@ class MessagesController extends Controller
             echo '</pre>';die;*/
 
             if($orderDetail){
-                $orderOperation = OrderOperation::with('carrier')->where('order_id',$orderDetail->id)->first();
+                $orderOperation = OrderOperation::with('carrier')->where('order_id',$orderDetail->id)->get();
                 $data['items'] = view('messages.order_items', ['orderDetail' => $orderDetail])->render();
                 $data['orderId'] = $orderDetail->order_id;
                 $data['orderDate'] = $orderDetail->order_date;
@@ -432,7 +451,37 @@ class MessagesController extends Controller
         print_r($orderDetail);
         echo '</pre>';die;*/
         if(isset($orderDetail->orderOperation)){
-            $order_opration_id = $orderDetail->orderOperation->id;
+            $orderOperation = $orderDetail->orderOperation;
+            $order_opration_id = $orderOperation->id;
+            if($request->input('rma')){
+                $rma_number = RmaNumberGenerator::generate($orderDetail->store_id);
+                $clonedOrderOperation = [
+                    'ship_date' => $orderOperation->ship_date,
+                    'client' => $orderOperation->client,
+                    'to_address_id' => $orderOperation->to_address_id,
+                    'sync_status' => $orderOperation->sync_status,
+                    'insurance_value' => $orderOperation->insurance_value,
+                    'status' => 0,
+                    'signature_confirmation' => $orderOperation->signature_confirmation,
+                    'shipping_package_id' => $orderOperation->shipping_package_id,
+                    'weight_value' => $orderOperation->weight_value,
+                    'weight_weight_unit' => $orderOperation->weight_weight_unit,
+                    'ship_from_id' => $orderOperation->ship_from_id,
+                    'store_id' => $orderOperation->store_id,
+                    'operation_type' => 2,
+                    'order_id' => $orderOperation->order_id,
+                    'label_creation_type' => 0,
+                    'rma_number' => $rma_number,
+                    'shipping_carrier_id' => $orderOperation->shipping_carrier_id,
+                    'shipping_carrier_service_id' => NULL,
+                    'shipping_account_transaction_id' => NULL,
+                ];
+
+                $newOrderOperation = OrderOperation::create($clonedOrderOperation);
+                $order_opration_id = $newOrderOperation->id;
+            }
+
+
             $shippingCarrier = ShippingCarrier::all();
             $shipFrom = LogisticCenter::all();
             $shippingCarrierPackage = ShippingPackage::all();
@@ -458,6 +507,27 @@ class MessagesController extends Controller
 
                             $product_weight = $product_detail->product_weight;
                             $product_total_weight = $product_total_weight + $product_weight;
+                        }
+                    }
+                }
+            }else{
+                if($request->input('rma')) {
+                    $newshipmentDetail = OrderOperation::with('operationItem','operationItem.orderItem')->where('id', $orderOperation->id)->first();
+                    if (count($newshipmentDetail->operationItem ?? []) > 0) {
+                        foreach ($newshipmentDetail->operationItem as $oitem) {
+
+                            $newOrderItem = [
+                                'order_item_id' => $oitem->order_item_id,
+                                'order_operation_id' => $order_opration_id,
+                                'client_id' => $oitem->client_id,
+                                'sync_status' => $oitem->sync_status,
+                                'quantity' => $oitem->quantity,
+                            ];
+
+                            OrderOperationItem::updateOrCreate([
+                                'order_item_id' => $oitem->order_item_id,
+                                'order_operation_id' => $order_opration_id,
+                            ], $newOrderItem);
                         }
                     }
                 }
