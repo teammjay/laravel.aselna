@@ -230,9 +230,6 @@ class ShipmentsController extends Controller
                 );
 
                 OrderOperation::findOrFail($id)->update($updateRecord);
-                return response()->json([
-                    'success' => true
-                ]);
             }
         }
         return response()->json([

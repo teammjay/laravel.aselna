@@ -855,7 +855,7 @@
     function updateRecord(type){
         var needUpdate = false;
         var selected_shipment = [];
-        if(type == 'selected'){
+        if(type === 'selected'){
 
             $('input[name="shipment_id[]"]:checked').each(function () {
                 selected_shipment.push($(this).val())
@@ -866,18 +866,18 @@
             });
         }
 
-        if(selected_shipment.length == 0){
+        if(selected_shipment.length === 0){
             alert('Please select record first');
             return false;
         }
         var carrier_id;
-        if($('#carrier_id').val() != ''){
+        if($('#carrier_id').val() !== ''){
             needUpdate = true;
             carrier_id = $('#carrier_id').val();
         }
 
         var carrier_service_id;
-        if($('#carrier_service_id').val() != ''){
+        if($('#carrier_service_id').val() !== ''){
             needUpdate = true;
             carrier_service_id = $('#carrier_service_id').val();
         }
