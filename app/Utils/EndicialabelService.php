@@ -111,7 +111,7 @@ class EndicialabelService
             DB::connection('aselna_printer_db')->table('PrintJobs')->insert([
                 'id' => (string)Str::uuid(),
                 'fileName' => $trackingNumber . '.png',
-                'filePath' => $imagePath,
+                'filePath' => $imageUrl,
                 'status' => 'pending',
                 'createdAt' => now(),
                 'updatedAt' => now(),

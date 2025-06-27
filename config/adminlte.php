@@ -544,6 +544,11 @@ return [
                     'text' => 'Order Operation Reason',
                     'url' => '/order_operation_reason',
                     'icon' => 'fa fa-fw fa-file',
+                ],
+                [
+                    'text' => 'Shipping Documents',
+                    'url' => '/logistic_center_document',
+                    'icon' => 'fa fa-fw fa-file',
                 ]
             ]
         ],

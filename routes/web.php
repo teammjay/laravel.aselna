@@ -615,6 +615,15 @@ Route::middleware('auth')->group(function () {
         Route::get('/hd_ticket_label/delete/{id}', 'destroy')->name('hd_ticket_label.delete');
     });
 
+    Route::prefix('logistic_center_document')->group(function () {
+        Route::get('/', [LogisticCenterDocumentController::class, 'index'])->name('logistic_center_document.index');
+        Route::get('/create', [LogisticCenterDocumentController::class, 'create'])->name('logistic_center_document.create');
+        Route::post('/store', [LogisticCenterDocumentController::class, 'store'])->name('logistic_center_document.store');
+        Route::get('/edit/{id}', [LogisticCenterDocumentController::class, 'edit'])->name('logistic_center_document.edit');
+        Route::post('/update/{id}', [LogisticCenterDocumentController::class, 'update'])->name('logistic_center_document.update');
+        Route::get('/delete/{id}', [LogisticCenterDocumentController::class, 'destroy'])->name('logistic_center_document.delete');
+    });
+
     Route::get('/ebay/login', [EbayAuthService::class, 'redirectToEbay'])->name('ebay.login');
     Route::get('/ebay/callback', [EbayAuthService::class, 'handleCallback'])->name('ebay.callback');
     Route::get('/ebay/refresh-token', [EbayAuthService::class, 'refreshToken'])->name('ebay.refresh');
@@ -639,12 +648,4 @@ Route::post('/jobs/{job}/update', [JobSchedulerController::class, 'update'])->na
 Route::post('/jobs/add', [JobSchedulerController::class, 'add'])->name('jobs.add');
 Route::post('/jobs/running',[JobSchedulerController::class, 'running'])->name('jobs.running');
 
-Route::prefix('logistic_center_document')->group(function () {
-    Route::get('/', [LogisticCenterDocumentController::class, 'index'])->name('logistic_center_document.index');
-    Route::get('/create', [LogisticCenterDocumentController::class, 'create'])->name('logistic_center_document.create');
-    Route::post('/store', [LogisticCenterDocumentController::class, 'store'])->name('logistic_center_document.store');
-    Route::get('/edit/{id}', [LogisticCenterDocumentController::class, 'edit'])->name('logistic_center_document.edit');
-    Route::post('/update/{id}', [LogisticCenterDocumentController::class, 'update'])->name('logistic_center_document.update');
-    Route::get('/delete/{id}', [LogisticCenterDocumentController::class, 'destroy'])->name('logistic_center_document.delete');
-});
 

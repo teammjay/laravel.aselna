@@ -294,6 +294,8 @@ class ShipmentsController extends Controller
 
                         $product_weight = $product_detail->product_weight;
                         $product_total_weight = $product_total_weight + $product_weight;
+
+                        $product_weight_unit = $product_detail->product_weight_unit;
                     }
                 }
             }
@@ -307,7 +309,7 @@ class ShipmentsController extends Controller
 
 
         if ($request->input('mark_as_ship')) {
-            $view = view('shipment.mark_as_shipped', compact('shipmentDetail', 'shippingCarrier', 'shippingCarrierService', 'shippingCarrierPackage', 'shipFrom', 'package_id', 'product_total_weight'))->render();
+            $view = view('shipment.mark_as_shipped', compact('shipmentDetail', 'shippingCarrier', 'shippingCarrierService', 'shippingCarrierPackage', 'shipFrom', 'package_id', 'product_total_weight','product_weight_unit'))->render();
         } else {
             $view = view('shipment.detail', compact('shipmentDetail', 'shippingCarrier', 'shippingCarrierService', 'shippingCarrierPackage', 'shipFrom', 'package_id', 'product_total_weight'))->render();
         }
@@ -505,6 +507,7 @@ class ShipmentsController extends Controller
 
                 $package_id = '';
                 $product_total_weight = 0;
+                $product_weight_unit = '';
                 if (count($operation->operationItem ?? []) > 0) {
                     $product_weight = 0;
                     foreach ($operation->operationItem as $oitem) {
@@ -519,7 +522,7 @@ class ShipmentsController extends Controller
                             }
                             $product_weight = $product_detail->product_weight;
                             $product_total_weight = $product_total_weight + $product_weight;
-
+                            $product_weight_unit = $product_detail->product_weight_unit;
                         }
                     }
                 }
@@ -527,7 +530,7 @@ class ShipmentsController extends Controller
                 $request['carrier_name'] = $operation->shipping_carrier_id;
                 $request['shipping_carrier_service'] = $operation->shipping_carrier_service_id;
                 $request['weight'] = $product_total_weight;
-                $request['weight_type'] = $operation->weight_weight_unit;
+                $request['weight_type'] = isset($operation->weight_weight_unit) ? $operation->weight_weight_unit : $product_weight_unit;
                 $request['label_generation'] = 1;
                 $request['tracking_number'] = null;
                 $request['shipment_from'] = $operation->ship_from_id;
