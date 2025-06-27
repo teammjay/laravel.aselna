@@ -4,7 +4,6 @@ namespace App\Utils\shipment;
 
 
 use App\Constants\ImageRotate;
-use App\Constants\PrintStatus;
 use App\Constants\ShippingDocumentType;
 use App\Constants\ShippingLabelFormat;
 use App\Models\OrderOperation;

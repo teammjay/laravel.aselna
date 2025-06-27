@@ -59,8 +59,10 @@ use App\Models\ListingTemplate;
 use App\Models\ProductMaterial;
 use App\Models\ProductSize;
 use App\Models\ProductType;
+use App\Utils\EndicialabelService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Bus;
+use Illuminate\Support\Str;
 
 class SyncAllTables extends Command
 {
@@ -144,6 +146,34 @@ class SyncAllTables extends Command
 //        AmazonProductTypeSyncJob::dispatch();
 //        FetchWalmartOrdersJob::dispatch();
         //synccategorytospecification::dispatch();
-        SystemPrinterSyncJob::dispatch();
+//        SystemPrinterSyncJob::dispatch();
+//
+//        $transactionIds = [
+//            '9400150105496002774974',
+//            '9400150105799001192122',
+//            '9400150105800001189705',
+//            '9400150105799001192696',
+//            '9400150105800001191050',
+//            '9400150105496002790097',
+//            '9400150105496001814695',
+//            '9400150105496001814695',
+//            '9400150105798005972952',
+//            '9400150105798005973515',
+//            '9400150105799005980497',
+//            '00040105496536080941',
+//        ];
+//
+//        foreach ($transactionIds as $transactionId) {
+//            $data = [
+//                'requesterId' => 'Iweb',
+//                'accountId' => '1257538',
+//                'requestId' => Str::uuid(),
+//                'passPhrase' => 'Ag7ycm1274r2!a8hser2m',
+//                'transaction_id' => '431030',
+//                'pic_no' => '9400150105496000076315',
+//            ];
+//            $endicia = new EndicialabelService();
+//            $result = $endicia->cancelLabel($data);
+//        }
     }
 }
