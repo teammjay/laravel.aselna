@@ -191,27 +191,26 @@ class OrderOperationUtility
         ];
 
         self::setRubberStampInfo($orderOperation, $shipmentDetails);
-
         Log::info('Shipment details for label creation: ' . json_encode($shipmentDetails));
 
         $endiciaClient = new EndicialabelService();
-        $response = $endiciaClient->createLabel($shipmentDetails,$orderOperation->id);
-        Log::info('Response from Endicia label creation: ' . json_encode($response));
-        if (isset($response['trackingNumber'])) {
-            Log::info('Label created successfully for order operation: ' . $orderOperation->id);
-            // Unsetting because of the issue with the label creation
-            unset($orderOperation->shipping_carrier_package);
-            unset($orderOperation->shipping_account);
-            unset($orderOperation->shipping_solution_carrier_package);
-            unset($orderOperation->shipping_solution_carrier_service);
-
-            $orderOperation->tracking_number = $response['trackingNumber'];
-            $orderOperation->save();
+//        $response = $endiciaClient->createLabel($shipmentDetails,$orderOperation->id);
+//        Log::info('Response from Endicia label creation: ' . json_encode($response));
+//        if (isset($response['trackingNumber'])) {
+//            Log::info('Label created successfully for order operation: ' . $orderOperation->id);
+//            // Unsetting because of the issue with the label creation
+//            unset($orderOperation->shipping_carrier_package);
+//            unset($orderOperation->shipping_account);
+//            unset($orderOperation->shipping_solution_carrier_package);
+//            unset($orderOperation->shipping_solution_carrier_service);
+//
+//            $orderOperation->tracking_number = $response['trackingNumber'];
+//            $orderOperation->save();
             return [];
-        } else {
-            Log::error('Error creating label for order operation: ' . $orderOperation->id . ' - ' . json_encode($response));
-            return $response['errors'] ?? ['Error creating label.'];
-        }
+//        } else {
+//            Log::error('Error creating label for order operation: ' . $orderOperation->id . ' - ' . json_encode($response));
+//            return $response['errors'] ?? ['Error creating label.'];
+//        }
     }
 
     public static function setRubberStampInfo($orderOperation, &$shipmentDetails)
@@ -605,29 +604,30 @@ class OrderOperationUtility
                 Log::info('Final data for the operation change :: ' . json_encode($finalData));
 
                 $authService = new WalmartAuthService($store->seller_id, $store->secret_key);
-                $response = $authService->shipOrder($orderOperation->order->purchase_order_id, $finalData);
-
-                Log::info('Walmart ship order response: ' . json_encode($response));
-
-                if (isset($response)) {
-                    $orderResp = $response['order'];
-                    Log::info('Walmart Ship order response: ' . json_encode($orderResp));
-                    if (isset($orderResp) && isset($orderResp['purchaseOrderId']) && $orderResp['purchaseOrderId'] == $orderOperation->order->purchase_order_id) {
-                        Log::info('Walmart ship order successful: ' . json_encode($orderResp));
-                        $orderOperation->update(['status' => OrderOperationStatus::MarkAsShipped]);
-                        if (isset($orderOperation->order_id)) {
-                            $order = Order::findOrFail($orderOperation->order_id);
-                            $order->update(['order_status' => OrderStatus::Shipped]);
-                        }
-                        return true;
-                    } else {
-                        Log::info('Walmart ship order error: ' . json_encode($response));
-                        return false;
-                    }
-                } else {
-                    Log::info('Walmart ship order error: No response received');
-                    return false;
-                }
+//                $response = $authService->shipOrder($orderOperation->order->purchase_order_id, $finalData);
+//
+//                Log::info('Walmart ship order response: ' . json_encode($response));
+//
+//                if (isset($response)) {
+//                    $orderResp = $response['order'];
+//                    Log::info('Walmart Ship order response: ' . json_encode($orderResp));
+//                    if (isset($orderResp) && isset($orderResp['purchaseOrderId']) && $orderResp['purchaseOrderId'] == $orderOperation->order->purchase_order_id) {
+//                        Log::info('Walmart ship order successful: ' . json_encode($orderResp));
+//                        $orderOperation->update(['status' => OrderOperationStatus::MarkAsShipped]);
+//                        if (isset($orderOperation->order_id)) {
+//                            $order = Order::findOrFail($orderOperation->order_id);
+//                            $order->update(['order_status' => OrderStatus::Shipped]);
+//                        }
+//                        return true;
+//                    } else {
+//                        Log::info('Walmart ship order error: ' . json_encode($response));
+//                        return false;
+//                    }
+//                } else {
+//                    Log::info('Walmart ship order error: No response received');
+//                    return false;
+//                }
+        return true;
             case 'ebay':
 
                 $payload = [
