@@ -2,7 +2,9 @@
 
 namespace App\Utils;
 
+use App\Models\Sequence;
 use Hashids\Hashids;
+use Illuminate\Support\Facades\DB;
 
 class RmaNumberGenerator
 {
@@ -17,10 +19,29 @@ class RmaNumberGenerator
         $this->hashids = new Hashids($this->hashIdSalt, $this->hashIdLen, $this->validHashChars);
     }
 
-    public function generate($number)
+    public function generate($storeId)
     {
+        $number = $this->getNextRMANumberForStore($storeId);
         return $this->hashids->encode($number);
     }
 
+    function getNextRMANumberForStore($storeId) {
+        $key = 'rma_' . str_replace('-', '', $storeId);
+
+        return DB::transaction(function () use ($key) {
+            $sequence = Sequence::lockForUpdate()->find($key);
+
+            if (!$sequence) {
+                $sequence = Sequence::create([
+                    'key' => $key,
+                    'number' => 1
+                ]);
+            } else {
+                $sequence->increment('number');
+            }
+
+            return $sequence->number;
+        });
+    }
 
 }

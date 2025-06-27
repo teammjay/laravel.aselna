@@ -45,6 +45,9 @@
         max-height: 500px;
         overflow: auto;
     }
+    #btnGroupDrop2::after{
+        display:none;
+    }
 </style>
 @stop
 
@@ -118,6 +121,7 @@
                                                             @endforeach
                                                         @endif
                                                     </select>
+                                                    <input type="hidden" id="template_id" value="">
                                                 </div>
                                             </div>
                                         </div>
@@ -154,9 +158,22 @@
                                 </div>--}}
 
                                 <button type="button" class="btn btn-primary" name="submit_message" id="submit_message"><i class="fa fa-paper-plane"></i> Submit</button>
-                                <button type="button" class="btn btn-default" name="rma" id="rma">RMA</button>
-                                <button type="button" class="btn btn-default" name="replacement" id="replacement">Replacement</button>
-                                <button type="button" class="btn btn-default" name="refund" id="refund">Refund</button>
+
+                                @if(isset($action['canbeReturned']) && $action['canbeReturned'] > 0)
+                                    <button type="button" class="btn btn-default" name="rma" id="rma">RMA</button>
+                                @endif
+                                @if(isset($action['canbeReplace']) && $action['canbeReplace'] > 0)
+                                    <button type="button" class="btn btn-default" name="replacement" id="replacement">Replacement</button>
+                                @endif
+                                @if(isset($action['canbeRefund']) && $action['canbeRefund'] > 0 && strtolower($store_type_name) != 'ebay')
+                                    <button type="button" class="btn btn-default" name="refund" id="refund">Refund</button>
+                                @endif
+                                @if(isset($action['canbeShipped']) && $action['canbeShipped'] > 0)
+                                    <button type="button" class="btn btn-default" name="ship_order" id="ship_order">Ship Order</button>
+                                @endif
+                                @if((isset($action['canbeShipped']) && $action['canbeShipped'] > 0) || (isset($action['canbeRefund']) && $action['canbeRefund'] > 0 && strtolower($store_type_name) != 'ebay'))
+                                <button type="button" class="btn btn-default" name="cancel_order" id="cancel_order">Cancel Order</button>
+                                @endif
                             </div>
                         </div>
                         <div class="col-md-4">
@@ -201,7 +218,7 @@
                     </div>
                     <div class="row pt-3" >
                         <div class="col-md-12 d-flex">
-                            <input type="text" class="form-control" name="customer" id="customer">
+                            <input type="text" class="form-control" name="customer" id="customer" value="{{ isset($ticketDetail->customer) ? $ticketDetail->customer->full_name : '' }}">
                             <button type="button" class="btn btn-default" id="search_customer"><i class="fa fa-search"></i></button>
                         </div>
                     </div>
@@ -451,6 +468,10 @@
                         success: function (response) {
                             // If success, remove the user row from the table
                             if (response.success) {
+                                if(response.template_code != ''){
+                                    $('#template_id').val(response.template_id);
+                                    $('#message_to_send').html(response.template_code);
+                                }
                                 $('#makeRMAModal').find('.modal-body').html(response.html);
                                 $('#date').datetimepicker({
                                     format:'Y-m-d H:i',
@@ -475,6 +496,39 @@
                     alert('There were no order found.');
                 }
             });
+
+            $(document).on('click','#regenerate_rma_message',function () {
+                var template_id = $('#template_id').val();
+                var customer_name = $('#customer_name').val();
+                var store_name = $('#store_name').val();
+                var rma_number = $('#rma_number').val();
+                $.ajax({
+                    type: "POST",
+                    url: "{{ route('message.getmessagetemplate') }}",
+                    data: {
+                        template_id: template_id,
+                        customer_name: customer_name,
+                        store_name: store_name,
+                        rma_number: rma_number,
+                    },
+                    headers: {
+                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                    },
+
+                    success: function(data) {
+                        if(data.success){
+                            $('#message_to_send').html(data.templateCode);
+                        }
+                    },
+                    error: function (xhr) {
+                    },
+                    complete: function () {
+                        $("#ajax-preloader").hide();
+                    }
+                });
+            });
+
+
 
             $(document).on('click','#refund',function () {
                 var order_id = $('#order_id').val();
@@ -501,6 +555,163 @@
                 }else{
                     alert('There were no order found.');
                 }
+            });
+
+            $(document).on('click','#ship_order',function () {
+                var order_id = $('#order_id').val();
+                if(order_id != '' && order_id != null){
+                    $.ajax({
+                        url: "{{ route('message.getshippingdetail') }}",
+                        type: 'POST',
+                        data: {
+                            order_id: order_id,
+                            ship_order: 1,
+                            "_token": '{{ csrf_token() }}'
+                        },
+                        success: function (response) {
+                            // If success, remove the user row from the table
+                            if (response.success) {
+                                $('#shipOrderModal').find('.modal-body').html(response.html);
+                                $('#date').datetimepicker({
+                                    format:'Y-m-d H:i',
+                                    /* minDate: 'now', */
+                                    step:10,
+                                    onSelectTime: function(dp,$input) {
+                                        var sel_date = $input.val();
+                                        $('#date').val(sel_date);
+                                    }
+                                });
+                                $('#shipOrderModal').modal('show');
+
+                                getShippingCarrierService($('#carrier_name_ms'));
+                            }
+                        },
+                        error: function (xhr) {
+                            // Handle error response
+                            alert('Error: ' + xhr.responseJSON.error);
+                        }
+                    });
+                }else{
+                    alert('Please select shipment first');
+                }
+            });
+
+            $(document).on('click','#submit_ship_order',function () {
+
+                const form = document.querySelector("#frmShipOrder");
+                let formData = new FormData(form);
+
+                const trackingNumber = formData.get("tracking_number");
+                const label_generation = formData.get("label_generation");
+
+                if(label_generation.trim() != 1) {
+                    $('#tracking_number').removeClass('error');
+                    if (!trackingNumber || trackingNumber.trim() === "") {
+                        $('#tracking_number').addClass('error');
+                        alert("Tracking number is required.");
+                        return;
+                    }
+                }
+
+                const orderId = formData.get("shipping_order_id");
+                $.ajax({
+                    url: "{{ route('shipment.markshipped') }}",
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    headers: {
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    },
+                    success: function (response) {
+                        // If success, remove the user row from the table
+                        if (response.success) {
+                            alert('Order shipped successfully!!');
+                            location.reload();
+                        }
+                        else {
+                            alert(response.message);
+                        }
+                    },
+                    error: function (xhr) {
+                        // Handle error response
+                        if (xhr.status === 422) {
+                            let errors = xhr.responseJSON.errors;
+                            $.each(errors, function (key, messages) {
+                                alert(key + ': ' + messages[0]);
+                            });
+                        }
+                        /*const response = xhr.responseJSON;
+                        if ( response.errors) {
+                            alert(response.message);
+                        } else {
+                            alert('Error: ' + response.message);
+                        }*/
+                    }
+                });
+            });
+
+            $(document).on('click','#cancel_order',function () {
+                var order_id = $('#order_id').val();
+                if(order_id != '' && order_id != null){
+                    $.ajax({
+                        url: "{{ route('message.getcancelorderdetail') }}",
+                        type: 'POST',
+                        data: {
+                            order_id: order_id,
+                            "_token": '{{ csrf_token() }}'
+                        },
+                        success: function (response) {
+                            // If success, remove the user row from the table
+                            if (response.success) {
+                                $('#cancelOrderModal').find('.modal-body').html(response.html);
+                                $('#canceldate').datetimepicker({
+                                    format:'Y-m-d H:i',
+                                    /* minDate: 'now', */
+                                    step:10,
+                                    onSelectTime: function(dp,$input) {
+                                        var sel_date = $input.val();
+                                        $('#canceldate').val(sel_date);
+                                    }
+                                });
+                                $('#cancelOrderModal').modal('show');
+                            }
+                        },
+                        error: function (xhr) {
+                            // Handle error response
+                            alert('Error: ' + xhr.responseJSON.error);
+                        }
+                    });
+                }else{
+                    alert('No order');
+                }
+            });
+
+            $(document).on('click','#cancelOrder',function () {
+
+                const form = document.querySelector("#frmCancelOrder");
+                let formData = new FormData(form);
+                $.ajax({
+                    url: "{{ route('shipment.cancelorder') }}",
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    headers: {
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    },
+                    success: function (response) {
+                        // If success, remove the user row from the table
+                        alert(response.message);
+                        if (response.success) {
+                            location.reload();
+                        }
+                    },
+                    error: function (xhr) {
+                        // Handle error response
+                        alert('Error: ' + xhr.responseJSON.error);
+                    }
+                });
             });
 
         });

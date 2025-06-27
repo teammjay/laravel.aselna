@@ -111,7 +111,7 @@ class EndicialabelService
             DB::connection('aselna_printer_db')->table('PrintJobs')->insert([
                 'id' => (string)Str::uuid(),
                 'fileName' => $trackingNumber . '.png',
-                'filePath' => $imagePath,
+                'filePath' => $imageUrl,
                 'status' => 'pending',
                 'createdAt' => now(),
                 'updatedAt' => now(),
@@ -300,7 +300,7 @@ class EndicialabelService
             if ($e instanceof RequestException && $e->hasResponse()) {
                 Log::error('SOAP Error Response: ' . $e->getResponse()->getBody()->getContents());
             }
-            throw new Exception('Error creating label: ' . $e->getMessage());
+//            throw new Exception('Error creating label: ' . $e->getMessage());
         }
     }
 

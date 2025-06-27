@@ -137,11 +137,12 @@
                                     <input type="text" class="form-control" id="weight" name="weight"
                                            value="{{ ($shipmentDetail->weight_value) ? $shipmentDetail->weight_value : $product_total_weight }}">
                                     <select class="form-control" id="weight_type" name="weight_type">
-                                        <option value="0">Oz</option>
-                                        <option value="1">Lb</option>
-                                        <option value="2">G</option>
-                                        <option value="3">Kg</option>
-                                        <option value="4">Mg</option>
+                                        <option value="">--</option>
+                                        <option value="0" selected="{{ $product_weight_unit === '0' ? 'true' : 'false' }}">Oz</option>
+                                        <option value="1" selected="{{ $product_weight_unit === '0' ? 'true' : 'false' }}">Lb</option>
+                                        <option value="2" selected="{{ $product_weight_unit === '0' ? 'true' : 'false' }}">G</option>
+                                        <option value="3" selected="{{ $product_weight_unit === '0' ? 'true' : 'false' }}">Kg</option>
+                                        <option value="4" selected="{{ $product_weight_unit === '0' ? 'true' : 'false' }}">Mg</option>
                                     </select>
                                 </div>
                             </div>

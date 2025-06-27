@@ -696,15 +696,54 @@
         });
 
 
-
-        $(document).on('click','#ship_selected, #ship_all',function () {
-
+        $(document).on('click','#ship_all',function () {
             let shipment_ids = [];
             $('input[name="shipment_id[]"]').each(function () {
                 shipment_ids.push($(this).val())
             });
 
-            if(shipment_ids.length == 0){
+            if(shipment_ids.length === 0){
+                alert('Please select shipment first.');
+                return false;
+            }
+
+            $.ajax({
+                url: "{{ route('shipment.shipselected') }}",
+                type: 'POST',
+                data: {
+                    shipment_ids:shipment_ids,
+                    "_token": '{{ csrf_token() }}'
+                },
+                success: function (response) {
+                    // If success, remove the user row from the table
+                    if (response.success) {
+                        alert('Order shipped successfully!!');
+                        location.reload();
+                    }
+                    else {
+                        alert(response.message);
+                    }
+                },
+                error: function (xhr) {
+                    // Handle error response
+                    const response = xhr.responseJSON;
+                    if ( response.errors) {
+                        alert(response.message);
+                    } else {
+                        alert('Error: ' + response.message);
+                    }
+                }
+            });
+        });
+
+        $(document).on('click','#ship_selected',function () {
+
+            let shipment_ids = [];
+            $('input[name="shipment_id[]"]:checked').each(function () {
+                shipment_ids.push($(this).val())
+            });
+
+            if(shipment_ids.length === 0){
                 alert('Please select shipment first.');
                 return false;
             }
