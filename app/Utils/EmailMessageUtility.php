@@ -69,11 +69,11 @@ class EmailMessageUtility
             if($toEmail) {
                 Mail::raw($message, function ($message) use ($toEmail, $subject, $message_id) {
                     $message->to($toEmail)->subject($subject);
-                    $message->getHeaders()->addTextHeader('In-Reply-To', $message_id);
-                    $message->getHeaders()->addTextHeader('References', $message_id);
+                    if($message_id != '') {
+                        $message->getHeaders()->addTextHeader('In-Reply-To', $message_id);
+                        $message->getHeaders()->addTextHeader('References', $message_id);
+                    }
                 });
-
-
             }
             Log::info("Email sent successfully to {$toEmail}.");
             return true;

@@ -51,17 +51,17 @@ class SubmitShopifyProductsJob implements ShouldQueue
                     //->where('product_sku', 'E74')
                     ->whereNotIn('product_id', $pIds)
                     ->orderBy('created_at', 'desc')
-                    ->limit(5)
-                    ->get();
-                    /*->chunk(25, function ($products) use ($store) {
+                    /*->limit(5)
+                    ->get();*/
+                    ->chunk(100, function ($products) use ($store) {
                         foreach ($products as $product) {
-                            $this->createFeed($product,$store);
+                            $this->submitFeed($product,$store);
                         }
-                    });*/
+                    });
                 //Log::info('Products: ' . json_encode($products));
-                foreach ($products as $product) {
+                /*foreach ($products as $product) {
                     $this->submitFeed($product, $store);
-                }
+                }*/
             }
         }
     }
