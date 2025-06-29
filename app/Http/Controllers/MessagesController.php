@@ -15,6 +15,7 @@ use App\Models\Message;
 use App\Models\Order;
 use App\Models\OrderOperation;
 use App\Models\OrderOperationItem;
+use App\Models\OrderOperationReason;
 use App\Models\ShippingCarrier;
 use App\Models\ShippingCarrierService;
 use App\Models\ShippingPackage;
@@ -281,7 +282,7 @@ class MessagesController extends Controller
             }
         }
 
-        print_r($action);
+        //print_r($action);
         return view('messages.detail', compact('message_template','ticketDetail','messages','ticketTypeCode','action','store_type_name'));
     }
 
@@ -331,8 +332,13 @@ class MessagesController extends Controller
         $template_id = $request->input('template_id');
         $store_name = $request->input('store_name');
         $customer_name = $request->input('customer_name');
-        if($template_id){
-            $templateDetail = HdMessageTemplate::findOrFail($template_id);
+        $rma_number = $request->input('rma_number');
+        if($template_id || $rma_number != ''){
+            if($rma_number){
+                $templateDetail = HdMessageTemplate::whereLike('name','%Return Without Label%')->first();
+            }else {
+                $templateDetail = HdMessageTemplate::findOrFail($template_id);
+            }
             if($templateDetail){
                 $data = [
                     'customer_firstName' => $customer_name,
@@ -340,6 +346,8 @@ class MessagesController extends Controller
                     'marketplaceName' => '',
                     'shipment_address' => '',
                     'trackingNumber' => '',
+                    'return_address' => '',
+                    'rma_number' => (isset($rma_number) && $rma_number != '') ? $rma_number : '',
                 ];
                 $template_code = \Blade::render($templateDetail->template_code, $data);
                 return response()->json([
@@ -415,19 +423,19 @@ class MessagesController extends Controller
 
             //if(isset($storeMessageAccount->outgoingAccount)){
                 $smtpConfig = [
-                    'host' => 'smtp.gmail.com',
-                    'port' => 465,
-                    'encryption' => 'ssl',
-                    'username' => 'common.mritu@gmail.com',
-                    'password' => 'jodgvobhealitnjk',
-                    'from_address' => 'common.mritu@gmail.com',
-                    'from_name' => 'Common Mritu',
+                    'host' => 'smtp-relay.brevo.com',
+                    'port' => 587,
+                    'encryption' => 'tls',
+                    'username' => '86defa001@smtp-brevo.com',
+                    'password' => '1GxQYH08RWtzg5fM',
+                    'from_address' => '86defa001@smtp-brevo.com',
+                    'from_name' => 'Mj AILAB',
                 ];
 
                 $imapConfig = [];
 
                 $connector = new EmailMessageUtility($smtpConfig, $imapConfig);
-                $response = $connector->sendEmail('jayesh11787@gmail.com','Test Mail',$message_to_send);
+                $response = $connector->sendEmail('jayesh@mjailab.com','Test Mail','test content');
 
                 if($response){
                     return response()->json([
@@ -445,8 +453,8 @@ class MessagesController extends Controller
     {
 
         $order_id = $request->input('order_id');
-        $orderDetail = Order::with('orderOperation')->where('order_id',$order_id)->first();
-
+        $orderDetail = Order::with('orderOperation','customer','store')->where('order_id',$order_id)->first();
+        $template_code = $template_id = '';
         /*echo '<pre>';
         print_r($orderDetail);
         echo '</pre>';die;*/
@@ -479,6 +487,18 @@ class MessagesController extends Controller
 
                 $newOrderOperation = OrderOperation::create($clonedOrderOperation);
                 $order_opration_id = $newOrderOperation->id;
+                $templateDetail = HdMessageTemplate::whereLike('name','%Return Without Label%')->first();
+                if($templateDetail){
+                    $data = [
+                        'customer_firstName' => isset($orderDetail->customer) ? $orderDetail->customer->full_name : '',
+                        'store_name' => isset($orderDetail->store) ? $orderDetail->store->name : '',
+                        'ima_number' => $rma_number,
+                        'return_address ' => ''
+                    ];
+                    $template_id = $templateDetail->id;
+                    $template_code = \Blade::render($templateDetail->template_code, $data);
+                }
+
             }
 
 
@@ -541,18 +561,45 @@ class MessagesController extends Controller
 
             if($request->input('rma')){
                 $view = view('messages.make_rma', compact('shipmentDetail', 'shippingCarrier', 'shippingCarrierService', 'shippingCarrierPackage', 'shipFrom', 'package_id', 'product_total_weight'))->render();
+            }else if($request->input('ship_order')){
+                $view = view('messages.ship_order', compact('shipmentDetail', 'shippingCarrier', 'shippingCarrierService', 'shippingCarrierPackage', 'shipFrom', 'package_id', 'product_total_weight'))->render();
             }else{
                 $view = view('messages.order_refund', compact('shipmentDetail'))->render();
             }
 
             return response()->json([
                 'success' => true,
-                'html' => $view
+                'html' => $view,
+                'template_code' => $template_code,
+                'template_id' => $template_id,
             ]);
         }
 
         return response()->json([
             'success' => false
+        ]);
+    }
+
+    public function getCancelOrderDetail(Request $request)
+    {
+        $order_id = $request->input('order_id');
+        $orderDetail = Order::with('orderOperation','customer','store')->where('order_id',$order_id)->first();
+
+        $order_opration_id = $orderDetail->orderOperation->id;
+
+        $shipmentDetail = OrderOperation::with('operationItem', 'store.storeType', 'order', 'operationItem.orderItem', 'operationItem.orderItem.product')->where('id', $order_opration_id)->first();
+
+        $reasons = [];
+        if (isset($shipmentDetail->store->storeType)) {
+            $store_type = $shipmentDetail->store->storeType->id;
+            $reasons = OrderOperationReason::where('store_type_id', $store_type)->where('operation_type', 1)->get();
+        }
+
+        $view = view('messages.cancel_order', compact('shipmentDetail', 'reasons'))->render();
+
+        return response()->json([
+            'success' => true,
+            'html' => $view
         ]);
     }
 }

@@ -274,6 +274,11 @@ class JobScheduler extends Seeder
                 'name' => 'System Printer Sync Job',
                 'description' => 'Sync all system printers',
                 'class_name' => 'App\Jobs\SystemPrinterSyncJob',
+            ],
+            [
+                'name' => 'Submit Product to Shopify Store',
+                'description' => 'Submit Product to Shopify Store',
+                'class_name' => 'App\Jobs\SubmitShopifyProductsJob',
             ]
         ];
 

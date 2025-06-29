@@ -64,7 +64,7 @@ class OrderOperationUtility
 
         $orderOperation->save();
 
-        $orderOperation = OrderOperation::with('order','order.customer','order.customerAddress', 'store', 'store.storeType', 'carrier','shipFrom','shipFrom.returnAddress','shipFrom.fromAddress')->where('id', $orderOperation->id)->first();
+        $orderOperation = OrderOperation::with('order','order.orderItem','order.customer','order.customerAddress', 'store', 'store.storeType', 'carrier','shipFrom','shipFrom.returnAddress','shipFrom.fromAddress')->where('id', $orderOperation->id)->first();
 
         return self::instantSynchronization($orderOperation);
     }
@@ -341,6 +341,13 @@ class OrderOperationUtility
                     }
                 } else {
                     //echo "Order canceled successfully!";
+                    if(isset($orderOperation->order->orderItem)){
+                        foreach($orderOperation->order->orderItem as $o_item){
+                            $item_qty = $o_item->quantity;
+                            $orderItem = OrderItem::findOrFail($o_item->id);
+                            $orderItem->update(['canceled_quantity'=>$item_qty]);
+                        }
+                    }
                     Log::info('Shopify cancer order successful:');
                     return true;
                 }
@@ -379,6 +386,13 @@ class OrderOperationUtility
                             $order = Order::findOrFail($orderOperation->order_id);
                             $order->update(['order_status' => OrderStatus::Canceled]);
                         }
+                        if(isset($orderOperation->order->orderItem)){
+                            foreach($orderOperation->order->orderItem as $o_item){
+                                $item_qty = $o_item->quantity;
+                                $orderItem = OrderItem::findOrFail($o_item->id);
+                                $orderItem->update(['canceled_quantity'=>$item_qty]);
+                            }
+                        }
                         return true;
                     } else {
                         Log::info('Walmart cancel order error: ' . json_encode($response));
@@ -403,6 +417,13 @@ class OrderOperationUtility
 
                 if (!isset($response['cancelId'])) {
 
+                    if(isset($orderOperation->order->orderItem)){
+                        foreach($orderOperation->order->orderItem as $o_item){
+                            $item_qty = $o_item->quantity;
+                            $orderItem = OrderItem::findOrFail($o_item->id);
+                            $orderItem->update(['canceled_quantity'=>$item_qty]);
+                        }
+                    }
                     Log::info('Shopify cancer order error:' . json_encode($response['warnings']));
                     return false;
                 } else {
@@ -429,6 +450,13 @@ class OrderOperationUtility
 
                 if ($response) {
                     //echo "Order canceled successfully!";
+                    if(isset($orderOperation->order->orderItem)){
+                        foreach($orderOperation->order->orderItem as $o_item){
+                            $item_qty = $o_item->quantity;
+                            $orderItem = OrderItem::findOrFail($o_item->id);
+                            $orderItem->update(['refund_quantity'=>$item_qty]);
+                        }
+                    }
                     Log::info('Shopify order refunded successful:');
                     return true;
                 }else{
@@ -491,6 +519,13 @@ class OrderOperationUtility
                             $order = Order::findOrFail($orderOperation->order_id);
                             $order->update(['order_status' => OrderStatus::Refund]);
                         }
+                        if(isset($orderOperation->order->orderItem)){
+                            foreach($orderOperation->order->orderItem as $o_item){
+                                $item_qty = $o_item->quantity;
+                                $orderItem = OrderItem::findOrFail($o_item->id);
+                                $orderItem->update(['refund_quantity'=>$item_qty]);
+                            }
+                        }
                         return true;
                     } else {
                         Log::info('Walmart refund order error: ' . json_encode($response));
@@ -534,6 +569,14 @@ class OrderOperationUtility
                         $order = Order::findOrFail($orderOperation->order_id);
                         $order->update(['order_status' => OrderStatus::Refund]);
                     }
+
+                    if(isset($orderOperation->order->orderItem)){
+                        foreach($orderOperation->order->orderItem as $o_item){
+                            $item_qty = $o_item->quantity;
+                            $orderItem = OrderItem::findOrFail($o_item->id);
+                            $orderItem->update(['refund_quantity'=>$item_qty]);
+                        }
+                    }
                 }
 
                 break;
@@ -562,6 +605,14 @@ class OrderOperationUtility
                     if (isset($orderOperation->order_id)) {
                         $order = Order::findOrFail($orderOperation->order_id);
                         $order->update(['order_status' => OrderStatus::Shipped]);
+                    }
+
+                    if(isset($orderOperation->order->orderItem)){
+                        foreach($orderOperation->order->orderItem as $o_item){
+                            $item_qty = $o_item->quantity;
+                            $orderItem = OrderItem::findOrFail($o_item->id);
+                            $orderItem->update(['shipped_quantity'=>$item_qty]);
+                        }
                     }
                 }
 
@@ -616,6 +667,14 @@ class OrderOperationUtility
                             $order = Order::findOrFail($orderOperation->order_id);
                             $order->update(['order_status' => OrderStatus::Shipped]);
                         }
+
+                        if(isset($orderOperation->order->orderItem)){
+                            foreach($orderOperation->order->orderItem as $o_item){
+                                $item_qty = $o_item->quantity;
+                                $orderItem = OrderItem::findOrFail($o_item->id);
+                                $orderItem->update(['shipped_quantity'=>$item_qty]);
+                            }
+                        }
                         return true;
                     } else {
                         Log::info('Walmart ship order error: ' . json_encode($response));
@@ -659,8 +718,18 @@ class OrderOperationUtility
                         $order = Order::findOrFail($orderOperation->order_id);
                         $order->update(['order_status' => OrderStatus::Shipped]);
                     }
+                    if(isset($orderOperation->order->orderItem)){
+                        foreach($orderOperation->order->orderItem as $o_item){
+                            $item_qty = $o_item->quantity;
+                            $orderItem = OrderItem::findOrFail($o_item->id);
+                            $orderItem->update(['shipped_quantity'=>$item_qty]);
+                        }
+                    }
+                    return true;
+                }else {
+                    Log::info('eBay ship fullfilment error: No response received');
+                    return false;
                 }
-
                 break;
         }
         return true;

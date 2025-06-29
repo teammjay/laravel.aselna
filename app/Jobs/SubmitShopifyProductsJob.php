@@ -5,6 +5,7 @@ namespace App\Jobs;
 use App\Models\Catalog;
 use App\Models\GenerateProductImage;
 use App\Models\ProductImageAlternative;
+use App\Models\ProductType;
 use App\Models\Store;
 use App\Models\ManageMarketplaceProduct;
 use App\Models\ProductImages;
@@ -46,22 +47,25 @@ class SubmitShopifyProductsJob implements ShouldQueue
 
                 Log::info('Store IN: ' . json_encode($store));
                 $pIds = ManageMarketplaceProduct::select('product_id')->where('upload_status','success')->get();
+                $productTypes = ProductType::select('id')->where('code', 'ceabundle')->get()->toArray();
                 $products = Catalog::select('*')->with('productType','productKeyFeatures','productColor')
-                    ->where('product_status', 1)
+                    ->whereNotIn('product_type', $productTypes)
+                    ->whereNull('parent_id')
+                    ->where('product_status','!=','discontinued')
                     //->where('product_sku', 'E74')
                     ->whereNotIn('product_id', $pIds)
                     ->orderBy('created_at', 'desc')
-                    ->limit(5)
-                    ->get();
-                    /*->chunk(25, function ($products) use ($store) {
+                    /*->limit(5)
+                    ->get();*/
+                    ->chunk(100, function ($products) use ($store) {
                         foreach ($products as $product) {
-                            $this->createFeed($product,$store);
+                            $this->submitFeed($product,$store);
                         }
-                    });*/
+                    });
                 //Log::info('Products: ' . json_encode($products));
-                foreach ($products as $product) {
+                /*foreach ($products as $product) {
                     $this->submitFeed($product, $store);
-                }
+                }*/
             }
         }
     }
