@@ -186,6 +186,7 @@ class EndicialabelService
         $labelRequest->addChild('Test', 'YES');
         $labelRequest->addChild('ImageFormat', $shipmentDetails['labelFormat']);
         $labelRequest->addChild('LabelSize', $shipmentDetails['label_size']);
+        $labelRequest->addChild('ImageResolution', $shipmentDetails['image_resolution'] ?? '203');
 //        $labelRequest->addAttribute('LabelType', $shipmentDetails['']);
 
         $labelRequest->addChild('RequesterID', $shipmentDetails['requesterId']);
