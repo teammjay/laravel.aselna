@@ -233,12 +233,11 @@ class ShipmentsController extends Controller
                 if($orderOperation){
                     $orderOperation->update($updateRecord);
                 }
-
-                return response()->json([
-                    'success' => true
-                ]);
-
             }
+
+            return response()->json([
+                'success' => true
+            ]);
         }
         return response()->json([
             'success' => false
