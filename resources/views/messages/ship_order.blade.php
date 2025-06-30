@@ -64,7 +64,7 @@
                                         </div>
                                         <div>
                                             <input type="radio" name="label_generation"
-                                                   value="<?= ShippingLabelCreationType::MarkAsShipped ?>" checked="">
+                                                   value="<?= ShippingLabelCreationType::MarkAsShipped ?>">
                                             Mark As Shipped
                                         </div>
                                     </div>

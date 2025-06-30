@@ -150,7 +150,7 @@ class EndicialabelService
             Log::info('File content :: ' . $fileContent);
 
             $lines = explode("\n", trim($fileContent));
-            Log::info('Lines in file: ' . count($lines));
+//            Log::info('Lines in file: ' . count($lines));
             if (count($lines) < 2) {
                 throw new Exception('File does not contain enough lines to add stamp');
             }
@@ -164,8 +164,6 @@ class EndicialabelService
             $lines[] = '^FS';
 
             $lines[] = $lastLine; // Add the last line back
-
-            Log::info('Modified lines: ' . implode("\n", $lines));
 
             // Write the modified content back to the file
             file_put_contents($filePath, implode("\n", $lines));
@@ -230,6 +228,7 @@ class EndicialabelService
         $labelRequest->addAttribute('ImageFormat', $shipmentDetails['labelFormat']);
         $labelRequest->addAttribute('LabelSize', $shipmentDetails['label_size']);
         $labelRequest->addAttribute('ImageResolution', $shipmentDetails['image_resolution'] ?? '203');
+        $labelRequest->addAttribute('ImageRotation', $shipmentDetails['ImageRotation'] ?? 'Rotate180');
 //        $labelRequest->addAttribute('LabelType', $shipmentDetails['']);
 
         $labelRequest->addChild('RequesterID', $shipmentDetails['requesterId']);

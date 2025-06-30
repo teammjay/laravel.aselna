@@ -7,6 +7,7 @@ use App\Constants\HdTicketTypeCode;
 use App\Constants\OrderStatus;
 use App\Helpers\QueryFilters;
 use App\Models\Catalog;
+use App\Models\Customer;
 use App\Models\HDMessage;
 use App\Models\HdMessageTemplate;
 use App\Models\HdTicketType;
@@ -282,8 +283,16 @@ class MessagesController extends Controller
             }
         }
 
+        $ticketHistory = '';
+        if(isset($ticketDetail->customer_id)){
+            $ticket_list = Message::where('customer_id',$ticketDetail->customer_id)->where('id','!=',$id)->get();
+            if($ticket_list){
+                $ticketHistory = view('messages.ticket_history', ['ticket_list' => $ticket_list])->render();
+            }
+        }
+
         //print_r($action);
-        return view('messages.detail', compact('message_template','ticketDetail','messages','ticketTypeCode','action','store_type_name'));
+        return view('messages.detail', compact('message_template','ticketDetail','messages','ticketTypeCode','action','store_type_name','ticketHistory'));
     }
 
     public function searchOrder(Request $request){
@@ -319,6 +328,32 @@ class MessagesController extends Controller
                     'success' => true,
                     'orderDetail' => $data,
                     'ticketHistory' => $ticketHistory,
+                ]);
+            }
+        }
+
+        return response()->json([
+            'success' => false
+        ]);
+    }
+
+    public function searchCustomer(Request $request){
+
+        $customer_id_name= $request->input('customer_id_name');
+
+        if($customer_id_name){
+
+            $customerDetail = Customer::with('emails','addresse')->where('id',$customer_id_name)->orWhere('full_name','%'.$customer_id_name.'%')->first();
+            /*echo '<pre>';
+            print_r($customerDetail);
+            echo '</pre>';die;*/
+
+            if($customerDetail){
+
+
+                return response()->json([
+                    'success' => true,
+                    'customerDetail' => NULL
                 ]);
             }
         }
@@ -422,7 +457,7 @@ class MessagesController extends Controller
             $storeMessageAccount = StoreMessageAccount::with('outgoingAccount')->where('store_id', $store->id)->first();
 
             //if(isset($storeMessageAccount->outgoingAccount)){
-                $smtpConfig = [
+                /*$smtpConfig = [
                     'host' => 'smtp-relay.brevo.com',
                     'port' => 587,
                     'encryption' => 'tls',
@@ -430,12 +465,22 @@ class MessagesController extends Controller
                     'password' => '1GxQYH08RWtzg5fM',
                     'from_address' => '86defa001@smtp-brevo.com',
                     'from_name' => 'Mj AILAB',
+                ];*/
+
+                $smtpConfig = [
+                    'host' => 'email-smtp.us-east-1.amazonaws.com',
+                    'port' => 465,
+                    'encryption' => 'tls',
+                    'username' => 'AKIATLGXH7OD45ES34GW',
+                    'password' => 'BC7NSneeB1+Bl/H+ZlVjoBbdB7JpnD7CRoD9ff3hbEf3',
+                    'from_address' => 'kryln.services@gmail.com',
+                    'from_name' => 'kryln services',
                 ];
 
                 $imapConfig = [];
 
                 $connector = new EmailMessageUtility($smtpConfig, $imapConfig);
-                $response = $connector->sendEmail('jayesh@mjailab.com','Test Mail','test content');
+                $response = $connector->sendEmail('jayesh@mjailab.com','Test Mail',$message_to_send);
 
                 if($response){
                     return response()->json([

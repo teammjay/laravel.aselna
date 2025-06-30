@@ -64,6 +64,11 @@ class ShopifyAuthService
         return $this->makeGraphQLRequest(ShopifyQueries::$saveProduct, $productData);
     }
 
+    public function updateProduct($productData)
+    {
+        return $this->makeGraphQLRequest(ShopifyQueries::$updateProduct, $productData);
+    }
+
     public function createCollection($createCollection)
     {
         return $this->makeGraphQLRequest(ShopifyQueries::$createCollection, $createCollection);

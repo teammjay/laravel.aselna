@@ -300,6 +300,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/messages/delete/{id}', 'destroy')->name('message.delete');
         Route::get('/messages/detail/{id}', 'detail')->name('message.detail');
         Route::post('/messages/searchorder', 'searchOrder')->name('message.searchorder');
+        Route::post('/messages/searchcustomer', 'searchCustomer')->name('message.searchcustomer');
         Route::post('/messages/getmessagetemplate', 'getMessageTemplate')->name('message.getmessagetemplate');
         Route::post('/messages/updateticket', 'updateTicket')->name('message.updateticket');
         Route::post('/messages/sendmessagetemplate', 'sendMessageTemplate')->name('message.sendmessagetemplate');

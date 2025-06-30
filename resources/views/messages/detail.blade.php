@@ -48,6 +48,14 @@
     #btnGroupDrop2::after{
         display:none;
     }
+    #order_operation{
+        position: relative;
+        overflow: hidden;
+    }
+
+    #order_operation .dropdown-menu{
+        left: -12px !important;
+    }
 </style>
 @stop
 
@@ -294,7 +302,7 @@
                 </div>
                 <div class="card-body">
                     <table class="table table-bordered" id="ticket_history_table">
-
+                        {!! $ticketHistory  !!}
                     </table>
                 </div>
             </div>
@@ -443,7 +451,8 @@
                     success: function(data) {
                         if(data.success){
 
-                            $('#message_to_send').html(data.templateCode);
+                            alert('Message send successfuly.');
+                            location.reload();
                         }
                     },
                     error: function (xhr) {
@@ -762,6 +771,34 @@
                             $('#order_operation').html(data.orderDetail.orderOperation);
                             if(data.ticketHistory != '')
                                 $('#ticket_history_table').html(data.ticketHistory);
+                        }
+                    },
+                    error: function (xhr) {
+                    },
+                    complete: function () {
+                        $("#ajax-preloader").hide();
+                    }
+                });
+            }
+        }
+
+        function loadCustomerDetail(){
+            let customer_id_name = $('#customer').val();
+            if(order_id != '') {
+                $.ajax({
+                    type: "POST",
+                    url: "{{ route('message.searchcustomer') }}",
+                    data: {
+                        customer_id_name: customer_id_name
+                    },
+                    headers: {
+                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                    },
+
+                    success: function (data) {
+                        if (data.success) {
+
+
                         }
                     },
                     error: function (xhr) {
