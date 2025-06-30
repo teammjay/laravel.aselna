@@ -32,22 +32,22 @@ class ShipmentDocuemntSettingSyncJob implements ShouldQueue
 
     private function createShippingDocuments(mixed $shippingdocument)
     {
-        ShipmentDocumentSetting::updateOrCreate(
-            [
-                'id' => $shippingdocument->id,
-            ],
-            [
-                'id' => $shippingdocument->id,
-                'client' => $shippingdocument->client,
-                'enabled'   => $shippingdocument->enabled,
-                'document_type' => $shippingdocument->document_type,
-                'printer_id' => $shippingdocument->printer_id,
-                'shipping_from_location_id' => $shippingdocument->shipping_from_location_id,
-                'page_size_id' => $shippingdocument->page_size_id,
-                'two_per_page' => $shippingdocument->two_per_page,
-                'pdf_action' => $shippingdocument->pdf_action,
-                'rotate'    => $shippingdocument->rotate,
-            ]
-        );
+//        ShipmentDocumentSetting::updateOrCreate(
+//            [
+//                'id' => $shippingdocument->id,
+//            ],
+//            [
+//                'id' => $shippingdocument->id,
+//                'client' => $shippingdocument->client,
+//                'enabled'   => $shippingdocument->enabled,
+//                'document_type' => $shippingdocument->document_type,
+//                'printer_id' => $shippingdocument->printer_id,
+//                'shipping_from_location_id' => $shippingdocument->shipping_from_location_id,
+//                'page_size_id' => $shippingdocument->page_size_id,
+//                'two_per_page' => $shippingdocument->two_per_page,
+//                'pdf_action' => $shippingdocument->pdf_action,
+//                'rotate'    => $shippingdocument->rotate,
+//            ]
+//        );
     }
 }
