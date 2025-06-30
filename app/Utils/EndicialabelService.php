@@ -256,6 +256,12 @@ class EndicialabelService
             $labelRequest->addChild('FromName', $shipmentDetails['fromAddress']['name']);
             $labelRequest->addChild('FromCompany', $shipmentDetails['fromAddress']['company'] ?? '');
             $labelRequest->addChild('FromAddress1', $shipmentDetails['fromAddress']['address1']);
+            if (isset($shipmentDetails['fromAddress']['address2']) && $shipmentDetails['fromAddress']['address2'] !== '') {
+                $labelRequest->addChild('FromAddress2', $shipmentDetails['fromAddress']['address2']);
+            }
+            if (isset($shipmentDetails['fromAddress']['address3']) && $shipmentDetails['fromAddress']['address3'] !== '') {
+                $labelRequest->addChild('FromAddress3', $shipmentDetails['fromAddress']['address3']);
+            }
             $labelRequest->addChild('FromCity', $shipmentDetails['fromAddress']['city']);
             $labelRequest->addChild('FromState', $shipmentDetails['fromAddress']['state']);
             $labelRequest->addChild('FromPostalCode', $shipmentDetails['fromAddress']['postalCode']);
@@ -265,6 +271,12 @@ class EndicialabelService
             $labelRequest->addChild('ToName', $shipmentDetails['toAddress']['name']);
             $labelRequest->addChild('ToCompany', $shipmentDetails['toAddress']['company'] ?? '');
             $labelRequest->addChild('ToAddress1', $shipmentDetails['toAddress']['address1']);
+            if (isset($shipmentDetails['toAddress']['address2']) && $shipmentDetails['toAddress']['address2'] !== '') {
+                $labelRequest->addChild('ToAddress2', $shipmentDetails['toAddress']['address2']);
+            }
+            if (isset($shipmentDetails['toAddress']['address3']) && $shipmentDetails['toAddress']['address3'] !== '') {
+                $labelRequest->addChild('ToAddress3', $shipmentDetails['toAddress']['address3']);
+            }
             $labelRequest->addChild('ToCity', $shipmentDetails['toAddress']['city']);
             $labelRequest->addChild('ToState', $shipmentDetails['toAddress']['state']);
             $labelRequest->addChild('ToPostalCode', $shipmentDetails['toAddress']['postalCode']);
@@ -281,6 +293,12 @@ class EndicialabelService
             $labelRequest->addChild('ReturnName', $shipmentDetails['fromAddress']['name']);
             $labelRequest->addChild('ReturnCompany', $shipmentDetails['fromAddress']['company'] ?? '');
             $labelRequest->addChild('ReturnAddress1', $shipmentDetails['fromAddress']['address1']);
+            if (isset($shipmentDetails['fromAddress']['address2']) && $shipmentDetails['fromAddress']['address2'] !== '') {
+                $labelRequest->addChild('ReturnAddress2', $shipmentDetails['fromAddress']['address2']);
+            }
+            if (isset($shipmentDetails['fromAddress']['address3']) && $shipmentDetails['fromAddress']['address3'] !== '') {
+                $labelRequest->addChild('ReturnAddress3', $shipmentDetails['fromAddress']['address3']);
+            }
             $labelRequest->addChild('ReturnToCity', $shipmentDetails['fromAddress']['city']);
             $labelRequest->addChild('ReturnToState', $shipmentDetails['fromAddress']['state']);
             $labelRequest->addChild('ReturnToPostalCode', $shipmentDetails['fromAddress']['postalCode']);
