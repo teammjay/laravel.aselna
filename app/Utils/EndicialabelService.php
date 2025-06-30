@@ -226,7 +226,7 @@ class EndicialabelService
         $request = $body->addChild('GetPostageLabel', null, 'www.envmgr.com/LabelService');
         $labelRequest = $request->addChild('LabelRequest');
 
-        $labelRequest->addChild('Test', 'YES');
+//        $labelRequest->addChild('Test', 'YES');
         $labelRequest->addAttribute('ImageFormat', $shipmentDetails['labelFormat']);
         $labelRequest->addAttribute('LabelSize', $shipmentDetails['label_size']);
         $labelRequest->addAttribute('ImageResolution', $shipmentDetails['image_resolution'] ?? '203');
