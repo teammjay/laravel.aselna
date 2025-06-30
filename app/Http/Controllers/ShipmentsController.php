@@ -237,6 +237,7 @@ class ShipmentsController extends Controller
                 return response()->json([
                     'success' => true
                 ]);
+
             }
         }
         return response()->json([

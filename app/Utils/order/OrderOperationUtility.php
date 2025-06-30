@@ -107,11 +107,8 @@ class OrderOperationUtility
         $printer = $shippingDocumentCreator->getPrinter();
         if (isset($printer)) {
             $shipmentDetails['printerId'] = $printer->id;
-            $printerInfo = DB::connection('aselna_printer_db')->table('Printers')->where('id', $printer->id)->first();
-            Log::info('Printer info for label creation: ' . json_encode($printerInfo));
-            if (isset($printerInfo)) {
-                $shipmentDetails['systemId'] = $printerInfo->systemId;
-            }
+            $shipmentDetails['systemId'] = $printer->internal_name;
+
         } else {
             Log::error('Printer not found for order operation: ' . $orderOperation->id);
             return 'Printer not found for order operation.';
@@ -180,7 +177,7 @@ class OrderOperationUtility
 
         $shipmentDetails['ImageRotation'] = null;
 
-        $shipmentDetails['labelFormat'] = 'PDF';
+        $shipmentDetails['labelFormat'] = 'ZPLII';
 
         $shipmentDetails['returnAddress'] = [
             'address1' => '590 Hatton Ln',
