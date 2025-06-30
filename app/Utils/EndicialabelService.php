@@ -270,15 +270,15 @@ class EndicialabelService
             $labelRequest->addChild('ToPostalCode', $shipmentDetails['toAddress']['postalCode']);
         }
 
-        if (isset($shipmentDetails['returnAddress'])) {
-//            $labelRequest->addChild('ReturnName', $shipmentDetails['returnAddress']['name']);
-//            $labelRequest->addChild('ReturnCompany', $shipmentDetails['returnAddress']['company'] ?? '');
-            $labelRequest->addChild('ReturnAddress1', $shipmentDetails['returnAddress']['address1']);
-            $labelRequest->addChild('ReturnToCity', $shipmentDetails['returnAddress']['city']);
-            $labelRequest->addChild('ReturnToState', $shipmentDetails['returnAddress']['state']);
-//            $labelRequest->addChild('ReturnToCountryCode', $shipmentDetails['returnAddress']['countryCode']);
-            $labelRequest->addChild('ReturnToPostalCode', $shipmentDetails['returnAddress']['postalCode']);
-        }
+//        if (isset($shipmentDetails['returnAddress'])) {
+////            $labelRequest->addChild('ReturnName', $shipmentDetails['returnAddress']['name']);
+////            $labelRequest->addChild('ReturnCompany', $shipmentDetails['returnAddress']['company'] ?? '');
+//            $labelRequest->addChild('ReturnAddress1', $shipmentDetails['returnAddress']['address1']);
+//            $labelRequest->addChild('ReturnToCity', $shipmentDetails['returnAddress']['city']);
+//            $labelRequest->addChild('ReturnToState', $shipmentDetails['returnAddress']['state']);
+////            $labelRequest->addChild('ReturnToCountryCode', $shipmentDetails['returnAddress']['countryCode']);
+//            $labelRequest->addChild('ReturnToPostalCode', $shipmentDetails['returnAddress']['postalCode']);
+//        }
 
         if (isset($shipmentDetails['RubberStamp1'])) {
             $labelRequest->addChild('RubberStamp1', $shipmentDetails['RubberStamp1']);
