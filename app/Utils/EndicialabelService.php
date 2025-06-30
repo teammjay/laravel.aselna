@@ -98,12 +98,12 @@ class EndicialabelService
 
         try {
             $imageData = base64_decode($base64Image);
-            $imagePath = storage_path('app/public/labels/' . $trackingNumber . '.png');
+            $imagePath = storage_path('app/public/labels/' . $trackingNumber . '.txt');
             file_put_contents($imagePath, $imageData);
 
-            if (isset($shippingDetail['RubberStamp3'])) {
-                $this->generateStampImage($imagePath, $shippingDetail['RubberStamp3']);
-            }
+//            if (isset($shippingDetail['RubberStamp3'])) {
+//                $this->generateStampImage($imagePath, $shippingDetail['RubberStamp3']);
+//            }
 
             $imageUrl = asset('storage/labels/' . $trackingNumber . '.png');
             Log::info('Label image saved to: ' . $imageUrl);
@@ -244,9 +244,9 @@ class EndicialabelService
         if (isset($shipmentDetails['RubberStamp2'])) {
             $labelRequest->addChild('RubberStamp2', $shipmentDetails['RubberStamp2']);
         }
-//        if (isset($shipmentDetails['RubberStamp3'])) {
-//            $labelRequest->addChild('RubberStamp3', $shipmentDetails['RubberStamp3']);
-//        }
+        if (isset($shipmentDetails['RubberStamp3'])) {
+            $labelRequest->addChild('RubberStamp3', $shipmentDetails['RubberStamp3']);
+        }
 
         return $xml->asXML();
     }
