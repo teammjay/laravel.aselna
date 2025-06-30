@@ -101,16 +101,20 @@ class EndicialabelService
             $imagePath = storage_path('app/public/labels/' . $trackingNumber . '.txt');
             file_put_contents($imagePath, $imageData);
 
+            if (isset($shippingDetail['RubberStamp3'])) {
+                $this->generateStampText($imagePath,$imageData, $shippingDetail['RubberStamp3']);
+            }
+
 //            if (isset($shippingDetail['RubberStamp3'])) {
 //                $this->generateStampImage($imagePath, $shippingDetail['RubberStamp3']);
 //            }
 
-            $imageUrl = asset('storage/labels/' . $trackingNumber . '.png');
+            $imageUrl = asset('storage/labels/' . $trackingNumber . '.txt');
             Log::info('Label image saved to: ' . $imageUrl);
 
             DB::connection('aselna_printer_db')->table('PrintJobs')->insert([
                 'id' => (string)Str::uuid(),
-                'fileName' => $trackingNumber . '.png',
+                'fileName' => $trackingNumber . '.txt',
                 'filePath' => $imageUrl,
                 'status' => 'pending',
                 'createdAt' => now(),
@@ -135,13 +139,52 @@ class EndicialabelService
         ];
     }
 
+    private function generateStampText($filePath,$fileContent, $text)
+    {
+        // get the text from filePAth and add text one second last line
+        try {
+            if ($fileContent === false) {
+                throw new Exception('Failed to read file content');
+            }
+
+            Log::info('File content :: ' . $fileContent);
+
+            $lines = explode("\n", trim($fileContent));
+            Log::info('Lines in file: ' . count($lines));
+            if (count($lines) < 2) {
+                throw new Exception('File does not contain enough lines to add stamp');
+            }
+
+            $lastLine = array_pop($lines);
+            // Remove the last line from the array
+
+            // Add the text to the second last line
+            $lines[] = '^FO30,1016^FB507,2,3,L,0^A0N,30,30^FD';
+            $lines[] = ' ' . $text;
+            $lines[] = '^FS';
+
+            $lines[] = $lastLine; // Add the last line back
+
+            Log::info('Modified lines: ' . implode("\n", $lines));
+
+            // Write the modified content back to the file
+            file_put_contents($filePath, implode("\n", $lines));
+
+//            Log::info('Added text directly to label image: ' . $filePath);
+            return $filePath;
+        } catch (Exception $e) {
+            Log::error('Error editing label image: ' . $e->getMessage());
+            throw $e;
+        }
+    }
+
     private function generateStampImage($imagePath, $text)
     {
         try {
             // Load the original image
             $image = imagecreatefrompng($imagePath);
             if (!$image) {
-                throw new Exception('Failed to load image');
+                throw new ExcepgenerateStampImagetion('Failed to load image');
             }
 
             // Get image dimensions
@@ -244,9 +287,9 @@ class EndicialabelService
         if (isset($shipmentDetails['RubberStamp2'])) {
             $labelRequest->addChild('RubberStamp2', $shipmentDetails['RubberStamp2']);
         }
-        if (isset($shipmentDetails['RubberStamp3'])) {
-            $labelRequest->addChild('RubberStamp3', $shipmentDetails['RubberStamp3']);
-        }
+//        if (isset($shipmentDetails['RubberStamp3'])) {
+//            $labelRequest->addChild('RubberStamp3', $shipmentDetails['RubberStamp3']);
+//        }
 
         return $xml->asXML();
     }
