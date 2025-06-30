@@ -175,7 +175,7 @@ class OrderOperationUtility
             return 'Shipping account not found for order operation.';
         }
 
-        $shipmentDetails['ImageRotation'] = null;
+        $shipmentDetails['ImageRotation'] = 'Rotate180';
 
         $shipmentDetails['labelFormat'] = 'ZPLII';
 

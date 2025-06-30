@@ -228,6 +228,7 @@ class EndicialabelService
         $labelRequest->addAttribute('ImageFormat', $shipmentDetails['labelFormat']);
         $labelRequest->addAttribute('LabelSize', $shipmentDetails['label_size']);
         $labelRequest->addAttribute('ImageResolution', $shipmentDetails['image_resolution'] ?? '203');
+        $labelRequest->addAttribute('ImageRotation', $shipmentDetails['ImageRotation'] ?? 'Rotate180');
 //        $labelRequest->addAttribute('LabelType', $shipmentDetails['']);
 
         $labelRequest->addChild('RequesterID', $shipmentDetails['requesterId']);
