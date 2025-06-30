@@ -108,7 +108,7 @@ class SyncAllOrderStatusJob implements ShouldQueue
                 Log::info('Walmart order response: ' . json_encode($response));
 
                 if (isset($response)) {
-                    $ordersItems = $response['orderLines']['orderLine'];
+                    $ordersItems = $response['order']['orderLines']['orderLine'];
                     if (!empty($ordersItems)) {
                         foreach ($ordersItems as $item) {
                             if (isset($response['order']) && isset($response['order']['purchaseOrderId']) && $response['order']['purchaseOrderId'] == $operation->order->purchase_order_id) {
