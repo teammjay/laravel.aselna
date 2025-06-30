@@ -78,139 +78,174 @@ class SubmitShopifyProductsJob implements ShouldQueue
 
         Log::info('Count Info: ' . $is_uploaded);
         Log::info('Product Info: ' . json_encode($productData));
-
+        $product_id = $sku = $upcCode = NULL;
         if($is_uploaded > 0){
-            return true;
-        }
+            $product_id = $productData->product_id;
+            $proDetail = ManageMarketplaceProduct::where('product_id',$productData->product_id)->where('store_id',$store->id)->where('upload_status','success')->first();
+            $sku = $proDetail->sku;
+            $upcCode = $proDetail->upc_code;
 
-        $ManageMarketplaceProduct = ManageMarketplaceProduct::create([
-            'product_id' => $productData->product_id,
-            'product_code' => $productData->product_sku,
-            'store_id' => $store->id,
-            'upload_status' => 'pending',
-            'upload_attempts' => 1,
-        ]);
+            $this->generateProductImages($productData, $store);
 
-        $productOptions = [];
-
-        $descriptionHtml = '';
-        if(isset($productData->productKeyFeatures)) {
-            $descriptionHtml .= '<ul>';
-            foreach ($productData->productKeyFeatures as $feature) {
-                $safeText = htmlspecialchars($feature->value, ENT_QUOTES | ENT_XML1, 'UTF-8'); // Escapes special characters
-                if (!empty(trim($safeText))) {
-                    $descriptionHtml .= '<li>' . $safeText . '</li>';
-                }
+            $images = GenerateProductImage::where('product_id', $productData->product_id)->get();
+            $media = [];
+            foreach ($images as $image) {
+                $media[] = [
+                    'mediaContentType' => 'IMAGE',
+                    'originalSource' => $fileSystem->url_base_path . $image->path,
+                ];
             }
-
-            $descriptionHtml .= '</ul>';
-        }
-        $descriptionHtml .= '<h2>Product Description</h2>';
-        $descriptionHtml .= '<p>' . $productData->product_description . '</p>';
-
-        $tags = [];
-        $tags = $this->getAllTags($productData, $tags);
-        Log::info('Tags: ' . json_encode($tags));
-        $tagsString = implode(',', $tags);
-
-        $productOptions[] = [
-            'name' => 'Color',
-            'values' => [
-                ['name' => (isset($productData->productColor->name)) ? $productData->productColor->name : 'Black']
-            ]
-        ];
-
-        $this->generateProductImages($productData, $store);
-
-        $images = GenerateProductImage::where('product_id', $productData->product_id)->get();
-        $files = [];
-        foreach ($images as $image) {
-            $files[] = [
-                'contentType' => 'IMAGE',
-                'originalSource' => $fileSystem->url_base_path . $image->path,
-            ];
-        }
-
-        $sku = StoreTypeListing::generateUniqueAlphabeticSku($productData->product_sku, 6);
-        $upcCodes = UPCCodes::where('store', $store->id)->where('is_used', 0)->orderBy('sequence_id', 'asc')->limit(1)->first();
-
-        $productNewData = [
-            'productSet' => array_filter([
-                'title' => $productData->product_title,
-                'descriptionHtml' => $descriptionHtml,
-                'vendor' => $store->name,
-                'productType' => $productData->productType->name,
-                'tags' => $tagsString,
-                'productOptions' => $productOptions,
-                'files' => $files,
-                'variants' => [
-                    [
-                        'price' => $productData->product_price,
-                        'sku' => $sku,
-                        'barcode' => isset($upcCodes->upc_code) ? $upcCodes->upc_code : '',
-                        'optionValues' => [
-                            [
-                                'optionName' => 'Color',
-                                'name' => (isset($productData->productColor->name)) ? $productData->productColor->name : 'Black',
-                            ]
-                        ],
-                        'inventoryItem' => [
-                            'sku' => $sku,
-                            'tracked' => true,
-                        ]
-                    ]
+            $productUpdateData = [
+                'product' => [
+                    'id' => $product_id
                 ],
-            ], function ($value) {
-                return !is_null($value);
-            }),
-        ];
+                'media' => $media
+            ];
 
-        Log::info('Product Data: ' . json_encode($productNewData));
+            Log::info('Product Update Data: ' . json_encode($productUpdateData));
 
-        $shopifyAuthService = new ShopifyAuthService($store->secret_key, $store->service_url);
-        $response = $shopifyAuthService->saveProduct($productNewData);
-        Log::info('Product: ' . json_encode($response));
+            $shopifyAuthService = new ShopifyAuthService($store->secret_key, $store->service_url);
+            $response = $shopifyAuthService->updateProduct($productUpdateData);
+            Log::info('Product Update : ' . json_encode($response));
 
-        if(isset($response['data']) && empty($response['data']['userErrors'])) {
-
-            $productId = $response['data']['productSet']['product']['id'];
-            $variantId = $response['data']['productSet']['product']['variants']['nodes'][0]['id'];
-
-            Log::info('Variant ID: ' . $variantId);
-
-            $inventoryItemId = $shopifyAuthService->getInventoryItemId($variantId);
-            $locationId = $shopifyAuthService->getLocationId();
-
-            if (!$inventoryItemId || !$locationId) {
-                Log::info('Invalid inventory item or location for variant '.$variantId.'"]');
+            if (isset($response['data']) && empty($response['data']['userErrors'])) {
+                return true;
+            }else{
                 return false;
             }
 
-            // Prepare inventory update array
-            $inventoryUpdates['locationId'] = $locationId;
-            $inventoryUpdates['changes'] = [
-                'inventoryItemId' => $inventoryItemId,
-                'locationId' => $locationId,
-                'delta' => 20
+        }else {
+
+            $ManageMarketplaceProduct = ManageMarketplaceProduct::updateOrCreate([
+                'product_id' => $productData->product_id,
+                'product_code' => $productData->product_sku,
+                'store_id' => $store->id,
+            ], [
+                'product_id' => $productData->product_id,
+                'product_code' => $productData->product_sku,
+                'store_id' => $store->id,
+                'upload_status' => 'pending',
+                'upload_attempts' => 1,
+            ]);
+
+            $productOptions = [];
+
+            $descriptionHtml = '';
+            if (isset($productData->productKeyFeatures)) {
+                $descriptionHtml .= '<ul>';
+                foreach ($productData->productKeyFeatures as $feature) {
+                    $safeText = htmlspecialchars($feature->value, ENT_QUOTES | ENT_XML1, 'UTF-8'); // Escapes special characters
+                    if (!empty(trim($safeText))) {
+                        $descriptionHtml .= '<li>' . $safeText . '</li>';
+                    }
+                }
+
+                $descriptionHtml .= '</ul>';
+            }
+            $descriptionHtml .= '<h2>Product Description</h2>';
+            $descriptionHtml .= '<p>' . $productData->product_description . '</p>';
+
+            $tags = [];
+            $tags = $this->getAllTags($productData, $tags);
+            Log::info('Tags: ' . json_encode($tags));
+            $tagsString = implode(',', $tags);
+
+            $productOptions[] = [
+                'name' => 'Color',
+                'values' => [
+                    ['name' => (isset($productData->productColor->name)) ? $productData->productColor->name : 'Black']
+                ]
             ];
 
-            $response = $shopifyAuthService->updateInventory($inventoryUpdates);
+            $this->generateProductImages($productData, $store);
 
-            if(isset($response['data']) && empty($response['data']['userErrors'])) {
-                Log::info('SKU : ' . $sku);
-                $ManageMarketplaceProduct->update([
-                    'sku' => $sku,
-                    'marketplace_product_id' => $productId,
-                    'marketplace_variant_id' => $variantId,
-                    'upload_status' => 'success'
-                ]);
+            $images = GenerateProductImage::where('product_id', $productData->product_id)->get();
+            $files = [];
+            foreach ($images as $image) {
+                $files[] = [
+                    'contentType' => 'IMAGE',
+                    'originalSource' => $fileSystem->url_base_path . $image->path,
+                ];
+            }
+
+            $productNewData = [
+                'productSet' => array_filter([
+                    'title' => $productData->product_title,
+                    'descriptionHtml' => $descriptionHtml,
+                    'vendor' => $store->name,
+                    'productType' => $productData->productType->name,
+                    'tags' => $tagsString,
+                    'productOptions' => $productOptions,
+                    'files' => $files,
+                    'variants' => [
+                        [
+                            'price' => $productData->product_price,
+                            'sku' => $sku,
+                            'barcode' => $upcCode,
+                            'optionValues' => [
+                                [
+                                    'optionName' => 'Color',
+                                    'name' => (isset($productData->productColor->name)) ? $productData->productColor->name : 'Black',
+                                ]
+                            ],
+                            'inventoryItem' => [
+                                'sku' => $sku,
+                                'tracked' => true,
+                            ]
+                        ]
+                    ],
+                ], function ($value) {
+                    return !is_null($value);
+                }),
+            ];
+
+            Log::info('Product Data: ' . json_encode($productNewData));
+
+            $shopifyAuthService = new ShopifyAuthService($store->secret_key, $store->service_url);
+            $response = $shopifyAuthService->saveProduct($productNewData);
+            Log::info('Product: ' . json_encode($response));
+
+            if (isset($response['data']) && empty($response['data']['userErrors'])) {
+
+                $productId = $response['data']['productSet']['product']['id'];
+                $variantId = $response['data']['productSet']['product']['variants']['nodes'][0]['id'];
+
+                Log::info('Variant ID: ' . $variantId);
+
+                $inventoryItemId = $shopifyAuthService->getInventoryItemId($variantId);
+                $locationId = $shopifyAuthService->getLocationId();
+
+                if (!$inventoryItemId || !$locationId) {
+                    Log::info('Invalid inventory item or location for variant ' . $variantId . '"]');
+                    return false;
+                }
+
+                // Prepare inventory update array
+                $inventoryUpdates['locationId'] = $locationId;
+                $inventoryUpdates['changes'] = [
+                    'inventoryItemId' => $inventoryItemId,
+                    'locationId' => $locationId,
+                    'delta' => 20
+                ];
+
+                $response = $shopifyAuthService->updateInventory($inventoryUpdates);
+
+                if (isset($response['data']) && empty($response['data']['userErrors'])) {
+                    Log::info('SKU : ' . $sku);
+                    $ManageMarketplaceProduct->update([
+                        'sku' => $sku,
+                        'upc_code' => isset($upcCode) ? $upcCode : '',
+                        'marketplace_product_id' => $productId,
+                        'marketplace_variant_id' => $variantId,
+                        'upload_status' => 'success'
+                    ]);
+                }
             }
         }
-
         return true;
     }
 
-    public function getAllTags($productData, array $tags): array
+    public function getAllTags($productData, array $tags)
     {
         ProductTags::where('product_id', $productData['product_id'])->get()->each(function ($tag) use (&$tags) {
             $tags[] = $tag->name;

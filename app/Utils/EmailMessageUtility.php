@@ -63,15 +63,18 @@ class EmailMessageUtility
         ]);
     }
 
-    public function sendEmail($toEmail, $subject = '', $message = '', $message_id = '')
+    public function sendEmail($toEmail, $subject = '', $message = '', $message_id = '', $attachment = '')
     {
         try {
             if($toEmail) {
-                Mail::raw($message, function ($message) use ($toEmail, $subject, $message_id) {
+                Mail::raw($message, function ($message) use ($toEmail, $subject, $message_id, $attachment) {
                     $message->to($toEmail)->subject($subject);
                     if($message_id != '') {
                         $message->getHeaders()->addTextHeader('In-Reply-To', $message_id);
                         $message->getHeaders()->addTextHeader('References', $message_id);
+                    }
+                    if($attachment != '') {
+                        $message->attach($attachment);
                     }
                 });
             }

@@ -25,6 +25,29 @@ public static $saveProduct = <<<GQL
     }
 GQL;
 
+public static $updateProduct = <<<GQL
+    mutation UpdateProductWithNewMedia(\$product: ProductUpdateInput!, \$media: [CreateMediaInput!]) {
+      productUpdate(product: \$product, media: \$media) {
+        product {
+          id
+          media(first: 10) {
+            nodes {
+              alt
+              mediaContentType
+              preview {
+                status
+              }
+            }
+          }
+        }
+        userErrors {
+          field
+          message
+        }
+      }
+    }
+GQL;
+
     // Query to get orders with a dynamic limit
 public static $getOrders = <<<GQL
     query getOrders(\$first: Int!, \$query:String) {

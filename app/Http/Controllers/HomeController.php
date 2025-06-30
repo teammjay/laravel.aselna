@@ -13,6 +13,7 @@ use App\Jobs\FetchWalmartOrdersJob;
 use App\Jobs\SubmitShopifyProductsJob;
 use App\Jobs\SyncAllOrderStatusJob;
 use App\Jobs\synccategorytospecification;
+use App\Models\Catalog;
 use App\Models\Customer;
 use App\Models\CustomerEmail;
 use App\Models\HDMessage;
@@ -24,6 +25,7 @@ use App\Models\ListingItem;
 use App\Models\Message;
 use App\Models\Order;
 use App\Models\OrderOperation;
+use App\Models\ProductType;
 use App\Models\Sequence;
 use App\Models\Store;
 use App\Models\StoreMessageAccount;
@@ -58,6 +60,19 @@ class HomeController extends Controller
     }
 
     public function testfunction(){
+
+        /*$productTypes = ProductType::select('id')->where('code', 'ceabundle')->get()->toArray();
+        $products = Catalog::select('*')->with('productType','productKeyFeatures','productColor')
+            ->whereNotIn('product_type', $productTypes)
+            ->whereNull('parent_id')
+            ->where('product_status','!=','discontinued')
+            ->orderBy('created_at', 'desc')
+            ->limit(5)
+            ->get();
+
+        echo '<pre>';
+        print_r($products);
+        echo '</pre>';die;*/
 
         /*$store = Store::findOrFail('3fab8878-e036-58c7-db30-addd3058875c');
         $shopifyService = new ShopifyService();
