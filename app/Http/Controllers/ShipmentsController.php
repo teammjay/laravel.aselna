@@ -229,8 +229,15 @@ class ShipmentsController extends Controller
                     'ship_from_id' => $ship_from,
                 );
 
-                OrderOperation::findOrFail($id)->update($updateRecord);
+                $orderOperation = OrderOperation::findOrFail($id);
+                if($orderOperation){
+                    $orderOperation->update($updateRecord);
+                }
             }
+
+            return response()->json([
+                'success' => true
+            ]);
         }
         return response()->json([
             'success' => false

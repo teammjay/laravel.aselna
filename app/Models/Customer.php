@@ -46,4 +46,8 @@ class Customer extends Model
     {
         return $this->hasMany(CustomerAddress::class);
     }
+    public function addresse()
+    {
+        return $this->hasOne(CustomerAddress::class);
+    }
 }
