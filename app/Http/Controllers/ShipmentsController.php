@@ -266,7 +266,7 @@ class ShipmentsController extends Controller
         $shippingCarrier = ShippingCarrier::all();
         $shipFrom = LogisticCenter::all();
         $shippingCarrierPackage = ShippingPackage::all();
-        $shipmentDetail = OrderOperation::with('operationItem', 'order', 'order.customerAddress', 'carrierService', 'store', 'operationItem.orderItem', 'operationItem.orderItem.product')->where('id', $order_opration_id)->first();
+        $shipmentDetail = OrderOperation::with('operationItem', 'order', 'order.customerAddress', 'carrierService', 'store','store.logisticCenters', 'operationItem.orderItem', 'operationItem.orderItem.product')->where('id', $order_opration_id)->first();
 
         $package_id = '';
         $product_total_weight = 0;
@@ -303,6 +303,14 @@ class ShipmentsController extends Controller
                     }
                 }
             }
+        }
+
+        Log::info('Shipment Info :: ' . $shipmentDetail->ship_from_id);
+        $storeLogisticCenter = $shipmentDetail->store->logisticCenters->first();
+        if (isset($storeLogisticCenter->logistic_center_id)) {
+            $shipmentDetail->ship_from_id = $storeLogisticCenter->logistic_center_id;
+        } else {
+            $shipmentDetail->ship_from_id = null;
         }
 
         /*echo '<pre>';
