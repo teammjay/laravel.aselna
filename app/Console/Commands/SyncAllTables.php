@@ -148,7 +148,16 @@ class SyncAllTables extends Command
         //synccategorytospecification::dispatch();
 //        SystemPrinterSyncJob::dispatch();
 //
-//        $transactionIds = [
+        $transactionIds = [
+//            '9400150105798006163885',
+//            '9400150105799006167927',
+//            '9400150105800006378319',
+//            '9400150105798006394630',
+//            '9400150105799006399137',
+//            '9400150105496008037882',
+//            '9400150105799006455116',
+//            '9400150105800006438150',
+//            '9400150105496008064079'
 //            '9400150105496002774974',
 //            '9400150105799001192122',
 //            '9400150105800001189705',
@@ -161,19 +170,19 @@ class SyncAllTables extends Command
 //            '9400150105798005973515',
 //            '9400150105799005980497',
 //            '00040105496536080941',
-//        ];
-//
-//        foreach ($transactionIds as $transactionId) {
-//            $data = [
-//                'requesterId' => 'Iweb',
-//                'accountId' => '1257538',
-//                'requestId' => Str::uuid(),
-//                'passPhrase' => 'Ag7ycm1274r2!a8hser2m',
-//                'transaction_id' => '431030',
-//                'pic_no' => '9400150105496000076315',
-//            ];
-//            $endicia = new EndicialabelService();
-//            $result = $endicia->cancelLabel($data);
-//        }
+        ];
+
+        foreach ($transactionIds as $transactionId) {
+            $data = [
+                'requesterId' => 'Iweb',
+                'accountId' => '1257538',
+                'requestId' => Str::uuid(),
+                'passPhrase' => 'Ag7ycm1274r2!a8hser2m',
+                'transaction_id' => '431030',
+                'pic_no' => $transactionId,
+            ];
+            $endicia = new EndicialabelService();
+            $result = $endicia->cancelLabel($data);
+        }
     }
 }
