@@ -139,10 +139,10 @@
                                     <select class="form-control" id="weight_type" name="weight_type">
                                         <option value="">--</option>
                                         <option value="0" selected="{{ $product_weight_unit === '0' ? 'true' : 'false' }}">Oz</option>
-                                        <option value="1" selected="{{ $product_weight_unit === '0' ? 'true' : 'false' }}">Lb</option>
-                                        <option value="2" selected="{{ $product_weight_unit === '0' ? 'true' : 'false' }}">G</option>
-                                        <option value="3" selected="{{ $product_weight_unit === '0' ? 'true' : 'false' }}">Kg</option>
-                                        <option value="4" selected="{{ $product_weight_unit === '0' ? 'true' : 'false' }}">Mg</option>
+                                        <option value="1" selected="{{ $product_weight_unit === '1' ? 'true' : 'false' }}">Lb</option>
+                                        <option value="2" selected="{{ $product_weight_unit === '2' ? 'true' : 'false' }}">G</option>
+                                        <option value="3" selected="{{ $product_weight_unit === '3' ? 'true' : 'false' }}">Kg</option>
+                                        <option value="4" selected="{{ $product_weight_unit === '4' ? 'true' : 'false' }}">Mg</option>
                                     </select>
                                 </div>
                             </div>
