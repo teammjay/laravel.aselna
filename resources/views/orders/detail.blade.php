@@ -238,7 +238,34 @@
                     Operations
                 </div>
                 <div class="card-body">
-                    <textarea class="form-control" rows="10"></textarea>
+                    @if(isset($orderDetail->orderOperation) && ($orderDetail->orderOperation->tracking_number != '' || $orderDetail->orderOperation->tracking_number != null))
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-1"><i class="fa fa-fw fa-shipping-fast" style="font-size: 24px;"></i> </div>
+                                    <div class="col-md-6" style="font-size: 18px !important;">Order Shipment On {{ date('D, d M Y',strtotime($orderDetail->orderOperation->ship_date)) }} </div>
+                                    <div class="col-md-5"><button class="btn btn-default w-100" type="button" name="reship" id="reship"> <i class="fas fa-fw fa-pencil-alt"></i> Re-ship</button> </div>
+                                </div>
+                                <div class="row pt-3">
+                                    <div class="col-md-12">
+                                        {{ $orderDetail->customer->first_name }} {{ $orderDetail->customer->last_name }}<br>
+                                        {{ $orderDetail->customerAddress->address_line_1 }},<br>
+                                        @if($orderDetail->customerAddress->address_line_2 != '')
+                                            {{ $orderDetail->customerAddress->address_line_2 }},<br>
+                                        @endif
+                                        {{ $orderDetail->customerAddress->city}}, {{$orderDetail->customerAddress->state}} {{$orderDetail->customerAddress->zip}}
+                                    </div>
+                                </div>
+                                <div class="row pt-3">
+                                    <div class="col-md-12">
+                                        @if(isset($orderDetail->orderOperation->tracking_number))
+                                            <a href="" class="text-blue">{{ isset($orderDetail->orderOperation->carrier) ? $orderDetail->orderOperation->carrier->name : '' }} {{ $orderDetail->orderOperation->tracking_number }}</a>
+                                        @endif
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    @endif
                 </div>
             </div>
         </div>

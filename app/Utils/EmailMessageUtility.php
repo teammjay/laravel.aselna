@@ -88,7 +88,7 @@ class EmailMessageUtility
 
 
 
-    public function fetchEmails($store_type, $folderName = 'INBOX', $limit = 100)
+    public function fetchEmails($store_type, $folderName = 'INBOX', $limit = 500)
     {
         try {
             $this->client->connect();
@@ -101,11 +101,11 @@ class EmailMessageUtility
                         ->since($fromDate)
                         ->before($toDate)
                         ->limit($limit)
-                        ->get()
-                        ->sortByDesc(function($msg) {
+                        ->get();
+                        /*->sortByDesc(function($msg) {
                             return optional($msg->getDate()->get())->getTimestamp(); // safe
                         })
-                        ->values(); // reindex after sorting
+                        ->values(); // reindex after sorting*/
 
             /*echo '<pre>';
             print_r($messages);

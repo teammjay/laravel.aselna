@@ -29,6 +29,7 @@ class WalmartEmailParser extends ReceivedMessageParser
         'where is my order' => HdTicketTypeCode::ORDER_INFORMATION,
     ];
     const PREFIXES = [
+        'customer_name' => 'Customer Name:',
         'customer_order_number' => 'Customer Order Number:',
         'purchase_order_number' => 'Purchase Order No:',
         'item_id' => 'Item ID:',
@@ -232,7 +233,10 @@ class WalmartEmailParser extends ReceivedMessageParser
         
 
         foreach ($lines as $line) {
-            if (str_starts_with(trim($line), self::PREFIXES['customer_order_number'])) {
+            if (str_starts_with(trim($line), self::PREFIXES['customer_name'])) {
+                $this->customer_name = trim(substr(trim($line), strlen(self::PREFIXES['customer_name'])));
+                $this->addEntity($this->customer_name, 'customer_name');
+            }elseif (str_starts_with(trim($line), self::PREFIXES['customer_order_number'])) {
                 $this->customer_order_number = trim(substr(trim($line), strlen(self::PREFIXES['customer_order_number'])));
                 $this->addEntity($this->customer_order_number, 'order_id');
             }elseif (str_starts_with(trim($line), self::PREFIXES['purchase_order_number'])) {

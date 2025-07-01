@@ -31,7 +31,7 @@
             white-space: nowrap;
         }
         table tbody tr{
-            background-color: rgba(0,0,0,0.051) !important;
+            /*background-color: rgba(0,0,0,0.051) !important;*/
         }
         .unread {
             background-color: #fff !important;

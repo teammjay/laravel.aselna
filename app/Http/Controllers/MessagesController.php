@@ -269,9 +269,10 @@ class MessagesController extends Controller
         $messages = HDMessage::where('ticket_id',$id)->orderBy('message_date','desc')->get();
         $ticketTypeCode = HdTicketType::orderBy('name')->get();
         $action = [];
+        $rma_done = 0;
         if(isset($ticketDetail->order_id) && $ticketDetail->order_id != NULL && $ticketDetail->order_id !=''){
             $order_id = $ticketDetail->order_id;
-            $orderDetail = Order::with('orderItem','orderItem.product','orderItem.product.image','customer','customerAddress')->where('order_id',$order_id)->first();
+            $orderDetail = Order::with('orderItem','orderItem.product','orderItem.product.image','customer','customerAddress','orderOperation')->where('order_id',$order_id)->first();
 
             if(isset($orderDetail->orderItem)){
                 foreach($orderDetail->orderItem as $oitem){
@@ -280,6 +281,10 @@ class MessagesController extends Controller
                     $action['canbeReplace'] = $oitem->shipped_quantity - $oitem->canceled_quantity;
                     $action['canbeReturned'] = $oitem->shipped_quantity - $oitem->refund_quantity - $oitem->return_request_quantity;
                 }
+            }
+
+            if(isset($orderDetail->orderOperation) && $orderDetail->orderOperation->rma_number != '' && $orderDetail->orderOperation->rma_number != NULL){
+                $rma_done = 1;
             }
         }
 
@@ -292,7 +297,7 @@ class MessagesController extends Controller
         }
 
         //print_r($action);
-        return view('messages.detail', compact('message_template','ticketDetail','messages','ticketTypeCode','action','store_type_name','ticketHistory'));
+        return view('messages.detail', compact('message_template','ticketDetail','messages','ticketTypeCode','action','store_type_name','ticketHistory','rma_done'));
     }
 
     public function searchOrder(Request $request){
@@ -307,7 +312,7 @@ class MessagesController extends Controller
             echo '</pre>';die;*/
 
             if($orderDetail){
-                $orderOperation = OrderOperation::with('carrier')->where('order_id',$orderDetail->id)->get();
+                $orderOperation = OrderOperation::with('carrier','shipFrom')->where('order_id',$orderDetail->id)->get();
                 $data['items'] = view('messages.order_items', ['orderDetail' => $orderDetail])->render();
                 $data['orderId'] = $orderDetail->order_id;
                 $data['orderDate'] = $orderDetail->order_date;
@@ -324,10 +329,35 @@ class MessagesController extends Controller
                     }
                 }
 
+                if($orderOperation->rma_number != '' && $orderOperation->rma_number != NULL){
+                    $rma_done = 1;
+                }
+
+                if(isset($orderDetail->orderItem)){
+                    foreach($orderDetail->orderItem as $oitem){
+                        $action['canbeShipped'] = $oitem->quantity - $oitem->shipped_quantity - $oitem->canceled_quantity;
+                        $action['canbeRefund'] = $oitem->shipped_quantity - $oitem->canceled_quantity;
+                        $action['canbeReplace'] = $oitem->shipped_quantity - $oitem->canceled_quantity;
+                        $action['canbeReturned'] = $oitem->shipped_quantity - $oitem->refund_quantity - $oitem->return_request_quantity;
+                    }
+
+
+                }
+
+                if(count($orderOperation ?? []) > 0) {
+                    foreach($orderOperation as $op) {
+                        if ($op->rma_number != '') {
+                            $action['canbeReturned'] = 0;
+                        }
+                    }
+                }
+
                 return response()->json([
                     'success' => true,
                     'orderDetail' => $data,
                     'ticketHistory' => $ticketHistory,
+                    'action' => $action,
+                    'rma_done' => $rma_done,
                 ]);
             }
         }
@@ -428,11 +458,12 @@ class MessagesController extends Controller
             if(isset($ticket_type_id) && $ticket_type_id){
                 $updatedData['ticket_type_id'] = $updatedData;
             }
-
-            if(isset($notes) && $notes != ''){
+            if($request->has('notes')){
+                if($notes == ''){
+                    $notes = NULL;
+                }
                 $updatedData['notes'] = $notes;
             }
-
             Message::findOrFail($ticket_id)->update($updatedData);
 
             return response()->json([
@@ -450,19 +481,28 @@ class MessagesController extends Controller
         $message_to_send = $request->input('message_to_send');
         $customer_id = $request->input('customer_id');
         $template_id = $request->input('template_id');
+        $is_closed = $request->input('ticket_status');
 
         if($ticket_id){
             $ticketDetail = Message::with('store')->where('id',$ticket_id)->first();
             $store= $ticketDetail->store;
             $storeMessageAccount = StoreMessageAccount::with('outgoingAccount')->where('store_id', $store->id)->first();
 
+
             //if(isset($storeMessageAccount->outgoingAccount)){
+                if($storeMessageAccount->outgoingAccount->requires_ssl){
+                    $encryption = 'ssl';
+                }
+                if($storeMessageAccount->outgoingAccount->requires_tls){
+                    $encryption = 'tls';
+                }
+
                 /*$smtpConfig = [
-                    'host' => 'smtp-relay.brevo.com',
-                    'port' => 587,
-                    'encryption' => 'tls',
-                    'username' => '86defa001@smtp-brevo.com',
-                    'password' => '1GxQYH08RWtzg5fM',
+                    'host' => $storeMessageAccount->outgoingAccount->server,
+                    'port' => $storeMessageAccount->outgoingAccount->port,
+                    'encryption' => $encryption,
+                    'username' => $storeMessageAccount->outgoingAccount->user_id,,
+                    'password' => $storeMessageAccount->outgoingAccount->password,
                     'from_address' => '86defa001@smtp-brevo.com',
                     'from_name' => 'Mj AILAB',
                 ];*/
@@ -483,6 +523,9 @@ class MessagesController extends Controller
                 $response = $connector->sendEmail('jayesh@mjailab.com','Test Mail',$message_to_send);
 
                 if($response){
+                    if($is_closed){
+                        $ticketDetail->update(['status'=>2]);
+                    }
                     return response()->json([
                         'success' => true
                     ]);
@@ -608,6 +651,8 @@ class MessagesController extends Controller
                 $view = view('messages.make_rma', compact('shipmentDetail', 'shippingCarrier', 'shippingCarrierService', 'shippingCarrierPackage', 'shipFrom', 'package_id', 'product_total_weight'))->render();
             }else if($request->input('ship_order')){
                 $view = view('messages.ship_order', compact('shipmentDetail', 'shippingCarrier', 'shippingCarrierService', 'shippingCarrierPackage', 'shipFrom', 'package_id', 'product_total_weight'))->render();
+            }else if($request->input('return_lable')){
+                $view = view('messages.order_return', compact('shipmentDetail', 'shippingCarrier', 'shippingCarrierService', 'shippingCarrierPackage', 'shipFrom', 'package_id', 'product_total_weight'))->render();
             }else{
                 $view = view('messages.order_refund', compact('shipmentDetail'))->render();
             }

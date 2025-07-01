@@ -4,9 +4,10 @@
         @if(isset($order_operation->rma_number) && ($order_operation->rma_number != '' || $order_operation->rma_number != null))
             <div class="card">
                 <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-2"><i class="fa fa-fw fa-refresh"></i> </div>
-                        <div class="col-md-10">
+                    <div class="row align-items-center">
+                        <div class="col-md-1"><i class="fa fa-fw fa-spinner" style="font-size: 18px;"></i> </div>
+                        <div class="col-md-8">Order Return On {{ date('D, d M Y',strtotime($order_operation->created_at)) }} </div>
+                        <div class="col-md-3">
                             <div class="btn-group float-right" role="group">
                                 <button id="btnGroupDrop2" type="button" class="dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="fa fa-ellipsis-v"></i></button>
                                 <div class="dropdown-menu" aria-labelledby="btnGroupDrop2">
@@ -19,8 +20,16 @@
                         <div class="col-md-12">
                             RMA : {{ $order_operation->rma_number }}
                             <input type="hidden" id="rma_number" value="{{ $order_operation->rma_number }}">
+
                         </div>
                     </div>
+                    @if(isset($orderOperation->shipFrom))
+                    <div class="row pt-3">
+                        <div class="col-md-12">
+                            Return Location : {{ $orderOperation->shipFrom->name }}
+                        </div>
+                    </div>
+                        @endif
                 </div>
             </div>
         @endif
@@ -28,10 +37,10 @@
         @if(isset($order_operation->tracking_number) && ($order_operation->tracking_number != '' || $order_operation->tracking_number != null))
             <div class="card">
                 <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-2"><i class="fa fa-fw fa-shipping-fast"></i> </div>
-                        <div class="col-md-6">Order Shipment On {{ $order_operation->ship_date }} </div>
-                        <div class="col-md-4"><button class="btn btn-default" type="button" name="reship" id="reship"> <i class="fas fa-fw fa-pencil-alt"></i> Re-ship</button> </div>
+                    <div class="row align-items-center">
+                        <div class="col-md-1"><i class="fa fa-fw fa-shipping-fast" style="font-size: 18px;"></i> </div>
+                        <div class="col-md-7">Order Shipment On {{ date('D, d M Y',strtotime($order_operation->ship_date)) }} </div>
+                        <div class="col-md-4"><button class="btn btn-default w-100" type="button" name="reship" id="reship"> <i class="fas fa-fw fa-pencil-alt"></i> Re-ship</button> </div>
                     </div>
                     <div class="row pt-3">
                         <div class="col-md-12">

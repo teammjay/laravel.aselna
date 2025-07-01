@@ -186,7 +186,7 @@ class OrdersController extends Controller
 
     public function edit(string $id)
     {
-        $orderDetail = Order::with('orderItem','orderItem.product','store','store.storeType','customer','customerAddress')->findOrFail($id);
+        $orderDetail = Order::with('orderItem','orderItem.product','store','store.storeType','customer','customerAddress','orderOperation','orderOperation.carrier')->findOrFail($id);
         /*echo '<pre>';
         print_r($orderDetail);
         echo '</pre>';die;*/
