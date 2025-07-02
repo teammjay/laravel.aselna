@@ -532,6 +532,7 @@
                 var customer_name = $('#customer_name').val();
                 var store_name = $('#store_name').val();
                 var rma_number = $('#rma_number').val();
+                var operationID = $(this).data('opid');
                 $.ajax({
                     type: "POST",
                     url: "{{ route('message.getmessagetemplate') }}",
@@ -540,6 +541,7 @@
                         customer_name: customer_name,
                         store_name: store_name,
                         rma_number: rma_number,
+                        operation_id: operationID,
                     },
                     headers: {
                         'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
@@ -665,7 +667,56 @@
                 }
             });
 
+            $(document).on('click','#submit_return_label',function () {
 
+                const form = document.querySelector("#frmReturnLabel");
+                let formData = new FormData(form);
+
+                const carrier_package = formData.get("carrier_package");
+                const label_generation = formData.get("label_generation");
+
+                if (!carrier_package || carrier_package.trim() === "") {
+                    alert("Carrier package is required.");
+                    return;
+                }
+
+
+                $.ajax({
+                    url: "{{ route('message.returnlabel') }}",
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    headers: {
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    },
+                    success: function (response) {
+                        // If success, remove the user row from the table
+                        if (response.success) {
+                            alert('Order shipped successfully!!');
+                            location.reload();
+                        }
+                        else {
+                            alert(response.message);
+                        }
+                    },
+                    error: function (xhr) {
+                        // Handle error response
+                        if (xhr.status === 422) {
+                            let errors = xhr.responseJSON.errors;
+                            $.each(errors, function (key, messages) {
+                                alert(key + ': ' + messages[0]);
+                            });
+                        }
+                        /*const response = xhr.responseJSON;
+                        if ( response.errors) {
+                            alert(response.message);
+                        } else {
+                            alert('Error: ' + response.message);
+                        }*/
+                    }
+                });
+            });
 
             $(document).on('click','#submit_ship_order',function () {
 
@@ -866,6 +917,14 @@
                                 }else{
                                     $('#cancel_order').removeClass('show').addClass('hide');
                                 }
+
+
+                            }
+
+                            if(data.rma_done){
+                                $('#return_label').removeClass('hide').addClass('show');
+                            }else{
+                                $('#return_label').removeClass('show').addClass('hide');
                             }
                         }
                     },

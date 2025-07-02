@@ -196,6 +196,17 @@
                                     </div>
                                 </div>
                             </div>
+
+                            <div class="row mt-3 g-3 align-items-center">
+                                <div class="col-md-4">
+                                    <label>Product Rubber Stamp</label>
+                                </div>
+                                <div class="col-md-8">
+                                    <div>
+                                        <input type="text" class="form-control" name="products_rubber_stamp" value="{{ $shipmentDetail->products_rubber_stamp }}">
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -231,7 +242,7 @@
                                             @endif
                                         </td>
                                         <td>{{ $oitem->orderItem->sku }}</td>
-                                        <td><input type="text" class="form-control" name="quantity" value="{{ $oitem->orderItem->quantity }}"></td>
+                                        <td><input type="text" class="form-control" name="quantity" value="{{ $oitem->orderItem->quantity }}" style="width:50px;" readonly></td>
                                         <td>{{ \App\Constants\OrderSyncStatus::getOrderSyncStatusName($oitem->sync_status) }}</td>
                                         <td>{{ $oitem->sync_message }}</td>
                                     </tr>

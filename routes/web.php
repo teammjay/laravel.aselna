@@ -306,6 +306,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/messages/sendmessagetemplate', 'sendMessageTemplate')->name('message.sendmessagetemplate');
         Route::post('/messages/getshippingdetail', 'getShippingDetail')->name('message.getshippingdetail');
         Route::post('/messages/getcancelorderdetail', 'getCancelOrderDetail')->name('message.getcancelorderdetail');
+        Route::post('/messages/returnlabel', 'returnLabel')->name('message.returnlabel');
     });
 
     Route::controller(PageTypesController::class)->group(function () {

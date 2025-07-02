@@ -11,7 +11,7 @@
                             <div class="btn-group float-right" role="group">
                                 <button id="btnGroupDrop2" type="button" class="dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="fa fa-ellipsis-v"></i></button>
                                 <div class="dropdown-menu" aria-labelledby="btnGroupDrop2">
-                                    <a class="dropdown-item" href="javascript:void(0)" id="regenerate_rma_message">Regenerate</a>
+                                    <a class="dropdown-item" href="javascript:void(0)" id="regenerate_rma_message" data-opid="{{ $order_operation->id }}">Regenerate</a>
                                 </div>
                             </div>
                         </div>

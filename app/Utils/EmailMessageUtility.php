@@ -88,7 +88,7 @@ class EmailMessageUtility
 
 
 
-    public function fetchEmails($store_type, $folderName = 'INBOX', $limit = 500)
+    public function fetchEmails($store_type, $folderName = 'INBOX', $limit = 50)
     {
         try {
             $this->client->connect();
@@ -112,10 +112,6 @@ class EmailMessageUtility
             echo '</pre>';die;*/
             $emails = [];
             foreach ($messages as $key=>$message) {
-                //if($key == 0) continue;
-               /* echo '<pre>';
-                print_r($message);
-                echo '</pre>';*/
 
                 $body = $message->getTextBody();
                 if (empty($message->getTextBody())) {
@@ -184,7 +180,6 @@ class EmailMessageUtility
                 echo '</pre>';*/
 
                 $emails[] = $eData;
-
             }
 
             //die;
