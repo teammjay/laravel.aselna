@@ -54,8 +54,8 @@ class MagentoService implements MarketplaceServiceInterface
 
         $store = $listingInfo->store;
         $magentoAuthService = new MagentoAuthService($store->seller_id, $store->secret_key);
-        $accessToken = $magentoAuthService->authenticate();
-        Log::info('Access Token: ' . $accessToken);
+//        $accessToken = $magentoAuthService->authenticate();
+//        Log::info('Access Token: ' . $accessToken);
 
         $response = $magentoAuthService->saveProducts($jsonDecodedContent);
         Log::info('Product: ' . json_encode($response));
@@ -300,7 +300,7 @@ class MagentoService implements MarketplaceServiceInterface
             if ($magentoAuthService->isAttributeExists($attribute)) {
                 continue;
             }
-            $magentoAuthService->createAttribute($attributeData);
+            $attributeData = $magentoAuthService->createAttribute($attributeData);
         }
     }
 
