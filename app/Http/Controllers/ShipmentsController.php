@@ -164,6 +164,7 @@ class ShipmentsController extends Controller
                     "store" => $order->store->name . ' - ' . $storeType,
                     "order_id" => isset($order->order) ? $order->order->order_id : '',
                     "order_date" => isset($order->order) ? $order->order->order_date : '',
+                    "expected_shipment_date" => isset($order) ? $order->expected_shipment_date : '',
                     "product_code" => $code,
                     "weight" => ($order->weight_value) ? $order->weight_value : $product_total_weight,
                     "first_name" => (isset($order->order) && !empty($order->order)) ? $order->order->buyer_first_name : '',

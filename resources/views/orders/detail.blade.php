@@ -78,7 +78,8 @@
                                 </div>
                                 <div class="col-md-9">
                                     @if(isset($orderDetail->customer))
-                                        <a href="javascript:void(0);" class="text-blue" id="edit_customer" data-id="{{ $orderDetail->customer->id }}">
+                                        <a href="javascript:void(0);" class="text-blue" id="edit_customer"
+                                           data-id="{{ $orderDetail->customer->id }}">
                                             {{ $orderDetail->customer->full_name }}
                                         </a>
                                     @endif
@@ -195,13 +196,16 @@
                                 </div>
                                 <div class="col-md-9">
                                     @if(isset($orderDetail->customerAddress))
-                                        <a href="javascript:void(0);" class="text-blue" id="edit_address" data-id="{{ $orderDetail->customerAddress->id }}">
-                                            {{ $orderDetail->customer->first_name }} {{ $orderDetail->customer->last_name }}<br>
+                                        <a href="javascript:void(0);" class="text-blue" id="edit_address"
+                                           data-id="{{ $orderDetail->customerAddress->id }}">
+                                            {{ $orderDetail->customer->first_name }} {{ $orderDetail->customer->last_name }}
+                                            <br>
                                             {{ $orderDetail->customerAddress->address_line_1 }},<br>
                                             @if($orderDetail->customerAddress->address_line_2 != '')
                                                 {{ $orderDetail->customerAddress->address_line_2 }},<br>
                                             @endif
-                                            {{ $orderDetail->customerAddress->city}}, {{$orderDetail->customerAddress->state}} {{$orderDetail->customerAddress->zip}}
+                                            {{ $orderDetail->customerAddress->city}}
+                                            , {{$orderDetail->customerAddress->state}} {{$orderDetail->customerAddress->zip}}
                                         </a>
                                     @endif
                                 </div>
@@ -237,8 +241,47 @@
                 <div class="card-header">
                     Operations
                 </div>
-                <div class="card-body">
-                    <textarea class="form-control" rows="10"></textarea>
+                <div class="card-body p-2">
+                    <div class="container border border-dark rounded px-4 py-2">
+                        <div class="row gap-2">
+                            @foreach($orderOperations as $orderOperation)
+                                <div class="container">
+                                    <div class="shipment-card position-relative">
+                                        <div class="d-flex justify-content-between mb-2">
+                                            <div class="d-flex align-items-center">
+                                                {{--                                                <img src="https://img.icons8.com/ios-filled/50/ffffff/delivery.png" alt="Truck Icon" class="shipment-icon">--}}
+                                                <h5 class="mb-0">Order Shipment on {{ date('D, d M Y', strtotime($orderOperation->ship_date)) }}</h5>
+                                            </div>
+                                            <button class="btn btn-light btn-sm re-ship-btn disabled">
+                                                <i class="bi bi-pencil"></i> Re-Ship
+                                            </button>
+                                        </div>
+
+                                        <p class="mb-1">
+                                            @if(isset($orderDetail->customerAddress))
+{{--                                                <a href="javascript:void(0);" class="text-blue" id="edit_address"--}}
+{{--                                                   data-id="{{ $orderDetail->customerAddress->id }}">--}}
+                                                    {{ $orderDetail->customer->first_name }} {{ $orderDetail->customer->last_name }}
+                                                    {{ $orderDetail->customerAddress->address_line_1 }},<br>
+                                                    @if($orderDetail->customerAddress->address_line_2 != '')
+                                                        {{ $orderDetail->customerAddress->address_line_2 }},
+                                                    @endif
+                                                    {{ $orderDetail->customerAddress->city}}
+                                                    , {{$orderDetail->customerAddress->state}} {{$orderDetail->customerAddress->zip}}
+{{--                                                </a>--}}
+                                            @endif
+                                        </p>
+                                        <br/>
+                                        <a href="https://tools.usps.com/go/TrackConfirmAction?tLabels={{$orderOperation->tracking_number}}" target="_blank">
+                                            <p class="mb-1 highlight">USPS {{$orderOperation->tracking_number}}</p>
+                                        </a>
+{{--                                        <p class="mb-1">Reference Id = 4081760731330</p>--}}
+{{--                                        <p>Status = Accepted</p>--}}
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -316,7 +359,8 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancle</button>
-                    <button type="button" class="btn btn-primary" id="saveCustomer"><i class="fa fa-check"></i> Ok </button>
+                    <button type="button" class="btn btn-primary" id="saveCustomer"><i class="fa fa-check"></i> Ok
+                    </button>
                 </div>
             </div>
         </div>
@@ -335,7 +379,8 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary closeaddressbtn" data-dismiss="modal">Cancle</button>
-                    <button type="button" class="btn btn-primary" id="saveAddress"><i class="fa fa-check"></i> Ok </button>
+                    <button type="button" class="btn btn-primary" id="saveAddress"><i class="fa fa-check"></i> Ok
+                    </button>
                 </div>
             </div>
         </div>
