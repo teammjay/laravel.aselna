@@ -498,7 +498,6 @@ class HomeController extends Controller
             $listingInfo = Listing::where('id', $listingId)->first();
             $feedInfo = ListingFeed::where('id', $feedId)->first();
 
-
             $storeType = $listingInfo->store->storeType->name;
 
             $marketplaceService = MarketplaceServiceFactory::create($storeType);

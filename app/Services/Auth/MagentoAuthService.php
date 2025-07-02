@@ -68,6 +68,26 @@ class MagentoAuthService
         return json_decode($response->getBody(), true);
     }
 
+    public function saveProduct($productData)
+    {
+        $accessToken = $this->authenticate();
+        Log::info('Access Token Created ' . $accessToken);
+
+        $headers = [
+            'Content-Type' => 'application/json',
+            'Accept' => 'application/json',
+            'Authorization' => 'Bearer ' . $accessToken,
+        ];
+
+        $body = ['product' => $productData];
+        Log::info('Product Data: ' . json_encode($body));
+
+        $request = new Request('POST', $this->endpoint . '/rest/default/V1/products', $headers);
+        $response = $this->client->sendAsync($request, ['json' => $body])->wait();
+
+        return json_decode($response->getBody(), true);
+    }
+
     public function getBulkStatus($feed_id)
     {
         $accessToken = $this->authenticate();
