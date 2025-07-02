@@ -78,7 +78,8 @@
                                 </div>
                                 <div class="col-md-9">
                                     @if(isset($orderDetail->customer))
-                                        <a href="javascript:void(0);" class="text-blue" id="edit_customer" data-id="{{ $orderDetail->customer->id }}">
+                                        <a href="javascript:void(0);" class="text-blue" id="edit_customer"
+                                           data-id="{{ $orderDetail->customer->id }}">
                                             {{ $orderDetail->customer->full_name }}
                                         </a>
                                     @endif
@@ -195,13 +196,16 @@
                                 </div>
                                 <div class="col-md-9">
                                     @if(isset($orderDetail->customerAddress))
-                                        <a href="javascript:void(0);" class="text-blue" id="edit_address" data-id="{{ $orderDetail->customerAddress->id }}">
-                                            {{ $orderDetail->customer->first_name }} {{ $orderDetail->customer->last_name }}<br>
+                                        <a href="javascript:void(0);" class="text-blue" id="edit_address"
+                                           data-id="{{ $orderDetail->customerAddress->id }}">
+                                            {{ $orderDetail->customer->first_name }} {{ $orderDetail->customer->last_name }}
+                                            <br>
                                             {{ $orderDetail->customerAddress->address_line_1 }},<br>
                                             @if($orderDetail->customerAddress->address_line_2 != '')
                                                 {{ $orderDetail->customerAddress->address_line_2 }},<br>
                                             @endif
-                                            {{ $orderDetail->customerAddress->city}}, {{$orderDetail->customerAddress->state}} {{$orderDetail->customerAddress->zip}}
+                                            {{ $orderDetail->customerAddress->city}}
+                                            , {{$orderDetail->customerAddress->state}} {{$orderDetail->customerAddress->zip}}
                                         </a>
                                     @endif
                                 </div>
@@ -237,35 +241,64 @@
                 <div class="card-header">
                     Operations
                 </div>
+
                 <div class="card-body">
-                    @if(isset($orderDetail->orderOperation) && ($orderDetail->orderOperation->tracking_number != '' || $orderDetail->orderOperation->tracking_number != null))
-                        <div class="card">
-                            <div class="card-body">
-                                <div class="row">
-                                    <div class="col-md-1"><i class="fa fa-fw fa-shipping-fast" style="font-size: 24px;"></i> </div>
-                                    <div class="col-md-6" style="font-size: 18px !important;">Order Shipment On {{ date('D, d M Y',strtotime($orderDetail->orderOperation->ship_date)) }} </div>
-                                    <div class="col-md-5"><button class="btn btn-default w-100" type="button" name="reship" id="reship"> <i class="fas fa-fw fa-pencil-alt"></i> Re-ship</button> </div>
-                                </div>
-                                <div class="row pt-3">
-                                    <div class="col-md-12">
-                                        {{ $orderDetail->customer->first_name }} {{ $orderDetail->customer->last_name }}<br>
-                                        {{ $orderDetail->customerAddress->address_line_1 }},<br>
-                                        @if($orderDetail->customerAddress->address_line_2 != '')
-                                            {{ $orderDetail->customerAddress->address_line_2 }},<br>
-                                        @endif
-                                        {{ $orderDetail->customerAddress->city}}, {{$orderDetail->customerAddress->state}} {{$orderDetail->customerAddress->zip}}
+                    @foreach($orderOperations as $orderOperation)
+
+                        @if(isset($orderOperation->rma_number) && ($orderOperation->rma_number != '' || $orderOperation->rma_number != null))
+                            <div class="card">
+                                <div class="card-body">
+                                    <div class="row align-items-center">
+                                        <div class="col-md-1"><i class="fa fa-fw fa-spinner" style="font-size: 18px;"></i> </div>
+                                        <div class="col-md-8">Order Return On {{ date('D, d M Y',strtotime($orderOperation->created_at)) }} </div>
                                     </div>
+                                    <div class="row pt-3">
+                                        <div class="col-md-12">
+                                            RMA : {{ $orderOperation->rma_number }}
+                                            <input type="hidden" id="rma_number" value="{{ $orderOperation->rma_number }}">
+
+                                        </div>
+                                    </div>
+                                    @if(isset($orderOperation->shipFrom))
+                                        <div class="row pt-3">
+                                            <div class="col-md-12">
+                                                Return Location : {{ $orderOperation->shipFrom->name }}
+                                            </div>
+                                        </div>
+                                    @endif
                                 </div>
-                                <div class="row pt-3">
-                                    <div class="col-md-12">
-                                        @if(isset($orderDetail->orderOperation->tracking_number))
-                                            <a href="" class="text-blue">{{ isset($orderDetail->orderOperation->carrier) ? $orderDetail->orderOperation->carrier->name : '' }} {{ $orderDetail->orderOperation->tracking_number }}</a>
-                                        @endif
+                            </div>
+                        @endif
+
+                        @if($orderOperation->tracking_number != '' && $orderOperation->tracking_number != null)
+                            <div class="card">
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-1"><i class="fa fa-fw fa-shipping-fast" style="font-size: 24px;"></i> </div>
+                                        <div class="col-md-6" style="font-size: 18px !important;">Order Shipment On {{ date('D, d M Y',strtotime($orderOperation->ship_date)) }} </div>
+                                        <div class="col-md-5"><button class="btn btn-default w-100" type="button" name="reship" id="reship"> <i class="fas fa-fw fa-pencil-alt"></i> Re-ship</button> </div>
+                                    </div>
+                                    <div class="row pt-3">
+                                        <div class="col-md-12">
+                                            {{ $orderDetail->customer->first_name }} {{ $orderDetail->customer->last_name }}<br>
+                                            {{ $orderDetail->customerAddress->address_line_1 }},<br>
+                                            @if($orderDetail->customerAddress->address_line_2 != '')
+                                                {{ $orderDetail->customerAddress->address_line_2 }},<br>
+                                            @endif
+                                            {{ $orderDetail->customerAddress->city}}, {{$orderDetail->customerAddress->state}} {{$orderDetail->customerAddress->zip}}
+                                        </div>
+                                    </div>
+                                    <div class="row pt-3">
+                                        <div class="col-md-12">
+                                            @if(isset($orderOperation->tracking_number))
+                                                <a href="" class="text-blue">{{ isset($orderOperation->carrier) ? $orderOperation->carrier->name : '' }} {{ $orderOperation->tracking_number }}</a>
+                                            @endif
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                    @endif
+                        @endif
+                    @endforeach
                 </div>
             </div>
         </div>
@@ -343,7 +376,8 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancle</button>
-                    <button type="button" class="btn btn-primary" id="saveCustomer"><i class="fa fa-check"></i> Ok </button>
+                    <button type="button" class="btn btn-primary" id="saveCustomer"><i class="fa fa-check"></i> Ok
+                    </button>
                 </div>
             </div>
         </div>
@@ -362,7 +396,8 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary closeaddressbtn" data-dismiss="modal">Cancle</button>
-                    <button type="button" class="btn btn-primary" id="saveAddress"><i class="fa fa-check"></i> Ok </button>
+                    <button type="button" class="btn btn-primary" id="saveAddress"><i class="fa fa-check"></i> Ok
+                    </button>
                 </div>
             </div>
         </div>

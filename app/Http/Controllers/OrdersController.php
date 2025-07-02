@@ -190,7 +190,8 @@ class OrdersController extends Controller
         /*echo '<pre>';
         print_r($orderDetail);
         echo '</pre>';die;*/
-        return view('orders.detail',compact('orderDetail'));
+        $orderOperations = OrderOperation::with('carrier','shipFrom')->where('order_id',$id)->get();
+        return view('orders.detail',compact('orderDetail', 'orderOperations'));
     }
 
     public function create_message(string $id)

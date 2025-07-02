@@ -140,7 +140,9 @@ class OrderUtility
             'label_creation_type' => 1,
             'print_to_file' => 0,
             'seller_provides_return_label' => 0,
-            'order_synchronization_id' => $order->order_synchronization_id
+            'order_synchronization_id' => $order->order_synchronization_id,
+            'expected_delivery_date' => date('Y-m-d H:i:s', $sorder['shippingInfo']['estimatedDeliveryDate'] / 1000),
+            'expected_shipment_date' => date('Y-m-d H:i:s', $sorder['shippingInfo']['estimatedShipDate'] / 1000),
         ];
 
         $order_operation_detail = OrderOperation::updateOrCreate([

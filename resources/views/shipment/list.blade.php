@@ -192,6 +192,7 @@
                 <th>Store</th>
                 <th>Order Id</th>
                 <th>Order Date</th>
+                <th>Shipment Date (expct)</th>
                 <th>Product Code</th>
                 <th>Weight</th>
                 <th>First Name</th>
