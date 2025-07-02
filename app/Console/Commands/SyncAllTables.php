@@ -170,6 +170,8 @@ class SyncAllTables extends Command
 //            '9400150105798005973515',
 //            '9400150105799005980497',
 //            '00040105496536080941',
+//            '9400150105798006503193',
+//'9400150105799006578198'
         ];
 
         foreach ($transactionIds as $transactionId) {
