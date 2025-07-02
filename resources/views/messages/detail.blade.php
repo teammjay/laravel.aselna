@@ -56,6 +56,8 @@
     #order_operation .dropdown-menu{
         left: -12px !important;
     }
+    .hide{display:none !important;}
+    .show{display:block !important;}
 </style>
 @stop
 
@@ -102,13 +104,12 @@
                             <ul class="nav nav-tabs" id="custom-tabs-one-tab" role="tablist">
                                 <li class="nav-item">
                                     <a class="nav-link active" id="composeMessage-tab" data-toggle="pill" href="#tab1" role="tab" aria-controls="tab1" aria-selected="true">
-                                        Compose Message
+                                        <i class="fa fa-reply"></i> Compose Message
                                     </a>
                                 </li>
                                 <li class="nav-item">
                                     <a class="nav-link @if($ticketDetail->notes !='' && $ticketDetail->notes != NULL) text-red @endif" id="internalNotes-tab" data-toggle="pill" href="#tab2" role="tab" aria-controls="tab2" aria-selected="false">
-                                        @if($ticketDetail->notes !='' && $ticketDetail->notes != NULL) <i class="fa fa-exclamation-triangle"></i> @endif Internal Notes
-                                    </a>
+                                        @if($ticketDetail->notes !='' && $ticketDetail->notes != NULL) <i class="fa fa-exclamation-triangle"></i> @else <i class="fa fa-sticky-note"></i> @endif Internal Notes </a>
                                 </li>
                             </ul>
 
@@ -157,31 +158,48 @@
                     <div class="row btn-sec pt-3">
                         <div class="col-md-8 border-r">
                             <div class="d-flex align-items-center" style="gap:10px;">
-                                {{--<div class="btn-group" role="group">
+                                <div class="btn-group" role="group">
                                     <button id="btnGroupDrop1" type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="fa fa-paper-plane"></i> Submit</button>
                                     <div class="dropdown-menu" aria-labelledby="btnGroupDrop1">
-                                        <a class="dropdown-item" href="#">Submit and close ticket</a>
-                                        <a class="dropdown-item" href="#">Dropdown link</a>
+                                        <a class="dropdown-item submit_message" href="#" data-close="1">Submit and close ticket</a>
+                                        <a class="dropdown-item submit_message" href="#" data-close="1">Submit and open ticket</a>
                                     </div>
-                                </div>--}}
+                                </div>
+                                {{--<button type="button" class="btn btn-primary" name="submit_message" id="submit_message"><i class="fa fa-paper-plane"></i> Submit</button>--}}
+                                @php
+                                    $displayReturned = $displayReplace = $displayRefund = $displayShipped = $displayCanceled = $displayReturnLabel = 'hide';
+                                    if(isset($action['canbeReturned']) && $action['canbeReturned'] > 0){
+                                        $displayReturned = 'show';
+                                    }
 
-                                <button type="button" class="btn btn-primary" name="submit_message" id="submit_message"><i class="fa fa-paper-plane"></i> Submit</button>
+                                    if($rma_done){
+                                        $displayReturnLabel = 'show';
+                                    }
 
-                                @if(isset($action['canbeReturned']) && $action['canbeReturned'] > 0)
-                                    <button type="button" class="btn btn-default" name="rma" id="rma">RMA</button>
-                                @endif
-                                @if(isset($action['canbeReplace']) && $action['canbeReplace'] > 0)
-                                    <button type="button" class="btn btn-default" name="replacement" id="replacement">Replacement</button>
-                                @endif
-                                @if(isset($action['canbeRefund']) && $action['canbeRefund'] > 0 && strtolower($store_type_name) != 'ebay')
-                                    <button type="button" class="btn btn-default" name="refund" id="refund">Refund</button>
-                                @endif
-                                @if(isset($action['canbeShipped']) && $action['canbeShipped'] > 0)
-                                    <button type="button" class="btn btn-default" name="ship_order" id="ship_order">Ship Order</button>
-                                @endif
-                                @if((isset($action['canbeShipped']) && $action['canbeShipped'] > 0) || (isset($action['canbeRefund']) && $action['canbeRefund'] > 0 && strtolower($store_type_name) != 'ebay'))
-                                <button type="button" class="btn btn-default" name="cancel_order" id="cancel_order">Cancel Order</button>
-                                @endif
+                                    if(isset($action['canbeReplace']) && $action['canbeReplace'] > 0){
+                                        $displayReplace = 'show';
+                                    }
+
+                                    if(isset($action['canbeRefund']) && $action['canbeRefund'] > 0 && strtolower($store_type_name) != 'ebay'){
+                                        $displayRefund = 'show';
+                                    }
+
+                                    if(isset($action['canbeShipped']) && $action['canbeShipped'] > 0){
+                                        $displayShipped = 'show';
+                                    }
+
+                                    if((isset($action['canbeShipped']) && $action['canbeShipped'] > 0) || (isset($action['canbeRefund']) && $action['canbeRefund'] > 0 && strtolower($store_type_name) != 'ebay')){
+                                        $displayCanceled = 'show';
+                                    }
+
+                                @endphp
+
+                                <button type="button" class="btn btn-default {{ $displayReturned }}" name="rma" id="rma">RMA</button>
+                                <button type="button" class="btn btn-default {{ $displayReturnLabel }}" name="return_label" id="return_label">Return Label</button>
+                                <button type="button" class="btn btn-default {{ $displayReplace }}" name="replacement" id="replacement">Replacement</button>
+                                <button type="button" class="btn btn-default {{ $displayRefund }}" name="refund" id="refund">Refund</button>
+                                <button type="button" class="btn btn-default {{ $displayShipped }}" name="ship_order" id="ship_order">Ship Order</button>
+                                <button type="button" class="btn btn-default {{ $displayCanceled }}" name="cancel_order" id="cancel_order">Cancel Order</button>
                             </div>
                         </div>
                         <div class="col-md-4">
@@ -365,7 +383,7 @@
 
             $(document).on('blur','#internal_notes',function () {
                 var notes = $(this).val();
-                if(notes != '') {
+                //if(notes != '') {
                     let ticket_id = '{{ $ticketDetail->id }}';
                     $.ajax({
                         type: "POST",
@@ -389,7 +407,7 @@
                             $("#ajax-preloader").hide();
                         }
                     });
-                }
+                //}
             });
 
 
@@ -426,11 +444,12 @@
                 }
             });*/
 
-            $(document).on('click','#submit_message',function () {
+            $(document).on('click','.submit_message',function () {
                 var template_id = $('#message_template').val();
                 var message_to_send = $('#message_to_send').val();
                 var customer_id = $('#customer_id').val();
                 var ticket_id = '{{ $ticketDetail->id }}';
+                var ticket_status = $(this).data('close');
                 if(message_to_send == ''){
                     alert('Please add text to send message');
                     return false;
@@ -443,6 +462,7 @@
                         message_to_send: message_to_send,
                         customer_id: customer_id,
                         ticket_id: ticket_id,
+                        ticket_status: ticket_status,
                     },
                     headers: {
                         'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
@@ -492,6 +512,7 @@
                                     }
                                 });
                                 $('#makeRMAModal').modal('show');
+                                $('#return_label').removeClass('hide').addClass('show');
 
                                 getShippingCarrierService($('#carrier_name_ms'));
                             }
@@ -511,6 +532,7 @@
                 var customer_name = $('#customer_name').val();
                 var store_name = $('#store_name').val();
                 var rma_number = $('#rma_number').val();
+                var operationID = $(this).data('opid');
                 $.ajax({
                     type: "POST",
                     url: "{{ route('message.getmessagetemplate') }}",
@@ -519,6 +541,7 @@
                         customer_name: customer_name,
                         store_name: store_name,
                         rma_number: rma_number,
+                        operation_id: operationID,
                     },
                     headers: {
                         'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
@@ -603,6 +626,96 @@
                 }else{
                     alert('Please select shipment first');
                 }
+            });
+
+            $(document).on('click','#return_label',function () {
+                var order_id = $('#order_id').val();
+                if(order_id != '' && order_id != null){
+                    $.ajax({
+                        url: "{{ route('message.getshippingdetail') }}",
+                        type: 'POST',
+                        data: {
+                            order_id: order_id,
+                            return_lable: 1,
+                            "_token": '{{ csrf_token() }}'
+                        },
+                        success: function (response) {
+                            // If success, remove the user row from the table
+                            if (response.success) {
+                                $('#returnLabelModal').find('.modal-body').html(response.html);
+                                $('#date').datetimepicker({
+                                    format:'Y-m-d H:i',
+                                    /* minDate: 'now', */
+                                    step:10,
+                                    onSelectTime: function(dp,$input) {
+                                        var sel_date = $input.val();
+                                        $('#date').val(sel_date);
+                                    }
+                                });
+                                $('#returnLabelModal').modal('show');
+
+                                getShippingCarrierService($('#carrier_name_ms'));
+                            }
+                        },
+                        error: function (xhr) {
+                            // Handle error response
+                            alert('Error: ' + xhr.responseJSON.error);
+                        }
+                    });
+                }else{
+                    alert('Please select shipment first');
+                }
+            });
+
+            $(document).on('click','#submit_return_label',function () {
+
+                const form = document.querySelector("#frmReturnLabel");
+                let formData = new FormData(form);
+
+                const carrier_package = formData.get("carrier_package");
+                const label_generation = formData.get("label_generation");
+
+                if (!carrier_package || carrier_package.trim() === "") {
+                    alert("Carrier package is required.");
+                    return;
+                }
+
+
+                $.ajax({
+                    url: "{{ route('message.returnlabel') }}",
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    headers: {
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    },
+                    success: function (response) {
+                        // If success, remove the user row from the table
+                        if (response.success) {
+                            alert('Order shipped successfully!!');
+                            location.reload();
+                        }
+                        else {
+                            alert(response.message);
+                        }
+                    },
+                    error: function (xhr) {
+                        // Handle error response
+                        if (xhr.status === 422) {
+                            let errors = xhr.responseJSON.errors;
+                            $.each(errors, function (key, messages) {
+                                alert(key + ': ' + messages[0]);
+                            });
+                        }
+                        /*const response = xhr.responseJSON;
+                        if ( response.errors) {
+                            alert(response.message);
+                        } else {
+                            alert('Error: ' + response.message);
+                        }*/
+                    }
+                });
             });
 
             $(document).on('click','#submit_ship_order',function () {
@@ -749,6 +862,7 @@
 
         function loadOrderDetail(){
             let order_id = $('#order_id').val();
+            var storeType = '{{ $store_type_name }}';
             if(order_id != '') {
                 $.ajax({
                     type: "POST",
@@ -771,6 +885,47 @@
                             $('#order_operation').html(data.orderDetail.orderOperation);
                             if(data.ticketHistory != '')
                                 $('#ticket_history_table').html(data.ticketHistory);
+
+                            if(data.action){
+
+                                if(data.action.canbeReturned && data.action.canbeReturned > 0){
+                                    $('#rma').removeClass('hide').addClass('show');
+                                }else{
+                                    $('#rma').removeClass('show').addClass('hide');
+                                }
+
+                                if(data.action.canbeReplace && data.action.canbeReplace > 0){
+                                    $('#replacement').removeClass('hide').addClass('show');
+                                }else{
+                                    $('#replacement').removeClass('show').addClass('hide');
+                                }
+
+                                if(data.action.canbeRefund && data.action.canbeRefund > 0 && storeType != 'eBay'){
+                                    $('#refund').removeClass('hide').addClass('hide');
+                                }else{
+                                    $('#refund').removeClass('show').addClass('hide');
+                                }
+
+                                if(data.action.canbeShipped && data.action.canbeShipped > 0){
+                                    $('#ship_order').removeClass('hide').addClass('show');
+                                }else{
+                                    $('#ship_order').removeClass('show').addClass('hide');
+                                }
+
+                                if((data.action.canbeShipped && data.action.canbeShipped > 0) || (data.action.canbeRefund && data.action.canbeRefund > 0 && storeType != 'eBay')){
+                                    $('#cancel_order').removeClass('hide').addClass('show');
+                                }else{
+                                    $('#cancel_order').removeClass('show').addClass('hide');
+                                }
+
+
+                            }
+
+                            if(data.rma_done){
+                                $('#return_label').removeClass('hide').addClass('show');
+                            }else{
+                                $('#return_label').removeClass('show').addClass('hide');
+                            }
                         }
                     },
                     error: function (xhr) {

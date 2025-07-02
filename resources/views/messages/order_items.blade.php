@@ -5,11 +5,9 @@
             <td>
                 @if($oitem->product->image != '')
                     <div class="main-image">
-                        <img
-                                src="{{ asset('storage/' .$oitem->product->image->getFileUrl()) }}"
-                                {{--                                                        alt="{{ asset('storage/' .$product->image->getFileUrl())}}"--}}
+                        <img src="{{ asset('storage/' .$oitem->product->image->getFileUrl()) }}"
                                 loading="lazy" width="50" height="50" class="mainImage"
-                                data-product-id="{{ $oitem->product->product_id }}">
+                                data-product-id="{{ $oitem->product->product_id }}" style="width: revert-layer;">
                     </div>
                 @endif
             </td>

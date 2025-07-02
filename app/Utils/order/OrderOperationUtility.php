@@ -49,6 +49,9 @@ class OrderOperationUtility
             'weight_value' => $weight,
             'weight_weight_unit' => $weight_type,
         );
+        if(isset($request['products_rubber_stamp']) && $request['products_rubber_stamp'] != ''){
+            $updateRecord['products_rubber_stamp'] = $request['products_rubber_stamp'];
+        }
         $orderOperation->update($updateRecord);
 
 
