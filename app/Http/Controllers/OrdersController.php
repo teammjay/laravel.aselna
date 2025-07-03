@@ -186,11 +186,11 @@ class OrdersController extends Controller
 
     public function edit(string $id)
     {
-        $orderDetail = Order::with('orderItem','orderItem.product','store','store.storeType','customer','customerAddress')->findOrFail($id);
+        $orderDetail = Order::with('orderItem','orderItem.product','store','store.storeType','customer','customerAddress','orderOperation','orderOperation.carrier')->findOrFail($id);
         /*echo '<pre>';
         print_r($orderDetail);
         echo '</pre>';die;*/
-        $orderOperations = OrderOperation::where('order_id',$id)->get();
+        $orderOperations = OrderOperation::with('carrier','shipFrom')->where('order_id',$id)->get();
         return view('orders.detail',compact('orderDetail', 'orderOperations'));
     }
 
@@ -312,7 +312,7 @@ class OrdersController extends Controller
                 $ordersItems = $amazonService->getOrderItems($data['order-id'],$store);
                 if (!isset($ordersItems['error'])) {
                     foreach($ordersItems as $item){
-                        Log::info('Amazon Order Item: ' . json_encode($item));
+                        //Log::info('Amazon Order Item: ' . json_encode($item));
 //                        $itemDetail = ListingItem::where('sku',$item['SellerSKU']);
                         $orderItemData = [
                             'title' => $item['Title'],

@@ -74,3 +74,22 @@
         </div>
     </div>
 </div>
+
+<!-- order return modal -->
+<div class="modal fade" id="returnLabelModal">
+    <div class="modal-dialog modal-dialog-centered" style="max-width:800px;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="returnLabelModalLabel">Return Detail</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancle</button>
+                <button type="button" class="btn btn-primary" id="submit_return_label"><i class="fa fa-check"></i> Ok </button>
+            </div>
+        </div>
+    </div>
+</div>

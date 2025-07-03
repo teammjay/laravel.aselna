@@ -54,7 +54,7 @@ class StoreCategorySyncJob implements ShouldQueue
 
     private function createCategory(mixed $category, $parentID = null)
     {
-        Log::info("Category :: " . json_encode($category));
+        //Log::info("Category :: " . json_encode($category));
         $storeCategory = StoreCategory::updateOrCreate(
             [
                 'store_id' => $this->storeID,

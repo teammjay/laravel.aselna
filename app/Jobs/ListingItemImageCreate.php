@@ -37,7 +37,7 @@ class ListingItemImageCreate implements ShouldQueue
     public function handle(): void
     {
         $listingInfo = Listing::find($this->listigId);
-        Log::info('Listing :: ' . json_encode($listingInfo));
+        //Log::info('Listing :: ' . json_encode($listingInfo));
         ListingItemLink::where('listing_id', $this->listigId)->chunk(100, function ($listingItemLinks) use ($listingInfo) {
             foreach ($listingItemLinks as $listingItemLink) {
                 $this->createListingItemImage($listingItemLink, $listingInfo);
@@ -47,20 +47,20 @@ class ListingItemImageCreate implements ShouldQueue
 
     private function createListingItemImage(mixed $listingItemLink, $listingInfo)
     {
-        Log::info('ListingItemLink :: ' . json_encode($listingItemLink));
+        //Log::info('ListingItemLink :: ' . json_encode($listingItemLink));
         $listingItem = $listingItemLink->item;
         $store = $listingInfo->store;
         $storeType = $listingInfo->store->storeType;
         $storeProduct = $listingItem->storeProduct;
         $productData = $storeProduct->product;
-        Log::info('ProductData :: ' . json_encode($productData));
+        //Log::info('ProductData :: ' . json_encode($productData));
         ProductImages::where('product_id', $productData->product_id)
             ->chunk(100, function ($productImages) use ($listingItem, $store, $storeType, $listingItemLink,$productData) {
                 if (!isset($store->fileSystem)) return;
                 foreach ($productImages as $productImage) {
                     $Image = $productImage->imageObj;
                     $path = '';
-                    Log::info('StoreType :: ' . json_encode($storeType));
+                    //Log::info('StoreType :: ' . json_encode($storeType));
 
                     switch (strtolower($storeType->name)) {
                         case 'shopify':
@@ -81,7 +81,7 @@ class ListingItemImageCreate implements ShouldQueue
                         'reference_id' => '',
                     ];
 
-                    Log::info("Main Image :: " . json_encode($productImage));
+                    //Log::info("Main Image :: " . json_encode($productImage));
 
                     if ($productImage->main_image == 1) {
                         $imageData['main_image'] = 1;
@@ -90,7 +90,7 @@ class ListingItemImageCreate implements ShouldQueue
                             Log::info("Version :: " .  $nextImageVersion);
                             $alternativeImage = ProductImageAlternative::where('main_image_id', $productImage->id)->where('version_number', $nextImageVersion)->first();
                             if(isset($alternativeImage) && isset($alternativeImage->imageObj)) {
-                                Log::info("Alternative Image :: " . json_encode($alternativeImage));
+                                //Log::info("Alternative Image :: " . json_encode($alternativeImage));
                                 $path = '/store-images/' . $store->id . '/' . $listingItem->id . '_' . $alternativeImage->id . '.jpg';
                                 $imageData['path'] = $path;
                                 $imageData['product_image_id'] = null;
@@ -152,7 +152,7 @@ class ListingItemImageCreate implements ShouldQueue
     private function uploadImage($store, $Image, $path)
     {
         $storeFileSystem = $store->fileSystem;
-        Log::info("File system :: " . json_encode($storeFileSystem));
+        //Log::info("File system :: " . json_encode($storeFileSystem));
         $host = $storeFileSystem->host;
         $port = $storeFileSystem->port ?? 21;
         $loginId = $storeFileSystem->login_id;
@@ -215,7 +215,7 @@ class ListingItemImageCreate implements ShouldQueue
                 $usedImageVersion[] = $litem->image_version;
             }
         }
-		Log::info("Used Images :: " . json_encode($usedImageVersion));
+		//Log::info("Used Images :: " . json_encode($usedImageVersion));
 
         // Step 2: Get all alternate image versions from product_image_alternatives table
         $alternateImages = ProductImageAlternative::select('product_image_alternatives.product_id', 'product_image_alternatives.version_number', 'products.product_id', 'products.product_sku')->leftJoin('products', 'products.product_id', '=', 'product_image_alternatives.product_id')->where('products.product_sku', $product_code)->get();

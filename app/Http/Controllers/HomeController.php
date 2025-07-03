@@ -118,19 +118,20 @@ class HomeController extends Controller
             'host' => 'imap.gmail.com',
             'port' => 993,
             'encryption' => 'ssl',
-            'username' => 'awaccessory@gmail.com',
-            'password' => 'qbdpyazqodnwsnju',
+            'username' => 'accessorychoice.cs@gmail.com',
+            'password' => 'qazbvuudllciqpga',
         ];
 
         $connector = new EmailMessageUtility($smtpConfig, $imapConfig);
-        $receiveEmails = $connector->fetchEmails('Walmart');
+        $receiveEmails = $connector->fetchEmails('Shopify');
 
-        $store = Store::with('storeType')->where('id','0dd4de79-bba1-c47a-a7aa-822e6f015b8e')->first();
+        //$store = Store::with('storeType')->where('id','0dd4de79-bba1-c47a-a7aa-822e6f015b8e')->first();
+        $store = Store::with('storeType')->where('id','99ede22c-fc39-7f9f-cd0d-34d4b9a70c21')->first();
         $store_id = $store->id;
         if(count($receiveEmails ?? []) > 0){
             foreach($receiveEmails as $email){
 
-                Log::info('Emails :'.json_encode($email));
+                //Log::info('Emails :'.json_encode($email));
                 /* create ticket*/
                 $order_id = $related_order_id = $po_no = $reason = $customer_id = $order_operation_id = $reference_code = NULL;
                 $ticket_type_code = HdTicketTypeCode::MARKETPLACE_NOTIFICATION;
@@ -255,7 +256,7 @@ class HomeController extends Controller
                     $hd_ticket = Message::create($ticketData);
                 }
 
-                Log::info('Ticket Detail :'.json_encode($hd_ticket));
+                //Log::info('Ticket Detail :'.json_encode($hd_ticket));
 
                 if(isset($hd_ticket->id)) {
                     $hdMessageData = [
@@ -276,7 +277,7 @@ class HomeController extends Controller
                         'reply_to_email' => $email['reply_to'],
                     ];
 
-                    Log::info('Ticket Message Detail :'.json_encode($hdMessageData));
+                    //Log::info('Ticket Message Detail :'.json_encode($hdMessageData));
 
                     $hd_message = HDMessage::updateOrCreate([
                         'ticket_id' => $hd_ticket->id,
@@ -475,7 +476,7 @@ class HomeController extends Controller
             }
         }
 
-        Log::info('Files: ' . json_encode($files));
+        //Log::info('Files: ' . json_encode($files));
         if (!empty($files)) {
             return response()->json(['file_path' => $files[0]]);
         }
@@ -544,7 +545,7 @@ class HomeController extends Controller
                 }
             }
 
-            Log::info('Files: ' . json_encode($files));
+            //Log::info('Files: ' . json_encode($files));
             if (!empty($files) && false) {
                 return response()->json(['success' => true,'file_path' => $files[0]]);
             } else {

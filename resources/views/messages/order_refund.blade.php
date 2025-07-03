@@ -88,6 +88,10 @@
                                 <th>Quantity</th>
                                 <th>Sync Status</th>
                                 <th>Sync Message</th>
+                                <th>Merchant Feedback</th>
+                                <th>Returned</th>
+                                <th>Product Refund</th>
+                                <th>Shipping Charge</th>
                             </tr>
                             </thead>
                             <tbody id="shipment-item-list">
@@ -107,10 +111,17 @@
                                             @endif
                                         </td>
                                         <td>{{ $oitem->orderItem->sku }}</td>
-                                        <td><input type="text" class="form-control" name="quantity"
-                                                   value="{{ $oitem->orderItem->quantity }}"></td>
+                                        <td><input type="text" class="form-control" name="quantity" value="{{ $oitem->orderItem->quantity }}"></td>
                                         <td>{{ \App\Constants\OrderSyncStatus::getOrderSyncStatusName($oitem->sync_status) }}</td>
                                         <td>{{ $oitem->sync_message }}</td>
+                                        <td>
+                                            <select class="form-control" name="merchant_feedback">
+
+                                            </select>
+                                        </td>
+                                        <td><input type="text" class="form-control" name="returned_quantity" value="{{ $oitem->orderItem->quantity }}"></td>
+                                        <td><input type="text" class="form-control" name="product_refund" value="{{ $oitem->orderItem->item_price }}"></td>
+                                        <td><input type="text" class="form-control" name="shipping_charge" value="{{ $oitem->orderItem->shipping_price }}"></td>
                                     </tr>
                                 @endforeach
                             @endif
