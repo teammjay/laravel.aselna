@@ -31,7 +31,7 @@ class FetchOrders extends Command
     {
 //         FetchShopifyOrders::dispatch();
 //        EbayListingItemSyncJob::dispatch();
-        FetchWalmartOrdersJob::dispatch();
+//        FetchWalmartOrdersJob::dispatch();
 //         FetchEbayOrders::dispatch();
     }
 }
