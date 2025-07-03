@@ -35,7 +35,7 @@ class StorePagesJobSync implements ShouldQueue
 
     private function createStorePage(mixed $storePage)
     {
-        Log::info('Store Page ID: ' . json_encode($storePage));
+        //Log::info('Store Page ID: ' . json_encode($storePage));
         StorePage::updateOrCreate(
             [
                 'id' => $storePage->id,

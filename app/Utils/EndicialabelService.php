@@ -43,7 +43,7 @@ class EndicialabelService
             ]);
 
             $body = $response->getBody()->getContents();
-            Log::info('Endicia Label Response XML: ' . $body);
+//            Log::info('Endicia Label Response XML: ' . $body);
             return $this->parseSoapResponse($body, $request, $orderOperationId);
         } catch (Exception $e) {
             // Handle SOAP request errors
@@ -146,8 +146,6 @@ class EndicialabelService
             if ($fileContent === false) {
                 throw new Exception('Failed to read file content');
             }
-
-            Log::info('File content :: ' . $fileContent);
 
             $lines = explode("\n", trim($fileContent));
 //            Log::info('Lines in file: ' . count($lines));

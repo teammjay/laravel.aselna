@@ -149,7 +149,7 @@ class ShopifyAuthService
 
             $response = $this->makeGraphQLRequest(ShopifyQueries::$inventoryAdjustQuantities, $variables);
 
-            Log::info('Inventory Response: ' . json_encode($response));
+            //Log::info('Inventory Response: ' . json_encode($response));
 
             return $response;
         }else{
@@ -163,7 +163,7 @@ class ShopifyAuthService
         if(!empty($priceUpdatesData)) {
             $response = $this->makeGraphQLRequest(ShopifyQueries::$productVariantUpdate, $priceUpdatesData);
 
-            Log::info('Price Update Response: ' . json_encode($response));
+            //Log::info('Price Update Response: ' . json_encode($response));
 
             return $response;
         }else{
@@ -228,7 +228,7 @@ class ShopifyAuthService
         if(!empty($variables)) {
             $response = $this->makeGraphQLRequest(ShopifyQueries::$createFullfillment, $variables);
 
-            Log::info('Update Fullfillment Response: ' . json_encode($response));
+            //Log::info('Update Fullfillment Response: ' . json_encode($response));
 
             return $response;
         }else{
@@ -249,7 +249,7 @@ class ShopifyAuthService
             ];
             $response = $this->makeGraphQLRequest(ShopifyQueries::$cancelOrder, $variable);
 
-            Log::info('Cancel Orders Response: ' . json_encode($response));
+            //Log::info('Cancel Orders Response: ' . json_encode($response));
 
             /*echo '<pre>';
             print_r($response);
@@ -268,7 +268,7 @@ class ShopifyAuthService
             $orderID = "gid://shopify/Order/".$orderID;
             $result = $this->makeGraphQLRequest(ShopifyQueries::$getOrderDetail, array('id' => $orderID));
             if (!isset($result['errors'])) {
-                Log::info('Shopify Orders Detail Response: ' . json_encode($result));
+                //Log::info('Shopify Orders Detail Response: ' . json_encode($result));
                 return $result['data']['order'];
             }
 
@@ -284,7 +284,7 @@ class ShopifyAuthService
 
             $response = $this->makeGraphQLRequest(ShopifyQueries::$createRefund, $variables);
 
-            Log::info('Create Refund Response: ' . json_encode($response));
+            //Log::info('Create Refund Response: ' . json_encode($response));
             /*echo '<pre>';
             print_r($response);
             echo '</pre>';die;*/
@@ -306,7 +306,7 @@ class ShopifyAuthService
             ];
             $response = $this->makeGraphQLRequest(ShopifyQueries::$refundOrder, $variable);
 
-            Log::info('Refund Orders Response: ' . json_encode($response));
+            //Log::info('Refund Orders Response: ' . json_encode($response));
 
             echo '<pre>';
             print_r($response);

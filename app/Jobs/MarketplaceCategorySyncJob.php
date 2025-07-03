@@ -105,7 +105,7 @@ class MarketplaceCategorySyncJob implements ShouldQueue
             return;
         }
 
-        Log::info("Creating Category: " . json_encode($category));
+        //Log::info("Creating Category: " . json_encode($category));
         $response = $magetoAuthService->createCategory($category['name'],$parentCategory['sync_id'] ?? 2);
 
         $category->update([

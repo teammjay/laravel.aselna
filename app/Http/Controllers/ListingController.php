@@ -1152,7 +1152,7 @@ class ListingController extends Controller
                             Log::info(' store_product_id : ' . $store_product_id);
                             if (array_key_exists($store_product_id, $product_details)) {
                                 $pDetail = $product_details[$store_product_id];
-                                Log::info('Product Detail:'. json_encode($pDetail));
+                                //Log::info('Product Detail:'. json_encode($pDetail));
                                 if(empty($pDetail)){
                                     Log::info('SKIP Product Detail:');
                                     continue;
@@ -2370,7 +2370,7 @@ class ListingController extends Controller
                         $listingArr['manufacturer_id'] = $manufacturer_id;
                     }
 
-                    Log::info(' Listing :: ' . json_encode($listingArr));
+                    //Log::info(' Listing :: ' . json_encode($listingArr));
                     $lisrecord = Listing::create($listingArr);
                     $listing_id = $lisrecord->id;
                     Log::info(' Listing ID :: ' . $listing_id);
@@ -2422,7 +2422,7 @@ class ListingController extends Controller
                                 $upcCodes = UPCCodes::where('store', $store_id)->where('is_used', 0)->orderBy('sequence_id', 'asc')->first();
                             }
 
-                            Log::info(' UPC Code :: ' . json_encode($upcCodes));
+                            //Log::info(' UPC Code :: ' . json_encode($upcCodes));
 
                             $productDetail = StoreProduct::with('product', 'product.productType')->where('id', $store_product_ids[$key])->first();
                             $productDetail = $productDetail->toArray();
@@ -2450,10 +2450,10 @@ class ListingController extends Controller
                                 'created_by' => $created_by,
                                 'updated_by' => $created_by
                             ];
-                            Log::info(' Store Type Listing :: ' . json_encode($listingProductArr));
+                            //Log::info(' Store Type Listing :: ' . json_encode($listingProductArr));
                             $record = StoreTypeListing::create($listingProductArr);
                             $store_type_listing_id = $record->id;
-                            Log::info(' Store Type Listing ID :: ' . $store_type_listing_id);
+                            //Log::info(' Store Type Listing ID :: ' . $store_type_listing_id);
 
                             if ($store_type_listing_id) {
 
@@ -2479,7 +2479,7 @@ class ListingController extends Controller
                                     'created_by' => $created_by
                                 );
 
-                                Log::info(' Listing Item :: ' . json_encode($modelDetail));
+                                //Log::info(' Listing Item :: ' . json_encode($modelDetail));
                                 $item = ListingItem::create($modelDetail);
                                 if ($item) {
                                     $record = UPCCodes::find($upcCodes->id);
@@ -2489,7 +2489,7 @@ class ListingController extends Controller
                                 $modelNames = array();
                                 if ($listing_item_id) {
                                     $product_key = $product_ids[$key];
-                                    Log::info(' Product Models :: ' . json_encode($product_models->$product_key));
+                                    //Log::info(' Product Models :: ' . json_encode($product_models->$product_key));
                                     $product_model = $product_models->$product_key;
                                     if (isset($product_model) && is_array($product_model)) {
 
@@ -2522,7 +2522,7 @@ class ListingController extends Controller
                                             if (count($models ?? []) > 0 && is_array($models)) {
                                                 $newupcCodes = $upcCodes;
                                                 foreach ($models as $j => $model) {
-                                                    Log::info(' Model :: ' . json_encode($model));
+                                                    //Log::info(' Model :: ' . json_encode($model));
 
                                                     /*if ($store_type != '') {
                                                         switch (strtolower($store_type)) {
@@ -2578,7 +2578,7 @@ class ListingController extends Controller
                                                         'created_by' => $created_by
                                                     );
 
-                                                    Log::info(' Listing Item Detail :: ' . json_encode($itemDetail));
+                                                    //Log::info(' Listing Item Detail :: ' . json_encode($itemDetail));
                                                     $rec = ListingItemDetail::create($itemDetail);
                                                     Log::info(' Listing Item Detail ID :: ' . $rec->id);
 
@@ -2598,7 +2598,7 @@ class ListingController extends Controller
                                             'created_by' => $created_by
                                         );
 
-                                        Log::info(' Listing Item Link :: ' . json_encode($itemLink));
+                                        //Log::info(' Listing Item Link :: ' . json_encode($itemLink));
                                         ListingItemLink::create($itemLink);
                                         Log::info(' Listing Item Link created successfully!');
                                     }

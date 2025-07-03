@@ -550,7 +550,7 @@ class ShipmentsController extends Controller
                 Log::info('Shipment From ID: ' . $request['shipment_from']);
                 if (!isset($request['shipment_from']) || $request['shipment_from'] == '') {
                     $storeLogisticCenter = $store->logisticCenters->first();
-                    Log::info('Store Logistic Center: ' . json_encode($storeLogisticCenter));
+                    //Log::info('Store Logistic Center: ' . json_encode($storeLogisticCenter));
                     if (isset($storeLogisticCenter->logistic_center_id)) {
                         $request['shipment_from'] = $storeLogisticCenter->logistic_center_id;
                     } else {
@@ -558,7 +558,7 @@ class ShipmentsController extends Controller
                     }
                 }
 
-                Log::info('Shipment Request Data: ' . json_encode($request->all()));
+                //Log::info('Shipment Request Data: ' . json_encode($request->all()));
 
                 $isSuccess = OrderOperationUtility::processShipment($operation, $request);
             }

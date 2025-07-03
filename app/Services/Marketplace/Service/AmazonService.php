@@ -62,7 +62,7 @@ class AmazonService implements MarketplaceServiceInterface
     {
         $fileSystem = $listingInfo->store->fileSystem;
         $userIdentifier = $listingInfo->store->user_id;
-        Log::info('User Identifier: ' . json_encode($listingInfo->store));
+        //Log::info('User Identifier: ' . json_encode($listingInfo->store));
         $listingItems = ListingItemLink::where('listing_id', $listingId)->cursor();
 
         $store = $listingInfo->store;
@@ -142,10 +142,10 @@ class AmazonService implements MarketplaceServiceInterface
                 if (isset($listingInfo->manufacturer_id) || isset($storeProduct->store)) {
                     $brandName = '';
 
-                    Log::info('Manufacturer ID: ' . json_encode($listingInfo->manufacturer_id));
+                    //Log::info('Manufacturer ID: ' . json_encode($listingInfo->manufacturer_id));
                     if ($listingInfo->manufacturer_id) {
                         $manufacturer = Manufacturer::where('id', $listingInfo->manufacturer_id)->first();
-                        Log::info('Manufacturer: ' . json_encode($manufacturer));
+                        //Log::info('Manufacturer: ' . json_encode($manufacturer));
                         if ($manufacturer) {
                             $brandName = $manufacturer->name;
                         }
@@ -183,7 +183,7 @@ class AmazonService implements MarketplaceServiceInterface
                     'currency' => 'USD',
                     'our_price' => [['schedule' => [['value_with_tax' => number_format($itemDetail->price, 2)]]]],
                 ]];
-                Log::info('Product Data: ' . json_encode($productData->sdoc_enable));
+                //Log::info('Product Data: ' . json_encode($productData->sdoc_enable));
                 if ($productData->sdoc_enable == 1) {
                     $propertyValues = StorePropertyValues::join('store_property_info', 'store_property_values.store_property_info_id', '=', 'store_property_info.id')
                         ->where('store_id', $listingInfo->store->id)->get();
@@ -239,7 +239,7 @@ class AmazonService implements MarketplaceServiceInterface
     public function generateCreateFeedOld($listingInfo, $listingId)
     {
         $userIdentifier = $listingInfo->store->user_id;
-        Log::info('User Identifier: ' . json_encode($listingInfo->store));
+        //Log::info('User Identifier: ' . json_encode($listingInfo->store));
         $listingItems = ListingItemLink::where('listing_id', $listingId)->cursor();
 
         // Build JSON feed structure
