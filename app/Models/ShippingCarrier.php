@@ -20,7 +20,7 @@ class ShippingCarrier extends Model
         parent::boot();
 
         static::creating(function ($model) {
-            Log::info('Creating Shipping Carrier' . json_encode($model));
+            //Log::info('Creating Shipping Carrier' . json_encode($model));
             if (empty($model->id)) {
                 $model->id = (string) Str::uuid();
             }

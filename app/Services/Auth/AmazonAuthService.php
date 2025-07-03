@@ -346,7 +346,7 @@ class AmazonAuthService
 
         $data = json_decode($response->getBody(), true);
         $schemaJsonUrl = $data['schema']['link']['resource'] ?? null;
-        Log::info('Product Type Schema: ' . json_encode($schemaJsonUrl));
+        //Log::info('Product Type Schema: ' . json_encode($schemaJsonUrl));
 
         if ($schemaJsonUrl) {
             $response = $this->client->get($schemaJsonUrl, []);

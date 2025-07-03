@@ -176,10 +176,10 @@ class EbayService implements MarketplaceServiceInterface
             $item->addChild('ListingType', 'FixedPriceItem');
             $item->addChild('Location', '06473');
 
-            Log::info('Listing Item Id : ' . json_encode($itemDetail->id));
-            Log::info('Listing Item StoreProduct : ' . json_encode($itemDetail->storeProduct));
-            Log::info('Listing Item StoreCategory : ' . json_encode($itemDetail->storeProduct->StoreTypeCategory));
-            Log::info('Listing Item Id : ' . json_encode($listingItem->listingItem));
+            //Log::info('Listing Item Id : ' . json_encode($itemDetail->id));
+            //Log::info('Listing Item StoreProduct : ' . json_encode($itemDetail->storeProduct));
+            //Log::info('Listing Item StoreCategory : ' . json_encode($itemDetail->storeProduct->StoreTypeCategory));
+            //Log::info('Listing Item Id : ' . json_encode($listingItem->listingItem));
             // Add PrimaryCategory
             $primaryCategory = $item->addChild('PrimaryCategory');
             $primaryCategory->addChild('CategoryID', (isset($listingItem->listingItem->storeProduct->StoreTypeCategory) && !empty($listingItem->listingItem->storeProduct->StoreTypeCategory)) ? $listingItem->listingItem->storeProduct->StoreTypeCategory->store_type_code : '');
@@ -534,7 +534,7 @@ class EbayService implements MarketplaceServiceInterface
             // $inventoryStatus->addChild('Quantity', $itemDetail->quantity);
 
             $variationData = ListingItemDetail::where('listing_item_id', $itemDetail->id)->orderBy('created_at', 'ASC')->get();
-            Log::info('Variation Data : ' . json_encode($variationData));
+            //Log::info('Variation Data : ' . json_encode($variationData));
             if (!empty((array)$variationData)) {
                 foreach ($variationData as $variant) {
                     // Add ReviseInventoryStatusRequest
@@ -694,12 +694,12 @@ class EbayService implements MarketplaceServiceInterface
         $authService = new EbayAuthService($clientId, $clientSecret, $redirectUri, $store->user_id);
 
         $feedInfo = ListingFeed::where('listing_id', $listingId)->first();
-        Log::info('Feed Response :: ' . json_encode($feedInfo));
+        //Log::info('Feed Response :: ' . json_encode($feedInfo));
 
         if ($feedInfo) {
             Log::info('Feed Id : ' . $feedInfo->feed_id);
             $response = $authService->getResultFeed($feedInfo->feed_id, $listingId);
-            Log::info('Feed Response :: ' . json_encode($response));
+            //Log::info('Feed Response :: ' . json_encode($response));
             if ($response) {
                 $zipPath = public_path($response);
                 $extractPath = public_path('result-feeds/ebay/' . $listingId);
@@ -1071,7 +1071,7 @@ class EbayService implements MarketplaceServiceInterface
 
         $this->authService = new EbayAuthService($clientId, $clientSecret, $redirectUri, $store->user_id);
         $orders = $this->authService->getOrders($filterStartDateFormatted, $last_synchronization->cursor ?? null);
-        Log::info('Orders Response : ' . json_encode(array_keys($orders)));
+        //Log::info('Orders Response : ' . json_encode(array_keys($orders)));
 
         if (!isset($orders)) {
             Log::info("Error in Ebay Orders : ");
@@ -1095,14 +1095,14 @@ class EbayService implements MarketplaceServiceInterface
             'created_by' => $created_by,
             'cursor' => $nextCursor
         ];
-        Log::info('Order Synchronization: ' . json_encode($synchronizeArr));
+        //Log::info('Order Synchronization: ' . json_encode($synchronizeArr));
         $order_synchronization = OrderSynchronization::create($synchronizeArr);
 
         if (isset($orders['total']) && $orders['total'] > 0) {
             $last_order_update_date = null;
             $noOfOrder = 0;
             foreach ($orders['orders'] as $order) {
-                Log::info('Order : ' . json_encode($order));
+                //Log::info('Order : ' . json_encode($order));
                 $newOrder = Order::where('order_id', $order['orderId'])->first();
 
                 $persist = false;
