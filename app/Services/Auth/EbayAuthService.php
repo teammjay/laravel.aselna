@@ -386,7 +386,7 @@ class EbayAuthService
 
                 $queryData = [
                     'filter'=> "creationdate:[$startDate..$endDate]",
-                    'limit' => 10, // Fetch max 100 orders
+                    'limit' => 90, // Fetch max 100 orders
                 ];
             }
 
