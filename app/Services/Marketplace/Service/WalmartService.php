@@ -70,7 +70,7 @@ class WalmartService implements MarketplaceServiceInterface
         $file = public_path('feeds/walmart/' . $listingId . '.json');
 
         $response = $authService->submitFeed($file, $feedType);
-        Log::info('Response ::' . json_encode($response));
+        //Log::info('Response ::' . json_encode($response));
 
         $resultFeedId = $response['feedId'];
 
@@ -102,7 +102,7 @@ class WalmartService implements MarketplaceServiceInterface
             'number_of_items' => $feedInfo->number_of_items,
             'created_by' => $created_by
         );
-        Log::info('Feed Data: ' . json_encode($feedData));
+        //Log::info('Feed Data: ' . json_encode($feedData));
 
         $newfeed = ListingFeed::updateOrCreate([
             'listing_id' => $listingId,
@@ -110,10 +110,10 @@ class WalmartService implements MarketplaceServiceInterface
         ], $feedData);
 
         $this->generateInventoryFeed($listingInfo, $listingId, $newfeed);
-        Log::info('Inventory Feed Generated: ' . json_encode($newfeed));
+        //Log::info('Inventory Feed Generated: ' . json_encode($newfeed));
 
         $this->submitFeed($newfeed->id, $listingId);
-        Log::info('Inventory Feed Submitted: ' . json_encode($newfeed));
+        //Log::info('Inventory Feed Submitted: ' . json_encode($newfeed));
 
         $newfeed->update([
             'status' => FeedStatus::PROCESSING,

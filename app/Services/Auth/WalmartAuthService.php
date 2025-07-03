@@ -44,8 +44,8 @@ class WalmartAuthService
             ],
         ];
 
-        Log::info("Headers: " . json_encode($headers));
-        Log::info("Options: " . json_encode($options));
+        //Log::info("Headers: " . json_encode($headers));
+        //Log::info("Options: " . json_encode($options));
 
         $request = new Request('POST', $this->endpoint . '/token', $headers);
         $res = $this->client->sendAsync($request, $options)->wait();
@@ -127,7 +127,7 @@ class WalmartAuthService
                 ];
             }
 
-            Log::info('Query Data: ' . json_encode($queryData));
+            //Log::info('Query Data: ' . json_encode($queryData));
 
             $response = $this->client->get($url, [
                 'verify' => false,
@@ -167,7 +167,7 @@ class WalmartAuthService
                 'replacementInfo' => false
             ];
 
-            Log::info('Query Data: ' . json_encode($queryData));
+            //Log::info('Query Data: ' . json_encode($queryData));
 
             $response = $this->client->get($url, [
                 'verify' => false,
@@ -204,7 +204,7 @@ class WalmartAuthService
                 'Content-Type' => 'application/json'
             ];
 
-            Log::info('Order Data' . json_encode($data));
+            //Log::info('Order Data' . json_encode($data));
 
             $request = new Request('POST', "{$this->endpoint}/orders/{$purchaseOrderId}/shipping", $headers, json_encode($data));
 
@@ -212,7 +212,7 @@ class WalmartAuthService
                 $res = $client->sendAsync($request)->wait();
 
                 $response = json_decode($res->getBody(), true);
-                Log::info('Response from Walmart: ' . json_encode($response));
+                //Log::info('Response from Walmart: ' . json_encode($response));
                 return $response;
             }
 
@@ -246,12 +246,12 @@ class WalmartAuthService
                 'WM_QOS.CORRELATION_ID' => uniqid(),
             ];
 
-            Log::info('Order Data' . json_encode($data));
+            //Log::info('Order Data' . json_encode($data));
 
             $request = new Request('POST', "{$this->endpoint}/orders/{$purchaseOrderId}/cancel", $headers, json_encode($data));
             $res = $client->sendAsync($request)->wait();
             $response = json_decode($res->getBody(), true);
-            Log::info('Response from Walmart: ' . json_encode($response));
+            //Log::info('Response from Walmart: ' . json_encode($response));
             return $response;
         } catch (RequestException $e) {
             // Log full error response (if available)
@@ -284,12 +284,12 @@ class WalmartAuthService
                 'WM_QOS.CORRELATION_ID' => uniqid(),
             ];
 
-            Log::info('Order Data' . json_encode($data));
+            //Log::info('Order Data' . json_encode($data));
 
             $request = new Request('POST', "{$this->endpoint}/orders/{$purchaseOrderId}/refund", $headers, json_encode($data));
             $res = $client->sendAsync($request)->wait();
             $response = json_decode($res->getBody(), true);
-            Log::info('Response from Walmart: ' . json_encode($response));
+            //Log::info('Response from Walmart: ' . json_encode($response));
             return $response;
         } catch (RequestException $e) {
             // Log full error response (if available)

@@ -49,7 +49,7 @@ class MagentoService implements MarketplaceServiceInterface
 
         $content = file_get_contents($filePath);
         $jsonDecodedContent = json_decode($content, true);
-        Log::info("Content :: " . json_encode($jsonDecodedContent));
+        //Log::info("Content :: " . json_encode($jsonDecodedContent));
         $listingInfo = Listing::where('id', $listingId)->first();
 
         $store = $listingInfo->store;
@@ -58,7 +58,7 @@ class MagentoService implements MarketplaceServiceInterface
 //        Log::info('Access Token: ' . $accessToken);
 
         $response = $magentoAuthService->saveProducts($jsonDecodedContent);
-        Log::info('Product: ' . json_encode($response));
+        //Log::info('Product: ' . json_encode($response));
         ListingFeed::where('listing_id', $listingId)->update(['feed_id' => $response['bulk_uuid']]);
     }
 
@@ -68,7 +68,7 @@ class MagentoService implements MarketplaceServiceInterface
         $store = $listingFeed->listing->store;
         $magentoAuthService = new MagentoAuthService($store->seller_id, $store->secret_key);
         $response = $magentoAuthService->getBulkStatus($listingFeed->feed_id);
-        Log::info('Response: ' . json_encode($response));
+        //Log::info('Response: ' . json_encode($response));
 
         // save to the response feed file
         FileUtility::saveToFile(public_path('result-feeds/magento/' . $listingId . '.json'), json_encode($response));
@@ -103,8 +103,8 @@ class MagentoService implements MarketplaceServiceInterface
             $brandsNames = $itemDevices->pluck('device.brand.name')->toArray();
             $brandsOptionsID = $this->getUpdatedOptions('brands', $brandsNames, $magetoAuthservice);
 
-            Log::info('Devices Options ID: ' . json_encode($deviceOptionsID));
-            Log::info('Brands Options ID: ' . json_encode($brandsOptionsID));
+            //Log::info('Devices Options ID: ' . json_encode($deviceOptionsID));
+            //Log::info('Brands Options ID: ' . json_encode($brandsOptionsID));
 
             $BulletPoints = '';
             foreach ($productData->productKeyFeatures as $feature) {
@@ -120,7 +120,7 @@ class MagentoService implements MarketplaceServiceInterface
                 $categoryIds[] = $parentCategory->sync_id;
                 $storeCategory = $parentCategory;
             }
-            Log::info('Category Ids: ' . json_encode($categoryIds));
+            //Log::info('Category Ids: ' . json_encode($categoryIds));
 
             $images = ListingItemProductImage::where('listing_item_id', $itemDetail->id)->get();
 
@@ -345,7 +345,7 @@ class MagentoService implements MarketplaceServiceInterface
         $magentoAuthService = new MagentoAuthService('api_user', 'api_user@123');
 
         $response = $magentoAuthService->getOrders();
-        Log::info('Product: ' . json_encode($response));
+        //Log::info('Product: ' . json_encode($response));
         /*echo '<pre>';
         print_r($response);
         echo '</pre>';die;*/

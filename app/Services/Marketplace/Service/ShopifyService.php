@@ -70,7 +70,7 @@ class ShopifyService implements MarketplaceServiceInterface
             $listingItem = $litem->listingItem;
             $storeProduct = $listingItem->storeProduct;
             $productData = $listingItem->storeProduct->product;
-            Log::info('Listing Item: ' . json_encode($listingItem));
+            //Log::info('Listing Item: ' . json_encode($listingItem));
 //
 //            $collectionIds = $this->getCollectionIds($listingItem->devices);
 //            continue;
@@ -90,7 +90,7 @@ class ShopifyService implements MarketplaceServiceInterface
 
             $tags = [];
             $tags = $this->getAllTags($productData, $tags);
-            Log::info('Tags: ' . json_encode($tags));
+            //Log::info('Tags: ' . json_encode($tags));
             $tagsString = implode(',', $tags);
 
             $productOptions[] = [
@@ -163,12 +163,12 @@ class ShopifyService implements MarketplaceServiceInterface
                 }),
             ];
 
-            Log::info('Product Data: ' . json_encode($productNewData));
+            //Log::info('Product Data: ' . json_encode($productNewData));
 
             $shopifyAuthService = new ShopifyAuthService($store->secret_key, $store->service_url);
             $response = $shopifyAuthService->saveProduct($productNewData);
 //             get handle and id from response and save in listing_item table
-            Log::info('Product: ' . json_encode($response));
+            //Log::info('Product: ' . json_encode($response));
 //            $productSetId = $response['productSet']['productSetOperation']['id'];
 //
 //            $feedInfo->update([
@@ -290,7 +290,7 @@ class ShopifyService implements MarketplaceServiceInterface
     {
         foreach ($devices as $device) {
             $deviceData = $device->device;
-            Log::info('Device: ' . json_encode($device->device));
+            //Log::info('Device: ' . json_encode($device->device));
         }
     }
 

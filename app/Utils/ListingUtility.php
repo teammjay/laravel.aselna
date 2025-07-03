@@ -13,7 +13,7 @@ class ListingUtility
     {
         $title = $storeProduct["title"] ?? null;
         $product = $storeProduct->product;
-        Log::info("Product: " . json_encode($product));
+        //Log::info("Product: " . json_encode($product));
 
         if ($force) {
             $title = null;
@@ -31,7 +31,7 @@ class ListingUtility
                     $templates = explode(" + ", $template);
                     Log::info("Templates: " . count($templates));
                     $processedTemplates = array_map(fn($t) => self::trimTemplate($t, $level), $templates);
-                    Log::info("Processed Templates: " . json_encode($processedTemplates));
+                    //Log::info("Processed Templates: " . json_encode($processedTemplates));
                     $template = implode($bundleSeparator, $processedTemplates);
                 }
                 Log::info("Processed Template: " . $template);
@@ -113,7 +113,7 @@ class ListingUtility
 
     public static function generateTitleUrl(mixed $product): string
     {
-        Log::info("Product: " . json_encode($product));
+        //Log::info("Product: " . json_encode($product));
         if (isset($product->storeProduct->store->storeType->name)) {
             return match (strtolower($product->storeProduct->store->storeType->name)) {
                 "ebay" => "https://www.ebay.com/itm/" . $product->store_sku . "/" . $product->store_sku,
@@ -136,7 +136,7 @@ class ListingUtility
         $issues = [];
 
         foreach ($requirements as $req) {
-            Log::info("Requirement: " . json_encode($req));
+           // Log::info("Requirement: " . json_encode($req));
             if ($req->type === 'column') {
                 $value = DB::table($req->table)
                     ->where('product_id', $productId)

@@ -312,7 +312,7 @@ class OrdersController extends Controller
                 $ordersItems = $amazonService->getOrderItems($data['order-id'],$store);
                 if (!isset($ordersItems['error'])) {
                     foreach($ordersItems as $item){
-                        Log::info('Amazon Order Item: ' . json_encode($item));
+                        //Log::info('Amazon Order Item: ' . json_encode($item));
 //                        $itemDetail = ListingItem::where('sku',$item['SellerSKU']);
                         $orderItemData = [
                             'title' => $item['Title'],
