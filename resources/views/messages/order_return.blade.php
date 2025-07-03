@@ -70,6 +70,16 @@
                                     </div>
                                 </div>
                             </div>
+                            <div class="row mt-3 g-3 align-items-center">
+                                <div class="col-md-4">
+                                    <label>Product Rubber Stamp</label>
+                                </div>
+                                <div class="col-md-8">
+                                    <div>
+                                        <input type="text" class="form-control" name="products_rubber_stamp" value="{{ $shipmentDetail->products_rubber_stamp }}">
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                         <div class="col-md-7">
                             <div class="row mt-3 g-3 align-items-center">
@@ -197,16 +207,7 @@
                                 </div>
                             </div>
 
-                            <div class="row mt-3 g-3 align-items-center">
-                                <div class="col-md-4">
-                                    <label>Product Rubber Stamp</label>
-                                </div>
-                                <div class="col-md-8">
-                                    <div>
-                                        <input type="text" class="form-control" name="products_rubber_stamp" value="{{ $shipmentDetail->products_rubber_stamp }}">
-                                    </div>
-                                </div>
-                            </div>
+
                         </div>
                     </div>
                 </div>

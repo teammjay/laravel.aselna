@@ -30,4 +30,35 @@ class HdMessageTemplate extends Model
     public function storeType(){
         return $this->belongsTo(StoreType::class, 'store_type_id');
     }
+
+    public static function getOrderOperationTemplate($operationType, $replacementShipped, $returnLabelAttached)
+    {
+        $templates = self::all();
+
+        foreach ($templates as $template) {
+            $templateOperationType = $template->order_operation_type;
+
+            if (is_null($templateOperationType) && !is_null($operationType)) {
+                continue;
+            }
+
+            if (!is_null($templateOperationType) && (is_null($operationType) || $templateOperationType !== $operationType)) {
+                continue;
+            }
+
+            $templateRequiresReplacementShipped = $template->replacement_order_shipped ?? false;
+            if ($templateRequiresReplacementShipped && !$replacementShipped) {
+                continue;
+            }
+
+            $templateRequiresReturnLabel = $template->print_to_file ?? false;
+            if ($templateRequiresReturnLabel !== $returnLabelAttached) {
+                continue;
+            }
+
+            return $template;
+        }
+
+        return null;
+    }
 }
