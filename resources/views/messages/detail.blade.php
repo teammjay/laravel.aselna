@@ -173,7 +173,7 @@
                                         $displayReturned = 'show';
                                     }
 
-                                    if(isset($action['canbeReturned']) && $action['canbeReturned'] > 0 && !$lable_generate){
+                                    if(isset($action['returnLable']) && $action['returnLable'] > 0){
                                         $displayReturnLabel = 'show';
                                     }
 
@@ -333,6 +333,9 @@
 @section('adminlte_js')
     <script src="{{ asset('js/jquery.datetimepicker.full.js') }}"></script>
     <script>
+
+        var ticket_id = '{{ $ticketDetail->id }}';
+
         $(document).ready(function () {
             $(document).on('click','#search_order',function () {
                 loadOrderDetail();
@@ -398,8 +401,10 @@
                         },
 
                         success: function (data) {
-                            if (data.success) {
-
+                            if (notes != '') {
+                                $('#internalNotes-tab').addClass('text-red').find('i').removeClass('fa-sticky-note').addClass('fa-exclamation-triangle');
+                            }else{
+                                $('#internalNotes-tab').removeClass('text-red').find('i').removeClass('fa-exclamation-triangle').addClass('fa-sticky-note');
                             }
                         },
                         error: function (xhr) {
@@ -956,7 +961,8 @@
                     type: "POST",
                     url: "{{ route('message.searchorder') }}",
                     data: {
-                        order_id: order_id
+                        order_id: order_id,
+                        ticket_id: ticket_id,
                     },
                     headers: {
                         'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
@@ -976,7 +982,7 @@
 
                             if(data.action){
 
-                                if(data.action.canbeReturned && data.action.canbeReturned > 0 && !data.rma_done){
+                                if(data.action.canbeReturned && data.action.canbeReturned > 0){
                                     $('#rma').removeClass('hide').addClass('show');
                                 }else{
                                     $('#rma').removeClass('show').addClass('hide');
@@ -1009,7 +1015,7 @@
 
                             }
 
-                            if(!data.lable_generate){
+                            if(data.action.returnLable){
                                 $('#return_label').removeClass('hide').addClass('show');
                             }else{
                                 $('#return_label').removeClass('show').addClass('hide');
