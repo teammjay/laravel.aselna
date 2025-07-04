@@ -13,9 +13,12 @@ use App\Models\OrderSynchronization;
 use App\Models\Store;
 use App\Services\Marketplace\Service\AmazonService;
 use App\Services\Marketplace\Service\EbayService;
+use App\Utils\shipment\ShipmentDocumentsCreator;
 use Illuminate\Http\Request;
 use App\Helpers\QueryFilters;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class OrdersController extends Controller
 {
@@ -400,6 +403,33 @@ class OrdersController extends Controller
             // Handle the exception and show an error message
             return response()->json(['errors' => $e->getMessage()]);
         }
+    }
+
+    public function reprintLabel(Request $request)
+    {
+        $operationId = $request->input('operation_id');
+        $orderOperation = OrderOperation::with('carrier')->find($operationId);
+
+        if ($orderOperation) {
+            $shippingDocumentCreator = new ShipmentDocumentsCreator($orderOperation);
+            $printer = $shippingDocumentCreator->getPrinter();
+
+            $trackingNumber = $orderOperation->tracking_number;
+            $imageUrl = asset('storage/labels/' . $trackingNumber . '.txt');
+
+            DB::connection('aselna_printer_db')->table('PrintJobs')->insert([
+                'id' => (string)Str::uuid(),
+                'fileName' => $trackingNumber . '.txt',
+                'filePath' => $imageUrl,
+                'status' => 'pending',
+                'createdAt' => now(),
+                'updatedAt' => now(),
+                'fileSize' => 0,
+                'printerId' => $printer->id ?? null,
+                'systemId' => $printer->internal_name ?? null,
+            ]);
+        }
+        return back()->withErrors(['error' => 'Order not found.']);
     }
 
 }
