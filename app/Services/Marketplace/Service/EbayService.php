@@ -1109,10 +1109,23 @@ class EbayService implements MarketplaceServiceInterface
                 $statusChange = false;
 
                 if ($newOrder == null) {
+
+                    switch (strtolower($order['orderFulfillmentStatus'])) {
+                        case 'fulfilled';
+                            $order_status = OrderStatus::Shipped;
+                            break;
+                        case 'not_started';
+                            $order_status = OrderStatus::Pending;
+                            break;
+                        default:
+                            $order_status = OrderStatus::Synchronizing;
+                            break;
+                    }
+
                     $orderData = [
                         'order_id' => $order['orderId'],
                         'order_date' => date('Y-m-d H:i:s', strtotime($order['creationDate'])),
-                        'order_status' => OrderStatus::getOrderStatusId($order['orderFulfillmentStatus']),
+                        'order_status' => $order_status,
                         'order_total' => $order['totalFeeBasisAmount']['value'],
                         'buyer_first_name' => $order['buyer']['buyerRegistrationAddress']['fullName'],
                         'buyer_last_name' => '',
