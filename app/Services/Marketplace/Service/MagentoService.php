@@ -8,6 +8,7 @@ use App\Models\Listing;
 use App\Models\ListingFeed;
 use App\Models\ListingItemLink;
 use App\Models\ListingItemProductImage;
+use App\Models\MarketplaceAttributeMapping;
 use App\Models\StoreCategory;
 use App\Services\Auth\MagentoAuthService;
 use App\Services\Marketplace\Contracts\MarketplaceServiceInterface;
@@ -17,7 +18,7 @@ use Illuminate\Support\Facades\Log;
 class MagentoService implements MarketplaceServiceInterface
 {
 
-    public function generateFeed($listingId,$feedId = null)
+    public function generateFeed($listingId, $feedId = null)
     {
         $listingInfo = Listing::where('id', $listingId)->first();
         switch ($listingInfo->feed_type) {
@@ -62,7 +63,7 @@ class MagentoService implements MarketplaceServiceInterface
         ListingFeed::where('listing_id', $listingId)->update(['feed_id' => $response['bulk_uuid']]);
     }
 
-    public function getResultFeed(mixed $listingId,$feedId = null)
+    public function getResultFeed(mixed $listingId, $feedId = null)
     {
         $listingFeed = ListingFeed::where('listing_id', $listingId)->first();
         $store = $listingFeed->listing->store;
@@ -300,7 +301,7 @@ class MagentoService implements MarketplaceServiceInterface
             if ($magentoAuthService->isAttributeExists($attribute)) {
                 continue;
             }
-            $attributeData = $magentoAuthService->createAttribute($attributeData);
+            $magentoAuthService->createAttribute($attributeData);
         }
     }
 
@@ -329,7 +330,6 @@ class MagentoService implements MarketplaceServiceInterface
 
         $newAttribute = $magetoAuthservice->updateAttributeOptions($attributeCode, $magentoDevices);
 
-        // return the id of the names array element from the new attribute['options'], iterrate the new attribute['options'] and get the id of the name which is in the $optionNames
         $optionId = [];
         foreach ($newAttribute['options'] as $option) {
             if (in_array($option['label'], $optionNames)) {
@@ -340,7 +340,8 @@ class MagentoService implements MarketplaceServiceInterface
         return implode(',', $optionId);
     }
 
-    public function getOrders(){
+    public function getOrders()
+    {
 
         $magentoAuthService = new MagentoAuthService('api_user', 'api_user@123');
 
@@ -350,5 +351,69 @@ class MagentoService implements MarketplaceServiceInterface
         print_r($response);
         echo '</pre>';die;*/
         return $response;
+    }
+
+    public function syncAttributeData($allAttributeData, $attributeCode, $store)
+    {
+        $magentoAuthService = new MagentoAuthService($store->seller_id, $store->secret_key);
+
+        $currentAttributeData = $magentoAuthService->getAttribute($attributeCode);
+
+        $magentoDevicesArray = array_map(fn($device) => $device['label'], $currentAttributeData['options']);
+        $attributeOptions = [];
+        foreach ($currentAttributeData['options'] as $option) {
+            $attributeOptions[$option['label']] = $option['value'];
+        }
+
+        $newUpdatedOptions = [];
+        foreach ($allAttributeData as $itemDevice) {
+            if (!in_array($itemDevice->name, $magentoDevicesArray)) {
+                $newUpdatedOptions[] = [
+                    'label' => $itemDevice->name,
+                ];
+                $magentoDevicesArray[] = $itemDevice;
+            }
+        }
+
+        $currentAttributeData['options'] = $newUpdatedOptions;
+
+        $newAttribute = $magentoAuthService->updateAttributeOptions($attributeCode, $currentAttributeData);
+
+        foreach ($newAttribute['options'] as $option) {
+            $attributeOptions[$option['label']] = $option['value'];
+        }
+
+        foreach ($allAttributeData as $itemDevice) {
+            $marketplaceValue = $attributeOptions[$itemDevice->name] ?? null;
+            if ($marketplaceValue) {
+                MarketplaceAttributeMapping::updateOrCreate(
+                    [
+                        'store_id' => $store->id,
+                        'code' => $attributeCode,
+                        'code_id' => $itemDevice->id,
+                    ],
+                    [
+                        'store_id' => $store->id,
+                        'code' => $attributeCode,
+                        'code_id' => $itemDevice->id,
+                        'value' => $itemDevice->name,
+                        'marketplace_code' => $marketplaceValue
+                    ]
+                );
+            }
+        }
+    }
+
+    public function createOrUpdateProduct($productData, $store)
+    {
+        $sku = $productData['sku'];
+        $magentoAuthService = new MagentoAuthService($store->seller_id, $store->secret_key);
+
+        $marketPlaceProduct = $magentoAuthService->getProduct($sku);
+        if (isset($marketPlaceProduct)) {
+            return $magentoAuthService->updateProduct($sku, $productData);
+        } else {
+            return $magentoAuthService->saveProduct($productData);
+        }
     }
 }
