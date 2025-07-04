@@ -135,11 +135,14 @@ class HomeController extends Controller
                 /* create ticket*/
                 $order_id = $related_order_id = $po_no = $reason = $customer_id = $order_operation_id = $reference_code = NULL;
                 $ticket_type_code = HdTicketTypeCode::MARKETPLACE_NOTIFICATION;
-                $customerDetail = Customer::whereLike('email','%'.$email['from'].'%')->first();
+                if(isset($email['from'])){
+                    $customerDetail = Customer::whereLike('email','%'.$email['from'].'%')->first();
 
-                if($customerDetail){
-                    $customer_id = $customerDetail->id;
+                    if($customerDetail){
+                        $customer_id = $customerDetail->id;
+                    }
                 }
+
 
                 if(isset($email['parsedData']) && !empty($email['parsedData'])){
                     if(isset($email['parsedData']['order_id'])){

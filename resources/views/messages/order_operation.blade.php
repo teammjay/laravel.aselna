@@ -1,5 +1,28 @@
 @if(count($orderOperation ?? []) > 0)
     @foreach($orderOperation as $order_operation)
+        @if($order_operation->operation_type == \App\Constants\OrderOperationType::OrderReplacement)
+            <div class="card">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-1"><i class="fa fa-fw fa-exchange-alt" style="font-size: 18px;"></i> </div>
+                        <div class="col-md-10">Order Replacement On {{ date('D, d M Y',strtotime($order_operation->created_at)) }} </div>
+
+                    </div>
+                    <div class="row pt-3">
+                        <div class="col-md-12">
+                            Shipped on {{ date('D, d M Y',strtotime($order_operation->created_at)) }}
+                        </div>
+                    </div>
+                    <div class="row pt-3">
+                        <div class="col-md-12">
+                            @if(isset($order_operation->tracking_number))
+                                <a href="" class="text-blue">{{ isset($order_operation->carrier) ? $order_operation->carrier->name : '' }} {{ $order_operation->tracking_number }}</a>
+                            @endif
+                        </div>
+                    </div>
+                </div>
+            </div>
+        @endif
 
         @if(isset($order_operation->rma_number) && ($order_operation->rma_number != '' || $order_operation->rma_number != null))
             <div class="card">
@@ -34,7 +57,7 @@
             </div>
         @endif
 
-        @if(isset($order_operation->tracking_number) && ($order_operation->tracking_number != '' || $order_operation->tracking_number != null))
+        @if(isset($order_operation->tracking_number) && ($order_operation->tracking_number != '' || $order_operation->tracking_number != null) && $order_operation->operation_type == \App\Constants\OrderOperationType::OrderShipment)
             <div class="card">
                 <div class="card-body">
                     <div class="row align-items-center">

@@ -30,6 +30,7 @@ use App\Utils\order\OrderOperationUtility;
 use App\Utils\RmaNumberGenerator;
 use Illuminate\Http\Request;
 use App\Services\DataTable\DataTableService;
+use Illuminate\Support\Facades\Validator;
 
 class MessagesController extends Controller
 {
@@ -330,7 +331,7 @@ class MessagesController extends Controller
             echo '</pre>';die;*/
 
             if($orderDetail){
-                $orderOperation = OrderOperation::with('carrier','shipFrom')->where('order_id',$orderDetail->id)->get();
+                $orderOperation = OrderOperation::with('carrier','shipFrom')->where('order_id',$orderDetail->id)->orderBy('created_at','desc')->get();
                 $data['items'] = view('messages.order_items', ['orderDetail' => $orderDetail])->render();
                 $data['orderId'] = $orderDetail->order_id;
                 $data['orderDate'] = $orderDetail->order_date;
@@ -367,6 +368,11 @@ class MessagesController extends Controller
 
                         if (isset($op->rma_number) && $op->rma_number != '' && $op->rma_number != NULL && $op->tracking_number != '') {
                             $action['canbeReturned'] = 0;
+                            $lable_generate= 1;
+                        }
+
+                        if($op->tracking_number != ''){
+                            //$action['canbeRefund'] = 1;
                             $lable_generate= 1;
                         }
                     }
@@ -615,7 +621,7 @@ class MessagesController extends Controller
                     'to_address_id' => $orderOperation->to_address_id,
                     'sync_status' => $orderOperation->sync_status,
                     'insurance_value' => $orderOperation->insurance_value,
-                    'status' => 0,
+                    'status' => OrderOperationStatus::Accepted,
                     'signature_confirmation' => $orderOperation->signature_confirmation,
                     'shipping_package_id' => $orderOperation->shipping_package_id,
                     'weight_value' => $orderOperation->weight_value,
@@ -799,7 +805,7 @@ class MessagesController extends Controller
 
         $request['label_generation'] = 1;
 
-        $orderOperations = OrderOperation::with('order', 'store', 'store.storeType')->whereIn('id', $request->id)->get();
+        $orderOperations = OrderOperation::with('order', 'store', 'store.storeType')->where('id', $request->id)->get();
 
         $isSuccess = OrderOperationUtility::processShipment($orderOperations, $request);
 
@@ -883,18 +889,19 @@ class MessagesController extends Controller
         }
 
         $request['label_generation'] = 1;
-        $orderOperations = OrderOperation::with('order','order.customer', 'store', 'store.storeType')->whereIn('id', $order_opration_id)->get();
+        $orderOperations = OrderOperation::with('order','order.customer', 'store', 'store.storeType')->where('id', $order_opration_id)->get();
 
-        $isSuccess = OrderOperationUtility::processShipment($orderOperations, $request);
+        /*$isSuccess = OrderOperationUtility::processShipment($orderOperations, $request);
 
         if (!$isSuccess) {
             return response()->json([
                 'success' => false,
                 'message' => 'Something went wrong with API. Please try again!'
             ]);
-        }
+        }*/
 
         $templateDetail = HdMessageTemplate::getOrderOperationTemplate(OrderOperationType::OrderReplacement,1,0);
+        $template_id = $template_code = '';
         if($templateDetail) {
             $data = [
                 'customer_firstName' => isset($orderOperations->order->customer) ? $orderOperations->order->customer->full_name : '',
@@ -909,6 +916,7 @@ class MessagesController extends Controller
 
         return response()->json([
             'success' => true,
+            'template_id' => $template_id,
             'template_code' => $template_code,
         ]);
 

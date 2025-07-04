@@ -85,6 +85,7 @@
                                 @foreach($messages as $key=>$message)
                                     <div class="time-center">{{ $message->message_date }}</div>
                                     <div class="msg-container @if(($key % 2)) darker @endif">
+                                        {{--<iframe srcdoc="{!! htmlspecialchars($message->message) !!}"></iframe>--}}
                                         {!! nl2br(html_entity_decode($message->message)) !!}
                                     </div>
 
@@ -172,7 +173,7 @@
                                         $displayReturned = 'show';
                                     }
 
-                                    if(!$lable_generate){
+                                    if(isset($action['canbeReturned']) && $action['canbeReturned'] > 0 && !$lable_generate){
                                         $displayReturnLabel = 'show';
                                     }
 
@@ -766,8 +767,22 @@
                     success: function (response) {
                         // If success, remove the user row from the table
                         if (response.success) {
+
+                            if($('#message_to_send').val() != '' && response.template_id != ''){
+                                if (confirm("Are you sure, you want to overwrite the template?") == true) {
+                                    $('#template_id').val(response.template_id);
+                                    $('#message_to_send').html(response.template_code);
+                                } else {
+
+                                }
+                            }else if(response.template_id != ''){
+                                $('#template_id').val(response.template_id);
+                                $('#message_to_send').html(response.template_code);
+                            }
+
+                            loadOrderDetail();
                             //alert('Order shipped successfully!!');
-                            location.reload();
+                            //location.reload();
                         }
                         else {
                             alert(response.message);
@@ -974,7 +989,7 @@
                                 }
 
                                 if(data.action.canbeRefund && data.action.canbeRefund > 0 && storeType != 'eBay'){
-                                    $('#refund').removeClass('hide').addClass('hide');
+                                    $('#refund').removeClass('hide').addClass('show');
                                 }else{
                                     $('#refund').removeClass('show').addClass('hide');
                                 }
