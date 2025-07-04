@@ -374,8 +374,8 @@ class OrderUtility
             'customer_id' => $customer_detail->id ?? null,
             'purchase_order_id' => $sorder['orderId'],
             'shipping_address_id' => $customer_address->id ?? null,
-            'expected_shipment_date' => isset($estimateShipmentDate) ? date('Y-m-d H:i:s', $estimateShipmentDate / 1000) : '',
-            'expected_delivery_date' => isset($estimateDeliveryDate) ? date('Y-m-d H:i:s', $estimateDeliveryDate / 1000) : '',
+            'expected_shipment_date' => isset($estimateShipmentDate) ? date('Y-m-d H:i:s', strtotime($estimateShipmentDate)) : '',
+            'expected_delivery_date' => isset($estimateDeliveryDate) ? date('Y-m-d H:i:s', strtotime($estimateDeliveryDate)) : '',
         ];
 
         $order->update($orderData);

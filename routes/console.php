@@ -28,4 +28,4 @@ Schedule::job(new SyncAllOrderStatusJob())->hourly();
 Schedule::job(new FetchEbayOrders())->hourly();
 
 // Products Syncing
-Schedule::job(new SubmitShopifyProductsJob())->everyFifteenMinutes();
+//Schedule::job(new SubmitShopifyProductsJob())->everyFifteenMinutes();
