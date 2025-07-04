@@ -475,6 +475,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/orders/upload', 'upload')->name('order.upload');
         Route::post('/orders/getcustomerdetail', 'getCustomerDetail')->name('order.getcustomerdetail');
         Route::post('/orders/savecustomer', 'saveCustomer')->name('order.savecustomer');
+        Route::post('/orders/reprintLabel', 'reprintLabel')->name('order.reprintlabel');
     });
 
     Route::controller(ShipmentsController::class)->group(function () {
