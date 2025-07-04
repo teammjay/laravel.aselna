@@ -327,11 +327,15 @@ class OrderUtility
             }
         }
 
+        $estimateShipmentDate = null;
+        $estimateDeliveryDate = null;
         if ($sorder['fulfillmentStartInstructions']) {
             $shipTo = $sorder['fulfillmentStartInstructions'][0]['shippingStep']['shipTo'];
             $full_name = $shipTo['fullName'] ?? '';
             $addressLine1 = $shipTo['contactAddress']['addressLine1'] ?? '';
             $addressLine2 = $shipTo['contactAddress']['addressLine2'] ?? '';
+            $estimateShipmentDate = $sorder['fulfillmentStartInstructions'][0]['minEstimatedDeliveryDate'];
+            $estimateDeliveryDate = $sorder['fulfillmentStartInstructions'][0]['maxEstimatedDeliveryDate'];
             $customer_address_data = [
                 'customer_id' => $customer_detail->id,
                 'full_name' => $full_name,
@@ -365,21 +369,33 @@ class OrderUtility
 //            'order_total' => $orderTotals,
             'buyer_first_name' => $firstname,
             'buyer_last_name' => $lastname,
-            'order_status' => OrderStatus::Synchronizing,
+            //'order_status' => OrderStatus::Synchronizing,
 //            'buyer_email' => $sorder['customerEmailId'],
             'customer_id' => $customer_detail->id ?? null,
             'purchase_order_id' => $sorder['orderId'],
             'shipping_address_id' => $customer_address->id ?? null,
+            'expected_shipment_date' => isset($estimateShipmentDate) ? date('Y-m-d H:i:s', strtotime($estimateShipmentDate)) : '',
+            'expected_delivery_date' => isset($estimateDeliveryDate) ? date('Y-m-d H:i:s', strtotime($estimateDeliveryDate)) : '',
         ];
 
         $order->update($orderData);
+
+        switch (strtolower($order['orderFulfillmentStatus'])) {
+            case 'fulfilled';
+                $operationstatus = OrderOperationStatus::MarkAsShipped;
+                break;
+            case 'not_started';
+            default:
+                $operationstatus = OrderStatus::Created;
+                break;
+        }
 
         /* create order operatation*/
         $orderOperationData = [
             'order_id' => $order->id,
             'ship_date' => date('Y-m-d H:i:s'),
             'insurance_value' => 0,
-            'status' => OrderOperationStatus::Created,
+            'status' => $operationstatus,
             'signature_confirmation' => 1,
 //            'ship_from_id' => '',
             'store_id' => $store->id,

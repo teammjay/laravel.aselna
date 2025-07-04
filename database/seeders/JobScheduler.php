@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Jobs\FetchWalmartOrdersJob;
+use App\Jobs\MagnetoAttributesSyncJob;
 use App\Models\ScheduledJob;
 use Illuminate\Database\Seeder;
 
@@ -279,6 +280,16 @@ class JobScheduler extends Seeder
                 'name' => 'Submit Product to Shopify Store',
                 'description' => 'Submit Product to Shopify Store',
                 'class_name' => 'App\Jobs\SubmitShopifyProductsJob',
+            ],
+            [
+                'name' => 'Magento Attributes Sync',
+                'description' => 'Sync all Magento attributes',
+                'class_name' => 'App\Jobs\MagnetoAttributesSyncJob',
+            ],
+            [
+                'name' => 'Magento Products Sync',
+                'description' => 'Sync all Magento products',
+                'class_name' => 'App\Jobs\MagentoProductsSyncJob',
             ]
         ];
 

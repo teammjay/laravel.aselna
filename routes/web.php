@@ -307,6 +307,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/messages/getshippingdetail', 'getShippingDetail')->name('message.getshippingdetail');
         Route::post('/messages/getcancelorderdetail', 'getCancelOrderDetail')->name('message.getcancelorderdetail');
         Route::post('/messages/returnlabel', 'returnLabel')->name('message.returnlabel');
+        Route::post('/messages/replaceorder', 'replaceOrder')->name('message.replaceorder');
     });
 
     Route::controller(PageTypesController::class)->group(function () {
@@ -474,6 +475,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/orders/upload', 'upload')->name('order.upload');
         Route::post('/orders/getcustomerdetail', 'getCustomerDetail')->name('order.getcustomerdetail');
         Route::post('/orders/savecustomer', 'saveCustomer')->name('order.savecustomer');
+        Route::post('/orders/reprintLabel', 'reprintLabel')->name('order.reprintlabel');
     });
 
     Route::controller(ShipmentsController::class)->group(function () {

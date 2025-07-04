@@ -180,6 +180,15 @@ class SyncAllOrderStatusJob implements ShouldQueue
                             }
                         }
 
+                        if (isset($orderDetail['fulfillmentStartInstructions'])) {
+                            $estimateShipmentDate = $orderDetail['fulfillmentStartInstructions'][0]['minEstimatedDeliveryDate'];
+                            $estimateDeliveryDate = $orderDetail['fulfillmentStartInstructions'][0]['maxEstimatedDeliveryDate'];
+
+                            $operation->expected_shipment_date =  date('Y-m-d H:i:s', strtotime($estimateShipmentDate));
+                            $operation->expected_delivery_date = date('Y-m-d H:i:s', strtotime($estimateDeliveryDate));
+                            $operation->save();
+                        }
+
                         if (isset($orderDetail['cancelStatus']) && $orderDetail['cancelStatus']['cancelState'] != 'NONE_REQUESTED') {
                             $order->update(['order_status' => OrderStatus::Canceled]);
                             if (!empty($operation)) {

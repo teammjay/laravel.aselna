@@ -82,6 +82,9 @@ public static $getOrders = <<<GQL
                         title
                       }
                     }
+                    shippingLine{
+                        title
+                    }
                     customer{
                         id
                         displayName

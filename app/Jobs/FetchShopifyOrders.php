@@ -203,14 +203,16 @@ class FetchShopifyOrders implements ShouldQueue
                                     //'order_status' => OrderStatus::getOrderStatusId($order['displayFulfillmentStatus']),
                                     'order_status' => $orderstatus,
                                     'order_total' => $order['totalPrice'],
-                                    'buyer_first_name' => isset($order['customer']) ? $order['customer']['firstName'] : '',
-                                    'buyer_last_name' => isset($order['customer']) ? $order['customer']['lastName'] : '',
+                                    'buyer_first_name' => isset($order['customer']) ? $order['customer']['firstName'] : NULL,
+                                    'buyer_last_name' => isset($order['customer']) ? $order['customer']['lastName'] : NULL,
                                     'buyer_email' => $order['email'],
                                     'customer_id' => $customer_detail->id,
-                                    'purchase_order_id' => isset($order['poNumber']) ? $order['poNumber'] : '',
+                                    'purchase_order_id' => isset($order['name']) ? $order['name'] : NULL,
                                     'store_id' => $store->id,
                                     'order_synchronization_id' => $order_synchronization_id,
                                     'shipping_address_id' => $customer_address->id,
+                                    'requested_shipment_service' => isset($order['shippingLine']['title']) ? $order['shippingLine']['title'] : NULL,
+                                    'requested_shipment_carrier' => 'Shopify',
                                 ];
                                 Log::info('Order Data: ' . json_encode($orderData));
 

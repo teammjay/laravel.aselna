@@ -85,6 +85,7 @@
                                 @foreach($messages as $key=>$message)
                                     <div class="time-center">{{ $message->message_date }}</div>
                                     <div class="msg-container @if(($key % 2)) darker @endif">
+                                        {{--<iframe srcdoc="{!! htmlspecialchars($message->message) !!}"></iframe>--}}
                                         {!! nl2br(html_entity_decode($message->message)) !!}
                                     </div>
 
@@ -172,7 +173,7 @@
                                         $displayReturned = 'show';
                                     }
 
-                                    if($rma_done){
+                                    if(isset($action['canbeReturned']) && $action['canbeReturned'] > 0 && !$lable_generate){
                                         $displayReturnLabel = 'show';
                                     }
 
@@ -584,8 +585,6 @@
                             alert('Error: ' + xhr.responseJSON.error);
                         }
                     });
-                }else{
-                    alert('There were no order found.');
                 }
             });
 
@@ -623,8 +622,6 @@
                             alert('Error: ' + xhr.responseJSON.error);
                         }
                     });
-                }else{
-                    alert('Please select shipment first');
                 }
             });
 
@@ -662,8 +659,6 @@
                             alert('Error: ' + xhr.responseJSON.error);
                         }
                     });
-                }else{
-                    alert('Please select shipment first');
                 }
             });
 
@@ -695,6 +690,99 @@
                         if (response.success) {
                             alert('Order shipped successfully!!');
                             location.reload();
+                        }
+                        else {
+                            alert(response.message);
+                        }
+                    },
+                    error: function (xhr) {
+                        // Handle error response
+                        if (xhr.status === 422) {
+                            let errors = xhr.responseJSON.errors;
+                            $.each(errors, function (key, messages) {
+                                alert(key + ': ' + messages[0]);
+                            });
+                        }
+                        /*const response = xhr.responseJSON;
+                        if ( response.errors) {
+                            alert(response.message);
+                        } else {
+                            alert('Error: ' + response.message);
+                        }*/
+                    }
+                });
+            });
+
+            $(document).on('click','#replacement',function () {
+                var order_id = $('#order_id').val();
+                if(order_id != '' && order_id != null){
+                    $.ajax({
+                        url: "{{ route('message.getshippingdetail') }}",
+                        type: 'POST',
+                        data: {
+                            order_id: order_id,
+                            replacement: 1,
+                            "_token": '{{ csrf_token() }}'
+                        },
+                        success: function (response) {
+                            // If success, remove the user row from the table
+                            if (response.success) {
+                                $('#replaceOrderModal').find('.modal-body').html(response.html);
+                                $('#date').datetimepicker({
+                                    format:'Y-m-d H:i',
+                                    /* minDate: 'now', */
+                                    step:10,
+                                    onSelectTime: function(dp,$input) {
+                                        var sel_date = $input.val();
+                                        $('#date').val(sel_date);
+                                    }
+                                });
+                                $('#replaceOrderModal').modal('show');
+
+                                getShippingCarrierService($('#carrier_name_ms'));
+                            }
+                        },
+                        error: function (xhr) {
+                            // Handle error response
+                            alert('Error: ' + xhr.responseJSON.error);
+                        }
+                    });
+                }
+            });
+
+
+            $(document).on('click','#submit_replace_order',function () {
+
+                const form = document.querySelector("#frmReplaceOrder");
+                let formData = new FormData(form);
+                $.ajax({
+                    url: "{{ route('message.replaceorder') }}",
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    headers: {
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    },
+                    success: function (response) {
+                        // If success, remove the user row from the table
+                        if (response.success) {
+
+                            if($('#message_to_send').val() != '' && response.template_id != ''){
+                                if (confirm("Are you sure, you want to overwrite the template?") == true) {
+                                    $('#template_id').val(response.template_id);
+                                    $('#message_to_send').html(response.template_code);
+                                } else {
+
+                                }
+                            }else if(response.template_id != ''){
+                                $('#template_id').val(response.template_id);
+                                $('#message_to_send').html(response.template_code);
+                            }
+
+                            loadOrderDetail();
+                            //alert('Order shipped successfully!!');
+                            //location.reload();
                         }
                         else {
                             alert(response.message);
@@ -888,7 +976,7 @@
 
                             if(data.action){
 
-                                if(data.action.canbeReturned && data.action.canbeReturned > 0){
+                                if(data.action.canbeReturned && data.action.canbeReturned > 0 && !data.rma_done){
                                     $('#rma').removeClass('hide').addClass('show');
                                 }else{
                                     $('#rma').removeClass('show').addClass('hide');
@@ -901,7 +989,7 @@
                                 }
 
                                 if(data.action.canbeRefund && data.action.canbeRefund > 0 && storeType != 'eBay'){
-                                    $('#refund').removeClass('hide').addClass('hide');
+                                    $('#refund').removeClass('hide').addClass('show');
                                 }else{
                                     $('#refund').removeClass('show').addClass('hide');
                                 }
@@ -921,7 +1009,7 @@
 
                             }
 
-                            if(data.rma_done){
+                            if(!data.lable_generate){
                                 $('#return_label').removeClass('hide').addClass('show');
                             }else{
                                 $('#return_label').removeClass('show').addClass('hide');

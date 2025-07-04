@@ -83,6 +83,11 @@ class OrderOperationUtility
         }
 
         if (OrderOperationType::isReturn($operationType)) {
+            self::returnOrder($orderOperation);
+            return true;
+        }
+
+        if (OrderOperationType::isRefund($operationType)) {
             self::refundOrder($orderOperation);
             return true;
         }
@@ -437,6 +442,20 @@ class OrderOperationUtility
 
                 break;
         }
+    }
+
+    private static function returnOrder($orderOperation){
+
+        if ($orderOperation->label_creation_type == ShippingLabelCreationType::CreateLabel) {
+            $errors = self::createLabel($orderOperation);
+            if (isset($errors) && !empty($errors)) {
+                Log::error('Error creating label: ' . $errors);
+                throw new \Exception('Error creating label: ' . json_encode($errors));
+            }else{
+                return true;
+            }
+        }
+
     }
 
     private static function refundOrder($orderOperation)

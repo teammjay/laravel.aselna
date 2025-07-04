@@ -158,6 +158,10 @@ class EmailMessageUtility
                     'content' => $part->content,
                     'charset' => $part->charset,
                 ];
+
+                if(str_contains($body, '<html>')){
+                    $body = $this->formatHtml($body);
+                }
                 $eData = [
                     'subject' => $message->subject->first(),
                     'full_name' => $message->fromaddress->first(),
@@ -190,6 +194,33 @@ class EmailMessageUtility
             echo '</pre>';die;*/
             return ['error' => 'Failed to fetch emails: ' . $e->getMessage()];
         }
+    }
+
+    private function formatHtml($emailHtml){
+
+        // Remove multiple <br> in a row
+        $html = preg_replace('/(<br\s*\/?>\s*){2,}/i', '<br>', $emailHtml);
+
+// Remove empty <p> and <div>
+        $html = preg_replace('/<p>\s*<\/p>/i', '', $html);
+        $html = preg_replace('/<div>\s*<\/div>/i', '', $html);
+
+        // Optionally trim spaces between tags
+        $html = preg_replace('/>\s+</', '><', $html);
+
+        $dom = new \DOMDocument();
+        libxml_use_internal_errors(true); // suppress parsing warnings
+        $dom->loadHTML($html);
+
+// Extract body content
+        $body = $dom->getElementsByTagName('body')->item(0);
+        $innerHTML = '';
+        foreach ($body->childNodes as $child) {
+            $innerHTML .= $dom->saveHTML($child);
+        }
+        libxml_clear_errors();
+
+        return $innerHTML;
     }
 
     private function parseEscalationEmail($emailBody){
