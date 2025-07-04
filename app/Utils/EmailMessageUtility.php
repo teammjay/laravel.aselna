@@ -88,12 +88,12 @@ class EmailMessageUtility
 
 
 
-    public function fetchEmails($store_type, $folderName = 'INBOX', $limit = 50)
+    public function fetchEmails($store_type, $filter_date, $folderName = 'INBOX', $limit = 50)
     {
         try {
             $this->client->connect();
 
-            $fromDate = \Carbon\Carbon::parse(date('Y-m-d', strtotime('-10 days')));
+            $fromDate = \Carbon\Carbon::parse(date('Y-m-d', strtotime($filter_date)));
             $toDate = \Carbon\Carbon::parse(date('Y-m-d'));
 
             $folder = $this->client->getFolder($folderName);

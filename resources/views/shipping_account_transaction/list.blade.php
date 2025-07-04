@@ -277,7 +277,7 @@
                                     "processing": false,
                                     "serverSide": false,
                                     "searching": false,
-                                    "paging": false,
+                                    "paging": true,
                                     "info": false,
                                     "order": [[8, "desc"]],
                                     /*columnDefs: [

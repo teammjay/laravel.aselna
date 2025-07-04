@@ -55,6 +55,8 @@ class FetchEmailMessagesJob implements ShouldQueue
 
                             if($maccount->incoming_account_id !='') {
                                 if(isset($maccount->incomingAccount)) {
+
+                                    $account = $maccount->incomingAccount;
                                     $imapConfig = [
                                         'host' => $maccount->incomingAccount->server,
                                         'port' => $maccount->incomingAccount->port,
@@ -63,15 +65,20 @@ class FetchEmailMessagesJob implements ShouldQueue
                                         'password' => $maccount->incomingAccount->password,
                                     ];
 
+                                    $filter_date = (isset($maccount->incomingAccount->filter_from_date)) ? $maccount->incomingAccount->filter_from_date : date('Y-m-d', strtotime('-15days'));
+                                    $folder = $maccount->incomingAccount->folders;
+
                                     Log::info('Imap Config :'.json_encode($imapConfig));
 
                                     $emailUtility = new EmailMessageUtility($smtpConfig, $imapConfig);
-                                    $receiveEmails = $emailUtility->fetchEmails($store_type,$maccount->incomingAccount->folders);
-
+                                    $receiveEmails = $emailUtility->fetchEmails($store_type, $filter_date, $maccount->incomingAccount->folders);
+                                    $last_filter_date = '';
                                     if(count($receiveEmails ?? []) > 0){
                                         foreach($receiveEmails as $email){
 
                                             Log::info('Emails :'.json_encode($email));
+
+                                            $last_filter_date = $email['date'];
                                             /* create ticket*/
                                             $order_id = $related_order_id = $po_no = $reason = $customer_id = $order_operation_id = $reference_code = NULL;
                                             $ticket_type_code = HdTicketTypeCode::MARKETPLACE_NOTIFICATION;
@@ -230,8 +237,10 @@ class FetchEmailMessagesJob implements ShouldQueue
                                                         'message_id' => $hd_message->id,
                                                     ], $email['parts']);
                                                 }
-
                                             }
+                                        }
+                                        if($last_filter_date != ''){
+                                            $account->update(['filter_from_date' => $last_filter_date]);
                                         }
                                     }
                                 }
