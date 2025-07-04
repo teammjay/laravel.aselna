@@ -276,7 +276,7 @@
                                     <div class="row">
                                         <div class="col-md-1"><i class="fa fa-fw fa-shipping-fast" style="font-size: 24px;"></i> </div>
                                         <div class="col-md-6" style="font-size: 18px !important;">Order Shipment On {{ date('D, d M Y',strtotime($orderOperation->ship_date)) }} </div>
-                                        <div class="col-md-5"><button class="btn btn-default w-100" type="button" name="reship" id="reship"> <i class="fas fa-fw fa-pencil-alt"></i> Re-ship</button> </div>
+                                        <div class="col-md-5"><button class="btn btn-default w-100" type="button" name="reprintlabel" id="reprintlabel" data-operation-id="{{$orderOperation->id}}"> <i class="fas fa-fw fa-pencil-alt"></i> Re-print</button> </div>
                                     </div>
                                     <div class="row pt-3">
                                         <div class="col-md-12">
@@ -511,6 +511,30 @@
                         alert('Error: ' + xhr.responseJSON.error);
                     }
                 });
+            });
+
+            $(document).on('click', '#reprintlabel', function () {
+                var operationId = $(this).data('operation-id');
+                if (operationId !== '' && operationId != null) {
+                    $.ajax({
+                        url: "{{ route('order.reprintlabel') }}",
+                        type: 'POST',
+                        data: {
+                            operation_id: operationId,
+                            "_token": '{{ csrf_token() }}'
+                        },
+                        success: function (response) {
+                            // If success, remove the user row from the table
+                            if (response.success) {
+                                window.open(response.label_url, '_blank');
+                            }
+                        },
+                        error: function (xhr) {
+                            // Handle error response
+                            alert('Error: ' + xhr.responseJSON.error);
+                        }
+                    });
+                }
             });
         });
     </script>

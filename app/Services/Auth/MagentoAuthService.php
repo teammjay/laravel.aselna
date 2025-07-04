@@ -88,6 +88,48 @@ class MagentoAuthService
         return json_decode($response->getBody(), true);
     }
 
+    public function updateProduct($prductSku, $productData)
+    {
+        $accessToken = $this->authenticate();
+        Log::info('Access Token Created ' . $accessToken);
+
+        $headers = [
+            'Content-Type' => 'application/json',
+            'Accept' => 'application/json',
+            'Authorization' => 'Bearer ' . $accessToken,
+        ];
+
+        $body = ['product' => $productData];
+        Log::info('Product Data: ' . json_encode($body));
+
+        $request = new Request('PUT', $this->endpoint . '/rest/default/V1/products/' . $prductSku, $headers);
+        $response = $this->client->sendAsync($request, ['json' => $body])->wait();
+
+        return json_decode($response->getBody(), true);
+    }
+
+    public function getProduct($sku)
+    {
+        try {
+            $accessToken = $this->authenticate();
+            Log::info('Access Token Created ' . $accessToken);
+
+            $headers = [
+                'Content-Type' => 'application/json',
+                'Accept' => 'application/json',
+                'Authorization' => 'Bearer ' . $accessToken,
+            ];
+
+            $request = new Request('GET', $this->endpoint . '/rest/V1/products/' . $sku, $headers);
+            $response = $this->client->sendAsync($request)->wait();
+
+            return json_decode($response->getBody(), true);
+        } catch (RequestException $e) {
+            Log::error('Error fetching product: ' . $e->getMessage());
+            return null;
+        }
+    }
+
     public function getBulkStatus($feed_id)
     {
         $accessToken = $this->authenticate();
