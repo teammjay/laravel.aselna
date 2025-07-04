@@ -51,12 +51,12 @@ class OrderOperation extends Model
     }
 
     public function shipFrom(){
-        return $this->belongsTo(LogisticCenter::class,'ship_from_id');
+        return $this->belongsTo(LogisticCenter::class,'ship_from_id','id');
     }
-
 
     public function store(){
 
         return $this->belongsTo(Store::class,'store_id');
     }
+
 }

@@ -241,47 +241,64 @@
                 <div class="card-header">
                     Operations
                 </div>
-                <div class="card-body p-2">
-                    <div class="container border border-dark rounded px-4 py-2">
-                        <div class="row gap-2">
-                            @foreach($orderOperations as $orderOperation)
-                                <div class="container">
-                                    <div class="shipment-card position-relative">
-                                        <div class="d-flex justify-content-between mb-2">
-                                            <div class="d-flex align-items-center">
-                                                {{--                                                <img src="https://img.icons8.com/ios-filled/50/ffffff/delivery.png" alt="Truck Icon" class="shipment-icon">--}}
-                                                <h5 class="mb-0">Order Shipment on {{ date('D, d M Y', strtotime($orderOperation->ship_date)) }}</h5>
-                                            </div>
-                                            <button class="btn btn-light btn-sm re-ship-btn disabled">
-                                                <i class="bi bi-pencil"></i> Re-Ship
-                                            </button>
-                                        </div>
 
-                                        <p class="mb-1">
-                                            @if(isset($orderDetail->customerAddress))
-{{--                                                <a href="javascript:void(0);" class="text-blue" id="edit_address"--}}
-{{--                                                   data-id="{{ $orderDetail->customerAddress->id }}">--}}
-                                                    {{ $orderDetail->customer->first_name }} {{ $orderDetail->customer->last_name }}
-                                                    {{ $orderDetail->customerAddress->address_line_1 }},<br>
-                                                    @if($orderDetail->customerAddress->address_line_2 != '')
-                                                        {{ $orderDetail->customerAddress->address_line_2 }},
-                                                    @endif
-                                                    {{ $orderDetail->customerAddress->city}}
-                                                    , {{$orderDetail->customerAddress->state}} {{$orderDetail->customerAddress->zip}}
-{{--                                                </a>--}}
+                <div class="card-body">
+                    @foreach($orderOperations as $orderOperation)
+
+                        @if(isset($orderOperation->rma_number) && ($orderOperation->rma_number != '' || $orderOperation->rma_number != null))
+                            <div class="card">
+                                <div class="card-body">
+                                    <div class="row align-items-center">
+                                        <div class="col-md-1"><i class="fa fa-fw fa-spinner" style="font-size: 18px;"></i> </div>
+                                        <div class="col-md-8">Order Return On {{ date('D, d M Y',strtotime($orderOperation->created_at)) }} </div>
+                                    </div>
+                                    <div class="row pt-3">
+                                        <div class="col-md-12">
+                                            RMA : {{ $orderOperation->rma_number }}
+                                            <input type="hidden" id="rma_number" value="{{ $orderOperation->rma_number }}">
+
+                                        </div>
+                                    </div>
+                                    @if(isset($orderOperation->shipFrom))
+                                        <div class="row pt-3">
+                                            <div class="col-md-12">
+                                                Return Location : {{ $orderOperation->shipFrom->name }}
+                                            </div>
+                                        </div>
+                                    @endif
+                                </div>
+                            </div>
+                        @endif
+
+                        @if($orderOperation->tracking_number != '' && $orderOperation->tracking_number != null)
+                            <div class="card">
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-1"><i class="fa fa-fw fa-shipping-fast" style="font-size: 24px;"></i> </div>
+                                        <div class="col-md-6" style="font-size: 18px !important;">Order Shipment On {{ date('D, d M Y',strtotime($orderOperation->ship_date)) }} </div>
+                                        <div class="col-md-5"><button class="btn btn-default w-100" type="button" name="reship" id="reship"> <i class="fas fa-fw fa-pencil-alt"></i> Re-ship</button> </div>
+                                    </div>
+                                    <div class="row pt-3">
+                                        <div class="col-md-12">
+                                            {{ $orderDetail->customer->first_name }} {{ $orderDetail->customer->last_name }}<br>
+                                            {{ $orderDetail->customerAddress->address_line_1 }},<br>
+                                            @if($orderDetail->customerAddress->address_line_2 != '')
+                                                {{ $orderDetail->customerAddress->address_line_2 }},<br>
                                             @endif
-                                        </p>
-                                        <br/>
-                                        <a href="https://tools.usps.com/go/TrackConfirmAction?tLabels={{$orderOperation->tracking_number}}" target="_blank">
-                                            <p class="mb-1 highlight">USPS {{$orderOperation->tracking_number}}</p>
-                                        </a>
-{{--                                        <p class="mb-1">Reference Id = 4081760731330</p>--}}
-{{--                                        <p>Status = Accepted</p>--}}
+                                            {{ $orderDetail->customerAddress->city}}, {{$orderDetail->customerAddress->state}} {{$orderDetail->customerAddress->zip}}
+                                        </div>
+                                    </div>
+                                    <div class="row pt-3">
+                                        <div class="col-md-12">
+                                            @if(isset($orderOperation->tracking_number))
+                                                <a href="" class="text-blue">{{ isset($orderOperation->carrier) ? $orderOperation->carrier->name : '' }} {{ $orderOperation->tracking_number }}</a>
+                                            @endif
+                                        </div>
                                     </div>
                                 </div>
-                            @endforeach
-                        </div>
-                    </div>
+                            </div>
+                        @endif
+                    @endforeach
                 </div>
             </div>
         </div>

@@ -49,6 +49,9 @@ class OrderOperationUtility
             'weight_value' => $weight,
             'weight_weight_unit' => $weight_type,
         );
+        if(isset($request['products_rubber_stamp']) && $request['products_rubber_stamp'] != ''){
+            $updateRecord['products_rubber_stamp'] = $request['products_rubber_stamp'];
+        }
         $orderOperation->update($updateRecord);
 
 
@@ -80,6 +83,11 @@ class OrderOperationUtility
         }
 
         if (OrderOperationType::isReturn($operationType)) {
+            self::returnOrder($orderOperation);
+            return true;
+        }
+
+        if (OrderOperationType::isRefund($operationType)) {
             self::refundOrder($orderOperation);
             return true;
         }
@@ -434,6 +442,20 @@ class OrderOperationUtility
 
                 break;
         }
+    }
+
+    private static function returnOrder($orderOperation){
+
+        if ($orderOperation->label_creation_type == ShippingLabelCreationType::CreateLabel) {
+            $errors = self::createLabel($orderOperation);
+            if (isset($errors) && !empty($errors)) {
+                Log::error('Error creating label: ' . $errors);
+                throw new \Exception('Error creating label: ' . json_encode($errors));
+            }else{
+                return true;
+            }
+        }
+
     }
 
     private static function refundOrder($orderOperation)
