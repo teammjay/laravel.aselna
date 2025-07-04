@@ -184,8 +184,8 @@ class SyncAllOrderStatusJob implements ShouldQueue
                             $estimateShipmentDate = $orderDetail['fulfillmentStartInstructions'][0]['minEstimatedDeliveryDate'];
                             $estimateDeliveryDate = $orderDetail['fulfillmentStartInstructions'][0]['maxEstimatedDeliveryDate'];
 
-                            $operation->estimate_shipment_date = $estimateShipmentDate;
-                            $operation->estimate_delivery_date = $estimateDeliveryDate;
+                            $operation->expected_shipment_date =  date('Y-m-d H:i:s', strtotime($estimateShipmentDate));
+                            $operation->expected_delivery_date = date('Y-m-d H:i:s', strtotime($estimateDeliveryDate));
                             $operation->save();
                         }
 

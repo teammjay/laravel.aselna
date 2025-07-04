@@ -44,13 +44,13 @@ class ShippingAccountsSyncJob implements ShouldQueue
                 }
             });
 
-        DB::connection('easyesale_db')->table('shipping_account_transaction')
-            ->orderBy('create_ts', 'desc')
-            ->chunk(100, function ($shippingAccountTransactions) {
-                foreach ($shippingAccountTransactions as $shippingAccountTransaction) {
-                     $this->createSyncShippingAccountTransaction($shippingAccountTransaction);
-                }
-            });
+//        DB::connection('easyesale_db')->table('shipping_account_transaction')
+//            ->orderBy('create_ts', 'desc')
+//            ->chunk(100, function ($shippingAccountTransactions) {
+//                foreach ($shippingAccountTransactions as $shippingAccountTransaction) {
+//                     $this->createSyncShippingAccountTransaction($shippingAccountTransaction);
+//                }
+//            });
     }
 
     private function createSyncShippingAccount(mixed $shippingAccount)

@@ -665,7 +665,7 @@ class EbayAuthService
 
             $accessToken = $this->refreshToken();
 
-            $response = $this->client->post("/sell/fulfillment/v1/order/".$orderID, [
+            $response = $this->client->get("/sell/fulfillment/v1/order/".$orderID, [
                 'verify' => false,
                 'headers' => [
                     'Authorization' => 'Bearer ' . $accessToken,
