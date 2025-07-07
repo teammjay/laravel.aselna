@@ -19,6 +19,7 @@
                 </div>
             </td>
             <td>{{ $shipment['status'] }}</td>
+            <td>{{ $shipment['carrier_package'] }}</td>
             <td>{{ $shipment['carrier_service'] }}</td>
             <td>{{ $shipment['store'] }}</td>
             <td>{{ $shipment['order_id'] }}</td>

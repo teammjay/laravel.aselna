@@ -162,8 +162,8 @@
                                 <div class="btn-group" role="group">
                                     <button id="btnGroupDrop1" type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="fa fa-paper-plane"></i> Submit</button>
                                     <div class="dropdown-menu" aria-labelledby="btnGroupDrop1">
-                                        <a class="dropdown-item submit_message" href="#" data-close="1">Submit and close ticket</a>
-                                        <a class="dropdown-item submit_message" href="#" data-close="1">Submit and open ticket</a>
+                                        <a class="dropdown-item submit_message" href="#" data-close="1">Submit and Close Ticket</a>
+                                        <a class="dropdown-item submit_message" href="#" data-close="0">Submit and Leave Ticket Open</a>
                                     </div>
                                 </div>
                                 {{--<button type="button" class="btn btn-primary" name="submit_message" id="submit_message"><i class="fa fa-paper-plane"></i> Submit</button>--}}
@@ -555,7 +555,20 @@
 
                     success: function(data) {
                         if(data.success){
-                            $('#message_to_send').html(data.templateCode);
+
+                            if($('#message_to_send').val() != '' && data.templateCode != ''){
+                                if (confirm("Are you sure, you want to overwrite the template?") == true) {
+                                    $('#template_id').val(data.template_id);
+                                    $('#message_to_send').html(data.templateCode);
+                                } else {
+
+                                }
+                            }else if(data.templateCode != ''){
+                                $('#template_id').val(data.template_id);
+                                $('#message_to_send').html(data.templateCode);
+                            }
+
+                            //$('#message_to_send').html(data.templateCode);
                         }
                     },
                     error: function (xhr) {
@@ -928,6 +941,29 @@
                     }
                 });
             });
+
+            $('#attach_file').on('change', function() {
+                let formData = new FormData();
+                formData.append('attach_file', this.files[0]);
+
+                $.ajax({
+                    url: '{{ route("message.imageupload") }}',
+                    type: 'POST',
+                    data: formData,
+                    contentType: false,
+                    processData: false,
+                    headers: {
+                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                    },
+                    success: function(response) {
+                        alert(response.success);
+                    },
+                    error: function(xhr) {
+                        alert('Upload failed');
+                    }
+                });
+            });
+
 
         });
 
