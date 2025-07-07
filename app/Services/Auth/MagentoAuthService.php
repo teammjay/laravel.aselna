@@ -14,6 +14,8 @@ class MagentoAuthService
     protected $clientId;
     protected $clientSecret;
     protected $endpoint;
+    protected $expireTime;
+    protected $accessToken;
 
     public function __construct($clientId, $clientSecret)
     {
@@ -26,6 +28,10 @@ class MagentoAuthService
 
     public function authenticate()
     {
+        if(isset($this->accessToken) && $this->expireTime > time()) {
+            return $this->accessToken;
+        }
+
         $headers = [
             'Content-Type' => 'application/json',
             'Accept' => 'application/json',
@@ -44,7 +50,8 @@ class MagentoAuthService
         Log::info('Response: ' . $res->getBody());
 
         $data = json_decode($res->getBody(), true);
-
+        $this->accessToken = $data;
+        $this->expireTime = time() + 600;
         return $data ?? null;
     }
 
@@ -292,7 +299,7 @@ class MagentoAuthService
             $accessToken = $this->authenticate();
             Log::info('Access Token Created ' . $accessToken);
 
-            $response = $this->client->get($this->endpoint."/rest/V1/orders", [
+            $response = $this->client->get($this->endpoint . "/rest/V1/orders", [
                 'verify' => false,
                 'headers' => [
                     'Content-Type' => 'application/json',
@@ -313,5 +320,64 @@ class MagentoAuthService
                 'message' => $e->getMessage()
             ];
         }
+    }
+
+    public function addChildProductToParent($parentSku, $childSku)
+    {
+        $accessToken = $this->authenticate();
+        Log::info('Access Token Created ' . $accessToken);
+
+        $headers = [
+            'Content-Type' => 'application/json',
+            'Accept' => 'application/json',
+            'Authorization' => 'Bearer ' . $accessToken,
+        ];
+
+        $body = ['childSku' => $childSku];
+
+        Log::info('Child Product Data: ' . json_encode($body));
+
+        $request = new Request('POST', $this->endpoint . '/rest/default/V1/configurable-products/' . $parentSku . '/child', $headers);
+        $response = $this->client->sendAsync($request, ['json' => $body])->wait();
+
+        return json_decode($response->getBody(), true);
+    }
+
+    public function getAllOptions($parentSku)
+    {
+        $accessToken = $this->authenticate();
+        Log::info('Access Token Created ' . $accessToken);
+
+        $headers = [
+            'Content-Type' => 'application/json',
+            'Accept' => 'application/json',
+            'Authorization' => 'Bearer ' . $accessToken,
+        ];
+
+        $request = new Request('GET', $this->endpoint . '/rest/default/V1/configurable-products/' . $parentSku . '/options', $headers);
+        $response = $this->client->sendAsync($request)->wait();
+
+        return json_decode($response->getBody(), true);
+    }
+
+    public function addOptionstoParent($parentSku, $data)
+    {
+        $accessToken = $this->authenticate();
+        Log::info('Access Token Created ' . $accessToken);
+
+        $headers = [
+            'Content-Type' => 'application/json',
+            'Accept' => 'application/json',
+            'Authorization' => 'Bearer ' . $accessToken,
+        ];
+
+        $body = ['option' => $data];
+
+        Log::info('Child Product Data: ' . json_encode($body));
+
+        $request = new Request('POST', $this->endpoint . '/rest/default/V1/configurable-products/' . $parentSku . '/options', $headers);
+        $response = $this->client->sendAsync($request, ['json' => $body])->wait();
+
+        return json_decode($response->getBody(), true);
     }
 }
