@@ -308,6 +308,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/messages/getcancelorderdetail', 'getCancelOrderDetail')->name('message.getcancelorderdetail');
         Route::post('/messages/returnlabel', 'returnLabel')->name('message.returnlabel');
         Route::post('/messages/replaceorder', 'replaceOrder')->name('message.replaceorder');
+        Route::post('/messages/imageupload', 'imageUpload')->name('message.imageupload');
     });
 
     Route::controller(PageTypesController::class)->group(function () {

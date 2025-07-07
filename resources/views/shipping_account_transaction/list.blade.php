@@ -16,14 +16,7 @@
     @if (session('error'))
         <div class="alert alert-danger alert-dismissible fade show">{{ session('error') }}</div>
     @endif
-    <div class="row my-3">
-        <div class="col-md-2">
-            <button class="btn btn-primary" id="cancleLabel">
-                Void
-            </button>
-        </div>
 
-    </div>
 
     <div class="card card-default">
         <div class="card-header">
@@ -139,6 +132,18 @@
 
             </form>
         </div>
+    </div>
+
+    <div class="row my-3">
+        <div class="col-md-2">
+            <button class="btn btn-primary" id="cancleLabel">
+                Void
+            </button>
+            <button class="btn btn-secondary" id="reprintLabel">
+                Re-print
+            </button>
+        </div>
+
     </div>
 
 

@@ -552,12 +552,13 @@ class MessagesController extends Controller
                     'marketplaceName' => '',
                     'shipment_address' => '',
                     'trackingNumber' => '',
-                    'return_address' => nl2br($returnAddress),
+                    'return_address' => $returnAddress,
                     'rma_number' => (isset($rma_number) && $rma_number != '') ? $rma_number : '',
                 ];
                 $template_code = \Blade::render($templateDetail->template_code, $data);
                 return response()->json([
                     'success' => true,
+                    'template_id' => $templateDetail,
                     'templateCode' => $template_code
                 ]);
             }
@@ -660,8 +661,14 @@ class MessagesController extends Controller
 
                 $imapConfig = [];
 
+                $filename = '1751883676.jpg';
+                $filepath = public_path('images/').$filename;
+
+                //echo file_exists($filepath);die;
+                //echo $filepath;die;
+
                 $connector = new EmailMessageUtility($smtpConfig, $imapConfig);
-                $response = $connector->sendEmail('jayesh@mjailab.com','Test Mail',$message_to_send);
+                $response = $connector->sendEmail('jayesh@mjailab.com','Test Mail',$message_to_send, 'CAB3DxwfKHcaot+XFxHBW6Teiq38dDaHs2UU2UqipkfbHnYr+sg@mail.gmail.com', $filepath);
 
                 if($response){
                     if($is_closed){
@@ -1007,7 +1014,21 @@ class MessagesController extends Controller
             'template_id' => $template_id,
             'template_code' => $template_code,
         ]);
+    }
 
+    public function imageUpload(Request $request){
+
+        $request->validate([
+            'attach_file' => 'required|image|mimes:jpeg,png,jpg|max:4096'
+        ]);
+
+        $imageName = time().'.'.$request->attach_file->extension();
+        $request->attach_file->move(public_path('images'), $imageName);
+
+        return response()->json([
+            'success' => true,
+            'image' => $imageName
+        ]);
 
     }
 }
