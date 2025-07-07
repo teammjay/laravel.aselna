@@ -494,6 +494,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/shipment/markshipped', 'markShipped')->name('shipment.markshipped');
         Route::post('/shipment/shipselected', 'shipSelected')->name('shipment.shipselected');
         Route::post('/shipment/shipthis', 'shipThis')->name('shipment.shipthis');
+        Route::post('/shipment/updateshipment', 'updateShipment')->name('shipment.updateshipment');
     });
 
     Route::controller(ShippingCarrierPackageController::class)->group(function () {
