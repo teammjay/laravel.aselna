@@ -55,6 +55,7 @@ class ShipmentsController extends Controller
             'carrierService:id,name,shipping_carrier_id',
             'carrierService.ShippingCarrier',
             'store:id,name,store_type_id',
+            'shippingPackage:id,name',
         ])->select('order_operation.*', 'order_operation.id as oid');
 
         $query->where('order_operation.status', 0);
@@ -160,6 +161,7 @@ class ShipmentsController extends Controller
                     "imagename" => (!empty($imagename)) ? $imagename : '',
                     "product_id" => (!empty($product_ids)) ? $product_ids : '',
                     "status" => '',
+                    "carrier_package" => isset($order->shippingPackage) ? $order->shippingPackage->name : '',
                     "carrier_service" => isset($order->carrierService) ? $order->carrierService->ShippingCarrier->name . ' ' . $order->carrierService->name : '',
                     "store" => $order->store->name . ' - ' . $storeType,
                     "order_id" => isset($order->order) ? $order->order->order_id : '',
@@ -282,7 +284,7 @@ class ShipmentsController extends Controller
                         if ($product_detail->product_weight > $product_weight) {
                             $package_id = $product_detail->shipping_package_id;
                         }
-                        if ($package_id) {
+                        if ($package_id && $shipmentDetail->shipping_package_id == NULL) {
                             $shipmentDetail->shipping_package_id = $package_id;
                             $shipmentDetail->save();
 //                          $shippingPackage = ShippingPackage::findOrFail($package_id);
@@ -612,6 +614,43 @@ class ShipmentsController extends Controller
 
         return response()->json([
             'success' => true
+        ]);
+    }
+
+    public function updateShipment(Request $request)
+    {
+        $order_operation_id = $request->input('id');
+        $carrier_id = $request->input('carrier_name');
+        $carrier_service_id = $request->input('shipment_carrier');
+        $shipping_package_id = $request->input('carrier_package');
+        $ship_date = $request->input('ship_date');
+        $ship_from = $request->input('shipment_from');
+        $insurance_value = $request->input('insurance_value');
+        $weight_value = $request->input('weight_value');
+        $weight_type = $request->input('weight_type');
+
+        if ($order_operation_id) {
+            $updateRecord = array(
+                'ship_date' => $ship_date,
+                'shipping_carrier_id' => $carrier_id,
+                'shipping_carrier_service_id' => $carrier_service_id,
+                'shipping_package_id' => $shipping_package_id,
+                'ship_from_id' => $ship_from,
+                'insurance_value' => $insurance_value,
+                'weight_value' => $weight_value,
+                'weight_weight_unit' => $weight_type,
+            );
+
+            $orderOperation = OrderOperation::findOrFail($order_operation_id);
+            if($orderOperation){
+                $orderOperation->update($updateRecord);
+            }
+            return response()->json([
+                'success' => true
+            ]);
+        }
+        return response()->json([
+            'success' => false
         ]);
     }
 }

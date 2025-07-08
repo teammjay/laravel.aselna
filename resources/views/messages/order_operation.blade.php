@@ -8,12 +8,12 @@
                         <div class="col-md-10">Order Replacement On {{ date('D, d M Y',strtotime($order_operation->created_at)) }} </div>
 
                     </div>
-                    <div class="row pt-3">
+                    <div class="row pt-2">
                         <div class="col-md-12">
                             Shipped on {{ date('D, d M Y',strtotime($order_operation->created_at)) }}
                         </div>
                     </div>
-                    <div class="row pt-3">
+                    <div class="row pt-2">
                         <div class="col-md-12">
                             @if(isset($order_operation->tracking_number))
                                 <a href="" class="text-blue">{{ isset($order_operation->carrier) ? $order_operation->carrier->name : '' }} {{ $order_operation->tracking_number }}</a>
@@ -39,17 +39,17 @@
                             </div>
                         </div>
                     </div>
-                    <div class="row pt-3">
+                    <div class="row pt-2">
                         <div class="col-md-12">
                             RMA : {{ $order_operation->rma_number }}
                             <input type="hidden" id="rma_number" value="{{ $order_operation->rma_number }}">
 
                         </div>
                     </div>
-                    @if(isset($orderOperation->shipFrom))
-                    <div class="row pt-3">
+                    @if(isset($order_operation->shipFrom))
+                    <div class="row pt-2">
                         <div class="col-md-12">
-                            Return Location : {{ $orderOperation->shipFrom->name }}
+                            Return Location : {{ $order_operation->shipFrom->name }}
                         </div>
                     </div>
                         @endif
@@ -65,7 +65,7 @@
                         <div class="col-md-7">Order Shipment On {{ date('D, d M Y',strtotime($order_operation->ship_date)) }} </div>
                         <div class="col-md-4"><button class="btn btn-default w-100" type="button" name="reship" id="reship"> <i class="fas fa-fw fa-pencil-alt"></i> Re-ship</button> </div>
                     </div>
-                    <div class="row pt-3">
+                    <div class="row pt-2">
                         <div class="col-md-12">
                             {{ $orderDetail->customer->first_name }} {{ $orderDetail->customer->last_name }}<br>
                             {{ $orderDetail->customerAddress->address_line_1 }},<br>
@@ -75,7 +75,7 @@
                             {{ $orderDetail->customerAddress->city}}, {{$orderDetail->customerAddress->state}} {{$orderDetail->customerAddress->zip}}
                         </div>
                     </div>
-                    <div class="row pt-3">
+                    <div class="row pt-2">
                         <div class="col-md-12">
                             @if(isset($order_operation->tracking_number))
                                 <a href="" class="text-blue">{{ isset($order_operation->carrier) ? $order_operation->carrier->name : '' }} {{ $order_operation->tracking_number }}</a>
@@ -83,7 +83,7 @@
                         </div>
                     </div>
 
-                    <div class="row pt-3">
+                    <div class="row pt-2">
                         <div class="col-md-12">
                             Status = {{ \App\Constants\OrderOperationStatus::getOrderStatusName($order_operation->status) }}
                         </div>
