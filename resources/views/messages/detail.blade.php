@@ -137,6 +137,14 @@
                                         </div>
                                         <div class="col-md-2">
                                             <input type="file" class="btn btn-default" name="attach_file" id="attach_file">
+                                            <input type="hidden" id="image_url">
+                                            <div class="btn-group lableImageGroup hide" role="group">
+                                                <button id="btnGroupDrop2" type="button" class="btn btn-primary lable-image dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"></button>
+                                                <div class="dropdown-menu" aria-labelledby="btnGroupDrop2">
+                                                    <a class="dropdown-item download_image" href="javascript:void(0);" data-close="1">Download</a>
+                                                    <a class="dropdown-item delete_images" href="javascript:void(0);" data-close="0">Delete</a>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                     <div class="row pt-3">
@@ -162,8 +170,8 @@
                                 <div class="btn-group" role="group">
                                     <button id="btnGroupDrop1" type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="fa fa-paper-plane"></i> Submit</button>
                                     <div class="dropdown-menu" aria-labelledby="btnGroupDrop1">
-                                        <a class="dropdown-item submit_message" href="#" data-close="1">Submit and Close Ticket</a>
-                                        <a class="dropdown-item submit_message" href="#" data-close="0">Submit and Leave Ticket Open</a>
+                                        <a class="dropdown-item submit_message" href="javascript:void(0);" data-close="1">Submit and Close Ticket</a>
+                                        <a class="dropdown-item submit_message" href="javascript:void(0);" data-close="0">Submit and Leave Ticket Open</a>
                                     </div>
                                 </div>
                                 {{--<button type="button" class="btn btn-primary" name="submit_message" id="submit_message"><i class="fa fa-paper-plane"></i> Submit</button>--}}
@@ -706,8 +714,25 @@
                     success: function (response) {
                         // If success, remove the user row from the table
                         if (response.success) {
-                            alert('Order shipped successfully!!');
-                            location.reload();
+
+                            if($('#message_to_send').val() != '' && response.templateCode != ''){
+                                if (confirm("Are you sure, you want to overwrite the template?") == true) {
+                                    $('#template_id').val(response.template_id);
+                                    $('#message_to_send').html(response.templateCode);
+                                }
+                            }else if(data.templateCode != ''){
+                                $('#template_id').val(response.template_id);
+                                $('#message_to_send').html(response.templateCode);
+                            }
+
+                            if(response.image_url){
+                                $('.lableImageGroup').removeClass('hide');
+                                $('#image_url').val(response.image_url);
+                                $('.lable-image').html(response.image_name);
+                            }
+
+                            loadOrderDetail();
+
                         }
                         else {
                             alert(response.message);

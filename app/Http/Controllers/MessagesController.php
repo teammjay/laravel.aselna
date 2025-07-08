@@ -508,19 +508,24 @@ class MessagesController extends Controller
         $rma_number = $request->input('rma_number');
         $operation_id = $request->input('operation_id');
         if($template_id || $rma_number != ''){
-            if($rma_number){
-                $templateDetail = HdMessageTemplate::whereLike('name','%Return Without Label%')->first();
-            }else {
-                $templateDetail = HdMessageTemplate::findOrFail($template_id);
-            }
+
 
             $returnAddress = "";
 
             if(isset($operation_id) && $operation_id != ''){
-                $orderOperation = OrderOperation::with('shipFrom','shipFrom.returnAddress')->where('id',$operation_id)->first();
+                $orderOperation = OrderOperation::with('shipFrom','shipFrom.returnAddress','carrier','store')->where('id',$operation_id)->first();
                 /*echo '<pre>';
                 print_r($orderOperation);
                 echo '</pre>';die;*/
+
+                if($orderOperation->operation_type == OrderOperationType::OrderReturn && $orderOperation->tracking_number){
+                    $templateDetail = HdMessageTemplate::getOrderOperationTemplate(OrderOperationType::OrderReturn, 0, 1);
+                }else if($orderOperation->operation_type == OrderOperationType::OrderReturn && $orderOperation->rma_number){
+                    $templateDetail = HdMessageTemplate::getOrderOperationTemplate(OrderOperationType::OrderReturn, 0, 0);
+                }else {
+                    $templateDetail = HdMessageTemplate::findOrFail($template_id);
+                }
+
                 if(isset($orderOperation->shipFrom->returnAddress) && $orderOperation->shipFrom->returnAddress->company != ''){
                     $returnAddress .= trim($orderOperation->shipFrom->returnAddress->company).PHP_EOL;
                 }
@@ -543,24 +548,24 @@ class MessagesController extends Controller
                     $returnAddress .= '-'.trim($orderOperation->shipFrom->returnAddress->postal_code).PHP_EOL;
                 }
 
-            }
-
-            if($templateDetail){
-                $data = [
-                    'customer_firstName' => $customer_name,
-                    'store_name' => $store_name,
-                    'marketplaceName' => '',
-                    'shipment_address' => '',
-                    'trackingNumber' => '',
-                    'return_address' => $returnAddress,
-                    'rma_number' => (isset($rma_number) && $rma_number != '') ? $rma_number : '',
-                ];
-                $template_code = \Blade::render($templateDetail->template_code, $data);
-                return response()->json([
-                    'success' => true,
-                    'template_id' => $templateDetail,
-                    'templateCode' => $template_code
-                ]);
+                if($templateDetail){
+                    $data = [
+                        'customer_firstName' => $customer_name,
+                        'store_name' => $store_name,
+                        'marketplaceName' => '',
+                        'shipment_address' => '',
+                        'trackingNumber' => isset($orderOperation->tracking_number) ? $orderOperation->tracking_number : '',
+                        'return_address' => $returnAddress,
+                        'carrier_name' => isset($orderOperation->carrier) ? $orderOperation->carrier->name : '',
+                        'rma_number' => (isset($rma_number) && $rma_number != '') ? $rma_number : '',
+                    ];
+                    $template_code = \Blade::render($templateDetail->template_code, $data);
+                    return response()->json([
+                        'success' => true,
+                        'template_id' => $templateDetail,
+                        'templateCode' => $template_code
+                    ]);
+                }
             }
         }
 
@@ -900,9 +905,9 @@ class MessagesController extends Controller
 
         $request['label_generation'] = 1;
 
-        $orderOperations = OrderOperation::with('order', 'store', 'store.storeType')->where('id', $request->id)->get();
+        $orderOperation = OrderOperation::with('order', 'order.customer', 'store', 'store.storeType','carrier')->where('id', $request->id)->first();
 
-        $isSuccess = OrderOperationUtility::processShipment($orderOperations, $request);
+        $isSuccess = OrderOperationUtility::processShipment($orderOperation, $request);
 
         if (!$isSuccess) {
             return response()->json([
@@ -911,8 +916,27 @@ class MessagesController extends Controller
             ]);
         }
 
+        $templateDetail = HdMessageTemplate::getOrderOperationTemplate(OrderOperationType::OrderReturn, 0, 1);
+        if ($templateDetail) {
+            $data = [
+                'customer_firstName' => isset($orderOperation->order->customer) ? $orderOperation->order->customer->full_name : '',
+                'store_name' => isset($orderOperation->store) ? $orderOperation->store->name : '',
+                'carrier_name ' => isset($orderOperation->carrier) ? $orderOperation->carrier->name : ''
+            ];
+            $template_id = $templateDetail->id;
+            $template_code = \Blade::render($templateDetail->template_code, $data);
+        }
+
+        $orderOperation = OrderOperation::with('order', 'store', 'store.storeType')->where('id', $request->id)->first();
+        $imageName = $orderOperation->tracking_number.'.jpg';
+        $imageUrl = asset('storage/labels/' .$imageName );
+
         return response()->json([
-            'success' => true
+            'success' => true,
+            'image_name' => $imageName,
+            'image_url' => $imageUrl,
+            'template_id' => $template_id,
+            'template_code' => $template_code
         ]);
     }
 
