@@ -50,7 +50,7 @@ class MagentoProductsSyncJob implements ShouldQueue
 
                 Catalog::select('*')->with('productType', 'productKeyFeatures', 'productColor')
                     ->whereNotIn('product_type', $productTypes)
-                    ->where('product_sku', 'V12')
+                    ->where('product_sku', 'M42')
                     ->whereNotIn('product_id', $pIds)
                     ->orderBy('created_at', 'desc')
                     ->chunk(100, function ($products) use ($store) {
@@ -118,6 +118,9 @@ class MagentoProductsSyncJob implements ShouldQueue
 
         $productName = $productTitle . ' - ' . trim($productKeywords) . ' - ' . $store->short_code . $productData->product_sku;
 
+        $mediaGallerEntries = $this->getMediaGalleryEntries($productData, $store);
+        Log::info('Media Gallery Entries: ' . json_encode($mediaGallerEntries));
+
         $finalProductData = [
             "attribute_set_id" => 4,
             "status" => 1,
@@ -156,7 +159,8 @@ class MagentoProductsSyncJob implements ShouldQueue
                     "qty" => 100,
                     "is_in_stock" => true
                 ]
-            ]
+            ],
+            "media_gallery_entries" => $mediaGallerEntries
         ];
 
         $response = $this->magentoService->createOrUpdateProduct($finalProductData, $store);
@@ -284,6 +288,56 @@ class MagentoProductsSyncJob implements ShouldQueue
                 'upload_attempts' => 1
             ]
         );
+    }
+
+    private function getMediaGalleryEntries($productData, $store)
+    {
+        $mediaGalleryEntries = [];
+        ProductImages::where('product_id', $productData->product_id)
+            ->chunk(100, function ($productImages) use ($store, $productData, $mediaGalleryEntries) {
+                foreach ($productImages as $productImage) {
+                    $Image = $productImage->imageObj;
+                    $localFilePath = storage_path('app/public/' . $Image->location . $Image->name);
+                    $base64Image = base64_encode(file_get_contents($localFilePath));
+
+                    $imageEntry = [
+                        "media_type" => "image",
+                        "label" => $Image->name,
+                        "position" => 0,
+                        "disabled" => false,
+                        "content" => [
+                            "base64_encoded_data" => $base64Image,
+                            "type" => 'image/jpeg',
+                            "name" => $Image->name
+                        ]
+                    ];
+                    if ($productImage->main_image) {
+                        $imageEntry['types'][] = 'image';
+                        $imageEntry['types'][] = 'small_image';
+
+                        $thumbnailImage = $productImage->thumbnailImageObj;
+                        if ($thumbnailImage) {
+                            $thumbnailLocalFilePath = storage_path('app/public/' . $thumbnailImage->location . $thumbnailImage->name);
+                            $base64ThumbnailImage = base64_encode(file_get_contents($thumbnailLocalFilePath));
+                            $thumbnailImageEntry = [
+                                "media_type" => "image",
+                                "label" => $thumbnailImage->name,
+                                "position" => 0,
+                                "disabled" => false,
+                                'types' => ['thumbnail'],
+                                "content" => [
+                                    "base64_encoded_data" => $base64ThumbnailImage,
+                                    "type" => 'image/jpeg',
+                                    "name" => $thumbnailImage->name
+                                ]
+                            ];
+                            $mediaGalleryEntries[] = $thumbnailImageEntry;
+                        }
+                    }
+                    $mediaGalleryEntries[] = $imageEntry;
+                }
+            });
+        return $mediaGalleryEntries;
     }
 
 }
