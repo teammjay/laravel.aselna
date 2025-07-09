@@ -45,13 +45,13 @@ class MagentoProductsSyncJob implements ShouldQueue
                 Log::info('Store : ' . $store->name);
 
                 $pIds = ManageMarketplaceProduct::select('product_id')->whereNull('parent_id')->whereIn('upload_status', ['success', 'failed'])->get();
-
                 $productTypes = ProductType::select('id')->where('code', 'ceabundle')->get()->toArray();
 
                 $products = Catalog::select('*')->with('productType', 'productKeyFeatures', 'productColor')
                     ->whereNotIn('product_type', $productTypes)
                     ->whereNotIn('product_id', $pIds)
                     ->orderBy('created_at', 'desc')
+                    ->whereNull('parent_id')
                     ->limit(10)
                     ->get();
                 foreach ($products as $product) {
