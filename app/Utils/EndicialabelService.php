@@ -2,6 +2,7 @@
 
 namespace App\Utils;
 
+use App\Constants\OrderOperationType;
 use App\Models\AccountTransaction;
 use App\Models\OrderOperation;
 use GuzzleHttp\Client;
@@ -98,31 +99,42 @@ class EndicialabelService
 
         try {
             $imageData = base64_decode($base64Image);
-            $imagePath = storage_path('app/public/labels/' . $trackingNumber . '.txt');
+
+            $operation_type = $orderOperation->operation_type;
+            if (OrderOperationType::isReturn($operation_type)) {
+                $imagePath = storage_path('app/public/labels/' . $trackingNumber . '.jpg');
+            }else{
+                $imagePath = storage_path('app/public/labels/' . $trackingNumber . '.txt');
+            }
             file_put_contents($imagePath, $imageData);
 
-            if (isset($shippingDetail['RubberStamp3'])) {
-                $this->generateStampText($imagePath,$imageData, $shippingDetail['RubberStamp3']);
+            if (OrderOperationType::isReturn($operation_type)) {
+
+                if (isset($shippingDetail['RubberStamp3'])) {
+                    $this->generateStampImage($imagePath, $shippingDetail['RubberStamp3']);
+                }
+
+            }else {
+
+                if (isset($shippingDetail['RubberStamp3'])) {
+                    $this->generateStampText($imagePath,$imageData, $shippingDetail['RubberStamp3']);
+                }
+
+                $imageUrl = asset('storage/labels/' . $trackingNumber . '.txt');
+                Log::info('Label image saved to: ' . $imageUrl);
+
+                DB::connection('aselna_printer_db')->table('PrintJobs')->insert([
+                    'id' => (string)Str::uuid(),
+                    'fileName' => $trackingNumber . '.txt',
+                    'filePath' => $imageUrl,
+                    'status' => 'pending',
+                    'createdAt' => now(),
+                    'updatedAt' => now(),
+                    'fileSize' => 0,
+                    'printerId' => $shippingDetail['printerId'] ?? null,
+                    'systemId' => $shippingDetail['systemId'] ?? null,
+                ]);
             }
-
-//            if (isset($shippingDetail['RubberStamp3'])) {
-//                $this->generateStampImage($imagePath, $shippingDetail['RubberStamp3']);
-//            }
-
-            $imageUrl = asset('storage/labels/' . $trackingNumber . '.txt');
-            Log::info('Label image saved to: ' . $imageUrl);
-
-            DB::connection('aselna_printer_db')->table('PrintJobs')->insert([
-                'id' => (string)Str::uuid(),
-                'fileName' => $trackingNumber . '.txt',
-                'filePath' => $imageUrl,
-                'status' => 'pending',
-                'createdAt' => now(),
-                'updatedAt' => now(),
-                'fileSize' => 0,
-                'printerId' => $shippingDetail['printerId'] ?? null,
-                'systemId' => $shippingDetail['systemId'] ?? null,
-            ]);
 
 
         } catch (Exception $e) {

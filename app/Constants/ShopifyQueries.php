@@ -385,4 +385,31 @@ public static $refundOrder =<<<GQL
     }
 GQL;
 
+
+public static $getProducts =<<<GQL
+    query GetProducts {
+        products(first: 100, after: \$cursor) {
+            nodes {
+                id
+                title
+            }
+            variants (first: 10){
+                edges {
+                    node {
+                      title
+                      quantity
+                      sku
+                    }
+                  }
+            }
+            pageInfo {
+                hasPreviousPage
+                hasNextPage
+                startCursor
+                endCursor
+            }
+        }
+    }
+GQL;
+
 }

@@ -109,6 +109,11 @@ class SubmitShopifyProductsJob implements ShouldQueue
             Log::info('Product Update : ' . json_encode($response));
 
             if (isset($response['data']) && empty($response['data']['userErrors'])) {
+
+                $proDetail->update([
+                    'upload_status' => 'success'
+                ]);
+
                 return true;
             }else{
                 return false;
@@ -116,13 +121,17 @@ class SubmitShopifyProductsJob implements ShouldQueue
 
         }else {
 
+            $sku = StoreTypeListing::generateUniqueAlphabeticSku($productData->product_sku, 6);
+
             $ManageMarketplaceProduct = ManageMarketplaceProduct::updateOrCreate([
                 'product_id' => $productData->product_id,
                 'product_code' => $productData->product_sku,
                 'store_id' => $store->id,
+                'sku' => $sku,
             ], [
                 'product_id' => $productData->product_id,
                 'product_code' => $productData->product_sku,
+                'sku' => $sku,
                 'store_id' => $store->id,
                 'upload_status' => 'pending',
                 'upload_attempts' => 1,

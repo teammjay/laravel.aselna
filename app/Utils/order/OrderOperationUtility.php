@@ -183,9 +183,13 @@ class OrderOperationUtility
             return 'Shipping account not found for order operation.';
         }
 
-        $shipmentDetails['ImageRotation'] = 'Rotate180';
+        if (OrderOperationType::isReturn($operation_type)) {
+            $shipmentDetails['labelFormat'] = 'jpg';
+        }else{
+            $shipmentDetails['ImageRotation'] = 'Rotate180';
+            $shipmentDetails['labelFormat'] = 'ZPLII';
+        }
 
-        $shipmentDetails['labelFormat'] = 'ZPLII';
 
         $shipmentDetails['returnAddress'] = [
             'address1' => '590 Hatton Ln',
