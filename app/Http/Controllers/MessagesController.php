@@ -311,15 +311,18 @@ class MessagesController extends Controller
                     $returnOperation = 0;
                     $returnOperationCnt = 0;
                     foreach ($orderOperations as $op) {
-                        if (count($orderOperation->operationItem ?? []) > 0) {
-                            foreach ($orderOperation->operationItem as $oop) {
+                        if (count($op->operationItem ?? []) > 0) {
+                            foreach ($op->operationItem as $oop) {
                                 if ($oop->return_operation_item_id) {
                                     $returnOperation += 1;
                                 }
                             }
                         }
 
-                        if (isset($orderOperation) && $orderOperation->operation_type == OrderOperationType::OrderReturn && $orderOperation->label_creation_type == ShippingLabelCreationType::NoLabel && $returnOperation == 0) {
+                        //echo $op->operation_type .'=='. OrderOperationType::OrderReturn.'<br>';
+                        //echo $op->label_creation_type;
+
+                        if (isset($op) && $op->operation_type == OrderOperationType::OrderReturn && $op->label_creation_type == ShippingLabelCreationType::NoLabel && $returnOperation == 0) {
                             $returnOperationCnt += 1;
                         }
 
@@ -425,15 +428,15 @@ class MessagesController extends Controller
                     $returnOperation = 0;
                     $returnOperationCnt = 0;
                     foreach($orderOperations as $op) {
-                        if(count($orderOperation->operationItem ?? []) > 0) {
-                            foreach($orderOperation->operationItem as $oop) {
+                        if(count($op->operationItem ?? []) > 0) {
+                            foreach($op->operationItem as $oop) {
                                 if($oop->return_operation_item_id){
                                     $returnOperation += 1;
                                 }
                             }
                         }
 
-                        if(isset($orderOperation) && $orderOperation->operation_type == OrderOperationType::OrderReturn && $orderOperation->label_creation_type == ShippingLabelCreationType::NoLabel && $returnOperation == 0){
+                        if(isset($op) && $op->operation_type == OrderOperationType::OrderReturn && $op->label_creation_type == ShippingLabelCreationType::NoLabel && $returnOperation == 0){
                             $returnOperationCnt += 1;
                         }
 
@@ -454,11 +457,6 @@ class MessagesController extends Controller
 
                     $action['returnLable'] = $returnOperationCnt;
                 }
-
-
-
-
-
                 return response()->json([
                     'success' => true,
                     'orderDetail' => $data,
@@ -704,16 +702,18 @@ class MessagesController extends Controller
         print_r($orderDetail);
         echo '</pre>';die;*/
         if($orderDetail) {
-            if(isset($orderDetail->orderItem)){
-                foreach($orderDetail->orderItem as $oitem){
-                    $oitem->update(['return_request_quantity'=> $oitem->quantity]);
-                }
-            }
+
             if (isset($orderDetail->orderOperation)) {
                 $orderOperation = $orderDetail->orderOperation;
                 $order_opration_id = $orderOperation->id;
                 if ($request->input('rma')) {
-                    $rma_number = RmaNumberGenerator::generate($orderDetail->store_id);
+                    if(isset($orderDetail->orderItem)){
+                        foreach($orderDetail->orderItem as $oitem){
+                            $oitem->update(['return_request_quantity'=> $oitem->quantity]);
+                        }
+                    }
+                    $rmaObject = new RmaNumberGenerator();
+                    $rma_number = $rmaObject->generate($orderDetail->store_id);
                     $clonedOrderOperation = [
                         'ship_date' => $orderOperation->ship_date,
                         'client' => $orderOperation->client,
@@ -768,7 +768,7 @@ class MessagesController extends Controller
                         $data = [
                             'customer_firstName' => isset($orderDetail->customer) ? $orderDetail->customer->full_name : '',
                             'store_name' => isset($orderDetail->store) ? $orderDetail->store->name : '',
-                            'ima_number' => $rma_number,
+                            'rma_number' => $rma_number,
                             'return_address ' => $returnAddress
                         ];
                         $template_id = $templateDetail->id;
@@ -978,7 +978,7 @@ class MessagesController extends Controller
                 'store_id' => $orderOperation->store_id,
                 'operation_type' => OrderOperationType::OrderReplacement,
                 'order_id' => $orderOperation->order_id,
-                'label_creation_type' => 1,
+                'label_creation_type' => ShippingLabelCreationType::CreateLabel,
                 'rma_number' => NULL,
                 'shipping_carrier_id' => $orderOperation->shipping_carrier_id,
                 'shipping_carrier_service_id' => NULL,
@@ -1018,6 +1018,90 @@ class MessagesController extends Controller
                 'message' => 'Something went wrong with API. Please try again!'
             ]);
         }*/
+
+        $templateDetail = HdMessageTemplate::getOrderOperationTemplate(OrderOperationType::OrderReplacement,1,0);
+        $template_id = $template_code = '';
+        if($templateDetail) {
+            $data = [
+                'customer_firstName' => isset($orderOperations->order->customer) ? $orderOperations->order->customer->full_name : '',
+                'store_name' => isset($orderOperations->store) ? $orderOperations->store->name : '',
+                'trackingNumber' => isset($orderOperations->tracking_number) ? $orderOperations->tracking_number : '',
+                'ima_number' => '',
+                'return_address ' => ''
+            ];
+            $template_id = $templateDetail->id;
+            $template_code = \Blade::render($templateDetail->template_code, $data);
+        }
+
+        return response()->json([
+            'success' => true,
+            'template_id' => $template_id,
+            'template_code' => $template_code,
+        ]);
+    }
+
+
+    public function refundOrder(Request $request){
+
+        $order_id = $request->input('order_id');
+        if($order_id) {
+            $orderOperation = OrderOperation::with('operationItem')->where('order_id',$order_id)->where('operation_type',OrderOperationType::OrderReturn)->first();
+            $clonedOrderOperation = [
+                'ship_date' => $orderOperation->ship_date,
+                'client' => $orderOperation->client,
+                'to_address_id' => $orderOperation->to_address_id,
+                'sync_status' => $orderOperation->sync_status,
+                'insurance_value' => $orderOperation->insurance_value,
+                'status' => OrderOperationStatus::PARTIAL_REFUND_ACCEPTED,
+                'signature_confirmation' => $orderOperation->signature_confirmation,
+                'shipping_package_id' => $orderOperation->shipping_package_id,
+                'weight_value' => $orderOperation->weight_value,
+                'weight_weight_unit' => $orderOperation->weight_weight_unit,
+                'ship_from_id' => $orderOperation->ship_from_id,
+                'store_id' => $orderOperation->store_id,
+                'operation_type' => OrderOperationType::OrderRefund,
+                'order_id' => $orderOperation->order_id,
+                'label_creation_type' => ShippingLabelCreationType::NoLabel,
+                'rma_number' => NULL,
+                'shipping_carrier_id' => $orderOperation->shipping_carrier_id,
+                'shipping_carrier_service_id' => NULL,
+                'shipping_account_transaction_id' => NULL,
+                'return_operation_item_id' => $orderOperation->id,
+            ];
+
+            $newOrderOperation = OrderOperation::create($clonedOrderOperation);
+            $order_opration_id = $newOrderOperation->id;
+
+            if (count($orderOperation->operationItem ?? []) > 0) {
+                foreach ($orderOperation->operationItem as $oitem) {
+
+                    $newOrderItem = [
+                        'order_item_id' => $oitem->order_item_id,
+                        'order_operation_id' => $order_opration_id,
+                        'client_id' => $oitem->client_id,
+                        'sync_status' => $oitem->sync_status,
+                        'quantity' => $oitem->quantity,
+                    ];
+
+                    OrderOperationItem::updateOrCreate([
+                        'order_item_id' => $oitem->order_item_id,
+                        'order_operation_id' => $order_opration_id,
+                    ], $newOrderItem);
+                }
+            }
+        }
+
+        $request['label_generation'] = 1;
+        $orderOperations = OrderOperation::with('order','order.customer', 'store', 'store.storeType')->where('id', $order_opration_id)->get();
+
+        $isSuccess = OrderOperationUtility::processShipment($orderOperations, $request);
+
+        if (!$isSuccess) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Something went wrong with API. Please try again!'
+            ]);
+        }
 
         $templateDetail = HdMessageTemplate::getOrderOperationTemplate(OrderOperationType::OrderReplacement,1,0);
         $template_id = $template_code = '';
