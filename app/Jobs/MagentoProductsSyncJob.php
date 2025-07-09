@@ -48,18 +48,15 @@ class MagentoProductsSyncJob implements ShouldQueue
 
                 $productTypes = ProductType::select('id')->where('code', 'ceabundle')->get()->toArray();
 
-                Catalog::select('*')->with('productType', 'productKeyFeatures', 'productColor')
+                $products = Catalog::select('*')->with('productType', 'productKeyFeatures', 'productColor')
                     ->whereNotIn('product_type', $productTypes)
                     ->whereNotIn('product_id', $pIds)
                     ->orderBy('created_at', 'desc')
                     ->limit(10)
-                    ->chunk(100, function ($products) use ($store) {
-                        Log::info('Processing Products for Store ID: ' . $store->id);
-                        foreach ($products as $product) {
-                            $this->submitFeed($product, $store);
-                        }
-                    });
-
+                    ->get();
+                foreach ($products as $product) {
+                    $this->submitFeed($product, $store);
+                }
             }
         }
 
