@@ -180,6 +180,16 @@ class SyncAllOrderStatusJob implements ShouldQueue
                             }
                         }
 
+                        switch (strtolower($orderDetail['orderFulfillmentStatus'])) {
+                            case 'fulfilled';
+                                $order->order_status = OrderStatus::Shipped;
+                                $operation->status = OrderOperationStatus::MarkAsShipped;
+                                break;
+                            case 'not_started';
+                                $order->order_status = OrderStatus::Pending;
+                                break;
+                        }
+
                         if (isset($orderDetail['fulfillmentStartInstructions'])) {
                             $estimateShipmentDate = $orderDetail['fulfillmentStartInstructions'][0]['minEstimatedDeliveryDate'];
                             $estimateDeliveryDate = $orderDetail['fulfillmentStartInstructions'][0]['maxEstimatedDeliveryDate'];
