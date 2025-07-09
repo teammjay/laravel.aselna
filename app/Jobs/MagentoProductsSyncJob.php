@@ -50,9 +50,9 @@ class MagentoProductsSyncJob implements ShouldQueue
 
                 Catalog::select('*')->with('productType', 'productKeyFeatures', 'productColor')
                     ->whereNotIn('product_type', $productTypes)
-                    ->where('product_sku', 'M42')
                     ->whereNotIn('product_id', $pIds)
                     ->orderBy('created_at', 'desc')
+                    ->limit(10)
                     ->chunk(100, function ($products) use ($store) {
                         Log::info('Processing Products for Store ID: ' . $store->id);
                         foreach ($products as $product) {
@@ -83,7 +83,8 @@ class MagentoProductsSyncJob implements ShouldQueue
                         ->where('product_id', $productData->product_id)
                         ->where('store_id', $store->id);
                 })
-                ->limit(5)
+                ->whereIn('device.order', [10, 2])
+                ->limit(20)
                 ->get();
 
             foreach ($devices as $device) {
@@ -119,7 +120,7 @@ class MagentoProductsSyncJob implements ShouldQueue
         $productName = $productTitle . ' - ' . trim($productKeywords) . ' - ' . $store->short_code . $productData->product_sku;
 
         $mediaGallerEntries = $this->getMediaGalleryEntries($productData, $store);
-        Log::info('Media Gallery Entries: ' . json_encode($mediaGallerEntries));
+//        Log::info('Media Gallery Entries: ' . json_encode($mediaGallerEntries));
 
         $finalProductData = [
             "attribute_set_id" => 4,
@@ -221,6 +222,22 @@ class MagentoProductsSyncJob implements ShouldQueue
             ],
             "custom_attributes" => [
                 [
+                    "attribute_code" => "weight",
+                    "value" => $productData->product_weight ?? 0
+                ],
+                [
+                    "attribute_code" => "width",
+                    "value" => $productData->dimensions_width ?? ''
+                ],
+                [
+                    "attribute_code" => "height",
+                    "value" => $productData->dimensions_height ?? ''
+                ],
+                [
+                    "attribute_code" => "depth",
+                    "value" => $productData->dimensions_length ?? ''
+                ],
+                [
                     "attribute_code" => "devices",
                     "value" => $marketPlaceDevice->marketplace_code ?? ''
                 ],
@@ -228,6 +245,10 @@ class MagentoProductsSyncJob implements ShouldQueue
                     "attribute_code" => "brands",
                     "value" => $marketPlaceBrand->marketplace_code ?? ''
                 ],
+                [
+                    "attribute_code" => "case_size",
+                    "value" => $productData->size ? $productData->size->value : ''
+                ]
             ]
         ];
 
