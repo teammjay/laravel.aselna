@@ -17,6 +17,7 @@ use App\Jobs\DevicesSyncJob;
 use App\Jobs\DeviceTypesSyncJob;
 use App\Jobs\FeedGenerationJob;
 use App\Jobs\FetchAmazonOrdersJob;
+use App\Jobs\FetchEbayOrders;
 use App\Jobs\FetchWalmartOrdersJob;
 use App\Jobs\FileSystemSyncJob;
 use App\Jobs\GenerationTypeAndTemplateSync;
@@ -150,7 +151,7 @@ class SyncAllTables extends Command
         //synccategorytospecification::dispatch();
 //        SystemPrinterSyncJob::dispatch();
 //
-        MagentoProductsSyncJob::dispatch();
+        FetchEbayOrders::dispatch();
 
 //        $transactionIds = [
 ////            '9400150105798006163885',
