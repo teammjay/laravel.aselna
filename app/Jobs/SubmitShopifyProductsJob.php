@@ -289,7 +289,7 @@ class SubmitShopifyProductsJob implements ShouldQueue
     }
 
     public function generateProductImages($productData, $store){
-        Log::info('Filesystem : ' . json_encode($store->fileSystem));
+        //Log::info('Filesystem : ' . json_encode($store->fileSystem));
         ProductImages::where('product_id', $productData->product_id)
             ->chunk(100, function ($productImages) use ($store, $productData) {
                 if (!isset($store->fileSystem)) return;
