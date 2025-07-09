@@ -16,14 +16,7 @@
     @if (session('error'))
         <div class="alert alert-danger alert-dismissible fade show">{{ session('error') }}</div>
     @endif
-    <div class="row my-3">
-        <div class="col-md-2">
-            <button class="btn btn-primary" id="cancleLabel">
-                Void
-            </button>
-        </div>
 
-    </div>
 
     <div class="card card-default">
         <div class="card-header">
@@ -141,6 +134,18 @@
         </div>
     </div>
 
+    <div class="row my-3">
+        <div class="col-md-2">
+            <button class="btn btn-primary" id="cancleLabel">
+                Void
+            </button>
+            <button class="btn btn-secondary" id="reprintLabel">
+                Re-print
+            </button>
+        </div>
+
+    </div>
+
 
     <div class="table-responsive">
         <table id="transactionsTable" class="table table-bordered table-striped">
@@ -158,21 +163,21 @@
             </tr>
             </thead>
             <tbody id="transaction-list">
-                @if(count($shipping_account_transactions ?? []) > 0)
-                    @foreach($shipping_account_transactions as $ship_transaction)
-                        <tr data-id="{{ $ship_transaction->id }}">
-                            <td>{{ $ship_transaction->shippingAccount->name }}<input type="checkbox" data-id="{{ $ship_transaction->id }}" name="transaction_id[]" style="visibility: hidden;" value="{{ $ship_transaction->tracking_number }}"></td>
-                            <td>{{ $ship_transaction->tracking_number }}</td>
-                            <td>{{ $ship_transaction->transaction_date }}</td>
-                            <td>{{ $ship_transaction->transaction_id }}</td>
-                            <td>{{ $ship_transaction->amount }}</td>
-                            <td>{{ $ship_transaction->address }}</td>
-                            <td><input type="checkbox" name="canceled" disabled @if($ship_transaction->canceled == 1) checked @endif /></td>
-                            <td>{{ $ship_transaction->canceled_date }}</td>
-                            <td>{{ $ship_transaction->created_at }}</td>
-                        </tr>
-                    @endforeach
-                @endif
+{{--                @if(count($shipping_account_transactions ?? []) > 0)--}}
+{{--                    @foreach($shipping_account_transactions as $ship_transaction)--}}
+{{--                        <tr data-id="{{ $ship_transaction->id }}">--}}
+{{--                            <td>{{ $ship_transaction->shippingAccount->name }}<input type="checkbox" data-id="{{ $ship_transaction->id }}" name="transaction_id[]" style="visibility: hidden;" value="{{ $ship_transaction->tracking_number }}"></td>--}}
+{{--                            <td>{{ $ship_transaction->tracking_number }}</td>--}}
+{{--                            <td>{{ $ship_transaction->transaction_date }}</td>--}}
+{{--                            <td>{{ $ship_transaction->transaction_id }}</td>--}}
+{{--                            <td>{{ $ship_transaction->amount }}</td>--}}
+{{--                            <td>{{ $ship_transaction->address }}</td>--}}
+{{--                            <td><input type="checkbox" name="canceled" disabled @if($ship_transaction->canceled == 1) checked @endif /></td>--}}
+{{--                            <td>{{ $ship_transaction->canceled_date }}</td>--}}
+{{--                            <td>{{ $ship_transaction->created_at }}</td>--}}
+{{--                        </tr>--}}
+{{--                    @endforeach--}}
+{{--                @endif--}}
             </tbody>
         </table>
     </div>
@@ -241,66 +246,138 @@
             });
 
 
-            $("#transactionsTable").dataTable();
-
-            $('#filter-form').on('submit', function (e) {
-                e.preventDefault(); // Prevent default form submission
-                loadTransactions();
-            });
-
-            function loadTransactions(){
-
-                if ($.fn.DataTable.isDataTable('#transactionsTable')) {
-                    $('#transactionsTable').DataTable().clear().destroy();
-                }
-
-                const form = document.querySelector("#filter-form");
-                let formData = new FormData(form);
-
-                $.ajax({
-                    url: "{{ route('shipping_account_transactions.filter') }}",
-                    type: 'POST',
-                    data: formData,
-                    processData: false,
-                    contentType: false,
+            $("#transactionsTable").dataTable({
+                processing: true,
+                serverSide: true,
+                searching: false,
+                ajax: {
+                    // csrf
                     headers: {
                         'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                     },
+                    url: '{{ route('shipping_account_transactions.filter') }}',
+                    type: 'POST',
+                    data: function (d) {
+                        var formData = $('#filter-form').serializeArray();
+                        $.each(formData, function (index, field) {
+                            d[field.name] = field.value;
+                        });
+                    }
+                },
+                columns: [
+                    {data: 'shipping_account', name: 'shipping_account'},
+                    {data: 'tracking_number', name: 'tracking_number'},
+                    {data: 'transaction_date', name: 'transaction_date'},
+                    {data: 'transaction_id', name: 'transaction_id'},
+                    {data: 'amount', name: 'amount'},
+                    {data: 'address', name: 'address'},
+                    {data: 'canceled', name: 'canceled',
+                        render: function (data, type, row) {
+                            return `<input type="checkbox" name="canceled" disabled ${data ? 'checked' : ''} />`;
+                        }
+                    },
+                    {data: 'canceled_date', name: 'canceled_date'},
+                    {data: 'created_at', name: 'created_at'}
+                ],
+                createdRow: function (row, data, dataIndex) {
+                    // Assuming `data.id` holds the transaction ID
+                    $(row).attr('data-id', data.tracking_number);
+                }
+            });
+
+            $('#filter-form').on('submit', function (e) {
+                e.preventDefault(); // Prevent default form submission
+                // loadTransactions();
+            });
+
+            $('#reprintLabel').on('click', function () {
+                var selectedTransactions = $('#transaction-list tr.active');
+                var transaction_id = [];
+                selectedTransactions.each(function () {
+                    var id = $(this).data('id');
+                    if (id) {
+                        transaction_id.push(id);
+                    }
+                });
+                if (transaction_id.length === 0) {
+                    alert('Please select a transaction to reprint.');
+                    return;
+                }
+                $.ajax({
+                    url: "{{ route('shipping_account_transactions.reprintlabel') }}",
+                    type: 'POST',
+                    data: {
+                        transaction_id: transaction_id,
+                        account_id: '{{ $account_id }}',
+                        "_token": '{{ csrf_token() }}'
+                    },
                     success: function (response) {
-                        if (response.html) {
-                            $('#transaction-list').html(response.html);
-
-                            if(response.totalRecords > 0) {
-                                var proTable = $('#transactionsTable').DataTable({
-                                    "lengthChange": false,
-                                    "autoWidth": false,
-                                    "processing": false,
-                                    "serverSide": false,
-                                    "searching": false,
-                                    "paging": false,
-                                    "info": false,
-                                    "order": [[8, "desc"]],
-                                    /*columnDefs: [
-                                        {
-                                            targets: [0],
-                                            orderable: false
-                                        }
-                                    ]*/
-                                });
-                            }
-
+                        // If success, remove the user row from the table
+                        alert(response.message);
+                        if (response.success) {
+                            location.reload();
                         }
                     },
                     error: function (xhr) {
-                        /*if (xhr.responseJSON?.error) {
-                            $('#responseMessage').html('<p style="color:red;">' + xhr.responseJSON.error.image[0] + '</p>');
-                        }*/
-                    },
-                    complete: function () {
-                        $("#ajax-preloader").hide();
+                        // Handle error response
+                        alert('Error: ' + xhr.responseJSON.error);
                     }
                 });
-            }
+            });
+
+            {{--function loadTransactions(){--}}
+
+            {{--    if ($.fn.DataTable.isDataTable('#transactionsTable')) {--}}
+            {{--        $('#transactionsTable').DataTable().clear().destroy();--}}
+            {{--    }--}}
+
+            {{--    const form = document.querySelector("#filter-form");--}}
+            {{--    let formData = new FormData(form);--}}
+
+            {{--    $.ajax({--}}
+            {{--        url: "{{ route('shipping_account_transactions.filter') }}",--}}
+            {{--        type: 'POST',--}}
+            {{--        data: formData,--}}
+            {{--        processData: false,--}}
+            {{--        contentType: false,--}}
+            {{--        headers: {--}}
+            {{--            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')--}}
+            {{--        },--}}
+            {{--        success: function (response) {--}}
+            {{--            if (response.html) {--}}
+            {{--                $('#transaction-list').html(response.html);--}}
+
+            {{--                if(response.totalRecords > 0) {--}}
+            {{--                    var proTable = $('#transactionsTable').DataTable({--}}
+            {{--                        "lengthChange": false,--}}
+            {{--                        "autoWidth": false,--}}
+            {{--                        "processing": false,--}}
+            {{--                        "serverSide": false,--}}
+            {{--                        "searching": false,--}}
+            {{--                        "paging": true,--}}
+            {{--                        "info": false,--}}
+            {{--                        "order": [[8, "desc"]],--}}
+            {{--                        /*columnDefs: [--}}
+            {{--                            {--}}
+            {{--                                targets: [0],--}}
+            {{--                                orderable: false--}}
+            {{--                            }--}}
+            {{--                        ]*/--}}
+            {{--                    });--}}
+            {{--                }--}}
+
+            {{--            }--}}
+            {{--        },--}}
+            {{--        error: function (xhr) {--}}
+            {{--            /*if (xhr.responseJSON?.error) {--}}
+            {{--                $('#responseMessage').html('<p style="color:red;">' + xhr.responseJSON.error.image[0] + '</p>');--}}
+            {{--            }*/--}}
+            {{--        },--}}
+            {{--        complete: function () {--}}
+            {{--            $("#ajax-preloader").hide();--}}
+            {{--        }--}}
+            {{--    });--}}
+            {{--}--}}
         });
 
     </script>

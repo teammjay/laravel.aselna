@@ -67,14 +67,14 @@ class EmailMessageUtility
     {
         try {
             if($toEmail) {
-                Mail::raw($message, function ($message) use ($toEmail, $subject, $message_id, $attachment) {
-                    $message->to($toEmail)->subject($subject);
+                Mail::raw($message, function ($m) use ($toEmail, $subject, $message_id, $attachment) {
+                    $m->to($toEmail)->subject('Re: '.$subject);
                     if($message_id != '') {
-                        $message->getHeaders()->addTextHeader('In-Reply-To', $message_id);
-                        $message->getHeaders()->addTextHeader('References', $message_id);
+                        $m->getHeaders()->addTextHeader('In-Reply-To', '<'.$message_id.'>');
+                        $m->getHeaders()->addTextHeader('References', '<'.$message_id.'>');
                     }
-                    if($attachment != '') {
-                        $message->attach($attachment);
+                    if(file_exists($attachment)) {
+                        $m->attach($attachment);
                     }
                 });
             }
@@ -88,12 +88,12 @@ class EmailMessageUtility
 
 
 
-    public function fetchEmails($store_type, $folderName = 'INBOX', $limit = 50)
+    public function fetchEmails($store_type, $filter_date, $folderName = 'INBOX', $limit = 100)
     {
         try {
             $this->client->connect();
 
-            $fromDate = \Carbon\Carbon::parse(date('Y-m-d', strtotime('-10 days')));
+            $fromDate = \Carbon\Carbon::parse(date('Y-m-d', strtotime($filter_date)));
             $toDate = \Carbon\Carbon::parse(date('Y-m-d'));
 
             $folder = $this->client->getFolder($folderName);

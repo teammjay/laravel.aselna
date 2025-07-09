@@ -180,7 +180,12 @@
             <span id="total_selected">( 0 selected )</span>
         </div>
     </div>
-
+    <div class="row">
+        <div class="col-md-1" id="totalRecords"></div>
+        <div class="col-md-3">
+            <input type="checkbox" id="select_deselect_shipment"> <label for="selected_product">Select/Deselect All</label>
+        </div>
+    </div>
     <div class="table-responsive pb-5" style="max-height: 500px; overflow: auto;">
         <table id="shipmentTable" class="table table-bordered table-striped">
             <thead>
@@ -188,6 +193,7 @@
                 <th></th>
                 <th>Image</th>
                 <th>Status</th>
+                <th>Carrier Package</th>
                 <th>Carrier Service</th>
                 <th>Store</th>
                 <th>Order Id</th>
@@ -219,7 +225,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancle</button>
-                    <button type="button" class="btn btn-primary" id="shipThis"><i class="fa fa-shipping-fast"></i> Ship This </button>
+                    <button type="button" class="btn btn-primary" id="updateShipment"><i class="fa fa-sticky-note"></i> Update </button>
                 </div>
             </div>
         </div>
@@ -320,8 +326,6 @@
             if(ele.find('.pro-id').is(':checked')){
                 ele.removeClass('bg-blue');
                 ele.find('.pro-id').prop('checked', false);
-                ele.find('.bulk-edit').attr('disabled',true).hide();
-                ele.find('.prVal').show();
             }else {
                 ele.addClass('bg-blue');
                 ele.find('.pro-id').prop('checked', true);
@@ -778,7 +782,7 @@
             });
         });
 
-        $(document).on('click','#shipThis',function () {
+        $(document).on('click','#updateShipment',function () {
 
             const form = document.querySelector("#frmShippingDetail");
             let formData = new FormData(form);
@@ -793,7 +797,7 @@
 
 
             $.ajax({
-                url: "{{ route('shipment.shipthis') }}",
+                url: "{{ route('shipment.updateshipment') }}",
                 type: 'POST',
                 data: formData,
                 processData: false,
@@ -804,7 +808,7 @@
                 success: function (response) {
                     // If success, remove the user row from the table
                     if (response.success) {
-                        alert('Order shipped successfully!!');
+                        alert('Shipped Updated successfully!!');
                         location.reload();
                     }
                     else {
@@ -827,6 +831,26 @@
                     }*/
                 }
             });
+        });
+
+        $(document).on('click', '#select_deselect_shipment', function() {
+
+            var ele = $(this);
+            if(ele.is(':checked')){
+                $('.pro-id').each(function () {
+                    $(this).prop('checked', true);
+                    $(this).parents('tr').addClass('bg-blue');
+                });
+            }else {
+
+                $('.pro-id').each(function () {
+                    $(this).prop('checked', false);
+                    $(this).parents('tr').removeClass('bg-blue');
+                });
+            }
+
+            let totalCnt = $('input[name="shipment_id[]"]:checked').length;
+            $('#total_selected').html('( <b>'+totalCnt+'</b> selected )');
         });
 
     });
@@ -986,7 +1010,8 @@
                             ],
                             drawCallback: function(settings) {
                                 let info = this.api().page.info();
-                                $('#shipmentTable_wrapper').find('.row div:first').html('Total : <b>' + info.recordsDisplay + '</b>');
+                                //$('#shipmentTable_wrapper').find('.row div:first').html('Total : <b>' + info.recordsDisplay + '</b>');
+                                $('#totalRecords').html('Total : <b>' + info.recordsDisplay + '</b>');
                             }
                         });
 
