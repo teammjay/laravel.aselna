@@ -17,6 +17,7 @@ use App\Jobs\DevicesSyncJob;
 use App\Jobs\DeviceTypesSyncJob;
 use App\Jobs\FeedGenerationJob;
 use App\Jobs\FetchAmazonOrdersJob;
+use App\Jobs\FetchEbayOrders;
 use App\Jobs\FetchWalmartOrdersJob;
 use App\Jobs\FileSystemSyncJob;
 use App\Jobs\GenerationTypeAndTemplateSync;

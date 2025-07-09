@@ -30,7 +30,18 @@ class SyncAllOrderStatusJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $orderOperations = OrderOperation::with('order','store')->whereNull('tracking_number')->orWhere('tracking_number','')->orWhere('status',OrderOperationStatus::Created)->get();
+        $orderOperations = OrderOperation::with(['order', 'store'])
+            ->where(function ($query) {
+                $query->whereNull('tracking_number')
+                    ->orWhere('tracking_number', '')
+                    ->orWhere('status', OrderOperationStatus::Created);
+            })
+            ->whereNotIn('status', [
+                OrderOperationStatus::MarkAsShipped,
+                OrderOperationStatus::Delivered,
+            ])
+            ->orderByDesc('ship_date')
+            ->get();
         //Log::info('Order Operations:'.json_encode($orderOperations));
         if(count($orderOperations ?? []) > 0){
             foreach($orderOperations as $operation){
@@ -178,6 +189,16 @@ class SyncAllOrderStatusJob implements ShouldQueue
                                 $order->save();
                                 $operation->save();
                             }
+                        }
+
+                        switch (strtolower($orderDetail['orderFulfillmentStatus'])) {
+                            case 'fulfilled';
+                                $order->order_status = OrderStatus::Shipped;
+                                $operation->status = OrderOperationStatus::MarkAsShipped;
+                                break;
+                            case 'not_started';
+                                $order->order_status = OrderStatus::Pending;
+                                break;
                         }
 
                         if (isset($orderDetail['fulfillmentStartInstructions'])) {

@@ -66,6 +66,17 @@ class AppServiceProvider extends ServiceProvider
                     ' | Class History: ' . implode(' -> ', array_reverse($classHistory));
 
                 $monolog->info($logMessage);
+            } else if (env('APP_ENV') === 'local') {
+                $logFile = storage_path('logs/queries.log'); // Main log file
+                $monolog = new Logger('SQL');
+                $monolog->pushHandler(new StreamHandler($logFile, Logger::INFO));
+
+                // Prepare log message
+                $logMessage = '[' . now() . '] ' . $query->sql .
+                    ' | Bindings: ' . json_encode($query->bindings) .
+                    ' | Time: ' . $query->time . 'ms';
+
+                $monolog->info($logMessage);
             }
         });
     }

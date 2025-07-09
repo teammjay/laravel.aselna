@@ -24,7 +24,7 @@ class MagentoProductsSyncJob implements ShouldQueue
 
     public $timeout = 30000;
 
-    public $magentoService;
+    public MagentoService $magentoService;
 
     /**
      * Create a new job instance.
@@ -44,22 +44,19 @@ class MagentoProductsSyncJob implements ShouldQueue
             foreach ($stores as $store) {
                 Log::info('Store : ' . $store->name);
 
-                $pIds = ManageMarketplaceProduct::select('product_id')->whereIn('upload_status', ['success', 'failed'])->get();
-
+                $pIds = ManageMarketplaceProduct::select('product_id')->whereNull('parent_id')->whereIn('upload_status', ['success', 'failed'])->get();
                 $productTypes = ProductType::select('id')->where('code', 'ceabundle')->get()->toArray();
 
-                Catalog::select('*')->with('productType', 'productKeyFeatures', 'productColor')
+                $products = Catalog::select('*')->with('productType', 'productKeyFeatures', 'productColor')
                     ->whereNotIn('product_type', $productTypes)
-                    ->whereNull('parent_id')
-                    ->where('product_sku', 'V12')
                     ->whereNotIn('product_id', $pIds)
                     ->orderBy('created_at', 'desc')
-                    ->chunk(100, function ($products) use ($store) {
-                        foreach ($products as $product) {
-                            $this->submitFeed($product, $store);
-                        }
-                    });
-
+                    ->whereNull('parent_id')
+                    ->limit(10)
+                    ->get();
+                foreach ($products as $product) {
+                    $this->submitFeed($product, $store);
+                }
             }
         }
 
@@ -67,36 +64,45 @@ class MagentoProductsSyncJob implements ShouldQueue
 
     private function submitFeed(mixed $productData, mixed $store)
     {
-//        if ($this->isSimpleProductRemaining($productData->product_id, $store->id)) {
-//
-//        } else {
-//
-//        }
-        $this->createConfigurableProduct($productData, $store);
+        if ($this->isConfigurableProductCreated($productData->product_id, $store->id)) {
+            Log::info('Creating Configurable Product for Product ID: ' . $productData->product_id . ' in Store ID: ' . $store->id);
+            $this->createConfigurableProduct($productData, $store);
+        } else {
+            Log::info('Creating simple Products for Product ID: ' . $productData->product_id . ' in Store ID: ' . $store->id);
+            $devices = Device::select('device.*')
+                ->leftJoin('device_interface', 'device_interface.device_id', '=', 'device.id')
+                ->leftJoin('product_interface', 'product_interface.interface_id', '=', 'device_interface.interface_id')
+                ->where('product_interface.product_id', $productData->product_id)
+                ->whereNotIn('device.id', function ($query) use ($productData, $store) {
+                    $query->select('device_id')
+                        ->from('manage_marketplace_products')
+                        ->whereNotNull('parent_id')
+                        ->where('product_id', $productData->product_id)
+                        ->where('store_id', $store->id);
+                })
+                ->whereIn('device.order', [10, 2])
+                ->limit(20)
+                ->get();
 
-        // $query->leftJoin('device_interface', 'device_interface.interface_id', '=', 'product_interface.interface_id');
-        // $query->leftJoin('product_interface', 'product_interface.product_id', '=', 'products.product_id');
-        // get all the devices associated with the product
-//        $devices = Device::select('device.*')
-//            ->leftJoin('device_interface', 'device_interface.device_id', '=', 'device.id')
-//            ->leftJoin('product_interface', 'product_interface.interface_id', '=', 'device_interface.interface_id')
-//            ->where('product_interface.product_id',$productData->product_id )
-//            ->limit(5)
-//            ->get();
-//
-//        foreach ($devices as $device) {
-//            $this->createSimpleProduct($productData, $store, $device);
-//        }
+            foreach ($devices as $device) {
+                $this->createSimpleProduct($productData, $store, $device);
+            }
+        }
     }
 
-    private function isSimpleProductRemaining($product_id, $id)
+    private function isConfigurableProductCreated($product_id, $id)
     {
+        $product = ManageMarketplaceProduct::where('product_id', $product_id)
+            ->where('store_id', $id)
+            ->whereNull('parent_id')
+            ->first();
 
-        return false;
+        return !isset($product);
     }
 
     private function createConfigurableProduct(mixed $productData, mixed $store)
     {
+        $magentoAuthService = new MagentoAuthService($store->seller_id, $store->secret_key);
         $bulletPoints = $productData->productKeyFeatures;
         $bulletPointHtml = '<ul>';
         foreach ($bulletPoints as $bulletPoint) {
@@ -109,6 +115,9 @@ class MagentoProductsSyncJob implements ShouldQueue
         $productKeywords = implode(' ', array_column(array_slice($keywords, 1), 'keyword'));
 
         $productName = $productTitle . ' - ' . trim($productKeywords) . ' - ' . $store->short_code . $productData->product_sku;
+
+        $mediaGallerEntries = $this->getMediaGalleryEntries($productData, $store);
+//        Log::info('Media Gallery Entries: ' . json_encode($mediaGallerEntries));
 
         $finalProductData = [
             "attribute_set_id" => 4,
@@ -148,7 +157,8 @@ class MagentoProductsSyncJob implements ShouldQueue
                     "qty" => 100,
                     "is_in_stock" => true
                 ]
-            ]
+            ],
+            "media_gallery_entries" => $mediaGallerEntries
         ];
 
         $response = $this->magentoService->createOrUpdateProduct($finalProductData, $store);
@@ -173,7 +183,8 @@ class MagentoProductsSyncJob implements ShouldQueue
 
     private function createSimpleProduct(mixed $productData, mixed $store, $device)
     {
-
+        Log::info('Creating Simple Product for Device ID: ' . $device->id . ' in Store ID: ' . $store->id);
+        $magentoAuthService = new MagentoAuthService($store->seller_id, $store->secret_key);
         $keywords = ProductTitleKeyword::select('product_id', 'keyword')->where('product_id', $productData->product_id)->orderBy('priority', 'asc')->get()->toArray();
         $productTitle = $keywords[0]['keyword'] ?? '';
         $productKeywords = implode(' ', array_column(array_slice($keywords, 1), 'keyword'));
@@ -183,6 +194,11 @@ class MagentoProductsSyncJob implements ShouldQueue
         $marketPlaceDevice = MarketplaceAttributeMapping::where('store_id', $store->id)
             ->where('code_id', $device->id)
             ->where('code', 'devices')
+            ->first();
+
+        $marketPlaceBrand = MarketplaceAttributeMapping::where('store_id', $store->id)
+            ->where('code_id', $device->brand_id)
+            ->where('code', 'brands')
             ->first();
 
         $new_sku = $productData->product_sku . '-' . $marketPlaceDevice->marketplace_code;
@@ -203,19 +219,143 @@ class MagentoProductsSyncJob implements ShouldQueue
             ],
             "custom_attributes" => [
                 [
+                    "attribute_code" => "weight",
+                    "value" => $productData->product_weight ?? 0
+                ],
+                [
+                    "attribute_code" => "width",
+                    "value" => $productData->dimensions_width ?? ''
+                ],
+                [
+                    "attribute_code" => "height",
+                    "value" => $productData->dimensions_height ?? ''
+                ],
+                [
+                    "attribute_code" => "depth",
+                    "value" => $productData->dimensions_length ?? ''
+                ],
+                [
                     "attribute_code" => "devices",
-                    "value" => ""
+                    "value" => $marketPlaceDevice->marketplace_code ?? ''
                 ],
                 [
                     "attribute_code" => "brands",
-                    "value" => ""
+                    "value" => $marketPlaceBrand->marketplace_code ?? ''
                 ],
+                [
+                    "attribute_code" => "case_size",
+                    "value" => $productData->size ? $productData->size->value : ''
+                ]
             ]
         ];
 
         Log::info('Final Product Data: ' . json_encode($finalProductData));
         $response = $this->magentoService->createOrUpdateProduct($finalProductData, $store);
         Log::info('Response from Magento: ' . json_encode($response));
+        if (isset($response['id'])) {
+            $magentoDevices = $magentoAuthService->getAttribute('devices');
+            $deviceOption = [
+                "attribute_id" => $magentoDevices['attribute_id'],
+                "label" => "Devices",
+                "values" => [
+                    [
+                        "value_index" => $marketPlaceDevice->marketplace_code
+                    ]
+                ]
+            ];
+            $magentoAuthService->addOptionstoParent($productData->product_sku, $deviceOption);
+
+            $magentoBrands = $magentoAuthService->getAttribute('brands');
+            $brandOption = [
+                "attribute_id" => $magentoBrands['attribute_id'],
+                "label" => "Brands",
+                "values" => [
+                    [
+                        "value_index" => $marketPlaceBrand->marketplace_code
+                    ]
+                ]
+            ];
+            $magentoAuthService->addOptionstoParent($productData->product_sku, $brandOption);
+
+            $magentoAuthService->addChildProductToParent($productData->product_sku, $new_sku);
+        }
+
+        $configProduct = ManageMarketplaceProduct::where('product_id', $productData->product_id)
+            ->whereNull('parent_id')
+            ->where('store_id', $store->id)
+            ->first();
+
+        ManageMarketplaceProduct::updateOrCreate(
+            [
+                'product_id' => $productData->product_id,
+                'store_id' => $store->id,
+                'sku' => $new_sku,
+                'device_id' => $device->id,
+                'marketplace_variant_id' => $response['id'] ?? null
+            ],
+            [
+                'product_id' => $productData->product_id,
+                'product_code' => $productData->product_sku,
+                'sku' => $new_sku,
+                'store_id' => $store->id,
+                'device_id' => $device->id,
+                'upload_status' => MarketPlaceUploadStatus::SUCCESS,
+                'marketplace_product_id' => $configProduct->marketplace_product_id ?? null,
+                'marketplace_variant_id' => $response['id'] ?? null,
+                'parent_id' => $configProduct->id ?? null,
+                'upload_attempts' => 1
+            ]
+        );
+    }
+
+    private function getMediaGalleryEntries($productData, $store)
+    {
+        $mediaGalleryEntries = [];
+        ProductImages::where('product_id', $productData->product_id)
+            ->chunk(100, function ($productImages) use ($store, $productData, $mediaGalleryEntries) {
+                foreach ($productImages as $productImage) {
+                    $Image = $productImage->imageObj;
+                    $localFilePath = storage_path('app/public/' . $Image->location . $Image->name);
+                    $base64Image = base64_encode(file_get_contents($localFilePath));
+
+                    $imageEntry = [
+                        "media_type" => "image",
+                        "label" => $Image->name,
+                        "position" => 0,
+                        "disabled" => false,
+                        "content" => [
+                            "base64_encoded_data" => $base64Image,
+                            "type" => 'image/jpeg',
+                            "name" => $Image->name
+                        ]
+                    ];
+                    if ($productImage->main_image) {
+                        $imageEntry['types'][] = 'image';
+                        $imageEntry['types'][] = 'small_image';
+
+                        $thumbnailImage = $productImage->thumbnailImageObj;
+                        if ($thumbnailImage) {
+                            $thumbnailLocalFilePath = storage_path('app/public/' . $thumbnailImage->location . $thumbnailImage->name);
+                            $base64ThumbnailImage = base64_encode(file_get_contents($thumbnailLocalFilePath));
+                            $thumbnailImageEntry = [
+                                "media_type" => "image",
+                                "label" => $thumbnailImage->name,
+                                "position" => 0,
+                                "disabled" => false,
+                                'types' => ['thumbnail'],
+                                "content" => [
+                                    "base64_encoded_data" => $base64ThumbnailImage,
+                                    "type" => 'image/jpeg',
+                                    "name" => $thumbnailImage->name
+                                ]
+                            ];
+                            $mediaGalleryEntries[] = $thumbnailImageEntry;
+                        }
+                    }
+                    $mediaGalleryEntries[] = $imageEntry;
+                }
+            });
+        return $mediaGalleryEntries;
     }
 
 }
