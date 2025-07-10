@@ -100,6 +100,9 @@ class OrderOperationUtility
 
     public static function createLabel($orderOperation)
     {
+        if (isset($orderOperation->tracking_number)) {
+            return [];
+        }
 
         $shipmentDetails = [];
         $errorMessages = ShippingUtility::assignSolutionService($orderOperation);
