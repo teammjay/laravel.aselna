@@ -58,6 +58,7 @@
     }
     .hide{display:none !important;}
     .show{display:block !important;}
+    .width-50{width:100px;}
 </style>
 @stop
 
@@ -692,6 +693,7 @@
 
                 const form = document.querySelector("#frmReturnLabel");
                 let formData = new FormData(form);
+                formData.append('ticket_id', ticket_id);
 
                 const carrier_package = formData.get("carrier_package");
                 const label_generation = formData.get("label_generation");
@@ -970,6 +972,7 @@
             $('#attach_file').on('change', function() {
                 let formData = new FormData();
                 formData.append('attach_file', this.files[0]);
+                formData.append('ticket_id', ticket_id);
 
                 $.ajax({
                     url: '{{ route("message.imageupload") }}',

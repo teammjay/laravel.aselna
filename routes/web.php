@@ -307,6 +307,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/messages/getshippingdetail', 'getShippingDetail')->name('message.getshippingdetail');
         Route::post('/messages/getcancelorderdetail', 'getCancelOrderDetail')->name('message.getcancelorderdetail');
         Route::post('/messages/returnlabel', 'returnLabel')->name('message.returnlabel');
+        Route::post('/messages/refundorder', 'refundOrder')->name('message.refundorder');
         Route::post('/messages/replaceorder', 'replaceOrder')->name('message.replaceorder');
         Route::post('/messages/imageupload', 'imageUpload')->name('message.imageupload');
     });

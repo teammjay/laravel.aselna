@@ -133,6 +133,20 @@
                             </select>
                         </div>
                     </div>
+
+                    <div class="form-group">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <label for="carrier_service_id" class="m-0">Carrier Package</label>
+                            <select class="form-control" id="carrier_package" name="carrier_package">
+                                <option value="">--</option>
+                                @if(count($shippingCarrierPackage ?? []) > 0)
+                                    @foreach($shippingCarrierPackage as $sCarrierPackage)
+                                        <option value="{{ $sCarrierPackage->id }}">{{ $sCarrierPackage->name }}</option>
+                                    @endforeach
+                                @endif
+                            </select>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -907,6 +921,12 @@
             carrier_service_id = $('#carrier_service_id').val();
         }
 
+        var carrier_package;
+        if($('#carrier_package').val() !== ''){
+            needUpdate = true;
+            carrier_package = $('#carrier_package').val();
+        }
+
         var ship_from;
         if($('input[name="ship_from"]').is(':checked')){
             needUpdate = true;
@@ -933,6 +953,7 @@
                 carrier_service_id: carrier_service_id,
                 ship_from: ship_from,
                 ship_option: ship_option,
+                carrier_package: carrier_package,
                 "_token": '{{ csrf_token() }}'
             },
             success: function (response) {

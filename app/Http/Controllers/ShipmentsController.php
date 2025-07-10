@@ -31,9 +31,10 @@ class ShipmentsController extends Controller
         $perPage = $this->perPage;
         $stores = Store::with('storeType')->where('store_status', 1)->orderBy('name', 'asc')->get();
         $shippingCarrier = ShippingCarrier::all();
+        $shippingCarrierPackage = ShippingPackage::all();
         $shipFrom = LogisticCenter::all();
 
-        return view('shipment.list', compact('perPage', 'stores', 'shippingCarrier', 'shipFrom'));
+        return view('shipment.list', compact('perPage', 'stores', 'shippingCarrier', 'shipFrom','shippingCarrierPackage'));
     }
 
     public function filter(Request $request)
@@ -223,6 +224,7 @@ class ShipmentsController extends Controller
         $carrier_service_id = $request->input('carrier_service_id');
         $ship_from = $request->input('ship_from');
         $ship_option = $request->input('ship_option');
+        $carrier_package = $request->input('carrier_package');
 
         if (!empty($selected_shipment)) {
             foreach ($selected_shipment as $id) {
@@ -230,6 +232,7 @@ class ShipmentsController extends Controller
                     'shipping_carrier_id' => $carrier_id,
                     'shipping_carrier_service_id' => $carrier_service_id,
                     'ship_from_id' => $ship_from,
+                    'shipping_package_id' => $carrier_package
                 );
 
                 $orderOperation = OrderOperation::findOrFail($id);
@@ -621,7 +624,7 @@ class ShipmentsController extends Controller
     {
         $order_operation_id = $request->input('id');
         $carrier_id = $request->input('carrier_name');
-        $carrier_service_id = $request->input('shipment_carrier');
+        $carrier_service_id = $request->input('shipping_carrier_service');
         $shipping_package_id = $request->input('carrier_package');
         $ship_date = $request->input('ship_date');
         $ship_from = $request->input('shipment_from');
