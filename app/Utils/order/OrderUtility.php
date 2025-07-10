@@ -386,7 +386,7 @@ class OrderUtility
                 break;
             case 'not_started';
             default:
-                $operationstatus = OrderStatus::Created;
+                $operationstatus = OrderStatus::Pending;
                 break;
         }
 
