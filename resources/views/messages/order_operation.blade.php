@@ -52,7 +52,17 @@
                             Return Location : {{ $order_operation->shipFrom->name }}
                         </div>
                     </div>
-                        @endif
+                    @endif
+
+                    @if(isset($order_operation->tracking_number))
+                    <div class="row pt-2">
+                        <div class="col-md-12">
+                            @if(isset($order_operation->tracking_number))
+                                <a href="" class="text-blue">{{ isset($order_operation->carrier) ? $order_operation->carrier->name : '' }} {{ $order_operation->tracking_number }}</a>
+                            @endif
+                        </div>
+                    </div>
+                    @endif
                 </div>
             </div>
         @endif

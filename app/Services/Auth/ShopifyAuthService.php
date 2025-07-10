@@ -316,4 +316,20 @@ class ShopifyAuthService
             return false;
         }
     }
+
+    public function getProducts($cursor = NULL){
+
+        $variable = [];
+        if($cursor != NULL){
+            $variable =['cursor'=>$cursor];
+        }
+        $response = $this->makeGraphQLRequest(ShopifyQueries::$getProducts, $variable);
+        //Log::info('Refund Orders Response: ' . json_encode($response));
+
+        echo '<pre>';
+        print_r($response);
+        echo '</pre>';die;
+        return $response;
+
+    }
 }

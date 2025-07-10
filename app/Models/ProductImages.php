@@ -36,4 +36,9 @@ class ProductImages extends Model
     {
         return $this->belongsTo(SysFile::class, 'image');
     }
+
+    public function thumbnailImageObj()
+    {
+        return $this->belongsTo(SysFile::class, 'thumbnail_image');
+    }
 }

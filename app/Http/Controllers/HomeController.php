@@ -61,6 +61,17 @@ class HomeController extends Controller
 
     public function testfunction(){
 
+         Bus::chain([
+            //new SubmitShopifyProductsJob(),
+            //new synccategorytospecification(),
+            new FetchShopifyOrders(),
+            //new EbayListingItemSyncJob()
+            //new SyncAllOrderStatusJob()
+            //new FetchWalmartOrdersJob()
+            //new FetchEmailMessagesJob()
+        ])->dispatch();
+        die;
+
         /*$productTypes = ProductType::select('id')->where('code', 'ceabundle')->get()->toArray();
         $products = Catalog::select('*')->with('productType','productKeyFeatures','productColor')
             ->whereNotIn('product_type', $productTypes)
@@ -363,15 +374,7 @@ class HomeController extends Controller
         echo '</pre>';die;*/
 
 
-       /* Bus::chain([
-            //new SubmitShopifyProductsJob(),
-            //new synccategorytospecification(),
-            //new FetchShopifyOrders(),
-            //new EbayListingItemSyncJob()
-            //new SyncAllOrderStatusJob()
-            //new FetchWalmartOrdersJob()
-            new FetchEmailMessagesJob()
-        ])->dispatch();*/
+
     }
 
     function getNextTicketNumberForStore($storeId) {
