@@ -1122,6 +1122,10 @@ class EbayService implements MarketplaceServiceInterface
                             break;
                     }
 
+                    if (isset($order['cancelStatus']) && $order['cancelStatus']['cancelState'] == 'CANCELLED') {
+                        $order_status = OrderStatus::Canceled;
+                    }
+
                     $orderData = [
                         'order_id' => $order['orderId'],
                         'order_date' => date('Y-m-d H:i:s', strtotime($order['creationDate'])),
