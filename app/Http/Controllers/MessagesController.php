@@ -12,6 +12,7 @@ use App\Helpers\QueryFilters;
 use App\Models\Catalog;
 use App\Models\Customer;
 use App\Models\HDMessage;
+use App\Models\HdMessageAttachment;
 use App\Models\HdMessageTemplate;
 use App\Models\HdTicketType;
 use App\Models\LogisticCenter;
@@ -26,6 +27,7 @@ use App\Models\ShippingCarrierService;
 use App\Models\ShippingPackage;
 use App\Models\Store;
 use App\Models\StoreMessageAccount;
+use App\Models\SysFile;
 use App\Utils\EmailMessageUtility;
 use App\Utils\order\OrderOperationUtility;
 use App\Utils\RmaNumberGenerator;
@@ -890,7 +892,6 @@ class MessagesController extends Controller
             'carrier_name' => 'required',
             'carrier_package' => 'required',
             'shipping_carrier_service' => 'required',
-//            'tracking_number' => 'required',
             'shipment_from' => 'required',
             'weight' => 'required|numeric|gt:0',
             'weight_type' => 'required'
@@ -903,6 +904,7 @@ class MessagesController extends Controller
             ], 422);
         }
 
+        $ticket_id = $request->input('ticket_id');
         $request['label_generation'] = 1;
 
         $orderOperation = OrderOperation::with('order', 'order.customer', 'store', 'store.storeType','carrier')->where('id', $request->id)->first();
@@ -931,6 +933,32 @@ class MessagesController extends Controller
         $imageName = $orderOperation->tracking_number.'.jpg';
         $imageUrl = asset('storage/labels/' .$imageName );
 
+        $storagePath = storage_path('app/public/labels/' . $imageName);
+        $fileSize = filesize($storagePath);
+        $extension = pathinfo($imageName, PATHINFO_EXTENSION);
+        $filedata = [
+            'name' => $imageName,
+            'ext' => $extension ?: 'jpg', // Default to 'jpg' if missing
+            'file_size' => $fileSize ?: 'Unknown', // Use 'Unknown' if not determined
+            'location' => 'storage/labels/',
+            'created_by' => 'admin',
+        ];
+
+        $imageFile = SysFile::create($filedata);
+        $file_id = $imageFile->id;
+
+        if($ticket_id && $file_id){
+            $attachementData = [
+                'client_id' => NULL,
+                'message_id' => $ticket_id,
+                'attachment_id' => $ticket_id,
+                'file_id' => $file_id,
+                'created_by' => 'admin',
+            ];
+
+            HdMessageAttachment::create($attachementData);
+        }
+
         return response()->json([
             'success' => true,
             'image_name' => $imageName,
@@ -947,7 +975,6 @@ class MessagesController extends Controller
             'carrier_name' => 'required',
             'carrier_package' => 'required',
             'shipping_carrier_service' => 'required',
-//            'tracking_number' => 'required',
             'shipment_from' => 'required',
             'weight' => 'required|numeric|gt:0',
             'weight_type' => 'required'
@@ -1010,14 +1037,14 @@ class MessagesController extends Controller
         $request['label_generation'] = 1;
         $orderOperations = OrderOperation::with('order','order.customer', 'store', 'store.storeType')->where('id', $order_opration_id)->get();
 
-        /*$isSuccess = OrderOperationUtility::processShipment($orderOperations, $request);
+        $isSuccess = OrderOperationUtility::processShipment($orderOperations, $request);
 
         if (!$isSuccess) {
             return response()->json([
                 'success' => false,
                 'message' => 'Something went wrong with API. Please try again!'
             ]);
-        }*/
+        }
 
         $templateDetail = HdMessageTemplate::getOrderOperationTemplate(OrderOperationType::OrderReplacement,1,0);
         $template_id = $template_code = '';
@@ -1044,7 +1071,23 @@ class MessagesController extends Controller
     public function refundOrder(Request $request){
 
         $order_id = $request->input('order_id');
+        $accept_return_charge = 0;
+        if($request->has('accept_return_charge') && $request->input('accept_return_charge') == 'on'){
+            $accept_return_charge = 1;
+        }
+        if($accept_return_charge){
+            $return_charge = $request->input('return_charge');
+            $return_charge_feedback = $request->input('return_charge_feedback');
+        }
         if($order_id) {
+            $orderDetail = Order::with('orderItem')->where('order_id',$order_id)->first();
+            if($orderDetail){
+                if(isset($orderDetail->orderItem)){
+                    foreach($orderDetail->orderItem as $oItem){
+
+                    }
+                }
+            }
             $orderOperation = OrderOperation::with('operationItem')->where('order_id',$order_id)->where('operation_type',OrderOperationType::OrderReturn)->first();
             $clonedOrderOperation = [
                 'ship_date' => $orderOperation->ship_date,
@@ -1130,8 +1173,40 @@ class MessagesController extends Controller
             'attach_file' => 'required|image|mimes:jpeg,png,jpg|max:4096'
         ]);
 
+        $ticket_id= $request->input('ticket_id');
+
         $imageName = time().'.'.$request->attach_file->extension();
+        $storagePath = storage_path('app/public/images/' . $imageName);
         $request->attach_file->move(public_path('images'), $imageName);
+
+        if ($imageName !== false) {
+
+            $extension = pathinfo($imageName, PATHINFO_EXTENSION);
+            $fileSize = filesize($storagePath);
+
+            $filedata = [
+                'name' => $imageName,
+                'ext' => $extension ?: 'jpg', // Default to 'jpg' if missing
+                'file_size' => $fileSize ?: 'Unknown', // Use 'Unknown' if not determined
+                'location' => 'images/',
+                'created_by' => 'admin',
+            ];
+
+            $fileDetail = SysFile::create($filedata);
+            $file_id = $fileDetail->id;
+
+            if($ticket_id && $file_id){
+                $attachementData = [
+                    'client_id' => NULL,
+                    'message_id' => $ticket_id,
+                    'attachment_id' => $ticket_id,
+                    'file_id' => $file_id,
+                    'created_by' => 'admin',
+                ];
+
+                HdMessageAttachment::create($attachementData);
+            }
+        }
 
         return response()->json([
             'success' => true,

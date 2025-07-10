@@ -29,7 +29,7 @@ class FetchShopifyProductsJob implements ShouldQueue
 
         if (count($stores ?? []) > 0) {
             foreach ($stores as $store) {
-                if (env('APP_ENV') === 'local' && $store->secret_key == '' && $store->service_url == '') {
+                if (env('APP_ENV') === 'local' && $store->name != 'AccessoryChoice' && $store->secret_key == '' && $store->service_url == '') {
                     continue;
                 }
 
@@ -63,6 +63,9 @@ class FetchShopifyProductsJob implements ShouldQueue
     }
 
     private function manageProducts($products, $store){
+        echo '<pre>';
+        print_r($products);
+        echo '</pre>';die;
         if(isset($products)){
             foreach($products as $product) {
                 $sku = '';
@@ -93,8 +96,6 @@ class FetchShopifyProductsJob implements ShouldQueue
                             'upload_attempts' => 1,
                         ]);
                     }
-
-
                 }
             }
         }
