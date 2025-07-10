@@ -44,7 +44,7 @@
                                     <label>Accept return charge</label>
                                 </div>
                                 <div class="col-md-7">
-                                    <input type="checkbox" id="accept_return_charge" name="accept_return_charge">
+                                    <input type="checkbox" id="accept_return_charge" name="accept_return_charge" checked>
                                 </div>
                             </div>
                             <div class="row mt-3 g-3 align-items-center">
@@ -91,7 +91,9 @@
                                 <th>Merchant Feedback</th>
                                 <th>Returned</th>
                                 <th>Product Refund</th>
-                                <th>Shipping Charge</th>
+                                <th>Shipping Refund</th>
+                                <th>Product Tax Refund</th>
+                                <th>Shipping Tax Refund</th>
                             </tr>
                             </thead>
                             <tbody id="shipment-item-list">
@@ -111,17 +113,19 @@
                                             @endif
                                         </td>
                                         <td>{{ $oitem->orderItem->sku }}</td>
-                                        <td><input type="text" class="form-control" name="quantity" value="{{ $oitem->orderItem->quantity }}"></td>
+                                        <td><input type="text" class="form-control width-50" name="quantity[{{ $oitem->id }}]" value="{{ $oitem->orderItem->quantity }}"></td>
                                         <td>{{ \App\Constants\OrderSyncStatus::getOrderSyncStatusName($oitem->sync_status) }}</td>
                                         <td>{{ $oitem->sync_message }}</td>
                                         <td>
-                                            <select class="form-control" name="merchant_feedback">
+                                            <select class="form-control" name="merchant_feedback[{{ $oitem->id }}]">
 
                                             </select>
                                         </td>
-                                        <td><input type="text" class="form-control" name="returned_quantity" value="{{ $oitem->orderItem->quantity }}"></td>
-                                        <td><input type="text" class="form-control" name="product_refund" value="{{ $oitem->orderItem->item_price }}"></td>
-                                        <td><input type="text" class="form-control" name="shipping_charge" value="{{ $oitem->orderItem->shipping_price }}"></td>
+                                        <td><input type="text" class="form-control width-50" name="refund_quantity[{{ $oitem->id }}]" value="{{ $oitem->orderItem->quantity }}"></td>
+                                        <td><input type="text" class="form-control width-50" name="refund_price[{{ $oitem->id }}]" value="{{ $oitem->orderItem->item_price }}"></td>
+                                        <td><input type="text" class="form-control width-50" name="refund_shipping_price[{{ $oitem->id }}]" value="{{ ($oitem->orderItem->refund_shipping_price != '') ? $oitem->orderItem->refund_shipping_price : 0 }}"></td>
+                                        <td><input type="text" class="form-control width-50" name="refund_tax_price[{{ $oitem->id }}]" value="{{ ($oitem->orderItem->refund_tax_price != '') ? $oitem->orderItem->refund_tax_price : 0 }}"></td>
+                                        <td><input type="text" class="form-control width-50" name="refund_shipping_tax[{{ $oitem->id }}]" value="{{ ($oitem->orderItem->refund_shipping_tax != '') ? $oitem->orderItem->refund_shipping_tax : 0 }}"></td>
                                     </tr>
                                 @endforeach
                             @endif
