@@ -64,13 +64,13 @@ class HomeController extends Controller
          Bus::chain([
             //new SubmitShopifyProductsJob(),
             //new synccategorytospecification(),
-            new FetchShopifyOrders(),
+            //new FetchShopifyOrders(),
             //new EbayListingItemSyncJob()
             //new SyncAllOrderStatusJob()
             //new FetchWalmartOrdersJob()
             //new FetchEmailMessagesJob()
         ])->dispatch();
-        die;
+        //die;
 
         /*$productTypes = ProductType::select('id')->where('code', 'ceabundle')->get()->toArray();
         $products = Catalog::select('*')->with('productType','productKeyFeatures','productColor')

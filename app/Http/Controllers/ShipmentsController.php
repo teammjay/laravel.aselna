@@ -515,7 +515,7 @@ class ShipmentsController extends Controller
 
         $selected_shipment_id = $request->input('shipment_ids');
 
-        $orderOperations = OrderOperation::with('order', 'store', 'store.storeType')->whereIn('id', $selected_shipment_id)->get();
+        $orderOperations = OrderOperation::with('order','operationItem', 'store', 'store.storeType')->whereIn('id', $selected_shipment_id)->get();
 
         if (count($orderOperations ?? []) > 0) {
             $isSuccess = false;
