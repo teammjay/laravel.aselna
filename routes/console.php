@@ -4,6 +4,7 @@ use App\Jobs\AmazonListingItemSyncJob;
 use App\Jobs\EbayListingItemSyncJob;
 use App\Jobs\FetchEbayOrders;
 use App\Jobs\FetchResultFeedAsync;
+use App\Jobs\FetchShopifyOrders;
 use App\Jobs\FetchWalmartOrdersJob;
 use App\Jobs\SyncAllOrderStatusJob;
 use App\Jobs\SubmitShopifyProductsJob;
@@ -24,8 +25,10 @@ Schedule::job(new FetchResultFeedAsync())->everyFiveMinutes();
 
 //Order Syncing
 Schedule::job(new FetchWalmartOrdersJob())->hourly();
-Schedule::job(new SyncAllOrderStatusJob())->hourly();
 Schedule::job(new FetchEbayOrders())->hourly();
+Schedule::job(new FetchShopifyOrders())->hourly();
+Schedule::job(new SyncAllOrderStatusJob())->hourly();
+
 
 // Products Syncing
 //Schedule::job(new SubmitShopifyProductsJob())->everyFifteenMinutes();
