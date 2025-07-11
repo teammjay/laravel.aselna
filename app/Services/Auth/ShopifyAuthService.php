@@ -35,7 +35,7 @@ class ShopifyAuthService
         ];
 
         $bodyArray['query'] = $query;
-        if(!empty($variables)){
+        if (!empty($variables)) {
             $bodyArray['variables'] = $variables;
         }
 
@@ -120,7 +120,7 @@ class ShopifyAuthService
 
         $response = $this->makeGraphQLRequest(ShopifyQueries::$getProductVariant, $variables);
 
-        Log::info('Inventory Item: ' .json_encode($response));
+        Log::info('Inventory Item: ' . json_encode($response));
 
         return $response['data']['productVariant']['inventoryItem']['id'] ?? null;
     }
@@ -130,14 +130,14 @@ class ShopifyAuthService
 
         $response = $this->makeGraphQLRequest(ShopifyQueries::$getLocation);
 
-        Log::info('Location Item: ' .json_encode($response));
+        Log::info('Location Item: ' . json_encode($response));
 
         return $response['data']['locations']['edges'][0]['node']['id'] ?? null;
     }
 
     public function updateInventory($inventoryUpdates)
     {
-        if(!empty($inventoryUpdates)) {
+        if (!empty($inventoryUpdates)) {
             $variables = [
                 'input' => [
                     'reason' => 'correction',
@@ -152,7 +152,7 @@ class ShopifyAuthService
             //Log::info('Inventory Response: ' . json_encode($response));
 
             return $response;
-        }else{
+        } else {
             return false;
         }
     }
@@ -160,13 +160,13 @@ class ShopifyAuthService
     public function updatePrice($priceUpdatesData)
     {
 
-        if(!empty($priceUpdatesData)) {
+        if (!empty($priceUpdatesData)) {
             $response = $this->makeGraphQLRequest(ShopifyQueries::$productVariantUpdate, $priceUpdatesData);
 
             //Log::info('Price Update Response: ' . json_encode($response));
 
             return $response;
-        }else{
+        } else {
             return false;
         }
     }
@@ -193,7 +193,7 @@ class ShopifyAuthService
               }
             }
             GQL;*/
-            $result = $this->makeGraphQLRequest(ShopifyQueries::$getOrders, array('first' => 50,'query' => 'created_at:>'.$sync_start_date));
+            $result = $this->makeGraphQLRequest(ShopifyQueries::$getOrders, array('first' => 50, 'query' => 'created_at:>' . $sync_start_date));
             if (!isset($result['errors'])) {
                 return $result['data']['orders']['edges'];
             }
@@ -206,42 +206,45 @@ class ShopifyAuthService
 
     public function getPublications()
     {
-        return $this->makeGraphQLRequest(ShopifyQueries::$getPublications,null);
+        return $this->makeGraphQLRequest(ShopifyQueries::$getPublications, null);
     }
 
-    public function getFullfillmentOrders($orderid){
+    public function getFullfillmentOrders($orderid)
+    {
 
-        if(!empty($orderid)) {
-            $variable['id'] =$orderid;
+        if (!empty($orderid)) {
+            $variable['id'] = $orderid;
             $response = $this->makeGraphQLRequest(ShopifyQueries::$getFullfillmentOrders, $variable);
 
             Log::info('Fullfillment Orders Response: ' . json_encode($response));
 
             return $response;
-        }else{
+        } else {
             return false;
         }
     }
 
-    public function updateFullfillment($variables){
+    public function updateFullfillment($variables)
+    {
 
-        if(!empty($variables)) {
+        if (!empty($variables)) {
             $response = $this->makeGraphQLRequest(ShopifyQueries::$createFullfillment, $variables);
 
             //Log::info('Update Fullfillment Response: ' . json_encode($response));
 
             return $response;
-        }else{
+        } else {
             return false;
         }
     }
 
-    public function cancelOrder($orderId, $reason= 'CUSTOMER'){
+    public function cancelOrder($orderId, $reason = 'CUSTOMER')
+    {
 
-        if(!empty($orderId)) {
+        if (!empty($orderId)) {
             $variable = [
                 'notifyCustomer' => true,
-                'orderId' => "gid://shopify/Order/".$orderId,
+                'orderId' => "gid://shopify/Order/" . $orderId,
                 'reason' => $reason, // CUSTOMER, DECLINED, FRAUD, INVENTORY, OTHER, STAFF
                 'refund' => true,
                 "restock" => true,
@@ -256,7 +259,7 @@ class ShopifyAuthService
             echo '</pre>';*/
 
             return $response;
-        }else{
+        } else {
             return false;
         }
     }
@@ -265,7 +268,7 @@ class ShopifyAuthService
     {
 
         try {
-            $orderID = "gid://shopify/Order/".$orderID;
+            $orderID = "gid://shopify/Order/" . $orderID;
             $result = $this->makeGraphQLRequest(ShopifyQueries::$getOrderDetail, array('id' => $orderID));
             if (!isset($result['errors'])) {
                 //Log::info('Shopify Orders Detail Response: ' . json_encode($result));
@@ -280,7 +283,7 @@ class ShopifyAuthService
 
     public function createRefund($orderId, $variables)
     {
-        if(!empty($orderId)) {
+        if (!empty($orderId)) {
 
             $response = $this->makeGraphQLRequest(ShopifyQueries::$createRefund, $variables);
 
@@ -288,19 +291,20 @@ class ShopifyAuthService
             /*echo '<pre>';
             print_r($response);
             echo '</pre>';die;*/
-            if(!isset($response['error'])){
+            if (!isset($response['error'])) {
                 return $response['data']['refundCreate']['refund']['id'] ?? null;
-            }else{
+            } else {
                 return false;
             }
-        }else{
+        } else {
             return false;
         }
     }
 
-    public function refundOrder($refundId){
+    public function refundOrder($refundId)
+    {
 
-        if(!empty($refundId)) {
+        if (!empty($refundId)) {
             $variable = [
                 'id' => $refundId
             ];
@@ -308,27 +312,28 @@ class ShopifyAuthService
 
             //Log::info('Refund Orders Response: ' . json_encode($response));
 
-            echo '<pre>';
-            print_r($response);
-            echo '</pre>';die;
+//            echo '<pre>';
+//            print_r($response);
+//            echo '</pre>';die;
             return $response;
-        }else{
+        } else {
             return false;
         }
     }
 
-    public function getProducts($cursor = NULL){
+    public function getProducts($cursor = NULL)
+    {
 
         $variable = [];
-        if($cursor != NULL){
-            $variable =['cursor'=>$cursor];
+        if ($cursor != NULL) {
+            Log::info('Cursor: ' . $cursor);
+            $variable = ['cursor' => $cursor];
+            $response = $this->makeGraphQLRequest(ShopifyQueries::$getProductsWithCursor, $variable);
+        } else {
+            $response = $this->makeGraphQLRequest(ShopifyQueries::$getProducts, $variable);
         }
-        $response = $this->makeGraphQLRequest(ShopifyQueries::$getProducts, $variable);
         //Log::info('Refund Orders Response: ' . json_encode($response));
 
-        echo '<pre>';
-        print_r($response);
-        echo '</pre>';die;
         return $response;
 
     }

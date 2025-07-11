@@ -243,7 +243,7 @@ class SubmitShopifyProductsJob implements ShouldQueue
                     Log::info('SKU : ' . $sku);
                     $ManageMarketplaceProduct->update([
                         'sku' => $sku,
-                        'upc_code' => isset($upcCode) ? $upcCode : '',
+//                        'upc_code' => isset($upcCode) ? $upcCode : '',
                         'marketplace_product_id' => $productId,
                         'marketplace_variant_id' => $variantId,
                         'upload_status' => 'success'
