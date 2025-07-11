@@ -1071,27 +1071,46 @@ class MessagesController extends Controller
     public function refundOrder(Request $request){
 
         $order_id = $request->input('order_id');
+        $id = $request->input('o_id');
         $accept_return_charge = 0;
+        $return_charges = 0;
+        $return_charge_feedback = NULL;
         if($request->has('accept_return_charge') && $request->input('accept_return_charge') == 'on'){
             $accept_return_charge = 1;
-        }
-        if($accept_return_charge){
-            $return_charge = $request->input('return_charge');
+            $return_charges = $request->input('return_charge');
             $return_charge_feedback = $request->input('return_charge_feedback');
+            $reason_id = $request->input('reason');
         }
+        $item_ids = $request->input('item_id');
+        $refund_quantities = $request->input('refund_quantity');
+        $refund_tax_prices = $request->input('refund_tax_price');
+        $refund_shipping_prices = $request->input('refund_shipping_price');
+        $refund_shipping_taxs = $request->input('refund_shipping_tax');
         if($order_id) {
             $orderDetail = Order::with('orderItem')->where('order_id',$order_id)->first();
             if($orderDetail){
                 if(isset($orderDetail->orderItem)){
-                    foreach($orderDetail->orderItem as $oItem){
-
+                    foreach($orderDetail->orderItem as $key=>$oItem){
+                        if($oItem->id == $item_ids[$oItem->id]){
+                            $updateOrderItemData = [
+                                'return_charge' => ($oItem->quantity * $oItem->item_price - $return_charges),
+                                'canceled_quantity' => $refund_quantities[$oItem->id],
+                                'refund_quantity' => $refund_quantities[$oItem->id],
+                                'return_charge_feedback' => $return_charge_feedback,
+                                'refund_tax_price' => $oItem->quantity * $refund_tax_prices[$oItem->id],
+                                'refund_shipping_price' => $oItem->quantity * $refund_shipping_prices[$oItem->id],
+                                'refund_shipping_tax' => $oItem->quantity * $refund_shipping_taxs[$oItem->id]
+                            ];
+                            $oItem->update($updateOrderItemData);
+                        }
                     }
                 }
             }
-            $orderOperation = OrderOperation::with('operationItem')->where('order_id',$order_id)->where('operation_type',OrderOperationType::OrderReturn)->first();
+            $orderOperation = OrderOperation::with('operationItem')->where('order_id',$id)->where('operation_type',OrderOperationType::OrderReturn)->first();
+
             $clonedOrderOperation = [
                 'ship_date' => $orderOperation->ship_date,
-                'client' => $orderOperation->client,
+                'client' => NULL,
                 'to_address_id' => $orderOperation->to_address_id,
                 'sync_status' => $orderOperation->sync_status,
                 'insurance_value' => $orderOperation->insurance_value,
@@ -1109,7 +1128,7 @@ class MessagesController extends Controller
                 'shipping_carrier_id' => $orderOperation->shipping_carrier_id,
                 'shipping_carrier_service_id' => NULL,
                 'shipping_account_transaction_id' => NULL,
-                'return_operation_item_id' => $orderOperation->id,
+                'return_operation_id' => $orderOperation->id,
             ];
 
             $newOrderOperation = OrderOperation::create($clonedOrderOperation);
@@ -1124,6 +1143,11 @@ class MessagesController extends Controller
                         'client_id' => $oitem->client_id,
                         'sync_status' => $oitem->sync_status,
                         'quantity' => $oitem->quantity,
+                        'item_price' => $oitem->item_price,
+                        'shipping_price' => ($oItem->quantity * $oItem->item_price - $return_charges),
+                        'reason_id' => $reason_id,
+                        'refund_feedback_id' => $return_charge_feedback,
+                        'return_operation_item_id' => $oitem->id
                     ];
 
                     OrderOperationItem::updateOrCreate([
@@ -1139,6 +1163,7 @@ class MessagesController extends Controller
 
         $isSuccess = OrderOperationUtility::processShipment($orderOperations, $request);
 
+        //$isSuccess = true;
         if (!$isSuccess) {
             return response()->json([
                 'success' => false,
@@ -1146,7 +1171,7 @@ class MessagesController extends Controller
             ]);
         }
 
-        $templateDetail = HdMessageTemplate::getOrderOperationTemplate(OrderOperationType::OrderReplacement,1,0);
+        /*$templateDetail = HdMessageTemplate::getOrderOperationTemplate(OrderOperationType::OrderReplacement,1,0);
         $template_id = $template_code = '';
         if($templateDetail) {
             $data = [
@@ -1158,12 +1183,11 @@ class MessagesController extends Controller
             ];
             $template_id = $templateDetail->id;
             $template_code = \Blade::render($templateDetail->template_code, $data);
-        }
+        }*/
 
         return response()->json([
             'success' => true,
-            'template_id' => $template_id,
-            'template_code' => $template_code,
+            'message' => 'Order refund successfuly!'
         ]);
     }
 
@@ -1204,13 +1228,20 @@ class MessagesController extends Controller
                     'created_by' => 'admin',
                 ];
 
-                HdMessageAttachment::create($attachementData);
+                $attchment = HdMessageAttachment::create($attachementData);
+                $messageAttach = HdMessageAttachment::with('fileSystem')->where('id',$attchment->id)->first();
+                //$fileSystem = $messageAttach->fileSystem;
+                //$imagesPath = asset('storage/' .$messageAttach->imageObj->getFileUrl());
+                $storagePath = public_path('images/' . $imageName);
+                $imagesPath = $storagePath;
+
             }
         }
 
         return response()->json([
             'success' => true,
-            'image' => $imageName
+            'image' => $imageName,
+            'imagesPath' => $imagesPath,
         ]);
 
     }

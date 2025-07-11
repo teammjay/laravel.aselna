@@ -142,8 +142,8 @@
                                             <div class="btn-group lableImageGroup hide" role="group">
                                                 <button id="btnGroupDrop2" type="button" class="btn btn-primary lable-image dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"></button>
                                                 <div class="dropdown-menu" aria-labelledby="btnGroupDrop2">
-                                                    <a class="dropdown-item download_image" href="javascript:void(0);" data-close="1">Download</a>
-                                                    <a class="dropdown-item delete_images" href="javascript:void(0);" data-close="0">Delete</a>
+                                                    <a class="dropdown-item download_image" href="javascript:void(0);">Download</a>
+                                                    <a class="dropdown-item delete_images" href="javascript:void(0);">Delete</a>
                                                 </div>
                                             </div>
                                         </div>
@@ -756,7 +756,21 @@
                         }*/
                     }
                 });
+
             });
+
+            $(document).on('click','.download_image',function () {
+                let imgUrl = $('#image_url').val();
+                window.open(imgUrl, '_blank');
+            });
+
+            $(document).on('click','.delete_images',function () {
+                let imgUrl = $('#image_url').val('');
+                $('.lableImageGroup').addClass('hide');
+                $('.lable-image').html('');
+            });
+
+
 
             $(document).on('click','#replacement',function () {
                 var order_id = $('#order_id').val();
@@ -969,6 +983,43 @@
                 });
             });
 
+            $(document).on('click','#refund_order',function () {
+
+                const form = document.querySelector("#frmRefundOrder");
+                let formData = new FormData(form);
+
+                var shipping_cost = formData.get('return_charge');
+                if(shipping_cost != null && shipping_cost > 0){
+                    if($('#accept_return_charge').is(':checked')){
+                        if($('#return_charge_feedback').val() == ''){
+                            alert('Please specify the reason for return charge ('+shipping_cost+') rejection.');
+                            return false;
+                        }
+                    }
+                }
+                $.ajax({
+                    url: "{{ route('message.refundorder') }}",
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    headers: {
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    },
+                    success: function (response) {
+                        // If success, remove the user row from the table
+                        alert(response.message);
+                        if (response.success) {
+                            location.reload();
+                        }
+                    },
+                    error: function (xhr) {
+                        // Handle error response
+                        alert('Error: ' + xhr.responseJSON.error);
+                    }
+                });
+            });
+
             $('#attach_file').on('change', function() {
                 let formData = new FormData();
                 formData.append('attach_file', this.files[0]);
@@ -985,6 +1036,11 @@
                     },
                     success: function(response) {
                         alert(response.success);
+                        if(response.image_url){
+                            $('.lableImageGroup').removeClass('hide');
+                            $('#image_url').val(response.image_url);
+                            $('.lable-image').html(response.image_name);
+                        }
                     },
                     error: function(xhr) {
                         alert('Upload failed');
