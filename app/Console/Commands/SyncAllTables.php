@@ -18,6 +18,7 @@ use App\Jobs\DeviceTypesSyncJob;
 use App\Jobs\FeedGenerationJob;
 use App\Jobs\FetchAmazonOrdersJob;
 use App\Jobs\FetchEbayOrders;
+use App\Jobs\FetchShopifyProductsJob;
 use App\Jobs\FetchWalmartOrdersJob;
 use App\Jobs\FileSystemSyncJob;
 use App\Jobs\GenerationTypeAndTemplateSync;
@@ -55,6 +56,7 @@ use App\Jobs\StoreProductSyncJob;
 use App\Jobs\StoreSyncJob;
 use App\Jobs\StoreTypeListingSyncJob;
 use App\Jobs\StoreTypeSyncJob;
+use App\Jobs\SubmitShopifyProductsJob;
 use App\Jobs\synccategorytospecification;
 use App\Jobs\SystemPrinterSyncJob;
 use App\Jobs\UPCSyncJob;
@@ -150,8 +152,8 @@ class SyncAllTables extends Command
 //        FetchWalmartOrdersJob::dispatch();
         //synccategorytospecification::dispatch();
 //        SystemPrinterSyncJob::dispatch();
-//
-        MagentoProductsSyncJob::dispatch();
+
+        FetchEbayOrders::dispatch();
 
 //        $transactionIds = [
 ////            '9400150105798006163885',
