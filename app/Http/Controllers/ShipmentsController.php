@@ -512,23 +512,35 @@ class ShipmentsController extends Controller
 
     public function shipSelected(Request $request)
     {
-
         $selected_shipment_id = $request->input('shipment_ids');
 
-        $orderOperations = OrderOperation::with('order','operationItem', 'store', 'store.storeType')->whereIn('id', $selected_shipment_id)->get();
+        // For streaming response
+        if ($request->input('process_id')) {
+            $process_id = $request->input('process_id');
+            $order_id = $request->input('order_id');
 
-        if (count($orderOperations ?? []) > 0) {
-            $isSuccess = false;
-            foreach ($orderOperations as $operation) {
+            // Process a single order operation
+            $operation = OrderOperation::with('order', 'operationItem', 'store', 'store.storeType')
+                ->where('id', $order_id)
+                ->first();
 
-                $store = $operation->store;
+            if (!$operation) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid shipment ID'
+                ]);
+            }
 
-                $package_id = '';
-                $product_total_weight = 0;
-                $product_weight_unit = '';
-                if (count($operation->operationItem ?? []) > 0) {
-                    $product_weight = 0;
-                    foreach ($operation->operationItem as $oitem) {
+            $store = $operation->store;
+
+            $package_id = '';
+            $product_total_weight = 0;
+            $product_weight_unit = '';
+
+            if (count($operation->operationItem ?? []) > 0) {
+                $product_weight = 0;
+                foreach ($operation->operationItem as $oitem) {
+                    if (isset($oitem->orderItem->product)) {
                         $product_id = $oitem->orderItem->product->product_id;
                         if ($product_id) {
                             $product_detail = Catalog::findOrFail($product_id);
@@ -544,41 +556,58 @@ class ShipmentsController extends Controller
                         }
                     }
                 }
+            }
 
-                $request['carrier_name'] = $operation->shipping_carrier_id;
-                $request['shipping_carrier_service'] = $operation->shipping_carrier_service_id;
-                $request['weight'] = $product_total_weight;
-                $request['weight_type'] = isset($operation->weight_weight_unit) ? $operation->weight_weight_unit : $product_weight_unit;
-                $request['label_generation'] = 1;
-                $request['tracking_number'] = null;
-                $request['shipment_from'] = $operation->ship_from_id;
-                Log::info('Shipment From ID: ' . $request['shipment_from']);
-                if (!isset($request['shipment_from']) || $request['shipment_from'] == '') {
-                    $storeLogisticCenter = $store->logisticCenters->first();
-                    //Log::info('Store Logistic Center: ' . json_encode($storeLogisticCenter));
-                    if (isset($storeLogisticCenter->logistic_center_id)) {
-                        $request['shipment_from'] = $storeLogisticCenter->logistic_center_id;
-                    } else {
-                        continue;
-                    }
+            $request['carrier_name'] = $operation->shipping_carrier_id;
+            $request['shipping_carrier_service'] = $operation->shipping_carrier_service_id;
+            $request['weight'] = $product_total_weight;
+            $request['weight_type'] = isset($operation->weight_weight_unit) ? $operation->weight_weight_unit : $product_weight_unit;
+            $request['label_generation'] = 1;
+            $request['tracking_number'] = null;
+            $request['shipment_from'] = $operation->ship_from_id;
+
+            if (!isset($request['shipment_from']) || $request['shipment_from'] == '') {
+                $storeLogisticCenter = $store->logisticCenters->first();
+                if (isset($storeLogisticCenter->logistic_center_id)) {
+                    $request['shipment_from'] = $storeLogisticCenter->logistic_center_id;
+                } else {
+                    return response()->json([
+                        'success' => false,
+                        'process_id' => $process_id,
+                        'order_id' => $order_id,
+                        'status' => 'error',
+                        'message' => 'No shipping location found for store'
+                    ]);
                 }
-
-                //Log::info('Shipment Request Data: ' . json_encode($request->all()));
-
-                $isSuccess = OrderOperationUtility::processShipment($operation, $request);
             }
 
-            if (!$isSuccess) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Something went wrong with API. Please try again!'
-                ]);
-            }
+            $isSuccess = OrderOperationUtility::processShipment($operation, $request);
 
             return response()->json([
-                'success' => true
+                'success' => $isSuccess,
+                'process_id' => $process_id,
+                'order_id' => $order_id,
+                'status' => $isSuccess ? 'completed' : 'error',
+                'message' => $isSuccess ? 'Shipment processed successfully' : 'Error processing shipment'
             ]);
         }
+
+        // Initial request - just return the IDs that need to be processed
+        if (count($selected_shipment_id ?? []) > 0) {
+            $process_id = uniqid('ship_');
+
+            return response()->json([
+                'success' => true,
+                'process_id' => $process_id,
+                'shipment_ids' => $selected_shipment_id,
+                'total_count' => count($selected_shipment_id)
+            ]);
+        }
+
+        return response()->json([
+            'success' => false,
+            'message' => 'No shipments selected'
+        ]);
     }
 
     public function shipThis(Request $request)

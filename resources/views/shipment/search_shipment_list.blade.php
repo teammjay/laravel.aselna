@@ -1,6 +1,6 @@
 @if(count($shipments ?? []) > 0)
     @foreach($shipments as $shipment)
-        <tr>
+        <tr data-id="{{ $shipment['oid'] }}" class="shipment-row">
 
             <td>
                 <button type="button" class="btn btn-warning show-detail" data-id="{{ $shipment['oid'] }}">Show Detail</button><input type="checkbox" class="pro-id" name="shipment_id[]" value="{{ $shipment['oid'] }}" style="visibility:hidden;">
