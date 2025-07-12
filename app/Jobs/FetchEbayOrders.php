@@ -33,7 +33,7 @@ class FetchEbayOrders implements ShouldQueue
         if(count($stores ?? []) > 0) {
             foreach ($stores as $store) {
 
-                if (env('APP_ENV') === 'local' && $store->name != 'nismobile') {
+                if (env('APP_ENV') === 'local' && $store->name != 'phonil') {
                     continue;
                 }
                 Log::info('Store : ' . $store->name);

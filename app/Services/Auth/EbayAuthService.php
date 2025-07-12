@@ -385,7 +385,7 @@ class EbayAuthService
                 $endDate = gmdate('Y-m-d\TH:i:s\Z', strtotime(now()));
 
                 $queryData = [
-                    'filter'=> "creationdate:[$startDate..$endDate]",
+                    'filter'=> "lastmodifieddate:[$startDate..$endDate]",
                     'limit' => 90, // Fetch max 100 orders
                 ];
             }
