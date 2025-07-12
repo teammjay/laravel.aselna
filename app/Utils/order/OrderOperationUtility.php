@@ -41,7 +41,6 @@ class OrderOperationUtility
         $order_id = $request->input('order_id');
 
         $updateRecord = array(
-            'tracking_number' => $tracking_number,
             'shipping_carrier_id' => $carrier_id,
             'shipping_carrier_service_id' => $carrier_service_id,
             'shipping_package_id' => $carrier_package,
@@ -49,6 +48,9 @@ class OrderOperationUtility
             'weight_value' => $weight,
             'weight_weight_unit' => $weight_type,
         );
+        if (isset($tracking_number) && $tracking_number != '') {
+            $updateRecord['tracking_number'] = $tracking_number;
+        }
         if(isset($request['products_rubber_stamp']) && $request['products_rubber_stamp'] != ''){
             $updateRecord['products_rubber_stamp'] = $request['products_rubber_stamp'];
         }
@@ -100,6 +102,7 @@ class OrderOperationUtility
 
     public static function createLabel($orderOperation)
     {
+        Log::info('Tracking number for order operation: ' . $orderOperation->tracking_number);
         if (isset($orderOperation->tracking_number)) {
             return [];
         }
