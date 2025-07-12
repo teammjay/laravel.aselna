@@ -1058,8 +1058,11 @@ class EbayService implements MarketplaceServiceInterface
 
     public function getOrders($store)
     {
-        $last_synchronization = OrderSynchronization::where('store_id', $store->id)->where('synchronization_type', OrderSyncronisationType::ORDER)->orderByRaw('COALESCE(last_order_update_date,filter_end_date) desc')->first();
+        $last_synchronization = OrderSynchronization::where('store_id', $store->id)->where('synchronization_type', OrderSyncronisationType::ORDER)->orderBy('last_order_update_date', 'desc')->first();
         $filterStartDate = OrderUtility::getLastSyncDate($store->id, OrderSyncronisationType::ORDER);
+
+        Log::info('Filter Start Date : ' . $filterStartDate);
+
         $filterStartDateFormatted = gmdate('Y-m-d\TH:i:s\Z', strtotime($filterStartDate));
         if (env('APP_ENV') !== 'local' && (!isset($store->user_id))) {
             return null;
@@ -1090,17 +1093,18 @@ class EbayService implements MarketplaceServiceInterface
         $synchronizeArr = [
             'store_id' => $store->id,
             'synchronization_type' => OrderSyncronisationType::ORDER,
-            'filter_start_date' => $filterStartDate,
-            'filter_end_date' => now(),
+            'filter_start_date' => isset($nextCursor) && isset($last_synchronization) ? $last_synchronization->filter_start_date : $filterStartDate,
+            'filter_end_date' => isset($nextCursor) && isset($last_synchronization) ? $last_synchronization->filter_end_date : date('Y-m-d H:i:s'),
             'created_by' => $created_by,
             'cursor' => $nextCursor
         ];
         //Log::info('Order Synchronization: ' . json_encode($synchronizeArr));
         $order_synchronization = OrderSynchronization::create($synchronizeArr);
 
+        $last_order_update_date = null;
+        $noOfOrder = 0;
+
         if (isset($orders['total']) && $orders['total'] > 0) {
-            $last_order_update_date = null;
-            $noOfOrder = 0;
             foreach ($orders['orders'] as $order) {
                 //Log::info('Order : ' . json_encode($order));
                 $newOrder = Order::where('order_id', $order['orderId'])->first();
@@ -1151,14 +1155,18 @@ class EbayService implements MarketplaceServiceInterface
                 }
 
 
-                if ($last_order_update_date === null || strtotime($order['creationDate']) > strtotime($last_order_update_date)) {
-                    $last_order_update_date = date('Y-m-d H:i:s', strtotime($order['creationDate']));
+                if ($last_order_update_date === null || strtotime($order['lastModifiedDate']) > strtotime($last_order_update_date)) {
+                    $last_order_update_date = date('Y-m-d H:i:s', strtotime($order['lastModifiedDate']));
                 }
                 Log::info('Last Order Update Date : ' . $last_order_update_date);
                 $noOfOrder++;
             }
-            $order_synchronization->update(['number_of_items' => $noOfOrder, 'last_order_update_date' => $last_order_update_date]);
         }
+
+        if (strtotime($last_synchronization->last_order_update_date) > strtotime($last_order_update_date)) {
+            $last_order_update_date = date('Y-m-d H:i:s', strtotime($last_synchronization->last_order_update_date));
+        }
+        $order_synchronization->update(['number_of_items' => $noOfOrder, 'last_order_update_date' => $last_order_update_date]);
         return $orders;
     }
 
