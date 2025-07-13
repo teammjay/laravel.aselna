@@ -950,6 +950,26 @@
                 }
             });
         }
+
+        $(document).on('click', '#select_deselect_shipment', function() {
+
+            var ele = $(this);
+            if(ele.is(':checked')){
+                $('.pro-id').each(function () {
+                    $(this).prop('checked', true);
+                    $(this).parents('tr').addClass('bg-blue');
+                });
+            }else {
+
+                $('.pro-id').each(function () {
+                    $(this).prop('checked', false);
+                    $(this).parents('tr').removeClass('bg-blue');
+                });
+            }
+
+            let totalCnt = $('input[name="shipment_id[]"]:checked').length;
+            $('#total_selected').html('( <b>'+totalCnt+'</b> selected )');
+        });
     });
 
     function getShippingCarrierService(element){
