@@ -152,8 +152,8 @@ class SyncAllTables extends Command
 //        FetchWalmartOrdersJob::dispatch();
         //synccategorytospecification::dispatch();
 //        SystemPrinterSyncJob::dispatch();
-//
-        SubmitShopifyProductsJob::dispatch();
+
+        FetchWalmartOrdersJob::dispatch();
 
 //        $transactionIds = [
 ////            '9400150105798006163885',

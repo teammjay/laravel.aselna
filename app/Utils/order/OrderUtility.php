@@ -22,10 +22,10 @@ class OrderUtility
     {
         $lastOrderUpdateDate = OrderSynchronization::where('store_id', $store_id)
             ->where('synchronization_type', $synchronizationType)
-            ->max('last_order_update_date');
+            ->orderBy('last_order_update_date','desc')->first();
 
         if ($lastOrderUpdateDate) {
-            $date = \Carbon\Carbon::parse($lastOrderUpdateDate)->addSeconds(10);
+            $date = \Carbon\Carbon::parse($lastOrderUpdateDate->last_order_update_date)->addSeconds(10);
             return $date->toDateTimeString();
         } else {
             // get last 30 days
@@ -78,11 +78,10 @@ class OrderUtility
             'first_name' => $firstname,
             'last_name' => $lastname,
             'full_name' => $sorder['shippingInfo']['postalAddress']['name'],
-            'user_id' => $sorder['customerOrderId'],
         ];
 
         $customer_detail = Customer::updateOrCreate([
-            'user_id' => $sorder['customerOrderId'],
+            'full_name' => $sorder['shippingInfo']['postalAddress']['name'],
         ], $customerData);
 
         $customer_address_data = [
@@ -341,10 +340,10 @@ class OrderUtility
                 'full_name' => $full_name,
                 'address_line_1' => $addressLine1,
                 'address_line_2' => $addressLine2,
-                'city' => $shipTo['contactAddress']['city'],
-                'state' => $shipTo['contactAddress']['stateOrProvince'],
-                'zip' => $shipTo['contactAddress']['postalCode'],
-                'country_code' => $shipTo['contactAddress']['countryCode'],
+                'city' => $shipTo['contactAddress']['city'] ?? '',
+                'state' => $shipTo['contactAddress']['stateOrProvince'] ?? '',
+                'zip' => $shipTo['contactAddress']['postalCode'] ?? '',
+                'country_code' => $shipTo['contactAddress']['countryCode'] ?? '',
                 'address_combined' => $addressLine1 . ' ' . $addressLine2,
                 'phone_no' => $shipTo['primaryPhone']['phoneNumber'] ?? '',
             ];
@@ -380,15 +379,22 @@ class OrderUtility
 
         $order->update($orderData);
 
-        switch (strtolower($order['orderFulfillmentStatus'])) {
+        Log::info("Order Status: " . $sorder['orderFulfillmentStatus']);
+        switch (strtolower($sorder['orderFulfillmentStatus'])) {
             case 'fulfilled';
                 $operationstatus = OrderOperationStatus::MarkAsShipped;
                 break;
             case 'not_started';
             default:
-                $operationstatus = OrderStatus::Pending;
+                $operationstatus = OrderOperationStatus::Created;
                 break;
         }
+
+        if (isset($sorder['cancelStatus']) && $sorder['cancelStatus']['cancelState'] != 'NONE_REQUESTED') {
+            $operationstatus = OrderOperationStatus::Canceled;
+        }
+
+        Log::info("Order Operation Status: " . $operationstatus);
 
         /* create order operatation*/
         $orderOperationData = [

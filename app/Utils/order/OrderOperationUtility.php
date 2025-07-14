@@ -14,6 +14,7 @@ use App\Services\Auth\EbayAuthService;
 use App\Services\Auth\ShopifyAuthService;
 use App\Services\Auth\WalmartAuthService;
 use App\Services\Marketplace\Service\ShopifyService;
+use App\Services\Marketplace\Service\WalmartService;
 use App\Utils\EndicialabelService;
 use App\Utils\shipment\ShipmentDocumentsCreator;
 use Illuminate\Support\Facades\DB;
@@ -41,7 +42,6 @@ class OrderOperationUtility
         $order_id = $request->input('order_id');
 
         $updateRecord = array(
-            'tracking_number' => $tracking_number,
             'shipping_carrier_id' => $carrier_id,
             'shipping_carrier_service_id' => $carrier_service_id,
             'shipping_package_id' => $carrier_package,
@@ -49,7 +49,10 @@ class OrderOperationUtility
             'weight_value' => $weight,
             'weight_weight_unit' => $weight_type,
         );
-        if(isset($request['products_rubber_stamp']) && $request['products_rubber_stamp'] != ''){
+        if (isset($tracking_number) && $tracking_number != '') {
+            $updateRecord['tracking_number'] = $tracking_number;
+        }
+        if (isset($request['products_rubber_stamp']) && $request['products_rubber_stamp'] != '') {
             $updateRecord['products_rubber_stamp'] = $request['products_rubber_stamp'];
         }
         $orderOperation->update($updateRecord);
@@ -67,7 +70,7 @@ class OrderOperationUtility
 
         $orderOperation->save();
 
-        $orderOperation = OrderOperation::with('order','order.orderItem','order.customer','order.customerAddress', 'store', 'store.storeType', 'carrier','shipFrom','shipFrom.returnAddress','shipFrom.fromAddress')->where('id', $orderOperation->id)->first();
+        $orderOperation = OrderOperation::with('order', 'order.orderItem', 'order.customer', 'order.customerAddress', 'store', 'store.storeType', 'carrier', 'shipFrom', 'shipFrom.returnAddress', 'shipFrom.fromAddress')->where('id', $orderOperation->id)->first();
 
         return self::instantSynchronization($orderOperation);
     }
@@ -100,6 +103,7 @@ class OrderOperationUtility
 
     public static function createLabel($orderOperation)
     {
+        Log::info('Tracking number for order operation: ' . $orderOperation->tracking_number);
         if (isset($orderOperation->tracking_number)) {
             return [];
         }
@@ -111,9 +115,9 @@ class OrderOperationUtility
         }
 
         $shippingDocumentCreator = new ShipmentDocumentsCreator($orderOperation);
-    //    $imageFormat = $shippingDocumentCreator->getLabelFormat();
-    //    $rotate = $shippingDocumentCreator->getImageRotate();
-    //    Log::info('Image format for label: ' . $imageFormat);
+        //    $imageFormat = $shippingDocumentCreator->getLabelFormat();
+        //    $rotate = $shippingDocumentCreator->getImageRotate();
+        //    Log::info('Image format for label: ' . $imageFormat);
 
         $printer = $shippingDocumentCreator->getPrinter();
         if (isset($printer)) {
@@ -188,7 +192,7 @@ class OrderOperationUtility
 
         if (OrderOperationType::isReturn($operation_type)) {
             $shipmentDetails['labelFormat'] = 'jpg';
-        }else{
+        } else {
             $shipmentDetails['ImageRotation'] = 'Rotate180';
             $shipmentDetails['labelFormat'] = 'ZPLII';
         }
@@ -207,7 +211,7 @@ class OrderOperationUtility
         Log::info('Shipment details for label creation: ' . json_encode($shipmentDetails));
 
         $endiciaClient = new EndicialabelService();
-        $response = $endiciaClient->createLabel($shipmentDetails,$orderOperation->id);
+        $response = $endiciaClient->createLabel($shipmentDetails, $orderOperation->id);
         Log::info('Response from Endicia label creation: ' . json_encode($response));
         if (isset($response['trackingNumber'])) {
             Log::info('Label created successfully for order operation: ' . $orderOperation->id);
@@ -217,13 +221,41 @@ class OrderOperationUtility
             unset($orderOperation->shipping_solution_carrier_package);
             unset($orderOperation->shipping_solution_carrier_service);
 
+            $result = self::waitForOperationCompleted($response['trackingNumber']);
+
+            if (!$result) {
+                Log::error('Label creation operation did not complete successfully for order operation: ' . $orderOperation->id);
+                return ['Error creating label. Operation did not complete successfully.'];
+            }
             $orderOperation->tracking_number = $response['trackingNumber'];
             $orderOperation->save();
+
+            self::updateMergedOrderIfExists($orderOperation,$response['trackingNumber']);
+
             return [];
         } else {
             Log::error('Error creating label for order operation: ' . $orderOperation->id . ' - ' . json_encode($response));
             return $response['errors'] ?? ['Error creating label.'];
         }
+    }
+
+    public static function waitForOperationCompleted($trackingNumber, $maxRetries = 30)
+    {
+        $retry = 0;
+        $waitSeconds = 2;
+        do {
+            $printJob = DB::connection('aselna_printer_db')->table('PrintJobs')
+                ->where('fileName', $trackingNumber . '.txt')
+                ->where('status', 'completed')->count();
+
+            if ($printJob > 0) {
+                return true;
+            }
+            sleep($waitSeconds);
+            $retry++;
+        } while ($retry < $maxRetries);
+
+        return false;
     }
 
     public static function setRubberStampInfo($orderOperation, &$shipmentDetails)
@@ -270,7 +302,8 @@ class OrderOperationUtility
             }
         }
 
-        $orderIdLine = $storeName . ' ' . implode(' ', $orderIds);
+//        $orderIdLine = $storeName . ' ' . implode(' ', $orderIds);
+        $orderIdLine = $storeName . ' ' . $orderIds[0];
 
         // If order ID line is too long, use shortened version
         if (strlen($orderIdLine) > 50) {
@@ -282,7 +315,8 @@ class OrderOperationUtility
                 }
             }
 
-            $orderIdLine = $storeName . ' ' . implode(' ', $orderIds);
+//            $orderIdLine = $storeName . ' ' . implode(' ', $orderIds);
+            $orderIdLine = $storeName . ' ' . $orderIds[0];
         }
 
         // Add RMA number if present
@@ -356,11 +390,11 @@ class OrderOperationUtility
                     }
                 } else {
                     //echo "Order canceled successfully!";
-                    if(isset($orderOperation->order->orderItem)){
-                        foreach($orderOperation->order->orderItem as $o_item){
+                    if (isset($orderOperation->order->orderItem)) {
+                        foreach ($orderOperation->order->orderItem as $o_item) {
                             $item_qty = $o_item->quantity;
                             $orderItem = OrderItem::findOrFail($o_item->id);
-                            $orderItem->update(['canceled_quantity'=>$item_qty]);
+                            $orderItem->update(['canceled_quantity' => $item_qty]);
                         }
                     }
                     Log::info('Shopify cancer order successful:');
@@ -401,11 +435,11 @@ class OrderOperationUtility
                             $order = Order::findOrFail($orderOperation->order_id);
                             $order->update(['order_status' => OrderStatus::Canceled]);
                         }
-                        if(isset($orderOperation->order->orderItem)){
-                            foreach($orderOperation->order->orderItem as $o_item){
+                        if (isset($orderOperation->order->orderItem)) {
+                            foreach ($orderOperation->order->orderItem as $o_item) {
                                 $item_qty = $o_item->quantity;
                                 $orderItem = OrderItem::findOrFail($o_item->id);
-                                $orderItem->update(['canceled_quantity'=>$item_qty]);
+                                $orderItem->update(['canceled_quantity' => $item_qty]);
                             }
                         }
                         return true;
@@ -432,11 +466,11 @@ class OrderOperationUtility
 
                 if (!isset($response['cancelId'])) {
 
-                    if(isset($orderOperation->order->orderItem)){
-                        foreach($orderOperation->order->orderItem as $o_item){
+                    if (isset($orderOperation->order->orderItem)) {
+                        foreach ($orderOperation->order->orderItem as $o_item) {
                             $item_qty = $o_item->quantity;
                             $orderItem = OrderItem::findOrFail($o_item->id);
-                            $orderItem->update(['canceled_quantity'=>$item_qty]);
+                            $orderItem->update(['canceled_quantity' => $item_qty]);
                         }
                     }
                     Log::info('Shopify cancer order error:' . json_encode($response['warnings']));
@@ -451,14 +485,15 @@ class OrderOperationUtility
         }
     }
 
-    private static function returnOrder($orderOperation){
+    private static function returnOrder($orderOperation)
+    {
 
         if ($orderOperation->label_creation_type == ShippingLabelCreationType::CreateLabel) {
             $errors = self::createLabel($orderOperation);
             if (isset($errors) && !empty($errors)) {
                 Log::error('Error creating label: ' . $errors);
                 throw new \Exception('Error creating label: ' . json_encode($errors));
-            }else{
+            } else {
                 return true;
             }
         }
@@ -479,22 +514,22 @@ class OrderOperationUtility
 
                 if ($response) {
                     //echo "Order canceled successfully!";
-                    if(isset($orderOperation->order->orderItem)){
-                        foreach($orderOperation->order->orderItem as $o_item){
+                    if (isset($orderOperation->order->orderItem)) {
+                        foreach ($orderOperation->order->orderItem as $o_item) {
                             $item_qty = $o_item->quantity;
                             $orderItem = OrderItem::findOrFail($o_item->id);
-                            $orderItem->update(['refund_quantity'=>$item_qty]);
+                            $orderItem->update(['refund_quantity' => $item_qty]);
                         }
                     }
                     Log::info('Shopify order refunded successful:');
                     return true;
-                }else{
+                } else {
                     return false;
                 }
                 break;
             case 'walmart':
                 $finalData = [
-                    'orderRefund'=> [
+                    'orderRefund' => [
                         'purchaseOrderId' => $orderOperation->order->purchase_order_id
                     ]
                 ];
@@ -507,7 +542,7 @@ class OrderOperationUtility
                         'refunds' => [
                             'refund' => [
                                 [
-                                    'refundCharges' =>[
+                                    'refundCharges' => [
                                         'refundCharge' => [
                                             'refundReason' => 'CustomerReturn',
                                             'charge' => [
@@ -548,11 +583,11 @@ class OrderOperationUtility
                             $order = Order::findOrFail($orderOperation->order_id);
                             $order->update(['order_status' => OrderStatus::Refund]);
                         }
-                        if(isset($orderOperation->order->orderItem)){
-                            foreach($orderOperation->order->orderItem as $o_item){
+                        if (isset($orderOperation->order->orderItem)) {
+                            foreach ($orderOperation->order->orderItem as $o_item) {
                                 $item_qty = $o_item->quantity;
                                 $orderItem = OrderItem::findOrFail($o_item->id);
-                                $orderItem->update(['refund_quantity'=>$item_qty]);
+                                $orderItem->update(['refund_quantity' => $item_qty]);
                             }
                         }
                         return true;
@@ -599,11 +634,11 @@ class OrderOperationUtility
                         $order->update(['order_status' => OrderStatus::Refund]);
                     }
 
-                    if(isset($orderOperation->order->orderItem)){
-                        foreach($orderOperation->order->orderItem as $o_item){
+                    if (isset($orderOperation->order->orderItem)) {
+                        foreach ($orderOperation->order->orderItem as $o_item) {
                             $item_qty = $o_item->quantity;
                             $orderItem = OrderItem::findOrFail($o_item->id);
-                            $orderItem->update(['refund_quantity'=>$item_qty]);
+                            $orderItem->update(['refund_quantity' => $item_qty]);
                         }
                     }
                 }
@@ -614,154 +649,118 @@ class OrderOperationUtility
 
     private static function createShipment($orderOperation)
     {
-        Log::info('Creating shipment for order operation: ' . $orderOperation->label_creation_type);
-        if ($orderOperation->label_creation_type == ShippingLabelCreationType::CreateLabel) {
-            $errors = self::createLabel($orderOperation);
-            if (isset($errors) && !empty($errors)) {
-                Log::error('Error creating label: ' . $errors);
-                throw new \Exception('Error creating label: ' . json_encode($errors));
+        // Start database transaction
+        DB::beginTransaction();
+
+        try {
+            Log::info('Creating shipment for order operation: ' . $orderOperation->label_creation_type);
+            if ($orderOperation->label_creation_type == ShippingLabelCreationType::CreateLabel) {
+                $errors = self::createLabel($orderOperation);
+                if (isset($errors) && !empty($errors)) {
+                    Log::error('Error creating label: ' . $errors);
+                    DB::rollBack();
+                    throw new \Exception('Error creating label: ' . json_encode($errors));
+                }
             }
-        }
-        $store = $orderOperation->store;
-        $storeType = $orderOperation->store->storeType->name;
-        switch (strtolower($storeType)) {
-            case 'shopify':
-                $shopifyServie = new ShopifyService();
-                $response = $shopifyServie->updateFullfillment($orderOperation->order_id);
+            $store = $orderOperation->store;
+            $storeType = $orderOperation->store->storeType->name;
+            $success = false;
 
-                if (!isset($response['errors'])) {
-                    $orderOperation->update(['status' => OrderOperationStatus::MarkAsShipped]);
-                    if (isset($orderOperation->order_id)) {
-                        $order = Order::findOrFail($orderOperation->order_id);
-                        $order->update(['order_status' => OrderStatus::Shipped]);
-                    }
+            switch (strtolower($storeType)) {
+                case 'shopify':
+                    $shopifyServie = new ShopifyService();
+                    $response = $shopifyServie->updateFullfillment($orderOperation->order_id);
 
-                    if(isset($orderOperation->order->orderItem)){
-                        foreach($orderOperation->order->orderItem as $o_item){
-                            $item_qty = $o_item->quantity;
-                            $orderItem = OrderItem::findOrFail($o_item->id);
-                            $orderItem->update(['shipped_quantity'=>$item_qty]);
-                        }
-                    }
-                }
-
-
-                break;
-            case 'walmart':
-                $finalData = [];
-                $count = 1;
-                foreach ($orderOperation->operationItem as $item) {
-                    Log::info('Itema data for the operation :: ' . json_encode($item));
-                    $orderLine = [
-                        'lineNumber' => $count,
-                        'orderLineStatuses' => [
-                            'orderLineStatus' => [
-                                [
-                                    'status' => 'Shipped',
-                                    'statusQuantity' => [
-                                        'unitOfMeasurement' => 'EACH',
-                                        'amount' => $item->quantity
-                                    ],
-                                    'trackingInfo' => [
-                                        "shipDateTime" => date('Y-m-d\TH:i:sP'),
-                                        "carrierName" => [
-                                            "carrier" => $orderOperation->carrier->name,
-                                        ],
-                                        "methodCode" => 'Standard',
-                                        "trackingNumber" => $orderOperation->tracking_number,
-                                    ]
-                                ]
-                            ]
-                        ]
-                    ];
-
-                    $finalData['orderShipment']['orderLines']['orderLine'][] = $orderLine;
-                    $count++;
-                }
-
-                Log::info('Final data for the operation change :: ' . json_encode($finalData));
-
-                $authService = new WalmartAuthService($store->seller_id, $store->secret_key);
-                $response = $authService->shipOrder($orderOperation->order->purchase_order_id, $finalData);
-
-                Log::info('Walmart ship order response: ' . json_encode($response));
-
-                if (isset($response)) {
-                    $orderResp = $response['order'];
-                    Log::info('Walmart Ship order response: ' . json_encode($orderResp));
-                    if (isset($orderResp) && isset($orderResp['purchaseOrderId']) && $orderResp['purchaseOrderId'] == $orderOperation->order->purchase_order_id) {
-                        Log::info('Walmart ship order successful: ' . json_encode($orderResp));
+                    if (!isset($response['errors'])) {
                         $orderOperation->update(['status' => OrderOperationStatus::MarkAsShipped]);
                         if (isset($orderOperation->order_id)) {
                             $order = Order::findOrFail($orderOperation->order_id);
                             $order->update(['order_status' => OrderStatus::Shipped]);
                         }
 
-                        if(isset($orderOperation->order->orderItem)){
-                            foreach($orderOperation->order->orderItem as $o_item){
+                        if (isset($orderOperation->order->orderItem)) {
+                            foreach ($orderOperation->order->orderItem as $o_item) {
                                 $item_qty = $o_item->quantity;
                                 $orderItem = OrderItem::findOrFail($o_item->id);
-                                $orderItem->update(['shipped_quantity'=>$item_qty]);
+                                $orderItem->update(['shipped_quantity' => $item_qty]);
                             }
                         }
-                        return true;
+                        $success = true;
                     } else {
-                        Log::info('Walmart ship order error: ' . json_encode($response));
-                        return false;
+                        $success = false;
                     }
-                } else {
-                    Log::info('Walmart ship order error: No response received');
-                    return false;
-                }
-            case 'ebay':
+                    break;
 
-                $payload = [
-                    "shippedDate" => now()->toIso8601ZuluString(),
-                    "shippingCarrierCode" => $orderOperation->carrier->name,
-                    "trackingNumber" => $orderOperation->tracking_number
-                ];
+                case 'walmart':
+                    $walmartServie = new WalmartService();
+                    $is_success = $walmartServie->shipmentUpdate($orderOperation, $store);
+                    $orderOperations = OrderOperation::where('is_merged',true)
+                        ->where('merged_with',$orderOperation->id)
+                        ->get();
 
-                foreach ($orderOperation->operationItem as $item) {
+                    foreach ($orderOperations as $o_item) {
+                        $walmartServie->shipmentUpdate($o_item, $store);
+                    }
+                    $success = $is_success;
+                    break;
 
-                    $payload["lineItems"][] = [
-                        "lineItemId" => $item->orderItem->store_sku,
-                        "quantity" => $item->quantity,
+                case 'ebay':
+                    $payload = [
+                        "shippedDate" => now()->toIso8601ZuluString(),
+                        "shippingCarrierCode" => $orderOperation->carrier->name,
+                        "trackingNumber" => $orderOperation->tracking_number
                     ];
 
-                }
-
-                /*echo '<pre>';
-                print_r($payload);
-                echo '</pre>';die;*/
-
-                $clientId = env('EBAY_CLIENT_ID');
-                $clientSecret = env('EBAY_CLIENT_SECRET');
-                $redirectUri = env('EBAY_REDIRECT_URI');
-
-                $authService = new EbayAuthService($clientId, $clientSecret, $redirectUri, $store->user_id);
-                $result = $authService->createShippingFulfillment($orderOperation->order->order_id, $payload);
-
-                if (!isset($result['error'])) {
-                    $orderOperation->update(['status' => OrderOperationStatus::MarkAsShipped]);
-                    if (isset($orderOperation->order_id)) {
-                        $order = Order::findOrFail($orderOperation->order_id);
-                        $order->update(['order_status' => OrderStatus::Shipped]);
+                    foreach ($orderOperation->operationItem as $item) {
+                        $payload["lineItems"][] = [
+                            "lineItemId" => $item->orderItem->store_sku,
+                            "quantity" => $item->quantity,
+                        ];
                     }
-                    if(isset($orderOperation->order->orderItem)){
-                        foreach($orderOperation->order->orderItem as $o_item){
-                            $item_qty = $o_item->quantity;
-                            $orderItem = OrderItem::findOrFail($o_item->id);
-                            $orderItem->update(['shipped_quantity'=>$item_qty]);
+
+                    $clientId = env('EBAY_CLIENT_ID');
+                    $clientSecret = env('EBAY_CLIENT_SECRET');
+                    $redirectUri = env('EBAY_REDIRECT_URI');
+
+                    $authService = new EbayAuthService($clientId, $clientSecret, $redirectUri, $store->user_id);
+                    $result = $authService->createShippingFulfillment($orderOperation->order->order_id, $payload);
+
+                    if (!isset($result['error'])) {
+                        $orderOperation->update(['status' => OrderOperationStatus::MarkAsShipped]);
+                        if (isset($orderOperation->order_id)) {
+                            $order = Order::findOrFail($orderOperation->order_id);
+                            $order->update(['order_status' => OrderStatus::Shipped]);
                         }
+                        if (isset($orderOperation->order->orderItem)) {
+                            foreach ($orderOperation->order->orderItem as $o_item) {
+                                $item_qty = $o_item->quantity;
+                                $orderItem = OrderItem::findOrFail($o_item->id);
+                                $orderItem->update(['shipped_quantity' => $item_qty]);
+                            }
+                        }
+                        $success = true;
+                    } else {
+                        Log::info('eBay ship fulfillment error: ' . json_encode($result['error'] ?? 'Unknown error'));
+                        $success = false;
                     }
-                    return true;
-                }else {
-                    Log::info('eBay ship fullfilment error: No response received');
-                    return false;
-                }
-                break;
+                    break;
+            }
+
+            // If everything went well, commit the transaction
+            if ($success) {
+                DB::commit();
+                return true;
+            } else {
+                // If there was an API error but no exception, still rollback
+                DB::rollBack();
+                return false;
+            }
+        } catch (\Exception $e) {
+            // If anything went wrong, rollback the transaction
+            DB::rollBack();
+            Log::error('Error in createShipment: ' . $e->getMessage());
+            return false;
         }
-        return true;
     }
 
     /**
@@ -798,7 +797,7 @@ class OrderOperationUtility
             return [];
         }
         return [
-            'name' => (isset($orderOperation->order->customerAddress) && $orderOperation->order->customerAddress->full_name != '' ) ? $orderOperation->order->customerAddress->full_name : $orderOperation->order->customer->full_name,
+            'name' => (isset($orderOperation->order->customerAddress) && $orderOperation->order->customerAddress->full_name != '') ? $orderOperation->order->customerAddress->full_name : $orderOperation->order->customer->full_name,
             'address1' => $orderOperation->order->customerAddress->address_line_1,
             'address2' => $orderOperation->order->customerAddress->address_line_2 ?? '',
             'address3' => $orderOperation->order->customerAddress->address_line_3 ?? '',
@@ -809,5 +808,17 @@ class OrderOperationUtility
             'phone' => $orderOperation->order->customerAddress->phone,
             'comapany' => $orderOperation->order->customerAddress->company ?? ''
         ];
+    }
+
+    private static function updateMergedOrderIfExists($orderOperation,$tracking_number)
+    {
+        $orderOperations = OrderOperation::where('is_merged',true)
+            ->where('merged_with',$orderOperation->id)
+            ->get();
+
+        foreach ($orderOperations as $tempOrderOperation) {
+            $tempOrderOperation->tracking_number = $tracking_number;
+            $tempOrderOperation->save();
+        }
     }
 }

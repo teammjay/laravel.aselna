@@ -726,37 +726,77 @@
                 return false;
             }
 
+            // Create a modal for progress display
+            if (!$('#progressModal').length) {
+                $('body').append(`
+                    <div class="modal fade" id="progressModal" data-backdrop="static" data-keyboard="false">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">Processing Shipments</h5>
+                                </div>
+                                <div class="modal-body">
+                                    <div class="progress mb-3">
+                                        <div class="progress-bar" id="progress-bar" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
+                                    </div>
+                                    <div id="progress-status" class="text-center">Preparing to process shipments...</div>
+                                    <div id="progress-detail" class="mt-3">
+                                        <ul class="list-group" id="progress-items"></ul>
+                                    </div>
+                                </div>
+                                <div class="modal-footer" style="display:none">
+                                    <button type="button" class="btn btn-success" data-dismiss="modal">Complete</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `);
+            }
+
+            // Reset and show modal
+            $('#progressModal .progress-bar').css('width', '0%').attr('aria-valuenow', 0).text('0%');
+            $('#progress-status').text('Preparing to process shipments...');
+            $('#progress-items').empty();
+            $('#progressModal .modal-footer').hide();
+            $('#progressModal').modal('show');
+
+            // Start the processing by making the initial request
             $.ajax({
                 url: "{{ route('shipment.shipselected') }}",
                 type: 'POST',
                 data: {
-                    shipment_ids:shipment_ids,
+                    shipment_ids: shipment_ids,
                     "_token": '{{ csrf_token() }}'
                 },
+                global: false,
                 success: function (response) {
-                    // If success, remove the user row from the table
                     if (response.success) {
-                        alert('Order shipped successfully!!');
-                        location.reload();
-                    }
-                    else {
-                        alert(response.message);
+                        const process_id = response.process_id;
+                        const total_count = response.total_count;
+                        const shipment_ids = response.shipment_ids;
+
+                        $('#progress-status').text(`Processing 0/${total_count} shipments`);
+
+                        // Process each shipment sequentially
+                        processShipmentsSequentially(process_id, shipment_ids, total_count, 0);
+                    } else {
+                        $('#progressModal').modal('hide');
+                        alert(response.message || 'Failed to process shipments');
                     }
                 },
                 error: function (xhr) {
-                    // Handle error response
+                    $('#progressModal').modal('hide');
                     const response = xhr.responseJSON;
-                    if ( response.errors) {
+                    if (response && response.errors) {
                         alert(response.message);
                     } else {
-                        alert('Error: ' + response.message);
+                        alert('Error: ' + (xhr.responseJSON?.message || 'Unknown error'));
                     }
                 }
             });
         });
 
         $(document).on('click','#ship_selected',function () {
-
             let shipment_ids = [];
             $('input[name="shipment_id[]"]:checked').each(function () {
                 shipment_ids.push($(this).val())
@@ -767,85 +807,149 @@
                 return false;
             }
 
+            // Create a modal for progress display
+            if (!$('#progressModal').length) {
+                $('body').append(`
+                    <div class="modal fade" id="progressModal" data-backdrop="static" data-keyboard="false">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">Processing Shipments</h5>
+                                </div>
+                                <div class="modal-body">
+                                    <div class="progress mb-3">
+                                        <div class="progress-bar" id="progress-bar" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
+                                    </div>
+                                    <div id="progress-status" class="text-center">Preparing to process shipments...</div>
+                                    <div id="progress-detail" class="mt-3">
+                                        <ul class="list-group" id="progress-items"></ul>
+                                    </div>
+                                </div>
+                                <div class="modal-footer" style="display:none">
+                                    <button type="button" class="btn btn-success" data-dismiss="modal">Complete</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `);
+            }
+
+            // Reset and show modal
+            $('#progressModal .progress-bar').css('width', '0%').attr('aria-valuenow', 0).text('0%');
+            $('#progress-status').text('Preparing to process shipments...');
+            $('#progress-items').empty();
+            $('#progressModal .modal-footer').hide();
+            $('#progressModal').modal('show');
+
+            // Start the processing by making the initial request
             $.ajax({
                 url: "{{ route('shipment.shipselected') }}",
                 type: 'POST',
                 data: {
-                    shipment_ids:shipment_ids,
+                    shipment_ids: shipment_ids,
                     "_token": '{{ csrf_token() }}'
                 },
+                global: false,
                 success: function (response) {
-                    // If success, remove the user row from the table
                     if (response.success) {
-                        alert('Order shipped successfully!!');
-                        location.reload();
-                    }
-                    else {
-                        alert(response.message);
+                        const process_id = response.process_id;
+                        const total_count = response.total_count;
+                        const shipment_ids = response.shipment_ids;
+
+                        $('#progress-status').text(`Processing 0/${total_count} shipments`);
+
+                        // Process each shipment sequentially
+                        processShipmentsSequentially(process_id, shipment_ids, total_count, 0);
+                    } else {
+                        $('#progressModal').modal('hide');
+                        alert(response.message || 'Failed to process shipments');
                     }
                 },
                 error: function (xhr) {
-                    // Handle error response
+                    $('#progressModal').modal('hide');
                     const response = xhr.responseJSON;
-                    if ( response.errors) {
+                    if (response && response.errors) {
                         alert(response.message);
                     } else {
-                        alert('Error: ' + response.message);
+                        alert('Error: ' + (xhr.responseJSON?.message || 'Unknown error'));
                     }
                 }
             });
         });
 
-        $(document).on('click','#updateShipment',function () {
-
-            const form = document.querySelector("#frmShippingDetail");
-            let formData = new FormData(form);
-
-            const carrier_package = formData.get("carrier_package");
-            const label_generation = formData.get("label_generation");
-
-            if (!carrier_package || carrier_package.trim() === "") {
-                alert("Carrier package is required.");
+        // Function to process shipments one by one
+        function processShipmentsSequentially(process_id, shipment_ids, total_count, current_index) {
+            if (current_index >= shipment_ids.length) {
+                // All done
+                let progress = 100;
+                $('#progress-status').text(`Completed processing all ${total_count} shipments`);
+                $('#progress-bar').css('width', `${progress}%`).attr('aria-valuenow', progress).text(`${progress}%`);
+                $('#progressModal .modal-footer').show();
                 return;
             }
 
+            const shipmentId = shipment_ids[current_index];
 
+            // Update the progress UI
+            const progress = Math.round(((current_index) / total_count) * 100);
+            console.log(progress)
+            $('#progress-status').text(`Processing ${current_index+1}/${total_count} shipments`);
+            $('#progress-bar').css('width', `${progress}%`).attr('aria-valuenow', progress).text(`${progress}%`);
+
+            // check for 5 items only remove previous items
+            if (current_index >= 5) {
+                $('#progress-items li').slice(0, current_index - 4).remove();
+            }
+
+            // Add item to list
+            $('#progress-items').append(`
+                <li class="list-group-item d-flex justify-content-between align-items-center" id="item-${shipmentId}">
+                    Order #${shipmentId}
+                    <span class="badge badge-warning">Processing</span>
+                </li>
+            `);
+
+            // Make the API call to process this shipment
             $.ajax({
-                url: "{{ route('shipment.updateshipment') }}",
+                url: "{{ route('shipment.shipselected') }}",
                 type: 'POST',
-                data: formData,
-                processData: false,
-                contentType: false,
-                headers: {
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                data: {
+                    process_id: process_id,
+                    order_id: shipmentId,
+                    "_token": '{{ csrf_token() }}'
                 },
+                global: false,
                 success: function (response) {
-                    // If success, remove the user row from the table
+                    // Update the item status in the list
                     if (response.success) {
-                        alert('Shipped Updated successfully!!');
-                        location.reload();
+                        $(`tr[data-id="${shipmentId}"]`).remove();
+
+                        $(`#item-${shipmentId} .badge`)
+                            .removeClass('badge-warning')
+                            .addClass('badge-success')
+                            .text('Completed');
+                    } else {
+                        $(`#item-${shipmentId} .badge`)
+                            .removeClass('badge-warning')
+                            .addClass('badge-danger')
+                            .text('Failed');
                     }
-                    else {
-                        alert(response.message);
-                    }
+
+                    // Process the next item
+                    processShipmentsSequentially(process_id, shipment_ids, total_count, current_index + 1);
                 },
                 error: function (xhr) {
-                    // Handle error response
-                    if (xhr.status === 422) {
-                        let errors = xhr.responseJSON.errors;
-                        $.each(errors, function (key, messages) {
-                            alert(key + ': ' + messages[0]);
-                        });
-                    }
-                    /*const response = xhr.responseJSON;
-                    if ( response.errors) {
-                        alert(response.message);
-                    } else {
-                        alert('Error: ' + response.message);
-                    }*/
+                    // Mark this item as failed
+                    $(`#item-${shipmentId} .badge`)
+                        .removeClass('badge-warning')
+                        .addClass('badge-danger')
+                        .text('Failed');
+
+                    // Continue with next item
+                    processShipmentsSequentially(process_id, shipment_ids, total_count, current_index + 1);
                 }
             });
-        });
+        }
 
         $(document).on('click', '#select_deselect_shipment', function() {
 
@@ -866,7 +970,6 @@
             let totalCnt = $('input[name="shipment_id[]"]:checked').length;
             $('#total_selected').html('( <b>'+totalCnt+'</b> selected )');
         });
-
     });
 
     function getShippingCarrierService(element){
@@ -994,7 +1097,6 @@
     function loadDatatables(){
 
         //$("#shipmentTable").dataTable().fnDestroy();
-
         $("#ajax-preloader").show();
         if ($.fn.DataTable.isDataTable('#shipmentTable')) {
             $('#shipmentTable').DataTable().clear().destroy();
@@ -1126,5 +1228,3 @@
     }
 </script>
 @stop
-
-

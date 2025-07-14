@@ -160,7 +160,7 @@ class WalmartAuthService
                 return null;
             }
 
-            $url = $this->endpoint . "/orders/".$orderID;
+            $url = $this->endpoint . "/orders/" . $orderID;
 
             $queryData = [
                 'productInfo' => false,
@@ -208,13 +208,11 @@ class WalmartAuthService
 
             $request = new Request('POST', "{$this->endpoint}/orders/{$purchaseOrderId}/shipping", $headers, json_encode($data));
 
-            if (env('APP_ENV') !== 'local') {
-                $res = $client->sendAsync($request)->wait();
+            $res = $client->sendAsync($request)->wait();
 
-                $response = json_decode($res->getBody(), true);
-                //Log::info('Response from Walmart: ' . json_encode($response));
-                return $response;
-            }
+            $response = json_decode($res->getBody(), true);
+            //Log::info('Response from Walmart: ' . json_encode($response));
+            return $response;
 
         } catch (RequestException $e) {
             // Log full error response (if available)
