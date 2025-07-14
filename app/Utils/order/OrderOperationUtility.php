@@ -348,8 +348,8 @@ class OrderOperationUtility
                 $shopifyServie = new ShopifyAuthService($store->secret_key, $store->service_url);
                 $response = $shopifyServie->cancelOrder($shipmentDetail->order->order_id, $reason);
 
-                if (!empty($response['data']['orderCancel']['orderCancelUserErrors'])) {
-                    foreach ($response['data']['orderCancel']['orderCancelUserErrors'] as $error) {
+                if (!empty($response['errors'])) {
+                    foreach ($response['errors'] as $error) {
                         //echo "Error: {$error['message']}\n";
                         Log::info('Shopify cancer order error:' . json_encode($error));
                         return false;
