@@ -34,7 +34,7 @@ class ShipmentsController extends Controller
         $shippingCarrierPackage = ShippingPackage::all();
         $shipFrom = LogisticCenter::all();
 
-        return view('shipment.list', compact('perPage', 'stores', 'shippingCarrier', 'shipFrom','shippingCarrierPackage'));
+        return view('shipment.list', compact('perPage', 'stores', 'shippingCarrier', 'shipFrom', 'shippingCarrierPackage'));
     }
 
     public function filter(Request $request)
@@ -46,6 +46,8 @@ class ShipmentsController extends Controller
         $columnIndex = $request['order'][0]['column'];
         $columnName = $request['columns'][$columnIndex]['data'];
         $columnSortOrder = $request['order'][0]['dir'];*/
+
+        $this->mergeSameAddressOrders($request);
 
         $query = OrderOperation::with([
             'order:id,order_id,order_date,buyer_first_name,buyer_last_name',
@@ -60,6 +62,7 @@ class ShipmentsController extends Controller
         ])->select('order_operation.*', 'order_operation.id as oid');
 
         $query->where('order_operation.status', 0);
+        $query->where('order_operation.is_merged', '=', false);
 
         // Filter by store
         if ($request->has('store_id') && $request->store_id != '') {
@@ -138,8 +141,9 @@ class ShipmentsController extends Controller
                 $onlycode = '';
                 $image = $imagename = $product_ids = [];
                 $product_total_weight = 0;
-                if (isset($order->order->orderItem) && !empty($order->order->orderItem)) {
-                    foreach ($order->order->orderItem as $oitem) {
+                if (isset($order->operationItem) && !empty($order->operationItem)) {
+                    foreach ($order->operationItem as $opitem) {
+                        $oitem = $opitem->orderItem;
                         if (isset($oitem->product) && !empty($oitem->product)) {
                             $imagename[] = $oitem->product->product_image;
                             if (!empty($oitem->product->image)) {
@@ -156,6 +160,16 @@ class ShipmentsController extends Controller
                         }
                     }
                 }
+                $orderIds = isset($order->order) ? [$order->order->order_id] : [];
+                if (isset($order->orderIds)) {
+                    $mergedOrderIds = json_decode($order->orderIds, true) ?? [];
+                    foreach ($mergedOrderIds as $oid) {
+                        $orderInfo = Order::where('id', $oid)->first();
+                        if ($orderInfo) {
+                            $orderIds[] = $orderInfo->order_id;
+                        }
+                    }
+                }
                 $shipments[] = array(
                     "oid" => $order->oid,
                     "image" => (!empty($image)) ? $image : '',
@@ -165,7 +179,7 @@ class ShipmentsController extends Controller
                     "carrier_package" => isset($order->shippingPackage) ? $order->shippingPackage->name : '',
                     "carrier_service" => isset($order->carrierService) ? $order->carrierService->ShippingCarrier->name . ' ' . $order->carrierService->name : '',
                     "store" => $order->store->name . ' - ' . $storeType,
-                    "order_id" => isset($order->order) ? $order->order->order_id : '',
+                    "order_id" => implode(', <br/> ', $orderIds),
                     "order_date" => isset($order->order) ? $order->order->order_date : '',
                     "expected_shipment_date" => isset($order) ? $order->expected_shipment_date : '',
                     "product_code" => $code,
@@ -236,7 +250,7 @@ class ShipmentsController extends Controller
                 );
 
                 $orderOperation = OrderOperation::findOrFail($id);
-                if($orderOperation){
+                if ($orderOperation) {
                     $orderOperation->update($updateRecord);
                 }
             }
@@ -272,7 +286,7 @@ class ShipmentsController extends Controller
         $shippingCarrier = ShippingCarrier::all();
         $shipFrom = LogisticCenter::all();
         $shippingCarrierPackage = ShippingPackage::all();
-        $shipmentDetail = OrderOperation::with('operationItem', 'order', 'order.customerAddress', 'carrierService', 'store','store.logisticCenters', 'operationItem.orderItem', 'operationItem.orderItem.product')->where('id', $order_opration_id)->first();
+        $shipmentDetail = OrderOperation::with('operationItem', 'order', 'order.customerAddress', 'carrierService', 'store', 'store.logisticCenters', 'operationItem.orderItem', 'operationItem.orderItem.product')->where('id', $order_opration_id)->first();
 
         $package_id = '';
         $product_total_weight = 0;
@@ -328,7 +342,7 @@ class ShipmentsController extends Controller
 
 
         if ($request->input('mark_as_ship')) {
-            $view = view('shipment.mark_as_shipped', compact('shipmentDetail', 'shippingCarrier', 'shippingCarrierService', 'shippingCarrierPackage', 'shipFrom', 'package_id', 'product_total_weight','product_weight_unit'))->render();
+            $view = view('shipment.mark_as_shipped', compact('shipmentDetail', 'shippingCarrier', 'shippingCarrierService', 'shippingCarrierPackage', 'shipFrom', 'package_id', 'product_total_weight', 'product_weight_unit'))->render();
         } else {
             $view = view('shipment.detail', compact('shipmentDetail', 'shippingCarrier', 'shippingCarrierService', 'shippingCarrierPackage', 'shipFrom', 'package_id', 'product_total_weight'))->render();
         }
@@ -359,22 +373,22 @@ class ShipmentsController extends Controller
 
         $id = $request->input('id');
         try {
-            $address = CustomerAddress::with('customer')->where('id',$id)->first();
+            $address = CustomerAddress::with('customer')->where('id', $id)->first();
             $request['address_combined'] = $address_combined = $request['address_line_1'] . ' ' . $request['address_line_2'];
             $fullname = $address1 = $address2 = '';
-            if(isset($address->customer)){
-                $fullname = $address->customer->full_name.', <br>';
+            if (isset($address->customer)) {
+                $fullname = $address->customer->full_name . ', <br>';
             }
 
-            if(isset($request['address_line_1']) && $request['address_line_1'] != ''){
-                $address1 = $request['address_line_1'].',<br>';
+            if (isset($request['address_line_1']) && $request['address_line_1'] != '') {
+                $address1 = $request['address_line_1'] . ',<br>';
             }
 
-            if(isset($request['address_line_2']) && $request['address_line_2'] != ''){
-                $address2 = $request['address_line_2'].',<br>';
+            if (isset($request['address_line_2']) && $request['address_line_2'] != '') {
+                $address2 = $request['address_line_2'] . ',<br>';
             }
 
-            $address_combined = $fullname.$address1.$address2. $request['city'] . ', ' . $request['state'] . ' ' . $request['zip_code'];
+            $address_combined = $fullname . $address1 . $address2 . $request['city'] . ', ' . $request['state'] . ' ' . $request['zip_code'];
             $address->update($request->except(['phone', 'id']));
             return response()->json(['success' => true, 'address' => $address_combined, 'message' => 'Data saved successfully!']);
 
@@ -675,7 +689,7 @@ class ShipmentsController extends Controller
             );
 
             $orderOperation = OrderOperation::findOrFail($order_operation_id);
-            if($orderOperation){
+            if ($orderOperation) {
                 $orderOperation->update($updateRecord);
             }
             return response()->json([
@@ -685,5 +699,69 @@ class ShipmentsController extends Controller
         return response()->json([
             'success' => false
         ]);
+    }
+
+    private function mergeSameAddressOrders(Request $request)
+    {
+        //(select shipping_address_id from `order` group by shipping_address_id having count(*) > 1;
+        // I want all the orderId whose addresses are same.
+        $sameAddressOrders = [];
+        $addressIds = Order::select('shipping_address_id')
+            ->groupBy('shipping_address_id')
+            ->havingRaw('COUNT(*) > 1')
+            ->whereNotIn('order_status',[
+                OrderStatus::Canceled,
+                OrderStatus::Shipped,
+                OrderStatus::Refund,
+                OrderStatus::Replaced,
+                OrderStatus::PartiallyShipped,
+                OrderStatus::SynchronizatonFailed
+            ])
+            ->pluck('shipping_address_id');
+
+        if ($addressIds->isNotEmpty()) {
+            foreach ($addressIds as $addressId) {
+                Log::info('Processing Address ID: ' . $addressId);
+                if ($addressId == null || $addressId == '' || $addressId == 0) {
+                    continue; // Skip null addresses
+                }
+                $sameAddressOrders[$addressId] = Order::where('shipping_address_id', $addressId)
+                    ->whereIn('id',function ($query) {
+                        $query->select('order_id')
+                            ->from('order_operation')
+                            ->where('is_merged', false)
+                            ->where('status', 0);
+                    })
+                    ->pluck('id')
+                    ->toArray();
+            }
+        }
+        Log::info('Processing Address IDs: ' . json_encode($sameAddressOrders));
+
+        foreach ($sameAddressOrders as $addressId => $orderIds) {
+            if (count($orderIds) > 1) {
+                Log::info('Merging Orders for Address ID: ' . $addressId . ' - Orders: ' . implode(',', $orderIds));
+                $mainShipment = null;
+                foreach ($orderIds as $orderId) {
+                    $orderOperation = OrderOperation::where('order_id', $orderId)->first();
+                    if ($orderOperation) {
+                        if (!isset($mainShipment)) {
+                            $mainShipment = $orderOperation; // Keep the first one as the main shipment
+                            continue;
+                        }
+                        $mainShipment->operationItem()->createMany($orderOperation->operationItem->toArray());
+                        $orderOperation->update([
+                            'is_merged' => true,
+                            'merged_with' => $mainShipment->id,
+                        ]);
+                        // save the comma separated order IDs in the main shipment
+                        $mergedOrderIds = json_decode($mainShipment->orderIds, true) ?? [];
+                        $mergedOrderIds[] = $orderId;
+                        $mainShipment->orderIds = json_encode(array_unique($mergedOrderIds));
+                        $mainShipment->save();
+                    }
+                }
+            }
+        }
     }
 }

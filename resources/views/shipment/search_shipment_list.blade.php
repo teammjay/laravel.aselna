@@ -22,7 +22,7 @@
             <td>{{ $shipment['carrier_package'] }}</td>
             <td>{{ $shipment['carrier_service'] }}</td>
             <td>{{ $shipment['store'] }}</td>
-            <td>{{ $shipment['order_id'] }}</td>
+            <td>{!! $shipment['order_id'] !!}</td>
             <td>{{ $shipment['order_date'] }}</td>
             <td>{{ $shipment['expected_shipment_date'] }}</td>
             <td>{{ $shipment['product_code'] }}</td>

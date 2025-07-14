@@ -153,7 +153,7 @@ class SyncAllTables extends Command
         //synccategorytospecification::dispatch();
 //        SystemPrinterSyncJob::dispatch();
 
-        FetchEbayOrders::dispatch();
+        FetchWalmartOrdersJob::dispatch();
 
 //        $transactionIds = [
 ////            '9400150105798006163885',
