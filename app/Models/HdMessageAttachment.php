@@ -26,4 +26,14 @@ class HdMessageAttachment extends Model
     }
 
     protected $fillable = ['id','client_id','message_id','attachment_id','file_id','deleted_by','deleted_at','created_by','updated_by','created_at','updated_at'];
+
+    public function fileSystem()
+    {
+        return $this->belongsTo(FileSystem::class, 'file_id', 'id');
+    }
+
+    public function imageObj()
+    {
+        return $this->belongsTo(SysFile::class, 'file_id');
+    }
 }

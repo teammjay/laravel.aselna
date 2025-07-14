@@ -276,6 +276,7 @@ class ShipmentsController extends Controller
 
         $package_id = '';
         $product_total_weight = 0;
+        $product_weight_unit = 0;
         //print_r($shipmentDetail->operationItem);
         if (count($shipmentDetail->operationItem ?? []) > 0) {
             $product_weight = 0;
