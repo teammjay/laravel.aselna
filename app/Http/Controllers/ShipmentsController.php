@@ -315,6 +315,8 @@ class ShipmentsController extends Controller
 //                                    $shipmentDetail->save();
 //                                }
 //                            }
+                        } else {
+                            $package_id = $shipmentDetail->shipping_package_id;
                         }
 
                         $product_weight = $product_detail->product_weight;
