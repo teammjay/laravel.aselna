@@ -257,7 +257,7 @@ class OrderUtility
                         $order->order_status = OrderStatus::Shipped;
                         $order_operation_detail->status = OrderOperationStatus::MarkAsShipped;
                         if ($lineStatus['trackingInfo']) {
-                            $trackingNumber = $lineStatus['trackingInfo']['trackingNumber'] ?? '';
+                            $trackingNumber = $lineStatus['trackingInfo']['trackingNumber'] ?? null;
                             $order_operation_detail->tracking_number = $trackingNumber;
                         }
                         $order->save();
@@ -266,7 +266,7 @@ class OrderUtility
                         $order->order_status = OrderStatus::Shipped;
                         $order_operation_detail->status = OrderOperationStatus::Delivered;
                         if ($lineStatus['trackingInfo']) {
-                            $trackingNumber = $lineStatus['trackingInfo']['trackingNumber'] ?? '';
+                            $trackingNumber = $lineStatus['trackingInfo']['trackingNumber'] ?? null;
                             $order_operation_detail->tracking_number = $trackingNumber;
                         }
                         $order->save();
