@@ -104,7 +104,7 @@ class OrderOperationUtility
     public static function createLabel($orderOperation)
     {
         Log::info('Tracking number for order operation: ' . $orderOperation->tracking_number);
-        if (isset($orderOperation->tracking_number)) {
+        if (isset($orderOperation->tracking_number) && $orderOperation->tracking_number != '') {
             return [];
         }
 
