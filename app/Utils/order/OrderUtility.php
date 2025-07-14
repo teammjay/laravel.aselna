@@ -78,11 +78,10 @@ class OrderUtility
             'first_name' => $firstname,
             'last_name' => $lastname,
             'full_name' => $sorder['shippingInfo']['postalAddress']['name'],
-            'user_id' => $sorder['customerOrderId'],
         ];
 
         $customer_detail = Customer::updateOrCreate([
-            'user_id' => $sorder['customerOrderId'],
+            'full_name' => $sorder['shippingInfo']['postalAddress']['name'],
         ], $customerData);
 
         $customer_address_data = [
