@@ -65,13 +65,13 @@ class FetchEmailMessagesJob implements ShouldQueue
                                         'password' => $maccount->incomingAccount->password,
                                     ];
 
-                                    $filter_date = (isset($maccount->incomingAccount->filter_from_date)) ? $maccount->incomingAccount->filter_from_date : date('Y-m-d', strtotime('-15days'));
+                                    $filter_date = (isset($maccount->incomingAccount->filter_from_date)) ? $maccount->incomingAccount->filter_from_date : date('Y-m-d', strtotime('-5 days'));
                                     $folder = $maccount->incomingAccount->folders;
 
                                     Log::info('Imap Config :'.json_encode($imapConfig));
 
                                     $emailUtility = new EmailMessageUtility($smtpConfig, $imapConfig);
-                                    $receiveEmails = $emailUtility->fetchEmails($store_type, $filter_date, $maccount->incomingAccount->folders);
+                                    $receiveEmails = $emailUtility->fetchEmails($store_type, $filter_date, $folder);
                                     $last_filter_date = '';
                                     if(count($receiveEmails ?? []) > 0){
                                         foreach($receiveEmails as $email){
