@@ -5,6 +5,7 @@ namespace App\Services\Marketplace\Service;
 use App\Constants\FeedStatus;
 use App\Constants\FeedTypes;
 use App\Constants\ListingSyncStatus;
+use App\Constants\OrderOperationStatus;
 use App\Constants\OrderStatus;
 use App\Constants\OrderSyncronisationType;
 use App\Models\Listing;
@@ -533,5 +534,75 @@ class WalmartService implements MarketplaceServiceInterface
     private function callOrderCancelFeed(mixed $feedId)
     {
 
+    }
+
+    public function shipmentUpdate($orderOperation,$store)
+    {
+        $finalData = [];
+        $count = 1;
+        foreach ($orderOperation->order->orderItem as $item) {
+            Log::info('Itema data for the operation :: ' . json_encode($item));
+            $orderLine = [
+                'lineNumber' => $count,
+                'orderLineStatuses' => [
+                    'orderLineStatus' => [
+                        [
+                            'status' => 'Shipped',
+                            'statusQuantity' => [
+                                'unitOfMeasurement' => 'EACH',
+                                'amount' => $item->quantity
+                            ],
+                            'trackingInfo' => [
+                                "shipDateTime" => date('Y-m-d\TH:i:sP'),
+                                "carrierName" => [
+                                    "carrier" => $orderOperation->carrier->name,
+                                ],
+                                "methodCode" => 'Standard',
+                                "trackingNumber" => $orderOperation->tracking_number,
+                            ]
+                        ]
+                    ]
+                ]
+            ];
+
+            $finalData['orderShipment']['orderLines']['orderLine'][] = $orderLine;
+            $count++;
+        }
+
+        Log::info('Final data for the operation change :: ' . json_encode($finalData));
+
+        $authService = new WalmartAuthService($store->seller_id, $store->secret_key);
+        $response = $authService->shipOrder($orderOperation->order->purchase_order_id, $finalData);
+
+        Log::info('Walmart ship order response: ' . json_encode($response));
+
+        if (isset($response)) {
+            $orderResp = $response['order'];
+            Log::info('Walmart Ship order response: ' . json_encode($orderResp));
+            if (isset($orderResp) && isset($orderResp['purchaseOrderId']) && $orderResp['purchaseOrderId'] == $orderOperation->order->purchase_order_id) {
+                Log::info('Walmart ship order successful: ' . json_encode($orderResp));
+                $orderOperation->update(['status' => OrderOperationStatus::MarkAsShipped]);
+                if (isset($orderOperation->order_id)) {
+                    $order = Order::findOrFail($orderOperation->order_id);
+                    $order->update(['order_status' => OrderStatus::Shipped]);
+                }
+
+                if (isset($orderOperation->order->orderItem)) {
+                    foreach ($orderOperation->order->orderItem as $o_item) {
+                        $item_qty = $o_item->quantity;
+                        $orderItem = OrderItem::findOrFail($o_item->id);
+                        $orderItem->update(['shipped_quantity' => $item_qty]);
+                    }
+                }
+                $success = true;
+            } else {
+                Log::info('Walmart ship order error: ' . json_encode($response));
+                $success = false;
+            }
+        } else {
+            Log::info('Walmart ship order error: No response received');
+            $success = false;
+        }
+        return $success;
     }
 }
