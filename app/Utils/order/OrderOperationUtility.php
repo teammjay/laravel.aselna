@@ -14,6 +14,7 @@ use App\Services\Auth\EbayAuthService;
 use App\Services\Auth\ShopifyAuthService;
 use App\Services\Auth\WalmartAuthService;
 use App\Services\Marketplace\Service\ShopifyService;
+use App\Services\Marketplace\Service\WalmartService;
 use App\Utils\EndicialabelService;
 use App\Utils\shipment\ShipmentDocumentsCreator;
 use Illuminate\Support\Facades\DB;
@@ -228,6 +229,9 @@ class OrderOperationUtility
             }
             $orderOperation->tracking_number = $response['trackingNumber'];
             $orderOperation->save();
+
+            self::updateMergedOrderIfExists($orderOperation,$response['trackingNumber']);
+
             return [];
         } else {
             Log::error('Error creating label for order operation: ' . $orderOperation->id . ' - ' . json_encode($response));
@@ -298,7 +302,8 @@ class OrderOperationUtility
             }
         }
 
-        $orderIdLine = $storeName . ' ' . implode(' ', $orderIds);
+//        $orderIdLine = $storeName . ' ' . implode(' ', $orderIds);
+        $orderIdLine = $storeName . ' ' . $orderIds[0];
 
         // If order ID line is too long, use shortened version
         if (strlen($orderIdLine) > 50) {
@@ -310,7 +315,8 @@ class OrderOperationUtility
                 }
             }
 
-            $orderIdLine = $storeName . ' ' . implode(' ', $orderIds);
+//            $orderIdLine = $storeName . ' ' . implode(' ', $orderIds);
+            $orderIdLine = $storeName . ' ' . $orderIds[0];
         }
 
         // Add RMA number if present
@@ -686,71 +692,16 @@ class OrderOperationUtility
                     break;
 
                 case 'walmart':
-                    $finalData = [];
-                    $count = 1;
-                    foreach ($orderOperation->operationItem as $item) {
-                        Log::info('Itema data for the operation :: ' . json_encode($item));
-                        $orderLine = [
-                            'lineNumber' => $count,
-                            'orderLineStatuses' => [
-                                'orderLineStatus' => [
-                                    [
-                                        'status' => 'Shipped',
-                                        'statusQuantity' => [
-                                            'unitOfMeasurement' => 'EACH',
-                                            'amount' => $item->quantity
-                                        ],
-                                        'trackingInfo' => [
-                                            "shipDateTime" => date('Y-m-d\TH:i:sP'),
-                                            "carrierName" => [
-                                                "carrier" => $orderOperation->carrier->name,
-                                            ],
-                                            "methodCode" => 'Standard',
-                                            "trackingNumber" => $orderOperation->tracking_number,
-                                        ]
-                                    ]
-                                ]
-                            ]
-                        ];
+                    $walmartServie = new WalmartService();
+                    $is_success = $walmartServie->shipmentUpdate($orderOperation, $store);
+                    $orderOperations = OrderOperation::where('is_merged',true)
+                        ->where('merged_with',$orderOperation->id)
+                        ->get();
 
-                        $finalData['orderShipment']['orderLines']['orderLine'][] = $orderLine;
-                        $count++;
+                    foreach ($orderOperations as $o_item) {
+                        $walmartServie->shipmentUpdate($o_item, $store);
                     }
-
-                    Log::info('Final data for the operation change :: ' . json_encode($finalData));
-
-                    $authService = new WalmartAuthService($store->seller_id, $store->secret_key);
-                    $response = $authService->shipOrder($orderOperation->order->purchase_order_id, $finalData);
-
-                    Log::info('Walmart ship order response: ' . json_encode($response));
-
-                    if (isset($response)) {
-                        $orderResp = $response['order'];
-                        Log::info('Walmart Ship order response: ' . json_encode($orderResp));
-                        if (isset($orderResp) && isset($orderResp['purchaseOrderId']) && $orderResp['purchaseOrderId'] == $orderOperation->order->purchase_order_id) {
-                            Log::info('Walmart ship order successful: ' . json_encode($orderResp));
-                            $orderOperation->update(['status' => OrderOperationStatus::MarkAsShipped]);
-                            if (isset($orderOperation->order_id)) {
-                                $order = Order::findOrFail($orderOperation->order_id);
-                                $order->update(['order_status' => OrderStatus::Shipped]);
-                            }
-
-                            if (isset($orderOperation->order->orderItem)) {
-                                foreach ($orderOperation->order->orderItem as $o_item) {
-                                    $item_qty = $o_item->quantity;
-                                    $orderItem = OrderItem::findOrFail($o_item->id);
-                                    $orderItem->update(['shipped_quantity' => $item_qty]);
-                                }
-                            }
-                            $success = true;
-                        } else {
-                            Log::info('Walmart ship order error: ' . json_encode($response));
-                            $success = false;
-                        }
-                    } else {
-                        Log::info('Walmart ship order error: No response received');
-                        $success = false;
-                    }
+                    $success = $is_success;
                     break;
 
                 case 'ebay':
@@ -857,5 +808,17 @@ class OrderOperationUtility
             'phone' => $orderOperation->order->customerAddress->phone,
             'comapany' => $orderOperation->order->customerAddress->company ?? ''
         ];
+    }
+
+    private static function updateMergedOrderIfExists($orderOperation,$tracking_number)
+    {
+        $orderOperations = OrderOperation::where('is_merged',true)
+            ->where('merged_with',$orderOperation->id)
+            ->get();
+
+        foreach ($orderOperations as $tempOrderOperation) {
+            $tempOrderOperation->tracking_number = $tracking_number;
+            $tempOrderOperation->save();
+        }
     }
 }
