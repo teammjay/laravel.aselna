@@ -741,8 +741,12 @@ class ShipmentsController extends Controller
             if (count($orderIds) > 1) {
                 Log::info('Merging Orders for Address ID: ' . $addressId . ' - Orders: ' . implode(',', $orderIds));
                 $mainShipment = null;
+                $totalweight = 0;
+                $totalInsurance = 0;
                 foreach ($orderIds as $orderId) {
                     $orderOperation = OrderOperation::where('order_id', $orderId)->first();
+                    $totalweight += $orderOperation->weight_value;
+                    $totalInsurance += $orderOperation->insurance_value;
                     if ($orderOperation) {
                         if (!isset($mainShipment)) {
                             $mainShipment = $orderOperation; // Keep the first one as the main shipment
@@ -760,6 +764,9 @@ class ShipmentsController extends Controller
                         $mainShipment->save();
                     }
                 }
+                $mainShipment->weight_value = $totalweight;
+                $mainShipment->insurance_value = $totalInsurance;
+                $mainShipment->save();
             }
         }
     }
