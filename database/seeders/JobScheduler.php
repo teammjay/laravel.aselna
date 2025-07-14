@@ -296,7 +296,12 @@ class JobScheduler extends Seeder
                 'name' => 'Fetch Shopify Products',
                 'description' => 'Fetch Shopify products',
                 'class_name' => 'App\Jobs\FetchShopifyProductsJob',
-            ]
+            ],
+            [
+                'name' => 'Fetch Email Message Sync Job',
+                'description' => 'Fetch Email Message',
+                'class_name' => 'App\Jobs\FetchEmailMessagesJob',
+            ],
         ];
 
         foreach ($jobs as $job) {
