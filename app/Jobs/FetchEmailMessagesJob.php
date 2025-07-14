@@ -214,7 +214,7 @@ class FetchEmailMessagesJob implements ShouldQueue
                                                     'cc' => isset($email['cc']) ? $email['cc'] : NULL,
                                                     'bcc' => isset($email['bcc']) ? $email['bcc'] : NULL,
                                                     'message_id' => trim($email['message_id']),
-                                                    'messaging_account_id' => $maccount->id,
+                                                    'messaging_account_id' => $maccount->incomingAccount->id,
                                                     'from_email' => trim($email['from']),
                                                     'from_name' => trim($email['name']),
                                                     'message' => $email['body'],
