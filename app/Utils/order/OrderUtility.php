@@ -42,8 +42,14 @@ class OrderUtility
         $orderTotals = 0;
         $order_date = date('Y-m-d H:i:s', $sorder['orderDate'] / 1000);
 
+        $totalWeight = 0;
         foreach ($sorder['orderLines']['orderLine'] as $line) {
             $itemTotal = 0;
+            $sku = preg_split('/[_-]/', $line['item']['sku'])[0];
+            $catalog = Catalog::where('product_sku', $sku)->first();
+            if($catalog){
+                $totalWeight += $catalog->product_weight;
+            }
             foreach ($line['charges']['charge'] as $charge) {
                 $amount = (float)$charge['chargeAmount']['amount'];
 
@@ -132,6 +138,7 @@ class OrderUtility
             'order_id' => $order->id,
             'ship_date' => date('Y-m-d H:i:s', $sorder['shippingInfo']['estimatedShipDate'] / 1000),
             'insurance_value' => $orderTotals,
+            'weight_value' => $totalWeight,
             'status' => OrderOperationStatus::Created,
             'signature_confirmation' => 1,
             'store_id' => $store->id,
