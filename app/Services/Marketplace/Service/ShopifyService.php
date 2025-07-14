@@ -544,7 +544,7 @@ class ShopifyService implements MarketplaceServiceInterface
 
             if($orderId){
                 $orderDetail = Order::with('orderItem')->where('order_id',$order_id)->first();
-                $items= [];
+                $items= $refundMethod = [];
                 if($orderDetail){
                     if(isset($orderDetail->orderItem)){
                         foreach($orderDetail->orderItem as $item){
@@ -552,13 +552,22 @@ class ShopifyService implements MarketplaceServiceInterface
                                 'lineItemId' => $item->id1,
                                 'quantity' => $item->quantity
                             ];
+
+                            $refundMethod = [
+                                'storeCreditRefund' => [
+                                    'amount' => [
+                                        'amount' => $item->item_price
+                                    ]
+                                ]
+                            ];
                         }
                     }
                 }
                 $variables = [
-                    'input' => [
+                    'RefundInput' => [
                         'orderId' => $orderId,
                         'refundLineItems' => $items,
+                        'refundMethods' => $refundMethod,
                         'transactions' => []
                     ]
                 ];

@@ -49,7 +49,7 @@ class FetchShopifyOrders implements ShouldQueue
 
             if (count($stores ?? []) > 0) {
                 foreach ($stores as $store) {
-                    if ($store->name != 'AccessoryChoice') {
+                    if ($store->secret_key == '' || $store->service_url == '') {
                         continue;
                     }
                     Log::info('Store : ' . $store->name);
@@ -207,7 +207,7 @@ class FetchShopifyOrders implements ShouldQueue
                                     'buyer_last_name' => isset($order['customer']) ? $order['customer']['lastName'] : NULL,
                                     'buyer_email' => $order['email'],
                                     'customer_id' => $customer_detail->id,
-                                    'purchase_order_id' => isset($order['name']) ? $order['name'] : NULL,
+                                    'purchase_order_id' => isset($order['name']) ? str_replace('#','',$order['name']) : NULL,
                                     'store_id' => $store->id,
                                     'order_synchronization_id' => $order_synchronization_id,
                                     'shipping_address_id' => $customer_address->id,
