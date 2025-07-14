@@ -139,6 +139,7 @@
                                         <div class="col-md-2">
                                             <input type="file" class="btn btn-default" name="attach_file" id="attach_file">
                                             <input type="hidden" id="image_url">
+                                            <input type="hidden" id="image_storage_path">
                                             <div class="btn-group lableImageGroup hide" role="group">
                                                 <button id="btnGroupDrop2" type="button" class="btn btn-primary lable-image dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"></button>
                                                 <div class="dropdown-menu" aria-labelledby="btnGroupDrop2">
@@ -371,6 +372,7 @@
                         template_id: template_id,
                         customer_name: customer_name,
                         store_name: store_name,
+                        ticket_id: ticket_id,
                     },
                     headers: {
                         'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
@@ -380,6 +382,12 @@
                         if(data.success){
 
                             $('#message_to_send').html(data.templateCode);
+                            if(data.image_name){
+                                $('.lableImageGroup').removeClass('hide');
+                                $('#image_url').val(data.image_url);
+                                $('#image_storage_path').val(data.imagesPath);
+                                $('.lable-image').html(data.image_name);
+                            }
                         }
                     },
                     error: function (xhr) {
@@ -469,6 +477,13 @@
                     alert('Please add text to send message');
                     return false;
                 }
+
+                var labelimage = '';
+                var imagepath = '';
+                if($('#image_url').val() != ''){
+                    var labelimage = $('#image_url').val();
+                    var imagepath = $('#image_storage_path').val();
+                }
                 $.ajax({
                     type: "POST",
                     url: "{{ route('message.sendmessagetemplate') }}",
@@ -478,6 +493,8 @@
                         customer_id: customer_id,
                         ticket_id: ticket_id,
                         ticket_status: ticket_status,
+                        labelimage: labelimage,
+                        imagepath: imagepath,
                     },
                     headers: {
                         'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
@@ -730,6 +747,7 @@
                             if(response.image_url){
                                 $('.lableImageGroup').removeClass('hide');
                                 $('#image_url').val(response.image_url);
+                                $('#image_storage_path').val(response.imagesPath);
                                 $('.lable-image').html(response.image_name);
                             }
 
@@ -765,7 +783,8 @@
             });
 
             $(document).on('click','.delete_images',function () {
-                let imgUrl = $('#image_url').val('');
+                $('#image_url').val('');
+                $('#image_storage_path').val('');
                 $('.lableImageGroup').addClass('hide');
                 $('.lable-image').html('');
             });
@@ -1039,6 +1058,7 @@
                         if(response.image_url){
                             $('.lableImageGroup').removeClass('hide');
                             $('#image_url').val(response.image_url);
+                            $('#image_storage_path').val(response.imagesPath);
                             $('.lable-image').html(response.image_name);
                         }
                     },
