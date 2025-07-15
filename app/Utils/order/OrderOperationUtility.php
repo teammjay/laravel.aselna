@@ -752,12 +752,12 @@ class OrderOperationUtility
                 return true;
             } else {
                 // If there was an API error but no exception, still rollback
-                DB::rollBack();
+                DB::commit();
                 return false;
             }
         } catch (\Exception $e) {
             // If anything went wrong, rollback the transaction
-            DB::rollBack();
+            DB::commit();
             Log::error('Error in createShipment: ' . $e->getMessage());
             return false;
         }
@@ -803,7 +803,7 @@ class OrderOperationUtility
             'address3' => $orderOperation->order->customerAddress->address_line_3 ?? '',
             'city' => $orderOperation->order->customerAddress->city,
             'state' => $orderOperation->order->customerAddress->state,
-            'postalCode' => $orderOperation->order->customerAddress->zip,
+            'postalCode' => explode('-',$orderOperation->order->customerAddress->zip ?? '')[0],
             'country' => $orderOperation->order->customerAddress->country,
             'phone' => $orderOperation->order->customerAddress->phone,
             'comapany' => $orderOperation->order->customerAddress->company ?? ''
