@@ -37,6 +37,9 @@
             background-color: #fff !important;
             font-weight: 600;
         }
+        tr.bg-blue {
+            background-color: #007bff!important;
+        }
     </style>
 @stop
 
