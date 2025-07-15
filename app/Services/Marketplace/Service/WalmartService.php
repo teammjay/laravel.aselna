@@ -558,7 +558,7 @@ class WalmartService implements MarketplaceServiceInterface
                                     "carrier" => $mainOrderOperation->carrier->name,
                                 ],
                                 "methodCode" => 'Standard',
-                                "trackingNumber" => $orderOperation->tracking_number,
+                                "trackingNumber" => $mainOrderOperation->tracking_number,
                             ]
                         ]
                     ]
