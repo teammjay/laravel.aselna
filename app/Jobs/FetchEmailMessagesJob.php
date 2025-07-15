@@ -52,10 +52,8 @@ class FetchEmailMessagesJob implements ShouldQueue
                     if(count($storeMessageAccount ?? []) > 0){
                         foreach($storeMessageAccount as $maccount){
                             $smtpConfig = $imapConfig = [];
-
                             if($maccount->incoming_account_id !='') {
                                 if(isset($maccount->incomingAccount)) {
-
                                     $account = $maccount->incomingAccount;
                                     $imapConfig = [
                                         'host' => $maccount->incomingAccount->server,
@@ -82,10 +80,12 @@ class FetchEmailMessagesJob implements ShouldQueue
                                             /* create ticket*/
                                             $order_id = $related_order_id = $po_no = $reason = $customer_id = $order_operation_id = $reference_code = NULL;
                                             $ticket_type_code = HdTicketTypeCode::MARKETPLACE_NOTIFICATION;
-                                            $customerDetail = Customer::select('customers.*')->join('customer_emails as CE', 'CE.customer_id', '=', 'customers.id','left')->whereLike('customers.email','%'.$email['from'].'%')->orWhere('CE.email_address','like','%'.$email['from'].'%')->first();
+                                            if(isset($email['from'])) {
+                                                $customerDetail = Customer::select('customers.*')->join('customer_emails as CE', 'CE.customer_id', '=', 'customers.id', 'left')->whereLike('customers.email', '%' . $email['from'] . '%')->orWhere('CE.email_address', 'like', '%' . $email['from'] . '%')->first();
 
-                                            if($customerDetail){
-                                                $customer_id = $customerDetail->id;
+                                                if($customerDetail){
+                                                    $customer_id = $customerDetail->id;
+                                                }
                                             }
 
                                             if(isset($email['parsedData']) && !empty($email['parsedData'])){
@@ -239,6 +239,7 @@ class FetchEmailMessagesJob implements ShouldQueue
                                                 }
                                             }
                                         }
+                                        Log::info('Last filter date :'.$last_filter_date);
                                         if($last_filter_date != ''){
                                             $account->update(['filter_from_date' => $last_filter_date]);
                                         }
