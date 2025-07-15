@@ -186,12 +186,15 @@ class EmailMessageUtility
                 $emails[] = $eData;
             }
 
+            Log::info("Email Founds.");
             //die;
             return $emails;
         } catch (Exception $e) {
             /*echo '<pre>';
             print_r($e->getMessage());
             echo '</pre>';die;*/
+
+            Log::info("Failed to fetch email: " . $e->getMessage());
             return ['error' => 'Failed to fetch emails: ' . $e->getMessage()];
         }
     }
