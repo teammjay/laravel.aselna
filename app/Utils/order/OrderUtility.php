@@ -314,7 +314,7 @@ class OrderUtility
                 'address_line_2' => $addressLine2,
                 'city' => $addressDetails['contactAddress']['city'],
                 'state' => $addressDetails['contactAddress']['stateOrProvince'],
-                'zip' => $addressDetails['contactAddress']['postalCode'],
+                'zip' => explode('-',$addressDetails['contactAddress']['postalCode'] ?? '')[0],
                 'country_code' => $addressDetails['contactAddress']['countryCode'],
                 'address_combined' => $addressLine1 . ' ' . $addressLine2,
             ];

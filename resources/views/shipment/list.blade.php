@@ -951,6 +951,57 @@
             });
         }
 
+        $(document).on('click','#updateShipment',function () {
+
+            const form = document.querySelector("#frmShippingDetail");
+            let formData = new FormData(form);
+
+            const carrier_package = formData.get("carrier_package");
+            const label_generation = formData.get("label_generation");
+
+            if (!carrier_package || carrier_package.trim() === "") {
+                alert("Carrier package is required.");
+                return;
+            }
+
+
+            $.ajax({
+                url: "<?php echo e(route('shipment.updateshipment')); ?>",
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                headers: {
+                    'X-CSRF-TOKEN': '<?php echo e(csrf_token()); ?>',
+                },
+                success: function (response) {
+                    // If success, remove the user row from the table
+                    if (response.success) {
+                        alert('Shipped Updated successfully!!');
+                        location.reload();
+                    }
+                    else {
+                        alert(response.message);
+                    }
+                },
+                error: function (xhr) {
+                    // Handle error response
+                    if (xhr.status === 422) {
+                        let errors = xhr.responseJSON.errors;
+                        $.each(errors, function (key, messages) {
+                            alert(key + ': ' + messages[0]);
+                        });
+                    }
+                    /*const response = xhr.responseJSON;
+                    if ( response.errors) {
+                        alert(response.message);
+                    } else {
+                        alert('Error: ' + response.message);
+                    }*/
+                }
+            });
+        });
+
         $(document).on('click', '#select_deselect_shipment', function() {
 
             var ele = $(this);
