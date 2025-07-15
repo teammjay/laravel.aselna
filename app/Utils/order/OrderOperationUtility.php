@@ -693,13 +693,13 @@ class OrderOperationUtility
 
                 case 'walmart':
                     $walmartServie = new WalmartService();
-                    $is_success = $walmartServie->shipmentUpdate($orderOperation, $store);
+                    $is_success = $walmartServie->shipmentUpdate($orderOperation,$orderOperation, $store);
                     $orderOperations = OrderOperation::where('is_merged',true)
                         ->where('merged_with',$orderOperation->id)
                         ->get();
 
                     foreach ($orderOperations as $o_item) {
-                        $walmartServie->shipmentUpdate($o_item, $store);
+                        $walmartServie->shipmentUpdate($orderOperation,$o_item, $store);
                     }
                     $success = $is_success;
                     break;

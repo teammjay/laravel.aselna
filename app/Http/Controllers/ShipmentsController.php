@@ -535,6 +535,7 @@ class ShipmentsController extends Controller
         if ($request->input('process_id')) {
             $process_id = $request->input('process_id');
             $order_id = $request->input('order_id');
+            Log::info("Starting Shipment of OrderID : ".$order_id);
 
             // Process a single order operation
             $operation = OrderOperation::with('order', 'operationItem', 'store', 'store.storeType')
@@ -719,6 +720,12 @@ class ShipmentsController extends Controller
                 OrderStatus::PartiallyShipped,
                 OrderStatus::SynchronizatonFailed
             ])
+            ->whereIn('id',function ($query) {
+                $query->select('order_id')
+                    ->from('order_operation')
+                    ->where('is_merged', false)
+                    ->where('status', 0);
+            })
             ->pluck('shipping_address_id');
 
         if ($addressIds->isNotEmpty()) {
