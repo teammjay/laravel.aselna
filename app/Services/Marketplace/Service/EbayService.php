@@ -1074,7 +1074,7 @@ class EbayService implements MarketplaceServiceInterface
 
         $this->authService = new EbayAuthService($clientId, $clientSecret, $redirectUri, $store->user_id);
         $orders = $this->authService->getOrders($filterStartDateFormatted, $last_synchronization->cursor ?? null);
-        //Log::info('Orders Response : ' . json_encode(array_keys($orders)));
+//        Log::info('Orders Response : ' . json_encode(array_keys($orders)));
 
         if (!isset($orders)) {
             Log::info("Error in Ebay Orders : ");
@@ -1130,6 +1130,7 @@ class EbayService implements MarketplaceServiceInterface
                         $order_status = OrderStatus::Canceled;
                     }
 
+                    Log::info('Order :: ' . json_encode($order));
                     $orderData = [
                         'order_id' => $order['orderId'],
                         'order_date' => date('Y-m-d H:i:s', strtotime($order['creationDate'])),
@@ -1163,7 +1164,7 @@ class EbayService implements MarketplaceServiceInterface
             }
         }
 
-        if (strtotime($last_synchronization->last_order_update_date) > strtotime($last_order_update_date)) {
+        if (isset($last_synchronization) && strtotime($last_synchronization->last_order_update_date) > strtotime($last_order_update_date)) {
             $last_order_update_date = date('Y-m-d H:i:s', strtotime($last_synchronization->last_order_update_date));
         }
         $order_synchronization->update(['number_of_items' => $noOfOrder, 'last_order_update_date' => $last_order_update_date]);
