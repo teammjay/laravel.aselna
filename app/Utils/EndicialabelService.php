@@ -80,7 +80,7 @@ class EndicialabelService
 
         /* create transaction entry*/
         if (env('APP_ENV') !== 'local') {
-            $address = $shippingDetail['fromAddress']['name'] . ' ' . $shippingDetail['fromAddress']['address1'] . ' ' . $shippingDetail['fromAddress']['address2'] . ' ' . $shippingDetail['fromAddress']['city'] . ' ' . $shippingDetail['fromAddress']['state'] . ' ' . $shippingDetail['fromAddress']['postalCode'] . ' ' . $shippingDetail['fromAddress']['country'];
+            $address = $shippingDetail['toAddress']['name'] . ' ' . $shippingDetail['toAddress']['address1'] . ' ' . $shippingDetail['toAddress']['address2'] . ' ' . $shippingDetail['toAddress']['city'] . ' ' . $shippingDetail['toAddress']['state'] . ' ' . $shippingDetail['toAddress']['postalCode'] . ' ' . $shippingDetail['toAddress']['country'];
             $transactionData = [
                 'shipping_account_id' => $shippingDetail['account_info'],
                 'tracking_number' => $trackingNumber,

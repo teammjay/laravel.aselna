@@ -56,6 +56,11 @@ class AccountTransactionController extends Controller
             $query->whereDate('created_at', $request->created_at);
         }
 
+        $columnIndex = $request->input('order.0.column', 0);
+        $sortColumn = $request->input('columns.' . $columnIndex . '.data', 'id');
+        $sortDirection = $request->input('order.0.dir', 'asc');
+        $query->orderBy($sortColumn, $sortDirection);
+
         $length = $request->input('length', 10);
         $start = $request->input('start', 0);
         $page = ($start / $length) + 1;
@@ -78,7 +83,6 @@ class AccountTransactionController extends Controller
                 'canceled' => $transaction->canceled,
                 'canceled_date' => $transaction->canceled_date,
                 'created_at' => $transaction->created_at,
-
             ];
         }
 
