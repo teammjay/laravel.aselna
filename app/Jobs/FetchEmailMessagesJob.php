@@ -46,7 +46,7 @@ class FetchEmailMessagesJob implements ShouldQueue
             if (count($stores ?? []) > 0) {
                 foreach ($stores as $store) {
                     Log::info('store:'.$store->name);
-                    $storeMessageAccount = StoreMessageAccount::with('incomingAccount','outgoingAccount')->where('store_id', $store->id)->get();
+                    $storeMessageAccount = StoreMessageAccount::with('incomingAccount','outgoingAccount')->where('store_id', $store->id)->where('active', 1)->get();
                     $store_type = $store->storeType->name;
                     $store_id = $store->id;
                     if(count($storeMessageAccount ?? []) > 0){
@@ -65,6 +65,8 @@ class FetchEmailMessagesJob implements ShouldQueue
 
                                     $filter_date = (isset($maccount->incomingAccount->filter_from_date)) ? $maccount->incomingAccount->filter_from_date : date('Y-m-d', strtotime('-5 days'));
                                     $folder = $maccount->incomingAccount->folders;
+
+                                    Log::info('Incomming Account ID:'.$maccount->incomingAccount->id);
 
                                     Log::info('Imap Config :'.json_encode($imapConfig));
 
