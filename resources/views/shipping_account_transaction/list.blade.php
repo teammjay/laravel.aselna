@@ -186,6 +186,7 @@
 @section('adminlte_js')
     <script>
         $(document).ready(function() {
+            var accountTransactionTable = null;
 
             $('.card-header').on('click', function () {
                 if ($(this).find('.fa').hasClass('fa-angle-down')) {
@@ -246,7 +247,7 @@
             });
 
 
-            $("#transactionsTable").dataTable({
+            accountTransactionTable = $("#transactionsTable").DataTable({
                 processing: true,
                 serverSide: true,
                 searching: false,
@@ -264,8 +265,9 @@
                         });
                     }
                 },
+                "order": [[ 3, "desc" ]],
                 columns: [
-                    {data: 'shipping_account', name: 'shipping_account'},
+                    {data: 'shipping_account', name: 'shipping_account',orderable: false, searchable: false},
                     {data: 'tracking_number', name: 'tracking_number'},
                     {data: 'transaction_date', name: 'transaction_date'},
                     {data: 'transaction_id', name: 'transaction_id'},
@@ -287,7 +289,7 @@
 
             $('#filter-form').on('submit', function (e) {
                 e.preventDefault(); // Prevent default form submission
-                // loadTransactions();
+                accountTransactionTable.ajax.reload();
             });
 
             $('#reprintLabel').on('click', function () {
