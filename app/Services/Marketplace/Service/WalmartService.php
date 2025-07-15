@@ -536,7 +536,7 @@ class WalmartService implements MarketplaceServiceInterface
 
     }
 
-    public function shipmentUpdate($orderOperation,$store)
+    public function shipmentUpdate($mainOrderOperation, $orderOperation,$store)
     {
         $finalData = [];
         $count = 1;
@@ -555,7 +555,7 @@ class WalmartService implements MarketplaceServiceInterface
                             'trackingInfo' => [
                                 "shipDateTime" => date('Y-m-d\TH:i:sP'),
                                 "carrierName" => [
-                                    "carrier" => $orderOperation->carrier->name,
+                                    "carrier" => $mainOrderOperation->carrier->name,
                                 ],
                                 "methodCode" => 'Standard',
                                 "trackingNumber" => $orderOperation->tracking_number,
