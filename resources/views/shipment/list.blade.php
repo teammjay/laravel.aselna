@@ -924,10 +924,7 @@
                     if (response.success) {
                         $(`tr[data-id="${shipmentId}"]`).remove();
 
-                        // $(`#item-${shipmentId} .badge`)
-                        //     .removeClass('badge-warning')
-                        //     .addClass('badge-success')
-                        //     .text('Completed');
+                        $(`#item-${shipmentId}`).remove();
                     } else {
                         $(`#item-${shipmentId} .badge`)
                             .removeClass('badge-warning')
