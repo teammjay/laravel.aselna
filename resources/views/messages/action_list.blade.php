@@ -408,7 +408,7 @@
            $('.card-body').toggle();
         });
 
-        $(document).on('click','#message-list tr',function () {
+        $(document).on('dblclick','#message-list tr',function () {
            let ele = $(this);
            $('#message-list tr').removeClass('bg-blue');
            $('input[name="message_id[]"]').prop('checked',false);
