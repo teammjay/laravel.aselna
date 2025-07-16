@@ -592,7 +592,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/shipping_account_transactions/edit/{id}', 'update')->name('shipping_account_transactions.update');
         Route::get('/shipping_account_transactions/delete/{id}', 'destroy')->name('shipping_account_transactions.delete');
         Route::post('/shipping_account_transactions/filter', 'filter')->name('shipping_account_transactions.filter');
-        Route::post('/shipping_account_transactions/cancellabel', 'cancelLabel')->name('shipping_account_transactions.cancellabel');
+        Route::post('/shipping_account_transactions/cancellabel', 'cancelTransaction')->name('shipping_account_transactions.cancellabel');
         Route::post('/shipping_account_transactions/rePrintlabel', 'rePrintlabel')->name('shipping_account_transactions.reprintlabel');
     });
 

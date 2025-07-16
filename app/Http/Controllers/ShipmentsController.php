@@ -569,6 +569,8 @@ class ShipmentsController extends Controller
                                 if ($package_id) {
                                     $request['carrier_package'] = $package_id;
                                 }
+                            } else {
+                                $request['carrier_package'] = $operation->shipping_package_id;
                             }
                             $product_weight = $product_detail->product_weight;
                             $product_total_weight = $product_total_weight + $product_weight;
