@@ -65,6 +65,8 @@ class AccountTransactionController extends Controller
         $start = $request->input('start', 0);
         $page = ($start / $length) + 1;
 
+        //echo $page;die;
+        $totalRecordwithFilter = $query->count();
         $query->paginate($length, ['*'], 'page', $page);
 
         $transactions = $query->distinct()->get();
@@ -90,9 +92,9 @@ class AccountTransactionController extends Controller
         return response()->json([
 //            'html' => view('shipping_account_transaction.search_list', compact('transactions'))->render(),
 //            'totalRecords' => $transactions->count()
-            'draw' => $request->input('draw'),
+            'draw' => intval($request->input('draw')),
             'recordsTotal' => $totalRecords,
-            'recordsFiltered' => count($data),
+            'recordsFiltered' => $totalRecordwithFilter,
             'data' => $data,
         ]);
     }

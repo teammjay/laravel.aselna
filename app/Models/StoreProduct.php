@@ -55,7 +55,9 @@ class StoreProduct extends Model
 
     public function product()
     {
-        return $this->belongsTo(Catalog::class, 'product_id');
+        return $this->belongsTo(Catalog::class, 'product_id')->where(function ($q) {
+            $q->where('product_status', 'active');
+        });
     }
 
     public function store()

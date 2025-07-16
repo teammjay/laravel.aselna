@@ -897,9 +897,9 @@
             $('#progress-bar').css('width', `${progress}%`).attr('aria-valuenow', progress).text(`${progress}%`);
 
             // check for 5 items only remove previous items
-            if (current_index >= 5) {
-                $('#progress-items li').slice(0, current_index - 4).remove();
-            }
+            // if (current_index >= 5) {
+            //     $('#progress-items li').slice(0, current_index - 4).remove();
+            // }
 
             // Add item to list
             $('#progress-items').append(`
@@ -924,10 +924,10 @@
                     if (response.success) {
                         $(`tr[data-id="${shipmentId}"]`).remove();
 
-                        $(`#item-${shipmentId} .badge`)
-                            .removeClass('badge-warning')
-                            .addClass('badge-success')
-                            .text('Completed');
+                        // $(`#item-${shipmentId} .badge`)
+                        //     .removeClass('badge-warning')
+                        //     .addClass('badge-success')
+                        //     .text('Completed');
                     } else {
                         $(`#item-${shipmentId} .badge`)
                             .removeClass('badge-warning')
@@ -1175,7 +1175,7 @@
                             "searching": true,
                             "paging": false,
                             "info": false,
-                            "order": [[6, "desc"]],
+                            "order": [[7, "desc"]],
                             columnDefs: [
                                 {
                                     targets: [0,1],
