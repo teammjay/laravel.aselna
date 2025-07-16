@@ -92,7 +92,7 @@ class AccountTransactionController extends Controller
 //            'totalRecords' => $transactions->count()
             'draw' => $request->input('draw'),
             'recordsTotal' => $totalRecords,
-            'recordsFiltered' => count($data),
+            'recordsFiltered' => $totalRecords,
             'data' => $data,
         ]);
     }
