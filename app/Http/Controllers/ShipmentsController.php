@@ -562,11 +562,13 @@ class ShipmentsController extends Controller
                         $product_id = $oitem->orderItem->product->product_id;
                         if ($product_id) {
                             $product_detail = Catalog::findOrFail($product_id);
-                            if ($product_detail->product_weight > $product_weight) {
-                                $package_id = $product_detail->shipping_package_id;
-                            }
-                            if ($package_id) {
-                                $request['carrier_package'] = $package_id;
+                            if (!isset($operation->shipping_package_id)) {
+                                if ($product_detail->product_weight > $product_weight) {
+                                    $package_id = $product_detail->shipping_package_id;
+                                }
+                                if ($package_id) {
+                                    $request['carrier_package'] = $package_id;
+                                }
                             }
                             $product_weight = $product_detail->product_weight;
                             $product_total_weight = $product_total_weight + $product_weight;
