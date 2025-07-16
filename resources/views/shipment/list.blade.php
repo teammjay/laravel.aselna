@@ -897,9 +897,9 @@
             $('#progress-bar').css('width', `${progress}%`).attr('aria-valuenow', progress).text(`${progress}%`);
 
             // check for 5 items only remove previous items
-            if (current_index >= 5) {
-                $('#progress-items li').slice(0, current_index - 4).remove();
-            }
+            // if (current_index >= 5) {
+            //     $('#progress-items li').slice(0, current_index - 4).remove();
+            // }
 
             // Add item to list
             $('#progress-items').append(`
