@@ -283,7 +283,7 @@
                 ],
                 createdRow: function (row, data, dataIndex) {
                     // Assuming `data.id` holds the transaction ID
-                    //$(row).attr('data-id', data.tracking_number);
+                    $(row).attr('data-id', data.tracking_number);
                 }
             });
 
