@@ -221,7 +221,6 @@
 
             $(document).on('click','#cancleLabel',function () {
                 var transaction_id  = $('input[name="transaction_id[]"]:checked').val();
-                var id  = $('input[name="transaction_id[]"]:checked').data('id');
                 alert(transaction_id);
                 $.ajax({
                     url: "{{ route('shipping_account_transactions.cancellabel') }}",
