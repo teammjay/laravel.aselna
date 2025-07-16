@@ -678,7 +678,7 @@ class ShipmentsController extends Controller
         $ship_date = $request->input('ship_date');
         $ship_from = $request->input('shipment_from');
         $insurance_value = $request->input('insurance_value');
-        $weight_value = $request->input('weight_value');
+        $weight_value = $request->input('weight');
         $weight_type = $request->input('weight_type');
 
         if ($order_operation_id) {
