@@ -265,7 +265,7 @@
                         });
                     }
                 },
-                "order": [[ 3, "desc" ]],
+                "order": [[ 2, "desc" ]],
                 columns: [
                     {data: 'shipping_account', name: 'shipping_account',orderable: false, searchable: false},
                     {data: 'tracking_number', name: 'tracking_number'},
@@ -283,7 +283,7 @@
                 ],
                 createdRow: function (row, data, dataIndex) {
                     // Assuming `data.id` holds the transaction ID
-                    $(row).attr('data-id', data.tracking_number);
+                    //$(row).attr('data-id', data.tracking_number);
                 }
             });
 
