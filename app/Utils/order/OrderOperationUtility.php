@@ -70,6 +70,8 @@ class OrderOperationUtility
 
         $orderOperation->save();
 
+        Log::info('Order Operation Id :: ' . $orderOperation->id);
+
         $orderOperation = OrderOperation::with('order', 'order.orderItem', 'order.customer', 'order.customerAddress', 'store', 'store.storeType', 'carrier', 'shipFrom', 'shipFrom.returnAddress', 'shipFrom.fromAddress')->where('id', $orderOperation->id)->first();
 
         return self::instantSynchronization($orderOperation);
@@ -134,7 +136,7 @@ class OrderOperationUtility
 
         if (OrderOperationType::isReturn($operation_type)) {
             $shipmentDetails['fromAddress'] = self::getAddress($shipFrom->returnAddress);
-            $shipmentDetails['toAddress'] = self::mapCustomerAddress($orderOperation);
+            $shipmentDetails['toAddress'] = self::getAddress($shipFrom->returnAddress);
         } else {
             $shipmentDetails['fromAddress'] = self::getAddress($shipFrom->fromAddress);
             $shipmentDetails['toAddress'] = self::mapCustomerAddress($orderOperation);
@@ -191,7 +193,8 @@ class OrderOperationUtility
         }
 
         if (OrderOperationType::isReturn($operation_type)) {
-            $shipmentDetails['labelFormat'] = 'jpg';
+            $shipmentDetails['ImageRotation'] = 'None';
+            $shipmentDetails['labelFormat'] = 'JPEG';
         } else {
             $shipmentDetails['ImageRotation'] = 'Rotate180';
             $shipmentDetails['labelFormat'] = 'ZPLII';
@@ -491,8 +494,9 @@ class OrderOperationUtility
         if ($orderOperation->label_creation_type == ShippingLabelCreationType::CreateLabel) {
             $errors = self::createLabel($orderOperation);
             if (isset($errors) && !empty($errors)) {
-                Log::error('Error creating label: ' . $errors);
-                throw new \Exception('Error creating label: ' . json_encode($errors));
+                Log::error('Error creating label: ' . json_encode($errors));
+                //throw new \Exception('Error creating label: ' . json_encode($errors));
+                return false;
             } else {
                 return true;
             }
