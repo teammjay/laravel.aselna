@@ -41,7 +41,7 @@ class SubmitShopifyProductsJob implements ShouldQueue
         if(count($stores ?? []) > 0) {
             foreach ($stores as $store) {
                 Log::info('Store : ' . $store->name);
-                if (trim(strtolower($store->name)) != strtolower('AccessoryWiz')) {
+                if (trim(strtolower($store->name)) != strtolower('GetAccessory')) {
                     continue;
                 }
 
@@ -53,7 +53,7 @@ class SubmitShopifyProductsJob implements ShouldQueue
                     ->whereNull('parent_id')
                     ->where('product_status','!=','discontinued')
                     //->where('product_sku', 'E74')
-                    ->whereNotIn('product_id', $pIds)
+                    ->whereIn('product_id', $pIds)
                     ->orderBy('created_at', 'desc')
                     /*->limit(5)
                     ->get();*/
@@ -74,37 +74,57 @@ class SubmitShopifyProductsJob implements ShouldQueue
     {
         $fileSystem = $store->fileSystem;
 
+        $shopifyAuthService = new ShopifyAuthService($store->secret_key, $store->service_url);
+
         $is_uploaded = ManageMarketplaceProduct::where('product_id',$productData->product_id)->where('store_id',$store->id)->where('upload_status','success')->count();
 
         Log::info('Count Info: ' . $is_uploaded);
-        Log::info('Product Info: ' . json_encode($productData));
+        Log::info('Product Info: ' . $productData->product_id);
         $product_id = $sku = $upcCode = NULL;
         if($is_uploaded > 0){
+            Log::info("Syncing Product SKU :: " .$productData->product_sku);
+
+
             $product_id = $productData->product_id;
             $proDetail = ManageMarketplaceProduct::where('product_id',$productData->product_id)->where('store_id',$store->id)->where('upload_status','success')->first();
             $sku = $proDetail->sku;
             $upcCode = $proDetail->upc_code;
 
-            $this->generateProductImages($productData, $store);
+            Log::info('Id :: ' . json_encode($proDetail));
+            $tags = $this->getAllTags($productData, []);
 
-            $images = GenerateProductImage::where('product_id', $productData->product_id)->get();
-            $media = [];
-            foreach ($images as $image) {
-                $media[] = [
-                    'mediaContentType' => 'IMAGE',
-                    'originalSource' => $fileSystem->url_base_path . $image->path,
-                ];
-            }
+//            $previousData = $shopifyAuthService->getProductById($proDetail->marketplace_product_id);
+//            $previousTags = $previousData['data']['product']['tags'];
+//            Log::info('Tags :: ' . json_encode($previousTags));
+//            $newTags = array_diff($tags, $previousTags);
+//            $mergedTags = array_merge($previousTags, $newTags);
+
+
+            $finalTagsString = implode(', ', $tags);
+
             $productUpdateData = [
                 'product' => [
-                    'id' => $product_id
+                    'id' => $proDetail->marketplace_product_id,
+                    'tags' => $finalTagsString,
                 ],
-                'media' => $media
             ];
+
+
+//            $this->generateProductImages($productData, $store);
+
+//            $images = GenerateProductImage::where('product_id', $productData->product_id)->get();
+            $media = [];
+//            foreach ($images as $image) {
+//                $media[] = [
+//                    'mediaContentType' => 'IMAGE',
+//                    'originalSource' => $fileSystem->url_base_path . $image->path,
+//                ];
+//            }
+            $productUpdateData['media'] = $media;
 
             Log::info('Product Update Data: ' . json_encode($productUpdateData));
 
-            $shopifyAuthService = new ShopifyAuthService($store->secret_key, $store->service_url);
+
             $response = $shopifyAuthService->updateProduct($productUpdateData);
             Log::info('Product Update : ' . json_encode($response));
 
