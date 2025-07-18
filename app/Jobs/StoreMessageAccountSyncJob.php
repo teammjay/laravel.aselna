@@ -49,7 +49,8 @@ class StoreMessageAccountSyncJob implements ShouldQueue
                 'api_account' => $storeMessageAccount->api_account,
                 'active' => $storeMessageAccount->active,
                 'version' => $storeMessageAccount->version,
-                'created_by' => $created_by
+                'created_by' => $created_by,
+                'updated_by' => $created_by,
             ]
         );
     }

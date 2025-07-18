@@ -24,7 +24,7 @@ class FetchEmailMessagesJob implements ShouldQueue
 {
     use Queueable;
 
-    public $timeout = 3000;
+    public $timeout = 30000;
 
     /**
      * Create a new job instance.
@@ -89,6 +89,7 @@ class FetchEmailMessagesJob implements ShouldQueue
                                                     $customer_id = $customerDetail->id;
                                                 }
                                             }
+                                            Log::info('Customer ID :'.$customer_id);
 
                                             if(isset($email['parsedData']) && !empty($email['parsedData'])){
                                                 if(isset($email['parsedData']['order_id'])){
@@ -120,6 +121,7 @@ class FetchEmailMessagesJob implements ShouldQueue
                                             }
 
                                             if($customer_id == NULL){
+                                                Log::info('Creating customer :');
 
                                                 if (isset($email['name'])) {
                                                     $nameArr = explode(' ', $email['name']);
@@ -189,6 +191,7 @@ class FetchEmailMessagesJob implements ShouldQueue
                                                 'sku' => NULL,
                                                 'related_listing_item_id' => NULL,
                                             ];
+                                            Log::info('Ticket Data created from :' . trim($email['from']));
 
                                             $ticketDetail = Message::where('ticket_email',trim($email['from']))->first();
 
@@ -253,7 +256,7 @@ class FetchEmailMessagesJob implements ShouldQueue
                 }
             }
         }catch (\Exception $e) {
-            Log::error('Error: ' . $e->getMessage());
+            Log::error('Error: ' . $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine());
         }
     }
 
