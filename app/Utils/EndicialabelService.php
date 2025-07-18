@@ -221,8 +221,8 @@ class EndicialabelService
             $textColor = imagecolorallocate($image, 0, 0, 0); // Black text
             $fontSize = 20;
             $fontFile = storage_path('app/fonts/arial.ttf');
-            $x = 50;
-            $y = $height - 90;
+            $x = 10;
+            $y = $height - 5;
 
             if (!file_exists($fontFile)) {
                 Log::info('Custom font file not found, using default font.');
