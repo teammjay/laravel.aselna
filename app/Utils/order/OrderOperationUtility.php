@@ -224,11 +224,13 @@ class OrderOperationUtility
             unset($orderOperation->shipping_solution_carrier_package);
             unset($orderOperation->shipping_solution_carrier_service);
 
-            $result = self::waitForOperationCompleted($response['trackingNumber']);
+            if (!OrderOperationType::isReturn($operation_type)) {
+                $result = self::waitForOperationCompleted($response['trackingNumber']);
 
-            if (!$result) {
-                Log::error('Label creation operation did not complete successfully for order operation: ' . $orderOperation->id);
-                return ['Error creating label. Operation did not complete successfully.'];
+                if (!$result) {
+                    Log::error('Label creation operation did not complete successfully for order operation: ' . $orderOperation->id);
+                    return ['Error creating label. Operation did not complete successfully.'];
+                }
             }
             $orderOperation->tracking_number = $response['trackingNumber'];
             $orderOperation->save();
