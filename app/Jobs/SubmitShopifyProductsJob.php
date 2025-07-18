@@ -46,14 +46,14 @@ class SubmitShopifyProductsJob implements ShouldQueue
                 }
 
                 Log::info('Store IN: ' . json_encode($store));
-                $pIds = ManageMarketplaceProduct::select('product_id')->where('upload_status','success')->get();
+//                $pIds = ManageMarketplaceProduct::select('product_id')->where('upload_status','success')->get();
                 $productTypes = ProductType::select('id')->where('code', 'ceabundle')->get()->toArray();
                 $products = Catalog::select('*')->with('productType','productKeyFeatures','productColor')
                     ->whereNotIn('product_type', $productTypes)
                     ->whereNull('parent_id')
                     ->where('product_status','!=','discontinued')
                     //->where('product_sku', 'E74')
-                    ->whereIn('product_id', $pIds)
+//                    ->whereNotIn('product_id', $pIds)
                     ->orderBy('created_at', 'desc')
                     /*->limit(5)
                     ->get();*/
@@ -124,14 +124,14 @@ class SubmitShopifyProductsJob implements ShouldQueue
 
             Log::info('Product Update Data: ' . json_encode($productUpdateData));
 
-
             $response = $shopifyAuthService->updateProduct($productUpdateData);
             Log::info('Product Update : ' . json_encode($response));
 
             if (isset($response['data']) && empty($response['data']['userErrors'])) {
 
                 $proDetail->update([
-                    'upload_status' => 'success'
+                    'upload_status' => 'success',
+                    'updated_at' => now()
                 ]);
 
                 return true;
@@ -139,7 +139,7 @@ class SubmitShopifyProductsJob implements ShouldQueue
                 return false;
             }
 
-        }else {
+        } else {
 
             $sku = StoreTypeListing::generateUniqueAlphabeticSku($productData->product_sku, 6);
 
