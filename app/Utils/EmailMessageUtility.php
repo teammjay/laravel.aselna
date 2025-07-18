@@ -88,7 +88,7 @@ class EmailMessageUtility
 
 
 
-    public function fetchEmails($store_type, $filter_date, $folderName = 'INBOX', $limit = 100)
+    public function fetchEmails($store_type, $filter_date, $folderName = 'INBOX', $limit = 50)
     {
         try {
             $this->client->connect();
@@ -177,6 +177,7 @@ class EmailMessageUtility
                     'parsedData' => $parsedData,
                     'parts' => $parts,
                     'body' => $body,
+                    'client_id' => null
                 ];
 
                 /*echo '<pre>';
