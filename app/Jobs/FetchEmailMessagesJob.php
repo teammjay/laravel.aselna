@@ -46,7 +46,7 @@ class FetchEmailMessagesJob implements ShouldQueue
             if (count($stores ?? []) > 0) {
                 foreach ($stores as $store) {
                     Log::info('store:'.$store->name);
-                    $storeMessageAccount = StoreMessageAccount::with('incomingAccount','outgoingAccount')->where('store_id', $store->id)->where('active', 1)->get();
+                    $storeMessageAccount = StoreMessageAccount::with('incomingAccount','outgoingAccount')->where('store_id', $store->id)->where('active', 1)->where('api_account', 0)->get();
                     $store_type = $store->storeType->name;
                     $store_id = $store->id;
                     if(count($storeMessageAccount ?? []) > 0){
