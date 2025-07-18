@@ -76,7 +76,6 @@ class FetchEmailMessagesJob implements ShouldQueue
                                     if(count($receiveEmails ?? []) > 0){
                                         foreach($receiveEmails as $email){
 
-                                            Log::info('Emails :'.json_encode($email));
 
                                             $last_filter_date = $email['date'];
                                             /* create ticket*/
@@ -208,7 +207,6 @@ class FetchEmailMessagesJob implements ShouldQueue
                                                 $hd_ticket = Message::create($ticketData);
                                             }
 
-                                            Log::info('Ticket Detail :'.json_encode($hd_ticket));
 
                                             if(isset($hd_ticket->id)) {
                                                 $hdMessageData = [
@@ -228,8 +226,6 @@ class FetchEmailMessagesJob implements ShouldQueue
                                                     'reply_to_name' => $email['reply_to_name'],
                                                     'reply_to_email' => $email['reply_to'],
                                                 ];
-
-                                                Log::info('Ticket Message Detail :'.json_encode($hdMessageData));
 
                                                 $hd_message = HDMessage::updateOrCreate([
                                                     'ticket_id' => $hd_ticket->id,
