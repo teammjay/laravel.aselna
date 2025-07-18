@@ -296,6 +296,12 @@ class JobScheduler extends Seeder
                 'name' => 'Fetch Shopify Products',
                 'description' => 'Fetch Shopify products',
                 'class_name' => 'App\Jobs\FetchShopifyProductsJob',
+            ],
+            [
+                //HtTicketStaticDataSyncJob
+                'name' => 'HD Ticket Static Data Sync',
+                'description' => 'Sync HD ticket static data',
+                'class_name' => 'App\Jobs\HtTicketStaticDataSyncJob',
             ]
         ];
 

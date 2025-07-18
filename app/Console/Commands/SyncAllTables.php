@@ -18,6 +18,7 @@ use App\Jobs\DeviceTypesSyncJob;
 use App\Jobs\FeedGenerationJob;
 use App\Jobs\FetchAmazonOrdersJob;
 use App\Jobs\FetchEbayOrders;
+use App\Jobs\FetchEmailMessagesJob;
 use App\Jobs\FetchShopifyProductsJob;
 use App\Jobs\FetchWalmartOrdersJob;
 use App\Jobs\FileSystemSyncJob;
@@ -153,7 +154,7 @@ class SyncAllTables extends Command
         //synccategorytospecification::dispatch();
 //        SystemPrinterSyncJob::dispatch();
 
-        FetchEbayOrders::dispatch();
+        FetchEmailMessagesJob::dispatch();
 
 //        $transactionIds = [
 ////            '9400150105798006163885',
