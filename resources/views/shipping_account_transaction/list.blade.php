@@ -208,6 +208,10 @@
                 if ($(e.target).is('input, textarea, select, checkbox, a, i, button, img')) {
                     return;
                 }
+
+                if (ele.find('input[name="canceled"]').is(':checked')) {
+                    return;
+                }
                 //$('#account-list tr').removeClass('active bg-blue');
                 if(!ele.hasClass('active bg-blue')){
                     ele.addClass('active bg-blue');
@@ -220,30 +224,46 @@
             });
 
             $(document).on('click','#cancleLabel',function () {
-                var transaction_id  = $('input[name="transaction_id[]"]:checked').val();
-                var id  = $('input[name="transaction_id[]"]:checked').data('id');
-                alert(transaction_id);
-                $.ajax({
-                    url: "{{ route('shipping_account_transactions.cancellabel') }}",
-                    type: 'POST',
-                    data: {
-                        id: id,
-                        transaction_id: transaction_id,
-                        account_id: '{{ $account_id }}',
-                        "_token": '{{ csrf_token() }}'
-                    },
-                    success: function (response) {
-                        // If success, remove the user row from the table
-                        alert(response.message);
-                        if (response.success) {
-                            location.reload();
-                        }
-                    },
-                    error: function (xhr) {
-                        // Handle error response
-                        alert('Error: ' + xhr.responseJSON.error);
-                    }
+                var transaction_ids  = [];
+                $('input[name="transaction_id[]"]:checked').each(function (e) {
+                    transaction_ids.push($(this).val());
                 });
+                var ids  = [];
+                $('input[name="transaction_id[]"]:checked').each(function (e) {
+                    ids.push($(this).data('id'));
+                });
+
+                if (confirm("Are you sure you want to void this label?")) {
+
+                    $.ajax({
+                        url: "{{ route('shipping_account_transactions.cancellabel') }}",
+                        type: 'POST',
+                        data: {
+                            ids: ids,
+                            transaction_ids: transaction_ids,
+                            account_id: '{{ $account_id }}',
+                            "_token": '{{ csrf_token() }}'
+                        },
+                        success: function (response) {
+                            // If success, remove the user row from the table
+
+                            if (response.success) {
+                                if(response.successCnt > 0 && response.failCnt == 0){
+                                    alert('All labels voided successfully.');
+                                }else if(response.successCnt == 0 && response.failCnt > 0){
+                                    alert('All labels voided failed.' + ' Message : '+response.message);
+                                }else if(response.successCnt > 0 && response.failCnt > 0){
+                                    alert(response.successCnt + ' labels voided and '+ response.successCnt + ' failed. Message:'+ response.message);
+                                }
+                                location.reload();
+                            }
+                        },
+                        error: function (xhr) {
+                            // Handle error response
+                            alert('Error: ' + xhr.responseJSON.error);
+                        }
+                    });
+                }
             });
 
 
@@ -265,7 +285,7 @@
                         });
                     }
                 },
-                "order": [[ 3, "desc" ]],
+                "order": [[ 8, "desc" ]],
                 columns: [
                     {data: 'shipping_account', name: 'shipping_account',orderable: false, searchable: false},
                     {data: 'tracking_number', name: 'tracking_number'},

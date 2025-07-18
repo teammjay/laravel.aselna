@@ -24,6 +24,18 @@
             </div>
         @endif
 
+        @if($order_operation->operation_type == \App\Constants\OrderOperationType::OrderRefund)
+            <div class="card">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-1"><i class="fa fa-fw fa-house-person-return" style="font-size: 18px;"></i> </div>
+                        <div class="col-md-10">Order Refunded On {{ date('D, d M Y',strtotime($order_operation->created_at)) }} </div>
+
+                    </div>
+                </div>
+            </div>
+        @endif
+
         @if(isset($order_operation->rma_number) && ($order_operation->rma_number != '' || $order_operation->rma_number != null))
             <div class="card">
                 <div class="card-body">

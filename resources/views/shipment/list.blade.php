@@ -79,7 +79,7 @@
                 </div>
                 <div class="card-body">
                     <div class="form-group">
-                        <input type="checkbox" name="ship_options" value="same_address"> <span>Combine Same Address</span>
+                        <input type="checkbox" name="ship_options" id="same_address" value="same_address" checked> <span>Combine Same Address</span>
                     </div>
                     <div class="form-group">
                         <input type="checkbox" name="ship_options" value="add_insurance"> <span>Add Insurance</span>
@@ -515,6 +515,10 @@
             updateRecord('all');
         });
 
+        $(document).on('click','#same_address',function () {
+            loadDatatables()
+        });
+
         getShippingCarrierService($('#carrier_id'));
 
         $(document).on('change','#carrier_id',function () {
@@ -948,6 +952,57 @@
             });
         }
 
+        $(document).on('click','#updateShipment',function () {
+
+            const form = document.querySelector("#frmShippingDetail");
+            let formData = new FormData(form);
+
+            const carrier_package = formData.get("carrier_package");
+            const label_generation = formData.get("label_generation");
+
+            if (!carrier_package || carrier_package.trim() === "") {
+                alert("Carrier package is required.");
+                return;
+            }
+
+
+            $.ajax({
+                url: "<?php echo e(route('shipment.updateshipment')); ?>",
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                headers: {
+                    'X-CSRF-TOKEN': '<?php echo e(csrf_token()); ?>',
+                },
+                success: function (response) {
+                    // If success, remove the user row from the table
+                    if (response.success) {
+                        alert('Shipped Updated successfully!!');
+                        location.reload();
+                    }
+                    else {
+                        alert(response.message);
+                    }
+                },
+                error: function (xhr) {
+                    // Handle error response
+                    if (xhr.status === 422) {
+                        let errors = xhr.responseJSON.errors;
+                        $.each(errors, function (key, messages) {
+                            alert(key + ': ' + messages[0]);
+                        });
+                    }
+                    /*const response = xhr.responseJSON;
+                    if ( response.errors) {
+                        alert(response.message);
+                    } else {
+                        alert('Error: ' + response.message);
+                    }*/
+                }
+            });
+        });
+
         $(document).on('click', '#select_deselect_shipment', function() {
 
             var ele = $(this);
@@ -1102,7 +1157,8 @@
             url: "{{ route('shipment.filter') }}",
             type: 'POST',
             data: {
-                'store_id':$('#listing_store').val()
+                'store_id':$('#listing_store').val(),
+                'combine_address' : $('#same_address').is(':checked'),
             },
             headers: {
                 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
@@ -1121,7 +1177,7 @@
                             "searching": true,
                             "paging": false,
                             "info": false,
-                            "order": [[6, "desc"]],
+                            "order": [[7, "desc"]],
                             columnDefs: [
                                 {
                                     targets: [0,1],

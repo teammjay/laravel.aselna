@@ -33,7 +33,7 @@ class FetchShopifyProductsJob implements ShouldQueue
 
         if (count($stores ?? []) > 0) {
             foreach ($stores as $store) {
-                if (env('APP_ENV') === 'local' && $store->name != 'AccessoryWiz') {
+                if (env('APP_ENV') === 'local' && $store->name != 'GetAccessory') {
                     continue;
                 }
 
@@ -83,11 +83,13 @@ class FetchShopifyProductsJob implements ShouldQueue
         if (isset($products)) {
             foreach ($products as $product) {
                 $sku = '';
+                $variantId = '';
                 $variants = $product['variants']['edges'];
                 if ($variants) {
                     foreach ($variants as $edge) {
                         $variant = $edge['node'];
                         $sku = $variant['sku'];
+                        $variantId = $variant['id'];
                     }
                 }
 
@@ -96,7 +98,7 @@ class FetchShopifyProductsJob implements ShouldQueue
                     $product_code = $skuPart[0];
                     if ($product_code) {
                         Log::info('Processing Product Code: ' . $product_code . ' for Store: ' . $store->name);
-                        $productDetail = Catalog::whereLike('product_sku', $product_code)->first();
+                        $productDetail = Catalog::whereLike('product_sku', $product_code)->where('product_status','!=','discontinued')->first();
                         if (!$productDetail) {
                             Log::warning('Product not found for SKU: ' . $product_code . ' in Store: ' . $store->name);
                             continue; // Skip to the next product if not found
@@ -111,6 +113,8 @@ class FetchShopifyProductsJob implements ShouldQueue
                             'product_code' => $product_code,
                             'sku' => $sku,
                             'store_id' => $store->id,
+                            'marketplace_product_id' => $product['id'],
+                            'marketplace_variant_id' => $variantId,
                             'upload_status' => 'success',
                             'upload_attempts' => 1,
                         ]);

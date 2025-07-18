@@ -13,6 +13,7 @@
                                 </div>
                                 <div class="col-md-8">
                                     <input type="hidden" name="id" value="{{ $shipmentDetail->id }}">
+                                    <input type="hidden" name="o_id" value="{{ $shipmentDetail->order_id }}">
                                     <input type="text" class="form-control" name="order_id" id="order_id"
                                            value="{{ $shipmentDetail->order->order_id }}" readonly="">
                                 </div>
@@ -86,6 +87,7 @@
                                 <th>Image</th>
                                 <th>Sku</th>
                                 <th>Quantity</th>
+                                <th>Reason</th>
                                 <th>Sync Status</th>
                                 <th>Sync Message</th>
                                 <th>Merchant Feedback</th>
@@ -100,6 +102,7 @@
 
                             @if(count($shipmentDetail->operationItem ?? []) > 0)
                                 @foreach($shipmentDetail->operationItem as $oitem)
+                                    <input type="hidden" name="item_id[{{ $oitem->orderItem->id }}]" value="{{ $oitem->orderItem->id }}">
                                     <tr>
                                         <td>
                                             @if($oitem->orderItem->product->image != '')
@@ -113,7 +116,10 @@
                                             @endif
                                         </td>
                                         <td>{{ $oitem->orderItem->sku }}</td>
-                                        <td><input type="text" class="form-control width-50" name="quantity[{{ $oitem->id }}]" value="{{ $oitem->orderItem->quantity }}"></td>
+                                        <td><input type="text" class="form-control width-50" name="quantity[{{ $oitem->orderItem->id }}]" value="{{ $oitem->orderItem->quantity }}"></td>
+                                        <td>
+
+                                        </td>
                                         <td>{{ \App\Constants\OrderSyncStatus::getOrderSyncStatusName($oitem->sync_status) }}</td>
                                         <td>{{ $oitem->sync_message }}</td>
                                         <td>
@@ -121,11 +127,11 @@
 
                                             </select>
                                         </td>
-                                        <td><input type="text" class="form-control width-50" name="refund_quantity[{{ $oitem->id }}]" value="{{ $oitem->orderItem->quantity }}"></td>
-                                        <td><input type="text" class="form-control width-50" name="refund_price[{{ $oitem->id }}]" value="{{ $oitem->orderItem->item_price }}"></td>
-                                        <td><input type="text" class="form-control width-50" name="refund_shipping_price[{{ $oitem->id }}]" value="{{ ($oitem->orderItem->refund_shipping_price != '') ? $oitem->orderItem->refund_shipping_price : 0 }}"></td>
-                                        <td><input type="text" class="form-control width-50" name="refund_tax_price[{{ $oitem->id }}]" value="{{ ($oitem->orderItem->refund_tax_price != '') ? $oitem->orderItem->refund_tax_price : 0 }}"></td>
-                                        <td><input type="text" class="form-control width-50" name="refund_shipping_tax[{{ $oitem->id }}]" value="{{ ($oitem->orderItem->refund_shipping_tax != '') ? $oitem->orderItem->refund_shipping_tax : 0 }}"></td>
+                                        <td><input type="text" class="form-control width-50" name="refund_quantity[{{ $oitem->orderItem->id }}]" value="{{ $oitem->orderItem->quantity }}"></td>
+                                        <td><input type="text" class="form-control width-50" name="refund_price[{{ $oitem->orderItem->id }}]" value="{{ $oitem->orderItem->item_price }}"></td>
+                                        <td><input type="text" class="form-control width-50" name="refund_shipping_price[{{ $oitem->orderItem->id }}]" value="{{ ($oitem->orderItem->refund_shipping_price != '') ? $oitem->orderItem->refund_shipping_price : 0 }}"></td>
+                                        <td><input type="text" class="form-control width-50" name="refund_tax_price[{{ $oitem->orderItem->id }}]" value="{{ ($oitem->orderItem->refund_tax_price != '') ? $oitem->orderItem->refund_tax_price : 0 }}"></td>
+                                        <td><input type="text" class="form-control width-50" name="refund_shipping_tax[{{ $oitem->orderItem->id }}]" value="{{ ($oitem->orderItem->refund_shipping_tax != '') ? $oitem->orderItem->refund_shipping_tax : 0 }}"></td>
                                     </tr>
                                 @endforeach
                             @endif

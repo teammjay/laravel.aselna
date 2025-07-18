@@ -51,4 +51,9 @@ class Order extends Model
         return $this->hasOne(OrderOperation::class,'order_id','id');
     }
 
+    public function orderOperations()
+    {
+        return $this->hasMany(OrderOperation::class,'order_id','id');
+    }
+
 }

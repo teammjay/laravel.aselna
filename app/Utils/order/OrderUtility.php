@@ -272,6 +272,11 @@ class OrderUtility
                         }
                         $order->save();
                         $order_operation_detail->save();
+                    }else if ($lineStatus['status'] === 'Cancelled') {
+                        $order->order_status = OrderStatus::Canceled;
+                        $order_operation_detail->status = OrderOperationStatus::Canceled;
+                        $order->save();
+                        $order_operation_detail->save();
                     }
                     Log::info("Order Line Cancelled: " . json_encode($item));
                 }
@@ -319,7 +324,7 @@ class OrderUtility
                 'address_combined' => $addressLine1 . ' ' . $addressLine2,
             ];
 
-            CustomerAddress::updateOrCreate([
+            $customer_address = CustomerAddress::updateOrCreate([
                 'customer_id' => $customer_detail->id,
                 'address_combined' => $addressLine1 . ' ' . $addressLine2,
             ], $customer_address_data);
@@ -350,7 +355,7 @@ class OrderUtility
                 'address_line_2' => $addressLine2,
                 'city' => $shipTo['contactAddress']['city'] ?? '',
                 'state' => $shipTo['contactAddress']['stateOrProvince'] ?? '',
-                'zip' => $shipTo['contactAddress']['postalCode'] ?? '',
+                'zip' => explode('-',$shipTo['contactAddress']['postalCode'] ?? '')[0],
                 'country_code' => $shipTo['contactAddress']['countryCode'] ?? '',
                 'address_combined' => $addressLine1 . ' ' . $addressLine2,
                 'phone_no' => $shipTo['primaryPhone']['phoneNumber'] ?? '',

@@ -302,7 +302,12 @@ class JobScheduler extends Seeder
                 'name' => 'HD Ticket Static Data Sync',
                 'description' => 'Sync HD ticket static data',
                 'class_name' => 'App\Jobs\HtTicketStaticDataSyncJob',
-            ]
+            ],
+            [
+                'name' => 'Fetch Email Message Sync Job',
+                'description' => 'Fetch Email Message',
+                'class_name' => 'App\Jobs\FetchEmailMessagesJob',
+            ],
         ];
 
         foreach ($jobs as $job) {

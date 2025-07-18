@@ -12,6 +12,7 @@ use App\Utils\shipment\ShipmentDocumentsCreator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Log;
 
 class AccountTransactionController extends Controller
 {
@@ -65,6 +66,8 @@ class AccountTransactionController extends Controller
         $start = $request->input('start', 0);
         $page = ($start / $length) + 1;
 
+        //echo $page;die;
+        $totalRecordwithFilter = $query->count();
         $query->paginate($length, ['*'], 'page', $page);
 
         $transactions = $query->distinct()->get();
@@ -74,7 +77,7 @@ class AccountTransactionController extends Controller
         $data = [];
         foreach ($transactions as $transaction) {
             $data[] = [
-                'shipping_account' => $transaction->shippingAccount->name,
+                'shipping_account' => $transaction->shippingAccount->name.'<input type="checkbox" name="transaction_id[]" style="visibility: hidden;" data-id="'.$transaction->id .'" value="'.$transaction->tracking_number.'">',
                 'tracking_number' => $transaction->tracking_number,
                 'transaction_date' => $transaction->transaction_date,
                 'transaction_id' => $transaction->transaction_id,
@@ -82,7 +85,7 @@ class AccountTransactionController extends Controller
                 'address' => $transaction->address,
                 'canceled' => $transaction->canceled,
                 'canceled_date' => $transaction->canceled_date,
-                'created_at' => $transaction->created_at,
+                'created_at' => date('Y-m-d H:i:s',strtotime($transaction->created_at)),
             ];
         }
 
@@ -90,69 +93,73 @@ class AccountTransactionController extends Controller
         return response()->json([
 //            'html' => view('shipping_account_transaction.search_list', compact('transactions'))->render(),
 //            'totalRecords' => $transactions->count()
-            'draw' => $request->input('draw'),
+            'draw' => intval($request->input('draw')),
             'recordsTotal' => $totalRecords,
-            'recordsFiltered' => $totalRecords,
+            'recordsFiltered' => $totalRecordwithFilter,
             'data' => $data,
         ]);
     }
 
     public function cancelTransaction(Request $request)
     {
-        $transaction_id = $request->input('transaction_id');
-        $id = $request->input('id');
+        $transaction_ids = $request->input('transaction_ids');
+        $ids = $request->input('ids');
         $account_id = $request->input('account_id');
-        if ($transaction_id) {
-
+        if (!empty($transaction_ids)) {
             $carrierAccount = ShippingSettingCarrierAccount::with('shippingAccount', 'shippingAccount.shippingSolution')->where('shipping_account_id', $account_id)->first();
             $shippingAccount = $carrierAccount->shippingAccount;
+            $flag = false;
+            $successCnt = 0;
+            $failCnt = 0;
+            $message = 'Transaction voided successfully!';
+            foreach($transaction_ids as $key=>$trans){
+                $id = $ids[$key];
+                $transactionDetail = [
+                    'accountId' => $shippingAccount->account_id,
+                    'passPhrase' => $shippingAccount->pass_phrase,
+                    'requesterId' => $shippingAccount->requester_id,
+                    'requestId' => $id,
+                    'pic_no' => $trans,
+                ];
 
-            $transactionDetail = [
-                'accountId' => $shippingAccount->account_id,
-                'passPhrase' => $shippingAccount->pass_phrase,
-                'requesterId' => $shippingAccount->requester_id,
-                'pic_no' => $transaction_id,
-            ];
+                $endiciaClient = new EndicialabelService();
+                $response = $endiciaClient->cancelLabel($transactionDetail);
 
-            $endiciaClient = new EndicialabelService();
-            $response = $endiciaClient->cancelLabel($transactionDetail);
+                Log::info('Endicia Label Refund Response:'. json_encode($response));
 
-            if (!empty($response)) {
-                $flag = false;
-                foreach ($response as $trans) {
-                    if (isset($trans['status']) && $trans['status'] != '') {
+                if (!empty($response)) {
+
+                    if (isset($response['status']) && $response['status'] != '') {
                         $transaction = AccountTransaction::findOrFail($id);
-                        switch ($trans['status']) {
+                        switch ($response['status']) {
                             case 'Approved':
                                 $transaction->update(['canceled' => 1, 'canceled_date' => date('Y-m-d H:i:s')]);
                                 $flag = true;
+                                $message = (isset($response['message'])) ? $response['message'] : '';
+                                $successCnt++;
                                 break;
                             case 'DeniedInvalid':
                                 $flag = false;
+                                $message = (isset($response['message'])) ? $response['message'] : '';
+                                $failCnt++;
                                 break;
                         }
                     }
                 }
-
-                if ($flag) {
-                    return response()->json([
-                        'success' => true,
-                        'message' => 'Transaction voided successfully!'
-                    ]);
-                } else {
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'Transaction Denied!'
-                    ]);
-                }
-
             }
 
             return response()->json([
-                'success' => false,
-                'message' => 'Something went wrong with API. Please try again later.'
+                'success' => true,
+                'failCnt' => $failCnt,
+                'successCnt' => $successCnt,
+                'message' => $message
             ]);
+
         }
+        return response()->json([
+            'success' => false,
+            'message' => 'Something went wrong with API. Please try again later.'
+        ]);
     }
 
     public function rePrintlabel(Request $request)

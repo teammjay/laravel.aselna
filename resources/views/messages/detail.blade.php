@@ -136,14 +136,15 @@
                                                 </div>
                                             </div>
                                         </div>
-                                        <div class="col-md-2">
+                                        <div class="col-md-8">
                                             <input type="file" class="btn btn-default" name="attach_file" id="attach_file">
                                             <input type="hidden" id="image_url">
+                                            <input type="hidden" id="image_storage_path">
                                             <div class="btn-group lableImageGroup hide" role="group">
-                                                <button id="btnGroupDrop2" type="button" class="btn btn-primary lable-image dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"></button>
+                                                <button id="btnGroupDrop2" type="button" class="btn btn-default lable-image dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"></button>
                                                 <div class="dropdown-menu" aria-labelledby="btnGroupDrop2">
-                                                    <a class="dropdown-item download_image" href="javascript:void(0);" data-close="1">Download</a>
-                                                    <a class="dropdown-item delete_images" href="javascript:void(0);" data-close="0">Delete</a>
+                                                    <a class="dropdown-item download_image" href="javascript:void(0);">Download</a>
+                                                    <a class="dropdown-item delete_images" href="javascript:void(0);">Delete</a>
                                                 </div>
                                             </div>
                                         </div>
@@ -204,12 +205,14 @@
 
                                 @endphp
 
-                                <button type="button" class="btn btn-default {{ $displayReturned }}" name="rma" id="rma">RMA</button>
-                                <button type="button" class="btn btn-default {{ $displayReturnLabel }}" name="return_label" id="return_label">Return Label</button>
-                                <button type="button" class="btn btn-default {{ $displayReplace }}" name="replacement" id="replacement">Replacement</button>
-                                <button type="button" class="btn btn-default {{ $displayRefund }}" name="refund" id="refund">Refund</button>
-                                <button type="button" class="btn btn-default {{ $displayShipped }}" name="ship_order" id="ship_order">Ship Order</button>
-                                <button type="button" class="btn btn-default {{ $displayCanceled }}" name="cancel_order" id="cancel_order">Cancel Order</button>
+                                @if(strtolower($store_type_name) == 'accessorywiz')
+                                    <button type="button" class="btn btn-default {{ $displayReturned }}" name="rma" id="rma">RMA</button>
+                                    <button type="button" class="btn btn-default {{ $displayReturnLabel }}" name="return_label" id="return_label">Return Label</button>
+                                    <button type="button" class="btn btn-default {{ $displayReplace }}" name="replacement" id="replacement">Replacement</button>
+                                    <button type="button" class="btn btn-default {{ $displayRefund }}" name="refund" id="refund">Refund</button>
+                                    <button type="button" class="btn btn-default {{ $displayShipped }}" name="ship_order" id="ship_order">Ship Order</button>
+                                    <button type="button" class="btn btn-default {{ $displayCanceled }}" name="cancel_order" id="cancel_order">Cancel Order</button>
+                                @endif
                             </div>
                         </div>
                         <div class="col-md-4">
@@ -371,6 +374,7 @@
                         template_id: template_id,
                         customer_name: customer_name,
                         store_name: store_name,
+                        ticket_id: ticket_id,
                     },
                     headers: {
                         'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
@@ -380,6 +384,12 @@
                         if(data.success){
 
                             $('#message_to_send').html(data.templateCode);
+                            if(data.image_name){
+                                $('.lableImageGroup').removeClass('hide');
+                                $('#image_url').val(data.image_url);
+                                $('#image_storage_path').val(data.imagesPath);
+                                $('.lable-image').html(data.image_name);
+                            }
                         }
                     },
                     error: function (xhr) {
@@ -469,6 +479,13 @@
                     alert('Please add text to send message');
                     return false;
                 }
+
+                var labelimage = '';
+                var imagepath = '';
+                if($('#image_url').val() != ''){
+                    var labelimage = $('#image_url').val();
+                    var imagepath = $('#image_storage_path').val();
+                }
                 $.ajax({
                     type: "POST",
                     url: "{{ route('message.sendmessagetemplate') }}",
@@ -478,6 +495,8 @@
                         customer_id: customer_id,
                         ticket_id: ticket_id,
                         ticket_status: ticket_status,
+                        labelimage: labelimage,
+                        imagepath: imagepath,
                     },
                     headers: {
                         'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
@@ -575,6 +594,13 @@
                             }else if(data.templateCode != ''){
                                 $('#template_id').val(data.template_id);
                                 $('#message_to_send').html(data.templateCode);
+                            }
+
+                            if(data.image_url){
+                                $('.lableImageGroup').removeClass('hide');
+                                $('#image_url').val(data.image_url);
+                                $('#image_storage_path').val(data.imagesPath);
+                                $('.lable-image').html(data.image_name);
                             }
 
                             //$('#message_to_send').html(data.templateCode);
@@ -730,6 +756,7 @@
                             if(response.image_url){
                                 $('.lableImageGroup').removeClass('hide');
                                 $('#image_url').val(response.image_url);
+                                $('#image_storage_path').val(response.imagesPath);
                                 $('.lable-image').html(response.image_name);
                             }
 
@@ -756,7 +783,22 @@
                         }*/
                     }
                 });
+
             });
+
+            $(document).on('click','.download_image',function () {
+                let imgUrl = $('#image_url').val();
+                window.open(imgUrl, '_blank');
+            });
+
+            $(document).on('click','.delete_images',function () {
+                $('#image_url').val('');
+                $('#image_storage_path').val('');
+                $('.lableImageGroup').addClass('hide');
+                $('.lable-image').html('');
+            });
+
+
 
             $(document).on('click','#replacement',function () {
                 var order_id = $('#order_id').val();
@@ -969,6 +1011,50 @@
                 });
             });
 
+            $(document).on('click','#refund_order',function () {
+
+                const form = document.querySelector("#frmRefundOrder");
+                let formData = new FormData(form);
+
+                var shipping_cost = formData.get('return_charge');
+                if(shipping_cost != null && shipping_cost > 0){
+                    if($('#accept_return_charge').is(':checked')){
+                        if($('#return_charge_feedback').val() == ''){
+                            alert('Please specify the reason for return charge ('+shipping_cost+') rejection.');
+                            return false;
+                        }
+                    }
+                }
+                $.ajax({
+                    url: "{{ route('message.refundorder') }}",
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    headers: {
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    },
+                    success: function (response) {
+                        // If success, remove the user row from the table
+                        alert(response.message);
+                        if (response.success) {
+
+                            loadOrderDetail();
+
+                            if(response.template_id != ''){
+                                $('#template_id').val(response.template_id);
+                                $('#message_to_send').html(response.template_code);
+                            }
+                            //location.reload();
+                        }
+                    },
+                    error: function (xhr) {
+                        // Handle error response
+                        alert('Error: ' + xhr.responseJSON.error);
+                    }
+                });
+            });
+
             $('#attach_file').on('change', function() {
                 let formData = new FormData();
                 formData.append('attach_file', this.files[0]);
@@ -985,6 +1071,12 @@
                     },
                     success: function(response) {
                         alert(response.success);
+                        if(response.image_url){
+                            $('.lableImageGroup').removeClass('hide');
+                            $('#image_url').val(response.image_url);
+                            $('#image_storage_path').val(response.imagesPath);
+                            $('.lable-image').html(response.image_name);
+                        }
                     },
                     error: function(xhr) {
                         alert('Upload failed');

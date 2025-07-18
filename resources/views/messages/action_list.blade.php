@@ -37,6 +37,9 @@
             background-color: #fff !important;
             font-weight: 600;
         }
+        tr.bg-blue {
+            background-color: #007bff!important;
+        }
     </style>
 @stop
 
@@ -405,7 +408,7 @@
            $('.card-body').toggle();
         });
 
-        $(document).on('click','#message-list tr',function () {
+        $(document).on('dblclick','#message-list tr',function () {
            let ele = $(this);
            $('#message-list tr').removeClass('bg-blue');
            $('input[name="message_id[]"]').prop('checked',false);

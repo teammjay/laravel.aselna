@@ -9,6 +9,7 @@ use App\Models\CustomerAddress;
 use App\Models\LogisticCenter;
 use App\Models\Order;
 use App\Models\OrderOperation;
+use App\Models\OrderOperationItem;
 use App\Models\OrderOperationReason;
 use App\Models\ShippingCarrier;
 use App\Models\ShippingCarrierPackage;
@@ -47,7 +48,11 @@ class ShipmentsController extends Controller
         $columnName = $request['columns'][$columnIndex]['data'];
         $columnSortOrder = $request['order'][0]['dir'];*/
 
-        $this->mergeSameAddressOrders($request);
+        if ($request->input('combine_address', false) === 'true') {
+            $this->mergeSameAddressOrders($request);
+        } else {
+            $this->unmergeSameAddressOrders($request);
+        }
 
         $query = OrderOperation::with([
             'order:id,order_id,order_date,buyer_first_name,buyer_last_name',
@@ -290,6 +295,7 @@ class ShipmentsController extends Controller
 
         $package_id = '';
         $product_total_weight = 0;
+        $product_weight_unit = 0;
         //print_r($shipmentDetail->operationItem);
         if (count($shipmentDetail->operationItem ?? []) > 0) {
             $product_weight = 0;
@@ -493,7 +499,7 @@ class ShipmentsController extends Controller
         try {
             if ($selected_shipment_id) {
                 $orderOperation = OrderOperation::with('order', 'store', 'store.storeType')->where('id', $selected_shipment_id)->first();
-                $response = OrderOperationUtility::cancelOrder($orderOperation, $reason);
+                $response = OrderOperationUtility::cancelOrder($orderOperation, strtoupper($reason));
 
                 if ($response) {
                     $orderOperation->update(['status' => OrderOperationStatus::Canceled]);
@@ -534,7 +540,7 @@ class ShipmentsController extends Controller
         if ($request->input('process_id')) {
             $process_id = $request->input('process_id');
             $order_id = $request->input('order_id');
-            Log::info("Starting Shipment of OrderID : ".$order_id);
+            Log::info("Starting Shipment of OrderID : " . $order_id);
 
             // Process a single order operation
             $operation = OrderOperation::with('order', 'operationItem', 'store', 'store.storeType')
@@ -679,7 +685,7 @@ class ShipmentsController extends Controller
         $ship_date = $request->input('ship_date');
         $ship_from = $request->input('shipment_from');
         $insurance_value = $request->input('insurance_value');
-        $weight_value = $request->input('weight_value');
+        $weight_value = $request->input('weight');
         $weight_type = $request->input('weight_type');
 
         if ($order_operation_id) {
@@ -715,7 +721,7 @@ class ShipmentsController extends Controller
         $addressIds = Order::select('shipping_address_id')
             ->groupBy('shipping_address_id')
             ->havingRaw('COUNT(*) > 1')
-            ->whereNotIn('order_status',[
+            ->whereNotIn('order_status', [
                 OrderStatus::Canceled,
                 OrderStatus::Shipped,
                 OrderStatus::Refund,
@@ -723,7 +729,7 @@ class ShipmentsController extends Controller
                 OrderStatus::PartiallyShipped,
                 OrderStatus::SynchronizatonFailed
             ])
-            ->whereIn('id',function ($query) {
+            ->whereIn('id', function ($query) {
                 $query->select('order_id')
                     ->from('order_operation')
                     ->where('is_merged', false)
@@ -738,7 +744,7 @@ class ShipmentsController extends Controller
                     continue; // Skip null addresses
                 }
                 $sameAddressOrders[$addressId] = Order::where('shipping_address_id', $addressId)
-                    ->whereIn('id',function ($query) {
+                    ->whereIn('id', function ($query) {
                         $query->select('order_id')
                             ->from('order_operation')
                             ->where('is_merged', false)
@@ -781,6 +787,39 @@ class ShipmentsController extends Controller
                 $mainShipment->insurance_value = $totalInsurance;
                 $mainShipment->save();
             }
+        }
+    }
+
+    private function unmergeSameAddressOrders(Request $request)
+    {
+        Log::info("Coming HEre");
+        $mergedOperations = OrderOperation::where('is_merged', true)
+            ->where('status','0')
+            ->whereNotNull('merged_with')->get();
+
+        foreach ($mergedOperations as $mergedOperation) {
+            $mainOperation = OrderOperation::where('id', $mergedOperation->merged_with)->first();
+
+            foreach ($mergedOperation->operationItem as $operationItem) {
+                OrderOperationItem::where('order_item_id', $operationItem->order_item_id)
+                    ->where('order_operation_id',$mainOperation->id)->delete();
+            }
+            $mergedOperation->update([
+                'is_merged' => false,
+                'merged_with' => null,
+            ]);
+
+            $mergedOrderIds = json_decode($mainOperation->orderIds, true) ?? [];
+            // remove the merged orderId
+            $mergedOrderIds = array_filter($mergedOrderIds, function ($id) use ($mergedOperation) {
+                return $id != $mergedOperation->order_id;
+            });
+
+            $mainOperation->orderIds = json_encode($mergedOrderIds);
+            $mainOperation->save();
+
+            Log::info('Merging Orders : ' . json_encode($mergedOrderIds));
+
         }
     }
 }
