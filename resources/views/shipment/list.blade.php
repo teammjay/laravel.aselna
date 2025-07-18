@@ -79,7 +79,7 @@
                 </div>
                 <div class="card-body">
                     <div class="form-group">
-                        <input type="checkbox" name="ship_options" value="same_address"> <span>Combine Same Address</span>
+                        <input type="checkbox" name="ship_options" id="same_address" value="same_address" checked> <span>Combine Same Address</span>
                     </div>
                     <div class="form-group">
                         <input type="checkbox" name="ship_options" value="add_insurance"> <span>Add Insurance</span>
@@ -513,6 +513,10 @@
 
         $(document).on('click','#update_all',function () {
             updateRecord('all');
+        });
+
+        $(document).on('click','#same_address',function () {
+            loadDatatables()
         });
 
         getShippingCarrierService($('#carrier_id'));
@@ -1153,7 +1157,8 @@
             url: "{{ route('shipment.filter') }}",
             type: 'POST',
             data: {
-                'store_id':$('#listing_store').val()
+                'store_id':$('#listing_store').val(),
+                'combine_address' : $('#same_address').is(':checked'),
             },
             headers: {
                 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')

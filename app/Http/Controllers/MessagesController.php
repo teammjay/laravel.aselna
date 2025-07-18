@@ -310,6 +310,8 @@ class MessagesController extends Controller
                     ];
                 }
 
+
+
                 if (count($orderOperations ?? []) > 0) {
                     $returnOperation = 0;
                     $returnOperationCnt = 0;
@@ -509,8 +511,7 @@ class MessagesController extends Controller
         $rma_number = $request->input('rma_number');
         $operation_id = $request->input('operation_id');
         $ticket_id = $request->input('ticket_id');
-        if($template_id || $rma_number != ''){
-
+        if($template_id || (isset($rma_number) && $rma_number != '')){
             $returnAddress = $imageName = $imageUrl = $imagePath = "";
 
             if(isset($operation_id) && $operation_id != ''){
@@ -521,10 +522,12 @@ class MessagesController extends Controller
 
                 if($orderOperation->operation_type == OrderOperationType::OrderReturn && $orderOperation->tracking_number){
                     $templateDetail = HdMessageTemplate::getOrderOperationTemplate(OrderOperationType::OrderReturn, 0, 1);
-                    $attachment = HdMessageAttachment::with('imageObj')->where('message_id',$ticket_id)->first();
-                    $imageObj = $attachment->imageObj;
-                    $imageName = $imageObj->name;
-                    $storagePath = public_path($imageObj->location.$imageObj->name);
+                    //$attachment = HdMessageAttachment::with('imageObj')->where('message_id',$ticket_id)->first();
+                    //$imageObj = $attachment->imageObj;
+                    //$imageName = $imageObj->name;
+                    $imageName = $orderOperation->tracking_number.'.jpg';
+                    //$storagePath = public_path($imageObj->location.$imageObj->name);
+                    $storagePath = storage_path('app/public/labels/'.$imageName);
                     $imagesPath = $storagePath;
                     $imageUrl = asset('storage/labels/' .$imageName );
                 }else if($orderOperation->operation_type == OrderOperationType::OrderReturn && $orderOperation->rma_number){
@@ -532,6 +535,8 @@ class MessagesController extends Controller
                 }else {
                     $templateDetail = HdMessageTemplate::findOrFail($template_id);
                 }
+
+                //print_r($templateDetail);die;
 
                 if(isset($orderOperation->shipFrom->returnAddress) && $orderOperation->shipFrom->returnAddress->company != ''){
                     $returnAddress .= trim($orderOperation->shipFrom->returnAddress->company).PHP_EOL;
@@ -575,6 +580,22 @@ class MessagesController extends Controller
                         'image_name' => $imageName,
                         'image_url' => $imageUrl,
 
+                    ]);
+                }
+            }else{
+                $templateDetail = HdMessageTemplate::findOrFail($template_id);
+
+                if($templateDetail){
+                    $data = [
+                        'customer_firstName' => $customer_name,
+                        'store_name' => $store_name,
+                        'marketplaceName' => '',
+                    ];
+                    $template_code = \Blade::render($templateDetail->template_code, $data);
+                    return response()->json([
+                        'success' => true,
+                        'template_id' => $templateDetail,
+                        'templateCode' => $template_code
                     ]);
                 }
             }
@@ -679,18 +700,36 @@ class MessagesController extends Controller
 
                 $imapConfig = [];
 
-                $filename = '1751883676.jpg';
-                //$filepath = public_path('images/').$filename;
                 $filepath = $imagepath;
-
-                //echo file_exists($filepath);die;
-                //echo $filepath;die;
 
                 $connector = new EmailMessageUtility($smtpConfig, $imapConfig);
                 /*$response = $connector->sendEmail($ticketDetail->ticket_email,$ticketDetail->subject,$message_to_send, $ticketDetail->message_id, $filepath);*/
                 $response = $connector->sendEmail('jayesh@mjailab.com','Test Mail',$message_to_send, 'CAB3DxwfKHcaot+XFxHBW6Teiq38dDaHs2UU2UqipkfbHnYr+sg@mail.gmail.com', $filepath);
 
                 if($response){
+
+                    $hdMessageData = [
+                        'ticket_id' => $ticket_id,
+                        'subject' => trim($ticketDetail->subject),
+                        'message_date' => date('Y-m-d H:i:s'),
+                        'to_' => $ticketDetail->ticket_email,
+                        'cc' => NULL,
+                        'bcc' => NULL,
+                        'message_id' => trim($ticketDetail->message_id),
+                        'messaging_account_id' => $storeMessageAccount->outgoingAccount->id,
+                        'from_email' => trim($storeMessageAccount->outgoingAccount->user_id),
+                        'from_name' => trim($storeMessageAccount->outgoingAccount->user_id),
+                        'message' => $message_to_send,
+                        'draft' => 0,
+                    ];
+
+                    HDMessage::create($hdMessageData);
+
+                    /*HDMessage::updateOrCreate([
+                        'ticket_id' => $ticket_id,
+                        'message_id' => trim($ticketDetail->message_id),
+                    ], $hdMessageData);*/
+
                     if($is_closed){
                         $ticketDetail->update(['status'=>2]);
                     }
@@ -710,7 +749,12 @@ class MessagesController extends Controller
 
         $order_id = $request->input('order_id');
         if($request->input('return_lable')){
-            $orderDetail = Order::with('orderItem','orderOperation', 'customer', 'store')->where('order_id', $order_id)->orWhere('purchase_order_id',$order_id)->whereHas('orderOperation', function ($q) { $q->whereNotNull('rma_number');})->first();
+            $orderDetail = Order::with(['orderItem','orderOperation' => function ($q) { $q->where('operation_type', 2);}, 'customer', 'store'])
+                ->where(function ($query) use ($order_id) {
+                $query->where('order_id', $order_id)
+                    ->orWhere('purchase_order_id', $order_id);
+                })
+                ->whereHas('orderOperation', function ($q) { $q->where('operation_type', 2);})->first();
         }else {
             $orderDetail = Order::with('orderItem','orderOperation', 'customer', 'store')->where('order_id', $order_id)->orWhere('purchase_order_id',$order_id)->first();
         }
@@ -833,6 +877,8 @@ class MessagesController extends Controller
                                     'client_id' => $oitem->client_id,
                                     'sync_status' => $oitem->sync_status,
                                     'quantity' => $oitem->quantity,
+                                    'item_price' => $oitem->item_price,
+                                    'shipping_price' => $oitem->shipping_price
                                 ];
 
                                 OrderOperationItem::updateOrCreate([
@@ -981,7 +1027,7 @@ class MessagesController extends Controller
             $data = [
                 'customer_firstName' => isset($orderOperation->order->customer) ? $orderOperation->order->customer->full_name : '',
                 'store_name' => isset($orderOperation->store) ? $orderOperation->store->name : '',
-                'carrier_name ' => isset($orderOperation->carrier) ? $orderOperation->carrier->name : ''
+                'carrier_name' => isset($orderOperation->carrier) ? $orderOperation->carrier->name : ''
             ];
             $template_id = $templateDetail->id;
             $template_code = \Blade::render($templateDetail->template_code, $data);
@@ -1014,7 +1060,7 @@ class MessagesController extends Controller
                 'created_by' => 'admin',
             ];
 
-            HdMessageAttachment::create($attachementData);
+            //HdMessageAttachment::create($attachementData);
         }
 
         return response()->json([
@@ -1228,28 +1274,34 @@ class MessagesController extends Controller
                     'message' => 'Something went wrong with API. Please try again!'
                 ]);
             }
+
+            $templateDetail = HdMessageTemplate::getOrderOperationTemplate(OrderOperationType::OrderReplacement,0,0);
+            $template_id = $template_code = '';
+            if($templateDetail) {
+                $data = [
+                    'customer_firstName' => isset($orderOperations->order->customer) ? $orderOperations->order->customer->full_name : '',
+                    'store_name' => isset($orderOperations->store) ? $orderOperations->store->name : '',
+                    'trackingNumber' => isset($orderOperations->tracking_number) ? $orderOperations->tracking_number : '',
+                    'ima_number' => '',
+                    'return_address' => ''
+                ];
+                $template_id = $templateDetail->id;
+                $template_code = \Blade::render($templateDetail->template_code, $data);
+            }
+
+            return response()->json([
+                'success' => true,
+                'template_id' => $template_id,
+                'template_code' => $template_code,
+                'message' => 'Order refund successfuly!'
+            ]);
         }
 
-
-
-        /*$templateDetail = HdMessageTemplate::getOrderOperationTemplate(OrderOperationType::OrderReplacement,1,0);
-        $template_id = $template_code = '';
-        if($templateDetail) {
-            $data = [
-                'customer_firstName' => isset($orderOperations->order->customer) ? $orderOperations->order->customer->full_name : '',
-                'store_name' => isset($orderOperations->store) ? $orderOperations->store->name : '',
-                'trackingNumber' => isset($orderOperations->tracking_number) ? $orderOperations->tracking_number : '',
-                'ima_number' => '',
-                'return_address' => ''
-            ];
-            $template_id = $templateDetail->id;
-            $template_code = \Blade::render($templateDetail->template_code, $data);
-        }*/
-
         return response()->json([
-            'success' => true,
-            'message' => 'Order refund successfuly!'
+            'success' => false,
+            'message' => 'Something went wrong with API. Please try again!'
         ]);
+
     }
 
     public function imageUpload(Request $request){

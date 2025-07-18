@@ -64,6 +64,11 @@ class ShopifyAuthService
         return $this->makeGraphQLRequest(ShopifyQueries::$saveProduct, $productData);
     }
 
+    public function getProductById($marketplace_product_id)
+    {
+        return $this->makeGraphQLRequest(ShopifyQueries::$getProductById,['id' => $marketplace_product_id]);
+    }
+
     public function updateProduct($productData)
     {
         return $this->makeGraphQLRequest(ShopifyQueries::$updateProduct, $productData);

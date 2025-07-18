@@ -246,10 +246,10 @@
                                 </div>
                                 <div class="row mt-3 g-3 align-items-center">
                                     <div class="col-md-5">
-                                        <label for="auto_generate_listing">Auto generate listing</label>
+                                        <label for="auto_generate_listings">Auto generate listing</label>
                                     </div>
                                     <div class="col-md-7">
-                                        <input type="checkbox" id="auto_generate_listing" name="auto_generate_listing" {{ ($store->auto_generate_listing == 1) ? 'checked' : '' }}>
+                                        <input type="checkbox" id="auto_generate_listings" name="auto_generate_listings" {{ ($store->auto_generate_listings == 1) ? 'checked' : '' }}>
                                     </div>
                                 </div>
                                 <div class="row mt-3 g-3 align-items-center">

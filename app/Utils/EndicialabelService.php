@@ -189,8 +189,26 @@ class EndicialabelService
     private function generateStampImage($imagePath, $text)
     {
         try {
+
+            $mime = mime_content_type($imagePath);
+
+            switch ($mime) {
+                case 'image/jpeg':
+                    $image = imagecreatefromjpeg($imagePath);
+                    break;
+                case 'image/png':
+                case 'text/plain':
+                    $image = imagecreatefrompng($imagePath);
+                    break;
+                case 'image/gif':
+                    $image = imagecreatefromgif($imagePath);
+                    break;
+                default:
+                    Log::error("Unsupported image type: $mime");
+                    throw new Exception("Unsupported image type: $mime");
+            }
             // Load the original image
-            $image = imagecreatefrompng($imagePath);
+            //$image = imagecreatefrompng($imagePath);
             if (!$image) {
                 throw new ExcepgenerateStampImagetion('Failed to load image');
             }
@@ -203,19 +221,33 @@ class EndicialabelService
             $textColor = imagecolorallocate($image, 0, 0, 0); // Black text
             $fontSize = 20;
             $fontFile = storage_path('app/fonts/arial.ttf');
-            $x = 50;
-            $y = $height - 90;
+            $x = 10;
+            $y = $height - 5;
 
             if (!file_exists($fontFile)) {
                 Log::info('Custom font file not found, using default font.');
                 imagestring($image, 5, $x, $y, $text, $textColor);
             } else {
                 Log::info('Custom font file found, using default font.');
-
                 imagettftext($image, $fontSize, 0, $x, $y, $textColor, $fontFile, $text);
             }
 
-            imagepng($image, $imagePath);
+
+            switch ($mime) {
+                case 'image/jpeg':
+                    imagejpeg($image, $imagePath);
+                    break;
+                case 'image/png':
+                case 'text/plain':
+                    imagepng($image, $imagePath);
+                    break;
+                case 'image/gif':
+                    $image = imagegif($image, $imagePath);
+                    break;
+                default:
+                    Log::error("Unsupported image type: $mime");
+                    throw new Exception("Unsupported image type: $mime");
+            }
             imagedestroy($image);
 
             Log::info('Added text directly to label image: ' . $imagePath);
@@ -354,21 +386,20 @@ class EndicialabelService
 
             $xml->registerXPathNamespace('ns', 'www.envmgr.com/LabelService');
 
-            $refunds = (string)$xml->xpath('//ns:Refund');
-            $returnData = [];
-            foreach ($refunds as $refund) {
-                $transactionId = (string)$refund['TransactionId'];
-                $PicNumber = (string)$refund['PicNumber'];
-                $status = (string)$refund->RefundStatus;
-                $message = (string)$refund->RefundStatusMessage;
+            $refund = (string)$xml->xpath('//ns:Refund')[0];
+            $RequestID = (string)$xml->xpath('//ns:RequestID')[0];
+            $RefundStatus = (string)$xml->xpath('//ns:RefundStatus')[0];
+            $Message = (string)$xml->xpath('//ns:RefundStatusMessage')[0];
+            Log::info('Endicia Label Response Parser: ' . json_encode($RequestID));
+            Log::info('Endicia Label Response Parser: ' . json_encode($RefundStatus));
+            Log::info('Endicia Label Response Parser: ' . json_encode($Message));
+            $returnData = [
+                'status' => $RefundStatus,
+                'requestID' => $RequestID,
+                'message' => $Message
+            ];
 
-                $returnData[] = [
-                    'transactionId' => $transactionId,
-                    'PicNumber' => $PicNumber,
-                    'status' => $status,
-                    'message' => $message,
-                ];
-            }
+            Log::info('Return Data: ' . json_encode($returnData));
 
             return $returnData;
 
@@ -378,6 +409,8 @@ class EndicialabelService
                 Log::error('SOAP Error Response: ' . $e->getResponse()->getBody()->getContents());
             }
 //            throw new Exception('Error creating label: ' . $e->getMessage());
+
+            Log::info('Return Data Error: ' . json_encode($e->getMessage()));
         }
     }
 

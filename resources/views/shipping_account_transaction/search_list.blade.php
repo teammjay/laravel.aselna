@@ -1,7 +1,7 @@
 @if(count($transactions ?? []) > 0)
     @foreach($transactions as $ship_transaction)
         <tr data-id="{{ $ship_transaction->id }}">
-            <td>{{ $ship_transaction->shippingAccount->name }} <input type="checkbox" name="transaction_id[]" style="visibility: hidden;" value="{{ $ship_transaction->transaction_id }}"></td>
+            <td>{{ $ship_transaction->shippingAccount->name }} <input type="checkbox" name="transaction_id[]" style="visibility: hidden;" data-id="{{ $ship_transaction->id }}" value="{{ $ship_transaction->transaction_id }}"></td>
             <td>{{ $ship_transaction->tracking_number }}</td>
             <td>{{ $ship_transaction->transaction_date }}</td>
             <td>{{ $ship_transaction->transaction_id }}</td>

@@ -4,7 +4,7 @@ namespace App\Constants;
 
 class ShopifyQueries
 {
-public static $saveProduct = <<<GQL
+    public static $saveProduct = <<<GQL
     mutation (\$productSet : ProductSetInput!) {
         productSet(input : \$productSet) {
             product {
@@ -25,7 +25,7 @@ public static $saveProduct = <<<GQL
     }
 GQL;
 
-public static $updateProduct = <<<GQL
+    public static $updateProduct = <<<GQL
     mutation UpdateProductWithNewMedia(\$product: ProductUpdateInput!, \$media: [CreateMediaInput!]) {
       productUpdate(product: \$product, media: \$media) {
         product {
@@ -49,7 +49,7 @@ public static $updateProduct = <<<GQL
 GQL;
 
     // Query to get orders with a dynamic limit
-public static $getOrders = <<<GQL
+    public static $getOrders = <<<GQL
     query getOrders(\$first: Int!, \$query:String) {
         orders(first: \$first, query: \$query) {
             edges {
@@ -130,7 +130,7 @@ public static $getOrders = <<<GQL
     }
 GQL;
 
-public static $createProductVariant = <<<GQL
+    public static $createProductVariant = <<<GQL
     mutation productVariantCreate(\$input: ProductVariantInput!) {
         productVariantCreate(input: \$input) {
             productVariant {
@@ -149,7 +149,7 @@ public static $createProductVariant = <<<GQL
     }
 GQL;
 
-public static $orderFields = <<<GQL
+    public static $orderFields = <<<GQL
 {
   __type(name: "Order") {
     fields {
@@ -166,7 +166,7 @@ public static $orderFields = <<<GQL
 }
 GQL;
 
-public static $createCollection = <<<GQL
+    public static $createCollection = <<<GQL
     mutation (\$collection : CollectionInput!) {
         collectionCreate(input : \$collection) {
             collection {
@@ -176,7 +176,7 @@ public static $createCollection = <<<GQL
     }
 GQL;
 
-public static $getPublications = <<<GQL
+    public static $getPublications = <<<GQL
     query {
         publications (first: 10) {
             edges {
@@ -188,7 +188,7 @@ public static $getPublications = <<<GQL
     }
 GQL;
 
-public static $getProductVariant = <<<GQL
+    public static $getProductVariant = <<<GQL
     query(\$id: ID!) {
       productVariant(id: \$id) {
         inventoryItem {
@@ -198,7 +198,7 @@ public static $getProductVariant = <<<GQL
     }
 GQL;
 
-public static $getLocation = <<<GQL
+    public static $getLocation = <<<GQL
     query {
       locations(first: 5) {
         edges {
@@ -210,7 +210,7 @@ public static $getLocation = <<<GQL
     }
 GQL;
 
-public static $inventoryAdjustQuantities = <<<GQL
+    public static $inventoryAdjustQuantities = <<<GQL
     mutation inventoryAdjustQuantities(\$input: InventoryAdjustQuantitiesInput!) {
       inventoryAdjustQuantities(input: \$input) {
         userErrors {
@@ -226,7 +226,7 @@ public static $inventoryAdjustQuantities = <<<GQL
     }
 GQL;
 
-public static $productVariantUpdate = <<<GQL
+    public static $productVariantUpdate = <<<GQL
     mutation UpdateProductVariants(\$productId: ID!, \$variant: [ProductVariantsBulkInput!]!) {
       productVariantsBulkUpdate(productId: \$productId, variants: \$variant) {
         productVariants {
@@ -241,7 +241,7 @@ public static $productVariantUpdate = <<<GQL
     }
 GQL;
 
-public static $getFullfillmentOrders = <<<GQL
+    public static $getFullfillmentOrders = <<<GQL
     query getFulfillmentOrders(\$id: ID!) {
       order(id: \$id) {
         id
@@ -266,7 +266,7 @@ public static $getFullfillmentOrders = <<<GQL
     }
 GQL;
 
-public static $cancelFullfillment = <<<GQL
+    public static $cancelFullfillment = <<<GQL
     mutation fulfillmentCancel(\$id: ID!) {
       fulfillmentCancel(id: \$id) {
         fulfillment {
@@ -281,7 +281,7 @@ public static $cancelFullfillment = <<<GQL
     }
 GQL;
 
-public static $createFullfillment = <<<GQL
+    public static $createFullfillment = <<<GQL
     mutation fulfillmentCreate(\$fulfillment: FulfillmentInput!) {
       fulfillmentCreate(fulfillment: \$fulfillment) {
         fulfillment {
@@ -302,7 +302,7 @@ public static $createFullfillment = <<<GQL
     }
 GQL;
 
-public static $cancelOrder =<<<GQL
+    public static $cancelOrder = <<<GQL
     mutation orderCancel(\$notifyCustomer: Boolean, \$orderId: ID!, \$reason: OrderCancelReason!, \$refund: Boolean!, \$restock: Boolean!, \$staffNote: String) {
         orderCancel(notifyCustomer: \$notifyCustomer, orderId: \$orderId, reason: \$reason, refund: \$refund, restock: \$restock, staffNote: \$staffNote) {
             job {
@@ -318,7 +318,7 @@ public static $cancelOrder =<<<GQL
     }
 GQL;
 
-public static $getOrderDetail =<<<GQL
+    public static $getOrderDetail = <<<GQL
     query getOrder(\$id: ID!) {
       order(id: \$id) {
         id
@@ -348,7 +348,7 @@ public static $getOrderDetail =<<<GQL
 GQL;
 
 
-public static $createRefund =<<<GQL
+    public static $createRefund = <<<GQL
     mutation RefundLineItem(\$input: RefundInput!) {
       refundCreate(input: \$input) {
         refund {
@@ -368,7 +368,7 @@ public static $createRefund =<<<GQL
     }
 GQL;
 
-public static $refundOrder =<<<GQL
+    public static $refundOrder = <<<GQL
     query refund(\$id: ID!) {
       refund(id: \$id) {
         duties {
@@ -386,7 +386,7 @@ public static $refundOrder =<<<GQL
 GQL;
 
 
-public static $getProducts =<<<GQL
+    public static $getProducts = <<<GQL
     query GetProducts {
         products(first: 100) {
             nodes {
@@ -395,6 +395,7 @@ public static $getProducts =<<<GQL
                 variants (first: 10){
                     edges {
                         node {
+                        id
                         title
                         sku
                         inventoryQuantity
@@ -412,7 +413,7 @@ public static $getProducts =<<<GQL
     }
 GQL;
 
-    public static $getProductsWithCursor =<<<GQL
+    public static $getProductsWithCursor = <<<GQL
     query GetProducts(\$cursor: String) {
         products(first: 100,after: \$cursor) {
             nodes {
@@ -421,6 +422,7 @@ GQL;
                 variants (first: 10){
                     edges {
                         node {
+                        id
                         title
                         sku
                         inventoryQuantity
@@ -437,5 +439,13 @@ GQL;
         }
     }
 GQL;
+
+    public static $getProductById = <<<GQL
+        query GetProductById (\$id : ID!) {
+            product( id : \$id) {
+                tags
+            }
+        }
+        GQL;
 
 }
