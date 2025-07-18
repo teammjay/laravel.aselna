@@ -147,13 +147,15 @@ class SyncAllTables extends Command
         //    ListingItemImageCreate::dispatch('4dcf1d3f-b723-4b31-a075-3702c0746b10');
 //        FetchAmazonOrdersJob::dispatch();
 //        StoreCategorySyncJob::dispatch('94428796-cdf9-dc2b-a1e7-aa4100066fd9');
+//        ShopifyCollectionDeviceSyncJob::dispatch('5cc46182-9x318-7a47-39bd-d3e38de6cce6');
 //        AmazonListingItemSyncJob::dispatch();
 //        AmazonProductTypeSyncJob::dispatch();
 //        FetchWalmartOrdersJob::dispatch();
         //synccategorytospecification::dispatch();
 //        SystemPrinterSyncJob::dispatch();
 
-        FetchEbayOrders::dispatch();
+        SubmitShopifyProductsJob::dispatch();
+//        FetchShopifyProductsJob::dispatch();
 
 //        $transactionIds = [
 ////            '9400150105798006163885',

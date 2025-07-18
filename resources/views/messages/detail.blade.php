@@ -136,12 +136,12 @@
                                                 </div>
                                             </div>
                                         </div>
-                                        <div class="col-md-2">
+                                        <div class="col-md-8">
                                             <input type="file" class="btn btn-default" name="attach_file" id="attach_file">
                                             <input type="hidden" id="image_url">
                                             <input type="hidden" id="image_storage_path">
                                             <div class="btn-group lableImageGroup hide" role="group">
-                                                <button id="btnGroupDrop2" type="button" class="btn btn-primary lable-image dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"></button>
+                                                <button id="btnGroupDrop2" type="button" class="btn btn-default lable-image dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"></button>
                                                 <div class="dropdown-menu" aria-labelledby="btnGroupDrop2">
                                                     <a class="dropdown-item download_image" href="javascript:void(0);">Download</a>
                                                     <a class="dropdown-item delete_images" href="javascript:void(0);">Delete</a>
@@ -592,6 +592,13 @@
                             }else if(data.templateCode != ''){
                                 $('#template_id').val(data.template_id);
                                 $('#message_to_send').html(data.templateCode);
+                            }
+
+                            if(data.image_url){
+                                $('.lableImageGroup').removeClass('hide');
+                                $('#image_url').val(data.image_url);
+                                $('#image_storage_path').val(data.imagesPath);
+                                $('.lable-image').html(data.image_name);
                             }
 
                             //$('#message_to_send').html(data.templateCode);
