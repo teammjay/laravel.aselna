@@ -1036,7 +1036,14 @@
                         // If success, remove the user row from the table
                         alert(response.message);
                         if (response.success) {
-                            location.reload();
+
+                            loadOrderDetail();
+
+                            if(response.template_id != ''){
+                                $('#template_id').val(response.template_id);
+                                $('#message_to_send').html(response.template_code);
+                            }
+                            //location.reload();
                         }
                     },
                     error: function (xhr) {

@@ -525,7 +525,7 @@ class MessagesController extends Controller
                     //$attachment = HdMessageAttachment::with('imageObj')->where('message_id',$ticket_id)->first();
                     //$imageObj = $attachment->imageObj;
                     //$imageName = $imageObj->name;
-                    $imageName = $orderOperation->tracking_number.'jpg';
+                    $imageName = $orderOperation->tracking_number.'.jpg';
                     //$storagePath = public_path($imageObj->location.$imageObj->name);
                     $storagePath = storage_path('app/public/labels/'.$imageName);
                     $imagesPath = $storagePath;
@@ -700,19 +700,36 @@ class MessagesController extends Controller
 
                 $imapConfig = [];
 
-                $filename = '1751883676.jpg';
-                //$filepath = public_path('images/').$filename;
                 $filepath = $imagepath;
-                $filepath = '';
-
-                //echo file_exists($filepath);die;
-                //echo $filepath;die;
 
                 $connector = new EmailMessageUtility($smtpConfig, $imapConfig);
                 /*$response = $connector->sendEmail($ticketDetail->ticket_email,$ticketDetail->subject,$message_to_send, $ticketDetail->message_id, $filepath);*/
                 $response = $connector->sendEmail('jayesh@mjailab.com','Test Mail',$message_to_send, 'CAB3DxwfKHcaot+XFxHBW6Teiq38dDaHs2UU2UqipkfbHnYr+sg@mail.gmail.com', $filepath);
 
                 if($response){
+
+                    $hdMessageData = [
+                        'ticket_id' => $ticket_id,
+                        'subject' => trim($ticketDetail->subject),
+                        'message_date' => date('Y-m-d H:i:s'),
+                        'to_' => $ticketDetail->ticket_email,
+                        'cc' => NULL,
+                        'bcc' => NULL,
+                        'message_id' => trim($ticketDetail->message_id),
+                        'messaging_account_id' => $storeMessageAccount->outgoingAccount->id,
+                        'from_email' => trim($storeMessageAccount->outgoingAccount->user_id),
+                        'from_name' => trim($storeMessageAccount->outgoingAccount->user_id),
+                        'message' => $message_to_send,
+                        'draft' => 0,
+                    ];
+
+                    HDMessage::create($hdMessageData);
+
+                    /*HDMessage::updateOrCreate([
+                        'ticket_id' => $ticket_id,
+                        'message_id' => trim($ticketDetail->message_id),
+                    ], $hdMessageData);*/
+
                     if($is_closed){
                         $ticketDetail->update(['status'=>2]);
                     }
@@ -1257,28 +1274,34 @@ class MessagesController extends Controller
                     'message' => 'Something went wrong with API. Please try again!'
                 ]);
             }
+
+            $templateDetail = HdMessageTemplate::getOrderOperationTemplate(OrderOperationType::OrderReplacement,0,0);
+            $template_id = $template_code = '';
+            if($templateDetail) {
+                $data = [
+                    'customer_firstName' => isset($orderOperations->order->customer) ? $orderOperations->order->customer->full_name : '',
+                    'store_name' => isset($orderOperations->store) ? $orderOperations->store->name : '',
+                    'trackingNumber' => isset($orderOperations->tracking_number) ? $orderOperations->tracking_number : '',
+                    'ima_number' => '',
+                    'return_address' => ''
+                ];
+                $template_id = $templateDetail->id;
+                $template_code = \Blade::render($templateDetail->template_code, $data);
+            }
+
+            return response()->json([
+                'success' => true,
+                'template_id' => $template_id,
+                'template_code' => $template_code,
+                'message' => 'Order refund successfuly!'
+            ]);
         }
 
-
-
-        /*$templateDetail = HdMessageTemplate::getOrderOperationTemplate(OrderOperationType::OrderReplacement,1,0);
-        $template_id = $template_code = '';
-        if($templateDetail) {
-            $data = [
-                'customer_firstName' => isset($orderOperations->order->customer) ? $orderOperations->order->customer->full_name : '',
-                'store_name' => isset($orderOperations->store) ? $orderOperations->store->name : '',
-                'trackingNumber' => isset($orderOperations->tracking_number) ? $orderOperations->tracking_number : '',
-                'ima_number' => '',
-                'return_address' => ''
-            ];
-            $template_id = $templateDetail->id;
-            $template_code = \Blade::render($templateDetail->template_code, $data);
-        }*/
-
         return response()->json([
-            'success' => true,
-            'message' => 'Order refund successfuly!'
+            'success' => false,
+            'message' => 'Something went wrong with API. Please try again!'
         ]);
+
     }
 
     public function imageUpload(Request $request){
