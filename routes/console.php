@@ -3,6 +3,7 @@
 use App\Jobs\AmazonListingItemSyncJob;
 use App\Jobs\EbayListingItemSyncJob;
 use App\Jobs\FetchEbayOrders;
+use App\Jobs\FetchEmailMessagesJob;
 use App\Jobs\FetchResultFeedAsync;
 use App\Jobs\FetchShopifyOrders;
 use App\Jobs\FetchWalmartOrdersJob;
@@ -29,6 +30,9 @@ Schedule::job(new FetchEbayOrders())->hourly();
 Schedule::job(new FetchShopifyOrders())->hourly();
 Schedule::job(new SyncAllOrderStatusJob())->hourly();
 
+
+// Email Message fetching
+Schedule::job(FetchEmailMessagesJob::class)->everyThirtyMinutes();
 
 // Products Syncing
 //Schedule::job(new SubmitShopifyProductsJob())->everyFifteenMinutes();
