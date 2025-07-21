@@ -46,6 +46,9 @@ class FetchEmailMessagesJob implements ShouldQueue
             if (count($stores ?? []) > 0) {
                 foreach ($stores as $store) {
                     Log::info('Processing store: ' . $store->name);
+                    if (env('APP_ENV') === 'local' && $store->name != 'OdeMobile') {
+                        continue;
+                    }
                     $storeMessageAccounts = StoreMessageAccount::with('incomingAccount', 'outgoingAccount')
                         ->where('store_id', $store->id)
                         ->where('active', 1)
