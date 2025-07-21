@@ -39,6 +39,7 @@ class ProcessStoreMessageAccountJob implements ShouldQueue
     public function handle()
     {
         try {
+            Log::info('Store Name: ' . $this->store->name);
             $maccount = $this->storeMessageAccount;
             $store = $this->store;
             $store_type = $this->store_type;
@@ -67,8 +68,11 @@ class ProcessStoreMessageAccountJob implements ShouldQueue
 
                     if (count($receiveEmails ?? []) > 0) {
                         foreach ($receiveEmails as $email) {
-                            Log::info('Processing Email: ' . json_encode($email) . " Username : " . $maccount->incomingAccount->user_id);
-                            $last_filter_date = $email['date'];
+                            // get as max date for next filter
+                            if (isset($email['date']) && $email['date'] > $last_filter_date) {
+                                $last_filter_date = $email['date'];
+                            }
+                            Log::info('Date :: '. $email['date']);
                             $order_id = $related_order_id = $po_no = $reason = $customer_id = $order_operation_id = $reference_code = NULL;
                             $ticket_type_code = HdTicketTypeCode::MARKETPLACE_NOTIFICATION;
 
@@ -182,7 +186,8 @@ class ProcessStoreMessageAccountJob implements ShouldQueue
                                 'related_listing_item_id' => NULL,
                             ];
 
-                            $ticketDetail = Message::where('ticket_email', trim($email['from']))->first();
+                            Log::info('Email From' . $email['from'] . ' Message ID: ' . $email['message_id']);
+                            $ticketDetail = Message::where('message_id', trim($email['message_id']))->first();
 
                             if ($ticketDetail) {
                                 if ($order_id) {
