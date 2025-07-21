@@ -282,7 +282,7 @@ class MessagesController extends Controller
         $store_type_id = $ticketDetail->store->storeType->id;
         $store_type_name = $ticketDetail->store->storeType->name;
         $message_template = HdMessageTemplate::where('store_type_id',$store_type_id)->get();
-        $messages = HDMessage::where('ticket_id',$id)->orderBy('message_date','desc')->get();
+        $messages = HDMessage::with('attachments')->where('ticket_id',$id)->orderBy('message_date','asc')->get();
         $ticketTypeCode = HdTicketType::orderBy('name')->get();
         $action = [];
         $rma_done = $lable_generate = 0;
@@ -721,6 +721,7 @@ class MessagesController extends Controller
                         'from_name' => trim($storeMessageAccount->outgoingAccount->user_id),
                         'message' => $message_to_send,
                         'draft' => 0,
+                        'author' => 1,
                     ];
 
                     HDMessage::create($hdMessageData);
