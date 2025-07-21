@@ -17,10 +17,12 @@
         border-radius: 5px;
         padding: 10px;
         margin: 10px 0;
+        width:90%;
     }
     .darker {
         border-color: #ccc;
         background-color: #fff;
+        margin-left: 10%;
     }
     .msg-container::after {
         content: "";
@@ -81,11 +83,11 @@
                 <div class="card-body">
 
                     <div class="row">
-                        <div class="col-md-12 mail-box">
+                        <div class="col-md-12 mail-box" id="scrollable">
                             @if(count($messages ?? []) > 0)
                                 @foreach($messages as $key=>$message)
                                     <div class="time-center">{{ $message->message_date }}</div>
-                                    <div class="msg-container @if(($key % 2)) darker @endif">
+                                    <div class="msg-container @if($message->author == 1) darker @endif">
                                         {{--<iframe srcdoc="{!! htmlspecialchars($message->message) !!}"></iframe>--}}
                                         {!! nl2br(html_entity_decode($message->message)) !!}
                                     </div>
@@ -347,6 +349,15 @@
     <script>
 
         var ticket_id = '{{ $ticketDetail->id }}';
+
+        const scrollable = document.getElementById("scrollable");
+        scrollable.scrollTop = scrollable.scrollHeight;
+
+        window.onload = function() {
+            // or use DOMContentLoaded
+            scrollable.scrollTop = scrollable.scrollHeight;
+        };
+
 
         $(document).ready(function () {
             $(document).on('click','#search_order',function () {

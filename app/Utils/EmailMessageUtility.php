@@ -164,6 +164,12 @@ class EmailMessageUtility
                 if(str_contains($body, '<html>')){
                     $body = $this->formatHtml($body);
                 }
+
+                $attachments = [];
+                if ($message->hasAttachments()) {
+                    $attachments = $message->getAttachments();
+                }
+
                 $eData = [
                     'subject' => $message->subject->first(),
                     'full_name' => $message->fromaddress->first(),
@@ -179,6 +185,7 @@ class EmailMessageUtility
                     'parsedData' => $parsedData,
                     'parts' => $parts,
                     'body' => $body,
+                    'attachments' => $attachments,
                     'client_id' => null
                 ];
 
