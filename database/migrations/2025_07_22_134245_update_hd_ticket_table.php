@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::table('hd_ticket', function (Blueprint $table) {
             $table->longText('subject')->change();
-            $table->longText('notes')->change();
+            $table->longText('notes')->nullable()->change();
         });
     }
 
