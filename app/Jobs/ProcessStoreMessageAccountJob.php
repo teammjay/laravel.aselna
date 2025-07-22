@@ -298,7 +298,7 @@ class ProcessStoreMessageAccountJob implements ShouldQueue
         }
     }
 
-    private function getNextTicketNumberForStore($storeId)
+    /*private function getNextTicketNumberForStore($storeId)
     {
         $lastTicket = Message::where('store_id', $storeId)
             ->orderBy('id', 'desc')
@@ -310,5 +310,24 @@ class ProcessStoreMessageAccountJob implements ShouldQueue
         }
 
         return str_pad(1, 6, '0', STR_PAD_LEFT);
+    }*/
+
+    function getNextTicketNumberForStore($storeId) {
+        $key = 'ticket_' . str_replace('-', '', $storeId);
+
+        return DB::transaction(function () use ($key) {
+            $sequence = Sequence::lockForUpdate()->find($key);
+
+            if (!$sequence) {
+                $sequence = Sequence::create([
+                    'key' => $key,
+                    'number' => 1
+                ]);
+            } else {
+                $sequence->increment('number');
+            }
+
+            return $sequence->number;
+        });
     }
 }
