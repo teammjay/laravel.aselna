@@ -88,18 +88,19 @@ class EmailMessageUtility
 
 
 
-    public function fetchEmails($store_type, $filter_date, $folderName = 'INBOX', $limit = 50)
+    public function fetchEmails($store_type, $filter_date, $folderName = 'INBOX', $limit = 100)
     {
         try {
             $this->client->connect();
 
-            $fromDate = \Carbon\Carbon::parse(date('Y-m-d', strtotime($filter_date)));
-            $toDate = \Carbon\Carbon::parse(date('Y-m-d'));
+            $fromDate = \Carbon\Carbon::parse($filter_date); // Keep the original timestamp
+            $toDate = \Carbon\Carbon::now();
+
+            Log::info("Fetching emails from folder: {$folderName} between {$fromDate->toDateTimeString()} and {$toDate->toDateTimeString()} with limit {$limit}");
 
             $folder = $this->client->getFolder($folderName);
             $messages = $folder->messages()
-                        ->since($fromDate)
-                        ->before($toDate)
+                        ->since($fromDate)->before($toDate)
                         ->limit($limit)
                         ->get();
                         /*->sortByDesc(function($msg) {
@@ -112,6 +113,7 @@ class EmailMessageUtility
             echo '</pre>';die;*/
             $emails = [];
             foreach ($messages as $key=>$message) {
+                Log::info('Subject: ' . $message->subject->first());
 
                 $body = $message->getTextBody();
                 if (empty($message->getTextBody())) {
@@ -162,6 +164,12 @@ class EmailMessageUtility
                 if(str_contains($body, '<html>')){
                     $body = $this->formatHtml($body);
                 }
+
+                $attachments = [];
+                if ($message->hasAttachments()) {
+                    $attachments = $message->getAttachments();
+                }
+
                 $eData = [
                     'subject' => $message->subject->first(),
                     'full_name' => $message->fromaddress->first(),
@@ -177,6 +185,7 @@ class EmailMessageUtility
                     'parsedData' => $parsedData,
                     'parts' => $parts,
                     'body' => $body,
+                    'attachments' => $attachments,
                     'client_id' => null
                 ];
 

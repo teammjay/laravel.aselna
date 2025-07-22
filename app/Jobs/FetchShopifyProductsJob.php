@@ -85,6 +85,7 @@ class FetchShopifyProductsJob implements ShouldQueue
                 $sku = '';
                 $variantId = '';
                 $variants = $product['variants']['edges'];
+                $productTitle = $product['title'] ?? '';
                 if ($variants) {
                     foreach ($variants as $edge) {
                         $variant = $edge['node'];
@@ -98,7 +99,23 @@ class FetchShopifyProductsJob implements ShouldQueue
                     $product_code = $skuPart[0];
                     if ($product_code) {
                         Log::info('Processing Product Code: ' . $product_code . ' for Store: ' . $store->name);
-                        $productDetail = Catalog::whereLike('product_sku', $product_code)->where('product_status','!=','discontinued')->first();
+                        $productDetails = Catalog::whereLike('product_sku', $product_code)->get();
+                        if( count($productDetails) > 1) {
+                            Log::warning('Multiple products found for SKU: ' . $product_code . ' in Store: ' . $store->name);
+                            foreach ($productDetails as $detail) {
+                                Log::info('Product ID: ' . $detail->product_id . ' - SKU: ' . $detail->product_sku);
+                                //match title by starting keyword.
+                                $firstWord = explode(' ', $productTitle)[0];
+                                Log::info('First Word from Title: ' . $firstWord);
+                                if (str_starts_with($detail->product_title, $firstWord)) {
+                                    Log::info('Matched Product: ' . $detail->product_sku . ' with Title: ' . $productTitle);
+                                    $productDetail = $detail;
+                                    break; // Use the first matching product
+                                }
+                            }
+                        } else {
+                            $productDetail = $productDetails->first();
+                        }
                         if (!$productDetail) {
                             Log::warning('Product not found for SKU: ' . $product_code . ' in Store: ' . $store->name);
                             continue; // Skip to the next product if not found

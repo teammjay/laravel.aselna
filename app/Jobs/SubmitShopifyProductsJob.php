@@ -66,7 +66,7 @@ class SubmitShopifyProductsJob implements ShouldQueue
 //                foreach ($products as $product) {
 //                    $this->createProduct($product, $store);
 //                }
-//
+
                 // Handle Updated Products
                 $AlreadyCreatedIds = ManageMarketplaceProduct::select('product_id')->where('upload_status', 'success')->where('store_id', $store->id)->orderBy('updated_at', 'asc')->limit(100)->get();
                 $products = Catalog::select('*')->with('productType', 'productKeyFeatures', 'productColor')
@@ -378,11 +378,21 @@ class SubmitShopifyProductsJob implements ShouldQueue
         $tags = $this->getAllTags($productData, []);
         $finalTagsString = implode(', ', $tags);
 
+        $variantData = [
+            'id' => $proDetail->marketplace_variant_id,
+            'price' => $productData->product_price,
+        ];
+
         $productUpdateData = [
             'product' => [
                 'id' => $proDetail->marketplace_product_id,
                 'tags' => $finalTagsString,
             ],
+        ];
+
+        $priceUpdatesData = [
+            'productId' => $proDetail->marketplace_product_id,
+            'variant' => [$variantData],
         ];
 
 //            $this->generateProductImages($productData, $store);
@@ -398,9 +408,9 @@ class SubmitShopifyProductsJob implements ShouldQueue
         $productUpdateData['media'] = $media;
 
         $response = $shopifyAuthService->updateProduct($productUpdateData);
+        $priceResponse = $shopifyAuthService->updatePrice($priceUpdatesData);
 
         if (isset($response['data']) && empty($response['data']['userErrors'])) {
-
             $proDetail->update([
                 'upload_status' => 'success',
                 'updated_at' => now()

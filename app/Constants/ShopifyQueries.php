@@ -441,11 +441,11 @@ GQL;
 GQL;
 
     public static $getProductById = <<<GQL
-        query GetProductById (\$id : ID!) {
-            product( id : \$id) {
-                tags
-            }
+    query GetProductById (\$id : ID!) {
+        product( id : \$id) {
+            tags
         }
-        GQL;
+    }
+GQL;
 
 }

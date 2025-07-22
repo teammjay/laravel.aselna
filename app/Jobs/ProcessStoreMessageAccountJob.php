@@ -2,6 +2,8 @@
 
 namespace App\Jobs;
 
+use App\Models\HdMessageAttachment;
+use App\Models\SysFile;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -39,6 +41,7 @@ class ProcessStoreMessageAccountJob implements ShouldQueue
     public function handle()
     {
         try {
+            Log::info('Store Name: ' . $this->store->name);
             $maccount = $this->storeMessageAccount;
             $store = $this->store;
             $store_type = $this->store_type;
@@ -67,8 +70,11 @@ class ProcessStoreMessageAccountJob implements ShouldQueue
 
                     if (count($receiveEmails ?? []) > 0) {
                         foreach ($receiveEmails as $email) {
-                            Log::info('Processing Email: ' . json_encode($email) . " Username : " . $maccount->incomingAccount->user_id);
-                            $last_filter_date = $email['date'];
+                            // get as max date for next filter
+                            if (isset($email['date']) && $email['date'] > $last_filter_date) {
+                                $last_filter_date = $email['date'];
+                            }
+                            Log::info('Date :: '. $email['date']);
                             $order_id = $related_order_id = $po_no = $reason = $customer_id = $order_operation_id = $reference_code = NULL;
                             $ticket_type_code = HdTicketTypeCode::MARKETPLACE_NOTIFICATION;
 
@@ -182,7 +188,8 @@ class ProcessStoreMessageAccountJob implements ShouldQueue
                                 'related_listing_item_id' => NULL,
                             ];
 
-                            $ticketDetail = Message::where('ticket_email', trim($email['from']))->first();
+                            Log::info('Email From' . $email['from'] . ' Message ID: ' . $email['message_id']);
+                            $ticketDetail = Message::where('message_id', trim($email['message_id']))->first();
 
                             if ($ticketDetail) {
                                 if ($order_id) {
@@ -224,6 +231,58 @@ class ProcessStoreMessageAccountJob implements ShouldQueue
                                     HdMessagePart::updateOrCreate([
                                         'message_id' => $hd_message->id,
                                     ], $email['parts']);
+                                }
+
+                                if (isset($hd_message->id) && !empty($email['attachments'])) {
+
+                                    if(is_array($email['attachments'])){
+                                        foreach($email['attachments'] as $attachment){
+                                            $fileName = $attachment->getName();
+                                            $fileMimeType = $attachment->getMimeType();
+                                            $fileSize = $attachment->getSize();
+                                            $attachmentID = $attachment->getId();
+
+                                            $extension = pathinfo($fileName, PATHINFO_EXTENSION);
+                                            $savePath = storage_path('app/public/email_attachment/');
+                                            if (!file_exists($savePath)) {
+                                                mkdir($savePath, 0755, true);
+                                            }
+
+                                            //$uniqueFileName = uniqid('email_', true) . '.' . $extension;
+
+                                            try {
+                                                $attachment->save($savePath, $fileName);
+
+                                                $filedata = [
+                                                    'name' => $fileName,
+                                                    'ext' => $extension ?: 'jpg', // Default to 'jpg' if missing
+                                                    'file_size' => $fileSize ?: 'Unknown', // Use 'Unknown' if not determined
+                                                    'location' => 'email_attachment/',
+                                                    'created_by' => 'admin',
+                                                ];
+
+                                                $fileDetail = SysFile::create($filedata);
+                                                $file_id = $fileDetail->id;
+
+                                                if($hd_ticket->id && $file_id){
+                                                    $attachementData = [
+                                                        'client_id' => NULL,
+                                                        'message_id' => $hd_message->id,
+                                                        'attachment_id' => $ticket_id,
+                                                        'file_id' => $file_id,
+                                                        'created_by' => 'admin',
+                                                    ];
+
+                                                    HdMessageAttachment::create($attachementData);
+
+                                                }
+
+                                            } catch (\Exception $e) {
+                                                echo "Error saving attachment: " . $e->getMessage();
+                                                Log::error('Error saving attachment: ' . $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine());
+                                            }
+                                        }
+                                    }
                                 }
                             }
                         }
