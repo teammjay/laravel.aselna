@@ -71,7 +71,7 @@ class SyncAllOrderStatusJob implements ShouldQueue
                 $orderDetail = $shopifyService->getOrderDetail($order->order_id);
 
                 if (isset($orderDetail) && !empty($orderDetail)) {
-                    if (isset($orderDetail['fulfillments'])) {
+                    if (isset($orderDetail['fulfillments']) && count($orderDetail['fulfillments']) > 0) {
 
                         foreach ($orderDetail['fulfillments'] as $item) {
                             switch (strtolower($item['status'])) {
@@ -106,6 +106,16 @@ class SyncAllOrderStatusJob implements ShouldQueue
                             $operation->save();
                         }
 
+                    } else if ($orderDetail['displayFinancialStatus']) {
+                        switch (strtolower($orderDetail['displayFinancialStatus'])) {
+                            case 'refunded';
+                                $order->order_status = OrderStatus::Refund;
+                                $operation->status = OrderOperationStatus::REFUNDED;
+                                break;
+                        }
+
+                        $order->save();
+                        $operation->save();
                     } else {
                         Log::info('Shopify order detail error: ' . json_encode($orderDetail));
                     }
