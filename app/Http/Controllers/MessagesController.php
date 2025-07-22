@@ -67,7 +67,7 @@ class MessagesController extends Controller
         QueryFilters::applyFilter($query, $request, 'sender_email', 'sender_email_operator', 'sender_email');
 
         // Filter by ticket type
-        QueryFilters::applyFilter($query, $request, 'ticket_type', 'ticket_type_operator', 'ticket_type_id');
+        QueryFilters::applyFilter($query, $request, 'ticket_type_id', 'ticket_type_operator', 'ticket_type');
 
         // Filter by ticket code
         QueryFilters::applyFilter($query, $request, 'ticket_code', 'ticket_code_operator', 'ticket_code');
@@ -133,7 +133,7 @@ class MessagesController extends Controller
         });*/
 
         //$data = $dataTableService->handle();
-
+        //echo $query->toSql();die;
         $totalRecords = $query->count();
         $messages = $query->skip($start)
             ->take($perPage)
