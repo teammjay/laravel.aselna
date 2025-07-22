@@ -235,7 +235,7 @@ class ProcessStoreMessageAccountJob implements ShouldQueue
 
                                 if (isset($hd_message->id) && !empty($email['attachments'])) {
 
-                                    if(is_array($email['attachments'])){
+                                    if(!empty($email['attachments'])){
                                         foreach($email['attachments'] as $attachment){
                                             $fileName = $attachment->getName();
                                             $fileMimeType = $attachment->getMimeType();
@@ -255,8 +255,8 @@ class ProcessStoreMessageAccountJob implements ShouldQueue
 
                                                 $filedata = [
                                                     'name' => $fileName,
-                                                    'ext' => $extension ?: 'jpg', // Default to 'jpg' if missing
-                                                    'file_size' => $fileSize ?: 'Unknown', // Use 'Unknown' if not determined
+                                                    'ext' => $extension ?: 'jpg',
+                                                    'file_size' => $fileSize ?: 'Unknown',
                                                     'location' => 'email_attachment/',
                                                     'created_by' => 'admin',
                                                 ];
@@ -268,7 +268,7 @@ class ProcessStoreMessageAccountJob implements ShouldQueue
                                                     $attachementData = [
                                                         'client_id' => NULL,
                                                         'message_id' => $hd_message->id,
-                                                        'attachment_id' => $ticket_id,
+                                                        'attachment_id' => $attachmentID,
                                                         'file_id' => $file_id,
                                                         'created_by' => 'admin',
                                                     ];

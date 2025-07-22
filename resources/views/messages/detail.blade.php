@@ -47,9 +47,9 @@
         max-height: 500px;
         overflow: auto;
     }
-    #btnGroupDrop2::after{
+    /*#btnGroupDrop2::after{
         display:none;
-    }
+    }*/
     #order_operation{
         position: relative;
         overflow: hidden;
@@ -61,6 +61,7 @@
     .hide{display:none !important;}
     .show{display:block !important;}
     .width-50{width:100px;}
+    .btn-group.lableImageGroup.show{display: inline-block !important;}
 </style>
 @stop
 
@@ -89,7 +90,24 @@
                                     <div class="time-center">{{ $message->message_date }}</div>
                                     <div class="msg-container @if($message->author == 1) darker @endif">
                                         {{--<iframe srcdoc="{!! htmlspecialchars($message->message) !!}"></iframe>--}}
+                                        <div class="mb-3">
                                         {!! nl2br(html_entity_decode($message->message)) !!}
+                                        </div>
+                                        @if(isset($message->attachments))
+                                            @foreach($message->attachments as $attachment)
+                                                @php
+                                                    $imageObj = $attachment->imageObj;
+                                                    $imageName = $imageObj->name;
+                                                    $imageUrl = asset('storage/'.$imageObj->location.$imageObj->name);
+                                                @endphp
+                                                <div class="btn-group attachmentGroup" role="group">
+                                                    <button id="btnGroupDrop3" type="button" class="lable-image dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="fa fa-paperclip"></i> {{ $imageName }}</button>
+                                                    <div class="dropdown-menu" aria-labelledby="btnGroupDrop3">
+                                                        <a class="dropdown-item" target="_blank" href="{{ $imageUrl }}">Download</a>
+                                                    </div>
+                                                </div>
+                                            @endforeach
+                                        @endif
                                     </div>
 
                                 @endforeach
@@ -484,7 +502,7 @@
                 var template_id = $('#message_template').val();
                 var message_to_send = $('#message_to_send').val();
                 var customer_id = $('#customer_id').val();
-                var ticket_id = '{{ $ticketDetail->id }}';
+                //var ticket_id = '{{ $ticketDetail->id }}';
                 var ticket_status = $(this).data('close');
                 if(message_to_send == ''){
                     alert('Please add text to send message');
@@ -493,9 +511,11 @@
 
                 var labelimage = '';
                 var imagepath = '';
+                var imagename = '';
                 if($('#image_url').val() != ''){
                     var labelimage = $('#image_url').val();
                     var imagepath = $('#image_storage_path').val();
+                    var imagename = $('.lable-image').html();
                 }
                 $.ajax({
                     type: "POST",
@@ -508,6 +528,7 @@
                         ticket_status: ticket_status,
                         labelimage: labelimage,
                         imagepath: imagepath,
+                        imagename: imagename,
                     },
                     headers: {
                         'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
@@ -1081,7 +1102,7 @@
                         'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                     },
                     success: function(response) {
-                        alert(response.success);
+                        //alert(response.success);
                         if(response.image_url){
                             $('.lableImageGroup').removeClass('hide');
                             $('#image_url').val(response.image_url);
