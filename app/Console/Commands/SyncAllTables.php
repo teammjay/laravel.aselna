@@ -156,8 +156,8 @@ class SyncAllTables extends Command
 //        SystemPrinterSyncJob::dispatch();
 
 //        FetchEmailMessagesJob::dispatch();
-//        SubmitShopifyProductsJob::dispatch();
-        FetchShopifyProductsJob::dispatch();
+        SubmitShopifyProductsJob::dispatch();
+//        FetchShopifyProductsJob::dispatch();
 
 //        $transactionIds = [
 ////            '9400150105798006163885',
