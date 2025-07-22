@@ -14,8 +14,8 @@ return new class extends Migration
         Schema::table('hd_message', function (Blueprint $table) {
             $table->longText('subject')->change();
             $table->longText('message')->change();
-            $table->longText('previous_message')->change();
-            $table->longText('links')->change();
+            $table->longText('previous_message')->nullable()->change();
+            $table->longText('links')->nullable()->change();
         });
     }
 
