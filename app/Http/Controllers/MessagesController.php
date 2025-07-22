@@ -283,6 +283,9 @@ class MessagesController extends Controller
         $store_type_name = $ticketDetail->store->storeType->name;
         $message_template = HdMessageTemplate::where('store_type_id',$store_type_id)->get();
         $messages = HDMessage::with('attachments')->where('ticket_id',$id)->orderBy('message_date','asc')->get();
+        /*echo '<pre>';
+        print_r($messages);
+        echo '</pre>';die;*/
         $ticketTypeCode = HdTicketType::orderBy('name')->get();
         $action = [];
         $rma_done = $lable_generate = 0;
@@ -663,6 +666,7 @@ class MessagesController extends Controller
         $is_closed = $request->input('ticket_status');
         $labelimage = $request->input('labelimage');
         $imagepath = $request->input('imagepath');
+        $imagename = $request->input('imagename');
 
         if($ticket_id){
             $ticketDetail = Message::with('store')->where('id',$ticket_id)->first();
@@ -699,7 +703,6 @@ class MessagesController extends Controller
                 ];
 
                 $imapConfig = [];
-
                 $filepath = $imagepath;
 
                 $connector = new EmailMessageUtility($smtpConfig, $imapConfig);
@@ -724,7 +727,35 @@ class MessagesController extends Controller
                         'author' => 1,
                     ];
 
-                    HDMessage::create($hdMessageData);
+                    $hd_message = HDMessage::create($hdMessageData);
+
+                    if($filepath){
+
+                        $extension = pathinfo($filepath, PATHINFO_EXTENSION);
+                        $fileSize = filesize($filepath);
+                        $filedata = [
+                            'name' => $imagename,
+                            'ext' => $extension ?: 'jpg', // Default to 'jpg' if missing
+                            'file_size' => $fileSize ?: 'Unknown', // Use 'Unknown' if not determined
+                            'location' => 'images/',
+                            'created_by' => 'admin',
+                        ];
+
+                        $fileDetail = SysFile::create($filedata);
+                        $file_id = $fileDetail->id;
+
+                        if($ticket_id && $file_id){
+                            $attachementData = [
+                                'client_id' => NULL,
+                                'message_id' => $hd_message->id,
+                                'attachment_id' => NULL,
+                                'file_id' => $file_id,
+                                'created_by' => 'admin',
+                            ];
+
+                            $attchment = HdMessageAttachment::create($attachementData);
+                        }
+                    }
 
                     /*HDMessage::updateOrCreate([
                         'ticket_id' => $ticket_id,
@@ -1280,9 +1311,9 @@ class MessagesController extends Controller
             $template_id = $template_code = '';
             if($templateDetail) {
                 $data = [
-                    'customer_firstName' => isset($orderOperations->order->customer) ? $orderOperations->order->customer->full_name : '',
-                    'store_name' => isset($orderOperations->store) ? $orderOperations->store->name : '',
-                    'trackingNumber' => isset($orderOperations->tracking_number) ? $orderOperations->tracking_number : '',
+                    'customer_firstName' => isset($orderOperation->order->customer) ? $orderOperation->order->customer->full_name : '',
+                    'store_name' => isset($orderOperation->store) ? $orderOperation->store->name : '',
+                    'trackingNumber' => isset($orderOperation->tracking_number) ? $orderOperation->tracking_number : '',
                     'ima_number' => '',
                     'return_address' => ''
                 ];
@@ -1315,9 +1346,11 @@ class MessagesController extends Controller
 
         $imageName = time().'.'.$request->attach_file->extension();
         $storagePath = storage_path('app/public/images/' . $imageName);
-        $request->attach_file->move(public_path('images'), $imageName);
+        $path = storage_path('app/public/images/');
+        $request->attach_file->move($path, $imageName);
+        $imageUrl = asset('storage/images/' .$imageName );
 
-        if ($imageName !== false) {
+        /*if ($imageName !== false) {
 
             $extension = pathinfo($imageName, PATHINFO_EXTENSION);
             $fileSize = filesize($storagePath);
@@ -1337,7 +1370,7 @@ class MessagesController extends Controller
                 $attachementData = [
                     'client_id' => NULL,
                     'message_id' => $ticket_id,
-                    'attachment_id' => $ticket_id,
+                    'attachment_id' => NULL,
                     'file_id' => $file_id,
                     'created_by' => 'admin',
                 ];
@@ -1350,12 +1383,13 @@ class MessagesController extends Controller
                 $imagesPath = $storagePath;
 
             }
-        }
+        }*/
 
         return response()->json([
             'success' => true,
-            'image' => $imageName,
-            'imagesPath' => $imagesPath,
+            'image_name' => $imageName,
+            'image_url' => $imageUrl,
+            'imagesPath' => $storagePath,
         ]);
 
     }

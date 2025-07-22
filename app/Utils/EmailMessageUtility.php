@@ -88,7 +88,7 @@ class EmailMessageUtility
 
 
 
-    public function fetchEmails($store_type, $filter_date, $folderName = 'INBOX', $limit = 100)
+    public function fetchEmails($store_type, $filter_date, $folderName = 'INBOX', $limit = 10)
     {
         try {
             $this->client->connect();
