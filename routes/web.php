@@ -292,13 +292,14 @@ Route::middleware('auth')->group(function () {
         Route::get('/messages/closed', 'closed_list')->name('message.closed');
         Route::get('/messages/spam', 'spam_list')->name('message.spam');
         Route::get('/messages/trash', 'trash_list')->name('message.trash');
-        Route::get('/messages/add', 'create')->name('message.create');
+        //Route::get('/messages/add', 'create')->name('message.create');
         Route::post('/messages/add', 'store')->name('message.store');
         Route::post('/messages/getdata', 'getMessageData')->name('message.getdata');
         Route::get('/messages/edit/{id}', 'edit')->name('message.edit');
         Route::post('/messages/edit/{id}', 'update')->name('message.update');
         Route::get('/messages/delete/{id}', 'destroy')->name('message.delete');
         Route::get('/messages/detail/{id}', 'detail')->name('message.detail');
+        Route::get('/messages/create/{id}', 'create')->name('message.create');
         Route::post('/messages/searchorder', 'searchOrder')->name('message.searchorder');
         Route::post('/messages/searchcustomer', 'searchCustomer')->name('message.searchcustomer');
         Route::post('/messages/getmessagetemplate', 'getMessageTemplate')->name('message.getmessagetemplate');
