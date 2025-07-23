@@ -9,6 +9,7 @@ use App\Constants\OrderOperationType;
 use App\Constants\OrderStatus;
 use App\Constants\ShippingLabelCreationType;
 use App\Helpers\QueryFilters;
+use App\Jobs\ProcessStoreMessageAccountJob;
 use App\Models\Catalog;
 use App\Models\Customer;
 use App\Models\HDMessage;
@@ -218,9 +219,114 @@ class MessagesController extends Controller
     /**
      * Show the form for creating a new resource.
      */
-    public function create()
+    public function create(string $orderid)
     {
-        return view('messages.update');
+        $orderDetail = Order::with('customer','store','store.storeType')->where('id',$orderid)->first();
+        $type = 'create';
+        /*echo '<pre>';
+        print_r($orderDetail);
+        echo '<pre>';die;*/
+        $customer_id = isset($orderDetail->customer) ? $orderDetail->customer->id : NULL;
+        $ticket_exist = Message::where('related_order_id',$orderid)->first();
+        /*echo '<pre>';
+        print_r($ticket_exist);
+        echo '</pre>';die;*/
+        if($ticket_exist){
+            $ticket_id = $ticket_exist->id;
+            $hd_ticket = $ticket_exist;
+        }else{
+            $ticket_code = $orderDetail->store->short_code . '-' . ProcessStoreMessageAccountJob::getNextTicketNumberForStore($orderDetail->store_id);
+
+            $ticketTypeDetail = HdTicketType::where('code', HdTicketTypeCode::ORDER_INFORMATION)->first();
+            $ticketData = [
+                'ticket_type_id' => $ticketTypeDetail->id,
+                'status' => HdTicketStatus::NEEDS_ACTION,
+                'related_order_id' => $orderDetail->id,
+                'subject' => '',
+                'customer_id' => $customer_id,
+                'order_id' => trim($orderDetail->order_id),
+                'store_id' => $orderDetail->store_id,
+                'ticket_date' => date('Y-m-d H:i:s'),
+                'ticket_code' => $ticket_code,
+                'message_read' => 1,
+                'replies' => 0,
+                'important' => 0,
+                'customer_merge_status' => 0,
+                'ticket_user_id' => $customer_id,
+            ];
+
+            $hd_ticket = Message::create($ticketData);
+            $ticket_id = $hd_ticket->id;
+        }
+
+        //$ticketDetail = Message::with('store','store.storeType')->where('id',$ticket_id)->first();
+        $ticketDetail = $hd_ticket;
+        $store_type_id = $ticketDetail->store->storeType->id;
+        $store_type_name = $ticketDetail->store->storeType->name;
+        $message_template = HdMessageTemplate::whereNull('order_operation_type')->orderBy('name')->get();
+        $messages = HDMessage::with('attachments')->where('ticket_id',$ticket_id)->orderBy('message_date','asc')->get();
+        /*echo '<pre>';
+        print_r($messages);
+        echo '</pre>';die;*/
+        $ticketTypeCode = HdTicketType::orderBy('name')->get();
+        $action = [];
+        $rma_done = $lable_generate = 0;
+        if(isset($ticketDetail->order_id) && $ticketDetail->order_id != NULL && $ticketDetail->order_id !=''){
+            $order_id = $ticketDetail->order_id;
+            $orderDetail = Order::with('orderItem','orderItem.product','orderItem.product.image','customer','customerAddress','orderOperation')->where('order_id',$order_id)->orWhere('purchase_order_id',$order_id)->first();
+
+            if($orderDetail) {
+                $orderOperations = OrderOperation::with('carrier', 'shipFrom', 'operationItem')->where('order_id', $orderDetail->id)->orderBy('created_at', 'desc')->get();
+
+                if (isset($orderDetail->orderItem)) {
+                    $canbeShipped = $canbeRefund = $canbeReplace = $canbeReturned = 0;
+                    foreach ($orderDetail->orderItem as $oitem) {
+                        $canbeShipped += $oitem->quantity - $oitem->shipped_quantity - $oitem->canceled_quantity;
+                        $canbeRefund += $oitem->shipped_quantity - $oitem->canceled_quantity;
+                        $canbeReplace += $oitem->shipped_quantity - $oitem->canceled_quantity;
+                        $canbeReturned += $oitem->shipped_quantity - $oitem->refund_quantity - $oitem->return_request_quantity;
+                    }
+
+                    $action = [
+                        'canbeShipped' => $canbeShipped,
+                        'canbeRefund' => $canbeRefund,
+                        'canbeReplace' => $canbeReplace,
+                        'canbeReturned' => $canbeReturned,
+                    ];
+                }
+
+                if (count($orderOperations ?? []) > 0) {
+                    $returnOperation = 0;
+                    $returnOperationCnt = 0;
+                    foreach ($orderOperations as $op) {
+                        if (count($op->operationItem ?? []) > 0) {
+                            foreach ($op->operationItem as $oop) {
+                                if ($oop->return_operation_item_id) {
+                                    $returnOperation += 1;
+                                }
+                            }
+                        }
+
+                        if (isset($op) && $op->operation_type == OrderOperationType::OrderReturn && $op->label_creation_type == ShippingLabelCreationType::NoLabel && $returnOperation == 0) {
+                            $returnOperationCnt += 1;
+                        }
+                    }
+                    $action['returnLable'] = $returnOperationCnt;
+                }
+            }
+
+        }
+
+        $ticketHistory = '';
+        if(isset($ticketDetail->customer_id)){
+            $ticket_list = Message::where('customer_id',$ticketDetail->customer_id)->where('id','!=',$ticket_id)->get();
+            if($ticket_list){
+                $ticketHistory = view('messages.ticket_history', ['ticket_list' => $ticket_list])->render();
+            }
+        }
+
+        //print_r($action);
+        return view('messages.detail', compact('message_template','ticketDetail','messages','ticketTypeCode','action','store_type_name','ticketHistory','rma_done','lable_generate','type'));
     }
 
     /**
@@ -277,11 +383,12 @@ class MessagesController extends Controller
 
     public function detail(string $id)
     {
+        $type = 'detail';
         $ticketDetail = Message::with('store','store.storeType')->where('id',$id)->first();
         $ticketDetail->update(['message_read' => 1]);
         $store_type_id = $ticketDetail->store->storeType->id;
         $store_type_name = $ticketDetail->store->storeType->name;
-        $message_template = HdMessageTemplate::where('store_type_id',$store_type_id)->get();
+        $message_template = HdMessageTemplate::whereNull('order_operation_type')->orderBy('name')->get();
         $messages = HDMessage::with('attachments')->where('ticket_id',$id)->orderBy('message_date','asc')->get();
         /*echo '<pre>';
         print_r($messages);
@@ -378,7 +485,7 @@ class MessagesController extends Controller
         }
 
         //print_r($action);
-        return view('messages.detail', compact('message_template','ticketDetail','messages','ticketTypeCode','action','store_type_name','ticketHistory','rma_done','lable_generate'));
+        return view('messages.detail', compact('message_template','ticketDetail','messages','ticketTypeCode','action','store_type_name','ticketHistory','rma_done','lable_generate','type'));
     }
 
     public function searchOrder(Request $request){
@@ -617,6 +724,7 @@ class MessagesController extends Controller
         $message_read = $request->input('message_read');
         $important = $request->input('important');
         $notes = $request->input('notes');
+        $subject = $request->input('subject');
         if($ticket_id){
 
             $updated_by = auth()->user()->name ?? 'admin';
@@ -624,6 +732,10 @@ class MessagesController extends Controller
             $updatedData = [
                 'updated_by' => $updated_by
             ];
+
+            if(isset($subject) && $subject){
+                $updatedData['subject'] = $subject;
+            }
 
             if(isset($status) && $status){
                 $updatedData['status'] = $status;

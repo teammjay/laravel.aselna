@@ -3,12 +3,14 @@
 namespace App\Jobs;
 
 use App\Models\HdMessageAttachment;
+use App\Models\Sequence;
 use App\Models\SysFile;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Models\Customer;
 use App\Models\CustomerEmail;
@@ -312,7 +314,7 @@ class ProcessStoreMessageAccountJob implements ShouldQueue
         return str_pad(1, 6, '0', STR_PAD_LEFT);
     }*/
 
-    function getNextTicketNumberForStore($storeId) {
+    public static function getNextTicketNumberForStore($storeId) {
         $key = 'ticket_' . str_replace('-', '', $storeId);
 
         return DB::transaction(function () use ($key) {

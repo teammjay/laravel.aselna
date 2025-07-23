@@ -568,7 +568,7 @@
 
                 success: function (data) {
                     if (data.success) {
-                        location.reload();
+                        //location.reload();
                     }
                 },
                 error: function (xhr) {
