@@ -58,14 +58,12 @@
                                 <div class="border-dark border-width-2">
                                     <div class="d-flex flex-column">
                                         <div>
-                                            <input type="radio" name="label_generation"
-                                                   value="<?= ShippingLabelCreationType::CreateLabel ?>" checked="">
+                                            <input type="radio" name="label_generation" value="<?= ShippingLabelCreationType::CreateLabel ?>" checked="">
                                             Create Label
                                         </div>
                                         <div>
-                                            <input type="radio" name="label_generation"
-                                                   value="<?= ShippingLabelCreationType::MarkAsShipped ?>">
-                                            Mark As Shipped
+                                            <input type="radio" name="label_generation" value="<?= ShippingLabelCreationType::NoLabel ?>">
+                                            Do not create label
                                         </div>
                                     </div>
                                 </div>

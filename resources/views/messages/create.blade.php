@@ -1109,12 +1109,10 @@
                     success: function (data) {
                         if(data.success && data.ticket_id != ''){
 
-                            console.log(subject);
+                            ticket_id = data.ticket_id;
+                            $('#ticket-title').html('ON <strong>'+data.ticket_code+'</strong>');
                             if(subject == 'RMA' || subject == 'rma'){
-                                alert('in');
                                 $('#rma').trigger('click');
-                                ticket_id = data.ticket_id;
-                                $('#ticket-title').html('ON <strong>'+data.ticket_code+'</strong>');
                             }
                         }
                     },
