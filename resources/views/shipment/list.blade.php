@@ -312,6 +312,7 @@
 
     <script>
     $(document).ready(function() {
+        let isProcessingCancelled = false;
         $('#listing_store').select2();
         //$('#markAsShippedModal').modal('show');
         $('.card-header').on('click',function () {
@@ -721,6 +722,7 @@
 
         $(document).on('click','#ship_all',function () {
             let shipment_ids = [];
+            isProcessingCancelled = false;
             $('input[name="shipment_id[]"]').each(function () {
                 shipment_ids.push($(this).val())
             });
@@ -749,7 +751,7 @@
                                     </div>
                                 </div>
                                 <div class="modal-footer">
-                                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                                    <button type="button" id="btn-cancel-shipment" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
                                     <button type="button" id="btn-complete" class="btn btn-success" data-dismiss="modal">Complete</button>
                                 </div>
                             </div>
@@ -803,6 +805,7 @@
 
         $(document).on('click','#ship_selected',function () {
             let shipment_ids = [];
+            isProcessingCancelled = false;
             $('input[name="shipment_id[]"]:checked').each(function () {
                 shipment_ids.push($(this).val())
             });
@@ -830,8 +833,8 @@
                                         <ul class="list-group" id="progress-items"></ul>
                                     </div>
                                 </div>
-                                <div class="modal-footer" style="display:none">
-                                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                                <div class="modal-footer">
+                                    <button type="button" id="btn-cancel-shipment" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
                                     <button type="button" id="btn-complete" class="btn btn-success" data-dismiss="modal">Complete</button>
                                 </div>
                             </div>
@@ -885,6 +888,13 @@
 
         // Function to process shipments one by one
         function processShipmentsSequentially(process_id, shipment_ids, total_count, current_index) {
+            // Check if processing has been cancelled
+            if (isProcessingCancelled) {
+                $('#progress-status').text('Processing cancelled');
+                $('#progressModal .modal-footer #btn-complete').show();
+                return;
+            }
+
             if (current_index >= shipment_ids.length) {
                 // All done
                 let progress = 100;
@@ -953,6 +963,10 @@
                 }
             });
         }
+
+        $(document).on('click','#btn-cancel-shipment',function () {
+            isProcessingCancelled = true;
+        })
 
         $(document).on('click','#updateShipment',function () {
 
