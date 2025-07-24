@@ -19,6 +19,8 @@ use App\Jobs\FeedGenerationJob;
 use App\Jobs\FetchAmazonOrdersJob;
 use App\Jobs\FetchEbayOrders;
 use App\Jobs\FetchEmailMessagesJob;
+use App\Jobs\FetchMagentoCategoriesJob;
+use App\Jobs\FetchMagentoProductsJob;
 use App\Jobs\FetchShopifyProductsJob;
 use App\Jobs\FetchWalmartOrdersJob;
 use App\Jobs\FileSystemSyncJob;
@@ -156,8 +158,12 @@ class SyncAllTables extends Command
 //        SystemPrinterSyncJob::dispatch();
 
 //        FetchEmailMessagesJob::dispatch();
-        SubmitShopifyProductsJob::dispatch();
+//        SubmitShopifyProductsJob::dispatch();
 //        FetchShopifyProductsJob::dispatch();
+//        FetchMagentoProductsJob::dispatch();
+        MagentoProductsSyncJob::dispatch();
+//        FetchMagentoCategoriesJob::dispatch();
+//        MagnetoAttributesSyncJob::dispatch();
 
 //        $transactionIds = [
 ////            '9400150105798006163885',
