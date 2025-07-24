@@ -80,40 +80,13 @@
         <div class="col-md-8">
             <div class="card">
                 <div class="card-header d-flex align-items-center" style="gap:15px;">
-                    <h2 class="ticket-title">ON <strong>{{ $ticketDetail->ticket_code }}</strong></h2>
+                    <h2 class="ticket-title">Subject</h2>
                     <input type="text" class="form-control" name="subject" id="subject">
                 </div>
                 <div class="card-body">
 
                     <div class="row">
                         <div class="col-md-12 mail-box" id="scrollable">
-                            @if(count($messages ?? []) > 0)
-                                @foreach($messages as $key=>$message)
-                                    <div class="time-center">{{ $message->message_date }}</div>
-                                    <div class="msg-container @if($message->author == 1) darker @endif">
-                                        {{--<iframe srcdoc="{!! htmlspecialchars($message->message) !!}"></iframe>--}}
-                                        <div class="mb-3">
-                                        {!! nl2br(html_entity_decode($message->message)) !!}
-                                        </div>
-                                        @if(isset($message->attachments))
-                                            @foreach($message->attachments as $attachment)
-                                                @php
-                                                    $imageObj = $attachment->imageObj;
-                                                    $imageName = $imageObj->name;
-                                                    $imageUrl = asset('storage/'.$imageObj->location.$imageObj->name);
-                                                @endphp
-                                                <div class="btn-group attachmentGroup" role="group">
-                                                    <button id="btnGroupDrop3" type="button" class="lable-image dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="fa fa-paperclip"></i> {{ $imageName }}</button>
-                                                    <div class="dropdown-menu" aria-labelledby="btnGroupDrop3">
-                                                        <a class="dropdown-item" target="_blank" href="{{ $imageUrl }}">Download</a>
-                                                    </div>
-                                                </div>
-                                            @endforeach
-                                        @endif
-                                    </div>
-
-                                @endforeach
-                            @endif
 
                         </div>
                     </div>
@@ -132,8 +105,8 @@
                                     </a>
                                 </li>
                                 <li class="nav-item">
-                                    <a class="nav-link @if($ticketDetail->notes !='' && $ticketDetail->notes != NULL) text-red @endif" id="internalNotes-tab" data-toggle="pill" href="#tab2" role="tab" aria-controls="tab2" aria-selected="false">
-                                        @if($ticketDetail->notes !='' && $ticketDetail->notes != NULL) <i class="fa fa-exclamation-triangle"></i> @else <i class="fa fa-sticky-note"></i> @endif Internal Notes </a>
+                                    <a class="nav-link" id="internalNotes-tab" data-toggle="pill" href="#tab2" role="tab" aria-controls="tab2" aria-selected="false">
+                                        Internal Notes </a>
                                 </li>
                             </ul>
 
@@ -180,7 +153,7 @@
                                 <div class="tab-pane fad" id="tab2" role="tabpanel" aria-labelledby="internalNotes-tab">
                                     <div class="row pt-3">
                                         <div class="col-md-12">
-                                            <textarea class="form-control" rows="10" id="internal_notes" name="internal_notes">{{ $ticketDetail->notes }}</textarea>
+                                            <textarea class="form-control" rows="10" id="internal_notes" name="internal_notes"></textarea>
                                         </div>
                                     </div>
                                 </div>
@@ -227,14 +200,14 @@
 
                                 @endphp
 
-                                @if(strtolower($store_type_name) == 'accessorywiz')
+                                {{--@if(strtolower($store_type_name) == 'accessorywiz')--}}
                                     <button type="button" class="btn btn-default {{ $displayReturned }}" name="rma" id="rma">RMA</button>
                                     <button type="button" class="btn btn-default {{ $displayReturnLabel }}" name="return_label" id="return_label">Return Label</button>
                                     <button type="button" class="btn btn-default {{ $displayReplace }}" name="replacement" id="replacement">Replacement</button>
                                     <button type="button" class="btn btn-default {{ $displayRefund }}" name="refund" id="refund">Refund</button>
                                     <button type="button" class="btn btn-default {{ $displayShipped }}" name="ship_order" id="ship_order">Ship Order</button>
                                     <button type="button" class="btn btn-default {{ $displayCanceled }}" name="cancel_order" id="cancel_order">Cancel Order</button>
-                                @endif
+                                {{--@endif--}}
                             </div>
                         </div>
                         <div class="col-md-4">
@@ -271,15 +244,14 @@
                 <div class="card-body">
                     <div class="row pt-3" >
                         <div class="col-md-12">
-                            {{ $ticketDetail->ticket_email }}
-                            <input type="hidden" id="customer_id" value="{{ $ticketDetail->customer_id }}">
-                            <input type="hidden" id="customer_name" value="{{ isset($ticketDetail->customer) ? $ticketDetail->customer->first_name : '' }}">
-                            <input type="hidden" id="store_name" value="{{ isset($ticketDetail->store) ? $ticketDetail->store->name : '' }}">
+                            <input type="hidden" id="customer_id" value="{{ $customer_detail->id }}">
+                            <input type="hidden" id="customer_name" value="{{ isset($customer_detail->first_name) ? $customer_detail->first_name : '' }}">
+                            <input type="hidden" id="store_name" value="{{ isset($orderDetail->store) ? $orderDetail->store->name : '' }}">
                         </div>
                     </div>
                     <div class="row pt-3" >
                         <div class="col-md-12 d-flex">
-                            <input type="text" class="form-control" name="customer" id="customer" value="{{ isset($ticketDetail->customer) ? $ticketDetail->customer->full_name : '' }}">
+                            <input type="text" class="form-control" name="customer" id="customer" value="{{ isset($customer_detail->full_name) ? $customer_detail->full_name : '' }}">
                             <button type="button" class="btn btn-default" id="search_customer"><i class="fa fa-search"></i></button>
                         </div>
                     </div>
@@ -296,7 +268,7 @@
                             <label for="carrier_name">Order ID</label>
                         </div>
                         <div class="col-md-8 d-flex align-items-center">
-                            <input type="text" class="form-control" name="order_id" id="order_id" value="{{ ($ticketDetail->order_id != '') ? $ticketDetail->order_id : '' }}">
+                            <input type="text" class="form-control" name="order_id" id="order_id" value="{{ ($orderDetail->order_id != '') ? $orderDetail->order_id : '' }}">
                             <button type="button" class="btn btn-default" id="search_order"><i class="fa fa-search"></i></button>
                         </div>
                     </div>
@@ -356,7 +328,7 @@
                 <div class="card-body">
                     <div style="max-height: 150px; overflow: auto">
                         <table class="table table-bordered" id="ticket_history_table">
-                            {!! $ticketHistory  !!}
+
                         </table>
                     </div>
                 </div>
@@ -364,13 +336,13 @@
         </div>
     </div>
 
-    @include('messages.modals', ['ticketDetail' => $ticketDetail])
+    @include('messages.modals', ['ticketDetail' => []])
 @stop
 @section('adminlte_js')
     <script src="{{ asset('js/jquery.datetimepicker.full.js') }}"></script>
     <script>
 
-        var ticket_id = '{{ $ticketDetail->id }}';
+        var ticket_id = '';
 
         const scrollable = document.getElementById("scrollable");
         scrollable.scrollTop = scrollable.scrollHeight;
@@ -440,7 +412,7 @@
             $(document).on('blur','#internal_notes',function () {
                 var notes = $(this).val();
                 //if(notes != '') {
-                    let ticket_id = '{{ $ticketDetail->id }}';
+                    let ticket_id = '';
                     $.ajax({
                         type: "POST",
                         url: "{{ route('message.updateticket') }}",
@@ -473,7 +445,7 @@
             /*$(document).on('click','#close_ticket',function () {
                 let ticket_type = $('#ticket_type').val();
                 let status = $('#action_type').val();
-                let ticket_id = '{{ $ticketDetail->id }}';
+                let ticket_id = '';
 
                 if(ticket_id != '') {
                     $.ajax({
@@ -506,7 +478,7 @@
                 var template_id = $('#message_template').val();
                 var message_to_send = $('#message_to_send').val();
                 var customer_id = $('#customer_id').val();
-                //var ticket_id = '{{ $ticketDetail->id }}';
+                //var ticket_id = '';
                 var ticket_status = $(this).data('close');
                 if(message_to_send == ''){
                     alert('Please add text to send message');
@@ -1120,6 +1092,39 @@
                 });
             });
 
+            $(document).on('blur','#subject',function () {
+                var subject = $(this).val();
+                $.ajax({
+                    type: "POST",
+                    url: "{{ route('message.saveticket') }}",
+                    data: {
+                        subject: subject,
+                        order_id: $('#order_id').val(),
+                    },
+                    dataType:'json',
+                    headers: {
+                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                    },
+
+                    success: function (data) {
+                        if(data.success && data.ticket_id != ''){
+
+                            console.log(subject);
+                            if(subject == 'RMA' || subject == 'rma'){
+                                alert('in');
+                                $('#rma').trigger('click');
+                                ticket_id = data.ticket_id;
+                                $('#ticket-title').html('ON <strong>'+data.ticket_code+'</strong>');
+                            }
+                        }
+                    },
+                    error: function (xhr) {
+                    },
+                    complete: function () {
+                        $("#ajax-preloader").hide();
+                    }
+                });
+            });
 
         });
 

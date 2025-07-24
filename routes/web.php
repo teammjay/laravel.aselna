@@ -311,6 +311,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/messages/refundorder', 'refundOrder')->name('message.refundorder');
         Route::post('/messages/replaceorder', 'replaceOrder')->name('message.replaceorder');
         Route::post('/messages/imageupload', 'imageUpload')->name('message.imageupload');
+        Route::post('/messages/saveticket', 'saveTicket')->name('message.saveticket');
     });
 
     Route::controller(PageTypesController::class)->group(function () {

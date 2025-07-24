@@ -30,7 +30,7 @@ class EndicialabelService
     public function createLabel(array $request, $orderOperationId)
     {
         Log::info('Creating Endicia label with request: ' . json_encode($request));
-        $xmlString = $this->buildXmlRequest($request);
+        $xmlString = $this->buildXmlRequest($request,$orderOperationId);
         Log::info('Endicia Label Request XML: ' . $xmlString);
 
         try {
@@ -259,7 +259,7 @@ class EndicialabelService
     }
 
     private
-    function buildXmlRequest(array $shipmentDetails)
+    function buildXmlRequest(array $shipmentDetails,$orderOperationId)
     {
         $xml = new \SimpleXMLElement('<?xml version="1.0" encoding="utf-8"?><soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"/>');
         $body = $xml->addChild('soap:Body', null, 'http://schemas.xmlsoap.org/soap/envelope/');
@@ -352,9 +352,15 @@ class EndicialabelService
         if (isset($shipmentDetails['RubberStamp2'])) {
             $labelRequest->addChild('RubberStamp2', $shipmentDetails['RubberStamp2']);
         }
-//        if (isset($shipmentDetails['RubberStamp3'])) {
-//            $labelRequest->addChild('RubberStamp3', $shipmentDetails['RubberStamp3']);
-//        }
+
+        $orderOperation = OrderOperation::findOrFail($orderOperationId);
+        $operation_type = $orderOperation->operation_type;
+
+        if (OrderOperationType::isReturn($operation_type)) {
+            if (isset($shipmentDetails['RubberStamp3'])) {
+                $labelRequest->addChild('RubberStamp3', $shipmentDetails['RubberStamp3']);
+            }
+        }
 
         return $xml->asXML();
     }

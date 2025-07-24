@@ -53,9 +53,9 @@
         max-height: 500px;
         overflow: auto;
     }
-    /*#btnGroupDrop2::after{
+    #btnGroupDrop2::after{
         display:none;
-    }*/
+    }
     #order_operation{
         position: relative;
         overflow: hidden;
@@ -1149,30 +1149,6 @@
                     },
                     error: function(xhr) {
                         alert('Upload failed');
-                    }
-                });
-            });
-
-            $(document).on('blur','#subject',function () {
-                var subject = $(this).val();
-                $.ajax({
-                    type: "POST",
-                    url: "{{ route('message.updateticket') }}",
-                    data: {
-                        ticket_id: ticket_id,
-                        subject: subject
-                    },
-                    headers: {
-                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                    },
-
-                    success: function (data) {
-
-                    },
-                    error: function (xhr) {
-                    },
-                    complete: function () {
-                        $("#ajax-preloader").hide();
                     }
                 });
             });
