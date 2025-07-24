@@ -748,8 +748,9 @@
                                         <ul class="list-group" id="progress-items"></ul>
                                     </div>
                                 </div>
-                                <div class="modal-footer" style="display:none">
-                                    <button type="button" class="btn btn-success" data-dismiss="modal">Complete</button>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                                    <button type="button" id="btn-complete" class="btn btn-success" data-dismiss="modal">Complete</button>
                                 </div>
                             </div>
                         </div>
@@ -761,7 +762,7 @@
             $('#progressModal .progress-bar').css('width', '0%').attr('aria-valuenow', 0).text('0%');
             $('#progress-status').text('Preparing to process shipments...');
             $('#progress-items').empty();
-            $('#progressModal .modal-footer').hide();
+            $('#progressModal .modal-footer #btn-complete').hide();
             $('#progressModal').modal('show');
 
             // Start the processing by making the initial request
@@ -830,7 +831,8 @@
                                     </div>
                                 </div>
                                 <div class="modal-footer" style="display:none">
-                                    <button type="button" class="btn btn-success" data-dismiss="modal">Complete</button>
+                                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                                    <button type="button" id="btn-complete" class="btn btn-success" data-dismiss="modal">Complete</button>
                                 </div>
                             </div>
                         </div>
@@ -842,7 +844,7 @@
             $('#progressModal .progress-bar').css('width', '0%').attr('aria-valuenow', 0).text('0%');
             $('#progress-status').text('Preparing to process shipments...');
             $('#progress-items').empty();
-            $('#progressModal .modal-footer').hide();
+            $('#progressModal .modal-footer #btn-complete').hide();
             $('#progressModal').modal('show');
 
             // Start the processing by making the initial request
@@ -888,7 +890,7 @@
                 let progress = 100;
                 $('#progress-status').text(`Completed processing all ${total_count} shipments`);
                 $('#progress-bar').css('width', `${progress}%`).attr('aria-valuenow', progress).text(`${progress}%`);
-                $('#progressModal .modal-footer').show();
+                $('#progressModal .modal-footer #btn-complete').show();
                 return;
             }
 
