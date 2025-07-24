@@ -222,19 +222,41 @@ class MessagesController extends Controller
     public function create(string $orderid)
     {
         $orderDetail = Order::with('customer','store','store.storeType')->where('id',$orderid)->first();
-        $type = 'create';
-        /*echo '<pre>';
-        print_r($orderDetail);
-        echo '<pre>';die;*/
         $customer_id = isset($orderDetail->customer) ? $orderDetail->customer->id : NULL;
+        $customer_detail = Customer::where('id',$customer_id)->first();
+        $store_type_name = $orderDetail->store->storeType->name;
+
         $ticket_exist = Message::where('related_order_id',$orderid)->first();
-        /*echo '<pre>';
-        print_r($ticket_exist);
-        echo '</pre>';die;*/
+
         if($ticket_exist){
             $ticket_id = $ticket_exist->id;
-            $hd_ticket = $ticket_exist;
-        }else{
+            //echo $ticket_id;die;
+            return redirect()->route('message.detail',$ticket_id);
+        }
+
+        //$ticketDetail = Message::with('store','store.storeType')->where('id',$ticket_id)->first();
+        $message_template = HdMessageTemplate::whereNull('order_operation_type')->orderBy('name')->get();
+        /*echo '<pre>';
+        print_r($messages);
+        echo '</pre>';die;*/
+        $ticketTypeCode = HdTicketType::orderBy('name')->get();
+        $action = [];
+
+        //print_r($action);
+        return view('messages.create', compact('message_template','orderDetail','ticketTypeCode','customer_detail','store_type_name'));
+    }
+
+    public function saveTicket(Request $request){
+
+        $order_id = $request->input('order_id');
+        $subject = $request->input('subject');
+
+        if($order_id && $subject) {
+
+            $orderDetail = Order::with('customer', 'store', 'store.storeType')->where('order_id', $order_id)->first();
+            $customer_id = isset($orderDetail->customer) ? $orderDetail->customer->id : NULL;
+            $customer_detail = Customer::where('id', $customer_id)->first();
+
             $ticket_code = $orderDetail->store->short_code . '-' . ProcessStoreMessageAccountJob::getNextTicketNumberForStore($orderDetail->store_id);
 
             $ticketTypeDetail = HdTicketType::where('code', HdTicketTypeCode::ORDER_INFORMATION)->first();
@@ -242,7 +264,7 @@ class MessagesController extends Controller
                 'ticket_type_id' => $ticketTypeDetail->id,
                 'status' => HdTicketStatus::NEEDS_ACTION,
                 'related_order_id' => $orderDetail->id,
-                'subject' => '',
+                'subject' => $subject,
                 'customer_id' => $customer_id,
                 'order_id' => trim($orderDetail->order_id),
                 'store_id' => $orderDetail->store_id,
@@ -257,76 +279,19 @@ class MessagesController extends Controller
 
             $hd_ticket = Message::create($ticketData);
             $ticket_id = $hd_ticket->id;
-        }
 
-        //$ticketDetail = Message::with('store','store.storeType')->where('id',$ticket_id)->first();
-        $ticketDetail = $hd_ticket;
-        $store_type_id = $ticketDetail->store->storeType->id;
-        $store_type_name = $ticketDetail->store->storeType->name;
-        $message_template = HdMessageTemplate::whereNull('order_operation_type')->orderBy('name')->get();
-        $messages = HDMessage::with('attachments')->where('ticket_id',$ticket_id)->orderBy('message_date','asc')->get();
-        /*echo '<pre>';
-        print_r($messages);
-        echo '</pre>';die;*/
-        $ticketTypeCode = HdTicketType::orderBy('name')->get();
-        $action = [];
-        $rma_done = $lable_generate = 0;
-        if(isset($ticketDetail->order_id) && $ticketDetail->order_id != NULL && $ticketDetail->order_id !=''){
-            $order_id = $ticketDetail->order_id;
-            $orderDetail = Order::with('orderItem','orderItem.product','orderItem.product.image','customer','customerAddress','orderOperation')->where('order_id',$order_id)->orWhere('purchase_order_id',$order_id)->first();
-
-            if($orderDetail) {
-                $orderOperations = OrderOperation::with('carrier', 'shipFrom', 'operationItem')->where('order_id', $orderDetail->id)->orderBy('created_at', 'desc')->get();
-
-                if (isset($orderDetail->orderItem)) {
-                    $canbeShipped = $canbeRefund = $canbeReplace = $canbeReturned = 0;
-                    foreach ($orderDetail->orderItem as $oitem) {
-                        $canbeShipped += $oitem->quantity - $oitem->shipped_quantity - $oitem->canceled_quantity;
-                        $canbeRefund += $oitem->shipped_quantity - $oitem->canceled_quantity;
-                        $canbeReplace += $oitem->shipped_quantity - $oitem->canceled_quantity;
-                        $canbeReturned += $oitem->shipped_quantity - $oitem->refund_quantity - $oitem->return_request_quantity;
-                    }
-
-                    $action = [
-                        'canbeShipped' => $canbeShipped,
-                        'canbeRefund' => $canbeRefund,
-                        'canbeReplace' => $canbeReplace,
-                        'canbeReturned' => $canbeReturned,
-                    ];
-                }
-
-                if (count($orderOperations ?? []) > 0) {
-                    $returnOperation = 0;
-                    $returnOperationCnt = 0;
-                    foreach ($orderOperations as $op) {
-                        if (count($op->operationItem ?? []) > 0) {
-                            foreach ($op->operationItem as $oop) {
-                                if ($oop->return_operation_item_id) {
-                                    $returnOperation += 1;
-                                }
-                            }
-                        }
-
-                        if (isset($op) && $op->operation_type == OrderOperationType::OrderReturn && $op->label_creation_type == ShippingLabelCreationType::NoLabel && $returnOperation == 0) {
-                            $returnOperationCnt += 1;
-                        }
-                    }
-                    $action['returnLable'] = $returnOperationCnt;
-                }
-            }
-
-        }
-
-        $ticketHistory = '';
-        if(isset($ticketDetail->customer_id)){
-            $ticket_list = Message::where('customer_id',$ticketDetail->customer_id)->where('id','!=',$ticket_id)->get();
-            if($ticket_list){
-                $ticketHistory = view('messages.ticket_history', ['ticket_list' => $ticket_list])->render();
+            if ($ticket_id) {
+                return response()->json([
+                    'success' => true,
+                    'ticket_id' => $ticket_id,
+                    'ticket_code' => $ticket_code,
+                ]);
             }
         }
 
-        //print_r($action);
-        return view('messages.detail', compact('message_template','ticketDetail','messages','ticketTypeCode','action','store_type_name','ticketHistory','rma_done','lable_generate','type'));
+        return response()->json([
+            'success' => false
+        ]);
     }
 
     /**
@@ -493,15 +458,18 @@ class MessagesController extends Controller
         $order_id = $request->input('order_id');
         $ticket_id = $request->input('ticket_id');
 
-        if($order_id && $ticket_id){
-            $ticketDetail = Message::findOrFail($ticket_id);
+        if($order_id){
+
             $orderDetail = Order::with('orderItem','orderItem.product','orderItem.product.image','customer','customerAddress')->where('order_id',$order_id)->orWhere('purchase_order_id',$order_id)->first();
             /*echo '<pre>';
             print_r($orderDetail);
             echo '</pre>';die;*/
 
             if($orderDetail){
-                $ticketDetail->update(['order_id' => $orderDetail->order_id]);
+                if($ticket_id) {
+                    $ticketDetail = Message::findOrFail($ticket_id);
+                    $ticketDetail->update(['order_id' => $orderDetail->order_id]);
+                }
                 $orderOperations = OrderOperation::with('carrier','shipFrom','operationItem')->where('order_id',$orderDetail->id)->orderBy('created_at','desc')->get();
                 $data['items'] = view('messages.order_items', ['orderDetail' => $orderDetail])->render();
                 $data['orderId'] = $orderDetail->order_id;
@@ -622,7 +590,7 @@ class MessagesController extends Controller
         $operation_id = $request->input('operation_id');
         $ticket_id = $request->input('ticket_id');
         if($template_id || (isset($rma_number) && $rma_number != '')){
-            $returnAddress = $imageName = $imageUrl = $imagePath = "";
+            $returnAddress = $imageName = $imageUrl = $imagesPath = "";
 
             if(isset($operation_id) && $operation_id != ''){
                 $orderOperation = OrderOperation::with('shipFrom','shipFrom.returnAddress','carrier','store')->where('id',$operation_id)->first();
