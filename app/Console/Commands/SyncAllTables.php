@@ -160,8 +160,8 @@ class SyncAllTables extends Command
 //        FetchEmailMessagesJob::dispatch();
 //        SubmitShopifyProductsJob::dispatch();
 //        FetchShopifyProductsJob::dispatch();
-//        FetchMagentoProductsJob::dispatch();
-        MagentoProductsSyncJob::dispatch();
+        FetchMagentoProductsJob::dispatch();
+//        MagentoProductsSyncJob::dispatch();
 //        FetchMagentoCategoriesJob::dispatch();
 //        MagnetoAttributesSyncJob::dispatch();
 
