@@ -235,6 +235,23 @@ class MagentoAuthService
         return json_decode($response->getBody(), true);
     }
 
+    public function getAllCategories()
+    {
+        $accessToken = $this->authenticate();
+        Log::info('Access Token Created ' . $accessToken);
+
+        $headers = [
+            'Content-Type' => 'application/json',
+            'Accept' => 'application/json',
+            'Authorization' => 'Bearer ' . $accessToken,
+        ];
+
+        $request = new Request('GET', $this->endpoint . '/rest/V1/categories', $headers);
+        $response = $this->client->sendAsync($request)->wait();
+
+        return json_decode($response->getBody(), true);
+    }
+
     public function createAttribute($attributeData)
     {
         $accessToken = $this->authenticate();
@@ -379,5 +396,33 @@ class MagentoAuthService
         $response = $this->client->sendAsync($request, ['json' => $body])->wait();
 
         return json_decode($response->getBody(), true);
+    }
+
+    public function getProducts($pageSize = 50, $currentPage = 1)
+    {
+        try {
+            $accessToken = $this->authenticate();
+            Log::info('Access Token Created ' . $accessToken);
+
+            $headers = [
+                'Content-Type' => 'application/json',
+                'Accept' => 'application/json',
+                'Authorization' => 'Bearer ' . $accessToken,
+            ];
+
+            $query = [
+                'searchCriteria[pageSize]' => $pageSize,
+                'searchCriteria[currentPage]' => $currentPage
+            ];
+
+            $queryString = http_build_query($query);
+            $request = new Request('GET', $this->endpoint . '/rest/V1/products?' . $queryString, $headers);
+            $response = $this->client->sendAsync($request)->wait();
+
+            return json_decode($response->getBody(), true);
+        } catch (RequestException $e) {
+            Log::error('Error fetching products: ' . $e->getMessage());
+            return ['items' => []];
+        }
     }
 }

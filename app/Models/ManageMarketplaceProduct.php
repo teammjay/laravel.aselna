@@ -28,5 +28,5 @@ class ManageMarketplaceProduct extends Model
     }
 
 
-    protected $fillable = ['id', 'product_id', 'product_code', 'store_id', 'device_id', 'product_code', 'sku', 'upc_code', 'marketplace_product_id', 'marketplace_variant_id', 'upload_status', 'upload_attempts', 'created_at', 'updated_at'];
+    protected $fillable = ['id', 'product_id', 'product_code', 'store_id', 'device_id', 'product_code','parent_id', 'sku', 'upc_code', 'marketplace_product_id', 'marketplace_variant_id', 'upload_status', 'upload_attempts', 'created_at', 'updated_at'];
 }

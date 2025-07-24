@@ -8,10 +8,13 @@ use App\Models\Device;
 use App\Models\GenerateProductImage;
 use App\Models\ManageMarketplaceProduct;
 use App\Models\MarketplaceAttributeMapping;
+use App\Models\MarketPlaceCategoryMappings;
 use App\Models\ProductImages;
 use App\Models\ProductTitleKeyword;
 use App\Models\ProductType;
 use App\Models\Store;
+use App\Models\StoreCategory;
+use App\Models\StoreTypeListing;
 use App\Services\Auth\MagentoAuthService;
 use App\Services\Marketplace\Service\MagentoService;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -23,6 +26,8 @@ class MagentoProductsSyncJob implements ShouldQueue
     use Queueable;
 
     public $timeout = 30000;
+
+    private $limit = 100;
 
     public MagentoService $magentoService;
 
@@ -36,6 +41,10 @@ class MagentoProductsSyncJob implements ShouldQueue
 
     public function handle(): void
     {
+        if (env('APP_ENV') === 'local') {
+            $this->limit = 10;
+        }
+
         $this->magentoService = new MagentoService();
         $stores = Store::select('store.*')->with('fileSystem', 'storeType')->join('store_type', 'store_type.id', '=', 'store.store_type_id')->where('store_type.code', 'magento')->get();
 
@@ -44,16 +53,18 @@ class MagentoProductsSyncJob implements ShouldQueue
             foreach ($stores as $store) {
                 Log::info('Store : ' . $store->name);
 
-                $pIds = ManageMarketplaceProduct::select('product_id')->whereNull('parent_id')->whereIn('upload_status', ['success', 'failed'])->get();
+                $AlreadyCreatedIds = ManageMarketplaceProduct::select('product_id')->where('upload_status', 'success')->where('store_id', $store->id)->get();
                 $productTypes = ProductType::select('id')->where('code', 'ceabundle')->get()->toArray();
 
                 $products = Catalog::select('*')->with('productType', 'productKeyFeatures', 'productColor')
                     ->whereNotIn('product_type', $productTypes)
-                    ->whereNotIn('product_id', $pIds)
+                    ->whereNotIn('product_id', $AlreadyCreatedIds)
+                    ->where('product_status', '!=', 'discontinued')
                     ->orderBy('created_at', 'desc')
                     ->whereNull('parent_id')
-                    ->limit(10)
+                    ->limit($this->limit)
                     ->get();
+
                 foreach ($products as $product) {
                     $this->submitFeed($product, $store);
                 }
@@ -80,12 +91,27 @@ class MagentoProductsSyncJob implements ShouldQueue
                         ->where('product_id', $productData->product_id)
                         ->where('store_id', $store->id);
                 })
+                ->where('device.status', 'active')
                 ->whereIn('device.order', [10, 2])
                 ->limit(20)
                 ->get();
 
-            foreach ($devices as $device) {
-                $this->createSimpleProduct($productData, $store, $device);
+            if (count($devices) === 0) {
+                $configProduct = ManageMarketplaceProduct::where('product_id', $productData->product_id)
+                    ->whereNull('parent_id')
+                    ->where('store_id', $store->id)
+                    ->first();
+
+                if ($configProduct) {
+                    $configProduct->update([
+                        'upload_status' => MarketPlaceUploadStatus::SUCCESS,
+                        'upload_attempts' => 1
+                    ]);
+                }
+            } else {
+                foreach ($devices as $device) {
+                    $this->createSimpleProduct($productData, $store, $device);
+                }
             }
         }
     }
@@ -118,6 +144,10 @@ class MagentoProductsSyncJob implements ShouldQueue
 
         $mediaGallerEntries = $this->getMediaGalleryEntries($productData, $store);
 //        Log::info('Media Gallery Entries: ' . json_encode($mediaGallerEntries));
+        $categoryIds = $this->getCategoryIds($store, $productData);
+
+//        $categoryIds = implode(',', $categoryIds);
+//        Log::info('Category IDs: ' . $categoryIds);
 
         $finalProductData = [
             "attribute_set_id" => 4,
@@ -147,10 +177,10 @@ class MagentoProductsSyncJob implements ShouldQueue
                     "attribute_code" => "short_description",
                     "value" => $productData->product_description
                 ],
-//                [
-//                    "attribute_code" => "category_ids",
-//                    "value" => "{{category_ids}}"
-//                ]
+                [
+                    "attribute_code" => "category_ids",
+                    "value" => $categoryIds
+                ]
             ],
             "extension_attributes" => [
                 "stock_item" => [
@@ -196,12 +226,14 @@ class MagentoProductsSyncJob implements ShouldQueue
             ->where('code', 'devices')
             ->first();
 
+        Log::info('Brand ID: ' . $device->brand_id);
+
         $marketPlaceBrand = MarketplaceAttributeMapping::where('store_id', $store->id)
             ->where('code_id', $device->brand_id)
             ->where('code', 'brands')
             ->first();
 
-        $new_sku = $productData->product_sku . '-' . $marketPlaceDevice->marketplace_code;
+        $new_sku = StoreTypeListing::generateUniqueAlphabeticSku($productData->product_sku, 4);
 
         $finalProductData = [
             "attribute_set_id" => 4,
@@ -252,6 +284,7 @@ class MagentoProductsSyncJob implements ShouldQueue
         Log::info('Final Product Data: ' . json_encode($finalProductData));
         $response = $this->magentoService->createOrUpdateProduct($finalProductData, $store);
         Log::info('Response from Magento: ' . json_encode($response));
+
         if (isset($response['id'])) {
             $magentoDevices = $magentoAuthService->getAttribute('devices');
             $deviceOption = [
@@ -285,6 +318,8 @@ class MagentoProductsSyncJob implements ShouldQueue
             ->where('store_id', $store->id)
             ->first();
 
+        Log::info('Config Product: ' . json_encode($configProduct));
+
         ManageMarketplaceProduct::updateOrCreate(
             [
                 'product_id' => $productData->product_id,
@@ -310,6 +345,10 @@ class MagentoProductsSyncJob implements ShouldQueue
 
     private function getMediaGalleryEntries($productData, $store)
     {
+        if (env('APP_ENV') === 'local') {
+            return [];
+        }
+
         $mediaGalleryEntries = [];
         ProductImages::where('product_id', $productData->product_id)
             ->chunk(100, function ($productImages) use ($store, $productData, $mediaGalleryEntries) {
@@ -356,6 +395,30 @@ class MagentoProductsSyncJob implements ShouldQueue
                 }
             });
         return $mediaGalleryEntries;
+    }
+
+    /**
+     * @param mixed $store
+     * @param mixed $productData
+     * @return mixed
+     */
+    public function getCategoryIds(mixed $store, mixed $productData)
+    {
+        $categoryIds = MarketPlaceCategoryMappings::where('store_id', $store->id)
+            ->where('name', $productData->productType->name)
+            ->pluck('marketplace_category_id')->toArray();
+
+        $parentCategoryIds = MarketPlaceCategoryMappings::where('store_id', $store->id)
+            ->where('name', $productData->productType->name)
+            ->pluck('marketplace_parent_id')->toArray();
+
+        foreach ($parentCategoryIds as $parentCategoryId) {
+            if (!in_array($parentCategoryId, $categoryIds)) {
+                $categoryIds[] = $parentCategoryId;
+            }
+        }
+
+        return array_merge($categoryIds);
     }
 
 }

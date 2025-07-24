@@ -52,20 +52,20 @@ class SubmitShopifyProductsJob implements ShouldQueue
                 }
 
                 // Handle Created Products
-//                $AlreadyCreatedIds = ManageMarketplaceProduct::select('product_id')->where('upload_status', 'success')->where('store_id', $store->id)->get();
+                $AlreadyCreatedIds = ManageMarketplaceProduct::select('product_id')->where('upload_status', 'success')->where('store_id', $store->id)->get();
                 $productTypes = ProductType::select('id')->where('code', 'ceabundle')->get()->toArray();
-//                $products = Catalog::select('*')->with('productType', 'productKeyFeatures', 'productColor')
-//                    ->whereNotIn('product_type', $productTypes)
-//                    ->whereNull('parent_id')
-//                    ->where('product_status', '!=', 'discontinued')
-//                    //->where('product_sku', 'E74')
-//                    ->whereNotIn('product_id', $AlreadyCreatedIds)
-//                    ->orderBy('created_at', 'desc')
-//                    ->limit(100)
-//                    ->get();
-//                foreach ($products as $product) {
-//                    $this->createProduct($product, $store);
-//                }
+                $products = Catalog::select('*')->with('productType', 'productKeyFeatures', 'productColor')
+                    ->whereNotIn('product_type', $productTypes)
+                    ->whereNull('parent_id')
+                    ->where('product_status', '!=', 'discontinued')
+                    //->where('product_sku', 'E74')
+                    ->whereNotIn('product_id', $AlreadyCreatedIds)
+                    ->orderBy('created_at', 'desc')
+                    ->limit(100)
+                    ->get();
+                foreach ($products as $product) {
+                    $this->createProduct($product, $store);
+                }
 
                 // Handle Updated Products
                 $AlreadyCreatedIds = ManageMarketplaceProduct::select('product_id')->where('upload_status', 'success')->where('store_id', $store->id)->orderBy('updated_at', 'asc')->limit(100)->get();
