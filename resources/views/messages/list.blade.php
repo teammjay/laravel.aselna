@@ -206,7 +206,7 @@
                                     <option value="{{FilterCodes::ENDS_WITH}}">ends with</option>
                                     <option value="{{FilterCodes::EQUAL}}">=</option>
                                     <option value="{{FilterCodes::IN}}">in</option>
-                                    <option value="{{FilterCodes::NOT_IN}}">not in</option>
+                                    <option value="{{FilterCodes::NOT_IN}}" selected>not in</option>
                                     <option value="{{FilterCodes::DOESNT_CONTAIN}}">doesn't contain</option>
                                     <option value="{{FilterCodes::IS_SET}}">is set</option>
                                 </select>
@@ -216,7 +216,7 @@
                                     <option value=""></option>
                                     @if(count($ticketTypes ?? []) > 0)
                                         @foreach($ticketTypes as $tt)
-                                            <option value="{{ $tt->id }}">{{ $tt->name }}</option>
+                                            <option value="{{ $tt->id }}" @if($tt->name == 'Marketplace Notification') selected @endif>{{ $tt->name }}</option>
                                         @endforeach
                                     @endif
                                 </select>
@@ -568,7 +568,7 @@
 
                 success: function (data) {
                     if (data.success) {
-                        location.reload();
+                        //location.reload();
                     }
                 },
                 error: function (xhr) {

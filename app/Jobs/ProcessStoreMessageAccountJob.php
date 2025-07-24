@@ -2,11 +2,15 @@
 
 namespace App\Jobs;
 
+use App\Models\HdMessageAttachment;
+use App\Models\Sequence;
+use App\Models\SysFile;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Models\Customer;
 use App\Models\CustomerEmail;
@@ -230,6 +234,58 @@ class ProcessStoreMessageAccountJob implements ShouldQueue
                                         'message_id' => $hd_message->id,
                                     ], $email['parts']);
                                 }
+
+                                if (isset($hd_message->id) && !empty($email['attachments'])) {
+
+                                    if(!empty($email['attachments'])){
+                                        foreach($email['attachments'] as $attachment){
+                                            $fileName = $attachment->getName();
+                                            $fileMimeType = $attachment->getMimeType();
+                                            $fileSize = $attachment->getSize();
+                                            $attachmentID = $attachment->getId();
+
+                                            $extension = pathinfo($fileName, PATHINFO_EXTENSION);
+                                            $savePath = storage_path('app/public/email_attachment/');
+                                            if (!file_exists($savePath)) {
+                                                mkdir($savePath, 0755, true);
+                                            }
+
+                                            //$uniqueFileName = uniqid('email_', true) . '.' . $extension;
+
+                                            try {
+                                                $attachment->save($savePath, $fileName);
+
+                                                $filedata = [
+                                                    'name' => $fileName,
+                                                    'ext' => $extension ?: 'jpg',
+                                                    'file_size' => $fileSize ?: 'Unknown',
+                                                    'location' => 'email_attachment/',
+                                                    'created_by' => 'admin',
+                                                ];
+
+                                                $fileDetail = SysFile::create($filedata);
+                                                $file_id = $fileDetail->id;
+
+                                                if($hd_ticket->id && $file_id){
+                                                    $attachementData = [
+                                                        'client_id' => NULL,
+                                                        'message_id' => $hd_message->id,
+                                                        'attachment_id' => $attachmentID,
+                                                        'file_id' => $file_id,
+                                                        'created_by' => 'admin',
+                                                    ];
+
+                                                    HdMessageAttachment::create($attachementData);
+
+                                                }
+
+                                            } catch (\Exception $e) {
+                                                echo "Error saving attachment: " . $e->getMessage();
+                                                Log::error('Error saving attachment: ' . $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine());
+                                            }
+                                        }
+                                    }
+                                }
                             }
                         }
 
@@ -244,7 +300,7 @@ class ProcessStoreMessageAccountJob implements ShouldQueue
         }
     }
 
-    private function getNextTicketNumberForStore($storeId)
+    /*private function getNextTicketNumberForStore($storeId)
     {
         $lastTicket = Message::where('store_id', $storeId)
             ->orderBy('id', 'desc')
@@ -256,5 +312,24 @@ class ProcessStoreMessageAccountJob implements ShouldQueue
         }
 
         return str_pad(1, 6, '0', STR_PAD_LEFT);
+    }*/
+
+    public static function getNextTicketNumberForStore($storeId) {
+        $key = 'ticket_' . str_replace('-', '', $storeId);
+
+        return DB::transaction(function () use ($key) {
+            $sequence = Sequence::lockForUpdate()->find($key);
+
+            if (!$sequence) {
+                $sequence = Sequence::create([
+                    'key' => $key,
+                    'number' => 1
+                ]);
+            } else {
+                $sequence->increment('number');
+            }
+
+            return $sequence->number;
+        });
     }
 }

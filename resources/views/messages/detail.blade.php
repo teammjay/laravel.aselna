@@ -3,10 +3,16 @@
 @section('title', 'Message Detail')
 
 @section('content_header')
-    <h1>Message Detail</h1>
+    @if($type == 'create')
+        <h1>Create Message</h1>
+    @else
+        <h1>Message Detail</h1>
+    @endif
+
 @stop
 
 @section('adminlte_css')
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 <style>
     .ticket-title{
         font-size:20px;
@@ -17,10 +23,12 @@
         border-radius: 5px;
         padding: 10px;
         margin: 10px 0;
+        width:90%;
     }
     .darker {
         border-color: #ccc;
         background-color: #fff;
+        margin-left: 10%;
     }
     .msg-container::after {
         content: "";
@@ -59,6 +67,26 @@
     .hide{display:none !important;}
     .show{display:block !important;}
     .width-50{width:100px;}
+    .btn-group.lableImageGroup.show{display: inline-block !important;}
+    .select2-container--default .select2-dropdown{
+        width:320px !important;
+    }
+    .select2-dropdown {
+        z-index: 9999;
+    }
+    .select2-container {
+         width: 100% !important;
+         /*margin: 15px 0;*/
+    }
+
+    .select2-container--default .select2-selection--single {
+        border: 1px solid #ced4da;
+        padding: .46875rem .75rem;
+        height: calc(2.25rem + 2px);
+    }
+    .select2-container--default .select2-selection--single .select2-selection__arrow b{
+        top:70%;
+    }
 </style>
 @stop
 
@@ -75,19 +103,43 @@
     <div class="row">
         <div class="col-md-8">
             <div class="card">
-                <div class="card-header">
-                    <h2 class="ticket-title">ON <strong>{{ $ticketDetail->ticket_code }}</strong>    {{ $ticketDetail->subject }}</h2>
-                </div>
+                @if($type == 'create')
+                    <div class="card-header d-flex align-items-center" style="gap:15px;">
+                        <h2 class="ticket-title">ON <strong>{{ $ticketDetail->ticket_code }}</strong></h2>
+                        <input type="text" class="form-control" name="subject" id="subject" value="{{ $ticketDetail->subject }}">
+                    </div>
+                @else
+                    <div class="card-header">
+                        <h2 class="ticket-title">ON <strong>{{ $ticketDetail->ticket_code }}</strong>    {{ $ticketDetail->subject }}</h2>
+                    </div>
+                @endif
                 <div class="card-body">
 
                     <div class="row">
-                        <div class="col-md-12 mail-box">
+                        <div class="col-md-12 mail-box" id="scrollable">
                             @if(count($messages ?? []) > 0)
                                 @foreach($messages as $key=>$message)
                                     <div class="time-center">{{ $message->message_date }}</div>
-                                    <div class="msg-container @if(($key % 2)) darker @endif">
+                                    <div class="msg-container @if($message->author == 1) darker @endif">
                                         {{--<iframe srcdoc="{!! htmlspecialchars($message->message) !!}"></iframe>--}}
+                                        <div class="mb-3">
                                         {!! nl2br(html_entity_decode($message->message)) !!}
+                                        </div>
+                                        @if(isset($message->attachments))
+                                            @foreach($message->attachments as $attachment)
+                                                @php
+                                                    $imageObj = $attachment->imageObj;
+                                                    $imageName = $imageObj->name;
+                                                    $imageUrl = asset('storage/'.$imageObj->location.$imageObj->name);
+                                                @endphp
+                                                <div class="btn-group attachmentGroup" role="group">
+                                                    <button id="btnGroupDrop3" type="button" class="lable-image dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="fa fa-paperclip"></i> {{ $imageName }}</button>
+                                                    <div class="dropdown-menu" aria-labelledby="btnGroupDrop3">
+                                                        <a class="dropdown-item" target="_blank" href="{{ $imageUrl }}">Download</a>
+                                                    </div>
+                                                </div>
+                                            @endforeach
+                                        @endif
                                     </div>
 
                                 @endforeach
@@ -121,7 +173,7 @@
                                         <div class="col-md-4">
                                             <div class="row">
                                                 <div class="col-md-4">
-                                                    <label for="template">Template</label>
+                                                    <label for="message_template">Template</label>
                                                 </div>
                                                 <div class="col-md-8">
                                                     <select class="form-control" name="message_template" id="message_template">
@@ -271,7 +323,7 @@
                 <div class="card-body">
                     <div class="row mt-3 g-3 align-items-center">
                         <div class="col-md-4">
-                            <label for="carrier_name">Order ID</label>
+                            <label for="order_id">Order ID</label>
                         </div>
                         <div class="col-md-8 d-flex align-items-center">
                             <input type="text" class="form-control" name="order_id" id="order_id" value="{{ ($ticketDetail->order_id != '') ? $ticketDetail->order_id : '' }}">
@@ -280,7 +332,7 @@
                     </div>
                     <div class="row mt-3 g-3 align-items-center">
                         <div class="col-md-4">
-                            <label for="carrier_name">Order Date</label>
+                            <label for="order_date">Order Date</label>
                         </div>
                         <div class="col-md-8">
                             <input type="text" class="form-control" name="order_date" id="order_date" readonly="">
@@ -288,7 +340,7 @@
                     </div>
                     <div class="row mt-3 g-3 align-items-center">
                         <div class="col-md-4">
-                            <label for="carrier_name">Order Status</label>
+                            <label for="order_status">Order Status</label>
                         </div>
                         <div class="col-md-8">
                             <input type="text" class="form-control" name="order_status" id="order_status" readonly="">
@@ -296,7 +348,7 @@
                     </div>
                     <div class="row mt-3 g-3 align-items-center">
                         <div class="col-md-4">
-                            <label for="carrier_name">Order Total</label>
+                            <label for="order_total">Order Total</label>
                         </div>
                         <div class="col-md-8">
                             <input type="text" class="form-control" name="order_total" id="order_total" readonly="">
@@ -304,7 +356,7 @@
                     </div>
                     <div class="row mt-3 g-3 align-items-center">
                         <div class="col-md-4">
-                            <label for="carrier_name">Purchase Order Id</label>
+                            <label for="purchase_order_id">Purchase Order Id</label>
                         </div>
                         <div class="col-md-8">
                             <input type="text" class="form-control" name="purchase_order_id" id="purchase_order_id" readonly="">
@@ -332,9 +384,11 @@
                     Ticket History
                 </div>
                 <div class="card-body">
-                    <table class="table table-bordered" id="ticket_history_table">
-                        {!! $ticketHistory  !!}
-                    </table>
+                    <div style="max-height: 150px; overflow: auto">
+                        <table class="table table-bordered" id="ticket_history_table">
+                            {!! $ticketHistory  !!}
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
@@ -343,12 +397,24 @@
     @include('messages.modals', ['ticketDetail' => $ticketDetail])
 @stop
 @section('adminlte_js')
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script src="{{ asset('js/jquery.datetimepicker.full.js') }}"></script>
     <script>
 
         var ticket_id = '{{ $ticketDetail->id }}';
 
+        const scrollable = document.getElementById("scrollable");
+        scrollable.scrollTop = scrollable.scrollHeight;
+
+        window.onload = function() {
+            // or use DOMContentLoaded
+            scrollable.scrollTop = scrollable.scrollHeight;
+        };
+
+
         $(document).ready(function () {
+
+            $('#message_template').select2();
             $(document).on('click','#search_order',function () {
                 loadOrderDetail();
             });
@@ -473,7 +539,7 @@
                 var template_id = $('#message_template').val();
                 var message_to_send = $('#message_to_send').val();
                 var customer_id = $('#customer_id').val();
-                var ticket_id = '{{ $ticketDetail->id }}';
+                //var ticket_id = '{{ $ticketDetail->id }}';
                 var ticket_status = $(this).data('close');
                 if(message_to_send == ''){
                     alert('Please add text to send message');
@@ -482,9 +548,11 @@
 
                 var labelimage = '';
                 var imagepath = '';
+                var imagename = '';
                 if($('#image_url').val() != ''){
                     var labelimage = $('#image_url').val();
                     var imagepath = $('#image_storage_path').val();
+                    var imagename = $('.lable-image').html();
                 }
                 $.ajax({
                     type: "POST",
@@ -497,6 +565,7 @@
                         ticket_status: ticket_status,
                         labelimage: labelimage,
                         imagepath: imagepath,
+                        imagename: imagename,
                     },
                     headers: {
                         'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
@@ -1070,7 +1139,7 @@
                         'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                     },
                     success: function(response) {
-                        alert(response.success);
+                        //alert(response.success);
                         if(response.image_url){
                             $('.lableImageGroup').removeClass('hide');
                             $('#image_url').val(response.image_url);
@@ -1083,7 +1152,6 @@
                     }
                 });
             });
-
 
         });
 

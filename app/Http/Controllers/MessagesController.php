@@ -9,6 +9,7 @@ use App\Constants\OrderOperationType;
 use App\Constants\OrderStatus;
 use App\Constants\ShippingLabelCreationType;
 use App\Helpers\QueryFilters;
+use App\Jobs\ProcessStoreMessageAccountJob;
 use App\Models\Catalog;
 use App\Models\Customer;
 use App\Models\HDMessage;
@@ -67,7 +68,7 @@ class MessagesController extends Controller
         QueryFilters::applyFilter($query, $request, 'sender_email', 'sender_email_operator', 'sender_email');
 
         // Filter by ticket type
-        QueryFilters::applyFilter($query, $request, 'ticket_type', 'ticket_type_operator', 'ticket_type_id');
+        QueryFilters::applyFilter($query, $request, 'ticket_type_id', 'ticket_type_operator', 'ticket_type');
 
         // Filter by ticket code
         QueryFilters::applyFilter($query, $request, 'ticket_code', 'ticket_code_operator', 'ticket_code');
@@ -133,7 +134,7 @@ class MessagesController extends Controller
         });*/
 
         //$data = $dataTableService->handle();
-
+        //echo $query->toSql();die;
         $totalRecords = $query->count();
         $messages = $query->skip($start)
             ->take($perPage)
@@ -218,9 +219,79 @@ class MessagesController extends Controller
     /**
      * Show the form for creating a new resource.
      */
-    public function create()
+    public function create(string $orderid)
     {
-        return view('messages.update');
+        $orderDetail = Order::with('customer','store','store.storeType')->where('id',$orderid)->first();
+        $customer_id = isset($orderDetail->customer) ? $orderDetail->customer->id : NULL;
+        $customer_detail = Customer::where('id',$customer_id)->first();
+        $store_type_name = $orderDetail->store->storeType->name;
+
+        $ticket_exist = Message::where('related_order_id',$orderid)->first();
+
+        if($ticket_exist){
+            $ticket_id = $ticket_exist->id;
+            //echo $ticket_id;die;
+            return redirect()->route('message.detail',$ticket_id);
+        }
+
+        //$ticketDetail = Message::with('store','store.storeType')->where('id',$ticket_id)->first();
+        $message_template = HdMessageTemplate::whereNull('order_operation_type')->orderBy('name')->get();
+        /*echo '<pre>';
+        print_r($messages);
+        echo '</pre>';die;*/
+        $ticketTypeCode = HdTicketType::orderBy('name')->get();
+        $action = [];
+
+        //print_r($action);
+        return view('messages.create', compact('message_template','orderDetail','ticketTypeCode','customer_detail','store_type_name'));
+    }
+
+    public function saveTicket(Request $request){
+
+        $order_id = $request->input('order_id');
+        $subject = $request->input('subject');
+
+        if($order_id && $subject) {
+
+            $orderDetail = Order::with('customer', 'store', 'store.storeType')->where('order_id', $order_id)->first();
+            $customer_id = isset($orderDetail->customer) ? $orderDetail->customer->id : NULL;
+            $customer_detail = Customer::where('id', $customer_id)->first();
+
+            $ticket_code = $orderDetail->store->short_code . '-' . ProcessStoreMessageAccountJob::getNextTicketNumberForStore($orderDetail->store_id);
+
+            $ticketTypeDetail = HdTicketType::where('code', HdTicketTypeCode::ORDER_INFORMATION)->first();
+            $ticketData = [
+                'ticket_type_id' => $ticketTypeDetail->id,
+                'status' => HdTicketStatus::NEEDS_ACTION,
+                'related_order_id' => $orderDetail->id,
+                'subject' => $subject,
+                'customer_id' => $customer_id,
+                'order_id' => trim($orderDetail->order_id),
+                'store_id' => $orderDetail->store_id,
+                'ticket_date' => date('Y-m-d H:i:s'),
+                'ticket_code' => $ticket_code,
+                'message_read' => 1,
+                'replies' => 0,
+                'important' => 0,
+                'customer_merge_status' => 0,
+                'ticket_user_id' => $customer_id,
+            ];
+
+            $hd_ticket = Message::create($ticketData);
+            $ticket_id = $hd_ticket->id;
+
+            if ($ticket_id) {
+                return response()->json([
+                    'success' => true,
+                    'ticket_id' => $ticket_id,
+                    'ticket_code' => $ticket_code,
+                ]);
+            }
+        }
+
+        return response()->json([
+            'success' => false
+        ]);
     }
 
     /**
@@ -277,12 +348,16 @@ class MessagesController extends Controller
 
     public function detail(string $id)
     {
+        $type = 'detail';
         $ticketDetail = Message::with('store','store.storeType')->where('id',$id)->first();
         $ticketDetail->update(['message_read' => 1]);
         $store_type_id = $ticketDetail->store->storeType->id;
         $store_type_name = $ticketDetail->store->storeType->name;
-        $message_template = HdMessageTemplate::where('store_type_id',$store_type_id)->get();
-        $messages = HDMessage::where('ticket_id',$id)->orderBy('message_date','desc')->get();
+        $message_template = HdMessageTemplate::whereNull('order_operation_type')->orderBy('name')->get();
+        $messages = HDMessage::with('attachments')->where('ticket_id',$id)->orderBy('message_date','asc')->get();
+        /*echo '<pre>';
+        print_r($messages);
+        echo '</pre>';die;*/
         $ticketTypeCode = HdTicketType::orderBy('name')->get();
         $action = [];
         $rma_done = $lable_generate = 0;
@@ -375,7 +450,7 @@ class MessagesController extends Controller
         }
 
         //print_r($action);
-        return view('messages.detail', compact('message_template','ticketDetail','messages','ticketTypeCode','action','store_type_name','ticketHistory','rma_done','lable_generate'));
+        return view('messages.detail', compact('message_template','ticketDetail','messages','ticketTypeCode','action','store_type_name','ticketHistory','rma_done','lable_generate','type'));
     }
 
     public function searchOrder(Request $request){
@@ -383,15 +458,18 @@ class MessagesController extends Controller
         $order_id = $request->input('order_id');
         $ticket_id = $request->input('ticket_id');
 
-        if($order_id && $ticket_id){
-            $ticketDetail = Message::findOrFail($ticket_id);
+        if($order_id){
+
             $orderDetail = Order::with('orderItem','orderItem.product','orderItem.product.image','customer','customerAddress')->where('order_id',$order_id)->orWhere('purchase_order_id',$order_id)->first();
             /*echo '<pre>';
             print_r($orderDetail);
             echo '</pre>';die;*/
 
             if($orderDetail){
-                $ticketDetail->update(['order_id' => $orderDetail->order_id]);
+                if($ticket_id) {
+                    $ticketDetail = Message::findOrFail($ticket_id);
+                    $ticketDetail->update(['order_id' => $orderDetail->order_id]);
+                }
                 $orderOperations = OrderOperation::with('carrier','shipFrom','operationItem')->where('order_id',$orderDetail->id)->orderBy('created_at','desc')->get();
                 $data['items'] = view('messages.order_items', ['orderDetail' => $orderDetail])->render();
                 $data['orderId'] = $orderDetail->order_id;
@@ -512,7 +590,7 @@ class MessagesController extends Controller
         $operation_id = $request->input('operation_id');
         $ticket_id = $request->input('ticket_id');
         if($template_id || (isset($rma_number) && $rma_number != '')){
-            $returnAddress = $imageName = $imageUrl = $imagePath = "";
+            $returnAddress = $imageName = $imageUrl = $imagesPath = "";
 
             if(isset($operation_id) && $operation_id != ''){
                 $orderOperation = OrderOperation::with('shipFrom','shipFrom.returnAddress','carrier','store')->where('id',$operation_id)->first();
@@ -614,6 +692,7 @@ class MessagesController extends Controller
         $message_read = $request->input('message_read');
         $important = $request->input('important');
         $notes = $request->input('notes');
+        $subject = $request->input('subject');
         if($ticket_id){
 
             $updated_by = auth()->user()->name ?? 'admin';
@@ -621,6 +700,10 @@ class MessagesController extends Controller
             $updatedData = [
                 'updated_by' => $updated_by
             ];
+
+            if(isset($subject) && $subject){
+                $updatedData['subject'] = $subject;
+            }
 
             if(isset($status) && $status){
                 $updatedData['status'] = $status;
@@ -663,6 +746,7 @@ class MessagesController extends Controller
         $is_closed = $request->input('ticket_status');
         $labelimage = $request->input('labelimage');
         $imagepath = $request->input('imagepath');
+        $imagename = $request->input('imagename');
 
         if($ticket_id){
             $ticketDetail = Message::with('store')->where('id',$ticket_id)->first();
@@ -699,7 +783,6 @@ class MessagesController extends Controller
                 ];
 
                 $imapConfig = [];
-
                 $filepath = $imagepath;
 
                 $connector = new EmailMessageUtility($smtpConfig, $imapConfig);
@@ -721,9 +804,38 @@ class MessagesController extends Controller
                         'from_name' => trim($storeMessageAccount->outgoingAccount->user_id),
                         'message' => $message_to_send,
                         'draft' => 0,
+                        'author' => 1,
                     ];
 
-                    HDMessage::create($hdMessageData);
+                    $hd_message = HDMessage::create($hdMessageData);
+
+                    if($filepath){
+
+                        $extension = pathinfo($filepath, PATHINFO_EXTENSION);
+                        $fileSize = filesize($filepath);
+                        $filedata = [
+                            'name' => $imagename,
+                            'ext' => $extension ?: 'jpg', // Default to 'jpg' if missing
+                            'file_size' => $fileSize ?: 'Unknown', // Use 'Unknown' if not determined
+                            'location' => 'images/',
+                            'created_by' => 'admin',
+                        ];
+
+                        $fileDetail = SysFile::create($filedata);
+                        $file_id = $fileDetail->id;
+
+                        if($ticket_id && $file_id){
+                            $attachementData = [
+                                'client_id' => NULL,
+                                'message_id' => $hd_message->id,
+                                'attachment_id' => NULL,
+                                'file_id' => $file_id,
+                                'created_by' => 'admin',
+                            ];
+
+                            $attchment = HdMessageAttachment::create($attachementData);
+                        }
+                    }
 
                     /*HDMessage::updateOrCreate([
                         'ticket_id' => $ticket_id,
@@ -1279,9 +1391,9 @@ class MessagesController extends Controller
             $template_id = $template_code = '';
             if($templateDetail) {
                 $data = [
-                    'customer_firstName' => isset($orderOperations->order->customer) ? $orderOperations->order->customer->full_name : '',
-                    'store_name' => isset($orderOperations->store) ? $orderOperations->store->name : '',
-                    'trackingNumber' => isset($orderOperations->tracking_number) ? $orderOperations->tracking_number : '',
+                    'customer_firstName' => isset($orderOperation->order->customer) ? $orderOperation->order->customer->full_name : '',
+                    'store_name' => isset($orderOperation->store) ? $orderOperation->store->name : '',
+                    'trackingNumber' => isset($orderOperation->tracking_number) ? $orderOperation->tracking_number : '',
                     'ima_number' => '',
                     'return_address' => ''
                 ];
@@ -1314,9 +1426,11 @@ class MessagesController extends Controller
 
         $imageName = time().'.'.$request->attach_file->extension();
         $storagePath = storage_path('app/public/images/' . $imageName);
-        $request->attach_file->move(public_path('images'), $imageName);
+        $path = storage_path('app/public/images/');
+        $request->attach_file->move($path, $imageName);
+        $imageUrl = asset('storage/images/' .$imageName );
 
-        if ($imageName !== false) {
+        /*if ($imageName !== false) {
 
             $extension = pathinfo($imageName, PATHINFO_EXTENSION);
             $fileSize = filesize($storagePath);
@@ -1336,7 +1450,7 @@ class MessagesController extends Controller
                 $attachementData = [
                     'client_id' => NULL,
                     'message_id' => $ticket_id,
-                    'attachment_id' => $ticket_id,
+                    'attachment_id' => NULL,
                     'file_id' => $file_id,
                     'created_by' => 'admin',
                 ];
@@ -1349,12 +1463,13 @@ class MessagesController extends Controller
                 $imagesPath = $storagePath;
 
             }
-        }
+        }*/
 
         return response()->json([
             'success' => true,
-            'image' => $imageName,
-            'imagesPath' => $imagesPath,
+            'image_name' => $imageName,
+            'image_url' => $imageUrl,
+            'imagesPath' => $storagePath,
         ]);
 
     }
