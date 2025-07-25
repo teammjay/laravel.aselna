@@ -275,9 +275,46 @@ class ShopifyAuthService
         try {
             $orderID = "gid://shopify/Order/" . $orderID;
             $result = $this->makeGraphQLRequest(ShopifyQueries::$getOrderDetail, array('id' => $orderID));
+            Log::info('Shopify Orders Detail Response: ' . json_encode($result));
             if (!isset($result['errors'])) {
-                //Log::info('Shopify Orders Detail Response: ' . json_encode($result));
                 return $result['data']['order'];
+            }
+
+        } catch (\Exception $e) {
+            Log::error('Error: ' . $e->getMessage());
+            return null;
+        }
+    }
+
+    public function getTransactions($orderID)
+    {
+
+        try {
+
+            $result = $this->makeGraphQLRequest(ShopifyQueries::$getOrderTransaction, array('orderId' => $orderID));
+            /*echo '<pre>';
+            print_r($result);
+            echo '</pre>';die;*/
+            Log::info('Shopify Orders Detail Response: ' . json_encode($result));
+            if (isset($result['data']['order']['transactions'])) {
+                return $result['data']['order']['transactions'] ?? null;
+            }
+
+        } catch (\Exception $e) {
+            Log::error('Error: ' . $e->getMessage());
+            return null;
+        }
+    }
+
+    public function getOrder($orderID)
+    {
+
+        try {
+
+            $result = $this->makeGraphQLRequest(ShopifyQueries::$getOrder, array('query' => "name:'#'.$orderID"));
+            if (!isset($result['errors'])) {
+                Log::info('Shopify Orders Detail Response: ' . json_encode($result));
+                return $response['data']['orders']['edges'][0]['node'] ?? null;
             }
 
         } catch (\Exception $e) {
@@ -293,16 +330,55 @@ class ShopifyAuthService
             $response = $this->makeGraphQLRequest(ShopifyQueries::$createRefund, $variables);
 
             //Log::info('Create Refund Response: ' . json_encode($response));
-            /*echo '<pre>';
-            print_r($response);
-            echo '</pre>';die;*/
-            if (!isset($response['error'])) {
+            if (!isset($response['errors']) || !isset($response['userErrors'])) {
                 return $response['data']['refundCreate']['refund']['id'] ?? null;
             } else {
                 return false;
             }
         } else {
             return false;
+        }
+    }
+
+    public function orderRefund($orderId, $lineItemId, $quantity, $transactionId, $amount)
+    {
+        $headers = [
+            'Content-Type' => 'application/json',
+            'Accept' => 'application/json',
+            'X-Shopify-Access-Token' => $this->accessToken,
+        ];
+
+        $payload = [
+            'refund' => [
+                'refund_line_items' => [
+                    [
+                        'line_item_id' => $lineItemId,
+                        'quantity' => $quantity,
+                    ]
+                ],
+                'transactions' => [
+                    [
+                        'parent_id' => $transactionId,
+                        'amount' => $amount,
+                        'kind' => 'refund',
+                        'gateway' => 'shopify_payments',
+                    ]
+                ]
+            ]
+        ];
+
+        try {
+            $request = new Request('POST', $this->endpoint . '/admin/api/' . $this->apiVersion . '/orders/{$orderId}/refunds.json', $headers, json_encode($payload));
+            $res = $this->client->sendAsync($request)->wait();
+
+            Log::info('Response: ' . $res->getBody());
+
+            $result = json_decode($res->getBody(), true);
+
+            return $result ?? null;
+        } catch (\Exception $e) {
+            Log::error('Error: ' . $e->getMessage());
+            return null;
         }
     }
 

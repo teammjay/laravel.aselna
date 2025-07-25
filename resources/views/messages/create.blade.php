@@ -81,7 +81,7 @@
             <div class="card">
                 <div class="card-header d-flex align-items-center" style="gap:15px;">
                     <h2 class="ticket-title">Subject</h2>
-                    <input type="text" class="form-control" name="subject" id="subject">
+                    <input type="text" class="form-control" name="subject" id="subject" placeholder="Enter message subject">
                 </div>
                 <div class="card-body">
 
@@ -526,6 +526,7 @@
             });
 
             $(document).on('click','#rma',function () {
+                saveTicket($('#subject').val());
                 var order_id = $('#order_id').val();
                 if(order_id != '' && order_id != null){
                     $.ajax({
@@ -1092,39 +1093,50 @@
                 });
             });
 
+            $(document).on("keypress", "#subject", function(e){
+                if(e.which == 13){ // Check if the pressed key is Enter (key code 13)
+                    var subject = $(this).val();
+                    saveTicket(subject);
+                }
+            });
+
             $(document).on('blur','#subject',function () {
                 var subject = $(this).val();
-                $.ajax({
-                    type: "POST",
-                    url: "{{ route('message.saveticket') }}",
-                    data: {
-                        subject: subject,
-                        order_id: $('#order_id').val(),
-                    },
-                    dataType:'json',
-                    headers: {
-                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                    },
-
-                    success: function (data) {
-                        if(data.success && data.ticket_id != ''){
-
-                            ticket_id = data.ticket_id;
-                            $('#ticket-title').html('ON <strong>'+data.ticket_code+'</strong>');
-                            if(subject == 'RMA' || subject == 'rma'){
-                                $('#rma').trigger('click');
-                            }
-                        }
-                    },
-                    error: function (xhr) {
-                    },
-                    complete: function () {
-                        $("#ajax-preloader").hide();
-                    }
-                });
+                //saveTicket(subject);
             });
 
         });
+
+        function saveTicket(subject){
+            $.ajax({
+                type: "POST",
+                url: "{{ route('message.saveticket') }}",
+                data: {
+                    subject: subject,
+                    order_id: $('#order_id').val(),
+                },
+                dataType:'json',
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                },
+
+                success: function (data) {
+                    if(data.success && data.ticket_id != ''){
+
+                        ticket_id = data.ticket_id;
+                        $('.ticket-title').html('ON <strong>'+data.ticket_code+'</strong>');
+                        /*if(subject == 'RMA' || subject == 'rma'){
+                            $('#rma').trigger('click');
+                        }*/
+                    }
+                },
+                error: function (xhr) {
+                },
+                complete: function () {
+                    $("#ajax-preloader").hide();
+                }
+            });
+        }
 
         function getShippingCarrierService(element){
             $.ajax({
@@ -1215,34 +1227,6 @@
                             }else{
                                 $('#return_label').removeClass('show').addClass('hide');
                             }
-                        }
-                    },
-                    error: function (xhr) {
-                    },
-                    complete: function () {
-                        $("#ajax-preloader").hide();
-                    }
-                });
-            }
-        }
-
-        function loadCustomerDetail(){
-            let customer_id_name = $('#customer').val();
-            if(order_id != '') {
-                $.ajax({
-                    type: "POST",
-                    url: "{{ route('message.searchcustomer') }}",
-                    data: {
-                        customer_id_name: customer_id_name
-                    },
-                    headers: {
-                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                    },
-
-                    success: function (data) {
-                        if (data.success) {
-
-
                         }
                     },
                     error: function (xhr) {

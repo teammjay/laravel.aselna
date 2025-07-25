@@ -317,7 +317,46 @@ GQL;
         }
     }
 GQL;
-
+    public static  $getOrder = <<<GQL
+    query getOrderId(\$query: String!) {
+        orders(first: 1, query: \$query) {
+            edges {
+                node {
+                    id
+                    name
+                    lineItems(first: 5) {
+                        edges {
+                            node {
+                                id
+                                title
+                                quantity
+                            }
+                        }
+                    }
+                    transactions{
+                      id
+                      amount
+                      kind
+                      gateway
+                    }
+                }
+            }
+        }
+    }
+GQL;
+    public static  $getOrderTransaction = <<<GQL
+    query getOrderTransactions(\$orderId: ID!) {
+        order(id: \$orderId) {
+            transactions {
+                id
+                kind
+                gateway
+                amount
+                status
+            }
+        }
+    }
+GQL;
     public static $getOrderDetail = <<<GQL
     query getOrder(\$id: ID!) {
       order(id: \$id) {
@@ -338,6 +377,7 @@ GQL;
         lineItems(first: 10) {
           edges {
             node {
+              id
               title
               quantity
             }
