@@ -128,7 +128,7 @@ class MagentoProductsSyncJob implements ShouldQueue
 
     private function createConfigurableProduct(mixed $productData, mixed $store)
     {
-        $magentoAuthService = new MagentoAuthService($store->seller_id, $store->secret_key);
+        $magentoAuthService = new MagentoAuthService($store->seller_id, $store->secret_key,$store->service_url);
         $bulletPoints = $productData->productKeyFeatures;
         $bulletPointHtml = '<ul>';
         foreach ($bulletPoints as $bulletPoint) {
@@ -214,7 +214,7 @@ class MagentoProductsSyncJob implements ShouldQueue
     private function createSimpleProduct(mixed $productData, mixed $store, $device)
     {
         Log::info('Creating Simple Product for Device ID: ' . $device->id . ' in Store ID: ' . $store->id);
-        $magentoAuthService = new MagentoAuthService($store->seller_id, $store->secret_key);
+        $magentoAuthService = new MagentoAuthService($store->seller_id, $store->secret_key,$store->service_url);
         $keywords = ProductTitleKeyword::select('product_id', 'keyword')->where('product_id', $productData->product_id)->orderBy('priority', 'asc')->get()->toArray();
         $productTitle = $keywords[0]['keyword'] ?? '';
         $productKeywords = implode(' ', array_column(array_slice($keywords, 1), 'keyword'));

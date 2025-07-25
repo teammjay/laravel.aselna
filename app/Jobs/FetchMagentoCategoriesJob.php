@@ -34,7 +34,7 @@ class FetchMagentoCategoriesJob implements ShouldQueue
         if (count($stores ?? []) > 0) {
             foreach ($stores as $store) {
                 Log::info('Store : ' . $store->name);
-                $magentoAuthService = new MagentoAuthService($store->seller_id, $store->secret_key);
+                $magentoAuthService = new MagentoAuthService($store->seller_id, $store->secret_key,$store->service_url);
                 $categoryResponse = $magentoAuthService->getAllCategories();
 
                 Log::info('Category Response: ' . json_encode($categoryResponse));

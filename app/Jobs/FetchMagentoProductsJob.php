@@ -59,7 +59,7 @@ class FetchMagentoProductsJob implements ShouldQueue
     private function fetchProductsFromStore(Store $store): void
     {
         try {
-            $magentoAuthService = new MagentoAuthService($store->seller_id, $store->secret_key);
+            $magentoAuthService = new MagentoAuthService($store->seller_id, $store->secret_key,$store->service_url);
 
             // Get products with pagination
             $currentPage = 1;

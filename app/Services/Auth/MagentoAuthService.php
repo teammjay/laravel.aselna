@@ -17,13 +17,17 @@ class MagentoAuthService
     protected $expireTime;
     protected $accessToken;
 
-    public function __construct($clientId, $clientSecret)
+    public function __construct($clientId, $clientSecret,$endpoint = null)
     {
         $this->client = new Client();
         $this->clientId = $clientId;
         $this->clientSecret = $clientSecret;
 //        $this->endpoint = env('MAGENTO_API_ENDPOINT');
-        $this->endpoint = 'https://magento.aselna.com';
+        if (isset($endpoint)) {
+            $this->endpoint = $endpoint;
+        } else {
+            $this->endpoint = 'https://magento.aselna.com';
+        }
     }
 
     public function authenticate()
