@@ -308,6 +308,18 @@ class JobScheduler extends Seeder
                 'description' => 'Fetch Email Message',
                 'class_name' => 'App\Jobs\FetchEmailMessagesJob',
             ],
+            [
+                //FetchMagentoProductsJob
+                'name' => 'Fetch Magento Products',
+                'description' => 'Fetch Magento products',
+                'class_name' => 'App\Jobs\FetchMagentoProductsJob',
+            ],
+            [
+                //FetchMagentoCategoriesJob
+                'name' => 'Fetch Magento Categories',
+                'description' => 'Fetch Magento categories',
+                'class_name' => 'App\Jobs\FetchMagentoCategoriesJob',
+            ]
         ];
 
         foreach ($jobs as $job) {
