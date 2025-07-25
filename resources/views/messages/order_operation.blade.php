@@ -28,7 +28,7 @@
             <div class="card">
                 <div class="card-body">
                     <div class="row align-items-center">
-                        <div class="col-md-1"><i class="fa fa-fw fa-house-person-return" style="font-size: 18px;"></i> </div>
+                        <div class="col-md-1"><i class="fa fa-fw fa-undo" style="font-size: 18px;"></i> </div>
                         <div class="col-md-10">Order Refunded On {{ date('D, d M Y',strtotime($order_operation->created_at)) }} </div>
 
                     </div>

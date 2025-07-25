@@ -33,6 +33,7 @@ use App\Models\Store;
 use App\Models\StoreMessageAccount;
 use App\Models\SysFile;
 use App\Services\Auth\GoogleShoppingAuthService;
+use App\Services\Auth\ShopifyAuthService;
 use App\Services\DataTable\DataTableService;
 use App\Services\Marketplace\MarketplaceServiceFactory;
 use App\Services\Marketplace\Service\EbayService;
@@ -64,6 +65,11 @@ class HomeController extends Controller
 
     public function testfunction(){
 
+            $store = Store::with('storeType')->where('id', '3fab8878-e036-58c7-db30-addd3058875c')->first();
+            $authService = new ShopifyAuthService($store->secret_key, $store->service_url);
+            $orderId = "gid://shopify/Order/6749583638833";
+            $transactions = $authService->getTransactions($orderId);
+            die;
 
          /*Bus::chain([
             //new SubmitShopifyProductsJob(),

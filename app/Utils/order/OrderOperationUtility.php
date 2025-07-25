@@ -32,35 +32,38 @@ class OrderOperationUtility
             }
         }
 
-        $carrier_id = $request->input('carrier_name');
-        $carrier_package = $request->input('carrier_package');
-        $carrier_service_id = $request->input('shipping_carrier_service');
-        $tracking_number = $request->input('tracking_number');
-        $shipment_from = $request->input('shipment_from');
-        $weight = $request->input('weight');
-        $weight_type = $request->input('weight_type');
-        $order_id = $request->input('order_id');
+        $label_generation = $request->input('label_generation');
+        if($label_generation) {
+            $carrier_id = $request->input('carrier_name');
+            $carrier_package = $request->input('carrier_package');
+            $carrier_service_id = $request->input('shipping_carrier_service');
+            $tracking_number = $request->input('tracking_number');
+            $shipment_from = $request->input('shipment_from');
+            $weight = $request->input('weight');
+            $weight_type = $request->input('weight_type');
+            $order_id = $request->input('order_id');
 
-        $updateRecord = array(
-            'shipping_carrier_id' => $carrier_id,
-            'shipping_carrier_service_id' => $carrier_service_id,
-            'shipping_package_id' => $carrier_package,
-            'ship_from_id' => $shipment_from,
-            'weight_value' => $weight,
-            'weight_weight_unit' => $weight_type,
-        );
-        if (isset($tracking_number) && $tracking_number != '') {
-            $updateRecord['tracking_number'] = $tracking_number;
+            $updateRecord = array(
+                'shipping_carrier_id' => $carrier_id,
+                'shipping_carrier_service_id' => $carrier_service_id,
+                'shipping_package_id' => $carrier_package,
+                'ship_from_id' => $shipment_from,
+                'weight_value' => $weight,
+                'weight_weight_unit' => $weight_type,
+            );
+            if (isset($tracking_number) && $tracking_number != '') {
+                $updateRecord['tracking_number'] = $tracking_number;
+            }
+            if (isset($request['products_rubber_stamp']) && $request['products_rubber_stamp'] != '') {
+                $updateRecord['products_rubber_stamp'] = $request['products_rubber_stamp'];
+            }
+            $orderOperation->update($updateRecord);
         }
-        if (isset($request['products_rubber_stamp']) && $request['products_rubber_stamp'] != '') {
-            $updateRecord['products_rubber_stamp'] = $request['products_rubber_stamp'];
-        }
-        $orderOperation->update($updateRecord);
 
 
         Log::info('Updated record :: ' . json_encode($updateRecord));
 
-        $label_generation = $request->input('label_generation');
+
         Log::info('Label generation type: ' . $label_generation);
         if (isset($label_generation)) {
             $orderOperation->label_creation_type = $label_generation;
@@ -348,6 +351,9 @@ class OrderOperationUtility
                 return $shorten ? substr($orderId, -5) : $orderId;
             case 'walmart':
                 return $shorten ? substr($orderId, -6) : $orderId;
+            case 'shopify':
+                $orderId = $order->purchase_order_id;
+                return $shorten ? substr($orderId, -6) : $orderId;
             default:
                 return $shorten ? substr($orderId, -5) : $orderId;
         }
@@ -513,10 +519,39 @@ class OrderOperationUtility
         switch (strtolower($storeType)) {
             case 'shopify':
                 $orderId = $orderOperation->order_id;
+                $order_id = $orderOperation->purchase_order_id;
                 $shipmentDetail = OrderOperation::with('operationItem', 'order', 'order.customerAddress', 'carrierService', 'store', 'operationItem.orderItem', 'operationItem.orderItem.product')->where('order_id', $orderId)->first();
+
+                /*$shopifyAuthServie = new ShopifyAuthService($store->secret_key, $store->service_url);
+                $order = $shopifyAuthServie->getOrderDetail($orderId);
+
+                Log::info('Shopify order rdetail:'.json_encode($order));
+                echo '<pre>';
+                print_r($order);
+                echo '<pre>';
+
+                die;
+
+                if (!$order) {
+                    return response()->json(['error' => 'Order not found'], 404);
+                }
+
+                $orderId = (int) last(explode('/', $order['id']));
+                $lineItem = $order['lineItems']['edges'][0]['node'];
+                $lineItemId = (int) last(explode('/', $lineItem['id']));
+                $quantity = (int) $lineItem['quantity'];
+                $amount = $order['transactions'][0]['amount']['amount'];
+                $transactionId = (int) last(explode('/', $order['transactions'][0]['id']));
+
+
+                $response = $shopifyAuthServie->orderRefund($orderId, $lineItemId, $quantity, $transactionId, $amount);
+
+                Log::info('Shopify order refunded response:'.json_encode($response));*/
 
                 $shopifyServie = new ShopifyService($store->secret_key, $store->service_url);
                 $response = $shopifyServie->refundOrder($shipmentDetail->order->order_id, $store);
+
+                Log::info('Shopify order refunded response:'.json_encode($response));
 
                 if ($response) {
                     //echo "Order canceled successfully!";
@@ -575,7 +610,7 @@ class OrderOperationUtility
                 Log::info('Final data for the refund operation :: ' . json_encode($finalData));
 
                 $authService = new WalmartAuthService($store->seller_id, $store->secret_key);
-                $response = $authService->shipOrder($orderOperation->order->purchase_order_id, $finalData);
+                $response = $authService->refundOrder($orderOperation->order->purchase_order_id, $finalData);
 
                 Log::info('Walmart refund order response: ' . json_encode($response));
 
