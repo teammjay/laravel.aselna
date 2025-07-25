@@ -13,6 +13,7 @@ use App\Http\Controllers\DeviceTypesController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\JobSchedulerController;
 use App\Http\Controllers\ListingRequirementController;
+use App\Http\Controllers\MarketPlaceProductsController;
 use App\Http\Controllers\ProductInterfaceController;
 use App\Http\Controllers\StoreTypeCategoryController;
 use App\Http\Controllers\SubCategoryController;
@@ -33,6 +34,7 @@ use App\Http\Controllers\ProductConditionController;
 use App\Http\Controllers\InterfaceController;
 use App\Http\Controllers\ListingGenerationTypeController;
 use App\Http\Controllers\ListingGenerationTypeTemplateController;
+
 //use App\Http\Controllers\StoreTypeCategoryController;
 use App\Http\Controllers\ProductTargetAudienceController;
 use App\Http\Controllers\CarrierController;
@@ -625,6 +627,11 @@ Route::middleware('auth')->group(function () {
         Route::get('/hd_ticket_label/delete/{id}', 'destroy')->name('hd_ticket_label.delete');
     });
 
+    Route::controller(MarketPlaceProductsController::class)->group(function () {
+        Route::get('/marketplace_product', 'index')->name('marketplace_product.index');
+        Route::post('/marketplace_product/filter', 'filter')->name('marketplace_product.filter');
+    });
+
     Route::prefix('logistic_center_document')->group(function () {
         Route::get('/', [LogisticCenterDocumentController::class, 'index'])->name('logistic_center_document.index');
         Route::get('/create', [LogisticCenterDocumentController::class, 'create'])->name('logistic_center_document.create');
@@ -656,6 +663,6 @@ Route::post('/jobs/{job}/run', [JobSchedulerController::class, 'run'])->name('jo
 Route::get('/jobs/{job}/edit', [JobSchedulerController::class, 'edit'])->name('jobs.edit');
 Route::post('/jobs/{job}/update', [JobSchedulerController::class, 'update'])->name('jobs.update');
 Route::post('/jobs/add', [JobSchedulerController::class, 'add'])->name('jobs.add');
-Route::post('/jobs/running',[JobSchedulerController::class, 'running'])->name('jobs.running');
+Route::post('/jobs/running', [JobSchedulerController::class, 'running'])->name('jobs.running');
 
 
