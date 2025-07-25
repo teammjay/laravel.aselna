@@ -44,6 +44,8 @@ class MarketPlaceProductsController extends Controller
                 'id' => $product->id,
                 'store_name' => $product->store->name . ' - ' . ($product->store->storeType->name ?? ''),
                 'sku' => $product->sku,
+                'code' => $product->product_code,
+                'product_id' => $product->product_id,
                 'upload_status' => $product->upload_status,
                 'created_at' => $product->created_at->format('Y-m-d H:i:s'),
             ];

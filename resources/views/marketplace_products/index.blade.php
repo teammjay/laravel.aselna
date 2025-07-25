@@ -1,3 +1,5 @@
+@php use App\Constants\FilterCodes; @endphp
+
 @extends('adminlte::page')
 
 @section('title', 'Marketplace Products')
@@ -6,6 +8,33 @@
     <h1>Marketplace Products</h1>
 @stop
 
+@section('adminlte_css')
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet"/>
+    <style>
+        .select2-container--default .select2-dropdown .select2-search__field:focus, .select2-container--default .select2-search--inline .select2-search__field:focus {
+            outline: 0;
+            border: none;
+        }
+
+        .select2-container {
+            width: 100% !important;
+        }
+
+        .select2-container .select2-selection--single {
+            height: calc(2.25rem + 2px);
+        }
+
+        .select2-container--default .select2-selection--single .select2-selection__arrow {
+            height: auto;
+            position: absolute;
+            top: 50%;
+            right: 1px;
+            width: 20px;
+            transform: translateY(-50%);
+        }
+    </style>
+@endsection
+
 @section('content')
     <div class="card card-secondary">
         <div class="card-header bg-white">
@@ -13,6 +42,46 @@
             <i class="fa fa-angle-down float-right"></i>
         </div>
         <div class="card-body" style="display: none;">
+            <form id="filter-form">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="row">
+                            <div class="col-3 text-right">
+                                SKU
+                            </div>
+                            <div class="col-3">
+                                <select class="custom-select" id="" name="sku_operator">
+                                    <option value="{{FilterCodes::CONTAINS}}">contains</option>
+                                    <option value="{{FilterCodes::STARTS_WITH}}">starts with</option>
+                                    <option value="{{FilterCodes::ENDS_WITH}}">ends with</option>
+                                    <option value="{{FilterCodes::EQUAL}}">=</option>
+                                    <option value="{{FilterCodes::IN}}">in</option>
+                                    <option value="{{FilterCodes::NOT_IN}}">not in</option>
+                                    <option value="{{FilterCodes::DOESNT_CONTAIN}}">doesn't contain</option>
+                                    <option value="{{FilterCodes::IS_SET}}">is set</option>
+                                </select>
+                            </div>
+                            <div class="col-6">
+                                <input type="text" name="sku" id="sku" class="form-control">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-2">
+                        <div class="form-group">
+                            <label>&nbsp;</label>
+                            <button type="submit" id="apply_filter" class="form-control btn btn-primary">Filter</button>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="form-group">
+                            <label>&nbsp;</label>
+                            <button type="reset" class="form-control btn  btn-reset btn-secondary">Reset</button>
+                        </div>
+                    </div>
+                </div>
+            </form>
         </div>
     </div>
     <div class="row my-3">
@@ -34,9 +103,10 @@
         <table id="productsTable" class="table table-bordered table-striped">
             <thead>
             <tr>
-                <th>Store</th>
                 <th>Sku</th>
+                <th>Code</th>
                 <th>Upload Status</th>
+                <th>Store</th>
                 <th>Created At</th>
             </tr>
             </thead>
@@ -62,6 +132,8 @@
                 $('.card-body').toggle();
             });
 
+            $(' #listing_store').select2();
+
             var productsTable = $('#productsTable').DataTable({
                 processing: true,
                 serverSide: true,
@@ -72,15 +144,33 @@
                         'X-CSRF-TOKEN': '{{ csrf_token() }}',
                     },
                     data: function (d) {
-                        d.listing_store_id = $('#listing_store').val();
+                        d.store_id = $('#listing_store').val();
+
+                        var formData = $('#filter-form').serializeArray();
+                        $.each(formData, function (i, field) {
+                            d[field.name] = field.value;
+                        });
                     }
                 },
                 columns: [
-                    {data: 'store_name', name: 'store_name'},
                     {data: 'sku', name: 'sku'},
+                    {data: 'code', name: 'code', render: function (data, type, row) {
+                        return `<a href="catalog/edit/${row.product_id}" target="_blank">${data}</a>`;
+                    }},
                     {data: 'upload_status', name: 'upload_status'},
+                    {data: 'store_name', name: 'store_name'},
                     {data: 'created_at', name: 'created_at'},
                 ]
+            });
+
+
+            $('#filter-form').on('submit', function (e) {
+                e.preventDefault();
+                productsTable.ajax.reload();
+            });
+
+            $('#listing_store').on('change', function () {
+                productsTable.ajax.reload();
             });
         });
     </script>
