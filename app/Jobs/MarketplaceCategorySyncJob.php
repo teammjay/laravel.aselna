@@ -97,7 +97,7 @@ class MarketplaceCategorySyncJob implements ShouldQueue
 
     private function createMagentoCategory(mixed $category)
     {
-        $magetoAuthService = new MagentoAuthService($this->store->seller_id, $this->store->secret_key);
+        $magetoAuthService = new MagentoAuthService($this->store->seller_id, $this->store->secret_key,$this->store->service_url);
         Log::info("Category parent ID :: " . $category->parent_id);
         $parentCategory = StoreCategory::find($category->parent_id);
         Log::info("Categiry Data :: " . $parentCategory);
