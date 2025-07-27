@@ -158,7 +158,7 @@
                         return `<a href="catalog/edit/${row.product_id}" target="_blank">${data}</a>`;
                     }},
                     {data: 'upload_status', name: 'upload_status'},
-                    {data: 'store_name', name: 'store_name'},
+                    {data: 'store_name', name: 'store_name', orderable: false},
                     {data: 'created_at', name: 'created_at'},
                 ]
             });
