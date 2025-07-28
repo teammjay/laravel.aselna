@@ -2,9 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\QueryFilters;
 use App\Models\ManageMarketplaceProduct;
 use App\Models\Store;
+use App\Services\DataTable\DataTableService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class MarketPlaceProductsController extends Controller
 {
@@ -20,26 +23,41 @@ class MarketPlaceProductsController extends Controller
         $draw = $request['draw'];
 
         $query = ManageMarketplaceProduct::query();
+        $totalRecords = ManageMarketplaceProduct::query()->count();
+
         $query->with(['store', 'store.storeType']);
 
         if ($request->has('store_id') && $request->store_id != '') {
             $query->where('store_id', $request->store_id);
         }
 
+        $dataTableService = new DataTableService($query, $request);
 
-        if ($request->has('sort_by') && $request->sort_by != '') {
-            $sortBy = $request->sort_by;
-            $query->orderBy($sortBy, 'asc');
-        } else {
-            $query->orderBy('created_at', 'desc');
-        }
+        $dataTableService->setCustomSorting(function ($query, $request) {
+            $columnIndex = $request->input('order.0.column', 0);
+            $columnName = $request->input('columns.' . $columnIndex . '.name', 'id');
+            $sortDirection = $request->input('order.0.dir', 'asc');
+            Log::info("Sorting by column: $columnName, direction: $sortDirection");
+            if ($columnName == 'code') {
+                $query->orderBy('product_code', $sortDirection);
+            } else {
+                $query->orderBy($columnName, $sortDirection);
+            }
+        });
 
-        $totalRecords = $query->count();
-        $products = $query->paginate(10);
+        $dataTableService->setCustomSearch(function ($query, $request) {
+            $query
+                ->when($request->input('sku'), function ($query) use ($request) {
+                    QueryFilters::applyFilter($query, $request, 'sku', 'sku_operator', 'sku');
+                });
+        });
+
+
+        $dataQuery = $dataTableService->handle();
 
         $data = [];
 
-        foreach ($products as $product) {
+        foreach ($dataQuery->items() as $product) {
             $data[] = [
                 'id' => $product->id,
                 'store_name' => $product->store->name . ' - ' . ($product->store->storeType->name ?? ''),
@@ -53,8 +71,8 @@ class MarketPlaceProductsController extends Controller
 
         $response = array(
             "draw" => intval($draw),
-            "iTotalRecords" => $totalRecords,
-            "iTotalDisplayRecords" => $totalRecords,
+            'recordsTotal' => $totalRecords,
+            'recordsFiltered' => $dataQuery->total(),
             "aaData" => $data
         );
 
