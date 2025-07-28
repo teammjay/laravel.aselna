@@ -605,7 +605,9 @@ class MessagesController extends Controller
 
                 //print_r($templateDetail);die;
 
-                if(isset($orderOperation->shipFrom->returnAddress) && $orderOperation->shipFrom->returnAddress->company != ''){
+                $returnAddress = $this->getReturnAddress($orderOperation);
+
+                /*if(isset($orderOperation->shipFrom->returnAddress) && $orderOperation->shipFrom->returnAddress->company != ''){
                     $returnAddress .= trim($orderOperation->shipFrom->returnAddress->company).PHP_EOL;
                 }
                 if(isset($orderOperation->shipFrom->returnAddress) && $orderOperation->shipFrom->returnAddress->address_line_1 != ''){
@@ -625,7 +627,7 @@ class MessagesController extends Controller
                 }
                 if(isset($orderOperation->shipFrom->returnAddress) && $orderOperation->shipFrom->returnAddress->postal_code != ''){
                     $returnAddress .= '-'.trim($orderOperation->shipFrom->returnAddress->postal_code).PHP_EOL;
-                }
+                }*/
 
                 if($templateDetail){
                     $data = [
@@ -1332,12 +1334,12 @@ class MessagesController extends Controller
                 }
             }
             //$orderOperation = OrderOperation::with('operationItem')->where('order_id',$id)->where('operation_type',OrderOperationType::OrderReturn)->first();
-            $orderOperation = OrderOperation::with('operationItem')->where('order_id',$id)->first();
+            $orderOperation = OrderOperation::with('operationItem')->where('order_id',$id)->orderBy('created_at','desc')->first();
 
             if($orderOperation->operation_type == OrderOperationType::OrderReturn){
                 $operation_type = OrderOperationType::OrderReturnRefund;
             }else{
-                $operation_type = OrderOperationType::OrderReturn;
+                $operation_type = OrderOperationType::OrderRefund;
             }
 
             $clonedOrderOperation = [
@@ -1402,7 +1404,7 @@ class MessagesController extends Controller
                     'message' => 'Something went wrong with API. Please try again!'
                 ]);
             }
-
+            DB::commit();
             $templateDetail = HdMessageTemplate::getOrderOperationTemplate($operation_type,0,0);
             $template_id = $template_code = '';
             if($templateDetail) {
@@ -1416,7 +1418,7 @@ class MessagesController extends Controller
                 $template_id = $templateDetail->id;
                 $template_code = \Blade::render($templateDetail->template_code, $data);
             }
-            DB::commit();
+
             return response()->json([
                 'success' => true,
                 'template_id' => $template_id,

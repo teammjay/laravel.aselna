@@ -42,16 +42,16 @@ class HdMessageTemplate extends Model
                 continue;
             }
 
-            if (!is_null($templateOperationType) && (is_null($operationType) || $templateOperationType !== $operationType)) {
+            if (!is_null($templateOperationType) && (is_null($operationType) || $templateOperationType != $operationType)) {
                 continue;
             }
 
-            $templateRequiresReplacementShipped = $template->replacement_order_shipped ?? false;
+            $templateRequiresReplacementShipped = $template->replacement_order_shipped ?? 0;
             if ($templateRequiresReplacementShipped && !$replacementShipped) {
                 continue;
             }
 
-            $templateRequiresReturnLabel = $template->print_to_file ?? false;
+            $templateRequiresReturnLabel = $template->print_to_file ?? 0;
             if ($templateRequiresReturnLabel !== $returnLabelAttached) {
                 continue;
             }

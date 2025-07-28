@@ -20,6 +20,7 @@ use App\Models\CustomerEmail;
 use App\Models\HDMessage;
 use App\Models\HdMessageAttachment;
 use App\Models\HdMessagePart;
+use App\Models\HdMessageTemplate;
 use App\Models\HdTicketType;
 use App\Models\Listing;
 use App\Models\ListingFeed;
@@ -65,6 +66,7 @@ class HomeController extends Controller
 
     public function testfunction(){
 
+
             /*$store = Store::with('storeType')->where('id', '3fab8878-e036-58c7-db30-addd3058875c')->first();
             $authService = new ShopifyAuthService($store->secret_key, $store->service_url);
             $orderId = "gid://shopify/Order/6749583638833";
@@ -100,7 +102,7 @@ class HomeController extends Controller
         $shopifyService->refundOrder('6665896263985',$store);
         die;*/
 
-        $requestId = (string) Str::uuid();
+        /*$requestId = (string) Str::uuid();
         $data = [
             'requesterId' => 'Iweb',
             'accountId' => '1257538',
@@ -114,7 +116,7 @@ class HomeController extends Controller
         echo '<pre>';
         print_r($result);
         echo '</pre>';
-        echo 'here'; die;
+        echo 'here'; die;*/
 
         //$orderOperation = OrderOperation::with('order', 'store', 'store.storeType', 'operationItem', 'operationItem.orderItem', 'carrier', 'carrierService','shippingPackage','shipFrom')->where('id', 'bf9525a0-27f3-4ea6-87be-9db88bfda601')->first();
         //Log::info('Order Operation:'.json_encode($orderOperation));
