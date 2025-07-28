@@ -15,6 +15,7 @@ use App\Models\OrderItem;
 use App\Models\OrderOperation;
 use App\Models\OrderOperationItem;
 use App\Models\OrderSynchronization;
+use App\Models\ShippingPackage;
 use App\Models\ShippingServiceRule;
 use App\Models\Store;
 use App\Services\Marketplace\Service\ShopifyService;
@@ -231,6 +232,7 @@ class FetchShopifyOrders implements ShouldQueue
                                     'status' => $orderOperationstatus,
                                     'signature_confirmation' => 1,
                                     'store_id' => $store->id,
+                                    'shipping_package_id'=>ShippingPackage::getDefaultShippingPackage(),
                                     'operation_type' => OrderOperationType::OrderShipment,
                                     'label_creation_type' => 1,
                                     'print_to_file' => 0,

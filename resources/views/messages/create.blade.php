@@ -343,6 +343,7 @@
     <script>
 
         var ticket_id = '';
+        var rma_action = false;
 
         const scrollable = document.getElementById("scrollable");
         scrollable.scrollTop = scrollable.scrollHeight;
@@ -526,48 +527,9 @@
             });
 
             $(document).on('click','#rma',function () {
+                rma_action = true;
                 saveTicket($('#subject').val());
-                var order_id = $('#order_id').val();
-                if(order_id != '' && order_id != null){
-                    $.ajax({
-                        url: "{{ route('message.getshippingdetail') }}",
-                        type: 'POST',
-                        data: {
-                            order_id: order_id,
-                            rma: 1,
-                            "_token": '{{ csrf_token() }}'
-                        },
-                        success: function (response) {
-                            // If success, remove the user row from the table
-                            if (response.success) {
-                                if(response.template_code != ''){
-                                    $('#template_id').val(response.template_id);
-                                    $('#message_to_send').html(response.template_code);
-                                }
-                                $('#makeRMAModal').find('.modal-body').html(response.html);
-                                $('#date').datetimepicker({
-                                    format:'Y-m-d H:i',
-                                    /* minDate: 'now', */
-                                    step:10,
-                                    onSelectTime: function(dp,$input) {
-                                        var sel_date = $input.val();
-                                        $('#date').val(sel_date);
-                                    }
-                                });
-                                $('#makeRMAModal').modal('show');
-                                $('#return_label').removeClass('hide').addClass('show');
 
-                                getShippingCarrierService($('#carrier_name_ms'));
-                            }
-                        },
-                        error: function (xhr) {
-                            // Handle error response
-                            alert('Error: ' + xhr.responseJSON.error);
-                        }
-                    });
-                }else{
-                    alert('There were no order found.');
-                }
             });
 
             $(document).on('click','#regenerate_rma_message',function () {
@@ -1096,7 +1058,7 @@
             $(document).on("keypress", "#subject", function(e){
                 if(e.which == 13){ // Check if the pressed key is Enter (key code 13)
                     var subject = $(this).val();
-                    saveTicket(subject);
+                    //saveTicket(subject);
                 }
             });
 
@@ -1106,6 +1068,53 @@
             });
 
         });
+
+        function doRMA(ticket_id){
+            var order_id = $('#order_id').val();
+            if(order_id != '' && order_id != null){
+                $.ajax({
+                    url: "{{ route('message.getshippingdetail') }}",
+                    type: 'POST',
+                    data: {
+                        order_id: order_id,
+                        rma: 1,
+                        "_token": '{{ csrf_token() }}'
+                    },
+                    success: function (response) {
+                        // If success, remove the user row from the table
+                        if (response.success) {
+
+                            window.location.href = '{{ url('messages/detail') }}/'+ticket_id;
+
+                            /*if(response.template_code != ''){
+                                $('#template_id').val(response.template_id);
+                                $('#message_to_send').html(response.template_code);
+                            }
+                            $('#makeRMAModal').find('.modal-body').html(response.html);
+                            $('#date').datetimepicker({
+                                format:'Y-m-d H:i',
+                                /!* minDate: 'now', *!/
+                                step:10,
+                                onSelectTime: function(dp,$input) {
+                                    var sel_date = $input.val();
+                                    $('#date').val(sel_date);
+                                }
+                            });
+                            $('#makeRMAModal').modal('show');
+                            $('#return_label').removeClass('hide').addClass('show');
+
+                            getShippingCarrierService($('#carrier_name_ms'));*/
+                        }
+                    },
+                    error: function (xhr) {
+                        // Handle error response
+                        alert('Error: ' + xhr.responseJSON.error);
+                    }
+                });
+            }else{
+                alert('There were no order found.');
+            }
+        }
 
         function saveTicket(subject){
             $.ajax({
@@ -1125,6 +1134,9 @@
 
                         ticket_id = data.ticket_id;
                         $('.ticket-title').html('ON <strong>'+data.ticket_code+'</strong>');
+                        if(rma_action) {
+                            doRMA(ticket_id);
+                        }
                         /*if(subject == 'RMA' || subject == 'rma'){
                             $('#rma').trigger('click');
                         }*/
