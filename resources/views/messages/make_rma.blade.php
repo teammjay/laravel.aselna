@@ -59,19 +59,18 @@
                                     <div class="d-flex flex-column">
                                         <div>
                                             <input type="radio" name="label_generation"
-                                                   value="<?= ShippingLabelCreationType::CreateLabel ?>" checked>
+                                                   value="<?= ShippingLabelCreationType::CreateLabel ?>">
                                             Create Label
                                         </div>
                                         <div>
-                                            <input type="radio" name="label_generation"
-                                                   value="<?= ShippingLabelCreationType::MarkAsShipped ?>">
-                                            Mark As Shipped
+                                            <input type="radio" name="label_generation" value="{{ ShippingLabelCreationType::NoLabel }}" checked>
+                                            Do not create label
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                        <div class="col-md-7">
+                        <div class="col-md-7 hide">
                             <div class="row mt-3 g-3 align-items-center">
                                 <div class="col-md-4">
                                     <label for="carrier_name">Carrier Name</label>

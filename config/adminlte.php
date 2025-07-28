@@ -494,11 +494,6 @@ return [
                     'icon' => 'far fa-fw fa-list-alt',
                 ],
                 [
-                    'text' => 'Suspended Listing',
-                    'url' => '/listing/suspended',
-                    'icon' => 'far fa-fw fa-list-alt',
-                ],
-                [
                     'text' => 'Generation Type',
                     'url' => '/list_generate_type',
                     'icon' => 'far fa-fw fa-file'
@@ -670,11 +665,15 @@ return [
                     'text' => 'Manufacturer',
                     'url' => '/manufacturer',
                     'icon' => 'far fa-fw fa-file'
-                ]
+                ],
+                [
+                    'text' => 'MarketPlace Products',
+                    'url' => '/marketplace_product',
+                    'icon' => 'far fa-fw fa-list-alt',
+                ],
 
             ],
         ],
-
         [
             'text' => 'Jobs',
             'icon' => 'fa fa-fw fa-cogs',

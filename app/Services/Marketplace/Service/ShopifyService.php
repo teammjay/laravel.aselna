@@ -541,10 +541,11 @@ class ShopifyService implements MarketplaceServiceInterface
 
             $this->authService = new ShopifyAuthService($store->secret_key, $store->service_url);
             $orderId = "gid://shopify/Order/".$order_id;
+            $transactionData = $this->authService->getTransactions($orderId);
 
             if($orderId){
                 $orderDetail = Order::with('orderItem')->where('order_id',$order_id)->first();
-                $items= $refundMethod = [];
+                $items= $refundMethod = $transactions =  [];
                 if($orderDetail){
                     if(isset($orderDetail->orderItem)){
                         foreach($orderDetail->orderItem as $item){
@@ -553,31 +554,44 @@ class ShopifyService implements MarketplaceServiceInterface
                                 'quantity' => $item->quantity
                             ];
 
-                            $refundMethod = [
+                            /*$refundMethod = [
                                 'storeCreditRefund' => [
                                     'amount' => [
-                                        'amount' => $item->item_price
+                                        'amount' => (string)$item->item_price
                                     ]
                                 ]
-                            ];
+                            ];*/
                         }
                     }
                 }
+
+                if(!empty($transactionData)){
+                    foreach($transactionData as $transaction){
+                        $transactions[] = [
+                            'orderId' => $orderId,
+                            'amount' => (string)$transaction['amount'],
+                            'kind' => 'REFUND',
+                            'gateway' => $transaction['gateway'],
+                            'parentId' => $transaction['id'],
+                        ];
+                    }
+                }
                 $variables = [
-                    'RefundInput' => [
+                    'input' => [
                         'orderId' => $orderId,
+                        'notify' => true,
                         'refundLineItems' => $items,
-                        'refundMethods' => $refundMethod,
-                        'transactions' => []
+                        //'refundMethods' => $refundMethod,
+                        'transactions' => $transactions
                     ]
                 ];
                 /*echo '<pre>';
                 print_r($variables);
                 echo '</pre>';die;*/
+                Log::info("Refund Request : ". json_encode($variables));
                 $refundId = $this->authService->createRefund($orderId, $variables);
                 if($refundId){
                     //$refund_response = $this->authService->refundOrder($refundId);
-
                     return $refundId;
                 }else{
                     return false;

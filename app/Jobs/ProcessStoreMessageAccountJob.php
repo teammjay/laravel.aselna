@@ -3,12 +3,14 @@
 namespace App\Jobs;
 
 use App\Models\HdMessageAttachment;
+use App\Models\Sequence;
 use App\Models\SysFile;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Models\Customer;
 use App\Models\CustomerEmail;
@@ -235,7 +237,7 @@ class ProcessStoreMessageAccountJob implements ShouldQueue
 
                                 if (isset($hd_message->id) && !empty($email['attachments'])) {
 
-                                    if(is_array($email['attachments'])){
+                                    if(!empty($email['attachments'])){
                                         foreach($email['attachments'] as $attachment){
                                             $fileName = $attachment->getName();
                                             $fileMimeType = $attachment->getMimeType();
@@ -255,8 +257,8 @@ class ProcessStoreMessageAccountJob implements ShouldQueue
 
                                                 $filedata = [
                                                     'name' => $fileName,
-                                                    'ext' => $extension ?: 'jpg', // Default to 'jpg' if missing
-                                                    'file_size' => $fileSize ?: 'Unknown', // Use 'Unknown' if not determined
+                                                    'ext' => $extension ?: 'jpg',
+                                                    'file_size' => $fileSize ?: 'Unknown',
                                                     'location' => 'email_attachment/',
                                                     'created_by' => 'admin',
                                                 ];
@@ -268,7 +270,7 @@ class ProcessStoreMessageAccountJob implements ShouldQueue
                                                     $attachementData = [
                                                         'client_id' => NULL,
                                                         'message_id' => $hd_message->id,
-                                                        'attachment_id' => $ticket_id,
+                                                        'attachment_id' => $attachmentID,
                                                         'file_id' => $file_id,
                                                         'created_by' => 'admin',
                                                     ];
@@ -298,7 +300,7 @@ class ProcessStoreMessageAccountJob implements ShouldQueue
         }
     }
 
-    private function getNextTicketNumberForStore($storeId)
+    /*private function getNextTicketNumberForStore($storeId)
     {
         $lastTicket = Message::where('store_id', $storeId)
             ->orderBy('id', 'desc')
@@ -310,5 +312,24 @@ class ProcessStoreMessageAccountJob implements ShouldQueue
         }
 
         return str_pad(1, 6, '0', STR_PAD_LEFT);
+    }*/
+
+    public static function getNextTicketNumberForStore($storeId) {
+        $key = 'ticket_' . str_replace('-', '', $storeId);
+
+        return DB::transaction(function () use ($key) {
+            $sequence = Sequence::lockForUpdate()->find($key);
+
+            if (!$sequence) {
+                $sequence = Sequence::create([
+                    'key' => $key,
+                    'number' => 1
+                ]);
+            } else {
+                $sequence->increment('number');
+            }
+
+            return $sequence->number;
+        });
     }
 }

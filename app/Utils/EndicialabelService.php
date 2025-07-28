@@ -30,7 +30,7 @@ class EndicialabelService
     public function createLabel(array $request, $orderOperationId)
     {
         Log::info('Creating Endicia label with request: ' . json_encode($request));
-        $xmlString = $this->buildXmlRequest($request);
+        $xmlString = $this->buildXmlRequest($request,$orderOperationId);
         Log::info('Endicia Label Request XML: ' . $xmlString);
 
         try {
@@ -259,7 +259,7 @@ class EndicialabelService
     }
 
     private
-    function buildXmlRequest(array $shipmentDetails)
+    function buildXmlRequest(array $shipmentDetails,$orderOperationId)
     {
         $xml = new \SimpleXMLElement('<?xml version="1.0" encoding="utf-8"?><soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"/>');
         $body = $xml->addChild('soap:Body', null, 'http://schemas.xmlsoap.org/soap/envelope/');
@@ -352,9 +352,15 @@ class EndicialabelService
         if (isset($shipmentDetails['RubberStamp2'])) {
             $labelRequest->addChild('RubberStamp2', $shipmentDetails['RubberStamp2']);
         }
-//        if (isset($shipmentDetails['RubberStamp3'])) {
-//            $labelRequest->addChild('RubberStamp3', $shipmentDetails['RubberStamp3']);
-//        }
+
+        $orderOperation = OrderOperation::findOrFail($orderOperationId);
+        $operation_type = $orderOperation->operation_type;
+
+        if (OrderOperationType::isReturn($operation_type)) {
+            if (isset($shipmentDetails['RubberStamp3'])) {
+                $labelRequest->addChild('RubberStamp3', $shipmentDetails['RubberStamp3']);
+            }
+        }
 
         return $xml->asXML();
     }
@@ -386,17 +392,18 @@ class EndicialabelService
 
             $xml->registerXPathNamespace('ns', 'www.envmgr.com/LabelService');
 
-            $refund = (string)$xml->xpath('//ns:Refund')[0];
+            //$refundNode = (string)$xml->xpath('//ns:Refund')[0];
             $RequestID = (string)$xml->xpath('//ns:RequestID')[0];
             $RefundStatus = (string)$xml->xpath('//ns:RefundStatus')[0];
-            $Message = (string)$xml->xpath('//ns:RefundStatusMessage')[0];
+            $Message = (string)$xml->xpath('//ns:RefundStatusMessage');
+            $refundStatusMessage = isset($Message[0]) ? (string)$Message[0] : null;
             Log::info('Endicia Label Response Parser: ' . json_encode($RequestID));
             Log::info('Endicia Label Response Parser: ' . json_encode($RefundStatus));
             Log::info('Endicia Label Response Parser: ' . json_encode($Message));
             $returnData = [
                 'status' => $RefundStatus,
                 'requestID' => $RequestID,
-                'message' => $Message
+                'message' => $refundStatusMessage
             ];
 
             Log::info('Return Data: ' . json_encode($returnData));

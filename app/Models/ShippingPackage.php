@@ -27,4 +27,10 @@ class ShippingPackage extends Model
 
 
     protected $fillable = ['id','name','client','dimensions_length','dimensions_width','dimensions_height','dimensions_length_unit','weight_value','weight_weight_unit','created_at','updated_at'];
+
+    public static function getDefaultShippingPackage(){
+
+        $packageDetail = Self::whereLike('name','%Rectangular Package%')->first();
+        return $packageDetail->id;
+    }
 }

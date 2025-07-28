@@ -38,4 +38,8 @@ class Message extends Model
     public function customer(){
         return $this->belongsTo(Customer::class, 'customer_id');
     }
+
+    public function order(){
+        return $this->belongsTo(Order::class, 'order_id','order_id');
+    }
 }
