@@ -81,7 +81,7 @@
             <div class="card">
                 <div class="card-header d-flex align-items-center" style="gap:15px;">
                     <h2 class="ticket-title">Subject</h2>
-                    <input type="text" class="form-control" name="subject" id="subject">
+                    <input type="text" class="form-control" name="subject" id="subject" placeholder="Enter message subject">
                 </div>
                 <div class="card-body">
 
@@ -343,6 +343,7 @@
     <script>
 
         var ticket_id = '';
+        var rma_action = false;
 
         const scrollable = document.getElementById("scrollable");
         scrollable.scrollTop = scrollable.scrollHeight;
@@ -526,47 +527,9 @@
             });
 
             $(document).on('click','#rma',function () {
-                var order_id = $('#order_id').val();
-                if(order_id != '' && order_id != null){
-                    $.ajax({
-                        url: "{{ route('message.getshippingdetail') }}",
-                        type: 'POST',
-                        data: {
-                            order_id: order_id,
-                            rma: 1,
-                            "_token": '{{ csrf_token() }}'
-                        },
-                        success: function (response) {
-                            // If success, remove the user row from the table
-                            if (response.success) {
-                                if(response.template_code != ''){
-                                    $('#template_id').val(response.template_id);
-                                    $('#message_to_send').html(response.template_code);
-                                }
-                                $('#makeRMAModal').find('.modal-body').html(response.html);
-                                $('#date').datetimepicker({
-                                    format:'Y-m-d H:i',
-                                    /* minDate: 'now', */
-                                    step:10,
-                                    onSelectTime: function(dp,$input) {
-                                        var sel_date = $input.val();
-                                        $('#date').val(sel_date);
-                                    }
-                                });
-                                $('#makeRMAModal').modal('show');
-                                $('#return_label').removeClass('hide').addClass('show');
+                rma_action = true;
+                saveTicket($('#subject').val());
 
-                                getShippingCarrierService($('#carrier_name_ms'));
-                            }
-                        },
-                        error: function (xhr) {
-                            // Handle error response
-                            alert('Error: ' + xhr.responseJSON.error);
-                        }
-                    });
-                }else{
-                    alert('There were no order found.');
-                }
             });
 
             $(document).on('click','#regenerate_rma_message',function () {
@@ -1092,39 +1055,100 @@
                 });
             });
 
+            $(document).on("keypress", "#subject", function(e){
+                if(e.which == 13){ // Check if the pressed key is Enter (key code 13)
+                    var subject = $(this).val();
+                    //saveTicket(subject);
+                }
+            });
+
             $(document).on('blur','#subject',function () {
                 var subject = $(this).val();
-                $.ajax({
-                    type: "POST",
-                    url: "{{ route('message.saveticket') }}",
-                    data: {
-                        subject: subject,
-                        order_id: $('#order_id').val(),
-                    },
-                    dataType:'json',
-                    headers: {
-                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                    },
-
-                    success: function (data) {
-                        if(data.success && data.ticket_id != ''){
-
-                            ticket_id = data.ticket_id;
-                            $('#ticket-title').html('ON <strong>'+data.ticket_code+'</strong>');
-                            if(subject == 'RMA' || subject == 'rma'){
-                                $('#rma').trigger('click');
-                            }
-                        }
-                    },
-                    error: function (xhr) {
-                    },
-                    complete: function () {
-                        $("#ajax-preloader").hide();
-                    }
-                });
+                //saveTicket(subject);
             });
 
         });
+
+        function doRMA(ticket_id){
+            var order_id = $('#order_id').val();
+            if(order_id != '' && order_id != null){
+                $.ajax({
+                    url: "{{ route('message.getshippingdetail') }}",
+                    type: 'POST',
+                    data: {
+                        order_id: order_id,
+                        rma: 1,
+                        "_token": '{{ csrf_token() }}'
+                    },
+                    success: function (response) {
+                        // If success, remove the user row from the table
+                        if (response.success) {
+
+                            window.location.href = '{{ url('messages/detail') }}/'+ticket_id;
+
+                            /*if(response.template_code != ''){
+                                $('#template_id').val(response.template_id);
+                                $('#message_to_send').html(response.template_code);
+                            }
+                            $('#makeRMAModal').find('.modal-body').html(response.html);
+                            $('#date').datetimepicker({
+                                format:'Y-m-d H:i',
+                                /!* minDate: 'now', *!/
+                                step:10,
+                                onSelectTime: function(dp,$input) {
+                                    var sel_date = $input.val();
+                                    $('#date').val(sel_date);
+                                }
+                            });
+                            $('#makeRMAModal').modal('show');
+                            $('#return_label').removeClass('hide').addClass('show');
+
+                            getShippingCarrierService($('#carrier_name_ms'));*/
+                        }
+                    },
+                    error: function (xhr) {
+                        // Handle error response
+                        alert('Error: ' + xhr.responseJSON.error);
+                    }
+                });
+            }else{
+                alert('There were no order found.');
+            }
+        }
+
+        function saveTicket(subject){
+            $.ajax({
+                type: "POST",
+                url: "{{ route('message.saveticket') }}",
+                data: {
+                    subject: subject,
+                    order_id: $('#order_id').val(),
+                },
+                dataType:'json',
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                },
+
+                success: function (data) {
+                    if(data.success && data.ticket_id != ''){
+
+                        ticket_id = data.ticket_id;
+                        $('.ticket-title').html('ON <strong>'+data.ticket_code+'</strong>');
+                        if(rma_action) {
+                            doRMA(ticket_id);
+                        }
+                        /*if(subject == 'RMA' || subject == 'rma'){
+                            $('#rma').trigger('click');
+                        }*/
+                    }
+                },
+                error: function (xhr) {
+                },
+                complete: function () {
+                    $("#ajax-preloader").hide();
+                }
+            });
+        }
 
         function getShippingCarrierService(element){
             $.ajax({
@@ -1215,34 +1239,6 @@
                             }else{
                                 $('#return_label').removeClass('show').addClass('hide');
                             }
-                        }
-                    },
-                    error: function (xhr) {
-                    },
-                    complete: function () {
-                        $("#ajax-preloader").hide();
-                    }
-                });
-            }
-        }
-
-        function loadCustomerDetail(){
-            let customer_id_name = $('#customer').val();
-            if(order_id != '') {
-                $.ajax({
-                    type: "POST",
-                    url: "{{ route('message.searchcustomer') }}",
-                    data: {
-                        customer_id_name: customer_id_name
-                    },
-                    headers: {
-                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                    },
-
-                    success: function (data) {
-                        if (data.success) {
-
-
                         }
                     },
                     error: function (xhr) {

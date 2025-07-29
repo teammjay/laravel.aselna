@@ -308,7 +308,7 @@ class ListingController extends Controller
                     "title" => strlen($product->title) > 50 ? substr($product->title, 0, 50) . "..." : $product->title,
                     "status" => ListingStatus::getListingStatusName($product->status),
                     "product_size" => (!empty((array)$product->storeProduct) && !empty((array)$product->storeProduct->product)) ? $product->storeProduct->product->dimensions_width : '',
-                    "product_color" => (!empty((array)$product->storeProduct->product->color) && !empty((array)$product->storeProduct->product->color)) ? $product->storeProduct->product->color->name : '',
+                    "product_color" => (isset($product->storeProduct->product) && !empty((array)$product->storeProduct->product->color) && !empty((array)$product->storeProduct->product->color)) ? $product->storeProduct->product->color->name : '',
                     "sync_status" => ListingSyncStatus::getListingSyncStatusName($product->sync_status),
                     "generation_type_name" => (!empty($product->generationType)) ? $product->generationType->name : '',
                     "price" => $product->price,
@@ -2946,6 +2946,94 @@ class ListingController extends Controller
     }
 
     public function endList(Request $request)
+    {
+        $created_by = auth()->user()->name ?? 'admin';
+        $selected_listing = $request->input('selected_list');
+        $selected_sku = $request->input('selected_sku');
+
+        if (empty($selected_listing)) {
+            return response()->json([
+                'error' => true,
+                'message' => 'No items selected.'
+            ]);
+        }
+
+        $storeGroupedItems = [];
+
+        foreach ($selected_listing as $key => $listing_item_id) {
+            $listingItem = ListingItem::find($listing_item_id);
+            if (!$listingItem) continue;
+
+            $sku = $selected_sku[$key] ?? null;
+
+            $listingDetail = ListingItemLink::select('listing_item_link.*')
+                ->with('listing')
+                ->leftJoin('listing_item', 'listing_item.id', '=', 'listing_item_link.item_id')
+                ->where('listing_item_link.item_id', $listing_item_id)
+                ->where('listing_item.sku', $sku)
+                ->first();
+
+            if ($listingDetail && $listingDetail->listing) {
+                $store_id = $listingDetail->listing->store_id;
+
+                $storeGroupedItems[$store_id][] = [
+                    'item_id' => $listingDetail->item_id,
+                    'listing' => $listingDetail->listing
+                ];
+            }
+        }
+
+        if (empty($storeGroupedItems)) {
+            return response()->json([
+                'error' => true,
+                'message' => 'No valid listings found for items.'
+            ]);
+        }
+
+        foreach ($storeGroupedItems as $store_id => $items) {
+            if (empty($items)) continue;
+
+            $firstListing = $items[0]['listing'];
+
+            // Create one listing per store
+            $listingArr = [
+                'store_id' => $store_id,
+                'generation_type_id' => $firstListing->generation_type_id,
+                'feed_type' => FeedTypes::DELETE,
+                'status' => 0,
+                'chained' => 1,
+                'include_carriers' => $firstListing->include_carriers,
+                'brand_combo' => $firstListing->brand_combo,
+                'carrier_combo' => $firstListing->carrier_combo,
+                'created_by' => $created_by,
+                'updated_by' => $created_by
+            ];
+
+            $listingRecord = Listing::create($listingArr);
+            $listing_id = $listingRecord->id;
+
+            foreach ($items as $item) {
+                ListingItemLink::create([
+                    'item_id' => $item['item_id'],
+                    'listing_id' => $listing_id,
+                    'sync_status' => ListingSyncStatus::Synchronized,
+                    'created_by' => $created_by
+                ]);
+            }
+
+            // Dispatch one job per store listing
+            Bus::chain([
+                new FeedGenerationJob($listing_id),
+            ])->dispatch();
+        }
+
+        return response()->json([
+            'success' => true
+        ]);
+    }
+
+
+    public function endList_bkp(Request $request)
     {
         $created_by = auth()->user()->name ?? 'admin';
         $selected_listing = $request->input('selected_list');

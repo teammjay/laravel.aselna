@@ -14,6 +14,7 @@ use App\Models\OrderItem;
 use App\Models\OrderOperation;
 use App\Models\OrderOperationItem;
 use App\Models\OrderSynchronization;
+use App\Models\ShippingPackage;
 use Illuminate\Support\Facades\Log;
 
 class OrderUtility
@@ -143,6 +144,7 @@ class OrderUtility
             'status' => OrderOperationStatus::Created,
             'signature_confirmation' => 1,
             'store_id' => $store->id,
+            'shipping_package_id'=>ShippingPackage::getDefaultShippingPackage(),
             'operation_type' => OrderOperationType::OrderShipment,
             'label_creation_type' => 1,
             'print_to_file' => 0,
@@ -417,6 +419,7 @@ class OrderUtility
             'status' => $operationstatus,
             'signature_confirmation' => 1,
 //            'ship_from_id' => '',
+            'shipping_package_id'=>ShippingPackage::getDefaultShippingPackage(),
             'store_id' => $store->id,
             'operation_type' => OrderOperationType::OrderShipment,
             'label_creation_type' => 1,

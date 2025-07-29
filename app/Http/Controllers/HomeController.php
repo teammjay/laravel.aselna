@@ -20,6 +20,7 @@ use App\Models\CustomerEmail;
 use App\Models\HDMessage;
 use App\Models\HdMessageAttachment;
 use App\Models\HdMessagePart;
+use App\Models\HdMessageTemplate;
 use App\Models\HdTicketType;
 use App\Models\Listing;
 use App\Models\ListingFeed;
@@ -33,6 +34,7 @@ use App\Models\Store;
 use App\Models\StoreMessageAccount;
 use App\Models\SysFile;
 use App\Services\Auth\GoogleShoppingAuthService;
+use App\Services\Auth\ShopifyAuthService;
 use App\Services\DataTable\DataTableService;
 use App\Services\Marketplace\MarketplaceServiceFactory;
 use App\Services\Marketplace\Service\EbayService;
@@ -64,6 +66,11 @@ class HomeController extends Controller
 
     public function testfunction(){
 
+            /*$store = Store::with('storeType')->where('id', '3fab8878-e036-58c7-db30-addd3058875c')->first();
+            $authService = new ShopifyAuthService($store->secret_key, $store->service_url);
+            $orderId = "gid://shopify/Order/6749583638833";
+            $transactions = $authService->getTransactions($orderId);
+            die;*/
 
          /*Bus::chain([
             //new SubmitShopifyProductsJob(),
@@ -101,7 +108,7 @@ class HomeController extends Controller
             'requestId' => $requestId,
             'passPhrase' => 'Ag7ycm1274r2!a8hser2m',
             'transaction_id' => '431030',
-            'pic_no' => '9400150105496000076315',
+            'pic_no' => '9400150105798015102707',
         ];
         $endicia = new EndicialabelService();
         $result = $endicia->cancelLabel($data);

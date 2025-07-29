@@ -103,16 +103,9 @@
     <div class="row">
         <div class="col-md-8">
             <div class="card">
-                @if($type == 'create')
-                    <div class="card-header d-flex align-items-center" style="gap:15px;">
-                        <h2 class="ticket-title">ON <strong>{{ $ticketDetail->ticket_code }}</strong></h2>
-                        <input type="text" class="form-control" name="subject" id="subject" value="{{ $ticketDetail->subject }}">
-                    </div>
-                @else
-                    <div class="card-header">
-                        <h2 class="ticket-title">ON <strong>{{ $ticketDetail->ticket_code }}</strong>    {{ $ticketDetail->subject }}</h2>
-                    </div>
-                @endif
+                <div class="card-header">
+                    <h2 class="ticket-title">ON <strong>{{ $ticketDetail->ticket_code }}</strong>    {{ $ticketDetail->subject }}</h2>
+                </div>
                 <div class="card-body">
 
                     <div class="row">
@@ -184,16 +177,16 @@
                                                             @endforeach
                                                         @endif
                                                     </select>
-                                                    <input type="hidden" id="template_id" value="">
+                                                    <input type="hidden" id="template_id" value="@if(isset($template['template_id']) && $template['template_id'] != '') {{ $template['template_id'] }} @endif">
                                                 </div>
                                             </div>
                                         </div>
                                         <div class="col-md-8">
                                             <input type="file" class="btn btn-default" name="attach_file" id="attach_file">
-                                            <input type="hidden" id="image_url">
-                                            <input type="hidden" id="image_storage_path">
-                                            <div class="btn-group lableImageGroup hide" role="group">
-                                                <button id="btnGroupDrop2" type="button" class="btn btn-default lable-image dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"></button>
+                                            <input type="hidden" id="image_url" value="@if(isset($template['imageUrl']) && $template['imageUrl'] != '') {{ $template['imageUrl'] }} @endif">
+                                            <input type="hidden" id="image_storage_path" value="@if(isset($template['storagePath']) && $template['storagePath'] != '') {{ $template['storagePath'] }} @endif">
+                                            <div class="btn-group lableImageGroup @if(!isset($template['imageName'])) hide @endif" role="group">
+                                                <button id="btnGroupDrop2" type="button" class="btn btn-default lable-image dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">@if(isset($template['imageName']) && $template['imageName'] != '') {{ $template['imageName'] }} @endif</button>
                                                 <div class="dropdown-menu" aria-labelledby="btnGroupDrop2">
                                                     <a class="dropdown-item download_image" href="javascript:void(0);">Download</a>
                                                     <a class="dropdown-item delete_images" href="javascript:void(0);">Delete</a>
@@ -203,7 +196,8 @@
                                     </div>
                                     <div class="row pt-3">
                                         <div class="col-md-12">
-                                            <textarea class="form-control" rows="10" id="message_to_send" name="message_to_send"></textarea>
+                                            <textarea class="form-control" rows="10" id="message_to_send" name="message_to_send">@if(isset($template['template_code']) && $template['template_code'] != ''){{ $template['template_code'] }}@endif
+                                            </textarea>
                                         </div>
                                     </div>
                                 </div>
@@ -219,7 +213,7 @@
                         </div>
                     </div>
                     <div class="row btn-sec pt-3">
-                        <div class="col-md-8 border-r">
+                        <div class="col-md-9 border-r">
                             <div class="d-flex align-items-center" style="gap:10px;">
                                 <div class="btn-group" role="group">
                                     <button id="btnGroupDrop1" type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="fa fa-paper-plane"></i> Submit</button>
@@ -267,7 +261,7 @@
                                 @endif
                             </div>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <div class="d-flex align-items-center float-right" style="gap:10px;">
                                 {{--<select class="form-control" name="ticket_type" id="ticket_type">
                                     @if(count($ticketTypeCode ?? []) >0)
@@ -604,7 +598,8 @@
                                     $('#template_id').val(response.template_id);
                                     $('#message_to_send').html(response.template_code);
                                 }
-                                $('#makeRMAModal').find('.modal-body').html(response.html);
+                                //$('#makeRMAModal').find('.modal-body').html(response.html);
+                                $('#returnLabelModal').find('.modal-body').html(response.html);
                                 $('#date').datetimepicker({
                                     format:'Y-m-d H:i',
                                     /* minDate: 'now', */
@@ -614,7 +609,8 @@
                                         $('#date').val(sel_date);
                                     }
                                 });
-                                $('#makeRMAModal').modal('show');
+                                //$('#makeRMAModal').modal('show');
+                                $('#returnLabelModal').modal('show');
                                 $('#return_label').removeClass('hide').addClass('show');
 
                                 getShippingCarrierService($('#carrier_name_ms'));
@@ -684,6 +680,14 @@
             });
 
 
+
+            $(document).on('click','input[name="label_generation"]',function () {
+                if($(this).val() > 0){
+                    $('.ship-sec').removeClass('hide');
+                }else{
+                    $('.ship-sec').addClass('hide');
+                }
+            });
 
             $(document).on('click','#refund',function () {
                 var order_id = $('#order_id').val();
@@ -762,6 +766,11 @@
                             // If success, remove the user row from the table
                             if (response.success) {
                                 $('#returnLabelModal').find('.modal-body').html(response.html);
+                                if($('input[name="label_generation"]').val() > 0){
+                                    $('.ship-sec').removeClass('hide');
+                                }else{
+                                    $('.ship-sec').addClass('hide');
+                                }
                                 $('#date').datetimepicker({
                                     format:'Y-m-d H:i',
                                     /* minDate: 'now', */
@@ -793,11 +802,12 @@
                 const carrier_package = formData.get("carrier_package");
                 const label_generation = formData.get("label_generation");
 
-                if (!carrier_package || carrier_package.trim() === "") {
-                    alert("Carrier package is required.");
-                    return;
+                if (label_generation > 0){
+                    if (!carrier_package || carrier_package.trim() === "") {
+                        alert("Carrier package is required.");
+                        return false;
+                    }
                 }
-
 
                 $.ajax({
                     url: "{{ route('message.returnlabel') }}",
@@ -1108,8 +1118,8 @@
                         alert(response.message);
                         if (response.success) {
 
+                            $('#orderRefundModal').modal('hide');
                             loadOrderDetail();
-
                             if(response.template_id != ''){
                                 $('#template_id').val(response.template_id);
                                 $('#message_to_send').html(response.template_code);

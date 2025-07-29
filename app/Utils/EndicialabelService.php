@@ -392,17 +392,18 @@ class EndicialabelService
 
             $xml->registerXPathNamespace('ns', 'www.envmgr.com/LabelService');
 
-            $refund = (string)$xml->xpath('//ns:Refund')[0];
+            //$refundNode = (string)$xml->xpath('//ns:Refund')[0];
             $RequestID = (string)$xml->xpath('//ns:RequestID')[0];
             $RefundStatus = (string)$xml->xpath('//ns:RefundStatus')[0];
-            $Message = (string)$xml->xpath('//ns:RefundStatusMessage')[0];
+            $Message = (string)$xml->xpath('//ns:RefundStatusMessage');
+            $refundStatusMessage = isset($Message[0]) ? (string)$Message[0] : null;
             Log::info('Endicia Label Response Parser: ' . json_encode($RequestID));
             Log::info('Endicia Label Response Parser: ' . json_encode($RefundStatus));
             Log::info('Endicia Label Response Parser: ' . json_encode($Message));
             $returnData = [
                 'status' => $RefundStatus,
                 'requestID' => $RequestID,
-                'message' => $Message
+                'message' => $refundStatusMessage
             ];
 
             Log::info('Return Data: ' . json_encode($returnData));
