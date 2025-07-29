@@ -221,6 +221,7 @@ class OrdersController extends Controller
     public function upload(Request $request){
 
         $request->validate([
+            'store_id' => 'required',
             'csv_file' => 'required|mimes:csv,txt'
         ]);
         $store_id = $request->input('store_id');
@@ -248,7 +249,7 @@ class OrdersController extends Controller
             $orderExist = Order::where('order_id',$data['order-id'])->count();
             if($orderExist){
                 $order_detail = Order::where('order_id',$data['order-id'])->first();
-                $orderObj = Order::findOrFail($order_detail->id); // Retrieve the product by ID
+                //$orderObj = Order::findOrFail($order_detail->id); // Retrieve the product by ID
                 //$orderObj->update(['order_status' =>OrderStatus::getOrderStatusId('Synchronizing')]);
 
                 /* get order item detail*/
@@ -293,7 +294,7 @@ class OrdersController extends Controller
                                 'ship_date' => date('Y-m-d H:i:s'),
                                 'insurance_value' => 0,
                                 'status' => OrderOperationStatus::Created,
-                                'signature_confirmation' => isset($data['signature-confirmation-recommended']) ? $data['signature-confirmation-recommended'] : 0,
+                                'signature_confirmation' => isset($data['signature-confirmation-recommended']) ? $data['signature-confirmation-recommended'] : 1,
                                 'store_id' => $store->id,
                                 'shipping_package_id'=>ShippingPackage::getDefaultShippingPackage(),
                                 'operation_type' => OrderOperationType::OrderShipment,
