@@ -294,15 +294,15 @@ class OrdersController extends Controller
                                 'ship_date' => date('Y-m-d H:i:s'),
                                 'insurance_value' => 0,
                                 'status' => OrderOperationStatus::Created,
-                                'signature_confirmation' => isset($data['signature-confirmation-recommended']) ? $data['signature-confirmation-recommended'] : 1,
+                                'signature_confirmation' => (isset($data['signature-confirmation-recommended']) && $data['signature-confirmation-recommended'] != '') ? $data['signature-confirmation-recommended'] : 1,
                                 'store_id' => $store->id,
                                 'shipping_package_id'=>ShippingPackage::getDefaultShippingPackage(),
                                 'operation_type' => OrderOperationType::OrderShipment,
                                 'label_creation_type' => 1,
                                 'print_to_file' => 0,
                                 'seller_provides_return_label' => 0,
-                                'expected_delivery_date' => date('Y-m-d H:i:s', strtotime($data['promise-date'])),
-                                'expected_shipment_date' => date('Y-m-d H:i:s', strtotime($data['reporting-date']))
+                                'expected_delivery_date' => (isset($data['promise-date']) && $data['promise-date'] != '') ?  date('Y-m-d H:i:s', strtotime($data['promise-date'])) : NULL,
+                                'expected_shipment_date' => (isset($data['reporting-date']) && $data['reporting-date'] != '') ? date('Y-m-d H:i:s', strtotime($data['reporting-date'])) : NULL
                             ];
 
                             $order_operation_detail = OrderOperation::updateOrCreate([
