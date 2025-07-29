@@ -48,7 +48,7 @@ class ShopifyAuthService
             $request = new Request('POST', $this->endpoint . '/admin/api/' . $this->apiVersion . '/graphql.json', $headers, json_encode($body));
             $res = $this->client->sendAsync($request)->wait();
 
-            Log::info('Response: ' . $res->getBody());
+            //Log::info('Response: ' . $res->getBody());
 
             $result = json_decode($res->getBody(), true);
 
@@ -77,6 +77,11 @@ class ShopifyAuthService
     public function createCollection($createCollection)
     {
         return $this->makeGraphQLRequest(ShopifyQueries::$createCollection, $createCollection);
+    }
+
+    public function updateCollection($updateCollection)
+    {
+        return $this->makeGraphQLRequest(ShopifyQueries::$updateCollection, $updateCollection);
     }
 
     public function createProductVariant($productVariantData)
@@ -341,5 +346,19 @@ class ShopifyAuthService
 
         return $response;
 
+    }
+
+    public function getCollectionByHandle(string $handle)
+    {
+        $query = ShopifyQueries::$getCollectionByHandle;
+        $variables = ['handle' => $handle];
+
+        $response = $this->makeGraphQLRequest($query, $variables);
+
+        if (isset($response['data']['collectionByHandle'])) {
+            return $response['data']['collectionByHandle'];
+        }
+
+        return null;
     }
 }

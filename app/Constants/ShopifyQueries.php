@@ -176,6 +176,22 @@ GQL;
     }
 GQL;
 
+    public static $updateCollection = <<<GQL
+    mutation (\$collection : CollectionInput!) {
+        collectionUpdate(input : \$collection) {
+            collection {
+                id
+            }
+            userErrors {
+                code
+                field
+                message
+            }
+        }
+    }
+GQL;
+
+
     public static $getPublications = <<<GQL
     query {
         publications (first: 10) {
@@ -444,6 +460,24 @@ GQL;
     query GetProductById (\$id : ID!) {
         product( id : \$id) {
             tags
+        }
+    }
+GQL;
+    public static $getCollectionByHandle = <<<GQL
+    query GetCollectionByHandle(\$handle: String!) {
+        collectionByHandle(handle: \$handle) {
+            id
+            title
+            handle
+            updatedAt
+            ruleSet {
+                appliedDisjunctively
+                rules {
+                    column
+                    relation
+                    condition
+                }
+            }
         }
     }
 GQL;
