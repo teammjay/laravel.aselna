@@ -395,7 +395,7 @@ class EndicialabelService
             //$refundNode = (string)$xml->xpath('//ns:Refund')[0];
             $RequestID = (string)$xml->xpath('//ns:RequestID')[0];
             $RefundStatus = (string)$xml->xpath('//ns:RefundStatus')[0];
-            $Message = (string)$xml->xpath('//ns:RefundStatusMessage');
+            $Message = $xml->xpath('//ns:RefundStatusMessage');
             $refundStatusMessage = isset($Message[0]) ? (string)$Message[0] : null;
             Log::info('Endicia Label Response Parser: ' . json_encode($RequestID));
             Log::info('Endicia Label Response Parser: ' . json_encode($RefundStatus));

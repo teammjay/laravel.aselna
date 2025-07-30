@@ -48,7 +48,7 @@ class ShopifyAuthService
             $request = new Request('POST', $this->endpoint . '/admin/api/' . $this->apiVersion . '/graphql.json', $headers, json_encode($body));
             $res = $this->client->sendAsync($request)->wait();
 
-            //Log::info('Response: ' . $res->getBody());
+            Log::info('Response: ' . $res->getBody());
 
             $result = json_decode($res->getBody(), true);
 

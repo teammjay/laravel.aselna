@@ -59,6 +59,8 @@
             z-index: 10;
         }
 
+        .hide{display:none;}
+
     </style>
 @stop
 
@@ -189,6 +191,10 @@
             </button>
             <button type="button" class="btn btn-default" id="cancel_selected">
                 Cancel Selected
+            </button>
+
+            <button type="button" class="btn btn-default hide" id="approved">
+                Approved
             </button>
 
             <span id="total_selected">( 0 selected )</span>
@@ -348,6 +354,14 @@
 
             let totalCnt = $('input[name="shipment_id[]"]:checked').length;
             $('#total_selected').html('( <b>'+totalCnt+'</b> selected )');
+
+            if(ele.data('status') == 1){
+                $('#cancel_selected').addClass('hide');
+                $('#approved').removeClass('hide');
+            }else{
+                $('#cancel_selected').removeClass('hide');
+                $('#approved').addClass('hide');
+            }
         });
 
         $(document).on('click','#refresh_list',function () {
@@ -387,6 +401,34 @@
                             $('#markAsShippedModal').modal('show');
 
                             getShippingCarrierService($('#carrier_name_ms'));
+                        }
+                    },
+                    error: function (xhr) {
+                        // Handle error response
+                        alert('Error: ' + xhr.responseJSON.error);
+                    }
+                });
+            }else{
+                alert('Please select shipment first');
+            }
+        });
+
+        $(document).on('click','#approved',function () {
+            var shipment_id = $('input[name="shipment_id[]"]:checked').val();
+            if(shipment_id != '' && shipment_id != null){
+                $.ajax({
+                    url: "{{ route('shipment.approveshipment') }}",
+                    type: 'POST',
+                    data: {
+                        shipment_id: shipment_id,
+                        "_token": '{{ csrf_token() }}'
+                    },
+                    success: function (response) {
+                        // If success, remove the user row from the table
+                        if (response.success) {
+                            $('#cancel_selected').removeClass('hide');
+                            $('#approved').addClass('hide');
+                            loadDatatables();
                         }
                     },
                     error: function (xhr) {
