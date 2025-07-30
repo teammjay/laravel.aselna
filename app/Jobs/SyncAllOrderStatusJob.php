@@ -237,7 +237,7 @@ class SyncAllOrderStatusJob implements ShouldQueue
                 if (isset($orderDetail['payload'])) {
                     $amazonOrder = $orderDetail['payload'];
                     if (isset($amazonOrder['AmazonOrderId']) && $amazonOrder['AmazonOrderId'] == $order->order_id) {
-                        if (isset($amazonOrder['FulfillmentChannel']) && $amazonOrder['FulfillmentChannel'] == 'AFN') {
+                        if (isset($amazonOrder['FulfillmentChannel'])) {
                             if (isset($amazonOrder['OrderStatus'])) {
                                 switch (strtolower($amazonOrder['OrderStatus'])) {
                                     case 'shipped';
