@@ -73,7 +73,7 @@ class EmailMessageUtility
                         $m->getHeaders()->addTextHeader('In-Reply-To', '<'.$message_id.'>');
                         $m->getHeaders()->addTextHeader('References', '<'.$message_id.'>');
                     }
-                    if(file_exists($attachment)) {
+                    if($attachment != '' && file_exists($attachment)) {
                         $m->attach($attachment);
                     }
                 });
