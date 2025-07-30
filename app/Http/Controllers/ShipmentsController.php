@@ -719,7 +719,7 @@ class ShipmentsController extends Controller
         // I want all the orderId whose addresses are same.
         $sameAddressOrders = [];
         $addressIds = Order::select('shipping_address_id')
-            ->groupBy('shipping_address_id,store_id')
+            ->groupBy('shipping_address_id','store_id')
             ->havingRaw('COUNT(*) > 1')
             ->whereNotIn('order_status', [
                 OrderStatus::Canceled,
