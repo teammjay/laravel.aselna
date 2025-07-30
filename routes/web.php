@@ -128,6 +128,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/stores/synccategories', 'syncCategories')->name('store.synccategories');
         Route::get('/store/handleCallback/', 'handleCallback')->name('store.handleCallback');
         Route::post('/store/getstorepage/', 'getStorePage')->name('store.getstorepage');
+        Route::post('/store/getstoremessageaccount/', 'getStoreMessageAccount')->name('store.getstoremessageaccount');
     });
 
     Route::controller(ListingController::class)->group(function () {
@@ -500,6 +501,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/shipment/shipselected', 'shipSelected')->name('shipment.shipselected');
         Route::post('/shipment/shipthis', 'shipThis')->name('shipment.shipthis');
         Route::post('/shipment/updateshipment', 'updateShipment')->name('shipment.updateshipment');
+        Route::post('/shipment/approveshipment', 'approveShipment')->name('shipment.approveshipment');
     });
 
     Route::controller(ShippingCarrierPackageController::class)->group(function () {

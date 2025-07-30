@@ -65,6 +65,16 @@ GQL;
                     totalWeight
                     displayFinancialStatus
                     displayFulfillmentStatus
+                    risk{
+                        assessments{
+                            facts{
+                                description
+                                sentiment
+                            }
+                            riskLevel
+                        }
+                        recommendation
+                    }
                     totalPriceSet{
                         shopMoney{
                             amount

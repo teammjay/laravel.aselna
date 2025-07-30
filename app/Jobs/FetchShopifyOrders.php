@@ -223,6 +223,15 @@ class FetchShopifyOrders implements ShouldQueue
 
                                 $order_weight = $order['totalWeight'];
                                 $rulesDetails = ShippingServiceRule::getOrderShippingCarrierService($order_weight);
+                                $sync_message = NULL;
+                                if(isset($order['risk']['assessments']['riskLevel']) && $order['risk']['assessments']['riskLevel'] != 'NONE'){
+                                    $sync_message = '';
+                                    if(isset($order['risk']['assessments']['facts']) && is_array($order['risk']['assessments']['facts'])){
+                                        foreach($order['risk']['assessments']['facts'] as $facts){
+                                            $sync_message .= $facts['description'].PHP_EOL;
+                                        }
+                                    }
+                                }
 
                                 /* create order operatation*/
                                 $orderOperationData = [
@@ -230,6 +239,7 @@ class FetchShopifyOrders implements ShouldQueue
                                     'ship_date' => date('Y-m-d H:i:s'),
                                     'insurance_value' => 0,
                                     'status' => $orderOperationstatus,
+                                    'sync_message' => $sync_message,
                                     'signature_confirmation' => 1,
                                     'store_id' => $store->id,
                                     'shipping_package_id'=>ShippingPackage::getDefaultShippingPackage(),

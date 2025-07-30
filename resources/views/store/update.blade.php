@@ -480,11 +480,20 @@
                                     <tr class="field-group">
                                         <td>{{ $maccount->name }}</td>
                                         <td>{{ $maccount->email }}</td>
-                                        <td>{{ $maccount->incoming_account_id }}</td>
-                                        <td>{{ $maccount->outgoing_account_id }}</td>
+                                        <td>
+                                            {{ (isset($maccount->incomingAccount)) ? 'Email: '.$maccount->incomingAccount->email : '' }}<br>
+                                            {{ (isset($maccount->incomingAccount)) ? 'User ID: '.$maccount->incomingAccount->user_id : '' }}
+                                        </td>
+                                        <td>
+                                            {{ (isset($maccount->outgoingAccount)) ? 'Email: '.$maccount->outgoingAccount->email : '' }}<br>
+                                            {{ (isset($maccount->outgoingAccount)) ? 'User ID: '.$maccount->outgoingAccount->user_id : '' }}
+                                        </td>
                                         <td>{{ $maccount->api_account == 1 ? 'Yes' : 'No' }}</td>
                                         <td>{{ $maccount->active == 1 ? 'Yes' : 'No' }}</td>
-                                        <td><button type="button" class="btn btn-danger remove-message-account" data-id="{{ $maccount->id }}"> <i class="fas fa-fw fa-trash"></i></button></td>
+                                        <td>
+
+                                            <button type="button" class="btn btn-primary edit-message-account" data-id="{{ $maccount->id }}" title="Edit"> <i class="fas fa-fw fa-pencil-alt"></i></button>
+                                            <button type="button" class="btn btn-danger remove-message-account" data-id="{{ $maccount->id }}"> <i class="fas fa-fw fa-trash"></i></button></td>
                                     </tr>
                                 @endforeach
                             @endif
@@ -1502,6 +1511,88 @@
                     });
                 }
             });
+
+            $(document).on('click', '.edit-message-account', function() {
+                var accountId = $(this).data('id');
+                var ele = $(this);
+                // Confirm the deletion
+
+                $.ajax({
+                    type: 'POST',
+                    url: "{{ route('store.getstoremessageaccount') }}",
+                    data: {
+                        "account_id": accountId
+                    },
+                    headers: {
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    },
+                    dataType:'json',
+                    success: function(response) {
+                        // Display a success message
+                        if(response.data) {
+                            $('#store_account_id').val(response.data.id);
+                            $('#acc_name').val(response.data.name);
+                            $('#acc_email').val(response.data.email);
+                            if(response.data.api_account == 1){
+                                $('#api_account').prop('checked',true);
+                            }
+                            if(response.data.active == 1){
+                                $('#message_active').prop('checked',true);
+                            }
+
+                            if(response.incomingAccount){
+                                $('#acc_in_id').val(response.incomingAccount.id);
+                                $('#acc_in_protocol').val(response.incomingAccount.protocol);
+                                $('#acc_in_email').val(response.incomingAccount.email);
+                                $('#acc_in_user_id').val(response.incomingAccount.user_id);
+                                $('#acc_in_password').val(response.incomingAccount.password);
+                                $('#acc_in_server').val(response.incomingAccount.server);
+                                $('#acc_in_port').val(response.incomingAccount.port);
+                                $('#acc_in_ssl_port').val(response.incomingAccount.ssl_port);
+                                $('#acc_in_tls_port').val(response.incomingAccount.tls_port);
+
+                                if(response.incomingAccount.requires_ssl == 1){
+                                    $('#acc_in_requires_ssl').prop('checked',true);
+                                }
+                                if(response.incomingAccount.requires_tls == 1){
+                                    $('#acc_in_requires_tls').prop('checked',true);
+                                }
+                                if(response.incomingAccount.requires_authentication == 1){
+                                    $('#acc_in_requires_authentication').prop('checked',true);
+                                }
+                            }
+
+                            if(response.outgoingAccount){
+                                $('#acc_out_id').val(response.outgoingAccount.id);
+                                $('#acc_out_protocol').val(response.outgoingAccount.protocol);
+                                $('#acc_out_email').val(response.outgoingAccount.email);
+                                $('#acc_out_user_id').val(response.outgoingAccount.user_id);
+                                $('#acc_out_password').val(response.outgoingAccount.password);
+                                $('#acc_out_server').val(response.outgoingAccount.server);
+                                $('#acc_out_port').val(response.outgoingAccount.port);
+                                $('#acc_out_ssl_port').val(response.outgoingAccount.ssl_port);
+                                $('#acc_out_tls_port').val(response.outgoingAccount.tls_port);
+
+                                if(response.outgoingAccount.requires_ssl == 1){
+                                    $('#acc_out_requires_ssl').prop('checked',true);
+                                }
+                                if(response.outgoingAccount.requires_tls == 1){
+                                    $('#acc_out_requires_tls').prop('checked',true);
+                                }
+                                if(response.outgoingAccount.requires_authentication == 1){
+                                    $('#acc_out_requires_authentication').prop('checked',true);
+                                }
+                            }
+
+                            $('#addMessageModal').modal('show');
+                        }
+                    },
+                    error: function(xhr) {
+                        alert(response.message);
+                    }
+                });
+            });
+
             $(document).on('click', '.edit-page', function() {
                 var pageId = $(this).data('id');
                 var ele = $(this);
