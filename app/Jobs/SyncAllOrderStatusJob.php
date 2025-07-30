@@ -6,6 +6,7 @@ use App\Constants\OrderOperationStatus;
 use App\Constants\OrderStatus;
 use App\Models\Order;
 use App\Models\OrderOperation;
+use App\Services\Auth\AmazonAuthService;
 use App\Services\Auth\EbayAuthService;
 use App\Services\Auth\ShopifyAuthService;
 use App\Services\Auth\WalmartAuthService;
@@ -43,8 +44,8 @@ class SyncAllOrderStatusJob implements ShouldQueue
             ->orderByDesc('ship_date')
             ->get();
         //Log::info('Order Operations:'.json_encode($orderOperations));
-        if(count($orderOperations ?? []) > 0){
-            foreach($orderOperations as $operation){
+        if (count($orderOperations ?? []) > 0) {
+            foreach ($orderOperations as $operation) {
 
                 $this->checkOrderStatus($operation);
             }
@@ -215,7 +216,7 @@ class SyncAllOrderStatusJob implements ShouldQueue
                             $estimateShipmentDate = $orderDetail['fulfillmentStartInstructions'][0]['minEstimatedDeliveryDate'];
                             $estimateDeliveryDate = $orderDetail['fulfillmentStartInstructions'][0]['maxEstimatedDeliveryDate'];
 
-                            $operation->expected_shipment_date =  date('Y-m-d H:i:s', strtotime($estimateShipmentDate));
+                            $operation->expected_shipment_date = date('Y-m-d H:i:s', strtotime($estimateShipmentDate));
                             $operation->expected_delivery_date = date('Y-m-d H:i:s', strtotime($estimateDeliveryDate));
                             $operation->save();
                         }
@@ -227,6 +228,41 @@ class SyncAllOrderStatusJob implements ShouldQueue
                             }
                         }
                     }
+                }
+                break;
+            case 'amazon':
+                $amazonAuthService = new AmazonAuthService($store->seller_id, $store->secret_key, $store->api_key);
+                $orderDetail = $amazonAuthService->getOrderInfo($order->order_id);
+                Log::info('Amazon order detail: ' . json_encode($orderDetail));
+                if (isset($orderDetail['Orders']) && count($orderDetail['Orders']) > 0) {
+                    $amazonOrder = $orderDetail['Orders'][0];
+                    if (isset($amazonOrder['AmazonOrderId']) && $amazonOrder['AmazonOrderId'] == $order->order_id) {
+                        if (isset($amazonOrder['FulfillmentChannel']) && $amazonOrder['FulfillmentChannel'] == 'AFN') {
+                            if (isset($amazonOrder['OrderStatus'])) {
+                                switch (strtolower($amazonOrder['OrderStatus'])) {
+                                    case 'shipped';
+                                        $order->order_status = OrderStatus::Shipped;
+                                        $operation->status = OrderOperationStatus::MarkAsShipped;
+                                        break;
+                                    case 'canceled';
+                                        $order->order_status = OrderStatus::Canceled;
+                                        $operation->status = OrderOperationStatus::Canceled;
+                                        break;
+                                    case 'unshipped';
+                                        $order->order_status = OrderStatus::Pending;
+                                        break;
+                                }
+                            }
+                        }
+                    }
+                    if (isset($amazonOrder['LatestShipDate'])) {
+                        $operation->expected_shipment_date = date('Y-m-d H:i:s', strtotime($amazonOrder['LatestShipDate']));
+                    }
+                    if (isset($amazonOrder['EarliestShipDate'])) {
+                        $operation->expected_delivery_date = date('Y-m-d H:i:s', strtotime($amazonOrder['EarliestShipDate']));
+                    }
+                    $order->save();
+                    $operation->save();
                 }
                 break;
         }

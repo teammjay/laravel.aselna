@@ -310,7 +310,6 @@ class AmazonAuthService
             'headers' => [
                 'x-amz-access-token' => "{$accessToken}",
                 'Content-Type' => 'application/json',
-
             ],
             'query' => [
                 'marketplaceIds' => implode(',', $marketPlaceID),
@@ -380,6 +379,23 @@ class AmazonAuthService
                 ]
             ]
         );
+
+        return json_decode($response->getBody(), true);
+    }
+
+    public function getOrderInfo($orderId)
+    {
+        $accessToken = $this->getAccessToken();
+        Log::info('Access Token Created ' . $accessToken);
+
+        $response = $this->client->get('/orders/v0/orders/' . $orderId, [
+            'headers' => [
+                'x-amz-access-token' => "{$accessToken}",
+                'Content-Type' => 'application/json',
+            ]
+        ]);
+
+        Log::info('Order Info Response: ' . $response->getBody());
 
         return json_decode($response->getBody(), true);
     }

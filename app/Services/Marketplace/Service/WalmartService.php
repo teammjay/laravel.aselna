@@ -435,7 +435,7 @@ class WalmartService implements MarketplaceServiceInterface
                 $noOfOrder = 0;
                 $last_order_update_date = $order_synchronization->last_order_update_date ?? null;
                 foreach ($response['list']['elements']['order'] as $sorder) {
-                    $order = Order::where('order_id', $sorder['customerOrderId'])->first();
+                    $order = Order::where('order_id', $sorder['customerOrderId'])->where('purchase_order_id', $sorder['purchaseOrderId'])->first();
 
                     $persist = false;
                     $statusChange = false;
@@ -443,8 +443,10 @@ class WalmartService implements MarketplaceServiceInterface
                     if ($order == null) {
                         $order = Order::updateOrCreate([
                             'order_id' => $sorder['customerOrderId'],
+                            'purchase_order_id' => $sorder['purchaseOrderId'],
                         ],[
                             'order_id' => $sorder['customerOrderId'],
+                            'purchase_order_id' => $sorder['purchaseOrderId'],
                             'order_date' => date('Y-m-d H:i:s', $sorder['orderDate'] / 1000),
                             'order_status' => OrderStatus::Synchronizing,
                             'store_id' => $store->id,
