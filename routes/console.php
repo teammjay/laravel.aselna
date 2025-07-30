@@ -7,6 +7,7 @@ use App\Jobs\FetchEmailMessagesJob;
 use App\Jobs\FetchResultFeedAsync;
 use App\Jobs\FetchShopifyOrders;
 use App\Jobs\FetchWalmartOrdersJob;
+use App\Jobs\ShopifyCollectionSyncJob;
 use App\Jobs\SyncAllOrderStatusJob;
 use App\Jobs\SubmitShopifyProductsJob;
 use Illuminate\Foundation\Inspiring;
@@ -36,3 +37,6 @@ Schedule::job(FetchEmailMessagesJob::class)->everyThirtyMinutes();
 
 // Products Syncing
 //Schedule::job(new SubmitShopifyProductsJob())->everyFifteenMinutes();
+
+//Category Syncing
+Schedule::job(new ShopifyCollectionSyncJob())->dailyAt('03:00');

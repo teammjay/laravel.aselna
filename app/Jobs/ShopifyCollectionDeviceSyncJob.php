@@ -37,7 +37,7 @@ class ShopifyCollectionDeviceSyncJob implements ShouldQueue
     {
         $this->setVariables();
         $this->getPuplications();
-        Device::orderBy('id')->chunk(1000, function ($devices) {
+        Device::where('status', 'active')->orderBy('id')->chunk(100, function ($devices) {
             foreach ($devices as $device) {
                 $this->syncShopifyCollection($device);
             }
@@ -49,9 +49,12 @@ class ShopifyCollectionDeviceSyncJob implements ShouldQueue
         $brand = $device->brand;
         Log::info('Syncing device with Shopify collection', ['device_id' => $device->id]);
 
+        $title = $brand->name . ' ' . $device->name . ' Accessories';
+        // create a handle for the collection by replacing spaces ( and .) with dashes and converting to lowercase
+        $handle = $this->generateShopifyHandle($title);
 
         $collectionData['collection'] = [
-            'title' => $brand->name . ' ' . $device->name . ' Accessories',
+            'title' => $title,
         ];
         $collectionData['collection']['ruleSet']['appliedDisjunctively'] = true;
         foreach ($this->publications as $publication) {
@@ -67,7 +70,17 @@ class ShopifyCollectionDeviceSyncJob implements ShouldQueue
             ];
         }
 
-        $response = $this->shopifyAuthService->createCollection($collectionData);
+        if ($alreadyCollection = $this->shopifyAuthService->getCollectionByHandle($handle)) {
+            Log::info('Collection already exists, updating collection', ['handle' => $handle]);
+            $collectionData['collection']['id'] = $alreadyCollection['id'];
+            $collectionData['collection']['handle'] = $handle;
+            $response = $this->shopifyAuthService->updateCollection($collectionData);
+        } else {
+            Log::info('Creating new collection', ['handle' => $handle]);
+            $collectionData['collection']['handle'] = $handle;
+            $collectionData['collection']['published'] = true;
+            $response = $this->shopifyAuthService->createCollection($collectionData);
+        }
     }
 
     private function getPuplications()
@@ -85,5 +98,33 @@ class ShopifyCollectionDeviceSyncJob implements ShouldQueue
     {
         $this->store = Store::find($this->storeID);
         $this->shopifyAuthService = new ShopifyAuthService($this->store->secret_key,$this->store->service_url);
+    }
+
+    function generateShopifyHandle($title) {
+        // Convert to lowercase
+        $handle = mb_strtolower($title, 'UTF-8');
+
+        // Normalize accented characters (e.g., é → e)
+        $handle = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $handle);
+
+        // Replace apostrophes
+        $handle = preg_replace("/'/", '', $handle);
+
+        // Replace any non-alphanumeric characters (excluding spaces and dots) with nothing
+        $handle = preg_replace("/[^a-z0-9\s.]/", '', $handle);
+
+        // Replace dots with hyphens (e.g., 12.3 → 12-3)
+        $handle = str_replace('.', '-', $handle);
+
+        // Replace whitespace with hyphens
+        $handle = preg_replace("/[\s]+/", '-', $handle);
+
+        // Remove multiple consecutive hyphens
+        $handle = preg_replace("/-+/", '-', $handle);
+
+        // Trim hyphens from beginning and end
+        $handle = trim($handle, '-');
+
+        return $handle;
     }
 }
