@@ -928,8 +928,110 @@
             });
         });
 
+        let maxRetries = 3;
+
         // Function to process shipments one by one
-        function processShipmentsSequentially(process_id, shipment_ids, total_count, current_index) {
+        function processShipmentsSequentially(process_id, shipment_ids, total_count, attempt = 1) {
+
+            let index = 0;
+            let failed_shipments = [];
+
+            function processNext() {
+                // Check if processing has been cancelled
+                if (isProcessingCancelled) {
+                    $('#progress-status').text('Processing cancelled');
+                    $('#progressModal .modal-footer #btn-complete').show();
+                    return;
+                }
+
+                if (index >= shipment_ids.length) {
+                    if (failed_shipments.length > 0 && attempt < maxRetries) {
+                        $('#progress-status').text(`Retrying failed shipments. Attempt ${attempt + 1}/${maxRetries}...`);
+                        // Retry failed shipments
+                        processShipmentsSequentially(process_id, failed_shipments, failed_shipments.length, attempt + 1);
+                    }else{
+                        $('#progress-status').text('Processing complete');
+                        $('#progressModal .modal-footer #btn-complete').show();
+                    }
+                }
+
+                const shipmentId = shipment_ids[index];
+                const current_index = index + 1;
+
+                if (current_index >= shipment_ids.length) {
+                    // All done
+                    let progress = 100;
+                    $('#progress-status').text(`Completed processing all ${total_count} shipments`);
+                    $('#progress-bar').css('width', `${progress}%`).attr('aria-valuenow', progress).text(`${progress}%`);
+                    $('#progressModal .modal-footer #btn-complete').show();
+                    return;
+                }
+
+                // Add item to list
+                $('#progress-items').append(`
+                    <li class="list-group-item d-flex justify-content-between align-items-center" id="item-${shipmentId}">
+                        Order #${shipmentId}
+                        <span class="badge badge-warning">Processing</span>
+                    </li>
+                `);
+
+                // Update the progress UI
+                const progress = Math.round(((current_index) / total_count) * 100);
+                console.log(progress);
+                $('#progress-status').text(`Processing ${current_index + 1}/${total_count} shipments`);
+                $('#progress-bar').css('width', `${progress}%`).attr('aria-valuenow', progress).text(`${progress}%`);
+
+                $.ajax({
+                    url: "{{ route('shipment.shipselected') }}",
+                    type: 'POST',
+                    data: {
+                        shipment_id: shipmentId,
+                        process_id: process_id,
+                        "_token": '{{ csrf_token() }}'
+                    },
+                    success: function (response) {
+                        if (response.success) {
+                            $(`tr[data-id="${shipmentId}"]`).remove();
+                            $(`#item-${shipmentId}`).remove();
+                        } else {
+                            $(`#item-${shipmentId} .badge`)
+                                .removeClass('badge-warning')
+                                .addClass('badge-danger')
+                                .text('Failed');
+                            failed_shipments.push(shipmentId);
+                        }
+
+                        const progress = Math.round(((current_index) / total_count) * 100);
+                        console.log(progress);
+                        $('#progress-status').text(`Processing ${current_index + 1}/${total_count} shipments`);
+                        $('#progress-bar').css('width', `${progress}%`).attr('aria-valuenow', progress).text(`${progress}%`);
+
+                        index++;
+                        processNext();
+                    },
+                    error: function () {
+                        $(`#item-${shipmentId} .badge`)
+                            .removeClass('badge-warning')
+                            .addClass('badge-danger')
+                            .text('Failed');
+
+                        failed_shipments.push(shipmentId);
+
+                        let progress = Math.round((current_index / total_count) * 100);
+                        $('#progress-bar').css('width', `${progress}%`).attr('aria-valuenow', progress).text(`${progress}%`);
+                        $('#progress-status').text(`Processing ${current_count}/${total_count} shipments`);
+
+                        index++;
+                        processNext();
+                    }
+                });
+            }
+
+            processNext();
+        }
+
+        // Function to process shipments one by one
+        function processShipmentsSequentiallyOld(process_id, shipment_ids, total_count, current_index) {
             // Check if processing has been cancelled
             if (isProcessingCancelled) {
                 $('#progress-status').text('Processing cancelled');
@@ -950,7 +1052,7 @@
 
             // Update the progress UI
             const progress = Math.round(((current_index) / total_count) * 100);
-            console.log(progress)
+            console.log(progress);
             $('#progress-status').text(`Processing ${current_index+1}/${total_count} shipments`);
             $('#progress-bar').css('width', `${progress}%`).attr('aria-valuenow', progress).text(`${progress}%`);
 
@@ -1008,7 +1110,7 @@
 
         $(document).on('click','#btn-cancel-shipment',function () {
             isProcessingCancelled = true;
-        })
+        });
 
         $(document).on('click','#updateShipment',function () {
 
