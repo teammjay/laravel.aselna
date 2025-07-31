@@ -28,7 +28,7 @@
                 @endif
                 </div>
             </td>
-            <td>{!! ($shipment['status'] == 1) ? '<i class="fa fa-exclamation-triangle" style="font-size:24px"></i>' : '' !!}</td>
+            <td>{!! ($shipment['status'] == 1) ? '<i class="fa fa-exclamation-triangle" style="font-size:24px" title="'.$shipment['status_message'].'"></i>' : '' !!}</td>
             <td>{{ $shipment['carrier_package'] }}</td>
             <td>{{ $shipment['carrier_service'] }}</td>
             <td>{{ $shipment['store'] }}</td>
