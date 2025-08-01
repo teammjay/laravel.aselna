@@ -146,7 +146,9 @@ class ShipmentsController extends Controller
                 $onlycode = '';
                 $image = $imagename = $product_ids = [];
                 $product_total_weight = 0;
+                $total_qty = [];
                 if (isset($order->operationItem) && !empty($order->operationItem)) {
+                    $totalQty = 0;
                     foreach ($order->operationItem as $opitem) {
                         $oitem = $opitem->orderItem;
                         if (isset($oitem->product) && !empty($oitem->product)) {
@@ -163,6 +165,11 @@ class ShipmentsController extends Controller
                             $product_weight = $oitem->product->product_weight;
                             $product_total_weight = $product_total_weight + $product_weight;
                         }
+                        if(isset($oitem->quantity)){
+                            $totalQty = $totalQty + $oitem->quantity;
+                        }
+
+                        $total_qty[] = $totalQty;
                     }
                 }
                 $orderIds = isset($order->order) ? [$order->order->order_id] : [];
@@ -175,12 +182,19 @@ class ShipmentsController extends Controller
                         }
                     }
                 }
+                $status = 0;
+                $status_message = '';
+                if($order->status_message != NULL){
+                    $status = 1;
+                    $status_message = $order->status_message;
+                }
                 $shipments[] = array(
                     "oid" => $order->oid,
                     "image" => (!empty($image)) ? $image : '',
                     "imagename" => (!empty($imagename)) ? $imagename : '',
                     "product_id" => (!empty($product_ids)) ? $product_ids : '',
-                    "status" => '',
+                    "status" => $status,
+                    "status_message" => $status_message,
                     "carrier_package" => isset($order->shippingPackage) ? $order->shippingPackage->name : '',
                     "carrier_service" => isset($order->carrierService) ? $order->carrierService->ShippingCarrier->name . ' ' . $order->carrierService->name : '',
                     "store" => $order->store->name . ' - ' . $storeType,
@@ -193,6 +207,7 @@ class ShipmentsController extends Controller
                     "last_name" => (isset($order->order) && !empty($order->order)) ? $order->order->buyer_last_name : '',
                     "city" => (isset($order->order->customer) && !empty($order->order->customer)) ? $order->order->customer->city : '',
                     'product_ids' => $product_ids,
+                    'total_qty' => $total_qty,
                 );
             }
         }
@@ -463,12 +478,12 @@ class ShipmentsController extends Controller
         try {
             if ($selected_shipment_id) {
                 $orderOperation = OrderOperation::with('order', 'store', 'store.storeType', 'operationItem', 'operationItem.orderItem', 'carrier', 'carrierService')->where('id', $selected_shipment_id)->first();
-                $isSuccess = OrderOperationUtility::processShipment($orderOperation, $request);
+                $successRes = OrderOperationUtility::processShipment($orderOperation, $request);
 
-                if (!$isSuccess) {
+                if (isset($successRes) && $successRes['success'] == false) {
                     return response()->json([
                         'success' => false,
-                        'message' => 'Something went wrong with API. Please try again!'
+                        'message' => $successRes['message'] ?? 'Something went wrong with API. Please try again!'
                     ]);
                 }
 
@@ -608,14 +623,14 @@ class ShipmentsController extends Controller
                 }
             }
 
-            $isSuccess = OrderOperationUtility::processShipment($operation, $request);
+            $successRes = OrderOperationUtility::processShipment($operation, $request);
 
             return response()->json([
-                'success' => $isSuccess,
+                'success' => $successRes['success'],
                 'process_id' => $process_id,
                 'order_id' => $order_id,
-                'status' => $isSuccess ? 'completed' : 'error',
-                'message' => $isSuccess ? 'Shipment processed successfully' : 'Error processing shipment'
+                'status' => $successRes['success'] ? 'completed' : 'error',
+                'message' => $successRes['message'] ?? 'Shipment processed successfully'
             ]);
         }
 
@@ -719,7 +734,7 @@ class ShipmentsController extends Controller
         // I want all the orderId whose addresses are same.
         $sameAddressOrders = [];
         $addressIds = Order::select('shipping_address_id')
-            ->groupBy('shipping_address_id')
+            ->groupBy('shipping_address_id','store_id')
             ->havingRaw('COUNT(*) > 1')
             ->whereNotIn('order_status', [
                 OrderStatus::Canceled,
@@ -821,5 +836,28 @@ class ShipmentsController extends Controller
             Log::info('Merging Orders : ' . json_encode($mergedOrderIds));
 
         }
+    }
+
+    public function approveShipment(Request $request){
+
+        $selected_shipment_id = $request->input('shipment_id');
+
+        if($selected_shipment_id != ''){
+
+            $orderOperation = OrderOperation::findOrFail($selected_shipment_id);
+            if ($orderOperation) {
+                $updateRecord = [
+                    'status_message' => ''
+                ];
+                $orderOperation->update($updateRecord);
+            }
+            return response()->json([
+                'success' => true
+            ]);
+        }
+        return response()->json([
+            'success' => false
+        ]);
+
     }
 }

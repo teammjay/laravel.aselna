@@ -745,7 +745,7 @@ class MessagesController extends Controller
             $storeMessageAccount = StoreMessageAccount::with('outgoingAccount')->where('store_id', $ticketDetail->store_id)->first();
 
 
-            //if(isset($storeMessageAccount->outgoingAccount)){
+            if(isset($storeMessageAccount->outgoingAccount)){
                 if($storeMessageAccount->outgoingAccount->requires_ssl){
                     $encryption = 'ssl';
                 }
@@ -753,17 +753,17 @@ class MessagesController extends Controller
                     $encryption = 'tls';
                 }
 
-                /*$smtpConfig = [
+                $smtpConfig = [
                     'host' => $storeMessageAccount->outgoingAccount->server,
                     'port' => $storeMessageAccount->outgoingAccount->port,
                     'encryption' => $encryption,
                     'username' => $storeMessageAccount->outgoingAccount->user_id,
                     'password' => $storeMessageAccount->outgoingAccount->password,
-                    'from_address' => '86defa001@smtp-brevo.com',
-                    'from_name' => 'Mj AILAB',
-                ];*/
+                    'from_address' => $storeMessageAccount->outgoingAccount->email,
+                    'from_name' => isset($ticketDetail->store) ? $ticketDetail->store->name : '',
+                ];
 
-                $smtpConfig = [
+                /*$smtpConfig = [
                     'host' => 'email-smtp.us-east-1.amazonaws.com',
                     'port' => 465,
                     'encryption' => 'tls',
@@ -771,14 +771,14 @@ class MessagesController extends Controller
                     'password' => 'BC7NSneeB1+Bl/H+ZlVjoBbdB7JpnD7CRoD9ff3hbEf3',
                     'from_address' => 'kryln.services@gmail.com',
                     'from_name' => 'kryln services',
-                ];
+                ];*/
 
                 $imapConfig = [];
                 $filepath = $imagepath;
 
                 $connector = new EmailMessageUtility($smtpConfig, $imapConfig);
-                /*$response = $connector->sendEmail($ticketDetail->ticket_email,$ticketDetail->subject,$message_to_send, $ticketDetail->message_id, $filepath);*/
-                $response = $connector->sendEmail('jayesh@mjailab.com','Test Mail',$message_to_send, 'CAB3DxwfKHcaot+XFxHBW6Teiq38dDaHs2UU2UqipkfbHnYr+sg@mail.gmail.com', $filepath);
+                $response = $connector->sendEmail($ticketDetail->ticket_email,$ticketDetail->subject,$message_to_send, $ticketDetail->message_id, $filepath);
+                /*$response = $connector->sendEmail('jayesh@mjailab.com','Test Mail',$message_to_send, 'CAB3DxwfKHcaot+XFxHBW6Teiq38dDaHs2UU2UqipkfbHnYr+sg@mail.gmail.com', $filepath);*/
 
                 if($response){
 
@@ -824,7 +824,7 @@ class MessagesController extends Controller
                                 'created_by' => 'admin',
                             ];
 
-                            $attchment = HdMessageAttachment::create($attachementData);
+                            HdMessageAttachment::create($attachementData);
                         }
                     }
 
@@ -835,7 +835,7 @@ class MessagesController extends Controller
                         'success' => true
                     ]);
                 }
-           // }
+            }
         }
         return response()->json([
             'success' => false
@@ -1129,13 +1129,13 @@ class MessagesController extends Controller
 
         $orderOperation = OrderOperation::with('order', 'order.customer', 'store', 'store.storeType','carrier')->where('id', $request->id)->first();
 
-        $isSuccess = OrderOperationUtility::processShipment($orderOperation, $request);
+        $successRes = OrderOperationUtility::processShipment($orderOperation, $request);
 
-        if (!$isSuccess) {
+        if (isset($successRes) && $successRes['success'] == false) {
             DB::rollBack();
             return response()->json([
                 'success' => false,
-                'message' => 'Something went wrong with API. Please try again!'
+                'message' => $successRes['message'] ?? 'Something went wrong with API. Please try again!'
             ]);
         }
 
@@ -1262,13 +1262,13 @@ class MessagesController extends Controller
         $request['label_generation'] = 1;
         $orderOperations = OrderOperation::with('order','order.customer', 'store', 'store.storeType')->where('id', $order_opration_id)->get();
 
-        $isSuccess = OrderOperationUtility::processShipment($orderOperations, $request);
+        $successRes = OrderOperationUtility::processShipment($orderOperations, $request);
 
-        if (!$isSuccess) {
+        if (isset($successRes) && $successRes['success'] == false) {
             DB::rollBack();
             return response()->json([
                 'success' => false,
-                'message' => 'Something went wrong with API. Please try again!'
+                'message' => $successRes['message'] ?? 'Something went wrong with API. Please try again!'
             ]);
         }
 
@@ -1394,14 +1394,14 @@ class MessagesController extends Controller
             $request['label_generation'] = 1;
             $orderOperation = OrderOperation::with('order','order.customer', 'store', 'store.storeType')->where('id', $order_opration_id)->first();
 
-            $isSuccess = OrderOperationUtility::processShipment($orderOperation, $request);
+            $successRes = OrderOperationUtility::processShipment($orderOperation, $request);
 
             //$isSuccess = true;
-            if (!$isSuccess) {
+            if (isset($successRes) && $successRes['success'] == false) {
                 DB::rollBack();
                 return response()->json([
                     'success' => false,
-                    'message' => 'Something went wrong with API. Please try again!'
+                    'message' => $successRes['message'] ?? 'Something went wrong with API. Please try again!'
                 ]);
             }
             DB::commit();

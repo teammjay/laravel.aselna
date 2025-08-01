@@ -76,7 +76,7 @@ class StoreController extends Controller
         $storeShippingService = StoreShippingService::where('store_id', $store_id)->get();
         $storePages = StorePage::with('PageType')->where('store_id', $store_id)->get();
         $storeCategories = StoreCategory::where('store_id', $store_id)->get();
-        $storeMessageAccount = StoreMessageAccount::where('store_id', $store_id)->get();
+        $storeMessageAccount = StoreMessageAccount::with('incomingAccount','outgoingAccount')->where('store_id', $store_id)->get();
         $storeLogisticCenters = StoreLogisticCenter::with('LogisticCenter')->where('store_id', $store_id)->get();
         $fileSystems = FileSystem::all();
         $propertyInfo = StorePropertyInfo::all();
@@ -362,7 +362,7 @@ class StoreController extends Controller
         $storeShippingService = StoreShippingService::where('store_id', $id)->get();
         $storePages = StorePage::with('PageType')->where('store_id', $id)->get();
         $storeCategories = StoreCategory::where('store_id', $id)->get();
-        $storeMessageAccount = StoreMessageAccount::where('store_id', $id)->get();
+        $storeMessageAccount = StoreMessageAccount::with('incomingAccount','outgoingAccount')->where('store_id', $id)->get();
         $storeLogisticCenters = StoreLogisticCenter::with('LogisticCenter')->where('store_id', $id)->get();
         $fileSystems = FileSystem::all();
         $propertyInfo = StorePropertyInfo::all();
@@ -625,8 +625,10 @@ class StoreController extends Controller
                     'updated_by' => auth()->user()->name ?? 'admin',
                 ];
 
-                StoreMessageAccount::updateOrCreate(
-                    ['store_id' => $request->input('store_id')],
+                StoreMessageAccount::updateOrCreate([
+                    'id' => $request->input('store_account_id'),
+                    'store_id' => $request->input('store_id')
+                ],
                     $storeAccount
                 );
 
@@ -798,5 +800,13 @@ class StoreController extends Controller
         }
 
         return response()->json(['error' => 'Failed to get access token'], 400);
+    }
+
+    public function getStoreMessageAccount(Request $request){
+
+        $account_id = $request->input('account_id');
+        $record = StoreMessageAccount::with('incomingAccount','outgoingAccount')->where('id',$account_id)->first();
+
+        return response()->json(['success' => true, 'data'=>$record, 'incomingAccount' => $record->incomingAccount, 'outgoingAccount' => $record->outgoingAccount]);exit;
     }
 }

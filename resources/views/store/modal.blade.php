@@ -154,6 +154,7 @@
                     <div class="tab-content" id="account-tabContent">
 
                             <div class="tab-pane fade show active" id="acctab1" role="tabpanel" aria-labelledby="message-general-tab">
+                                <input type="hidden" name="store_account_id" id="store_account_id">
                                 <div>
                                     <label for="acc_name" class="col-form-label">Name:</label>
                                     <input type="text" name="name" class="form-control" id="acc_name">
@@ -174,7 +175,7 @@
                                 </div>
                             </div>
                             <div class="tab-pane fade" id="acctab2" role="tabpanel" aria-labelledby="message-outgoing-tab">
-                                <input type="hidden" name="acc_out_id" value="">
+                                <input type="hidden" name="acc_out_id" id="acc_out_id" value="">
                                 <div class="row">
                                     <div class="col-md-6">
                                         <label for="acc_out_protocol" class="col-form-label">Account Protocol:</label>
@@ -238,7 +239,7 @@
                                 </div>
                             </div>
                             <div class="tab-pane fade" id="acctab3" role="tabpanel" aria-labelledby="message-incoming-tab">
-                                <input type="hidden" name="acc_in_id" value="">
+                                <input type="hidden" name="acc_in_id" id="acc_in_id" value="">
                                 <div class="row">
                                     <div class="col-md-6">
                                         <label for="acc_in_protocol" class="col-form-label">Account Protocol:</label>

@@ -38,6 +38,7 @@ use App\Jobs\LogisticCentreSyncJob;
 use App\Jobs\MagentoProductsSyncJob;
 use App\Jobs\MagnetoAttributesSyncJob;
 use App\Jobs\ManufacturerSyncJob;
+use App\Jobs\OldOrderSyncJob;
 use App\Jobs\ProductAlternativeImagesSyncJob;
 use App\Jobs\ProductChannelDetailSyncJob;
 use App\Jobs\ProductColorSync;
@@ -165,7 +166,7 @@ class SyncAllTables extends Command
 //        MagentoProductsSyncJob::dispatch();
 //        FetchMagentoCategoriesJob::dispatch();
 //        MagnetoAttributesSyncJob::dispatch();
-        ShopifyCollectionSyncJob::dispatch();
+        OldOrderSyncJob::dispatch();
 
 //        $transactionIds = [
 ////            '9400150105798006163885',
