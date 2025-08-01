@@ -1550,6 +1550,7 @@
                                 $('#acc_in_port').val(response.incomingAccount.port);
                                 $('#acc_in_ssl_port').val(response.incomingAccount.ssl_port);
                                 $('#acc_in_tls_port').val(response.incomingAccount.tls_port);
+                                $('#acc_in_folders').val(response.incomingAccount.folders);
 
                                 if(response.incomingAccount.requires_ssl == 1){
                                     $('#acc_in_requires_ssl').prop('checked',true);
