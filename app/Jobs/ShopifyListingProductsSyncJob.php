@@ -62,6 +62,7 @@ class ShopifyListingProductsSyncJob implements ShouldQueue
                 'store_product_id' => $item->store_product_id,
                 'status' => $item->sync_status,
                 'store_url' => $item->store_url,
+                'created_at' => $item->created_ts,
             ]
         );
     }
