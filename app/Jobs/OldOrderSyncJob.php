@@ -30,7 +30,7 @@ class OldOrderSyncJob implements ShouldQueue
     {
         // Order Syncing
         DB::connection('easyesale_db')->table('order')
-            ->where('create_ts', '<', now()->subDays(180))
+            ->where('create_ts', '>', now()->subDays(180))
             ->orderBy('id')
             ->chunk(100, function ($orders) {
                 foreach ($orders as $order) {

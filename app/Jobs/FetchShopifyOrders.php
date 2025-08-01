@@ -74,6 +74,10 @@ class FetchShopifyOrders implements ShouldQueue
                     $shopifyService = new ShopifyService();
                     $orders = $shopifyService->getOrders($store, $sync_start_date);
 
+                    /*Log::info('Shopify Orders : ' . json_encode($orders));
+
+                    die;*/
+
                     if (isset($orders) && !empty($orders)) {
 
                         $created_by = auth()->user()->name ?? 'admin';

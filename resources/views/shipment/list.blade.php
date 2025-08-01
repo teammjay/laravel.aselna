@@ -143,7 +143,7 @@
                                 <option value="">--</option>
                                 @if(count($shippingCarrierPackage ?? []) > 0)
                                     @foreach($shippingCarrierPackage as $sCarrierPackage)
-                                        <option value="{{ $sCarrierPackage->id }}">{{ $sCarrierPackage->name }}</option>
+                                        <option value="{{ $sCarrierPackage->id }}" {{$sCarrierPackage->id == 'a9930f32-bff4-da7e-27e2-149c24a179ad' ? 'selected' : ''}}>{{ $sCarrierPackage->name }}</option>
                                     @endforeach
                                 @endif
                             </select>
