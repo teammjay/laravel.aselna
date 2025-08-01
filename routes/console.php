@@ -33,7 +33,7 @@ Schedule::job(new SyncAllOrderStatusJob())->hourly();
 
 
 // Email Message fetching
-Schedule::job(FetchEmailMessagesJob::class)->everyThirtyMinutes();
+Schedule::job(FetchEmailMessagesJob::class)->everyTenMinutes();
 
 // Products Syncing
 //Schedule::job(new SubmitShopifyProductsJob())->everyFifteenMinutes();
