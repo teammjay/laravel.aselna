@@ -1129,13 +1129,13 @@ class MessagesController extends Controller
 
         $orderOperation = OrderOperation::with('order', 'order.customer', 'store', 'store.storeType','carrier')->where('id', $request->id)->first();
 
-        $isSuccess = OrderOperationUtility::processShipment($orderOperation, $request);
+        $successRes = OrderOperationUtility::processShipment($orderOperation, $request);
 
-        if (!$isSuccess) {
+        if (isset($successRes) && $successRes['success'] == false) {
             DB::rollBack();
             return response()->json([
                 'success' => false,
-                'message' => 'Something went wrong with API. Please try again!'
+                'message' => $successRes['message'] ?? 'Something went wrong with API. Please try again!'
             ]);
         }
 
@@ -1262,13 +1262,13 @@ class MessagesController extends Controller
         $request['label_generation'] = 1;
         $orderOperations = OrderOperation::with('order','order.customer', 'store', 'store.storeType')->where('id', $order_opration_id)->get();
 
-        $isSuccess = OrderOperationUtility::processShipment($orderOperations, $request);
+        $successRes = OrderOperationUtility::processShipment($orderOperations, $request);
 
-        if (!$isSuccess) {
+        if (isset($successRes) && $successRes['success'] == false) {
             DB::rollBack();
             return response()->json([
                 'success' => false,
-                'message' => 'Something went wrong with API. Please try again!'
+                'message' => $successRes['message'] ?? 'Something went wrong with API. Please try again!'
             ]);
         }
 
@@ -1394,14 +1394,14 @@ class MessagesController extends Controller
             $request['label_generation'] = 1;
             $orderOperation = OrderOperation::with('order','order.customer', 'store', 'store.storeType')->where('id', $order_opration_id)->first();
 
-            $isSuccess = OrderOperationUtility::processShipment($orderOperation, $request);
+            $successRes = OrderOperationUtility::processShipment($orderOperation, $request);
 
             //$isSuccess = true;
-            if (!$isSuccess) {
+            if (isset($successRes) && $successRes['success'] == false) {
                 DB::rollBack();
                 return response()->json([
                     'success' => false,
-                    'message' => 'Something went wrong with API. Please try again!'
+                    'message' => $successRes['message'] ?? 'Something went wrong with API. Please try again!'
                 ]);
             }
             DB::commit();
