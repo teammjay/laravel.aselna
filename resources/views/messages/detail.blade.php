@@ -251,14 +251,14 @@
 
                                 @endphp
 
-                                @if(strtolower($store_type_name) == 'accessorywiz')
+                                {{--@if(strtolower($store_type_name) == 'accessorywiz' || strtolower($store_type_name) == 'accessorychoice')--}}
                                     <button type="button" class="btn btn-default {{ $displayReturned }}" name="rma" id="rma">RMA</button>
                                     <button type="button" class="btn btn-default {{ $displayReturnLabel }}" name="return_label" id="return_label">Return Label</button>
                                     <button type="button" class="btn btn-default {{ $displayReplace }}" name="replacement" id="replacement">Replacement</button>
                                     <button type="button" class="btn btn-default {{ $displayRefund }}" name="refund" id="refund">Refund</button>
                                     <button type="button" class="btn btn-default {{ $displayShipped }}" name="ship_order" id="ship_order">Ship Order</button>
                                     <button type="button" class="btn btn-default {{ $displayCanceled }}" name="cancel_order" id="cancel_order">Cancel Order</button>
-                                @endif
+                                {{--@endif--}}
                             </div>
                         </div>
                         <div class="col-md-3">
