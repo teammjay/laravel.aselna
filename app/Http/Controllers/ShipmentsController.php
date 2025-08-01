@@ -847,7 +847,7 @@ class ShipmentsController extends Controller
             $orderOperation = OrderOperation::findOrFail($selected_shipment_id);
             if ($orderOperation) {
                 $updateRecord = [
-                    'status_message' => ''
+                    'status_message' => NULL
                 ];
                 $orderOperation->update($updateRecord);
             }
