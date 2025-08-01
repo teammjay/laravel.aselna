@@ -778,7 +778,7 @@
             if (!$('#progressModal').length) {
                 $('body').append(`
                     <div class="modal fade" id="progressModal" data-backdrop="static" data-keyboard="false">
-                        <div class="modal-dialog">
+                        <div class="modal-dialog modal-lg">
                             <div class="modal-content">
                                 <div class="modal-header">
                                     <h5 class="modal-title">Processing Shipments</h5>
@@ -789,7 +789,22 @@
                                     </div>
                                     <div id="progress-status" class="text-center">Preparing to process shipments...</div>
                                     <div id="progress-detail" class="mt-3">
-                                        <ul class="list-group" id="progress-items"></ul>
+                                        <ul class="list-group" id="progress-items">
+                                            <div class="table-responsive">
+                                                <table class="table table-bordered" id="processing-table">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>Order ID</th>
+                                                            <th>Status</th>
+                                                            <th>Message</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody id="progress-items-body">
+
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </ul>
                                     </div>
                                 </div>
                                 <div class="modal-footer">
@@ -805,7 +820,7 @@
             // Reset and show modal
             $('#progressModal .progress-bar').css('width', '0%').attr('aria-valuenow', 0).text('0%');
             $('#progress-status').text('Preparing to process shipments...');
-            $('#progress-items').empty();
+            $('#progress-items-body').empty();
             $('#progressModal .modal-footer #btn-complete').hide();
             $('#progressModal').modal('show');
 
@@ -861,7 +876,7 @@
             if (!$('#progressModal').length) {
                 $('body').append(`
                     <div class="modal fade" id="progressModal" data-backdrop="static" data-keyboard="false">
-                        <div class="modal-dialog">
+                        <div class="modal-dialog modal-lg">
                             <div class="modal-content">
                                 <div class="modal-header">
                                     <h5 class="modal-title">Processing Shipments</h5>
@@ -872,7 +887,22 @@
                                     </div>
                                     <div id="progress-status" class="text-center">Preparing to process shipments...</div>
                                     <div id="progress-detail" class="mt-3">
-                                        <ul class="list-group" id="progress-items"></ul>
+                                        <ul class="list-group" id="progress-items">
+                                            <div class="table-responsive">
+                                                <table class="table table-bordered" id="processing-table">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>Order ID</th>
+                                                            <th>Status</th>
+                                                            <th>Message</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody id="progress-items-body">
+
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </ul>
                                     </div>
                                 </div>
                                 <div class="modal-footer">
@@ -888,7 +918,7 @@
             // Reset and show modal
             $('#progressModal .progress-bar').css('width', '0%').attr('aria-valuenow', 0).text('0%');
             $('#progress-status').text('Preparing to process shipments...');
-            $('#progress-items').empty();
+            $('#progress-items-body').empty();
             $('#progressModal .modal-footer #btn-complete').hide();
             $('#progressModal').modal('show');
 
@@ -928,10 +958,10 @@
             });
         });
 
-        let maxRetries = 3;
+        let maxRetries = 1;
 
         // Function to process shipments one by one
-        function processShipmentsSequentially(process_id, shipment_ids, total_count, attempt = 1) {
+        function processShipmentsSequentiallyNew(process_id, shipment_ids, total_count, attempt = 1) {
 
             let index = 0;
             let failed_shipments = [];
@@ -1031,7 +1061,7 @@
         }
 
         // Function to process shipments one by one
-        function processShipmentsSequentiallyOld(process_id, shipment_ids, total_count, current_index) {
+        function processShipmentsSequentially(process_id, shipment_ids, total_count, current_index) {
             // Check if processing has been cancelled
             if (isProcessingCancelled) {
                 $('#progress-status').text('Processing cancelled');
@@ -1062,11 +1092,12 @@
             // }
 
             // Add item to list
-            $('#progress-items').append(`
-                <li class="list-group-item d-flex justify-content-between align-items-center" id="item-${shipmentId}">
-                    Order #${shipmentId}
-                    <span class="badge badge-warning">Processing</span>
-                </li>
+            $('#progress-items-body').append(`
+                <tr id="item-${shipmentId}">
+                    <td>Order #${shipmentId}</td>
+                    <td><span class="badge badge-warning">Processing</span></td>
+                    <td id="message-${shipmentId}">Processing shipment...</td>
+                </tr>
             `);
 
             // Make the API call to process this shipment
@@ -1090,6 +1121,9 @@
                             .removeClass('badge-warning')
                             .addClass('badge-danger')
                             .text('Failed');
+
+                        $(`#item-${shipmentId} #message-${shipmentId}`)
+                            .text(response.message || 'Failed to process shipment');
                     }
 
                     // Process the next item
