@@ -478,12 +478,12 @@ class ShipmentsController extends Controller
         try {
             if ($selected_shipment_id) {
                 $orderOperation = OrderOperation::with('order', 'store', 'store.storeType', 'operationItem', 'operationItem.orderItem', 'carrier', 'carrierService')->where('id', $selected_shipment_id)->first();
-                $isSuccess = OrderOperationUtility::processShipment($orderOperation, $request);
+                $successRes = OrderOperationUtility::processShipment($orderOperation, $request);
 
-                if (!$isSuccess) {
+                if (isset($successRes) && $successRes['success'] == false) {
                     return response()->json([
                         'success' => false,
-                        'message' => 'Something went wrong with API. Please try again!'
+                        'message' => $successRes['message'] ?? 'Something went wrong with API. Please try again!'
                     ]);
                 }
 
@@ -623,14 +623,14 @@ class ShipmentsController extends Controller
                 }
             }
 
-            $isSuccess = OrderOperationUtility::processShipment($operation, $request);
+            $successRes = OrderOperationUtility::processShipment($operation, $request);
 
             return response()->json([
-                'success' => $isSuccess,
+                'success' => $successRes['success'],
                 'process_id' => $process_id,
                 'order_id' => $order_id,
-                'status' => $isSuccess ? 'completed' : 'error',
-                'message' => $isSuccess ? 'Shipment processed successfully' : 'Error processing shipment'
+                'status' => $successRes['success'] ? 'completed' : 'error',
+                'message' => $successRes['message'] ?? 'Shipment processed successfully'
             ]);
         }
 
