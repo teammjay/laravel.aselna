@@ -41,6 +41,9 @@ class OldOrderSyncJob implements ShouldQueue
 
     private function syncOldOrder(mixed $order)
     {
+        if (Order::where('purchase_order_id', $order->purchase_order_id)->orWhere('order_id', $order->purchase_order_id)->exists()) {
+            return;
+        }
         $customer = DB::connection('easyesale_db')->table('customer')
             ->where('id', $order->customer_id)
             ->first();
@@ -70,6 +73,7 @@ class OldOrderSyncJob implements ShouldQueue
                 'buyer_email' => $order->buyer_email,
                 'order_total' => $order->order_total,
                 'purchase_order_id' => $order->purchase_order_id,
+                'order_id' => $order->order_id,
                 'customer_id' => $createdCustomer->id,
             ]
         );
