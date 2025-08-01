@@ -94,7 +94,7 @@ class EmailMessageUtility
             $this->client->connect();
 
             $fromDate = \Carbon\Carbon::parse($filter_date); // Keep the original timestamp
-            $toDate = \Carbon\Carbon::now();
+            $toDate = \Carbon\Carbon::now()->addDay();
 
             Log::info("Fetching emails from folder: {$folderName} between {$fromDate->toDateTimeString()} and {$toDate->toDateTimeString()} with limit {$limit}");
 
