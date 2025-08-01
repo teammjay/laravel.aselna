@@ -46,6 +46,9 @@ class ShopifyListingProductsSyncJob implements ShouldQueue
     private function syncListingItem(mixed $item)
     {
         Log::info('Syncing listing item: ' . $item->id);
+        if (ListingItem::where('id', $item->id)->exists()) {
+            return;
+        }
         ListingItem::updateOrCreate(
             [
                 'id' => $item->id,
