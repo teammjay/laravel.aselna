@@ -22,13 +22,13 @@ use Illuminate\Support\Facades\Log;
 
 class OrderOperationUtility
 {
-    public static function processShipment($orderOperation, $request)
+    public static function processShipment($orderOperation, $request) : array
     {
         if (isset($orderOperation->order)) {
             if (isset($orderOperation->order->contingent) && $orderOperation->order->contingent) {
                 $orderOperation->status = OrderOperationStatus::Error;
                 $orderOperation->save();
-                return false;
+                return ['success' => false, 'message' => 'Contingent order cannot be processed.'];
             }
         }
 
@@ -80,30 +80,30 @@ class OrderOperationUtility
         return self::instantSynchronization($orderOperation);
     }
 
-    public static function instantSynchronization($orderOperation)
+    public static function instantSynchronization($orderOperation) : array
     {
         $operationType = $orderOperation->operation_type;
         Log::info('Instant synchronization for operation type: ' . $operationType);
 
         if ($operationType === OrderOperationType::OrderCancellation) {
             self::cancelOrder($orderOperation);
-            return true;
+            return ['success' => true, 'message' => ''];
         }
 
         if (OrderOperationType::isReturn($operationType)) {
             self::returnOrder($orderOperation);
-            return true;
+            return ['success' => true, 'message' => ''];
         }
 
         if (OrderOperationType::isRefund($operationType)) {
             self::refundOrder($orderOperation);
-            return true;
+            return ['success' => true, 'message' => ''];
         }
 
         if (OrderOperationType::isShipment($operationType)) {
             return self::createShipment($orderOperation);
         }
-        return false;
+        return ['success' => false, 'message' => 'No Operation Type found for instant synchronization.'];
     }
 
     public static function createLabel($orderOperation)
@@ -688,7 +688,7 @@ class OrderOperationUtility
         }
     }
 
-    private static function createShipment($orderOperation)
+    private static function createShipment($orderOperation) : array
     {
         // Start database transaction
         DB::beginTransaction();
@@ -706,6 +706,7 @@ class OrderOperationUtility
             $store = $orderOperation->store;
             $storeType = $orderOperation->store->storeType->name;
             $success = false;
+            $message = '';
 
             switch (strtolower($storeType)) {
                 case 'shopify':
@@ -790,17 +791,17 @@ class OrderOperationUtility
             // If everything went well, commit the transaction
             if ($success) {
                 DB::commit();
-                return true;
+                return ['success' => true, 'message' => ''];
             } else {
                 // If there was an API error but no exception, still rollback
                 DB::commit();
-                return false;
+                return ['success' => false, 'message' => $message];
             }
         } catch (\Exception $e) {
             // If anything went wrong, rollback the transaction
             DB::commit();
             Log::error('Error in createShipment: ' . $e->getMessage());
-            return false;
+            return ['success' => false, 'message' => $e->getMessage()];
         }
     }
 
