@@ -392,11 +392,11 @@
         });
 
         $(document).on('click','#message-list tr',function () {
-           let ele = $(this);
-           $('#message-list tr').removeClass('bg-blue');
-           $('input[name="message_id[]"]').prop('checked',false);
-           ele.addClass('bg-blue');
-           ele.find('input[name="message_id[]"]').prop('checked',true);
+            let ele = $(this);
+            $('#message-list tr').removeClass('bg-blue');
+            $('input[name="message_id[]"]').prop('checked',false);
+            ele.addClass('bg-blue');
+            ele.find('input[name="message_id[]"]').prop('checked',true);
             $('#open_message').removeAttr('disabled');
             var ticket_id = ele.find('input[name="message_id[]"]').val();
             location.href = "{{ url('messages/detail') }}/" + ticket_id;
@@ -411,6 +411,11 @@
                     location.href = "{{ url('messages/detail') }}/" + selectedId;
                 }
             });
+        });
+
+        $(document).on('dblclick','#message-list tr',function () {
+            var ticket_id = $(this).find('input[name="message_id[]"]').val();
+            location.href = "{{ url('messages/detail') }}/" + ticket_id;
         });
 
         /*table = $('#messageTable').DataTable({

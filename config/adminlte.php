@@ -326,14 +326,14 @@ return [
             'icon' => 'fa fa-fw fa-envelope',
             'submenu' => [
                 [
-                    'text' => 'All',
-                    'url' => '/messages',
-                    'icon' => 'fa fa-fw fa-envelope',
-                ],
-                [
                     'text' => 'Need Action',
                     'url' => '/messages/need_action',
                     'icon' => 'fa fa-fw fa-exclamation',
+                ],
+                [
+                    'text' => 'All',
+                    'url' => '/messages',
+                    'icon' => 'fa fa-fw fa-envelope',
                 ],
                 [
                     'text' => 'Awaiting',
