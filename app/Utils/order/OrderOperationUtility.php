@@ -711,7 +711,7 @@ class OrderOperationUtility
             switch (strtolower($storeType)) {
                 case 'shopify':
                     $shopifyServie = new ShopifyService();
-                    $response = $shopifyServie->updateFullfillment($orderOperation->order_id);
+                    $response = $shopifyServie->updateFullfillment($orderOperation->order_id, $orderOperation);
 
                     if (!isset($response['errors'])) {
                         $orderOperation->update(['status' => OrderOperationStatus::MarkAsShipped]);
@@ -727,7 +727,33 @@ class OrderOperationUtility
                                 $orderItem->update(['shipped_quantity' => $item_qty]);
                             }
                         }
-                        $success = true;
+
+                        $orderOperations = OrderOperation::with('order','order.orderItem')->where('is_merged',true)
+                            ->where('merged_with',$orderOperation->id)
+                            ->get();
+
+                        foreach ($orderOperations as $oop) {
+                            $response = $shopifyServie->updateFullfillment($oop->order_id, $orderOperation);
+
+                            if (!isset($response['errors'])) {
+                                $oop->update(['status' => OrderOperationStatus::MarkAsShipped]);
+                                if (isset($oop->order_id)) {
+                                    $order = Order::findOrFail($oop->order_id);
+                                    $order->update(['order_status' => OrderStatus::Shipped]);
+                                }
+
+                                if (isset($oop->order->orderItem)) {
+                                    foreach ($oop->order->orderItem as $o_item) {
+                                        $item_qty = $o_item->quantity;
+                                        $orderItem = OrderItem::findOrFail($o_item->id);
+                                        $orderItem->update(['shipped_quantity' => $item_qty]);
+                                    }
+                                }
+                                $success = true;
+                            }else{
+                                $success = false;
+                            }
+                        }
                     } else {
                         $success = false;
                     }
@@ -780,7 +806,46 @@ class OrderOperationUtility
                                 $orderItem->update(['shipped_quantity' => $item_qty]);
                             }
                         }
-                        $success = true;
+
+                        $orderOperations = OrderOperation::with('order','order.orderItem','operationItem')->where('is_merged',true)
+                            ->where('merged_with',$orderOperation->id)
+                            ->get();
+
+                        foreach ($orderOperations as $oop) {
+                            $payload2 = [
+                                "shippedDate" => now()->toIso8601ZuluString(),
+                                "shippingCarrierCode" => $orderOperation->carrier->name,
+                                "trackingNumber" => $orderOperation->tracking_number
+                            ];
+
+                            foreach ($oop->operationItem as $item) {
+                                $payload2["lineItems"][] = [
+                                    "lineItemId" => $item->orderItem->store_sku,
+                                    "quantity" => $item->quantity,
+                                ];
+                            }
+
+                            $response = $authService->createShippingFulfillment($oop->order->order_id, $payload2);
+
+                            if (!isset($response['errors'])) {
+
+                                $oop->update(['status' => OrderOperationStatus::MarkAsShipped]);
+                                if (isset($oop->order_id)) {
+                                    $order = Order::findOrFail($oop->order_id);
+                                    $order->update(['order_status' => OrderStatus::Shipped]);
+                                }
+                                if (isset($oop->order->orderItem)) {
+                                    foreach ($oop->order->orderItem as $o_item) {
+                                        $item_qty = $o_item->quantity;
+                                        $orderItem = OrderItem::findOrFail($o_item->id);
+                                        $orderItem->update(['shipped_quantity' => $item_qty]);
+                                    }
+                                }
+                                $success = true;
+                            }else{
+                                $success = false;
+                            }
+                        }
                     } else {
                         Log::info('eBay ship fulfillment error: ' . json_encode($result['error'] ?? 'Unknown error'));
                         $success = false;

@@ -460,7 +460,7 @@ class ShopifyService implements MarketplaceServiceInterface
         return response()->json($response);
     }
 
-    public function updateFullfillment($orderId)
+    public function updateFullfillment($orderId, $mainorderOperation)
     {
         if($orderId) {
             Log::info("Order ID : ". json_encode($orderId));
@@ -513,8 +513,8 @@ class ShopifyService implements MarketplaceServiceInterface
                     ],
                     "notifyCustomer" => true,
                     "trackingInfo" => [
-                        "company" => $shipmentDetail->carrierService->ShippingCarrier->name,
-                        "number" => $shipmentDetail->tracking_number
+                        "company" => $mainorderOperation->carrierService->ShippingCarrier->name,
+                        "number" => $mainorderOperation->tracking_number
                     ]
                 ]
             ];
