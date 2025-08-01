@@ -48,7 +48,7 @@ class ShopifyListingProductsSyncJob implements ShouldQueue
         Log::info('Syncing listing item: ' . $item->id);
         ListingItem::updateOrCreate(
             [
-                'store_sku' => $item->store_sku,
+                'id' => $item->id,
             ],
             [
                 'id' => $item->id,
