@@ -336,7 +336,7 @@
 
         </div>
         <div class="col-md-9 d-flex">
-            <button type="button" class="btn btn-default" id="open_message" disabled="">
+            <button type="button" class="btn btn-default mr-2" id="open_message" disabled="">
                 <i class="fas fa-fw fa-pencil-alt"></i> Open
             </button>
             <button type="button" class="btn btn-default mr-2" data-status="4" id="mark_as_spam" disabled="">
@@ -351,9 +351,14 @@
                 <i class="fas fa-fw fa-star"></i> Mark As Important
             </button>
 
-            <button type="button" class="btn btn-default" id="mark_as_unread" disabled="">
+            <button type="button" class="btn btn-default mr-2" id="mark_as_unread" disabled="">
                 <i class="fas fa-fw fa-envelope"></i> Mark As Unread
             </button>
+
+            <div class="d-flex align-items-center" style="gap:10px;">
+                <input type="checkbox" id="select_deselect_message"> <label class="mb-0" for="selected_product">Select/Deselect All</label>
+            </div>
+
         </div>
     </div>
     <div class="table-responsive">
@@ -408,15 +413,52 @@
            $('.card-body').toggle();
         });
 
-        $(document).on('dblclick','#message-list tr',function () {
-           let ele = $(this);
-           $('#message-list tr').removeClass('bg-blue');
-           $('input[name="message_id[]"]').prop('checked',false);
-           ele.addClass('bg-blue');
-           ele.find('input[name="message_id[]"]').prop('checked',true);
-            $('#open_message').removeAttr('disabled');
-            var ticket_id = ele.find('input[name="message_id[]"]').val();
-            location.href = "{{ url('messages/detail') }}/" + ticket_id;
+        $(document).on('click','#message-list tr',function () {
+            let ele = $(this);
+            //$('#message-list tr').removeClass('bg-blue');
+            //$('input[name="message_id[]"]').prop('checked',false);
+            if(ele.find('input[name="message_id[]"]').is(':checked')){
+                ele.removeClass('bg-blue');
+                ele.find('input[name="message_id[]"]').prop('checked', false);
+            }else {
+                ele.addClass('bg-blue');
+                ele.find('input[name="message_id[]"]').prop('checked', true);
+            }
+
+            if($('input[name="message_id[]"]:checked').length) {
+                $('#open_message').removeAttr('disabled');
+                $('#mark_as_spam').removeAttr('disabled');
+                $('#delete_ticket').removeAttr('disabled');
+                $('#mark_as_important').removeAttr('disabled');
+                $('#mark_as_unread').removeAttr('disabled');
+            }else{
+                $('#open_message').attr('disabled',true);
+                $('#mark_as_spam').attr('disabled',true);
+                $('#delete_ticket').attr('disabled',true);
+                $('#mark_as_important').attr('disabled',true);
+                $('#mark_as_unread').attr('disabled',true);
+            }
+
+            //var ticket_id = ele.find('input[name="message_id[]"]').val();
+            //location.href = "{{ url('messages/detail') }}/" + ticket_id;
+        });
+
+        $(document).on('click', '#select_deselect_message', function() {
+
+            var ele = $(this);
+            if(ele.is(':checked')){
+                $('#message-list tr').each(function () {
+                    $(this).find('input[name="message_id[]"]').prop('checked', true);
+                    $(this).addClass('bg-blue');
+                });
+            }else {
+
+                $('#message-list tr').each(function () {
+                    $(this).find('input[name="message_id[]"]').prop('checked', false);
+                    $(this).removeClass('bg-blue');
+                });
+            }
+
         });
 
         $('#open_message').on('click',function () {
@@ -428,6 +470,79 @@
                     location.href = "{{ url('messages/detail') }}/" + selectedId;
                 }
             });
+        });
+
+        $(document).on('dblclick','#message-list tr',function () {
+            var ticket_id = $(this).find('input[name="message_id[]"]').val();
+            location.href = "{{ url('messages/detail') }}/" + ticket_id;
+        });
+
+        $(document).on('click','#mark_as_spam',function () {
+            var selected_ticket = [];
+
+            $('input[name="message_id[]"]:checked').each(function () {
+                selected_ticket.push($(this).val())
+            });
+
+            //var ticket_id = $('input[name="message_id[]"]:checked').val();
+            var status = $(this).data('status');
+            var data = {
+                ticket_id: selected_ticket,
+                status: 4
+            };
+            if(selected_ticket.length) {
+                updateTicket(data);
+            }
+        });
+
+        $(document).on('click','#mark_as_important',function () {
+            var selected_ticket = [];
+
+            $('input[name="message_id[]"]:checked').each(function () {
+                selected_ticket.push($(this).val())
+            });
+            var data = {
+                ticket_id: selected_ticket,
+                important: 1
+            };
+
+            if(selected_ticket.length) {
+                updateTicket(data);
+            }
+        });
+
+        $(document).on('click','#mark_as_unread',function () {
+            var selected_ticket = [];
+
+            $('input[name="message_id[]"]:checked').each(function () {
+                selected_ticket.push($(this).val())
+            });
+
+            var data = {
+                ticket_id: selected_ticket,
+                message_read: 0
+            };
+
+            if(selected_ticket.length) {
+                updateTicket(data);
+            }
+        });
+
+        $(document).on('click','#delete_ticket',function () {
+            var selected_ticket = [];
+
+            $('input[name="message_id[]"]:checked').each(function () {
+                selected_ticket.push($(this).val())
+            });
+
+            var data = {
+                ticket_id: selected_ticket,
+                status: 3
+            };
+
+            if(selected_ticket.length) {
+                updateTicket(data);
+            }
         });
 
         /*table = $('#messageTable').DataTable({
@@ -492,6 +607,32 @@
         });
 
     });
+
+    function updateTicket(data) {
+        let ticket_id = $('input[name="message_id[]"]:checked').val();
+
+        if(ticket_id != '') {
+            $.ajax({
+                type: "POST",
+                url: "{{ route('message.updateticket') }}",
+                data: data,
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                },
+
+                success: function (data) {
+                    if (data.success) {
+                        location.reload();
+                    }
+                },
+                error: function (xhr) {
+                },
+                complete: function () {
+                    $("#ajax-preloader").hide();
+                }
+            });
+        }
+    }
 
     function loadDatatables() {
 

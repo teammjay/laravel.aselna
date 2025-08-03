@@ -677,14 +677,14 @@ class MessagesController extends Controller
 
     public function updateTicket(Request $request){
 
-        $ticket_id= $request->input('ticket_id');
+        $ticket_ids = $request->input('ticket_id');
         $status = $request->input('status');
         $ticket_type_id = $request->input('ticket_type');
         $message_read = $request->input('message_read');
         $important = $request->input('important');
         $notes = $request->input('notes');
         $subject = $request->input('subject');
-        if($ticket_id){
+        if($ticket_ids){
 
             $updated_by = auth()->user()->name ?? 'admin';
 
@@ -717,7 +717,7 @@ class MessagesController extends Controller
                 }
                 $updatedData['notes'] = $notes;
             }
-            Message::findOrFail($ticket_id)->update($updatedData);
+            Message::whereIn('id', $ticket_ids)->update($updatedData);
 
             return response()->json([
                 'success' => true
