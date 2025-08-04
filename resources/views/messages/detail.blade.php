@@ -657,6 +657,8 @@
                                     $('#message_to_send').html(response.template_code);
                                 }
 
+                                loadOrderDetail();
+
                             }
                         },
                         error: function (xhr) {
@@ -1169,6 +1171,10 @@
                                 $('#template_id').val(response.template_id);
                                 $('#message_to_send').html(response.template_code);
                             }
+                            $('.lableImageGroup').addClass('hide');
+                            $('#image_url').val('');
+                            $('#image_storage_path').val('');
+                            $('.lable-image').html('');
                             //location.reload();
                         }
                     },

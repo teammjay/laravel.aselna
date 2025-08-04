@@ -412,6 +412,9 @@ class MessagesController extends Controller
                             }else if($op->operation_type == OrderOperationType::OrderReturn && ($op->tracking_number == null || $op->tracking_number)){
                                 $templateDetail = HdMessageTemplate::getOrderOperationTemplate(OrderOperationType::OrderReturn, 0, 0);
 
+                            }else if($op->operation_type == OrderOperationType::OrderRefund || $op->operation_type == OrderOperationType::OrderReturnRefund ){
+
+                                $templateDetail = HdMessageTemplate::getOrderOperationTemplate($op->operation_type,0,0);
                             }
 
                             $rma_number = $op->rma_number;
@@ -434,16 +437,12 @@ class MessagesController extends Controller
                                 $template_code = \Blade::render($templateDetail->template_code, $data);
 
                                 $template['template_id'] = $templateDetail->id;
-                                $template['template_code'] = \Blade::render($templateDetail->template_code, $data);
+                                $template['template_code'] = $template_code;
                             }
                         }
-
                     }
-
                     $action['returnLable'] = $returnOperationCnt;
                 }
-
-
             }
         }
 
@@ -454,7 +453,6 @@ class MessagesController extends Controller
                 $ticketHistory = view('messages.ticket_history', ['ticket_list' => $ticket_list])->render();
             }
         }
-
 
         //print_r($action);
         return view('messages.detail', compact('message_template','ticketDetail','messages','ticketTypeCode','action','store_type_name','ticketHistory','rma_done','lable_generate','type','template'));
@@ -808,7 +806,7 @@ class MessagesController extends Controller
                             'name' => $imagename,
                             'ext' => $extension ?: 'jpg', // Default to 'jpg' if missing
                             'file_size' => $fileSize ?: 'Unknown', // Use 'Unknown' if not determined
-                            'location' => 'images/',
+                            'location' => 'labels/',
                             'created_by' => 'admin',
                         ];
 
@@ -1260,7 +1258,7 @@ class MessagesController extends Controller
         $ticket_id = $request->input('ticket_id');
         $request['label_generation'] = 1;
 
-        $orderOperation = OrderOperation::with('order', 'order.customer', 'store', 'store.storeType','carrier')->where('id', $request->id)->first();
+        $orderOperation = OrderOperation::with('order', 'order.customer', 'store', 'store.storeType','carrier')->where('id', $request->id)->whereNotNull('rma_number')->first();
 
         $successRes = OrderOperationUtility::processShipment($orderOperation, $request);
 
@@ -1288,7 +1286,7 @@ class MessagesController extends Controller
         $imageUrl = asset('storage/labels/' .$imageName );
 
         $storagePath = storage_path('app/public/labels/' . $imageName);
-        if (file_exists($storagePath)) {
+        /*if (file_exists($storagePath)) {
             $fileSize = filesize($storagePath);
             $extension = pathinfo($imageName, PATHINFO_EXTENSION);
             $filedata = [
@@ -1313,7 +1311,7 @@ class MessagesController extends Controller
 
                 HdMessageAttachment::create($attachementData);
             }
-        }
+        }*/
 
         DB::commit();
         return response()->json([
@@ -1526,7 +1524,7 @@ class MessagesController extends Controller
                 }
             }
 
-            $request['label_generation'] = 1;
+            $request['label_generation'] = 0;
             $orderOperation = OrderOperation::with('order','order.customer', 'store', 'store.storeType')->where('id', $order_opration_id)->first();
 
             $successRes = OrderOperationUtility::processShipment($orderOperation, $request);
@@ -1578,10 +1576,10 @@ class MessagesController extends Controller
         $ticket_id= $request->input('ticket_id');
 
         $imageName = time().'.'.$request->attach_file->extension();
-        $storagePath = storage_path('app/public/images/' . $imageName);
-        $path = storage_path('app/public/images/');
+        $storagePath = storage_path('app/public/labels/' . $imageName);
+        $path = storage_path('app/public/labels/');
         $request->attach_file->move($path, $imageName);
-        $imageUrl = asset('storage/images/' .$imageName );
+        $imageUrl = asset('storage/labels/' .$imageName );
 
         /*if ($imageName !== false) {
 

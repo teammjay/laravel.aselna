@@ -45,7 +45,7 @@
                                     <label>Accept return charge</label>
                                 </div>
                                 <div class="col-md-7">
-                                    <input type="checkbox" id="accept_return_charge" name="accept_return_charge" checked>
+                                    <input type="checkbox" id="accept_return_charge" name="accept_return_charge">
                                 </div>
                             </div>
                             <div class="row mt-3 g-3 align-items-center">
