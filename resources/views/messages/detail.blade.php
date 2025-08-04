@@ -657,6 +657,8 @@
                                     $('#message_to_send').html(response.template_code);
                                 }
 
+                                loadOrderDetail();
+
                             }
                         },
                         error: function (xhr) {

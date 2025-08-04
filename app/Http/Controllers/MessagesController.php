@@ -1288,7 +1288,7 @@ class MessagesController extends Controller
         $imageUrl = asset('storage/labels/' .$imageName );
 
         $storagePath = storage_path('app/public/labels/' . $imageName);
-        if (file_exists($storagePath)) {
+        /*if (file_exists($storagePath)) {
             $fileSize = filesize($storagePath);
             $extension = pathinfo($imageName, PATHINFO_EXTENSION);
             $filedata = [
@@ -1313,7 +1313,7 @@ class MessagesController extends Controller
 
                 HdMessageAttachment::create($attachementData);
             }
-        }
+        }*/
 
         DB::commit();
         return response()->json([
