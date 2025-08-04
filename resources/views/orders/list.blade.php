@@ -195,6 +195,19 @@
                 </div>
 
                 <div class="row pt-3">
+                    <div class="col-md-3">
+                        <div class="row">
+                            <div class="col-4 text-right">
+                                Product Code
+                            </div>
+                            <div class="col-8">
+                                <input type="text" name="product_code" id="product_code" class="form-control">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row pt-3">
                     <div class="col-md-2">
                         <div class="form-group">
                             <label>&nbsp;</label>
