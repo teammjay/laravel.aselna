@@ -808,7 +808,7 @@ class MessagesController extends Controller
                             'name' => $imagename,
                             'ext' => $extension ?: 'jpg', // Default to 'jpg' if missing
                             'file_size' => $fileSize ?: 'Unknown', // Use 'Unknown' if not determined
-                            'location' => 'images/',
+                            'location' => 'labels/',
                             'created_by' => 'admin',
                         ];
 
@@ -1260,7 +1260,7 @@ class MessagesController extends Controller
         $ticket_id = $request->input('ticket_id');
         $request['label_generation'] = 1;
 
-        $orderOperation = OrderOperation::with('order', 'order.customer', 'store', 'store.storeType','carrier')->where('id', $request->id)->first();
+        $orderOperation = OrderOperation::with('order', 'order.customer', 'store', 'store.storeType','carrier')->where('id', $request->id)->whereNotNull('rma_number')->first();
 
         $successRes = OrderOperationUtility::processShipment($orderOperation, $request);
 
@@ -1526,7 +1526,7 @@ class MessagesController extends Controller
                 }
             }
 
-            $request['label_generation'] = 1;
+            $request['label_generation'] = 0;
             $orderOperation = OrderOperation::with('order','order.customer', 'store', 'store.storeType')->where('id', $order_opration_id)->first();
 
             $successRes = OrderOperationUtility::processShipment($orderOperation, $request);
@@ -1578,10 +1578,10 @@ class MessagesController extends Controller
         $ticket_id= $request->input('ticket_id');
 
         $imageName = time().'.'.$request->attach_file->extension();
-        $storagePath = storage_path('app/public/images/' . $imageName);
-        $path = storage_path('app/public/images/');
+        $storagePath = storage_path('app/public/labels/' . $imageName);
+        $path = storage_path('app/public/labels/');
         $request->attach_file->move($path, $imageName);
-        $imageUrl = asset('storage/images/' .$imageName );
+        $imageUrl = asset('storage/labels/' .$imageName );
 
         /*if ($imageName !== false) {
 

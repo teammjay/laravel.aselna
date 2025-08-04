@@ -24,7 +24,7 @@
             </div>
         @endif
 
-        @if($order_operation->operation_type == \App\Constants\OrderOperationType::OrderRefund)
+        @if($order_operation->operation_type == \App\Constants\OrderOperationType::OrderRefund || $order_operation->operation_type == \App\Constants\OrderOperationType::OrderReturnRefund)
             <div class="card">
                 <div class="card-body">
                     <div class="row align-items-center">
