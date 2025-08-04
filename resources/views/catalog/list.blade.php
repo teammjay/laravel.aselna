@@ -53,9 +53,9 @@
             </a>
         </div>
         <div class="col-md-10 d-flex align-items-center" style="gap:10px;">
-            <a href="{{ route('listing.list') }}" class="btn btn-default">
+            <button type="button" class="btn btn-default hide" id="show_listing">
                 Show Listing
-            </a>
+            </button>
             <input type="checkbox" id="show_simple_products"> <label for="show_simple_products" class="mb-0">Show simple
                 products</label>
 
@@ -501,11 +501,13 @@
                     ele.find('.pro-id').prop('checked', true);
                     $('#edit_product').removeAttr('disabled');
                     $('#update_product').removeAttr('disabled');
+                    $('#show_listing').removeAttr('disabled');
                 }
 
                 if (!$('.pro-id:checked').length) {
                     $('#edit_product').attr('disabled', true);
                     $('#update_product').attr('disabled', true);
+                    $('#show_listing').attr('disabled', true);
                 }
             });
 
@@ -518,6 +520,17 @@
                     }
                 });
 
+            });
+
+
+
+            $(document).on('click', '#show_listing', function () {
+                var ele = $('.pro-id:checked');
+                var pCode = ele.parents('tr').find('.prVal').html();
+
+                if(pCode != ''){
+                    window.location.href = "{{ url('listing') }}?code="+pCode;
+                }
             });
 
             $(document).on('click', '#update_product', function () {
