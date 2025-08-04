@@ -461,7 +461,7 @@
             });
 
             $(document).on('click','#close_ticket',function () {
-                window.location.href = '{{ route('message.index') }}';
+                window.location.href = '{{ route('message.need_action') }}';
             });
 
             $(document).on('blur','#internal_notes',function () {
@@ -567,9 +567,12 @@
 
                     success: function(data) {
                         if(data.success){
-
                             alert('Message send successfuly.');
-                            location.reload();
+                            if(ticket_status){
+                                window.location.href = "{{ route('message.need_action') }}";
+                            }else{
+                                location.reload();
+                            }
                         }
                     },
                     error: function (xhr) {
