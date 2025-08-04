@@ -67,8 +67,12 @@ class ListingController extends Controller
         $manufacturers = Manufacturer::all();
         $devices = Device::all();
         $brands = Brand::all();
+        $code = '';
+        if(isset($_GET['code']) && $_GET['code'] != ''){
+            $code = $_GET['code'];
+        }
 
-        return view('listing.list', compact('stores', 'device_types', 'product_types', 'manufacturers', 'devices', 'brands'))->with('perPage', $this->perPage);
+        return view('listing.list', compact('stores', 'device_types', 'product_types', 'manufacturers', 'devices', 'brands','code'))->with('perPage', $this->perPage);
     }
 
     public function suspended_list()

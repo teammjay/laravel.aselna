@@ -344,7 +344,7 @@
                                 </select>
                             </div>
                             <div class="col-6">
-                                <input type="text" name="product_code" id="product_code" class="form-control">
+                                <input type="text" name="product_code" id="product_code" class="form-control" value="{{ $code }}">
                             </div>
                         </div>
                     </div>
