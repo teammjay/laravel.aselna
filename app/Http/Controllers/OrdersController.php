@@ -103,9 +103,7 @@ class OrdersController extends Controller
         // Filter by product code
         if ($request->has('product_code') && $request->product_code != '') {
             $query->whereHas('orderItem', function ($q) use ($request) {
-                $q->whereHas('product', function ($q2) use ($request) {
-                    $q2->where('product_sku', 'like', '%' . $request->product_code . '%');
-                });
+                $q->where('sku', 'like', '%' . $request->product_code . '%');
             });
         }
 
