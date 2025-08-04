@@ -449,7 +449,7 @@ class MessagesController extends Controller
 
         $ticketHistory = '';
         if(isset($ticketDetail->customer_id)){
-            $ticket_list = Message::where('customer_id',$ticketDetail->customer_id)->where('id','!=',$id)->get();
+            $ticket_list = Message::where('customer_id',$ticketDetail->customer_id)->where('id','!=',$id)->orderBy('created_at','desc')->get();
             if($ticket_list){
                 $ticketHistory = view('messages.ticket_history', ['ticket_list' => $ticket_list])->render();
             }
@@ -484,7 +484,7 @@ class MessagesController extends Controller
 
                 $ticketHistory = '';
                 if(isset($orderDetail->customer_id)){
-                    $ticket_list = Message::where('customer_id',$orderDetail->customer_id)->get();
+                    $ticket_list = Message::where('customer_id',$orderDetail->customer_id)->orderBy('created_at','desc')->get();
                     if($ticket_list){
                         $ticketHistory = view('messages.ticket_history', ['ticket_list' => $ticket_list])->render();
                     }
@@ -1155,29 +1155,31 @@ class MessagesController extends Controller
         $imageUrl = asset('storage/labels/' .$imageName );
 
         $storagePath = storage_path('app/public/labels/' . $imageName);
-        $fileSize = filesize($storagePath);
-        $extension = pathinfo($imageName, PATHINFO_EXTENSION);
-        $filedata = [
-            'name' => $imageName,
-            'ext' => $extension ?: 'jpg', // Default to 'jpg' if missing
-            'file_size' => $fileSize ?: 'Unknown', // Use 'Unknown' if not determined
-            'location' => 'storage/labels/',
-            'created_by' => 'admin',
-        ];
-
-        $imageFile = SysFile::create($filedata);
-        $file_id = $imageFile->id;
-
-        if($ticket_id && $file_id){
-            $attachementData = [
-                'client_id' => NULL,
-                'message_id' => $ticket_id,
-                'attachment_id' => $ticket_id,
-                'file_id' => $file_id,
+        if (file_exists($storagePath)) {
+            $fileSize = filesize($storagePath);
+            $extension = pathinfo($imageName, PATHINFO_EXTENSION);
+            $filedata = [
+                'name' => $imageName,
+                'ext' => $extension ?: 'jpg', // Default to 'jpg' if missing
+                'file_size' => $fileSize ?: 'Unknown', // Use 'Unknown' if not determined
+                'location' => 'storage/labels/',
                 'created_by' => 'admin',
             ];
 
-            HdMessageAttachment::create($attachementData);
+            $imageFile = SysFile::create($filedata);
+            $file_id = $imageFile->id;
+
+            if ($ticket_id && $file_id) {
+                $attachementData = [
+                    'client_id' => NULL,
+                    'message_id' => $ticket_id,
+                    'attachment_id' => $ticket_id,
+                    'file_id' => $file_id,
+                    'created_by' => 'admin',
+                ];
+
+                HdMessageAttachment::create($attachementData);
+            }
         }
 
         DB::commit();
