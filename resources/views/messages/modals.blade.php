@@ -11,7 +11,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancle</button>
-                <button type="button" class="btn btn-primary" id="mark_shipped"><i class="fa fa-check"></i> Ok </button>
+                <button type="button" class="btn btn-primary" id="save_rma"><i class="fa fa-check"></i> Ok </button>
             </div>
         </div>
     </div>

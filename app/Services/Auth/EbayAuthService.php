@@ -529,9 +529,9 @@ class EbayAuthService
                 'json' => $data,
             ]);
 
-            Log::info('Fullfillment Response: ' . $response->getBody());
+            Log::info('Fullfillment Response: ' .  $response->getBody()->getContents());
 
-            return json_decode($response->getBody(), true);
+            return json_decode($response->getBody()->getContents(), true);
 
         } catch (RequestException $e) {
             if ($e->hasResponse()) {
