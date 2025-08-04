@@ -412,6 +412,9 @@ class MessagesController extends Controller
                             }else if($op->operation_type == OrderOperationType::OrderReturn && ($op->tracking_number == null || $op->tracking_number)){
                                 $templateDetail = HdMessageTemplate::getOrderOperationTemplate(OrderOperationType::OrderReturn, 0, 0);
 
+                            }else if($op->operation_type == OrderOperationType::OrderRefund || $op->operation_type == OrderOperationType::OrderReturnRefund ){
+
+                                $templateDetail = HdMessageTemplate::getOrderOperationTemplate($op->operation_type,0,0);
                             }
 
                             $rma_number = $op->rma_number;
@@ -434,16 +437,12 @@ class MessagesController extends Controller
                                 $template_code = \Blade::render($templateDetail->template_code, $data);
 
                                 $template['template_id'] = $templateDetail->id;
-                                $template['template_code'] = \Blade::render($templateDetail->template_code, $data);
+                                $template['template_code'] = $template_code;
                             }
                         }
-
                     }
-
                     $action['returnLable'] = $returnOperationCnt;
                 }
-
-
             }
         }
 
@@ -454,7 +453,6 @@ class MessagesController extends Controller
                 $ticketHistory = view('messages.ticket_history', ['ticket_list' => $ticket_list])->render();
             }
         }
-
 
         //print_r($action);
         return view('messages.detail', compact('message_template','ticketDetail','messages','ticketTypeCode','action','store_type_name','ticketHistory','rma_done','lable_generate','type','template'));
