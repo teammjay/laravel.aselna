@@ -315,6 +315,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/messages/replaceorder', 'replaceOrder')->name('message.replaceorder');
         Route::post('/messages/imageupload', 'imageUpload')->name('message.imageupload');
         Route::post('/messages/saveticket', 'saveTicket')->name('message.saveticket');
+        Route::post('/messages/saverma', 'saveRMA')->name('message.saverma');
     });
 
     Route::controller(PageTypesController::class)->group(function () {

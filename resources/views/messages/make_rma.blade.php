@@ -223,6 +223,7 @@
                                 <th>Quantity</th>
                                 <th>Sync Status</th>
                                 <th>Sync Message</th>
+                                <th>Reason</th>
                             </tr>
                             </thead>
                             <tbody id="shipment-item-list">
@@ -242,10 +243,19 @@
                                             @endif
                                         </td>
                                         <td>{{ $oitem->orderItem->sku }}</td>
-                                        <td><input type="text" class="form-control" name="quantity"
-                                                   value="{{ $oitem->orderItem->quantity }}"></td>
+                                        <td><input type="text" class="form-control" name="quantity" value="{{ $oitem->orderItem->quantity }}"></td>
                                         <td>{{ \App\Constants\OrderSyncStatus::getOrderSyncStatusName($oitem->sync_status) }}</td>
                                         <td>{{ $oitem->sync_message }}</td>
+                                        <td>
+                                            <select class="form-control" name="reason" style="width:150px;">
+                                                <option value=""></option>
+                                                @if(count($reasons ?? []) > 0)
+                                                    @foreach($reasons as $reason)
+                                                        <option value="{{ $reason->id }}">{{ $reason->name }}</option>
+                                                    @endforeach
+                                                @endif
+                                            </select>
+                                        </td>
                                     </tr>
                                 @endforeach
                             @endif

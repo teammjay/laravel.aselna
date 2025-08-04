@@ -598,8 +598,8 @@
                                     $('#template_id').val(response.template_id);
                                     $('#message_to_send').html(response.template_code);
                                 }
-                                //$('#makeRMAModal').find('.modal-body').html(response.html);
-                                $('#returnLabelModal').find('.modal-body').html(response.html);
+                                $('#makeRMAModal').find('.modal-body').html(response.html);
+                                //$('#returnLabelModal').find('.modal-body').html(response.html);
                                 $('#date').datetimepicker({
                                     format:'Y-m-d H:i',
                                     /* minDate: 'now', */
@@ -609,9 +609,9 @@
                                         $('#date').val(sel_date);
                                     }
                                 });
-                                //$('#makeRMAModal').modal('show');
-                                $('#returnLabelModal').modal('show');
-                                $('#return_label').removeClass('hide').addClass('show');
+                                $('#makeRMAModal').modal('show');
+                                //$('#returnLabelModal').modal('show');
+                                //$('#return_label').removeClass('hide').addClass('show');
 
                                 getShippingCarrierService($('#carrier_name_ms'));
                             }
@@ -625,6 +625,48 @@
                     alert('There were no order found.');
                 }
             });
+
+            $(document).on('click','#save_rma',function () {
+
+                const form = document.querySelector("#frmMakeRMA");
+                let formData = new FormData(form);
+                formData.append('ticket_id', ticket_id);
+
+                var order_id = $('#order_id').val();
+                formData.append('order_id', order_id);
+
+                if(order_id != '' && order_id != null){
+                    $.ajax({
+                        url: "{{ route('message.saverma') }}",
+                        type: 'POST',
+                        data: formData,
+                        processData: false,
+                        contentType: false,
+                        headers: {
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        },
+                        success: function (response) {
+                            // If success, remove the user row from the table
+                            if (response.success) {
+                                $('#makeRMAModal').modal('hide');
+                                if(response.template_code != ''){
+                                    $('#template_id').val(response.template_id);
+                                    $('#message_to_send').html(response.template_code);
+                                }
+
+                            }
+                        },
+                        error: function (xhr) {
+                            // Handle error response
+                            alert('Error: ' + xhr.responseJSON.error);
+                        }
+                    });
+                }else{
+                    alert('There were no order found.');
+                }
+            });
+
+
 
             $(document).on('click','#regenerate_rma_message',function () {
                 var template_id = $('#template_id').val();
