@@ -356,6 +356,17 @@ return [
                     'icon' => 'fa fa-fw fa-trash',
                 ],
                 [
+                    'text' => 'Tags',
+                    'icon' => 'fa fa-fw fa-tag',
+                    'submenu' => [
+                        [
+                            'text' => 'As Hakan',
+                            'url' => '/messages/label/35e3767e-7cb9-4c27-a4b1-5d0e0cadb82f',
+                            'icon' => 'fa fa-fw fa-exclamation-circle',
+                        ],
+                    ],
+                ],
+                [
                     'text' => 'Message Template',
                     'url' => '/hd_message_template',
                     'icon' => 'fa fa-fw fa-file',

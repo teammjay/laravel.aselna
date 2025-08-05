@@ -316,6 +316,10 @@ Route::middleware('auth')->group(function () {
         Route::post('/messages/imageupload', 'imageUpload')->name('message.imageupload');
         Route::post('/messages/saveticket', 'saveTicket')->name('message.saveticket');
         Route::post('/messages/saverma', 'saveRMA')->name('message.saverma');
+        Route::post('/messages/search', 'search')->name('message.search');
+        Route::post('/messages/assignlabel', 'assignLabel')->name('message.assignlabel');
+        Route::post('/messages/removeticketlabel', 'removeTicketLabel')->name('message.removeticketlabel');
+        Route::get('/messages/label/{id}', 'label_list')->name('message.label');
     });
 
     Route::controller(PageTypesController::class)->group(function () {
