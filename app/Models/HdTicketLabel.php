@@ -30,4 +30,8 @@ class HdTicketLabel extends Model
     public function parent(){
         return $this->belongsTo(self::class, 'parent_id');
     }
+
+    public function tickets(){
+        return $this->belongsTo(HdTicketLabelLink::class, 'id','hd_ticket_label_id');
+    }
 }

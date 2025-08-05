@@ -385,6 +385,24 @@
                     </div>
                 </div>
             </div>
+
+            <div class="card">
+                <div class="card-header">
+                    Labels
+                </div>
+                <div class="card-body" id="ticket_lables">
+                    <div class="form-group d-flex position-relative">
+                        <input type="text" class="form-control" id="ticket_label" placeholder="Search...."><i class="fa fa-search position-absolute" style="top: 50%;right: 5px;transform: translateY(-50%);"></i>
+                    </div>
+                    <div id="ticket_label_list">
+                        @if(isset($ticketLabels) && count($ticketLabels ?? []) > 0)
+                            @foreach($ticketLabels as $tlabel)
+                            <div class="border bg-blue d-flex justify-content-between p-1 mt-1"><input type="hidden" name="ticket_label[]" value="{{ $tlabel->label->id }}">{{ $tlabel->label->name }}<i class="fa fa-window-close float-right mt-1"></i></div>
+                            @endforeach
+                        @endif
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -422,6 +440,74 @@
             });
 
             loadOrderDetail();
+
+            $('#ticket_label').autocomplete({
+
+                source: function (request, response) {
+
+                    let ticket_label = [];
+                    $('input[name="ticket_label[]"]').each(function () {
+                        ticket_label.push($(this).val())
+                    });
+
+                    $.ajax({
+                        type: "POST",
+                        url: "{{ route('message.search') }}",
+                        data: {
+                            term: request.term,
+                            type: "ticket_label",
+                            ticket_label: ticket_label
+                        },
+                        //processData: false,
+                        //contentType: false,
+                        headers: {
+                            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                        },
+
+                        success: function(data) {
+                            actemp = data.details;
+                            response(data.display);
+                        },
+                        delay: 100
+                    });
+                },
+                minLength:1,
+                select : function(event, ui){
+                    $('#ticket_label').val('');
+                    $('#ticket_label_list').append('<div class="border bg-blue d-flex justify-content-between p-1 mt-1"><input type="hidden" name="ticket_label[]" value="'+ui.item.value+'">'+ui.item.label+'<i class="fa fa-window-close float-right mt-1"></i></div>');
+                    assignTicketToLabel(ui.item.value);
+                    return false;
+                }
+            }).focus(function () {
+                //$('#product_code_filter').keydown();
+            });
+
+            $(document).on('click','.fa-window-close',function () {
+                var ele = $(this);
+                var label_id = $(this).parent('.border').find('input[name="ticket_label[]"]').val();
+                $.ajax({
+                    type: "POST",
+                    url: "{{ route('message.removeticketlabel') }}",
+                    data: {
+                        label_id: label_id,
+                        ticket_id: ticket_id,
+                    },
+                    headers: {
+                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                    },
+
+                    success: function(data) {
+                        if(data.success){
+                            ele.parent('.border').remove();
+                        }
+                    },
+                    error: function (xhr) {
+                    },
+                    complete: function () {
+                        $("#ajax-preloader").hide();
+                    }
+                });
+            });
 
             $(document).on('change','#message_template',function () {
                 var template_id = $(this).val();
@@ -1215,6 +1301,29 @@
             });
 
         });
+
+        function assignTicketToLabel(label_id){
+
+            $.ajax({
+                url: "<?php echo e(route('message.assignlabel')); ?>",
+                type: 'POST',
+                data: {
+                    ticket_id: ticket_id,
+                    label_id: label_id,
+                    "_token": '<?php echo e(csrf_token()); ?>'
+                },
+                success: function (response) {
+                    // If success, remove the user row from the table
+                    if (response.success) {
+                        window.location.href = '{{ route('message.need_action') }}';
+                    }
+                },
+                error: function (xhr) {
+                    // Handle error response
+                    alert('Error: ' + xhr.responseJSON.error);
+                }
+            });
+        }
 
         function getShippingCarrierService(element){
             $.ajax({

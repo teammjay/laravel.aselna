@@ -15,6 +15,8 @@ use App\Models\Customer;
 use App\Models\HDMessage;
 use App\Models\HdMessageAttachment;
 use App\Models\HdMessageTemplate;
+use App\Models\HdTicketLabel;
+use App\Models\HdTicketLabelLink;
 use App\Models\HdTicketType;
 use App\Models\LogisticCenter;
 use App\Models\Message;
@@ -358,6 +360,8 @@ class MessagesController extends Controller
         $message_template = HdMessageTemplate::whereNull('order_operation_type')->orderBy('name')->get();
         $messages = HDMessage::with('attachments')->where('ticket_id',$id)->orderBy('message_date','asc')->get();
         $ticketTypeCode = HdTicketType::orderBy('name')->get();
+        $ticketAllLabels = HdTicketLabel::orderBy('name')->get();
+        $ticketLabels = HdTicketLabelLink::with('label')->where('hd_ticket_id',$id)->get();
         $action = [];
         $template = [];
         $rma_done = $lable_generate = 0;
@@ -455,7 +459,42 @@ class MessagesController extends Controller
         }
 
         //print_r($action);
-        return view('messages.detail', compact('message_template','ticketDetail','messages','ticketTypeCode','action','store_type_name','ticketHistory','rma_done','lable_generate','type','template'));
+        return view('messages.detail', compact('message_template','ticketDetail','messages','ticketTypeCode','action','store_type_name','ticketHistory','rma_done','lable_generate','type','template','ticketAllLabels','ticketLabels'));
+    }
+
+    public function search(Request $request)
+    {
+
+        $term = $request->input('term');
+        $store_id = $request->input('store_id');
+        $data = [];
+        $ticket_label = $request->input('ticket_label');
+        if (!empty($ticket_label)) {
+            $query = HdTicketLabel::select('*');
+            $query->WhereLike('name', '%' . $term . '%');
+            $query->whereNotIn('id', $ticket_label);
+            $labels = $query->get();
+
+        } else {
+            $query = HdTicketLabel::select('*');
+            $query->WhereLike('name', '%' . $term . '%');
+            $labels = $query->get();
+        }
+
+        if(!empty($labels)){
+            foreach ($labels as $key => $value) {
+                $data["display"][] = [
+                    "label" => $value->name,
+                    "value" => $value->id
+                ];
+                $data["details"][$value->ID] = [
+                    "name" => $value->name,
+                    "ID" => $value->id
+                ];
+            }
+        }
+
+        return response()->json($data);
     }
 
     public function searchOrder(Request $request){
@@ -1651,5 +1690,71 @@ class MessagesController extends Controller
         }
 
         return $returnAddress;
+    }
+
+    public function label_list(string $id)
+    {
+        $stores = Store::orderBy('name','asc')->get();
+        $ticketTypes = HdTicketType::all();
+        $label_id = $id;
+        $labelDetail = HdTicketLabel::findOrFail($id);
+        return view('messages.label_list', compact('stores','ticketTypes','label_id','labelDetail'));
+    }
+
+    public function assignLabel(Request $request){
+
+        $ticket_id = $request->input('ticket_id');
+        $status = 1;
+        $label_id = $request->input('label_id');
+        if($label_id && $ticket_id){
+
+            $updated_by = auth()->user()->name ?? 'admin';
+
+            $updatedData = [
+                'updated_by' => $updated_by
+            ];
+
+            if(isset($status) && $status){
+                $updatedData['status'] = $status;
+            }
+
+            Message::where('id', $ticket_id)->update($updatedData);
+
+            $labelData = [
+                'hd_ticket_label_id' => $label_id,
+                'hd_ticket_id' => $ticket_id,
+            ];
+
+            HdTicketLabelLink::updateOrCreate([
+                'hd_ticket_label_id' => $label_id,
+                'hd_ticket_id' => $ticket_id,
+            ], $labelData);
+
+            return response()->json([
+                'success' => true
+            ]);
+        }
+
+        return response()->json([
+            'success' => false
+        ]);
+    }
+
+    public function removeTicketLabel(Request $request){
+
+        $ticket_id = $request->input('ticket_id');
+        $label_id = $request->input('label_id');
+        if($label_id && $ticket_id){
+
+            $hdlabel = HdTicketLabelLink::where('hd_ticket_label_id',$label_id)->where('hd_ticket_id',$ticket_id)->delete();
+
+            return response()->json([
+                'success' => true
+            ]);
+        }
+
+        return response()->json([
+            'success' => false
+        ]);
     }
 }
