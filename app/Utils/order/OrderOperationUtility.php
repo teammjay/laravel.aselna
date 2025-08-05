@@ -811,39 +811,41 @@ class OrderOperationUtility
                             ->where('merged_with',$orderOperation->id)
                             ->get();
 
-                        foreach ($orderOperations as $oop) {
-                            $payload2 = [
-                                "shippedDate" => now()->toIso8601ZuluString(),
-                                "shippingCarrierCode" => $orderOperation->carrier->name,
-                                "trackingNumber" => $orderOperation->tracking_number
-                            ];
-
-                            foreach ($oop->operationItem as $item) {
-                                $payload2["lineItems"][] = [
-                                    "lineItemId" => $item->orderItem->store_sku,
-                                    "quantity" => $item->quantity,
+                        if(count($orderOperations ?? []) > 0) {
+                            foreach ($orderOperations as $oop) {
+                                $payload2 = [
+                                    "shippedDate" => now()->toIso8601ZuluString(),
+                                    "shippingCarrierCode" => $orderOperation->carrier->name,
+                                    "trackingNumber" => $orderOperation->tracking_number
                                 ];
-                            }
 
-                            $response = $authService->createShippingFulfillment($oop->order->order_id, $payload2);
-
-                            if (!isset($response['errors'])) {
-
-                                $oop->update(['status' => OrderOperationStatus::MarkAsShipped]);
-                                if (isset($oop->order_id)) {
-                                    $order = Order::findOrFail($oop->order_id);
-                                    $order->update(['order_status' => OrderStatus::Shipped]);
+                                foreach ($oop->operationItem as $item) {
+                                    $payload2["lineItems"][] = [
+                                        "lineItemId" => $item->orderItem->store_sku,
+                                        "quantity" => $item->quantity,
+                                    ];
                                 }
-                                if (isset($oop->order->orderItem)) {
-                                    foreach ($oop->order->orderItem as $o_item) {
-                                        $item_qty = $o_item->quantity;
-                                        $orderItem = OrderItem::findOrFail($o_item->id);
-                                        $orderItem->update(['shipped_quantity' => $item_qty]);
+
+                                $response = $authService->createShippingFulfillment($oop->order->order_id, $payload2);
+
+                                if (!isset($response['errors'])) {
+
+                                    $oop->update(['status' => OrderOperationStatus::MarkAsShipped]);
+                                    if (isset($oop->order_id)) {
+                                        $order = Order::findOrFail($oop->order_id);
+                                        $order->update(['order_status' => OrderStatus::Shipped]);
                                     }
+                                    if (isset($oop->order->orderItem)) {
+                                        foreach ($oop->order->orderItem as $o_item) {
+                                            $item_qty = $o_item->quantity;
+                                            $orderItem = OrderItem::findOrFail($o_item->id);
+                                            $orderItem->update(['shipped_quantity' => $item_qty]);
+                                        }
+                                    }
+                                    $success = true;
+                                } else {
+                                    $success = false;
                                 }
-                                $success = true;
-                            }else{
-                                $success = false;
                             }
                         }
                     } else {
