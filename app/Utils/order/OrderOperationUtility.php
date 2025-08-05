@@ -714,6 +714,7 @@ class OrderOperationUtility
                     $response = $shopifyServie->updateFullfillment($orderOperation->order_id, $orderOperation);
 
                     if (!isset($response['errors'])) {
+                        $success = true;
                         $orderOperation->update(['status' => OrderOperationStatus::MarkAsShipped]);
                         if (isset($orderOperation->order_id)) {
                             $order = Order::findOrFail($orderOperation->order_id);
@@ -794,6 +795,7 @@ class OrderOperationUtility
                     $result = $authService->createShippingFulfillment($orderOperation->order->order_id, $payload);
 
                     if (!isset($result['error'])) {
+                        $success = true;
                         $orderOperation->update(['status' => OrderOperationStatus::MarkAsShipped]);
                         if (isset($orderOperation->order_id)) {
                             $order = Order::findOrFail($orderOperation->order_id);
