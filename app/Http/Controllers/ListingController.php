@@ -26,6 +26,7 @@ use App\Models\ListingItemDetail;
 use App\Models\ListingItemHistory;
 use App\Models\ListingItemLink;
 use App\Models\Manufacturer;
+use App\Models\OrderItem;
 use App\Models\ProductTitleKeyword;
 use App\Models\ProductType;
 use App\Models\Store;
@@ -126,7 +127,25 @@ class ListingController extends Controller
             'device.deviceType:id,name',
             'generationType:id,name',
             'manufacturer:id,name'
-        ]);
+        ])->addSelect([
+            'saleCount' => OrderItem::selectRaw('SUM(
+                COALESCE(shipped_quantity, 0)
+              - COALESCE(canceled_quantity, 0)
+              - COALESCE(refund_quantity, 0)
+            )')->whereColumn('order_item.sku', 'listing_item.sku')
+        ])
+            /*->withSum(['orderItems as saleCount' => function ($query) {
+            $query->whereNotNull('shipped_quantity')->where(function ($q) {
+                $q->whereNull('canceled_quantity')
+                    ->orWhere('canceled_quantity', 0);
+            })->where(function ($q) {
+                $q->whereNull('refund_quantity')
+                    ->orWhere('refund_quantity', 0);
+            });
+        }], 'quantity')*/
+        ->withMax(['orderItems as lastSaleDate' => function ($query) {
+            $query->whereNotNull('shipped_quantity')->whereNull('canceled_quantity')->orWhere('canceled_quantity', 0)->whereNull('refund_quantity')->orWhere('refund_quantity', 0);
+        }], 'created_at');
 
         if ($request->has('store_id') && $request->store_id != '') {
             $query->whereRelation('storeProduct', 'store_id', $request->store_id);
@@ -260,10 +279,11 @@ class ListingController extends Controller
                     break;
             }
 
+            $totalRecords = $query->count();
             $sortableColumns = [
                 'sku' => 'sku',
-                'sale_count' => 'sale_count',
-                'last_sale_date' => 'last_sale_date',
+                'sales_count' => 'saleCount',
+                'last_sale_date' => 'lastSaleDate',
                 'store_sku' => 'store_sku',
                 'store_name' => 'store.name',
                 'title' => 'title',
@@ -275,6 +295,8 @@ class ListingController extends Controller
             ];
             if (isset($sortableColumns[$columnName])) {
                 $query->orderBy($sortableColumns[$columnName], $columnSortOrder);
+            }else{
+                $query->orderBy($columnName, $columnSortOrder);
             }
         }
 
@@ -286,9 +308,8 @@ class ListingController extends Controller
         print_r($products);
         echo '</pre>';die;*/
         /*$totalRecordwithFilter = $productsRecord->total();*/
-        $totalRecords = $query->count();
-        $products = $query->orderBy($columnName, $columnSortOrder)
-            ->skip($start)
+
+        $products = $query->skip($start)
             ->take($perPage)
             ->get();
         $totalRecordwithFilter = $totalRecords;
@@ -302,10 +323,11 @@ class ListingController extends Controller
                 } else {
                     $productcode = '';
                 };
+
                 $data[] = array(
                     "sku" => $product->sku . '<input type="checkbox" class="proList" name="listing_item[]" data-sku="' . $product->sku . '" data-code="' . $productcode . '" value="' . $product->id . '" style="visibility:hidden;">',
-                    "sale_count" => ($product->sale_count) ? $product->sale_count : 0,
-                    "last_sale_date" => $product->last_sale_date,
+                    "sales_count" => (isset($product->saleCount)) ? $product->saleCount : 0,
+                    "last_sale_date" => isset($product->lastSaleDate) ? $product->lastSaleDate : '',
                     "store_sku" => $product->store_sku,
                     "product_sku" => (!empty((array)$product->storeProduct) && !empty((array)$product->storeProduct->product)) ? $product->storeProduct->product->product_sku : '',
                     "store_name" => ((!empty((array)$product->storeProduct) && !empty((array)$product->storeProduct->store)) ? $product->storeProduct->store->name : '') . ((!empty((array)$product->storeProduct) && !empty((array)$product->storeProduct->store) && !empty((array)$product->storeProduct->store->storeType)) ? ' - ' . $product->storeProduct->store->storeType->name : ''),

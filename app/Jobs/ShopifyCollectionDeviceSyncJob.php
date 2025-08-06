@@ -60,13 +60,24 @@ class ShopifyCollectionDeviceSyncJob implements ShouldQueue
         foreach ($this->publications as $publication) {
             $collectionData['collection']['publications'][]['publicationId'] = $publication;
         }
+        $path = '/store-images/' . $this->store->id . '/collections/' . $handle . '.jpg';
+        $imagePath = $this->uploadImage($this->store, $device->image, $path);
+        Log::info('Image path for device', ['device_id' => $device->id, 'image_path' => $imagePath]);
+
+        if ($imagePath) {
+            $collectionData['collection']['image'] = [
+                'src' => $imagePath,
+            ];
+        } else {
+            Log::error('Image upload failed for device', ['device_id' => $device->id, 'image' => $device->image]);
+        }
 
         $interfaces = DeviceInterface::where('device_id', $device->id)->get();
         foreach ($interfaces as $interface) {
             $collectionData['collection']['ruleSet']['rules'][] = [
                 'column' => 'TAG',
                 'relation' => 'EQUALS',
-                'condition' => $interface->id,
+                'condition' => $interface->interface_id,
             ];
         }
 
@@ -74,11 +85,12 @@ class ShopifyCollectionDeviceSyncJob implements ShouldQueue
             Log::info('Collection already exists, updating collection', ['handle' => $handle]);
             $collectionData['collection']['id'] = $alreadyCollection['id'];
             $collectionData['collection']['handle'] = $handle;
+            Log::info('Collection data update', ['collection_data' => $collectionData]);
             $response = $this->shopifyAuthService->updateCollection($collectionData);
         } else {
             Log::info('Creating new collection', ['handle' => $handle]);
             $collectionData['collection']['handle'] = $handle;
-            $collectionData['collection']['published'] = true;
+            Log::info('Collection data creation', ['collection_data' => $collectionData]);
             $response = $this->shopifyAuthService->createCollection($collectionData);
         }
     }
@@ -127,4 +139,62 @@ class ShopifyCollectionDeviceSyncJob implements ShouldQueue
 
         return $handle;
     }
+
+    private function uploadImage($store, $Image, $path)
+    {
+        $storeFileSystem = $store->fileSystem;
+        //Log::info("File system :: " . json_encode($storeFileSystem));
+        $host = $storeFileSystem->host;
+        $port = $storeFileSystem->port ?? 21;
+        $loginId = $storeFileSystem->login_id;
+        $password = $storeFileSystem->password;
+        $rootPath = $storeFileSystem->root_path;
+        $localFilePath = storage_path('app/public/device_images/' . $Image);
+        Log::info("Local File Path :: " . $localFilePath);
+
+        $ftpConn = ftp_connect($host, $port);
+        if (!$ftpConn) {
+            Log::info("Could not connect to FTP server: $host");
+        }
+
+        $login = ftp_login($ftpConn, $loginId, $password);
+        if (!$login) {
+            ftp_close($ftpConn);
+            Log::info("Could not login to FTP server with provided credentials.");
+        }
+
+        ftp_pasv($ftpConn, true);
+
+        $remoteFilePath = $rootPath . $path;
+        Log::info("Remote Path :: " . $remoteFilePath);
+
+        $this->createFtpDirectory($ftpConn, dirname($remoteFilePath));
+
+        //Upload the file
+        if (ftp_put($ftpConn, $remoteFilePath, $localFilePath, FTP_BINARY)) {
+            //echo "File uploaded successfully to $remoteFilePath";
+            return $storeFileSystem->url_base_path . $path;
+        } else {
+            //echo "Error uploading file.";
+        }
+
+        // Close FTP connection
+        ftp_close($ftpConn);
+    }
+
+    function createFtpDirectory($ftpConn, $dirPath)
+    {
+        $parts = explode('/', $dirPath);
+        $currentDir = '';
+
+        foreach ($parts as $part) {
+            if (empty($part)) continue;
+            $currentDir .= "/$part";
+
+            if (!@ftp_chdir($ftpConn, $currentDir)) { // Check if directory exists
+                ftp_mkdir($ftpConn, $currentDir); // Create directory if it does not exist
+            }
+        }
+    }
+
 }
