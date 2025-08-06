@@ -326,7 +326,7 @@ class ListingController extends Controller
 
                 $data[] = array(
                     "sku" => $product->sku . '<input type="checkbox" class="proList" name="listing_item[]" data-sku="' . $product->sku . '" data-code="' . $productcode . '" value="' . $product->id . '" style="visibility:hidden;">',
-                    "sale_count" => (isset($product->saleCount)) ? $product->saleCount : 0,
+                    "sales_count" => (isset($product->saleCount)) ? $product->saleCount : 0,
                     "last_sale_date" => isset($product->lastSaleDate) ? $product->lastSaleDate : '',
                     "store_sku" => $product->store_sku,
                     "product_sku" => (!empty((array)$product->storeProduct) && !empty((array)$product->storeProduct->product)) ? $product->storeProduct->product->product_sku : '',
