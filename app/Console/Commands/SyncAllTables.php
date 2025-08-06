@@ -166,7 +166,7 @@ class SyncAllTables extends Command
 //        MagentoProductsSyncJob::dispatch();
 //        FetchMagentoCategoriesJob::dispatch();
 //        MagnetoAttributesSyncJob::dispatch();
-        OldOrderSyncJob::dispatch();
+        StorePagesJobSync::dispatch();
 
 //        $transactionIds = [
 ////            '9400150105798006163885',

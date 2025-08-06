@@ -57,9 +57,6 @@ class ShopifyCollectionDeviceSyncJob implements ShouldQueue
             'title' => $title,
         ];
         $collectionData['collection']['ruleSet']['appliedDisjunctively'] = true;
-        foreach ($this->publications as $publication) {
-            $collectionData['collection']['publications'][]['publicationId'] = $publication;
-        }
         $path = '/store-images/' . $this->store->id . '/collections/' . $handle . '.jpg';
         $imagePath = $this->uploadImage($this->store, $device->image, $path);
         Log::info('Image path for device', ['device_id' => $device->id, 'image_path' => $imagePath]);
@@ -89,6 +86,11 @@ class ShopifyCollectionDeviceSyncJob implements ShouldQueue
             $response = $this->shopifyAuthService->updateCollection($collectionData);
         } else {
             Log::info('Creating new collection', ['handle' => $handle]);
+
+            foreach ($this->publications as $publication) {
+                $collectionData['collection']['publications'][]['publicationId'] = $publication;
+            }
+
             $collectionData['collection']['handle'] = $handle;
             Log::info('Collection data creation', ['collection_data' => $collectionData]);
             $response = $this->shopifyAuthService->createCollection($collectionData);
@@ -142,6 +144,7 @@ class ShopifyCollectionDeviceSyncJob implements ShouldQueue
 
     private function uploadImage($store, $Image, $path)
     {
+        if (!isset($Image)) return '';
         $storeFileSystem = $store->fileSystem;
         //Log::info("File system :: " . json_encode($storeFileSystem));
         $host = $storeFileSystem->host;
