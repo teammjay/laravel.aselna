@@ -191,7 +191,7 @@ class ProcessStoreMessageAccountJob implements ShouldQueue
                             ];
 
                             Log::info('Email From' . $email['from'] . ' Message ID: ' . $email['message_id']);
-                            $ticketDetail = Message::where('message_id', trim($email['message_id']))->orWhere('message_id', trim($email['reply_to']))->first();
+                            $ticketDetail = Message::where('message_id', trim($email['message_id']))->orWhere('message_id', trim($email['in_reply_to']))->first();
 
                             if ($ticketDetail) {
                                 if ($order_id) {
@@ -217,7 +217,7 @@ class ProcessStoreMessageAccountJob implements ShouldQueue
                                     'from_email' => trim($email['from']),
                                     'from_name' => trim($email['name']),
                                     'message' => $email['body'],
-                                    'in_reply_to' => $email['reply_to'],
+                                    'in_reply_to' => $email['in_reply_to'],
                                     'draft' => 0,
                                     'reply_to_name' => $email['reply_to_name'],
                                     'reply_to_email' => $email['reply_to'],

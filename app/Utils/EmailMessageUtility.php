@@ -185,6 +185,8 @@ class EmailMessageUtility
                     'parsedData' => $parsedData,
                     'parts' => $parts,
                     'body' => $body,
+                    'in_reply_to' => $message->in_reply_to->first(),
+                    //'references' => $message->references->get(),
                     'attachments' => $attachments,
                     'client_id' => null
                 ];
@@ -195,6 +197,10 @@ class EmailMessageUtility
 
                 $emails[] = $eData;
             }
+
+            /*echo '<pre>';
+            print_r($emails);
+            echo '</pre>';*/
 
             Log::info("Email Founds.");
             //die;
