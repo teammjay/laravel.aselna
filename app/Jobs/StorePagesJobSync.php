@@ -6,6 +6,7 @@ use App\Constants\StorePageType;
 use App\Models\PageType;
 use App\Models\StoreNavigationPage;
 use App\Models\StorePage;
+use App\Models\StorePageTemplate;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\DB;
@@ -15,6 +16,7 @@ class StorePagesJobSync implements ShouldQueue
 {
     use Queueable;
 
+    public $timeout = 3600;
     /**
      * Create a new job instance.
      */
@@ -40,6 +42,13 @@ class StorePagesJobSync implements ShouldQueue
             ->chunk(1000, function ($storeNavigationPages) {
                 foreach ($storeNavigationPages as $storeNavigationPage) {
                     $this->createStoreNavigationPage($storeNavigationPage);
+                }
+            });
+
+        DB::connection('easyesale_db')->table('web_store_page_template')->orderBy('id')
+            ->chunk(1000,function ($storePageTemplates) {
+                foreach ($storePageTemplates as $storePageTemplate) {
+                    $this->createStorePageTemplate($storePageTemplate);
                 }
             });
     }
@@ -88,6 +97,28 @@ class StorePagesJobSync implements ShouldQueue
                 'image_id' => $storeNavigationPage->image_id,
                 'synchronize' => (bool)$storeNavigationPage->synchronize,
                 'update_image' => (bool)$storeNavigationPage->update_image
+            ]
+        );
+    }
+
+    private function createStorePageTemplate(mixed $storePageTemplate)
+    {
+        StorePageTemplate::updateOrCreate(
+            [
+                'id' => $storePageTemplate->id,
+            ],[
+                'id' => $storePageTemplate->id,
+                'name' => $storePageTemplate->name,
+                'overwrite' => (bool)$storePageTemplate->overwrite,
+                'page_type' => $storePageTemplate->page_type,
+                'template_code' => $storePageTemplate->template_code,
+                'meta_description_template' => $storePageTemplate->meta_description_template,
+                'meta_title_template' => $storePageTemplate->meta_title_template,
+                'meta_keywords_template' => $storePageTemplate->meta_keywords_template,
+                'title_template' => $storePageTemplate->title_template,
+                'description_template' => $storePageTemplate->description_template,
+                'store_id' => $storePageTemplate->store_id,
+                'product_type_id' => $storePageTemplate->product_type_id
             ]
         );
     }

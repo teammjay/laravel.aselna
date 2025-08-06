@@ -24,7 +24,7 @@ return new class extends Migration
             $table->uuid('device_brand_id')->nullable();
             $table->uuid('device_id')->nullable();
             $table->uuid('product_type_id')->nullable()->constrained('product_types')->onDelete('cascade');
-            $table->text('generated_body')->nullable();
+            $table->longText('generated_body')->nullable();
             $table->string('keywords', 1024)->nullable();
             $table->string('meta_title', 500)->nullable();
             $table->string('meta_description', 1024)->nullable();
