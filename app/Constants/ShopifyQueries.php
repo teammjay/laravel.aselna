@@ -192,11 +192,6 @@ GQL;
             collection {
                 id
             }
-            userErrors {
-                code
-                field
-                message
-            }
         }
     }
 GQL;
