@@ -75,4 +75,9 @@ class ListingItem extends Model
         return $this->belongsTo(ListingGenerationType::class, 'generation_type_id');
     }
 
+    public function orderItems()
+    {
+        return $this->hasMany(OrderItem::class,'sku','sku');
+    }
+
 }
