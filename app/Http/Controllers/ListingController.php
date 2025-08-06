@@ -282,7 +282,7 @@ class ListingController extends Controller
             $totalRecords = $query->count();
             $sortableColumns = [
                 'sku' => 'sku',
-                'sale_count' => 'saleCount',
+                'sales_count' => 'saleCount',
                 'last_sale_date' => 'lastSaleDate',
                 'store_sku' => 'store_sku',
                 'store_name' => 'store.name',
