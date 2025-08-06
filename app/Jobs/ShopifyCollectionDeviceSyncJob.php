@@ -85,11 +85,12 @@ class ShopifyCollectionDeviceSyncJob implements ShouldQueue
             Log::info('Collection already exists, updating collection', ['handle' => $handle]);
             $collectionData['collection']['id'] = $alreadyCollection['id'];
             $collectionData['collection']['handle'] = $handle;
+            Log::info('Collection data update', ['collection_data' => $collectionData]);
             $response = $this->shopifyAuthService->updateCollection($collectionData);
         } else {
             Log::info('Creating new collection', ['handle' => $handle]);
             $collectionData['collection']['handle'] = $handle;
-            $collectionData['collection']['published'] = true;
+            Log::info('Collection data creation', ['collection_data' => $collectionData]);
             $response = $this->shopifyAuthService->createCollection($collectionData);
         }
     }
@@ -149,6 +150,7 @@ class ShopifyCollectionDeviceSyncJob implements ShouldQueue
         $password = $storeFileSystem->password;
         $rootPath = $storeFileSystem->root_path;
         $localFilePath = storage_path('app/public/device_images/' . $Image);
+        Log::info("Local File Path :: " . $localFilePath);
 
         $ftpConn = ftp_connect($host, $port);
         if (!$ftpConn) {
