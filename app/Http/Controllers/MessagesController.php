@@ -697,7 +697,7 @@ class MessagesController extends Controller
                     $template_code = \Blade::render($templateDetail->template_code, $data);
                     return response()->json([
                         'success' => true,
-                        'template_id' => $templateDetail,
+                        'template_id' => $templateDetail->id,
                         'templateCode' => $template_code,
                         'imagesPath' => $imagesPath,
                         'image_name' => $imageName,
@@ -724,7 +724,7 @@ class MessagesController extends Controller
                     $template_code = \Blade::render($templateDetail->template_code, $data);
                     return response()->json([
                         'success' => true,
-                        'template_id' => $templateDetail,
+                        'template_id' => $templateDetail->id,
                         'templateCode' => $template_code
                     ]);
                 }
@@ -1327,7 +1327,63 @@ class MessagesController extends Controller
 
         $orderOperation = OrderOperation::with('order', 'order.customer', 'store', 'store.storeType','carrier')->where('id', $request->id)->whereNotNull('rma_number')->first();
 
-        $successRes = OrderOperationUtility::processShipment($orderOperation, $request);
+        /* create new operation for return label*/
+
+        $newOrderOperation = $orderOperation;
+        $order_opration_id = $orderOperation->id;
+
+        if($orderOperation) {
+            $clonedOrderOperation = [
+                'ship_date' => $orderOperation->ship_date,
+                'client' => $orderOperation->client,
+                'to_address_id' => $orderOperation->to_address_id,
+                'sync_status' => $orderOperation->sync_status,
+                'insurance_value' => $orderOperation->insurance_value,
+                'status' => OrderOperationStatus::Accepted,
+                'signature_confirmation' => $orderOperation->signature_confirmation,
+                'shipping_package_id' => $orderOperation->shipping_package_id,
+                'weight_value' => $orderOperation->weight_value,
+                'weight_weight_unit' => $orderOperation->weight_weight_unit,
+                'ship_from_id' => $orderOperation->ship_from_id,
+                'store_id' => $orderOperation->store_id,
+                'operation_type' => OrderOperationType::OrderReturn,
+                'order_id' => $orderOperation->order_id,
+                'label_creation_type' => 1,
+                'rma_number' => NULL,
+                'shipping_carrier_id' => $orderOperation->shipping_carrier_id,
+                'shipping_carrier_service_id' => NULL,
+                'shipping_account_transaction_id' => NULL,
+            ];
+
+            $newOrderOperation = OrderOperation::create($clonedOrderOperation);
+            $order_opration_id = $newOrderOperation->id;
+
+            $newshipmentDetail = OrderOperation::with('operationItem', 'operationItem.orderItem')->where('id', $order_opration_id)->first();
+            if (count($newshipmentDetail->operationItem ?? []) > 0) {
+                foreach ($newshipmentDetail->operationItem as $oitem) {
+
+                    $newOrderItem = [
+                        'order_item_id' => $oitem->order_item_id,
+                        'order_operation_id' => $order_opration_id,
+                        'client_id' => $oitem->client_id,
+                        'sync_status' => $oitem->sync_status,
+                        'quantity' => $oitem->quantity,
+                        'item_price' => $oitem->item_price,
+                        'shipping_price' => $oitem->shipping_price,
+                        'reason_id' => NULL
+                    ];
+
+                    OrderOperationItem::updateOrCreate([
+                        'order_item_id' => $oitem->order_item_id,
+                        'order_operation_id' => $order_opration_id,
+                    ], $newOrderItem);
+                }
+            }
+        }
+
+        /**/
+
+        $successRes = OrderOperationUtility::processShipment($newOrderOperation, $request);
 
         if (isset($successRes) && $successRes['success'] == false) {
             DB::rollBack();
@@ -1350,7 +1406,7 @@ class MessagesController extends Controller
             $template_code = \Blade::render($templateDetail->template_code, $data);
         }
 
-        $orderOperation = OrderOperation::with('order', 'store', 'store.storeType')->where('id', $request->id)->first();
+        $orderOperation = OrderOperation::with('order', 'store', 'store.storeType')->where('id', $order_opration_id)->first();
         $imageName = $orderOperation->tracking_number.'.jpg';
         $imageUrl = asset('storage/labels/' .$imageName );
 
@@ -1790,5 +1846,26 @@ class MessagesController extends Controller
         return response()->json([
             'success' => false
         ]);
+    }
+
+    private function getReplacementOrderID($storeId)
+    {
+
+        $key = 'order_' . str_replace('-', '', $storeId);
+
+        return DB::transaction(function () use ($key) {
+            $sequence = Sequence::lockForUpdate()->find($key);
+
+            if (!$sequence) {
+                $sequence = Sequence::create([
+                    'key' => $key,
+                    'number' => str_pad(1, 6, '0', STR_PAD_LEFT)
+                ]);
+            } else {
+                $sequence->increment('number');
+            }
+
+            return $sequence->number;
+        });
     }
 }

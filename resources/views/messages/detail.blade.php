@@ -51,6 +51,7 @@
     }
     .mail-box{
         max-height: 500px;
+        min-height: 500px;
         overflow: auto;
     }
     #btnGroupDrop2::after{
@@ -547,6 +548,7 @@
                         if(data.success){
 
                             $('#message_to_send').html(data.templateCode);
+                            $('#template_id').val(data.template_id);
                             if(data.image_name){
                                 $('.lableImageGroup').removeClass('hide');
                                 $('#image_url').val(data.image_url);
