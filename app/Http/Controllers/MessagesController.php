@@ -1337,7 +1337,7 @@ class MessagesController extends Controller
             ]);
         }
 
-        $orderOperation = OrderOperation::with('order', 'order.customer', 'store', 'store.storeType','carrier')->where('id', $orderOperation->id)->first();
+        //$orderOperation = OrderOperation::with('order', 'order.customer', 'store', 'store.storeType','carrier')->where('id', $orderOperation->id)->first();
 
         $templateDetail = HdMessageTemplate::getOrderOperationTemplate(OrderOperationType::OrderReturn, 0, 1);
         if ($templateDetail) {
@@ -1350,7 +1350,7 @@ class MessagesController extends Controller
             $template_code = \Blade::render($templateDetail->template_code, $data);
         }
 
-        //$orderOperation = OrderOperation::with('order', 'store', 'store.storeType')->where('id', $request->id)->first();
+        $orderOperation = OrderOperation::with('order', 'store', 'store.storeType')->where('id', $request->id)->first();
         $imageName = $orderOperation->tracking_number.'.jpg';
         $imageUrl = asset('storage/labels/' .$imageName );
 
