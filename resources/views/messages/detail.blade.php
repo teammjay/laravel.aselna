@@ -973,14 +973,15 @@
                         // If success, remove the user row from the table
                         if (response.success) {
 
-                            if($('#message_to_send').val() != '' && response.templateCode != ''){
+                            $('#returnLabelModal').modal('hide');
+                            if($('#message_to_send').val() != '' && response.template_code != ''){
                                 if (confirm("Are you sure, you want to overwrite the template?") == true) {
                                     $('#template_id').val(response.template_id);
-                                    $('#message_to_send').html(response.templateCode);
+                                    $('#message_to_send').html(response.template_code);
                                 }
-                            }else if(response.templateCode != ''){
+                            }else if(response.template_code != ''){
                                 $('#template_id').val(response.template_id);
-                                $('#message_to_send').html(response.templateCode);
+                                $('#message_to_send').html(response.template_code);
                             }
 
                             if(response.image_url){
