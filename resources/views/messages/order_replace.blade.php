@@ -175,7 +175,7 @@
                                         @if(count($shippingCarrierPackage ?? []) > 0)
                                             @foreach($shippingCarrierPackage as $sCarrierPackage)
                                                 <option
-                                                    value="{{ $sCarrierPackage->id }}" {{ ( $sCarrierPackage->id == $shipmentDetail->shipping_package_id || ($package_id != '' && $package_id == $sCarrierPackage->id) ) ? 'selected' : '' }}>{{ $sCarrierPackage->name }}</option>
+                                                    value="{{ $sCarrierPackage->id }}" {{ ( ($package_id != '' && $package_id == $sCarrierPackage->id) ) ? 'selected' : '' }}>{{ $sCarrierPackage->name }}</option>
                                             @endforeach
                                         @endif
                                     </select>

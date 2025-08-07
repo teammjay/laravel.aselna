@@ -9,7 +9,7 @@
 @section('content')
     <div class="row my-3">
         <div class="col-md-3">
-            <a href="{{ route('store_page.create') }}" class="btn btn-primary">
+            <a href="{{ route('store_page_templates.create') }}" class="btn btn-primary">
                 Add Store Page Template
             </a>
         </div>
@@ -31,15 +31,15 @@
                 @foreach($store_page_templates as $sPage)
                     <tr>
                         <td>{{ $sPage->name }}</td>
-                        <td>{{ \App\Constants\PageTypes::getPageTypeName($sPage->page_type) }}</td>
-                        <td>{{ $sPage->store->name }} {{ (!empty((array)$sPage->store->storeType)) ? ' - '.$sPage->store->storeType->name : '' }}</td>
+                        <td></td>
+                        <td>{{ (isset($sPage->store)) ? $sPage->store->name : '' }} {{ (isset($sPage->store) && !empty((array)$sPage->store->storeType)) ? ' - '.$sPage->store->storeType->name : '' }}</td>
                         <td></td>
                         <td><input type="checkbox" name="overwrite[]" @if($sPage->overwrite) checked @endif></td>
                         <td>
-                            <a href="{{ route('store_page.edit', $sPage->id) }}" class="btn btn-primary" title="Edit">
+                            <a href="{{ route('store_page_templates.edit', $sPage->id) }}" class="btn btn-primary" title="Edit">
                                 <i class="fas fa-fw fa-pencil-alt"></i>
                             </a>
-                            <a href="{{ route('store_page.delete', $sPage->id) }}" class="btn btn-danger" title="Remove">
+                            <a href="{{ route('store_page_templates.delete', $sPage->id) }}" class="btn btn-danger" title="Remove">
                                 <i class="fas fa-fw fa-trash"></i>
                             </a>
                         </td>

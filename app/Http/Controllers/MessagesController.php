@@ -1067,8 +1067,10 @@ class MessagesController extends Controller
                         $view = view('messages.ship_order', compact('shipmentDetail', 'shippingCarrier', 'shippingCarrierService', 'shippingCarrierPackage', 'shipFrom', 'package_id', 'product_total_weight'))->render();
                     } else if ($request->input('return_lable')) {
                         $return_lable = 1;
+                        $package_id = ShippingPackage::getDefaultShippingPackage();
                         $view = view('messages.order_return', compact('shipmentDetail', 'shippingCarrier', 'shippingCarrierService', 'shippingCarrierPackage', 'shipFrom', 'package_id', 'product_total_weight','return_lable'))->render();
                     } else if ($request->input('replacement')) {
+                        $package_id = ShippingPackage::getDefaultShippingPackage();
                         $view = view('messages.order_replace', compact('shipmentDetail', 'shippingCarrier', 'shippingCarrierService', 'shippingCarrierPackage', 'shipFrom', 'package_id', 'product_total_weight'))->render();
                     } else {
                         $view = view('messages.order_refund', compact('shipmentDetail'))->render();
@@ -1335,6 +1337,8 @@ class MessagesController extends Controller
             ]);
         }
 
+        $orderOperation = OrderOperation::with('order', 'order.customer', 'store', 'store.storeType','carrier')->where('id', $orderOperation->id)->first();
+
         $templateDetail = HdMessageTemplate::getOrderOperationTemplate(OrderOperationType::OrderReturn, 0, 1);
         if ($templateDetail) {
             $data = [
@@ -1346,7 +1350,7 @@ class MessagesController extends Controller
             $template_code = \Blade::render($templateDetail->template_code, $data);
         }
 
-        $orderOperation = OrderOperation::with('order', 'store', 'store.storeType')->where('id', $request->id)->first();
+        //$orderOperation = OrderOperation::with('order', 'store', 'store.storeType')->where('id', $request->id)->first();
         $imageName = $orderOperation->tracking_number.'.jpg';
         $imageUrl = asset('storage/labels/' .$imageName );
 

@@ -3,6 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StorePageTemplatesRequest;
+use App\Models\ProductType;
+use App\Models\Store;
+use App\Models\StorePageTemplate;
 use Illuminate\Http\Request;
 
 class StorePageTemplatesController extends Controller
@@ -22,7 +25,8 @@ class StorePageTemplatesController extends Controller
     public function create()
     {
         $stores = Store::with('storeType')->where('store_status', 1)->orderBy('name', 'asc')->get();
-        return view('store_page_templates.add',compact('stores'));
+        $product_types = ProductType::orderBy('sort_order', 'asc')->get();
+        return view('store_page_templates.add',compact('stores','product_types'));
     }
 
     /**
@@ -47,6 +51,9 @@ class StorePageTemplatesController extends Controller
     public function edit(string $id)
     {
         $store_page_templates = StorePageTemplate::findOrFail($id);
+        /*echo '<pre>';
+        print_r($store_page_templates);
+        echo '</pre>';die;*/
         $stores = Store::with('storeType')->where('store_status', 1)->orderBy('name', 'asc')->get();
         return view('store_page_templates.add', compact('store_page_templates','stores'));
     }
