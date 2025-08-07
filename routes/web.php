@@ -27,6 +27,7 @@ use App\Http\Controllers\ShippingCarrierServiceController;
 use App\Http\Controllers\PageTypesController;
 use App\Http\Controllers\LogisticCenterController;
 use App\Http\Controllers\StoreTypesController;
+use App\Http\Controllers\StorePageTemplatesController;
 use App\Http\Controllers\ListingController;
 use App\Http\Controllers\ManufacturerController;
 use App\Http\Controllers\ProductTypeController;
@@ -250,6 +251,15 @@ Route::middleware('auth')->group(function () {
         Route::get('/store_page/edit/{id}', 'edit')->name('store_page.edit');
         Route::post('/store_page/edit/{id}', 'update')->name('store_page.update');
         Route::get('/store_page/delete/{id}', 'destroy')->name('store_page.delete');
+    });
+
+    Route::controller(StorePageTemplatesController::class)->group(function () {
+        Route::get('/store_page_template', 'index')->name('store_page_templates.index');
+        Route::get('/store_page_template/add', 'create')->name('store_page_templates.create');
+        Route::post('/store_page_template/add', 'store')->name('store_page_templates.store');
+        Route::get('/store_page_template/edit/{id}', 'edit')->name('store_page_templates.edit');
+        Route::post('/store_page_template/edit/{id}', 'update')->name('store_page_templates.update');
+        Route::get('/store_page_template/delete/{id}', 'destroy')->name('store_page_templates.delete');
     });
 
     Route::controller(StoreTypeCategoryController::class)->group(function () {

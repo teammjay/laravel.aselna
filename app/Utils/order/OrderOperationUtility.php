@@ -140,6 +140,7 @@ class OrderOperationUtility
         if (OrderOperationType::isReturn($operation_type)) {
             $shipmentDetails['fromAddress'] = self::getAddress($shipFrom->returnAddress);
             $shipmentDetails['toAddress'] = self::getAddress($shipFrom->returnAddress);
+            $shipmentDetails['is_return'] = true;
         } else {
             $shipmentDetails['fromAddress'] = self::getAddress($shipFrom->fromAddress);
             $shipmentDetails['toAddress'] = self::mapCustomerAddress($orderOperation);

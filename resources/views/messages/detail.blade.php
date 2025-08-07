@@ -181,7 +181,7 @@
                                                 </div>
                                             </div>
                                         </div>
-                                        <div class="col-md-8">
+                                        {{--<div class="col-md-8">
                                             <input type="file" class="btn btn-default" name="attach_file" id="attach_file">
                                             <input type="hidden" id="image_url" value="@if(isset($template['imageUrl']) && $template['imageUrl'] != '') {{ $template['imageUrl'] }} @endif">
                                             <input type="hidden" id="image_storage_path" value="@if(isset($template['storagePath']) && $template['storagePath'] != '') {{ $template['storagePath'] }} @endif">
@@ -192,12 +192,27 @@
                                                     <a class="dropdown-item delete_images" href="javascript:void(0);">Delete</a>
                                                 </div>
                                             </div>
+                                        </div>--}}
+
+                                        <div class="col-md-8">
+                                            <input type="file" class="btn btn-default" name="attach_file" id="attach_file">
+                                            <input type="hidden" id="image_url" value="">
+                                            <input type="hidden" id="image_storage_path" value="">
+                                            <div class="btn-group lableImageGroup hide" role="group">
+                                                <button id="btnGroupDrop2" type="button" class="btn btn-default lable-image dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"></button>
+                                                <div class="dropdown-menu" aria-labelledby="btnGroupDrop2">
+                                                    <a class="dropdown-item download_image" href="javascript:void(0);">Download</a>
+                                                    <a class="dropdown-item delete_images" href="javascript:void(0);">Delete</a>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                     <div class="row pt-3">
                                         <div class="col-md-12">
-                                            <textarea class="form-control" rows="10" id="message_to_send" name="message_to_send">@if(isset($template['template_code']) && $template['template_code'] != ''){{ $template['template_code'] }}@endif
-                                            </textarea>
+                                            {{--<textarea class="form-control" rows="10" id="message_to_send" name="message_to_send">@if(isset($template['template_code']) && $template['template_code'] != ''){{ $template['template_code'] }}@endif
+                                            </textarea>--}}
+
+                                            <textarea class="form-control" rows="10" id="message_to_send" name="message_to_send"></textarea>
                                         </div>
                                     </div>
                                 </div>
@@ -513,6 +528,7 @@
                 var template_id = $(this).val();
                 var customer_name = $('#customer_name').val();
                 var store_name = $('#store_name').val();
+                var order_id = $('#order_id').val();
                 $.ajax({
                     type: "POST",
                     url: "{{ route('message.getmessagetemplate') }}",
@@ -521,6 +537,7 @@
                         customer_name: customer_name,
                         store_name: store_name,
                         ticket_id: ticket_id,
+                        order_id: order_id,
                     },
                     headers: {
                         'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
@@ -774,6 +791,7 @@
                         store_name: store_name,
                         rma_number: rma_number,
                         operation_id: operationID,
+                        regenerate: 1,
                     },
                     headers: {
                         'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')

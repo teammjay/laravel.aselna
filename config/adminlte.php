@@ -471,7 +471,7 @@ return [
                 ],
                 [
                     'text' => 'Page Templates',
-                    'url' => '#',
+                    'url' => '/store_page_template',
                     'icon' => 'far fa-fw fa-file',
                 ],
                 [

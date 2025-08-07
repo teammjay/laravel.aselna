@@ -38,4 +38,16 @@ class StorePageTemplate extends Model
         'store_id',
         'product_type_id'
     ];
+
+    public function store(){
+        return $this->belongsTo(Store::class,'store_id');
+    }
+
+    public function PageType(){
+        return $this->belongsTo(PageType::class,'page_type');
+    }
+
+    public function productType(){
+        return $this->belongsTo(ProductType::class,'product_type_id');
+    }
 }
