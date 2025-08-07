@@ -433,6 +433,8 @@ class MessagesController extends Controller
                                     'store_name' => $store_name,
                                     'marketplaceName' => '',
                                     'shipment_address' => '',
+                                    'shipment_date' => '',
+                                    'order_date' => '',
                                     'trackingNumber' => isset($op->tracking_number) ? $op->tracking_number : '',
                                     'return_address' => $returnAddress,
                                     'carrier_name' => isset($op->carrier) ? $op->carrier->name : '',
@@ -615,16 +617,25 @@ class MessagesController extends Controller
         $rma_number = $request->input('rma_number');
         $operation_id = $request->input('operation_id');
         $ticket_id = $request->input('ticket_id');
+        $order_id = $request->input('order_id');
+        $regenerate = $request->input('regenerate');
         if($template_id || (isset($rma_number) && $rma_number != '')){
             $returnAddress = $imageName = $imageUrl = $imagesPath = "";
+            $orderDetail = [];
+            if(isset($order_id) && $order_id != ''){
+                $orderDetail = Order::where('order_id',$order_id)->first();
+                if($orderDetail !=NULL){
+                    $orderOperation = OrderOperation::where('order_id',$orderDetail->id)->orderBy('created_at','desc')->first();
+                    $operation_id = $orderOperation->id;
+                }
+            }
 
             if(isset($operation_id) && $operation_id != ''){
                 $orderOperation = OrderOperation::with('shipFrom','shipFrom.returnAddress','carrier','store')->where('id',$operation_id)->first();
                 /*echo '<pre>';
                 print_r($orderOperation);
                 echo '</pre>';die;*/
-
-                if($orderOperation->operation_type == OrderOperationType::OrderReturn && $orderOperation->tracking_number){
+                if(isset($regenerate) && $regenerate == 1 && $orderOperation->operation_type == OrderOperationType::OrderReturn && $orderOperation->tracking_number){
                     $templateDetail = HdMessageTemplate::getOrderOperationTemplate(OrderOperationType::OrderReturn, 0, 1);
                     //$attachment = HdMessageAttachment::with('imageObj')->where('message_id',$ticket_id)->first();
                     //$imageObj = $attachment->imageObj;
@@ -634,9 +645,9 @@ class MessagesController extends Controller
                     $storagePath = storage_path('app/public/labels/'.$imageName);
                     $imagesPath = $storagePath;
                     $imageUrl = asset('storage/labels/' .$imageName );
-                }else if($orderOperation->operation_type == OrderOperationType::OrderReturn && $orderOperation->rma_number){
+                }else if(isset($regenerate) && $regenerate == 1 && $orderOperation->operation_type == OrderOperationType::OrderReturn && $orderOperation->rma_number){
                     $templateDetail = HdMessageTemplate::getOrderOperationTemplate(OrderOperationType::OrderReturn, 0, 0);
-                }else {
+                }else{
                     $templateDetail = HdMessageTemplate::findOrFail($template_id);
                 }
 
@@ -644,7 +655,7 @@ class MessagesController extends Controller
 
                 $returnAddress = $this->getReturnAddress($orderOperation);
 
-                /*if(isset($orderOperation->shipFrom->returnAddress) && $orderOperation->shipFrom->returnAddress->company != ''){
+                if(isset($orderOperation->shipFrom->returnAddress) && $orderOperation->shipFrom->returnAddress->company != ''){
                     $returnAddress .= trim($orderOperation->shipFrom->returnAddress->company).PHP_EOL;
                 }
                 if(isset($orderOperation->shipFrom->returnAddress) && $orderOperation->shipFrom->returnAddress->address_line_1 != ''){
@@ -664,7 +675,11 @@ class MessagesController extends Controller
                 }
                 if(isset($orderOperation->shipFrom->returnAddress) && $orderOperation->shipFrom->returnAddress->postal_code != ''){
                     $returnAddress .= '-'.trim($orderOperation->shipFrom->returnAddress->postal_code).PHP_EOL;
-                }*/
+                }
+
+                if( isset($orderOperation->rma_number) && $orderOperation->rma_number != ''){
+                    $rma_number = $orderOperation->rma_number;
+                }
 
                 if($templateDetail){
                     $data = [
@@ -672,6 +687,8 @@ class MessagesController extends Controller
                         'store_name' => $store_name,
                         'marketplaceName' => '',
                         'shipment_address' => '',
+                        'shipment_date' => '',
+                        'order_date' => (isset($orderDetail->order_date)) ? $orderDetail->order_date : '',
                         'trackingNumber' => isset($orderOperation->tracking_number) ? $orderOperation->tracking_number : '',
                         'return_address' => $returnAddress,
                         'carrier_name' => isset($orderOperation->carrier) ? $orderOperation->carrier->name : '',
@@ -696,6 +713,13 @@ class MessagesController extends Controller
                         'customer_firstName' => $customer_name,
                         'store_name' => $store_name,
                         'marketplaceName' => '',
+                        'shipment_address' => '',
+                        'shipment_date' => '',
+                        'trackingNumber' => '',
+                        'return_address' => $returnAddress,
+                        'carrier_name' => '',
+                        'rma_number' => '',
+                        'order_date' => (isset($orderDetail->order_date)) ? $orderDetail->order_date : '',
                     ];
                     $template_code = \Blade::render($templateDetail->template_code, $data);
                     return response()->json([
@@ -1150,7 +1174,9 @@ class MessagesController extends Controller
                             'customer_firstName' => isset($orderDetail->customer) ? $orderDetail->customer->full_name : '',
                             'store_name' => isset($orderDetail->store) ? $orderDetail->store->name : '',
                             'rma_number' => $rma_number,
-                            'return_address' => $returnAddress
+                            'return_address' => $returnAddress,
+                            'shipment_date' => '',
+                            'order_date' => '',
                         ];
                         $template_id = $templateDetail->id;
                         $template_code = \Blade::render($templateDetail->template_code, $data);
@@ -1452,7 +1478,9 @@ class MessagesController extends Controller
                 'store_name' => isset($orderOperations->store) ? $orderOperations->store->name : '',
                 'trackingNumber' => isset($orderOperations->tracking_number) ? $orderOperations->tracking_number : '',
                 'ima_number' => '',
-                'return_address' => ''
+                'return_address' => '',
+                'shipment_date' => '',
+                'order_date' => '',
             ];
             $template_id = $templateDetail->id;
             $template_code = \Blade::render($templateDetail->template_code, $data);
@@ -1585,7 +1613,9 @@ class MessagesController extends Controller
                     'store_name' => isset($orderOperation->store) ? $orderOperation->store->name : '',
                     'trackingNumber' => isset($orderOperation->tracking_number) ? $orderOperation->tracking_number : '',
                     'ima_number' => '',
-                    'return_address' => ''
+                    'return_address' => '',
+                    'shipment_date' => '',
+                    'order_date' => '',
                 ];
                 $template_id = $templateDetail->id;
                 $template_code = \Blade::render($templateDetail->template_code, $data);

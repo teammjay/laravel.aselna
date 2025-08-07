@@ -513,6 +513,7 @@
                 var template_id = $(this).val();
                 var customer_name = $('#customer_name').val();
                 var store_name = $('#store_name').val();
+                var order_id = $('#order_id').val();
                 $.ajax({
                     type: "POST",
                     url: "{{ route('message.getmessagetemplate') }}",
@@ -521,6 +522,7 @@
                         customer_name: customer_name,
                         store_name: store_name,
                         ticket_id: ticket_id,
+                        order_id: order_id,
                     },
                     headers: {
                         'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
@@ -774,6 +776,7 @@
                         store_name: store_name,
                         rma_number: rma_number,
                         operation_id: operationID,
+                        regenerate: 1,
                     },
                     headers: {
                         'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
