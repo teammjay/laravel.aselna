@@ -978,7 +978,7 @@
                                     $('#template_id').val(response.template_id);
                                     $('#message_to_send').html(response.templateCode);
                                 }
-                            }else if(data.templateCode != ''){
+                            }else if(response.templateCode != ''){
                                 $('#template_id').val(response.template_id);
                                 $('#message_to_send').html(response.templateCode);
                             }
