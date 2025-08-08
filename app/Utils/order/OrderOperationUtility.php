@@ -278,6 +278,7 @@ class OrderOperationUtility
         $storeType = $orderOperation->store->storeType;
 
         // Group products by code and sum quantities
+        Log::info('Rubber stamp Ordero peration item: ' . json_encode($orderOperation->operationItem));
         $productMap = [];
         foreach ($orderOperation->operationItem as $item) {
             $product = $item->orderItem->product;
