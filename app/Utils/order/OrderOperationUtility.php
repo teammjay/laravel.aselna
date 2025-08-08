@@ -280,14 +280,14 @@ class OrderOperationUtility
         // Group products by code and sum quantities
         Log::info('Rubber stamp Ordero peration item: ' . json_encode($orderOperation->operationItem));
         $productMap = [];
-        foreach ($orderOperation->operationItem as $item) {
-            $product = $item->orderItem->product;
-            $code = $product ? $product->product_sku : $item->orderItem->sku;
+        foreach ($orderOperation->order->orderItem as $item) {
+            $product = $item->product;
+            $code = $product ? $product->product_sku : $item->sku;
 
             if (!isset($productMap[$code])) {
                 $productMap[$code] = 0;
             }
-            $productMap[$code] += $item->orderItem->quantity;
+            $productMap[$code] += $item->quantity;
         }
 
         // Get or generate product codes line
@@ -311,8 +311,8 @@ class OrderOperationUtility
 
         // Create order ID line
         $orderIds = [];
-        foreach ($orderOperation->operationItem as $item) {
-            $orderId = self::getOrderIdForStamp($item->orderItem->order, $storeType, false);
+        foreach ($orderOperation->order->orderItem as $item) {
+            $orderId = self::getOrderIdForStamp($orderOperation->order, $storeType, false);
             if (!in_array($orderId, $orderIds)) {
                 $orderIds[] = $orderId;
             }
@@ -324,8 +324,8 @@ class OrderOperationUtility
         // If order ID line is too long, use shortened version
         if (strlen($orderIdLine) > 50) {
             $orderIds = [];
-            foreach ($orderOperation->operationItem as $item) {
-                $orderId = self::getOrderIdForStamp($item->orderItem->order, $storeType, true);
+            foreach ($orderOperation->order->orderItem as $item) {
+                $orderId = self::getOrderIdForStamp($orderOperation->order, $storeType, true);
                 if (!in_array($orderId, $orderIds)) {
                     $orderIds[] = $orderId;
                 }
@@ -514,6 +514,18 @@ class OrderOperationUtility
                 //throw new \Exception('Error creating label: ' . json_encode($errors));
                 return false;
             } else {
+
+                if (isset($orderOperation->order->orderItem)) {
+                    foreach ($orderOperation->order->orderItem as $o_item) {
+                        $item_qty = $o_item->quantity;
+                        $orderItem = OrderItem::findOrFail($o_item->id);
+
+                        if($orderOperation->operation_type == OrderOperationType::OrderReplacement){
+                            $orderItem->update(['replaced_quantity' => $item_qty]);
+                        }
+                    }
+                }
+
                 return true;
             }
         }
