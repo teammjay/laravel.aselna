@@ -267,6 +267,7 @@ class MessagesController extends Controller
 
             $ticketTypeDetail = HdTicketType::where('code', HdTicketTypeCode::ORDER_INFORMATION)->first();
             $ticketData = [
+                'ticket_email' => $customer_detail->email,
                 'ticket_type_id' => $ticketTypeDetail->id,
                 'status' => HdTicketStatus::NEEDS_ACTION,
                 'related_order_id' => $orderDetail->id,
@@ -810,7 +811,13 @@ class MessagesController extends Controller
         $imagename = $request->input('imagename');
 
         if($ticket_id){
-            $ticketDetail = Message::with('store')->where('id',$ticket_id)->first();
+            $ticketDetail = Message::with('store','customer')->where('id',$ticket_id)->first();
+
+            if(isset($ticketDetail->ticket_email) && $ticketDetail->ticket_email != ''){
+                $email = $ticketDetail->ticket_email;
+            }else if(isset($ticketDetail->customer)){
+                $email = $ticketDetail->customer->email;
+            }
             //$store= $ticketDetail->store;
             $storeMessageAccount = StoreMessageAccount::with('outgoingAccount')->where('store_id', $ticketDetail->store_id)->first();
 
@@ -847,7 +854,7 @@ class MessagesController extends Controller
                 $filepath = $imagepath;
 
                 $connector = new EmailMessageUtility($smtpConfig, $imapConfig);
-                $response = $connector->sendEmail($ticketDetail->ticket_email,$ticketDetail->subject,$message_to_send, $ticketDetail->message_id, $filepath);
+                $response = $connector->sendEmail($email,$ticketDetail->subject,$message_to_send, $ticketDetail->message_id, $filepath);
                 /*$response = $connector->sendEmail('jayesh@mjailab.com','Test Mail',$message_to_send, 'CAB3DxwfKHcaot+XFxHBW6Teiq38dDaHs2UU2UqipkfbHnYr+sg@mail.gmail.com', $filepath);*/
 
                 if($response){
@@ -1392,7 +1399,9 @@ class MessagesController extends Controller
 
         /**/
 
-        $successRes = OrderOperationUtility::processShipment($newOrderOperation, $request);
+        $orderOperations = OrderOperation::with('order', 'order.customer', 'store', 'store.storeType','carrier')->where('id', $order_opration_id)->first();
+
+        $successRes = OrderOperationUtility::processShipment($orderOperations, $request);
 
         if (isset($successRes) && $successRes['success'] == false) {
             DB::rollBack();
