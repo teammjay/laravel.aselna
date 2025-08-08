@@ -1401,6 +1401,8 @@ class MessagesController extends Controller
 
         $orderOperations = OrderOperation::with('order', 'order.customer', 'store', 'store.storeType','carrier')->where('id', $order_opration_id)->first();
 
+        Log::info('Return Label Order operation: ' . json_encode($orderOperations));
+
         $successRes = OrderOperationUtility::processShipment($orderOperations, $request);
 
         if (isset($successRes) && $successRes['success'] == false) {
