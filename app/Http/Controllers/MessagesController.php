@@ -1643,7 +1643,7 @@ class MessagesController extends Controller
 
 
             $orderOperations = OrderOperation::with('order', 'order.customer', 'store', 'store.storeType')->where('id', $order_opration_id)->first();
-            $orderOperations->update('related_operation_id',$order_operation_detail->id);
+            $orderOperations->update(['related_operation_id',$order_operation_detail->id]);
 
             if (isset($successRes) && $successRes['success'] == false) {
                 DB::rollBack();
