@@ -33,6 +33,7 @@ class OrderOperationUtility
         }
 
         $label_generation = $request->input('label_generation');
+        $replacement = $request->input('replacement');
         if($label_generation) {
             $carrier_id = $request->input('carrier_name');
             $carrier_package = $request->input('carrier_package');
@@ -77,10 +78,10 @@ class OrderOperationUtility
 
         $orderOperation = OrderOperation::with('order', 'order.orderItem', 'order.customer', 'order.customerAddress', 'store', 'store.storeType', 'carrier', 'shipFrom', 'shipFrom.returnAddress', 'shipFrom.fromAddress')->where('id', $orderOperation->id)->first();
 
-        return self::instantSynchronization($orderOperation);
+        return self::instantSynchronization($orderOperation,$replacement);
     }
 
-    public static function instantSynchronization($orderOperation) : array
+    public static function instantSynchronization($orderOperation,$replacement='') : array
     {
         $operationType = $orderOperation->operation_type;
         Log::info('Instant synchronization for operation type: ' . $operationType);
@@ -91,7 +92,12 @@ class OrderOperationUtility
         }
 
         if (OrderOperationType::isReturn($operationType)) {
-            self::returnOrder($orderOperation);
+            self::returnReplaceOrder($orderOperation);
+            return ['success' => true, 'message' => ''];
+        }
+
+        if (isset($replacement) && $replacement > 0) {
+            self::returnReplaceOrder($orderOperation);
             return ['success' => true, 'message' => ''];
         }
 
@@ -497,7 +503,7 @@ class OrderOperationUtility
         }
     }
 
-    private static function returnOrder($orderOperation)
+    private static function returnReplaceOrder($orderOperation)
     {
 
         if ($orderOperation->label_creation_type == ShippingLabelCreationType::CreateLabel) {

@@ -410,7 +410,7 @@ class ShipmentsController extends Controller
                 $address2 = $request['address_line_2'] . ',<br>';
             }
 
-            $address_combined = $fullname . $address1 . $address2 . $request['city'] . ', ' . $request['state'] . ' ' . $request['zip_code'];
+            $address_combined = $fullname . $address1 . $address2 . $request['city'] . ', ' . $request['state'] . ' ' . $request['zip'];
             $address->update($request->except(['phone', 'id']));
             return response()->json(['success' => true, 'address' => $address_combined, 'message' => 'Data saved successfully!']);
 
