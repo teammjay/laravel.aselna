@@ -21,10 +21,12 @@ use App\Models\HdTicketType;
 use App\Models\LogisticCenter;
 use App\Models\Message;
 use App\Models\Order;
+use App\Models\OrderItem;
 use App\Models\OrderOperation;
 use App\Models\OrderOperationItem;
 use App\Models\OrderOperationReason;
 use App\Models\PostalAddress;
+use App\Models\Sequence;
 use App\Models\ShippingCarrier;
 use App\Models\ShippingCarrierService;
 use App\Models\ShippingPackage;
@@ -37,6 +39,7 @@ use App\Utils\RmaNumberGenerator;
 use Illuminate\Http\Request;
 use App\Services\DataTable\DataTableService;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
 class MessagesController extends Controller
@@ -512,7 +515,7 @@ class MessagesController extends Controller
                     $ticketDetail = Message::findOrFail($ticket_id);
                     $ticketDetail->update(['order_id' => $orderDetail->order_id]);
                 }
-                $orderOperations = OrderOperation::with('carrier','shipFrom','operationItem')->where('order_id',$orderDetail->id)->orderBy('created_at','desc')->get();
+                $orderOperations = OrderOperation::with('carrier','shipFrom','operationItem','relatedOperation','relatedOperation.order','relatedOperation.carrier')->where('order_id',$orderDetail->id)->orderBy('created_at','desc')->get();
                 $data['items'] = view('messages.order_items', ['orderDetail' => $orderDetail])->render();
                 $data['orderId'] = $orderDetail->order_id;
                 $data['orderDate'] = $orderDetail->order_date;
@@ -619,115 +622,121 @@ class MessagesController extends Controller
         $ticket_id = $request->input('ticket_id');
         $order_id = $request->input('order_id');
         $regenerate = $request->input('regenerate');
-        if($template_id || (isset($rma_number) && $rma_number != '')){
-            $returnAddress = $imageName = $imageUrl = $imagesPath = "";
-            $orderDetail = [];
-            if(isset($order_id) && $order_id != ''){
-                $orderDetail = Order::where('order_id',$order_id)->first();
-                if($orderDetail !=NULL){
-                    $orderOperation = OrderOperation::where('order_id',$orderDetail->id)->orderBy('created_at','desc')->first();
-                    $operation_id = $orderOperation->id;
-                }
+
+        $returnAddress = $imageName = $imageUrl = $imagesPath = "";
+        $orderDetail = [];
+        if(isset($order_id) && $order_id != ''){
+            $orderDetail = Order::where('order_id',$order_id)->first();
+            if($orderDetail !=NULL){
+                $orderOperation = OrderOperation::where('order_id',$orderDetail->id)->orderBy('created_at','desc')->first();
+                $operation_id = $orderOperation->id;
             }
+        }
 
-            if(isset($operation_id) && $operation_id != ''){
-                $orderOperation = OrderOperation::with('shipFrom','shipFrom.returnAddress','carrier','store')->where('id',$operation_id)->first();
-                /*echo '<pre>';
-                print_r($orderOperation);
-                echo '</pre>';die;*/
-                if(isset($regenerate) && $regenerate == 1 && $orderOperation->operation_type == OrderOperationType::OrderReturn && $orderOperation->tracking_number){
-                    $templateDetail = HdMessageTemplate::getOrderOperationTemplate(OrderOperationType::OrderReturn, 0, 1);
-                    //$attachment = HdMessageAttachment::with('imageObj')->where('message_id',$ticket_id)->first();
-                    //$imageObj = $attachment->imageObj;
-                    //$imageName = $imageObj->name;
-                    $imageName = $orderOperation->tracking_number.'.jpg';
-                    //$storagePath = public_path($imageObj->location.$imageObj->name);
-                    $storagePath = storage_path('app/public/labels/'.$imageName);
-                    $imagesPath = $storagePath;
-                    $imageUrl = asset('storage/labels/' .$imageName );
-                }else if(isset($regenerate) && $regenerate == 1 && $orderOperation->operation_type == OrderOperationType::OrderReturn && $orderOperation->rma_number){
-                    $templateDetail = HdMessageTemplate::getOrderOperationTemplate(OrderOperationType::OrderReturn, 0, 0);
-                }else{
-                    $templateDetail = HdMessageTemplate::findOrFail($template_id);
-                }
-
-                //print_r($templateDetail);die;
-
-                $returnAddress = $this->getReturnAddress($orderOperation);
-
-                if(isset($orderOperation->shipFrom->returnAddress) && $orderOperation->shipFrom->returnAddress->company != ''){
-                    $returnAddress .= trim($orderOperation->shipFrom->returnAddress->company).PHP_EOL;
-                }
-                if(isset($orderOperation->shipFrom->returnAddress) && $orderOperation->shipFrom->returnAddress->address_line_1 != ''){
-                    $returnAddress .= trim($orderOperation->shipFrom->returnAddress->address_line_1).PHP_EOL;
-                }
-                if(isset($orderOperation->shipFrom->returnAddress) && $orderOperation->shipFrom->returnAddress->address_line_2 != ''){
-                    $returnAddress .= trim($orderOperation->shipFrom->returnAddress->address_line_2).PHP_EOL;
-                }
-                if(isset($orderOperation->shipFrom->returnAddress) && $orderOperation->shipFrom->returnAddress->address_line_3 != ''){
-                    $returnAddress .= trim($orderOperation->shipFrom->returnAddress->address_line_3).PHP_EOL;
-                }
-                if(isset($orderOperation->shipFrom->returnAddress) && $orderOperation->shipFrom->returnAddress->city != ''){
-                    $returnAddress .= trim($orderOperation->shipFrom->returnAddress->city);
-                }
-                if(isset($orderOperation->shipFrom->returnAddress) && $orderOperation->shipFrom->returnAddress->state_or_region != ''){
-                    $returnAddress .= ','.trim($orderOperation->shipFrom->returnAddress->state_or_region);
-                }
-                if(isset($orderOperation->shipFrom->returnAddress) && $orderOperation->shipFrom->returnAddress->postal_code != ''){
-                    $returnAddress .= '-'.trim($orderOperation->shipFrom->returnAddress->postal_code).PHP_EOL;
+        if(isset($operation_id) && $operation_id != ''){
+            $orderOperation = OrderOperation::with('shipFrom','shipFrom.returnAddress','carrier','store','relatedOperation')->where('id',$operation_id)->first();
+            /*echo '<pre>';
+            print_r($orderOperation->operation_type);
+            echo '</pre>';die;*/
+            $trackingNumber = isset($orderOperation->tracking_number) ? $orderOperation->tracking_number : '';
+            if(isset($regenerate) && $regenerate == 1 && $orderOperation->operation_type == OrderOperationType::OrderReturn && $orderOperation->tracking_number){
+                $templateDetail = HdMessageTemplate::getOrderOperationTemplate(OrderOperationType::OrderReturn, 0, 1);
+                //$attachment = HdMessageAttachment::with('imageObj')->where('message_id',$ticket_id)->first();
+                //$imageObj = $attachment->imageObj;
+                //$imageName = $imageObj->name;
+                $imageName = $orderOperation->tracking_number.'.jpg';
+                //$storagePath = public_path($imageObj->location.$imageObj->name);
+                $storagePath = storage_path('app/public/labels/'.$imageName);
+                $imagesPath = $storagePath;
+                $imageUrl = asset('storage/labels/' .$imageName );
+            }else if(isset($regenerate) && $regenerate == 1 && $orderOperation->operation_type == OrderOperationType::OrderReturn && $orderOperation->rma_number){
+                $templateDetail = HdMessageTemplate::getOrderOperationTemplate(OrderOperationType::OrderReturn, 0, 0);
+            }else if(isset($regenerate) && $regenerate == 1 && $orderOperation->operation_type == OrderOperationType::OrderReplacement){
+                $templateDetail = HdMessageTemplate::getOrderOperationTemplate(OrderOperationType::OrderReplacement, 1, 0);
+                if(isset($orderOperation->relatedOperation)){
+                    $trackingNumber = $orderOperation->relatedOperation->tracking_number;
                 }
 
-                if( isset($orderOperation->rma_number) && $orderOperation->rma_number != ''){
-                    $rma_number = $orderOperation->rma_number;
-                }
-
-                if($templateDetail){
-                    $data = [
-                        'customer_firstName' => $customer_name,
-                        'store_name' => $store_name,
-                        'marketplaceName' => '',
-                        'shipment_address' => '',
-                        'shipment_date' => '',
-                        'order_date' => (isset($orderDetail->order_date)) ? $orderDetail->order_date : '',
-                        'trackingNumber' => isset($orderOperation->tracking_number) ? $orderOperation->tracking_number : '',
-                        'return_address' => $returnAddress,
-                        'carrier_name' => isset($orderOperation->carrier) ? $orderOperation->carrier->name : '',
-                        'rma_number' => (isset($rma_number) && $rma_number != '') ? $rma_number : '',
-                    ];
-                    $template_code = \Blade::render($templateDetail->template_code, $data);
-                    return response()->json([
-                        'success' => true,
-                        'template_id' => $templateDetail->id,
-                        'templateCode' => $template_code,
-                        'imagesPath' => $imagesPath,
-                        'image_name' => $imageName,
-                        'image_url' => $imageUrl,
-
-                    ]);
-                }
             }else{
                 $templateDetail = HdMessageTemplate::findOrFail($template_id);
+            }
 
-                if($templateDetail){
-                    $data = [
-                        'customer_firstName' => $customer_name,
-                        'store_name' => $store_name,
-                        'marketplaceName' => '',
-                        'shipment_address' => '',
-                        'shipment_date' => '',
-                        'trackingNumber' => '',
-                        'return_address' => $returnAddress,
-                        'carrier_name' => '',
-                        'rma_number' => '',
-                        'order_date' => (isset($orderDetail->order_date)) ? $orderDetail->order_date : '',
-                    ];
-                    $template_code = \Blade::render($templateDetail->template_code, $data);
-                    return response()->json([
-                        'success' => true,
-                        'template_id' => $templateDetail->id,
-                        'templateCode' => $template_code
-                    ]);
-                }
+            //print_r($templateDetail);die;
+
+            $returnAddress = $this->getReturnAddress($orderOperation);
+
+            if(isset($orderOperation->shipFrom->returnAddress) && $orderOperation->shipFrom->returnAddress->company != ''){
+                $returnAddress .= trim($orderOperation->shipFrom->returnAddress->company).PHP_EOL;
+            }
+            if(isset($orderOperation->shipFrom->returnAddress) && $orderOperation->shipFrom->returnAddress->address_line_1 != ''){
+                $returnAddress .= trim($orderOperation->shipFrom->returnAddress->address_line_1).PHP_EOL;
+            }
+            if(isset($orderOperation->shipFrom->returnAddress) && $orderOperation->shipFrom->returnAddress->address_line_2 != ''){
+                $returnAddress .= trim($orderOperation->shipFrom->returnAddress->address_line_2).PHP_EOL;
+            }
+            if(isset($orderOperation->shipFrom->returnAddress) && $orderOperation->shipFrom->returnAddress->address_line_3 != ''){
+                $returnAddress .= trim($orderOperation->shipFrom->returnAddress->address_line_3).PHP_EOL;
+            }
+            if(isset($orderOperation->shipFrom->returnAddress) && $orderOperation->shipFrom->returnAddress->city != ''){
+                $returnAddress .= trim($orderOperation->shipFrom->returnAddress->city);
+            }
+            if(isset($orderOperation->shipFrom->returnAddress) && $orderOperation->shipFrom->returnAddress->state_or_region != ''){
+                $returnAddress .= ','.trim($orderOperation->shipFrom->returnAddress->state_or_region);
+            }
+            if(isset($orderOperation->shipFrom->returnAddress) && $orderOperation->shipFrom->returnAddress->postal_code != ''){
+                $returnAddress .= '-'.trim($orderOperation->shipFrom->returnAddress->postal_code).PHP_EOL;
+            }
+
+            if( isset($orderOperation->rma_number) && $orderOperation->rma_number != ''){
+                $rma_number = $orderOperation->rma_number;
+            }
+
+            if($templateDetail){
+                $data = [
+                    'customer_firstName' => $customer_name,
+                    'store_name' => $store_name,
+                    'marketplaceName' => '',
+                    'shipment_address' => '',
+                    'shipment_date' => '',
+                    'order_date' => (isset($orderDetail->order_date)) ? $orderDetail->order_date : '',
+                    'trackingNumber' => $trackingNumber,
+                    'return_address' => $returnAddress,
+                    'carrier_name' => isset($orderOperation->carrier) ? $orderOperation->carrier->name : '',
+                    'rma_number' => (isset($rma_number) && $rma_number != '') ? $rma_number : '',
+                ];
+                $template_code = \Blade::render($templateDetail->template_code, $data);
+                return response()->json([
+                    'success' => true,
+                    'template_id' => $templateDetail->id,
+                    'templateCode' => $template_code,
+                    'imagesPath' => $imagesPath,
+                    'image_name' => $imageName,
+                    'image_url' => $imageUrl,
+
+                ]);
+            }
+        }else{
+            $templateDetail = HdMessageTemplate::findOrFail($template_id);
+
+            if($templateDetail){
+                $data = [
+                    'customer_firstName' => $customer_name,
+                    'store_name' => $store_name,
+                    'marketplaceName' => '',
+                    'shipment_address' => '',
+                    'shipment_date' => '',
+                    'trackingNumber' => '',
+                    'return_address' => $returnAddress,
+                    'carrier_name' => '',
+                    'rma_number' => '',
+                    'order_date' => (isset($orderDetail->order_date)) ? $orderDetail->order_date : '',
+                ];
+                $template_code = \Blade::render($templateDetail->template_code, $data);
+                return response()->json([
+                    'success' => true,
+                    'template_id' => $templateDetail->id,
+                    'templateCode' => $template_code
+                ]);
             }
         }
 
@@ -1469,88 +1478,199 @@ class MessagesController extends Controller
         }
 
         DB::beginTransaction();
+        try {
+            $operation_id = $request->input('id');
+            $order_id = $request->input('order_id');
+            if ($operation_id) {
+                $orderOperation = OrderOperation::with('operationItem')->where('id', $operation_id)->first();
+                $clonedOrderOperation = [
+                    'ship_date' => $orderOperation->ship_date,
+                    'client' => $orderOperation->client,
+                    'to_address_id' => $orderOperation->to_address_id,
+                    'sync_status' => $orderOperation->sync_status,
+                    'insurance_value' => $orderOperation->insurance_value,
+                    'status' => OrderOperationStatus::Accepted,
+                    'signature_confirmation' => $orderOperation->signature_confirmation,
+                    'shipping_package_id' => $orderOperation->shipping_package_id,
+                    'weight_value' => $orderOperation->weight_value,
+                    'weight_weight_unit' => $orderOperation->weight_weight_unit,
+                    'ship_from_id' => $orderOperation->ship_from_id,
+                    'store_id' => $orderOperation->store_id,
+                    'operation_type' => OrderOperationType::OrderReplacement,
+                    'order_id' => $orderOperation->order_id,
+                    'label_creation_type' => ShippingLabelCreationType::CreateLabel,
+                    'rma_number' => NULL,
+                    'shipping_carrier_id' => $orderOperation->shipping_carrier_id,
+                    'shipping_carrier_service_id' => NULL,
+                    'shipping_account_transaction_id' => NULL,
+                ];
 
-        $operation_id = $request->input('id');
-        if($operation_id) {
-            $orderOperation = OrderOperation::with('operationItem')->where('id',$operation_id)->first();
-            $clonedOrderOperation = [
-                'ship_date' => $orderOperation->ship_date,
-                'client' => $orderOperation->client,
-                'to_address_id' => $orderOperation->to_address_id,
-                'sync_status' => $orderOperation->sync_status,
-                'insurance_value' => $orderOperation->insurance_value,
-                'status' => OrderOperationStatus::Accepted,
-                'signature_confirmation' => $orderOperation->signature_confirmation,
-                'shipping_package_id' => $orderOperation->shipping_package_id,
-                'weight_value' => $orderOperation->weight_value,
-                'weight_weight_unit' => $orderOperation->weight_weight_unit,
-                'ship_from_id' => $orderOperation->ship_from_id,
-                'store_id' => $orderOperation->store_id,
-                'operation_type' => OrderOperationType::OrderReplacement,
-                'order_id' => $orderOperation->order_id,
-                'label_creation_type' => ShippingLabelCreationType::CreateLabel,
-                'rma_number' => NULL,
-                'shipping_carrier_id' => $orderOperation->shipping_carrier_id,
-                'shipping_carrier_service_id' => NULL,
-                'shipping_account_transaction_id' => NULL,
-            ];
+                $newOrderOperation = OrderOperation::create($clonedOrderOperation);
+                $order_opration_id = $newOrderOperation->id;
 
-            $newOrderOperation = OrderOperation::create($clonedOrderOperation);
-            $order_opration_id = $newOrderOperation->id;
+                if (count($orderOperation->operationItem ?? []) > 0) {
+                    foreach ($orderOperation->operationItem as $oitem) {
 
-            if (count($orderOperation->operationItem ?? []) > 0) {
-                foreach ($orderOperation->operationItem as $oitem) {
+                        $newOrderItem = [
+                            'order_item_id' => $oitem->order_item_id,
+                            'order_operation_id' => $order_opration_id,
+                            'client_id' => $oitem->client_id,
+                            'sync_status' => $oitem->sync_status,
+                            'quantity' => $oitem->quantity,
+                        ];
 
-                    $newOrderItem = [
-                        'order_item_id' => $oitem->order_item_id,
-                        'order_operation_id' => $order_opration_id,
-                        'client_id' => $oitem->client_id,
-                        'sync_status' => $oitem->sync_status,
-                        'quantity' => $oitem->quantity,
-                    ];
-
-                    OrderOperationItem::updateOrCreate([
-                        'order_item_id' => $oitem->order_item_id,
-                        'order_operation_id' => $order_opration_id,
-                    ], $newOrderItem);
+                        OrderOperationItem::updateOrCreate([
+                            'order_item_id' => $oitem->order_item_id,
+                            'order_operation_id' => $order_opration_id,
+                        ], $newOrderItem);
+                    }
                 }
             }
-        }
 
-        $request['label_generation'] = 1;
-        $orderOperations = OrderOperation::with('order','order.customer', 'store', 'store.storeType')->where('id', $order_opration_id)->get();
+            if ($order_id != '') {
 
-        $successRes = OrderOperationUtility::processShipment($orderOperations, $request);
+                $orderDetail = Order::with('store','customer', 'CustomerAddress', 'orderItem')->where('order_id', $order_id)->first();
+                $new_order_id = $orderDetail->store->short_code . '-' . $this->getReplacementOrderID($orderOperation->store_id);
 
-        if (isset($successRes) && $successRes['success'] == false) {
-            DB::rollBack();
+
+                $orderData = [
+                    'order_id' => $new_order_id,
+                    'order_date' => date('Y-m-d H:i:s'),
+                    //'order_status' => OrderStatus::getOrderStatusId($order['displayFulfillmentStatus']),
+                    'order_status' => OrderStatus::Synchronizing,
+                    'order_total' => $orderDetail->order_total,
+                    'buyer_first_name' => isset($orderDetail->customer) ? $orderDetail->customer->first_name : NULL,
+                    'buyer_last_name' => isset($orderDetail->customer) ? $orderDetail->customer->last_name : NULL,
+                    'buyer_email' => isset($orderDetail->customer) ? $orderDetail->customer->email : NULL,
+                    'customer_id' => isset($orderDetail->customer) ? $orderDetail->customer->id : NULL,
+                    'purchase_order_id' => NULL,
+                    'store_id' => $orderOperation->store_id,
+                    'shipping_address_id' => isset($orderDetail->CustomerAddress) ? $orderDetail->CustomerAddress->id : NULL
+                ];
+                Log::info('Replacement Order Data: ' . json_encode($orderData));
+
+                $order_detail = Order::updateOrCreate([
+                    'order_id' => $new_order_id,
+                ], $orderData);
+
+                $orderOperationData = [
+                    'order_id' => $order_detail->id,
+                    'ship_date' => date('Y-m-d H:i:s'),
+                    'insurance_value' => 0,
+                    'status' => OrderOperationStatus::Created,
+                    'order_status' => OrderStatus::Shipped,
+                    'sync_message' => NULL,
+                    'signature_confirmation' => 1,
+                    'store_id' => $orderOperation->store_id,
+                    'shipping_package_id' => ShippingPackage::getDefaultShippingPackage(),
+                    'operation_type' => OrderOperationType::OrderShipment,
+                    'label_creation_type' => 1,
+                    'print_to_file' => 0,
+                    'seller_provides_return_label' => 0
+                ];
+
+                $order_operation_detail = OrderOperation::updateOrCreate([
+                    'order_id' => $order_detail->id,
+                ], $orderOperationData);
+
+                /* get order items*/
+                if (isset($orderDetail->orderItem)) {
+                    foreach ($orderDetail->orderItem as $item) {
+                        if ($item->sku != '') {
+                            Log::info('Replace Order Item: ' . json_encode($item));
+                            $orderItemData = [
+                                'title' => $item->title,
+                                'order_id' => $order_detail->id,
+                                'product_id' => isset($item->product_id) ? $item->product_id : NULL,
+                                /*'client_id' => '',
+                                'listing_item_id' => '',*/
+                                'sku' => $item->sku,
+                                'store_sku' => $item->store_sku,
+                                'quantity' => $item->quantity,
+                                'shipped_quantity' => $item->quantity,
+                                'id1' => NULL,
+                                'item_price' => 0,
+                                'shipping_price' => 0,
+                                'item_tax' => 0,
+                                'shipping_tax' => 0,
+                                'acknowledged_quantity' => $item->quantity,
+                            ];
+
+                            Log::info('Replacement Order Item Data: ' . json_encode($orderItemData));
+
+                            $order_item = OrderItem::updateOrCreate([
+                                'order_id' => $order_detail->id,
+                                'sku' => $item->sku,
+                            ], $orderItemData);
+
+                            /* create order operation item*/
+                            if ($order_item->id) {
+                                $orderOperationItemData = [
+                                    'order_item_id' => $order_item->id,
+                                    'order_operation_id' => $order_operation_detail->id,
+                                    'quantity' => $item->quantity,
+                                    //'client_id' => '',
+                                ];
+
+                                Log::info('Replacement Orderoperation Item Data: ' . json_encode($orderOperationItemData));
+
+                                OrderOperationItem::updateOrCreate([
+                                    'order_operation_id' => $order_operation_detail->id,
+                                    'order_item_id' => $order_item->id,
+                                ], $orderOperationItemData);
+                            }
+                        }
+                    }
+                }
+            }
+
+            $request['label_generation'] = 1;
+            $request['replacement'] = 1;
+            $orderOperations = OrderOperation::with('order', 'order.customer', 'store', 'store.storeType')->where('id', $order_operation_detail->id)->first();
+
+            Log::info('Orderoperation: ' . json_encode($orderOperations));
+
+            $successRes = OrderOperationUtility::processShipment($orderOperations, $request);
+
+
+            $orderOperations = OrderOperation::with('order', 'order.customer', 'store', 'store.storeType')->where('id', $order_opration_id)->first();
+            $orderOperations->update('related_operation_id',$order_operation_detail->id);
+
+            if (isset($successRes) && $successRes['success'] == false) {
+                DB::rollBack();
+                return response()->json([
+                    'success' => false,
+                    'message' => $successRes['message'] ?? 'Something went wrong with API. Please try again!'
+                ]);
+            }
+
+            $templateDetail = HdMessageTemplate::getOrderOperationTemplate(OrderOperationType::OrderReplacement, 1, 0);
+            $template_id = $template_code = '';
+            if ($templateDetail) {
+                $data = [
+                    'customer_firstName' => isset($orderOperations->order->customer) ? $orderOperations->order->customer->full_name : '',
+                    'store_name' => isset($orderOperations->store) ? $orderOperations->store->name : '',
+                    'trackingNumber' => isset($orderOperations->tracking_number) ? $orderOperations->tracking_number : '',
+                    'ima_number' => '',
+                    'return_address' => '',
+                    'shipment_date' => '',
+                    'order_date' => '',
+                ];
+                $template_id = $templateDetail->id;
+                $template_code = \Blade::render($templateDetail->template_code, $data);
+            }
+            DB::commit();
             return response()->json([
-                'success' => false,
-                'message' => $successRes['message'] ?? 'Something went wrong with API. Please try again!'
+                'success' => true,
+                'template_id' => $template_id,
+                'template_code' => $template_code,
             ]);
+        } catch (\Exception $e) {
+            // If anything went wrong, rollback the transaction
+            DB::rollBack();
+            Log::error('Error in order replacement: ' . $e->getMessage());
+            return ['success' => false, 'message' => $e->getMessage()];
         }
-
-        $templateDetail = HdMessageTemplate::getOrderOperationTemplate(OrderOperationType::OrderReplacement,1,0);
-        $template_id = $template_code = '';
-        if($templateDetail) {
-            $data = [
-                'customer_firstName' => isset($orderOperations->order->customer) ? $orderOperations->order->customer->full_name : '',
-                'store_name' => isset($orderOperations->store) ? $orderOperations->store->name : '',
-                'trackingNumber' => isset($orderOperations->tracking_number) ? $orderOperations->tracking_number : '',
-                'ima_number' => '',
-                'return_address' => '',
-                'shipment_date' => '',
-                'order_date' => '',
-            ];
-            $template_id = $templateDetail->id;
-            $template_code = \Blade::render($templateDetail->template_code, $data);
-        }
-        DB::commit();
-        return response()->json([
-            'success' => true,
-            'template_id' => $template_id,
-            'template_code' => $template_code,
-        ]);
     }
 
 
@@ -1859,13 +1979,13 @@ class MessagesController extends Controller
             if (!$sequence) {
                 $sequence = Sequence::create([
                     'key' => $key,
-                    'number' => str_pad(1, 6, '0', STR_PAD_LEFT)
+                    'number' => 1
                 ]);
             } else {
                 $sequence->increment('number');
             }
 
-            return $sequence->number;
+            return str_pad($sequence->number, 6, '0', STR_PAD_LEFT);
         });
     }
 }

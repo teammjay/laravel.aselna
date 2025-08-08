@@ -1087,7 +1087,7 @@
                     success: function (response) {
                         // If success, remove the user row from the table
                         if (response.success) {
-
+                            $('#replaceOrderModal').modal('hide');
                             if($('#message_to_send').val() != '' && response.template_id != ''){
                                 if (confirm("Are you sure, you want to overwrite the template?") == true) {
                                     $('#template_id').val(response.template_id);
@@ -1319,6 +1319,66 @@
                         alert('Upload failed');
                     }
                 });
+            });
+
+            $(document).on('click','#edit_address',function () {
+                var address_id = $(this).data('id');
+                if(address_id != '' && address_id != null){
+                    $.ajax({
+                        url: "<?php echo e(route('shipment.getshippingaddress')); ?>",
+                        type: 'POST',
+                        data: {
+                            address_id: address_id,
+                            "_token": '<?php echo e(csrf_token()); ?>'
+                        },
+                        success: function (response) {
+                            // If success, remove the user row from the table
+                            if (response.success) {
+                                $('#editPostalAddressModal').find('.modal-body').html(response.html);
+                                $('#editPostalAddressModal').modal('show');
+                            }
+                        },
+                        error: function (xhr) {
+                            // Handle error response
+                            alert('Error: ' + xhr.responseJSON.error);
+                        }
+                    });
+                }
+            });
+
+            $(document).on('click','#saveAddress',function () {
+
+                const form = document.querySelector("#frmEditAddress");
+                let formData = new FormData(form);
+                $.ajax({
+                    url: "<?php echo e(route('shipment.saveaddress')); ?>",
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    headers: {
+                        'X-CSRF-TOKEN': '<?php echo e(csrf_token()); ?>',
+                    },
+                    success: function (response) {
+                        // If success, remove the user row from the table
+                        if (response.success) {
+                            $('#edit_address').html(response.address);
+                            $('#editPostalAddressModal').modal('hide');
+                            $('body').addClass('modal-open');
+
+                        }
+                    },
+                    error: function (xhr) {
+                        // Handle error response
+                        alert('Error: ' + xhr.responseJSON.error);
+                    }
+                });
+            });
+
+            $(document).on('click','.closeaddressbtn',function () {
+                setTimeout(function(){
+                    $('body').addClass('modal-open');
+                },500);
             });
 
         });
