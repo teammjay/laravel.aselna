@@ -1641,9 +1641,8 @@ class MessagesController extends Controller
 
             $successRes = OrderOperationUtility::processShipment($orderOperations, $request);
 
-
             $orderOperations = OrderOperation::with('order', 'order.customer', 'store', 'store.storeType')->where('id', $order_opration_id)->first();
-            $orderOperations->update('related_operation_id',$order_operation_detail->id);
+            $orderOperations->update(['related_operation_id',$order_operation_detail->id]);
 
             if (isset($successRes) && $successRes['success'] == false) {
                 DB::rollBack();
@@ -1652,6 +1651,8 @@ class MessagesController extends Controller
                     'message' => $successRes['message'] ?? 'Something went wrong with API. Please try again!'
                 ]);
             }
+
+            DB::commit();
 
             $templateDetail = HdMessageTemplate::getOrderOperationTemplate(OrderOperationType::OrderReplacement, 1, 0);
             $template_id = $template_code = '';
