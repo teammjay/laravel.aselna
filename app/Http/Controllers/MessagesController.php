@@ -1365,7 +1365,7 @@ class MessagesController extends Controller
                 'operation_type' => OrderOperationType::OrderReturn,
                 'order_id' => $orderOperation->order_id,
                 'label_creation_type' => 1,
-                'rma_number' => NULL,
+                'rma_number' => $orderOperation->rma_number,
                 'shipping_carrier_id' => $orderOperation->shipping_carrier_id,
                 'shipping_carrier_service_id' => NULL,
                 'shipping_account_transaction_id' => NULL,
@@ -1374,7 +1374,7 @@ class MessagesController extends Controller
             $newOrderOperation = OrderOperation::create($clonedOrderOperation);
             $order_opration_id = $newOrderOperation->id;
 
-            $newshipmentDetail = OrderOperation::with('operationItem', 'operationItem.orderItem')->where('id', $order_opration_id)->first();
+            $newshipmentDetail = OrderOperation::with('operationItem', 'operationItem.orderItem')->where('id', $orderOperation->id)->first();
             if (count($newshipmentDetail->operationItem ?? []) > 0) {
                 foreach ($newshipmentDetail->operationItem as $oitem) {
 
