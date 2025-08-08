@@ -76,7 +76,7 @@ class OrderOperationUtility
 
         Log::info('Order Operation Id :: ' . $orderOperation->id);
 
-        $orderOperation = OrderOperation::with('order', 'order.orderItem', 'order.customer', 'order.customerAddress', 'store', 'store.storeType', 'carrier', 'shipFrom', 'shipFrom.returnAddress', 'shipFrom.fromAddress')->where('id', $orderOperation->id)->first();
+        $orderOperation = OrderOperation::with('order', 'order.orderItem', 'order.customer', 'order.customerAddress', 'store', 'store.storeType', 'carrier', 'shipFrom', 'shipFrom.returnAddress', 'shipFrom.fromAddress','operationItem','operationItem.orderItem')->where('id', $orderOperation->id)->first();
 
         return self::instantSynchronization($orderOperation,$replacement);
     }
