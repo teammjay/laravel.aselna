@@ -63,6 +63,7 @@ use App\Http\Controllers\ResetPasswordController;
 use App\Http\Controllers\StorePagesController;
 use App\Services\Auth\EbayAuthService;
 use App\Http\Controllers\LogisticCenterDocumentController;
+use App\Http\Controllers\StoreNavigationPagesController;
 
 Route::middleware('auth')->group(function () {
     Route::get('/devices/{id}/details', [DeviceController::class, 'getDeviceDetails']);
@@ -648,6 +649,15 @@ Route::middleware('auth')->group(function () {
     Route::get('/ebay/callback', [EbayAuthService::class, 'handleCallback'])->name('ebay.callback');
     Route::get('/ebay/refresh-token', [EbayAuthService::class, 'refreshToken'])->name('ebay.refresh');
 
+    Route::controller(StoreNavigationPagesController::class)->group(function () {
+        Route::get('/store_navigation_page', 'index')->name('store_navigation_page.index');
+        Route::get('/store_navigation_page/add', 'create')->name('store_navigation_page.create');
+        Route::post('/store_navigation_page/add', 'store')->name('store_navigation_page.store');
+        Route::get('/store_navigation_page/edit/{id}', 'edit')->name('store_navigation_page.edit');
+        Route::post('/store_navigation_page/edit/{id}', 'update')->name('store_navigation_page.update');
+        Route::get('/store_navigation_page/delete/{id}', 'destroy')->name('store_navigation_page.delete');
+    });
+
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 });
 
@@ -667,5 +677,4 @@ Route::get('/jobs/{job}/edit', [JobSchedulerController::class, 'edit'])->name('j
 Route::post('/jobs/{job}/update', [JobSchedulerController::class, 'update'])->name('jobs.update');
 Route::post('/jobs/add', [JobSchedulerController::class, 'add'])->name('jobs.add');
 Route::post('/jobs/running', [JobSchedulerController::class, 'running'])->name('jobs.running');
-
 
