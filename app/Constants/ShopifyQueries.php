@@ -338,7 +338,7 @@ GQL;
         }
     }
 GQL;
-    public static  $getOrder = <<<GQL
+    public static $getOrder = <<<GQL
     query getOrderId(\$query: String!) {
         orders(first: 1, query: \$query) {
             edges {
@@ -365,7 +365,7 @@ GQL;
         }
     }
 GQL;
-    public static  $getOrderTransaction = <<<GQL
+    public static $getOrderTransaction = <<<GQL
     query getOrderTransactions(\$orderId: ID!) {
         order(id: \$orderId) {
             transactions {
@@ -526,5 +526,50 @@ GQL;
         }
     }
 GQL;
+    public static $pageCreate = <<<GQL
+    mutation pageCreate(\$page: PageCreateInput!) {
+        pageCreate(page: \$page) {
+            page {
+                id
+                title
+                handle
+            }
+            userErrors {
+                field
+                message
+            }
+        }
+    }
+    GQL;
+
+    public static $pageFetch = <<<GQL
+query getPageByHandle (\$handle: String!) {
+  pages (first: 1, query : \$handle) {
+    edges {
+      node {
+        id
+      }
+    }
+    pageInfo {
+      endCursor
+      hasNextPage
+      hasPreviousPage
+      startCursor
+    }
+  }
+}
+GQL;
+
+    public static $pageUpdate = <<<GQL
+    mutation pageUpdate(\$page: PageUpdateInput!, \$id: ID!) {
+        pageUpdate(page: \$page, id: \$id) {
+            page {
+                id
+                title
+                handle
+            }
+        }
+    }
+    GQL;
 
 }

@@ -49,4 +49,9 @@ class StoreNavigationPage extends Model
         'update_image'
     ];
 
+    public function store()
+    {
+        return $this->belongsTo(Store::class, 'store_id', 'id');
+    }
+
 }
