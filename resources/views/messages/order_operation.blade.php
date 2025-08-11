@@ -102,7 +102,7 @@
         @endif
 
 
-        @if(isset($order_operation->rma_number) && ($order_operation->rma_number != '' || $order_operation->rma_number != null))
+        @if(isset($order_operation->rma_number) && ($order_operation->rma_number != '' || $order_operation->rma_number != null) && && $order_operation->label_creation_type == 0)
             <div class="card">
                 <div class="card-body">
                     <div class="row align-items-center">
