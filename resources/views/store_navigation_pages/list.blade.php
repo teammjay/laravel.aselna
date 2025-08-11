@@ -26,33 +26,47 @@
                     <th>Action</th>
                 </tr>
                 </thead>
-                <tbody>
-                @foreach($navigation_pages as $page)
-                    <tr>
-                        <td>{{ $page->id }}</td>
-                        <td>{{ $page->title }}</td>
-                        <td>{{ $page->store->name }} {{ (!empty((array)$page->store->storeType)) ? ' - '.$page->store->storeType->name : '' }}</td>
-                        <td>{{ $page->navigation_type }}</td>
-                        <td>
-                            <a href="{{ route('store_navigation_page.edit', $page->id) }}" class="btn btn-primary" title="Edit">
-                                <i class="fas fa-fw fa-pencil-alt"></i>
-                            </a>
-                            <a href="{{ route('store_navigation_page.delete', $page->id) }}" class="btn btn-danger" title="Remove">
-                                <i class="fas fa-fw fa-trash"></i>
-                            </a>
-                        </td>
-                    </tr>
-                @endforeach
-                </tbody>
             </table>
         </div>
     </div>
 @stop
 
-@section('adminlte_js')
+@section('css')
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap4.min.css">
+@stop
+
+@section('js')
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap4.min.js"></script>
     <script>
         $(document).ready(function () {
-            $('#navigationPageTable').DataTable();
+            $('#navigationPageTable').DataTable({
+                processing: true,
+                serverSide: true,
+                ajax: {
+                    url: "{{ route('store_navigation_page.filter') }}",
+                    type: "POST",
+                    headers: {
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    },
+                    data: function (d) {
+
+                    }
+                },
+                columns: [
+                    {data: 'id', name: 'id'},
+                    {data: 'title', name: 'title'},
+                    {data: 'store_name', name: 'store_name'},
+                    {data: 'navigation_type', name: 'navigation_type'},
+                    {
+                        data: 'action',
+                        name: 'action',
+                        orderable: false,
+                        searchable: false,
+                        className: 'text-center'
+                    }
+                ],
+            });
         });
     </script>
 @stop

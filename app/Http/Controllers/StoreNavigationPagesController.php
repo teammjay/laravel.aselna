@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Constants\StorePageType;
+use App\Constants\WebStorePageType;
 use App\Models\Store;
 use App\Models\StoreNavigationPage;
 use Illuminate\Http\Request;
@@ -11,10 +13,53 @@ class StoreNavigationPagesController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $navigation_pages = StoreNavigationPage::with('store','store.storeType')->get();
-        return view('store_navigation_pages.list', compact('navigation_pages'));
+        return view('store_navigation_pages.list');
+    }
+
+    public function filter(Request $request)
+    {
+        $draw = $request['draw'];
+        $start = $request['start'];
+        $perPage = $request['length'];
+        $columnIndex = $request['order'][0]['column'];
+        $columnName = $request['columns'][$columnIndex]['data'];
+        $columnSortOrder = $request['order'][0]['dir'];
+
+        $query = StoreNavigationPage::select('*');
+
+        $totalRecords = $query->count();
+        $pages = $query->orderBy($columnName, $columnSortOrder)
+            ->skip($start)
+            ->take($perPage)
+            ->get();
+        $totalRecordwithFilter = $totalRecords;
+
+        $data = [];
+        if(!empty((array) $pages)){
+            foreach ($pages as $page) {
+                $data[] = [
+                    'id' => $page->id,
+                    'title' => $page->title,
+                    'store_name' => $page->store->name ?? '',
+                    'navigation_type' => WebStorePageType::getPageTypeName($page->page_type),
+                    'created_by' => $page->created_by,
+                    'updated_by' => $page->updated_by,
+                    'created_at' => $page->created_at->format('Y-m-d H:i:s'),
+                    'action' => ''
+                ];
+            }
+        }
+
+        $response = array(
+            "draw" => intval($draw),
+            "iTotalRecords" => $totalRecordwithFilter,
+            "iTotalDisplayRecords" => $totalRecordwithFilter,
+            "aaData" => $data
+        );
+
+        return $response;
     }
 
     /**

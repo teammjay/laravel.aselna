@@ -43,9 +43,12 @@
                             <select class="form-control @error('navigation_type') is-invalid @enderror"
                                     name="navigation_type" id="navigation_type" required>
                                 <option value="">--</option>
-                                <option value="header" @if(isset($navigation_page) && $navigation_page->navigation_type == 'header') selected @endif>Header</option>
-                                <option value="footer" @if(isset($navigation_page) && $navigation_page->navigation_type == 'footer') selected @endif>Footer</option>
-                                <option value="sidebar" @if(isset($navigation_page) && $navigation_page->navigation_type == 'sidebar') selected @endif>Sidebar</option>
+                                @foreach(\App\Constants\WebStorePageType::getPageTypes() as $pageType)
+                                    <option value="{{ $pageType }}"
+                                        @if(isset($navigation_page) && $navigation_page->navigation_type == $pageType) selected @endif>
+                                        {{ \App\Constants\WebStorePageType::getPageTypeName($pageType) }}
+                                    </option>
+                                @endforeach
                             </select>
                             @if ($errors->has('navigation_type'))
                                 <span class="text-danger">{{ $errors->first('navigation_type') }}</span>
