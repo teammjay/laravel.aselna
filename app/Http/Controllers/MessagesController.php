@@ -1635,6 +1635,11 @@ class MessagesController extends Controller
                                     'order_item_id' => $order_item->id,
                                 ], $orderOperationItemData);
                             }
+
+                            $prevorderOperations = OrderOperation::where('id', $order_opration_id)->first();
+                            $prevorderOperations->update(['related_operation_id',$order_operation_detail->id]);
+
+                            Log::info('Related Order Operation: '. $order_opration_id.' - '. $order_operation_detail->id);
                         }
                     }
                 }
@@ -1657,8 +1662,7 @@ class MessagesController extends Controller
 
             DB::commit();
 
-            $prevorderOperations = OrderOperation::where('id', $order_opration_id)->first();
-            $prevorderOperations->update(['related_operation_id',$orderOperations->id]);
+
 
             $templateDetail = HdMessageTemplate::getOrderOperationTemplate(OrderOperationType::OrderReplacement, 1, 0);
             $template_id = $template_code = '';
