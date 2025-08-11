@@ -1573,7 +1573,6 @@ class MessagesController extends Controller
                     'ship_date' => date('Y-m-d H:i:s'),
                     'insurance_value' => 0,
                     'status' => OrderOperationStatus::Created,
-                    'order_status' => OrderStatus::Shipped,
                     'sync_message' => NULL,
                     'signature_confirmation' => 1,
                     'store_id' => $orderOperation->store_id,

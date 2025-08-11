@@ -515,11 +515,17 @@ class OrderOperationUtility
                 return false;
             } else {
 
+                $orderOperation->update(['status' => OrderOperationStatus::MarkAsShipped]);
+                if (isset($orderOperation->order_id)) {
+                    $order = Order::findOrFail($orderOperation->order_id);
+                    $order->update(['order_status' => OrderStatus::Shipped]);
+                }
+
                 if (isset($orderOperation->order->orderItem)) {
                     foreach ($orderOperation->order->orderItem as $o_item) {
                         $item_qty = $o_item->quantity;
                         $orderItem = OrderItem::findOrFail($o_item->id);
-
+                        $orderItem->update(['shipped_quantity' => $item_qty]);
                         if($orderOperation->operation_type == OrderOperationType::OrderReplacement){
                             $orderItem->update(['replaced_quantity' => $item_qty]);
                         }
@@ -878,6 +884,7 @@ class OrderOperationUtility
             }
 
             // If everything went well, commit the transaction
+            Log::info('Creating shipment for order operation status: ' . $success);
             if ($success) {
                 DB::commit();
                 return ['success' => true, 'message' => ''];
