@@ -1075,6 +1075,8 @@
 
                 const form = document.querySelector("#frmReplaceOrder");
                 let formData = new FormData(form);
+                formData.append('ticket_id', ticket_id);
+
                 $.ajax({
                     url: "{{ route('message.replaceorder') }}",
                     type: 'POST',
@@ -1362,10 +1364,9 @@
                     success: function (response) {
                         // If success, remove the user row from the table
                         if (response.success) {
-                            $('#edit_address').html(response.address);
+                            $('.edit_address').html(response.address);
                             $('#editPostalAddressModal').modal('hide');
                             $('body').addClass('modal-open');
-
                         }
                     },
                     error: function (xhr) {
