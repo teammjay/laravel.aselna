@@ -13,6 +13,8 @@ class ShopifyIndvPagesSyncJob implements ShouldQueue
 {
     use Queueable;
 
+    public $timeout = 36000;
+
     private mixed $storeID;
 
     private Store $store;
