@@ -1581,7 +1581,8 @@ class MessagesController extends Controller
                     'operation_type' => OrderOperationType::OrderShipment,
                     'label_creation_type' => 1,
                     'print_to_file' => 0,
-                    'seller_provides_return_label' => 0
+                    'seller_provides_return_label' => 0,
+                    'hd_ticket_id' => $ticket_id,
                 ];
 
                 $order_operation_detail = OrderOperation::updateOrCreate([
