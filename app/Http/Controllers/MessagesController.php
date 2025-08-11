@@ -1162,6 +1162,28 @@ class MessagesController extends Controller
                     $newOrderOperation = OrderOperation::create($clonedOrderOperation);
                     $order_opration_id = $newOrderOperation->id;
 
+                    $newshipmentDetail = OrderOperation::with('operationItem', 'operationItem.orderItem')->where('id', $orderOperation->id)->first();
+                    if (count($newshipmentDetail->operationItem ?? []) > 0) {
+                        foreach ($newshipmentDetail->operationItem as $oitem) {
+
+                            $newOrderItem = [
+                                'order_item_id' => $oitem->order_item_id,
+                                'order_operation_id' => $order_opration_id,
+                                'client_id' => $oitem->client_id,
+                                'sync_status' => $oitem->sync_status,
+                                'quantity' => $oitem->quantity,
+                                'item_price' => $oitem->item_price,
+                                'shipping_price' => $oitem->shipping_price,
+                                'reason_id' => (isset($reason) && $reason != '') ? $reason : ''
+                            ];
+
+                            OrderOperationItem::updateOrCreate([
+                                'order_item_id' => $oitem->order_item_id,
+                                'order_operation_id' => $order_opration_id,
+                            ], $newOrderItem);
+                        }
+                    }
+
 
                     $templateDetail = HdMessageTemplate::getOrderOperationTemplate(OrderOperationType::OrderReturn, 0, 0);
                     if ($templateDetail) {
@@ -1199,28 +1221,6 @@ class MessagesController extends Controller
                         ];
                         $template_id = $templateDetail->id;
                         $template_code = \Blade::render($templateDetail->template_code, $data);
-                    }
-
-                    $newshipmentDetail = OrderOperation::with('operationItem', 'operationItem.orderItem')->where('id', $orderOperation->id)->first();
-                    if (count($newshipmentDetail->operationItem ?? []) > 0) {
-                        foreach ($newshipmentDetail->operationItem as $oitem) {
-
-                            $newOrderItem = [
-                                'order_item_id' => $oitem->order_item_id,
-                                'order_operation_id' => $order_opration_id,
-                                'client_id' => $oitem->client_id,
-                                'sync_status' => $oitem->sync_status,
-                                'quantity' => $oitem->quantity,
-                                'item_price' => $oitem->item_price,
-                                'shipping_price' => $oitem->shipping_price,
-                                'reason_id' => (isset($reason) && $reason != '') ? $reason : ''
-                            ];
-
-                            OrderOperationItem::updateOrCreate([
-                                'order_item_id' => $oitem->order_item_id,
-                                'order_operation_id' => $order_opration_id,
-                            ], $newOrderItem);
-                        }
                     }
 
                     DB::commit();
@@ -1637,7 +1637,7 @@ class MessagesController extends Controller
                             }
 
                             $prevorderOperations = OrderOperation::where('id', $order_opration_id)->first();
-                            $prevorderOperations->update(['related_operation_id',$order_operation_detail->id]);
+                            $prevorderOperations->update(['related_operation_id' => $order_operation_detail->id]);
 
                             Log::info('Related Order Operation: '. $order_opration_id.' - '. $order_operation_detail->id);
                         }
@@ -1663,7 +1663,7 @@ class MessagesController extends Controller
             DB::commit();
 
 
-
+            $orderOperations = OrderOperation::with('order', 'order.customer', 'store', 'store.storeType')->where('id', $order_operation_detail->id)->first();
             $templateDetail = HdMessageTemplate::getOrderOperationTemplate(OrderOperationType::OrderReplacement, 1, 0);
             $template_id = $template_code = '';
             if ($templateDetail) {

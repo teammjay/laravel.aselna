@@ -743,6 +743,12 @@
                 var order_id = $('#order_id').val();
                 formData.append('order_id', order_id);
 
+                const reason = formData.get("reason");
+                if(reason == ''){
+                    alert('Please select reason for return.');
+                    return false;
+                }
+
                 if(order_id != '' && order_id != null){
                     $.ajax({
                         url: "{{ route('message.saverma') }}",
@@ -1366,7 +1372,9 @@
                         if (response.success) {
                             $('.edit_address').html(response.address);
                             $('#editPostalAddressModal').modal('hide');
-                            $('body').addClass('modal-open');
+                            setTimeout(function(){
+                                $('body').addClass('modal-open');
+                            },500);
                         }
                     },
                     error: function (xhr) {
