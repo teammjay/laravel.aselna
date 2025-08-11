@@ -1156,6 +1156,7 @@ class MessagesController extends Controller
                         'shipping_carrier_id' => $orderOperation->shipping_carrier_id,
                         'shipping_carrier_service_id' => NULL,
                         'shipping_account_transaction_id' => NULL,
+                        'hd_ticket_id' => $ticket_id,
                     ];
 
                     $newOrderOperation = OrderOperation::create($clonedOrderOperation);
@@ -1369,6 +1370,7 @@ class MessagesController extends Controller
                 'shipping_carrier_id' => $orderOperation->shipping_carrier_id,
                 'shipping_carrier_service_id' => NULL,
                 'shipping_account_transaction_id' => NULL,
+                'hd_ticket_id' => $ticket_id,
             ];
 
             $newOrderOperation = OrderOperation::create($clonedOrderOperation);
@@ -1492,6 +1494,7 @@ class MessagesController extends Controller
         try {
             $operation_id = $request->input('id');
             $order_id = $request->input('order_id');
+            $ticket_id = $request->input('ticket_id');
             if ($operation_id) {
                 $orderOperation = OrderOperation::with('operationItem')->where('id', $operation_id)->first();
                 $clonedOrderOperation = [
@@ -1514,6 +1517,7 @@ class MessagesController extends Controller
                     'shipping_carrier_id' => $orderOperation->shipping_carrier_id,
                     'shipping_carrier_service_id' => NULL,
                     'shipping_account_transaction_id' => NULL,
+                    'hd_ticket_id' => $ticket_id,
                 ];
 
                 $newOrderOperation = OrderOperation::create($clonedOrderOperation);
@@ -1638,13 +1642,9 @@ class MessagesController extends Controller
             $request['label_generation'] = 1;
             $request['replacement'] = 1;
             $orderOperations = OrderOperation::with('order', 'order.customer', 'store', 'store.storeType')->where('id', $order_operation_detail->id)->first();
-
             Log::info('Orderoperation: ' . json_encode($orderOperations));
 
             $successRes = OrderOperationUtility::processShipment($orderOperations, $request);
-
-            $orderOperations = OrderOperation::with('order', 'order.customer', 'store', 'store.storeType')->where('id', $order_opration_id)->first();
-            $orderOperations->update(['related_operation_id',$order_operation_detail->id]);
 
             if (isset($successRes) && $successRes['success'] == false) {
                 DB::rollBack();
@@ -1655,6 +1655,9 @@ class MessagesController extends Controller
             }
 
             DB::commit();
+
+            $prevorderOperations = OrderOperation::where('id', $order_opration_id)->first();
+            $prevorderOperations->update(['related_operation_id',$orderOperations->id]);
 
             $templateDetail = HdMessageTemplate::getOrderOperationTemplate(OrderOperationType::OrderReplacement, 1, 0);
             $template_id = $template_code = '';
@@ -1690,6 +1693,7 @@ class MessagesController extends Controller
 
         DB::beginTransaction();
         $order_id = $request->input('order_id');
+        $ticket_id = $request->input('ticket_id');
         $id = $request->input('o_id');
         $accept_return_charge = 0;
         $return_charges = 0;
@@ -1755,6 +1759,7 @@ class MessagesController extends Controller
                 'shipping_carrier_service_id' => NULL,
                 'shipping_account_transaction_id' => NULL,
                 'return_operation_id' => $orderOperation->id,
+                'hd_ticket_id' => $ticket_id,
             ];
 
             $newOrderOperation = OrderOperation::create($clonedOrderOperation);
