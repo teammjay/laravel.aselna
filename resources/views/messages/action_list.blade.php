@@ -329,7 +329,9 @@
                 <option value="">All stores</option>
                 @if(count($stores ?? []) > 0)
                     @foreach($stores as $store)
-                        <option value="{{ $store->id }}">{{ $store->name }}{{ (!empty((array)$store->storeType)) ? ' - '.$store->storeType->name : '' }}</option>
+                        @if(!empty($store->messageAccount) && $store->messageAccount->active == 1)
+                            <option value="{{ $store->id }}">{{ $store->name }}{{ (!empty((array)$store->storeType)) ? ' - '.$store->storeType->name : '' }}</option>
+                        @endif
                     @endforeach
                 @endif
             </select>

@@ -49,7 +49,7 @@ class MessagesController extends Controller
      */
     public function index()
     {
-        $stores = Store::orderBy('name','asc')->get();
+        $stores = Store::with('messageAccount','messageAccount.incomingAccount')->orderBy('name','asc')->get();
         $ticketTypes = HdTicketType::all();
         return view('messages.list', compact('stores','ticketTypes'));
     }
@@ -189,35 +189,35 @@ class MessagesController extends Controller
 
     public function need_action_list()
     {
-        $stores = Store::orderBy('name','asc')->get();
+        $stores = Store::with('messageAccount','messageAccount.incomingAccount')->orderBy('name','asc')->get();
         $ticketTypes = HdTicketType::all();
         return view('messages.action_list', compact('stores','ticketTypes'));
     }
 
     public function awaiting_list()
     {
-        $stores = Store::orderBy('name','asc')->get();
+        $stores = Store::with('messageAccount','messageAccount.incomingAccount')->orderBy('name','asc')->get();
         $ticketTypes = HdTicketType::all();
         return view('messages.awaiting_list', compact('stores','ticketTypes'));
     }
 
     public function closed_list()
     {
-        $stores = Store::orderBy('name','asc')->get();
+        $stores = Store::with('messageAccount','messageAccount.incomingAccount')->orderBy('name','asc')->get();
         $ticketTypes = HdTicketType::all();
         return view('messages.closed_list', compact('stores','ticketTypes'));
     }
 
     public function spam_list()
     {
-        $stores = Store::orderBy('name','asc')->get();
+        $stores = Store::with('messageAccount','messageAccount.incomingAccount')->orderBy('name','asc')->get();
         $ticketTypes = HdTicketType::all();
         return view('messages.spam_list', compact('stores','ticketTypes'));
     }
 
     public function trash_list()
     {
-        $stores = Store::orderBy('name','asc')->get();
+        $stores = Store::with('messageAccount','messageAccount.incomingAccount')->orderBy('name','asc')->get();
         $ticketTypes = HdTicketType::all();
         return view('messages.trash_list', compact('stores','ticketTypes'));
     }
