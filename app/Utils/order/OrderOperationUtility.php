@@ -806,9 +806,9 @@ class OrderOperationUtility
                         "trackingNumber" => $orderOperation->tracking_number
                     ];
 
-                    foreach ($orderOperation->operationItem as $item) {
+                    foreach ($orderOperation->order->orderItem as $item) {
                         $payload["lineItems"][] = [
-                            "lineItemId" => $item->orderItem->store_sku,
+                            "lineItemId" => $item->store_sku,
                             "quantity" => $item->quantity,
                         ];
                     }
@@ -847,9 +847,9 @@ class OrderOperationUtility
                                     "trackingNumber" => $orderOperation->tracking_number
                                 ];
 
-                                foreach ($oop->operationItem as $item) {
+                                foreach ($oop->order->orderItem as $item) {
                                     $payload2["lineItems"][] = [
-                                        "lineItemId" => $item->orderItem->store_sku,
+                                        "lineItemId" => $item->store_sku,
                                         "quantity" => $item->quantity,
                                     ];
                                 }
