@@ -26,7 +26,7 @@ class ShopifyAuthService
         $this->apiVersion = '2025-01';
     }
 
-    public function makeGraphQLRequest($query, $variables = [])
+    public function makeGraphQLRequest($query, $variables = [], $apiVersion = null)
     {
         $headers = [
             'Content-Type' => 'application/json',
@@ -43,9 +43,13 @@ class ShopifyAuthService
             return $value !== null;
         });
 
+        if (!isset($apiVersion)) {
+            $apiVersion = $this->apiVersion;
+        }
+
 
         try {
-            $request = new Request('POST', $this->endpoint . '/admin/api/' . $this->apiVersion . '/graphql.json', $headers, json_encode($body));
+            $request = new Request('POST', $this->endpoint . '/admin/api/' . $apiVersion . '/graphql.json', $headers, json_encode($body));
             $res = $this->client->sendAsync($request)->wait();
 
             Log::info('Response: ' . $res->getBody());
@@ -66,7 +70,7 @@ class ShopifyAuthService
 
     public function getProductById($marketplace_product_id)
     {
-        return $this->makeGraphQLRequest(ShopifyQueries::$getProductById,['id' => $marketplace_product_id]);
+        return $this->makeGraphQLRequest(ShopifyQueries::$getProductById, ['id' => $marketplace_product_id]);
     }
 
     public function updateProduct($productData)
@@ -436,5 +440,58 @@ class ShopifyAuthService
         }
 
         return null;
+    }
+
+    public function syncIndividualPage(mixed $StoreNavigationPage)
+    {
+        $isPageExists = $this->pageAlreadyExists($StoreNavigationPage->url_path);
+        $variables = ['page' => [
+            'title' => $StoreNavigationPage->title,
+            'body' => $StoreNavigationPage->generated_body,
+            'handle' => $StoreNavigationPage->url_path,
+            'isPublished' => true,
+        ]];
+
+        if ($isPageExists['exists']) {
+            $query = ShopifyQueries::$pageUpdate;
+
+            $variables['id'] = $isPageExists['id'];
+
+            Log::info('Updating Page: ' . json_encode($variables));
+
+            $response = $this->makeGraphQLRequest($query, $variables);
+
+            if (isset($response['data']['pageUpdate'])) {
+                return $response['data']['pageUpdate'];
+            }
+        } else {
+            $query = ShopifyQueries::$pageCreate;
+
+            Log::info('Syncing Page: ' . json_encode($variables));
+
+            $response = $this->makeGraphQLRequest($query, $variables);
+
+            if (isset($response['data']['pageCreate'])) {
+                return $response['data']['pageCreate'];
+            }
+        }
+
+        return null;
+    }
+
+    private function pageAlreadyExists($url_path)
+    {
+        $query = ShopifyQueries::$pageFetch;
+
+        $variables['handle'] = $url_path;
+        $getPageData = $this->makeGraphQLRequest($query, $variables, '2025-07');
+        Log::info('Get Page Data: ' . json_encode($getPageData));
+        $existingPages = $getPageData['data']['pages']['edges'];
+        Log::info('Existing Pages: ' . json_encode($existingPages));
+        if (count($existingPages) > 0) {
+            return ['exists' => true, 'id' => $existingPages[0]['node']['id']];
+        } else {
+            return ['exists' => false,];
+        }
     }
 }
