@@ -60,4 +60,8 @@ class Store extends Model
     {
         return $this->belongsTo(FileSystem::class, 'file_system_id', 'id');
     }
+
+    public function messageAccount(){
+        return $this->hasOne(StoreMessageAccount::class,'store_id','id');
+    }
 }

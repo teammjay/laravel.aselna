@@ -1,25 +1,47 @@
 @if(count($orderOperation ?? []) > 0)
     @foreach($orderOperation as $order_operation)
         @if($order_operation->operation_type == \App\Constants\OrderOperationType::OrderReplacement)
+
             <div class="card">
                 <div class="card-body">
                     <div class="row align-items-center">
                         <div class="col-md-1"><i class="fa fa-fw fa-exchange-alt" style="font-size: 18px;"></i> </div>
-                        <div class="col-md-10">Order Replacement On {{ date('D, d M Y',strtotime($order_operation->created_at)) }} </div>
+                        <div class="col-md-8">Order Replacement On {{ date('D, d M Y',strtotime($order_operation->created_at)) }} </div>
+                        <div class="col-md-3">
+                            <div class="btn-group float-right" role="group">
+                                <button id="btnGroupDrop2" type="button" class="dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="fa fa-ellipsis-v"></i></button>
+                                <div class="dropdown-menu" aria-labelledby="btnGroupDrop2">
+                                    <a class="dropdown-item" href="javascript:void(0)" id="regenerate_rma_message" data-opid="{{ $order_operation->id }}">Regenerate</a>
+                                </div>
+                            </div>
+                        </div>
 
                     </div>
-                    <div class="row pt-2">
-                        <div class="col-md-12">
-                            Shipped on {{ date('D, d M Y',strtotime($order_operation->created_at)) }}
+                    @if(isset($order_operation->relatedOperation))
+                        <div class="card mt-2">
+                            <div class="card-body p-2">
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        @if(isset($order_operation->relatedOperation->order))
+                                        Order ID <a class="text-blue" href="{{ route('order.edit',$order_operation->relatedOperation->order->id) }}"> {{ $order_operation->relatedOperation->order->order_id }}</a>   ON  {{ date('D, d M Y',strtotime($order_operation->relatedOperation->created_at)) }}
+                                        @endif
+                                    </div>
+                                </div>
+                                <div class="row pt-2">
+                                    <div class="col-md-12">
+                                        Shipped on {{ date('D, d M Y',strtotime($order_operation->relatedOperation->created_at)) }}
+                                    </div>
+                                </div>
+                                <div class="row pt-2">
+                                    <div class="col-md-12">
+                                        @if(isset($order_operation->relatedOperation->tracking_number))
+                                            <a href="" class="text-blue">{{ isset($order_operation->relatedOperation->carrier) ? $order_operation->relatedOperation->carrier->name : '' }} {{ $order_operation->relatedOperation->tracking_number }}</a>
+                                        @endif
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                    <div class="row pt-2">
-                        <div class="col-md-12">
-                            @if(isset($order_operation->tracking_number))
-                                <a href="" class="text-blue">{{ isset($order_operation->carrier) ? $order_operation->carrier->name : '' }} {{ $order_operation->tracking_number }}</a>
-                            @endif
-                        </div>
-                    </div>
+                    @endif
                 </div>
             </div>
         @endif
@@ -36,7 +58,7 @@
             </div>
         @endif
 
-        @if(isset($order_operation->rma_number) && ($order_operation->rma_number != '' || $order_operation->rma_number != null))
+        @if(isset($order_operation->operation_type) && ($order_operation->operation_type == 2 && $order_operation->label_creation_type == 1))
             <div class="card">
                 <div class="card-body">
                     <div class="row align-items-center">
@@ -59,25 +81,61 @@
                         </div>
                     </div>
                     @if(isset($order_operation->shipFrom))
-                    <div class="row pt-2">
-                        <div class="col-md-12">
-                            Return Location : {{ $order_operation->shipFrom->name }}
+                        <div class="row pt-2">
+                            <div class="col-md-12">
+                                Return Location : {{ $order_operation->shipFrom->name }}
+                            </div>
                         </div>
-                    </div>
                     @endif
 
                     @if(isset($order_operation->tracking_number))
-                    <div class="row pt-2">
-                        <div class="col-md-12">
-                            @if(isset($order_operation->tracking_number))
-                                <a href="" class="text-blue">{{ isset($order_operation->carrier) ? $order_operation->carrier->name : '' }} {{ $order_operation->tracking_number }}</a>
-                            @endif
+                        <div class="row pt-2">
+                            <div class="col-md-12">
+                                @if(isset($order_operation->tracking_number))
+                                    <a href="" class="text-blue">{{ isset($order_operation->carrier) ? $order_operation->carrier->name : '' }} {{ $order_operation->tracking_number }}</a>
+                                @endif
+                            </div>
                         </div>
-                    </div>
                     @endif
                 </div>
             </div>
         @endif
+
+
+        @if(isset($order_operation->rma_number) && ($order_operation->rma_number != '' || $order_operation->rma_number != null) && $order_operation->label_creation_type == 0)
+            <div class="card">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-1"><i class="fa fa-fw fa-spinner" style="font-size: 18px;"></i> </div>
+                        <div class="col-md-8">Order Return On {{ date('D, d M Y',strtotime($order_operation->created_at)) }} </div>
+                        <div class="col-md-3">
+                            <div class="btn-group float-right" role="group">
+                                <button id="btnGroupDrop2" type="button" class="dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="fa fa-ellipsis-v"></i></button>
+                                <div class="dropdown-menu" aria-labelledby="btnGroupDrop2">
+                                    <a class="dropdown-item" href="javascript:void(0)" id="regenerate_rma_message" data-opid="{{ $order_operation->id }}">Regenerate</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row pt-2">
+                        <div class="col-md-12">
+                            RMA : {{ $order_operation->rma_number }}
+                            <input type="hidden" id="rma_number" value="{{ $order_operation->rma_number }}">
+
+                        </div>
+                    </div>
+                    @if(isset($order_operation->shipFrom))
+                        <div class="row pt-2">
+                            <div class="col-md-12">
+                                Return Location : {{ $order_operation->shipFrom->name }}
+                            </div>
+                        </div>
+                    @endif
+
+                </div>
+            </div>
+        @endif
+
 
         @if(isset($order_operation->tracking_number) && ($order_operation->tracking_number != '' || $order_operation->tracking_number != null) && $order_operation->operation_type == \App\Constants\OrderOperationType::OrderShipment)
             <div class="card">

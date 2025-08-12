@@ -175,7 +175,7 @@
                                         @if(count($shippingCarrierPackage ?? []) > 0)
                                             @foreach($shippingCarrierPackage as $sCarrierPackage)
                                                 <option
-                                                    value="{{ $sCarrierPackage->id }}" {{ ( $sCarrierPackage->id == $shipmentDetail->shipping_package_id || ($package_id != '' && $package_id == $sCarrierPackage->id) ) ? 'selected' : '' }}>{{ $sCarrierPackage->name }}</option>
+                                                    value="{{ $sCarrierPackage->id }}" {{ ( ($package_id != '' && $package_id == $sCarrierPackage->id) ) ? 'selected' : '' }}>{{ $sCarrierPackage->name }}</option>
                                             @endforeach
                                         @endif
                                     </select>
@@ -187,7 +187,7 @@
                                 </div>
                                 <div class="col-md-8">
                                     @if(isset($shipmentDetail->order->customerAddress))
-                                        <a href="javascript:void(0);" class="text-blue" id="edit_address"
+                                        <a href="javascript:void(0);" class="text-blue edit_address" id="edit_address"
                                            data-id="{{ $shipmentDetail->order->customerAddress->id }}">
                                             {{ $shipmentDetail->order->customer->first_name }} {{ $shipmentDetail->order->customer->last_name }}<br>
                                             {{ $shipmentDetail->order->customerAddress->address_line_1 }},<br>

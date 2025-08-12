@@ -55,6 +55,7 @@ use App\Jobs\ProductTypeKeywordSyncJob;
 use App\Jobs\ShippingCarrierJob;
 use App\Jobs\ShopifyCollectionDeviceSyncJob;
 use App\Jobs\ShopifyCollectionSyncJob;
+use App\Jobs\ShopifyPagesSyncJob;
 use App\Jobs\StoreCategorySyncJob;
 use App\Jobs\StorePagesJobSync;
 use App\Jobs\StoreProductSyncJob;
@@ -166,7 +167,7 @@ class SyncAllTables extends Command
 //        MagentoProductsSyncJob::dispatch();
 //        FetchMagentoCategoriesJob::dispatch();
 //        MagnetoAttributesSyncJob::dispatch();
-        OldOrderSyncJob::dispatch();
+        ShopifyPagesSyncJob::dispatch();
 
 //        $transactionIds = [
 ////            '9400150105798006163885',

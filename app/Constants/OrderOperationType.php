@@ -41,6 +41,11 @@ class OrderOperationType
         return $type === self::OrderReturn;
     }
 
+    public static function isReplace($type)
+    {
+        return $type === self::OrderReplacement;
+    }
+
     public static function isShipment($type)
     {
         return $type === self::OrderShipment;

@@ -51,6 +51,7 @@
     }
     .mail-box{
         max-height: 500px;
+        min-height: 500px;
         overflow: auto;
     }
     #btnGroupDrop2::after{
@@ -181,7 +182,7 @@
                                                 </div>
                                             </div>
                                         </div>
-                                        <div class="col-md-8">
+                                        {{--<div class="col-md-8">
                                             <input type="file" class="btn btn-default" name="attach_file" id="attach_file">
                                             <input type="hidden" id="image_url" value="@if(isset($template['imageUrl']) && $template['imageUrl'] != '') {{ $template['imageUrl'] }} @endif">
                                             <input type="hidden" id="image_storage_path" value="@if(isset($template['storagePath']) && $template['storagePath'] != '') {{ $template['storagePath'] }} @endif">
@@ -192,12 +193,27 @@
                                                     <a class="dropdown-item delete_images" href="javascript:void(0);">Delete</a>
                                                 </div>
                                             </div>
+                                        </div>--}}
+
+                                        <div class="col-md-8">
+                                            <input type="file" class="btn btn-default" name="attach_file" id="attach_file">
+                                            <input type="hidden" id="image_url" value="">
+                                            <input type="hidden" id="image_storage_path" value="">
+                                            <div class="btn-group lableImageGroup hide" role="group">
+                                                <button id="btnGroupDrop2" type="button" class="btn btn-default lable-image dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"></button>
+                                                <div class="dropdown-menu" aria-labelledby="btnGroupDrop2">
+                                                    <a class="dropdown-item download_image" href="javascript:void(0);">Download</a>
+                                                    <a class="dropdown-item delete_images" href="javascript:void(0);">Delete</a>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                     <div class="row pt-3">
                                         <div class="col-md-12">
-                                            <textarea class="form-control" rows="10" id="message_to_send" name="message_to_send">@if(isset($template['template_code']) && $template['template_code'] != ''){{ $template['template_code'] }}@endif
-                                            </textarea>
+                                            {{--<textarea class="form-control" rows="10" id="message_to_send" name="message_to_send">@if(isset($template['template_code']) && $template['template_code'] != ''){{ $template['template_code'] }}@endif
+                                            </textarea>--}}
+
+                                            <textarea class="form-control" rows="10" id="message_to_send" name="message_to_send"></textarea>
                                         </div>
                                     </div>
                                 </div>
@@ -513,6 +529,7 @@
                 var template_id = $(this).val();
                 var customer_name = $('#customer_name').val();
                 var store_name = $('#store_name').val();
+                var order_id = $('#order_id').val();
                 $.ajax({
                     type: "POST",
                     url: "{{ route('message.getmessagetemplate') }}",
@@ -521,6 +538,7 @@
                         customer_name: customer_name,
                         store_name: store_name,
                         ticket_id: ticket_id,
+                        order_id: order_id,
                     },
                     headers: {
                         'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
@@ -530,6 +548,7 @@
                         if(data.success){
 
                             $('#message_to_send').html(data.templateCode);
+                            $('#template_id').val(data.template_id);
                             if(data.image_name){
                                 $('.lableImageGroup').removeClass('hide');
                                 $('#image_url').val(data.image_url);
@@ -724,6 +743,12 @@
                 var order_id = $('#order_id').val();
                 formData.append('order_id', order_id);
 
+                const reason = formData.get("reason");
+                if(reason == ''){
+                    alert('Please select reason for return.');
+                    return false;
+                }
+
                 if(order_id != '' && order_id != null){
                     $.ajax({
                         url: "{{ route('message.saverma') }}",
@@ -774,6 +799,7 @@
                         store_name: store_name,
                         rma_number: rma_number,
                         operation_id: operationID,
+                        regenerate: 1,
                     },
                     headers: {
                         'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
@@ -955,14 +981,15 @@
                         // If success, remove the user row from the table
                         if (response.success) {
 
-                            if($('#message_to_send').val() != '' && response.templateCode != ''){
+                            $('#returnLabelModal').modal('hide');
+                            if($('#message_to_send').val() != '' && response.template_code != ''){
                                 if (confirm("Are you sure, you want to overwrite the template?") == true) {
                                     $('#template_id').val(response.template_id);
-                                    $('#message_to_send').html(response.templateCode);
+                                    $('#message_to_send').html(response.template_code);
                                 }
-                            }else if(data.templateCode != ''){
+                            }else if(response.template_code != ''){
                                 $('#template_id').val(response.template_id);
-                                $('#message_to_send').html(response.templateCode);
+                                $('#message_to_send').html(response.template_code);
                             }
 
                             if(response.image_url){
@@ -1054,6 +1081,8 @@
 
                 const form = document.querySelector("#frmReplaceOrder");
                 let formData = new FormData(form);
+                formData.append('ticket_id', ticket_id);
+
                 $.ajax({
                     url: "{{ route('message.replaceorder') }}",
                     type: 'POST',
@@ -1066,7 +1095,7 @@
                     success: function (response) {
                         // If success, remove the user row from the table
                         if (response.success) {
-
+                            $('#replaceOrderModal').modal('hide');
                             if($('#message_to_send').val() != '' && response.template_id != ''){
                                 if (confirm("Are you sure, you want to overwrite the template?") == true) {
                                     $('#template_id').val(response.template_id);
@@ -1298,6 +1327,67 @@
                         alert('Upload failed');
                     }
                 });
+            });
+
+            $(document).on('click','#edit_address',function () {
+                var address_id = $(this).data('id');
+                if(address_id != '' && address_id != null){
+                    $.ajax({
+                        url: "<?php echo e(route('shipment.getshippingaddress')); ?>",
+                        type: 'POST',
+                        data: {
+                            address_id: address_id,
+                            "_token": '<?php echo e(csrf_token()); ?>'
+                        },
+                        success: function (response) {
+                            // If success, remove the user row from the table
+                            if (response.success) {
+                                $('#editPostalAddressModal').find('.modal-body').html(response.html);
+                                $('#editPostalAddressModal').modal('show');
+                            }
+                        },
+                        error: function (xhr) {
+                            // Handle error response
+                            alert('Error: ' + xhr.responseJSON.error);
+                        }
+                    });
+                }
+            });
+
+            $(document).on('click','#saveAddress',function () {
+
+                const form = document.querySelector("#frmEditAddress");
+                let formData = new FormData(form);
+                $.ajax({
+                    url: "<?php echo e(route('shipment.saveaddress')); ?>",
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    headers: {
+                        'X-CSRF-TOKEN': '<?php echo e(csrf_token()); ?>',
+                    },
+                    success: function (response) {
+                        // If success, remove the user row from the table
+                        if (response.success) {
+                            $('.edit_address').html(response.address);
+                            $('#editPostalAddressModal').modal('hide');
+                            setTimeout(function(){
+                                $('body').addClass('modal-open');
+                            },500);
+                        }
+                    },
+                    error: function (xhr) {
+                        // Handle error response
+                        alert('Error: ' + xhr.responseJSON.error);
+                    }
+                });
+            });
+
+            $(document).on('click','.closeaddressbtn',function () {
+                setTimeout(function(){
+                    $('body').addClass('modal-open');
+                },500);
             });
 
         });

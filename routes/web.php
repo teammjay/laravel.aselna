@@ -27,6 +27,7 @@ use App\Http\Controllers\ShippingCarrierServiceController;
 use App\Http\Controllers\PageTypesController;
 use App\Http\Controllers\LogisticCenterController;
 use App\Http\Controllers\StoreTypesController;
+use App\Http\Controllers\StorePageTemplatesController;
 use App\Http\Controllers\ListingController;
 use App\Http\Controllers\ManufacturerController;
 use App\Http\Controllers\ProductTypeController;
@@ -63,6 +64,7 @@ use App\Http\Controllers\ResetPasswordController;
 use App\Http\Controllers\StorePagesController;
 use App\Services\Auth\EbayAuthService;
 use App\Http\Controllers\LogisticCenterDocumentController;
+use App\Http\Controllers\StoreNavigationPagesController;
 
 Route::middleware('auth')->group(function () {
     Route::get('/devices/{id}/details', [DeviceController::class, 'getDeviceDetails']);
@@ -250,6 +252,15 @@ Route::middleware('auth')->group(function () {
         Route::get('/store_page/edit/{id}', 'edit')->name('store_page.edit');
         Route::post('/store_page/edit/{id}', 'update')->name('store_page.update');
         Route::get('/store_page/delete/{id}', 'destroy')->name('store_page.delete');
+    });
+
+    Route::controller(StorePageTemplatesController::class)->group(function () {
+        Route::get('/store_page_template', 'index')->name('store_page_templates.index');
+        Route::get('/store_page_template/add', 'create')->name('store_page_templates.create');
+        Route::post('/store_page_template/add', 'store')->name('store_page_templates.store');
+        Route::get('/store_page_template/edit/{id}', 'edit')->name('store_page_templates.edit');
+        Route::post('/store_page_template/edit/{id}', 'update')->name('store_page_templates.update');
+        Route::get('/store_page_template/delete/{id}', 'destroy')->name('store_page_templates.delete');
     });
 
     Route::controller(StoreTypeCategoryController::class)->group(function () {
@@ -652,6 +663,16 @@ Route::middleware('auth')->group(function () {
     Route::get('/ebay/callback', [EbayAuthService::class, 'handleCallback'])->name('ebay.callback');
     Route::get('/ebay/refresh-token', [EbayAuthService::class, 'refreshToken'])->name('ebay.refresh');
 
+    Route::controller(StoreNavigationPagesController::class)->group(function () {
+        Route::get('/store_navigation_page', 'index')->name('store_navigation_page.index');
+        Route::get('/store_navigation_page/add', 'create')->name('store_navigation_page.create');
+        Route::post('/store_navigation_page/add', 'store')->name('store_navigation_page.store');
+        Route::get('/store_navigation_page/edit/{id}', 'edit')->name('store_navigation_page.edit');
+        Route::post('/store_navigation_page/filter', 'filter')->name('store_navigation_page.filter');
+        Route::post('/store_navigation_page/edit/{id}', 'update')->name('store_navigation_page.update');
+        Route::get('/store_navigation_page/delete/{id}', 'destroy')->name('store_navigation_page.delete');
+    });
+
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 });
 
@@ -671,5 +692,4 @@ Route::get('/jobs/{job}/edit', [JobSchedulerController::class, 'edit'])->name('j
 Route::post('/jobs/{job}/update', [JobSchedulerController::class, 'update'])->name('jobs.update');
 Route::post('/jobs/add', [JobSchedulerController::class, 'add'])->name('jobs.add');
 Route::post('/jobs/running', [JobSchedulerController::class, 'running'])->name('jobs.running');
-
 

@@ -471,12 +471,17 @@ return [
                 ],
                 [
                     'text' => 'Page Templates',
-                    'url' => '#',
+                    'url' => '/store_page_template',
                     'icon' => 'far fa-fw fa-file',
                 ],
                 [
                     'text' => 'Store Pages',
                     'url' => '/store_pages',
+                    'icon' => 'far fa-fw fa-file',
+                ],
+                [
+                    'text' => 'Store Navigation Pages',
+                    'url' => '/store_navigation_page',
                     'icon' => 'far fa-fw fa-file',
                 ]
             ]

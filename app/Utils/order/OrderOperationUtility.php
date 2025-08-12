@@ -33,6 +33,7 @@ class OrderOperationUtility
         }
 
         $label_generation = $request->input('label_generation');
+        $replacement = $request->input('replacement');
         if($label_generation) {
             $carrier_id = $request->input('carrier_name');
             $carrier_package = $request->input('carrier_package');
@@ -75,12 +76,12 @@ class OrderOperationUtility
 
         Log::info('Order Operation Id :: ' . $orderOperation->id);
 
-        $orderOperation = OrderOperation::with('order', 'order.orderItem', 'order.customer', 'order.customerAddress', 'store', 'store.storeType', 'carrier', 'shipFrom', 'shipFrom.returnAddress', 'shipFrom.fromAddress')->where('id', $orderOperation->id)->first();
+        $orderOperation = OrderOperation::with('order', 'order.orderItem', 'order.customer', 'order.customerAddress', 'store', 'store.storeType', 'carrier', 'shipFrom', 'shipFrom.returnAddress', 'shipFrom.fromAddress','operationItem','operationItem.orderItem')->where('id', $orderOperation->id)->first();
 
-        return self::instantSynchronization($orderOperation);
+        return self::instantSynchronization($orderOperation,$replacement);
     }
 
-    public static function instantSynchronization($orderOperation) : array
+    public static function instantSynchronization($orderOperation,$replacement='') : array
     {
         $operationType = $orderOperation->operation_type;
         Log::info('Instant synchronization for operation type: ' . $operationType);
@@ -91,7 +92,12 @@ class OrderOperationUtility
         }
 
         if (OrderOperationType::isReturn($operationType)) {
-            self::returnOrder($orderOperation);
+            self::returnReplaceOrder($orderOperation);
+            return ['success' => true, 'message' => ''];
+        }
+
+        if (isset($replacement) && $replacement > 0) {
+            self::returnReplaceOrder($orderOperation);
             return ['success' => true, 'message' => ''];
         }
 
@@ -140,6 +146,7 @@ class OrderOperationUtility
         if (OrderOperationType::isReturn($operation_type)) {
             $shipmentDetails['fromAddress'] = self::getAddress($shipFrom->returnAddress);
             $shipmentDetails['toAddress'] = self::getAddress($shipFrom->returnAddress);
+            $shipmentDetails['is_return'] = true;
         } else {
             $shipmentDetails['fromAddress'] = self::getAddress($shipFrom->fromAddress);
             $shipmentDetails['toAddress'] = self::mapCustomerAddress($orderOperation);
@@ -271,15 +278,16 @@ class OrderOperationUtility
         $storeType = $orderOperation->store->storeType;
 
         // Group products by code and sum quantities
+        Log::info('Rubber stamp Ordero peration item: ' . json_encode($orderOperation->operationItem));
         $productMap = [];
-        foreach ($orderOperation->operationItem as $item) {
-            $product = $item->orderItem->product;
-            $code = $product ? $product->product_sku : $item->orderItem->sku;
+        foreach ($orderOperation->order->orderItem as $item) {
+            $product = $item->product;
+            $code = $product ? $product->product_sku : $item->sku;
 
             if (!isset($productMap[$code])) {
                 $productMap[$code] = 0;
             }
-            $productMap[$code] += $item->orderItem->quantity;
+            $productMap[$code] += $item->quantity;
         }
 
         // Get or generate product codes line
@@ -303,8 +311,8 @@ class OrderOperationUtility
 
         // Create order ID line
         $orderIds = [];
-        foreach ($orderOperation->operationItem as $item) {
-            $orderId = self::getOrderIdForStamp($item->orderItem->order, $storeType, false);
+        foreach ($orderOperation->order->orderItem as $item) {
+            $orderId = self::getOrderIdForStamp($orderOperation->order, $storeType, false);
             if (!in_array($orderId, $orderIds)) {
                 $orderIds[] = $orderId;
             }
@@ -316,8 +324,8 @@ class OrderOperationUtility
         // If order ID line is too long, use shortened version
         if (strlen($orderIdLine) > 50) {
             $orderIds = [];
-            foreach ($orderOperation->operationItem as $item) {
-                $orderId = self::getOrderIdForStamp($item->orderItem->order, $storeType, true);
+            foreach ($orderOperation->order->orderItem as $item) {
+                $orderId = self::getOrderIdForStamp($orderOperation->order, $storeType, true);
                 if (!in_array($orderId, $orderIds)) {
                     $orderIds[] = $orderId;
                 }
@@ -496,7 +504,7 @@ class OrderOperationUtility
         }
     }
 
-    private static function returnOrder($orderOperation)
+    private static function returnReplaceOrder($orderOperation)
     {
 
         if ($orderOperation->label_creation_type == ShippingLabelCreationType::CreateLabel) {
@@ -506,6 +514,24 @@ class OrderOperationUtility
                 //throw new \Exception('Error creating label: ' . json_encode($errors));
                 return false;
             } else {
+
+                $orderOperation->update(['status' => OrderOperationStatus::MarkAsShipped]);
+                if (isset($orderOperation->order_id)) {
+                    $order = Order::findOrFail($orderOperation->order_id);
+                    $order->update(['order_status' => OrderStatus::Shipped]);
+                }
+
+                if (isset($orderOperation->order->orderItem)) {
+                    foreach ($orderOperation->order->orderItem as $o_item) {
+                        $item_qty = $o_item->quantity;
+                        $orderItem = OrderItem::findOrFail($o_item->id);
+                        $orderItem->update(['shipped_quantity' => $item_qty]);
+                        if($orderOperation->operation_type == OrderOperationType::OrderReplacement){
+                            $orderItem->update(['replaced_quantity' => $item_qty]);
+                        }
+                    }
+                }
+
                 return true;
             }
         }
@@ -780,9 +806,9 @@ class OrderOperationUtility
                         "trackingNumber" => $orderOperation->tracking_number
                     ];
 
-                    foreach ($orderOperation->operationItem as $item) {
+                    foreach ($orderOperation->order->orderItem as $item) {
                         $payload["lineItems"][] = [
-                            "lineItemId" => $item->orderItem->store_sku,
+                            "lineItemId" => $item->store_sku,
                             "quantity" => $item->quantity,
                         ];
                     }
@@ -821,9 +847,9 @@ class OrderOperationUtility
                                     "trackingNumber" => $orderOperation->tracking_number
                                 ];
 
-                                foreach ($oop->operationItem as $item) {
+                                foreach ($oop->order->orderItem as $item) {
                                     $payload2["lineItems"][] = [
-                                        "lineItemId" => $item->orderItem->store_sku,
+                                        "lineItemId" => $item->store_sku,
                                         "quantity" => $item->quantity,
                                     ];
                                 }
@@ -858,6 +884,7 @@ class OrderOperationUtility
             }
 
             // If everything went well, commit the transaction
+            Log::info('Creating shipment for order operation status: ' . $success);
             if ($success) {
                 DB::commit();
                 return ['success' => true, 'message' => ''];
