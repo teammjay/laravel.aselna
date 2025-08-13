@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Constants\StorePageType;
 use App\Constants\WebStorePageType;
+use App\Models\Brand;
 use App\Models\Store;
 use App\Models\StoreNavigationPage;
 use App\Models\StorePageTemplate;
@@ -71,8 +72,9 @@ class StoreNavigationPagesController extends Controller
     public function create()
     {
         $stores = Store::with('storeType')->where('store_status', 1)->orderBy('name', 'asc')->get();
+        $brands = Brand::where('status', 1)->orderBy('name', 'asc')->get();
         $pageTemplates = StorePageTemplate::all();
-        return view('store_navigation_pages.add', compact('stores', 'pageTemplates'));
+        return view('store_navigation_pages.add', compact('stores', 'pageTemplates', 'brands'));
     }
 
     /**
@@ -103,8 +105,9 @@ class StoreNavigationPagesController extends Controller
     {
         $navigation_page = StoreNavigationPage::findOrFail($id);
         $stores = Store::with('storeType')->where('store_status', 1)->orderBy('name', 'asc')->get();
+        $brands = Brand::where('status', 1)->orderBy('name', 'asc')->get();
         $pageTemplates = StorePageTemplate::all();
-        return view('store_navigation_pages.add', compact('navigation_page', 'stores', 'pageTemplates'));
+        return view('store_navigation_pages.add', compact('navigation_page', 'stores', 'pageTemplates', 'brands'));
     }
 
     //generateContent
@@ -244,11 +247,36 @@ class StoreNavigationPagesController extends Controller
 //                break;
 
             case WebStorePageType::ALL_BRANDS:
-                $links =  StoreNavigationPage::where('store_id', $store_id)
+                $links = StoreNavigationPage::where('store_id', $store_id)
                     ->where('page_type', WebStorePageType::BRAND)
                     ->get();
                 foreach ($links as $link) {
                     if ($link->brand->sort_order <= 10) {
+                        $finalLinkArray['popular_link'][] = [
+                            'id' => $link->id,
+                            'title' => $link->brand->name,
+                            'imageUrl' => $link->store_image_url,
+                            'url' => "/pages/" . $link->url_path,
+                            'popular' => true
+                        ];
+                    } else {
+                        $finalLinkArray['other_link'][] = [
+                            'id' => $link->id,
+                            'title' => $link->brand->name,
+                            'imageUrl' => $link->store_image_url,
+                            'url' => "/pages/" . $link->url_path,
+                            'popular' => false
+                        ];
+                    }
+                }
+                break;
+
+            case WebStorePageType::BRAND:
+                $links = StoreNavigationPage::where('store_id', $store_id)
+                    ->where('page_type', WebStorePageType::BRAND_DEVICE_PRODUCT_TYPES)
+                    ->get();
+                foreach ($links as $link) {
+                    if ($link->device->order <= 10) {
                         $finalLinkArray['popular_link'][] = [
                             'id' => $link->id,
                             'title' => $link->brand->name,
@@ -290,8 +318,21 @@ class StoreNavigationPagesController extends Controller
 //                    );
 //                };
 //                break;
-//
-//            case WebStorePageType::BRAND_DEVICE_PRODUCT_TYPES:
+
+            case WebStorePageType::BRAND_DEVICE_PRODUCT_TYPES:
+                $links = StoreNavigationPage::where('store_id', $store_id)
+                    ->where('page_type', WebStorePageType::PRODUCT_TYPE)
+                    ->get();
+                $finalLinkArray['title'] = '';
+                foreach ($links as $link) {
+                    $finalLinkArray['popular_link'][] = [
+                        'id' => $link->id,
+                        'title' => $link->productType->name,
+                        'imageUrl' => $link->store_image_url,
+                        'url' => "/pages/" . $link->url_path,
+                        'popular' => true
+                    ];
+                }
 //                if ($useCategorPage) {
 //                    $navigationPage = $deviceCategoryPage;
 //                }
@@ -314,7 +355,7 @@ class StoreNavigationPagesController extends Controller
 //                        true
 //                    );
 //                };
-//                break;
+                break;
 
             default:
                 break;

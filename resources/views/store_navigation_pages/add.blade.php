@@ -1,3 +1,4 @@
+@php use App\Constants\WebStorePageType; @endphp
 @extends('adminlte::page')
 
 @section('content_header')
@@ -23,15 +24,6 @@
         <div class="card card-primary">
             <div class="card-body">
                 <div class="row">
-                    <div class="form-group col-md-7">
-                        <label for="title">Title</label>
-                        <input type="text" class="form-control @error('title') is-invalid @enderror" id="title"
-                               name="title" placeholder="Enter Title"
-                               value="{{ old('title', $navigation_page->title ?? '') }}" required>
-                        @if ($errors->has('title'))
-                            <span class="text-danger">{{ $errors->first('title') }}</span>
-                        @endif
-                    </div>
 
                     <div class="form-group col-md-7">
                         <label for="store_id">Store</label>
@@ -55,10 +47,10 @@
                         <select class="form-control @error('page_type') is-invalid @enderror"
                                 name="page_type" id="page_type" required>
                             <option value="">--</option>
-                            @foreach(\App\Constants\WebStorePageType::getPageTypes() as $pageType)
+                            @foreach(WebStorePageType::getPageTypes() as $pageType)
                                 <option value="{{ $pageType }}"
                                         @if(isset($navigation_page) && $navigation_page->page_type == $pageType) selected @endif>
-                                    {{ \App\Constants\WebStorePageType::getPageTypeName($pageType) }}
+                                    {{ WebStorePageType::getPageTypeName($pageType) }}
                                 </option>
                             @endforeach
                         </select>
@@ -83,6 +75,33 @@
                         @endif
                     </div>
 
+                    <div class="form-group col-md-7">
+                        <label for="title">Title</label>
+                        <input type="text" class="form-control @error('title') is-invalid @enderror" id="title"
+                               name="title" placeholder="Enter Title"
+                               value="{{ old('title', $navigation_page->title ?? '') }}" required>
+                        @if ($errors->has('title'))
+                            <span class="text-danger">{{ $errors->first('title') }}</span>
+                        @endif
+                    </div>
+
+                    <div class="form-group col-md-7" id="device_brand_id_wrapper">
+                        <label for="device_brand_id">Brand</label>
+                        <select class="form-control @error('device_brand_id') is-invalid @enderror"
+                                name="device_brand_id" id="device_brand_id" required>
+                            <option value="">--</option>
+                            @foreach($brands as $brand)
+                                <option value="{{ $brand->id }}"
+                                        @if(isset($navigation_page) && $navigation_page->device_brand_id == $brand->id) selected @endif>
+                                    {{ $brand->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                        @if ($errors->has('device_brand_id'))
+                            <span class="text-danger">{{ $errors->first('device_brand_id') }}</span>
+                        @endif
+                    </div>
+
                     <div class="form-group col-md-10">
                         <label for="description">Description</label>
                         <textarea class="form-control @error('description') is-invalid @enderror"
@@ -102,7 +121,7 @@
                         @endif
                     </div>
                     <div class="form-group col-md-2 mt-4">
-                        <button class="generate btn btn-secondary" id="generate_content"> Generate </button>
+                        <button class="generate btn btn-secondary" id="generate_content"> Generate</button>
                     </div>
                 </div>
             </div>
@@ -156,6 +175,19 @@
                         alert('Failed to generate content. Please try again.');
                     }
                 });
+            });
+
+            $('#page_type').on('change', function () {
+                const pageType = $(this).val();
+                switch (pageType) {
+                    case '<?= WebStorePageType::ALL_BRANDS ?>':
+                        $('#title').val('Shop By Brand');
+                        $('#device_brand_id_wrapper').hide();
+                        break;
+                    case '<?= WebStorePageType::BRAND ?>':
+                        $('#device_brand_id_wrapper').show();
+                        break;
+                }
             });
         });
     </script>
