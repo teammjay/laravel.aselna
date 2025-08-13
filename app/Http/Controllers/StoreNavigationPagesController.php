@@ -83,10 +83,9 @@ class StoreNavigationPagesController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'title' => 'required',
             'store_id' => 'required',
             'template_id' => 'required',
-            'content' => 'required'
+            'generated_body' => 'required'
         ]);
 
         $created_by = auth()->user()->name ?? 'admin';
@@ -152,7 +151,7 @@ class StoreNavigationPagesController extends Controller
             'title' => 'required',
             'store_id' => 'required',
             'template_id' => 'required',
-            'content' => 'required'
+            'generated_body' => 'required'
         ]);
 
         $updated_by = auth()->user()->name ?? 'admin';
