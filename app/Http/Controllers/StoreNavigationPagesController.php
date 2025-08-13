@@ -6,6 +6,7 @@ use App\Constants\StorePageType;
 use App\Constants\WebStorePageType;
 use App\Models\Store;
 use App\Models\StoreNavigationPage;
+use App\Models\StorePageTemplate;
 use Illuminate\Http\Request;
 
 class StoreNavigationPagesController extends Controller
@@ -68,7 +69,8 @@ class StoreNavigationPagesController extends Controller
     public function create()
     {
         $stores = Store::with('storeType')->where('store_status', 1)->orderBy('name', 'asc')->get();
-        return view('store_navigation_pages.add', compact('stores'));
+        $pageTemplates = StorePageTemplate::all();
+        return view('store_navigation_pages.add', compact('stores', 'pageTemplates'));
     }
 
     /**
@@ -79,7 +81,7 @@ class StoreNavigationPagesController extends Controller
         $request->validate([
             'title' => 'required',
             'store_id' => 'required',
-            'navigation_type' => 'required',
+            'template_id' => 'required',
             'content' => 'required'
         ]);
 
@@ -99,7 +101,27 @@ class StoreNavigationPagesController extends Controller
     {
         $navigation_page = StoreNavigationPage::findOrFail($id);
         $stores = Store::with('storeType')->where('store_status', 1)->orderBy('name', 'asc')->get();
-        return view('store_navigation_pages.add', compact('navigation_page', 'stores'));
+        $pageTemplates = StorePageTemplate::all();
+        return view('store_navigation_pages.add', compact('navigation_page', 'stores', 'pageTemplates'));
+    }
+
+    //generateContent
+    public function generateContent(Request $request)
+    {
+        $request->validate([
+            'store_id' => 'required',
+            'page_type' => 'required',
+            'template_id' => 'required',
+        ]);
+
+        $created_by = auth()->user()->name ?? 'admin';
+        $request->merge(['created_by' => $created_by, 'updated_by' => $created_by]);
+
+        $template = StorePageTemplate::findOrFail($request->template_id);
+
+        $content = $template->template_code;
+
+        return response()->json(['content' => $content]);
     }
 
     /**
@@ -110,7 +132,7 @@ class StoreNavigationPagesController extends Controller
         $request->validate([
             'title' => 'required',
             'store_id' => 'required',
-            'navigation_type' => 'required',
+            'template_id' => 'required',
             'content' => 'required'
         ]);
 
