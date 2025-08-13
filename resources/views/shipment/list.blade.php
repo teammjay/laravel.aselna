@@ -1107,6 +1107,7 @@
                 data: {
                     process_id: process_id,
                     order_id: shipmentId,
+                    store_id:$('#listing_store').val(),
                     "_token": '{{ csrf_token() }}'
                 },
                 global: false,
@@ -1114,6 +1115,7 @@
                     // Update the item status in the list
                     if (response.success) {
                         $(`tr[data-id="${shipmentId}"]`).remove();
+                        $('#totalRecords').html('Total : <b>' + response.remaining_count + '</b>');
 
                         $(`#item-${shipmentId}`).remove();
                     } else {

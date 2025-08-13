@@ -550,6 +550,7 @@ class ShipmentsController extends Controller
     public function shipSelected(Request $request)
     {
         $selected_shipment_id = $request->input('shipment_ids');
+        $store_id = $request->input('store_id');
 
         // For streaming response
         if ($request->input('process_id')) {
@@ -625,8 +626,16 @@ class ShipmentsController extends Controller
 
             $successRes = OrderOperationUtility::processShipment($operation, $request);
 
+            $remainingCount = OrderOperation::where('status', 0)
+                ->where('is_merged', false)
+                ->when($store_id, function ($query) use ($store_id) {
+                    return $query->where('store_id', $store_id);
+                })
+                ->count();
+
             return response()->json([
                 'success' => $successRes['success'],
+                'remaining_count' => $remainingCount,
                 'process_id' => $process_id,
                 'order_id' => $order_id,
                 'status' => $successRes['success'] ? 'completed' : 'error',
