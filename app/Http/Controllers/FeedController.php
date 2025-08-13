@@ -19,6 +19,13 @@ use Illuminate\Support\Facades\Log;
 
 class FeedController extends Controller
 {
+    Private $perPage = 20;
+
+    public function index(Request $request){
+        $stores = Store::with('storeType')->where('store_status', 1)->orderBy('name', 'asc')->get();
+
+        return view('feed.list', compact('stores'))->with('perPage', $this->perPage);
+    }
     public function create()
     {
 
@@ -32,8 +39,53 @@ class FeedController extends Controller
         return view('feed.create_feed', compact('stores', 'manufacturers', 'productTypes', 'deviceTypes', 'brands'));
     }
 
-    public function getFeeds(){
+    public function filter(Request $request){
 
+        $draw = $request['draw'];
+        $start = $request['start'];
+        $perPage = $request['length'];
+        $columnIndex = $request['order'][0]['column'];
+        $columnName = $request['columns'][$columnIndex]['data'];
+        $columnSortOrder = $request['order'][0]['dir'];
+
+        $query = Feed::with('store');
+
+        if ($request->has('store_id') && $request->store_id != '') {
+            $query->where('store_id', $request->store_id);
+        }
+
+        $totalRecords = $query->count();
+
+        $query->orderBy($columnName, $columnSortOrder);
+
+        $feeds = $query->skip($start)
+            ->take($perPage)
+            ->get();
+        $totalRecordwithFilter = $totalRecords;
+
+        $data = [];
+        if (!empty((array)$feeds)) {
+            foreach ($feeds as $feed) {
+
+                $data[] = array(
+                    "store" => (isset($feed->store)) ? $feed->store->name : 0,
+                    "marketplace" => isset($feed->marketplace) ? $feed->marketplace : '',
+                    "file_type" => $feed->file_type,
+                    "file_name" => $feed->file_name,
+                    "created_at" => date('Y-m-d H:i:s', strtotime($feed->created_at)),
+                    "action" => '<button class="btn btn-default download-feed" data-file="'.$feed->file_name.'" data-filepath="'.$feed->path.'"><i class="fas fa-fw fa-download"></i> Download</button>',
+                );
+            }
+        }
+
+        $response = array(
+            "draw" => intval($draw),
+            "iTotalRecords" => $totalRecordwithFilter,
+            "iTotalDisplayRecords" => $totalRecordwithFilter,
+            "aaData" => $data
+        );
+
+        return $response;
     }
 
     public function generateFeed(Request $request){
@@ -66,72 +118,89 @@ class FeedController extends Controller
 
         $products = $query->distinct()->get();
 
+        /*echo '<pre>';
+        print_r($products);
+        echo '</pre>';die;*/
+
 
         $store_id = $request->input('store_id');
-        $storeDetail = Store::findOrFail($store_id);
+        $storeDetail = Store::with('storeType')->where('id',$store_id)->first();
         $fileSystem = $storeDetail->fileSystem;
-
-        $columns = ['id', 'title', 'description', 'google product category', 'product type', 'link', 'image link', 'condition', 'availability', 'price', 'gtin', 'brand', 'mpn', 'item group id', 'gender', 'age group', 'color', 'size', 'shipping', 'additional_image_link', 'inventory', 'return_policy_info', 'custom_label_0', 'custom_label_1', 'custom_label_2', 'custom_label_3', 'custom_label_4', 'product_detail'];
-
         $feed_type = $request->input('feed_type');
         $fileType = $request->input('file_type');
-        $fname = date('Y-m-d-H-i-s');
-        $fileName = 'google_shopping_feed_' . $fname . '.'.$fileType;
-        $filePath = public_path('feeds/google-shopping/' . $fileName);
-        $stream = fopen('php://temp', 'w');
 
-        // Write the header row
-        fputcsv($stream, $columns);
+        if(isset($feed_type)){
+            switch(strtolower($feed_type)){
+                case 'google':
 
-        // Write product rows
-        foreach ($products as $itemDetail) {
+                    $columns = ['id', 'title', 'description', 'google product category', 'product type', 'link', 'image link', 'condition', 'availability', 'price', 'gtin', 'brand', 'mpn', 'item group id', 'gender', 'age group', 'color', 'size', 'shipping', 'additional_image_link', 'inventory', 'return_policy_info', 'custom_label_0', 'custom_label_1', 'custom_label_2', 'custom_label_3', 'custom_label_4', 'product_detail'];
 
-            $images = array();
 
-            $this->generateProductImages($itemDetail, $storeDetail);
-            $productImages = GenerateProductImage::where('product_id', $itemDetail->product_id)->get();
-            foreach ($productImages as $image) {
-                $images[] = $fileSystem->url_base_path . $image->path;
+                    $fname = date('Y-m-d-H-i-s');
+                    $fileName = 'google_shopping_feed_' . $fname . '.'.$fileType;
+                    $filePath = 'feeds/google-shopping/' . $fileName;
+                    $stream = fopen('php://temp', 'w');
+
+                    // Write the header row
+                    fputcsv($stream, $columns);
+
+                    // Write product rows
+                    foreach ($products as $itemDetail) {
+
+                        $images = array();
+
+                        $this->generateProductImages($itemDetail, $storeDetail);
+                        $productImages = GenerateProductImage::where('product_id', $itemDetail->product_id)->get();
+                        foreach ($productImages as $image) {
+                            $images[] = $fileSystem->url_base_path . $image->path;
+                        }
+
+                        $ptype_id = '';
+                        $typeDetail = ProductType::with('parent')->where('id', $itemDetail->product_type)->first();
+                        $product_type = $this->getCategoryPath($typeDetail);
+                        fputcsv($stream, [
+                            $itemDetail->product_sku,
+                            $itemDetail->product_title,
+                            $itemDetail->product_description,
+                            $ptype_id,
+                            $product_type,
+                            '',
+                            (!empty($images)) ? implode(',', $images) : '',
+                            (isset($itemDetail->condition)) ? $itemDetail->condition->name : '',
+                            'in stock',
+                            ($itemDetail->product_marketplace_price != '') ? $itemDetail->product_marketplace_price : $itemDetail->product_price,
+                            '',
+                            $itemDetail->Manufacturer->name,
+                            $itemDetail->product_sku,
+                            '',
+                            '',
+                            '',
+                            '',
+                            '',
+                            'US::Standard:4.9 USD',
+                            '',
+                            20,
+                            'return_policy_days: "30"',
+                            '',
+                            '',
+                            $itemDetail->product_title,
+                            '',
+                            $itemDetail->product_sku,
+                            ''
+                        ]);
+                    }
+                    rewind($stream);
+                    FileUtility::saveToFile(public_path('feeds/google-shopping/' . $fileName), stream_get_contents($stream));
+                    //Storage::put($filePath, stream_get_contents($stream));
+                    fclose($stream);
+
+                    break;
+                case 'microsoft':
+                    break;
             }
-
-            $ptype_id = '';
-            $typeDetail = ProductType::with('parent')->where('id', $itemDetail->product_type)->first();
-            $product_type = $this->getCategoryPath($typeDetail);
-            fputcsv($stream, [
-                $itemDetail->product_sku,
-                $itemDetail->product_title,
-                $itemDetail->product_description,
-                $ptype_id,
-                $product_type,
-                '',
-                (!empty($images)) ? implode(',', $images) : '',
-                (isset($itemDetail->condition)) ? $itemDetail->condition->name : '',
-                'in stock',
-                ($itemDetail->product_marketplace_price != '') ? $itemDetail->product_marketplace_price : $itemDetail->product_price,
-                '',
-                $itemDetail->Manufacturer->name,
-                $itemDetail->product_sku,
-                '',
-                '',
-                '',
-                '',
-                '',
-                'US::Standard:4.9 USD',
-                '',
-                20,
-                'return_policy_days: "30"',
-                '',
-                '',
-                $itemDetail->product_title,
-                '',
-                $itemDetail->product_sku,
-                ''
-            ]);
         }
-        rewind($stream);
-        FileUtility::saveToFile(public_path('feeds/google-shopping/' . $fname . '.'.$fileType), stream_get_contents($stream));
-        //Storage::put($filePath, stream_get_contents($stream));
-        fclose($stream);
+
+
 
         $feedData = [
             'store_id' => $store_id,
@@ -143,6 +212,12 @@ class FeedController extends Controller
         ];
 
         Feed::create($feedData);
+
+        if ($request->ajax()) {
+            return response()->json([
+                'success' => true
+            ]);
+        }
 
     }
 

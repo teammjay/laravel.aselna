@@ -675,7 +675,9 @@ Route::middleware('auth')->group(function () {
     });
 
     Route::controller(FeedController::class)->group(function () {
+        Route::get('/feed', 'index')->name('feed.list');
         Route::get('/feed/create', 'create')->name('feed.create');
+        Route::post('/feed/filter', 'filter')->name('feed.filter');
         Route::get('/feed/getfeeds', 'getFeeds')->name('feed.getfeeds');
         Route::post('/feed/generatefeed', 'generateFeed')->name('feed.generatefeed');
     });

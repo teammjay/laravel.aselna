@@ -176,10 +176,10 @@
                                 <label>Feed Type</label>
                                 <div class="form-group position-relative">
                                     <div>
-                                        <input type="radio" name="feed_type" value="1"> Google
+                                        <input type="radio" name="feed_type" value="Google"> Google
                                     </div>
                                     <div>
-                                        <input type="radio" name="feed_type" value="2"> Microsoft
+                                        <input type="radio" name="feed_type" value="Microsoft"> Microsoft
                                     </div>
                                 </div>
                             </div>
@@ -733,84 +733,8 @@
                     'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                 },
                 success: function (response) {
-                    if (response.html) {
-                        $('#feed-list').html(response.html);
-                        $('#total_search_feed').html(response.totalRecords+' rows');
-
-                        if(response.totalRecords > 0) {
-                            var proTable = $('#productsTable').DataTable({
-                                "lengthChange": false,
-                                "autoWidth": false,
-                                "processing": false,
-                                "serverSide": false,
-                                "searching": false,
-                                "paging": false,
-                                "info": false,
-                                "order": [[7, "desc"]],
-                                columnDefs: [
-                                    {
-                                        targets: [0],
-                                        orderable: false
-                                    }
-                                ]
-                            });
-                        }
-
-                    }
-                },
-                error: function (xhr) {
-                    /*if (xhr.responseJSON?.error) {
-                        $('#responseMessage').html('<p style="color:red;">' + xhr.responseJSON.error.image[0] + '</p>');
-                    }*/
-                },
-                complete: function () {
-                    $("#ajax-preloader").hide();
-                }
-            });
-        }
-
-        function loadFeeds() {
-            if($('#listing_store').val() === '') return;
-            const form = document.querySelector("#frmproductfilter");
-            let formData = new FormData(form);
-            $("#ajax-preloader").show();
-            if ($.fn.DataTable.isDataTable('#productsTable')) {
-                $('#productsTable').DataTable().clear().destroy();
-            }
-            $('.total_sel_product').html('(Selected <b>0</b> item)');
-            $.ajax({
-                url: "{{ route('feed.getfeeds') }}",
-                type: 'POST',
-                data: formData,
-                processData: false,
-                contentType: false,
-                headers: {
-                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                },
-                success: function (response) {
-                    if (response.html) {
-                        $('#feed-list').html(response.html);
-                        $('#total_search_feed').html(response.totalRecords+' rows');
-
-                        if(response.totalRecords > 0) {
-                            var proTable = $('#productsTable').DataTable({
-                                "lengthChange": false,
-                                "autoWidth": false,
-                                "processing": false,
-                                "serverSide": false,
-                                "searching": false,
-                                "paging": false,
-                                "info": false,
-                                "order": [[7, "desc"]],
-                                columnDefs: [
-                                    {
-                                        targets: [0],
-                                        orderable: false
-                                    }
-                                ]
-                            });
-                        }
-
+                    if (response.success) {
+                        window.location.href = '{{ route('feed.list') }}';
                     }
                 },
                 error: function (xhr) {
