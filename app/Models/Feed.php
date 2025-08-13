@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
 
 class Feed extends Model
 {
@@ -25,4 +26,8 @@ class Feed extends Model
     }
 
     protected $fillable = ['id','store_id','marketplace','file_type','file_name','path','created_by','updated_by','deleted_by','deleted_at','created_at','updated_at'];
+
+    public function store(){
+        return $this->belongsTo(Store::class,'store_id');
+    }
 }

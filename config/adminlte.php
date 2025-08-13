@@ -532,6 +532,22 @@ return [
             ]
         ],
         [
+            'text' => 'Feeds',
+            'icon' => 'fa fa-fw fa-list',
+            'submenu' => [
+                [
+                    'text' => 'Feeds',
+                    'url' => '/feed',
+                    'icon' => 'fa fa-fw fa-list',
+                ],
+                [
+                    'text' => 'Create',
+                    'url' => '/feed/create',
+                    'icon' => 'fa fa-fw fa-file',
+                ],
+            ]
+        ],
+        [
             'text' => 'Shipment',
             'url' => '/shipment',
             'icon' => 'fa fa-fw fa-shipping-fast',
