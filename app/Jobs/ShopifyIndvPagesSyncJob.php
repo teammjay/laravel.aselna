@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Constants\WebStorePageType;
 use App\Models\Store;
 use App\Models\StoreNavigationPage;
 use App\Services\Auth\ShopifyAuthService;
@@ -30,6 +31,7 @@ class ShopifyIndvPagesSyncJob implements ShouldQueue
     {
         $this->setVariables();
         $StoreNavigationPages = StoreNavigationPage::where('store_id', $this->storeID)
+            ->whereIn('page_type',[WebStorePageType::ALL_BRANDS, WebStorePageType::BRAND])
             ->get();
 
         foreach ($StoreNavigationPages as $StoreNavigationPage) {
