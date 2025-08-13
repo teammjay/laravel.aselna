@@ -84,6 +84,15 @@
                     </div>
 
                     <div class="form-group col-md-10">
+                        <label for="description">Description</label>
+                        <textarea class="form-control @error('description') is-invalid @enderror"
+                                  name="description" id="description" rows="3"
+                                  required>
+                            {{ old('description', $navigation_page->description ?? '') }}
+                        </textarea>
+                    </div>
+
+                    <div class="form-group col-md-10">
                         <label for="content">Content</label>
                         <textarea class="form-control @error('content') is-invalid @enderror"
                                   name="content" id="content" rows="8"
@@ -122,6 +131,8 @@
                 const storeId = $('#store_id').val();
                 const pageType = $('#page_type').val();
                 const templateId = $('#template_id').val();
+                const description = $('#description').val();
+                const title = $('#title').val();
                 if (!storeId || !pageType) {
                     alert('Please select a store and page type.');
                     return;
@@ -134,7 +145,9 @@
                         _token: '{{ csrf_token() }}',
                         store_id: storeId,
                         page_type: pageType,
-                        template_id: templateId
+                        template_id: templateId,
+                        description: description,
+                        title: title
                     },
                     success: function (response) {
                         $('#content').val(response.content);
