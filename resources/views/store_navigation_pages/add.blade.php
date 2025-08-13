@@ -112,12 +112,12 @@
                     </div>
 
                     <div class="form-group col-md-10">
-                        <label for="content">Content</label>
+                        <label for="generated_body">Content</label>
                         <textarea class="form-control @error('content') is-invalid @enderror"
-                                  name="content" id="content" rows="8"
-                                  required>{{ old('content', $navigation_page->content ?? '') }}</textarea>
-                        @if ($errors->has('content'))
-                            <span class="text-danger">{{ $errors->first('content') }}</span>
+                                  name="generated_body" id="generated_body" rows="8"
+                                  required>{{ old('generated_body', $navigation_page->generated_body ?? '') }}</textarea>
+                        @if ($errors->has('generated_body'))
+                            <span class="text-danger">{{ $errors->first('generated_body') }}</span>
                         @endif
                     </div>
                     <div class="form-group col-md-2 mt-4">
@@ -169,7 +169,7 @@
                         title: title
                     },
                     success: function (response) {
-                        $('#content').val(response.content);
+                        $('#generated_body').val(response.content);
                     },
                     error: function () {
                         alert('Failed to generate content. Please try again.');
