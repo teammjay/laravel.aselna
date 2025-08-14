@@ -83,6 +83,7 @@ class AccountTransactionController extends Controller
                 'transaction_id' => $transaction->transaction_id,
                 'amount' => $transaction->amount,
                 'address' => $transaction->address,
+                'status' => $transaction->status,
                 'canceled' => $transaction->canceled,
                 'canceled_date' => $transaction->canceled_date,
                 'created_at' => date('Y-m-d H:i:s',strtotime($transaction->created_at)),
