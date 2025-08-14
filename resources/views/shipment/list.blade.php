@@ -761,6 +761,7 @@
             }
         });
 
+        let shipment_details = [];
 
         $(document).on('click','#ship_all',function () {
             let shipment_ids = [];
@@ -768,6 +769,7 @@
             $('input[name="shipment_id[]"]').each(function () {
                 shipment_ids.push($(this).val())
             });
+            shipment_details = [];
 
             if(shipment_ids.length === 0){
                 alert('Please select shipment first.');
@@ -838,6 +840,7 @@
                         const process_id = response.process_id;
                         const total_count = response.total_count;
                         const shipment_ids = response.shipment_ids;
+                        shipment_details = response.shipment_details;
 
                         $('#progress-status').text(`Processing 0/${total_count} shipments`);
 
@@ -867,6 +870,8 @@
                 shipment_ids.push($(this).val())
             });
 
+            shipment_details = [];
+
             if(shipment_ids.length === 0){
                 alert('Please select shipment first.');
                 return false;
@@ -936,6 +941,7 @@
                         const process_id = response.process_id;
                         const total_count = response.total_count;
                         const shipment_ids = response.shipment_ids;
+                        shipment_details = response.shipment_details;
 
                         $('#progress-status').text(`Processing 0/${total_count} shipments`);
 
@@ -1079,6 +1085,7 @@
             }
 
             const shipmentId = shipment_ids[current_index];
+            const shipmentDetail = shipment_details.find(detail => detail.id === shipmentId);
 
             // Update the progress UI
             const progress = Math.round(((current_index) / total_count) * 100);
@@ -1094,7 +1101,7 @@
             // Add item to list
             $('#progress-items-body').append(`
                 <tr id="item-${shipmentId}">
-                    <td>Order #${shipmentId}</td>
+                    <td>Order #${shipmentDetail['order_id']}</td>
                     <td><span class="badge badge-warning">Processing</span></td>
                     <td id="message-${shipmentId}">Processing shipment...</td>
                 </tr>
@@ -1107,6 +1114,7 @@
                 data: {
                     process_id: process_id,
                     order_id: shipmentId,
+                    store_id:$('#listing_store').val(),
                     "_token": '{{ csrf_token() }}'
                 },
                 global: false,
@@ -1114,6 +1122,7 @@
                     // Update the item status in the list
                     if (response.success) {
                         $(`tr[data-id="${shipmentId}"]`).remove();
+                        $('#totalRecords').html('Total : <b>' + response.remaining_count + '</b>');
 
                         $(`#item-${shipmentId}`).remove();
                     } else {

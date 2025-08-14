@@ -550,6 +550,7 @@ class ShipmentsController extends Controller
     public function shipSelected(Request $request)
     {
         $selected_shipment_id = $request->input('shipment_ids');
+        $store_id = $request->input('store_id');
 
         // For streaming response
         if ($request->input('process_id')) {
@@ -625,8 +626,16 @@ class ShipmentsController extends Controller
 
             $successRes = OrderOperationUtility::processShipment($operation, $request);
 
+            $remainingCount = OrderOperation::where('status', 0)
+                ->where('is_merged', false)
+                ->when($store_id, function ($query) use ($store_id) {
+                    return $query->where('store_id', $store_id);
+                })
+                ->count();
+
             return response()->json([
                 'success' => $successRes['success'],
+                'remaining_count' => $remainingCount,
                 'process_id' => $process_id,
                 'order_id' => $order_id,
                 'status' => $successRes['success'] ? 'completed' : 'error',
@@ -637,11 +646,24 @@ class ShipmentsController extends Controller
         // Initial request - just return the IDs that need to be processed
         if (count($selected_shipment_id ?? []) > 0) {
             $process_id = uniqid('ship_');
+            $shipmentInfos = OrderOperation::with('order', 'store', 'store.storeType')
+                ->whereIn('id', $selected_shipment_id)
+                ->get();
+            $shipmentDetails = [];
+            foreach ($shipmentInfos as $shipmentInfo) {
+                $shipmentDetails[] = [
+                    'id' => $shipmentInfo->id,
+                    'order_id' => $shipmentInfo->order->order_id ?? '',
+                    'store_name' => $shipmentInfo->store->name ?? '',
+                    'store_type' => $shipmentInfo->store->storeType->name ?? '',
+                ];
+            }
 
             return response()->json([
                 'success' => true,
                 'process_id' => $process_id,
                 'shipment_ids' => $selected_shipment_id,
+                'shipment_details' => $shipmentDetails,
                 'total_count' => count($selected_shipment_id)
             ]);
         }

@@ -62,6 +62,7 @@ use App\Http\Controllers\HdTicketLabelController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ResetPasswordController;
 use App\Http\Controllers\StorePagesController;
+use App\Http\Controllers\FeedController;
 use App\Services\Auth\EbayAuthService;
 use App\Http\Controllers\LogisticCenterDocumentController;
 use App\Http\Controllers\StoreNavigationPagesController;
@@ -669,8 +670,17 @@ Route::middleware('auth')->group(function () {
         Route::post('/store_navigation_page/add', 'store')->name('store_navigation_page.store');
         Route::get('/store_navigation_page/edit/{id}', 'edit')->name('store_navigation_page.edit');
         Route::post('/store_navigation_page/filter', 'filter')->name('store_navigation_page.filter');
+        Route::post('/store_navigation_page/generate_content', 'generateContent')->name('store_navigation_page.generate_content');
         Route::post('/store_navigation_page/edit/{id}', 'update')->name('store_navigation_page.update');
         Route::get('/store_navigation_page/delete/{id}', 'destroy')->name('store_navigation_page.delete');
+    });
+
+    Route::controller(FeedController::class)->group(function () {
+        Route::get('/feed', 'index')->name('feed.list');
+        Route::get('/feed/create', 'create')->name('feed.create');
+        Route::post('/feed/filter', 'filter')->name('feed.filter');
+        Route::get('/feed/getfeeds', 'getFeeds')->name('feed.getfeeds');
+        Route::post('/feed/generatefeed', 'generateFeed')->name('feed.generatefeed');
     });
 
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');

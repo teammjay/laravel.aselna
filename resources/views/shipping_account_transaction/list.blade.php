@@ -157,6 +157,7 @@
                 <th>Transaction ID</th>
                 <th>Amount</th>
                 <th>Address</th>
+                <th>Status</th>
                 <th>Cancelled</th>
                 <th>Cancelled Date</th>
                 <th>Created Date</th>
@@ -285,7 +286,7 @@
                         });
                     }
                 },
-                "order": [[ 8, "desc" ]],
+                "order": [[ 9, "desc" ]],
                 columns: [
                     {data: 'shipping_account', name: 'shipping_account',orderable: false, searchable: false},
                     {data: 'tracking_number', name: 'tracking_number'},
@@ -293,6 +294,7 @@
                     {data: 'transaction_id', name: 'transaction_id'},
                     {data: 'amount', name: 'amount'},
                     {data: 'address', name: 'address'},
+                    {data: 'status', name: 'status'},
                     {data: 'canceled', name: 'canceled',
                         render: function (data, type, row) {
                             return `<input type="checkbox" name="canceled" disabled ${data ? 'checked' : ''} />`;

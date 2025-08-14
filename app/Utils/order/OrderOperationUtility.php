@@ -7,6 +7,7 @@ use App\Constants\OrderOperationType;
 use App\Constants\OrderStatus;
 use App\Constants\ShippingLabelCreationType;
 use App\Constants\WeightUnit;
+use App\Models\AccountTransaction;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\OrderOperation;
@@ -22,7 +23,7 @@ use Illuminate\Support\Facades\Log;
 
 class OrderOperationUtility
 {
-    public static function processShipment($orderOperation, $request) : array
+    public static function processShipment($orderOperation, $request): array
     {
         if (isset($orderOperation->order)) {
             if (isset($orderOperation->order->contingent) && $orderOperation->order->contingent) {
@@ -34,7 +35,7 @@ class OrderOperationUtility
 
         $label_generation = $request->input('label_generation');
         $replacement = $request->input('replacement');
-        if($label_generation) {
+        if ($label_generation) {
             $carrier_id = $request->input('carrier_name');
             $carrier_package = $request->input('carrier_package');
             $carrier_service_id = $request->input('shipping_carrier_service');
@@ -76,12 +77,12 @@ class OrderOperationUtility
 
         Log::info('Order Operation Id :: ' . $orderOperation->id);
 
-        $orderOperation = OrderOperation::with('order', 'order.orderItem', 'order.customer', 'order.customerAddress', 'store', 'store.storeType', 'carrier', 'shipFrom', 'shipFrom.returnAddress', 'shipFrom.fromAddress','operationItem','operationItem.orderItem')->where('id', $orderOperation->id)->first();
+        $orderOperation = OrderOperation::with('order', 'order.orderItem', 'order.customer', 'order.customerAddress', 'store', 'store.storeType', 'carrier', 'shipFrom', 'shipFrom.returnAddress', 'shipFrom.fromAddress', 'operationItem', 'operationItem.orderItem')->where('id', $orderOperation->id)->first();
 
-        return self::instantSynchronization($orderOperation,$replacement);
+        return self::instantSynchronization($orderOperation, $replacement);
     }
 
-    public static function instantSynchronization($orderOperation,$replacement='') : array
+    public static function instantSynchronization($orderOperation, $replacement = ''): array
     {
         $operationType = $orderOperation->operation_type;
         Log::info('Instant synchronization for operation type: ' . $operationType);
@@ -238,14 +239,25 @@ class OrderOperationUtility
                 $result = self::waitForOperationCompleted($response['trackingNumber']);
 
                 if (!$result) {
+                    DB::connection('aselna_printer_db')->table('PrintJobs')
+                        ->where('fileName', $response['trackingNumber'] . '.txt')
+                        ->update(['status' => 'failed']);
+
+                   // AccountTransaction::where('tracking_number', $response['trackingNumber'])
+                      //  ->update(['status' => 'failed']);
+
                     Log::error('Label creation operation did not complete successfully for order operation: ' . $orderOperation->id);
-                    return ['Error creating label. Operation did not complete successfully.'];
+                    return ['Error creating label. Printing Failed.'];
+                } else {
+                    //AccountTransaction::where('tracking_number', $response['trackingNumber'])
+                        //->update(['status' => 'completed']);
                 }
             }
+
             $orderOperation->tracking_number = $response['trackingNumber'];
             $orderOperation->save();
 
-            self::updateMergedOrderIfExists($orderOperation,$response['trackingNumber']);
+            self::updateMergedOrderIfExists($orderOperation, $response['trackingNumber']);
 
             return [];
         } else {
@@ -266,11 +278,19 @@ class OrderOperationUtility
             if ($printJob > 0) {
                 return true;
             }
+
+            $printJob = DB::connection('aselna_printer_db')->table('PrintJobs')
+                ->where('fileName', $trackingNumber . '.txt')
+                ->where('status', 'failed')->count();
+
+            if ($printJob > 0) {
+                return false;
+            }
             sleep($waitSeconds);
             $retry++;
         } while ($retry < $maxRetries);
 
-        return false;
+        return true;
     }
 
     public static function setRubberStampInfo($orderOperation, &$shipmentDetails)
@@ -526,7 +546,7 @@ class OrderOperationUtility
                         $item_qty = $o_item->quantity;
                         $orderItem = OrderItem::findOrFail($o_item->id);
                         $orderItem->update(['shipped_quantity' => $item_qty]);
-                        if($orderOperation->operation_type == OrderOperationType::OrderReplacement){
+                        if ($orderOperation->operation_type == OrderOperationType::OrderReplacement) {
                             $orderItem->update(['replaced_quantity' => $item_qty]);
                         }
                     }
@@ -577,7 +597,7 @@ class OrderOperationUtility
                 $shopifyServie = new ShopifyService($store->secret_key, $store->service_url);
                 $response = $shopifyServie->refundOrder($shipmentDetail->order->order_id, $store);
 
-                Log::info('Shopify order refunded response:'.json_encode($response));
+                Log::info('Shopify order refunded response:' . json_encode($response));
 
                 if ($response) {
                     //echo "Order canceled successfully!";
@@ -714,7 +734,7 @@ class OrderOperationUtility
         }
     }
 
-    private static function createShipment($orderOperation) : array
+    private static function createShipment($orderOperation): array
     {
         // Start database transaction
         DB::beginTransaction();
@@ -724,9 +744,8 @@ class OrderOperationUtility
             if ($orderOperation->label_creation_type == ShippingLabelCreationType::CreateLabel) {
                 $errors = self::createLabel($orderOperation);
                 if (isset($errors) && !empty($errors)) {
-                    Log::error('Error creating label: ' . $errors);
-                    DB::rollBack();
-                    throw new \Exception('Error creating label: ' . json_encode($errors));
+                    //DB::rollBack();
+                    throw new \Exception('Error creating label: Printing failed');
                 }
             }
             $store = $orderOperation->store;
@@ -755,8 +774,8 @@ class OrderOperationUtility
                             }
                         }
 
-                        $orderOperations = OrderOperation::with('order','order.orderItem')->where('is_merged',true)
-                            ->where('merged_with',$orderOperation->id)
+                        $orderOperations = OrderOperation::with('order', 'order.orderItem')->where('is_merged', true)
+                            ->where('merged_with', $orderOperation->id)
                             ->get();
 
                         foreach ($orderOperations as $oop) {
@@ -777,7 +796,7 @@ class OrderOperationUtility
                                     }
                                 }
                                 $success = true;
-                            }else{
+                            } else {
                                 $success = false;
                             }
                         }
@@ -788,13 +807,13 @@ class OrderOperationUtility
 
                 case 'walmart':
                     $walmartServie = new WalmartService();
-                    $is_success = $walmartServie->shipmentUpdate($orderOperation,$orderOperation, $store);
-                    $orderOperations = OrderOperation::where('is_merged',true)
-                        ->where('merged_with',$orderOperation->id)
+                    $is_success = $walmartServie->shipmentUpdate($orderOperation, $orderOperation, $store);
+                    $orderOperations = OrderOperation::where('is_merged', true)
+                        ->where('merged_with', $orderOperation->id)
                         ->get();
 
                     foreach ($orderOperations as $o_item) {
-                        $walmartServie->shipmentUpdate($orderOperation,$o_item, $store);
+                        $walmartServie->shipmentUpdate($orderOperation, $o_item, $store);
                     }
                     $success = $is_success;
                     break;
@@ -835,11 +854,11 @@ class OrderOperationUtility
                             }
                         }
 
-                        $orderOperations = OrderOperation::with('order','order.orderItem','operationItem')->where('is_merged',true)
-                            ->where('merged_with',$orderOperation->id)
+                        $orderOperations = OrderOperation::with('order', 'order.orderItem', 'operationItem')->where('is_merged', true)
+                            ->where('merged_with', $orderOperation->id)
                             ->get();
 
-                        if(count($orderOperations ?? []) > 0) {
+                        if (count($orderOperations ?? []) > 0) {
                             foreach ($orderOperations as $oop) {
                                 $payload2 = [
                                     "shippedDate" => now()->toIso8601ZuluString(),
@@ -941,17 +960,17 @@ class OrderOperationUtility
             'address3' => $orderOperation->order->customerAddress->address_line_3 ?? '',
             'city' => $orderOperation->order->customerAddress->city,
             'state' => $orderOperation->order->customerAddress->state,
-            'postalCode' => explode('-',$orderOperation->order->customerAddress->zip ?? '')[0],
+            'postalCode' => explode('-', $orderOperation->order->customerAddress->zip ?? '')[0],
             'country' => $orderOperation->order->customerAddress->country,
             'phone' => $orderOperation->order->customerAddress->phone,
             'comapany' => $orderOperation->order->customerAddress->company ?? ''
         ];
     }
 
-    private static function updateMergedOrderIfExists($orderOperation,$tracking_number)
+    private static function updateMergedOrderIfExists($orderOperation, $tracking_number)
     {
-        $orderOperations = OrderOperation::where('is_merged',true)
-            ->where('merged_with',$orderOperation->id)
+        $orderOperations = OrderOperation::where('is_merged', true)
+            ->where('merged_with', $orderOperation->id)
             ->get();
 
         foreach ($orderOperations as $tempOrderOperation) {

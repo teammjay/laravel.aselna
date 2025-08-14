@@ -54,4 +54,18 @@ class StoreNavigationPage extends Model
         return $this->belongsTo(Store::class, 'store_id', 'id');
     }
 
+    public function brand()
+    {
+        return $this->belongsTo(Brand::class, 'device_brand_id', 'id');
+    }
+
+    public function device()
+    {
+        return $this->belongsTo(Device::class, 'device_id', 'id');
+    }
+
+    public function productType()
+    {
+        return $this->belongsTo(ProductType::class, 'product_type_id', 'id');
+    }
 }
