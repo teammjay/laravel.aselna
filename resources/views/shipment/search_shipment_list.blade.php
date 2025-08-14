@@ -12,10 +12,11 @@
         @endphp
         <tr data-id="{{ $shipment['oid'] }}" data-status="{{ $shipment['status'] }}" class="shipment-row {{ ($moreQty > 0) ? 'bg-red' : '' }}">
 
-            <td>
+            {{--<td>
                 <button type="button" class="btn btn-warning show-detail" data-id="{{ $shipment['oid'] }}">Show Detail</button><input type="checkbox" class="pro-id" name="shipment_id[]" value="{{ $shipment['oid'] }}" style="visibility:hidden;">
-            </td>
+            </td>--}}
             <td>
+                <input type="checkbox" class="pro-id" name="shipment_id[]" value="{{ $shipment['oid'] }}" style="visibility:hidden;">
                 <div class="d-flex" style="gap:5px">
                 @if(!empty($shipment['image']))
                     @foreach($shipment['image'] as $key=>$img)
@@ -33,6 +34,7 @@
             <td>{{ $shipment['carrier_service'] }}</td>
             <td>{{ $shipment['store'] }}</td>
             <td>{!! $shipment['order_id'] !!}</td>
+            <td>{!! $shipment['purchase_order_id'] !!}</td>
             <td>{{ $shipment['order_date'] }}</td>
             <td>{{ $shipment['expected_shipment_date'] }}</td>
             <td>{{ $shipment['product_code'] }}</td>
@@ -46,6 +48,6 @@
     @endforeach
 @else
     <tr class="text-center">
-        <td colspan="12">No shipment found</td>
+        <td colspan="11">No shipment found</td>
     </tr>
 @endif

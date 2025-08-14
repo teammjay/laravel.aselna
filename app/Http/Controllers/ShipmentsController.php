@@ -173,12 +173,14 @@ class ShipmentsController extends Controller
                     }
                 }
                 $orderIds = isset($order->order) ? [$order->order->order_id] : [];
+                $porderIds = isset($order->order) ? [$order->order->purchase_order_id] : [];
                 if (isset($order->orderIds)) {
                     $mergedOrderIds = json_decode($order->orderIds, true) ?? [];
                     foreach ($mergedOrderIds as $oid) {
                         $orderInfo = Order::where('id', $oid)->first();
                         if ($orderInfo) {
                             $orderIds[] = $orderInfo->order_id;
+                            $porderIds[] = $orderInfo->purchase_order_id;
                         }
                     }
                 }
@@ -199,6 +201,7 @@ class ShipmentsController extends Controller
                     "carrier_service" => isset($order->carrierService) ? $order->carrierService->ShippingCarrier->name . ' ' . $order->carrierService->name : '',
                     "store" => $order->store->name . ' - ' . $storeType,
                     "order_id" => implode(', <br/> ', $orderIds),
+                    "purchase_order_id" => implode(', <br/> ', $porderIds),
                     "order_date" => isset($order->order) ? $order->order->order_date : '',
                     "expected_shipment_date" => isset($order) ? $order->expected_shipment_date : '',
                     "product_code" => $code,

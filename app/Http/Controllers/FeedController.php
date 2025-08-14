@@ -166,7 +166,7 @@ class FeedController extends Controller
                             $product_type,
                             '',
                             (!empty($images)) ? implode(',', $images) : '',
-                            (isset($itemDetail->condition)) ? $itemDetail->condition->name : '',
+                            (!empty($itemDetail->condition)) ? $itemDetail->condition->name : '',
                             'in stock',
                             ($itemDetail->product_marketplace_price != '') ? $itemDetail->product_marketplace_price : $itemDetail->product_price,
                             '',
