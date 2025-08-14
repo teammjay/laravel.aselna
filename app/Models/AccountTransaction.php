@@ -26,7 +26,7 @@ class AccountTransaction extends Model
     }
 
 
-    protected $fillable = ['id','shipping_account_id','tracking_number','transaction_date','transaction_id','amount','address','canceled','canceled_date','created_by','created_at','updated_at'];
+    protected $fillable = ['id','shipping_account_id','tracking_number','transaction_date','transaction_id','amount','address','status','canceled','canceled_date','created_by','created_at','updated_at'];
 
     public function shippingAccount(){
         return $this->belongsTo(ShippingAccount::class,'shipping_account_id');

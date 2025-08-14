@@ -7,6 +7,7 @@ use App\Constants\OrderOperationType;
 use App\Constants\OrderStatus;
 use App\Constants\ShippingLabelCreationType;
 use App\Constants\WeightUnit;
+use App\Models\AccountTransaction;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\OrderOperation;
@@ -234,9 +235,6 @@ class OrderOperationUtility
             unset($orderOperation->shipping_solution_carrier_package);
             unset($orderOperation->shipping_solution_carrier_service);
 
-            $orderOperation->tracking_number = $response['trackingNumber'];
-            $orderOperation->save();
-
             if (!OrderOperationType::isReturn($operation_type)) {
                 $result = self::waitForOperationCompleted($response['trackingNumber']);
 
@@ -244,10 +242,20 @@ class OrderOperationUtility
                     DB::connection('aselna_printer_db')->table('PrintJobs')
                         ->where('fileName', $response['trackingNumber'] . '.txt')
                         ->update(['status' => 'failed']);
+
+                    AccountTransaction::where('tracking_number', $response['trackingNumber'])
+                        ->update(['status' => 'completed']);
+
                     Log::error('Label creation operation did not complete successfully for order operation: ' . $orderOperation->id);
-                    return ['Error creating label. Operation did not complete successfully.'];
+                    return ['Error creating label. Printing Failed.'];
+                } else {
+                    AccountTransaction::where('tracking_number', $response['trackingNumber'])
+                        ->update(['status' => 'completed']);
                 }
             }
+
+            $orderOperation->tracking_number = $response['trackingNumber'];
+            $orderOperation->save();
 
             self::updateMergedOrderIfExists($orderOperation, $response['trackingNumber']);
 
@@ -728,8 +736,8 @@ class OrderOperationUtility
             if ($orderOperation->label_creation_type == ShippingLabelCreationType::CreateLabel) {
                 $errors = self::createLabel($orderOperation);
                 if (isset($errors) && !empty($errors)) {
-                    DB::rollBack();
-                    throw new \Exception('Error creating label: ' . json_encode($errors));
+                    //DB::rollBack();
+                    throw new \Exception('Error creating label: Printing failed');
                 }
             }
             $store = $orderOperation->store;
