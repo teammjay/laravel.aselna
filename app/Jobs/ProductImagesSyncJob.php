@@ -37,10 +37,10 @@ class ProductImagesSyncJob implements ShouldQueue
         $productImagesQ = DB::connection('fonus_db')
             ->table('tbl_product_images')
             ->where('picture_type_id', '=', '1')
-            ->orderBy('product_id');
+            ->orderBy('product_id','desc');
 
         if (env('APP_ENV') === 'local') {
-//            $productImagesQ->limit(40);
+            $productImagesQ->limit(40);
         }
 
         $productImagesQ->chunk(1000, function ($productImages) {
@@ -76,23 +76,25 @@ class ProductImagesSyncJob implements ShouldQueue
 
         //check if file exists in storage
         try {
-            if (!file_exists(storage_path('app/public/product_images/' . $productImage->picture_name))) {
+            if (file_exists(storage_path('app/public/product_images/' . $productImage->picture_name))) {
+                $mainImageDetail = SysFile::where('name', $productImage->picture_name)->first();
+            }
+            if(!isset($mainImageDetail)) {
                 Log::info('ProductImagesSyncJob: ' . $productImage->picture_name);
                 $imagePath = 'https://fonusaccessory.com/inv/inv_images/main_product_images/' . $productImage->picture_name;
                 $mainImageDetail = FileUtility::saveImage($imagePath, 'product_images', $productImage->picture_name);
-            } else {
-                $mainImageDetail = SysFile::where('name', $productImage->picture_name)->first();
             }
         } catch (Exception $e) {
             Log::error('ProductImagesSyncJob: ' . $e->getMessage());
         }
 
         try {
-            if (!file_exists(storage_path('app/public/product_images/' . $productImage->thumbnail_picture_name))) {
+            if (file_exists(storage_path('app/public/product_images/' . $productImage->thumbnail_picture_name))) {
+                $thumbnailImageDetail = SysFile::where('name', $productImage->thumbnail_picture_name)->first();
+            }
+            if(!isset($thumbnailImageDetail)) {
                 $imageThumbnail = 'https://fonusaccessory.com/inv/inv_images/main_product_images/' . $productImage->thumbnail_picture_name;
                 $thumbnailImageDetail = FileUtility::saveImage($imageThumbnail, 'product_images', $productImage->thumbnail_picture_name);
-            } else {
-                $thumbnailImageDetail = SysFile::where('name', $productImage->thumbnail_picture_name)->first();
             }
         } catch (Exception $e) {
             Log::error('ProductImagesSyncJob: ' . $e->getMessage());
@@ -105,16 +107,20 @@ class ProductImagesSyncJob implements ShouldQueue
         }
 
 
-        ProductImages::updateOrCreate([
-            'product_id' => $product->product_id,
-            'sort_order' => $productImage->picture_id
-        ], [
-            'product_id' => $product->product_id,
-            'main_image' => $productImage->picture_id === 1 ? true : false,
-            'image' => $mainImageDetail ? $mainImageDetail->id : '',
-            'thumbnail_image' => $thumbnailImageDetail ? $thumbnailImageDetail->id : null,
-            'sort_order' => $productImage->picture_id
-        ]);
+        try {
+            ProductImages::updateOrCreate([
+                'product_id' => $product->product_id,
+                'sort_order' => $productImage->picture_id
+            ], [
+                'product_id' => $product->product_id,
+                'main_image' => $productImage->picture_id === 1 ? true : false,
+                'image' => $mainImageDetail ? $mainImageDetail->id : '',
+                'thumbnail_image' => $thumbnailImageDetail ? $thumbnailImageDetail->id : null,
+                'sort_order' => $productImage->picture_id
+            ]);
+        } catch (Exception $e) {
+            Log::error('ProductImagesSyncJob: ' . $e->getMessage());
+        }
     }
 
     private function createProductImageFromEasyEsale(mixed $productImage)
