@@ -37,14 +37,11 @@ class LogisticCenterDocumentController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'client' => 'required',
             'enabled' => 'required|boolean',
             'document_type' => 'required|integer',
             'printer_id' => 'required|string',
             'shipping_from_location_id' => 'required|string',
             'page_size_id' => 'required|string',
-            'two_per_page' => 'required|boolean',
-            'pdf_action' => 'nullable|integer',
             'rotate' => 'required|integer',
         ]);
 
@@ -78,14 +75,11 @@ class LogisticCenterDocumentController extends Controller
     public function update(Request $request, string $id)
     {
         $validated = $request->validate([
-            'client' => 'required',
             'enabled' => 'required|boolean',
             'document_type' => 'required|integer',
             'printer_id' => 'required|string',
             'shipping_from_location_id' => 'required|string',
             'page_size_id' => 'required|string',
-            'two_per_page' => 'required|boolean',
-            'pdf_action' => 'nullable|integer',
             'rotate' => 'required|integer',
         ]);
 
