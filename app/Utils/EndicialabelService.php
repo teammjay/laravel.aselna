@@ -75,8 +75,6 @@ class EndicialabelService
 
         Log::info('Tracking Number: ' . $trackingNumber);
         $orderOperation = OrderOperation::findOrFail($orderOperationId);
-        $orderOperation->tracking_number = $trackingNumber;
-        $orderOperation->save();
 
         /* create transaction entry*/
         if (env('APP_ENV') !== 'local') {

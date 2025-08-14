@@ -40,7 +40,7 @@
                                 </div>
                                 <div class="form-group">
                                     <label for="store_id">Store</label>
-                                    <select class="form-control @error('store_id') is-invalid @enderror" name="store_id" id="store_id" required>
+                                    <select class="form-control @error('store_id') is-invalid @enderror" name="store_id" id="store_id">
                                         <option value="">--</option>
                                         @if(count($stores ?? []) > 0)
                                             @foreach($stores as $store)
