@@ -243,14 +243,14 @@ class OrderOperationUtility
                         ->where('fileName', $response['trackingNumber'] . '.txt')
                         ->update(['status' => 'failed']);
 
-                    AccountTransaction::where('tracking_number', $response['trackingNumber'])
-                        ->update(['status' => 'failed']);
+                   // AccountTransaction::where('tracking_number', $response['trackingNumber'])
+                      //  ->update(['status' => 'failed']);
 
                     Log::error('Label creation operation did not complete successfully for order operation: ' . $orderOperation->id);
                     return ['Error creating label. Printing Failed.'];
                 } else {
-                    AccountTransaction::where('tracking_number', $response['trackingNumber'])
-                        ->update(['status' => 'completed']);
+                    //AccountTransaction::where('tracking_number', $response['trackingNumber'])
+                        //->update(['status' => 'completed']);
                 }
             }
 
