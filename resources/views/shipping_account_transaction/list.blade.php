@@ -286,7 +286,7 @@
                         });
                     }
                 },
-                "order": [[ 8, "desc" ]],
+                "order": [[ 9, "desc" ]],
                 columns: [
                     {data: 'shipping_account', name: 'shipping_account',orderable: false, searchable: false},
                     {data: 'tracking_number', name: 'tracking_number'},

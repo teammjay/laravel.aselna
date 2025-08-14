@@ -746,7 +746,7 @@
                     //processData: false,
                     //contentType: false
                 },
-                "order": [[10, "desc"]],
+                "order": [[11, "desc"]],
                 'columns': [
                     {data: 'product_id'},
                     {data: 'product_image_url'},
