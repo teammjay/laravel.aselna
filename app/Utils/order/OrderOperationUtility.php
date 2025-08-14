@@ -278,11 +278,19 @@ class OrderOperationUtility
             if ($printJob > 0) {
                 return true;
             }
+
+            $printJob = DB::connection('aselna_printer_db')->table('PrintJobs')
+                ->where('fileName', $trackingNumber . '.txt')
+                ->where('status', 'failed')->count();
+
+            if ($printJob > 0) {
+                return false;
+            }
             sleep($waitSeconds);
             $retry++;
         } while ($retry < $maxRetries);
 
-        return false;
+        return true;
     }
 
     public static function setRubberStampInfo($orderOperation, &$shipmentDetails)
