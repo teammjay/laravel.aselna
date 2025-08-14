@@ -245,7 +245,7 @@ class OrderOperationUtility
                         ->where('fileName', $response['trackingNumber'] . '.txt')
                         ->update(['status' => 'failed']);
                     Log::error('Label creation operation did not complete successfully for order operation: ' . $orderOperation->id);
-                    return ['Error creating label. Operation did not complete successfully.'];
+                    return ['Error creating label. Printing Failed.'];
                 }
             }
 
@@ -729,7 +729,7 @@ class OrderOperationUtility
                 $errors = self::createLabel($orderOperation);
                 if (isset($errors) && !empty($errors)) {
                     DB::rollBack();
-                    throw new \Exception('Error creating label: ' . json_encode($errors));
+                    throw new \Exception('Error creating label: Printing failed');
                 }
             }
             $store = $orderOperation->store;
