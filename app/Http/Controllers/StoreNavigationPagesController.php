@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Constants\StorePageType;
 use App\Constants\WebStorePageType;
 use App\Models\Brand;
+use App\Models\Device;
+use App\Models\ProductType;
 use App\Models\Store;
 use App\Models\StoreNavigationPage;
 use App\Models\StorePageTemplate;
@@ -74,7 +76,9 @@ class StoreNavigationPagesController extends Controller
         $stores = Store::with('storeType')->where('store_status', 1)->orderBy('name', 'asc')->get();
         $brands = Brand::where('status', 1)->orderBy('name', 'asc')->get();
         $pageTemplates = StorePageTemplate::all();
-        return view('store_navigation_pages.add', compact('stores', 'pageTemplates', 'brands'));
+        $devices = Device::all();
+        $productTypes = ProductType::orderBy('name')->get();
+        return view('store_navigation_pages.add', compact('stores', 'pageTemplates', 'brands', 'devices', 'productTypes'));
     }
 
     /**
@@ -106,7 +110,9 @@ class StoreNavigationPagesController extends Controller
         $stores = Store::with('storeType')->where('store_status', 1)->orderBy('name', 'asc')->get();
         $brands = Brand::where('status', 1)->orderBy('name', 'asc')->get();
         $pageTemplates = StorePageTemplate::all();
-        return view('store_navigation_pages.add', compact('navigation_page', 'stores', 'pageTemplates', 'brands'));
+        $devices = Device::all();
+        $productTypes = ProductType::orderBy('name')->get();
+        return view('store_navigation_pages.add', compact('navigation_page', 'stores', 'pageTemplates', 'brands', 'devices', 'productTypes'));
     }
 
     //generateContent
@@ -123,11 +129,11 @@ class StoreNavigationPagesController extends Controller
 
         $template = StorePageTemplate::findOrFail($request->template_id);
 
-        $links = $this->getLinks($request->store_id, $request->page_type);
+        $links = $this->getLinks($request->store_id, $request->page_type, $request);
 
         $data = [
             'description' => $request->description ?? '',
-            'title' => $request->title ?? '',
+            'title' => $request->title ?? $links['final_title'],
             'name' => $request->name ?? '',
             'popularLinks' => $links['popular_link'] ?? [],
             'otherLinks' => $links['other_link'] ?? [],
@@ -183,69 +189,16 @@ class StoreNavigationPagesController extends Controller
         }
     }
 
-    private function getLinks(mixed $store_id, mixed $page_type)
+    private function getLinks(mixed $store_id, mixed $page_type, Request $request): array
     {
         $finalLinkArray = [];
         switch ($page_type) {
-//            case WebStorePageType::ALL_PRODUCT_TYPES:
-//                $title = "Product Category";
-//                $name = $title;
-//                $detailIdFunction = function ($x) {
-//                    return $x->getProductType()->getId();
-//                };
-//                $linkFunction = function ($x) use ($productTypeCategoryPages, $skipDevicePage) {
-//                    return new PageExternalLink(
-//                        $x->getPageId(),
-//                        $x->getProductType()->getName(),
-//                        getImageUrl($productTypeCategoryPages[$x->getProductType()->getId()]->getStoreImageUrl()),
-//                        ($skipDevicePage ? "/collections/" : "/pages/") . $x->getUrlPath(),
-//                        true
-//                    );
-//                };
-//                $alwaysUpdate = true;
-//                $popularPage = true;
-//                break;
-//
-//            case WebStorePageType::PRODUCT_TYPE_BRANDS:
-//                $productType = $productTypeCategoryPage->getProductType();
-//                $title = $productType->getName();
-//                $name = $title;
-//                $detailIdFunction = function ($x) {
-//                    return $x->getDeviceBrand()->getId();
-//                };
-//                $linkFunction = function ($x) use ($brandCategoryPages) {
-//                    return new PageExternalLink(
-//                        $x->getPageId(),
-//                        $x->getDeviceBrand()->getName(),
-//                        getImageUrl($brandCategoryPages[$x->getDeviceBrand()->getId()]->getStoreImageUrl()),
-//                        "/pages/" . $x->getUrlPath(),
-//                        $x->getDeviceBrand()->getSortOrder() <= 10
-//                    );
-//                };
-//                $popularPage = true;
-//                break;
-//
-//            case WebStorePageType::PRODUCT_TYPE_BRAND_DEVICES:
-//                $productType = $productTypeCategoryPage->getProductType();
-//                $brand = $brandCategoryPage->getDeviceBrand();
-//                $title = $productType->getName() . " for " . $brand->getName();
-//                $name = $brand->getName();
-//                $detailIdFunction = function ($x) {
-//                    return $x->getDevice()->getId();
-//                };
-//                $linkFunction = function ($x) use ($deviceCategoryPages, $productTypeCategoryPage) {
-//                    return new PageExternalLink(
-//                        $x->getPageId(),
-//                        $x->getDevice()->getModelName(),
-//                        getImageUrl($deviceCategoryPages[$x->getDevice()->getId()]->getStoreImageUrl()),
-//                        "/collections/" . $x->getUrlPath() . "/" . $productTypeCategoryPage->getProductType()->getSeoName(),
-//                        $x->getDevice()->getPopularDevice() !== null
-//                    );
-//                };
-//                $popularPage = isBrandPopular($brand);
-//                break;
-
-            case WebStorePageType::ALL_BRANDS:
+            case WebStorePageType::ALL_PRODUCT_TYPES:
+                $finalLinkArray['final_title'] = 'Product Category';
+                break;
+            case WebStorePageType::PRODUCT_TYPE_BRANDS:
+                $productType = ProductType::where('id', $request->product_type)->firstOrFail();
+                $finalLinkArray['final_title'] = $productType->name;
                 $links = StoreNavigationPage::where('store_id', $store_id)
                     ->where('page_type', WebStorePageType::BRAND)
                     ->get();
@@ -270,10 +223,71 @@ class StoreNavigationPagesController extends Controller
                 }
                 break;
 
+            case WebStorePageType::PRODUCT_TYPE_BRAND_DEVICES:
+                $device = Device::where('id', $request->device_id)->firstOrFail();
+                $finalLinkArray['final_title'] = $device->name . ' for ' . $device->brand->name;
+                $links = StoreNavigationPage::where('store_id', $store_id)
+                    ->where('page_type', WebStorePageType::DEVICE)
+                    ->get();
+                foreach ($links as $link) {
+                    if ($link->device->order <= 10) {
+                        $finalLinkArray['popular_link'][] = [
+                            'id' => $link->id,
+                            'title' => $link->device->name,
+                            'imageUrl' => $link->store_image_url,
+                            'url' => "/pages/" . $link->url_path,
+                            'popular' => true
+                        ];
+                    } else {
+                        $finalLinkArray['other_link'][] = [
+                            'id' => $link->id,
+                            'title' => $link->device->name,
+                            'imageUrl' => $link->store_image_url,
+                            'url' => "/pages/" . $link->url_path,
+                            'popular' => false
+                        ];
+                    }
+                }
+                break;
+
+            case WebStorePageType::ALL_BRANDS:
+                $links = StoreNavigationPage::where('store_id', $store_id)
+                    ->where('page_type', WebStorePageType::BRAND)
+                    ->get();
+                $finalLinkArray['final_title'] = 'Shop By Brand';
+                foreach ($links as $link) {
+                    if ($link->brand->sort_order <= 10) {
+                        $finalLinkArray['popular_link'][] = [
+                            'id' => $link->id,
+                            'title' => $link->brand->name,
+                            'imageUrl' => $link->store_image_url,
+                            'url' => "/pages/" . $link->url_path,
+                            'popular' => true
+                        ];
+                    } else {
+                        $finalLinkArray['other_link'][] = [
+                            'id' => $link->id,
+                            'title' => $link->brand->name,
+                            'imageUrl' => $link->store_image_url,
+                            'url' => "/pages/" . $link->url_path,
+                            'popular' => false
+                        ];
+                    }
+                }
+                break;
+
+            case WebStorePageType::BRAND_DEVICES:
+                $finalLinkArray['final_title'] = '';
+                break;
+
+            case WebStorePageType::DEVICE:
+                break;
+
             case WebStorePageType::BRAND:
                 $links = StoreNavigationPage::where('store_id', $store_id)
                     ->where('page_type', WebStorePageType::BRAND_DEVICE_PRODUCT_TYPES)
                     ->get();
+                $finalLinkArray['final_title'] = '';
                 foreach ($links as $link) {
                     if ($link->device->order <= 10) {
                         $finalLinkArray['popular_link'][] = [
@@ -295,34 +309,20 @@ class StoreNavigationPagesController extends Controller
                 }
                 break;
 
-//            case WebStorePageType::BRAND_DEVICES:
-//                if ($useCategorPage) {
-//                    $navigationPage = $brandCategoryPage;
-//                }
-//                $brand = $brandCategoryPage->getDeviceBrand();
-//                $title = $brand->getName();
-//                $name = $brand->getName();
-//                $popularPage = isBrandPopular($brand);
-//
-//                $detailIdFunction = function ($x) {
-//                    return $x->getDevice()->getId();
-//                };
-//                $linkFunction = function ($x) use ($deviceCategoryPages, $skipDevicePage) {
-//                    return new PageExternalLink(
-//                        $x->getPageId(),
-//                        $x->getDevice()->getModelName(),
-//                        getImageUrl($deviceCategoryPages[$x->getDevice()->getId()]->getStoreImageUrl()),
-//                        ($skipDevicePage ? "/collections/" : "/pages/") . $x->getUrlPath(),
-//                        $x->getDevice()->getPopularDevice() !== null
-//                    );
-//                };
-//                break;
+            case WebStorePageType::PRODUCT_TYPE:
+                break;
+
+            case WebStorePageType::DEVICE_PRODUCT_TYPE:
+                break;
+
+            case WebStorePageType::ALL_DEVICES:
+                break;
 
             case WebStorePageType::BRAND_DEVICE_PRODUCT_TYPES:
                 $links = StoreNavigationPage::where('store_id', $store_id)
                     ->where('page_type', WebStorePageType::PRODUCT_TYPE)
                     ->get();
-                $finalLinkArray['title'] = '';
+                $finalLinkArray['final_title'] = '';
                 foreach ($links as $link) {
                     $finalLinkArray['popular_link'][] = [
                         'id' => $link->id,
@@ -332,28 +332,6 @@ class StoreNavigationPagesController extends Controller
                         'popular' => true
                     ];
                 }
-//                if ($useCategorPage) {
-//                    $navigationPage = $deviceCategoryPage;
-//                }
-//                $brand = $brandCategoryPage->getDeviceBrand();
-//                $device = $deviceCategoryPage->getDevice();
-//                $modelName = $device->getModelName();
-//                $brandName = $brand->getName();
-//                $title = $brandName . " " . $modelName . " Accessories";
-//                $name = $title;
-//                $popularPage = isDevicePopular($device);
-//                $detailIdFunction = function ($x) {
-//                    return $x->getProductType()->getId();
-//                };
-//                $linkFunction = function ($x) use ($productTypeCategoryPages, $deviceCategoryPage) {
-//                    return new PageExternalLink(
-//                        $x->getPageId(),
-//                        $x->getProductType()->getName(),
-//                        getImageUrl($productTypeCategoryPages[$x->getProductType()->getId()]->getStoreImageUrl()),
-//                        "/collections/" . $deviceCategoryPage->getUrlPath() . "/" . $x->getProductType()->getSeoName(),
-//                        true
-//                    );
-//                };
                 break;
 
             default:

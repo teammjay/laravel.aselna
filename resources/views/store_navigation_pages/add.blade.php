@@ -75,16 +75,6 @@
                         @endif
                     </div>
 
-                    <div class="form-group col-md-7">
-                        <label for="title">Title</label>
-                        <input type="text" class="form-control @error('title') is-invalid @enderror" id="title"
-                               name="title" placeholder="Enter Title"
-                               value="{{ old('title', $navigation_page->title ?? '') }}" required>
-                        @if ($errors->has('title'))
-                            <span class="text-danger">{{ $errors->first('title') }}</span>
-                        @endif
-                    </div>
-
                     <div class="form-group col-md-7" id="device_brand_id_wrapper">
                         <label for="device_brand_id">Brand</label>
                         <select class="form-control @error('device_brand_id') is-invalid @enderror"
@@ -100,6 +90,59 @@
                         @if ($errors->has('device_brand_id'))
                             <span class="text-danger">{{ $errors->first('device_brand_id') }}</span>
                         @endif
+                    </div>
+
+                    <div class="form-group col-md-7" id="device_id_wrapper">
+                        <label for="device_brand_id">Devices</label>
+                        <select class="form-control @error('device_id') is-invalid @enderror"
+                                name="device_id" id="device_id" required>
+                            <option value="">--</option>
+                            @foreach($devices as $device)
+                                <option value="{{ $device->id }}"
+                                        @if(isset($navigation_page) && $navigation_page->device_id == $device->id) selected @endif>
+                                    {{ $device->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+                    @php
+                        function renderCategories($productTypes, $product_type, $prefix = '') {
+                            foreach ($productTypes as $ptype) {
+                                if($product_type == $ptype->id){
+                                    $sel = 'selected';
+                                }else{
+                                    $sel = '';
+                                }
+                                echo '<option value="' . $ptype->id . '" '.$sel.'>' . $prefix . $ptype->name . '</option>';
+
+                                if ($ptype->children) {
+                                    renderCategories($ptype->children, $product_type, $prefix . '-- ');
+                                }
+                            }
+                        }
+                    @endphp
+
+                    <div class="form-group col-md-7" id="product_type_wrapper">
+                        <label for="product_type">Product Type</label>
+                        <select class="form-control select2" id="product_type" name="product_type">
+                            <option>-- Product Type --</option>
+                            @php
+                                renderCategories($productTypes,$navigation_page->product_type ?? '');
+                            @endphp
+                        </select>
+                    </div>
+
+                    <div class="form-group col-md-7">
+                        <label for="title">Title</label>
+                        <input type="text" class="form-control @error('title') is-invalid @enderror" id="title"
+                               name="title" placeholder="Enter Title"
+                               value="{{ old('title', $navigation_page->title ?? '') }}" required>
+                        @if ($errors->has('title'))
+                            <span class="text-danger">{{ $errors->first('title') }}</span>
+                        @endif
+                    </div>
+                    <div class="form-group col-md-2 mt-4">
+                        <button class="generate btn btn-secondary" id="generate_content"> Generate</button>
                     </div>
 
                     <div class="form-group col-md-10">
@@ -119,9 +162,6 @@
                         @if ($errors->has('generated_body'))
                             <span class="text-danger">{{ $errors->first('generated_body') }}</span>
                         @endif
-                    </div>
-                    <div class="form-group col-md-2 mt-4">
-                        <button class="generate btn btn-secondary" id="generate_content"> Generate</button>
                     </div>
                 </div>
             </div>
@@ -144,6 +184,10 @@
                 placeholder: 'Select Store',
                 allowClear: true
             });
+
+            $('#product_type').select2();
+            $('#device_brand_id').select2();
+            $('#device_id').select2();
 
             $('#generate_content').on('click', function (e) {
                 e.preventDefault();

@@ -167,7 +167,8 @@ class SyncAllTables extends Command
 //        MagentoProductsSyncJob::dispatch();
 //        FetchMagentoCategoriesJob::dispatch();
 //        MagnetoAttributesSyncJob::dispatch();
-//        ShopifyPagesSyncJob::dispatch();
+        ShopifyPagesSyncJob::dispatch();
+//        ProductImagesSyncJob::dispatch();
 
         $transactionIds = [
 ////            '9400150105798006163885',
@@ -192,20 +193,20 @@ class SyncAllTables extends Command
 ////            '9400150105799005980497',
 ////            '00040105496536080941',
 ////            '9400150105798006503193',
-                '9400150105800020740031'
+//                '9400150105800020740031'
         ];
 
-        foreach ($transactionIds as $transactionId) {
-            $data = [
-                'requesterId' => 'Iweb',
-                'accountId' => '1257538',
-                'requestId' => Str::uuid(),
-                'passPhrase' => 'Ag7ycm1274r2!a8hser2m',
-                'transaction_id' => '431030',
-                'pic_no' => $transactionId,
-            ];
-            $endicia = new EndicialabelService();
-            $result = $endicia->cancelLabel($data);
-        }
+//        foreach ($transactionIds as $transactionId) {
+//            $data = [
+//                'requesterId' => 'Iweb',
+//                'accountId' => '1257538',
+//                'requestId' => Str::uuid(),
+//                'passPhrase' => 'Ag7ycm1274r2!a8hser2m',
+//                'transaction_id' => '431030',
+//                'pic_no' => $transactionId,
+//            ];
+//            $endicia = new EndicialabelService();
+//            $result = $endicia->cancelLabel($data);
+//        }
     }
 }
