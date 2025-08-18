@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Constants\StorePageType;
 use App\Constants\WebStorePageType;
+use App\Jobs\StoreBrandPageSyncJob;
 use App\Models\Brand;
 use App\Models\Device;
 use App\Models\ProductType;
@@ -22,7 +23,9 @@ class StoreNavigationPagesController extends Controller
     public function index(Request $request)
     {
         $stores = Store::with('storeType')->where('store_status', 1)->orderBy('name', 'asc')->get();
-        return view('store_navigation_pages.list', compact('stores'));
+        $pageTemplates = StorePageTemplate::orderBy('name')->get();
+        $productTypes = ProductType::orderBy('name')->get();
+        return view('store_navigation_pages.list', compact('stores','pageTemplates', 'productTypes'));
     }
 
     public function filter(Request $request)
@@ -38,6 +41,10 @@ class StoreNavigationPagesController extends Controller
 
         if ($request->has('store_id') && $request->input('store_id') != '') {
             $query->where('store_id', $request->input('store_id'));
+        }
+
+        if ($request->has('navigation_type') && $request->input('navigation_type') != '') {
+            $query->where('page_type', $request->input('navigation_type'));
         }
 
         $totalRecords = $query->count();
@@ -80,9 +87,9 @@ class StoreNavigationPagesController extends Controller
     {
         $stores = Store::with('storeType')->where('store_status', 1)->orderBy('name', 'asc')->get();
         $brands = Brand::where('status', 1)->orderBy('name', 'asc')->get();
-        $pageTemplates = StorePageTemplate::all();
-        $devices = Device::all();
+        $pageTemplates = StorePageTemplate::orderBy('name')->get();
         $productTypes = ProductType::orderBy('name')->get();
+        $devices = Device::all();
         return view('store_navigation_pages.add', compact('stores', 'pageTemplates', 'brands', 'devices', 'productTypes'));
     }
 
@@ -346,8 +353,20 @@ class StoreNavigationPagesController extends Controller
         return $finalLinkArray;
     }
 
-    public function generate_brands_page(Request $request)
+    public function generate_bulk(Request $request)
     {
-        
+        $request->validate([
+            'store_id' => 'required',
+            'page_type' => 'required',
+            'template_id' => 'required',
+        ]);
+
+        StoreBrandPageSyncJob::dispatch(
+            $request->store_id,
+            $request->page_type,
+            $request->template_id
+        );
+
+        return response()->json(['success' => true, 'message' => 'Store navigation pages generated successfully.']);
     }
 }

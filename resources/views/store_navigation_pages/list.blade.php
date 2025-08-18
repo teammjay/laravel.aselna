@@ -1,3 +1,6 @@
+@php use App\Constants\WebStorePageType; @endphp
+@php use App\Constants\FilterCodes; @endphp
+
 @extends('adminlte::page')
 
 @section('title', 'Store Navigation Pages')
@@ -32,27 +35,35 @@
                             </div>
                         </div>
                     </div>
-{{--                    <div class="col-md-4">--}}
-{{--                        <div class="row">--}}
-{{--                            <div class="col-3 text-right ">--}}
-
-{{--                            </div>--}}
-{{--                            <div class="col-3">--}}
-{{--                                <select class="custom-select" id="" name="prefix_operator">--}}
-{{--                                    <option value="{{FilterCodes::EQUAL}}">=</option>--}}
-{{--                                    <option value="{{FilterCodes::CONTAINS}}">contains</option>--}}
-{{--                                    <option value="{{FilterCodes::STARTS_WITH}}">starts with</option>--}}
-{{--                                    <option value="{{FilterCodes::ENDS_WITH}}">ends with</option>--}}
-{{--                                    <option value="{{FilterCodes::IN}}">in</option>--}}
-{{--                                    <option value="{{FilterCodes::NOT_IN}}">not in</option>--}}
-{{--                                    <option value="{{FilterCodes::DOESNT_CONTAIN}}">doesn't contain</option>--}}
-{{--                                </select>--}}
-{{--                            </div>--}}
-{{--                            <div class="col-6">--}}
-{{--                                <input type="text" name="prefix" id="prefix" class="form-control">--}}
-{{--                            </div>--}}
-{{--                        </div>--}}
-{{--                    </div>--}}
+                    <div class="col-md-4">
+                        <div class="row">
+                            <div class="col-3 text-right ">
+                                Navigation Type
+                            </div>
+                            <div class="col-3">
+                                <select class="custom-select" id="" name="navigation_type_operator">
+                                    <option value="{{FilterCodes::EQUAL}}">=</option>
+                                    <option value="{{FilterCodes::CONTAINS}}">contains</option>
+                                    <option value="{{FilterCodes::STARTS_WITH}}">starts with</option>
+                                    <option value="{{FilterCodes::ENDS_WITH}}">ends with</option>
+                                    <option value="{{FilterCodes::IN}}">in</option>
+                                    <option value="{{FilterCodes::NOT_IN}}">not in</option>
+                                    <option value="{{FilterCodes::DOESNT_CONTAIN}}">doesn't contain</option>
+                                </select>
+                            </div>
+                            <div class="col-6">
+                                <select type="text" name="navigation_type" id="navigation_type" class="form-control">
+                                    <option value="">Select Navigation Type</option>
+                                    @foreach(WebStorePageType::getPageTypes() as $pageType)
+                                        <option value="{{ $pageType }}"
+                                                @if(isset($navigation_page) && $navigation_page->page_type == $pageType) selected @endif>
+                                            {{ WebStorePageType::getPageTypeName($pageType) }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 <div class="row">
                     <div class="col-md-2">
@@ -75,8 +86,8 @@
         <a href="{{ route('store_navigation_page.create') }}" class="btn btn-primary">
             Add Navigation Page
         </a>
-        <button class="btn btn-primary" id="generate_brands_page" >
-            Generate Brands Page
+        <button class="btn btn-primary" id="generate_bulk_pages" data-toggle="modal" data-target="#bulkPageModal">
+            Generate Bulk Page
         </button>
     </div>
     <table id="navigationPageTable" class="table table-bordered table-striped">
@@ -90,6 +101,65 @@
         </tr>
         </thead>
     </table>
+
+    <!-- Bulk Page Generation Modal -->
+    <div class="modal fade" id="bulkPageModal" tabindex="-1" role="dialog" aria-labelledby="bulkPageModalLabel"
+         aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="bulkPageModalLabel">Generate Bulk Navigation Pages</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form id="bulkPageForm">
+                        @csrf
+                        <div class="form-group">
+                            <label for="bulk_store_id">Store</label>
+                            <select class="form-control" name="store_id" id="bulk_store_id">
+                                <option value="">-- Select Store --</option>
+                                @foreach($stores as $store)
+                                    <option value="{{ $store->id }}">
+                                        {{ $store->name }} {{ (!empty((array)$store->storeType)) ? ' - '.$store->storeType->name : '' }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="bulk_page_type">Page Type</label>
+                            <select class="form-control" name="page_type" id="bulk_page_type">
+                                <option value="">-- Select Page Type --</option>
+                                @foreach(WebStorePageType::getPageTypes() as $pageType)
+                                    <option value="{{ $pageType }}"
+                                            @if(isset($navigation_page) && $navigation_page->page_type == $pageType) selected @endif>
+                                        {{ WebStorePageType::getPageTypeName($pageType) }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="bulk_template_id">Page Template</label>
+                            <select class="form-control" name="template_id" id="bulk_template_id">
+                                <option value="">-- Select Page Template --</option>
+                                @foreach($pageTemplates as $pageTemplate)
+                                    <option value="{{ $pageTemplate->id }}"
+                                            @if(isset($navigation_page) && $navigation_page->template_id == $pageTemplate->id) selected @endif>
+                                        {{ $pageTemplate->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="submitBulkGenerate">Generate Pages</button>
+                </div>
+            </div>
+        </div>
+    </div>
 @stop
 
 @section('css')
@@ -152,34 +222,53 @@
                 navigationTable.ajax.reload();
             });
 
-            $('#generate_brands_page').on('click', function (e) {
-                e.preventDefault();
-                const storeId = $('#store_id').val();
-                if (!storeId) {
-                    alert('Please select a store.');
+            $('#submitBulkGenerate').on('click', function () {
+                // This is the function call after the submit button click of the modal
+                handleBulkPageGeneration();
+            });
+
+            function handleBulkPageGeneration() {
+                const form = $('#bulkPageForm');
+                const storeId = form.find('#bulk_store_id').val();
+                const pageType = form.find('#bulk_page_type').val();
+                const templateId = form.find('#bulk_template_id').val();
+
+                if (!storeId || !pageType || !templateId) {
+                    alert('Please select store, page type, and template.');
                     return;
                 }
 
+                // You can now perform an AJAX request to your bulk generation endpoint
+                console.log({
+                    _token: '{{ csrf_token() }}',
+                    store_id: storeId,
+                    page_type: pageType,
+                    template_id: templateId
+                });
+
                 $.ajax({
-                    url: '{{ route('store_navigation_page.generate_brands_page') }}',
+                    url: '{{ route('store_navigation_page.generate_bulk') }}', // You need to create this route
                     method: 'POST',
                     data: {
                         _token: '{{ csrf_token() }}',
-                        store_id: storeId
+                        store_id: storeId,
+                        page_type: pageType,
+                        template_id: templateId
                     },
                     success: function (response) {
                         if (response.success) {
-                            alert('Brands page generated successfully.');
-                            window.location.href = response.redirect_url;
+                            alert('Bulk pages generated successfully.');
+                            $('#bulkPageModal').modal('hide');
+                            navigationTable.ajax.reload();
                         } else {
-                            alert('Failed to generate brands page. Please try again.');
+                            alert('Failed to generate bulk pages: ' + (response.message || 'Please try again.'));
                         }
                     },
                     error: function () {
-                        alert('An error occurred while generating the brands page.');
+                        alert('An error occurred while generating bulk pages.');
                     }
                 });
-            });
+            }
         });
     </script>
 @stop
