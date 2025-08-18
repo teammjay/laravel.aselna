@@ -196,7 +196,7 @@ class StoreBrandPageSyncJob implements ShouldQueue
                             'id' => $link->id,
                             'title' => $link->brand->name,
                             'imageUrl' => $link->store_image_url,
-                            'url' => "/pages/" . $link->url_path,
+                            'url' => "/collections/" . $link->url_path,
                             'popular' => true
                         ];
                     } else {
@@ -204,7 +204,7 @@ class StoreBrandPageSyncJob implements ShouldQueue
                             'id' => $link->id,
                             'title' => $link->brand->name,
                             'imageUrl' => $link->store_image_url,
-                            'url' => "/pages/" . $link->url_path,
+                            'url' => "/collections/" . $link->url_path,
                             'popular' => false
                         ];
                     }
