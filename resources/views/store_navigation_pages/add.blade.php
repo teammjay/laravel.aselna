@@ -28,7 +28,7 @@
                     <div class="form-group col-md-7">
                         <label for="store_id">Store</label>
                         <select class="form-control @error('store_id') is-invalid @enderror" name="store_id"
-                                id="store_id" required>
+                                id="store_id">
                             <option value="">--</option>
                             @foreach($stores as $store)
                                 <option value="{{ $store->id }}"
@@ -45,7 +45,7 @@
                     <div class="form-group col-md-7">
                         <label for="page_type">Page Type</label>
                         <select class="form-control @error('page_type') is-invalid @enderror"
-                                name="page_type" id="page_type" required>
+                                name="page_type" id="page_type">
                             <option value="">--</option>
                             @foreach(WebStorePageType::getPageTypes() as $pageType)
                                 <option value="{{ $pageType }}"
@@ -58,10 +58,11 @@
                             <span class="text-danger">{{ $errors->first('page_type') }}</span>
                         @endif
                     </div>
+
                     <div class="form-group col-md-7">
                         <label for="template_id">Page Template</label>
                         <select class="form-control @error('template_id') is-invalid @enderror"
-                                name="template_id" id="template_id" required>
+                                name="template_id" id="template_id">
                             <option value="">--</option>
                             @foreach($pageTemplates as $pageTemplate)
                                 <option value="{{ $pageTemplate->id }}"
@@ -78,7 +79,7 @@
                     <div class="form-group col-md-7" id="device_brand_id_wrapper">
                         <label for="device_brand_id">Brand</label>
                         <select class="form-control @error('device_brand_id') is-invalid @enderror"
-                                name="device_brand_id" id="device_brand_id" required>
+                                name="device_brand_id" id="device_brand_id">
                             <option value="">--</option>
                             @foreach($brands as $brand)
                                 <option value="{{ $brand->id }}"
@@ -95,7 +96,7 @@
                     <div class="form-group col-md-7" id="device_id_wrapper">
                         <label for="device_brand_id">Devices</label>
                         <select class="form-control @error('device_id') is-invalid @enderror"
-                                name="device_id" id="device_id" required>
+                                name="device_id" id="device_id">
                             <option value="">--</option>
                             @foreach($devices as $device)
                                 <option value="{{ $device->id }}"
@@ -136,7 +137,7 @@
                         <label for="title">Title</label>
                         <input type="text" class="form-control @error('title') is-invalid @enderror" id="title"
                                name="title" placeholder="Enter Title"
-                               value="{{ old('title', $navigation_page->title ?? '') }}" required>
+                               value="{{ old('title', $navigation_page->title ?? '') }}">
                         @if ($errors->has('title'))
                             <span class="text-danger">{{ $errors->first('title') }}</span>
                         @endif
@@ -149,7 +150,7 @@
                         <label for="description">Description</label>
                         <textarea class="form-control @error('description') is-invalid @enderror"
                                   name="description" id="description" rows="3"
-                                  required>
+                                  >
                             {{ old('description', $navigation_page->description ?? '') }}
                         </textarea>
                     </div>
@@ -158,7 +159,7 @@
                         <label for="generated_body">Content</label>
                         <textarea class="form-control @error('content') is-invalid @enderror"
                                   name="generated_body" id="generated_body" rows="8"
-                                  required>{{ old('generated_body', $navigation_page->generated_body ?? '') }}</textarea>
+                                  >{{ old('generated_body', $navigation_page->generated_body ?? '') }}</textarea>
                         @if ($errors->has('generated_body'))
                             <span class="text-danger">{{ $errors->first('generated_body') }}</span>
                         @endif
@@ -227,6 +228,7 @@
                     case '<?= WebStorePageType::ALL_BRANDS ?>':
                         $('#title').val('Shop By Brand');
                         $('#device_brand_id_wrapper').hide();
+                        $('#device_id_wrapper').hide();
                         break;
                     case '<?= WebStorePageType::BRAND ?>':
                         $('#device_brand_id_wrapper').show();
