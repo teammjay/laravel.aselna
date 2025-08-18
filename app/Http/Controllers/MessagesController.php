@@ -1295,9 +1295,62 @@ class MessagesController extends Controller
         try {
             if ($selected_shipment_id) {
                 $orderOperation = OrderOperation::with('order', 'store', 'store.storeType')->where('id', $selected_shipment_id)->first();
+
+                if($orderOperation){
+                    $clonedOrderOperation = [
+                        'ship_date' => $orderOperation->ship_date,
+                        'client' => $orderOperation->client,
+                        'to_address_id' => $orderOperation->to_address_id,
+                        'sync_status' => $orderOperation->sync_status,
+                        'insurance_value' => $orderOperation->insurance_value,
+                        'status' => OrderOperationStatus::Canceled,
+                        'signature_confirmation' => $orderOperation->signature_confirmation,
+                        'shipping_package_id' => $orderOperation->shipping_package_id,
+                        'weight_value' => $orderOperation->weight_value,
+                        'weight_weight_unit' => $orderOperation->weight_weight_unit,
+                        'ship_from_id' => $orderOperation->ship_from_id,
+                        'store_id' => $orderOperation->store_id,
+                        'operation_type' => OrderOperationType::OrderCancellation,
+                        'order_id' => $orderOperation->order_id,
+                        'label_creation_type' => 1,
+                        'rma_number' => '',
+                        'shipping_carrier_id' => $orderOperation->shipping_carrier_id,
+                        'shipping_carrier_service_id' => NULL,
+                        'shipping_account_transaction_id' => NULL,
+                        'hd_ticket_id' => $ticket_id,
+                    ];
+
+                    $newOrderOperation = OrderOperation::create($clonedOrderOperation);
+                    $order_opration_id = $newOrderOperation->id;
+
+                    $newshipmentDetail = OrderOperation::with('operationItem', 'operationItem.orderItem')->where('id', $orderOperation->id)->first();
+                    if (count($newshipmentDetail->operationItem ?? []) > 0) {
+                        foreach ($newshipmentDetail->operationItem as $oitem) {
+
+                            $newOrderItem = [
+                                'order_item_id' => $oitem->order_item_id,
+                                'order_operation_id' => $order_opration_id,
+                                'client_id' => $oitem->client_id,
+                                'sync_status' => $oitem->sync_status,
+                                'quantity' => $oitem->quantity,
+                                'item_price' => $oitem->item_price,
+                                'shipping_price' => $oitem->shipping_price,
+                                'reason_id' => NULL
+                            ];
+
+                            OrderOperationItem::updateOrCreate([
+                                'order_item_id' => $oitem->order_item_id,
+                                'order_operation_id' => $order_opration_id,
+                            ], $newOrderItem);
+                        }
+                    }
+                }
+
+                $orderOperation = OrderOperation::with('order', 'store', 'store.storeType')->where('id', $order_opration_id)->first();
+
                 $response = OrderOperationUtility::cancelOrder($orderOperation, $reason);
 
-                if ($response) {
+                if (!empty($response) && $response['status']) {
                     $orderOperation->update(['status' => OrderOperationStatus::Canceled]);
                     if (isset($orderOperation->order->id)) {
                         $order = Order::findOrFail($orderOperation->order->id);
@@ -1332,7 +1385,7 @@ class MessagesController extends Controller
                     DB::rollBack();
                     return response()->json([
                         'success' => false,
-                        'message' => 'Something went wrong with API. Please try again!'
+                        'message' => isset($response['message']) ? $response['message'] : 'Something went wrong with API. Please try again!'
                     ]);
                 }
 
