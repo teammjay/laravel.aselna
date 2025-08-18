@@ -2,9 +2,11 @@
 
 namespace App\Jobs;
 
+use App\Constants\WebStorePageType;
 use App\Models\Device;
 use App\Models\DeviceInterface;
 use App\Models\Store;
+use App\Models\StoreNavigationPage;
 use App\Services\Auth\ShopifyAuthService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -51,7 +53,17 @@ class ShopifyCollectionDeviceSyncJob implements ShouldQueue
 
         $title = $brand->name . ' ' . $device->name . ' Accessories';
         // create a handle for the collection by replacing spaces ( and .) with dashes and converting to lowercase
-        $handle = $this->generateShopifyHandle($title);
+
+        $storePage = StoreNavigationPage::where('store_id', $this->storeID)
+            ->where('page_type', WebStorePageType::BRAND_DEVICE_PRODUCT_TYPES)
+            ->where('device_id', $device->id)
+            ->first();
+
+        if (isset($storePage)) {
+            $handle = $storePage->url_path;
+        } else {
+            $handle = $this->generateShopifyHandle($title);
+        }
 
         $collectionData['collection'] = [
             'title' => $title,
@@ -60,6 +72,7 @@ class ShopifyCollectionDeviceSyncJob implements ShouldQueue
         $path = '/store-images/' . $this->store->id . '/collections/' . $handle . '.jpg';
         $imagePath = $this->uploadImage($this->store, $device->image, $path);
         Log::info('Image path for device', ['device_id' => $device->id, 'image_path' => $imagePath]);
+        $collection = null;
 
         if ($imagePath) {
             $collectionData['collection']['image'] = [
@@ -84,6 +97,10 @@ class ShopifyCollectionDeviceSyncJob implements ShouldQueue
             $collectionData['collection']['handle'] = $handle;
             Log::info('Collection data update', ['collection_data' => $collectionData]);
             $response = $this->shopifyAuthService->updateCollection($collectionData);
+
+            if (isset($response['data']['collectionUpdate'])) {
+                $collection = $response['data']['collectionUpdate']['collection'];
+            }
         } else {
             Log::info('Creating new collection', ['handle' => $handle]);
 
@@ -94,6 +111,30 @@ class ShopifyCollectionDeviceSyncJob implements ShouldQueue
             $collectionData['collection']['handle'] = $handle;
             Log::info('Collection data creation', ['collection_data' => $collectionData]);
             $response = $this->shopifyAuthService->createCollection($collectionData);
+
+            if (isset($response['data']['collectionCreate'])) {
+                $collection = $response['data']['collectionCreate']['collection'];
+            }
+        }
+        Log::info('Collection ::' . json_encode($collection));
+        if (isset($collection)) {
+            $id =str_replace('gid://shopify/Collection/', '', $collection['id']);
+            StoreNavigationPage::updateOrCreate(
+                [
+                    'store_id' => $this->storeID,
+                    'page_type' => WebStorePageType::BRAND_DEVICE_PRODUCT_TYPES,
+                    'device_id' => $device->id,
+                ],
+                [
+                    'store_id' => $this->storeID,
+                    'page_type' => WebStorePageType::BRAND_DEVICE_PRODUCT_TYPES,
+                    'device_id' => $device->id,
+                    'device_brand_id' => $device->brand_id,
+                    'url_path' => $handle,
+                    'title' => $title,
+                    'page_id' => $id,
+                ]
+            );
         }
     }
 
@@ -110,7 +151,10 @@ class ShopifyCollectionDeviceSyncJob implements ShouldQueue
 
     private function setVariables()
     {
+        Log::info('Store ID :: ' . $this->storeID);
         $this->store = Store::find($this->storeID);
+        Log::info('Store Details :: ' . json_encode($this->store));
+
         $this->shopifyAuthService = new ShopifyAuthService($this->store->secret_key,$this->store->service_url);
     }
 
@@ -144,6 +188,10 @@ class ShopifyCollectionDeviceSyncJob implements ShouldQueue
 
     private function uploadImage($store, $Image, $path)
     {
+        if (env('APP_ENV') == 'local') {
+            Log::info("Local environment detected, skipping image upload.");
+            return '';
+        }
         if (!isset($Image)) return '';
         $storeFileSystem = $store->fileSystem;
         //Log::info("File system :: " . json_encode($storeFileSystem));

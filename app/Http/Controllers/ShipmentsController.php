@@ -516,7 +516,7 @@ class ShipmentsController extends Controller
                 $orderOperation = OrderOperation::with('order', 'store', 'store.storeType')->where('id', $selected_shipment_id)->first();
                 $response = OrderOperationUtility::cancelOrder($orderOperation, strtoupper($reason));
 
-                if ($response) {
+                if (!empty($response) && $response['status']) {
                     $orderOperation->update(['status' => OrderOperationStatus::Canceled]);
                     if (isset($orderOperation->order->id)) {
                         $order = Order::findOrFail($orderOperation->order->id);
@@ -529,7 +529,7 @@ class ShipmentsController extends Controller
                 } else {
                     return response()->json([
                         'success' => false,
-                        'message' => 'Something went wrong with API. Please try again!'
+                        'message' => isset($response['message']) ? $response['message'] : 'Something went wrong with API. Please try again!'
                     ]);
                 }
 

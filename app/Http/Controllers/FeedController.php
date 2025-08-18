@@ -13,6 +13,7 @@ use App\Models\Manufacturer;
 use App\Models\ProductImages;
 use App\Models\ProductType;
 use App\Models\Store;
+use App\Models\StoreProduct;
 use App\Utils\FileUtility;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -90,20 +91,26 @@ class FeedController extends Controller
 
     public function generateFeed(Request $request){
 
-        $query = Catalog::with('StoreProduct', 'images', 'productType', 'interfaces.interfaces', 'pinterface.interfaces','condition','Manufacturer')->where('products.product_status', 1);
+        $query = StoreProduct::with('product','StoreTypeCategory','product.condition','product.Manufacturer','product.images', 'product.productType','product.interfaces', 'product.interfaces.interfaces');
+        //$query = Catalog::with('StoreProduct', 'images', 'productType', 'interfaces.interfaces', 'pinterface.interfaces','condition','Manufacturer')->where('products.product_status', 1);
 
+        $query->select('store_product.*');
 
-        if ($request->has('exclude_oem')) {
-            $query->where('products.oem_generic', 2);
+        if ($request->has('store_id')) {
+            $query->where('store_product.store_id', $request->store_id);
         }
 
+        $query->leftJoin('products', 'store_product.product_id', '=', 'products.product_id');
+        $query->where('products.oem_generic', 2);
+
         if ($request->has('product_code') && $request->product_code != '') {
+
             $query->whereIn('products.product_sku', $request->product_code);
         }
 
         if ($request->has('device') && $request->device != '') {
             if(!$request->has('interface') || $request->interface == ''){
-                $query->leftJoin('product_interface', 'product_interface.product_id', '=', 'products.product_id');
+                $query->leftJoin('product_interface', 'product_interface.product_id', '=', 'store_product.product_id');
             }
             $query->leftJoin('device_interface', 'device_interface.interface_id', '=', 'product_interface.interface_id');
             $query->whereIn('device_interface.device_id', $request->device);
@@ -111,7 +118,7 @@ class FeedController extends Controller
 
         if ($request->has('device_series') && $request->device_series != '') {
             $devices = DevicesLinkedDevice::select('device_id')->whereIn('device_series_id', $request->device_series)->get();
-            $query->leftJoin('product_interface', 'product_interface.product_id', '=', 'products.product_id');
+            $query->leftJoin('product_interface', 'product_interface.product_id', '=', 'store_product.product_id');
             $query->leftJoin('device_interface', 'device_interface.interface_id', '=', 'product_interface.interface_id');
             $query->whereIn('device_interface.device_id', $devices);
         }
@@ -119,6 +126,7 @@ class FeedController extends Controller
         $products = $query->distinct()->get();
 
         /*echo '<pre>';
+        echo $query->toSql();die;
         print_r($products);
         echo '</pre>';die;*/
 
@@ -145,49 +153,53 @@ class FeedController extends Controller
                     fputcsv($stream, $columns);
 
                     // Write product rows
+
                     foreach ($products as $itemDetail) {
 
                         $images = array();
 
-                        $this->generateProductImages($itemDetail, $storeDetail);
+                        /*$this->generateProductImages($itemDetail, $storeDetail);
                         $productImages = GenerateProductImage::where('product_id', $itemDetail->product_id)->get();
                         foreach ($productImages as $image) {
                             $images[] = $fileSystem->url_base_path . $image->path;
-                        }
+                        }*/
 
-                        $ptype_id = '';
-                        $typeDetail = ProductType::with('parent')->where('id', $itemDetail->product_type)->first();
-                        $product_type = $this->getCategoryPath($typeDetail);
-                        fputcsv($stream, [
-                            $itemDetail->product_sku,
-                            $itemDetail->product_title,
-                            $itemDetail->product_description,
-                            $ptype_id,
-                            $product_type,
-                            '',
-                            (!empty($images)) ? implode(',', $images) : '',
-                            (isset($itemDetail->condition)) ? $itemDetail->condition->name : '',
-                            'in stock',
-                            ($itemDetail->product_marketplace_price != '') ? $itemDetail->product_marketplace_price : $itemDetail->product_price,
-                            '',
-                            $itemDetail->Manufacturer->name,
-                            $itemDetail->product_sku,
-                            '',
-                            '',
-                            '',
-                            '',
-                            '',
-                            'US::Standard:4.9 USD',
-                            '',
-                            20,
-                            'return_policy_days: "30"',
-                            '',
-                            '',
-                            $itemDetail->product_title,
-                            '',
-                            $itemDetail->product_sku,
-                            ''
-                        ]);
+                        $ptype_id = (isset($itemDetail->StoreTypeCategory) && !empty($itemDetail->StoreTypeCategory)) ? $itemDetail->StoreTypeCategory->store_type_code : '';
+                        $product_type = '';
+                        if(isset($itemDetail->product)) {
+                            $typeDetail = ProductType::with('parent')->where('id', $itemDetail->product->product_type)->first();
+                            $product_type = $this->getCategoryPath($typeDetail);
+                            fputcsv($stream, [
+                                $itemDetail->product->product_sku,
+                                $itemDetail->product->product_title,
+                                ($itemDetail->overwrite_description) ? $itemDetail->description : $itemDetail->product->product_description,
+                                $ptype_id,
+                                $product_type,
+                                '',
+                                (!empty($images)) ? implode(',', $images) : '',
+                                (isset($itemDetail->product->condition)) ? $itemDetail->product->condition->name : '',
+                                'in stock',
+                                ($itemDetail->product->product_marketplace_price != '') ? $itemDetail->product->product_marketplace_price : $itemDetail->product->product_price,
+                                '',
+                                (isset($itemDetail->product->Manufacturer)) ? $itemDetail->product->Manufacturer->name : '',
+                                (isset($itemDetail->product)) ? $itemDetail->product->product_sku : '',
+                                '',
+                                '',
+                                '',
+                                '',
+                                '',
+                                'US::Standard:4.9 USD',
+                                '',
+                                20,
+                                'return_policy_days: "30"',
+                                '',
+                                '',
+                                ($itemDetail->overwrite_title) ? $itemDetail->title : $itemDetail->product->product_title,
+                                '',
+                                $itemDetail->product->product_sku,
+                                ''
+                            ]);
+                        }
                     }
                     rewind($stream);
                     FileUtility::saveToFile(public_path('feeds/google-shopping/' . $fileName), stream_get_contents($stream));
