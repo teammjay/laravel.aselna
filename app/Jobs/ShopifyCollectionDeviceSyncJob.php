@@ -98,7 +98,6 @@ class ShopifyCollectionDeviceSyncJob implements ShouldQueue
             Log::info('Collection data update', ['collection_data' => $collectionData]);
             $response = $this->shopifyAuthService->updateCollection($collectionData);
 
-
             if (isset($response['data']['collectionUpdate'])) {
                 $collection = $response['data']['collectionUpdate']['collection'];
             }
