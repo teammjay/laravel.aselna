@@ -67,11 +67,15 @@ class StoreBrandPageSyncJob implements ShouldQueue
                         'alphabeticallySortedOtherLinks' => [],
                     ];
 
-                    $request['title'] = $request['title'] ?? $links['final_title'];
+                    $request['title'] = $links['final_title'];
                     Log::info('Request Title :: ' . json_encode($request['title']));
                     $request['generated_body'] = $this->fillTemplateWithData($template->template_code, $data);
 
-                    StoreNavigationPage::create($request->all());
+                    StoreNavigationPage::updateOrCreate([
+                        'store_id' => $this->store_id,
+                        'page_type' => $page_type,
+                        'device_brand_id' => $brand->id,
+                    ],$request->all());
                 }
                 break;
         }
