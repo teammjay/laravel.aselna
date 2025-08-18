@@ -1288,7 +1288,7 @@
                 var order_id = $('#order_id').val();
                 formData.append('order_id',order_id);
                 $.ajax({
-                    url: "{{ route('shipment.cancelorder') }}",
+                    url: "{{ route('message.cancelorder') }}",
                     type: 'POST',
                     data: formData,
                     processData: false,
@@ -1301,7 +1301,7 @@
                         alert(response.message);
                         if (response.success) {
                             //location.reload();
-                            loadOrderDetail();
+
                             $('#cancelOrderModal').modal('hide');
                             if($('#message_to_send').val() != '' && response.template_id != ''){
                                 if (confirm("Are you sure, you want to overwrite the template?") == true) {
@@ -1315,6 +1315,7 @@
                                 $('#message_to_send').html(response.template_code);
                             }
 
+                            loadOrderDetail();
 
                         }
 
