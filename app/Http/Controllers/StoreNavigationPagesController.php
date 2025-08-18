@@ -21,7 +21,8 @@ class StoreNavigationPagesController extends Controller
      */
     public function index(Request $request)
     {
-        return view('store_navigation_pages.list');
+        $stores = Store::with('storeType')->where('store_status', 1)->orderBy('name', 'asc')->get();
+        return view('store_navigation_pages.list', compact('stores'));
     }
 
     public function filter(Request $request)
@@ -34,6 +35,10 @@ class StoreNavigationPagesController extends Controller
         $columnSortOrder = $request['order'][0]['dir'];
 
         $query = StoreNavigationPage::select('*');
+
+        if ($request->has('store_id') && $request->input('store_id') != '') {
+            $query->where('store_id', $request->input('store_id'));
+        }
 
         $totalRecords = $query->count();
         $pages = $query->orderBy($columnName, $columnSortOrder)
@@ -339,5 +344,10 @@ class StoreNavigationPagesController extends Controller
         }
 
         return $finalLinkArray;
+    }
+
+    public function generate_brands_page(Request $request)
+    {
+        
     }
 }
