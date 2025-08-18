@@ -547,8 +547,18 @@
                     success: function(data) {
                         if(data.success){
 
-                            $('#message_to_send').html(data.templateCode);
-                            $('#template_id').val(data.template_id);
+                            if($('#message_to_send').val() != '' && data.templateCode != ''){
+                                if (confirm("Are you sure, you want to overwrite the template?") == true) {
+                                    $('#template_id').val(data.template_id);
+                                    $('#message_to_send').html(data.templateCode);
+                                }
+                            }else if(data.templateCode != ''){
+                                $('#template_id').val(data.template_id);
+                                $('#message_to_send').html(data.templateCode);
+                            }
+
+                            //$('#message_to_send').html(data.templateCode);
+                            //$('#template_id').val(data.template_id);
                             if(data.image_name){
                                 $('.lableImageGroup').removeClass('hide');
                                 $('#image_url').val(data.image_url);
@@ -828,6 +838,51 @@
                             }
 
                             //$('#message_to_send').html(data.templateCode);
+                        }
+                    },
+                    error: function (xhr) {
+                    },
+                    complete: function () {
+                        $("#ajax-preloader").hide();
+                    }
+                });
+            });
+
+            $(document).on('click','#regenerate_message',function () {
+                var template_id = $('#template_id').val();
+                var customer_name = $('#customer_name').val();
+                var store_name = $('#store_name').val();
+                var operationID = $(this).data('opid');
+                var order_id = $('#order_id').val();
+                $.ajax({
+                    type: "POST",
+                    url: "{{ route('message.getmessagetemplate') }}",
+                    data: {
+                        template_id: template_id,
+                        customer_name: customer_name,
+                        store_name: store_name,
+                        operation_id: operationID,
+                        order_id: order_id,
+                        regenerate: 1,
+                    },
+                    headers: {
+                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                    },
+
+                    success: function(data) {
+                        if(data.success){
+
+                            if($('#message_to_send').val() != '' && data.templateCode != ''){
+                                if (confirm("Are you sure, you want to overwrite the template?") == true) {
+                                    $('#template_id').val(data.template_id);
+                                    $('#message_to_send').html(data.templateCode);
+                                } else {
+
+                                }
+                            }else if(data.templateCode != ''){
+                                $('#template_id').val(data.template_id);
+                                $('#message_to_send').html(data.templateCode);
+                            }
                         }
                     },
                     error: function (xhr) {
@@ -1229,6 +1284,9 @@
 
                 const form = document.querySelector("#frmCancelOrder");
                 let formData = new FormData(form);
+
+                var order_id = $('#order_id').val();
+                formData.append('order_id',order_id);
                 $.ajax({
                     url: "{{ route('shipment.cancelorder') }}",
                     type: 'POST',
@@ -1242,8 +1300,25 @@
                         // If success, remove the user row from the table
                         alert(response.message);
                         if (response.success) {
-                            location.reload();
+                            //location.reload();
+                            loadOrderDetail();
+                            $('#cancelOrderModal').modal('hide');
+                            if($('#message_to_send').val() != '' && response.template_id != ''){
+                                if (confirm("Are you sure, you want to overwrite the template?") == true) {
+                                    $('#template_id').val(response.template_id);
+                                    $('#message_to_send').html(response.template_code);
+                                } else {
+
+                                }
+                            }else if(response.template_id != ''){
+                                $('#template_id').val(response.template_id);
+                                $('#message_to_send').html(response.template_code);
+                            }
+
+
                         }
+
+
                     },
                     error: function (xhr) {
                         // Handle error response

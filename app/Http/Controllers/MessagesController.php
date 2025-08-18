@@ -647,7 +647,7 @@ class MessagesController extends Controller
         }
 
         if(isset($operation_id) && $operation_id != ''){
-            $orderOperation = OrderOperation::with('shipFrom','shipFrom.returnAddress','carrier','store','relatedOperation')->where('id',$operation_id)->first();
+            $orderOperation = OrderOperation::with('shipFrom','shipFrom.returnAddress','carrier','store','relatedOperation','order','order.customer','order.customerAddress')->where('id',$operation_id)->first();
             /*echo '<pre>';
             print_r($orderOperation->operation_type);
             echo '</pre>';die;*/
@@ -670,6 +670,8 @@ class MessagesController extends Controller
                     $trackingNumber = $orderOperation->relatedOperation->tracking_number;
                 }
 
+            }else if(isset($regenerate) && $regenerate == 1 && $orderOperation->status == OrderOperationStatus::Canceled){
+                $templateDetail = HdMessageTemplate::getOrderOperationTemplate(OrderOperationType::OrderCancellation, 0, 0);
             }else{
                 $templateDetail = HdMessageTemplate::findOrFail($template_id);
             }
@@ -677,8 +679,9 @@ class MessagesController extends Controller
             //print_r($templateDetail);die;
 
             $returnAddress = $this->getReturnAddress($orderOperation);
+            $shipment_address = $this->getShipmentAddress($orderOperation);
 
-            if(isset($orderOperation->shipFrom->returnAddress) && $orderOperation->shipFrom->returnAddress->company != ''){
+            /*if(isset($orderOperation->shipFrom->returnAddress) && $orderOperation->shipFrom->returnAddress->company != ''){
                 $returnAddress .= trim($orderOperation->shipFrom->returnAddress->company).PHP_EOL;
             }
             if(isset($orderOperation->shipFrom->returnAddress) && $orderOperation->shipFrom->returnAddress->address_line_1 != ''){
@@ -698,7 +701,7 @@ class MessagesController extends Controller
             }
             if(isset($orderOperation->shipFrom->returnAddress) && $orderOperation->shipFrom->returnAddress->postal_code != ''){
                 $returnAddress .= '-'.trim($orderOperation->shipFrom->returnAddress->postal_code).PHP_EOL;
-            }
+            }*/
 
             if( isset($orderOperation->rma_number) && $orderOperation->rma_number != ''){
                 $rma_number = $orderOperation->rma_number;
@@ -709,7 +712,7 @@ class MessagesController extends Controller
                     'customer_firstName' => $customer_name,
                     'store_name' => $store_name,
                     'marketplaceName' => '',
-                    'shipment_address' => '',
+                    'shipment_address' => $shipment_address,
                     'shipment_date' => '',
                     'order_date' => (isset($orderDetail->order_date)) ? $orderDetail->order_date : '',
                     'trackingNumber' => $trackingNumber,
@@ -1287,6 +1290,7 @@ class MessagesController extends Controller
         $selected_shipment_id = $request->input('id');
         $ticket_id = $request->input('ticket_id');
         $reason = $request->input('reason');
+        $order_id = $request->input('order_id');
         DB::beginTransaction();
         try {
             if ($selected_shipment_id) {
@@ -1299,9 +1303,29 @@ class MessagesController extends Controller
                         $order = Order::findOrFail($orderOperation->order->id);
                         $order->update(['order_status' => OrderStatus::Canceled]);
                     }
+
+                    $templateDetail = HdMessageTemplate::getOrderOperationTemplate(OrderOperationType::OrderCancellation, 0, 0);
+                    $template_id = $template_code = '';
+
+                    if ($templateDetail) {
+
+                        $orderDetail = Order::with('orderItem', 'orderOperation', 'customer', 'store')->where('order_id', $order_id)->orWhere('purchase_order_id', $order_id)->first();
+                        $data = [
+                            'customer_firstName' => isset($orderDetail->customer) ? $orderDetail->customer->full_name : '',
+                            'store_name' => isset($orderDetail->store) ? $orderDetail->store->name : '',
+                            'rma_number' => '',
+                            'return_address' => '',
+                            'shipment_date' => '',
+                            'order_date' => '',
+                        ];
+                        $template_id = $templateDetail->id;
+                        $template_code = \Blade::render($templateDetail->template_code, $data);
+                    }
                     DB::commit();
                     return response()->json([
                         'success' => true,
+                        'template_code' => $template_code,
+                        'template_id' => $template_id,
                         'message' => 'Order Cancelled Successfully',
                     ]);
                 } else {
@@ -1933,6 +1957,37 @@ class MessagesController extends Controller
         }
 
         return $returnAddress;
+    }
+
+    private function getShipmentAddress($orderOperation){
+
+        $shipmentAddress = '';
+        if(isset($orderOperation->order)){
+            if(isset($orderOperation->order->customer->first_name) && $orderOperation->order->customer->first_name != ''){
+                $shipmentAddress .= $orderOperation->order->customer->first_name.' '.$orderOperation->order->customer->last_name.PHP_EOL;
+            }
+            if(isset($orderOperation->order->customerAddress->address_line_1) && $orderOperation->order->customerAddress->address_line_1 != ''){
+                $shipmentAddress .= trim($orderOperation->order->customerAddress->address_line_1).PHP_EOL;
+            }
+            if(isset($orderOperation->order->customerAddress->address_line_2) && $orderOperation->order->customerAddress->address_line_2 != ''){
+                $shipmentAddress .= trim($orderOperation->order->customerAddress->address_line_2).PHP_EOL;
+            }
+            if(isset($orderOperation->order->customerAddress->address_line_3) && $orderOperation->order->customerAddress->address_line_3 != ''){
+                $shipmentAddress .= trim($orderOperation->order->customerAddress->address_line_3).PHP_EOL;
+            }
+            if(isset($orderOperation->order->customerAddress->city) && $orderOperation->order->customerAddress->city != ''){
+                $shipmentAddress .= trim($orderOperation->order->customerAddress->city);
+            }
+            if(isset($orderOperation->order->customerAddress->state) && $orderOperation->order->customerAddress->state != ''){
+                $shipmentAddress .= ', '.trim($orderOperation->order->customerAddress->state);
+            }
+            if(isset($orderOperation->order->customerAddress->zip) && $orderOperation->order->customerAddress->zip != ''){
+                $shipmentAddress .= ' - '.trim($orderOperation->order->customerAddress->zip).PHP_EOL;
+            }
+        }
+
+
+        return $shipmentAddress;
     }
 
     public function label_list(string $id)

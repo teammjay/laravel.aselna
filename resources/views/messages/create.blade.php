@@ -526,7 +526,7 @@
                 });
             });
 
-            $(document).on('click','#rma',function () {
+            $(document).on('click','#rma,#return_label,#replacement, #refund, #ship_order, #cancel_order',function () {
                 rma_action = true;
                 saveTicket($('#subject').val());
 
