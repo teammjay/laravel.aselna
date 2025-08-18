@@ -457,21 +457,29 @@ class ShopifyAuthService
 
             $variables['id'] = $isPageExists['id'];
 
-            Log::info('Updating Page: ' . json_encode($variables));
-
             $response = $this->makeGraphQLRequest($query, $variables);
 
             if (isset($response['data']['pageUpdate'])) {
+                Log::info('Page Updated: ' . json_encode($response['data']['pageUpdate']));
+                $pageData = $response['data']['pageUpdate']['page'];
+                $StoreNavigationPage->page_id = str_replace('gid://shopify/Page/', '', $pageData['id']);
+                $StoreNavigationPage->url_path = $pageData['handle'];
+                $StoreNavigationPage->save();
+
                 return $response['data']['pageUpdate'];
             }
         } else {
             $query = ShopifyQueries::$pageCreate;
 
-            Log::info('Syncing Page: ' . json_encode($variables));
-
             $response = $this->makeGraphQLRequest($query, $variables);
 
             if (isset($response['data']['pageCreate'])) {
+                Log::info('Page Created: ' . json_encode($response['data']['pageCreate']));
+                $pageData = $response['data']['pageCreate']['page'];
+                $StoreNavigationPage->page_id = str_replace('gid://shopify/Page/', '', $pageData['id']);
+                $StoreNavigationPage->url_path = $pageData['handle'];
+                $StoreNavigationPage->save();
+
                 return $response['data']['pageCreate'];
             }
         }
@@ -481,9 +489,14 @@ class ShopifyAuthService
 
     private function pageAlreadyExists($url_path)
     {
+        if ($url_path == null || $url_path == '') {
+            Log::error('URL path is empty or null');
+            return ['exists' => false];
+        }
         $query = ShopifyQueries::$pageFetch;
-
+        Log::info('Checking if page exists with URL path: ' . $url_path);
         $variables['handle'] = $url_path;
+
         $getPageData = $this->makeGraphQLRequest($query, $variables, '2025-07');
         Log::info('Get Page Data: ' . json_encode($getPageData));
         $existingPages = $getPageData['data']['pages']['edges'];
@@ -491,7 +504,7 @@ class ShopifyAuthService
         if (count($existingPages) > 0) {
             return ['exists' => true, 'id' => $existingPages[0]['node']['id']];
         } else {
-            return ['exists' => false,];
+            return ['exists' => false];
         }
     }
 }
