@@ -425,7 +425,10 @@ class OrderOperationUtility
                     foreach ($response['data']['orderCancel']['orderCancelUserErrors'] as $error) {
                         //echo "Error: {$error['message']}\n";
                         Log::info('Shopify cancer order error:' . json_encode($error));
-                        return false;
+                        $data['message'] = isset($error['message']) ? $error['message'] : json_encode($error);
+                        $data['status'] = true;
+                        return $data;
+                        //return false;
                     }
                 } else {
                     //echo "Order canceled successfully!";
@@ -438,7 +441,10 @@ class OrderOperationUtility
                         }
                     }
                     Log::info('Shopify cancer order successful:');
-                    return true;
+                    $data['message'] = 'Shopify cancer order successful';
+                    $data['status'] = true;
+                    return $data;
+                    //return true;
                 }
                 break;
             case 'walmart':
@@ -482,10 +488,16 @@ class OrderOperationUtility
                                 $orderItem->update(['canceled_quantity' => $item_qty]);
                             }
                         }
-                        return true;
+
+                        $data['status'] = true;
+                        return $data;
+                        //return true;
                     } else {
                         Log::info('Walmart cancel order error: ' . json_encode($response));
-                        return false;
+                        $data['message'] = 'Walmart cancel order error';
+                        $data['status'] = false;
+                        return $data;
+                        //return false;
                     }
                 } else {
                     Log::info('Walmart cancel order error: No response received');
@@ -513,12 +525,17 @@ class OrderOperationUtility
                             $orderItem->update(['canceled_quantity' => $item_qty]);
                         }
                     }
-                    Log::info('Shopify cancer order error:' . json_encode($response['warnings']));
-                    return false;
+                    Log::info('eBay cancer order error:' . json_encode($response['warnings']));
+                    $data['message'] = json_encode($response['warnings']);
+                    $data['status'] = false;
+                    return $data;
+                    //return false;
                 } else {
                     //echo "Order canceled successfully!";
                     Log::info('Shopify cancer order successful:');
-                    return true;
+                    $data['status'] = true;
+                    return $data;
+                    //return true;
                 }
 
                 break;
