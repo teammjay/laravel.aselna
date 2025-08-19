@@ -43,4 +43,9 @@ class OrderItem extends Model
     {
         return $this->hasOne(OrderOperationItem::class,'id');
     }
+
+    public function listingItem()
+    {
+        return $this->belongsTo(ListingItem::class,'sku','sku');
+    }
 }
