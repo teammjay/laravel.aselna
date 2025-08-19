@@ -769,9 +769,25 @@
         });
 
         $('#open_store_page').on('click',function () {
-            var store_id = $('#listing_store').val();
-            if(store_id != '') {
-                location.href = "{{ url('stores/edit') }}/" + store_id;
+            let selected_list = [];
+            $('input[name="listing_item[]"]:checked').each(function () {
+                selected_list.push($(this).val())
+            });
+
+            if (selected_list.length === 0) {
+                alert('Please select listing first.');
+            } else if(selected_list.length > 1) {
+                alert('Please select only one listing to open store page.');
+            } else {
+                let storeId = "tr[id=\"" + selected_list[0] + "\"] a.store_url";
+                console.log(storeId)
+                let href = $(storeId);
+                console.log(href);
+                if (!href) {
+                    alert('Store URL not found for this listing.');
+                    return;
+                }
+                window.open(href.attr('href'), '_blank');
             }
         });
 
@@ -1183,7 +1199,7 @@
                 { data: 'store_name' },
                 { data: 'title', render: function(data, type, row) {
                     if (row.title_url) {
-                        return '<a href="' + row.title_url + '" target="_blank">' + data + '</a>';
+                        return '<a href="' + row.title_url + '" class="store_url" target="_blank">' + data + '</a>';
                     } else {
                         return data;
                     }
@@ -1205,7 +1221,11 @@
                     targets: 6, // The column index
                     className: 'column-no-whitespace' // The class to add
                 }
-            ]
+            ],
+            "createdRow": function(row, data, dataIndex) {
+                $(row).attr('id', data.listing_id);
+                $(row).addClass('listing-item');
+            },
         });
 
         $( '#productsTable_wrapper').removeClass( 'form-inline' );

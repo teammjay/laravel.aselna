@@ -153,7 +153,7 @@ class SyncAllTables extends Command
         //    ListingItemImageCreate::dispatch('4dcf1d3f-b723-4b31-a075-3702c0746b10');
 //        FetchAmazonOrdersJob::dispatch();
 //        StoreCategorySyncJob::dispatch('94428796-cdf9-dc2b-a1e7-aa4100066fd9');
-//        ShopifyCollectionDeviceSyncJob::dispatch('5cc46182-9x318-7a47-39bd-d3e38de6cce6');
+//        ShopifyCollectionDeviceSyncJob::dispatch('5cc46182-9318-7a47-39bd-d3e38de6cce6');
 //        AmazonListingItemSyncJob::dispatch();
 //        AmazonProductTypeSyncJob::dispatch();
 //        FetchWalmartOrdersJob::dispatch();
@@ -168,8 +168,9 @@ class SyncAllTables extends Command
 //        FetchMagentoCategoriesJob::dispatch();
 //        MagnetoAttributesSyncJob::dispatch();
         ShopifyPagesSyncJob::dispatch();
+//        ProductImagesSyncJob::dispatch();
 
-//        $transactionIds = [
+        $transactionIds = [
 ////            '9400150105798006163885',
 ////            '9400150105799006167927',
 ////            '9400150105800006378319',
@@ -192,8 +193,8 @@ class SyncAllTables extends Command
 ////            '9400150105799005980497',
 ////            '00040105496536080941',
 ////            '9400150105798006503193',
-////'9400150105799006578198'
-//        ];
+//              '9400150105800020740031'
+        ];
 
 //        foreach ($transactionIds as $transactionId) {
 //            $data = [

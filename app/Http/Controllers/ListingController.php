@@ -343,7 +343,8 @@ class ListingController extends Controller
                     "manufacturer" => (isset($product->manufacturer)) ? $product->manufacturer->name : '',
                     "created_at" => date('Y-m-d H:i:s', strtotime($product->created_at)),
                     "title_url" => ListingUtility::generateTitleUrl($product),
-                    "sync_count" => $product->sync_count
+                    "sync_count" => $product->sync_count,
+                    "listing_id" => $product->id
                     /*"action" => '<a href="'.route('listing.edit', $product->id).'" class="btn btn-primary">
                                     <i class="fas fa-fw fa-pencil-alt"></i>
                                 </a>',*/
