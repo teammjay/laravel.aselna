@@ -80,4 +80,9 @@ class ListingItem extends Model
         return $this->hasMany(OrderItem::class,'sku','sku');
     }
 
+    public function itemDetail()
+    {
+        return $this->belongsTo(ListingItemDetail::class,'id','listing_item_id');
+    }
+
 }

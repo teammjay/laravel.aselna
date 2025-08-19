@@ -8,6 +8,7 @@ use App\Models\DevicesLinkedDevice;
 use App\Models\DeviceTypes;
 use App\Models\Feed;
 use App\Models\GenerateProductImage;
+use App\Models\ListingItem;
 use App\Models\ListingItemProductImage;
 use App\Models\Manufacturer;
 use App\Models\ProductImages;
@@ -156,6 +157,8 @@ class FeedController extends Controller
 
                     foreach ($products as $itemDetail) {
 
+
+
                         $images = array();
 
                         /*$this->generateProductImages($itemDetail, $storeDetail);
@@ -167,6 +170,13 @@ class FeedController extends Controller
                         $ptype_id = (isset($itemDetail->StoreTypeCategory) && !empty($itemDetail->StoreTypeCategory)) ? $itemDetail->StoreTypeCategory->store_type_code : '';
                         $product_type = '';
                         if(isset($itemDetail->product)) {
+                            $product_id = $itemDetail->product->product_id;
+                            //$compatibleDevice = $this->getCompatibleDevices($product_id,$request->device,$request->device_series);
+                            /*$listingItems = ListingItem::with('itemDetail')->whereNotNull('store_product_id')->where('store_product_id',$itemDetail->id)->get();
+                            echo '<pre>';
+                            print_r($listingItems);
+                            echo '</pre>';die;*/
+
                             $typeDetail = ProductType::with('parent')->where('id', $itemDetail->product->product_type)->first();
                             $product_type = $this->getCategoryPath($typeDetail);
                             fputcsv($stream, [
@@ -231,6 +241,45 @@ class FeedController extends Controller
             ]);
         }
 
+    }
+
+    private function getProductListingItems($product_id){
+
+        $listingItems = ListingItem::with('itemDetail')->whereNotNull('store_product_id')->where('store_product_id',$product_id)->get();
+
+
+    }
+
+    private function getCompatibleDevices($product_id,$devices,$deviceSeries){
+
+        $field = 'carrier.name as carrier_name';
+        $field2 = 'carrier.id as carrier_id';
+
+        $query = Device::select('device.*', 'product_interface.product_id', 'products.product_sku', $field, $field2)->with('brand', 'rating')->with('deviceType', 'deviceSeries');
+        $query->leftJoin('brands', 'brands.id', '=', 'device.brand_id');
+        $query->leftJoin('device_interface', 'device_interface.device_id', '=', 'device.id');
+        $query->leftJoin('product_interface', 'product_interface.interface_id', '=', 'device_interface.interface_id');
+        $query->leftJoin('products', 'product_interface.product_id', '=', 'products.product_id');
+
+        $query->leftJoin('device_carrier', 'device_carrier.device_id', '=', 'device.id');
+        $query->leftJoin('carrier', 'carrier.id', '=', 'device_carrier.carrier_id');
+        $query->whereNotNull('carrier.id');
+
+        $query->whereIn('product_interface.product_id', $product_id);
+
+        if ($devices) {
+            $query->whereIn('device.id', $devices);
+        }
+        if ($deviceSeries) {
+            $devices = DevicesLinkedDevice::select('device_id')->whereIn('device_series_id', $deviceSeries)->get();
+            $query->whereIn('device.id', $devices);
+        }
+        $query->orderBy('brands.name', 'asc');
+        $query->orderBy('device.name', 'asc');
+
+        $devices = $query->get();
+
+        return $devices;
     }
 
     private function getCategoryPath($category)
