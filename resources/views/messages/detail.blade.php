@@ -88,6 +88,7 @@
     .select2-container--default .select2-selection--single .select2-selection__arrow b{
         top:70%;
     }
+    .clickable-row:hover{cursor:pointer; background: #f0f8ff;}
 </style>
 @stop
 
@@ -234,7 +235,8 @@
                                 <div class="btn-group" role="group">
                                     <button id="btnGroupDrop1" type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="fa fa-paper-plane"></i> Submit</button>
                                     <div class="dropdown-menu" aria-labelledby="btnGroupDrop1">
-                                        <a class="dropdown-item submit_message" href="javascript:void(0);" data-close="1">Submit and Close Ticket</a>
+                                        <a class="dropdown-item submit_message" href="javascript:void(0);" data-close="2">Submit and Close Ticket</a>
+                                        <a class="dropdown-item submit_message" href="javascript:void(0);" data-close="1">Submit and Awaiting Ticket</a>
                                         <a class="dropdown-item submit_message" href="javascript:void(0);" data-close="0">Submit and Leave Ticket Open</a>
                                     </div>
                                 </div>
@@ -295,7 +297,7 @@
                                     <option value="4">Spam</option>
                                 </select>
                                 <button type="button" class="btn btn-default" name="revert" id="revert_ticket">Revert</button>--}}
-                                <button type="button" class="btn btn-default" name="close" id="close_ticket">Close</button>
+                                <button type="button" class="btn btn-default" name="close" id="close_ticket" onclick="history.back()">Close</button>
                             </div>
                         </div>
                     </div>
@@ -576,7 +578,14 @@
             });
 
             $(document).on('click','#close_ticket',function () {
-                window.location.href = '{{ route('message.need_action') }}';
+                //window.location.href = '{{ route('message.need_action') }}';
+            });
+
+            $(document).on("click",".clickable-row", function() {
+                var store_url = $(this).data("href");
+                if(store_url != '') {
+                    window.open(store_url, '_blank');
+                }
             });
 
             $(document).on('blur','#internal_notes',function () {
@@ -1517,6 +1526,7 @@
             let order_id = $('#order_id').val();
             var storeType = '{{ $store_type_name }}';
             if(order_id != '') {
+                $("#ajax-preloader").show();
                 $.ajax({
                     type: "POST",
                     url: "{{ route('message.searchorder') }}",

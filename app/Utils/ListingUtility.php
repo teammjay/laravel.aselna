@@ -130,6 +130,25 @@ class ListingUtility
     }
 
 
+    public static function generateItemUrl($store_type, $store_sku = '', $site_url = '',$store_url = '')
+    {
+        //Log::info("Product: " . json_encode($product));
+        if ($store_type != '' && $store_sku != '') {
+            return match (strtolower($store_type)) {
+            "ebay" => "https://www.ebay.com/itm/" . $store_sku . "/" . $store_sku,
+                "amazon" => "https://www.amazon.com/dp/" . $store_sku,
+                "shopify" => $site_url . "/products/" . $store_url,
+                "magento" => $site_url . "/product/" . $store_sku,
+                "walmart" => "https://www.walmart.com/ip/" . $store_sku,
+                "newegg" => "https://www.newegg.com/p/" . $store_sku,
+                default => "",
+            };
+        } else {
+            return "";
+        }
+    }
+
+
     public static function validate($category, $productId, $storeTypeId): array
     {
         $requirements = ListingRequirement::where('category', $category)->get();
