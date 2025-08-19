@@ -243,6 +243,10 @@
             <div class="card">
                 <div class="card-body" id="shipping_section">
                 </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancle</button>
+                    <button type="button" class="btn btn-primary" id="updateShipment"><i class="fa fa-sticky-note"></i> Update </button>
+                </div>
             </div>
         </div>
     </div>
@@ -259,10 +263,10 @@
                 <div class="modal-body">
 
                 </div>
-                <div class="modal-footer">
+                {{--<div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancle</button>
                     <button type="button" class="btn btn-primary" id="updateShipment"><i class="fa fa-sticky-note"></i> Update </button>
-                </div>
+                </div>--}}
             </div>
         </div>
     </div>
@@ -1182,10 +1186,10 @@
             const carrier_package = formData.get("carrier_package");
             const label_generation = formData.get("label_generation");
 
-            if (!carrier_package || carrier_package.trim() === "") {
+            /*if (!carrier_package || carrier_package.trim() === "") {
                 alert("Carrier package is required.");
                 return;
-            }
+            }*/
 
 
             $.ajax({
@@ -1200,8 +1204,9 @@
                 success: function (response) {
                     // If success, remove the user row from the table
                     if (response.success) {
-                        alert('Shipped Updated successfully!!');
-                        location.reload();
+                        //alert('Shipped Updated successfully!!');
+                        //location.reload();
+                        loadDatatables();
                     }
                     else {
                         alert(response.message);
