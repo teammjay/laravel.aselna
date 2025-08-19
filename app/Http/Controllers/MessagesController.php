@@ -522,7 +522,7 @@ class MessagesController extends Controller
 
         if($order_id){
 
-            $orderDetail = Order::with('orderItem','orderItem.product','orderItem.product.image','customer','customerAddress')->where('order_id',$order_id)->orWhere('purchase_order_id',$order_id)->first();
+            $orderDetail = Order::with('store','store.storeType','orderItem','orderItem.listingItem','orderItem.product','orderItem.product.image','customer','customerAddress')->where('order_id',$order_id)->orWhere('purchase_order_id',$order_id)->first();
             if($orderDetail){
                 if($ticket_id) {
                     $ticketDetail = Message::findOrFail($ticket_id);
@@ -820,7 +820,7 @@ class MessagesController extends Controller
         $message_to_send = $request->input('message_to_send');
         $customer_id = $request->input('customer_id');
         $template_id = $request->input('template_id');
-        $is_closed = $request->input('ticket_status');
+        $ticket_status = $request->input('ticket_status');
         $labelimage = $request->input('labelimage');
         $imagepath = $request->input('imagepath');
         $imagename = $request->input('imagename');
@@ -920,7 +920,10 @@ class MessagesController extends Controller
                         }
                     }
 
-                    if($is_closed){
+                    if($ticket_status == 1){
+                        $ticketDetail->update(['status'=>1]);
+                    }
+                    if($ticket_status == 2){
                         $ticketDetail->update(['status'=>2]);
                     }
                     return response()->json([

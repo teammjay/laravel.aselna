@@ -57,10 +57,11 @@
             top: 0;
             background: white; /* Or your table's background */
             z-index: 10;
+            border-color: #dee2e6;
         }
 
         .hide{display:none;}
-
+        #shipping_section{min-height: 100vh;}
     </style>
 @stop
 
@@ -73,162 +74,181 @@
     @if (session('error'))
         <div class="alert alert-danger alert-dismissible fade show">{{ session('error') }}</div>
     @endif
-    <div class="row my-3">
-        <div class="col-md-3">
-            <div class="card">
-                <div class="card-header">
-                    Options
-                </div>
-                <div class="card-body">
-                    <div class="form-group">
-                        <input type="checkbox" name="ship_options" id="same_address" value="same_address" checked> <span>Combine Same Address</span>
-                    </div>
-                    <div class="form-group">
-                        <input type="checkbox" name="ship_options" value="add_insurance"> <span>Add Insurance</span>
-                    </div>
-                    <div class="form-group">
-                        <input type="checkbox" name="ship_options" value="stop_on_error"> <span>Stop On Error</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card">
-                <div class="card-header">
-                    Ship From
-                </div>
-                <div class="card-body">
-                    @if(count($shipFrom ?? []) > 0)
-                        @foreach($shipFrom as $lc)
-                            <div class="form-group mb-1">
-                                <input type="radio" name="ship_from" value="{{ $lc->id }}"> <span>{{ $lc->name }}</span>
-                            </div>
-                        @endforeach
-                    @endif
-
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card">
-                <div class="card-header">
-                    Shipping Service
-                </div>
-                <div class="card-body">
-                    <div class="form-group">
-                        <div class="d-flex align-items-center justify-content-between">
-                            <label for="carrier_id" class="m-0">Carrier</label>
-                            <select class="form-control w-75" id="carrier_id">
-                                @if(count($shippingCarrier ?? []) > 0)
-                                    @foreach($shippingCarrier as $sCarrier)
-                                        <option value="{{ $sCarrier->id }}">{{ $sCarrier->name }}</option>
-                                    @endforeach
-                                @endif
-                            </select>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <div class="d-flex align-items-center justify-content-between">
-                            <label for="carrier_service_id" class="m-0">Service</label>
-                            <select class="form-control w-75" id="carrier_service_id">
-                                <option value=""></option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <div class="d-flex align-items-center justify-content-between">
-                            <label for="carrier_service_id" class="m-0">Carrier Package</label>
-                            <select class="form-control" id="carrier_package" name="carrier_package">
-                                <option value="">--</option>
-                                @if(count($shippingCarrierPackage ?? []) > 0)
-                                    @foreach($shippingCarrierPackage as $sCarrierPackage)
-                                        <option value="{{ $sCarrierPackage->id }}" {{$sCarrierPackage->id == '2ae35910-a53e-1570-1be4-94d309ee04ce' ? 'selected' : ''}}>{{ $sCarrierPackage->name }}</option>
-                                    @endforeach
-                                @endif
-                            </select>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-md-3">
-            <div class="card">
-                <div class="card-header">
-                    Shipping Service
-                </div>
-                <div class="card-body">
-                    <button class="btn btn-default w-100" id="update_selected">Update Selected</button>
-                    <button class="btn btn-default mt-2 w-100" id="update_all">Update All</button>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="row my-3">
-        <div class="col-md-2">
-            <select class="form-control mt-3 mb-3" name="store_id" id="listing_store">
-                <option value="">All Stores</option>
-                @if(count($stores ?? []) > 0)
-                    @foreach($stores as $store)
-                        <option value="{{ $store->id }}">{{ $store->name }} {{ (!empty((array)$store->storeType)) ? ' - '.$store->storeType->name : '' }}</option>
-                    @endforeach
-                @endif
-            </select>
-        </div>
-        <div class="col-md-10 d-flex align-items-center" style="gap:10px;">
-            <button type="button" class="btn btn-default" id="refresh_list">
-                <i class="fa fa-fw fa-spinner"></i> Refresh
-            </button>
-            <button type="button" class="btn btn-default" id="ship_all">
-                <i class="fa fa-fw fa-shipping-fast"></i> Ship All
-            </button>
-            <button type="button" class="btn btn-default" id="ship_selected">
-                <i class="fa fa-fw fa-shipping-fast"></i> Ship Selected
-            </button>
-            <button type="button" class="btn btn-default" id="mark_as_shipped">
-                Mark As Shipped
-            </button>
-            <button type="button" class="btn btn-default" id="cancel_selected">
-                Cancel Selected
-            </button>
-
-            <button type="button" class="btn btn-default hide" id="approved">
-                Approved
-            </button>
-
-            <span id="total_selected">( 0 selected )</span>
-        </div>
-    </div>
     <div class="row">
-        <div class="col-md-1" id="totalRecords"></div>
-        <div class="col-md-3">
-            <input type="checkbox" id="select_deselect_shipment"> <label for="selected_product">Select/Deselect All</label>
+        <div class="col-md-9">
+            <div class="card">
+                <div class="card-body">
+                    <div class="row my-3">
+                        <div class="col-md-3">
+                            <div class="card">
+                                <div class="card-header">
+                                    Options
+                                </div>
+                                <div class="card-body">
+                                    <div class="form-group">
+                                        <input type="checkbox" name="ship_options" id="same_address" value="same_address" checked> <span>Combine Same Address</span>
+                                    </div>
+                                    <div class="form-group">
+                                        <input type="checkbox" name="ship_options" value="add_insurance"> <span>Add Insurance</span>
+                                    </div>
+                                    <div class="form-group">
+                                        <input type="checkbox" name="ship_options" value="stop_on_error"> <span>Stop On Error</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card">
+                                <div class="card-header">
+                                    Ship From
+                                </div>
+                                <div class="card-body">
+                                    @if(count($shipFrom ?? []) > 0)
+                                        @foreach($shipFrom as $lc)
+                                            <div class="form-group mb-1">
+                                                <input type="radio" name="ship_from" value="{{ $lc->id }}"> <span>{{ $lc->name }}</span>
+                                            </div>
+                                        @endforeach
+                                    @endif
+
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card">
+                                <div class="card-header">
+                                    Shipping Service
+                                </div>
+                                <div class="card-body">
+                                    <div class="form-group">
+                                        <div class="d-flex align-items-center justify-content-between">
+                                            <label for="carrier_id" class="m-0">Carrier</label>
+                                            <select class="form-control w-75" id="carrier_id">
+                                                @if(count($shippingCarrier ?? []) > 0)
+                                                    @foreach($shippingCarrier as $sCarrier)
+                                                        <option value="{{ $sCarrier->id }}">{{ $sCarrier->name }}</option>
+                                                    @endforeach
+                                                @endif
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <div class="d-flex align-items-center justify-content-between">
+                                            <label for="carrier_service_id" class="m-0">Service</label>
+                                            <select class="form-control w-75" id="carrier_service_id">
+                                                <option value=""></option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <div class="d-flex align-items-center justify-content-between">
+                                            <label for="carrier_service_id" class="m-0">Carrier Package</label>
+                                            <select class="form-control" id="carrier_package" name="carrier_package">
+                                                <option value="">--</option>
+                                                @if(count($shippingCarrierPackage ?? []) > 0)
+                                                    @foreach($shippingCarrierPackage as $sCarrierPackage)
+                                                        <option value="{{ $sCarrierPackage->id }}" {{$sCarrierPackage->id == '2ae35910-a53e-1570-1be4-94d309ee04ce' ? 'selected' : ''}}>{{ $sCarrierPackage->name }}</option>
+                                                    @endforeach
+                                                @endif
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-3">
+                            <div class="card">
+                                <div class="card-header">
+                                    Shipping Service
+                                </div>
+                                <div class="card-body">
+                                    <button class="btn btn-default w-100" id="update_selected">Update Selected</button>
+                                    <button class="btn btn-default mt-2 w-100" id="update_all">Update All</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row my-3">
+                        <div class="col-md-2">
+                            <select class="form-control mt-3 mb-3" name="store_id" id="listing_store">
+                                <option value="">All Stores</option>
+                                @if(count($stores ?? []) > 0)
+                                    @foreach($stores as $store)
+                                        <option value="{{ $store->id }}">{{ $store->name }} {{ (!empty((array)$store->storeType)) ? ' - '.$store->storeType->name : '' }}</option>
+                                    @endforeach
+                                @endif
+                            </select>
+                        </div>
+                        <div class="col-md-10 d-flex align-items-center" style="gap:10px;">
+                            <button type="button" class="btn btn-default" id="refresh_list">
+                                <i class="fa fa-fw fa-spinner"></i> Refresh
+                            </button>
+                            <button type="button" class="btn btn-default" id="ship_all">
+                                <i class="fa fa-fw fa-shipping-fast"></i> Ship All
+                            </button>
+                            <button type="button" class="btn btn-default" id="ship_selected">
+                                <i class="fa fa-fw fa-shipping-fast"></i> Ship Selected
+                            </button>
+                            <button type="button" class="btn btn-default" id="mark_as_shipped">
+                                Mark As Shipped
+                            </button>
+                            <button type="button" class="btn btn-default" id="cancel_selected">
+                                Cancel Selected
+                            </button>
+
+                            <button type="button" class="btn btn-default hide" id="approved">
+                                Approved
+                            </button>
+
+                            <span id="total_selected">( 0 selected )</span>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-2" id="totalRecords"></div>
+                        <div class="col-md-3">
+                            <input type="checkbox" id="select_deselect_shipment"> <label for="selected_product">Select/Deselect All</label>
+                        </div>
+                    </div>
+                    <div class="table-responsive pb-5" style="max-height: 500px; overflow: auto;">
+                        <table id="shipmentTable" class="table table-bordered table-striped">
+                            <thead>
+                            <tr>
+                                {{--<th></th>--}}
+                                <th>Image</th>
+                                <th>Status</th>
+                                <th>Carrier Package</th>
+                                <th>Carrier Service</th>
+                                <th>Store</th>
+                                <th>Order Id</th>
+                                <th>Purchase Order Id</th>
+                                <th>Order Date</th>
+                                <th>Shipment Date (expct)</th>
+                                <th>Product Code</th>
+                                <th>Weight</th>
+                                <th>First Name</th>
+                                <th>Last Name</th>
+                                <th>City</th>
+                            </tr>
+                            </thead>
+                            <tbody id="shipment-list">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
         </div>
-    </div>
-    <div class="table-responsive pb-5" style="max-height: 500px; overflow: auto;">
-        <table id="shipmentTable" class="table table-bordered table-striped">
-            <thead>
-            <tr>
-                <th></th>
-                <th>Image</th>
-                <th>Status</th>
-                <th>Carrier Package</th>
-                <th>Carrier Service</th>
-                <th>Store</th>
-                <th>Order Id</th>
-                <th>Order Date</th>
-                <th>Shipment Date (expct)</th>
-                <th>Product Code</th>
-                <th>Weight</th>
-                <th>First Name</th>
-                <th>Last Name</th>
-                <th>City</th>
-            </tr>
-            </thead>
-            <tbody id="shipment-list">
-            </tbody>
-        </table>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body" id="shipping_section">
+                </div>
+                <div class="modal-footer shipping_section hide">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancle</button>
+                    <button type="button" class="btn btn-primary" id="updateShipment"><i class="fa fa-sticky-note"></i> Update </button>
+                </div>
+            </div>
+        </div>
     </div>
     <div id="ajax-gallery" style="display: none;"></div>
 
@@ -243,10 +263,10 @@
                 <div class="modal-body">
 
                 </div>
-                <div class="modal-footer">
+                {{--<div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancle</button>
                     <button type="button" class="btn btn-primary" id="updateShipment"><i class="fa fa-sticky-note"></i> Update </button>
-                </div>
+                </div>--}}
             </div>
         </div>
     </div>
@@ -362,6 +382,9 @@
                 $('#cancel_selected').removeClass('hide');
                 $('#approved').addClass('hide');
             }
+
+            var operation_id = ele.find('input[name="shipment_id[]"]').val();
+            getShippingDetail(operation_id);
         });
 
         $(document).on('click','#refresh_list',function () {
@@ -669,7 +692,7 @@
                     if (response.success) {
                         $('#edit_address').html(response.address);
                         $('#editPostalAddressModal').modal('hide');
-                        $('body').addClass('modal-open');
+                        //$('body').addClass('modal-open');
 
                     }
                 },
@@ -680,11 +703,11 @@
             });
         });
 
-        $(document).on('click','.closeaddressbtn',function () {
+        /*$(document).on('click','.closeaddressbtn',function () {
             setTimeout(function(){
                 $('body').addClass('modal-open');
             },500);
-        });
+        });*/
 
         $(document).on('click','#mark_shipped',function () {
 
@@ -1163,10 +1186,10 @@
             const carrier_package = formData.get("carrier_package");
             const label_generation = formData.get("label_generation");
 
-            if (!carrier_package || carrier_package.trim() === "") {
+            /*if (!carrier_package || carrier_package.trim() === "") {
                 alert("Carrier package is required.");
                 return;
-            }
+            }*/
 
 
             $.ajax({
@@ -1181,8 +1204,9 @@
                 success: function (response) {
                     // If success, remove the user row from the table
                     if (response.success) {
-                        alert('Shipped Updated successfully!!');
-                        location.reload();
+                        //alert('Shipped Updated successfully!!');
+                        //location.reload();
+                        loadDatatables();
                     }
                     else {
                         alert(response.message);
@@ -1225,7 +1249,95 @@
             let totalCnt = $('input[name="shipment_id[]"]:checked').length;
             $('#total_selected').html('( <b>'+totalCnt+'</b> selected )');
         });
+
+        $(document).on('change', '#frmShippingDetail input, #frmShippingDetail select, #frmShippingDetail textarea', function() {
+            // Your code to execute when a change occurs in any of these elements
+            updateShipment();
+        });
     });
+
+    function updateShipment(){
+
+        const form = document.querySelector("#frmShippingDetail");
+        let formData = new FormData(form);
+
+        const carrier_package = formData.get("carrier_package");
+        const label_generation = formData.get("label_generation");
+
+        /*if (!carrier_package || carrier_package.trim() === "") {
+            alert("Carrier package is required.");
+            return;
+        }*/
+
+        $.ajax({
+            url: "<?php echo e(route('shipment.updateshipment')); ?>",
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            headers: {
+                'X-CSRF-TOKEN': '<?php echo e(csrf_token()); ?>',
+            },
+            success: function (response) {
+                // If success, remove the user row from the table
+                if (response.success) {
+                    //alert('Shipped Updated successfully!!');
+                    //location.reload();
+                    loadDatatables();
+                }
+                else {
+                    alert(response.message);
+                }
+            },
+            error: function (xhr) {
+                // Handle error response
+                if (xhr.status === 422) {
+                    let errors = xhr.responseJSON.errors;
+                    $.each(errors, function (key, messages) {
+                        alert(key + ': ' + messages[0]);
+                    });
+                }
+                /*const response = xhr.responseJSON;
+                if ( response.errors) {
+                    alert(response.message);
+                } else {
+                    alert('Error: ' + response.message);
+                }*/
+            }
+        });
+    }
+
+    function getShippingDetail(operation_id){
+        $.ajax({
+            url: "{{ route('shipment.getshippingdetail') }}",
+            type: 'POST',
+            data: {
+                operation_id: operation_id,
+                "_token": '{{ csrf_token() }}'
+            },
+            success: function (response) {
+                // If success, remove the user row from the table
+                if (response.success) {
+                    $('#shipping_section').html(response.html);
+                    $('#ship_date').datetimepicker({
+                        format:'Y-m-d H:i',
+                        minDate: 'now',
+                        step:10,
+                        onSelectTime: function(dp,$input) {
+                            var sel_date = $input.val();
+                            $('#ship_date').val(sel_date);
+                        }
+                    });
+                    loadServiceCarrier($('#carrier_name').val());
+                    $('.shipping_section').removeClass('hide');
+                }
+            },
+            error: function (xhr) {
+                // Handle error response
+                alert('Error: ' + xhr.responseJSON.error);
+            }
+        });
+    }
 
     function getShippingCarrierService(element){
         $.ajax({
@@ -1383,7 +1495,7 @@
                             "order": [[7, "desc"]],
                             columnDefs: [
                                 {
-                                    targets: [0,1],
+                                    targets: [0],
                                     orderable: false
                                 }
                             ],

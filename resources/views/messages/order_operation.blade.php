@@ -35,7 +35,7 @@
                                 <div class="row pt-2">
                                     <div class="col-md-12">
                                         @if(isset($order_operation->relatedOperation->tracking_number))
-                                            <a href="" class="text-blue">{{ isset($order_operation->relatedOperation->carrier) ? $order_operation->relatedOperation->carrier->name : '' }} {{ $order_operation->relatedOperation->tracking_number }}</a>
+                                            <a target="_blank" href="https://tools.usps.com/go/TrackConfirmAction_input?qtc_tLabels1={{ $order_operation->relatedOperation->tracking_number }}" class="text-blue">{{ isset($order_operation->relatedOperation->carrier) ? $order_operation->relatedOperation->carrier->name : '' }} {{ $order_operation->relatedOperation->tracking_number }}</a>
                                         @endif
                                     </div>
                                 </div>
@@ -112,7 +112,7 @@
                         <div class="row pt-2">
                             <div class="col-md-12">
                                 @if(isset($order_operation->tracking_number))
-                                    <a href="" class="text-blue">{{ isset($order_operation->carrier) ? $order_operation->carrier->name : '' }} {{ $order_operation->tracking_number }}</a>
+                                    <a target="_blank" href="https://tools.usps.com/go/TrackConfirmAction_input?qtc_tLabels1={{ $order_operation->tracking_number }}" class="text-blue">{{ isset($order_operation->carrier) ? $order_operation->carrier->name : '' }} {{ $order_operation->tracking_number }}</a>
                                 @endif
                             </div>
                         </div>
@@ -178,7 +178,7 @@
                     <div class="row pt-2">
                         <div class="col-md-12">
                             @if(isset($order_operation->tracking_number))
-                                <a href="" class="text-blue">{{ isset($order_operation->carrier) ? $order_operation->carrier->name : '' }} {{ $order_operation->tracking_number }}</a>
+                                <a target="_blank" href="https://tools.usps.com/go/TrackConfirmAction_input?qtc_tLabels1={{ $order_operation->tracking_number }}" class="text-blue">{{ isset($order_operation->carrier) ? $order_operation->carrier->name : '' }} {{ $order_operation->tracking_number }}</a>
                             @endif
                         </div>
                     </div>
