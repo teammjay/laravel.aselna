@@ -35,7 +35,7 @@
                                 <div class="row pt-2">
                                     <div class="col-md-12">
                                         @if(isset($order_operation->relatedOperation->tracking_number))
-                                            <a href="" class="text-blue">{{ isset($order_operation->relatedOperation->carrier) ? $order_operation->relatedOperation->carrier->name : '' }} {{ $order_operation->relatedOperation->tracking_number }}</a>
+                                            <a target="_blank" href="https://tools.usps.com/go/TrackConfirmAction_input?qtc_tLabels1={{ $order_operation->relatedOperation->tracking_number }}" class="text-blue">{{ isset($order_operation->relatedOperation->carrier) ? $order_operation->relatedOperation->carrier->name : '' }} {{ $order_operation->relatedOperation->tracking_number }}</a>
                                         @endif
                                     </div>
                                 </div>
@@ -52,6 +52,26 @@
                     <div class="row align-items-center">
                         <div class="col-md-1"><i class="fa fa-fw fa-undo" style="font-size: 18px;"></i> </div>
                         <div class="col-md-10">Order Refunded On {{ date('D, d M Y',strtotime($order_operation->created_at)) }} </div>
+
+                    </div>
+                </div>
+            </div>
+        @endif
+
+        @if($order_operation->status == \App\Constants\OrderOperationStatus::Canceled )
+            <div class="card">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-1"><i class="fa fa-fw fa-times" style="font-size: 18px;"></i> </div>
+                        <div class="col-md-8">Order Cancelled On {{ date('D, d M Y',strtotime($order_operation->created_at)) }} </div>
+                        <div class="col-md-3">
+                            <div class="btn-group float-right" role="group">
+                                <button id="btnGroupDrop2" type="button" class="dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="fa fa-ellipsis-v"></i></button>
+                                <div class="dropdown-menu" aria-labelledby="btnGroupDrop2">
+                                    <a class="dropdown-item" href="javascript:void(0)" id="regenerate_message" data-opid="{{ $order_operation->id }}">Regenerate</a>
+                                </div>
+                            </div>
+                        </div>
 
                     </div>
                 </div>
@@ -92,7 +112,7 @@
                         <div class="row pt-2">
                             <div class="col-md-12">
                                 @if(isset($order_operation->tracking_number))
-                                    <a href="" class="text-blue">{{ isset($order_operation->carrier) ? $order_operation->carrier->name : '' }} {{ $order_operation->tracking_number }}</a>
+                                    <a target="_blank" href="https://tools.usps.com/go/TrackConfirmAction_input?qtc_tLabels1={{ $order_operation->tracking_number }}" class="text-blue">{{ isset($order_operation->carrier) ? $order_operation->carrier->name : '' }} {{ $order_operation->tracking_number }}</a>
                                 @endif
                             </div>
                         </div>
@@ -158,7 +178,7 @@
                     <div class="row pt-2">
                         <div class="col-md-12">
                             @if(isset($order_operation->tracking_number))
-                                <a href="" class="text-blue">{{ isset($order_operation->carrier) ? $order_operation->carrier->name : '' }} {{ $order_operation->tracking_number }}</a>
+                                <a target="_blank" href="https://tools.usps.com/go/TrackConfirmAction_input?qtc_tLabels1={{ $order_operation->tracking_number }}" class="text-blue">{{ isset($order_operation->carrier) ? $order_operation->carrier->name : '' }} {{ $order_operation->tracking_number }}</a>
                             @endif
                         </div>
                     </div>

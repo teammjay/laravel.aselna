@@ -88,6 +88,7 @@
     .select2-container--default .select2-selection--single .select2-selection__arrow b{
         top:70%;
     }
+    .clickable-row:hover{cursor:pointer; background: #f0f8ff;}
 </style>
 @stop
 
@@ -234,7 +235,8 @@
                                 <div class="btn-group" role="group">
                                     <button id="btnGroupDrop1" type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="fa fa-paper-plane"></i> Submit</button>
                                     <div class="dropdown-menu" aria-labelledby="btnGroupDrop1">
-                                        <a class="dropdown-item submit_message" href="javascript:void(0);" data-close="1">Submit and Close Ticket</a>
+                                        <a class="dropdown-item submit_message" href="javascript:void(0);" data-close="2">Submit and Close Ticket</a>
+                                        <a class="dropdown-item submit_message" href="javascript:void(0);" data-close="1">Submit and Awaiting Ticket</a>
                                         <a class="dropdown-item submit_message" href="javascript:void(0);" data-close="0">Submit and Leave Ticket Open</a>
                                     </div>
                                 </div>
@@ -295,7 +297,7 @@
                                     <option value="4">Spam</option>
                                 </select>
                                 <button type="button" class="btn btn-default" name="revert" id="revert_ticket">Revert</button>--}}
-                                <button type="button" class="btn btn-default" name="close" id="close_ticket">Close</button>
+                                <button type="button" class="btn btn-default" name="close" id="close_ticket" onclick="history.back()">Close</button>
                             </div>
                         </div>
                     </div>
@@ -547,8 +549,18 @@
                     success: function(data) {
                         if(data.success){
 
-                            $('#message_to_send').html(data.templateCode);
-                            $('#template_id').val(data.template_id);
+                            if($('#message_to_send').val() != '' && data.templateCode != ''){
+                                if (confirm("Are you sure, you want to overwrite the template?") == true) {
+                                    $('#template_id').val(data.template_id);
+                                    $('#message_to_send').html(data.templateCode);
+                                }
+                            }else if(data.templateCode != ''){
+                                $('#template_id').val(data.template_id);
+                                $('#message_to_send').html(data.templateCode);
+                            }
+
+                            //$('#message_to_send').html(data.templateCode);
+                            //$('#template_id').val(data.template_id);
                             if(data.image_name){
                                 $('.lableImageGroup').removeClass('hide');
                                 $('#image_url').val(data.image_url);
@@ -566,7 +578,14 @@
             });
 
             $(document).on('click','#close_ticket',function () {
-                window.location.href = '{{ route('message.need_action') }}';
+                //window.location.href = '{{ route('message.need_action') }}';
+            });
+
+            $(document).on("click",".clickable-row", function() {
+                var store_url = $(this).data("href");
+                if(store_url != '') {
+                    window.open(store_url, '_blank');
+                }
             });
 
             $(document).on('blur','#internal_notes',function () {
@@ -828,6 +847,51 @@
                             }
 
                             //$('#message_to_send').html(data.templateCode);
+                        }
+                    },
+                    error: function (xhr) {
+                    },
+                    complete: function () {
+                        $("#ajax-preloader").hide();
+                    }
+                });
+            });
+
+            $(document).on('click','#regenerate_message',function () {
+                var template_id = $('#template_id').val();
+                var customer_name = $('#customer_name').val();
+                var store_name = $('#store_name').val();
+                var operationID = $(this).data('opid');
+                var order_id = $('#order_id').val();
+                $.ajax({
+                    type: "POST",
+                    url: "{{ route('message.getmessagetemplate') }}",
+                    data: {
+                        template_id: template_id,
+                        customer_name: customer_name,
+                        store_name: store_name,
+                        operation_id: operationID,
+                        order_id: order_id,
+                        regenerate: 1,
+                    },
+                    headers: {
+                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                    },
+
+                    success: function(data) {
+                        if(data.success){
+
+                            if($('#message_to_send').val() != '' && data.templateCode != ''){
+                                if (confirm("Are you sure, you want to overwrite the template?") == true) {
+                                    $('#template_id').val(data.template_id);
+                                    $('#message_to_send').html(data.templateCode);
+                                } else {
+
+                                }
+                            }else if(data.templateCode != ''){
+                                $('#template_id').val(data.template_id);
+                                $('#message_to_send').html(data.templateCode);
+                            }
                         }
                     },
                     error: function (xhr) {
@@ -1229,8 +1293,11 @@
 
                 const form = document.querySelector("#frmCancelOrder");
                 let formData = new FormData(form);
+
+                var order_id = $('#order_id').val();
+                formData.append('order_id',order_id);
                 $.ajax({
-                    url: "{{ route('shipment.cancelorder') }}",
+                    url: "{{ route('message.cancelorder') }}",
                     type: 'POST',
                     data: formData,
                     processData: false,
@@ -1242,8 +1309,26 @@
                         // If success, remove the user row from the table
                         alert(response.message);
                         if (response.success) {
-                            location.reload();
+                            //location.reload();
+
+                            $('#cancelOrderModal').modal('hide');
+                            if($('#message_to_send').val() != '' && response.template_id != ''){
+                                if (confirm("Are you sure, you want to overwrite the template?") == true) {
+                                    $('#template_id').val(response.template_id);
+                                    $('#message_to_send').html(response.template_code);
+                                } else {
+
+                                }
+                            }else if(response.template_id != ''){
+                                $('#template_id').val(response.template_id);
+                                $('#message_to_send').html(response.template_code);
+                            }
+
+                            loadOrderDetail();
+
                         }
+
+
                     },
                     error: function (xhr) {
                         // Handle error response
@@ -1441,6 +1526,7 @@
             let order_id = $('#order_id').val();
             var storeType = '{{ $store_type_name }}';
             if(order_id != '') {
+                $("#ajax-preloader").show();
                 $.ajax({
                     type: "POST",
                     url: "{{ route('message.searchorder') }}",

@@ -522,7 +522,7 @@ class MessagesController extends Controller
 
         if($order_id){
 
-            $orderDetail = Order::with('orderItem','orderItem.product','orderItem.product.image','customer','customerAddress')->where('order_id',$order_id)->orWhere('purchase_order_id',$order_id)->first();
+            $orderDetail = Order::with('store','store.storeType','orderItem','orderItem.listingItem','orderItem.product','orderItem.product.image','customer','customerAddress')->where('order_id',$order_id)->orWhere('purchase_order_id',$order_id)->first();
             if($orderDetail){
                 if($ticket_id) {
                     $ticketDetail = Message::findOrFail($ticket_id);
@@ -647,7 +647,7 @@ class MessagesController extends Controller
         }
 
         if(isset($operation_id) && $operation_id != ''){
-            $orderOperation = OrderOperation::with('shipFrom','shipFrom.returnAddress','carrier','store','relatedOperation')->where('id',$operation_id)->first();
+            $orderOperation = OrderOperation::with('shipFrom','shipFrom.returnAddress','carrier','store','relatedOperation','order','order.customer','order.customerAddress')->where('id',$operation_id)->first();
             /*echo '<pre>';
             print_r($orderOperation->operation_type);
             echo '</pre>';die;*/
@@ -670,6 +670,8 @@ class MessagesController extends Controller
                     $trackingNumber = $orderOperation->relatedOperation->tracking_number;
                 }
 
+            }else if(isset($regenerate) && $regenerate == 1 && $orderOperation->status == OrderOperationStatus::Canceled){
+                $templateDetail = HdMessageTemplate::getOrderOperationTemplate(OrderOperationType::OrderCancellation, 0, 0);
             }else{
                 $templateDetail = HdMessageTemplate::findOrFail($template_id);
             }
@@ -677,8 +679,9 @@ class MessagesController extends Controller
             //print_r($templateDetail);die;
 
             $returnAddress = $this->getReturnAddress($orderOperation);
+            $shipment_address = $this->getShipmentAddress($orderOperation);
 
-            if(isset($orderOperation->shipFrom->returnAddress) && $orderOperation->shipFrom->returnAddress->company != ''){
+            /*if(isset($orderOperation->shipFrom->returnAddress) && $orderOperation->shipFrom->returnAddress->company != ''){
                 $returnAddress .= trim($orderOperation->shipFrom->returnAddress->company).PHP_EOL;
             }
             if(isset($orderOperation->shipFrom->returnAddress) && $orderOperation->shipFrom->returnAddress->address_line_1 != ''){
@@ -698,7 +701,7 @@ class MessagesController extends Controller
             }
             if(isset($orderOperation->shipFrom->returnAddress) && $orderOperation->shipFrom->returnAddress->postal_code != ''){
                 $returnAddress .= '-'.trim($orderOperation->shipFrom->returnAddress->postal_code).PHP_EOL;
-            }
+            }*/
 
             if( isset($orderOperation->rma_number) && $orderOperation->rma_number != ''){
                 $rma_number = $orderOperation->rma_number;
@@ -709,7 +712,7 @@ class MessagesController extends Controller
                     'customer_firstName' => $customer_name,
                     'store_name' => $store_name,
                     'marketplaceName' => '',
-                    'shipment_address' => '',
+                    'shipment_address' => $shipment_address,
                     'shipment_date' => '',
                     'order_date' => (isset($orderDetail->order_date)) ? $orderDetail->order_date : '',
                     'trackingNumber' => $trackingNumber,
@@ -817,7 +820,7 @@ class MessagesController extends Controller
         $message_to_send = $request->input('message_to_send');
         $customer_id = $request->input('customer_id');
         $template_id = $request->input('template_id');
-        $is_closed = $request->input('ticket_status');
+        $ticket_status = $request->input('ticket_status');
         $labelimage = $request->input('labelimage');
         $imagepath = $request->input('imagepath');
         $imagename = $request->input('imagename');
@@ -917,7 +920,10 @@ class MessagesController extends Controller
                         }
                     }
 
-                    if($is_closed){
+                    if($ticket_status == 1){
+                        $ticketDetail->update(['status'=>1]);
+                    }
+                    if($ticket_status == 2){
                         $ticketDetail->update(['status'=>2]);
                     }
                     return response()->json([
@@ -1287,28 +1293,102 @@ class MessagesController extends Controller
         $selected_shipment_id = $request->input('id');
         $ticket_id = $request->input('ticket_id');
         $reason = $request->input('reason');
+        $order_id = $request->input('order_id');
         DB::beginTransaction();
         try {
             if ($selected_shipment_id) {
                 $orderOperation = OrderOperation::with('order', 'store', 'store.storeType')->where('id', $selected_shipment_id)->first();
+
+                if($orderOperation){
+                    $clonedOrderOperation = [
+                        'ship_date' => $orderOperation->ship_date,
+                        'client' => $orderOperation->client,
+                        'to_address_id' => $orderOperation->to_address_id,
+                        'sync_status' => $orderOperation->sync_status,
+                        'insurance_value' => $orderOperation->insurance_value,
+                        'status' => OrderOperationStatus::Canceled,
+                        'signature_confirmation' => $orderOperation->signature_confirmation,
+                        'shipping_package_id' => $orderOperation->shipping_package_id,
+                        'weight_value' => $orderOperation->weight_value,
+                        'weight_weight_unit' => $orderOperation->weight_weight_unit,
+                        'ship_from_id' => $orderOperation->ship_from_id,
+                        'store_id' => $orderOperation->store_id,
+                        'operation_type' => OrderOperationType::OrderCancellation,
+                        'order_id' => $orderOperation->order_id,
+                        'label_creation_type' => 1,
+                        'rma_number' => '',
+                        'shipping_carrier_id' => $orderOperation->shipping_carrier_id,
+                        'shipping_carrier_service_id' => NULL,
+                        'shipping_account_transaction_id' => NULL,
+                        'hd_ticket_id' => $ticket_id,
+                    ];
+
+                    $newOrderOperation = OrderOperation::create($clonedOrderOperation);
+                    $order_opration_id = $newOrderOperation->id;
+
+                    $newshipmentDetail = OrderOperation::with('operationItem', 'operationItem.orderItem')->where('id', $orderOperation->id)->first();
+                    if (count($newshipmentDetail->operationItem ?? []) > 0) {
+                        foreach ($newshipmentDetail->operationItem as $oitem) {
+
+                            $newOrderItem = [
+                                'order_item_id' => $oitem->order_item_id,
+                                'order_operation_id' => $order_opration_id,
+                                'client_id' => $oitem->client_id,
+                                'sync_status' => $oitem->sync_status,
+                                'quantity' => $oitem->quantity,
+                                'item_price' => $oitem->item_price,
+                                'shipping_price' => $oitem->shipping_price,
+                                'reason_id' => NULL
+                            ];
+
+                            OrderOperationItem::updateOrCreate([
+                                'order_item_id' => $oitem->order_item_id,
+                                'order_operation_id' => $order_opration_id,
+                            ], $newOrderItem);
+                        }
+                    }
+                }
+
+                $orderOperation = OrderOperation::with('order', 'store', 'store.storeType')->where('id', $order_opration_id)->first();
+
                 $response = OrderOperationUtility::cancelOrder($orderOperation, $reason);
 
-                if ($response) {
+                if (!empty($response) && $response['status']) {
                     $orderOperation->update(['status' => OrderOperationStatus::Canceled]);
                     if (isset($orderOperation->order->id)) {
                         $order = Order::findOrFail($orderOperation->order->id);
                         $order->update(['order_status' => OrderStatus::Canceled]);
                     }
+
+                    $templateDetail = HdMessageTemplate::getOrderOperationTemplate(OrderOperationType::OrderCancellation, 0, 0);
+                    $template_id = $template_code = '';
+
+                    if ($templateDetail) {
+
+                        $orderDetail = Order::with('orderItem', 'orderOperation', 'customer', 'store')->where('order_id', $order_id)->orWhere('purchase_order_id', $order_id)->first();
+                        $data = [
+                            'customer_firstName' => isset($orderDetail->customer) ? $orderDetail->customer->full_name : '',
+                            'store_name' => isset($orderDetail->store) ? $orderDetail->store->name : '',
+                            'rma_number' => '',
+                            'return_address' => '',
+                            'shipment_date' => '',
+                            'order_date' => '',
+                        ];
+                        $template_id = $templateDetail->id;
+                        $template_code = \Blade::render($templateDetail->template_code, $data);
+                    }
                     DB::commit();
                     return response()->json([
                         'success' => true,
+                        'template_code' => $template_code,
+                        'template_id' => $template_id,
                         'message' => 'Order Cancelled Successfully',
                     ]);
                 } else {
                     DB::rollBack();
                     return response()->json([
                         'success' => false,
-                        'message' => 'Something went wrong with API. Please try again!'
+                        'message' => isset($response['message']) ? $response['message'] : 'Something went wrong with API. Please try again!'
                     ]);
                 }
 
@@ -1933,6 +2013,37 @@ class MessagesController extends Controller
         }
 
         return $returnAddress;
+    }
+
+    private function getShipmentAddress($orderOperation){
+
+        $shipmentAddress = '';
+        if(isset($orderOperation->order)){
+            if(isset($orderOperation->order->customer->first_name) && $orderOperation->order->customer->first_name != ''){
+                $shipmentAddress .= $orderOperation->order->customer->first_name.' '.$orderOperation->order->customer->last_name.PHP_EOL;
+            }
+            if(isset($orderOperation->order->customerAddress->address_line_1) && $orderOperation->order->customerAddress->address_line_1 != ''){
+                $shipmentAddress .= trim($orderOperation->order->customerAddress->address_line_1).PHP_EOL;
+            }
+            if(isset($orderOperation->order->customerAddress->address_line_2) && $orderOperation->order->customerAddress->address_line_2 != ''){
+                $shipmentAddress .= trim($orderOperation->order->customerAddress->address_line_2).PHP_EOL;
+            }
+            if(isset($orderOperation->order->customerAddress->address_line_3) && $orderOperation->order->customerAddress->address_line_3 != ''){
+                $shipmentAddress .= trim($orderOperation->order->customerAddress->address_line_3).PHP_EOL;
+            }
+            if(isset($orderOperation->order->customerAddress->city) && $orderOperation->order->customerAddress->city != ''){
+                $shipmentAddress .= trim($orderOperation->order->customerAddress->city);
+            }
+            if(isset($orderOperation->order->customerAddress->state) && $orderOperation->order->customerAddress->state != ''){
+                $shipmentAddress .= ', '.trim($orderOperation->order->customerAddress->state);
+            }
+            if(isset($orderOperation->order->customerAddress->zip) && $orderOperation->order->customerAddress->zip != ''){
+                $shipmentAddress .= ' - '.trim($orderOperation->order->customerAddress->zip).PHP_EOL;
+            }
+        }
+
+
+        return $shipmentAddress;
     }
 
     public function label_list(string $id)

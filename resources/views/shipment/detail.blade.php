@@ -1,8 +1,9 @@
+
 <form id="frmShippingDetail">
     <input type="hidden" name="id" value="{{ $shipmentDetail->id }}">
     <div class="row">
         <div class="col-md-12">
-            <div class="row mt-3 g-3 align-items-center">
+            <div class="row mt-1 g-3 align-items-center">
                 <div class="col-md-4">
                     <label for="carrier_name">Carrier Name</label>
                 </div>
@@ -17,7 +18,7 @@
                     </select>
                 </div>
             </div>
-            <div class="row mt-3 g-3 align-items-center">
+            <div class="row mt-1 g-3 align-items-center">
                 <div class="col-md-4">
                     <label for="shipment_carrier">Shipping Carrier</label>
                 </div>
@@ -32,7 +33,7 @@
                     </select>
                 </div>
             </div>
-            <div class="row mt-3 g-3 align-items-center">
+            <div class="row mt-1 g-3 align-items-center">
                 <div class="col-md-4">
                     <label for="ship_date">Ship Date</label>
                 </div>
@@ -40,7 +41,7 @@
                     <input type="text" class="form-control" id="ship_date" name="ship_date" value="{{ $shipmentDetail->ship_date }}">
                 </div>
             </div>
-            <div class="row mt-3 g-3 align-items-center">
+            <div class="row mt-1 g-3 align-items-center">
                 <div class="col-md-4">
                     <label for="insurance_value">Insurance Value</label>
                 </div>
@@ -48,7 +49,7 @@
                     <input type="text" class="form-control" id="insurance_value" name="insurance_value" value="{{ $shipmentDetail->insurance_value }}">
                 </div>
             </div>
-            <div class="row mt-3 g-3 align-items-center">
+            <div class="row mt-1 g-3 align-items-center">
                 <div class="col-md-4">
                     <label for="weight">Weight</label>
                 </div>
@@ -63,7 +64,7 @@
                     </select>
                 </div>
             </div>
-            <div class="row mt-3 g-3 align-items-center">
+            <div class="row mt-1 g-3 align-items-center">
                 <div class="col-md-4">
                     <label for="carrier_package">Carrier Package</label>
                 </div>
@@ -78,7 +79,7 @@
                     </select>
                 </div>
             </div>
-            <div class="row mt-3 g-3 align-items-center">
+            <div class="row mt-1 g-3 align-items-center">
                 <div class="col-md-4">
                     <label for="cost">Cost</label>
                 </div>
@@ -86,7 +87,7 @@
                     <input type="text" class="form-control" id="cost" name="cost" value="{{ $shipmentDetail->cost }}" readonly>
                 </div>
             </div>
-            <div class="row mt-3 g-3 align-items-center">
+            <div class="row mt-1 g-3 align-items-center">
                 <div class="col-md-4">
                     <label for="shipment_from">Shipment from</label>
                 </div>
@@ -101,7 +102,7 @@
                     </select>
                 </div>
             </div>
-            <div class="row mt-3 g-3 align-items-center">
+            <div class="row mt-1 g-3 align-items-center">
                 <div class="col-md-4">
                     <label for="shipping_address">Shipping Address</label>
                 </div>
@@ -120,7 +121,7 @@
                 </div>
             </div>
 
-            <div class="row mt-3 g-3 align-items-center">
+            <div class="row mt-1 g-3 align-items-center">
                 <div class="col-md-4">
                     <label>Signature</label>
                 </div>
@@ -136,7 +137,7 @@
                     </div>
                 </div>
             </div>
-            <div class="row mt-3 g-3 align-items-center">
+            <div class="row mt-1 g-3 align-items-center">
                 <div class="col-md-4">
                     <label for="store">Store</label>
                 </div>
@@ -145,43 +146,38 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-12 mt-5">
-            <div class="card">
-                <div class="card-header">
-                    Shipment Items
-                </div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table id="shipmentItemTable" class="table table-bordered table-striped">
-                            <thead>
-                            <tr>
-                                <th>Image</th>
-                                <th>Sku</th>
-                                <th>Quantity</th>
-                            </tr>
-                            </thead>
-                            <tbody id="shipment-item-list">
+        <hr>
+        <div class="col-md-12 mt-3">
+            <div class="table-responsive">
+                <table id="shipmentItemTable" class="table table-bordered table-striped">
+                    <thead>
+                    <tr>
+                        <th>Image</th>
+                        <th>Sku</th>
+                        <th>Quantity</th>
+                    </tr>
+                    </thead>
+                    <tbody id="shipment-item-list">
 
-                                @if(count($shipmentDetail->operationItem ?? []) > 0)
-                                    @foreach($shipmentDetail->operationItem as $oitem)
-                                        <tr>
-                                            <td>
-                                                @if(isset($oitem->orderItem->product) && !empty($oitem->orderItem->product->image))
-                                                    <div class="main-image">
-                                                        <img src="{{  asset('storage/'. $oitem->orderItem->product->image->getFileUrl()) }}" alt="{{  $oitem->orderItem->product->product_image_url }}" class="mainImage" width="70" height="70" data-product-id="{{ $oitem->orderItem->product->product_id }}">
-                                                    </div>
-                                                @endif
-                                            </td>
-                                            <td>{{ $oitem->orderItem->sku }}</td>
-                                            <td><input type="text" class="form-control" name="quantity" value="{{ $oitem->orderItem->quantity }}"></td>
-                                        </tr>
-                                    @endforeach
-                                @endif
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
+                    @if(count($shipmentDetail->operationItem ?? []) > 0)
+                        @foreach($shipmentDetail->operationItem as $oitem)
+                            <tr>
+                                <td>
+                                    @if(isset($oitem->orderItem->product) && !empty($oitem->orderItem->product->image))
+                                        <div class="main-image">
+                                            <img src="{{  asset('storage/'. $oitem->orderItem->product->image->getFileUrl()) }}" alt="{{  $oitem->orderItem->product->product_image_url }}" class="mainImage" width="70" height="70" data-product-id="{{ $oitem->orderItem->product->product_id }}">
+                                        </div>
+                                    @endif
+                                </td>
+                                <td>{{ $oitem->orderItem->sku }}</td>
+                                <td><input type="text" class="form-control" name="quantity" value="{{ $oitem->orderItem->quantity }}"></td>
+                            </tr>
+                        @endforeach
+                    @endif
+                    </tbody>
+                </table>
             </div>
+
         </div>
     </div>
 </form>
