@@ -112,7 +112,7 @@ class EmailMessageUtility
             print_r($messages);
             echo '</pre>';die;*/
             $emails = [];
-            foreach ($messages as $key=>$message) {
+            foreach ($messages as $key => $message) {
                 Log::info('Subject: ' . $message->subject->first());
 
                 $body = $message->getTextBody();

@@ -526,7 +526,7 @@
                 });
             });
 
-            $(document).on('click','#rma',function () {
+            $(document).on('click','#rma,#return_label,#replacement, #refund, #ship_order, #cancel_order',function () {
                 rma_action = true;
                 saveTicket($('#subject').val());
 
@@ -920,7 +920,7 @@
             });
 
             $(document).on('click','#cancel_order',function () {
-                var order_id = $('#order_id').val();
+                /*var order_id = $('#order_id').val();
                 if(order_id != '' && order_id != null){
                     $.ajax({
                         url: "{{ route('message.getcancelorderdetail') }}",
@@ -935,7 +935,7 @@
                                 $('#cancelOrderModal').find('.modal-body').html(response.html);
                                 $('#canceldate').datetimepicker({
                                     format:'Y-m-d H:i',
-                                    /* minDate: 'now', */
+                                    /!* minDate: 'now', *!/
                                     step:10,
                                     onSelectTime: function(dp,$input) {
                                         var sel_date = $input.val();
@@ -952,7 +952,7 @@
                     });
                 }else{
                     alert('No order');
-                }
+                }*/
             });
 
             $(document).on('click','#cancelOrder',function () {
