@@ -12,6 +12,7 @@ use App\Models\ListingItem;
 use App\Models\ListingItemProductImage;
 use App\Models\Manufacturer;
 use App\Models\ProductImages;
+use App\Models\ProductTitleKeyword;
 use App\Models\ProductType;
 use App\Models\Store;
 use App\Models\StoreProduct;
@@ -92,7 +93,7 @@ class FeedController extends Controller
 
     public function generateFeed(Request $request){
 
-        $query = StoreProduct::with('product','StoreTypeCategory','product.condition','product.Manufacturer','product.images', 'product.productType','product.interfaces', 'product.interfaces.interfaces');
+        $query = StoreProduct::with('product','StoreTypeCategory','product.condition','product.Manufacturer','product.images', 'product.productType','product.interfaces', 'product.interfaces.interfaces','product.color');
         //$query = Catalog::with('StoreProduct', 'images', 'productType', 'interfaces.interfaces', 'pinterface.interfaces','condition','Manufacturer')->where('products.product_status', 1);
 
         $query->select('store_product.*');
@@ -124,6 +125,8 @@ class FeedController extends Controller
             $query->whereIn('device_interface.device_id', $devices);
         }
 
+        //$query->orderBy('products.product_sku','asc');
+        $query->limit(10);
         $products = $query->distinct()->get();
 
         /*echo '<pre>';
@@ -157,8 +160,6 @@ class FeedController extends Controller
 
                     foreach ($products as $itemDetail) {
 
-
-
                         $images = array();
 
                         /*$this->generateProductImages($itemDetail, $storeDetail);
@@ -170,45 +171,78 @@ class FeedController extends Controller
                         $ptype_id = (isset($itemDetail->StoreTypeCategory) && !empty($itemDetail->StoreTypeCategory)) ? $itemDetail->StoreTypeCategory->store_type_code : '';
                         $product_type = '';
                         if(isset($itemDetail->product)) {
-                            $product_id = $itemDetail->product->product_id;
+                            $product_code = $itemDetail->product->product_sku;
+                            $keywords = ProductTitleKeyword::select('product_id', 'keyword')->where('product_id', $itemDetail->product_id)->orderBy('priority', 'asc')->limit(5)->get();
+                            $title = '';
+                            $title_keyword = [];
+                            if (!empty($keywords)) {
+                                foreach ($keywords as $key => $val) {
+                                    $title_keyword[] = trim($val['keyword']);
+                                }
+                                $title = implode(' ',$title_keyword);
+                            }
+
+                            //echo $product_code;
                             //$compatibleDevice = $this->getCompatibleDevices($product_id,$request->device,$request->device_series);
-                            /*$listingItems = ListingItem::with('itemDetail')->whereNotNull('store_product_id')->where('store_product_id',$itemDetail->id)->get();
-                            echo '<pre>';
+                            $query = ListingItem::with('brand','device','itemDetails','itemDetail','itemDetail.device','itemDetail.carrier')->whereNotNull('sku')->whereLike('sku','%'.$product_code.'%');
+                            $listingItems = $query->get();
+                            /*echo '<pre>';
+                            echo $query->toSql();die;
                             print_r($listingItems);
                             echo '</pre>';die;*/
+                            if($listingItems){
+                                foreach($listingItems as $listitem){
 
-                            $typeDetail = ProductType::with('parent')->where('id', $itemDetail->product->product_type)->first();
-                            $product_type = $this->getCategoryPath($typeDetail);
-                            fputcsv($stream, [
-                                $itemDetail->product->product_sku,
-                                $itemDetail->product->product_title,
-                                ($itemDetail->overwrite_description) ? $itemDetail->description : $itemDetail->product->product_description,
-                                $ptype_id,
-                                $product_type,
-                                '',
-                                (!empty($images)) ? implode(',', $images) : '',
-                                (isset($itemDetail->product->condition)) ? $itemDetail->product->condition->name : '',
-                                'in stock',
-                                ($itemDetail->product->product_marketplace_price != '') ? $itemDetail->product->product_marketplace_price : $itemDetail->product->product_price,
-                                '',
-                                (isset($itemDetail->product->Manufacturer)) ? $itemDetail->product->Manufacturer->name : '',
-                                (isset($itemDetail->product)) ? $itemDetail->product->product_sku : '',
-                                '',
-                                '',
-                                '',
-                                '',
-                                '',
-                                'US::Standard:4.9 USD',
-                                '',
-                                20,
-                                'return_policy_days: "30"',
-                                '',
-                                '',
-                                ($itemDetail->overwrite_title) ? $itemDetail->title : $itemDetail->product->product_title,
-                                '',
-                                $itemDetail->product->product_sku,
-                                ''
-                            ]);
+                                    if(isset($listitem->itemDetails)){
+                                        foreach($listitem->itemDetails as $item_detail){
+                                            $typeDetail = ProductType::with('parent')->where('id', $itemDetail->product->product_type)->first();
+                                            $product_type = $this->getCategoryPath($typeDetail);
+
+                                            $productTitle = '';
+                                            if(isset($listitem->brand->name)){
+                                                $productTitle .= $listitem->brand->name;
+                                            }
+
+                                            if(isset($listitem->device->name)){
+                                                $productTitle .= ' '.$listitem->device->name.' ';
+                                            }
+
+                                            $productTitle .= $title;
+
+                                            fputcsv($stream, [
+                                                $item_detail->sku,
+                                                $productTitle,
+                                                ($itemDetail->overwrite_description) ? $itemDetail->description : $itemDetail->product->product_description,
+                                                $ptype_id,
+                                                $product_type,
+                                                '',
+                                                (!empty($images)) ? implode(',', $images) : '',
+                                                (isset($itemDetail->product->condition)) ? $itemDetail->product->condition->name : '',
+                                                'in stock',
+                                                (($itemDetail->product->product_marketplace_price != '') ? $itemDetail->product->product_marketplace_price : $itemDetail->product->product_price).' USD',
+                                                (isset($item_detail->upc)) ? $item_detail->upc : '',
+                                                (isset($itemDetail->product->Manufacturer)) ? $itemDetail->product->Manufacturer->name : '',
+                                                $item_detail->sku,
+                                                '',
+                                                '',
+                                                '',
+                                                (isset($itemDetail->product->color->name)) ? $itemDetail->product->color->name : '',
+                                                '',
+                                                'US::Standard:3.99 USD',
+                                                '',
+                                                (isset($listitem->qunatity)) ? $listitem->qunatity : 500,
+                                                'return_policy_days: "30"',
+                                                (isset($listitem->brand->name)) ? $listitem->brand->name : '',
+                                                (isset($listitem->device->name)) ? $listitem->device->name : '',
+                                                '',
+                                                ($itemDetail->overwrite_title) ? $itemDetail->title : $itemDetail->product->product_title,
+                                                (isset($itemDetail->product->product_sku)) ? $itemDetail->product->product_sku : '',
+                                                ''
+                                            ]);
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
                     rewind($stream);
