@@ -286,33 +286,7 @@
                         </div>
                     </div>
                 </form>
-                <div class="col-md-12">
-                    <div class="">
-                        <div class="card-body pl-0 pr-0 pt-5">
-                            <div class="table-responsive" style="max-height: 500px; overflow: auto;">
-                                <table id="productsTable" class="table table-bordered table-striped">
-                                    <thead>
-                                    <tr>
-                                        <th>Image</th>
-                                        <th>Product Code</th>
-                                        <th>Product Type</th>
-                                        <th>Title</th>
-                                        <th>Price</th>
-                                        <th>Quantity</th>
-                                        <th>Interface</th>
-                                        <th>Created At</th>
-                                    </tr>
-                                    </thead>
-                                    <tbody id="feed-list">
 
-                                    {{--@include('catalog.product_list', ['products' => $products])--}}
-
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
             </div>
         </div>
     </div>
