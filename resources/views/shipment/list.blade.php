@@ -1328,8 +1328,9 @@
                             $('#ship_date').val(sel_date);
                         }
                     });
-                    //loadServiceCarrier($('#carrier_name').val());
                     $('.shipping_section').removeClass('hide');
+                    loadServiceCarrier($('#carrier_name').val());
+
                 }
             },
             error: function (xhr) {
@@ -1441,7 +1442,7 @@
     }
 
     function loadServiceCarrier(carrier){
-        var selected_service = $('#shipping_carrier_service').val();
+        var selected_service = $('#shipment_carrier').val();
         $.ajax({
             url: "{{ route('shipment.getshippingcarrier') }}",
             type: 'POST',
