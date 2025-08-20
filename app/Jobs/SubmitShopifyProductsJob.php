@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Models\Catalog;
 use App\Models\GenerateProductImage;
+use App\Models\ListingItem;
 use App\Models\ProductImageAlternative;
 use App\Models\ProductType;
 use App\Models\Store;
@@ -11,6 +12,7 @@ use App\Models\ManageMarketplaceProduct;
 use App\Models\ProductImages;
 use App\Models\ProductInterface;
 use App\Models\ProductTags;
+use App\Models\StoreProduct;
 use App\Models\StoreTypeListing;
 use App\Models\UPCCodes;
 use App\Services\Auth\ShopifyAuthService;
@@ -22,7 +24,7 @@ class SubmitShopifyProductsJob implements ShouldQueue
 {
     use Queueable;
 
-    public $timeout = 3000;
+    public $timeout = 30000;
 
     /**
      * Create a new job instance.
@@ -94,7 +96,6 @@ class SubmitShopifyProductsJob implements ShouldQueue
                 foreach ($discontinuedProducts as $product) {
                     $this->discontinueProduct($product, $store);
                 }
-
             }
         }
     }
@@ -235,6 +236,8 @@ class SubmitShopifyProductsJob implements ShouldQueue
         $fileSystem = $store->fileSystem;
         $shopifyAuthService = new ShopifyAuthService($store->secret_key, $store->service_url);
         $product_id = $sku = $upcCode = NULL;
+
+        $listingItem = $this->addListingItem($productData, $store);
 
         $sku = StoreTypeListing::generateUniqueAlphabeticSku($productData->product_sku, 6);
 
@@ -440,6 +443,52 @@ class SubmitShopifyProductsJob implements ShouldQueue
                     'updated_at' => now()
                 ]);
             }
+        }
+    }
+
+    public function addListingItem($productData, $store)
+    {
+        $product_exist = StoreProduct::where('product_id', $productData->product_id)->where('store_id', $store->id)->first();
+        if (!isset($product_exist)) {
+            $sPr = [
+                'product_id' => $productData->product_id,
+                'title' => $productData->product_title,
+                'store_type_category_id' => $productData->product_type,
+                'price' => $productData->product_marketplace_price,
+                'msrp' => $productData->product_msrp,
+                'description' => $productData->product_description,
+                'store_id' => $store->id,
+                'created_by' => 'system',
+                'updated_by' => 'system'
+            ];
+            $product_exist = StoreProduct::create($sPr);
+        }
+
+        $listingItem = ListingItem::where('store_product_id', $product_exist->id)
+            ->first();
+        if (!isset($listingItem)) {
+            $listingItem = ListingItem::updateOrCreate(
+                [
+                    'store_product_id' => $product_exist->id,
+                ],
+                [
+                    'store_product_id' => $product_exist->id,
+                    'title' => $productData->product_title,
+//                    'description' => ($productDetail['description'] != '') ? $productDetail['description'] : $productDetail['product']['product_description'],
+//                    'store_type_listing_id' => $store_type_listing_id,
+//                    'sku' => $sku,
+//                    'store_sku' => '',
+//                    'price' => $product_prices[$key],
+//                    'quantity' => ($store_detail->default_listing_quantity) ? $store_detail->default_listing_quantity : 10,
+//                    'sync_status' => ListingSyncStatus::Synchronizing,
+//                    'store_product_id' => $store_product_ids[$key],
+//                    'manufacturer_id' => ($productDetail['manufacturer_id'] != '') ? $productDetail['manufacturer_id'] : $productDetail['product']['manufacturer_id'],
+//                    'brand_id' => $brand_id[$key],
+//                    'device_id' => $productDetail['device_id'] ?? null,
+//                    'status' => ListingStatus::Active,
+//                    'upc' => $upcCodes->upc_code,
+//                    'created_by' => 'system'
+                ]);
         }
     }
 }
