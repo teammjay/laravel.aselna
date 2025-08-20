@@ -27,7 +27,7 @@
                         {{--<option value="">--</option>--}}
                         @if(count($shippingCarrierService ?? []) > 0)
                             @foreach($shippingCarrierService as $sCarrierService)
-                                <option value="{{ $sCarrierService->id }}" {{ ( $sCarrierService->id == $shipmentDetail->shipping_carrier_service_id ) ? 'selected' : '' }}>{{ $sCarrierService->name }}</option>
+                                <option {{ $shipmentDetail->shipping_carrier_service_id }} value="{{ $sCarrierService->id }}" {{ ( $sCarrierService->id == $shipmentDetail->shipping_carrier_service_id ) ? 'selected' : '' }}>{{ $sCarrierService->name }}</option>
                             @endforeach
                         @endif
                     </select>

@@ -61,7 +61,7 @@
         }
 
         .hide{display:none;}
-        #shipping_section{min-height: 100vh;}
+        /*#shipping_section{min-height: 100vh;}*/
     </style>
 @stop
 
@@ -1252,7 +1252,7 @@
 
         $(document).on('change', '#frmShippingDetail input, #frmShippingDetail select, #frmShippingDetail textarea', function() {
             // Your code to execute when a change occurs in any of these elements
-            updateShipment();
+            //updateShipment();
         });
     });
 
@@ -1328,7 +1328,7 @@
                             $('#ship_date').val(sel_date);
                         }
                     });
-                    loadServiceCarrier($('#carrier_name').val());
+                    //loadServiceCarrier($('#carrier_name').val());
                     $('.shipping_section').removeClass('hide');
                 }
             },
@@ -1441,11 +1441,13 @@
     }
 
     function loadServiceCarrier(carrier){
+        var selected_service = $('#shipping_carrier_service').val();
         $.ajax({
             url: "{{ route('shipment.getshippingcarrier') }}",
             type: 'POST',
             data: {
                 carrier_id:carrier,
+                selected_service:selected_service,
                 "_token": '{{ csrf_token() }}'
             },
             success: function (response) {

@@ -290,11 +290,17 @@ class ShipmentsController extends Controller
     public function getShippingCarrier(Request $request)
     {
         $shipping_carrier_id = $request->input('carrier_id');
+        $selected_service = $request->input('selected_service');
         $carrier_servie = ShippingCarrierService::where('shipping_carrier_id', $shipping_carrier_id)->orderBy('name', 'asc')->get();
         $option = '';
         if (!empty($carrier_servie)) {
             foreach ($carrier_servie as $service) {
-                $option .= '<option value="' . $service->id . '">' . $service->name . '</option>';
+                if($selected_service != '' && $service->id == $selected_service){
+                    $sel = 'selected';
+                }else{
+                    $sel = '';
+                }
+                $option .= '<option value="' . $service->id . '" '.$sel.'>' . $service->name . '</option>';
             }
         }
         return response()->json([
