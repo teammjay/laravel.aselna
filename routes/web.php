@@ -271,6 +271,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/store_type_category/edit/{id}', 'edit')->name('store_type_category.edit');
         Route::post('/store_type_category/edit/{id}', 'update')->name('store_type_category.update');
         Route::get('/store_type_category/delete/{id}', 'destroy')->name('store_type_category.delete');
+        Route::post('/store_type_category/getparentcategory', 'getParentCategory')->name('store_type_category.getparentcategory');
     });
 
     Route::controller(LogisticCenterController::class)->group(function () {

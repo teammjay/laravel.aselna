@@ -427,6 +427,17 @@
                 var operation_id = ele.find('input[name="shipment_id[]"]').val();
                 getShippingDetail(operation_id);
             }
+
+            let totalCnt = $('input[name="shipment_id[]"]:checked').length;
+            $('#total_selected').html('( <b>'+totalCnt+'</b> selected )');
+
+            if(ele.data('status') == 1){
+                $('#cancel_selected').addClass('hide');
+                $('#approved').removeClass('hide');
+            }else{
+                $('#cancel_selected').removeClass('hide');
+                $('#approved').addClass('hide');
+            }
         });
 
         /*$(document).on('click','#shipment-list tr',function (e) {

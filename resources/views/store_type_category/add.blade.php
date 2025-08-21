@@ -9,7 +9,7 @@
 @section('adminlte_css')
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <style>
-       
+
         .select2-dropdown {
             z-index: 9999;
         }
@@ -128,8 +128,36 @@
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script>
         $(document).ready(function () {
+            loadCategory();
 
-            $('#parent_id').select2();
+            $('#store_type_id').change(function () {
+                loadCategory();
+            });
+
+            function loadCategory(){
+                var store_type_id = $('#store_type_id').val();
+                var selected_val = '{{ $store_type_category['parent_id'] }}';
+                $.ajax({
+                    url: "{{ route('store_type_category.getparentcategory') }}",
+                    type: 'POST',
+                    data: {
+                        store_type_id:store_type_id,
+                        selected_val:selected_val,
+                        "_token": '{{ csrf_token() }}'
+                    },
+                    success: function (response) {
+                        // If success, remove the user row from the table
+                        if (response.success) {
+                            $('#parent_id').html(response.option);
+                            $('#parent_id').select2();
+                        }
+                    },
+                    error: function (xhr) {
+                        // Handle error response
+                        alert('Error: ' + xhr.responseJSON.error);
+                    }
+                });
+            }
         });
     </script>
 @stop
