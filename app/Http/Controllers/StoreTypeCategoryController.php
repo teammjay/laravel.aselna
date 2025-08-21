@@ -27,7 +27,7 @@ class StoreTypeCategoryController extends Controller
     public function create()
     {
         $store_types = StoreType::all();
-        $store_type_categories = StoreTypeCategory::all();
+        $store_type_categories = StoreTypeCategory::orderBy('name')->get();
         return view('store_type_category.add',compact('store_types','store_type_categories'));
     }
 
@@ -54,7 +54,7 @@ class StoreTypeCategoryController extends Controller
     {
         $store_type_category = StoreTypeCategory::findOrFail($id);
         $store_types = StoreType::all();
-        $store_type_categories = StoreTypeCategory::all();
+        $store_type_categories = StoreTypeCategory::orderBy('name')->get();
         return view('store_type_category.add', compact('store_type_category','store_types','store_type_categories'));
     }
 
@@ -83,5 +83,28 @@ class StoreTypeCategoryController extends Controller
 
         return redirect()->route('store_type_category.index')
             ->with('success', 'Store type category deleted successfully.');
+    }
+
+    public function getParentCategory(Request $request){
+
+        $store_type_id = $request->input('store_type_id');
+        $selected_val= $request->input('selected_val');
+
+        $store_type_categories = StoreTypeCategory::where('store_type_id',$store_type_id)->orderBy('name')->get();
+        $option = '';
+        if (!empty($store_type_categories)) {
+            foreach ($store_type_categories as $category) {
+                if($selected_val != '' && $category->id == $selected_val){
+                    $sel = 'selected';
+                }else{
+                    $sel = '';
+                }
+                $option .= '<option value="' . $category->id . '" '.$sel.'>' . $category->name . '</option>';
+            }
+        }
+        return response()->json([
+            'success' => true,
+            'option' => $option
+        ]);
     }
 }
