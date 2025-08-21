@@ -263,7 +263,11 @@ class ProcessStoreMessageAccountJob implements ShouldQueue
                                                     'created_by' => 'admin',
                                                 ];
 
-                                                $fileDetail = SysFile::create($filedata);
+                                                $fileDetail = SysFile::updateOrCreate([
+                                                    'name' => $fileName,
+                                                ], $filedata);
+
+                                                /*$fileDetail = SysFile::create($filedata);*/
                                                 $file_id = $fileDetail->id;
 
                                                 if($hd_ticket->id && $file_id){
@@ -275,7 +279,13 @@ class ProcessStoreMessageAccountJob implements ShouldQueue
                                                         'created_by' => 'admin',
                                                     ];
 
-                                                    HdMessageAttachment::create($attachementData);
+                                                    /*HdMessageAttachment::create($attachementData);*/
+
+                                                    HdMessageAttachment::updateOrCreate([
+                                                        'message_id' => $hd_message->id,
+                                                        'attachment_id' => $attachmentID,
+                                                        'file_id' => $file_id,
+                                                    ], $attachementData);
 
                                                 }
 
