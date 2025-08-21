@@ -76,7 +76,7 @@ class ProcessStoreMessageAccountJob implements ShouldQueue
                             if (isset($email['date']) && $email['date'] > $last_filter_date) {
                                 $last_filter_date = $email['date'];
                             }
-                            Log::info('Date :: '. $email['date']);
+                            //Log::info('Date :: '. $email['date']);
                             $order_id = $related_order_id = $po_no = $reason = $customer_id = $order_operation_id = $reference_code = NULL;
                             $ticket_type_code = HdTicketTypeCode::MARKETPLACE_NOTIFICATION;
 
