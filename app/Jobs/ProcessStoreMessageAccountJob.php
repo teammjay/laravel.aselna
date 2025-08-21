@@ -76,7 +76,7 @@ class ProcessStoreMessageAccountJob implements ShouldQueue
                             if (isset($email['date']) && $email['date'] > $last_filter_date) {
                                 $last_filter_date = $email['date'];
                             }
-                            Log::info('Date :: '. $email['date']);
+                            //Log::info('Date :: '. $email['date']);
                             $order_id = $related_order_id = $po_no = $reason = $customer_id = $order_operation_id = $reference_code = NULL;
                             $ticket_type_code = HdTicketTypeCode::MARKETPLACE_NOTIFICATION;
 
@@ -263,7 +263,11 @@ class ProcessStoreMessageAccountJob implements ShouldQueue
                                                     'created_by' => 'admin',
                                                 ];
 
-                                                $fileDetail = SysFile::create($filedata);
+                                                $fileDetail = SysFile::updateOrCreate([
+                                                    'name' => $fileName,
+                                                ], $filedata);
+
+                                                /*$fileDetail = SysFile::create($filedata);*/
                                                 $file_id = $fileDetail->id;
 
                                                 if($hd_ticket->id && $file_id){
@@ -275,7 +279,13 @@ class ProcessStoreMessageAccountJob implements ShouldQueue
                                                         'created_by' => 'admin',
                                                     ];
 
-                                                    HdMessageAttachment::create($attachementData);
+                                                    /*HdMessageAttachment::create($attachementData);*/
+
+                                                    HdMessageAttachment::updateOrCreate([
+                                                        'message_id' => $hd_message->id,
+                                                        'attachment_id' => $attachmentID,
+                                                        'file_id' => $file_id,
+                                                    ], $attachementData);
 
                                                 }
 

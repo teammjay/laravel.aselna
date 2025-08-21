@@ -6,6 +6,29 @@
     <h1>{{ isset($store_type_category) ? 'Edit Store Type Category' : 'Add Store Type Category' }}</h1>
 @stop
 
+@section('adminlte_css')
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <style>
+       
+        .select2-dropdown {
+            z-index: 9999;
+        }
+        .select2-container {
+            width: 100% !important;
+            /*margin: 15px 0;*/
+        }
+
+        .select2-container--default .select2-selection--single {
+            border: 1px solid #ced4da;
+            padding: .46875rem .75rem;
+            height: calc(2.25rem + 2px);
+        }
+        .select2-container--default .select2-selection--single .select2-selection__arrow b{
+            top:70%;
+        }
+    </style>
+@stop
+
 @section('content')
     <form
         action="{{ isset($store_type_category) ? route('store_type_category.update',['id' => $store_type_category['id']]) : route('store_type_category.store') }}"
@@ -99,4 +122,14 @@
             </div>
         </div>
     </form>
+@stop
+
+@section('adminlte_js')
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script>
+        $(document).ready(function () {
+
+            $('#parent_id').select2();
+        });
+    </script>
 @stop

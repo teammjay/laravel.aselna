@@ -8,7 +8,9 @@
 @stop
 
 @section('adminlte_css')
-
+<style>
+    .clickable-row:hover{cursor:pointer; background: #f0f8ff;}
+</style>
 @stop
 
 @section('content')
@@ -328,7 +330,19 @@
                             <tbody id="order-item-list">
                             @if(count($orderDetail->orderItem ?? []) > 0)
                                 @foreach($orderDetail->orderItem as $item)
-                                    <tr>
+                                    @php
+                                        $url = '';
+                                        if(isset($item->listingItem) && !empty($item->listingItem)){
+                                            $store_sku = $item->listingItem->store_sku;
+                                            $store_type = isset($orderDetail->store->storeType->name) ? $orderDetail->store->storeType->name : '';
+                                            $site_url = isset($orderDetail->store->store_url) ? $orderDetail->store->store_url : '';
+                                            $store_url = isset($item->listingItem->store_url) ? $item->listingItem->store_url : '';
+                                            if($store_sku != ''){
+                                                $url = \App\Utils\ListingUtility::generateItemUrl($store_type, $store_sku, $site_url, $store_url);
+                                            }
+                                        }
+                                    @endphp
+                                    <tr class="clickable-row" data-href="{{ $url }}" {{ $store_type }}>
                                         <td>
                                             @if(isset($item->product) && $item->product->image != '')
                                                 <div class="main-image">
@@ -429,6 +443,17 @@
                             alert('Error: ' + xhr.responseJSON.error);
                         }
                     });
+                }
+            });
+
+            $(document).on("click",".clickable-row", function(e) {
+
+                if ($(e.target).is('input,select,checkbox, a, img')) {
+                    return;
+                }
+                var store_url = $(this).data("href");
+                if(store_url != '') {
+                    window.open(store_url, '_blank');
                 }
             });
 
