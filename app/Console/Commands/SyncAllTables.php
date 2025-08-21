@@ -169,8 +169,8 @@ class SyncAllTables extends Command
 //        FetchMagentoCategoriesJob::dispatch();
 //        MagnetoAttributesSyncJob::dispatch();
 //        ShopifyPagesSyncJob::dispatch();
-//        ProductImagesSyncJob::dispatch();
-        ShopifyListingProductsSyncJob::dispatch();
+        SubmitShopifyProductsJob::dispatch();
+//        ShopifyListingProductsSyncJob::dispatch();
 
         $transactionIds = [
 ////            '9400150105798006163885',

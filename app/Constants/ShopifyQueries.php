@@ -30,6 +30,12 @@ GQL;
       productUpdate(product: \$product, media: \$media) {
         product {
           id
+            handle
+            variants(first : 1) {
+                nodes {
+                    id
+                }
+            }
           media(first: 10) {
             nodes {
               alt
