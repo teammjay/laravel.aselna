@@ -229,7 +229,19 @@
 
                             @if(count($shipmentDetail->operationItem ?? []) > 0)
                                 @foreach($shipmentDetail->operationItem as $oitem)
-                                    <tr>
+                                    @php
+                                        $url = '';
+                                        if(isset($oitem->orderItem->listingItem) && !empty($oitem->orderItem->listingItem)){
+                                            $store_sku = $oitem->orderItem->listingItem->store_sku;
+                                            $store_type = isset($shipmentDetail->store->storeType->name) ? $shipmentDetail->store->storeType->name : '';
+                                            $site_url = isset($shipmentDetail->store->store_url) ? $shipmentDetail->store->store_url : '';
+                                            $store_url = isset($oitem->orderItem->listingItem->store_url) ? $oitem->orderItem->listingItem->store_url : '';
+                                            if($store_sku != ''){
+                                                $url = \App\Utils\ListingUtility::generateItemUrl($store_type, $store_sku, $site_url, $store_url);
+                                            }
+                                        }
+                                    @endphp
+                                    <tr class="clickable-row" data-href="{{ $url }}" {{ $store_type }}>
                                         <td>
                                             @if($oitem->orderItem->product->image != '')
                                                 <div class="main-image">

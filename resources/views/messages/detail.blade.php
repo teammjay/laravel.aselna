@@ -581,7 +581,11 @@
                 //window.location.href = '{{ route('message.need_action') }}';
             });
 
-            $(document).on("click",".clickable-row", function() {
+            $(document).on("click",".clickable-row", function(e) {
+
+                if ($(e.target).is('input,select,checkbox, a, img')) {
+                    return;
+                }
                 var store_url = $(this).data("href");
                 if(store_url != '') {
                     window.open(store_url, '_blank');

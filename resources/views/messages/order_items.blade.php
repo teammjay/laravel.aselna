@@ -7,7 +7,7 @@
                 $store_sku = $oitem->listingItem->store_sku;
                 $store_type = isset($orderDetail->store->storeType->name) ? $orderDetail->store->storeType->name : '';
                 $site_url = isset($orderDetail->store->store_url) ? $orderDetail->store->store_url : '';
-                $store_url = isset($orderDetail->store_url) ? $orderDetail->store_url : '';
+                $store_url = isset($oitem->listingItem->store_url) ? $oitem->listingItem->store_url : '';
                 if($store_sku != ''){
                     $url = \App\Utils\ListingUtility::generateItemUrl($store_type, $store_sku, $site_url, $store_url);
                 }

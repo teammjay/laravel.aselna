@@ -315,7 +315,7 @@ class ShipmentsController extends Controller
         $shippingCarrier = ShippingCarrier::all();
         $shipFrom = LogisticCenter::all();
         $shippingCarrierPackage = ShippingPackage::all();
-        $shipmentDetail = OrderOperation::with('operationItem', 'order', 'order.customerAddress', 'carrierService', 'store', 'store.logisticCenters', 'operationItem.orderItem', 'operationItem.orderItem.product')->where('id', $order_opration_id)->first();
+        $shipmentDetail = OrderOperation::with('operationItem', 'order', 'order.customerAddress', 'carrierService', 'store', 'store.storeType', 'store.logisticCenters', 'operationItem.orderItem', 'operationItem.orderItem.product', 'operationItem.orderItem.listingItem')->where('id', $order_opration_id)->first();
 
         $package_id = '';
         $product_total_weight = 0;
