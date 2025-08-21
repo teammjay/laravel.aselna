@@ -62,6 +62,7 @@
 
         .hide{display:none;}
         /*#shipping_section{min-height: 100vh;}*/
+        .clickable-row:hover{cursor:pointer; background: #f0f8ff !important;}
     </style>
 @stop
 
@@ -356,7 +357,79 @@
 
         });
 
+        $(document).on("click",".clickable-row", function(e) {
+
+            if ($(e.target).is('input,select,checkbox, a, img')) {
+                return;
+            }
+
+            var store_url = $(this).data("href");
+            if(store_url != '') {
+                window.open(store_url, '_blank');
+            }
+        });
+
+        let lastChecked = null;
         $(document).on('click','#shipment-list tr',function (e) {
+            let ele = $(this);
+
+
+
+            if (lastChecked && e.ctrlKey) {
+                e.preventDefault();
+
+                if(ele.find('.pro-id').is(':checked')){
+                    ele.removeClass('bg-blue');
+                    ele.find('.pro-id').prop('checked', false);
+                }else {
+                    ele.addClass('bg-blue');
+                    ele.find('.pro-id').prop('checked', true);
+                }
+
+                let checkboxes = $(".pro-id");
+                let start = checkboxes.index(ele.find('.proList'));
+                let end = checkboxes.index(lastChecked);
+
+                checkboxes.slice(Math.min(start, end), Math.max(start, end) + 1).prop("checked", lastChecked.checked).parents('tr').addClass('bg-blue');
+            }
+            lastChecked = ele.find('.pro-id');
+
+            let totalCnt = $('input[name="shipment_id[]"]:checked').length;
+            $('#total_selected').html('( <b>'+totalCnt+'</b> selected )');
+
+            if(ele.data('status') == 1){
+                $('#cancel_selected').addClass('hide');
+                $('#approved').removeClass('hide');
+            }else{
+                $('#cancel_selected').removeClass('hide');
+                $('#approved').addClass('hide');
+            }
+
+            /*$('#product-list tr').removeClass('bg-blue');
+            $('input[name="listing_item[]"]').prop('checked',false);
+            ele.addClass('bg-blue');
+            ele.find('input[name="listing_item[]"]').prop('checked',true);
+            $('#edit_list').removeAttr('disabled');*/
+        });
+
+        $(document).on('mousedown','#shipment-list tr',function (e) {
+            let ele = $(this);
+            if (e.ctrlKey) {
+                // Prevent text selection
+                e.preventDefault();
+            }else{
+
+                $('#shipment-list tr').removeClass('bg-blue');
+                $('.pro-id').prop('checked', false);
+                ele.addClass('bg-blue');
+                ele.find('.pro-id').prop('checked', true);
+
+                var operation_id = ele.find('input[name="shipment_id[]"]').val();
+                getShippingDetail(operation_id);
+            }
+        });
+
+        /*$(document).on('click','#shipment-list tr',function (e) {
             let ele = $(this);
 
             if ($(e.target).is('input, textarea, select, checkbox, a, i, button, img')) {
@@ -385,7 +458,7 @@
 
             var operation_id = ele.find('input[name="shipment_id[]"]').val();
             getShippingDetail(operation_id);
-        });
+        });*/
 
         $(document).on('click','#refresh_list',function () {
             loadDatatables();

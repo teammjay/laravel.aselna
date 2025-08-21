@@ -12,10 +12,12 @@ use App\Models\ListingItem;
 use App\Models\ListingItemProductImage;
 use App\Models\Manufacturer;
 use App\Models\ProductImages;
+use App\Models\ProductSpecification;
 use App\Models\ProductTitleKeyword;
 use App\Models\ProductType;
 use App\Models\Store;
 use App\Models\StoreProduct;
+use App\Models\StoreType;
 use App\Utils\FileUtility;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -136,6 +138,7 @@ class FeedController extends Controller
 
 
         $store_id = $request->input('store_id');
+        $store_type_detail = StoreType::getStoreTypeDetailById($store_id);
         $storeDetail = Store::with('storeType')->where('id',$store_id)->first();
         $fileSystem = $storeDetail->fileSystem;
         $feed_type = $request->input('feed_type');
@@ -181,6 +184,26 @@ class FeedController extends Controller
                                 }
                                 $title = implode(' ',$title_keyword);
                             }
+
+                            $productSpecification = ProductSpecification::where('product_id', $itemDetail->product_id)->where('store_type_id', $store_type_detail->id)->get();
+                            $section = 'General';
+                            $kvSep = ':';
+                            $pairSep = ',';
+                            $parts = [];
+                            foreach ($productSpecification as $specification) {
+
+                                $section = trim((string) $section);
+                                $key     = trim((string) $specification->name);
+                                $value   = trim((string) $specification->value);
+
+                                if ($section === '' || $key === '' || $value === '') {
+                                    continue;
+                                }
+
+                                $parts[] = "{$section}{$kvSep}{$key}{$kvSep}{$value}";
+                            }
+
+                            $prodDetail = implode($pairSep, $parts);
 
                             //echo $product_code;
                             //$compatibleDevice = $this->getCompatibleDevices($product_id,$request->device,$request->device_series);
@@ -237,7 +260,7 @@ class FeedController extends Controller
                                                 '',
                                                 ($itemDetail->overwrite_title) ? $itemDetail->title : $itemDetail->product->product_title,
                                                 (isset($itemDetail->product->product_sku)) ? $itemDetail->product->product_sku : '',
-                                                ''
+                                                $prodDetail
                                             ]);
                                         }
                                     }
