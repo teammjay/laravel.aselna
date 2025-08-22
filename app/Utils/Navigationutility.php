@@ -109,23 +109,17 @@ class Navigationutility
                 break;
 
             case WebStorePageType::BRAND_DEVICES:
-                $finalLinkArray['final_title'] = '';
-                break;
-
-            case WebStorePageType::DEVICE:
-                break;
-
-            case WebStorePageType::BRAND:
                 $brand = Brand::where('id', $request->device_brand_id)->firstOrFail();
                 $links = StoreNavigationPage::where('store_id', $store_id)
                     ->where('page_type', WebStorePageType::BRAND_DEVICE_PRODUCT_TYPES)
+                    ->where('device_brand_id', $brand->id)
                     ->get();
                 $finalLinkArray['final_title'] = $brand->name;
                 foreach ($links as $link) {
                     if ($link->device->order <= 10) {
                         $finalLinkArray['popular_link'][] = [
                             'id' => $link->id,
-                            'title' => $link->brand->name,
+                            'title' => $link->device->name,
                             'imageUrl' => $link->store_image_url,
                             'url' => "/collections/" . $link->url_path,
                             'popular' => true
@@ -133,13 +127,20 @@ class Navigationutility
                     } else {
                         $finalLinkArray['other_link'][] = [
                             'id' => $link->id,
-                            'title' => $link->brand->name,
+                            'title' => $link->device->name,
                             'imageUrl' => $link->store_image_url,
                             'url' => "/collections/" . $link->url_path,
                             'popular' => false
                         ];
                     }
                 }
+                break;
+
+            case WebStorePageType::DEVICE:
+                break;
+
+            case WebStorePageType::BRAND:
+
                 break;
 
             case WebStorePageType::PRODUCT_TYPE:

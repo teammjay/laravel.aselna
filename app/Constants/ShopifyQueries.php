@@ -187,6 +187,9 @@ GQL;
         collectionCreate(input : \$collection) {
             collection {
                 id
+                image {
+                    url
+                }
             }
         }
     }
@@ -197,6 +200,9 @@ GQL;
         collectionUpdate(input : \$collection) {
             collection {
                 id
+                image {
+                    url
+                }
             }
         }
     }

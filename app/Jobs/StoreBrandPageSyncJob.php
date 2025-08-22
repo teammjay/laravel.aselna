@@ -6,8 +6,11 @@ use App\Constants\WebStorePageType;
 use App\Models\Brand;
 use App\Models\Device;
 use App\Models\ProductType;
+use App\Models\Store;
 use App\Models\StoreNavigationPage;
 use App\Models\StorePageTemplate;
+use App\Services\Auth\ShopifyAuthService;
+use App\Utils\FileUtility;
 use App\Utils\Navigationutility;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -19,9 +22,14 @@ class StoreBrandPageSyncJob implements ShouldQueue
 {
     use Queueable;
 
+    public $timeout = 36000;
+
     protected $store_id;
     protected $page_type;
     protected $template_id;
+    private $store;
+    private ShopifyAuthService $shopifyAuthService;
+    private array $publications;
 
     /**
      * Create a new job instance.
@@ -41,6 +49,7 @@ class StoreBrandPageSyncJob implements ShouldQueue
      */
     public function handle(): void
     {
+        $this->setVariables();
         Log::info('Testing Here');
         $request = new Request();
         $request->merge(['store_id' => $this->store_id, 'page_type' => $this->page_type, 'template_id' => $this->template_id]);
@@ -50,7 +59,7 @@ class StoreBrandPageSyncJob implements ShouldQueue
         $template = StorePageTemplate::findOrFail($this->template_id);
         $page_type = $this->page_type;
         switch ($page_type) {
-            case WebStorePageType::BRAND:
+            case WebStorePageType::BRAND_DEVICES:
                 Log::info('Page Type :: ' . $page_type);
                 $brands = Brand::where('status', 'active')->orderBy('order_no')->get();
                 foreach ($brands as $brand) {
@@ -79,6 +88,132 @@ class StoreBrandPageSyncJob implements ShouldQueue
                     ],$request->all());
                 }
                 break;
+            case WebStorePageType::BRAND:
+                Log::info('Page Type :: ' . $page_type);
+                $this->getPuplications();
+                $brands = Brand::where('status', 'active')->orderBy('order_no')->get();
+                foreach ($brands as $brand) {
+                    $title = $brand->name;
+
+                    $collectionData['collection'] = [
+                        'title' => $title,
+                    ];
+                    $storePage = StoreNavigationPage::where('store_id', $this->store_id)
+                        ->where('page_type', WebStorePageType::BRAND)
+                        ->where('device_brand_id', $brand->id)
+                        ->first();
+
+                    if (isset($storePage)) {
+                        $handle = $storePage->url_path;
+                    } else {
+                        $handle = $this->generateShopifyHandle($title);
+                    }
+
+                    $path = '/store-images/' . $this->store_id . '/collections/' . $handle . '.jpg';
+
+                    $imagePath = FileUtility::uploadImage($this->store, $brand->image, $path);
+
+                    if ($imagePath) {
+                        $collectionData['collection']['image'] = [
+                            'src' => $imagePath,
+                        ];
+                    }
+
+                    if ($alreadyCollection = $this->shopifyAuthService->getCollectionByHandle($handle)) {
+                        Log::info('Collection already exists, updating collection', ['handle' => $handle]);
+                        $collectionData['collection']['id'] = $alreadyCollection['id'];
+                        $collectionData['collection']['handle'] = $handle;
+                        Log::info('Collection data update', ['collection_data' => $collectionData]);
+                        $response = $this->shopifyAuthService->updateCollection($collectionData);
+
+                        if (isset($response['data']['collectionUpdate'])) {
+                            $collection = $response['data']['collectionUpdate']['collection'];
+                        }
+                    } else {
+                        Log::info('Creating new collection', ['handle' => $handle]);
+
+                        foreach ($this->publications as $publication) {
+                            $collectionData['collection']['publications'][]['publicationId'] = $publication;
+                        }
+
+                        $collectionData['collection']['handle'] = $handle;
+                        Log::info('Collection data creation', ['collection_data' => $collectionData]);
+                        $response = $this->shopifyAuthService->createCollection($collectionData);
+
+                        if (isset($response['data']['collectionCreate'])) {
+                            $collection = $response['data']['collectionCreate']['collection'];
+                        }
+                    }
+
+                    if (isset($collection)) {
+                        $id =str_replace('gid://shopify/Collection/', '', $collection['id']);
+                        $imageUrl = $collection['image']['url'] ?? '';
+                        StoreNavigationPage::updateOrCreate(
+                            [
+                                'store_id' => $this->store_id,
+                                'page_type' => WebStorePageType::BRAND,
+                                'device_brand_id' => $brand->id,
+                            ],
+                            [
+                                'store_id' => $this->store_id,
+                                'page_type' => WebStorePageType::BRAND,
+                                'device_brand_id' => $brand->id,
+                                'url_path' => $handle,
+                                'store_image_url' => $imageUrl,
+                                'title' => $title,
+                                'page_id' => $id,
+                            ]
+                        );
+                    }
+                }
+                break;
         }
+    }
+
+    private function setVariables()
+    {
+        Log::info('Store ID :: ' . $this->store_id);
+        $this->store = Store::find($this->store_id);
+        Log::info('Store Details :: ' . json_encode($this->store));
+
+        $this->shopifyAuthService = new ShopifyAuthService($this->store->secret_key,$this->store->service_url);
+    }
+    function generateShopifyHandle($title) {
+        // Convert to lowercase
+        $handle = mb_strtolower($title, 'UTF-8');
+
+        // Normalize accented characters (e.g., é → e)
+        $handle = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $handle);
+
+        // Replace apostrophes
+        $handle = preg_replace("/'/", '', $handle);
+
+        // Replace any non-alphanumeric characters (excluding spaces and dots) with nothing
+        $handle = preg_replace("/[^a-z0-9\s.]/", '', $handle);
+
+        // Replace dots with hyphens (e.g., 12.3 → 12-3)
+        $handle = str_replace('.', '-', $handle);
+
+        // Replace whitespace with hyphens
+        $handle = preg_replace("/[\s]+/", '-', $handle);
+
+        // Remove multiple consecutive hyphens
+        $handle = preg_replace("/-+/", '-', $handle);
+
+        // Trim hyphens from beginning and end
+        $handle = trim($handle, '-');
+
+        return $handle;
+    }
+
+    private function getPuplications()
+    {
+        $publications = $this->shopifyAuthService->getPublications();
+
+        $publicationIds = [];
+        foreach ($publications['data']['publications']['edges'] as $publication) {
+            $publicationIds[] = $publication['node']['id'];
+        }
+        $this->publications = $publicationIds;
     }
 }
