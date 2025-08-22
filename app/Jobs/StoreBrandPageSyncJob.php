@@ -52,7 +52,7 @@ class StoreBrandPageSyncJob implements ShouldQueue
         $template = StorePageTemplate::findOrFail($this->template_id);
         $page_type = $this->page_type;
         switch ($page_type) {
-            case WebStorePageType::BRAND:
+            case WebStorePageType::BRAND_DEVICES:
                 Log::info('Page Type :: ' . $page_type);
                 $brands = Brand::where('status', 'active')->orderBy('order_no')->get();
                 foreach ($brands as $brand) {

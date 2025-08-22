@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Constants\WebStorePageType;
+use App\Models\Brand;
 use App\Models\Device;
 use App\Models\DeviceInterface;
 use App\Models\Store;
@@ -119,7 +120,7 @@ class ShopifyCollectionDeviceSyncJob implements ShouldQueue
         Log::info('Collection ::' . json_encode($collection));
         if (isset($collection)) {
             $id =str_replace('gid://shopify/Collection/', '', $collection['id']);
-            $imageUrl = $collection['image']['src'] ?? '';
+            $imageUrl = $collection['image']['url'] ?? '';
             StoreNavigationPage::updateOrCreate(
                 [
                     'store_id' => $this->storeID,
