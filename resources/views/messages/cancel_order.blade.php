@@ -70,7 +70,7 @@
                                                 }
                                             }
                                         @endphp
-                                        <tr class="clickable-row" data-href="{{ $url }}" {{ $store_type }}>
+                                        <tr class="clickable-row" data-href="{{ $url }}">
                                             <td>
                                                 @if(isset($oitem->orderItem->product) && $oitem->orderItem->product->image != '')
                                                     <div class="main-image">
