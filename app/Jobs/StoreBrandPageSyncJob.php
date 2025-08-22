@@ -19,6 +19,8 @@ class StoreBrandPageSyncJob implements ShouldQueue
 {
     use Queueable;
 
+    public $timeout = 36000;
+
     protected $store_id;
     protected $page_type;
     protected $template_id;
