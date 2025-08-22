@@ -286,10 +286,19 @@ class HomeController extends Controller
                     'related_listing_item_id' => NULL,
                 ];
 
-                Log::info('Email From' . $email['from'] . ' Message ID: ' . $email['message_id']);
-                $ticketDetail = Message::where('message_id', trim($email['message_id']))->first();
+                Log::info('Email From : ' . $email['from'] . ' Message ID: ' . $email['message_id'].' Reference ID: '.$email['references']);
+                /*$ticketDetail = Message::where('ticket_email', trim($email['from']))->orWhere('ticket_email', trim($email['reply_to']))->first();*/
+                $query = Message::where('message_id', trim($email['message_id']));
+                if(isset($email['references']) && $email['references'] != ''){
+                    $query->orWhere('message_id', trim($email['references']));
+                    $query->orWhere('message_id', trim($email['in_reply_to']));
+                }
+                Log::info($query->toRawSql());
+                $ticketDetail = $query->first();
 
+                Log::info('TicketDetail : ' .json_encode($ticketDetail));
                 if ($ticketDetail) {
+                    Log::info('Ticket Exist');
                     if ($order_id) {
                         $ticketDetail->order_id = $order_id;
                         $ticketDetail->ticket_type_id = $ticketTypeDetail->id;
@@ -297,8 +306,11 @@ class HomeController extends Controller
                     }
                     $hd_ticket = $ticketDetail;
                 } else {
+                    Log::info('New Ticket');
                     $hd_ticket = Message::create($ticketData);
                 }
+
+                Log::info('Ticket ID : ' .$hd_ticket->id);
 
                 if (isset($hd_ticket->id)) {
                     $hdMessageData = [
@@ -330,6 +342,8 @@ class HomeController extends Controller
                             'message_id' => $hd_message->id,
                         ], $email['parts']);
                     }
+
+                    Log::info('Message ID : ' .$hd_message->id);
 
                     if (isset($hd_message->id) && !empty($email['attachments'])) {
 
@@ -400,6 +414,7 @@ class HomeController extends Controller
                         }
                     }
                 }
+                sleep(5);
             }
 
             /*if ($last_filter_date != '') {

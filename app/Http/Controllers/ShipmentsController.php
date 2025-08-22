@@ -55,8 +55,9 @@ class ShipmentsController extends Controller
         }
 
         $query = OrderOperation::with([
-            'order:id,order_id,order_date,buyer_first_name,buyer_last_name',
+            'order:id,order_id,order_date,buyer_first_name,buyer_last_name,customer_id,shipping_address_id',
             'order.customer',
+            'order.customerAddress',
             'order.orderItem',
             'order.orderItem.product',
             'order.orderItem.product.image',
@@ -208,7 +209,7 @@ class ShipmentsController extends Controller
                     "weight" => ($order->weight_value) ? $order->weight_value : $product_total_weight,
                     "first_name" => (isset($order->order) && !empty($order->order)) ? $order->order->buyer_first_name : '',
                     "last_name" => (isset($order->order) && !empty($order->order)) ? $order->order->buyer_last_name : '',
-                    "city" => (isset($order->order->customer) && !empty($order->order->customer)) ? $order->order->customer->city : '',
+                    "state" => (isset($order->order->customerAddress) && !empty($order->order->customerAddress)) ? $order->order->customerAddress->state : '',
                     'product_ids' => $product_ids,
                     'total_qty' => $total_qty,
                 );

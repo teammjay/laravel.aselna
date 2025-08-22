@@ -41,7 +41,7 @@
             <td>{{ $shipment['weight'] }}</td>
             <td>{{ $shipment['first_name'] }}</td>
             <td>{{ $shipment['last_name'] }}</td>
-            <td>{{ $shipment['city'] }}</td>
+            <td>{{ $shipment['state'] }}</td>
 
 
         </tr>
