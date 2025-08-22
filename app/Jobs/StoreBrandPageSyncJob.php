@@ -5,6 +5,7 @@ namespace App\Jobs;
 use App\Constants\WebStorePageType;
 use App\Models\Brand;
 use App\Models\Device;
+use App\Models\Images;
 use App\Models\ProductType;
 use App\Models\Store;
 use App\Models\StoreNavigationPage;
@@ -111,7 +112,7 @@ class StoreBrandPageSyncJob implements ShouldQueue
 
                     $path = '/store-images/' . $this->store_id . '/collections/' . $handle . '.jpg';
 
-                    $imagePath = FileUtility::uploadImage($this->store, $brand->image, $path);
+                    $imagePath = FileUtility::uploadImage($this->store, 'app/public/brand_images/' . $brand->image , $path);
 
                     if ($imagePath) {
                         $collectionData['collection']['image'] = [

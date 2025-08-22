@@ -67,7 +67,7 @@ class FileUtility
         return File::get($public_path);
     }
 
-    public static function uploadImage($store, $Image, $path)
+    public static function uploadImage($store, $imagePath, $path)
     {
         if (env('APP_ENV') == 'local') {
             Log::info("Local environment detected, skipping image upload.");
@@ -81,7 +81,7 @@ class FileUtility
         $loginId = $storeFileSystem->login_id;
         $password = $storeFileSystem->password;
         $rootPath = $storeFileSystem->root_path;
-        $localFilePath = storage_path('app/public/device_images/' . $Image);
+        $localFilePath = storage_path($imagePath);
         Log::info("Local File Path :: " . $localFilePath);
 
         $ftpConn = ftp_connect($host, $port);
