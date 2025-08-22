@@ -125,7 +125,7 @@ class Navigationutility
                     if ($link->device->order <= 10) {
                         $finalLinkArray['popular_link'][] = [
                             'id' => $link->id,
-                            'title' => $link->brand->name,
+                            'title' => $link->device->name,
                             'imageUrl' => $link->store_image_url,
                             'url' => "/collections/" . $link->url_path,
                             'popular' => true
@@ -133,7 +133,7 @@ class Navigationutility
                     } else {
                         $finalLinkArray['other_link'][] = [
                             'id' => $link->id,
-                            'title' => $link->brand->name,
+                            'title' => $link->device->name,
                             'imageUrl' => $link->store_image_url,
                             'url' => "/collections/" . $link->url_path,
                             'popular' => false
