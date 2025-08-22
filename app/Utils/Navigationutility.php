@@ -119,6 +119,7 @@ class Navigationutility
                 $brand = Brand::where('id', $request->device_brand_id)->firstOrFail();
                 $links = StoreNavigationPage::where('store_id', $store_id)
                     ->where('page_type', WebStorePageType::BRAND_DEVICE_PRODUCT_TYPES)
+                    ->where('device_brand_id', $brand->id)
                     ->get();
                 $finalLinkArray['final_title'] = $brand->name;
                 foreach ($links as $link) {
