@@ -72,6 +72,7 @@ class ProcessStoreMessageAccountJob implements ShouldQueue
 
                     if (count($receiveEmails ?? []) > 0) {
                         foreach ($receiveEmails as $email) {
+
                             // get as max date for next filter
                             if (isset($email['date']) && $email['date'] > $last_filter_date) {
                                 $last_filter_date = $email['date'];
@@ -191,8 +192,14 @@ class ProcessStoreMessageAccountJob implements ShouldQueue
                                 'related_listing_item_id' => NULL,
                             ];
 
-                            Log::info('Email From' . $email['from'] . ' Message ID: ' . $email['message_id']);
-                            $ticketDetail = Message::where('ticket_email', trim($email['from']))->orWhere('ticket_email', trim($email['reply_to']))->first();
+                            Log::info('Email From : ' . $email['from'] . ' Message ID: ' . $email['message_id'].' Reference ID: '.$email['references']);
+                            /*$ticketDetail = Message::where('ticket_email', trim($email['from']))->orWhere('ticket_email', trim($email['reply_to']))->first();*/
+                            $query = Message::where('message_id', trim($email['message_id']));
+                            if(isset($email['references']) && $email['references'] != ''){
+                                $query->orWhere('message_id', trim($email['references']));
+                                $query->orWhere('message_id', trim($email['in_reply_to']));
+                            }
+                            $ticketDetail = $query->first();
 
                             if ($ticketDetail) {
                                 if ($order_id) {
