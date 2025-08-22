@@ -126,28 +126,33 @@ class ProcessFeedGenerationJob implements ShouldQueue
 
                                     $product_url = '';
                                     $store_sku = $listitem->store_sku;
-                                    $store_type = isset($shipmentDetail->store->storeType->name) ? $storeDetail->storeType->name : '';
-                                    $site_url = isset($shipmentDetail->store->store_url) ? $storeDetail->store_url : '';
+                                    $store_type = isset($storeDetail->storeType->name) ? $storeDetail->storeType->name : '';
+                                    $site_url = isset($storeDetail->store_url) ? $storeDetail->store_url : '';
                                     $store_url = isset($listitem->store_url) ? $listitem->store_url : '';
                                     if($store_sku != ''){
                                         $product_url = \App\Utils\ListingUtility::generateItemUrl($store_type, $store_sku, $site_url, $store_url);
                                     }
 
+                                    $productTitle = '';
+                                    if(isset($listitem->brand->name)){
+                                        $productTitle .= $listitem->brand->name;
+                                    }
+
+                                    if(isset($listitem->device->name)){
+                                        $productTitle .= ' '.$listitem->device->name.' ';
+                                    }
+
+                                    $productTitle .= $title;
+
                                     if(isset($listitem->itemDetails)){
                                         foreach($listitem->itemDetails as $item_detail){
+
+                                            if($item_detail->sku == '' || $item_detail->sku == NULL){
+                                                continue;
+                                            }
+
                                             $typeDetail = ProductType::with('parent')->where('id', $itemDetail->product->product_type)->first();
                                             $product_type = $this->getCategoryPath($typeDetail);
-
-                                            $productTitle = '';
-                                            if(isset($listitem->brand->name)){
-                                                $productTitle .= $listitem->brand->name;
-                                            }
-
-                                            if(isset($listitem->device->name)){
-                                                $productTitle .= ' '.$listitem->device->name.' ';
-                                            }
-
-                                            $productTitle .= $title;
 
                                             fputcsv($stream, [
                                                 $item_detail->sku,
