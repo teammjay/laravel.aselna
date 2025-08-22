@@ -213,6 +213,11 @@ class ProcessFeedGenerationJob implements ShouldQueue
         }
     }
 
+    public function failed(\Throwable $exception)
+    {
+        Log::error('Feed generation job failed: ' . $exception->getMessage());
+    }
+
     private function getCompatibleDevices($product_id,$devices,$deviceSeries){
 
         $field = 'carrier.name as carrier_name';

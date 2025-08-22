@@ -122,6 +122,7 @@ class ProcessStoreMessageAccountJob implements ShouldQueue
                             }
 
                             if ($customer_id == NULL) {
+                                $firstname = $lastname = '';
                                 if (isset($email['name'])) {
                                     $nameArr = explode(' ', $email['name']);
                                     $firstname = $nameArr[0];

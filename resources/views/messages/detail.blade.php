@@ -120,6 +120,7 @@
                                         <div class="mb-3">
                                             @if(stripos($message->message, '<table') !== false)
                                                 {!! (html_entity_decode($message->message)) !!}
+                                                
                                             @else
                                                 {!! nl2br(html_entity_decode($message->message)) !!}
                                             @endif
