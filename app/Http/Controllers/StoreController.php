@@ -194,6 +194,7 @@ class StoreController extends Controller
             $request['download_buy_box'] = $request->has('download_buy_box') ? 1 : 0;
             $request['download_reviews'] = $request->has('download_reviews') ? 1 : 0;
             $request['generate_device_details'] = $request->has('generate_device_details') ? 1 : 0;
+            $request['skip_device_pages'] = $request->has('skip_device_pages') ? 1 : 0;
 
             $validator = Validator::make(request()->all(), [
                 'name' => 'required',

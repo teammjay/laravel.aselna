@@ -45,12 +45,12 @@ class StorePagesJobSync implements ShouldQueue
                 }
             });
 
-        DB::connection('easyesale_db')->table('web_store_page_template')->orderBy('id')
-            ->chunk(1000,function ($storePageTemplates) {
-                foreach ($storePageTemplates as $storePageTemplate) {
-                    $this->createStorePageTemplate($storePageTemplate);
-                }
-            });
+//        DB::connection('easyesale_db')->table('web_store_page_template')->orderBy('id')
+//            ->chunk(1000,function ($storePageTemplates) {
+//                foreach ($storePageTemplates as $storePageTemplate) {
+//                    $this->createStorePageTemplate($storePageTemplate);
+//                }
+//            });
     }
 
     private function createStorePage(mixed $storePage)
