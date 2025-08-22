@@ -119,6 +119,7 @@ class ShopifyCollectionDeviceSyncJob implements ShouldQueue
         Log::info('Collection ::' . json_encode($collection));
         if (isset($collection)) {
             $id =str_replace('gid://shopify/Collection/', '', $collection['id']);
+            $imageUrl = $collection['image']['src'] ?? '';
             StoreNavigationPage::updateOrCreate(
                 [
                     'store_id' => $this->storeID,
@@ -131,6 +132,7 @@ class ShopifyCollectionDeviceSyncJob implements ShouldQueue
                     'device_id' => $device->id,
                     'device_brand_id' => $device->brand_id,
                     'url_path' => $handle,
+                    'store_image_url' => $imageUrl,
                     'title' => $title,
                     'page_id' => $id,
                 ]
