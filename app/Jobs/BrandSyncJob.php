@@ -3,9 +3,13 @@
 namespace App\Jobs;
 
 use App\Models\Brand;
+use App\Models\SysFile;
+use App\Utils\FileUtility;
+use Exception;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class BrandSyncJob implements ShouldQueue
@@ -54,15 +58,45 @@ class BrandSyncJob implements ShouldQueue
 
     private function createSyncBrand(mixed $brand)
     {
-        Brand::updateOrCreate([
-            'id' => $brand->id,
-        ], [
+        $brandData = [
             'id' => $brand->id,
             'code' => $brand->code,
             'name' => $brand->name,
             'order_no' => $brand->sort_order,
             'image' => $brand->image_id,
             'thumbnail_image' => $brand->thumbnail_id,
-        ]);
+        ];
+
+        $Image = DB::connection('easyesale_db_wt_prefix')->table('sys_file')->where('id', $brand->image_id)->first();
+        try {
+            $image_name = $Image->name;
+            if (isset($image_name) && env('APP_ENV') == 'local') {
+                if (!file_exists(storage_path('app/public/device_images/' . $image_name))) {
+                    $image = file_get_contents('https://fonusaccessory.com/inv/inv_images/brand_images/' . $image_name);
+                    file_put_contents(storage_path('app/public/brand_images/' . $image_name), $image);
+                    $brandData['image'] = $image_name;
+                }
+            }
+        } catch (Exception $e) {
+            Log::error('Error in Image Sync: ' . $e->getMessage());
+        }
+
+        $Thumbnail = DB::connection('easyesale_db_wt_prefix')->table('sys_file')->where('id', $brand->image_id)->first();
+        try {
+            $thumbnail_name = $Thumbnail->name;
+            if (isset($thumbnail_name) && env('APP_ENV') == 'local') {
+                if (!file_exists(storage_path('app/public/device_images/' . $thumbnail_name))) {
+                    $thumbnail = file_get_contents('https://fonusaccessory.com/inv/inv_images/brand_images/' . $thumbnail_name);
+                    file_put_contents(storage_path('app/public/brand_images/' . $thumbnail_name), $thumbnail);
+                    $brandData['thumbnail_image'] = $thumbnail_name;
+                }
+            }
+        } catch (Exception $e) {
+            Log::error('Error in Image Sync: ' . $e->getMessage());
+        }
+
+        Brand::updateOrCreate([
+            'id' => $brand->id,
+        ],$brandData );
     }
 }
