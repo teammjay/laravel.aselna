@@ -31,7 +31,7 @@ class ShopifyIndvPagesSyncJob implements ShouldQueue
     {
         $this->setVariables();
         $StoreNavigationPages = StoreNavigationPage::where('store_id', $this->storeID)
-            ->whereIn('page_type',[WebStorePageType::ALL_BRANDS, WebStorePageType::BRAND])
+            ->whereIn('page_type',[WebStorePageType::ALL_BRANDS, WebStorePageType::BRAND_DEVICES])
             ->get();
 
         foreach ($StoreNavigationPages as $StoreNavigationPage) {

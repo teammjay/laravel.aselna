@@ -109,13 +109,6 @@ class Navigationutility
                 break;
 
             case WebStorePageType::BRAND_DEVICES:
-                $finalLinkArray['final_title'] = '';
-                break;
-
-            case WebStorePageType::DEVICE:
-                break;
-
-            case WebStorePageType::BRAND:
                 $brand = Brand::where('id', $request->device_brand_id)->firstOrFail();
                 $links = StoreNavigationPage::where('store_id', $store_id)
                     ->where('page_type', WebStorePageType::BRAND_DEVICE_PRODUCT_TYPES)
@@ -141,6 +134,13 @@ class Navigationutility
                         ];
                     }
                 }
+                break;
+
+            case WebStorePageType::DEVICE:
+                break;
+
+            case WebStorePageType::BRAND:
+
                 break;
 
             case WebStorePageType::PRODUCT_TYPE:
