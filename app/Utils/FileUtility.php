@@ -73,7 +73,6 @@ class FileUtility
             Log::info("Local environment detected, skipping image upload.");
             return '';
         }
-        if (!isset($Image)) return '';
         $storeFileSystem = $store->fileSystem;
         //Log::info("File system :: " . json_encode($storeFileSystem));
         $host = $storeFileSystem->host;
