@@ -230,7 +230,7 @@
                                 <th>Weight</th>
                                 <th>First Name</th>
                                 <th>Last Name</th>
-                                <th>City</th>
+                                <th>State</th>
                             </tr>
                             </thead>
                             <tbody id="shipment-list">

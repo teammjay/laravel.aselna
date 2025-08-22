@@ -186,7 +186,7 @@ class EmailMessageUtility
                     'parts' => $parts,
                     'body' => $body,
                     'in_reply_to' => $message->in_reply_to->first(),
-                    //'references' => $message->references->get(),
+                    'references' => $message->references->first(),
                     'attachments' => $attachments,
                     'client_id' => null
                 ];
