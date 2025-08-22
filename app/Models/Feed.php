@@ -25,7 +25,7 @@ class Feed extends Model
         });
     }
 
-    protected $fillable = ['id','store_id','marketplace','file_type','file_name','path','created_by','updated_by','deleted_by','deleted_at','created_at','updated_at'];
+    protected $fillable = ['id','store_id','marketplace','file_type','file_name','path','status','created_by','updated_by','deleted_by','deleted_at','created_at','updated_at'];
 
     public function store(){
         return $this->belongsTo(Store::class,'store_id');

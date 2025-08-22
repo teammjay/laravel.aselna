@@ -660,6 +660,7 @@
                 <th>Marketplace</th>
                 <th>File Type</th>
                 <th>File Name</th>
+                <th>Status</th>
                 <th>Created Date</th>
                 <th>Action</th>
             </tr>
@@ -779,12 +780,13 @@
                 //processData: false,
                 //contentType: false
             },
-            "order": [[ 4, "desc" ]],
+            "order": [[ 5, "desc" ]],
             'columns': [
                 { data: 'store'},
                 { data: 'marketplace' },
                 { data: 'file_type' },
                 { data: 'file_name' },
+                { data: 'status' },
                 { data: 'created_at' },
                 { data: 'action' }
             ],
