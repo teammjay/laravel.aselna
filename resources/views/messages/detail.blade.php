@@ -118,7 +118,11 @@
                                     <div class="msg-container @if($message->author == 1) darker @endif">
                                         {{--<iframe srcdoc="{!! htmlspecialchars($message->message) !!}"></iframe>--}}
                                         <div class="mb-3">
-                                        {!! nl2br(html_entity_decode($message->message)) !!}
+                                            @if($message->message !== strip_tags($message->message))
+                                                {!! (html_entity_decode($message->message)) !!}
+                                            @else
+                                                {!! nl2br(html_entity_decode($message->message)) !!}
+                                            @endif
                                         </div>
                                         @if(isset($message->attachments))
                                             @foreach($message->attachments as $attachment)
