@@ -442,6 +442,14 @@
                                 </div>
                                 <div class="row mt-3 g-3 align-items-center">
                                     <div class="col-md-5">
+                                        <label for="skip_device_pages">Skip device pages</label>
+                                    </div>
+                                    <div class="col-md-7">
+                                        <input type="checkbox" id="skip_device_pages" name="skip_device_pages" {{ ($store->skip_device_pages == 1) ? 'checked' : '' }}>
+                                    </div>
+                                </div>
+                                <div class="row mt-3 g-3 align-items-center">
+                                    <div class="col-md-5">
                                         <label for="label_order_prefix">Label order prefix</label>
                                     </div>
                                     <div class="col-md-7">

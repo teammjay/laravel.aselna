@@ -30,6 +30,12 @@ GQL;
       productUpdate(product: \$product, media: \$media) {
         product {
           id
+            handle
+            variants(first : 1) {
+                nodes {
+                    id
+                }
+            }
           media(first: 10) {
             nodes {
               alt
@@ -181,6 +187,9 @@ GQL;
         collectionCreate(input : \$collection) {
             collection {
                 id
+                image {
+                    url
+                }
             }
         }
     }
@@ -191,6 +200,9 @@ GQL;
         collectionUpdate(input : \$collection) {
             collection {
                 id
+                image {
+                    url
+                }
             }
         }
     }

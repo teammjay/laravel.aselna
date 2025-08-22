@@ -5,9 +5,14 @@ namespace App\Jobs;
 use App\Constants\WebStorePageType;
 use App\Models\Brand;
 use App\Models\Device;
+use App\Models\Images;
 use App\Models\ProductType;
+use App\Models\Store;
 use App\Models\StoreNavigationPage;
 use App\Models\StorePageTemplate;
+use App\Services\Auth\ShopifyAuthService;
+use App\Utils\FileUtility;
+use App\Utils\Navigationutility;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Http\Request;
@@ -18,9 +23,14 @@ class StoreBrandPageSyncJob implements ShouldQueue
 {
     use Queueable;
 
+    public $timeout = 36000;
+
     protected $store_id;
     protected $page_type;
     protected $template_id;
+    private $store;
+    private ShopifyAuthService $shopifyAuthService;
+    private array $publications;
 
     /**
      * Create a new job instance.
@@ -40,6 +50,7 @@ class StoreBrandPageSyncJob implements ShouldQueue
      */
     public function handle(): void
     {
+        $this->setVariables();
         Log::info('Testing Here');
         $request = new Request();
         $request->merge(['store_id' => $this->store_id, 'page_type' => $this->page_type, 'template_id' => $this->template_id]);
@@ -49,13 +60,13 @@ class StoreBrandPageSyncJob implements ShouldQueue
         $template = StorePageTemplate::findOrFail($this->template_id);
         $page_type = $this->page_type;
         switch ($page_type) {
-            case WebStorePageType::BRAND:
+            case WebStorePageType::BRAND_DEVICES:
                 Log::info('Page Type :: ' . $page_type);
                 $brands = Brand::where('status', 'active')->orderBy('order_no')->get();
                 foreach ($brands as $brand) {
                     Log::info('Brand :: ' . $brand->name);
                     $request['device_brand_id'] = $brand->id;
-                    $links = $this->getLinks($this->store_id, $page_type, $request);
+                    $links = Navigationutility::getLinks($this->store_id, $page_type, $request);
 
                     $data = [
                         'description' => $request->description ?? '',
@@ -69,7 +80,7 @@ class StoreBrandPageSyncJob implements ShouldQueue
 
                     $request['title'] = $links['final_title'];
                     Log::info('Request Title :: ' . json_encode($request['title']));
-                    $request['generated_body'] = $this->fillTemplateWithData($template->template_code, $data);
+                    $request['generated_body'] = Navigationutility::fillTemplateWithData($template->template_code, $data);
 
                     StoreNavigationPage::updateOrCreate([
                         'store_id' => $this->store_id,
@@ -78,168 +89,136 @@ class StoreBrandPageSyncJob implements ShouldQueue
                     ],$request->all());
                 }
                 break;
-        }
-    }
-
-    function fillTemplateWithData(string $templateString, $templateData)
-    {
-        try {
-            return Blade::render($templateString, $templateData);
-        } catch (\Exception $e) {
-            throw new \RuntimeException($e->getMessage(), 0, $e);
-        }
-    }
-
-    private function getLinks(mixed $store_id, mixed $page_type, Request $request): array
-    {
-        $finalLinkArray = [];
-        switch ($page_type) {
-            case WebStorePageType::ALL_PRODUCT_TYPES:
-                $finalLinkArray['final_title'] = 'Product Category';
-                break;
-            case WebStorePageType::PRODUCT_TYPE_BRANDS:
-                $productType = ProductType::where('id', $request->product_type)->firstOrFail();
-                $finalLinkArray['final_title'] = $productType->name;
-                $links = StoreNavigationPage::where('store_id', $store_id)
-                    ->where('page_type', WebStorePageType::BRAND)
-                    ->get();
-                foreach ($links as $link) {
-                    if ($link->brand->sort_order <= 10) {
-                        $finalLinkArray['popular_link'][] = [
-                            'id' => $link->id,
-                            'title' => $link->brand->name,
-                            'imageUrl' => $link->store_image_url,
-                            'url' => "/pages/" . $link->url_path,
-                            'popular' => true
-                        ];
-                    } else {
-                        $finalLinkArray['other_link'][] = [
-                            'id' => $link->id,
-                            'title' => $link->brand->name,
-                            'imageUrl' => $link->store_image_url,
-                            'url' => "/pages/" . $link->url_path,
-                            'popular' => false
-                        ];
-                    }
-                }
-                break;
-
-            case WebStorePageType::PRODUCT_TYPE_BRAND_DEVICES:
-                $device = Device::where('id', $request->device_id)->firstOrFail();
-                $finalLinkArray['final_title'] = $device->name . ' for ' . $device->brand->name;
-                $links = StoreNavigationPage::where('store_id', $store_id)
-                    ->where('page_type', WebStorePageType::DEVICE)
-                    ->get();
-                foreach ($links as $link) {
-                    if ($link->device->order <= 10) {
-                        $finalLinkArray['popular_link'][] = [
-                            'id' => $link->id,
-                            'title' => $link->device->name,
-                            'imageUrl' => $link->store_image_url,
-                            'url' => "/pages/" . $link->url_path,
-                            'popular' => true
-                        ];
-                    } else {
-                        $finalLinkArray['other_link'][] = [
-                            'id' => $link->id,
-                            'title' => $link->device->name,
-                            'imageUrl' => $link->store_image_url,
-                            'url' => "/pages/" . $link->url_path,
-                            'popular' => false
-                        ];
-                    }
-                }
-                break;
-
-            case WebStorePageType::ALL_BRANDS:
-                $links = StoreNavigationPage::where('store_id', $store_id)
-                    ->where('page_type', WebStorePageType::BRAND)
-                    ->get();
-                $finalLinkArray['final_title'] = 'Shop By Brand';
-                foreach ($links as $link) {
-                    if ($link->brand->sort_order <= 10) {
-                        $finalLinkArray['popular_link'][] = [
-                            'id' => $link->id,
-                            'title' => $link->brand->name,
-                            'imageUrl' => $link->store_image_url,
-                            'url' => "/pages/" . $link->url_path,
-                            'popular' => true
-                        ];
-                    } else {
-                        $finalLinkArray['other_link'][] = [
-                            'id' => $link->id,
-                            'title' => $link->brand->name,
-                            'imageUrl' => $link->store_image_url,
-                            'url' => "/pages/" . $link->url_path,
-                            'popular' => false
-                        ];
-                    }
-                }
-                break;
-
-            case WebStorePageType::BRAND_DEVICES:
-                $finalLinkArray['final_title'] = '';
-                break;
-
-            case WebStorePageType::DEVICE:
-                break;
-
             case WebStorePageType::BRAND:
-                $brand = Brand::where('id', $request->device_brand_id)->firstOrFail();
-                $links = StoreNavigationPage::where('store_id', $store_id)
-                    ->where('page_type', WebStorePageType::BRAND_DEVICE_PRODUCT_TYPES)
-                    ->get();
-                $finalLinkArray['final_title'] = $brand->name;
-                foreach ($links as $link) {
-                    if ($link->device->order <= 10) {
-                        $finalLinkArray['popular_link'][] = [
-                            'id' => $link->id,
-                            'title' => $link->brand->name,
-                            'imageUrl' => $link->store_image_url,
-                            'url' => "/collections/" . $link->url_path,
-                            'popular' => true
-                        ];
+                Log::info('Page Type :: ' . $page_type);
+                $this->getPuplications();
+                $brands = Brand::where('status', 'active')->orderBy('order_no')->get();
+                foreach ($brands as $brand) {
+                    $title = $brand->name;
+
+                    $collectionData['collection'] = [
+                        'title' => $title,
+                    ];
+                    $storePage = StoreNavigationPage::where('store_id', $this->store_id)
+                        ->where('page_type', WebStorePageType::BRAND)
+                        ->where('device_brand_id', $brand->id)
+                        ->first();
+
+                    if (isset($storePage)) {
+                        $handle = $storePage->url_path;
                     } else {
-                        $finalLinkArray['other_link'][] = [
-                            'id' => $link->id,
-                            'title' => $link->brand->name,
-                            'imageUrl' => $link->store_image_url,
-                            'url' => "/collections/" . $link->url_path,
-                            'popular' => false
+                        $handle = $this->generateShopifyHandle($title);
+                    }
+
+                    $path = '/store-images/' . $this->store_id . '/collections/' . $handle . '.jpg';
+
+                    try {
+                        $imagePath = FileUtility::uploadImage($this->store, 'app/public/brand_images/' . $brand->image, $path);
+                    } catch (\Exception $e) {
+                        $imagePath = '';
+                    }
+
+                    if ($imagePath) {
+                        $collectionData['collection']['image'] = [
+                            'src' => $imagePath,
                         ];
+                    }
+
+                    if ($alreadyCollection = $this->shopifyAuthService->getCollectionByHandle($handle)) {
+                        Log::info('Collection already exists, updating collection', ['handle' => $handle]);
+                        $collectionData['collection']['id'] = $alreadyCollection['id'];
+                        $collectionData['collection']['handle'] = $handle;
+                        Log::info('Collection data update', ['collection_data' => $collectionData]);
+                        $response = $this->shopifyAuthService->updateCollection($collectionData);
+
+                        if (isset($response['data']['collectionUpdate'])) {
+                            $collection = $response['data']['collectionUpdate']['collection'];
+                        }
+                    } else {
+                        Log::info('Creating new collection', ['handle' => $handle]);
+
+                        foreach ($this->publications as $publication) {
+                            $collectionData['collection']['publications'][]['publicationId'] = $publication;
+                        }
+
+                        $collectionData['collection']['handle'] = $handle;
+                        Log::info('Collection data creation', ['collection_data' => $collectionData]);
+                        $response = $this->shopifyAuthService->createCollection($collectionData);
+
+                        if (isset($response['data']['collectionCreate'])) {
+                            $collection = $response['data']['collectionCreate']['collection'];
+                        }
+                    }
+
+                    if (isset($collection)) {
+                        $id =str_replace('gid://shopify/Collection/', '', $collection['id']);
+                        $imageUrl = $collection['image']['url'] ?? '';
+                        StoreNavigationPage::updateOrCreate(
+                            [
+                                'store_id' => $this->store_id,
+                                'page_type' => WebStorePageType::BRAND,
+                                'device_brand_id' => $brand->id,
+                            ],
+                            [
+                                'store_id' => $this->store_id,
+                                'page_type' => WebStorePageType::BRAND,
+                                'device_brand_id' => $brand->id,
+                                'url_path' => $handle,
+                                'store_image_url' => $imageUrl,
+                                'title' => $title,
+                                'page_id' => $id,
+                            ]
+                        );
                     }
                 }
                 break;
-
-            case WebStorePageType::PRODUCT_TYPE:
-                break;
-
-            case WebStorePageType::DEVICE_PRODUCT_TYPE:
-                break;
-
-            case WebStorePageType::ALL_DEVICES:
-                break;
-
-            case WebStorePageType::BRAND_DEVICE_PRODUCT_TYPES:
-                $links = StoreNavigationPage::where('store_id', $store_id)
-                    ->where('page_type', WebStorePageType::PRODUCT_TYPE)
-                    ->get();
-                $finalLinkArray['final_title'] = '';
-                foreach ($links as $link) {
-                    $finalLinkArray['popular_link'][] = [
-                        'id' => $link->id,
-                        'title' => $link->productType->name,
-                        'imageUrl' => $link->store_image_url,
-                        'url' => "/pages/" . $link->url_path,
-                        'popular' => true
-                    ];
-                }
-                break;
-
-            default:
-                break;
         }
+    }
 
-        return $finalLinkArray;
+    private function setVariables()
+    {
+        Log::info('Store ID :: ' . $this->store_id);
+        $this->store = Store::find($this->store_id);
+        Log::info('Store Details :: ' . json_encode($this->store));
+
+        $this->shopifyAuthService = new ShopifyAuthService($this->store->secret_key,$this->store->service_url);
+    }
+    function generateShopifyHandle($title) {
+        // Convert to lowercase
+        $handle = mb_strtolower($title, 'UTF-8');
+
+        // Normalize accented characters (e.g., é → e)
+        $handle = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $handle);
+
+        // Replace apostrophes
+        $handle = preg_replace("/'/", '', $handle);
+
+        // Replace any non-alphanumeric characters (excluding spaces and dots) with nothing
+        $handle = preg_replace("/[^a-z0-9\s.]/", '', $handle);
+
+        // Replace dots with hyphens (e.g., 12.3 → 12-3)
+        $handle = str_replace('.', '-', $handle);
+
+        // Replace whitespace with hyphens
+        $handle = preg_replace("/[\s]+/", '-', $handle);
+
+        // Remove multiple consecutive hyphens
+        $handle = preg_replace("/-+/", '-', $handle);
+
+        // Trim hyphens from beginning and end
+        $handle = trim($handle, '-');
+
+        return $handle;
+    }
+
+    private function getPuplications()
+    {
+        $publications = $this->shopifyAuthService->getPublications();
+
+        $publicationIds = [];
+        foreach ($publications['data']['publications']['edges'] as $publication) {
+            $publicationIds[] = $publication['node']['id'];
+        }
+        $this->publications = $publicationIds;
     }
 }

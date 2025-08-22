@@ -2,8 +2,11 @@
 
 namespace App\Jobs;
 
+use App\Constants\ListingStatus;
+use App\Constants\ListingSyncStatus;
 use App\Models\Catalog;
 use App\Models\GenerateProductImage;
+use App\Models\ListingItem;
 use App\Models\ProductImageAlternative;
 use App\Models\ProductType;
 use App\Models\Store;
@@ -11,18 +14,20 @@ use App\Models\ManageMarketplaceProduct;
 use App\Models\ProductImages;
 use App\Models\ProductInterface;
 use App\Models\ProductTags;
+use App\Models\StoreProduct;
 use App\Models\StoreTypeListing;
 use App\Models\UPCCodes;
 use App\Services\Auth\ShopifyAuthService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Log;
+use phpseclib3\File\ASN1\Element;
 
 class SubmitShopifyProductsJob implements ShouldQueue
 {
     use Queueable;
 
-    public $timeout = 3000;
+    public $timeout = 30000;
 
     /**
      * Create a new job instance.
@@ -65,10 +70,18 @@ class SubmitShopifyProductsJob implements ShouldQueue
                     ->get();
                 foreach ($products as $product) {
                     $this->createProduct($product, $store);
+                    if (env('APP_ENV') == 'local') {
+                        break;
+                    }
                 }
 
                 // Handle Updated Products
-                $AlreadyCreatedIds = ManageMarketplaceProduct::select('product_id')->where('upload_status', 'success')->where('store_id', $store->id)->orderBy('updated_at', 'asc')->limit(100)->get();
+                $AlreadyCreatedIds = ManageMarketplaceProduct::select('product_id')
+                    ->where('upload_status', 'success')->where('store_id', $store->id)
+                    ->orderBy('updated_at', 'asc')
+                    ->limit(100)
+                    ->get();
+
                 $products = Catalog::select('*')->with('productType', 'productKeyFeatures', 'productColor')
                     ->whereNotIn('product_type', $productTypes)
                     ->whereNull('parent_id')
@@ -81,6 +94,9 @@ class SubmitShopifyProductsJob implements ShouldQueue
 
                 foreach ($products as $product) {
                     $this->updateProduct($product, $store);
+                    if (env('APP_ENV') == 'local') {
+                        break;
+                    }
                 }
 
                 // Handle Discontinued Products
@@ -93,8 +109,10 @@ class SubmitShopifyProductsJob implements ShouldQueue
                     ->get();
                 foreach ($discontinuedProducts as $product) {
                     $this->discontinueProduct($product, $store);
+                    if (env('APP_ENV') == 'local') {
+                        break;
+                    }
                 }
-
             }
         }
     }
@@ -238,6 +256,8 @@ class SubmitShopifyProductsJob implements ShouldQueue
 
         $sku = StoreTypeListing::generateUniqueAlphabeticSku($productData->product_sku, 6);
 
+        $listingItem = $this->addListingItem($productData, $store, $sku);
+
         $ManageMarketplaceProduct = ManageMarketplaceProduct::updateOrCreate([
             'product_id' => $productData->product_id,
             'product_code' => $productData->product_sku,
@@ -332,7 +352,10 @@ class SubmitShopifyProductsJob implements ShouldQueue
         if (isset($response['data']) && empty($response['data']['userErrors'])) {
 
             $productId = $response['data']['productSet']['product']['id'];
+            $productIdReplaced = str_replace('gid://shopify/Product/', '', $productId);
+            $handle = $response['data']['productSet']['product']['handle'];
             $variantId = $response['data']['productSet']['product']['variants']['nodes'][0]['id'];
+            $variantIdReplaced = str_replace('gid://shopify/ProductVariant/', '', $variantId);
 
             Log::info('Variant ID: ' . $variantId);
 
@@ -343,6 +366,11 @@ class SubmitShopifyProductsJob implements ShouldQueue
                 Log::info('Invalid inventory item or location for variant ' . $variantId . '"]');
                 return false;
             }
+
+            $listingItem->update([
+                'store_url' => $handle,
+                'store_sku' => $productIdReplaced . '-' . $variantIdReplaced
+            ]);
 
             // Prepare inventory update array
             $inventoryUpdates['locationId'] = $locationId;
@@ -370,10 +398,13 @@ class SubmitShopifyProductsJob implements ShouldQueue
     private function updateProduct(mixed $productData, mixed $store)
     {
         $fileSystem = $store->fileSystem;
+
         $shopifyAuthService = new ShopifyAuthService($store->secret_key, $store->service_url);
         Log::info("Syncing Product SKU :: " . $productData->product_sku);
 
         $proDetail = ManageMarketplaceProduct::where('product_id', $productData->product_id)->where('store_id', $store->id)->where('upload_status', 'success')->first();
+
+        $listingItem = $this->addListingItem($productData, $store, $proDetail->sku);
 
         $tags = $this->getAllTags($productData, []);
         $finalTagsString = implode(', ', $tags);
@@ -411,9 +442,26 @@ class SubmitShopifyProductsJob implements ShouldQueue
         $priceResponse = $shopifyAuthService->updatePrice($priceUpdatesData);
 
         if (isset($response['data']) && empty($response['data']['userErrors'])) {
+            $productId = $response['data']['productUpdate']['product']['id'];
+            $productIdReplaced = str_replace('gid://shopify/Product/', '', $productId);
+            $handle = $response['data']['productUpdate']['product']['handle'];
+            $variantId = $response['data']['productUpdate']['product']['variants']['nodes'][0]['id'];
+            $variantIdReplaced = str_replace('gid://shopify/ProductVariant/', '', $variantId);
+
+            $listingItem->update([
+                'store_url' => $handle,
+                'store_sku' => $productIdReplaced . '-' . $variantIdReplaced
+            ]);
+
             $proDetail->update([
                 'upload_status' => 'success',
                 'updated_at' => now()
+            ]);
+        } else {
+            $proDetail->update([
+                'upload_status' => 'failed',
+                'updated_at' => now(),
+                'upload_attempts' => $proDetail->upload_attempts + 1
             ]);
         }
     }
@@ -441,5 +489,46 @@ class SubmitShopifyProductsJob implements ShouldQueue
                 ]);
             }
         }
+    }
+
+    public function addListingItem($productData, $store, $new_sku)
+    {
+        $product_exist = StoreProduct::where('product_id', $productData->product_id)->where('store_id', $store->id)->first();
+        if (!isset($product_exist)) {
+            $sPr = [
+                'product_id' => $productData->product_id,
+                'title' => $productData->product_title,
+                'store_type_category_id' => $productData->product_type,
+                'price' => $productData->product_marketplace_price,
+                'msrp' => $productData->product_msrp,
+                'description' => $productData->product_description,
+                'store_id' => $store->id,
+                'created_by' => 'system',
+                'updated_by' => 'system'
+            ];
+            $product_exist = StoreProduct::create($sPr);
+        }
+
+        $listingItem = ListingItem::where('store_product_id', $product_exist->id)
+            ->first();
+        if (!isset($listingItem)) {
+            $listingItem = ListingItem::updateOrCreate(
+                [
+                    'store_product_id' => $product_exist->id,
+                ],
+                [
+                    'store_product_id' => $product_exist->id,
+                    'title' => $productData->product_title,
+                    'description' => $productData->product_description ?? '',
+                    'sku' => $new_sku,
+                    'price' => $productData->product_marketplace_price,
+                    'quantity' => ($store->default_listing_quantity) ?: 10,
+                    'sync_status' => ListingSyncStatus::Synchronized,
+                    'status' => ListingStatus::Active,
+                ]);
+
+            return $listingItem;
+        }
+        return null;
     }
 }

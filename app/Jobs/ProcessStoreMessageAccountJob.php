@@ -122,6 +122,7 @@ class ProcessStoreMessageAccountJob implements ShouldQueue
                             }
 
                             if ($customer_id == NULL) {
+                                $firstname = $lastname = '';
                                 if (isset($email['name'])) {
                                     $nameArr = explode(' ', $email['name']);
                                     $firstname = $nameArr[0];
@@ -238,11 +239,14 @@ class ProcessStoreMessageAccountJob implements ShouldQueue
                                 if (isset($hd_message->id) && !empty($email['attachments'])) {
 
                                     if(!empty($email['attachments'])){
+                                        $uniqueAttachments = [];
                                         foreach($email['attachments'] as $attachment){
                                             $fileName = $attachment->getName();
                                             $fileMimeType = $attachment->getMimeType();
                                             $fileSize = $attachment->getSize();
                                             $attachmentID = $attachment->getId();
+
+                                            $key = $fileName . '-' . $fileSize;
 
                                             $extension = pathinfo($fileName, PATHINFO_EXTENSION);
                                             $savePath = storage_path('app/public/email_attachment/');
@@ -253,40 +257,44 @@ class ProcessStoreMessageAccountJob implements ShouldQueue
                                             //$uniqueFileName = uniqid('email_', true) . '.' . $extension;
 
                                             try {
-                                                $attachment->save($savePath, $fileName);
+                                                if(!in_array($key,$uniqueAttachments)) {
+                                                    $uniqueAttachments[] = $key;
 
-                                                $filedata = [
-                                                    'name' => $fileName,
-                                                    'ext' => $extension ?: 'jpg',
-                                                    'file_size' => $fileSize ?: 'Unknown',
-                                                    'location' => 'email_attachment/',
-                                                    'created_by' => 'admin',
-                                                ];
+                                                    $attachment->save($savePath, $fileName);
 
-                                                $fileDetail = SysFile::updateOrCreate([
-                                                    'name' => $fileName,
-                                                ], $filedata);
-
-                                                /*$fileDetail = SysFile::create($filedata);*/
-                                                $file_id = $fileDetail->id;
-
-                                                if($hd_ticket->id && $file_id){
-                                                    $attachementData = [
-                                                        'client_id' => NULL,
-                                                        'message_id' => $hd_message->id,
-                                                        'attachment_id' => $attachmentID,
-                                                        'file_id' => $file_id,
+                                                    $filedata = [
+                                                        'name' => $fileName,
+                                                        'ext' => $extension ?: 'jpg',
+                                                        'file_size' => $fileSize ?: 'Unknown',
+                                                        'location' => 'email_attachment/',
                                                         'created_by' => 'admin',
                                                     ];
 
-                                                    /*HdMessageAttachment::create($attachementData);*/
+                                                    $fileDetail = SysFile::updateOrCreate([
+                                                        'name' => $fileName,
+                                                    ], $filedata);
 
-                                                    HdMessageAttachment::updateOrCreate([
-                                                        'message_id' => $hd_message->id,
-                                                        'attachment_id' => $attachmentID,
-                                                        'file_id' => $file_id,
-                                                    ], $attachementData);
+                                                    /*$fileDetail = SysFile::create($filedata);*/
+                                                    $file_id = $fileDetail->id;
 
+                                                    if ($hd_ticket->id && $file_id) {
+                                                        $attachementData = [
+                                                            'client_id' => NULL,
+                                                            'message_id' => $hd_message->id,
+                                                            'attachment_id' => $attachmentID,
+                                                            'file_id' => $file_id,
+                                                            'created_by' => 'admin',
+                                                        ];
+
+                                                        /*HdMessageAttachment::create($attachementData);*/
+
+                                                        HdMessageAttachment::updateOrCreate([
+                                                            'message_id' => $hd_message->id,
+                                                            'attachment_id' => $attachmentID,
+                                                            'file_id' => $file_id,
+                                                        ], $attachementData);
+
+                                                    }
                                                 }
 
                                             } catch (\Exception $e) {

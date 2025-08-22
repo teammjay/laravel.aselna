@@ -3,11 +3,13 @@
 namespace App\Jobs;
 
 use App\Constants\WebStorePageType;
+use App\Models\Brand;
 use App\Models\Device;
 use App\Models\DeviceInterface;
 use App\Models\Store;
 use App\Models\StoreNavigationPage;
 use App\Services\Auth\ShopifyAuthService;
+use App\Utils\FileUtility;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Log;
@@ -70,7 +72,12 @@ class ShopifyCollectionDeviceSyncJob implements ShouldQueue
         ];
         $collectionData['collection']['ruleSet']['appliedDisjunctively'] = true;
         $path = '/store-images/' . $this->store->id . '/collections/' . $handle . '.jpg';
-        $imagePath = $this->uploadImage($this->store, $device->image, $path);
+        try {
+
+            $imagePath = FileUtility::uploadImage($this->store, 'app/public/device_images/' . $device->image, $path);
+        } catch (\Exception $e) {
+            $imagePath = '';
+        }
         Log::info('Image path for device', ['device_id' => $device->id, 'image_path' => $imagePath]);
         $collection = null;
 
@@ -119,6 +126,7 @@ class ShopifyCollectionDeviceSyncJob implements ShouldQueue
         Log::info('Collection ::' . json_encode($collection));
         if (isset($collection)) {
             $id =str_replace('gid://shopify/Collection/', '', $collection['id']);
+            $imageUrl = $collection['image']['url'] ?? '';
             StoreNavigationPage::updateOrCreate(
                 [
                     'store_id' => $this->storeID,
@@ -131,6 +139,7 @@ class ShopifyCollectionDeviceSyncJob implements ShouldQueue
                     'device_id' => $device->id,
                     'device_brand_id' => $device->brand_id,
                     'url_path' => $handle,
+                    'store_image_url' => $imageUrl,
                     'title' => $title,
                     'page_id' => $id,
                 ]
@@ -184,68 +193,6 @@ class ShopifyCollectionDeviceSyncJob implements ShouldQueue
         $handle = trim($handle, '-');
 
         return $handle;
-    }
-
-    private function uploadImage($store, $Image, $path)
-    {
-        if (env('APP_ENV') == 'local') {
-            Log::info("Local environment detected, skipping image upload.");
-            return '';
-        }
-        if (!isset($Image)) return '';
-        $storeFileSystem = $store->fileSystem;
-        //Log::info("File system :: " . json_encode($storeFileSystem));
-        $host = $storeFileSystem->host;
-        $port = $storeFileSystem->port ?? 21;
-        $loginId = $storeFileSystem->login_id;
-        $password = $storeFileSystem->password;
-        $rootPath = $storeFileSystem->root_path;
-        $localFilePath = storage_path('app/public/device_images/' . $Image);
-        Log::info("Local File Path :: " . $localFilePath);
-
-        $ftpConn = ftp_connect($host, $port);
-        if (!$ftpConn) {
-            Log::info("Could not connect to FTP server: $host");
-        }
-
-        $login = ftp_login($ftpConn, $loginId, $password);
-        if (!$login) {
-            ftp_close($ftpConn);
-            Log::info("Could not login to FTP server with provided credentials.");
-        }
-
-        ftp_pasv($ftpConn, true);
-
-        $remoteFilePath = $rootPath . $path;
-        Log::info("Remote Path :: " . $remoteFilePath);
-
-        $this->createFtpDirectory($ftpConn, dirname($remoteFilePath));
-
-        //Upload the file
-        if (ftp_put($ftpConn, $remoteFilePath, $localFilePath, FTP_BINARY)) {
-            //echo "File uploaded successfully to $remoteFilePath";
-            return $storeFileSystem->url_base_path . $path;
-        } else {
-            //echo "Error uploading file.";
-        }
-
-        // Close FTP connection
-        ftp_close($ftpConn);
-    }
-
-    function createFtpDirectory($ftpConn, $dirPath)
-    {
-        $parts = explode('/', $dirPath);
-        $currentDir = '';
-
-        foreach ($parts as $part) {
-            if (empty($part)) continue;
-            $currentDir .= "/$part";
-
-            if (!@ftp_chdir($ftpConn, $currentDir)) { // Check if directory exists
-                ftp_mkdir($ftpConn, $currentDir); // Create directory if it does not exist
-            }
-        }
     }
 
 }

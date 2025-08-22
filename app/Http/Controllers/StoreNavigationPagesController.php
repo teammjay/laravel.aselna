@@ -11,6 +11,7 @@ use App\Models\ProductType;
 use App\Models\Store;
 use App\Models\StoreNavigationPage;
 use App\Models\StorePageTemplate;
+use App\Utils\Navigationutility;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Log;
@@ -141,7 +142,7 @@ class StoreNavigationPagesController extends Controller
 
         $template = StorePageTemplate::findOrFail($request->template_id);
 
-        $links = $this->getLinks($request->store_id, $request->page_type, $request);
+        $links = Navigationutility::getLinks($request->store_id, $request->page_type, $request);
 
         $data = [
             'description' => $request->description ?? '',
@@ -155,7 +156,7 @@ class StoreNavigationPagesController extends Controller
 
         Log::info('Data :: ' . json_encode($data));
 
-        $content = $this->fillTemplateWithData($template->template_code, $data);
+        $content = Navigationutility::fillTemplateWithData($template->template_code, $data);
 
         return response()->json(['content' => $content]);
     }
@@ -190,15 +191,6 @@ class StoreNavigationPagesController extends Controller
 
         return redirect()->route('store_navigation_page.index')
             ->with('success', 'Store navigation page deleted successfully.');
-    }
-
-    function fillTemplateWithData(string $templateString, $templateData)
-    {
-        try {
-            return Blade::render($templateString, $templateData);
-        } catch (\Exception $e) {
-            throw new \RuntimeException($e->getMessage(), 0, $e);
-        }
     }
 
     private function getLinks(mixed $store_id, mixed $page_type, Request $request): array
