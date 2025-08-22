@@ -66,4 +66,66 @@ class FileUtility
     {
         return File::get($public_path);
     }
+
+    public static function uploadImage($store, $Image, $path)
+    {
+        if (env('APP_ENV') == 'local') {
+            Log::info("Local environment detected, skipping image upload.");
+            return '';
+        }
+        if (!isset($Image)) return '';
+        $storeFileSystem = $store->fileSystem;
+        //Log::info("File system :: " . json_encode($storeFileSystem));
+        $host = $storeFileSystem->host;
+        $port = $storeFileSystem->port ?? 21;
+        $loginId = $storeFileSystem->login_id;
+        $password = $storeFileSystem->password;
+        $rootPath = $storeFileSystem->root_path;
+        $localFilePath = storage_path('app/public/device_images/' . $Image);
+        Log::info("Local File Path :: " . $localFilePath);
+
+        $ftpConn = ftp_connect($host, $port);
+        if (!$ftpConn) {
+            Log::info("Could not connect to FTP server: $host");
+        }
+
+        $login = ftp_login($ftpConn, $loginId, $password);
+        if (!$login) {
+            ftp_close($ftpConn);
+            Log::info("Could not login to FTP server with provided credentials.");
+        }
+
+        ftp_pasv($ftpConn, true);
+
+        $remoteFilePath = $rootPath . $path;
+        Log::info("Remote Path :: " . $remoteFilePath);
+
+        self::createFtpDirectory($ftpConn, dirname($remoteFilePath));
+
+        //Upload the file
+        if (ftp_put($ftpConn, $remoteFilePath, $localFilePath, FTP_BINARY)) {
+            //echo "File uploaded successfully to $remoteFilePath";
+            return $storeFileSystem->url_base_path . $path;
+        } else {
+            //echo "Error uploading file.";
+        }
+
+        // Close FTP connection
+        ftp_close($ftpConn);
+    }
+
+    public static function createFtpDirectory($ftpConn, $dirPath)
+    {
+        $parts = explode('/', $dirPath);
+        $currentDir = '';
+
+        foreach ($parts as $part) {
+            if (empty($part)) continue;
+            $currentDir .= "/$part";
+
+            if (!@ftp_chdir($ftpConn, $currentDir)) { // Check if directory exists
+                ftp_mkdir($ftpConn, $currentDir); // Create directory if it does not exist
+            }
+        }
+    }
 }
