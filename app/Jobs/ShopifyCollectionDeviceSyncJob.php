@@ -72,7 +72,12 @@ class ShopifyCollectionDeviceSyncJob implements ShouldQueue
         ];
         $collectionData['collection']['ruleSet']['appliedDisjunctively'] = true;
         $path = '/store-images/' . $this->store->id . '/collections/' . $handle . '.jpg';
-        $imagePath = FileUtility::uploadImage($this->store, 'app/public/device_images/' . $device->image, $path);
+        try {
+
+            $imagePath = FileUtility::uploadImage($this->store, 'app/public/device_images/' . $device->image, $path);
+        } catch (\Exception $e) {
+            $imagePath = '';
+        }
         Log::info('Image path for device', ['device_id' => $device->id, 'image_path' => $imagePath]);
         $collection = null;
 

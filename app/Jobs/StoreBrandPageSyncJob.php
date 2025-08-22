@@ -112,7 +112,11 @@ class StoreBrandPageSyncJob implements ShouldQueue
 
                     $path = '/store-images/' . $this->store_id . '/collections/' . $handle . '.jpg';
 
-                    $imagePath = FileUtility::uploadImage($this->store, 'app/public/brand_images/' . $brand->image , $path);
+                    try {
+                        $imagePath = FileUtility::uploadImage($this->store, 'app/public/brand_images/' . $brand->image, $path);
+                    } catch (\Exception $e) {
+                        $imagePath = '';
+                    }
 
                     if ($imagePath) {
                         $collectionData['collection']['image'] = [

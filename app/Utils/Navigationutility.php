@@ -84,15 +84,19 @@ class Navigationutility
 
             case WebStorePageType::ALL_BRANDS:
                 $links = StoreNavigationPage::where('store_id', $store_id)
-                    ->where('page_type', WebStorePageType::BRAND)
+                    ->where('page_type', WebStorePageType::BRAND_DEVICES)
                     ->get();
                 $finalLinkArray['final_title'] = 'Shop By Brand';
                 foreach ($links as $link) {
+                    $brandPage = StoreNavigationPage::where('store_id', $store_id)
+                        ->where('page_type', WebStorePageType::BRAND)
+                        ->where('device_brand_id', $link->device_brand_id)
+                        ->first();
                     if ($link->brand->sort_order <= 10) {
                         $finalLinkArray['popular_link'][] = [
                             'id' => $link->id,
                             'title' => $link->brand->name,
-                            'imageUrl' => $link->store_image_url,
+                            'imageUrl' => $brandPage->store_image_url,
                             'url' => "/pages/" . $link->url_path,
                             'popular' => true
                         ];
@@ -100,7 +104,7 @@ class Navigationutility
                         $finalLinkArray['other_link'][] = [
                             'id' => $link->id,
                             'title' => $link->brand->name,
-                            'imageUrl' => $link->store_image_url,
+                            'imageUrl' => $brandPage->store_image_url,
                             'url' => "/pages/" . $link->url_path,
                             'popular' => false
                         ];
