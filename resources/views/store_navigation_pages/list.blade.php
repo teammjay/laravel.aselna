@@ -9,6 +9,16 @@
     <h1>Store Navigation Pages</h1>
 @stop
 
+@section('adminlte_css')
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap4.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet"/>
+    <style>
+        .select2-container .select2-selection--single {
+            height: 38px;
+        }
+    </style>
+@stop
+
 @section('content')
     <div class="card card-secondary">
         <div class="card-header bg-white">
@@ -24,7 +34,7 @@
                                 Store
                             </div>
                             <div class="col-6">
-                                <select class="form-control" id="store_id" name="store_id">
+                                <select class="form-control" id="store_id" name="store_id" style="width: 100%;">
                                     <option value="">Select store</option>
                                     @foreach($stores as $store)
                                         <option value="{{ $store->id }}" id="{{ $store->id }}"
@@ -118,7 +128,7 @@
                         @csrf
                         <div class="form-group">
                             <label for="bulk_store_id">Store</label>
-                            <select class="form-control" name="store_id" id="bulk_store_id">
+                            <select class="form-control" name="store_id" id="bulk_store_id" style="width: 100%;">
                                 <option value="">-- Select Store --</option>
                                 @foreach($stores as $store)
                                     <option value="{{ $store->id }}">
@@ -162,15 +172,15 @@
     </div>
 @stop
 
-@section('css')
-    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap4.min.css">
-@stop
-
 @section('js')
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap4.min.js"></script>
     <script>
         $(document).ready(function () {
+            $('#bulk_store_id').select2();
+            $('#store_id').select2();
+
             let navigationTable = $('#navigationPageTable').DataTable({
                 processing: true,
                 serverSide: true,

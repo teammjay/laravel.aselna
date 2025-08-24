@@ -57,7 +57,7 @@ class ShopifyCollectionDeviceSyncJob implements ShouldQueue
         // create a handle for the collection by replacing spaces ( and .) with dashes and converting to lowercase
 
         $storePage = StoreNavigationPage::where('store_id', $this->storeID)
-            ->where('page_type', WebStorePageType::BRAND_DEVICE_PRODUCT_TYPES)
+            ->where('page_type', WebStorePageType::DEVICE)
             ->where('device_id', $device->id)
             ->first();
 
@@ -130,12 +130,12 @@ class ShopifyCollectionDeviceSyncJob implements ShouldQueue
             StoreNavigationPage::updateOrCreate(
                 [
                     'store_id' => $this->storeID,
-                    'page_type' => WebStorePageType::BRAND_DEVICE_PRODUCT_TYPES,
+                    'page_type' => WebStorePageType::DEVICE,
                     'device_id' => $device->id,
                 ],
                 [
                     'store_id' => $this->storeID,
-                    'page_type' => WebStorePageType::BRAND_DEVICE_PRODUCT_TYPES,
+                    'page_type' => WebStorePageType::DEVICE,
                     'device_id' => $device->id,
                     'device_brand_id' => $device->brand_id,
                     'url_path' => $handle,
