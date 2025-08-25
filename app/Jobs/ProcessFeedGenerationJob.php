@@ -187,8 +187,6 @@ class ProcessFeedGenerationJob implements ShouldQueue
                                     $compatibledevices = $this->getCompatibleDevices($itemDetail->product_id, $this->data['device'] , $this->data['device_series']);
 
                                     if($compatibledevices){
-                                        foreach($compatibledevices as $device){
-
                                             if(isset($listitem->itemDetails)){
                                                 foreach($listitem->itemDetails as $item_detail){
 
@@ -196,9 +194,9 @@ class ProcessFeedGenerationJob implements ShouldQueue
                                                         continue;
                                                     }
 
-                                                    if($item_detail->device_id != $device->id && $item_detail->listing_item_id == $listitem->id){
-                                                        $item_detail = $this->insertListingItemDetail($storeDetail, $product_code, $itemDetail, $device);
-                                                    }
+//                                                    if($item_detail->device_id != $device->id && $item_detail->listing_item_id == $listitem->id){
+//                                                        $item_detail = $this->insertListingItemDetail($storeDetail, $product_code, $itemDetail, $device);
+//                                                    }
 
                                                     $typeDetail = ProductType::with('parent')->where('id', $itemDetail->product->product_type)->first();
                                                     $product_type = $this->getCategoryPath($typeDetail);
@@ -235,7 +233,6 @@ class ProcessFeedGenerationJob implements ShouldQueue
                                                     ]);
                                                 }
                                             }
-                                        }
                                     }
                                 }
                             }
