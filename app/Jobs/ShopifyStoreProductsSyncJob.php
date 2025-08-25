@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Models\Catalog;
 use App\Models\Store;
 use App\Models\StoreProduct;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -41,6 +42,9 @@ class ShopifyStoreProductsSyncJob implements ShouldQueue
 
     private function syncStoreProduct(mixed $storeProduct)
     {
+        if (Catalog::where('product_id', $storeProduct->product_id)->doesntExist()) {
+            return;
+        }
         StoreProduct::updateOrCreate([
             'id' => $storeProduct->id,
         ], [
