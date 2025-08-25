@@ -145,13 +145,6 @@ class Navigationutility
                 }
                 break;
 
-            case WebStorePageType::DEVICE:
-                break;
-
-            case WebStorePageType::BRAND:
-
-                break;
-
             case WebStorePageType::PRODUCT_TYPE:
                 break;
 

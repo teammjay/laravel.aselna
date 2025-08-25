@@ -64,7 +64,7 @@ class ShopifyCollectionDeviceSyncJob implements ShouldQueue
         if (isset($storePage)) {
             $handle = $storePage->url_path;
         } else {
-            $handle = $this->generateShopifyHandle($title);
+            $handle = $this->generateShopifyHandle($brand->name . ' ' . $device->name );
         }
 
         $collectionData['collection'] = [
