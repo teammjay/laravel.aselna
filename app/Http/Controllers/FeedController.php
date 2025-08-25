@@ -97,42 +97,6 @@ class FeedController extends Controller
 
     public function generateFeed(Request $request){
 
-        $query = StoreProduct::with('product','product.size','StoreTypeCategory','product.condition','product.Manufacturer','product.images', 'product.productType','product.interfaces', 'product.interfaces.interfaces','product.color');
-        //$query = Catalog::with('StoreProduct', 'images', 'productType', 'interfaces.interfaces', 'pinterface.interfaces','condition','Manufacturer')->where('products.product_status', 1);
-
-        $query->select('store_product.*');
-
-        if ($request->has('store_id')) {
-            $query->where('store_product.store_id', $request->store_id);
-        }
-
-        $query->leftJoin('products', 'store_product.product_id', '=', 'products.product_id');
-        $query->where('products.oem_generic', 2);
-
-        if ($request->has('product_code') && $request->product_code != '') {
-
-            $query->whereIn('products.product_sku', $request->product_code);
-        }
-
-        if ($request->has('device') && $request->device != '') {
-            if(!$request->has('interface') || $request->interface == ''){
-                $query->leftJoin('product_interface', 'product_interface.product_id', '=', 'store_product.product_id');
-            }
-            $query->leftJoin('device_interface', 'device_interface.interface_id', '=', 'product_interface.interface_id');
-            $query->whereIn('device_interface.device_id', $request->device);
-        }
-
-        if ($request->has('device_series') && $request->device_series != '') {
-            $devices = DevicesLinkedDevice::select('device_id')->whereIn('device_series_id', $request->device_series)->get();
-            $query->leftJoin('product_interface', 'product_interface.product_id', '=', 'store_product.product_id');
-            $query->leftJoin('device_interface', 'device_interface.interface_id', '=', 'product_interface.interface_id');
-            $query->whereIn('device_interface.device_id', $devices);
-        }
-
-        //$query->orderBy('products.product_sku','asc');
-        //$query->limit(10);
-        $products = $query->distinct()->get();
-
         /*echo '<pre>';
         echo $query->toSql();die;
         print_r($products);
@@ -142,11 +106,16 @@ class FeedController extends Controller
         $store_id = $request->input('store_id');
         $feed_type = $request->input('feed_type');
         $fileType = $request->input('file_type');
+        $product_code = $request->input('product_code');
 
         $requestData = [
             'store_id' => $store_id,
             'feed_type' => $feed_type,
             'fileType' => $fileType,
+            'product_code' => $product_code,
+            'device' => $request->input('device'),
+            'interface' => $request->input('interface'),
+            'device_series' => $request->input('device_series'),
         ];
 
         if(isset($feed_type)){
@@ -179,7 +148,7 @@ class FeedController extends Controller
 
             $marketfeed = Feed::create($feedData);
             $feed_id = $marketfeed->id;
-            ProcessFeedGenerationJob::dispatch($products, $requestData, $feed_id);
+            ProcessFeedGenerationJob::dispatch($requestData, $feed_id);
         }
 
         if ($request->ajax()) {
