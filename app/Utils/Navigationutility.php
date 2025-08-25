@@ -119,7 +119,7 @@ class Navigationutility
                 $brand = Brand::where('id', $request->device_brand_id)->firstOrFail();
                 $links = StoreNavigationPage::join('device', 'store_navigation_page.device_id', '=', 'device.id')
                     ->where('store_id', $store_id)
-                    ->where('page_type', WebStorePageType::BRAND_DEVICE_PRODUCT_TYPES)
+                    ->where('page_type', WebStorePageType::DEVICE)
                     ->where('device_brand_id', $brand->id)
                     ->orderBy('device.order', 'asc')
                     ->get();
