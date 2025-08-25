@@ -21,6 +21,7 @@ use App\Models\StoreProduct;
 use App\Models\StoreType;
 use App\Utils\FileUtility;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class FeedController extends Controller
@@ -102,59 +103,66 @@ class FeedController extends Controller
         print_r($products);
         echo '</pre>';die;*/
 
-
+        DB::beginTransaction();
         $store_id = $request->input('store_id');
         $feed_type = $request->input('feed_type');
         $fileType = $request->input('file_type');
         $product_code = $request->input('product_code');
 
-        $requestData = [
-            'store_id' => $store_id,
-            'feed_type' => $feed_type,
-            'fileType' => $fileType,
-            'product_code' => $product_code,
-            'device' => $request->input('device'),
-            'interface' => $request->input('interface'),
-            'device_series' => $request->input('device_series'),
-        ];
+        try {
 
-        if(isset($feed_type)){
-
-            switch(strtolower($feed_type)) {
-                case 'google':
-                    $fname = date('Y-m-d-H-i-s');
-                    $fileName = 'google_shopping_feed_' . $fname . '.'.$fileType;
-                    $filePath = 'feeds/google-shopping/' . $fileName;
-                    break;
-                case 'microsoft':
-                    $fname = date('Y-m-d-H-i-s');
-                    $fileName = 'microsoft_feed_' . $fname . '.'.$fileType;
-                    $filePath = 'feeds/microsoft/' . $fileName;
-                    break;
-            }
-
-            $requestData['fileName']= $fileName;
-            $requestData['filePath']= $filePath;
-
-            $feedData = [
+            $requestData = [
                 'store_id' => $store_id,
-                'marketplace' => $feed_type,
-                'file_type' => $fileType,
-                'file_name' => $fileName,
-                'path' => $filePath,
-                'status' => 0,
-                'created_by' => 'admin',
+                'feed_type' => $feed_type,
+                'fileType' => $fileType,
+                'product_code' => $product_code,
+                'device' => $request->input('device'),
+                'interface' => $request->input('interface'),
+                'device_series' => $request->input('device_series'),
             ];
 
-            $marketfeed = Feed::create($feedData);
-            $feed_id = $marketfeed->id;
-            ProcessFeedGenerationJob::dispatch($requestData, $feed_id);
-        }
+            if (isset($feed_type)) {
 
-        if ($request->ajax()) {
-            return response()->json([
-                'success' => true
-            ]);
+                switch (strtolower($feed_type)) {
+                    case 'google':
+                        $fname = date('Y-m-d-H-i-s');
+                        $fileName = 'google_shopping_feed_' . $fname . '.' . $fileType;
+                        $filePath = 'feeds/google-shopping/' . $fileName;
+                        break;
+                    case 'microsoft':
+                        $fname = date('Y-m-d-H-i-s');
+                        $fileName = 'microsoft_feed_' . $fname . '.' . $fileType;
+                        $filePath = 'feeds/microsoft/' . $fileName;
+                        break;
+                }
+
+                $requestData['fileName'] = $fileName;
+                $requestData['filePath'] = $filePath;
+
+                $feedData = [
+                    'store_id' => $store_id,
+                    'marketplace' => $feed_type,
+                    'file_type' => $fileType,
+                    'file_name' => $fileName,
+                    'path' => $filePath,
+                    'status' => 0,
+                    'created_by' => 'admin',
+                ];
+
+                $marketfeed = Feed::create($feedData);
+                $feed_id = $marketfeed->id;
+                ProcessFeedGenerationJob::dispatch($requestData, $feed_id);
+                DB::commit();
+            }
+
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => true
+                ]);
+            }
+        }catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Error processing feed generation: ' . $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine());
         }
 
     }

@@ -196,7 +196,7 @@ class ProcessFeedGenerationJob implements ShouldQueue
                                                         continue;
                                                     }
 
-                                                    if($item_detail->device_id != $device->id){
+                                                    if($item_detail->device_id != $device->id && $item_detail->listing_item_id == $listitem->id){
                                                         $item_detail = $this->insertListingItemDetail($storeDetail, $product_code, $itemDetail, $device);
                                                     }
 
@@ -374,7 +374,7 @@ class ProcessFeedGenerationJob implements ShouldQueue
         $query->leftJoin('carrier', 'carrier.id', '=', 'device_carrier.carrier_id');
         $query->whereNotNull('carrier.id');
 
-        $query->whereIn('product_interface.product_id', $product_id);
+        $query->where('product_interface.product_id', $product_id);
 
         if ($devices) {
             $query->whereIn('device.id', $devices);
