@@ -339,7 +339,6 @@ class JobScheduler extends Seeder
                 'class_name' => 'App\Jobs\OldOrderSyncJob',
             ],
             [
-                //ShopifyCollectionSyncJob
                 'name' => 'Shopify Pages Sync',
                 'description' => 'Sync Shopify pages',
                 'class_name' => 'App\Jobs\ShopifyPagesSyncJob',
