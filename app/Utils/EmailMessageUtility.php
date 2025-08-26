@@ -170,6 +170,10 @@ class EmailMessageUtility
                     $attachments = $message->getAttachments();
                 }
 
+                $mDate = $message->getDate()->first();
+                $convertedDate = $mDate->copy()->setTimezone(config('app.timezone'));
+                $date = $convertedDate->format('Y-m-d H:i:s');
+
                 $eData = [
                     'subject' => $message->subject->first(),
                     'full_name' => $message->fromaddress->first(),
@@ -181,7 +185,7 @@ class EmailMessageUtility
                     'cc' => $message->getCc()[0]->mail ?? null,
                     'bcc' => $message->getBcc()[0]->mail ?? null,
                     'message_id' => $message->message_id->first(),
-                    'date' => date('Y-m-d H:i:s',strtotime($message->getDate())),
+                    'date' => $date,
                     'parsedData' => $parsedData,
                     'parts' => $parts,
                     'body' => $body,
@@ -200,7 +204,7 @@ class EmailMessageUtility
 
             /*echo '<pre>';
             print_r($emails);
-            echo '</pre>';*/
+            echo '</pre>';die;*/
 
             Log::info("Email Founds.");
             //die;

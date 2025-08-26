@@ -552,7 +552,7 @@ GQL;
             }
         }
     }
-    GQL;
+GQL;
 
     public static $pageFetch = <<<GQL
 query getPageByHandle (\$handle: String!) {
@@ -582,6 +582,6 @@ GQL;
             }
         }
     }
-    GQL;
+GQL;
 
 }

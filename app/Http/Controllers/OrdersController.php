@@ -325,6 +325,7 @@ class OrdersController extends Controller
                                 $orderOperationItemData = [
                                     'order_item_id' => $order_item->id,
                                     'order_operation_id' => $order_operation_detail->id,
+                                    'sku' => $data['sku'],
                                     'quantity' => $data['quantity-purchased'],
                                     'sync_status' => 6
                                 ];
@@ -458,6 +459,7 @@ class OrdersController extends Controller
                             $orderOperationItemData = [
                                 'order_item_id' => $order_item->id,
                                 'order_operation_id' => $order_operation_detail->id,
+                                'sku' => $data['sku'],
                                 'quantity' => $data['quantity-purchased'],
                                 'sync_status' => 6
                             ];

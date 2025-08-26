@@ -449,7 +449,7 @@ class MessagesController extends Controller
                                     'store_name' => $store_name,
                                     'marketplaceName' => '',
                                     'shipment_address' => '',
-                                    'shipment_date' => '',
+                                    'shipment_date' => isset($op->ship_date) ? date('d M Y',strtotime($op->ship_date)) : '',
                                     'order_date' => '',
                                     'trackingNumber' => isset($op->tracking_number) ? $op->tracking_number : '',
                                     'return_address' => $returnAddress,
@@ -652,6 +652,7 @@ class MessagesController extends Controller
             print_r($orderOperation->operation_type);
             echo '</pre>';die;*/
             $trackingNumber = isset($orderOperation->tracking_number) ? $orderOperation->tracking_number : '';
+            $shipment_date = isset($orderOperation->ship_date) ? date('d M Y',strtotime($orderOperation->ship_date)) : '';
             if(isset($regenerate) && $regenerate == 1 && $orderOperation->operation_type == OrderOperationType::OrderReturn && $orderOperation->tracking_number){
                 $templateDetail = HdMessageTemplate::getOrderOperationTemplate(OrderOperationType::OrderReturn, 0, 1);
                 //$attachment = HdMessageAttachment::with('imageObj')->where('message_id',$ticket_id)->first();
@@ -668,6 +669,7 @@ class MessagesController extends Controller
                 $templateDetail = HdMessageTemplate::getOrderOperationTemplate(OrderOperationType::OrderReplacement, 1, 0);
                 if(isset($orderOperation->relatedOperation)){
                     $trackingNumber = $orderOperation->relatedOperation->tracking_number;
+                    $shipment_date = date('d M Y',strtotime($orderOperation->relatedOperation->ship_date));
                 }
 
             }else if(isset($regenerate) && $regenerate == 1 && $orderOperation->status == OrderOperationStatus::Canceled){
@@ -713,7 +715,7 @@ class MessagesController extends Controller
                     'store_name' => $store_name,
                     'marketplaceName' => '',
                     'shipment_address' => $shipment_address,
-                    'shipment_date' => '',
+                    'shipment_date' => $shipment_date,
                     'order_date' => (isset($orderDetail->order_date)) ? $orderDetail->order_date : '',
                     'trackingNumber' => $trackingNumber,
                     'return_address' => $returnAddress,
@@ -1189,6 +1191,7 @@ class MessagesController extends Controller
                                 'order_operation_id' => $order_opration_id,
                                 'client_id' => $oitem->client_id,
                                 'sync_status' => $oitem->sync_status,
+                                'sku' => $oitem->sku,
                                 'quantity' => $oitem->quantity,
                                 'item_price' => $oitem->item_price,
                                 'shipping_price' => $oitem->shipping_price,
@@ -1335,6 +1338,7 @@ class MessagesController extends Controller
                                 'order_operation_id' => $order_opration_id,
                                 'client_id' => $oitem->client_id,
                                 'sync_status' => $oitem->sync_status,
+                                'sku' => $oitem->sku,
                                 'quantity' => $oitem->quantity,
                                 'item_price' => $oitem->item_price,
                                 'shipping_price' => $oitem->shipping_price,
@@ -1477,6 +1481,7 @@ class MessagesController extends Controller
                         'order_operation_id' => $order_opration_id,
                         'client_id' => $oitem->client_id,
                         'sync_status' => $oitem->sync_status,
+                        'sku' => $oitem->sku,
                         'quantity' => $oitem->quantity,
                         'item_price' => $oitem->item_price,
                         'shipping_price' => $oitem->shipping_price,
@@ -1623,6 +1628,7 @@ class MessagesController extends Controller
                             'order_operation_id' => $order_opration_id,
                             'client_id' => $oitem->client_id,
                             'sync_status' => $oitem->sync_status,
+                            'sku' => $oitem->sku,
                             'quantity' => $oitem->quantity,
                         ];
 
@@ -1716,6 +1722,7 @@ class MessagesController extends Controller
                                     'order_item_id' => $order_item->id,
                                     'order_operation_id' => $order_operation_detail->id,
                                     'quantity' => $item->quantity,
+                                    'sku' => $order_item->sku,
                                     //'client_id' => '',
                                 ];
 
@@ -1764,7 +1771,7 @@ class MessagesController extends Controller
                     'trackingNumber' => isset($orderOperations->tracking_number) ? $orderOperations->tracking_number : '',
                     'ima_number' => '',
                     'return_address' => '',
-                    'shipment_date' => '',
+                    'shipment_date' => isset($orderOperations->ship_date) ? date('d M Y',strtotime($orderOperations->ship_date)) : '',
                     'order_date' => '',
                 ];
                 $template_id = $templateDetail->id;
@@ -1869,6 +1876,7 @@ class MessagesController extends Controller
                         'order_operation_id' => $order_opration_id,
                         'client_id' => $oitem->client_id,
                         'sync_status' => $oitem->sync_status,
+                        'sku' => $oitem->sku,
                         'quantity' => $oitem->quantity,
                         'item_price' => $oitem->item_price,
                         'shipping_price' => ($oItem->quantity * $oItem->item_price - $return_charges),
@@ -1907,7 +1915,7 @@ class MessagesController extends Controller
                     'trackingNumber' => isset($orderOperation->tracking_number) ? $orderOperation->tracking_number : '',
                     'ima_number' => '',
                     'return_address' => '',
-                    'shipment_date' => '',
+                    'shipment_date' => isset($orderOperation->ship_date) ? date('d M Y',strtotime($orderOperation->ship_date)) : '',
                     'order_date' => '',
                 ];
                 $template_id = $templateDetail->id;

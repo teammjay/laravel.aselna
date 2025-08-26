@@ -701,11 +701,12 @@
                     success: function(data) {
                         if(data.success){
                             alert('Message send successfuly.');
-                            if(ticket_status){
+                            history.back()
+                            /*if(ticket_status){
                                 window.location.href = "{{ route('message.need_action') }}";
                             }else{
                                 location.reload();
-                            }
+                            }*/
                         }
                     },
                     error: function (xhr) {

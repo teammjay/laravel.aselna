@@ -1336,7 +1336,7 @@
 
         $(document).on('change', '#frmShippingDetail input, #frmShippingDetail select, #frmShippingDetail textarea', function() {
             // Your code to execute when a change occurs in any of these elements
-            //updateShipment();
+            updateShipment();
         });
     });
 
