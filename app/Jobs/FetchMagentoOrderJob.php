@@ -144,6 +144,7 @@ class FetchMagentoOrderJob implements ShouldQueue
                                         $orderOperationItemData = [
                                             'order_item_id' => $order_item->id,
                                             'order_operation_id' => $order_operation_detail->id,
+                                            'sku' => $item['sku'],
                                             'quantity' => $item['qty_ordered'],
                                             'client_id' => '',
                                             'sync_status' => 6

@@ -2,17 +2,24 @@
 
 namespace App\Jobs;
 
+use App\Constants\WebStorePageType;
 use App\Models\Device;
 use App\Models\DevicesLinkedDevice;
 use App\Models\Feed;
 use App\Models\GenerateProductImage;
+use App\Models\GoodUpc;
 use App\Models\ListingItem;
+use App\Models\ListingItemDetail;
 use App\Models\ProductImages;
 use App\Models\ProductSpecification;
 use App\Models\ProductTitleKeyword;
 use App\Models\ProductType;
 use App\Models\Store;
+use App\Models\StoreNavigationPage;
+use App\Models\StoreProduct;
 use App\Models\StoreType;
+use App\Models\StoreTypeListing;
+use App\Models\UPCCodes;
 use App\Utils\FileUtility;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -27,16 +34,14 @@ class ProcessFeedGenerationJob implements ShouldQueue
 
     public $timeout = 30000; // Set a timeout for the job
 
-    protected $products;
     protected $feed_id;
     protected $data;
 
     /**
      * Create a new job instance.
      */
-    public function __construct($products, $requestdata, $feed_id)
+    public function __construct($requestdata, $feed_id)
     {
-        $this->products = $products;
         $this->data = $requestdata;
         $this->feed_id = $feed_id;
     }
@@ -46,32 +51,85 @@ class ProcessFeedGenerationJob implements ShouldQueue
      */
     public function handle()
     {
-        try{
+        try {
 
             $feed_type = $this->data['feed_type'];
             $store_id = $this->data['store_id'];
-            $storeDetail = Store::with('storeType')->where('id',$store_id)->first();
+            $fileType = $this->data['fileType'];
+            $storeDetail = Store::with('storeType')->where('id', $store_id)->first();
             $fileSystem = $storeDetail->fileSystem;
             $store_type_detail = StoreType::getStoreTypeDetailById($store_id);
-            switch(strtolower($feed_type)){
+
+
+            $query = StoreProduct::with('product', 'product.size', 'StoreTypeCategory', 'product.condition', 'product.Manufacturer', 'product.images', 'product.productType', 'product.interfaces', 'product.interfaces.interfaces', 'product.color');
+            //$query = Catalog::with('StoreProduct', 'images', 'productType', 'interfaces.interfaces', 'pinterface.interfaces','condition','Manufacturer')->where('products.product_status', 1);
+
+            $query->select('store_product.*');
+
+            if ($this->data['store_id']) {
+                $query->where('store_product.store_id', $store_id);
+            }
+
+            $query->leftJoin('products', 'store_product.product_id', '=', 'products.product_id');
+            $query->where('products.oem_generic', 2);
+
+            if (isset($this->data['product_code']) && $this->data['product_code'] != '') {
+
+                $query->whereIn('products.product_sku', $this->data['product_code']);
+            }
+
+            if (isset($this->data['device']) && $this->data['device'] != '') {
+                if (!isset($this->data['interface']) || $this->data['interface'] == '') {
+                    $query->leftJoin('product_interface', 'product_interface.product_id', '=', 'store_product.product_id');
+                }
+                $query->leftJoin('device_interface', 'device_interface.interface_id', '=', 'product_interface.interface_id');
+                $query->whereIn('device_interface.device_id', $this->data['device']);
+            }
+
+            if (isset($this->data['device_series']) && $this->data['device_series'] != '') {
+                $devices = DevicesLinkedDevice::select('device_id')->whereIn('device_series_id', $this->data['device_series'])->get();
+                $query->leftJoin('product_interface', 'product_interface.product_id', '=', 'store_product.product_id');
+                $query->leftJoin('device_interface', 'device_interface.interface_id', '=', 'product_interface.interface_id');
+                $query->whereIn('device_interface.device_id', $devices);
+            }
+
+            //$query->orderBy('products.product_sku','asc');
+            //$query->limit(10);
+            $products = $query->distinct()->get();
+
+            switch (strtolower($feed_type)) {
                 case 'google':
+                case 'microsoft':
 
                     $columns = ['id', 'title', 'description', 'google product category', 'product type', 'link', 'image link', 'condition', 'availability', 'price', 'gtin', 'brand', 'mpn', 'item group id', 'gender', 'age group', 'color', 'size', 'shipping', 'additional_image_link', 'inventory', 'return_policy_info', 'custom_label_0', 'custom_label_1', 'custom_label_2', 'custom_label_3', 'custom_label_4', 'product_detail'];
+
+                    if (strtolower($feed_type) == 'microsoft') {
+                        $columns = ['id', 'title', 'description', 'product_category', 'product_type', 'link', 'image link', 'condition', 'availability', 'price', 'gtin', 'brand', 'mpn', 'item_group_id', 'gender', 'age_group', 'color', 'size', 'shipping', 'additional_image_link', 'inventory', 'return_policy_info', 'custom_label_0', 'custom_label_1', 'custom_label_2', 'custom_label_3', 'custom_label_4', 'product_detail'];
+                    }
 
 
                     $fileName = $this->data['fileName'];
                     $filePath = $this->data['filePath'];
 
-                    $stream = fopen('php://temp', 'w');
+//                    $stream = fopen('php://temp', 'w');
+                    $fullPath = public_path('feeds/google-shopping/' . $fileName);
+
+                    $directory = dirname($fullPath);
+                    if (!file_exists($directory)) {
+                        mkdir($directory, 0755, true);
+                    }
+
+                    $fileHandle = fopen($fullPath, 'w');
 
                     // Write the header row
-                    fputcsv($stream, $columns);
+                    fputcsv($fileHandle, $columns);
 
                     // Write product rows
 
-                    foreach ($this->products as $itemDetail) {
+                    foreach ($products as $itemDetail) {
 
                         $images = array();
+                        Log::info('Processing product ID: ' . $itemDetail->id);
 
                         /*$this->generateProductImages($itemDetail, $storeDetail);
                         $productImages = GenerateProductImage::where('product_id', $itemDetail->product_id)->get();
@@ -81,7 +139,7 @@ class ProcessFeedGenerationJob implements ShouldQueue
 
                         $ptype_id = (isset($itemDetail->StoreTypeCategory) && !empty($itemDetail->StoreTypeCategory)) ? $itemDetail->StoreTypeCategory->store_type_code : '';
                         $product_type = '';
-                        if(isset($itemDetail->product)) {
+                        if (isset($itemDetail->product)) {
                             $product_code = $itemDetail->product->product_sku;
                             $keywords = ProductTitleKeyword::select('product_id', 'keyword')->where('product_id', $itemDetail->product_id)->orderBy('priority', 'asc')->limit(5)->get();
                             $title = '';
@@ -90,71 +148,71 @@ class ProcessFeedGenerationJob implements ShouldQueue
                                 foreach ($keywords as $key => $val) {
                                     $title_keyword[] = trim($val['keyword']);
                                 }
-                                $title = implode(' ',$title_keyword);
+                                $title = implode(' ', $title_keyword);
                             }
 
-                            $productSpecification = ProductSpecification::where('product_id', $itemDetail->product_id)->where('store_type_id', $store_type_detail->id)->get();
-                            $section = 'General';
-                            $kvSep = ':';
-                            $pairSep = ',';
-                            $parts = [];
-                            foreach ($productSpecification as $specification) {
-
-                                $section = trim((string) $section);
-                                $key     = trim((string) $specification->name);
-                                $value   = trim((string) $specification->value);
-
-                                if ($section === '' || $key === '' || $value === '') {
-                                    continue;
-                                }
-
-                                $parts[] = "{$section}{$kvSep}{$key}{$kvSep}{$value}";
-                            }
-
-                            $prodDetail = implode($pairSep, $parts);
+                            $prodDetail = $this->generateProductDetail($itemDetail->product_id, $store_type_detail->id);
 
                             //echo $product_code;
                             //$compatibleDevice = $this->getCompatibleDevices($product_id,$request->device,$request->device_series);
-                            $query = ListingItem::with('brand','device','itemDetails','itemDetail','itemDetail.device','itemDetail.carrier')->whereNotNull('sku')->whereLike('sku','%'.$product_code.'%');
+                            $query = ListingItem::with('brand', 'device', 'itemDetails', 'itemDetail', 'itemDetail.device', 'itemDetail.carrier')
+                                ->where('store_product_id', $itemDetail->id);
                             $listingItems = $query->get();
                             /*echo '<pre>';
                             echo $query->toSql();die;
                             print_r($listingItems);
                             echo '</pre>';die;*/
-                            if($listingItems){
-                                foreach($listingItems as $listitem){
+                            if ($listingItems) {
+                                foreach ($listingItems as $listitem) {
+                                    Log::info('Processing listing item ID: ' . $listitem->id . ' for product ID: ' . $itemDetail->product_id);
 
                                     $product_url = '';
                                     $store_sku = $listitem->store_sku;
                                     $store_type = isset($storeDetail->storeType->name) ? $storeDetail->storeType->name : '';
                                     $site_url = isset($storeDetail->store_url) ? $storeDetail->store_url : '';
                                     $store_url = isset($listitem->store_url) ? $listitem->store_url : '';
-                                    if($store_sku != ''){
+                                    if ($store_sku != '') {
                                         $product_url = \App\Utils\ListingUtility::generateItemUrl($store_type, $store_sku, $site_url, $store_url);
                                     }
 
                                     $productTitle = '';
-                                    if(isset($listitem->brand->name)){
+                                    if (isset($listitem->brand->name)) {
                                         $productTitle .= $listitem->brand->name;
                                     }
 
-                                    if(isset($listitem->device->name)){
-                                        $productTitle .= ' '.$listitem->device->name.' ';
+                                    if (isset($listitem->device->name)) {
+                                        $productTitle .= ' ' . $listitem->device->name . ' ';
                                     }
 
                                     $productTitle .= $title;
 
-                                    if(isset($listitem->itemDetails)){
-                                        foreach($listitem->itemDetails as $item_detail){
+                                    $item_url = StoreNavigationPage::where('store_id', $store_id)
+                                        ->where('page_type', WebStorePageType::DEVICE)
+                                        ->where('device_id', $listitem->device_id)
+                                        ->first();
 
-                                            if($item_detail->sku == '' || $item_detail->sku == NULL){
+                                    if ($item_url) {
+                                        $listitem->update(['url' => $item_url->url_path]);
+                                    }
+
+                                    $compatibledevices = $this->getCompatibleDevices($itemDetail->product_id, $this->data['device'], $this->data['device_series']);
+
+                                    if ($compatibledevices) {
+                                        foreach ($compatibledevices as $device) {
+                                            Log::info('Processing compatible device ID: ' . $device->id . ' for listing item ID: ' . $listitem->id);
+                                            $item_detail = ListingItemDetail::where('listing_item_id', $listitem->id)
+                                                ->where('device_id', $device->id)->first();
+
+                                            if (!$item_detail) {
                                                 continue;
+                                                Log::info('Inserting new listing item detail for listing item ID: ' . $listitem->id . ' and device ID: ' . $device->id);
+                                                $item_detail = $this->insertListingItemDetail($storeDetail, $product_code, $listitem, $device);
                                             }
 
                                             $typeDetail = ProductType::with('parent')->where('id', $itemDetail->product->product_type)->first();
                                             $product_type = $this->getCategoryPath($typeDetail);
 
-                                            fputcsv($stream, [
+                                            fputcsv($fileHandle, [
                                                 $item_detail->sku,
                                                 $productTitle,
                                                 ($itemDetail->overwrite_description) ? $itemDetail->description : $itemDetail->product->product_description,
@@ -164,7 +222,7 @@ class ProcessFeedGenerationJob implements ShouldQueue
                                                 (!empty($images)) ? implode(',', $images) : '',
                                                 (isset($itemDetail->product->condition)) ? $itemDetail->product->condition->name : '',
                                                 'in stock',
-                                                (($itemDetail->product->product_marketplace_price != '') ? $itemDetail->product->product_marketplace_price : $itemDetail->product->product_price).' USD',
+                                                (($itemDetail->product->product_marketplace_price != '') ? $itemDetail->product->product_marketplace_price : $itemDetail->product->product_price) . ' USD',
                                                 (isset($item_detail->upc)) ? $item_detail->upc : '',
                                                 (isset($itemDetail->product->Manufacturer)) ? $itemDetail->product->Manufacturer->name : '',
                                                 $item_detail->sku,
@@ -172,13 +230,13 @@ class ProcessFeedGenerationJob implements ShouldQueue
                                                 '',
                                                 '',
                                                 (isset($itemDetail->product->color->name)) ? $itemDetail->product->color->name : '',
-                                                (isset($itemDetail->product->size->value)) ? $itemDetail->product->size->value .' '.$itemDetail->product->size->value_unit  : '',
+                                                (isset($itemDetail->product->size->value)) ? $itemDetail->product->size->value . ' ' . $itemDetail->product->size->value_unit : '',
                                                 'US::Standard:3.99 USD',
                                                 '',
                                                 (isset($listitem->qunatity)) ? $listitem->qunatity : 500,
                                                 'return_policy_days: "30"',
-                                                (isset($listitem->brand->name)) ? $listitem->brand->name : '',
-                                                (isset($listitem->device->name)) ? $listitem->device->name : '',
+                                                (isset($item_detail->device->brand->name)) ? $item_detail->device->brand->name : '',
+                                                (isset($item_detail->device->name)) ? $item_detail->device->name : '',
                                                 '',
                                                 ($itemDetail->overwrite_title) ? $itemDetail->title : $itemDetail->product->product_title,
                                                 (isset($itemDetail->product->product_sku)) ? $itemDetail->product->product_sku : '',
@@ -190,25 +248,24 @@ class ProcessFeedGenerationJob implements ShouldQueue
                             }
                         }
                     }
-                    rewind($stream);
-                    FileUtility::saveToFile(public_path('feeds/google-shopping/' . $fileName), stream_get_contents($stream));
+//                    rewind($stream);
+//                    FileUtility::saveToFile(public_path('feeds/google-shopping/' . $fileName), stream_get_contents($stream));
                     //Storage::put($filePath, stream_get_contents($stream));
-                    fclose($stream);
+//                    fclose($stream);
 
                     if ($this->feed_id != '') {
                         $feedDetail = Feed::findOrFail($this->feed_id);
-                        Log::info('Feed detail: '.json_encode($feedDetail));
+                        Log::info('Feed detail: ' . json_encode($feedDetail));
                         $feedDetail->update([
                             'status' => 1,
                         ]);
                     }
 
                     break;
-                case 'microsoft':
-                    break;
+
             }
 
-        }catch (\Exception $e) {
+        } catch (\Exception $e) {
             Log::error('Error processing feed generation: ' . $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine());
         }
     }
@@ -218,32 +275,120 @@ class ProcessFeedGenerationJob implements ShouldQueue
         Log::error('Feed generation job failed: ' . $exception->getMessage());
     }
 
-    private function getCompatibleDevices($product_id,$devices,$deviceSeries){
+    private function insertListingItemDetail($storeDetail, $product_code, $listitem, $device)
+    {
 
-        $field = 'carrier.name as carrier_name';
-        $field2 = 'carrier.id as carrier_id';
+        $store_id = $storeDetail->id;
 
-        $query = Device::select('device.*', 'product_interface.product_id', 'products.product_sku', $field, $field2)->with('brand', 'rating')->with('deviceType', 'deviceSeries');
-        $query->leftJoin('brands', 'brands.id', '=', 'device.brand_id');
+        if ($storeDetail->sku_generation_type) {
+            switch ($storeDetail->sku_generation_type) {
+                case 1:
+                    $sku = StoreTypeListing::generateUniqueAlphabeticSku($product_code, 6);
+                    break;
+                case 2:
+                    $sku = StoreTypeListing::generateUniqueAlphabeticSku('', 6);
+                    break;
+                case 3:
+                    $sku = StoreTypeListing::generateUniqueAlphabeticSku($product_code, 6);
+                    break;
+                case 4:
+                    $sku = StoreTypeListing::generateUniqueAlphabeticSku($product_code, 6);
+                    break;
+                case 'default':
+                    $sku = StoreTypeListing::generateUniqueAlphabeticSku($product_code, 6);
+                    break;
+            }
+        } else {
+            $sku = StoreTypeListing::generateUniqueAlphabeticSku($product_code, 6);
+        }
+
+        if ($storeDetail->upc_usage_type) {
+            switch ($storeDetail->upc_usage_type) {
+                case 0:
+                    $upcCodes = UPCCodes::where('store', $store_id)->where('is_used', 0)->orderBy('sequence_id', 'asc')->first();
+                    break;
+                case 1:
+                    $upcCodes = UPCCodes::where('store', $store_id)->where('is_used', 0)->orderBy('sequence_id', 'asc')->first();
+                    break;
+                case 2:
+                    $upcCodes = GoodUpc::where('is_used', 0)->orderBy('upc', 'asc')->first();
+                    break;
+                case 3:
+                    $upcCodes = UPCCodes::where('store', $store_id)->where('is_used', 0)->orderBy('sequence_id', 'asc')->first();
+                    break;
+                case 'default':
+                    $upcCodes = UPCCodes::where('store', $store_id)->where('is_used', 0)->orderBy('sequence_id', 'asc')->first();
+                    break;
+            }
+        } else {
+            $upcCodes = UPCCodes::where('store', $store_id)->where('is_used', 0)->orderBy('sequence_id', 'asc')->first();
+        }
+
+        $created_by = auth()->user()->name ?? 'admin';
+
+        $itemDetail = array(
+            'sku' => $sku,
+            'title' => $listitem->title,
+            'upc' => isset($upcCodes->upc_code) ? $upcCodes->upc_code : '',
+            'device_id' => $device->id,
+            'listing_item_id' => $listitem->id,
+            'device_carrier_id' =>  null,
+            //'store_sku' => $store_id,
+            'created_by' => $created_by
+        );
+
+        $newlistingItem = ListingItemDetail::create($itemDetail);
+
+        return $newlistingItem;
+
+    }
+
+    private function generateProductDetail($product_id, $store_type_id)
+    {
+
+        $productSpecification = ProductSpecification::where('product_id', $product_id)->where('store_type_id', $store_type_id)->get();
+        $section = 'General';
+        $kvSep = ':';
+        $pairSep = ',';
+        $parts = [];
+        foreach ($productSpecification as $specification) {
+
+            $section = trim((string)$section);
+            $key = trim((string)$specification->name);
+            $value = trim((string)$specification->value);
+
+            if ($section === '' || $key === '' || $value === '') {
+                continue;
+            }
+
+            $parts[] = "{$section}{$kvSep}{$key}{$kvSep}{$value}";
+        }
+
+        return implode($pairSep, $parts);
+    }
+
+
+    private function getCompatibleDevices($product_id, $devices, $deviceSeries)
+    {
+        $query = Device::select('device.*', 'product_interface.product_id')->with('brand', 'rating')->with('deviceType', 'deviceSeries');
         $query->leftJoin('device_interface', 'device_interface.device_id', '=', 'device.id');
         $query->leftJoin('product_interface', 'product_interface.interface_id', '=', 'device_interface.interface_id');
-        $query->leftJoin('products', 'product_interface.product_id', '=', 'products.product_id');
 
-        $query->leftJoin('device_carrier', 'device_carrier.device_id', '=', 'device.id');
-        $query->leftJoin('carrier', 'carrier.id', '=', 'device_carrier.carrier_id');
-        $query->whereNotNull('carrier.id');
-
-        $query->whereIn('product_interface.product_id', $product_id);
+        $query->where('product_interface.product_id', $product_id);
 
         if ($devices) {
             $query->whereIn('device.id', $devices);
         }
+
+        $query->where('device.status', 'active');
+
         if ($deviceSeries) {
             $devices = DevicesLinkedDevice::select('device_id')->whereIn('device_series_id', $deviceSeries)->get();
             $query->whereIn('device.id', $devices);
         }
-        $query->orderBy('brands.name', 'asc');
         $query->orderBy('device.name', 'asc');
+
+        Log::info('Compatible Devices Query: ' . $query->toSql());
 
         $devices = $query->get();
 

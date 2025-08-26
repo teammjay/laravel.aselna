@@ -160,7 +160,7 @@
                     <tbody id="shipment-item-list">
 
                     @if(count($shipmentDetail->operationItem ?? []) > 0)
-                        @foreach($shipmentDetail->operationItem as $oitem)
+                        @foreach($shipmentDetail->operationItem as $key=>$oitem)
                             @php
                                 $url = '';
                                 if(isset($oitem->orderItem->listingItem) && !empty($oitem->orderItem->listingItem)){
@@ -181,8 +181,8 @@
                                         </div>
                                     @endif
                                 </td>
-                                <td>{{ $oitem->orderItem->sku }}</td>
-                                <td><input type="text" class="form-control" name="quantity" value="{{ $oitem->orderItem->quantity }}"></td>
+                                <td><input type="hidden" name="opi_ids[{{ $key }}]" value="{{ $oitem->id }}"><input type="text" class="form-control" name="sku[{{ $key }}]" value="{{ $oitem->orderItem->sku }}" style="width:122px;"></td>
+                                <td><input type="text" class="form-control" name="quantity[{{ $key }}]" value="{{ $oitem->orderItem->quantity }}"></td>
                             </tr>
                         @endforeach
                     @endif

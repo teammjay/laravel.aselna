@@ -55,7 +55,7 @@ class ShipmentsController extends Controller
         }
 
         $query = OrderOperation::with([
-            'order:id,order_id,order_date,buyer_first_name,buyer_last_name,customer_id,shipping_address_id',
+            'order:id,order_id,order_date,buyer_first_name,buyer_last_name,customer_id,shipping_address_id,purchase_order_id',
             'order.customer',
             'order.customerAddress',
             'order.orderItem',
@@ -148,6 +148,7 @@ class ShipmentsController extends Controller
                 $image = $imagename = $product_ids = [];
                 $product_total_weight = 0;
                 $total_qty = [];
+                $package_id = $order->shipping_package_id;
                 if (isset($order->operationItem) && !empty($order->operationItem)) {
                     $totalQty = 0;
                     foreach ($order->operationItem as $opitem) {
@@ -165,6 +166,11 @@ class ShipmentsController extends Controller
 
                             $product_weight = $oitem->product->product_weight;
                             $product_total_weight = $product_total_weight + $product_weight;
+
+                            if ($oitem->product->shipping_package_id != '') {
+                                $package_id = $oitem->product->shipping_package_id;
+                                $order->update(['shipping_package_id' => $package_id]);
+                            }
                         }
                         if(isset($oitem->quantity)){
                             $totalQty = $totalQty + $oitem->quantity;
@@ -191,6 +197,11 @@ class ShipmentsController extends Controller
                     $status = 1;
                     $status_message = $order->status_message;
                 }
+                $packageName = isset($order->shippingPackage) ? $order->shippingPackage->name : '';
+                if($package_id){
+                    $packageDetail = ShippingPackage::findOrFail($package_id);
+                    $packageName = $packageDetail->name;
+                }
                 $shipments[] = array(
                     "oid" => $order->oid,
                     "image" => (!empty($image)) ? $image : '',
@@ -198,7 +209,7 @@ class ShipmentsController extends Controller
                     "product_id" => (!empty($product_ids)) ? $product_ids : '',
                     "status" => $status,
                     "status_message" => $status_message,
-                    "carrier_package" => isset($order->shippingPackage) ? $order->shippingPackage->name : '',
+                    "carrier_package" => $packageName,
                     "carrier_service" => isset($order->carrierService) ? $order->carrierService->ShippingCarrier->name . ' ' . $order->carrierService->name : '',
                     "store" => $order->store->name . ' - ' . $storeType,
                     "order_id" => implode(', <br/> ', $orderIds),
@@ -329,6 +340,9 @@ class ShipmentsController extends Controller
                     $product_id = $oitem->orderItem->product->product_id;
                     if ($product_id) {
                         $product_detail = Catalog::findOrFail($product_id);
+                        /*if ($product_detail->product_weight > $product_weight) {
+                            $package_id = $product_detail->shipping_package_id;
+                        }*/
                         if ($product_detail->product_weight > $product_weight) {
                             $package_id = $product_detail->shipping_package_id;
                         }
@@ -734,6 +748,9 @@ class ShipmentsController extends Controller
         $insurance_value = $request->input('insurance_value');
         $weight_value = $request->input('weight');
         $weight_type = $request->input('weight_type');
+        $skus = $request->input('sku');
+        $quantities = $request->input('quantity');
+        $opi_ids = $request->input('opi_ids');
 
         if ($order_operation_id) {
             $updateRecord = array(
@@ -750,6 +767,18 @@ class ShipmentsController extends Controller
             $orderOperation = OrderOperation::findOrFail($order_operation_id);
             if ($orderOperation) {
                 $orderOperation->update($updateRecord);
+
+                if(is_array($opi_ids) && !empty($opi_ids)){
+                    foreach($opi_ids as $key=>$id){
+                        $itemData = [
+                            'sku' => $skus[$key],
+                            'quantity' => $quantities[$key],
+                        ];
+
+                        $orderOperationItem = OrderOperationItem::findOrFail($id);
+                        $orderOperationItem->update($itemData);
+                    }
+                }
             }
             return response()->json([
                 'success' => true

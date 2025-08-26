@@ -196,6 +196,7 @@ class OrderUtility
                                 'order_item_id' => $order_item->id,
                                 'order_operation_id' => $order_operation_detail->id,
                                 'client_id' => $itemDetail->client,
+                                'sku' => $item['item']['sku'],
                                 'quantity' => $item['orderLineQuantity']['amount'],
                                 'sync_status' => 6
                             ];
@@ -242,6 +243,7 @@ class OrderUtility
                                 'order_item_id' => $order_item->id,
                                 'order_operation_id' => $order_operation_detail->id,
 //                                'client_id' => $itemDetail->client,
+                                'sku' => $item['item']['sku'],
                                 'quantity' => $item['orderLineQuantity']['amount'],
                                 'sync_status' => 6
                             ];
@@ -469,6 +471,7 @@ class OrderUtility
                         $orderOperationItemData = [
                             'order_item_id' => $order_item->id,
                             'order_operation_id' => $order_operation_detail->id,
+                            'sku' => $item['sku'],
                             'quantity' => $item['quantity'],
                             'client_id' => '',
                             'sync_status' => 6
@@ -513,6 +516,7 @@ class OrderUtility
                         $orderOperationItemData = [
                             'order_item_id' => $order_item->id,
                             'order_operation_id' => $order_operation_detail->id,
+                            'sku' => $item['sku'],
                             'quantity' => $item['quantity'],
                             'client_id' => null,
                             'sync_status' => 6
