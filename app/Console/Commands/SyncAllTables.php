@@ -39,6 +39,7 @@ use App\Jobs\MagentoProductsSyncJob;
 use App\Jobs\MagnetoAttributesSyncJob;
 use App\Jobs\ManufacturerSyncJob;
 use App\Jobs\OldOrderSyncJob;
+use App\Jobs\ProcessFeedGenerationJob;
 use App\Jobs\ProductAlternativeImagesSyncJob;
 use App\Jobs\ProductChannelDetailSyncJob;
 use App\Jobs\ProductColorSync;
@@ -57,6 +58,7 @@ use App\Jobs\ShopifyCollectionDeviceSyncJob;
 use App\Jobs\ShopifyCollectionSyncJob;
 use App\Jobs\ShopifyListingProductsSyncJob;
 use App\Jobs\ShopifyPagesSyncJob;
+use App\Jobs\ShopifyStoreProductsSyncJob;
 use App\Jobs\StoreCategorySyncJob;
 use App\Jobs\StorePagesJobSync;
 use App\Jobs\StoreProductSyncJob;
@@ -154,7 +156,7 @@ class SyncAllTables extends Command
         //    ListingItemImageCreate::dispatch('4dcf1d3f-b723-4b31-a075-3702c0746b10');
 //        FetchAmazonOrdersJob::dispatch();
 //        StoreCategorySyncJob::dispatch('94428796-cdf9-dc2b-a1e7-aa4100066fd9');
-        ShopifyCollectionDeviceSyncJob::dispatch('5cc46182-9318-7a47-39bd-d3e38de6cce6');
+//        ShopifyCollectionDeviceSyncJob::dispatch('5cc46182-9318-7a47-39bd-d3e38de6cce6');
 //        AmazonListingItemSyncJob::dispatch();
 //        AmazonProductTypeSyncJob::dispatch();
 //        FetchWalmartOrdersJob::dispatch();
@@ -171,7 +173,8 @@ class SyncAllTables extends Command
 //        ShopifyPagesSyncJob::dispatch();
 //        SubmitShopifyProductsJob::dispatch();
 //        ShopifyListingProductsSyncJob::dispatch();
-//        ShopifyCollectionSyncJob::
+//        ShopifyStoreProductsSyncJob::dispatch();
+        ProcessFeedGenerationJob::dispatch(json_decode('{"store_id":"3fab8878-e036-58c7-db30-addd3058875c","feed_type":"Google","fileType":"csv","product_code":["J14"],"device":null,"interface":null,"device_series":null,"fileName":"google_shopping_feed_2025-08-26-09-15-19.csv","filePath":"feeds\/google-shopping\/google_shopping_feed_2025-08-26-09-15-19.csv"}',true), 'fd066ad3-7059-4a87-a6e7-a18e5823f016');
 
         $transactionIds = [
 ////            '9400150105798006163885',

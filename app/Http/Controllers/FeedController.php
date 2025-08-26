@@ -151,8 +151,10 @@ class FeedController extends Controller
 
                 $marketfeed = Feed::create($feedData);
                 $feed_id = $marketfeed->id;
-                ProcessFeedGenerationJob::dispatch($requestData, $feed_id);
                 DB::commit();
+                Log::info('Dispatching ProcessFeedGenerationJob for feed ID: ' . $feed_id);
+                Log::info('Request Data: ' . json_encode($requestData));
+                ProcessFeedGenerationJob::dispatch($requestData, $feed_id);
             }
 
             if ($request->ajax()) {

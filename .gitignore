@@ -22,3 +22,4 @@ yarn-error.log
 /.zed
 storage/app/public/*
 /storage/app/public/*
+/public/feeds/**/*.csv
