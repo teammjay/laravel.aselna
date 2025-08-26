@@ -300,8 +300,8 @@ class OrderOperationUtility
         // Group products by code and sum quantities
         Log::info('Rubber stamp Ordero peration item: ' . json_encode($orderOperation->operationItem));
         $productMap = [];
-        foreach ($orderOperation->order->orderItem as $item) {
-            $product = $item->product;
+        foreach ($orderOperation->operationItem as $item) {
+            $product = $item->orderItem->product;
             $code = $product ? $product->product_sku : $item->sku;
 
             if (!isset($productMap[$code])) {
