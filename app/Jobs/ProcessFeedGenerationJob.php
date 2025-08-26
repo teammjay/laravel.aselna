@@ -204,6 +204,7 @@ class ProcessFeedGenerationJob implements ShouldQueue
                                                 ->where('device_id', $device->id)->first();
 
                                             if (!$item_detail) {
+                                                continue;
                                                 Log::info('Inserting new listing item detail for listing item ID: ' . $listitem->id . ' and device ID: ' . $device->id);
                                                 $item_detail = $this->insertListingItemDetail($storeDetail, $product_code, $listitem, $device);
                                             }
@@ -378,6 +379,8 @@ class ProcessFeedGenerationJob implements ShouldQueue
         if ($devices) {
             $query->whereIn('device.id', $devices);
         }
+
+        $query->where('device.status', 'active');
 
         if ($deviceSeries) {
             $devices = DevicesLinkedDevice::select('device_id')->whereIn('device_series_id', $deviceSeries)->get();
