@@ -58,7 +58,7 @@
             </div>
         @endif
 
-        @if($order_operation->status == \App\Constants\OrderOperationStatus::Canceled )
+        @if($order_operation->operation_type == \App\Constants\OrderOperationType::OrderCancellation)
             <div class="card">
                 <div class="card-body">
                     <div class="row align-items-center">
