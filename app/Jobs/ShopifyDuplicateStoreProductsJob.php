@@ -54,6 +54,10 @@ class ShopifyDuplicateStoreProductsJob implements ShouldQueue
             ->limit(100)
             ->chunk(100, function ($products) {
                 foreach ($products as $product) {
+                    if (StoreProduct::where('store_id', $this->toStoreId)->where('product_id',$product->product_id)->exists()) {
+                        Log::info("Product with SKU: " . $product->sku . " already exists in Store ID: " . $this->toStoreId . ". Skipping duplication.");
+                        continue;
+                    }
                     Log::info("Processing Product ID: " . $product->id . " for Store ID: " . $this->fromStoreId);
                     $newProduct = $product->replicate();
                     $newProduct->store_id = $this->toStoreId;
@@ -63,7 +67,6 @@ class ShopifyDuplicateStoreProductsJob implements ShouldQueue
                     Log::info("New Product ID: " . $newProduct->id . " for Store ID: " . $this->toStoreId);
 
                     $listingItem = ListingItem::where('store_product_id', $product->id)
-                        ->where('sku', $product->sku)
                         ->first();
                     if ($listingItem) {
                         $newListingItem = $listingItem->replicate();

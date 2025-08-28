@@ -254,9 +254,18 @@ class SubmitShopifyProductsJob implements ShouldQueue
         $shopifyAuthService = new ShopifyAuthService($store->secret_key, $store->service_url);
         $product_id = $sku = $upcCode = NULL;
 
-        $sku = StoreTypeListing::generateUniqueAlphabeticSku($productData->product_sku, 6);
+        $listingItem = $this->addListingItem($productData, $store);
 
-        $listingItem = $this->addListingItem($productData, $store, $sku);
+        if (!$listingItem) {
+            Log::info('Listing Item not created for product SKU: ' . $productData->product_sku);
+            return;
+        }
+
+        if (isset($listingItem->sku) && !empty($listingItem->sku)) {
+            $sku = $listingItem->sku;
+        } else {
+            $sku = StoreTypeListing::generateUniqueAlphabeticSku($productData->product_sku, 6);
+        }
 
         $ManageMarketplaceProduct = ManageMarketplaceProduct::updateOrCreate([
             'product_id' => $productData->product_id,
@@ -404,7 +413,12 @@ class SubmitShopifyProductsJob implements ShouldQueue
 
         $proDetail = ManageMarketplaceProduct::where('product_id', $productData->product_id)->where('store_id', $store->id)->where('upload_status', 'success')->first();
 
-        $listingItem = $this->addListingItem($productData, $store, $proDetail->sku);
+        $listingItem = $this->addListingItem($productData, $store);
+
+        if (!isset($listingItem)) {
+            Log::info('Listing Item not created for product SKU: ' . $productData->product_sku);
+            return;
+        }
 
         $tags = $this->getAllTags($productData, []);
         $finalTagsString = implode(', ', $tags);
@@ -491,7 +505,7 @@ class SubmitShopifyProductsJob implements ShouldQueue
         }
     }
 
-    public function addListingItem($productData, $store, $new_sku)
+    public function addListingItem($productData, $store)
     {
         $product_exist = StoreProduct::where('product_id', $productData->product_id)->where('store_id', $store->id)->first();
         if (!isset($product_exist)) {
@@ -520,7 +534,6 @@ class SubmitShopifyProductsJob implements ShouldQueue
                     'store_product_id' => $product_exist->id,
                     'title' => $productData->product_title,
                     'description' => $productData->product_description ?? '',
-                    'sku' => $new_sku,
                     'price' => $productData->product_marketplace_price,
                     'quantity' => ($store->default_listing_quantity) ?: 10,
                     'sync_status' => ListingSyncStatus::Synchronized,
@@ -529,6 +542,6 @@ class SubmitShopifyProductsJob implements ShouldQueue
 
             return $listingItem;
         }
-        return null;
+        return $listingItem;
     }
 }
