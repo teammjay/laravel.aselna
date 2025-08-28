@@ -167,10 +167,10 @@ class ShipmentsController extends Controller
                             $product_weight = $oitem->product->product_weight;
                             $product_total_weight = $product_total_weight + $product_weight;
 
-                            if ($oitem->product->shipping_package_id != '') {
+                            /*if ($oitem->product->shipping_package_id != '') {
                                 $package_id = $oitem->product->shipping_package_id;
                                 $order->update(['shipping_package_id' => $package_id]);
-                            }
+                            }*/
                         }
                         if(isset($oitem->quantity)){
                             $totalQty = $totalQty + $oitem->quantity;
