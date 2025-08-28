@@ -71,6 +71,47 @@
             </div>
         </div>
     </div>
+
+    <!-- Purchase Credit Modal -->
+    <div class="modal fade" id="purchaseCreditModal">
+        <div class="modal-dialog modal-dialog-centered" style="max-width:800px;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="makeRMAModalLabel">Account Credit</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="row mt-3 g-3 align-items-center">
+                                <div class="col-md-4">
+                                    <label for="order_id">Available Credit</label>
+                                </div>
+                                <div class="col-md-8">
+                                    <input type="text" class="form-control" name="available_credit" id="available_credit"
+                                           value="" readonly="">
+                                </div>
+                            </div>
+
+                            <div class="row mt-3 g-3 align-items-center">
+                                <div class="col-md-4">
+                                    <label for="order_id">Purchase Credit</label>
+                                </div>
+                                <div class="col-md-8">
+                                    <input type="text" class="form-control" name="purchase_credit" id="purchase_credit"
+                                           value="">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancle</button>
+                    <button type="button" class="btn btn-primary" id="save_credit"><i class="fa fa-check"></i> Ok </button>
+                </div>
+            </div>
+        </div>
+    </div>
 @stop
 
 @section('adminlte_js')
@@ -104,6 +145,62 @@
             });
 
             $("#accountTable").dataTable();
+
+            $('#check_balance').on('click', function () {
+                if (selAcc === null) {
+                    alert('Please select account.');
+                    return;
+                }
+                $.ajax({
+                    url: "{{ route('shipping_account.getaccountcredit') }}",
+                    type: 'POST',
+                    data: {
+                        account_id: selAcc,
+                        "_token": '{{ csrf_token() }}'
+                    },
+                    success: function (response) {
+                        // If success, remove the user row from the table
+                        if (response.success) {
+                            $('#available_credit').val(response.balance);
+                            $('#purchase_credit').val(response.credit);
+                            $('#purchaseCreditModal').modal('show');
+                        }
+                    },
+                    error: function (xhr) {
+                        // Handle error response
+                        alert('Error: ' + xhr.responseJSON.error);
+                    }
+                });
+            });
+
+
+
+            $('#save_credit').on('click', function () {
+                if (selAcc === null) {
+                    alert('Please select account.');
+                    return;
+                }
+                $.ajax({
+                    url: "{{ route('shipping_account.purchasecredit') }}",
+                    type: 'POST',
+                    data: {
+                        account_id: selAcc,
+                        credit_amount: $('#purchase_credit').val(),
+                        "_token": '{{ csrf_token() }}'
+                    },
+                    success: function (response) {
+                        // If success, remove the user row from the table
+                        alert(response.message);
+                        if (response.success) {
+                            $('#purchaseCreditModal').modal('hide');
+                        }
+                    },
+                    error: function (xhr) {
+                        // Handle error response
+                        alert('Error: ' + xhr.responseJSON.error);
+                    }
+                });
+            });
 
         });
 

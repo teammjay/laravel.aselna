@@ -600,7 +600,7 @@ class StoreController extends Controller
                 'ssl_port' => $request->input('acc_in_ssl_port'),
                 'tls_port' => $request->input('acc_in_tls_port'),
                 'folders' => $request->input('acc_in_folders'),
-                'filter_from_date' => date('Y-m-d H:i:s'),
+                'filter_from_date' => NULL,
                 'created_by' => auth()->user()->name ?? 'admin',
             ];
 

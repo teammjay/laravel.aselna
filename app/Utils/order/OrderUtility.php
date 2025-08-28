@@ -192,6 +192,7 @@ class OrderUtility
                         ], $orderItemData);
 
                         if ($order_item->id) {
+
                             $orderOperationItemData = [
                                 'order_item_id' => $order_item->id,
                                 'order_operation_id' => $order_operation_detail->id,
@@ -205,6 +206,11 @@ class OrderUtility
                                 'order_item_id' => $order_item->id,
                                 'order_operation_id' => $order_operation_detail->id
                             ], $orderOperationItemData);
+
+                            if(isset($itemDetail->storeProduct->product->shipping_package_id) && $itemDetail->storeProduct->product->shipping_package_id != '') {
+                                $package_id = $itemDetail->storeProduct->product->shipping_package_id;
+                                $order_operation_detail->update(['shipping_package_id' => $package_id]);
+                            }
                         }
                     }
                     else
@@ -239,6 +245,7 @@ class OrderUtility
                         ], $orderItemData);
 
                         if ($order_item->id) {
+
                             $orderOperationItemData = [
                                 'order_item_id' => $order_item->id,
                                 'order_operation_id' => $order_operation_detail->id,
@@ -252,6 +259,11 @@ class OrderUtility
                                 'order_item_id' => $order_item->id,
                                 'order_operation_id' => $order_operation_detail->id
                             ], $orderOperationItemData);
+
+                            if(isset($catalog->shipping_package_id) && $catalog->shipping_package_id != '') {
+                                $package_id = $catalog->shipping_package_id;
+                                $order_operation_detail->update(['shipping_package_id' => $package_id]);
+                            }
                         }
                     }
                 }
@@ -481,6 +493,11 @@ class OrderUtility
                             'order_item_id' => $order_item->id,
                             'order_operation_id' => $order_operation_detail->id
                         ], $orderOperationItemData);
+
+                        if(isset($itemDetail->storeProduct->product->shipping_package_id) && $itemDetail->storeProduct->product->shipping_package_id != '') {
+                            $package_id = $itemDetail->storeProduct->product->shipping_package_id;
+                            $order_operation_detail->update(['shipping_package_id' => $package_id]);
+                        }
                     }
                 } else {
                     Log::info("Item Not Found :: " . json_encode($item));
@@ -526,6 +543,11 @@ class OrderUtility
                             'order_item_id' => $order_item->id,
                             'order_operation_id' => $order_operation_detail->id
                         ], $orderOperationItemData);
+
+                        if(isset($catalog->shipping_package_id) && $catalog->shipping_package_id != '') {
+                            $package_id = $catalog->shipping_package_id;
+                            $order_operation_detail->update(['shipping_package_id' => $package_id]);
+                        }
                     }
                 }
             }

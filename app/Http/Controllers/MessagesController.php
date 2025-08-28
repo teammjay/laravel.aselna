@@ -1301,6 +1301,7 @@ class MessagesController extends Controller
         try {
             if ($selected_shipment_id) {
                 $orderOperation = OrderOperation::with('order', 'store', 'store.storeType')->where('id', $selected_shipment_id)->first();
+                $backupOrderOperation = $orderOperation;
 
                 if($orderOperation){
                     $clonedOrderOperation = [
@@ -1355,10 +1356,13 @@ class MessagesController extends Controller
 
                 $orderOperation = OrderOperation::with('order', 'store', 'store.storeType')->where('id', $order_opration_id)->first();
 
-                $response = OrderOperationUtility::cancelOrder($orderOperation, $reason);
+                if(!$reason){ $reason = 'CUSTOMER';}
+
+                $response = OrderOperationUtility::cancelOrder($orderOperation, strtoupper($reason));
 
                 if (!empty($response) && $response['status']) {
                     $orderOperation->update(['status' => OrderOperationStatus::Canceled]);
+                    $backupOrderOperation->update(['status' => OrderOperationStatus::Canceled]);
                     if (isset($orderOperation->order->id)) {
                         $order = Order::findOrFail($orderOperation->order->id);
                         $order->update(['order_status' => OrderStatus::Canceled]);
