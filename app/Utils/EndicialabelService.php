@@ -448,4 +448,233 @@ class EndicialabelService
         return $xml->asXML();
 
     }
+
+    public function getAccountStatus(array $request)
+    {
+        $xml = new \SimpleXMLElement('<?xml version="1.0" encoding="utf-8"?><soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"/>');
+        $body = $xml->addChild('soap:Body', null, 'http://schemas.xmlsoap.org/soap/envelope/');
+        $xmlrequest = $body->addChild('GetAccountStatus', null, 'www.envmgr.com/LabelService');
+        $labelRequest = $xmlrequest->addChild('AccountStatusRequest');
+
+        $labelRequest->addChild('RequesterID', $request['requesterId']);
+        $labelRequest->addChild('RequestID', $request['requestId']);
+        $CertifiedIntermediary = $labelRequest->addChild('CertifiedIntermediary');
+
+        $CertifiedIntermediary->addChild('AccountID', $request['accountId']);
+        $CertifiedIntermediary->addChild('PassPhrase', $request['passPhrase']);
+
+        $xmlString = $xml->asXML();
+        Log::info('Endicia Purchase Credit Request XML: ' . $xmlString);
+
+        try {
+            $response = $this->client->post('https://LabelServer.Endicia.com/LabelService/EwsLabelService.asmx', [
+                'headers' => [
+                    'Content-Type' => 'text/xml; charset=utf-8',
+                    'SOAPAction' => '"www.envmgr.com/LabelService/GetAccountStatus"',
+                ],
+                'body' => $xmlString,
+                'verify' => false,
+            ]);
+
+            $body = $response->getBody()->getContents();
+            Log::info('Endicia Account Status Response XML: ' . $body);
+
+            libxml_use_internal_errors(true);
+            $xml = simplexml_load_string($body);
+
+            if ($xml === false) {
+                return ['error' => 'Failed to parse XML'];
+            }
+
+            $xml->registerXPathNamespace('ns', 'www.envmgr.com/LabelService');
+
+            $status = (string)$xml->xpath('//ns:Status')[0];
+            $errorMessage = '';
+            if($status > 0) {
+                $errorMessage = (string)$xml->xpath('//ns:ErrorMessage')[0];
+            }
+            $RequestID = (string)$xml->xpath('//ns:RequestID')[0];
+            $PostageBalance = (string)$xml->xpath('//ns:CertifiedIntermediary/ns:PostageBalance')[0];
+
+            $returnData = [
+                'status' => $status,
+                'requestID' => $RequestID,
+                'message' => $errorMessage,
+                'postageBalance'  => $PostageBalance
+            ];
+
+            Log::info('Account Status Data: ' . json_encode($returnData));
+
+            return $returnData;
+
+        } catch (Exception $e) {
+            // Handle SOAP request errors
+            if ($e instanceof RequestException && $e->hasResponse()) {
+                Log::error('SOAP Error Response: ' . $e->getResponse()->getBody()->getContents());
+            }
+//            throw new Exception('Error creating label: ' . $e->getMessage());
+
+            Log::info('Return Data Error: ' . json_encode($e->getMessage()));
+        }
+    }
+
+    public function purchaseCredit(array $request)
+    {
+        $xmlString = $this->buildPurchaseCreditXmlRequest($request);
+        Log::info('Endicia Purchase Credit Request XML: ' . $xmlString);
+
+        try {
+            $response = $this->client->post('https://LabelServer.Endicia.com/LabelService/EwsLabelService.asmx', [
+                'headers' => [
+                    'Content-Type' => 'text/xml; charset=utf-8',
+                    'SOAPAction' => '"www.envmgr.com/LabelService/BuyPostage"',
+                ],
+                'body' => $xmlString,
+                'verify' => false,
+            ]);
+
+            $body = $response->getBody()->getContents();
+            Log::info('Endicia Credit Response XML: ' . $body);
+
+            libxml_use_internal_errors(true);
+            $xml = simplexml_load_string($body);
+
+            if ($xml === false) {
+                return ['error' => 'Failed to parse XML'];
+            }
+
+            $xml->registerXPathNamespace('ns', 'www.envmgr.com/LabelService');
+
+            $status = (string)$xml->xpath('//ns:Status')[0];
+            $errorMessage = '';
+            if($status > 0) {
+                $errorMessage = (string)$xml->xpath('//ns:ErrorMessage')[0];
+            }
+            $RequestID = (string)$xml->xpath('//ns:RequestID')[0];
+
+            $returnData = [
+                'status' => $status,
+                'requestID' => $RequestID,
+                'message' => $errorMessage
+            ];
+
+            Log::info('Return Data: ' . json_encode($returnData));
+
+            return $returnData;
+
+        } catch (Exception $e) {
+            // Handle SOAP request errors
+            if ($e instanceof RequestException && $e->hasResponse()) {
+                Log::error('SOAP Error Response: ' . $e->getResponse()->getBody()->getContents());
+            }
+//            throw new Exception('Error creating label: ' . $e->getMessage());
+
+            Log::info('Return Data Error: ' . json_encode($e->getMessage()));
+        }
+    }
+
+    private function buildPurchaseCreditXmlRequest(array $labelDetails)
+    {
+        $xml = new \SimpleXMLElement('<?xml version="1.0" encoding="utf-8"?><soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"/>');
+        $body = $xml->addChild('soap:Body', null, 'http://schemas.xmlsoap.org/soap/envelope/');
+        $request = $body->addChild('BuyPostage', null, 'www.envmgr.com/LabelService');
+        $labelRequest = $request->addChild('RecreditRequest');
+
+        $labelRequest->addChild('RequesterID', $labelDetails['requesterId']);
+        $labelRequest->addChild('RequestID', $labelDetails['requestId']);
+        $CertifiedIntermediary = $labelRequest->addChild('CertifiedIntermediary');
+
+        $CertifiedIntermediary->addChild('AccountID', $labelDetails['accountId']);
+        $CertifiedIntermediary->addChild('PassPhrase', $labelDetails['passPhrase']);
+
+        $labelRequest->addChild('RecreditAmount',$labelDetails['credit']);
+
+        return $xml->asXML();
+
+    }
+
+    public function getTransactionLists(array $request)
+    {
+        $xmlString = $this->buildTransactionListXmlRequest($request);
+        Log::info('Endicia Purchase Credit Request XML: ' . $xmlString);
+
+        try {
+            $response = $this->client->post('https://LabelServer.Endicia.com/LabelService/EwsLabelService.asmx', [
+                'headers' => [
+                    'Content-Type' => 'text/xml; charset=utf-8',
+                    'SOAPAction' => '"www.envmgr.com/LabelService/GetTransactionsListing"',
+                ],
+                'body' => $xmlString,
+                'verify' => false,
+            ]);
+
+            $body = $response->getBody()->getContents();
+            Log::info('Endicia Transaction Response XML: ' . $body);
+
+            libxml_use_internal_errors(true);
+            $xml = simplexml_load_string($body);
+
+            if ($xml === false) {
+                return ['error' => 'Failed to parse XML'];
+            }
+
+            $xml->registerXPathNamespace('ns', 'www.envmgr.com/LabelService');
+
+            $status = (string)$xml->xpath('//ns:Status')[0];
+            $errorMessage = '';
+            if($status > 0) {
+                $errorMessage = (string)$xml->xpath('//ns:ErrorMessage')[0];
+            }
+            $RequestID = (string)$xml->xpath('//ns:RequestID')[0];
+            $transactionResult = (string)$xml->xpath('//ns:TransactionsResults');
+
+            $returnData = [
+                'status' => $status,
+                'requestID' => $RequestID,
+                'message' => $errorMessage,
+                'transactionResult' => $transactionResult
+            ];
+
+            Log::info('Return Data: ' . json_encode($returnData));
+
+            return $returnData;
+
+        } catch (Exception $e) {
+            // Handle SOAP request errors
+            if ($e instanceof RequestException && $e->hasResponse()) {
+                Log::error('SOAP Error Response: ' . $e->getResponse()->getBody()->getContents());
+            }
+//            throw new Exception('Error creating label: ' . $e->getMessage());
+
+            Log::info('Return Data Error: ' . json_encode($e->getMessage()));
+        }
+    }
+
+    private function buildTransactionListXmlRequest(array $transDetails)
+    {
+        $xml = new \SimpleXMLElement('<?xml version="1.0" encoding="utf-8"?><soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"/>');
+        $body = $xml->addChild('soap:Body', null, 'http://schemas.xmlsoap.org/soap/envelope/');
+        $labelRequest = $body->addChild('GetTransactionsListingRequest', null, 'www.envmgr.com/LabelService');
+
+        $labelRequest->addChild('RequesterID', $transDetails['requesterId']);
+        $labelRequest->addChild('RequestID', $transDetails['requestId']);
+        $CertifiedIntermediary = $labelRequest->addChild('CertifiedIntermediary');
+
+        $CertifiedIntermediary->addChild('AccountID', $transDetails['accountId']);
+        $CertifiedIntermediary->addChild('PassPhrase', $transDetails['passPhrase']);
+
+        //$options = $labelRequest->addChild('RequestOptions');
+        //$options->addAttribute('TransactionType', 'PRINTS');
+        $picNum = $labelRequest->addChild('PicNumbers');
+
+        if(isset($transDetails['transactions']) && !empty($transDetails['transactions'])){
+            foreach($transDetails['transactions'] as $transaction){
+                $picNum->addChild('PIC', $transaction['pic_no']);
+            }
+        }
+
+        $labelRequest->addChild('IncludeTracking', 'Y');
+        return $xml->asXML();
+
+    }
 }

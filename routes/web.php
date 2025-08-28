@@ -607,6 +607,8 @@ Route::middleware('auth')->group(function () {
         Route::get('/shipping_account/edit/{id}', 'edit')->name('shipping_account.edit');
         Route::post('/shipping_account/edit/{id}', 'update')->name('shipping_account.update');
         Route::get('/shipping_account/delete/{id}', 'destroy')->name('shipping_account.delete');
+        Route::post('/shipping_account/getaccountcredit', 'getAccountCredit')->name('shipping_account.getaccountcredit');
+        Route::post('/shipping_account/purchasecredit', 'purchaseCredit')->name('shipping_account.purchasecredit');
     });
 
     Route::controller(AccountTransactionController::class)->group(function () {
