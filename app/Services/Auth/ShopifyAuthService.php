@@ -264,6 +264,7 @@ class ShopifyAuthService
                 "restock" => true,
                 'staffNote' => 'Order Cancelled',
             ];
+            Log::info('Cancel Orders Variables: ' . json_encode($variable));
             $response = $this->makeGraphQLRequest(ShopifyQueries::$cancelOrder, $variable);
 
             //Log::info('Cancel Orders Response: ' . json_encode($response));

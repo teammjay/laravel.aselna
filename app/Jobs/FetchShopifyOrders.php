@@ -320,6 +320,11 @@ class FetchShopifyOrders implements ShouldQueue
                                                     'order_operation_id' => $order_operation_detail->id,
                                                     'order_item_id' => $order_item->id,
                                                 ], $orderOperationItemData);
+
+                                                if(isset($product_detail->shipping_package_id) && $product_detail->shipping_package_id != '') {
+                                                    $package_id = $product_detail->shipping_package_id;
+                                                    $order_operation_detail->update(['shipping_package_id' => $package_id]);
+                                                }
                                             }
                                         }
                                     }
