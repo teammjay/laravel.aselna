@@ -36,6 +36,6 @@ class ShippingAccountPurchase extends Model
 
     public function shippingAccount()
     {
-        return $this->belongsTo(ShippingAccount::class, 'shipping_account_id');
+        return $this->belongsTo(ShippingAccount::class, 'shipping_account_id','id');
     }
 }
