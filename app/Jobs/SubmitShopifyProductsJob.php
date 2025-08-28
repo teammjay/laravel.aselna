@@ -542,6 +542,6 @@ class SubmitShopifyProductsJob implements ShouldQueue
 
             return $listingItem;
         }
-        return null;
+        return $listingItem;
     }
 }
