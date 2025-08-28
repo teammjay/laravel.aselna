@@ -4,8 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\ShippingAccountRequest;
 use App\Models\ShippingAccount;
+use App\Models\ShippingSettingCarrierAccount;
 use App\Models\ShippingSolution;
+use App\Utils\EndicialabelService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class ShippingAccountController extends Controller
 {
@@ -81,5 +85,100 @@ class ShippingAccountController extends Controller
 
         return redirect()->route('shipping_account.index')
             ->with('success', 'Shipping account deleted successfully.');
+    }
+
+    public function getAccountCredit(Request $request){
+        $account_id = $request->input('account_id');
+        if ($account_id) {
+            $shippingAccount = ShippingAccount::with('shippingSolution')->where('id', $account_id)->first();
+            /*echo '<pre>';
+            print_r($shippingAccount);
+            echo '</pre>';die;*/
+
+            $accDetail = [
+                'accountId' => $shippingAccount->account_id,
+                'passPhrase' => $shippingAccount->pass_phrase,
+                'requesterId' => $shippingAccount->requester_id,
+                'requestId' => (string)Str::uuid()
+            ];
+
+
+            $endiciaClient = new EndicialabelService();
+            $response = $endiciaClient->getAccountStatus($accDetail);
+
+            $message = $postageBalance = '';
+            $purchaseCredit = 0;
+            if (!empty($response)) {
+
+                if (isset($response['status']) && $response['status'] == 0) {
+                    if(isset($response['postageBalance'])){
+                        $postageBalance = $response['postageBalance'];
+
+                        $purchaseCredit = 500 - $postageBalance;
+                    }
+                }
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => $message,
+                'balance' => $postageBalance,
+                'credit' => (int) $purchaseCredit
+            ]);
+
+        }
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Shipping account not found.'
+        ]);
+    }
+
+    public function purchaseCredit(Request $request)
+    {
+        $account_id = $request->input('account_id');
+        $credit = $request->input('credit_amount');
+        if ($account_id) {
+            $shippingAccount = ShippingAccount::with('shippingSolution')->where('id', $account_id)->first();
+
+            $creditDetail = [
+                'accountId' => $shippingAccount->account_id,
+                'passPhrase' => $shippingAccount->pass_phrase,
+                'requesterId' => $shippingAccount->requester_id,
+                'requestId' => (string) Str::uuid(),
+                'credit' => $credit,
+            ];
+
+            $endiciaClient = new EndicialabelService();
+            $response = $endiciaClient->purchaseCredit($creditDetail);
+
+            Log::info('Endicia Label Refund Response:'. json_encode($response));
+
+            $message = 'Credit added successfully!';
+
+            if (!empty($response)) {
+
+                if (isset($response['status']) && $response['status'] != '') {
+                    switch ($response['status']) {
+                        case 'Approved':
+                            $message = (isset($response['message'])) ? $response['message'] : '';
+                            break;
+                        case 'DeniedInvalid':
+                            $message = (isset($response['message'])) ? $response['message'] : '';
+                            break;
+                    }
+                }
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => $message
+            ]);
+
+        }
+        return response()->json([
+            'success' => false,
+            'message' => 'Something went wrong with API. Please try again later.'
+        ]);
     }
 }
