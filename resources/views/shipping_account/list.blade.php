@@ -88,8 +88,7 @@
                                     <label for="order_id">Available Credit</label>
                                 </div>
                                 <div class="col-md-8">
-                                    <input type="text" class="form-control" name="available_credit" id="available_credit"
-                                           value="" readonly="">
+                                    <input type="text" class="form-control" name="available_credit" id="available_credit" value="" readonly="">
                                 </div>
                             </div>
 
@@ -98,8 +97,15 @@
                                     <label for="order_id">Purchase Credit</label>
                                 </div>
                                 <div class="col-md-8">
-                                    <input type="text" class="form-control" name="purchase_credit" id="purchase_credit"
-                                           value="">
+                                    <input type="text" class="form-control" name="purchase_credit" id="purchase_credit" value="">
+                                </div>
+                            </div>
+                            <div class="row mt-3 g-3 align-items-center">
+                                <div class="col-md-4">
+                                    <label for="order_id">Purchase Date</label>
+                                </div>
+                                <div class="col-md-8">
+                                    <input type="text" class="form-control" name="purchase_date" id="purchase_date" value="{{ date('Y-m-d H:i:s') }}">
                                 </div>
                             </div>
                         </div>
@@ -118,6 +124,12 @@
     <script>
         let selAcc = null;
         $(document).ready(function() {
+
+            $('#purchase_date').datepicker({
+                dateFormat:'yy-mm-dd',
+                defaultDate: new Date(),
+                minDate: new Date()
+            });
 
             $(document).on('click','#account-list tr',function (e) {
                 let ele = $(this);
@@ -142,6 +154,10 @@
 
             $(document).on('click','#transactions',function () {
                 location.href = "{{ url('shipping_account_transactions') }}/" + selAcc;
+            });
+
+            $(document).on('click','#purchase',function () {
+                location.href = "{{ url('shipping_account_purchases') }}/" + selAcc;
             });
 
             $("#accountTable").dataTable();
@@ -186,6 +202,7 @@
                     data: {
                         account_id: selAcc,
                         credit_amount: $('#purchase_credit').val(),
+                        purchase_date: $('#purchase_date').val(),
                         "_token": '{{ csrf_token() }}'
                     },
                     success: function (response) {

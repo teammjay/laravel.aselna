@@ -50,6 +50,7 @@ use App\Http\Controllers\ShippingPackageController;
 use App\Http\Controllers\ShippingServiceRulesController;
 use App\Http\Controllers\ShippingSolutionController;
 use App\Http\Controllers\ShippingAccountController;
+use App\Http\Controllers\ShippingAccountPurchaseController;
 use App\Http\Controllers\AccountTransactionController;
 use App\Http\Controllers\ProductSpecificationInfoController;
 use App\Http\Controllers\ProductSpecificationValueController;
@@ -621,6 +622,18 @@ Route::middleware('auth')->group(function () {
         Route::post('/shipping_account_transactions/filter', 'filter')->name('shipping_account_transactions.filter');
         Route::post('/shipping_account_transactions/cancellabel', 'cancelTransaction')->name('shipping_account_transactions.cancellabel');
         Route::post('/shipping_account_transactions/rePrintlabel', 'rePrintlabel')->name('shipping_account_transactions.reprintlabel');
+    });
+
+    Route::controller(ShippingAccountPurchaseController::class)->group(function () {
+        Route::get('/shipping_account_purchases/{id}', 'index')->name('shipping_account_purchases.index');
+        Route::get('/shipping_account_purchases/add', 'create')->name('shipping_account_purchases.create');
+        Route::post('/shipping_account_purchases/add', 'store')->name('shipping_account_purchases.store');
+        Route::get('/shipping_account_purchases/edit/{id}', 'edit')->name('shipping_account_purchases.edit');
+        Route::post('/shipping_account_purchases/edit/{id}', 'update')->name('shipping_account_purchases.update');
+        Route::get('/shipping_account_purchases/delete/{id}', 'destroy')->name('shipping_account_purchases.delete');
+        Route::post('/shipping_account_purchases/filter', 'filter')->name('shipping_account_purchases.filter');
+        Route::post('/shipping_account_purchases/cancellabel', 'cancelTransaction')->name('shipping_account_purchases.cancellabel');
+        Route::post('/shipping_account_purchases/rePrintlabel', 'rePrintlabel')->name('shipping_account_purchases.reprintlabel');
     });
 
     Route::controller(OrderOperationReasonController::class)->group(function () {

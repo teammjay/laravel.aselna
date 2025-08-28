@@ -66,6 +66,20 @@ class HomeController extends Controller
 
     public function testfunction(){
 
+        /*$imapConfig = [];
+        $smtpConfig = [
+            'host' => 'smtp.gmail.com',
+            'port' => 465,
+            'encryption' => 'ssl',
+            'username' => 'phonil.ebay@gmail.com',
+            'password' => 'qynvjqjqqaqqramo',
+            'from_address' => 'phonil.ebay@gmail.com',
+            'from_name' => 'Phonil Ebay',
+        ];
+
+        $connector = new EmailMessageUtility($smtpConfig, $imapConfig);
+        $response = $connector->sendEmail('jayesh@mjailab.com','Test account to test');
+        die;*/
             /*$store = Store::with('storeType')->where('id', '3fab8878-e036-58c7-db30-addd3058875c')->first();
             $authService = new ShopifyAuthService($store->secret_key, $store->service_url);
             $orderId = "gid://shopify/Order/6749583638833";
