@@ -421,14 +421,27 @@ class OrderOperationUtility
                 $shopifyServie = new ShopifyAuthService($store->secret_key, $store->service_url);
                 $response = $shopifyServie->cancelOrder($shipmentDetail->order->order_id, $reason);
 
-                if (!empty($response['data']['orderCancel']['orderCancelUserErrors'])) {
-                    foreach ($response['data']['orderCancel']['orderCancelUserErrors'] as $error) {
-                        //echo "Error: {$error['message']}\n";
-                        Log::info('Shopify cancer order error:' . json_encode($error));
-                        $data['message'] = isset($error['message']) ? $error['message'] : json_encode($error);
-                        $data['status'] = true;
-                        return $data;
-                        //return false;
+                if (!empty($response['data']['orderCancel']['orderCancelUserErrors']) || !empty($response['errors'])) {
+                    if(isset($response['data']['orderCancel']['orderCancelUserErrors'])) {
+                        foreach ($response['data']['orderCancel']['orderCancelUserErrors'] as $error) {
+                            //echo "Error: {$error['message']}\n";
+                            Log::info('Shopify cancer order error:' . json_encode($error));
+                            $data['message'] = isset($error['message']) ? $error['message'] : json_encode($error);
+                            $data['status'] = true;
+                            return $data;
+                            //return false;
+                        }
+                    }
+
+                    if(isset($response['errors'])) {
+                        foreach ($response['errors'] as $error) {
+                            //echo "Error: {$error['message']}\n";
+                            Log::info('Shopify cancer order error:' . json_encode($error));
+                            $data['message'] = isset($error['message']) ? $error['message'] : json_encode($error);
+                            $data['status'] = true;
+                            return $data;
+                            //return false;
+                        }
                     }
                 } else {
                     //echo "Order canceled successfully!";
