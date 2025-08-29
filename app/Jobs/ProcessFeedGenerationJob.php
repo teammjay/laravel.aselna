@@ -155,8 +155,7 @@ class ProcessFeedGenerationJob implements ShouldQueue
 
                             //echo $product_code;
                             //$compatibleDevice = $this->getCompatibleDevices($product_id,$request->device,$request->device_series);
-                            $query = ListingItem::with('brand', 'device', 'itemDetails', 'itemDetail', 'itemDetail.device', 'itemDetail.carrier')
-                                ->where('store_product_id', $itemDetail->id);
+                            $query = ListingItem::with('brand', 'device')->where('store_product_id', $itemDetail->id);
                             $listingItems = $query->get();
                             /*echo '<pre>';
                             echo $query->toSql();die;
@@ -191,7 +190,7 @@ class ProcessFeedGenerationJob implements ShouldQueue
                                         ->where('device_id', $listitem->device_id)
                                         ->first();
 
-                                    if ($item_url) {
+                                    if ($item_url && !isset($listitem->url)) {
                                         $listitem->update(['url' => $item_url->url_path]);
                                     }
 
@@ -203,11 +202,11 @@ class ProcessFeedGenerationJob implements ShouldQueue
                                             $item_detail = ListingItemDetail::where('listing_item_id', $listitem->id)
                                                 ->where('device_id', $device->id)->first();
 
-//                                            if (!$item_detail) {
-//                                                continue;
+                                            if (!$item_detail) {
+                                                continue;
 //                                                Log::info('Inserting new listing item detail for listing item ID: ' . $listitem->id . ' and device ID: ' . $device->id);
 //                                                $item_detail = $this->insertListingItemDetail($storeDetail, $product_code, $listitem, $device);
-//                                            }
+                                            }
 
                                             $typeDetail = ProductType::with('parent')->where('id', $itemDetail->product->product_type)->first();
                                             $product_type = $this->getCategoryPath($typeDetail);
