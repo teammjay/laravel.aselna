@@ -261,7 +261,7 @@ class SubmitShopifyProductsJob implements ShouldQueue
             return;
         }
 
-        if (isset($listingItem->sku) && !empty($listingItem->sku)) {
+        if (isset($listingItem->sku)) {
             $sku = $listingItem->sku;
         } else {
             $sku = StoreTypeListing::generateUniqueAlphabeticSku($productData->product_sku, 6);
