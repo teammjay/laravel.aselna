@@ -196,6 +196,17 @@
                     alert('Please select account.');
                     return;
                 }
+
+                var purchase_credit = $('#purchase_credit').val();
+                var available_credit = $('#available_credit').val();
+
+                var total_credit = parseFloat(purchase_credit) + parseFloat(available_credit);
+
+                if(total_credit > 500){
+                    alert('Your total credit more than 500');
+                    return false;
+                }
+
                 $.ajax({
                     url: "{{ route('shipping_account.purchasecredit') }}",
                     type: 'POST',
