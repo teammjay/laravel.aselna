@@ -1141,8 +1141,9 @@ class MessagesController extends Controller
             $order_id = $request->input('order_id');
             $ticket_id = $request->input('ticket_id');
             $reason = $request->input('reason');
+            $label_generation = $request->input('label_generation');
 
-            $orderDetail = Order::with('orderItem', 'orderOperation', 'customer', 'store')->where('order_id', $order_id)->orWhere('purchase_order_id', $order_id)->first();
+            $orderDetail = Order::with('orderItem', 'orderOperation', 'orderOperation.carrier', 'customer', 'store')->where('order_id', $order_id)->orWhere('purchase_order_id', $order_id)->first();
 
             if ($orderDetail) {
 
@@ -1171,7 +1172,7 @@ class MessagesController extends Controller
                         'store_id' => $orderOperation->store_id,
                         'operation_type' => OrderOperationType::OrderReturn,
                         'order_id' => $orderOperation->order_id,
-                        'label_creation_type' => 0,
+                        'label_creation_type' => $label_generation,
                         'rma_number' => $rma_number,
                         'shipping_carrier_id' => $orderOperation->shipping_carrier_id,
                         'shipping_carrier_service_id' => NULL,
@@ -1205,8 +1206,32 @@ class MessagesController extends Controller
                         }
                     }
 
+                    $orderOperations = OrderOperation::with('order', 'order.customer', 'store', 'store.storeType','carrier')->where('id', $order_opration_id)->first();
 
-                    $templateDetail = HdMessageTemplate::getOrderOperationTemplate(OrderOperationType::OrderReturn, 0, 0);
+                    Log::info('Make RMA with Return Label Order operation: ' . json_encode($orderOperations));
+
+                    $successRes = OrderOperationUtility::processShipment($orderOperations, $request);
+
+                    if (isset($successRes) && $successRes['success'] == false) {
+                        DB::rollBack();
+                        return response()->json([
+                            'success' => false,
+                            'message' => $successRes['message'] ?? 'Something went wrong with API. Please try again!'
+                        ]);
+                    }
+
+
+
+                    $template_code = $template_id = '';
+                    if($label_generation == 1){
+                        $templateDetail = HdMessageTemplate::getOrderOperationTemplate(OrderOperationType::OrderReturn, 0, 1);
+                    }else{
+                        $templateDetail = HdMessageTemplate::getOrderOperationTemplate(OrderOperationType::OrderReturn, 0, 0);
+                    }
+
+
+                    Log::info('Template Detail:'.json_encode($templateDetail));
+
                     if ($templateDetail) {
 
                         $logisticDetail = LogisticCenter::with('returnAddress')->where('id', $orderOperation->ship_from_id)->first();
@@ -1235,6 +1260,7 @@ class MessagesController extends Controller
                         $data = [
                             'customer_firstName' => isset($orderDetail->customer) ? $orderDetail->customer->full_name : '',
                             'store_name' => isset($orderDetail->store) ? $orderDetail->store->name : '',
+                            'carrier_name' => isset($orderOperation->carrier) ? $orderOperation->carrier->name : '',
                             'rma_number' => $rma_number,
                             'return_address' => $returnAddress,
                             'shipment_date' => '',
@@ -1244,9 +1270,21 @@ class MessagesController extends Controller
                         $template_code = \Blade::render($templateDetail->template_code, $data);
                     }
 
+                    $imageName = $imageUrl = $storagePath = '';
+                    if($label_generation > 0) {
+                        $norderOperation = OrderOperation::with('order', 'store', 'store.storeType')->where('id', $order_opration_id)->first();
+                        $imageName = $norderOperation->tracking_number . '.jpg';
+                        $imageUrl = asset('storage/labels/' . $imageName);
+                        $storagePath = storage_path('app/public/labels/' . $imageName);
+                    }
+
                     DB::commit();
+
                     return response()->json([
                         'success' => true,
+                        'image_name' => $imageName,
+                        'image_url' => $imageUrl,
+                        'imagesPath' => $storagePath,
                         'template_code' => $template_code,
                         'template_id' => $template_id,
                     ]);

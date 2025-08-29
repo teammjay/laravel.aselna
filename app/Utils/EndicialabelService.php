@@ -599,7 +599,7 @@ class EndicialabelService
         Log::info('Endicia Purchase Credit Request XML: ' . $xmlString);
 
         try {
-            $response = $this->client->post('https://LabelServer.Endicia.com/LabelService/EwsLabelService.asmx', [
+            $response = $this->client->post('https://labelserver.endicia.com/LabelService/EwsLabelService.asmx', [
                 'headers' => [
                     'Content-Type' => 'text/xml; charset=utf-8',
                     'SOAPAction' => '"www.envmgr.com/LabelService/GetTransactionsListing"',
@@ -625,12 +625,11 @@ class EndicialabelService
             if($status > 0) {
                 $errorMessage = (string)$xml->xpath('//ns:ErrorMessage')[0];
             }
-            $RequestID = (string)$xml->xpath('//ns:RequestID')[0];
             $transactionResult = (string)$xml->xpath('//ns:TransactionsResults');
 
             $returnData = [
                 'status' => $status,
-                'requestID' => $RequestID,
+                //'requestID' => $RequestID,
                 'message' => $errorMessage,
                 'transactionResult' => $transactionResult
             ];
@@ -654,7 +653,7 @@ class EndicialabelService
     {
         $xml = new \SimpleXMLElement('<?xml version="1.0" encoding="utf-8"?><soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"/>');
         $body = $xml->addChild('soap:Body', null, 'http://schemas.xmlsoap.org/soap/envelope/');
-        $labelRequest = $body->addChild('GetTransactionsListingRequest', null, 'www.envmgr.com/LabelService');
+        $labelRequest = $body->addChild('GetTransactionsListingRequest', null,'www.envmgr.com/LabelService');
 
         $labelRequest->addChild('RequesterID', $transDetails['requesterId']);
         $labelRequest->addChild('RequestID', $transDetails['requestId']);
@@ -663,17 +662,17 @@ class EndicialabelService
         $CertifiedIntermediary->addChild('AccountID', $transDetails['accountId']);
         $CertifiedIntermediary->addChild('PassPhrase', $transDetails['passPhrase']);
 
-        //$options = $labelRequest->addChild('RequestOptions');
-        //$options->addAttribute('TransactionType', 'PRINTS');
+        $options = $labelRequest->addChild('RequestOptions');
+        $options->addAttribute('TransactionType', 'ALL');
         $picNum = $labelRequest->addChild('PicNumbers');
 
         if(isset($transDetails['transactions']) && !empty($transDetails['transactions'])){
             foreach($transDetails['transactions'] as $transaction){
-                $picNum->addChild('PIC', $transaction['pic_no']);
+                $picNum->addChild('PIC', $transaction);
             }
         }
 
-        $labelRequest->addChild('IncludeTracking', 'Y');
+        $labelRequest->addChild('IncludeTracking', 'TRUE');
         return $xml->asXML();
 
     }

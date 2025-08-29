@@ -797,6 +797,13 @@
                                     $('#message_to_send').html(response.template_code);
                                 }
 
+                                if(response.image_url){
+                                    $('.lableImageGroup').removeClass('hide');
+                                    $('#image_url').val(response.image_url);
+                                    $('#image_storage_path').val(response.imagesPath);
+                                    $('.lable-image').html(response.image_name);
+                                }
+
                                 loadOrderDetail();
 
                             }

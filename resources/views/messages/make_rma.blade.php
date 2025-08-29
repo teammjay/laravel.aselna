@@ -58,18 +58,18 @@
                                 <div class="border-dark border-width-2">
                                     <div class="d-flex flex-column">
                                         <div>
-                                            <input type="radio" name="label_generation" value="<?= ShippingLabelCreationType::CreateLabel ?>" disabled="">
+                                            <input type="radio" name="label_generation" value="{{ App\Constants\ShippingLabelCreationType::CreateLabel }}">
                                             Create Label
                                         </div>
                                         <div>
-                                            <input type="radio" name="label_generation" value="{{ ShippingLabelCreationType::NoLabel }}" checked>
+                                            <input type="radio" name="label_generation" value="{{ App\Constants\ShippingLabelCreationType::NoLabel }}" checked>
                                             Do not create label
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                        <div class="col-md-7 hide">
+                        <div class="col-md-7 ship-sec hide">
                             <div class="row mt-3 g-3 align-items-center">
                                 <div class="col-md-4">
                                     <label for="carrier_name">Carrier Name</label>
@@ -199,7 +199,7 @@
                                     <label>Product Rubber Stamp</label>
                                 </div>
                                 <div class="col-md-8">
-                                    <input type="text" class="form-control" id="rubber_stamp" name="rubber_stamp" value="">
+                                    <input type="text" class="form-control" id="rubber_stamp" name="products_rubber_stamp" value="">
                                 </div>
                             </div>
                         </div>
