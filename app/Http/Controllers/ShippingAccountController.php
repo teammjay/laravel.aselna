@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\ShippingAccountRequest;
 use App\Models\ShippingAccount;
+use App\Models\ShippingAccountPurchase;
 use App\Models\ShippingSettingCarrierAccount;
 use App\Models\ShippingSolution;
 use App\Utils\EndicialabelService;
@@ -138,6 +139,7 @@ class ShippingAccountController extends Controller
     {
         $account_id = $request->input('account_id');
         $credit = $request->input('credit_amount');
+        $purchase_date = $request->input('purchase_date');
         if ($account_id) {
             $shippingAccount = ShippingAccount::with('shippingSolution')->where('id', $account_id)->first();
 
@@ -156,19 +158,25 @@ class ShippingAccountController extends Controller
 
             $message = 'Credit added successfully!';
 
-            if (!empty($response)) {
+            if (isset($response['status']) && $response['status'] == 0) {
 
-                if (isset($response['status']) && $response['status'] != '') {
-                    switch ($response['status']) {
-                        case 'Approved':
-                            $message = (isset($response['message'])) ? $response['message'] : '';
-                            break;
-                        case 'DeniedInvalid':
-                            $message = (isset($response['message'])) ? $response['message'] : '';
-                            break;
-                    }
-                }
+                $purchaseData = [
+                    'shipping_account_id' => $account_id,
+                    'purchase_date' => date('Y-m-d H:i:s', strtotime($purchase_date)),
+                    'amount' => $credit,
+                    'errors' => NULL,
+                ];
+            }else {
+                $purchaseData = [
+                    'shipping_account_id' => $account_id,
+                    'purchase_date' => date('Y-m-d H:i:s', strtotime($purchase_date)),
+                    'amount' => $credit,
+                    'errors' => (isset($response['message']) && $response['message'] != '') ? $response['message'] : NULL,
+                ];
+
             }
+
+            ShippingAccountPurchase::create($purchaseData);
 
             return response()->json([
                 'success' => true,

@@ -14,6 +14,7 @@ use App\Jobs\FetchWalmartOrdersJob;
 use App\Jobs\SubmitShopifyProductsJob;
 use App\Jobs\SyncAllOrderStatusJob;
 use App\Jobs\synccategorytospecification;
+use App\Models\AccountTransaction;
 use App\Models\Catalog;
 use App\Models\Customer;
 use App\Models\CustomerEmail;
@@ -66,6 +67,65 @@ class HomeController extends Controller
 
     public function testfunction(){
 
+        $transactions = AccountTransaction::with('shippingAccount')->where('canceled', 0)->orWhereNull('canceled')
+            ->orderBy('transaction_date','desc')
+            ->limit(10)->get();
+        //echo $transactions->toSql();die;
+        $trans = [];
+        if($transactions){
+            foreach($transactions as $key=>$transaction){
+                if($key == 0) {
+                    $trans = [
+                        'accountId' => $transaction->shippingAccount->account_id,
+                        'passPhrase' => $transaction->shippingAccount->pass_phrase,
+                        'requesterId' => $transaction->shippingAccount->requester_id,
+                        'requestId' => (string)Str::uuid()
+                    ];
+                }
+
+                $trans['transactions'][] = $transaction->tracking_number;
+            }
+
+            echo '<pre>';
+            print_r($trans);
+            echo '</pre>';
+
+            $endiciaClient = new EndicialabelService();
+            $response = $endiciaClient->getTransactionLists($trans);
+            echo '<pre>';
+            print_r($response);
+            echo '</pre>';die;
+
+            Log::info('Transaction Status Response:'.json_enocode($response));
+
+            if(isset($response['status']) && $response['status'] == 0){
+                if(isset($response['transactionResult']) && !empty($response['transactionResult'])){
+                    foreach($response['transactionResult'] as $tres){
+
+                    }
+                }
+            }
+        }
+
+        /*$templateDetail = HdMessageTemplate::getOrderOperationTemplate(2, 0, 0);
+        echo '<pre>';
+        print_r($templateDetail);
+        echo '</pre>';die;*/
+
+        /*$imapConfig = [];
+        $smtpConfig = [
+            'host' => 'smtp.gmail.com',
+            'port' => 465,
+            'encryption' => 'ssl',
+            'username' => 'phonil.ebay@gmail.com',
+            'password' => 'qynvjqjqqaqqramo',
+            'from_address' => 'phonil.ebay@gmail.com',
+            'from_name' => 'Phonil Ebay',
+        ];
+
+        $connector = new EmailMessageUtility($smtpConfig, $imapConfig);
+        $response = $connector->sendEmail('jayesh@mjailab.com','Test account to test');
+        die;*/
             /*$store = Store::with('storeType')->where('id', '3fab8878-e036-58c7-db30-addd3058875c')->first();
             $authService = new ShopifyAuthService($store->secret_key, $store->service_url);
             $orderId = "gid://shopify/Order/6749583638833";

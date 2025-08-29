@@ -56,6 +56,7 @@ use App\Jobs\ProductTypeKeywordSyncJob;
 use App\Jobs\ShippingCarrierJob;
 use App\Jobs\ShopifyCollectionDeviceSyncJob;
 use App\Jobs\ShopifyCollectionSyncJob;
+use App\Jobs\ShopifyDuplicateStoreProductsJob;
 use App\Jobs\ShopifyListingProductsSyncJob;
 use App\Jobs\ShopifyPagesSyncJob;
 use App\Jobs\ShopifyStoreProductsSyncJob;
@@ -174,7 +175,8 @@ class SyncAllTables extends Command
 //        SubmitShopifyProductsJob::dispatch();
 //        ShopifyListingProductsSyncJob::dispatch();
 //        ShopifyStoreProductsSyncJob::dispatch();
-        ProcessFeedGenerationJob::dispatch(json_decode('{"store_id":"3fab8878-e036-58c7-db30-addd3058875c","feed_type":"Google","fileType":"csv","product_code":["J14"],"device":null,"interface":null,"device_series":null,"fileName":"google_shopping_feed_2025-08-26-09-15-19.csv","filePath":"feeds\/google-shopping\/google_shopping_feed_2025-08-26-09-15-19.csv"}',true), 'fd066ad3-7059-4a87-a6e7-a18e5823f016');
+//        ProcessFeedGenerationJob::dispatch(json_decode('{"store_id":"3fab8878-e036-58c7-db30-addd3058875c","feed_type":"Google","fileType":"csv","product_code":["J14"],"device":null,"interface":null,"device_series":null,"fileName":"google_shopping_feed_2025-08-26-09-15-19.csv","filePath":"feeds\/google-shopping\/google_shopping_feed_2025-08-26-09-15-19.csv"}',true), 'fd066ad3-7059-4a87-a6e7-a18e5823f016');
+        ShopifyDuplicateStoreProductsJob::dispatch('5cc46182-9318-7a47-39bd-d3e38de6cce6', 'e0225d70-b282-5f60-bbcc-55bb260645d7');
 
         $transactionIds = [
 ////            '9400150105798006163885',
