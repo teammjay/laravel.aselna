@@ -262,7 +262,7 @@
                                                 <option value=""></option>
                                                 @if(count($reasons ?? []) > 0)
                                                     @foreach($reasons as $reason)
-                                                        <option value="{{ $reason->id }}">{{ $reason->name }}</option>
+                                                        <option value="{{ $reason->id }}" @if(str_contains($reason->channel_code,'customer')) selected @endif>{{ $reason->name }}</option>
                                                     @endforeach
                                                 @endif
                                             </select>

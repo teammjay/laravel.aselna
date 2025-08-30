@@ -79,11 +79,13 @@ class TransactionStatusCheckJob implements ShouldQueue
         //Log::info('Transaction Status Response:'.json_enocode($response));
 
         if(isset($response['status']) && $response['status'] == 0){
+            Log::info('Status:'.$response['status']);
             if(isset($response['transactionResult'][0]['Transaction']) && !empty($response['transactionResult'][0]['Transaction'])){
                 foreach($response['transactionResult'][0]['Transaction'] as $tres){
 
                     $trackingNumber = $tres->PIC;
                     $status_event = $tres->Status->StatusEvent;
+                    Log::info('Status Event:'.json_encode($status_event));
                     $status = 'Pending';
                     if(!array($status_event)){
                         switch($status_event){
@@ -133,10 +135,9 @@ class TransactionStatusCheckJob implements ShouldQueue
                         Log::info('Update Tracking status:'.$trackingNumber.'- status : '.$status);
                     }
                     Log::info('Tracking:'.$trackingNumber);
-
-                    DB::commit();
-
                 }
+
+                DB::commit();
             }
         }else{
             DB::rollBack();
