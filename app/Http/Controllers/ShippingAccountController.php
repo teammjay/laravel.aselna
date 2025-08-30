@@ -154,7 +154,7 @@ class ShippingAccountController extends Controller
             $endiciaClient = new EndicialabelService();
             $response = $endiciaClient->purchaseCredit($creditDetail);
 
-            Log::info('Endicia Label Refund Response:'. json_encode($response));
+            Log::info('Endicia Purchase Credit Response:'. json_encode($response));
 
             $message = 'Credit added successfully!';
 

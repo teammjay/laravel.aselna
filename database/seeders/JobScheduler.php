@@ -348,6 +348,12 @@ class JobScheduler extends Seeder
                 'name' => 'Shopify Store Products Sync',
                 'description' => 'Sync Shopify store products',
                 'class_name' => 'App\Jobs\ShopifyStoreProductsSyncJob',
+            ],
+            [
+
+                'name' => 'Transaction Status Update Job',
+                'description' => 'Transaction Status Update Job',
+                'class_name' => 'App\Jobs\TransactionStatusCheckJob',
             ]
         ];
 
