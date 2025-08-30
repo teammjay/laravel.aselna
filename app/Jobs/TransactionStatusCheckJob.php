@@ -85,9 +85,9 @@ class TransactionStatusCheckJob implements ShouldQueue
             if(isset($transactions) && !empty($transactions)){
                 foreach($transactions as $tres){
 
-                    echo '<pre>';
+                    /*echo '<pre>';
                     print_r($tres);
-                    echo '</pre>';die;
+                    echo '</pre>';die;*/
 
                     $transactionType = (string) $tres['TransactionType'];
                     $transactionDateTime = (string) $tres['TransactionDateTime'];
