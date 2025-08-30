@@ -55,14 +55,15 @@ class TransactionStatusCheckJob implements ShouldQueue
             $startTime = date('Y-m-d H:i:s', strtotime('-25 days', strtotime($endTime)));
         }
 
-        DB::beginTransaction();
+
         $data = [
             'shipping_account_id' => $shipping_account->id,
             'filter_start_date' => date('Y-m-d H:i:s',strtotime($startTime)),
             'filter_end_date' => date('Y-m-d H:i:s',strtotime($endTime)),
         ];
 
-        AccountTransactionSynchronization::create($data);
+        $synchronize = AccountTransactionSynchronization::create($data);
+
 
         $trans = [
             'accountId' => $shipping_account->account_id,
@@ -80,10 +81,19 @@ class TransactionStatusCheckJob implements ShouldQueue
 
         if(isset($response['status']) && $response['status'] == 0){
             Log::info('Status:'.$response['status']);
-            if(isset($response['transactionResult'][0]['Transaction']) && !empty($response['transactionResult'][0]['Transaction'])){
-                foreach($response['transactionResult'][0]['Transaction'] as $tres){
+            $transactions = $response['transactionResult'][0]->Transaction;
+            if(isset($transactions) && !empty($transactions)){
+                foreach($transactions as $tres){
 
-                    $trackingNumber = $tres->PIC;
+                    /*echo '<pre>';
+                    print_r($tres);
+                    echo '</pre>';die;*/
+
+                    $transactionType = (string) $tres['TransactionType'];
+                    $transactionDateTime = (string) $tres['TransactionDateTime'];
+                    $postmarkDate = (string) $tres['PostmarkDate'];
+
+                    $trackingNumber = (string) $tres->PIC;
                     $status_event = $tres->Status->StatusEvent;
                     Log::info('Status Event:'.json_encode($status_event));
                     $status = 'Pending';
@@ -134,13 +144,12 @@ class TransactionStatusCheckJob implements ShouldQueue
                         $transaction->update(['status' => $status]);
                         Log::info('Update Tracking status:'.$trackingNumber.'- status : '.$status);
                     }
+
+                    $synchronize->update(['filter_end_date' => date('Y-m-d H:i:s',strtotime($transactionDateTime))]);
                     Log::info('Tracking:'.$trackingNumber);
                 }
 
-                DB::commit();
             }
-        }else{
-            DB::rollBack();
         }
     }
 
