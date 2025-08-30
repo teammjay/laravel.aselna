@@ -89,8 +89,6 @@ class HomeController extends Controller
         //echo $startTime;
         //echo $endTime;
 
-        DB::beginTransaction();
-
         $data = [
             'shipping_account_id' => $shipping_account->id,
             'filter_start_date' => date('Y-m-d H:i:s',strtotime($startTime)),
@@ -101,7 +99,7 @@ class HomeController extends Controller
         //print_r($data);
         //echo '</pre>';die;
 
-        AccountTransactionSynchronization::create($data);
+        $synchronize = AccountTransactionSynchronization::create($data);
 
         $trans = [
             'accountId' => $shipping_account->account_id,
@@ -115,22 +113,29 @@ class HomeController extends Controller
         $endiciaClient = new EndicialabelService();
         $response = $endiciaClient->getTransactionLists($trans);
 
-        echo '<pre>';
+        /*echo '<pre>';
         print_r($response);
-        echo '</pre>';die;
+        echo '</pre>';die;*/
 
         //Log::info('Transaction Status Response:'.json_encode($response));
 
         if(isset($response['status']) && $response['status'] == 0){
-            if(isset($response['transactionResult'][0]['Transaction']) && !empty($response['transactionResult'][0]['Transaction'])){
-                foreach($response['transactionResult'][0]['Transaction'] as $tres){
+            Log::info('Status:'.$response['status']);
+            $transactions = $response['transactionResult'][0]->Transaction;
+            if(isset($transactions) && !empty($transactions)){
+                foreach($transactions as $tres){
 
                     /*echo '<pre>';
                     print_r($tres);
-                    echo '</pre>';*/
+                    echo '</pre>';die;*/
 
-                    $trackingNumber = $tres->PIC;
+                    $transactionType = (string) $tres['TransactionType'];
+                    $transactionDateTime = (string) $tres['TransactionDateTime'];
+                    $postmarkDate = (string) $tres['PostmarkDate'];
+
+                    $trackingNumber = (string) $tres->PIC;
                     $status_event = $tres->Status->StatusEvent;
+                    Log::info('Status Event:'.json_encode($status_event));
                     $status = 'Pending';
                     if(!array($status_event)){
                         switch($status_event){
@@ -167,6 +172,9 @@ class HomeController extends Controller
                             case 'C':
                                 $status = 'Customer Recall';
                                 break;
+                            case 'I':
+                                $status = 'Scanned in Route';
+                                break;
                         }
                     }
 
@@ -176,14 +184,12 @@ class HomeController extends Controller
                         $transaction->update(['status' => $status]);
                         Log::info('Update Tracking status:'.$trackingNumber.'- status : '.$status);
                     }
+
+                    $synchronize->update(['filter_end_date' => date('Y-m-d H:i:s',strtotime($transactionDateTime))]);
                     Log::info('Tracking:'.$trackingNumber);
-
-                    DB::commit();
-
                 }
+
             }
-        }else{
-            DB::rollBack();
         }
 
         die;
