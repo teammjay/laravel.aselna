@@ -27,6 +27,7 @@ class UPCCodes extends Model
     }
 
     protected $fillable = [
+        'id',
         'store',
         'upc_code',
         'company_prefix',

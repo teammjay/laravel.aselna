@@ -72,6 +72,7 @@ class UPCGenerateJob implements ShouldQueue
         $bulkData = [];
         foreach ($upcCodes as $upcCode) {
             $bulkData[] = [
+                'id' => (string) \Illuminate\Support\Str::uuid(),
                 'upc_code' => $upcCode['upc_code'],
                 'company_prefix' => $company_prefix,
                 'product_number' => $upcCode['product_number'],
@@ -83,7 +84,10 @@ class UPCGenerateJob implements ShouldQueue
         }
 
         DB::transaction(function () use ($bulkData) {
-            UPCCodes::insert($bulkData);
+            $chunks = array_chunk($bulkData, 1000);
+            foreach ($chunks as $chunk) {
+                UPCCodes::insert($chunk);
+            }
         });
     }
 }
