@@ -354,7 +354,15 @@ class JobScheduler extends Seeder
                 'name' => 'Transaction Status Update Job',
                 'description' => 'Transaction Status Update Job',
                 'class_name' => 'App\Jobs\TransactionStatusCheckJob',
+            ],
+            [
+
+                'name' => 'Send Notification For Pending Transaction Job',
+                'description' => 'Send Notification For Pending Transaction Job',
+                'class_name' => 'App\Jobs\SendNotificationForPendingTransactionsJob',
             ]
+
+
         ];
 
         foreach ($jobs as $job) {

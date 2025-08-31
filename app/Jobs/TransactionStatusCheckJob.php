@@ -55,6 +55,9 @@ class TransactionStatusCheckJob implements ShouldQueue
             $startTime = date('Y-m-d H:i:s', strtotime('-25 days', strtotime($endTime)));
         }
 
+        if(strtotime($startTime) == strtotime($endTime)){
+            return;
+        }
 
         $data = [
             'shipping_account_id' => $shipping_account->id,
@@ -99,7 +102,7 @@ class TransactionStatusCheckJob implements ShouldQueue
                     $status = 'Pending';
                     if(!array($status_event)){
                         switch($status_event){
-                            case 'N':
+                            /*case 'N':
                                 $status = 'New Item';
                                 break;
                             case 'D':
@@ -134,6 +137,13 @@ class TransactionStatusCheckJob implements ShouldQueue
                                 break;
                             case 'I':
                                 $status = 'Scanned in Route';
+                                break;*/
+
+                            case 'D':
+                                $status = 'completed';
+                                break;
+                            default:
+                                $status = 'pending';
                                 break;
                         }
                     }

@@ -33,13 +33,13 @@ class UPCController extends Controller
             ->when($request->input('prefix'), function ($query) use ($request) {
                 QueryFilters::applyFilter($query, $request, 'company_prefix', 'prefix_operator', 'prefix');
             })
-            ->when($request->input('product_number'), function ($query, $searchValue) use ($request) {
+            ->when($request->input('product_number'), function ($query) use ($request) {
                 QueryFilters::applyFilter($query, $request, 'product_number', 'product_number_operator', 'product_number');
             })
             ->when($request->input('upc_code'), function ($query, $searchValue) use ($request) {
                 QueryFilters::applyFilter($query, $request, 'upc_code', 'upc_code_operator', 'upc_code');
             })
-            ->when($request->has('is_used') && $request->input('is_used') ?? false, function ($query) use ($request) {
+            ->when($request->has('is_used') && ($request->input('is_used') != ''), function ($query) use ($request) {
                 $query->where('is_used', $request->input('is_used'));
             })
             ->when($request->input('sequence_id'), function ($query, $searchValue) use ($request) {
