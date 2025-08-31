@@ -90,7 +90,7 @@ class FeedController extends Controller
                             }
                         }
                         $action .= '</div>';
-                } else {
+                } else if ($feed->status) {
                     // Fallback for feeds that don't have parts
                     $action = '<button class="btn btn-default download-feed" data-file="' . $feed->file_name . '" data-filepath="' . $feed->path . '"><i class="fas fa-fw fa-download"></i> Download</button>';
                 }

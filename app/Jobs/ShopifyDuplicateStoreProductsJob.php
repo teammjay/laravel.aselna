@@ -76,15 +76,15 @@ class ShopifyDuplicateStoreProductsJob implements ShouldQueue
                         $newListingItem->save();
                         Log::info("New Listing Item ID: " . $newListingItem->id . " for Store ID: " . $this->toStoreId);
 
-                        $listingItemDetails = ListingItemDetail::where('listing_item_id', $listingItem->id)->get();
-                        foreach ($listingItemDetails as $detail) {
-                            $newDetail = $detail->replicate();
-                            $newDetail->listing_item_id = $newListingItem->id;
-                            $newDetail->created_at = now();
-                            $newDetail->updated_at = now();
-                            $newDetail->save();
-                            Log::info("New Listing Item Detail ID: " . $newDetail->id . " for Listing Item ID: " . $newListingItem->id);
-                        }
+//                        $listingItemDetails = ListingItemDetail::where('listing_item_id', $listingItem->id)->get();
+//                        foreach ($listingItemDetails as $detail) {
+//                            $newDetail = $detail->replicate();
+//                            $newDetail->listing_item_id = $newListingItem->id;
+//                            $newDetail->created_at = now();
+//                            $newDetail->updated_at = now();
+//                            $newDetail->save();
+//                            Log::info("New Listing Item Detail ID: " . $newDetail->id . " for Listing Item ID: " . $newListingItem->id);
+//                        }
                     }
                 }
             });

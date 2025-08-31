@@ -48,19 +48,37 @@ class SubmitShopifyProductsJob implements ShouldQueue
         if (count($stores ?? []) > 0) {
             foreach ($stores as $store) {
                 Log::info('Store : ' . $store->name);
-                if (trim(strtolower($store->name)) != strtolower('GetAccessory')) {
-                    continue;
-                }
                 if (($store->auto_generate_listings ?? 0) == 0) {
                     Log::info('Auto Generate Listings is disabled for store: ' . $store->name);
                     continue;
                 }
 
                 // Handle Created Products
+                // get all te children and their children of cea products
+                // Get product types with parent code 'cea' and all their descendants recursively
+                $ceaProductTypes = [];
+                $ceaParentTypes = ProductType::select('id')->where('code', 'cea')->get()->pluck('id')->toArray();
+
+                // Get immediate children
+                $ceaChildrenTypes = ProductType::select('id')->whereIn('parent_id', $ceaParentTypes)->get()->pluck('id')->toArray();
+                $ceaProductTypes = array_merge($ceaProductTypes, $ceaParentTypes, $ceaChildrenTypes);
+
+                // Get descendants recursively
+                $nextLevelParents = $ceaChildrenTypes;
+                foreach ($nextLevelParents as $parentId) {
+                    $children = ProductType::select('id')->where('parent_id', $parentId)->get()->pluck('id')->toArray();
+                    if (!empty($children)) {
+                        $ceaProductTypes = array_merge($ceaProductTypes, $children);
+                    }
+                }
+
+                Log::info('CEA Product Types and descendants: ' . count($ceaProductTypes));
+
                 $AlreadyCreatedIds = ManageMarketplaceProduct::select('product_id')->where('upload_status', 'success')->where('store_id', $store->id)->get();
                 $productTypes = ProductType::select('id')->where('code', 'ceabundle')->get()->toArray();
                 $products = Catalog::select('*')->with('productType', 'productKeyFeatures', 'productColor')
                     ->whereNotIn('product_type', $productTypes)
+                    ->whereIn('product_type', $ceaProductTypes)
                     ->whereNull('parent_id')
                     ->where('product_status', '!=', 'discontinued')
                     //->where('product_sku', 'E74')
@@ -84,6 +102,7 @@ class SubmitShopifyProductsJob implements ShouldQueue
 
                 $products = Catalog::select('*')->with('productType', 'productKeyFeatures', 'productColor')
                     ->whereNotIn('product_type', $productTypes)
+                    ->whereIn('product_type', $ceaProductTypes)
                     ->whereNull('parent_id')
                     ->where('product_status', '!=', 'discontinued')
                     //->where('product_sku', 'E74')
@@ -102,6 +121,7 @@ class SubmitShopifyProductsJob implements ShouldQueue
                 // Handle Discontinued Products
                 $discontinuedProducts = Catalog::select('*')->with('productType', 'productKeyFeatures', 'productColor')
                     ->whereNotIn('product_type', $productTypes)
+                    ->whereIn('product_type', $ceaProductTypes)
                     ->whereNull('parent_id')
                     ->where('product_status', 'discontinued')
                     ->orderBy('created_at', 'desc')
@@ -224,9 +244,9 @@ class SubmitShopifyProductsJob implements ShouldQueue
 
         //Upload the file
         if (ftp_put($ftpConn, $remoteFilePath, $localFilePath, FTP_BINARY)) {
-            echo "File uploaded successfully to $remoteFilePath";
+//            echo "File uploaded successfully to $remoteFilePath";
         } else {
-            echo "Error uploading file.";
+//            echo "Error uploading file.";
         }
 
         // Close FTP connection
