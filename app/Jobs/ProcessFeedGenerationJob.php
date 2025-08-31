@@ -60,6 +60,13 @@ class ProcessFeedGenerationJob implements ShouldQueue
             $fileSystem = $storeDetail->fileSystem;
             $store_type_detail = StoreType::getStoreTypeDetailById($store_id);
 
+            if ($this->feed_id == '') {
+                Log::error('Feed ID is missing. Cannot proceed with feed generation.');
+                return;
+            }
+            $feedDetail = Feed::findOrFail($this->feed_id);
+            Log::info('Feed detail: ' . json_encode($feedDetail));
+
             $query = StoreProduct::with('product', 'product.size', 'StoreTypeCategory', 'product.condition', 'product.Manufacturer', 'product.images', 'product.productType', 'product.interfaces', 'product.interfaces.interfaces', 'product.color');
             //$query = Catalog::with('StoreProduct', 'images', 'productType', 'interfaces.interfaces', 'pinterface.interfaces','condition','Manufacturer')->where('products.product_status', 1);
 
@@ -125,6 +132,23 @@ class ProcessFeedGenerationJob implements ShouldQueue
 
                     $fileHandle = fopen($getFilePath($current_file_index), 'w');
                     fputcsv($fileHandle, $columns);
+
+                    // Track feed parts for database
+                    $feedParts = [];
+                    $getPartFilename = function ($index) use ($fileNameBase, $fileExtension) {
+                        return $fileNameBase . "_part{$index}." . $fileExtension;
+                    };
+
+                    $getPartPath = function ($index) use ($fileNameBase, $fileExtension) {
+                        return 'feeds/google-shopping/' . $fileNameBase . "_part{$index}." . $fileExtension;
+                    };
+
+                    // Add first part to tracking array
+                    $feedPart = [
+                        'part_number' => $current_file_index,
+                        'file_name' => $getPartFilename($current_file_index),
+                        'path' => $getPartPath($current_file_index)
+                    ];
 
                     // Write product rows
 
@@ -250,6 +274,19 @@ class ProcessFeedGenerationJob implements ShouldQueue
                                                 $current_file_index++;
                                                 $fileHandle = fopen($getFilePath($current_file_index), 'w');
                                                 fputcsv($fileHandle, $columns); // Write header to new file
+
+                                                $feedDetail->parts()->create([
+                                                    'part_number' => $feedPart['part_number'],
+                                                    'file_name' => $feedPart['file_name'],
+                                                    'path' => $feedPart['path']
+                                                ]);
+
+                                                // Track this new part
+                                                $feedPart = [
+                                                    'part_number' => $current_file_index,
+                                                    'file_name' => $getPartFilename($current_file_index),
+                                                    'path' => $getPartPath($current_file_index)
+                                                ];
                                             }
                                         }
                                     }
@@ -258,19 +295,22 @@ class ProcessFeedGenerationJob implements ShouldQueue
                         }
                     }
 
+                    $feedDetail->parts()->create([
+                        'part_number' => $feedPart['part_number'],
+                        'file_name' => $feedPart['file_name'],
+                        'path' => $feedPart['path']
+                    ]);
+
                     fclose($fileHandle);
 //                    rewind($stream);
 //                    FileUtility::saveToFile(public_path('feeds/google-shopping/' . $fileName), stream_get_contents($stream));
                     //Storage::put($filePath, stream_get_contents($stream));
 //                    fclose($stream);
 
-                    if ($this->feed_id != '') {
-                        $feedDetail = Feed::findOrFail($this->feed_id);
-                        Log::info('Feed detail: ' . json_encode($feedDetail));
-                        $feedDetail->update([
-                            'status' => 1,
-                        ]);
-                    }
+                    $feedDetail->update([
+                        'status' => 1,
+                    ]);
+
 
                     break;
 

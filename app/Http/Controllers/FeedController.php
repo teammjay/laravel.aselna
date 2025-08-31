@@ -55,7 +55,7 @@ class FeedController extends Controller
         $columnName = $request['columns'][$columnIndex]['data'];
         $columnSortOrder = $request['order'][0]['dir'];
 
-        $query = Feed::with('store');
+        $query = Feed::with('store', 'parts');
 
         if ($request->has('store_id') && $request->store_id != '') {
             $query->where('store_id', $request->store_id);
@@ -73,6 +73,19 @@ class FeedController extends Controller
         $data = [];
         if (!empty((array)$feeds)) {
             foreach ($feeds as $feed) {
+                $action = '';
+
+                if ($feed->status) {
+                    // Check if feed has parts
+                    if ($feed->parts && $feed->parts->count() > 0) {
+                        foreach ($feed->parts as $part) {
+                            $action .= '<button class="btn btn-sm btn-default download-feed-part mr-1 mb-1" data-file="'.$part->file_name.'" data-filepath="'.$part->path.'"><i class="fas fa-fw fa-download"></i> Part '.$part->part_number.'</button>';
+                        }
+                    } else {
+                        // Fallback for feeds that don't have parts
+                        $action = '<button class="btn btn-default download-feed" data-file="'.$feed->file_name.'" data-filepath="'.$feed->path.'"><i class="fas fa-fw fa-download"></i> Download</button>';
+                    }
+                }
 
                 $data[] = array(
                     "store" => (isset($feed->store)) ? $feed->store->name : 0,
@@ -81,7 +94,7 @@ class FeedController extends Controller
                     "file_name" => $feed->file_name,
                     "status" => ($feed->status) ? 'Completed' : 'Processing',
                     "created_at" => date('Y-m-d H:i:s', strtotime($feed->created_at)),
-                    "action" => ($feed->status) ? '<button class="btn btn-default download-feed" data-file="'.$feed->file_name.'" data-filepath="'.$feed->path.'"><i class="fas fa-fw fa-download"></i> Download</button>' : '',
+                    "action" => $action,
                 );
             }
         }
@@ -172,9 +185,22 @@ class FeedController extends Controller
     private function getProductListingItems($product_id){
 
         $listingItems = ListingItem::with('itemDetail')->whereNotNull('store_product_id')->where('store_product_id',$product_id)->get();
-
-
     }
 
+    /**
+     * Download a feed file
+     */
+    public function downloadFeed(Request $request)
+    {
+        $fileName = $request->input('file');
+        $filePath = $request->input('path');
 
+        $fullPath = public_path($filePath);
+
+        if (file_exists($fullPath)) {
+            return response()->download($fullPath, $fileName);
+        }
+
+        return response()->json(['error' => 'File not found'], 404);
+    }
 }

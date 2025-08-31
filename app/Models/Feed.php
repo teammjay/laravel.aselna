@@ -30,4 +30,8 @@ class Feed extends Model
     public function store(){
         return $this->belongsTo(Store::class,'store_id');
     }
+
+    public function parts(){
+        return $this->hasMany(FeedPart::class, 'feed_id');
+    }
 }
