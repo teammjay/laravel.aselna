@@ -48,6 +48,9 @@ class SubmitShopifyProductsJob implements ShouldQueue
         if (count($stores ?? []) > 0) {
             foreach ($stores as $store) {
                 Log::info('Store : ' . $store->name);
+                if (env('APP_ENV') == 'local' && trim(strtolower($store->name)) != strtolower('GetAccessory')) {
+                    continue;
+                }
                 if (($store->auto_generate_listings ?? 0) == 0) {
                     Log::info('Auto Generate Listings is disabled for store: ' . $store->name);
                     continue;
@@ -324,9 +327,9 @@ class SubmitShopifyProductsJob implements ShouldQueue
         $tagsString = implode(',', $tags);
 
         $productOptions[] = [
-            'name' => 'Color',
+            'name' => 'Title',
             'values' => [
-                ['name' => (isset($productData->productColor->name)) ? $productData->productColor->name : 'Black']
+                ['name' => 'Default Title']
             ]
         ];
 
@@ -354,11 +357,11 @@ class SubmitShopifyProductsJob implements ShouldQueue
                     [
                         'price' => $productData->product_price,
                         'sku' => $sku,
-                        'barcode' => $upcCode,
+//                        'barcode' => $upcCode,
                         'optionValues' => [
                             [
-                                'optionName' => 'Color',
-                                'name' => (isset($productData->productColor->name)) ? $productData->productColor->name : 'Black',
+                                'optionName' => 'Title',
+                                'name' => "Default Title",
                             ]
                         ],
                         'inventoryItem' => [
