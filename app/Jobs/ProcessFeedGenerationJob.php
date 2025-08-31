@@ -123,7 +123,7 @@ class ProcessFeedGenerationJob implements ShouldQueue
 //                    $stream = fopen('php://temp', 'w');
                     $fullPath = public_path('feeds/google-shopping/' . $fileName);
 
-                    $max_file_size = 150 * 1024 * 1024; // 200 MB in bytes
+                    $max_file_size = 10 * 1024 * 1024; // 200 MB in bytes
                     $current_file_index = 1;
 
                     $getFilePath = function ($index) use ($directory, $fileNameBase, $fileExtension) {
