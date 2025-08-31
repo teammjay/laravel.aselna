@@ -11,6 +11,7 @@ use App\Jobs\FetchEmailMessagesJob;
 use App\Jobs\FetchMagentoOrderJob;
 use App\Jobs\FetchShopifyOrders;
 use App\Jobs\FetchWalmartOrdersJob;
+use App\Jobs\SendNotificationForPendingTransactionsJob;
 use App\Jobs\SubmitShopifyProductsJob;
 use App\Jobs\SyncAllOrderStatusJob;
 use App\Jobs\synccategorytospecification;
@@ -69,6 +70,17 @@ class HomeController extends Controller
 
     public function testfunction(){
 
+        /*Bus::chain([
+            new SendNotificationForPendingTransactionsJob()
+            //new SubmitShopifyProductsJob(),
+            //new synccategorytospecification(),
+            //new FetchShopifyOrders(),
+            //new EbayListingItemSyncJob()
+            //new SyncAllOrderStatusJob()
+            //new FetchWalmartOrdersJob()
+            //new FetchEmailMessagesJob()
+        ])->dispatch(); die;*/
+
         $shipping_account = ShippingAccount::whereLike('name','%Endicia Label Server%')->first();
         $sync_detail = AccountTransactionSynchronization::orderBy('created_at','desc')->first();
 
@@ -84,6 +96,10 @@ class HomeController extends Controller
         }else {
             $endTime   = date('Y-m-d H:i:s', strtotime('-3 months'));
             $startTime = date('Y-m-d H:i:s', strtotime('-25 days', strtotime($endTime)));
+        }
+
+        if(strtotime($startTime) == strtotime($endTime)){
+            return;
         }
 
         //echo $startTime;
@@ -139,7 +155,7 @@ class HomeController extends Controller
                     $status = 'Pending';
                     if(!array($status_event)){
                         switch($status_event){
-                            case 'N':
+                            /*case 'N':
                                 $status = 'New Item';
                                 break;
                             case 'D':
@@ -174,6 +190,14 @@ class HomeController extends Controller
                                 break;
                             case 'I':
                                 $status = 'Scanned in Route';
+                                break;*/
+
+
+                            case 'D':
+                                $status = 'completed';
+                                break;
+                            default:
+                                $status = 'pending';
                                 break;
                         }
                     }
