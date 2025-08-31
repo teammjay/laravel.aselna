@@ -60,7 +60,6 @@ class ProcessFeedGenerationJob implements ShouldQueue
             $fileSystem = $storeDetail->fileSystem;
             $store_type_detail = StoreType::getStoreTypeDetailById($store_id);
 
-
             $query = StoreProduct::with('product', 'product.size', 'StoreTypeCategory', 'product.condition', 'product.Manufacturer', 'product.images', 'product.productType', 'product.interfaces', 'product.interfaces.interfaces', 'product.color');
             //$query = Catalog::with('StoreProduct', 'images', 'productType', 'interfaces.interfaces', 'pinterface.interfaces','condition','Manufacturer')->where('products.product_status', 1);
 
@@ -110,18 +109,21 @@ class ProcessFeedGenerationJob implements ShouldQueue
 
                     $fileName = $this->data['fileName'];
                     $filePath = $this->data['filePath'];
+                    $directory = public_path('feeds/google-shopping/');
+                    $fileNameBase = pathinfo($this->data['fileName'], PATHINFO_FILENAME);
+                    $fileExtension = pathinfo($this->data['fileName'], PATHINFO_EXTENSION);
 
 //                    $stream = fopen('php://temp', 'w');
                     $fullPath = public_path('feeds/google-shopping/' . $fileName);
 
-                    $directory = dirname($fullPath);
-                    if (!file_exists($directory)) {
-                        mkdir($directory, 0755, true);
-                    }
+                    $max_file_size = 150 * 1024 * 1024; // 200 MB in bytes
+                    $current_file_index = 1;
 
-                    $fileHandle = fopen($fullPath, 'w');
+                    $getFilePath = function ($index) use ($directory, $fileNameBase, $fileExtension) {
+                        return $directory . '/' . $fileNameBase . "_part{$index}." . $fileExtension;
+                    };
 
-                    // Write the header row
+                    $fileHandle = fopen($getFilePath($current_file_index), 'w');
                     fputcsv($fileHandle, $columns);
 
                     // Write product rows
@@ -197,6 +199,7 @@ class ProcessFeedGenerationJob implements ShouldQueue
                                     $compatibledevices = $this->getCompatibleDevices($itemDetail->product_id, $this->data['device'], $this->data['device_series']);
 
                                     if ($compatibledevices) {
+
                                         foreach ($compatibledevices as $device) {
                                             Log::info('Processing compatible device ID: ' . $device->id . ' for listing item ID: ' . $listitem->id);
                                             $item_detail = ListingItemDetail::where('listing_item_id', $listitem->id)
@@ -241,12 +244,21 @@ class ProcessFeedGenerationJob implements ShouldQueue
                                                 (isset($itemDetail->product->product_sku)) ? $itemDetail->product->product_sku : '',
                                                 $prodDetail
                                             ]);
+
+                                            if (ftell($fileHandle) >= $max_file_size) {
+                                                fclose($fileHandle);
+                                                $current_file_index++;
+                                                $fileHandle = fopen($getFilePath($current_file_index), 'w');
+                                                fputcsv($fileHandle, $columns); // Write header to new file
+                                            }
                                         }
                                     }
                                 }
                             }
                         }
                     }
+
+                    fclose($fileHandle);
 //                    rewind($stream);
 //                    FileUtility::saveToFile(public_path('feeds/google-shopping/' . $fileName), stream_get_contents($stream));
                     //Storage::put($filePath, stream_get_contents($stream));
@@ -331,7 +343,7 @@ class ProcessFeedGenerationJob implements ShouldQueue
             'upc' => isset($upcCodes->upc_code) ? $upcCodes->upc_code : '',
             'device_id' => $device->id,
             'listing_item_id' => $listitem->id,
-            'device_carrier_id' =>  null,
+            'device_carrier_id' => null,
             //'store_sku' => $store_id,
             'created_by' => $created_by
         );

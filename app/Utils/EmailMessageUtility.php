@@ -108,9 +108,9 @@ class EmailMessageUtility
                         })
                         ->values(); // reindex after sorting*/
 
-            echo '<pre>';
-            print_r($messages);
-            echo '</pre>';die;
+//            echo '<pre>';
+//            print_r($messages);
+//            echo '</pre>';die;
             $emails = [];
             foreach ($messages as $key => $message) {
                 Log::info('Subject: ' . $message->subject->first());
