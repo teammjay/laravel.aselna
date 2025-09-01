@@ -208,7 +208,7 @@ class ProcessStoreMessageAccountJob implements ShouldQueue
                                     $ticketDetail->order_id = $order_id;
                                     $ticketDetail->ticket_type_id = $ticketTypeDetail->id;
                                 }
-                                $ticketDetail->message_date = $email['date'];
+                                $ticketDetail->ticket_date = $email['date'];
                                 $ticketDetail->message_read = 0;
                                 $ticketDetail->save();
 
@@ -220,7 +220,7 @@ class ProcessStoreMessageAccountJob implements ShouldQueue
                             if (isset($hd_ticket->id)) {
                                 $hdMessageData = [
                                     'ticket_id' => $hd_ticket->id,
-                                    'subject' => trim($email['subject']),
+                                    'subject' => trim(preg_replace('/[^\x20-\x7E]/', '', $email['subject'])),
                                     'message_date' => $email['date'],
                                     'to_' => $email['to'],
                                     'cc' => isset($email['cc']) ? $email['cc'] : NULL,
