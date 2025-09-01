@@ -220,7 +220,7 @@ class ProcessStoreMessageAccountJob implements ShouldQueue
                             if (isset($hd_ticket->id)) {
                                 $hdMessageData = [
                                     'ticket_id' => $hd_ticket->id,
-                                    'subject' => trim($email['subject']),
+                                    'subject' => trim(preg_replace('/[^\x20-\x7E]/', '', $email['subject'])),
                                     'message_date' => $email['date'],
                                     'to_' => $email['to'],
                                     'cc' => isset($email['cc']) ? $email['cc'] : NULL,
