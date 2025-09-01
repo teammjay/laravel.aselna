@@ -66,7 +66,7 @@ class TransactionStatusCheckJob implements ShouldQueue
         ];
 
         $synchronize = AccountTransactionSynchronization::create($data);
-
+        $sync_id = $synchronize->id;
 
         $trans = [
             'accountId' => $shipping_account->account_id,
@@ -95,12 +95,15 @@ class TransactionStatusCheckJob implements ShouldQueue
                     $transactionType = (string) $tres['TransactionType'];
                     $transactionDateTime = (string) $tres['TransactionDateTime'];
                     $postmarkDate = (string) $tres['PostmarkDate'];
+                    $refundStatus = (string) $tres['RefundStatus'];
 
                     $trackingNumber = (string) $tres->PIC;
-                    $status_event = $tres->Status->StatusEvent;
+                    $status_event = isset($tres->Status->StatusEvent) ? $tres->Status->StatusEvent : '';
+                    $status_desription = isset($tres->Status->StatusDescription) ? $tres->Status->StatusDescription : '';
                     Log::info('Status Event:'.json_encode($status_event));
                     $status = 'Pending';
-                    if(!array($status_event)){
+                    if(!array($status_event) && $status_event != ''){
+
                         switch($status_event){
                             /*case 'N':
                                 $status = 'New Item';
@@ -148,10 +151,14 @@ class TransactionStatusCheckJob implements ShouldQueue
                         }
                     }
 
-                    $transaction = AccountTransaction::where('tracking_number',$trackingNumber)->first();
+                    $transactionObj = AccountTransaction::where('tracking_number',$trackingNumber)->first();
 
-                    if($transaction){
-                        $transaction->update(['status' => $status]);
+                    if($transactionObj){
+                        $canceled = 0;
+                        if(strtolower($refundStatus) == 'refunded'){
+                            $canceled = 1;
+                        }
+                        $transactionObj->update(['status' => $status,'status_event' => $status_event, 'status_description' => $status_desription]);
                         Log::info('Update Tracking status:'.$trackingNumber.'- status : '.$status);
                     }
 
