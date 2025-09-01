@@ -86,6 +86,7 @@ class TransactionStatusCheckJob implements ShouldQueue
             Log::info('Status:'.$response['status']);
             $transactions = $response['transactionResult'][0]->Transaction;
             if(isset($transactions) && !empty($transactions)){
+                $key = 0;
                 foreach($transactions as $tres){
 
                     /*echo '<pre>';
@@ -98,13 +99,12 @@ class TransactionStatusCheckJob implements ShouldQueue
                     $refundStatus = (string) $tres['RefundStatus'];
 
                     $trackingNumber = (string) $tres->PIC;
-                    $status_event = isset($tres->Status->StatusEvent) ? $tres->Status->StatusEvent : '';
-                    $status_desription = isset($tres->Status->StatusDescription) ? $tres->Status->StatusDescription : '';
-                    Log::info('Status Event:'.json_encode($status_event));
+                    $status_event = isset($tres->Status->StatusEvent[0]) ? (string) trim($tres->Status->StatusEvent[0]) : '';
+                    $status_desription = isset($tres->Status->StatusDescription[0]) ? (string) trim($tres->Status->StatusDescription[0]) : '';
                     $status = 'Pending';
-                    if(!array($status_event) && $status_event != ''){
-
-                        switch($status_event){
+                    if($status_event != ''){
+                        Log::info('Status Event:'.$status_event);
+                        switch(trim($status_event)){
                             /*case 'N':
                                 $status = 'New Item';
                                 break;
@@ -158,12 +158,27 @@ class TransactionStatusCheckJob implements ShouldQueue
                         if(strtolower($refundStatus) == 'refunded'){
                             $canceled = 1;
                         }
-                        $transactionObj->update(['status' => $status,'status_event' => $status_event, 'status_description' => $status_desription]);
+                        $updateRecords = [
+                            'status' => $status,
+                            'status_event' => $status_event,
+                            'status_description' => $status_desription
+                        ];
+
+                        /*echo '<pre>';
+                        print_r($updateRecords);
+                        echo '</pre>';die;*/
+
+                        Log::info('Update Tracking status:'.json_encode($updateRecords));
+                        $transactionObj->update($updateRecords);
                         Log::info('Update Tracking status:'.$trackingNumber.'- status : '.$status);
                     }
 
-                    $synchronize->update(['filter_end_date' => date('Y-m-d H:i:s',strtotime($transactionDateTime))]);
-                    Log::info('Tracking:'.$trackingNumber);
+                    if($key == 0) {
+                        $synchronize->update(['filter_end_date' => date('Y-m-d H:i:s', strtotime($transactionDateTime))]);
+                        Log::info('Tracking:' . $trackingNumber);
+                    }
+
+                    $key++;
                 }
 
             }
