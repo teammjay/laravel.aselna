@@ -15,6 +15,7 @@ use App\Jobs\SendNotificationForPendingTransactionsJob;
 use App\Jobs\SubmitShopifyProductsJob;
 use App\Jobs\SyncAllOrderStatusJob;
 use App\Jobs\synccategorytospecification;
+use App\Jobs\TransactionStatusCheckJob;
 use App\Models\AccountTransaction;
 use App\Models\Catalog;
 use App\Models\Customer;
@@ -70,8 +71,9 @@ class HomeController extends Controller
 
     public function testfunction(){
 
-        /*Bus::chain([
-            new SendNotificationForPendingTransactionsJob()
+        Bus::chain([
+            new TransactionStatusCheckJob(),
+            //new SendNotificationForPendingTransactionsJob()
             //new SubmitShopifyProductsJob(),
             //new synccategorytospecification(),
             //new FetchShopifyOrders(),
@@ -79,7 +81,7 @@ class HomeController extends Controller
             //new SyncAllOrderStatusJob()
             //new FetchWalmartOrdersJob()
             //new FetchEmailMessagesJob()
-        ])->dispatch(); die;*/
+        ])->dispatch(); die;
 
         $shipping_account = ShippingAccount::whereLike('name','%Endicia Label Server%')->first();
         $sync_detail = AccountTransactionSynchronization::orderBy('created_at','desc')->first();
