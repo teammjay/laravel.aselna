@@ -216,7 +216,7 @@
                                     <option value=""></option>
                                     @if(count($ticketTypes ?? []) > 0)
                                         @foreach($ticketTypes as $tt)
-                                            <option value="{{ $tt->id }}" @if($tt->name == 'Marketplace Notification') selected @endif>{{ $tt->name }}</option>
+                                            <option value="{{ $tt->id }}" {{--@if($tt->name == 'Marketplace Notification') selected @endif--}}>{{ $tt->name }}</option>
                                         @endforeach
                                     @endif
                                 </select>

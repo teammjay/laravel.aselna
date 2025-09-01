@@ -596,7 +596,7 @@ class EndicialabelService
     public function getTransactionLists(array $request)
     {
         $xmlString = $this->buildTransactionListXmlRequest($request);
-        Log::info('Endicia Purchase Credit Request XML: ' . $xmlString);
+        Log::info('Endicia Transaction Request XML: ' . $xmlString);
 
         try {
             $response = $this->client->post('https://labelserver.endicia.com/LabelService/EwsLabelService.asmx', [
@@ -625,7 +625,7 @@ class EndicialabelService
             if($status > 0) {
                 $errorMessage = (string)$xml->xpath('//ns:ErrorMessage')[0];
             }
-            $transactionResult = (string)$xml->xpath('//ns:TransactionsResults');
+            $transactionResult = $xml->xpath('//ns:TransactionsResults');
 
             $returnData = [
                 'status' => $status,
@@ -634,7 +634,7 @@ class EndicialabelService
                 'transactionResult' => $transactionResult
             ];
 
-            Log::info('Return Data: ' . json_encode($returnData));
+            //Log::info('Return Data: ' . json_encode($returnData));
 
             return $returnData;
 
@@ -652,8 +652,9 @@ class EndicialabelService
     private function buildTransactionListXmlRequest(array $transDetails)
     {
         $xml = new \SimpleXMLElement('<?xml version="1.0" encoding="utf-8"?><soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"/>');
-        $body = $xml->addChild('soap:Body', null, 'http://schemas.xmlsoap.org/soap/envelope/');
-        $labelRequest = $body->addChild('GetTransactionsListingRequest', null,'www.envmgr.com/LabelService');
+        $body = $xml->addChild('soap:Body');
+        $transactionlist = $body->addChild('GetTransactionsListing', null,'www.envmgr.com/LabelService');
+        $labelRequest = $transactionlist->addChild('GetTransactionsListingRequest');
 
         $labelRequest->addChild('RequesterID', $transDetails['requesterId']);
         $labelRequest->addChild('RequestID', $transDetails['requestId']);
@@ -661,18 +662,23 @@ class EndicialabelService
 
         $CertifiedIntermediary->addChild('AccountID', $transDetails['accountId']);
         $CertifiedIntermediary->addChild('PassPhrase', $transDetails['passPhrase']);
-
+        $endTime = $transDetails['filter_end_date'];
+        $startTime = $transDetails['filter_start_date'];
+       //echo $startTime.'<br>';
+        //echo $endTime;die;
         $options = $labelRequest->addChild('RequestOptions');
+        $options->addAttribute('StartDateTime', date('m/d/Y H:i:s A',strtotime($startTime)));
+        $options->addAttribute('EndDateTime', date('m/d/Y H:i:s A',strtotime($endTime)));
         $options->addAttribute('TransactionType', 'ALL');
-        $picNum = $labelRequest->addChild('PicNumbers');
+        /*$picNum = $labelRequest->addChild('TransactionIDs');
 
         if(isset($transDetails['transactions']) && !empty($transDetails['transactions'])){
             foreach($transDetails['transactions'] as $transaction){
-                $picNum->addChild('PIC', $transaction);
+                $picNum->addChild('TransactionID', $transaction);
             }
-        }
+        }*/
 
-        $labelRequest->addChild('IncludeTracking', 'TRUE');
+        $labelRequest->addChild('IncludeTracking', 'Y');
         return $xml->asXML();
 
     }

@@ -207,8 +207,11 @@ class ProcessStoreMessageAccountJob implements ShouldQueue
                                 if ($order_id) {
                                     $ticketDetail->order_id = $order_id;
                                     $ticketDetail->ticket_type_id = $ticketTypeDetail->id;
-                                    $ticketDetail->save();
                                 }
+                                $ticketDetail->message_date = $email['date'];
+                                $ticketDetail->message_read = 0;
+                                $ticketDetail->save();
+
                                 $hd_ticket = $ticketDetail;
                             } else {
                                 $hd_ticket = Message::create($ticketData);

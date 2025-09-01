@@ -88,7 +88,7 @@ class EmailMessageUtility
 
 
 
-    public function fetchEmails($store_type, $filter_date, $folderName = 'INBOX', $limit = 100)
+    public function fetchEmails($store_type, $filter_date, $folderName = 'INBOX', $limit = 10)
     {
         try {
             $this->client->connect();
@@ -108,9 +108,9 @@ class EmailMessageUtility
                         })
                         ->values(); // reindex after sorting*/
 
-            /*echo '<pre>';
-            print_r($messages);
-            echo '</pre>';die;*/
+//            echo '<pre>';
+//            print_r($messages);
+//            echo '</pre>';die;
             $emails = [];
             foreach ($messages as $key => $message) {
                 Log::info('Subject: ' . $message->subject->first());

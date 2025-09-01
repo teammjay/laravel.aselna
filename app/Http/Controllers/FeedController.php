@@ -26,13 +26,15 @@ use Illuminate\Support\Facades\Log;
 
 class FeedController extends Controller
 {
-    Private $perPage = 20;
+    private $perPage = 20;
 
-    public function index(Request $request){
+    public function index(Request $request)
+    {
         $stores = Store::with('storeType')->where('store_status', 1)->orderBy('name', 'asc')->get();
 
         return view('feed.list', compact('stores'))->with('perPage', $this->perPage);
     }
+
     public function create()
     {
 
@@ -46,7 +48,8 @@ class FeedController extends Controller
         return view('feed.create_feed', compact('stores', 'manufacturers', 'productTypes', 'deviceTypes', 'brands'));
     }
 
-    public function filter(Request $request){
+    public function filter(Request $request)
+    {
 
         $draw = $request['draw'];
         $start = $request['start'];
@@ -55,7 +58,7 @@ class FeedController extends Controller
         $columnName = $request['columns'][$columnIndex]['data'];
         $columnSortOrder = $request['order'][0]['dir'];
 
-        $query = Feed::with('store');
+        $query = Feed::with('store', 'parts');
 
         if ($request->has('store_id') && $request->store_id != '') {
             $query->where('store_id', $request->store_id);
@@ -73,6 +76,25 @@ class FeedController extends Controller
         $data = [];
         if (!empty((array)$feeds)) {
             foreach ($feeds as $feed) {
+                $action = '';
+
+                // Check if feed has parts
+                if ($feed->parts && $feed->parts->count() > 0) {
+                    $partCounter = 0;
+                        $action .= '<div class="d-flex flex-wrap" style="width: 300px;">';
+                        foreach ($feed->parts->sortBy('part_number') as $part) {
+                            $action .= '<button class="btn btn-sm btn-default download-feed m-1" style="flex: 0 0 30%;" data-file="' . $part->file_name . '" data-filepath="' . $part->path . '"><i class="fas fa-fw fa-download"></i> Part ' . $part->part_number . '</button>';
+                            $partCounter++;
+                            if ($partCounter % 3 == 0) {
+                                $action .= '<div class="w-100"></div>';
+                            }
+                        }
+                        $action .= '</div>';
+                } else if ($feed->status) {
+                    // Fallback for feeds that don't have parts
+                    $action = '<button class="btn btn-default download-feed" data-file="' . $feed->file_name . '" data-filepath="' . $feed->path . '"><i class="fas fa-fw fa-download"></i> Download</button>';
+                }
+
 
                 $data[] = array(
                     "store" => (isset($feed->store)) ? $feed->store->name : 0,
@@ -81,7 +103,7 @@ class FeedController extends Controller
                     "file_name" => $feed->file_name,
                     "status" => ($feed->status) ? 'Completed' : 'Processing',
                     "created_at" => date('Y-m-d H:i:s', strtotime($feed->created_at)),
-                    "action" => ($feed->status) ? '<button class="btn btn-default download-feed" data-file="'.$feed->file_name.'" data-filepath="'.$feed->path.'"><i class="fas fa-fw fa-download"></i> Download</button>' : '',
+                    "action" => $action,
                 );
             }
         }
@@ -96,7 +118,8 @@ class FeedController extends Controller
         return $response;
     }
 
-    public function generateFeed(Request $request){
+    public function generateFeed(Request $request)
+    {
 
         /*echo '<pre>';
         echo $query->toSql();die;
@@ -162,19 +185,33 @@ class FeedController extends Controller
                     'success' => true
                 ]);
             }
-        }catch (\Exception $e) {
+        } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Error processing feed generation: ' . $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine());
         }
 
     }
 
-    private function getProductListingItems($product_id){
+    private function getProductListingItems($product_id)
+    {
 
-        $listingItems = ListingItem::with('itemDetail')->whereNotNull('store_product_id')->where('store_product_id',$product_id)->get();
-
-
+        $listingItems = ListingItem::with('itemDetail')->whereNotNull('store_product_id')->where('store_product_id', $product_id)->get();
     }
 
+    /**
+     * Download a feed file
+     */
+    public function downloadFeed(Request $request)
+    {
+        $fileName = $request->input('file');
+        $filePath = $request->input('path');
 
+        $fullPath = public_path($filePath);
+
+        if (file_exists($fullPath)) {
+            return response()->download($fullPath, $fileName);
+        }
+
+        return response()->json(['error' => 'File not found'], 404);
+    }
 }

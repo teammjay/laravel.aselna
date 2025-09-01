@@ -11,6 +11,7 @@ use App\Models\AccountTransaction;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\OrderOperation;
+use App\Models\ShippingAccountPurchase;
 use App\Services\Auth\EbayAuthService;
 use App\Services\Auth\ShopifyAuthService;
 use App\Services\Auth\WalmartAuthService;
@@ -119,6 +120,9 @@ class OrderOperationUtility
         if (isset($orderOperation->tracking_number) && $orderOperation->tracking_number != '') {
             return [];
         }
+
+        /* check endicia available limit*/
+        self::checkCredit($orderOperation);
 
         $shipmentDetails = [];
         $errorMessages = ShippingUtility::assignSolutionService($orderOperation);
@@ -263,6 +267,67 @@ class OrderOperationUtility
         } else {
             Log::error('Error creating label for order operation: ' . $orderOperation->id . ' - ' . json_encode($response));
             return $response['errors'] ?? ['Error creating label.'];
+        }
+    }
+
+    private function checkCredit($orderOperation){
+
+        try {
+            if (isset($orderOperation->shipping_account) && $orderOperation->shipping_account != '') {
+                if ($orderOperation->shipping_account->auto_recharge) {
+                    $shipmentDetails['accountId'] = $orderOperation->shipping_account->account_id;
+                    $shipmentDetails['passPhrase'] = $orderOperation->shipping_account->pass_phrase;
+                    $shipmentDetails['requesterId'] = $orderOperation->shipping_account->requester_id;
+                    $shipmentDetails['account_info'] = $orderOperation->shipping_account->id;
+
+                    $endiciaClient = new EndicialabelService();
+                    $response = $endiciaClient->getAccountStatus($shipmentDetails);
+
+                    if (!empty($response)) {
+                        if (isset($response['status']) && $response['status'] == 0) {
+                            if (isset($response['postageBalance'])) {
+                                $postageBalance = $response['postageBalance'];
+                                Log::info('Postage Balance : ' . json_encode($postageBalance));
+
+                                if (isset($postageBalance) && $postageBalance < 100) {
+                                    $purchaseCredit = 500 - $postageBalance;
+
+                                    /* purchase credit*/
+                                    $shipmentDetails['credit'] = $purchaseCredit;
+                                    $response = $endiciaClient->purchaseCredit($shipmentDetails);
+
+                                    Log::info('uto Purchase credit Response:' . json_encode($response));
+
+                                    if (isset($response['status']) && $response['status'] == 0) {
+
+                                        $purchaseData = [
+                                            'shipping_account_id' => $orderOperation->shipping_account->id,
+                                            'purchase_date' => date('Y-m-d H:i:s'),
+                                            'amount' => $purchaseCredit,
+                                            'errors' => NULL,
+                                        ];
+                                    } else {
+                                        $purchaseData = [
+                                            'shipping_account_id' => $orderOperation->shipping_account->id,
+                                            'purchase_date' => date('Y-m-d H:i:s'),
+                                            'amount' => $purchaseCredit,
+                                            'errors' => (isset($response['message']) && $response['message'] != '') ? $response['message'] : NULL,
+                                        ];
+                                    }
+                                    ShippingAccountPurchase::create($purchaseData);
+                                    Log::info('Auto Purchase credit : ' . json_encode($purchaseCredit));
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    Log::error('Shipping account auto recharge disabled');
+                }
+            } else {
+                Log::error('Shipping account not found for purchase auto credit');
+            }
+        }catch (\Exception $e) {
+            Log::error('Error processing check transaction credit: ' . $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine());
         }
     }
 

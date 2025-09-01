@@ -69,6 +69,7 @@ use App\Jobs\StoreTypeSyncJob;
 use App\Jobs\SubmitShopifyProductsJob;
 use App\Jobs\synccategorytospecification;
 use App\Jobs\SystemPrinterSyncJob;
+use App\Jobs\UPCGenerateJob;
 use App\Jobs\UPCSyncJob;
 use App\Models\ListingTemplate;
 use App\Models\ProductMaterial;
@@ -172,11 +173,19 @@ class SyncAllTables extends Command
 //        FetchMagentoCategoriesJob::dispatch();
 //        MagnetoAttributesSyncJob::dispatch();
 //        ShopifyPagesSyncJob::dispatch();
-//        SubmitShopifyProductsJob::dispatch();
+        SubmitShopifyProductsJob::dispatch();
 //        ShopifyListingProductsSyncJob::dispatch();
 //        ShopifyStoreProductsSyncJob::dispatch();
 //        ProcessFeedGenerationJob::dispatch(json_decode('{"store_id":"3fab8878-e036-58c7-db30-addd3058875c","feed_type":"Google","fileType":"csv","product_code":["J14"],"device":null,"interface":null,"device_series":null,"fileName":"google_shopping_feed_2025-08-26-09-15-19.csv","filePath":"feeds\/google-shopping\/google_shopping_feed_2025-08-26-09-15-19.csv"}',true), 'fd066ad3-7059-4a87-a6e7-a18e5823f016');
-        ShopifyDuplicateStoreProductsJob::dispatch('5cc46182-9318-7a47-39bd-d3e38de6cce6', 'e0225d70-b282-5f60-bbcc-55bb260645d7');
+//        ShopifyDuplicateStoreProductsJob::dispatch('5cc46182-9318-7a47-39bd-d3e38de6cce6', 'e0225d70-b282-5f60-bbcc-55bb260645d7');
+//        UPCGenerateJob::dispatch(
+//            [
+//                'store' => '6f535170-ecf1-7fda-9b5e-c9045278bb47',
+//                'company_prefix' => '727020',
+//                'product_number' => 50000,
+//                'number_of_codes' => 20000
+//            ]
+//        );
 
         $transactionIds = [
 ////            '9400150105798006163885',
