@@ -208,7 +208,7 @@ class ProcessStoreMessageAccountJob implements ShouldQueue
                                     $ticketDetail->order_id = $order_id;
                                     $ticketDetail->ticket_type_id = $ticketTypeDetail->id;
                                 }
-                                $ticketDetail->message_date = $email['date'];
+                                $ticketDetail->ticket_date = $email['date'];
                                 $ticketDetail->message_read = 0;
                                 $ticketDetail->save();
 
