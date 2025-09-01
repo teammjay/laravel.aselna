@@ -173,7 +173,7 @@ class ProcessStoreMessageAccountJob implements ShouldQueue
                                 'ticket_email' => trim($email['from']),
                                 'status' => HdTicketStatus::NEEDS_ACTION,
                                 'related_order_id' => $related_order_id,
-                                'subject' => trim($email['subject']),
+                                'subject' => preg_replace('/[\x00-\x1F\x7F-\xFF]/', '', trim(mb_convert_encoding(htmlspecialchars_decode($email['subject']), 'UTF-8', 'UTF-8'))),
                                 'message_id' => trim($email['message_id']),
                                 'notes' => NULL,
                                 'customer_id' => $customer_id,
@@ -192,13 +192,13 @@ class ProcessStoreMessageAccountJob implements ShouldQueue
                                 'related_listing_item_id' => NULL,
                             ];
 
-                            Log::info('Email From : ' . $email['from'] . ' Message ID: ' . $email['message_id'].' Reference ID: '.$email['references']);
+                            Log::info('Email From : ' . $email['from'] . ' Message ID: ' . $email['message_id'] . ' Reference ID: ' . $email['references']);
                             /*$ticketDetail = Message::where('ticket_email', trim($email['from']))->orWhere('ticket_email', trim($email['reply_to']))->first();*/
                             $query = Message::where('message_id', trim($email['message_id']));
-                            if(isset($email['references']) && $email['references'] != ''){
+                            if (isset($email['references']) && $email['references'] != '') {
                                 $query->orWhere('message_id', trim($email['references']));
                             }
-                            if(isset($email['in_reply_to']) && $email['in_reply_to'] != ''){
+                            if (isset($email['in_reply_to']) && $email['in_reply_to'] != '') {
                                 $query->orWhere('message_id', trim($email['in_reply_to']));
                             }
                             $ticketDetail = $query->first();
@@ -220,7 +220,7 @@ class ProcessStoreMessageAccountJob implements ShouldQueue
                             if (isset($hd_ticket->id)) {
                                 $hdMessageData = [
                                     'ticket_id' => $hd_ticket->id,
-                                    'subject' => trim(preg_replace('/[^\x20-\x7E]/', '', $email['subject'])),
+                                    'subject' => preg_replace('/[\x00-\x1F\x7F-\xFF]/', '', trim(mb_convert_encoding(htmlspecialchars_decode($email['subject']), 'UTF-8', 'UTF-8'))),
                                     'message_date' => $email['date'],
                                     'to_' => $email['to'],
                                     'cc' => isset($email['cc']) ? $email['cc'] : NULL,
@@ -250,9 +250,9 @@ class ProcessStoreMessageAccountJob implements ShouldQueue
 
                                 if (isset($hd_message->id) && !empty($email['attachments'])) {
 
-                                    if(!empty($email['attachments'])){
+                                    if (!empty($email['attachments'])) {
                                         $uniqueAttachments = [];
-                                        foreach($email['attachments'] as $attachment){
+                                        foreach ($email['attachments'] as $attachment) {
                                             $fileName = $attachment->getName();
                                             $fileMimeType = $attachment->getMimeType();
                                             $fileSize = $attachment->getSize();
@@ -269,7 +269,7 @@ class ProcessStoreMessageAccountJob implements ShouldQueue
                                             //$uniqueFileName = uniqid('email_', true) . '.' . $extension;
 
                                             try {
-                                                if(!in_array($key,$uniqueAttachments)) {
+                                                if (!in_array($key, $uniqueAttachments)) {
                                                     $uniqueAttachments[] = $key;
 
                                                     $attachment->save($savePath, $fileName);
@@ -344,7 +344,8 @@ class ProcessStoreMessageAccountJob implements ShouldQueue
         return str_pad(1, 6, '0', STR_PAD_LEFT);
     }*/
 
-    public static function getNextTicketNumberForStore($storeId) {
+    public static function getNextTicketNumberForStore($storeId)
+    {
         $key = 'ticket_' . str_replace('-', '', $storeId);
 
         return DB::transaction(function () use ($key) {
