@@ -164,7 +164,7 @@ class ShipmentsController extends Controller
                                 $onlycode .= $oitem->product->product_sku . '<br>';
                             }
 
-                            $product_weight = $oitem->product->product_weight;
+                            $product_weight = $oitem->product->product_weight * $opitem->quantity;;
                             $product_total_weight = $product_total_weight + $product_weight;
 
                             /*if ($oitem->product->shipping_package_id != '') {
@@ -217,7 +217,7 @@ class ShipmentsController extends Controller
                     "order_date" => isset($order->order) ? $order->order->order_date : '',
                     "expected_shipment_date" => isset($order) ? $order->expected_shipment_date : '',
                     "product_code" => $code,
-                    "weight" => ($order->weight_value) ? $order->weight_value : $product_total_weight,
+                    "weight" => $product_total_weight,
                     "first_name" => (isset($order->order) && !empty($order->order)) ? $order->order->buyer_first_name : '',
                     "last_name" => (isset($order->order) && !empty($order->order)) ? $order->order->buyer_last_name : '',
                     "state" => (isset($order->order->customerAddress) && !empty($order->order->customerAddress)) ? $order->order->customerAddress->state : '',
