@@ -270,7 +270,7 @@ class OrderOperationUtility
         }
     }
 
-    private function checkCredit($orderOperation){
+    public static function checkCredit($orderOperation){
 
         try {
             if (isset($orderOperation->shipping_account) && $orderOperation->shipping_account != '') {
