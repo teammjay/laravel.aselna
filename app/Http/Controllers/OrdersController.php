@@ -412,7 +412,7 @@ class OrdersController extends Controller
                         'ship_date' => date('Y-m-d H:i:s'),
                         'insurance_value' => 0,
                         'status' => OrderOperationStatus::Created,
-                        'signature_confirmation' => isset($data['signature-confirmation-recommended']) ? $data['signature-confirmation-recommended'] : 0,
+                        'signature_confirmation' => (isset($data['signature-confirmation-recommended']) && $data['signature-confirmation-recommended']) ? 1 : 0,
                         'store_id' => $store->id,
                         'shipping_package_id' => ShippingPackage::getDefaultShippingPackage(),
                         'operation_type' => OrderOperationType::OrderShipment,
