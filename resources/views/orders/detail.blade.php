@@ -209,6 +209,18 @@
                                             {{ $orderDetail->customerAddress->city}}
                                             , {{$orderDetail->customerAddress->state}} {{$orderDetail->customerAddress->zip}}
                                         </a>
+                                    @elseif(isset($orderDetail->customer->addresse))
+                                        <a href="javascript:void(0);" class="text-blue" id="edit_address"
+                                           data-id="{{ $orderDetail->customer->addresse->id }}">
+                                            {{ $orderDetail->customer->first_name }} {{ $orderDetail->customer->last_name }}
+                                            <br>
+                                            {{ $orderDetail->customer->addresse->address_line_1 }},<br>
+                                            @if($orderDetail->customer->addresse->address_line_2 != '')
+                                                {{ $orderDetail->customer->addresse->address_line_2 }},<br>
+                                            @endif
+                                            {{ $orderDetail->customer->addresse->city}}
+                                            , {{ $orderDetail->customer->addresse->state }} {{ $orderDetail->customer->addresse->zip }}
+                                        </a>
                                     @endif
                                 </div>
                             </div>
