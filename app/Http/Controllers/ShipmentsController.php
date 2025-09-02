@@ -217,7 +217,7 @@ class ShipmentsController extends Controller
                     "order_date" => isset($order->order) ? $order->order->order_date : '',
                     "expected_shipment_date" => isset($order) ? $order->expected_shipment_date : '',
                     "product_code" => $code,
-                    "weight" => $product_total_weight,
+                    "weight" => ($order->weight_value) ? $order->weight_value : $product_total_weight,
                     "first_name" => (isset($order->order) && !empty($order->order)) ? $order->order->buyer_first_name : '',
                     "last_name" => (isset($order->order) && !empty($order->order)) ? $order->order->buyer_last_name : '',
                     "state" => (isset($order->order->customerAddress) && !empty($order->order->customerAddress)) ? $order->order->customerAddress->state : '',
@@ -363,7 +363,7 @@ class ShipmentsController extends Controller
                             $package_id = $shipmentDetail->shipping_package_id;
                         }
 
-                        $product_weight = $product_detail->product_weight;
+                        $product_weight = $product_detail->product_weight * $oitem->quantity;
                         $product_total_weight = $product_total_weight + $product_weight;
 
                         $product_weight_unit = $product_detail->product_weight_unit;
@@ -617,7 +617,7 @@ class ShipmentsController extends Controller
                             } else {
                                 $request['carrier_package'] = $operation->shipping_package_id;
                             }
-                            $product_weight = $product_detail->product_weight;
+                            $product_weight = $product_detail->product_weight * $oitem->quantity;
                             $product_total_weight = $product_total_weight + $product_weight;
                             $product_weight_unit = $product_detail->product_weight_unit;
                         }
