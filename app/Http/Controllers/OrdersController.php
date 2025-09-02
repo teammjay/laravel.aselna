@@ -263,6 +263,34 @@ class OrdersController extends Controller
                     //$orderObj = Order::findOrFail($order_detail->id); // Retrieve the product by ID
                     //$orderObj->update(['order_status' =>OrderStatus::getOrderStatusId('Synchronizing')]);
 
+                    $firstname = $lastname = '';
+                    $customer_address = null;
+                    $customer_detail = null;
+
+                    if (isset($data['buyer-name'])) {
+                        $nameArr = explode(' ', $data['buyer-name']);
+                        $firstname = isset($nameArr[0]) ? $nameArr[0] : $data['buyer-name'];
+                        $lastname = isset($nameArr[1]) ? $nameArr[1] : '';
+                    }
+
+                    $customer_address = CustomerAddress::where('customer_id', $order_detail->customer_id)
+                        ->where('address_combined', $data['ship-address-1'] . ' ' . $data['ship-address-2'])
+                        ->first();
+
+                    $orderData = [
+                        'order_id' => $data['order-id'],
+                        'buyer_first_name' => $firstname,
+                        'buyer_last_name' => $lastname,
+                        'buyer_email' => $data['buyer-email'],
+                        'customer_id' => $order_detail->customer_id,
+                        'store_id' => $store_id,
+                        'shipping_address_id' => $customer_address->id,
+                    ];
+
+                    $order_detail = Order::updateOrCreate([
+                        'order_id' => $data['order-id'],
+                    ], $orderData);
+
                     /* get order item detail*/
 
                     $orderItem = OrderItem::where('order_id', $order_detail->id)->where('sku', $data['sku'])->first();
