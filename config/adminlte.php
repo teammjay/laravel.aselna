@@ -590,6 +590,11 @@ return [
             'icon' => 'fa fa-fw fa-print'
         ],
         [
+            'text' => 'Users',
+            'url' => '/user',
+            'icon' => 'fa fa-fw fa-users'
+        ],
+        [
             'text' => 'Master File Settings',
             'icon' => 'fa fa-fw fa-cogs',
             'submenu' => [

@@ -239,7 +239,7 @@ class HomeController extends Controller
             }
         }*/
 
-        die;
+        //die;
         /*$transactions = AccountTransaction::with('shippingAccount')->where('canceled', 0)->orWhereNull('canceled')
             ->where('transaction_date','<=',date('Y-m-d'))
             ->where('transaction_date','>=',date('Y-m-d',strtotime('-3 month')))
@@ -398,7 +398,7 @@ class HomeController extends Controller
         ];
 
         $connector = new EmailMessageUtility($smtpConfig, $imapConfig);
-        $receiveEmails = $connector->fetchEmails('Walmart', '2025-08-30','INBOX');
+        $receiveEmails = $connector->fetchEmails('Walmart', '2025-09-01 05:30:18','INBOX');
 
         //$store = Store::with('storeType')->where('id','0dd4de79-bba1-c47a-a7aa-822e6f015b8e')->first();
         $store = Store::with('storeType')->where('id','6c7009ce-eac1-a995-a986-27d5df0103ac')->first();

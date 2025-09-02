@@ -64,6 +64,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ResetPasswordController;
 use App\Http\Controllers\StorePagesController;
 use App\Http\Controllers\FeedController;
+use App\Http\Controllers\UsersController;
 use App\Services\Auth\EbayAuthService;
 use App\Http\Controllers\LogisticCenterDocumentController;
 use App\Http\Controllers\StoreNavigationPagesController;
@@ -699,6 +700,20 @@ Route::middleware('auth')->group(function () {
         Route::post('/feed/filter', 'filter')->name('feed.filter');
         Route::get('/feed/getfeeds', 'getFeeds')->name('feed.getfeeds');
         Route::post('/feed/generatefeed', 'generateFeed')->name('feed.generatefeed');
+    });
+
+    Route::controller(UsersController::class)->group(function () {
+        Route::get('/user', 'index')->name('user.list');
+        Route::get('/user/add', 'create')->name('user.add');
+        Route::get('user/filter', 'filter')->name('user.filter');
+        Route::post('/user/saveTabData', 'saveTabData')->name('user.save');
+        Route::post('/user/finalize', 'finalize')->name('user.final');
+        Route::get('/user/edit/{id}', 'edit')->name('user.edit');
+        Route::post('/user/edit', 'update')->name('user.update');
+        Route::get('/user/destroy/{id}', 'destroy')->name('user.delete');
+        Route::post('/user/saveNotificationAccount', 'saveNotificationAccount')->name('user.notificationaccount');
+        Route::post('/user/removenotificationaccount', 'removeNotificationAccount')->name('user.removenotificationaccount');
+        Route::post('/user/getusernotificationAccount/', 'getUserNotificationAccount')->name('user.getusernotificationAccount');
     });
 
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
