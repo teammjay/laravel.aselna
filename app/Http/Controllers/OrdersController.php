@@ -202,7 +202,7 @@ class OrdersController extends Controller
 
     public function edit(string $id)
     {
-        $orderDetail = Order::with('orderItem','orderItem.product','store','store.storeType','customer','customerAddress','orderOperation','orderOperation.carrier')->findOrFail($id);
+        $orderDetail = Order::with('orderItem','orderItem.product','store','store.storeType','customer','customer.addresse','customerAddress','orderOperation','orderOperation.carrier')->findOrFail($id);
         /*echo '<pre>';
         print_r($orderDetail);
         echo '</pre>';die;*/
@@ -380,6 +380,10 @@ class OrdersController extends Controller
                         'address_combined' => $data['ship-address-1'] . ' ' . $data['ship-address-2'],
                     ], $customer_address_data);
 
+                    $customer_address = CustomerAddress::where('customer_id', $customer_detail->id)
+                        ->where('address_combined', $data['ship-address-1'] . ' ' . $data['ship-address-2'])
+                        ->first();
+
                     if (isset($data['buyer-phone-number']) && $data['buyer-phone-number'] != null) {
                         $number = preg_replace('/\s+ext\..*/', '', $data['buyer-phone-number']);
                         $customer_phone_data = [
@@ -399,7 +403,8 @@ class OrdersController extends Controller
                         'buyer_email' => $data['buyer-email'],
                         'customer_id' => $customer_detail->id,
                         'purchase_order_id' => $data['purchase-order-number'],
-                        'store_id' => $store_id
+                        'store_id' => $store_id,
+                        'shipping_address_id' => $customer_address->id,
                     ];
 
                     $order_detail = Order::updateOrCreate([
