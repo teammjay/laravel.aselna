@@ -4,12 +4,16 @@ namespace App\Services\Marketplace\Service;
 
 use App\Constants\FeedStatus;
 use App\Constants\FeedTypes;
+use App\Constants\OrderOperationStatus;
+use App\Constants\OrderStatus;
 use App\Models\Listing;
 use App\Models\ListingFeed;
 use App\Models\ListingItemDetail;
 use App\Models\ListingItemLink;
 use App\Models\ListingItemProductImage;
 use App\Models\Manufacturer;
+use App\Models\Order;
+use App\Models\OrderItem;
 use App\Models\ProductSearchTerm;
 use App\Models\ProductTypeKeyword;
 use App\Models\StorePropertyInfo;
@@ -601,9 +605,11 @@ class AmazonService implements MarketplaceServiceInterface
     {
         $this->authService = new AmazonAuthService($store->seller_id, $store->secret_key, $store->api_key);
         $finalData = [];
-        $orderId = $orderOperation->order_id;
+        $orderId = $orderOperation->order->order_id;
         $trackingNumber = $mainOrderOperation->tracking_number;
         $orderItems = [];
+
+        $orderDetail = $this->authService ->getOrderInfo($orderId);
 
         foreach ($orderOperation->order->orderItem as $item) {
             $orderItems[] = [
@@ -616,20 +622,37 @@ class AmazonService implements MarketplaceServiceInterface
 
         $finalData['packageDetail'] = [
             'orderItems' => $orderItems,
-            'shipDate' => $orderOperation->ship_date,
+            'shipDate' => date('c', time()),
             'trackingNumber' => $trackingNumber,
             'carrierName' => $mainOrderOperation->carrier->name,
             'carrierCode' => $mainOrderOperation->carrier->code,
-            'packageReferenceId' => $orderOperation->id,
+            'packageReferenceId' => 1,
         ];
+        $finalData['marketplaceId'] = $orderDetail['payload']['MarketplaceId'];
+
         Log::info('Final Shipment Data: ' . json_encode($finalData));
 
         $response = $this->authService->shipOrder($finalData, $orderId);
-        if (isset($response)) {
-            Log::info('Shipment created successfully for order ' . $orderId . ': ' . json_encode($response));
+        Log::info('Shipment Response: ' . json_encode($response));
+        if ($response === 204 || isset($response)) {
+            $orderOperation->update(['status' => OrderOperationStatus::MarkAsShipped]);
+            if (isset($orderOperation->order_id)) {
+                $order = Order::findOrFail($orderOperation->order_id);
+                $order->update(['order_status' => OrderStatus::Shipped]);
+            }
+
+            if (isset($orderOperation->order->orderItem)) {
+                foreach ($orderOperation->order->orderItem as $o_item) {
+                    $item_qty = $o_item->quantity;
+                    $orderItem = OrderItem::findOrFail($o_item->id);
+                    $orderItem->update(['shipped_quantity' => $item_qty]);
+                }
+            }
+
+//            Log::info('Shipment created successfully for order ' . $orderId . ': ' . ($response === 204 ? 'HTTP 204 No Content' : json_encode($response)));
             return true;
         } else {
-            Log::error('Error creating shipment for order ' . $orderId . ': ');
+            Log::error('Error creating shipment for order ' . $orderId);
             return false;
         }
     }
