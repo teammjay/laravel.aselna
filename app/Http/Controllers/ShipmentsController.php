@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Constants\OrderOperationStatus;
 use App\Constants\OrderStatus;
+use App\Helpers\Common;
 use App\Models\Catalog;
 use App\Models\CustomerAddress;
 use App\Models\LogisticCenter;
@@ -146,7 +147,7 @@ class ShipmentsController extends Controller
                 $code = '';
                 $onlycode = '';
                 $image = $imagename = $product_ids = [];
-                $product_total_weight = 0;
+                $product_total_weight = Common::calculateProductWeight($order);
                 $total_qty = [];
                 $package_id = $order->shipping_package_id;
                 if (isset($order->operationItem) && !empty($order->operationItem)) {
@@ -165,12 +166,20 @@ class ShipmentsController extends Controller
                             }
 
                             $product_weight = $oitem->product->product_weight;
-                            $product_total_weight = $product_total_weight + $product_weight;
+                            //$product_total_weight = $product_total_weight + $product_weight;
 
                             /*if ($oitem->product->shipping_package_id != '') {
                                 $package_id = $oitem->product->shipping_package_id;
                                 $order->update(['shipping_package_id' => $package_id]);
                             }*/
+                        }else{
+                            if($opitem->sku != '') {
+                                $parts = explode('-', $opitem->sku);
+                                $product_code = isset($parts[0]) ? $parts[0] : '';
+                                //$product_detail = Catalog::where('product_sku', $product_code)->first();
+                                $code .= $product_code . ' x ' . $opitem->quantity . PHP_EOL;
+                                $onlycode .= $product_code . '<br>';
+                            }
                         }
                         if(isset($oitem->quantity)){
                             $totalQty = $totalQty + $oitem->quantity;
@@ -330,7 +339,7 @@ class ShipmentsController extends Controller
         $shipmentDetail = OrderOperation::with('operationItem', 'order', 'order.customerAddress', 'carrierService', 'store', 'store.storeType', 'store.logisticCenters', 'operationItem.orderItem', 'operationItem.orderItem.product', 'operationItem.orderItem.listingItem')->where('id', $order_opration_id)->first();
 
         $package_id = '';
-        $product_total_weight = 0;
+        $product_total_weight = Common::calculateProductWeight($shipmentDetail);
         $product_weight_unit = 0;
         //print_r($shipmentDetail->operationItem);
         if (count($shipmentDetail->operationItem ?? []) > 0) {
@@ -364,8 +373,6 @@ class ShipmentsController extends Controller
                         }
 
                         $product_weight = $product_detail->product_weight;
-                        $product_total_weight = $product_total_weight + $product_weight;
-
                         $product_weight_unit = $product_detail->product_weight_unit;
                     }
                 }
@@ -597,7 +604,8 @@ class ShipmentsController extends Controller
             $store = $operation->store;
 
             $package_id = '';
-            $product_total_weight = 0;
+            $product_total_weight = Common::calculateProductWeight($operation);
+
             $product_weight_unit = '';
 
             if (count($operation->operationItem ?? []) > 0) {
@@ -618,7 +626,6 @@ class ShipmentsController extends Controller
                                 $request['carrier_package'] = $operation->shipping_package_id;
                             }
                             $product_weight = $product_detail->product_weight;
-                            $product_total_weight = $product_total_weight + $product_weight;
                             $product_weight_unit = $product_detail->product_weight_unit;
                         }
                     }
@@ -921,4 +928,5 @@ class ShipmentsController extends Controller
         ]);
 
     }
+
 }
