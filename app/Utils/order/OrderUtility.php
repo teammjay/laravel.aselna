@@ -140,7 +140,6 @@ class OrderUtility
             'order_id' => $order->id,
             'ship_date' => date('Y-m-d H:i:s', $sorder['shippingInfo']['estimatedShipDate'] / 1000),
             'insurance_value' => $orderTotals,
-            'weight_value' => $totalWeight,
             'status' => OrderOperationStatus::Created,
             'signature_confirmation' => 1,
             'store_id' => $store->id,
