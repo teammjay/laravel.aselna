@@ -122,14 +122,14 @@ class OrderOperationUtility
             return [];
         }
 
-        /* check endicia available limit*/
-        self::checkCredit($orderOperation);
-
         $shipmentDetails = [];
         $errorMessages = ShippingUtility::assignSolutionService($orderOperation);
         if (isset($errorMessages) && !empty($errorMessages)) {
             return $errorMessages;
         }
+
+        /* check endicia available limit*/
+        self::checkCredit($orderOperation);
 
         $shippingDocumentCreator = new ShipmentDocumentsCreator($orderOperation);
         //    $imageFormat = $shippingDocumentCreator->getLabelFormat();
