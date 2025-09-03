@@ -1167,6 +1167,7 @@ class EbayService implements MarketplaceServiceInterface
         if (isset($last_synchronization) && strtotime($last_synchronization->last_order_update_date) > strtotime($last_order_update_date)) {
             $last_order_update_date = date('Y-m-d H:i:s', strtotime($last_synchronization->last_order_update_date));
         }
+        Log::info('Final Last Order Update Date : ' . $last_order_update_date . ' No of Orders : ' . $noOfOrder);
         $order_synchronization->update(['number_of_items' => $noOfOrder, 'last_order_update_date' => $last_order_update_date]);
         return $orders;
     }
