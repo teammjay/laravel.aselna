@@ -382,7 +382,7 @@ class EbayAuthService
                 parse_str(parse_url($cursor, PHP_URL_QUERY), $queryData);
             } else {
                 $startDate = $sync_start_date;
-                $endDate = gmdate('Y-m-d\TH:i:s\Z', strtotime(now()));
+                $endDate = date('Y-m-d\TH:i:s\Z', strtotime(now()));
 
                 $queryData = [
                     'filter'=> "lastmodifieddate:[$startDate..$endDate]",
@@ -619,8 +619,8 @@ class EbayAuthService
             $pagination->addChild('PageNumber', '1');
 //            $xml->addChild('IncludeItemSpecifics','true');
 
-            $xml->addChild('StartTimeFrom', gmdate('Y-m-d\TH:i:s\Z', strtotime('-119 days')));
-            $xml->addChild('StartTimeTo', gmdate('Y-m-d\TH:i:s\Z', strtotime('now')));
+            $xml->addChild('StartTimeFrom', date('Y-m-d\TH:i:s\Z', strtotime('-119 days')));
+            $xml->addChild('StartTimeTo', date('Y-m-d\TH:i:s\Z', strtotime('now')));
 
             $outPutSelector = $xml->addChild('GranularityLevel', 'Coarse');
 

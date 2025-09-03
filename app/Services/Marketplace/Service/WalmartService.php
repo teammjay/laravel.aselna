@@ -402,7 +402,7 @@ class WalmartService implements MarketplaceServiceInterface
             $authService = new WalmartAuthService($store->seller_id, $store->secret_key);
             $last_synchronization = OrderSynchronization::where('store_id', $store->id)->where('synchronization_type', OrderSyncronisationType::ORDER)->orderBy('last_order_update_date', 'desc')->first();
             $filterStartDate = OrderUtility::getLastSyncDate($store->id, OrderSyncronisationType::ORDER);
-            $filterStartDateFormatted = gmdate('Y-m-d\TH:i:s\Z', strtotime($filterStartDate));
+            $filterStartDateFormatted = date('Y-m-d\TH:i:s\Z', strtotime($filterStartDate));
 
             $response = $authService->getOrders($filterStartDateFormatted, $last_synchronization->cursor ?? null);
 
