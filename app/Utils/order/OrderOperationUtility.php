@@ -15,6 +15,7 @@ use App\Models\ShippingAccountPurchase;
 use App\Services\Auth\EbayAuthService;
 use App\Services\Auth\ShopifyAuthService;
 use App\Services\Auth\WalmartAuthService;
+use App\Services\Marketplace\Service\AmazonService;
 use App\Services\Marketplace\Service\ShopifyService;
 use App\Services\Marketplace\Service\WalmartService;
 use App\Utils\EndicialabelService;
@@ -995,6 +996,19 @@ class OrderOperationUtility
                         Log::info('eBay ship fulfillment error: ' . json_encode($result['error'] ?? 'Unknown error'));
                         $success = false;
                     }
+                    break;
+
+                case 'amazon' :
+                    $amazonService = new AmazonService();
+                    $is_success = $amazonService->createShipment($orderOperation,$orderOperation, $store);
+                    $orderOperations = OrderOperation::where('is_merged',true)
+                        ->where('merged_with',$orderOperation->id)
+                        ->get();
+
+                    foreach ($orderOperations as $o_item) {
+                        $amazonService->createShipment($orderOperation,$o_item, $store);
+                    }
+                    $success = $is_success;
                     break;
             }
 

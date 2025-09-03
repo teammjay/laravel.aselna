@@ -5,6 +5,7 @@ namespace App\Services\Auth;
 use App\Constants\FeedTypes;
 use App\Models\Listing;
 use App\Utils\FileUtility;
+use Exception;
 use GuzzleHttp\Client;
 use Illuminate\Support\Facades\Log;
 
@@ -398,6 +399,37 @@ class AmazonAuthService
         Log::info('Order Info Response: ' . $response->getBody());
 
         return json_decode($response->getBody(), true);
+    }
+
+    public function shipOrder($shipmentData, $amazonOrderId)
+    {
+        try {
+            $accessToken = $this->getAccessToken();
+            if (!$accessToken) {
+                return "Error: Could not retrieve access token.";
+            }
+
+            $response = $this->client->get("/orders/v0/orders/" . $amazonOrderId . "/shipmentConfirmation", [
+                'headers' => [
+                    'x-amz-access-token' => "{$accessToken}",
+                    'Content-Type' => 'application/json',
+                    'x-amz-date' => gmdate('Ymd\THis\Z'),
+                ],
+                'json' => $shipmentData
+            ]);
+
+            return json_decode($response->getBody(), true);
+        } catch (Exception $exception) {
+            return json_encode([
+                'error' => 'Amazon API request failed',
+                'message' => $exception->getMessage()
+            ]);
+        }
+    }
+
+    public function cancelOrder()
+    {
+
     }
 
 }

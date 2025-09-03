@@ -596,4 +596,38 @@ class AmazonService implements MarketplaceServiceInterface
     {
         // TODO: Implement syncAttributes() method.
     }
+
+    public function createShipment($mainOrderOperation, $orderOperation, mixed $store)
+    {
+        $this->authService = new AmazonAuthService($store->seller_id, $store->secret_key, $store->api_key);
+        $finalData = [];
+        $orderId = $orderOperation->order_id;
+        $trackingNumber = $mainOrderOperation->tracking_number;
+        $orderItems = [];
+
+        foreach ($orderOperation->items as $item) {
+            $orderItems[] = [
+                'orderItemId' => $item->order_item_id,
+                'quantity' => $item->quantity
+            ];
+        }
+
+        $finalData['packageDetail'] = [
+            'orderItems' => $orderItems,
+            'shipDate' => $orderOperation->ship_date,
+            'trackingNumber' => $trackingNumber,
+            'carrierName' => $mainOrderOperation->carrier->name,
+            'carrierCode' => $mainOrderOperation->carrier->code,
+            'packageReferenceId' => $orderOperation->id,
+        ];
+
+        $response = $this->authService->shipOrder($finalData, $orderId);
+        if (isset($response)) {
+            Log::info('Shipment created successfully for order ' . $orderId . ': ' . json_encode($response));
+            return true;
+        } else {
+            Log::error('Error creating shipment for order ' . $orderId . ': ');
+            return false;
+        }
+    }
 }
