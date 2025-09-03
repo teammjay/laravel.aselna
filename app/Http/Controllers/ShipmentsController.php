@@ -165,7 +165,7 @@ class ShipmentsController extends Controller
                                 $onlycode .= $oitem->product->product_sku . '<br>';
                             }
 
-                            $product_weight = $oitem->product->product_weight;
+                            $product_weight = $oitem->product->product_weight * $opitem->quantity;
                             //$product_total_weight = $product_total_weight + $product_weight;
 
                             /*if ($oitem->product->shipping_package_id != '') {
@@ -352,7 +352,7 @@ class ShipmentsController extends Controller
                         /*if ($product_detail->product_weight > $product_weight) {
                             $package_id = $product_detail->shipping_package_id;
                         }*/
-                        if ($product_detail->product_weight > $product_weight) {
+                        if (($product_detail->product_weight * $oitem->quantity) > $product_weight) {
                             $package_id = $product_detail->shipping_package_id;
                         }
                         if ($package_id && $shipmentDetail->shipping_package_id == NULL) {
@@ -372,7 +372,7 @@ class ShipmentsController extends Controller
                             $package_id = $shipmentDetail->shipping_package_id;
                         }
 
-                        $product_weight = $product_detail->product_weight;
+                        $product_weight = $product_detail->product_weight * $oitem->quantity;
                         $product_weight_unit = $product_detail->product_weight_unit;
                     }
                 }
@@ -616,7 +616,7 @@ class ShipmentsController extends Controller
                         if ($product_id) {
                             $product_detail = Catalog::findOrFail($product_id);
                             if (!isset($operation->shipping_package_id)) {
-                                if ($product_detail->product_weight > $product_weight) {
+                                if (($product_detail->product_weight * $oitem->quantity) > $product_weight) {
                                     $package_id = $product_detail->shipping_package_id;
                                 }
                                 if ($package_id) {
@@ -625,7 +625,8 @@ class ShipmentsController extends Controller
                             } else {
                                 $request['carrier_package'] = $operation->shipping_package_id;
                             }
-                            $product_weight = $product_detail->product_weight;
+
+                            $product_weight = $product_detail->product_weight * $oitem->quantity;
                             $product_weight_unit = $product_detail->product_weight_unit;
                         }
                     }
