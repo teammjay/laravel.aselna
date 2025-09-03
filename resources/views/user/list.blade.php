@@ -158,13 +158,13 @@
             });
 
             $(document).on('click', '.delete-btn', function() {
-                var storeId = $(this).data('id');
+                var user_id = $(this).data('id');
                 var token = '{{ csrf_token() }}'; // CSRF token for security
 
                 // Confirm the deletion
                 if (confirm("Are you sure you want to delete this store?")) {
                     $.ajax({
-                        url: "{{ url('stores/destroy') }}/" + storeId,   // Laravel route for deletion
+                        url: "{{ url('user/destroy') }}/" + user_id,   // Laravel route for deletion
                         type: 'GET',
                         data: {
                             "_token": token
@@ -172,7 +172,7 @@
                         success: function (response) {
                             // If success, remove the user row from the table
                             if (response.success) {
-                                $('#store-' + storeId).remove();
+                                $('#user-' + user_id).remove();
                                 alert(response.success);
                             }
                         },

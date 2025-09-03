@@ -96,6 +96,14 @@
                                         <span class="error-message text-danger" id="email-error"></span>
                                     </div>
                                 </div>
+                                <div class="row mt-3 g-3 align-items-center">
+                                    <div class="col-md-5">
+                                        <label for="email">CC Email</label>
+                                    </div>
+                                    <div class="col-md-7">
+                                        <textarea class="form-control" id="cc_email" name="cc_email">{{ old('cc_email',$user->cc_email) }}</textarea>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 

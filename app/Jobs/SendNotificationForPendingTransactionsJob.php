@@ -18,12 +18,14 @@ class SendNotificationForPendingTransactionsJob implements ShouldQueue
 {
     use Queueable;
 
+    protected $userId;
+
     /**
      * Create a new job instance.
      */
-    public function __construct()
+    public function __construct($user_id)
     {
-        //
+        $this->userId = $user_id;
     }
 
     /**
@@ -39,10 +41,20 @@ class SendNotificationForPendingTransactionsJob implements ShouldQueue
 
             if ($tracking_numbers->count() > 0) {
 
-                $userId = Auth::id();
+                $userId = $this->userId;
+                Log::info('User ID : '.$userId);
                 $userDetail = User::findOrFail($userId);
                 $sendTo = $userDetail->email;
                 $sendTo = 'jayesh@mjailab.com';
+                $cc_emails = '';
+                if($userDetail->cc_email != ''){
+                    $ccEmails = explode(PHP_EOL,$userDetail->cc_email);
+                    if(is_array($ccEmails)){
+                        $cc_emails = implode(',', $ccEmails);
+                    }else{
+                        $cc_emails = $ccEmails;
+                    }
+                }
                 $userMessageAccount = UserAccount::with('outgoingAccount')->where('user_id', $userId)->where('active', 1)->first();
 
                 if (isset($userMessageAccount->outgoingAccount)) {
@@ -67,11 +79,15 @@ class SendNotificationForPendingTransactionsJob implements ShouldQueue
                     Config::set('mail.from.address', $userMessageAccount->outgoingAccount->email);
                     Config::set('mail.from.name', $userMessageAccount->name);
 
-                    Mail::to($sendTo)
-                        ->send(new PendingTrackingNumbersMail($tracking_numbers));
+                    $mail = Mail::to($sendTo);
+
+                    if (!empty($cc_emails)) {
+                        $mail->cc($cc_emails);
+                    }
+                    $mail->send(new PendingTrackingNumbersMail($tracking_numbers,$userDetail));
 
                     Log::info('Mail sent successfully', [
-                        'recipient' => 'admin@example.com',
+                        'recipient' => $sendTo,
                         'tracking_count' => count($tracking_numbers),
                         'timestamp' => now()
                     ]);

@@ -14,10 +14,12 @@ class PendingTrackingNumbersMail extends Mailable
     use Queueable, SerializesModels;
 
     public $trackingNumbers;
+    public $userDetail;
 
-    public function __construct($trackingNumbers)
+    public function __construct($trackingNumbers,$user_detail)
     {
         $this->trackingNumbers = $trackingNumbers;
+        $this->userDetail = $user_detail;
     }
 
     public function build()

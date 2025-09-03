@@ -52,6 +52,7 @@ use App\Utils\EndicialabelService;
 use App\Utils\order\OrderOperationUtility;
 use Exception;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -71,9 +72,10 @@ class HomeController extends Controller
 
     public function testfunction(){
 
+        /*$user_id = Auth::id();
         Bus::chain([
             //new TransactionStatusCheckJob(),
-            new SendNotificationForPendingTransactionsJob()
+            new SendNotificationForPendingTransactionsJob($user_id)
             //new SubmitShopifyProductsJob(),
             //new synccategorytospecification(),
             //new FetchShopifyOrders(),
@@ -81,7 +83,7 @@ class HomeController extends Controller
             //new SyncAllOrderStatusJob()
             //new FetchWalmartOrdersJob()
             //new FetchEmailMessagesJob()
-        ])->dispatch(); die;
+        ])->dispatch(); die;*/
 
         /*$shipping_account = ShippingAccount::whereLike('name','%Endicia Label Server%')->first();
         $sync_detail = AccountTransactionSynchronization::orderBy('created_at','desc')->first();
