@@ -27,7 +27,7 @@ class OrderUtility
 
         if ($lastOrderUpdateDate) {
 
-            $date = \Carbon\Carbon::parse($lastOrderUpdateDate->last_order_update_date ?? $lastOrderUpdateDate->filter_end_date)->addSeconds(10);
+            $date = \Carbon\Carbon::parse($lastOrderUpdateDate->last_order_update_date ?? $lastOrderUpdateDate->filter_end_date, 'EST')->addSeconds(10);
             return $date->toDateTimeString();
         } else {
             // get last 30 days
