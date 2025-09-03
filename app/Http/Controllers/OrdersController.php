@@ -301,7 +301,17 @@ class OrdersController extends Controller
                             //$itemDetail = ManageMarketplaceProduct::where('sku', $item['sku'])->first();
 
                             $parts = explode('-', $data['sku']);
-                            $product_code = isset($parts[0]) ? $parts[0] : '';
+                            if(count($parts) > 2){
+                                foreach($parts as $ele){
+                                    $product_detail = Catalog::where('product_sku', $ele)->first();
+                                    if($product_detail){
+                                        $product_code = $ele;
+                                        break;
+                                    }
+                                }
+                            }else {
+                                $product_code = isset($parts[0]) ? $parts[0] : '';
+                            }
                             $product_detail = Catalog::where('product_sku', $product_code)->first();
 
                             $orderItemData = [
@@ -464,7 +474,17 @@ class OrdersController extends Controller
                         //$itemDetail = ManageMarketplaceProduct::where('sku', $item['sku'])->first();
 
                         $parts = explode('-', $data['sku']);
-                        $product_code = isset($parts[0]) ? $parts[0] : '';
+                        if(count($parts) > 2){
+                            foreach($parts as $ele){
+                                $product_detail = Catalog::where('product_sku', $ele)->first();
+                                if($product_detail){
+                                    $product_code = $ele;
+                                    break;
+                                }
+                            }
+                        }else {
+                            $product_code = isset($parts[0]) ? $parts[0] : '';
+                        }
                         $product_detail = Catalog::where('product_sku', $product_code)->first();
 
                         $orderItemData = [
