@@ -605,12 +605,14 @@ class AmazonService implements MarketplaceServiceInterface
         $trackingNumber = $mainOrderOperation->tracking_number;
         $orderItems = [];
 
-        foreach ($orderOperation->items as $item) {
+        foreach ($orderOperation->order->orderItem as $item) {
             $orderItems[] = [
-                'orderItemId' => $item->order_item_id,
+                'orderItemId' => $item->id1,
                 'quantity' => $item->quantity
             ];
         }
+
+        Log::info('Order Items for Shipment: ' . json_encode($orderItems));
 
         $finalData['packageDetail'] = [
             'orderItems' => $orderItems,
@@ -620,6 +622,7 @@ class AmazonService implements MarketplaceServiceInterface
             'carrierCode' => $mainOrderOperation->carrier->code,
             'packageReferenceId' => $orderOperation->id,
         ];
+        Log::info('Final Shipment Data: ' . json_encode($finalData));
 
         $response = $this->authService->shipOrder($finalData, $orderId);
         if (isset($response)) {
