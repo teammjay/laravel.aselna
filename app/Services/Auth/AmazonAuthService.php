@@ -418,6 +418,10 @@ class AmazonAuthService
                 'json' => $shipmentData
             ]);
 
+            if ($response->getStatusCode() == 204) {
+                return 204;
+            }
+
             return json_decode($response->getBody(), true);
         } catch (Exception $exception) {
             return json_encode([
