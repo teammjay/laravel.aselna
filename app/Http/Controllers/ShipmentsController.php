@@ -635,7 +635,7 @@ class ShipmentsController extends Controller
 
             $request['carrier_name'] = $operation->shipping_carrier_id;
             $request['shipping_carrier_service'] = $operation->shipping_carrier_service_id;
-            $request['weight'] = $product_total_weight;
+            $request['weight'] = $operation->weight_value ?? $product_total_weight;
             $request['weight_type'] = isset($operation->weight_weight_unit) ? $operation->weight_weight_unit : $product_weight_unit;
             $request['label_generation'] = 1;
             $request['tracking_number'] = null;
