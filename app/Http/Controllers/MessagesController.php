@@ -8,6 +8,7 @@ use App\Constants\OrderOperationStatus;
 use App\Constants\OrderOperationType;
 use App\Constants\OrderStatus;
 use App\Constants\ShippingLabelCreationType;
+use App\Helpers\Common;
 use App\Helpers\QueryFilters;
 use App\Jobs\ProcessStoreMessageAccountJob;
 use App\Models\Catalog;
@@ -958,6 +959,8 @@ class MessagesController extends Controller
             } else {
                 $orderDetail = Order::with('orderItem', 'orderOperation', 'customer', 'store')->where('order_id', $order_id)->orWhere('purchase_order_id', $order_id)->first();
             }
+
+
             $template_code = $template_id = '';
             if ($orderDetail) {
 
@@ -1040,7 +1043,7 @@ class MessagesController extends Controller
                     $shipmentDetail = OrderOperation::with('operationItem', 'order', 'order.customerAddress', 'carrierService', 'store', 'store.storeType', 'operationItem.orderItem', 'operationItem.orderItem.product')->where('id', $order_opration_id)->first();
 
                     $package_id = '';
-                    $product_total_weight = 0;
+                    $product_total_weight = Common::calculateProductWeight($shipmentDetail);
                     //print_r($shipmentDetail->operationItem);
                     if (count($shipmentDetail->operationItem ?? []) > 0) {
                         $product_weight = 0;
@@ -1058,7 +1061,6 @@ class MessagesController extends Controller
                                     }
 
                                     $product_weight = $product_detail->product_weight;
-                                    $product_total_weight = $product_total_weight + $product_weight;
                                 }
                             }
                         }
@@ -1088,6 +1090,8 @@ class MessagesController extends Controller
                             $shipmentDetail = OrderOperation::with('operationItem', 'order', 'order.customerAddress', 'carrierService', 'store', 'operationItem.orderItem', 'operationItem.orderItem.product')->where('id', $order_opration_id)->first();
                         }*/
                     }
+
+
 
                     $shipping_carrier_id = $shipmentDetail->shipping_carrier_id;
                     $shippingCarrierService = ShippingCarrierService::where('shipping_carrier_id', $shipping_carrier_id)->orderBy('name', 'asc')->get();
