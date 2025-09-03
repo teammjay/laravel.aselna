@@ -450,6 +450,9 @@ class OrderUtility
         $ordersItems = $sorder['lineItems'];
         if (!empty($ordersItems)) {
             foreach ($ordersItems as $item) {
+                if (!isset($item['sku']) || $item['sku'] == '') {
+                    continue;
+                }
                 //Log:info("Inside Order :: " . json_encode($item));
                 $itemDetail = ListingItem::with('storeProduct', 'storeProduct.product')->where('sku', $item['sku'])->first();
                 Log::info("Came Till Here 1 :: " . json_encode($itemDetail));
@@ -509,7 +512,7 @@ class OrderUtility
                     $orderItemData = [
                         'title' => $item['title'],
                         'order_id' => $order->id,
-                        'product_id' => $catalog->product_id,
+                        'product_id' => $catalog->product_id ?? null,
                         'client_id' => null,
 //                        'listing_item_id' => $itemDetail->id,
                         'sku' => $item['sku'],
