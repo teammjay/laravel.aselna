@@ -57,7 +57,7 @@ class FetchShopifyOrders implements ShouldQueue
 
                     $ordersyncDetail = OrderSynchronization::where('store_id',$store->id)->where('synchronization_type', OrderSyncronisationType::ORDER)->orderByRaw('COALESCE(last_order_update_date,filter_end_date) desc')->first();
                     $filterStartDate = OrderUtility::getLastSyncDate($store->id, OrderSyncronisationType::ORDER);
-                    $filterStartDateFormatted = gmdate('Y-m-d\TH:i:s\Z', strtotime($filterStartDate));
+                    $filterStartDateFormatted = date('Y-m-d\TH:i:s\Z', strtotime($filterStartDate));
 
                     /*if(!empty($ordersyncDetail)){
                         $start_date = new DateTime($ordersyncDetail->filter_end_date);

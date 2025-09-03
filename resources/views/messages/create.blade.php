@@ -1134,9 +1134,11 @@
 
                         ticket_id = data.ticket_id;
                         $('.ticket-title').html('ON <strong>'+data.ticket_code+'</strong>');
-                        if(rma_action) {
+
+                        window.location.href = '{{ url('messages/detail') }}/'+ticket_id;
+                        /*if(rma_action) {
                             doRMA(ticket_id);
-                        }
+                        }*/
                         /*if(subject == 'RMA' || subject == 'rma'){
                             $('#rma').trigger('click');
                         }*/

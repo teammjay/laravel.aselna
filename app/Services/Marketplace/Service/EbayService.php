@@ -1063,7 +1063,7 @@ class EbayService implements MarketplaceServiceInterface
 
         Log::info('Filter Start Date : ' . $filterStartDate);
 
-        $filterStartDateFormatted = gmdate('Y-m-d\TH:i:s\Z', strtotime($filterStartDate));
+        $filterStartDateFormatted = date('Y-m-d\TH:i:s\Z', strtotime($filterStartDate));
         if (env('APP_ENV') !== 'local' && (!isset($store->user_id))) {
             return null;
         }
