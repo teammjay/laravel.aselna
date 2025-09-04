@@ -512,6 +512,8 @@ class OrderUtility
                         Log::info("Catalog Found :: " . json_encode($catalog));
                     }
 
+                    if(!isset($catalog)) continue;
+
                     $orderItemData = [
                         'title' => $item['title'],
                         'order_id' => $order->id,
