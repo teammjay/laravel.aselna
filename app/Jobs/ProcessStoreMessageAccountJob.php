@@ -73,6 +73,7 @@ class ProcessStoreMessageAccountJob implements ShouldQueue
                     if (count($receiveEmails ?? []) > 0) {
                         foreach ($receiveEmails as $email) {
 
+                            Log::info(' Date : ' . $email['date']);
                             // get as max date for next filter
                             if (isset($email['date']) && $email['date'] > $last_filter_date) {
                                 $last_filter_date = $email['date'];
