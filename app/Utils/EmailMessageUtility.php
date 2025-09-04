@@ -63,7 +63,7 @@ class EmailMessageUtility
         ]);
     }
 
-    public function sendEmail($toEmail, $subject = '', $message = '', $prev_content = '', $message_id = '', $attachment = '')
+    public function sendEmail($toEmail, $subject = '', $message = '', $message_id = '', $attachment = '')
     {
         try {
 
@@ -81,21 +81,13 @@ class EmailMessageUtility
             }*/
 
             if($toEmail) {
-                if($prev_content != '') {
-                    Log::info("Email Previous Content". $prev_content);
-                    $newMessageBody = $message . " <div style='margin-left:20px; border-left:2px solid #ccc; padding-left:10px;'>
-                                    " . nl2br($prev_content) . "
-                                </div>";
-                }else{
-                    $newMessageBody = nl2br($message);
-                }
 
-                Log::info("Email New Content". $newMessageBody);
+                Log::info("Email New Content". $message);
 
-                Mail::send([], [], function ($m) use ($toEmail, $subject, $message_id, $attachment, $newMessageBody) {
+                Mail::send([], [], function ($m) use ($toEmail, $subject, $message_id, $attachment, $message) {
                     $m->to($toEmail)
                         ->subject('Re: ' . $subject)
-                        ->html($newMessageBody); // ✅ send HTML body
+                        ->html($message);
 
                     if (!empty($message_id)) {
                         $m->getHeaders()->addTextHeader('In-Reply-To', '<' . $message_id . '>');
