@@ -477,8 +477,10 @@ class MessagesController extends Controller
             }
         }
 
+        $stores = Store::with('storeType')->get();
+
         //print_r($action);
-        return view('messages.detail', compact('message_template','ticketDetail','messages','ticketTypeCode','action','store_type_name','ticketHistory','rma_done','lable_generate','type','template','ticketAllLabels','ticketLabels'));
+        return view('messages.detail', compact('message_template','ticketDetail','messages','ticketTypeCode','action','store_type_name','ticketHistory','rma_done','lable_generate','type','template','ticketAllLabels','ticketLabels','stores'));
     }
 
     public function search(Request $request)
@@ -830,6 +832,13 @@ class MessagesController extends Controller
 
         if($ticket_id){
             $ticketDetail = Message::with('store','customer')->where('id',$ticket_id)->first();
+            $previousMessage = HDMessage::with('parts')->where('ticket_id')->orderBy('created_at','desc')->first();
+            $prev_content = '';
+            if($previousMessage){
+                if(isset($previousMessage->parts)){
+                    $prev_content = $previousMessage->parts->content;
+                }
+            }
 
             if(isset($ticketDetail->ticket_email) && $ticketDetail->ticket_email != ''){
                 $email = $ticketDetail->ticket_email;
@@ -872,7 +881,7 @@ class MessagesController extends Controller
                 $filepath = $imagepath;
 
                 $connector = new EmailMessageUtility($smtpConfig, $imapConfig);
-                $response = $connector->sendEmail($email,$ticketDetail->subject,$message_to_send, $ticketDetail->message_id, $filepath);
+                $response = $connector->sendEmail($email,$ticketDetail->subject,$message_to_send, $prev_content, $ticketDetail->message_id, $filepath);
                 /*$response = $connector->sendEmail('jayesh@mjailab.com','Test Mail',$message_to_send, 'CAB3DxwfKHcaot+XFxHBW6Teiq38dDaHs2UU2UqipkfbHnYr+sg@mail.gmail.com', $filepath);*/
 
                 if($response){

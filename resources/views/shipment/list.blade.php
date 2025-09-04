@@ -342,7 +342,7 @@
         let isProcessingCancelled = false;
         $('#listing_store').select2();
         //$('#markAsShippedModal').modal('show');
-        $('.card-header').on('click',function () {
+        /*$('.card-header').on('click',function () {
             if($(this).find('.fa').hasClass('fa-angle-down')){
                 $(this).find('.fa').removeClass('fa-angle-down');
                 $(this).find('.fa').addClass('fa-angle-up');
@@ -351,7 +351,7 @@
                 $(this).find('.fa').addClass('fa-angle-down');
             }
             $('.card-body').toggle();
-        });
+        });*/
         $('#created_at').datepicker({
             dateFormat:'yy-mm-dd',
 

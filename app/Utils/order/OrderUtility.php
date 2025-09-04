@@ -450,9 +450,9 @@ class OrderUtility
         $ordersItems = $sorder['lineItems'];
         if (!empty($ordersItems)) {
             foreach ($ordersItems as $item) {
-                if (!isset($item['sku']) || $item['sku'] == '') {
+                /*if (!isset($item['sku']) || $item['sku'] == '') {
                     continue;
-                }
+                }*/
                 //Log:info("Inside Order :: " . json_encode($item));
                 $itemDetail = ListingItem::with('storeProduct', 'storeProduct.product')->where('sku', $item['sku'])->first();
                 Log::info("Came Till Here 1 :: " . json_encode($itemDetail));
@@ -504,10 +504,13 @@ class OrderUtility
                 } else {
                     Log::info("Item Not Found :: " . json_encode($item));
                     // split the sku from ES56_li to ES56
-                    $sku = preg_split('/[_-]/', $item['sku'])[0];
-                    Log::info("Item SKU :: " . json_encode($sku));
-                    $catalog = Catalog::where('product_sku', $sku)->first();
-                    Log::info("Catalog Found :: " . json_encode($catalog));
+                    $catalog = [];
+                    if($item['sku'] !='') {
+                        $sku = preg_split('/[_-]/', $item['sku'])[0];
+                        Log::info("Item SKU :: " . json_encode($sku));
+                        $catalog = Catalog::where('product_sku', $sku)->first();
+                        Log::info("Catalog Found :: " . json_encode($catalog));
+                    }
 
                     if(!isset($catalog)) continue;
 
@@ -530,7 +533,8 @@ class OrderUtility
 
                     $order_item = OrderItem::updateOrCreate([
                         'order_id' => $order->id,
-                        'product_id' => $catalog->product_id,
+                        //'product_id' => $catalog->product_id,
+                        'store_sku' =>  $item['lineItemId'],
                     ], $orderItemData);
 
                     if ($order_item->id) {
