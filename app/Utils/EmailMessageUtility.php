@@ -82,12 +82,16 @@ class EmailMessageUtility
 
             if($toEmail) {
                 if($prev_content != '') {
+                    Log::info("Email Previous Content". $prev_content);
                     $newMessageBody = $message . " <div style='margin-left:20px; border-left:2px solid #ccc; padding-left:10px;'>
-                                    " . $prev_content . "
+                                    " . nl2br($prev_content) . "
                                 </div>";
                 }else{
-                    $newMessageBody = $message;
+                    $newMessageBody = nl2br($message);
                 }
+
+                Log::info("Email New Content". $newMessageBody);
+
                 Mail::send([], [], function ($m) use ($toEmail, $subject, $message_id, $attachment, $newMessageBody) {
                     $m->to($toEmail)
                         ->subject('Re: ' . $subject)
