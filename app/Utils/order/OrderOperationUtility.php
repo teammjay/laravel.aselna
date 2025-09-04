@@ -22,6 +22,7 @@ use App\Utils\EndicialabelService;
 use App\Utils\shipment\ShipmentDocumentsCreator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class OrderOperationUtility
 {
@@ -295,6 +296,7 @@ class OrderOperationUtility
 
                                     /* purchase credit*/
                                     $shipmentDetails['credit'] = $purchaseCredit;
+                                    $shipmentDetails['requestId'] = (string) Str::uuid();
                                     $response = $endiciaClient->purchaseCredit($shipmentDetails);
 
                                     Log::info('uto Purchase credit Response:' . json_encode($response));

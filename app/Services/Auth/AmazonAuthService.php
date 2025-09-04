@@ -409,7 +409,7 @@ class AmazonAuthService
                 return "Error: Could not retrieve access token.";
             }
 
-            $response = $this->client->get("/orders/v0/orders/" . $amazonOrderId . "/shipmentConfirmation", [
+            $response = $this->client->post("/orders/v0/orders/" . $amazonOrderId . "/shipmentConfirmation", [
                 'headers' => [
                     'x-amz-access-token' => "{$accessToken}",
                     'Content-Type' => 'application/json',

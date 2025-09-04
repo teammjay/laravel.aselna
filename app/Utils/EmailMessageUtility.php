@@ -66,7 +66,8 @@ class EmailMessageUtility
     public function sendEmail($toEmail, $subject = '', $message = '', $message_id = '', $attachment = '')
     {
         try {
-            if($toEmail) {
+
+            /*if($toEmail) {
                 Mail::raw($message, function ($m) use ($toEmail, $subject, $message_id, $attachment) {
                     $m->to($toEmail)->subject('Re: '.$subject);
                     if($message_id != '') {
@@ -74,6 +75,26 @@ class EmailMessageUtility
                         $m->getHeaders()->addTextHeader('References', '<'.$message_id.'>');
                     }
                     if($attachment != '' && file_exists($attachment)) {
+                        $m->attach($attachment);
+                    }
+                });
+            }*/
+
+            if($toEmail) {
+
+                Log::info("Email New Content". $message);
+
+                Mail::send([], [], function ($m) use ($toEmail, $subject, $message_id, $attachment, $message) {
+                    $m->to($toEmail)
+                        ->subject('Re: ' . $subject)
+                        ->html($message);
+
+                    if (!empty($message_id)) {
+                        $m->getHeaders()->addTextHeader('In-Reply-To', '<' . $message_id . '>');
+                        $m->getHeaders()->addTextHeader('References', '<' . $message_id . '>');
+                    }
+
+                    if (!empty($attachment) && file_exists($attachment)) {
                         $m->attach($attachment);
                     }
                 });
@@ -88,133 +109,153 @@ class EmailMessageUtility
 
 
 
-    public function fetchEmails($store_type, $filter_date, $folderName = 'INBOX', $limit = 50)
+    public function fetchEmails($store_type, $filter_date, $folderName = 'INBOX', $limit = 20)
     {
         try {
             $this->client->connect();
 
-            $fromDate = \Carbon\Carbon::parse($filter_date,'America/New_York')->addHours(5);
-            $toDate = \Carbon\Carbon::now('America/New_York')->addDay();
+            $filterDateObj = \Carbon\Carbon::parse($filter_date, 'America/New_York');
+            $today = \Carbon\Carbon::now('America/New_York')->addDay();
+            $maxDate = $filterDateObj->copy()->addDays(1);
 
-            Log::info("Fetching emails from folder: {$folderName} between {$fromDate->toDateTimeString()} and {$toDate->toDateTimeString()} with limit {$limit}");
+            $toDate = $maxDate->lessThan($today) ? $maxDate : $today;
+
+            Log::info("Fetching email headers from folder: {$folderName} with filter date {$filterDateObj->toDateTimeString()} to {$toDate->toDateTimeString()} and limit {$limit}");
 
             $folder = $this->client->getFolder($folderName);
-            $messages = $folder->messages()
-                        ->since($fromDate)->before($toDate)
-                        ->limit($limit)
-                        ->get();
-                        /*->sortByDesc(function($msg) {
-                            return optional($msg->getDate()->get())->getTimestamp(); // safe
-                        })
-                        ->values(); // reindex after sorting*/
 
-//            echo '<pre>';
-//            print_r($messages);
-//            echo '</pre>';die;
+            $searchDateCriteria = $filterDateObj->format('d-M-Y');
+            $toDateCriteria = $toDate->format('d-M-Y');
+
+            $query = $folder->query()
+                ->where('SINCE', $searchDateCriteria)
+                ->where('BEFORE',$toDateCriteria)
+                ->setFetchOptions(\Webklex\PHPIMAP\IMAP::FT_UID | \Webklex\PHPIMAP\IMAP::FT_PEEK);
+
+            $messages = $query->get();
+
+            // Filter messages by exact time - more precise than IMAP can do
+            $filteredMessages = collect($messages)->filter(function($message) use ($filterDateObj) {
+                try {
+                    Log::info('Message checking :: ' . $message->getDate());
+                    $messageDate = $message->getDate()->first();
+                    return $messageDate->greaterThanOrEqualTo($filterDateObj);
+                } catch (Exception $e) {
+                    Log::warning("Error filtering message date: " . $e->getMessage());
+                    return false;
+                }
+            })->take($limit)->values();
+
+            Log::info("Found " . count($filteredMessages) . " messages matching the time criteria");
+
             $emails = [];
-            foreach ($messages as $key => $message) {
-                Log::info('Subject: ' . $message->subject->first());
+            foreach ($filteredMessages as $key => $message) {
+                try {
+                    // Log the subject we're processing
+                    $subject = $message->subject->first() ?? 'No Subject';
+                    Log::info("Processing email #{$key}: {$subject}");
 
-                $body = $message->getTextBody();
-                if (empty($message->getTextBody())) {
-                    $html = $message->getHtmlBody();
-                    $body = $html; // fallback to text-like content
-                }
+                    // Step 2: Now fetch the full message content for this specific message
+                    $uid = $message->getUid();
+                    $fullMessage = $folder->query()->whereUid($uid)->get()->first();
 
-                $parsedData = [];
-                if($store_type != ''){
-                    switch (strtolower($store_type)){
-                        case 'walmart':
-                            $walmartEmailParser = new WalmartEmailParser($message);
-                            $walmartEmailParser->getMessage(strip_tags($body));
-                            $parsedData = $walmartEmailParser->getEntities();
-                            /*echo '<pre>';
-                            print_r($parsedData);
-                            echo '</pre>';*/
-                            break;
-                        case 'amazon':
-                            $amazonEmailParser = new AmazonEmailParser($message);
-                            $amazonEmailParser->getMessage(strip_tags($body));
-                            $parsedData = $amazonEmailParser->getEntities();
-                            /*echo '<pre>';
-                            print_r($parsedData);
-                            echo '</pre>';*/
-                            break;
-                        case 'shopify':
-                            $shopifyEmailParser = new ShopifyEmailParser($message);
-                            $shopifyEmailParser->getMessage(strip_tags($body));
-                            $parsedData = $shopifyEmailParser->getEntities();
-                            /*echo '<pre>';
-                            print_r($parsedData);
-                            echo '</pre>';*/
-                            break;
+                    // Get the body content
+                    $body = $fullMessage->getTextBody();
+                    if (empty($body)) {
+                        $body = $fullMessage->getHtmlBody();
                     }
+
+                    // Process data for this specific message
+                    $parsedData = [];
+                    if($store_type != '') {
+                        switch (strtolower($store_type)) {
+                            case 'walmart':
+                                $walmartEmailParser = new WalmartEmailParser($fullMessage);
+                                $walmartEmailParser->getMessage(strip_tags($body));
+                                $parsedData = $walmartEmailParser->getEntities();
+                                break;
+                            case 'amazon':
+                                $amazonEmailParser = new AmazonEmailParser($fullMessage);
+                                $amazonEmailParser->getMessage(strip_tags($body));
+                                $parsedData = $amazonEmailParser->getEntities();
+                                break;
+                            case 'shopify':
+                                $shopifyEmailParser = new ShopifyEmailParser($fullMessage);
+                                $shopifyEmailParser->getMessage(strip_tags($body));
+                                $parsedData = $shopifyEmailParser->getEntities();
+                                break;
+                        }
+                    }
+
+                    // Handle message structure
+                    $structure = $fullMessage->getStructure();
+                    $part = isset($structure->parts[0]) ? $structure->parts[0] : null;
+
+                    $parts = [];
+                    if ($part) {
+                        $parts = [
+                            'mime_type' => $part->content_type ?? null,
+                            'content' => $part->content ?? null,
+                            'charset' => $part->charset ?? null,
+                        ];
+                    }
+
+                    if(str_contains($body, '<html>')) {
+                        $body = $this->formatHtml($body);
+                    }
+
+                    $attachments = [];
+                    if ($fullMessage->hasAttachments()) {
+                        $attachments = $fullMessage->getAttachments();
+                    }
+
+                    $mDate = $fullMessage->getDate()->first();
+                    $convertedDate = $mDate->copy()->setTimezone(config('app.timezone'));
+                    $date = $convertedDate->format('Y-m-d H:i:s');
+
+                    // Build the email data array
+                    $eData = [
+                        'subject' => $fullMessage->subject->first(),
+                        'full_name' => $fullMessage->fromaddress->first(),
+                        'name' => isset($fullMessage->getFrom()[0]) ? ($fullMessage->getFrom()[0]->personal ?? null) : null,
+                        'from' => isset($fullMessage->getFrom()[0]) ? ($fullMessage->getFrom()[0]->mail ?? null) : null,
+                        'reply_to' => isset($fullMessage->getReplyTo()[0]) ? ($fullMessage->getReplyTo()[0]->mail ?? null) : null,
+                        'reply_to_name' => isset($fullMessage->getReplyTo()[0]) ? ($fullMessage->getReplyTo()[0]->full ?? null) : null,
+                        'to' => isset($fullMessage->getTo()[0]) ? ($fullMessage->getTo()[0]->mail ?? null) : null,
+                        'cc' => isset($fullMessage->getCc()[0]) ? ($fullMessage->getCc()[0]->mail ?? null) : null,
+                        'bcc' => isset($fullMessage->getBcc()[0]) ? ($fullMessage->getBcc()[0]->mail ?? null) : null,
+                        'message_id' => $fullMessage->message_id->first(),
+                        'date' => $date,
+                        'parsedData' => $parsedData,
+                        'parts' => $parts,
+                        'body' => $body,
+                        'in_reply_to' => $fullMessage->in_reply_to->first(),
+                        'references' => $fullMessage->references->all(),
+                        'attachments' => $attachments,
+                        'client_id' => null
+                    ];
+
+                    $emails[] = $eData;
+
+                    // Free up memory by unsetting large objects
+                    unset($fullMessage);
+                    unset($body);
+                    unset($parsedData);
+
+                    // Allow garbage collection to free memory
+                    if (function_exists('gc_collect_cycles')) {
+                        gc_collect_cycles();
+                    }
+
+                } catch (Exception $e) {
+                    Log::error("Error processing message #{$key}: " . $e->getMessage());
                 }
-
-                //$parsedData = $this->parseEscalationEmail($body);
-
-                $part = $message->getStructure()->parts[0];
-
-                $parts = [
-                    'mime_type' => $part->content_type,
-                    'content' => $part->content,
-                    'charset' => $part->charset,
-                ];
-
-                if(str_contains($body, '<html>')){
-                    $body = $this->formatHtml($body);
-                }
-
-                $attachments = [];
-                if ($message->hasAttachments()) {
-                    $attachments = $message->getAttachments();
-                }
-
-                $mDate = $message->getDate()->first();
-                $convertedDate = $mDate->copy()->setTimezone(config('app.timezone'));
-                $date = $convertedDate->format('Y-m-d H:i:s');
-
-                $eData = [
-                    'subject' => $message->subject->first(),
-                    'full_name' => $message->fromaddress->first(),
-                    'name' => $message->getFrom()[0]->personal ?? null,
-                    'from' => $message->getFrom()[0]->mail ?? null,
-                    'reply_to' => $message->getReplyTo()[0]->mail ?? null,
-                    'reply_to_name' => $message->getReplyTo()[0]->full ?? null,
-                    'to' => $message->getTo()[0]->mail ?? null,
-                    'cc' => $message->getCc()[0]->mail ?? null,
-                    'bcc' => $message->getBcc()[0]->mail ?? null,
-                    'message_id' => $message->message_id->first(),
-                    'date' => $date,
-                    'parsedData' => $parsedData,
-                    'parts' => $parts,
-                    'body' => $body,
-                    'in_reply_to' => $message->in_reply_to->first(),
-                    'references' => $message->references->first(),
-                    'attachments' => $attachments,
-                    'client_id' => null
-                ];
-
-                /*echo '<pre>';
-                print_r($eData);
-                echo '</pre>';*/
-
-                $emails[] = $eData;
             }
 
-            /*echo '<pre>';
-            print_r($emails);
-            echo '</pre>';die;*/
-
-            Log::info("Email Founds.");
-            //die;
+            Log::info("Successfully processed " . count($emails) . " emails");
             return $emails;
         } catch (Exception $e) {
-            /*echo '<pre>';
-            print_r($e->getMessage());
-            echo '</pre>';die;*/
-
-            Log::info("Failed to fetch email: " . $e->getMessage());
+            Log::error("Failed to fetch emails: " . $e->getMessage());
             return ['error' => 'Failed to fetch emails: ' . $e->getMessage()];
         }
     }

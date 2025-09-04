@@ -41,6 +41,7 @@ class ProductSyncJob implements ShouldQueue
     {
         $easyesaleProductsQ = DB::connection('easyesale_db')->table('product')
             ->whereNull('deleted_by')
+            ->whereNull('parent_id')
             ->orderBy('create_ts', 'desc');
 
         if (env('APP_ENV') === 'local') {

@@ -385,7 +385,7 @@ class EbayAuthService
                 $endDate = now()->utc()->format('Y-m-d\TH:i:s\Z');
 
                 $queryData = [
-                    'filter'=> "lastmodifieddate:[$startDate..$endDate]",
+                    'filter'=> "creationdate:[$startDate..$endDate]",
                     'limit' => 90, // Fetch max 100 orders
                 ];
             }
