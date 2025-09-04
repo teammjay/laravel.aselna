@@ -531,6 +531,8 @@ class OrderUtility
                         'shipping_quantity' => $item['quantity'],
                     ];
 
+                    Log::info("Order Item Data :: " . json_encode($orderItemData));
+
                     $order_item = OrderItem::updateOrCreate([
                         'order_id' => $order->id,
                         //'product_id' => $catalog->product_id,
@@ -546,6 +548,8 @@ class OrderUtility
                             'client_id' => null,
                             'sync_status' => 6
                         ];
+
+                        Log::info("Order Operation Item Data :: " . json_encode($orderOperationItemData));
 
                         $order_operation_item = OrderOperationItem::updateOrCreate([
                             'order_item_id' => $order_item->id,
