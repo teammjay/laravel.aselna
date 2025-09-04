@@ -23,7 +23,7 @@ class OrderUtility
     {
         $lastOrderUpdateDate = OrderSynchronization::where('store_id', $store_id)
             ->where('synchronization_type', $synchronizationType)
-            ->orderBy('last_order_update_date','desc')->first();
+            ->orderBy('last_order_update_date', 'desc')->first();
 
         if ($lastOrderUpdateDate) {
 
@@ -49,7 +49,7 @@ class OrderUtility
             $itemTotal = 0;
             $sku = preg_split('/[_-]/', $line['item']['sku'])[0];
             $catalog = Catalog::where('product_sku', $sku)->first();
-            if($catalog){
+            if ($catalog) {
                 $totalWeight += $catalog->product_weight;
             }
             foreach ($line['charges']['charge'] as $charge) {
@@ -114,7 +114,7 @@ class OrderUtility
             ->where('address_combined', $sorder['shippingInfo']['postalAddress']['address1'] . ' ' . $sorder['shippingInfo']['postalAddress']['address2'])
             ->first();
 
-        if(isset($sorder['shippingInfo']['phone']) && $sorder['shippingInfo']['phone'] != null) {
+        if (isset($sorder['shippingInfo']['phone']) && $sorder['shippingInfo']['phone'] != null) {
             $customer_phone_data = [
                 'customer_id' => $customer_detail->id,
                 'phone_no' => $sorder['shippingInfo']['phone'],
@@ -143,7 +143,7 @@ class OrderUtility
             'status' => OrderOperationStatus::Created,
             'signature_confirmation' => 1,
             'store_id' => $store->id,
-            'shipping_package_id'=>ShippingPackage::getDefaultShippingPackage(),
+            'shipping_package_id' => ShippingPackage::getDefaultShippingPackage(),
             'operation_type' => OrderOperationType::OrderShipment,
             'label_creation_type' => 1,
             'print_to_file' => 0,
@@ -206,14 +206,12 @@ class OrderUtility
                                 'order_operation_id' => $order_operation_detail->id
                             ], $orderOperationItemData);
 
-                            if(isset($itemDetail->storeProduct->product->shipping_package_id) && $itemDetail->storeProduct->product->shipping_package_id != '') {
+                            if (isset($itemDetail->storeProduct->product->shipping_package_id) && $itemDetail->storeProduct->product->shipping_package_id != '') {
                                 $package_id = $itemDetail->storeProduct->product->shipping_package_id;
                                 $order_operation_detail->update(['shipping_package_id' => $package_id]);
                             }
                         }
-                    }
-                    else
-                    {
+                    } else {
                         $sku = preg_split('/[_-]/', $item['item']['sku'])[0];
                         if (env('APP_ENV') == 'local') {
                             $sku = 'Z67';
@@ -259,7 +257,7 @@ class OrderUtility
                                 'order_operation_id' => $order_operation_detail->id
                             ], $orderOperationItemData);
 
-                            if(isset($catalog->shipping_package_id) && $catalog->shipping_package_id != '') {
+                            if (isset($catalog->shipping_package_id) && $catalog->shipping_package_id != '') {
                                 $package_id = $catalog->shipping_package_id;
                                 $order_operation_detail->update(['shipping_package_id' => $package_id]);
                             }
@@ -287,7 +285,7 @@ class OrderUtility
                         }
                         $order->save();
                         $order_operation_detail->save();
-                    }else if ($lineStatus['status'] === 'Cancelled') {
+                    } else if ($lineStatus['status'] === 'Cancelled') {
                         $order->order_status = OrderStatus::Canceled;
                         $order_operation_detail->status = OrderOperationStatus::Canceled;
                         $order->save();
@@ -334,7 +332,7 @@ class OrderUtility
                 'address_line_2' => $addressLine2,
                 'city' => $addressDetails['contactAddress']['city'],
                 'state' => $addressDetails['contactAddress']['stateOrProvince'],
-                'zip' => explode('-',$addressDetails['contactAddress']['postalCode'] ?? '')[0],
+                'zip' => explode('-', $addressDetails['contactAddress']['postalCode'] ?? '')[0],
                 'country_code' => $addressDetails['contactAddress']['countryCode'],
                 'address_combined' => $addressLine1 . ' ' . $addressLine2,
             ];
@@ -344,7 +342,7 @@ class OrderUtility
                 'address_combined' => $addressLine1 . ' ' . $addressLine2,
             ], $customer_address_data);
 
-            if(isset($addressDetails['primaryPhone']['phoneNumber']) && $addressDetails['primaryPhone']['phoneNumber'] != null) {
+            if (isset($addressDetails['primaryPhone']['phoneNumber']) && $addressDetails['primaryPhone']['phoneNumber'] != null) {
                 $customer_phone_data = [
                     'customer_id' => $customer_detail->id,
                     'phone_no' => $addressDetails['primaryPhone']['phoneNumber'],
@@ -370,7 +368,7 @@ class OrderUtility
                 'address_line_2' => $addressLine2,
                 'city' => $shipTo['contactAddress']['city'] ?? '',
                 'state' => $shipTo['contactAddress']['stateOrProvince'] ?? '',
-                'zip' => explode('-',$shipTo['contactAddress']['postalCode'] ?? '')[0],
+                'zip' => explode('-', $shipTo['contactAddress']['postalCode'] ?? '')[0],
                 'country_code' => $shipTo['contactAddress']['countryCode'] ?? '',
                 'address_combined' => $addressLine1 . ' ' . $addressLine2,
                 'phone_no' => $shipTo['primaryPhone']['phoneNumber'] ?? '',
@@ -381,7 +379,7 @@ class OrderUtility
                 'address_combined' => $addressLine1 . ' ' . $addressLine2,
             ], $customer_address_data);
 
-            if(isset($shipTo['primaryPhone']['phoneNumber']) && $shipTo['primaryPhone']['phoneNumber'] != null) {
+            if (isset($shipTo['primaryPhone']['phoneNumber']) && $shipTo['primaryPhone']['phoneNumber'] != null) {
                 $customer_phone_data = [
                     'customer_id' => $customer_detail->id,
                     'phone_no' => $shipTo['primaryPhone']['phoneNumber'],
@@ -432,7 +430,7 @@ class OrderUtility
             'status' => $operationstatus,
             'signature_confirmation' => 1,
 //            'ship_from_id' => '',
-            'shipping_package_id'=>ShippingPackage::getDefaultShippingPackage(),
+            'shipping_package_id' => ShippingPackage::getDefaultShippingPackage(),
             'store_id' => $store->id,
             'operation_type' => OrderOperationType::OrderShipment,
             'label_creation_type' => 1,
@@ -496,7 +494,7 @@ class OrderUtility
                             'order_operation_id' => $order_operation_detail->id
                         ], $orderOperationItemData);
 
-                        if(isset($itemDetail->storeProduct->product->shipping_package_id) && $itemDetail->storeProduct->product->shipping_package_id != '') {
+                        if (isset($itemDetail->storeProduct->product->shipping_package_id) && $itemDetail->storeProduct->product->shipping_package_id != '') {
                             $package_id = $itemDetail->storeProduct->product->shipping_package_id;
                             $order_operation_detail->update(['shipping_package_id' => $package_id]);
                         }
@@ -556,7 +554,7 @@ class OrderUtility
                             'order_operation_id' => $order_operation_detail->id
                         ], $orderOperationItemData);
 
-                        if(isset($catalog->shipping_package_id) && $catalog->shipping_package_id != '') {
+                        if (isset($catalog->shipping_package_id) && $catalog->shipping_package_id != '') {
                             $package_id = $catalog->shipping_package_id;
                             $order_operation_detail->update(['shipping_package_id' => $package_id]);
                         }

@@ -16,6 +16,7 @@ use App\Jobs\FetchWalmartOrdersJob;
 use App\Jobs\InterfaceSyncJob;
 use App\Jobs\ProductImagesSyncJob;
 use App\Jobs\ProductInterfaces;
+use App\Jobs\ProductSyncJob;
 use App\Jobs\ShopifyCollectionSyncJob;
 use App\Jobs\SyncAllOrderStatusJob;
 use App\Jobs\SubmitShopifyProductsJob;
@@ -51,6 +52,7 @@ Schedule::job(FetchEmailMessagesJob::class)->everyTenMinutes();
 Schedule::job(new ShopifyCollectionSyncJob())->dailyAt('03:00');
 
 //Devices, Interfaces, and Brands Syncing at 1 2 and 3 AM
+Schedule::job(new ProductSyncJob())->dailyAt('00:30');
 Schedule::job(new InterfaceSyncJob())->dailyAt('01:00');
 Schedule::job(new DeviceSeriesSyncJob())->dailyAt('01:00');
 Schedule::job(new CategorySyncJob())->dailyAt('01:30');
