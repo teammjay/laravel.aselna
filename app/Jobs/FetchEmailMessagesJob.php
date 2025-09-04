@@ -45,10 +45,10 @@ class FetchEmailMessagesJob implements ShouldQueue
 
             if (count($stores ?? []) > 0) {
                 foreach ($stores as $store) {
-                    if (env('APP_ENV') === 'local' && $store->name != 'AWAccessory') {
+                    if (env('APP_ENV') === 'local' && $store->name != 'OdeMobile') {
                         continue;
                     }
-                    if (env('APP_ENV') === 'local' && $store->storeType->name != 'Walmart') {
+                    if (env('APP_ENV') === 'local' && $store->storeType->name != 'Shopify') {
                         continue;
                     }
                     Log::info('Processing store: ' . $store->name);

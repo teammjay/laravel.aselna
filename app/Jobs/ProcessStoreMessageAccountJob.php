@@ -320,6 +320,7 @@ class ProcessStoreMessageAccountJob implements ShouldQueue
                         }
 
                         if ($last_filter_date != '') {
+                            Log::info('Updating last filter date to: ' . $last_filter_date);
                             $account->update(['filter_from_date' => $last_filter_date]);
                         }
                     }
