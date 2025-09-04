@@ -607,10 +607,10 @@ class AmazonService implements MarketplaceServiceInterface
         $finalData = [];
         $orderId = $orderOperation->order->order_id;
         $trackingNumber = $mainOrderOperation->tracking_number;
-        $shippingMethod = $mainOrderOperation->order->carrierService->name;
+        $shippingMethod = $mainOrderOperation->carrierService->name;
         $orderItems = [];
 
-        $orderDetail = $this->authService ->getOrderInfo($orderId);
+        $orderDetail = $this->authService->getOrderInfo($orderId);
 
         foreach ($orderOperation->order->orderItem as $item) {
             $orderItems[] = [
