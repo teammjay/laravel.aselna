@@ -880,8 +880,17 @@ class MessagesController extends Controller
                 $imapConfig = [];
                 $filepath = $imagepath;
 
+                if($prev_content != '') {
+                    Log::info("Email Previous Content". $prev_content);
+                    $newMessageBody = $message_to_send . " <div style='margin-left:20px; border-left:2px solid #ccc; padding-left:10px;'>
+                                    " . nl2br($prev_content) . "
+                                </div>";
+                }else{
+                    $newMessageBody = nl2br($message_to_send);
+                }
+
                 $connector = new EmailMessageUtility($smtpConfig, $imapConfig);
-                $response = $connector->sendEmail($email,$ticketDetail->subject,$message_to_send, $prev_content, $ticketDetail->message_id, $filepath);
+                $response = $connector->sendEmail($email,$ticketDetail->subject,$newMessageBody, $ticketDetail->message_id, $filepath);
                 /*$response = $connector->sendEmail('jayesh@mjailab.com','Test Mail',$message_to_send, 'CAB3DxwfKHcaot+XFxHBW6Teiq38dDaHs2UU2UqipkfbHnYr+sg@mail.gmail.com', $filepath);*/
 
                 if($response){
@@ -893,11 +902,11 @@ class MessagesController extends Controller
                         'to_' => $ticketDetail->ticket_email,
                         'cc' => NULL,
                         'bcc' => NULL,
-                        'message_id' => trim($ticketDetail->message_id),
+                        'message_id' => NULL,
                         'messaging_account_id' => $storeMessageAccount->outgoingAccount->id,
                         'from_email' => trim($storeMessageAccount->outgoingAccount->user_id),
                         'from_name' => trim($storeMessageAccount->outgoingAccount->user_id),
-                        'message' => $message_to_send,
+                        'message' => $newMessageBody,
                         'draft' => 0,
                         'author' => 1,
                     ];
