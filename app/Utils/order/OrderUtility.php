@@ -509,6 +509,8 @@ class OrderUtility
                     $catalog = Catalog::where('product_sku', $sku)->first();
                     Log::info("Catalog Found :: " . json_encode($catalog));
 
+                    if(!isset($catalog)) continue;
+
                     $orderItemData = [
                         'title' => $item['title'],
                         'order_id' => $order->id,
