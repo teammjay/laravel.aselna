@@ -63,10 +63,11 @@ class EmailMessageUtility
         ]);
     }
 
-    public function sendEmail($toEmail, $subject = '', $message = '', $message_id = '', $attachment = '')
+    public function sendEmail($toEmail, $subject = '', $message = '', $prev_content = '', $message_id = '', $attachment = '')
     {
         try {
-            if($toEmail) {
+
+            /*if($toEmail) {
                 Mail::raw($message, function ($m) use ($toEmail, $subject, $message_id, $attachment) {
                     $m->to($toEmail)->subject('Re: '.$subject);
                     if($message_id != '') {
@@ -74,6 +75,30 @@ class EmailMessageUtility
                         $m->getHeaders()->addTextHeader('References', '<'.$message_id.'>');
                     }
                     if($attachment != '' && file_exists($attachment)) {
+                        $m->attach($attachment);
+                    }
+                });
+            }*/
+
+            if($toEmail) {
+                if($prev_content != '') {
+                    $newMessageBody = $message . " <div style='margin-left:20px; border-left:2px solid #ccc; padding-left:10px;'>
+                                    " . $prev_content . "
+                                </div>";
+                }else{
+                    $newMessageBody = $message;
+                }
+                Mail::send([], [], function ($m) use ($toEmail, $subject, $message_id, $attachment, $newMessageBody) {
+                    $m->to($toEmail)
+                        ->subject('Re: ' . $subject)
+                        ->html($newMessageBody); // ✅ send HTML body
+
+                    if (!empty($message_id)) {
+                        $m->getHeaders()->addTextHeader('In-Reply-To', '<' . $message_id . '>');
+                        $m->getHeaders()->addTextHeader('References', '<' . $message_id . '>');
+                    }
+
+                    if (!empty($attachment) && file_exists($attachment)) {
                         $m->attach($attachment);
                     }
                 });
@@ -190,7 +215,7 @@ class EmailMessageUtility
                     'parts' => $parts,
                     'body' => $body,
                     'in_reply_to' => $message->in_reply_to->first(),
-                    'references' => $message->references->first(),
+                    'references' => $message->references->all(),
                     'attachments' => $attachments,
                     'client_id' => null
                 ];

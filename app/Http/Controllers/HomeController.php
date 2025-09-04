@@ -300,8 +300,15 @@ class HomeController extends Controller
             'from_name' => 'Phonil Ebay',
         ];
 
+        $previous = 'Reply from email center
+
+On Fri, 29 Aug 2025 at 23:36, phonil <phonil.ebay@gmail.com> wrote:
+
+> Reply from message page
+>';
+
         $connector = new EmailMessageUtility($smtpConfig, $imapConfig);
-        $response = $connector->sendEmail('jayesh@mjailab.com','Test account to test');
+        $response = $connector->sendEmail('jayesh@mjailab.com','Test account to test','Test Message For Check',$previous,'CAB3Dxwe17ba=xxUSyLkmUMmGLkxSvwPKpHXt+H8oZ89xaWnfaA@mail.gmail.com');
         die;*/
             /*$store = Store::with('storeType')->where('id', '3fab8878-e036-58c7-db30-addd3058875c')->first();
             $authService = new ShopifyAuthService($store->secret_key, $store->service_url);
@@ -394,13 +401,17 @@ class HomeController extends Controller
             'port' => 993,
             'encryption' => 'ssl',
             //'username' => 'odemobile.shopify@gmail.com',
-            'username' => 'cs@odemobile.com',
+            //'username' => 'cs@odemobile.com',
+            'username' => 'phonil.ebay@gmail.com',
             //'password' => 'deczsvfmubmpxtsf',
-            'password' => 'qaym xjqg icea syxw',
+            //'password' => 'qaym xjqg icea syxw',
+            'password' => 'qynvjqjqqaqqramo',
         ];
 
+
+
         $connector = new EmailMessageUtility($smtpConfig, $imapConfig);
-        $receiveEmails = $connector->fetchEmails('Walmart', '2025-09-01 05:30:18','INBOX');
+        $receiveEmails = $connector->fetchEmails('Ebay', '2025-09-03 20:00:00','INBOX');
 
         //$store = Store::with('storeType')->where('id','0dd4de79-bba1-c47a-a7aa-822e6f015b8e')->first();
         $store = Store::with('storeType')->where('id','6c7009ce-eac1-a995-a986-27d5df0103ac')->first();
@@ -506,7 +517,7 @@ class HomeController extends Controller
                     'ticket_email' => trim($email['from']),
                     'status' => HdTicketStatus::NEEDS_ACTION,
                     'related_order_id' => $related_order_id,
-                    'subject' => trim($email['subject']),
+                    'subject' => preg_replace('/[\x00-\x1F\x7F-\xFF]/', '', trim(mb_convert_encoding(htmlspecialchars_decode($email['subject']), 'UTF-8', 'UTF-8'))),
                     'message_id' => trim($email['message_id']),
                     'notes' => NULL,
                     'customer_id' => $customer_id,
@@ -525,14 +536,23 @@ class HomeController extends Controller
                     'related_listing_item_id' => NULL,
                 ];
 
-                Log::info('Email From : ' . $email['from'] . ' Message ID: ' . $email['message_id'].' Reference ID: '.$email['references']);
+                Log::info('Email From : ' . $email['from'] . ' Message ID: ' . $email['message_id']);
+                Log::info(' Reference ID: ' . json_encode($email['references']));
                 /*$ticketDetail = Message::where('ticket_email', trim($email['from']))->orWhere('ticket_email', trim($email['reply_to']))->first();*/
                 $query = Message::where('message_id', trim($email['message_id']));
-                if(isset($email['references']) && $email['references'] != ''){
-                    $query->orWhere('message_id', trim($email['references']));
+                if (isset($email['references']) && $email['references'] != '') {
+                    if(is_array($email['references'])){
+                        $query->orWhereIn('message_id', $email['references']);
+
+
+                    }else {
+                        $query->orWhere('message_id', trim($email['references']));
+                    }
+                }
+                if (isset($email['in_reply_to']) && $email['in_reply_to'] != '') {
                     $query->orWhere('message_id', trim($email['in_reply_to']));
                 }
-                Log::info($query->toRawSql());
+                Log::info(' Message Query: ' . $query->toSql());
                 $ticketDetail = $query->first();
 
                 Log::info('TicketDetail : ' .json_encode($ticketDetail));

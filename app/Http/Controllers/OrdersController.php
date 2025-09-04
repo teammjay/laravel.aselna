@@ -170,7 +170,7 @@ class OrdersController extends Controller
                 }
                 $image .= '</div>';
                 $data[] = array(
-                    "order_id" => $order->order_id.'<input type="checkbox" class="pro-id" name="order_id[]" value="'.$order->id.'" style="visibility:hidden;">',
+                    "order_id" => $order->order_id.'<input type="checkbox" class="pro-id" name="order_id[]" data-order="'.$order->order_id.'" value="'.$order->id.'" style="visibility:hidden;">',
                     "store" => $order->store->name.' - '.$storeType,
                     "order_date" => $order->order_date,
                     "order_image" => $image,
