@@ -382,7 +382,7 @@ class EbayAuthService
                 parse_str(parse_url($cursor, PHP_URL_QUERY), $queryData);
             } else {
                 $startDate = $sync_start_date;
-                $endDate = date('Y-m-d\TH:i:s\Z', strtotime(now()));
+                $endDate = now()->utc()->format('Y-m-d\TH:i:s\Z');
 
                 $queryData = [
                     'filter'=> "lastmodifieddate:[$startDate..$endDate]",

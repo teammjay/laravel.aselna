@@ -607,6 +607,7 @@ class AmazonService implements MarketplaceServiceInterface
         $finalData = [];
         $orderId = $orderOperation->order->order_id;
         $trackingNumber = $mainOrderOperation->tracking_number;
+        $shippingMethod = $mainOrderOperation->order->carrierService->name;
         $orderItems = [];
 
         $orderDetail = $this->authService ->getOrderInfo($orderId);
@@ -624,8 +625,9 @@ class AmazonService implements MarketplaceServiceInterface
             'orderItems' => $orderItems,
             'shipDate' => date('c', time()),
             'trackingNumber' => $trackingNumber,
-            'carrierName' => $mainOrderOperation->carrier->name,
-            'carrierCode' => $mainOrderOperation->carrier->code,
+            'carrierName' => '',
+            'carrierCode' => $mainOrderOperation->carrier->name,
+            'shippingMethod' => $shippingMethod,
             'packageReferenceId' => 1,
         ];
         $finalData['marketplaceId'] = $orderDetail['payload']['MarketplaceId'];
