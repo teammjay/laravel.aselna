@@ -1058,118 +1058,122 @@ class EbayService implements MarketplaceServiceInterface
 
     public function getOrders($store)
     {
-        $last_synchronization = OrderSynchronization::where('store_id', $store->id)->where('synchronization_type', OrderSyncronisationType::ORDER)->orderBy('last_order_update_date', 'desc')->first();
-        $filterStartDate = OrderUtility::getLastSyncDate($store->id, OrderSyncronisationType::ORDER);
+        try {
+            $last_synchronization = OrderSynchronization::where('store_id', $store->id)->where('synchronization_type', OrderSyncronisationType::ORDER)->orderBy('last_order_update_date', 'desc')->first();
+            $filterStartDate = OrderUtility::getLastSyncDate($store->id, OrderSyncronisationType::ORDER);
 
-        Log::info('Filter Start Date : ' . $filterStartDate);
+            Log::info('Filter Start Date : ' . $filterStartDate);
 
-        $filterStartDateFormatted = date('Y-m-d\TH:i:s\Z', strtotime($filterStartDate));
-        if (env('APP_ENV') !== 'local' && (!isset($store->user_id))) {
-            return null;
-        }
+            $filterStartDateFormatted = date('Y-m-d\TH:i:s\Z', strtotime($filterStartDate));
+            if (env('APP_ENV') !== 'local' && (!isset($store->user_id))) {
+                return null;
+            }
 
-        $clientId = env('EBAY_CLIENT_ID');
-        $clientSecret = env('EBAY_CLIENT_SECRET');
-        $redirectUri = env('EBAY_REDIRECT_URI');
+            $clientId = env('EBAY_CLIENT_ID');
+            $clientSecret = env('EBAY_CLIENT_SECRET');
+            $redirectUri = env('EBAY_REDIRECT_URI');
 
-        $this->authService = new EbayAuthService($clientId, $clientSecret, $redirectUri, $store->user_id);
-        $orders = $this->authService->getOrders($filterStartDateFormatted, $last_synchronization->cursor ?? null);
+            $this->authService = new EbayAuthService($clientId, $clientSecret, $redirectUri, $store->user_id);
+            $orders = $this->authService->getOrders($filterStartDateFormatted, $last_synchronization->cursor ?? null);
 //        Log::info('Orders Response : ' . json_encode(array_keys($orders)));
 
-        if (!isset($orders)) {
-            Log::info("Error in Ebay Orders : ");
-            return null;
-        }
-
-        if (isset($orders['total']) && $orders['total'] < 0) {
-            Log::info("No Orders Found");
-            return null;
-        }
-
-        $nextCursor = $orders['next'] ?? null;
-        Log::info('Next Cursor : ' . $nextCursor);
-
-        $created_by = auth()->user()->name ?? 'admin';
-        $synchronizeArr = [
-            'store_id' => $store->id,
-            'synchronization_type' => OrderSyncronisationType::ORDER,
-            'filter_start_date' => isset($nextCursor) && isset($last_synchronization) ? $last_synchronization->filter_start_date : $filterStartDate,
-            'filter_end_date' => isset($nextCursor) && isset($last_synchronization) ? $last_synchronization->filter_end_date : date('Y-m-d H:i:s'),
-            'created_by' => $created_by,
-            'cursor' => $nextCursor
-        ];
-        //Log::info('Order Synchronization: ' . json_encode($synchronizeArr));
-        $order_synchronization = OrderSynchronization::create($synchronizeArr);
-
-        $last_order_update_date = null;
-        $noOfOrder = 0;
-
-        if (isset($orders['total']) && $orders['total'] > 0) {
-            foreach ($orders['orders'] as $order) {
-                //Log::info('Order : ' . json_encode($order));
-                $newOrder = Order::where('order_id', $order['orderId'])->first();
-
-                $persist = false;
-                $statusChange = false;
-
-                if ($newOrder == null) {
-
-                    switch (strtolower($order['orderFulfillmentStatus'])) {
-                        case 'fulfilled';
-                            $order_status = OrderStatus::Shipped;
-                            break;
-                        case 'not_started';
-                            $order_status = OrderStatus::Pending;
-                            break;
-                        default:
-                            $order_status = OrderStatus::Synchronizing;
-                            break;
-                    }
-
-                    if (isset($order['cancelStatus']) && $order['cancelStatus']['cancelState'] == 'CANCELLED') {
-                        $order_status = OrderStatus::Canceled;
-                    }
-
-                    Log::info('Order :: ' . json_encode($order));
-                    $orderData = [
-                        'order_id' => $order['orderId'],
-                        'order_date' => date('Y-m-d H:i:s', strtotime($order['creationDate'])),
-                        'order_status' => $order_status,
-                        'order_total' => $order['totalFeeBasisAmount']['value'],
-                        'buyer_first_name' => $order['buyer']['buyerRegistrationAddress']['fullName'],
-                        'buyer_last_name' => '',
-                        'buyer_email' => $order['buyer']['buyerRegistrationAddress']['email'] ?? '',
-                        'purchase_order_id' => $order['orderId'],
-                        'store_id' => $store->id,
-                        'order_synchronization_id' => $order_synchronization->id
-                    ];
-                    $newOrder = Order::create($orderData);
-                    $persist = true;
-                    $statusChange = true;
-                } else {
-                    // TODO Need To implement status change
-                    $statusChange = true;
-                }
-
-                if ($statusChange) {
-                    OrderUtility::mapEbayOrders($newOrder, $order, $store);
-                }
-
-
-                if ($last_order_update_date === null || strtotime($order['lastModifiedDate']) > strtotime($last_order_update_date)) {
-                    $last_order_update_date = date('Y-m-d H:i:s', strtotime($order['lastModifiedDate']));
-                }
-                Log::info('Last Order Update Date : ' . $last_order_update_date);
-                $noOfOrder++;
+            if (!isset($orders)) {
+                Log::info("Error in Ebay Orders : ");
+                return null;
             }
-        }
 
-        if (isset($last_synchronization) && strtotime($last_synchronization->last_order_update_date) > strtotime($last_order_update_date)) {
-            $last_order_update_date = date('Y-m-d H:i:s', strtotime($last_synchronization->last_order_update_date));
+            if (isset($orders['total']) && $orders['total'] < 0) {
+                Log::info("No Orders Found");
+                return null;
+            }
+
+            $nextCursor = $orders['next'] ?? null;
+            Log::info('Next Cursor : ' . $nextCursor);
+
+            $created_by = auth()->user()->name ?? 'admin';
+            $synchronizeArr = [
+                'store_id' => $store->id,
+                'synchronization_type' => OrderSyncronisationType::ORDER,
+                'filter_start_date' => isset($nextCursor) && isset($last_synchronization) ? $last_synchronization->filter_start_date : $filterStartDate,
+                'filter_end_date' => isset($nextCursor) && isset($last_synchronization) ? $last_synchronization->filter_end_date : date('Y-m-d H:i:s'),
+                'created_by' => $created_by,
+                'cursor' => $nextCursor
+            ];
+            //Log::info('Order Synchronization: ' . json_encode($synchronizeArr));
+            $order_synchronization = OrderSynchronization::create($synchronizeArr);
+
+            $last_order_update_date = null;
+            $noOfOrder = 0;
+
+            if (isset($orders['total']) && $orders['total'] > 0) {
+                foreach ($orders['orders'] as $order) {
+                    //Log::info('Order : ' . json_encode($order));
+                    $newOrder = Order::where('order_id', $order['orderId'])->first();
+
+                    $persist = false;
+                    $statusChange = false;
+
+                    if ($newOrder == null) {
+
+                        switch (strtolower($order['orderFulfillmentStatus'])) {
+                            case 'fulfilled';
+                                $order_status = OrderStatus::Shipped;
+                                break;
+                            case 'not_started';
+                                $order_status = OrderStatus::Pending;
+                                break;
+                            default:
+                                $order_status = OrderStatus::Synchronizing;
+                                break;
+                        }
+
+                        if (isset($order['cancelStatus']) && $order['cancelStatus']['cancelState'] == 'CANCELLED') {
+                            $order_status = OrderStatus::Canceled;
+                        }
+
+                        Log::info('Order :: ' . json_encode($order));
+                        $orderData = [
+                            'order_id' => $order['orderId'],
+                            'order_date' => date('Y-m-d H:i:s', strtotime($order['creationDate'])),
+                            'order_status' => $order_status,
+                            'order_total' => $order['totalFeeBasisAmount']['value'],
+                            'buyer_first_name' => $order['buyer']['buyerRegistrationAddress']['fullName'],
+                            'buyer_last_name' => '',
+                            'buyer_email' => $order['buyer']['buyerRegistrationAddress']['email'] ?? '',
+                            'purchase_order_id' => $order['orderId'],
+                            'store_id' => $store->id,
+                            'order_synchronization_id' => $order_synchronization->id
+                        ];
+                        $newOrder = Order::create($orderData);
+                        $persist = true;
+                        $statusChange = true;
+                    } else {
+                        // TODO Need To implement status change
+                        $statusChange = true;
+                    }
+
+                    if ($statusChange) {
+                        OrderUtility::mapEbayOrders($newOrder, $order, $store);
+                    }
+
+
+                    if ($last_order_update_date === null || strtotime($order['lastModifiedDate']) > strtotime($last_order_update_date)) {
+                        $last_order_update_date = date('Y-m-d H:i:s', strtotime($order['lastModifiedDate']));
+                    }
+                    Log::info('Last Order Update Date : ' . $last_order_update_date);
+                    $noOfOrder++;
+                }
+            }
+
+            if (isset($last_synchronization) && strtotime($last_synchronization->last_order_update_date) > strtotime($last_order_update_date)) {
+                $last_order_update_date = date('Y-m-d H:i:s', strtotime($last_synchronization->last_order_update_date));
+            }
+            Log::info('Final Last Order Update Date : ' . $last_order_update_date . ' No of Orders : ' . $noOfOrder);
+            $order_synchronization->update(['number_of_items' => $noOfOrder, 'last_order_update_date' => $last_order_update_date]);
+            return $orders;
+        }catch (\Exception $e) {
+            Log::info('Ebay order error : ' . $e->getMessage());
         }
-        Log::info('Final Last Order Update Date : ' . $last_order_update_date . ' No of Orders : ' . $noOfOrder);
-        $order_synchronization->update(['number_of_items' => $noOfOrder, 'last_order_update_date' => $last_order_update_date]);
-        return $orders;
     }
 
     public function syncAttributes($store)

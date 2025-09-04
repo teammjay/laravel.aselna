@@ -192,15 +192,23 @@ class ProcessStoreMessageAccountJob implements ShouldQueue
                                 'related_listing_item_id' => NULL,
                             ];
 
-                            Log::info('Email From : ' . $email['from'] . ' Message ID: ' . $email['message_id'] . ' Reference ID: ' . $email['references']);
+                            Log::info('Email From : ' . $email['from'] . ' Message ID: ' . $email['message_id']);
+                            Log::info(' Reference ID: ' . json_encode($email['references']));
                             /*$ticketDetail = Message::where('ticket_email', trim($email['from']))->orWhere('ticket_email', trim($email['reply_to']))->first();*/
                             $query = Message::where('message_id', trim($email['message_id']));
                             if (isset($email['references']) && $email['references'] != '') {
-                                $query->orWhere('message_id', trim($email['references']));
+                                if(is_array($email['references'])){
+                                    $query->orWhereIn('message_id', $email['references']);
+
+
+                                }else {
+                                    $query->orWhere('message_id', trim($email['references']));
+                                }
                             }
                             if (isset($email['in_reply_to']) && $email['in_reply_to'] != '') {
                                 $query->orWhere('message_id', trim($email['in_reply_to']));
                             }
+                            Log::info(' Message Query: ' . $query->toSql());
                             $ticketDetail = $query->first();
 
                             if ($ticketDetail) {

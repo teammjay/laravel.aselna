@@ -66,7 +66,8 @@ class EmailMessageUtility
     public function sendEmail($toEmail, $subject = '', $message = '', $message_id = '', $attachment = '')
     {
         try {
-            if($toEmail) {
+
+            /*if($toEmail) {
                 Mail::raw($message, function ($m) use ($toEmail, $subject, $message_id, $attachment) {
                     $m->to($toEmail)->subject('Re: '.$subject);
                     if($message_id != '') {
@@ -74,6 +75,26 @@ class EmailMessageUtility
                         $m->getHeaders()->addTextHeader('References', '<'.$message_id.'>');
                     }
                     if($attachment != '' && file_exists($attachment)) {
+                        $m->attach($attachment);
+                    }
+                });
+            }*/
+
+            if($toEmail) {
+
+                Log::info("Email New Content". $message);
+
+                Mail::send([], [], function ($m) use ($toEmail, $subject, $message_id, $attachment, $message) {
+                    $m->to($toEmail)
+                        ->subject('Re: ' . $subject)
+                        ->html($message);
+
+                    if (!empty($message_id)) {
+                        $m->getHeaders()->addTextHeader('In-Reply-To', '<' . $message_id . '>');
+                        $m->getHeaders()->addTextHeader('References', '<' . $message_id . '>');
+                    }
+
+                    if (!empty($attachment) && file_exists($attachment)) {
                         $m->attach($attachment);
                     }
                 });
@@ -209,7 +230,7 @@ class EmailMessageUtility
                         'parts' => $parts,
                         'body' => $body,
                         'in_reply_to' => $fullMessage->in_reply_to->first(),
-                        'references' => $fullMessage->references->first(),
+                        'references' => $fullMessage->references->all(),
                         'attachments' => $attachments,
                         'client_id' => null
                     ];

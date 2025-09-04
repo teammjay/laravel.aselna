@@ -30,4 +30,8 @@ class HDMessage extends Model
     public function attachments(){
         return $this->hasMany(HdMessageAttachment::class, 'message_id','id');
     }
+
+    public function parts(){
+        return $this->belongsTo(HdMessagePart::class, 'message_id','id');
+    }
 }
