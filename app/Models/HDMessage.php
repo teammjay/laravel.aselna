@@ -32,6 +32,10 @@ class HDMessage extends Model
     }
 
     public function parts(){
-        return $this->belongsTo(HdMessagePart::class, 'message_id','id');
+        return $this->hasOne(HdMessagePart::class,'message_id')->where(function ($q) {
+            $q->orderBy('created_at', 'desc');
+            $q->limit(1);
+        });
+
     }
 }
