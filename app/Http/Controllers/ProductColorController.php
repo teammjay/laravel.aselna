@@ -74,7 +74,7 @@ class ProductColorController extends Controller
      */
     public function destroy(string $id)
     {
-//        ProductColor::findOrFail($id)->delete();
+        ProductColor::findOrFail($id)->delete();
 
         return redirect()->route('product_color.index')
             ->with('success', 'Product color deleted successfully.');

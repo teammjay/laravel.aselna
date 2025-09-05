@@ -74,7 +74,7 @@ class HdTicketLabelController extends Controller
      */
     public function destroy(string $id)
     {
-        //HdTicketLabel::findOrFail($id)->delete();
+        HdTicketLabel::findOrFail($id)->delete();
 
         return redirect()->route('hd_ticket_label.index')
             ->with('success', 'HD Ticket Label deleted successfully.');

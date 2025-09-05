@@ -86,8 +86,8 @@ class HomeController extends Controller
             //new FetchEmailMessagesJob()
         ])->dispatch(); die;*/
 
-        /*$shipping_account = ShippingAccount::whereLike('name','%Endicia Label Server%')->first();
-        $sync_detail = AccountTransactionSynchronization::orderBy('created_at','desc')->first();
+        $shipping_account = ShippingAccount::whereLike('name','%Endicia Label Server%')->first();
+        /*$sync_detail = AccountTransactionSynchronization::orderBy('created_at','desc')->first();
 
         if($sync_detail){
             $startTime = date('Y-m-d H:i:s',strtotime($sync_detail->filter_end_date));
@@ -120,23 +120,36 @@ class HomeController extends Controller
         //print_r($data);
         //echo '</pre>';die;
 
-        $synchronize = AccountTransactionSynchronization::create($data);
+        $synchronize = AccountTransactionSynchronization::create($data);*/
+
+        $transactions = AccountTransaction::with('shippingAccount')
+            ->where('canceled', 0)
+            ->orWhereNull('canceled')
+            ->where('status','pending')
+            ->orderBy('transaction_date','desc')
+            ->limit(10)->get();
+
+        /*echo '<pre>';
+        print_r($transactions);
+        echo '<pre>';die;*/
+
 
         $trans = [
             'accountId' => $shipping_account->account_id,
             'passPhrase' => $shipping_account->pass_phrase,
             'requesterId' => $shipping_account->requester_id,
             'requestId' => (string)Str::uuid(),
-            'filter_start_date' => $startTime,
-            'filter_end_date' => $endTime,
+            'transactions' => $transactions,
         ];
 
-        $endiciaClient = new EndicialabelService();
-        $response = $endiciaClient->getTransactionLists($trans);
 
-//        echo '<pre>';
-//        print_r($response);
-//        echo '</pre>';die;
+
+        $endiciaClient = new EndicialabelService();
+        $response = $endiciaClient->getTrackingStatuses($trans);
+
+        echo '<pre>';
+        print_r($response);
+        echo '</pre>';die;
 
         //Log::info('Transaction Status Response:'.json_encode($response));
 
@@ -240,7 +253,7 @@ class HomeController extends Controller
                 }
 
             }
-        }*/
+        }die;
 
         //die;
         /*$transactions = AccountTransaction::with('shippingAccount')->where('canceled', 0)->orWhereNull('canceled')

@@ -70,7 +70,7 @@ class OrderOperationReasonController extends Controller
      */
     public function destroy(string $id)
     {
-//        OrderOperationReason::findOrFail($id)->delete();
+        OrderOperationReason::findOrFail($id)->delete();
 
         return redirect()->route('order_operation_reason.index')
             ->with('success', 'Order operation reason deleted successfully.');
