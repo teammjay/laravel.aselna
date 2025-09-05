@@ -71,7 +71,7 @@ class ShippingPackageController extends Controller
         ShippingPackage::findOrFail($id)->update($request->except(['carrier_package']));
 
         $data = [];
-        for($i=0; $i < count($request->carrier_package); $i++){
+        for($i=0; $i < count($request->carrier_package ?? []); $i++){
             $data[] = array(
                 'shipping_package_id' => $id,
                 'shipping_carrier_package_id' => $request->carrier_package[$i]
