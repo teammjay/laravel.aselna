@@ -594,7 +594,7 @@ class SubmitShopifyProductsJob implements ShouldQueue
     {
         $keywords = ProductTitleKeyword::select('product_id', 'keyword')
             ->where('product_id', $productData->product_id)
-            ->orderBy('priority', 'asc')->get()->toArray();
+            ->orderBy('priority', 'asc')->limit(5)->get()->toArray();
 
         Log::info('Keywords: ' . json_encode($keywords));
         // take the first one and reverse the remaining array
