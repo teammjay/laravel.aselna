@@ -605,7 +605,7 @@ class SubmitShopifyProductsJob implements ShouldQueue
             $title .= $firstKeyword['keyword'] . ', ';
             $reversedKeywords = array_reverse($keywords);
             foreach ($reversedKeywords as $keyword) {
-                $title .= $keyword['keyword'] . ' ';
+                $title .= trim($keyword['keyword']) . ' ';
             }
         } else {
             $title = $productData->product_title;
