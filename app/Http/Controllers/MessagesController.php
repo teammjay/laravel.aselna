@@ -821,141 +821,151 @@ class MessagesController extends Controller
     }
 
     public function sendMessageTemplate(Request $request){
-        $ticket_id = $request->input('ticket_id');
-        $message_to_send = $request->input('message_to_send');
-        $customer_id = $request->input('customer_id');
-        $template_id = $request->input('template_id');
-        $ticket_status = $request->input('ticket_status');
-        $labelimage = $request->input('labelimage');
-        $imagepath = $request->input('imagepath');
-        $imagename = $request->input('imagename');
-
-        if($ticket_id){
-            $ticketDetail = Message::with('store','customer')->where('id',$ticket_id)->first();
-            $previousMessage = HDMessage::with('parts')->where('ticket_id')->orderBy('created_at','desc')->first();
-            $prev_content = '';
-            if($previousMessage){
-                if(isset($previousMessage->parts)){
-                    $prev_content = $previousMessage->parts->content;
-                }
-            }
-
-            if(isset($ticketDetail->ticket_email) && $ticketDetail->ticket_email != ''){
-                $email = $ticketDetail->ticket_email;
-            }else if(isset($ticketDetail->customer)){
-                $email = $ticketDetail->customer->email;
-            }
-            //$store= $ticketDetail->store;
-            $storeMessageAccount = StoreMessageAccount::with('outgoingAccount')->where('store_id', $ticketDetail->store_id)->first();
 
 
-            if(isset($storeMessageAccount->outgoingAccount)){
-                if($storeMessageAccount->outgoingAccount->requires_ssl){
-                    $encryption = 'ssl';
-                }
-                if($storeMessageAccount->outgoingAccount->requires_tls){
-                    $encryption = 'tls';
+        try {
+
+            $ticket_id = $request->input('ticket_id');
+            $message_to_send = $request->input('message_to_send');
+            $customer_id = $request->input('customer_id');
+            $template_id = $request->input('template_id');
+            $ticket_status = $request->input('ticket_status');
+            $labelimage = $request->input('labelimage');
+            $imagepath = $request->input('imagepath');
+            $imagename = $request->input('imagename');
+            if ($ticket_id) {
+                $ticketDetail = Message::with('store', 'customer')->where('id', $ticket_id)->first();
+                $previousMessage = HDMessage::with('parts')->where('ticket_id', $ticket_id)->orderBy('created_at', 'desc')->first();
+
+                $prev_content = '';
+                if ($previousMessage) {
+                    if (isset($previousMessage->parts)) {
+                        $prev_content = $previousMessage->parts->content;
+                    }
                 }
 
-                $smtpConfig = [
-                    'host' => $storeMessageAccount->outgoingAccount->server,
-                    'port' => $storeMessageAccount->outgoingAccount->port,
-                    'encryption' => $encryption,
-                    'username' => $storeMessageAccount->outgoingAccount->user_id,
-                    'password' => $storeMessageAccount->outgoingAccount->password,
-                    'from_address' => $storeMessageAccount->outgoingAccount->email,
-                    'from_name' => isset($ticketDetail->store) ? $ticketDetail->store->name : '',
-                ];
-
-                /*$smtpConfig = [
-                    'host' => 'email-smtp.us-east-1.amazonaws.com',
-                    'port' => 465,
-                    'encryption' => 'tls',
-                    'username' => 'AKIATLGXH7OD45ES34GW',
-                    'password' => 'BC7NSneeB1+Bl/H+ZlVjoBbdB7JpnD7CRoD9ff3hbEf3',
-                    'from_address' => 'kryln.services@gmail.com',
-                    'from_name' => 'kryln services',
-                ];*/
-
-                $imapConfig = [];
-                $filepath = $imagepath;
-
-                if($prev_content != '') {
-                    Log::info("Email Previous Content". $prev_content);
-                    $newMessageBody = $message_to_send . " <div style='margin-left:20px; border-left:2px solid #ccc; padding-left:10px;'>
-                                    " . nl2br($prev_content) . "
-                                </div>";
-                }else{
-                    $newMessageBody = nl2br($message_to_send);
+                if (isset($ticketDetail->ticket_email) && $ticketDetail->ticket_email != '') {
+                    $email = $ticketDetail->ticket_email;
+                } else if (isset($ticketDetail->customer)) {
+                    $email = $ticketDetail->customer->email;
                 }
+                //$store= $ticketDetail->store;
+                $storeMessageAccount = StoreMessageAccount::with('outgoingAccount')->where('store_id', $ticketDetail->store_id)->first();
 
-                $connector = new EmailMessageUtility($smtpConfig, $imapConfig);
-                $response = $connector->sendEmail($email,$ticketDetail->subject,$newMessageBody, $ticketDetail->message_id, $filepath);
-                /*$response = $connector->sendEmail('jayesh@mjailab.com','Test Mail',$message_to_send, 'CAB3DxwfKHcaot+XFxHBW6Teiq38dDaHs2UU2UqipkfbHnYr+sg@mail.gmail.com', $filepath);*/
 
-                if($response){
+                if (isset($storeMessageAccount->outgoingAccount)) {
+                    if ($storeMessageAccount->outgoingAccount->requires_ssl) {
+                        $encryption = 'ssl';
+                    }
+                    if ($storeMessageAccount->outgoingAccount->requires_tls) {
+                        $encryption = 'tls';
+                    }
 
-                    $hdMessageData = [
-                        'ticket_id' => $ticket_id,
-                        'subject' => trim($ticketDetail->subject),
-                        'message_date' => date('Y-m-d H:i:s'),
-                        'to_' => $ticketDetail->ticket_email,
-                        'cc' => NULL,
-                        'bcc' => NULL,
-                        'message_id' => NULL,
-                        'messaging_account_id' => $storeMessageAccount->outgoingAccount->id,
-                        'from_email' => trim($storeMessageAccount->outgoingAccount->user_id),
-                        'from_name' => trim($storeMessageAccount->outgoingAccount->user_id),
-                        'message' => $newMessageBody,
-                        'draft' => 0,
-                        'author' => 1,
+                    $smtpConfig = [
+                        'host' => $storeMessageAccount->outgoingAccount->server,
+                        'port' => $storeMessageAccount->outgoingAccount->port,
+                        'encryption' => $encryption,
+                        'username' => $storeMessageAccount->outgoingAccount->user_id,
+                        'password' => $storeMessageAccount->outgoingAccount->password,
+                        'from_address' => $storeMessageAccount->outgoingAccount->email,
+                        'from_name' => isset($ticketDetail->store) ? $ticketDetail->store->name : '',
                     ];
 
-                    $hd_message = HDMessage::create($hdMessageData);
+                    /*$smtpConfig = [
+                        'host' => 'email-smtp.us-east-1.amazonaws.com',
+                        'port' => 465,
+                        'encryption' => 'tls',
+                        'username' => 'AKIATLGXH7OD45ES34GW',
+                        'password' => 'BC7NSneeB1+Bl/H+ZlVjoBbdB7JpnD7CRoD9ff3hbEf3',
+                        'from_address' => 'kryln.services@gmail.com',
+                        'from_name' => 'kryln services',
+                    ];*/
 
-                    if($filepath){
+                    $imapConfig = [];
+                    $filepath = $imagepath;
 
-                        $extension = pathinfo($filepath, PATHINFO_EXTENSION);
-                        $fileSize = filesize($filepath);
-                        $filedata = [
-                            'name' => $imagename,
-                            'ext' => $extension ?: 'jpg', // Default to 'jpg' if missing
-                            'file_size' => $fileSize ?: 'Unknown', // Use 'Unknown' if not determined
-                            'location' => 'labels/',
-                            'created_by' => 'admin',
+                    if ($prev_content != '') {
+                        Log::info("Email Previous Content" . $prev_content);
+                        $newMessageBody = $message_to_send . PHP_EOL. "<div style='margin-left:20px; border-left:2px solid #ccc; padding-left:10px;'>
+                                        " . nl2br($prev_content) . "
+                                    </div>";
+                    } else {
+                        $newMessageBody = nl2br($message_to_send);
+                    }
+
+                    $connector = new EmailMessageUtility($smtpConfig, $imapConfig);
+                    $response = $connector->sendEmail($email, $ticketDetail->subject, $newMessageBody, $ticketDetail->message_id, $filepath);
+                    /*$response = $connector->sendEmail('jayesh@mjailab.com','Test Mail',$message_to_send, 'CAB3DxwfKHcaot+XFxHBW6Teiq38dDaHs2UU2UqipkfbHnYr+sg@mail.gmail.com', $filepath);*/
+
+                    if ($response) {
+
+                        $hdMessageData = [
+                            'ticket_id' => $ticket_id,
+                            'subject' => trim($ticketDetail->subject),
+                            'message_date' => date('Y-m-d H:i:s'),
+                            'to_' => $ticketDetail->ticket_email,
+                            'cc' => NULL,
+                            'bcc' => NULL,
+                            'message_id' => NULL,
+                            'messaging_account_id' => $storeMessageAccount->outgoingAccount->id,
+                            'from_email' => trim($storeMessageAccount->outgoingAccount->user_id),
+                            'from_name' => trim($storeMessageAccount->outgoingAccount->user_id),
+                            'message' => $newMessageBody,
+                            'draft' => 0,
+                            'author' => 1,
                         ];
 
-                        $fileDetail = SysFile::create($filedata);
-                        $file_id = $fileDetail->id;
+                        $hd_message = HDMessage::create($hdMessageData);
 
-                        if($ticket_id && $file_id){
-                            $attachementData = [
-                                'client_id' => NULL,
-                                'message_id' => $hd_message->id,
-                                'attachment_id' => NULL,
-                                'file_id' => $file_id,
+                        if ($filepath) {
+
+                            $extension = pathinfo($filepath, PATHINFO_EXTENSION);
+                            $fileSize = filesize($filepath);
+                            $filedata = [
+                                'name' => $imagename,
+                                'ext' => $extension ?: 'jpg', // Default to 'jpg' if missing
+                                'file_size' => $fileSize ?: 'Unknown', // Use 'Unknown' if not determined
+                                'location' => 'labels/',
                                 'created_by' => 'admin',
                             ];
 
-                            HdMessageAttachment::create($attachementData);
-                        }
-                    }
+                            $fileDetail = SysFile::create($filedata);
+                            $file_id = $fileDetail->id;
 
-                    if($ticket_status == 1){
-                        $ticketDetail->update(['status'=>1]);
+                            if ($ticket_id && $file_id) {
+                                $attachementData = [
+                                    'client_id' => NULL,
+                                    'message_id' => $hd_message->id,
+                                    'attachment_id' => NULL,
+                                    'file_id' => $file_id,
+                                    'created_by' => 'admin',
+                                ];
+
+                                HdMessageAttachment::create($attachementData);
+                            }
+                        }
+
+                        if ($ticket_status == 1) {
+                            $ticketDetail->update(['status' => 1]);
+                        }
+                        if ($ticket_status == 2) {
+                            $ticketDetail->update(['status' => 2]);
+                        }
+                        return response()->json([
+                            'success' => true
+                        ]);
                     }
-                    if($ticket_status == 2){
-                        $ticketDetail->update(['status'=>2]);
-                    }
-                    return response()->json([
-                        'success' => true
-                    ]);
                 }
             }
+            return response()->json([
+                'success' => false
+            ]);
+        }catch (\Exception $exception) {
+            return response()->json([
+                'success' => false,
+                'message' => $exception->getMessage()
+            ]);
         }
-        return response()->json([
-            'success' => false
-        ]);
     }
 
     public function getShippingDetail(Request $request)
