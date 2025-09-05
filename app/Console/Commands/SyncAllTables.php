@@ -165,7 +165,8 @@ class SyncAllTables extends Command
         //synccategorytospecification::dispatch();
 //        SystemPrinterSyncJob::dispatch();
 
-        FetchEmailMessagesJob::dispatch();
+        FetchEbayOrders::dispatch();
+//        FetchEmailMessagesJob::dispatch();
 //        SubmitShopifyProductsJob::dispatch();
 //        FetchShopifyProductsJob::dispatch();
 //        FetchMagentoProductsJob::dispatch();
