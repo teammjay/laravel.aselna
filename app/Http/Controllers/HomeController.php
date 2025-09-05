@@ -23,6 +23,7 @@ use App\Models\CustomerEmail;
 use App\Models\HDMessage;
 use App\Models\HdMessageAttachment;
 use App\Models\HdMessagePart;
+use App\Models\HdMessageReference;
 use App\Models\HdMessageTemplate;
 use App\Models\HdTicketType;
 use App\Models\Listing;
@@ -411,7 +412,7 @@ On Fri, 29 Aug 2025 at 23:36, phonil <phonil.ebay@gmail.com> wrote:
 
 
         $connector = new EmailMessageUtility($smtpConfig, $imapConfig);
-        $receiveEmails = $connector->fetchEmails('Ebay', '2025-09-03 20:00:00','INBOX');
+        $receiveEmails = $connector->fetchEmails('Ebay', '2025-09-02 00:00:00','INBOX');
 
         //$store = Store::with('storeType')->where('id','0dd4de79-bba1-c47a-a7aa-822e6f015b8e')->first();
         $store = Store::with('storeType')->where('id','6c7009ce-eac1-a995-a986-27d5df0103ac')->first();
@@ -603,6 +604,21 @@ On Fri, 29 Aug 2025 at 23:36, phonil <phonil.ebay@gmail.com> wrote:
                     }
 
                     Log::info('Message ID : ' .$hd_message->id);
+
+                    if(isset($email['references']) && !empty($email['references']) && is_array($email['references'])){
+                        foreach($email['references'] as $ref){
+                            $refData = [
+                                'ticket_id' => $hd_ticket->id,
+                                'message_id' => $hd_message->id,
+                                'reference' => $ref,
+                            ];
+                            HdMessageReference::updateOrCreate([
+                                'ticket_id' => $hd_ticket->id,
+                                'message_id' => $hd_message->id,
+                                'reference' => $ref,
+                            ], $refData);
+                        }
+                    }
 
                     if (isset($hd_message->id) && !empty($email['attachments'])) {
 
