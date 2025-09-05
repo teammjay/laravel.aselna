@@ -581,7 +581,7 @@ class EndicialabelService
         $labelRequest = $request->addChild('RecreditRequest');
 
         $labelRequest->addChild('RequesterID', $labelDetails['requesterId']);
-        $labelRequest->addChild('RequestID', $labelDetails['requestId']);
+        $labelRequest->addChild('RequestID', (string) Str::uuid());
         $CertifiedIntermediary = $labelRequest->addChild('CertifiedIntermediary');
 
         $CertifiedIntermediary->addChild('AccountID', $labelDetails['accountId']);
@@ -657,7 +657,7 @@ class EndicialabelService
         $labelRequest = $transactionlist->addChild('GetTransactionsListingRequest');
 
         $labelRequest->addChild('RequesterID', $transDetails['requesterId']);
-        $labelRequest->addChild('RequestID', $transDetails['requestId']);
+        $labelRequest->addChild('RequestID', (string) Str::uuid());
         $CertifiedIntermediary = $labelRequest->addChild('CertifiedIntermediary');
 
         $CertifiedIntermediary->addChild('AccountID', $transDetails['accountId']);
