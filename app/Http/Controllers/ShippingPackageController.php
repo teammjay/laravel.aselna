@@ -89,7 +89,7 @@ class ShippingPackageController extends Controller
      */
     public function destroy(string $id)
     {
-//        ShippingPackage::findOrFail($id)->delete();
+        ShippingPackage::findOrFail($id)->delete();
 
         return redirect()->route('shipping_package.index')
             ->with('success', 'Shipping package deleted successfully.');
