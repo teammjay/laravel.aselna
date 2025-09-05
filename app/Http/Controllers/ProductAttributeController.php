@@ -67,7 +67,7 @@ class ProductAttributeController extends Controller
      */
     public function destroy(string $id)
     {
-//        ProductAttribute::findOrFail($id)->delete();
+        ProductAttribute::findOrFail($id)->delete();
 
         return redirect()->route('product_attribute.index')
             ->with('success', 'Product attributes deleted successfully.');

@@ -682,4 +682,70 @@ class EndicialabelService
         return $xml->asXML();
 
     }
+
+    /*public function getTrackingStatuses(array $request)
+    {
+        $xmlString = $this->buildGetStatusXML($request);
+        Log::info('Endicia Transaction Request XML: ' . $xmlString);
+
+        try {
+            $response = $this->client->post('https://labelserver.endicia.com/LabelService/EwsLabelService.asmx', [
+                'headers' => [
+                    'Content-Type' => 'text/xml; charset=utf-8',
+                    'SOAPAction' => '"www.envmgr.com/LabelService/GetStatus"',
+                ],
+                'body' => $xmlString,
+                'verify' => false,
+            ]);
+
+            $body = $response->getBody()->getContents();
+
+            $xml = simplexml_load_string($body);
+
+            $statuses = [];
+            foreach ($xml->StatusList->Status as $status) {
+                $statuses[] = [
+                    'tracking_number' => (string) $status->PICNumber,
+                    'status'          => (string) $status->Status,
+                    'status_date'     => (string) $status->StatusDate,
+                ];
+            }
+
+            return $statuses;
+
+        }catch (Exception $e) {
+            // Handle SOAP request errors
+            if ($e instanceof RequestException && $e->hasResponse()) {
+                Log::error('SOAP Error Response: ' . $e->getResponse()->getBody()->getContents());
+            }
+//            throw new Exception('Error creating label: ' . $e->getMessage());
+
+            Log::info('Return Data Error: ' . json_encode($e->getMessage()));
+        }
+
+    }
+
+
+    public function buildGetStatusXML(array $transDetails)
+    {
+        $xml = new \SimpleXMLElement('<?xml version="1.0" encoding="utf-8"?><soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"/>');
+        $body = $xml->addChild('soap:Body');
+        $transactionlist = $body->addChild('GetStatus', null,'www.envmgr.com/LabelService');
+        $labelRequest = $transactionlist->addChild('GetStatusRequest');
+
+        $labelRequest->addChild('RequesterID', $transDetails['requesterId']);
+        $labelRequest->addChild('RequestID', $transDetails['requestId']);
+        $CertifiedIntermediary = $labelRequest->addChild('CertifiedIntermediary');
+
+        $CertifiedIntermediary->addChild('AccountID', $transDetails['accountId']);
+        $CertifiedIntermediary->addChild('PassPhrase', $transDetails['passPhrase']);
+
+        $picNumbers = $labelRequest->addChild('PICNumbers');
+
+        foreach($transDetails['transactions'] as $transaction){
+            $picNumbers->addChild('PICNumber', $transaction->tracking_number);
+        }
+
+        return $xml->asXML();
+    }*/
 }

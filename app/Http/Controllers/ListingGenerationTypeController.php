@@ -77,7 +77,7 @@ class ListingGenerationTypeController extends Controller
      */
     public function destroy(string $id)
     {
-//        ListingGenerationType::findOrFail($id)->delete();
+        ListingGenerationType::findOrFail($id)->delete();
 
         return redirect()->route('listing_generation_type.index')
             ->with('success', 'Listing Generation Type deleted successfully.');
