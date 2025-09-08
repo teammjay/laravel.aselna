@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Constants\HdTicketStatus;
 use App\Constants\HdTicketTypeCode;
+use App\Constants\ListingSyncStatus;
 use App\Helpers\QueryFilters;
 use App\Jobs\EbayListingItemSyncJob;
 use App\Jobs\FeedGenerationJob;
@@ -29,6 +30,7 @@ use App\Models\HdTicketType;
 use App\Models\Listing;
 use App\Models\ListingFeed;
 use App\Models\ListingItem;
+use App\Models\ListingItemLink;
 use App\Models\Message;
 use App\Models\Order;
 use App\Models\OrderOperation;
@@ -72,6 +74,51 @@ class HomeController extends Controller
     }
 
     public function testfunction(){
+
+
+        /*Log::info('WalmartListingItemSyncJob started');
+        $walmart_store_ids = Store::where('store_type_id', function ($subquery) {
+            return $subquery->select('id')
+                ->from('store_type')
+                ->where('code', 'walmart');
+        })->pluck('id');
+        Log::info('Walmart store ids: ' . json_encode($walmart_store_ids));
+
+        foreach ($walmart_store_ids as $storeId) {
+            $store = Store::find($storeId);
+
+            if (!isset($store->user_id)) continue;
+            //if (env('APP_ENV') === 'local' && $store->name == 'Accessorychoice') continue;
+
+            $listingItemLinks = ListingItemLink::query()
+                ->join('listing_item', 'listing_item_link.item_id', '=', 'listing_item.id')
+                ->join('listing', 'listing_item_link.listing_id', '=', 'listing.id')
+                ->whereIn('listing.store_id', [$storeId])
+                ->where(function ($query) {
+                    return $query->whereNull('listing_item.store_sku')
+                        ->orWhere('listing_item.store_sku', '');
+                })
+                ->where(function ($query) {
+                    return $query
+                        ->where('listing_item.creation_retry_count', '<', 3)->orWhereNull('listing_item.creation_retry_count');
+                })
+                ->whereNotIn('listing_item.sync_status', [
+                    ListingSyncStatus::CreationError,
+                ])
+                ->whereNotNull('listing_item_link.feed_id')
+                ->orderBy('listing_item_link.feed_id')
+                ->limit(10)
+                ->get();
+
+            echo '<pre>';
+            print_r($listingItemLinks);
+            echo '</pre>';die;
+
+//            Log::info("Listing Item Links Query: " . $listingItemLinks);
+//            continue;
+
+            //$this->syncListingItem($listingItemLinks, $store);
+        }*/
 
         /*$user_id = Auth::id();
         Bus::chain([
@@ -122,16 +169,16 @@ class HomeController extends Controller
 
         $synchronize = AccountTransactionSynchronization::create($data);*/
 
-        $transactions = AccountTransaction::with('shippingAccount')
-            ->where('canceled', 0)
+        /*$transactions = AccountTransaction::with('shippingAccount')
+        ->where('canceled', 0)
             ->orWhereNull('canceled')
             ->where('status','pending')
             ->orderBy('transaction_date','desc')
             ->limit(10)->get();
 
-        /*echo '<pre>';
-        print_r($transactions);
-        echo '<pre>';die;*/
+//        echo '<pre>';
+//        print_r($transactions);
+//        echo '<pre>';die;
 
 
         $trans = [
@@ -253,7 +300,7 @@ class HomeController extends Controller
                 }
 
             }
-        }die;
+        }die;*/
 
         //die;
         /*$transactions = AccountTransaction::with('shippingAccount')->where('canceled', 0)->orWhereNull('canceled')
@@ -416,19 +463,21 @@ On Fri, 29 Aug 2025 at 23:36, phonil <phonil.ebay@gmail.com> wrote:
             'encryption' => 'ssl',
             //'username' => 'odemobile.shopify@gmail.com',
             //'username' => 'cs@odemobile.com',
-            'username' => 'phonil.ebay@gmail.com',
+            //'username' => 'phonil.ebay@gmail.com',
+            'username' => 'accessorychoice.wmt@gmail.com',
             //'password' => 'deczsvfmubmpxtsf',
             //'password' => 'qaym xjqg icea syxw',
-            'password' => 'qynvjqjqqaqqramo',
+            //'password' => 'qynvjqjqqaqqramo',
+            'password' => 'hbmevmsyjuwqcpsm',
         ];
 
 
 
         $connector = new EmailMessageUtility($smtpConfig, $imapConfig);
-        $receiveEmails = $connector->fetchEmails('Ebay', '2025-09-02 00:00:00','INBOX');
+        $receiveEmails = $connector->fetchEmails('Ebay', '2025-09-08 12:13:57','INBOX');
 
         //$store = Store::with('storeType')->where('id','0dd4de79-bba1-c47a-a7aa-822e6f015b8e')->first();
-        $store = Store::with('storeType')->where('id','6c7009ce-eac1-a995-a986-27d5df0103ac')->first();
+        $store = Store::with('storeType')->where('id','fff036c8-6892-4184-9126-0130e4e505fb')->first();
         $store_id = $store->id;
         if (count($receiveEmails ?? []) > 0) {
             foreach ($receiveEmails as $email) {
