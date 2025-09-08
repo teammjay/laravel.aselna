@@ -457,7 +457,7 @@ class EndicialabelService
         $labelRequest = $xmlrequest->addChild('AccountStatusRequest');
 
         $labelRequest->addChild('RequesterID', $request['requesterId']);
-        $labelRequest->addChild('RequestID', $request['requestId']);
+        $labelRequest->addChild('RequestID', (string) Str::uuid());
         $CertifiedIntermediary = $labelRequest->addChild('CertifiedIntermediary');
 
         $CertifiedIntermediary->addChild('AccountID', $request['accountId']);
