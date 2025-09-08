@@ -127,7 +127,7 @@ class WalmartAuthService
                 ];
             }
 
-            //Log::info('Query Data: ' . json_encode($queryData));
+            Log::info('Query Data: ' . json_encode($queryData));
 
             $response = $this->client->get($url, [
                 'verify' => false,
