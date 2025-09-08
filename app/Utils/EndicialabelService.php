@@ -283,7 +283,7 @@ class EndicialabelService
 
         $labelRequest->addChild('PartnerTransactionID', $shipmentDetails['transactionId']);
 
-        $labelRequest->addChild('Machinable', $shipmentDetails['non_machinable'] ? 'true' : 'false');
+        $labelRequest->addChild('Machinable', $shipmentDetails['non_machinable'] == 0 ? 'true' : 'false');
 
         if ($shipmentDetails['dimensions']) {
             $dimensions = $labelRequest->addChild('MailpieceDimensions');
