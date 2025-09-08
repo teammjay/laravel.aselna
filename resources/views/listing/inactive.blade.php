@@ -1094,7 +1094,7 @@
             "order": [[ 16, "desc" ]],
             'columns': [
                 { data: 'sku'},
-                { data: 'sale_count' },
+                { data: 'sales_count' },
                 { data: 'last_sale_date' },
                 { data: 'store_sku' },
                 { data: 'product_sku' },

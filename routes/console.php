@@ -20,6 +20,7 @@ use App\Jobs\ProductSyncJob;
 use App\Jobs\ShopifyCollectionSyncJob;
 use App\Jobs\SyncAllOrderStatusJob;
 use App\Jobs\SubmitShopifyProductsJob;
+use App\Models\OrderSynchronization;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
@@ -46,7 +47,7 @@ Schedule::job(new SyncAllOrderStatusJob())->hourly();
 Schedule::job(FetchEmailMessagesJob::class)->everyTenMinutes();
 
 // Products Syncing
-//Schedule::job(new SubmitShopifyProductsJob())->everyFifteenMinutes();
+Schedule::job(new SubmitShopifyProductsJob())->hourly();
 
 //Category Syncing
 Schedule::job(new ShopifyCollectionSyncJob())->dailyAt('03:00');
@@ -62,3 +63,10 @@ Schedule::job(new DeviceInterfaces())->dailyAt('03:30');
 Schedule::job(new ProductImagesSyncJob())->dailyAt('04:00');
 Schedule::job(new ProductInterfaces())->dailyAt('04:30');
 Schedule::job(new DeviceCarrierSyncJob())->dailyAt('05:30');
+
+
+
+Schedule::call(function () {
+    // Delete all the records from yesterday to all previous days
+    OrderSynchronization::where('updated_at', '<', now()->toDate())->delete();
+})->dailyAt('13:00')->name('clear syncronisation');

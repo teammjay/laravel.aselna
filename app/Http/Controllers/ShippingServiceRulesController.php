@@ -81,7 +81,7 @@ class ShippingServiceRulesController extends Controller
      */
     public function destroy(string $id)
     {
-//        ShippingServiceRule::findOrFail($id)->delete();
+        ShippingServiceRule::findOrFail($id)->delete();
 
         return redirect()->route('shipping_service_rule.index')
             ->with('success', 'Shipping service rule deleted successfully.');

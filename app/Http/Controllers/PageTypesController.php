@@ -71,7 +71,7 @@ class PageTypesController extends Controller
      */
     public function destroy(string $id)
     {
-//        PageType::findOrFail($id)->delete();
+        PageType::findOrFail($id)->delete();
 
         return redirect()->route('page_type.index')
             ->with('success', 'Page type deleted successfully.');

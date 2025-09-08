@@ -8,6 +8,7 @@ use App\Models\Catalog;
 use App\Models\GenerateProductImage;
 use App\Models\ListingItem;
 use App\Models\ProductImageAlternative;
+use App\Models\ProductTitleKeyword;
 use App\Models\ProductType;
 use App\Models\Store;
 use App\Models\ManageMarketplaceProduct;
@@ -335,7 +336,7 @@ class SubmitShopifyProductsJob implements ShouldQueue
 
         $this->generateProductImages($productData, $store);
 
-        $images = GenerateProductImage::where('product_id', $productData->product_id)->get();
+        $images = GenerateProductImage::where('product_id', $productData->product_id)->orderBy('main_image', 'desc')->get();
         $files = [];
         foreach ($images as $image) {
             $files[] = [
@@ -344,9 +345,11 @@ class SubmitShopifyProductsJob implements ShouldQueue
             ];
         }
 
+        $productTitle = $this->generateProductTitle($productData, $store);
+
         $productNewData = [
             'productSet' => array_filter([
-                'title' => $productData->product_title,
+                'title' => $productTitle,
                 'descriptionHtml' => $descriptionHtml,
                 'vendor' => $store->name,
                 'productType' => $productData->productType->name,
@@ -443,6 +446,23 @@ class SubmitShopifyProductsJob implements ShouldQueue
             return;
         }
 
+        $productTitle = $this->generateProductTitle($productData, $store);
+
+        $descriptionHtml = '';
+        if (isset($productData->productKeyFeatures)) {
+            $descriptionHtml .= '<ul>';
+            foreach ($productData->productKeyFeatures as $feature) {
+                $safeText = htmlspecialchars($feature->value, ENT_QUOTES | ENT_XML1, 'UTF-8'); // Escapes special characters
+                if (!empty(trim($safeText))) {
+                    $descriptionHtml .= '<li>' . $safeText . '</li>';
+                }
+            }
+
+            $descriptionHtml .= '</ul>';
+        }
+        $descriptionHtml .= '<h2>Product Description</h2>';
+        $descriptionHtml .= '<p>' . $productData->product_description . '</p>';
+
         $tags = $this->getAllTags($productData, []);
         $finalTagsString = implode(', ', $tags);
 
@@ -455,6 +475,8 @@ class SubmitShopifyProductsJob implements ShouldQueue
             'product' => [
                 'id' => $proDetail->marketplace_product_id,
                 'tags' => $finalTagsString,
+                'title' => $productTitle,
+                'descriptionHtml' => $descriptionHtml,
             ],
         ];
 
@@ -566,5 +588,28 @@ class SubmitShopifyProductsJob implements ShouldQueue
             return $listingItem;
         }
         return $listingItem;
+    }
+
+    private function generateProductTitle($productData, $store)
+    {
+        $keywords = ProductTitleKeyword::select('product_id', 'keyword')
+            ->where('product_id', $productData->product_id)
+            ->orderBy('priority', 'asc')->limit(5)->get()->toArray();
+
+        Log::info('Keywords: ' . json_encode($keywords));
+        // take the first one and reverse the remaining array
+
+        $title = '';
+        if (count($keywords) > 0) {
+            $firstKeyword = array_shift($keywords);
+            $title .= $firstKeyword['keyword'] . ', ';
+            $reversedKeywords = array_reverse($keywords);
+            foreach ($reversedKeywords as $keyword) {
+                $title .= trim($keyword['keyword']) . ' ';
+            }
+        } else {
+            $title = $productData->product_title;
+        }
+        return trim($title) . ' - ' . $store->short_code  . $productData->product_sku;
     }
 }

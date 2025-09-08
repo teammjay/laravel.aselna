@@ -74,7 +74,7 @@ class CarrierController extends Controller
      */
     public function destroy(string $id)
     {
-//        Carrier::findOrFail($id)->delete();
+        Carrier::findOrFail($id)->delete();
 
         return redirect()->route('carrier.index')
             ->with('success', 'Carrier deleted successfully.');
