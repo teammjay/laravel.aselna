@@ -112,6 +112,22 @@
                             </div>
                         </div>
                     </div>
+
+                    <div class="col-md-4">
+                        <div class="row">
+                            <div class="col-4 text-right">
+                               Status
+                            </div>
+                            <div class="col-8">
+                                <select class="form-control" name="status" id="status">
+                                    <option value=""></option>
+                                    <option value="pending">Pending</option>
+                                    <option value="completed">Completed</option>
+                                    <option value="failed">Failed</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="row pt-3">

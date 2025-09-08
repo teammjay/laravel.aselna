@@ -57,6 +57,12 @@ class AccountTransactionController extends Controller
             $query->whereDate('created_at', $request->created_at);
         }
 
+        if ($request->has('status') && $request->status != '') {
+            $query->where('status', $request->status);
+        }
+
+
+
         $columnIndex = $request->input('order.0.column', 0);
         $sortColumn = $request->input('columns.' . $columnIndex . '.data', 'id');
         $sortDirection = $request->input('order.0.dir', 'asc');
