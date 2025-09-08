@@ -130,7 +130,7 @@ class OrderOperationUtility
         }
 
         /* check endicia available limit*/
-        self::checkCredit($orderOperation);
+        //self::checkCredit($orderOperation);
 
         $shippingDocumentCreator = new ShipmentDocumentsCreator($orderOperation);
         //    $imageFormat = $shippingDocumentCreator->getLabelFormat();
@@ -185,14 +185,16 @@ class OrderOperationUtility
         $shipmentDetails['MailpieceShape'] = $orderOperation->shipping_solution_carrier_package->solution_code;
         $shipmentDetails['transactionId'] = $orderOperation->order->order_id;
 
-        $shipmentDetails['non_machinable'] = false;
-
         Log::info('Image creation error 1');
 
         $shipmentDetails['weight'] = [
             'value' => $orderOperation->weight_value,
             'unit' => WeightUnit::getUnitName($orderOperation->weight_weight_unit),
         ];
+
+        if ($orderOperation->shipping_carrier_package) {
+            $shipmentDetails['non_machinable'] = $orderOperation->shipping_carrier_package->non_machinable;
+        }
 
         if ($orderOperation->shipping_solution_carrier_package) {
             $shipmentDetails['packageType'] = $orderOperation->shipping_solution_carrier_package->solution_code;
