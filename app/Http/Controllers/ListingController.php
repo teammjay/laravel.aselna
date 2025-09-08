@@ -161,10 +161,10 @@ class ListingController extends Controller
 
         if ($request->has('store_id') && $request->store_id != '') {
 
-            $query->join('store_product', 'store_product.id', '=', 'listing_item.store_product_id')
-                ->where('store_product.store_id', $request->store_id);
+            /*$query->join('store_product', 'store_product.id', '=', 'listing_item.store_product_id')
+                ->where('store_product.store_id', $request->store_id);*/
 
-            //$query->whereRelation('storeProduct', 'store_id', $request->store_id);
+            $query->whereRelation('storeProduct', 'store_id', $request->store_id);
             /*$query->whereHas('storeProduct', function ($q) use ($request) {
                 $q->where('store_id', $request->store_id);
             });*/
