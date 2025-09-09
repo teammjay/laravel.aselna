@@ -404,6 +404,8 @@ class WalmartService implements MarketplaceServiceInterface
             $filterStartDate = OrderUtility::getLastSyncDate($store->id, OrderSyncronisationType::ORDER);
             $filterStartDateFormatted = date('Y-m-d\TH:i:s\Z', strtotime($filterStartDate));
 
+            Log::info("Walmart Orders Start Date : " . json_encode($last_synchronization));
+
             $response = $authService->getOrders($filterStartDateFormatted, $last_synchronization->cursor ?? null);
 
             if (!isset($response)) {
