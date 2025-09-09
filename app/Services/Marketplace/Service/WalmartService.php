@@ -400,7 +400,7 @@ class WalmartService implements MarketplaceServiceInterface
                 return null;
             }
             $authService = new WalmartAuthService($store->seller_id, $store->secret_key);
-            $last_synchronization = OrderSynchronization::where('store_id', $store->id)->where('synchronization_type', OrderSyncronisationType::ORDER)->orderBy('last_order_update_date', 'desc')->first();
+            $last_synchronization = OrderSynchronization::where('store_id', $store->id)->where('synchronization_type', OrderSyncronisationType::ORDER)->orderBy('last_order_update_date', 'desc')->orderBy('updated_at', 'desc')->first();
             $filterStartDate = OrderUtility::getLastSyncDate($store->id, OrderSyncronisationType::ORDER);
             $filterStartDateFormatted = date('Y-m-d\TH:i:s\Z', strtotime($filterStartDate));
 
@@ -467,6 +467,10 @@ class WalmartService implements MarketplaceServiceInterface
                         $last_order_update_date = date('Y-m-d H:i:s', $sorder['orderDate'] / 1000);
                     }
                     $noOfOrder++;
+                }
+
+                if (isset($last_synchronization) && strtotime($last_synchronization->last_order_update_date) > strtotime($last_order_update_date)) {
+                    $last_order_update_date = date('Y-m-d H:i:s', strtotime($last_synchronization->last_order_update_date));
                 }
                 $order_synchronization->update(['number_of_items' => $noOfOrder, 'last_order_update_date' => $last_order_update_date]);
             }
