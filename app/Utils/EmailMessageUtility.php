@@ -116,7 +116,7 @@ class EmailMessageUtility
 
             $filterDateObj = \Carbon\Carbon::parse($filter_date, 'America/New_York');
             $today = \Carbon\Carbon::now('America/New_York')->addDay();
-            $maxDate = $filterDateObj->copy()->addDays(3);
+            $maxDate = $filterDateObj->copy()->addDays(5);
 
             $toDate = $maxDate->lessThan($today) ? $maxDate : $today;
 
