@@ -608,6 +608,10 @@ class ShipmentsController extends Controller
 
             $product_weight_unit = '';
 
+            if(isset($operation->shipping_package_id)) {
+                $request['carrier_package'] = $operation->shipping_package_id;
+            }
+
             if (count($operation->operationItem ?? []) > 0) {
                 $product_weight = 0;
                 foreach ($operation->operationItem as $oitem) {
