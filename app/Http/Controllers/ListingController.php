@@ -145,7 +145,7 @@ class ListingController extends Controller
         }], 'quantity')*/
         ->addSelect([
             'lastSaleDate' => OrderItem::selectRaw('MAX(created_at)')
-                //->whereColumn('order_item.sku', 'listing_item.sku')
+                ->whereColumn('order_item.sku', 'listing_item.sku')
                 ->whereNotNull('shipped_quantity')
                 ->where(function($q){
                     $q->whereNull('canceled_quantity')->orWhere('canceled_quantity', 0);

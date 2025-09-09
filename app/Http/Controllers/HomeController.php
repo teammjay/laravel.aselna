@@ -43,6 +43,7 @@ use App\Models\StoreMessageAccount;
 use App\Models\SysFile;
 use App\Services\Auth\GoogleShoppingAuthService;
 use App\Services\Auth\ShopifyAuthService;
+use App\Services\Auth\WalmartAuthService;
 use App\Services\DataTable\DataTableService;
 use App\Services\Marketplace\MarketplaceServiceFactory;
 use App\Services\Marketplace\Service\EbayService;
@@ -76,49 +77,13 @@ class HomeController extends Controller
     public function testfunction(){
 
 
-        /*Log::info('WalmartListingItemSyncJob started');
-        $walmart_store_ids = Store::where('store_type_id', function ($subquery) {
-            return $subquery->select('id')
-                ->from('store_type')
-                ->where('code', 'walmart');
-        })->pluck('id');
-        Log::info('Walmart store ids: ' . json_encode($walmart_store_ids));
+        $authService = new WalmartAuthService('b8f63c96-93fd-4bc1-b0cc-2a5f84e5bd7c', 'AOWo7abtyndXMFjcvzlnP6Z_62SgQPZRtquhIunLHMiNYQggxowM22wipJhZICtgShCafih2apKPf4XGPTpR_2g');
 
-        foreach ($walmart_store_ids as $storeId) {
-            $store = Store::find($storeId);
+        $response = $authService->getFeedStatus('186275989E8757208632E42569E9749A@AXkBCgA', 150);
 
-            if (!isset($store->user_id)) continue;
-            //if (env('APP_ENV') === 'local' && $store->name == 'Accessorychoice') continue;
-
-            $listingItemLinks = ListingItemLink::query()
-                ->join('listing_item', 'listing_item_link.item_id', '=', 'listing_item.id')
-                ->join('listing', 'listing_item_link.listing_id', '=', 'listing.id')
-                ->whereIn('listing.store_id', [$storeId])
-                ->where(function ($query) {
-                    return $query->whereNull('listing_item.store_sku')
-                        ->orWhere('listing_item.store_sku', '');
-                })
-                ->where(function ($query) {
-                    return $query
-                        ->where('listing_item.creation_retry_count', '<', 3)->orWhereNull('listing_item.creation_retry_count');
-                })
-                ->whereNotIn('listing_item.sync_status', [
-                    ListingSyncStatus::CreationError,
-                ])
-                ->whereNotNull('listing_item_link.feed_id')
-                ->orderBy('listing_item_link.feed_id')
-                ->limit(10)
-                ->get();
-
-            echo '<pre>';
-            print_r($listingItemLinks);
-            echo '</pre>';die;
-
-//            Log::info("Listing Item Links Query: " . $listingItemLinks);
-//            continue;
-
-            //$this->syncListingItem($listingItemLinks, $store);
-        }*/
+        echo '<pre>';
+        print_r($response);
+        echo '</pre>';die;
 
         /*$user_id = Auth::id();
         Bus::chain([
@@ -464,17 +429,19 @@ On Fri, 29 Aug 2025 at 23:36, phonil <phonil.ebay@gmail.com> wrote:
             //'username' => 'odemobile.shopify@gmail.com',
             //'username' => 'cs@odemobile.com',
             //'username' => 'phonil.ebay@gmail.com',
-            'username' => 'accessorychoice.wmt@gmail.com',
+            //'username' => 'accessorychoice.wmt@gmail.com',
+            'username' => 'snhdigital.ebay@gmail.com',
             //'password' => 'deczsvfmubmpxtsf',
             //'password' => 'qaym xjqg icea syxw',
             //'password' => 'qynvjqjqqaqqramo',
-            'password' => 'hbmevmsyjuwqcpsm',
+            //'password' => 'hbmevmsyjuwqcpsm',
+            'password' => 'vtldhcsfeciyzhwm',
         ];
 
 
 
         $connector = new EmailMessageUtility($smtpConfig, $imapConfig);
-        $receiveEmails = $connector->fetchEmails('Ebay', '2025-09-08 12:13:57','INBOX');
+        $receiveEmails = $connector->fetchEmails('Ebay', '2025-09-04 08:25:28','INBOX');
 
         //$store = Store::with('storeType')->where('id','0dd4de79-bba1-c47a-a7aa-822e6f015b8e')->first();
         $store = Store::with('storeType')->where('id','fff036c8-6892-4184-9126-0130e4e505fb')->first();

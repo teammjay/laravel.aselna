@@ -41,7 +41,7 @@ class WalmartListingItemSyncJob implements ShouldQueue
             $store = Store::find($storeId);
 
             if (!isset($store->user_id)) continue;
-            if (env('APP_ENV') === 'local' && $store->name == 'Accessorychoice') continue;
+            if (env('APP_ENV') === 'local') continue;
 
             $listingItemLinks = ListingItemLink::query()
                 ->join('listing_item', 'listing_item_link.item_id', '=', 'listing_item.id')
@@ -58,8 +58,9 @@ class WalmartListingItemSyncJob implements ShouldQueue
                 ->whereNotIn('listing_item.sync_status', [
                     ListingSyncStatus::CreationError,
                 ])
+                ->whereNotNull('listing_item_link.feed_id')
                 ->groupBy('listing_item_link.feed_id')
-                ->limit(100)
+                ->limit(10)
                 ->get();
 
 //            Log::info("Listing Item Links Query: " . $listingItemLinks);
@@ -100,7 +101,7 @@ class WalmartListingItemSyncJob implements ShouldQueue
 
                         $retry_count = $itemDetail->creation_retry_count ?? 0;
 
-                        if ($item_detail) {
+                        if ($item_detail && isset($item['itemid']) && $item['itemid'] !='') {
                             $item_detail->update([
                                 'store_sku' => $item['ItemID'],
                                 'sync_status' => $status,
