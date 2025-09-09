@@ -350,11 +350,17 @@ class JobScheduler extends Seeder
                 'class_name' => 'App\Jobs\ShopifyStoreProductsSyncJob',
             ],
             [
-
                 'name' => 'Transaction Status Update Job',
                 'description' => 'Transaction Status Update Job',
                 'class_name' => 'App\Jobs\TransactionStatusCheckJob',
+            ],
+            [
+                'name' => 'Walmart Listing Item Status Check',
+                'description' => 'Walmart Listing Item Status Check',
+                'class_name' => 'App\Jobs\WalmartListingItemSyncJob',
             ]
+
+
 
 
         ];
