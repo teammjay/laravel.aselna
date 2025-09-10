@@ -658,4 +658,14 @@ class AmazonService implements MarketplaceServiceInterface
             return false;
         }
     }
+
+    public function cancelOrder($orderOperation, mixed $store)
+    {
+        $this->authService = new AmazonAuthService($store->seller_id, $store->secret_key, $store->api_key);
+        $orderId = $orderOperation->order->order_id;
+
+        $response = $this->authService->cancelOrder($orderId);
+
+        return $response;
+    }
 }

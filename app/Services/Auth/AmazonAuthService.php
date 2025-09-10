@@ -431,8 +431,32 @@ class AmazonAuthService
         }
     }
 
-    public function cancelOrder()
+    public function cancelOrder($orderId)
     {
+        try {
+            $accessToken = $this->getAccessToken();
+            if (!$accessToken) {
+                return "Error: Could not retrieve access token.";
+            }
+
+            $response =  $this->client->put("/fba/outbound/2020-07-01/fulfillmentOrders/{$orderId}/cancel", [
+                'headers' => [
+                    'x-amz-access-token' => "{$accessToken}",
+                    'Content-Type' => 'application/json',
+                    'x-amz-date' => gmdate('Ymd\THis\Z'),
+                ]
+            ]);
+
+            if ($response->getStatusCode() == 200) {
+                return 200;
+            }
+
+        } catch (Exception $exception) {
+            return json_encode([
+                'error' => 'Amazon API request failed',
+                'message' => $exception->getMessage()
+            ]);
+        }
 
     }
 
