@@ -185,6 +185,10 @@ class OrderOperationUtility
         $shipmentDetails['MailpieceShape'] = $orderOperation->shipping_solution_carrier_package->solution_code;
         $shipmentDetails['transactionId'] = $orderOperation->order->order_id;
 
+        if($shipmentDetails['MailpieceShape'] == 'Letter') {
+            $shipmentDetails['MailpieceShape'] = 'Envelope';
+        }
+
         Log::info('Image creation error 1');
 
         $shipmentDetails['weight'] = [
@@ -270,7 +274,7 @@ class OrderOperationUtility
             return [];
         } else {
             Log::error('Error creating label for order operation: ' . $orderOperation->id . ' - ' . json_encode($response));
-            return $response['errors'] ?? ['Error creating label.'];
+            return $response['error'] ?? 'Error In Endicia Response.';
         }
     }
 
@@ -846,7 +850,7 @@ class OrderOperationUtility
                 $errors = self::createLabel($orderOperation);
                 if (isset($errors) && !empty($errors)) {
                     //DB::rollBack();
-                    throw new \Exception('Error creating label: Printing failed');
+                    throw new \Exception($errors);
                 }
             }
             $store = $orderOperation->store;
