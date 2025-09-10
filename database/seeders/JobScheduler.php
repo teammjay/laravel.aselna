@@ -354,6 +354,12 @@ class JobScheduler extends Seeder
                 'name' => 'Transaction Status Update Job',
                 'description' => 'Transaction Status Update Job',
                 'class_name' => 'App\Jobs\TransactionStatusCheckJob',
+            ],
+            [
+                //ShopifyCombinedSyncing
+                'name' => 'Shopify Combined Syncing',
+                'description' => 'Shopify Combined Syncing',
+                'class_name' => 'App\Jobs\ShopifyCombinedSyncing',
             ]
 
 
