@@ -358,11 +358,13 @@ class JobScheduler extends Seeder
                 'name' => 'Walmart Listing Item Status Check',
                 'description' => 'Walmart Listing Item Status Check',
                 'class_name' => 'App\Jobs\WalmartListingItemSyncJob',
+            ],
+            [
+                'name' => 'Send Notification Email Sync Fail',
+                'description' => 'Send Notification Email Sync Fail',
+                'class_name' => 'App\Jobs\SendNotificationEmailSyncFailJob',
             ]
-
-
-
-
+            
         ];
 
         foreach ($jobs as $job) {
