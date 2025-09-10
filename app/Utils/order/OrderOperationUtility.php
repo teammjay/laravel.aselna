@@ -626,6 +626,20 @@ class OrderOperationUtility
                 }
 
                 break;
+            case 'amazon' :
+                $amazonService = new AmazonService();
+                $response = $amazonService->cancelOrder($orderOperation, $store);
+
+                if (isset($orderOperation->order->orderItem)) {
+                    foreach ($orderOperation->order->orderItem as $o_item) {
+                        $item_qty = $o_item->quantity;
+                        $orderItem = OrderItem::findOrFail($o_item->id);
+                        $orderItem->update(['canceled_quantity' => $item_qty]);
+
+                        $data['status'] = true;
+                    }
+                }
+                break;
         }
     }
 
