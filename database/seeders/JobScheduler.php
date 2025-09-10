@@ -363,8 +363,14 @@ class JobScheduler extends Seeder
                 'name' => 'Send Notification Email Sync Fail',
                 'description' => 'Send Notification Email Sync Fail',
                 'class_name' => 'App\Jobs\SendNotificationEmailSyncFailJob',
+            ],
+            [
+                //ShopifyCombinedSyncing
+                'name' => 'Shopify Combined Syncing',
+                'description' => 'Shopify Combined Syncing',
+                'class_name' => 'App\Jobs\ShopifyCombinedSyncing',
             ]
-            
+
         ];
 
         foreach ($jobs as $job) {
