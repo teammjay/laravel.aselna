@@ -63,6 +63,7 @@ use Illuminate\Support\Facades\Log;
 use App\Constants\FeedStatus;
 use Tests\Utils\order\OrderOperationUtilityTest;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Mail;
 
 class HomeController extends Controller
 {
@@ -76,7 +77,45 @@ class HomeController extends Controller
 
     public function testfunction(){
 
+        $thresholdMinutes = 10;
+        $now = now();
 
+        $storeMessageAccounts = StoreMessageAccount::with('store','store.storeType','incomingAccount')
+            ->where('active', 1)
+            ->where('api_account', 0)
+            ->get();
+       /* echo '<pre>';
+        print_r($storeMessageAccounts);
+        echo '</re>';die;*/
+
+        foreach ($storeMessageAccounts as $macc) {
+
+
+            if (isset($macc->incomingAccount->filter_from_date) && $macc->incomingAccount->filter_from_date != '') {
+
+                $lastSync = \Carbon\Carbon::parse($macc->incomingAccount->filter_from_date);
+                echo '<pre>';
+                print_r($macc);
+                echo '<pre>';
+                echo 'Filter date - ' . $lastSync->lt(now()->subMinutes($thresholdMinutes)) . '==';
+
+                /*if (!isset($macc->incomingAccount)) {
+                    continue;
+                }*/
+                if ($lastSync->lt(now()->subMinutes($thresholdMinutes))) {
+                    Log::info('Filter date: ' . $macc->incomingAccount->filter_from_date);
+                    // send notification email
+                    Mail::raw("Email Sync issue detected for store: {$macc->store->name} - {$macc->store->storeType->name}. \n Last sync at {$lastSync->toDateTimeString()}",
+                        function ($message) use ($macc) {
+                            $message->to('jayesh@mjailab.com')
+                                ->subject("Sync Issue Alert : {$macc->store->name} - {$macc->store->storeType->name}");
+                        }
+                    );
+                }
+            }
+        }
+
+        die;
         $authService = new WalmartAuthService('b8f63c96-93fd-4bc1-b0cc-2a5f84e5bd7c', 'AOWo7abtyndXMFjcvzlnP6Z_62SgQPZRtquhIunLHMiNYQggxowM22wipJhZICtgShCafih2apKPf4XGPTpR_2g');
 
         $response = $authService->getFeedStatus('186275989E8757208632E42569E9749A@AXkBCgA', 150);
