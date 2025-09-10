@@ -607,7 +607,11 @@ class ShipmentsController extends Controller
             $package_id = '';
             $product_total_weight = Common::calculateProductWeight($operation);
 
-            $product_weight_unit = '';
+            $product_weight_unit = 0;
+
+            if(isset($operation->shipping_package_id)) {
+                $request['carrier_package'] = $operation->shipping_package_id;
+            }
 
             if (count($operation->operationItem ?? []) > 0) {
                 $product_weight = 0;

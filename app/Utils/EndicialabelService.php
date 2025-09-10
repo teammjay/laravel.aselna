@@ -66,6 +66,11 @@ class EndicialabelService
         }
 
         $xml->registerXPathNamespace('ns', 'www.envmgr.com/LabelService');
+        if($errorNode = $xml->xpath('//ns:ErrorMessage')){
+            $errorMessage = (string)$errorNode[0];
+            Log::error('Endicia Label Error Message: ' . $errorMessage);
+            return ['error' => $errorMessage];
+        }
 
         $base64Image = (string)$xml->xpath('//ns:Base64LabelImage')[0];
         $trackingNumber = (string)$xml->xpath('//ns:TrackingNumber')[0];
@@ -283,7 +288,7 @@ class EndicialabelService
 
         $labelRequest->addChild('PartnerTransactionID', $shipmentDetails['transactionId']);
 
-        $labelRequest->addChild('Machinable', $shipmentDetails['non_machinable'] == 0 ? 'true' : 'false');
+        $labelRequest->addChild('Machinable', $shipmentDetails['non_machinable'] == 0 ? 'TRUE' : 'FALSE');
 
         if ($shipmentDetails['dimensions']) {
             $dimensions = $labelRequest->addChild('MailpieceDimensions');

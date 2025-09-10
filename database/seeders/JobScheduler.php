@@ -350,12 +350,26 @@ class JobScheduler extends Seeder
                 'class_name' => 'App\Jobs\ShopifyStoreProductsSyncJob',
             ],
             [
-
                 'name' => 'Transaction Status Update Job',
                 'description' => 'Transaction Status Update Job',
                 'class_name' => 'App\Jobs\TransactionStatusCheckJob',
+            ],
+            [
+                'name' => 'Walmart Listing Item Status Check',
+                'description' => 'Walmart Listing Item Status Check',
+                'class_name' => 'App\Jobs\WalmartListingItemSyncJob',
+            ],
+            [
+                'name' => 'Send Notification Email Sync Fail',
+                'description' => 'Send Notification Email Sync Fail',
+                'class_name' => 'App\Jobs\SendNotificationEmailSyncFailJob',
+            ],
+            [
+                //ShopifyCombinedSyncing
+                'name' => 'Shopify Combined Syncing',
+                'description' => 'Shopify Combined Syncing',
+                'class_name' => 'App\Jobs\ShopifyCombinedSyncing',
             ]
-
 
         ];
 

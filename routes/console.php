@@ -1,6 +1,7 @@
 <?php
 
 use App\Jobs\AmazonListingItemSyncJob;
+use App\Jobs\WalmartListingItemSyncJob;
 use App\Jobs\BrandSyncJob;
 use App\Jobs\CategorySyncJob;
 use App\Jobs\DeviceCarrierSyncJob;
@@ -32,6 +33,7 @@ Schedule::command('logs:rotate')->everyFourHours();
 // Listing sync Job
 Schedule::job(new AmazonListingItemSyncJob())->everyFiveMinutes();
 Schedule::job(new EbayListingItemSyncJob())->hourly();
+//Schedule::job(new WalmartListingItemSyncJob())->hourly();
 
 // Listing Feed Result Syncing
 Schedule::job(new FetchResultFeedAsync())->everyFiveMinutes();
@@ -59,8 +61,8 @@ Schedule::job(new DeviceSeriesSyncJob())->dailyAt('01:00');
 Schedule::job(new CategorySyncJob())->dailyAt('01:30');
 Schedule::job(new BrandSyncJob())->dailyAt('02:00');
 Schedule::job(new DevicesSyncJob())->dailyAt('02:30');
-Schedule::job(new DeviceInterfaces())->dailyAt('03:30');
 Schedule::job(new ProductImagesSyncJob())->dailyAt('04:00');
+Schedule::job(new DeviceInterfaces())->dailyAt('03:30');
 Schedule::job(new ProductInterfaces())->dailyAt('04:30');
 Schedule::job(new DeviceCarrierSyncJob())->dailyAt('05:30');
 
