@@ -475,6 +475,20 @@
                 });
             }
 
+            if($('input[name="message_id[]"]:checked').length) {
+                $('#open_message').removeAttr('disabled');
+                $('#mark_as_spam').removeAttr('disabled');
+                $('#delete_ticket').removeAttr('disabled');
+                $('#mark_as_important').removeAttr('disabled');
+                $('#mark_as_unread').removeAttr('disabled');
+            }else{
+                $('#open_message').attr('disabled',true);
+                $('#mark_as_spam').attr('disabled',true);
+                $('#delete_ticket').attr('disabled',true);
+                $('#mark_as_important').attr('disabled',true);
+                $('#mark_as_unread').attr('disabled',true);
+            }
+
         });
 
         $(document).on('dblclick','#message-list tr',function () {

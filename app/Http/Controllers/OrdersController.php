@@ -53,7 +53,7 @@ class OrdersController extends Controller
         $columnName = $request['columns'][$columnIndex]['data'];
         $columnSortOrder = $request['order'][0]['dir'];
 
-        $query = Order::with('orderItem','orderItem.product','store','store.storeType')->select('*');
+        $query = Order::with('orderItem','orderItem.product','store','store.storeType','orderOperations')->select('*');
 
         // Filter by store
         if ($request->has('store_id') && $request->store_id != '') {
@@ -63,6 +63,11 @@ class OrdersController extends Controller
         // Filter by sku
         if ($request->has('sku') && $request->sku != '') {
             $query->whereRelation('orderItem', 'sku', $request->sku);
+        }
+
+        // Filter by sku
+        if ($request->has('tracking_number') && $request->tracking_number != '') {
+            $query->whereRelation('orderOperations', 'tracking_number', $request->tracking_number);
         }
 
         // Filter by order id
