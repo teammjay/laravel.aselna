@@ -74,7 +74,7 @@ class StoreTypesController extends Controller
      */
     public function destroy(string $id)
     {
-//        StoreType::findOrFail($id)->delete();
+        StoreType::findOrFail($id)->delete();
 
         return redirect()->route('store_type.index')
             ->with('success', 'Store type deleted successfully.');

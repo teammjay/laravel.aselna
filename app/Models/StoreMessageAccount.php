@@ -36,4 +36,7 @@ class StoreMessageAccount extends Model
         return $this->belongsTo(MessagingAccount::class,'outgoing_account_id');
     }
 
+    public function store(){
+        return $this->belongsTo(Store::class,'store_id');
+    }
 }

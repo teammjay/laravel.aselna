@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Models\HdMessageAttachment;
+use App\Models\HdMessageReference;
 use App\Models\Sequence;
 use App\Models\SysFile;
 use Illuminate\Bus\Queueable;
@@ -200,8 +201,6 @@ class ProcessStoreMessageAccountJob implements ShouldQueue
                             if (isset($email['references']) && $email['references'] != '') {
                                 if(is_array($email['references'])){
                                     $query->orWhereIn('message_id', $email['references']);
-
-
                                 }else {
                                     $query->orWhere('message_id', trim($email['references']));
                                 }
@@ -255,6 +254,21 @@ class ProcessStoreMessageAccountJob implements ShouldQueue
                                     HdMessagePart::updateOrCreate([
                                         'message_id' => $hd_message->id,
                                     ], $email['parts']);
+                                }
+
+                                if(isset($email['references']) && !empty($email['references']) && is_array($email['references'])){
+                                    foreach($email['references'] as $ref){
+                                        $refData = [
+                                            'ticket_id' => $hd_ticket->id,
+                                            'message_id' => $hd_message->id,
+                                            'reference' => $ref,
+                                        ];
+                                        HdMessageReference::updateOrCreate([
+                                            'ticket_id' => $hd_ticket->id,
+                                            'message_id' => $hd_message->id,
+                                            'reference' => $ref,
+                                        ], $refData);
+                                    }
                                 }
 
                                 if (isset($hd_message->id) && !empty($email['attachments'])) {

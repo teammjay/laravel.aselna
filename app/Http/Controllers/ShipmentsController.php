@@ -9,6 +9,7 @@ use App\Models\Catalog;
 use App\Models\CustomerAddress;
 use App\Models\LogisticCenter;
 use App\Models\Order;
+use App\Models\OrderItem;
 use App\Models\OrderOperation;
 use App\Models\OrderOperationItem;
 use App\Models\OrderOperationReason;
@@ -606,7 +607,7 @@ class ShipmentsController extends Controller
             $package_id = '';
             $product_total_weight = Common::calculateProductWeight($operation);
 
-            $product_weight_unit = '';
+            $product_weight_unit = 0;
 
             if(isset($operation->shipping_package_id)) {
                 $request['carrier_package'] = $operation->shipping_package_id;
@@ -789,6 +790,14 @@ class ShipmentsController extends Controller
 
                         $orderOperationItem = OrderOperationItem::findOrFail($id);
                         $orderOperationItem->update($itemData);
+
+                        $sku = preg_split('/[_-]/', $skus[$key])[0];
+                        $catalog = Catalog::where('product_sku', $sku)->first();
+                        if($catalog) {
+                            $order_item_id = $orderOperationItem->order_item_id;
+                            $order_item = OrderItem::findOrFail($order_item_id);
+                            $order_item->update(['product_id' => $catalog->product_id ?? null]);
+                        }
                     }
                 }
             }

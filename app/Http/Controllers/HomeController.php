@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Constants\HdTicketStatus;
 use App\Constants\HdTicketTypeCode;
+use App\Constants\ListingSyncStatus;
 use App\Helpers\QueryFilters;
 use App\Jobs\EbayListingItemSyncJob;
 use App\Jobs\FeedGenerationJob;
@@ -23,11 +24,13 @@ use App\Models\CustomerEmail;
 use App\Models\HDMessage;
 use App\Models\HdMessageAttachment;
 use App\Models\HdMessagePart;
+use App\Models\HdMessageReference;
 use App\Models\HdMessageTemplate;
 use App\Models\HdTicketType;
 use App\Models\Listing;
 use App\Models\ListingFeed;
 use App\Models\ListingItem;
+use App\Models\ListingItemLink;
 use App\Models\Message;
 use App\Models\Order;
 use App\Models\OrderOperation;
@@ -40,6 +43,7 @@ use App\Models\StoreMessageAccount;
 use App\Models\SysFile;
 use App\Services\Auth\GoogleShoppingAuthService;
 use App\Services\Auth\ShopifyAuthService;
+use App\Services\Auth\WalmartAuthService;
 use App\Services\DataTable\DataTableService;
 use App\Services\Marketplace\MarketplaceServiceFactory;
 use App\Services\Marketplace\Service\EbayService;
@@ -59,6 +63,7 @@ use Illuminate\Support\Facades\Log;
 use App\Constants\FeedStatus;
 use Tests\Utils\order\OrderOperationUtilityTest;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Mail;
 
 class HomeController extends Controller
 {
@@ -71,6 +76,53 @@ class HomeController extends Controller
     }
 
     public function testfunction(){
+
+        $thresholdMinutes = 10;
+        $now = now();
+
+        $storeMessageAccounts = StoreMessageAccount::with('store','store.storeType','incomingAccount')
+            ->where('active', 1)
+            ->where('api_account', 0)
+            ->get();
+       /* echo '<pre>';
+        print_r($storeMessageAccounts);
+        echo '</re>';die;*/
+
+        foreach ($storeMessageAccounts as $macc) {
+
+
+            if (isset($macc->incomingAccount->filter_from_date) && $macc->incomingAccount->filter_from_date != '') {
+
+                $lastSync = \Carbon\Carbon::parse($macc->incomingAccount->filter_from_date);
+                echo '<pre>';
+                print_r($macc);
+                echo '<pre>';
+                echo 'Filter date - ' . $lastSync->lt(now()->subMinutes($thresholdMinutes)) . '==';
+
+                /*if (!isset($macc->incomingAccount)) {
+                    continue;
+                }*/
+                if ($lastSync->lt(now()->subMinutes($thresholdMinutes))) {
+                    Log::info('Filter date: ' . $macc->incomingAccount->filter_from_date);
+                    // send notification email
+                    Mail::raw("Email Sync issue detected for store: {$macc->store->name} - {$macc->store->storeType->name}. \n Last sync at {$lastSync->toDateTimeString()}",
+                        function ($message) use ($macc) {
+                            $message->to('jayesh@mjailab.com')
+                                ->subject("Sync Issue Alert : {$macc->store->name} - {$macc->store->storeType->name}");
+                        }
+                    );
+                }
+            }
+        }
+
+        die;
+        $authService = new WalmartAuthService('b8f63c96-93fd-4bc1-b0cc-2a5f84e5bd7c', 'AOWo7abtyndXMFjcvzlnP6Z_62SgQPZRtquhIunLHMiNYQggxowM22wipJhZICtgShCafih2apKPf4XGPTpR_2g');
+
+        $response = $authService->getFeedStatus('186275989E8757208632E42569E9749A@AXkBCgA', 150);
+
+        echo '<pre>';
+        print_r($response);
+        echo '</pre>';die;
 
         /*$user_id = Auth::id();
         Bus::chain([
@@ -85,8 +137,8 @@ class HomeController extends Controller
             //new FetchEmailMessagesJob()
         ])->dispatch(); die;*/
 
-        /*$shipping_account = ShippingAccount::whereLike('name','%Endicia Label Server%')->first();
-        $sync_detail = AccountTransactionSynchronization::orderBy('created_at','desc')->first();
+        $shipping_account = ShippingAccount::whereLike('name','%Endicia Label Server%')->first();
+        /*$sync_detail = AccountTransactionSynchronization::orderBy('created_at','desc')->first();
 
         if($sync_detail){
             $startTime = date('Y-m-d H:i:s',strtotime($sync_detail->filter_end_date));
@@ -119,23 +171,36 @@ class HomeController extends Controller
         //print_r($data);
         //echo '</pre>';die;
 
-        $synchronize = AccountTransactionSynchronization::create($data);
+        $synchronize = AccountTransactionSynchronization::create($data);*/
+
+        /*$transactions = AccountTransaction::with('shippingAccount')
+        ->where('canceled', 0)
+            ->orWhereNull('canceled')
+            ->where('status','pending')
+            ->orderBy('transaction_date','desc')
+            ->limit(10)->get();
+
+//        echo '<pre>';
+//        print_r($transactions);
+//        echo '<pre>';die;
+
 
         $trans = [
             'accountId' => $shipping_account->account_id,
             'passPhrase' => $shipping_account->pass_phrase,
             'requesterId' => $shipping_account->requester_id,
             'requestId' => (string)Str::uuid(),
-            'filter_start_date' => $startTime,
-            'filter_end_date' => $endTime,
+            'transactions' => $transactions,
         ];
 
-        $endiciaClient = new EndicialabelService();
-        $response = $endiciaClient->getTransactionLists($trans);
 
-//        echo '<pre>';
-//        print_r($response);
-//        echo '</pre>';die;
+
+        $endiciaClient = new EndicialabelService();
+        $response = $endiciaClient->getTrackingStatuses($trans);
+
+        echo '<pre>';
+        print_r($response);
+        echo '</pre>';die;
 
         //Log::info('Transaction Status Response:'.json_encode($response));
 
@@ -239,7 +304,7 @@ class HomeController extends Controller
                 }
 
             }
-        }*/
+        }die;*/
 
         //die;
         /*$transactions = AccountTransaction::with('shippingAccount')->where('canceled', 0)->orWhereNull('canceled')
@@ -402,19 +467,23 @@ On Fri, 29 Aug 2025 at 23:36, phonil <phonil.ebay@gmail.com> wrote:
             'encryption' => 'ssl',
             //'username' => 'odemobile.shopify@gmail.com',
             //'username' => 'cs@odemobile.com',
-            'username' => 'phonil.ebay@gmail.com',
+            //'username' => 'phonil.ebay@gmail.com',
+            //'username' => 'accessorychoice.wmt@gmail.com',
+            'username' => 'snhdigital.ebay@gmail.com',
             //'password' => 'deczsvfmubmpxtsf',
             //'password' => 'qaym xjqg icea syxw',
-            'password' => 'qynvjqjqqaqqramo',
+            //'password' => 'qynvjqjqqaqqramo',
+            //'password' => 'hbmevmsyjuwqcpsm',
+            'password' => 'vtldhcsfeciyzhwm',
         ];
 
 
 
         $connector = new EmailMessageUtility($smtpConfig, $imapConfig);
-        $receiveEmails = $connector->fetchEmails('Ebay', '2025-09-03 20:00:00','INBOX');
+        $receiveEmails = $connector->fetchEmails('Ebay', '2025-09-04 08:25:28','INBOX');
 
         //$store = Store::with('storeType')->where('id','0dd4de79-bba1-c47a-a7aa-822e6f015b8e')->first();
-        $store = Store::with('storeType')->where('id','6c7009ce-eac1-a995-a986-27d5df0103ac')->first();
+        $store = Store::with('storeType')->where('id','fff036c8-6892-4184-9126-0130e4e505fb')->first();
         $store_id = $store->id;
         if (count($receiveEmails ?? []) > 0) {
             foreach ($receiveEmails as $email) {
@@ -603,6 +672,21 @@ On Fri, 29 Aug 2025 at 23:36, phonil <phonil.ebay@gmail.com> wrote:
                     }
 
                     Log::info('Message ID : ' .$hd_message->id);
+
+                    if(isset($email['references']) && !empty($email['references']) && is_array($email['references'])){
+                        foreach($email['references'] as $ref){
+                            $refData = [
+                                'ticket_id' => $hd_ticket->id,
+                                'message_id' => $hd_message->id,
+                                'reference' => $ref,
+                            ];
+                            HdMessageReference::updateOrCreate([
+                                'ticket_id' => $hd_ticket->id,
+                                'message_id' => $hd_message->id,
+                                'reference' => $ref,
+                            ], $refData);
+                        }
+                    }
 
                     if (isset($hd_message->id) && !empty($email['attachments'])) {
 

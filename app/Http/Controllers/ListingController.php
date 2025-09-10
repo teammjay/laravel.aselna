@@ -132,7 +132,7 @@ class ListingController extends Controller
                 COALESCE(shipped_quantity, 0)
               - COALESCE(canceled_quantity, 0)
               - COALESCE(refund_quantity, 0)
-            )')->whereColumn('order_item.sku', 'listing_item.sku')
+            )')->whereColumn('order_item.sku', 'listing_item.sku')->limit(1)
         ])
             /*->withSum(['orderItems as saleCount' => function ($query) {
             $query->whereNotNull('shipped_quantity')->where(function ($q) {
@@ -143,11 +143,27 @@ class ListingController extends Controller
                     ->orWhere('refund_quantity', 0);
             });
         }], 'quantity')*/
-        ->withMax(['orderItems as lastSaleDate' => function ($query) {
+        ->addSelect([
+            'lastSaleDate' => OrderItem::selectRaw('MAX(created_at)')
+                ->whereColumn('order_item.sku', 'listing_item.sku')
+                ->whereNotNull('shipped_quantity')
+                ->where(function($q){
+                    $q->whereNull('canceled_quantity')->orWhere('canceled_quantity', 0);
+                })
+                ->where(function($q){
+                    $q->whereNull('refund_quantity')->orWhere('refund_quantity', 0);
+                })
+                ->limit(1)
+        ]);
+        /*->withMax(['orderItems as lastSaleDate' => function ($query) {
             $query->whereNotNull('shipped_quantity')->whereNull('canceled_quantity')->orWhere('canceled_quantity', 0)->whereNull('refund_quantity')->orWhere('refund_quantity', 0);
-        }], 'created_at');
+        }], 'created_at');*/
 
         if ($request->has('store_id') && $request->store_id != '') {
+
+            /*$query->join('store_product', 'store_product.id', '=', 'listing_item.store_product_id')
+                ->where('store_product.store_id', $request->store_id);*/
+
             $query->whereRelation('storeProduct', 'store_id', $request->store_id);
             /*$query->whereHas('storeProduct', function ($q) use ($request) {
                 $q->where('store_id', $request->store_id);
@@ -207,6 +223,12 @@ class ListingController extends Controller
 
         // Filter by upc
         QueryFilters::applyFilter($query, $request, 'upc', 'upc_operator', 'upc');
+
+        // Filter by title
+        $storeSku = ($request->has('store_sku')) ? 1 : 0;
+        if ($storeSku) {
+            $query->whereNotNull('store_sku')->where('store_sku', '!=', '');
+        }
 
         // Filter by device
         if ($request->has('device') && $request->device != '') {
@@ -279,7 +301,8 @@ class ListingController extends Controller
                     break;
             }
 
-            $totalRecords = $query->count();
+            //$totalRecords = $query->count();
+            $totalRecords = (clone $query)->toBase()->getCountForPagination();
             $sortableColumns = [
                 'sku' => 'sku',
                 'sales_count' => 'saleCount',
@@ -303,16 +326,19 @@ class ListingController extends Controller
         //$productsRecord = $query->paginate($perPage); // Paginate results
         //echo $query->toSql();die;
         //$products = $query->skip($start)->take($perPage)->get(); // Paginate results
-        //dd(DB::getQueryLog());
+
         /*echo '<pre>';
         print_r($products);
         echo '</pre>';die;*/
         /*$totalRecordwithFilter = $productsRecord->total();*/
 
-        $products = $query->skip($start)
+        /*$products = $query->skip($start)
             ->take($perPage)
-            ->get();
+            ->get();*/
+        $products = $query->paginate($perPage, ['*'], 'page', floor($start/$perPage)+1);
         $totalRecordwithFilter = $totalRecords;
+        //echo $query->toSql();die;
+        //dd(DB::getQueryLog());
 
         $data = [];
         if (!empty((array)$products)) {

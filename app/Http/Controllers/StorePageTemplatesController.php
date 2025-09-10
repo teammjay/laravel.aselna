@@ -79,7 +79,7 @@ class StorePageTemplatesController extends Controller
      */
     public function destroy(string $id)
     {
-//        StorePage::findOrFail($id)->delete();
+        StorePage::findOrFail($id)->delete();
 
         return redirect()->route('store_page_templates.index')
             ->with('success', 'Store page deleted successfully.');
