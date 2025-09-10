@@ -381,11 +381,13 @@ class ShipmentsController extends Controller
         }
 
         Log::info('Shipment Info :: ' . $shipmentDetail->ship_from_id);
-        $storeLogisticCenter = $shipmentDetail->store->logisticCenters->first();
-        if (isset($storeLogisticCenter->logistic_center_id)) {
-            $shipmentDetail->ship_from_id = $storeLogisticCenter->logistic_center_id;
-        } else {
-            $shipmentDetail->ship_from_id = null;
+        if($shipmentDetail->ship_from_id == '' || $shipmentDetail->ship_from_id == null) {
+            $storeLogisticCenter = $shipmentDetail->store->logisticCenters->first();
+            if (isset($storeLogisticCenter->logistic_center_id)) {
+                $shipmentDetail->ship_from_id = $storeLogisticCenter->logistic_center_id;
+            } else {
+                $shipmentDetail->ship_from_id = null;
+            }
         }
 
         /*echo '<pre>';
