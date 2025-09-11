@@ -484,6 +484,45 @@ class WalmartService implements MarketplaceServiceInterface
         }
     }
 
+    public function getLatestOrder($store)
+    {
+        try {
+            if (!isset($store->seller_id) || !isset($store->secret_key)) {
+                Log::info("Error in Walmart Orders : No Secret Key Found");
+                return null;
+            }
+            $authService = new WalmartAuthService($store->seller_id, $store->secret_key);
+            $filterStartDateFormatted = now()->subDays(2)->toIso8601String();
+
+            $response = $authService->getOrders($filterStartDateFormatted, null,1);
+
+            if (!isset($response)) {
+                Log::info("Error in Walmart Orders : ");
+                return null;
+            }
+
+//            Log::info('Walmart Orders Response: ' . json_encode($response));
+            if (isset($response['list']['meta']['totalCount']) && $response['list']['meta']['totalCount'] == 0) {
+                Log::info("No Orders Found");
+                return null;
+            }
+
+            $data = [];
+            if (isset($response['list']['elements']['order'])) {
+                foreach ($response['list']['elements']['order'] as $sorder) {
+                    $data['order_id'] = $sorder['customerOrderId'];
+                    $data['order_date'] = date('Y-m-d H:i:s', $sorder['orderDate'] / 1000);
+                }
+            }
+
+            return $data;
+
+        }catch (\Exception $e) {
+            Log::error("Error in Walmart Orders: " . $e->getMessage());
+            return null;
+        }
+    }
+
     public function syncAttributes($store)
     {
         // TODO: Implement syncAttributes() method.

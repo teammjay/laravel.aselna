@@ -286,6 +286,18 @@ class ShopifyService implements MarketplaceServiceInterface
         return $response;
     }
 
+    public function getLatestOrders($store)
+    {
+        if (!isset($store->secret_key)) {
+            Log::info("Error in Shopify Orders : No Secret Key Found");
+            return null;
+        }
+        $this->authService = new ShopifyAuthService($store->secret_key, $store->service_url);
+        $response = $this->authService->getLatestOrders();
+
+        return $response;
+    }
+
     private function getCollectionIds($devices)
     {
         foreach ($devices as $device) {

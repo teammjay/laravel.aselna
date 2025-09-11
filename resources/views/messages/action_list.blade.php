@@ -314,7 +314,7 @@
                     <div class="col-md-2">
                         <div class="form-group">
                             <label>&nbsp;</label>
-                            <button type="reset" class="form-control btn  btn-reset btn-secondary">Reset</button>
+                            <button type="reset" class="form-control btn  btn-reset btn-secondary" id="resetForm">Reset</button>
                         </div>
                     </div>
                 </div>
@@ -622,6 +622,58 @@
             loadDatatables();
         });
 
+        /*let savedFilters = JSON.parse(localStorage.getItem("message_filters"));
+        if (savedFilters) {
+            console.log(savedFilters);
+            Object.keys(savedFilters).forEach(function (key) {
+                console.log(key, savedFilters[key]);
+
+                let input = document.querySelector(`[name="${key}"]`);
+                if (input) {
+                    input.value = savedFilters[key];
+                }
+
+                if( key == 'store_id'){
+                    $('#messages_store').val(savedFilters[key]);
+                }
+            });
+        }*/
+
+        document.getElementById("resetForm").addEventListener("click", function () {
+            localStorage.removeItem("message_filters");
+        });
+
+    });
+
+    window.onpageshow = function(event) {
+        if (event.persisted) {
+            // Page was loaded from cache → force reload
+            //window.location.reload();
+            loadDatatables();
+        }
+    };
+
+
+    document.addEventListener("DOMContentLoaded", function () {
+        let savedFilters = JSON.parse(localStorage.getItem("message_filters"));
+        if (savedFilters) {
+            console.log(savedFilters);
+            Object.keys(savedFilters).forEach(function (key) {
+
+                //console.log(savedFilters[key]);
+                let input = $('#filter-form [name="'+savedFilters[key].name+'"]');
+                if (input) {
+                    input.val(savedFilters[key].value)
+                }
+
+                if( savedFilters[key].name == 'store_id'){
+                    $('#messages_store').val(savedFilters[key].value);
+                }
+
+            });
+
+            loadDatatables();
+        }
     });
 
     function updateTicket(data) {
@@ -681,6 +733,8 @@
                     });
 
                     d['status'] = 0;
+
+                    localStorage.setItem("message_filters", JSON.stringify(formData));
 
                     var columnValues = [];
                     if (table) {

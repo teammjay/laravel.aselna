@@ -1056,6 +1056,37 @@ class EbayService implements MarketplaceServiceInterface
 
     }
 
+    public function getLatestOrders($store)
+    {
+        try {
+
+            $filterStartDateFormatted = date('Y-m-d\TH:i:s\Z', strtotime('-2 days'));
+            if (env('APP_ENV') !== 'local' && (!isset($store->user_id))) {
+                return null;
+            }
+
+            $clientId = env('EBAY_CLIENT_ID');
+            $clientSecret = env('EBAY_CLIENT_SECRET');
+            $redirectUri = env('EBAY_REDIRECT_URI');
+
+            $this->authService = new EbayAuthService($clientId, $clientSecret, $redirectUri, $store->user_id);
+            $orders = $this->authService->getOrders($filterStartDateFormatted, null, 1);
+//        Log::info('Orders Response : ' . json_encode(array_keys($orders)));
+
+            if (!isset($orders)) {
+                Log::info("Error in Ebay Orders : ");
+                return null;
+            }
+
+            if (isset($orders['total']) && $orders['total'] < 0) {
+                Log::info("No Orders Found");
+                return null;
+            }
+        }catch (\Exception $e) {
+            Log::info('Ebay order error : ' . $e->getMessage());
+        }
+    }
+
     public function getOrders($store)
     {
         try {
