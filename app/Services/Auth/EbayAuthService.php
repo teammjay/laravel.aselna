@@ -372,7 +372,7 @@ class EbayAuthService
         }
     }
 
-    public function getOrders($sync_start_date,$cursor = null)
+    public function getOrders($sync_start_date,$cursor = null,$limit = 90)
     {
         $accessToken = $this->refreshToken();
         try {
@@ -386,8 +386,12 @@ class EbayAuthService
 
                 $queryData = [
                     'filter'=> "creationdate:[$startDate..$endDate]",
-                    'limit' => 90, // Fetch max 100 orders
+                    'limit' => $limit, // Fetch max 100 orders
                 ];
+
+                if($limit == 1){
+                    $queryData['sort'] = "creationdate:desc";
+                }
             }
 
             Log::info('Query Data: ' . json_encode($queryData));

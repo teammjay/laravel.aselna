@@ -105,7 +105,7 @@ class WalmartAuthService
         return json_decode($response->getBody(), true);
     }
 
-    public function getOrders($last_order_time, $cursor)
+    public function getOrders($last_order_time, $cursor, $limit = 100)
     {
         try {
             $accessToken = $this->authenticate();
@@ -123,7 +123,7 @@ class WalmartAuthService
             } else {
                 $queryData = [
                     'createdStartDate' => $last_order_time,
-                    'limit' => 100
+                    'limit' => $limit
                 ];
             }
 

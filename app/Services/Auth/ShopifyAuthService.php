@@ -218,6 +218,21 @@ class ShopifyAuthService
         }
     }
 
+    public function getLatestOrders()
+    {
+
+        try {
+            $result = $this->makeGraphQLRequest(ShopifyQueries::$getLatestOrders, array('first' => 1));
+            if (!isset($result['errors'])) {
+                return $result['data']['orders']['edges'];
+            }
+
+        } catch (\Exception $e) {
+            Log::error('Error: ' . $e->getMessage());
+            return null;
+        }
+    }
+
     public function getPublications()
     {
         return $this->makeGraphQLRequest(ShopifyQueries::$getPublications, null);
