@@ -186,7 +186,7 @@ class OrderOperationUtility
         $shipmentDetails['transactionId'] = $orderOperation->order->order_id;
 
         if($shipmentDetails['MailpieceShape'] == 'Letter') {
-            $shipmentDetails['MailpieceShape'] = 'Envelope';
+            $shipmentDetails['MailpieceShape'] = 'ENVELOPE';
         }
 
         Log::info('Image creation error 1');
@@ -375,13 +375,14 @@ class OrderOperationUtility
         Log::info('Rubber stamp Ordero peration item: ' . json_encode($orderOperation->operationItem));
         $productMap = [];
         foreach ($orderOperation->operationItem as $item) {
+            $orderItem = $item->orderItem;
             $product = $item->orderItem->product;
             $code = $product ? $product->product_sku : $item->sku;
 
             if (!isset($productMap[$code])) {
                 $productMap[$code] = 0;
             }
-            $productMap[$code] += $item->quantity;
+            $productMap[$code] += $orderItem->quantity;
         }
 
         // Get or generate product codes line
