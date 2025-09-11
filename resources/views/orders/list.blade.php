@@ -205,6 +205,16 @@
                             </div>
                         </div>
                     </div>
+                    <div class="col-md-3">
+                        <div class="row">
+                            <div class="col-4 text-right">
+                                Tracking Number
+                            </div>
+                            <div class="col-8">
+                                <input type="text" name="tracking_number" id="tracking_number" class="form-control">
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="row pt-3">

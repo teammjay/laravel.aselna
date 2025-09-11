@@ -53,7 +53,7 @@ class OrdersController extends Controller
         $columnName = $request['columns'][$columnIndex]['data'];
         $columnSortOrder = $request['order'][0]['dir'];
 
-        $query = Order::with('orderItem','orderItem.product','store','store.storeType')->select('*');
+        $query = Order::with('orderItem','orderItem.product','store','store.storeType','orderOperations')->select('*');
 
         // Filter by store
         if ($request->has('store_id') && $request->store_id != '') {
@@ -65,9 +65,14 @@ class OrdersController extends Controller
             $query->whereRelation('orderItem', 'sku', $request->sku);
         }
 
+        // Filter by sku
+        if ($request->has('tracking_number') && $request->tracking_number != '') {
+            $query->whereRelation('orderOperations', 'tracking_number', $request->tracking_number);
+        }
+
         // Filter by order id
         if ($request->has('order_id') && $request->order_id != '') {
-            $query->where('order_id', $request->order_id);
+            $query->whereLike('order_id', $request->order_id);
         }
 
         // Filter by order date
@@ -87,7 +92,7 @@ class OrdersController extends Controller
 
         // Filter by purchase order id
         if ($request->has('purchase_order_id') && $request->purchase_order_id != '') {
-            $query->where('purchase_order_id', $request->purchase_order_id);
+            $query->whereLike('purchase_order_id', $request->purchase_order_id);
         }
 
         // Filter by purchase order id

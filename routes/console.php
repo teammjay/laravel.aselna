@@ -31,9 +31,9 @@ Schedule::command('logs:rotate')->everyFourHours();
 
 
 // Listing sync Job
-Schedule::job(new AmazonListingItemSyncJob())->everyFiveMinutes();
+Schedule::job(new AmazonListingItemSyncJob())->hourly();
 Schedule::job(new EbayListingItemSyncJob())->hourly();
-//Schedule::job(new WalmartListingItemSyncJob())->hourly();
+Schedule::job(new WalmartListingItemSyncJob())->hourly();
 
 // Listing Feed Result Syncing
 Schedule::job(new FetchResultFeedAsync())->everyFiveMinutes();
