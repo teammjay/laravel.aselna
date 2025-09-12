@@ -77,7 +77,7 @@ class HomeController extends Controller
 
     public function testfunction(){
 
-        $stores = Store::with('storeType')->where('store_status','>',0)->get();
+        /*$stores = Store::with('storeType')->where('store_status','>',0)->get();
 
         if(count($stores ?? []) > 0) {
             foreach ($stores as $store) {
@@ -150,7 +150,7 @@ class HomeController extends Controller
                 }
             }
         }
-        die;
+        die;*/
         /*$user_id = Auth::id();
         Bus::chain([
             //new TransactionStatusCheckJob(),

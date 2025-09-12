@@ -38,6 +38,10 @@ class SendNotificationOrderSyncFailJob implements ShouldQueue
 
         if(count($stores ?? []) > 0) {
             foreach ($stores as $store) {
+
+                Log::info("Store: : {$store->name} - {$store->storeType->name}");
+                Log::info("Store ID: ".$store->id);
+
                 $latest_system_order = Order::where('store_id',$store->id)->orderBy('order_date','desc')->first();
                 $latest_order_id = '';
                 $latest_order_date = '';
@@ -45,6 +49,8 @@ class SendNotificationOrderSyncFailJob implements ShouldQueue
                     case 'shopify':
 
                         //$filterStartDateFormatted = date('Y-m-d\TH:i:s\Z', strtotime('-2 days'));
+
+                        Log::info('System Shopify Latest Order: '.json_encode($latest_system_order));
 
                         $shopifyService = new ShopifyService();
                         $orders = $shopifyService->getLatestOrders($store);
@@ -62,6 +68,9 @@ class SendNotificationOrderSyncFailJob implements ShouldQueue
 
                         break;
                     case 'walmart':
+
+                        Log::info('System Walmart Latest Order: '.json_encode($latest_system_order));
+
                         $walmartService = new WalmartService();
                         $latest_order_detail = $walmartService->getLatestOrder($store);
                         if($latest_order_detail){
@@ -71,6 +80,7 @@ class SendNotificationOrderSyncFailJob implements ShouldQueue
                         break;
                     case 'ebay':
 
+                        Log::info('System eBay Latest Order: '.json_encode($latest_system_order));
                         $ebayService = new EbayService();
                         $orders = $ebayService->getLatestOrders($store);
                         if (isset($orders['total']) && $orders['total'] > 0) {
@@ -88,6 +98,8 @@ class SendNotificationOrderSyncFailJob implements ShouldQueue
                         $content = "Order Sync issue detected for store: {$store->name} - {$store->storeType->name}. \n Last sync at {$latest_system_order->order_date}\n";
                         $content .= "System order id: {$latest_system_order->order_id} , Order date : {$latest_system_order->order_date} \n";
                         $content .= "Store order id: {$latest_order_id} , Order date : {$latest_order_date} \n";
+
+                        Log::info('Message content send: '.$content);
 
                         //$this->sendMail($store, $content);
 
