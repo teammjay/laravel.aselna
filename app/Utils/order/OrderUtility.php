@@ -458,6 +458,7 @@ class OrderUtility
                 if (!isset($itemDetail)) {
                     $itemDeviceDetail = ListingItemDetail::where('sku',$item['sku'])->first();
                     if(isset($itemDeviceDetail)) {
+                        Log::info('Came Inside Item Device Detail');
                         $itemDetail = ListingItem::with('storeProduct', 'storeProduct.product')
                             ->where('id', $itemDeviceDetail->item_id)->first();
                     }
