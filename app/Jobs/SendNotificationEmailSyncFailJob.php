@@ -30,7 +30,7 @@ class SendNotificationEmailSyncFailJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $thresholdMinutes = 300;
+        $thresholdMinutes = 480;
 
         $storeMessageAccounts = StoreMessageAccount::with('store','store.storeType','incomingAccount')
             ->where('active', 1)
