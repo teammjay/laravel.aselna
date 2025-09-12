@@ -99,6 +99,9 @@
         <button class="btn btn-primary" id="generate_bulk_pages" data-toggle="modal" data-target="#bulkPageModal">
             Generate Bulk Page
         </button>
+        <button class="btn btn-primary" id="generate_bulk_all_pages" data-toggle="modal" data-target="#bulkAllPageModal">
+            Generate Bulk Combine Page
+        </button>
     </div>
     <table id="navigationPageTable" class="table table-bordered table-striped">
         <thead>
@@ -166,6 +169,40 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
                     <button type="button" class="btn btn-primary" id="submitBulkGenerate">Generate Pages</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="bulkAllPageModal" tabindex="-1" role="dialog" aria-labelledby="bulkAllPageModalLabel"
+         aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="bulkPageModalLabel">Generate Bulk Navigation Pages</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form id="bulkAllPageForm">
+                        @csrf
+                        <div class="form-group">
+                            <label for="bulk_store_id">Store</label>
+                            <select class="form-control" name="store_id" id="bulk_store_id" style="width: 100%;">
+                                <option value="">-- Select Store --</option>
+                                @foreach($stores as $store)
+                                    <option value="{{ $store->id }}">
+                                        {{ $store->name }} {{ (!empty((array)$store->storeType)) ? ' - '.$store->storeType->name : '' }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="submitAllBulkGenerate">Generate Pages</button>
                 </div>
             </div>
         </div>
@@ -268,6 +305,49 @@
                     success: function (response) {
                         if (response.success) {
                             alert('Bulk pages generated successfully.');
+                            $('#bulkPageModal').modal('hide');
+                            navigationTable.ajax.reload();
+                        } else {
+                            alert('Failed to generate bulk pages: ' + (response.message || 'Please try again.'));
+                        }
+                    },
+                    error: function () {
+                        alert('An error occurred while generating bulk pages.');
+                    }
+                });
+            }
+
+            $('#submitAllBulkGenerate').on('click', function () {
+                // This is the function call after the submit button click of the modal
+                handleAllBulkPageGeneration();
+            });
+            function handleAllBulkPageGeneration() {
+                const form = $('#bulkPageForm');
+                const storeId = form.find('#bulk_store_id').val();
+
+                if (!storeId) {
+                    alert('Please select store to move forward');
+                    return;
+                }
+
+                // You can now perform an AJAX request to your bulk generation endpoint
+                console.log({
+                    _token: '{{ csrf_token() }}',
+                    store_id: storeId,
+                    page_type: pageType,
+                    template_id: templateId
+                });
+
+                $.ajax({
+                    url: '{{ route('store_navigation_page.generate_all_bulk') }}', // You need to create this route
+                    method: 'POST',
+                    data: {
+                        _token: '{{ csrf_token() }}',
+                        store_id: storeId,
+                    },
+                    success: function (response) {
+                        if (response.success) {
+                            alert('All Bulk pages started generating.');
                             $('#bulkPageModal').modal('hide');
                             navigationTable.ajax.reload();
                         } else {

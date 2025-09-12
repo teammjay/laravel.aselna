@@ -173,7 +173,7 @@ class SyncAllTables extends Command
 //        MagentoProductsSyncJob::dispatch();
 //        FetchMagentoCategoriesJob::dispatch();
 //        MagnetoAttributesSyncJob::dispatch();
-//        ShopifyPagesSyncJob::dispatch();
+        ShopifyPagesSyncJob::dispatch();
 //        SubmitShopifyProductsJob::dispatch();
 //        ShopifyListingProductsSyncJob::dispatch();
 //        ShopifyStoreProductsSyncJob::dispatch();
@@ -191,7 +191,7 @@ class SyncAllTables extends Command
         $transactionIds = [
 ////            '9400150105798006163885',
 ////            '9400150105799006167927',
-            '9400150105497028574135',
+//            '9400150105497028574135',
         ];
 
         foreach ($transactionIds as $transactionId) {
