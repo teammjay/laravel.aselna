@@ -6,6 +6,7 @@ use App\Constants\WebStorePageType;
 use App\Models\Brand;
 use App\Models\Device;
 use App\Models\Images;
+use App\Models\Interfaces;
 use App\Models\ProductType;
 use App\Models\Store;
 use App\Models\StoreNavigationPage;
@@ -172,6 +173,152 @@ class StoreBrandPageSyncJob implements ShouldQueue
                     }
                 }
                 break;
+            case WebStorePageType::BRAND_DEVICE_PRODUCT_TYPES:
+                Device::where('status', 'active')->orderBy('id')->chunk(100, function ($devices) use ($page_type, $template, $request) {
+                    foreach ($devices as $device) {
+                        Log::info('Device :: ' . $device->name);
+                        $deviceCollectionPage = StoreNavigationPage::where('store_id', $this->store_id)
+                            ->where('page_type', WebStorePageType::DEVICE)
+                            ->where('device_id', $device->id)
+                            ->first();
+                        if (!isset($deviceCollectionPage)) {
+                            Log::info('Device Collection Page not found for device id :: ' . $device->id);
+                            continue;
+                        }
+                        $request['device_brand_id'] = $device->brand->id;
+                        $request['device_id'] = $device->id;
+                        $links = Navigationutility::getLinks($this->store_id, $page_type, $request);
+                        $request['title'] = $device->brand->name . ' ' . $device->name . ' Accessories';
+                        $data = [
+                            'description' => $request->description ?? '',
+                            'title' => $links['final_title'],
+                            'name' => $request->name ?? '',
+                            'popularLinks' => $links['popular_link'] ?? [],
+                            'otherLinks' => $links['other_link'] ?? [],
+                            'alphabeticallySortedPopularLinks' => [],
+                            'alphabeticallySortedOtherLinks' => [],
+                        ];
+                        $request['generated_body'] = Navigationutility::fillTemplateWithData($template->template_code, $data);
+
+                        StoreNavigationPage::updateOrCreate([
+                            'store_id' => $this->store_id,
+                            'page_type' => $page_type,
+                            'device_brand_id' => $device->brand->id,
+                            'device_id' => $device->id,
+                        ],$request->all());
+                    }
+                });
+                break;
+            case WebStorePageType::PRODUCT_TYPE:
+                $this->getPuplications();
+                $productTypes = ProductType::whereIn('parent_id', function ($subquery) {
+                    $subquery->select('id')->from('product_type')->where('code', 'cea');
+                })->whereNotNull('sort_order')->orderBy('sort_order', 'asc')->get();
+
+                foreach ($productTypes as $productType) {
+                    $title = $productType->name;
+                    $collectionData['collection'] = [
+                        'title' => $title,
+                    ];
+                    $collectionData['collection']['ruleSet']['appliedDisjunctively'] = true;
+
+                    $storePage = StoreNavigationPage::where('store_id', $this->store_id)
+                        ->where('page_type', WebStorePageType::PRODUCT_TYPE)
+                        ->where('product_type_id', $productType->id)
+                        ->first();
+
+                    if (isset($storePage)) {
+                        $handle = $storePage->url_path;
+                    } else {
+                        $handle = $this->generateShopifyHandle($title);
+                    }
+
+                    $interfaces = Interfaces::where('product_type_id', $productType->id)->get();
+                    foreach ($interfaces as $interface) {
+                        $collectionData['collection']['ruleSet']['rules'][] = [
+                            'column' => 'TAG',
+                            'relation' => 'EQUALS',
+                            'condition' => $interface->id,
+                        ];
+                    }
+
+                    if ($alreadyCollection = $this->shopifyAuthService->getCollectionByHandle($handle)) {
+                        Log::info('Collection already exists, updating collection', ['handle' => $handle]);
+                        $collectionData['collection']['id'] = $alreadyCollection['id'];
+                        $collectionData['collection']['handle'] = $handle;
+                        Log::info('Collection data update', ['collection_data' => $collectionData]);
+                        $response = $this->shopifyAuthService->updateCollection($collectionData);
+
+                        if (isset($response['data']['collectionUpdate'])) {
+                            $collection = $response['data']['collectionUpdate']['collection'];
+                        }
+                    } else {
+                        Log::info('Creating new collection', ['handle' => $handle]);
+
+                        foreach ($this->publications as $publication) {
+                            $collectionData['collection']['publications'][]['publicationId'] = $publication;
+                        }
+
+                        $collectionData['collection']['handle'] = $handle;
+                        Log::info('Collection data creation', ['collection_data' => $collectionData]);
+                        $response = $this->shopifyAuthService->createCollection($collectionData);
+
+                        if (isset($response['data']['collectionCreate'])) {
+                            $collection = $response['data']['collectionCreate']['collection'];
+                        }
+                    }
+
+                    if (isset($collection)) {
+                        $id =str_replace('gid://shopify/Collection/', '', $collection['id']);
+                        $imageUrl = $collection['image']['url'] ?? '';
+                        StoreNavigationPage::updateOrCreate(
+                            [
+                                'store_id' => $this->store_id,
+                                'page_type' => WebStorePageType::PRODUCT_TYPE,
+                                'product_type_id' => $productType->id,
+                            ],
+                            [
+                                'store_id' => $this->store_id,
+                                'page_type' => WebStorePageType::PRODUCT_TYPE,
+                                'product_type_id' => $productType->id,
+                                'url_path' => $handle,
+                                'store_image_url' => $imageUrl,
+                                'title' => $title,
+                                'page_id' => $id,
+                            ]
+                        );
+                    }
+                }
+                break;
+            case WebStorePageType::PRODUCT_TYPE_BRANDS:
+                $productTypes = ProductType::whereIn('parent_id', function ($subquery) {
+                    $subquery->select('id')->from('product_type')->where('code', 'cea');
+                })->whereNotNull('sort_order')->orderBy('sort_order', 'asc')->get();
+
+                foreach ($productTypes as $productType) {
+                    $request['product_type'] = $productType->id;
+                    $links = Navigationutility::getLinks($this->store_id, $page_type, $request);
+
+                    $data = [
+                        'description' => $request->description ?? '',
+                        'title' => $request->title ?? $links['final_title'],
+                        'name' => $request->name ?? '',
+                        'popularLinks' => $links['popular_link'] ?? [],
+                        'otherLinks' => $links['other_link'] ?? [],
+                        'alphabeticallySortedPopularLinks' => [],
+                        'alphabeticallySortedOtherLinks' => [],
+                    ];
+
+                    $request['title'] = $links['final_title'];
+                    Log::info('Request Title :: ' . json_encode($request['title']));
+                    $request['generated_body'] = Navigationutility::fillTemplateWithData($template->template_code, $data);
+
+                    StoreNavigationPage::updateOrCreate([
+                        'store_id' => $this->store_id,
+                        'page_type' => $page_type,
+                        'product_type_id' => $productType->id,
+                    ],$request->all());
+                }
         }
     }
 

@@ -307,8 +307,8 @@ class OrderUtility
             $addressDetails = $sorder['buyer']['buyerRegistrationAddress'];
             if (isset($addressDetails['fullName'])) {
                 $nameArr = explode(' ', $addressDetails['fullName']);
-                $firstname = $nameArr[0];
-                $lastname = $nameArr[1];
+                $firstname = $nameArr[0] ?? '';
+                $lastname = $nameArr[1] ?? '';
             }
 
             $customerData = [
