@@ -31,7 +31,8 @@ class ShopifyIndvPagesSyncJob implements ShouldQueue
     {
         $this->setVariables();
         $StoreNavigationPages = StoreNavigationPage::where('store_id', $this->storeID)
-            ->whereIn('page_type',[WebStorePageType::ALL_BRANDS, WebStorePageType::BRAND_DEVICES])
+            ->whereIn('page_type', [WebStorePageType::ALL_BRANDS, WebStorePageType::BRAND_DEVICES,
+                WebStorePageType::PRODUCT_TYPE_BRANDS, WebStorePageType::BRAND_DEVICE_PRODUCT_TYPES])
             ->get();
 
         foreach ($StoreNavigationPages as $StoreNavigationPage) {
@@ -46,6 +47,6 @@ class ShopifyIndvPagesSyncJob implements ShouldQueue
     private function setVariables()
     {
         $this->store = Store::find($this->storeID);
-        $this->shopifyAuthService = new ShopifyAuthService($this->store->secret_key,$this->store->service_url);
+        $this->shopifyAuthService = new ShopifyAuthService($this->store->secret_key, $this->store->service_url);
     }
 }
