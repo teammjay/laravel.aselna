@@ -10,6 +10,7 @@ use App\Models\Customer;
 use App\Models\CustomerAddress;
 use App\Models\CustomerPhone;
 use App\Models\ListingItem;
+use App\Models\ListingItemDetail;
 use App\Models\OrderItem;
 use App\Models\OrderOperation;
 use App\Models\OrderOperationItem;
@@ -453,6 +454,15 @@ class OrderUtility
                 }*/
                 //Log:info("Inside Order :: " . json_encode($item));
                 $itemDetail = ListingItem::with('storeProduct', 'storeProduct.product')->where('sku', $item['sku'])->first();
+
+                if (!isset($itemDetail)) {
+                    $itemDeviceDetail = ListingItemDetail::where('sku',$item['sku'])->first();
+                    if(isset($itemDeviceDetail)) {
+                        $itemDetail = ListingItem::with('storeProduct', 'storeProduct.product')
+                            ->where('id', $itemDeviceDetail->item_id)->first();
+                    }
+                }
+
                 Log::info("Came Till Here 1 :: " . json_encode($itemDetail));
                 if (isset($itemDetail)) {
                     $orderItemData = [
