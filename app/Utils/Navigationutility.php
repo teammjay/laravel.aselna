@@ -9,6 +9,7 @@ use App\Models\ProductType;
 use App\Models\StoreNavigationPage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Blade;
+use Illuminate\Support\Facades\Log;
 
 class Navigationutility
 {
@@ -158,13 +159,20 @@ class Navigationutility
                 $links = StoreNavigationPage::where('store_id', $store_id)
                     ->where('page_type', WebStorePageType::PRODUCT_TYPE)
                     ->get();
-                $finalLinkArray['final_title'] = '';
+                $deviceCollectionPage = StoreNavigationPage::where('store_id', $store_id)
+                    ->where('page_type', WebStorePageType::DEVICE)
+                    ->where('device_id', $request->device_id)
+                    ->first();
+
+                $device = Device::where('id', $request->device_id)->firstOrFail();
+
+                $finalLinkArray['final_title'] = $device->brand->name . ' ' . $device->name . ' Accessories';
                 foreach ($links as $link) {
                     $finalLinkArray['popular_link'][] = [
                         'id' => $link->id,
                         'title' => $link->productType->name,
                         'imageUrl' => $link->store_image_url,
-                        'url' => "/pages/" . $link->url_path,
+                        'url' => "/collections/" . $deviceCollectionPage->url_path . "/" . $link->url_path,
                         'popular' => true
                     ];
                 }

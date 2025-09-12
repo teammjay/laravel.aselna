@@ -72,7 +72,7 @@ class OrdersController extends Controller
 
         // Filter by order id
         if ($request->has('order_id') && $request->order_id != '') {
-            $query->whereLike('order_id', $request->order_id);
+            $query->whereLike('order_id', '%' . $request->order_id . '%');
         }
 
         // Filter by order date
@@ -92,7 +92,7 @@ class OrdersController extends Controller
 
         // Filter by purchase order id
         if ($request->has('purchase_order_id') && $request->purchase_order_id != '') {
-            $query->whereLike('purchase_order_id', $request->purchase_order_id);
+            $query->whereLike('purchase_order_id', '%'.$request->purchase_order_id.'%');
         }
 
         // Filter by purchase order id

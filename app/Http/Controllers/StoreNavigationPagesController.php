@@ -26,7 +26,7 @@ class StoreNavigationPagesController extends Controller
         $stores = Store::with('storeType')->where('store_status', 1)->orderBy('name', 'asc')->get();
         $pageTemplates = StorePageTemplate::orderBy('name')->get();
         $productTypes = ProductType::orderBy('name')->get();
-        return view('store_navigation_pages.list', compact('stores','pageTemplates', 'productTypes'));
+        return view('store_navigation_pages.list', compact('stores', 'pageTemplates', 'productTypes'));
     }
 
     public function filter(Request $request)
@@ -208,5 +208,37 @@ class StoreNavigationPagesController extends Controller
         );
 
         return response()->json(['success' => true, 'message' => 'Store navigation pages generated successfully.']);
+    }
+
+
+    public function generate_all_bulk(Request $request)
+    {
+        $request->validate([
+            'store_id' => 'required',
+        ]);
+        $store = Store::findOrFail($request->store_id);
+
+        StoreBrandPageSyncJob::
+        withChain([
+//            new StoreBrandPageSyncJob(
+//                $request->store_id,
+//                WebStorePageType::BRAND,
+//
+//            ),
+//            new StoreBrandPageSyncJob(
+//                $request->store_id,
+//                WebStorePageType::BRAND_DEVICE_PRODUCT_TYPES,
+//                $store->default_brand_device_product_type_page_template_id
+//            ),
+//            new StoreBrandPageSyncJob(
+//                $request->store_id,
+//                WebStorePageType::BRAND_DEVICES,
+//                $store->default_brand_device_page_template_id
+//            ),
+        ])->dispatch(
+                $request->store_id,
+                WebStorePageType::ALL_BRANDS,
+                $store->default_brand_page_template_id
+            );
     }
 }
