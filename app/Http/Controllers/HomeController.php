@@ -77,53 +77,80 @@ class HomeController extends Controller
 
     public function testfunction(){
 
-        $thresholdMinutes = 10;
-        $now = now();
+        $stores = Store::with('storeType')->where('store_status','>',0)->get();
 
-        $storeMessageAccounts = StoreMessageAccount::with('store','store.storeType','incomingAccount')
-            ->where('active', 1)
-            ->where('api_account', 0)
-            ->get();
-       /* echo '<pre>';
-        print_r($storeMessageAccounts);
-        echo '</re>';die;*/
+        if(count($stores ?? []) > 0) {
+            foreach ($stores as $store) {
+                $latest_system_order = Order::where('store_id',$store->id)->orderBy('order_date','desc')->first();
+                $latest_order_id = '';
+                $latest_order_date = '';
+                switch (strtolower($store->storeType->name)) {
+                    case 'shopify':
 
-        foreach ($storeMessageAccounts as $macc) {
+                        //$filterStartDateFormatted = date('Y-m-d\TH:i:s\Z', strtotime('-2 days'));
 
+                        Log::info('System Shopify Latest Order: '.json_encode($latest_system_order));
 
-            if (isset($macc->incomingAccount->filter_from_date) && $macc->incomingAccount->filter_from_date != '') {
+                        $shopifyService = new ShopifyService();
+                        $orders = $shopifyService->getLatestOrders($store);
 
-                $lastSync = \Carbon\Carbon::parse($macc->incomingAccount->filter_from_date);
-                echo '<pre>';
-                print_r($macc);
-                echo '<pre>';
-                echo 'Filter date - ' . $lastSync->lt(now()->subMinutes($thresholdMinutes)) . '==';
+                        Log::info('Shopify Latest Order: '.json_encode($orders));
 
-                /*if (!isset($macc->incomingAccount)) {
-                    continue;
-                }*/
-                if ($lastSync->lt(now()->subMinutes($thresholdMinutes))) {
-                    Log::info('Filter date: ' . $macc->incomingAccount->filter_from_date);
-                    // send notification email
-                    Mail::raw("Email Sync issue detected for store: {$macc->store->name} - {$macc->store->storeType->name}. \n Last sync at {$lastSync->toDateTimeString()}",
-                        function ($message) use ($macc) {
-                            $message->to('jayesh@mjailab.com')
-                                ->subject("Sync Issue Alert : {$macc->store->name} - {$macc->store->storeType->name}");
+                        if (isset($orders) && !empty($orders)) {
+                            foreach ($orders as $key=>$value) {
+                                $order = $value['node'];
+                                $gid = $order['id'];
+                                $parts = explode('/', $gid);
+                                $latest_order_id = end($parts);
+                                $latest_order_date = date('Y-m-d H:i:s', strtotime($order['createdAt']));
+                                if($key > 0){break;}
+                            }
                         }
-                    );
+
+                        break;
+                    case 'walmart':
+
+                        Log::info('System Walmart Latest Order: '.json_encode($latest_system_order));
+
+                        $walmartService = new WalmartService();
+                        $latest_order_detail = $walmartService->getLatestOrder($store);
+
+                        Log::info('Walmart Latest Order: '.json_encode($latest_order_detail));
+                        if($latest_order_detail){
+                            $latest_order_id = $latest_order_detail['order_id'];
+                            $latest_order_date = $latest_order_detail['order_date'];
+                        }
+                        break;
+                    case 'ebay':
+
+                        Log::info('System eBay Latest Order: '.json_encode($latest_system_order));
+                        $ebayService = new EbayService();
+                        $orders = $ebayService->getLatestOrders($store);
+                        if (isset($orders['total']) && $orders['total'] > 0) {
+                            foreach ($orders['orders'] as $key=>$order) {
+                                $latest_order_id = $order['orderId'];
+                                $latest_order_date = date('Y-m-d H:i:s', strtotime($order['creationDate']));
+                                if($key > 0){break;}
+                            }
+                        }
+                        break;
+                }
+
+                if($latest_system_order && $latest_order_id){
+                    if($latest_system_order->order_id != $latest_order_id){
+                        $content = "Order Sync issue detected for store: {$store->name} - {$store->storeType->name}. \n Last sync at {$latest_system_order->order_date}\n";
+                        $content .= "System order id: {$latest_system_order->order_id} , Order date : {$latest_system_order->order_date} \n";
+                        $content .= "Store order id: {$latest_order_id} , Order date : {$latest_order_date} \n";
+
+                        Log::info('Message content send: '.$content);
+
+                        //$this->sendMail($store, $content);
+
+                    }
                 }
             }
         }
-
         die;
-        $authService = new WalmartAuthService('b8f63c96-93fd-4bc1-b0cc-2a5f84e5bd7c', 'AOWo7abtyndXMFjcvzlnP6Z_62SgQPZRtquhIunLHMiNYQggxowM22wipJhZICtgShCafih2apKPf4XGPTpR_2g');
-
-        $response = $authService->getFeedStatus('186275989E8757208632E42569E9749A@AXkBCgA', 150);
-
-        echo '<pre>';
-        print_r($response);
-        echo '</pre>';die;
-
         /*$user_id = Auth::id();
         Bus::chain([
             //new TransactionStatusCheckJob(),
@@ -467,20 +494,20 @@ On Fri, 29 Aug 2025 at 23:36, phonil <phonil.ebay@gmail.com> wrote:
             'encryption' => 'ssl',
             //'username' => 'odemobile.shopify@gmail.com',
             //'username' => 'cs@odemobile.com',
-            //'username' => 'phonil.ebay@gmail.com',
+            'username' => 'phonil.ebay@gmail.com',
             //'username' => 'accessorychoice.wmt@gmail.com',
-            'username' => 'snhdigital.ebay@gmail.com',
+            //'username' => 'snhdigital.ebay@gmail.com',
             //'password' => 'deczsvfmubmpxtsf',
             //'password' => 'qaym xjqg icea syxw',
-            //'password' => 'qynvjqjqqaqqramo',
+            'password' => 'qynvjqjqqaqqramo',
             //'password' => 'hbmevmsyjuwqcpsm',
-            'password' => 'vtldhcsfeciyzhwm',
+            //'password' => 'vtldhcsfeciyzhwm',
         ];
 
 
 
         $connector = new EmailMessageUtility($smtpConfig, $imapConfig);
-        $receiveEmails = $connector->fetchEmails('Ebay', '2025-09-04 08:25:28','INBOX');
+        $receiveEmails = $connector->fetchEmails('Ebay', '2025-09-09 08:25:28','INBOX');
 
         //$store = Store::with('storeType')->where('id','0dd4de79-bba1-c47a-a7aa-822e6f015b8e')->first();
         $store = Store::with('storeType')->where('id','fff036c8-6892-4184-9126-0130e4e505fb')->first();
