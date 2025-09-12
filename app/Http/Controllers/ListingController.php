@@ -224,11 +224,9 @@ class ListingController extends Controller
         // Filter by upc
         QueryFilters::applyFilter($query, $request, 'upc', 'upc_operator', 'upc');
 
-        // Filter by title
-        $storeSku = ($request->has('store_sku')) ? 1 : 0;
-        if ($storeSku) {
-            $query->whereNotNull('store_sku')->where('store_sku', '!=', '');
-        }
+        // Filter by upc
+        QueryFilters::applyFilter($query, $request, 'store_sku', 'store_sku_operator', 'store_sku');
+
 
         // Filter by device
         if ($request->has('device') && $request->device != '') {

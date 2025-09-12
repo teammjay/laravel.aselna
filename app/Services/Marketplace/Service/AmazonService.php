@@ -637,7 +637,7 @@ class AmazonService implements MarketplaceServiceInterface
         $response = $this->authService->shipOrder($finalData, $orderId);
         Log::info('Shipment Response: ' . json_encode($response));
         if ($response === 204 || isset($response)) {
-            $orderOperation->update(['status' => OrderOperationStatus::MarkAsShipped]);
+            $orderOperation->update(['status' => OrderOperationStatus::MarkAsShipped, 'ship_date' => now()]);
             if (isset($orderOperation->order_id)) {
                 $order = Order::findOrFail($orderOperation->order_id);
                 $order->update(['order_status' => OrderStatus::Shipped]);

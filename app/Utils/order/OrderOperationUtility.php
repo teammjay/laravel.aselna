@@ -880,7 +880,7 @@ class OrderOperationUtility
 
                     if (!isset($response['errors'])) {
                         $success = true;
-                        $orderOperation->update(['status' => OrderOperationStatus::MarkAsShipped]);
+                        $orderOperation->update(['status' => OrderOperationStatus::MarkAsShipped, 'ship_date' => now()]);
                         if (isset($orderOperation->order_id)) {
                             $order = Order::findOrFail($orderOperation->order_id);
                             $order->update(['order_status' => OrderStatus::Shipped]);
@@ -902,7 +902,7 @@ class OrderOperationUtility
                             $response = $shopifyServie->updateFullfillment($oop->order_id, $orderOperation);
 
                             if (!isset($response['errors'])) {
-                                $oop->update(['status' => OrderOperationStatus::MarkAsShipped]);
+                                $oop->update(['status' => OrderOperationStatus::MarkAsShipped,'ship_date' => now()]);
                                 if (isset($oop->order_id)) {
                                     $order = Order::findOrFail($oop->order_id);
                                     $order->update(['order_status' => OrderStatus::Shipped]);
@@ -961,7 +961,7 @@ class OrderOperationUtility
 
                     if (!isset($result['error'])) {
                         $success = true;
-                        $orderOperation->update(['status' => OrderOperationStatus::MarkAsShipped]);
+                        $orderOperation->update(['status' => OrderOperationStatus::MarkAsShipped,'ship_date' => now()]);
                         if (isset($orderOperation->order_id)) {
                             $order = Order::findOrFail($orderOperation->order_id);
                             $order->update(['order_status' => OrderStatus::Shipped]);
@@ -997,7 +997,7 @@ class OrderOperationUtility
 
                                 if (!isset($response['errors'])) {
 
-                                    $oop->update(['status' => OrderOperationStatus::MarkAsShipped]);
+                                    $oop->update(['status' => OrderOperationStatus::MarkAsShipped,'ship_date' => now()]);
                                     if (isset($oop->order_id)) {
                                         $order = Order::findOrFail($oop->order_id);
                                         $order->update(['order_status' => OrderStatus::Shipped]);
