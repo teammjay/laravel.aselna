@@ -481,6 +481,41 @@
             loadDatatables();
         });
 
+        document.getElementById("resetForm").addEventListener("click", function () {
+            localStorage.removeItem("close_message_filters");
+        });
+
+    });
+
+    window.onpageshow = function(event) {
+        if (event.persisted) {
+            // Page was loaded from cache → force reload
+            //window.location.reload();
+            loadDatatables();
+        }
+    };
+
+
+    document.addEventListener("DOMContentLoaded", function () {
+        let savedFilters = JSON.parse(localStorage.getItem("close_message_filters"));
+        if (savedFilters) {
+            console.log(savedFilters);
+            Object.keys(savedFilters).forEach(function (key) {
+
+                //console.log(savedFilters[key]);
+                let input = $('#filter-form [name="'+savedFilters[key].name+'"]');
+                if (input) {
+                    input.val(savedFilters[key].value)
+                }
+
+                if( savedFilters[key].name == 'store_id'){
+                    $('#messages_store').val(savedFilters[key].value);
+                }
+
+            });
+
+            loadDatatables();
+        }
     });
 
     function loadDatatables() {
@@ -512,6 +547,8 @@
                     $.each(formData, function (index, field) {
                         d[field.name] = field.value; // Append form data to the DataTables request
                     });
+
+                    localStorage.setItem("close_message_filters", JSON.stringify(formData));
 
                     d['status'] = 2;
 

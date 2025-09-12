@@ -10,7 +10,7 @@ class OrderOperationUtilityTest extends TestCase
 {
     public function testCreateLabel()
     {
-        $order = OrderOperation::findOrFail('4e846c8d-ee64-4f64-a11a-669a0c62cacc'); // Assuming an order with ID 1 exists
+        $order = OrderOperation::findOrFail('009d877e-4085-453b-9964-20586cc1ec52'); // Assuming an order with ID 1 exists
 
         $utility = new OrderOperationUtility();
         $utility->createLabel($order);

@@ -124,11 +124,11 @@ class OrderUtility
         }
 
         $orderData = [
-            'order_date' => date('Y-m-d H:i:s', $sorder['orderDate'] / 1000),
-            'order_total' => $orderTotals,
+            //'order_date' => date('Y-m-d H:i:s', $sorder['orderDate'] / 1000),
+            //'order_total' => $orderTotals,
             'buyer_first_name' => $firstname,
             'buyer_last_name' => $lastname,
-            'buyer_email' => $sorder['customerEmailId'],
+            //'buyer_email' => $sorder['customerEmailId'],
             'customer_id' => $customer_detail->id,
             'purchase_order_id' => $sorder['purchaseOrderId'],
             'shipping_address_id' => $customer_address->id,
@@ -307,8 +307,8 @@ class OrderUtility
             $addressDetails = $sorder['buyer']['buyerRegistrationAddress'];
             if (isset($addressDetails['fullName'])) {
                 $nameArr = explode(' ', $addressDetails['fullName']);
-                $firstname = $nameArr[0];
-                $lastname = $nameArr[1];
+                $firstname = $nameArr[0] ?? '';
+                $lastname = $nameArr[1] ?? '';
             }
 
             $customerData = [

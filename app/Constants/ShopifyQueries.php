@@ -146,6 +146,98 @@ GQL;
     }
 GQL;
 
+    // Query to get latest orders with a dynamic limit
+    public static $getLatestOrders = <<<GQL
+    query GetLatestOrders(\$first: Int!) {
+        orders(first: \$first, sortKey: CREATED_AT, reverse: true) {
+            edges {
+                node {
+                    id
+                    name
+                    email
+                    phone
+                    poNumber
+                    totalPrice
+                    createdAt
+                    updatedAt
+                    totalWeight
+                    displayFinancialStatus
+                    displayFulfillmentStatus
+                    risk{
+                        assessments{
+                            facts{
+                                description
+                                sentiment
+                            }
+                            riskLevel
+                        }
+                        recommendation
+                    }
+                    totalPriceSet{
+                        shopMoney{
+                            amount
+                        }
+                    }
+                    additionalFees {
+                      name
+                      price{
+                        shopMoney{
+                            amount
+                        }
+                      }
+                      taxLines{
+                        rate
+                        title
+                      }
+                    }
+                    shippingLine{
+                        title
+                    }
+                    customer{
+                        id
+                        displayName
+                        email
+                        firstName
+                        lastName
+                    }
+                    shippingAddress{
+                        firstName
+                        lastName
+                        address1
+                        address2
+                        city
+                        country
+                        countryCodeV2
+                        zip
+                        phone
+                        province
+                        provinceCode
+                    }
+                    lineItems(first: \$first){
+                        nodes{
+                            id
+                            title
+                            name
+                            quantity
+                            sku
+                            currentQuantity
+                            variant{
+                                price
+                            }
+                            taxLines(first: \$first){
+                                title
+                                price
+                                source
+                                rate
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+GQL;
+
     public static $createProductVariant = <<<GQL
     mutation productVariantCreate(\$input: ProductVariantInput!) {
         productVariantCreate(input: \$input) {
