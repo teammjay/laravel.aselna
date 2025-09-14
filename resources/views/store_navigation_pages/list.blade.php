@@ -189,7 +189,7 @@
                         @csrf
                         <div class="form-group">
                             <label for="bulk_store_id">Store</label>
-                            <select class="form-control" name="store_id" id="bulk_store_id" style="width: 100%;">
+                            <select class="form-control" name="store_id" id="bulk_all_store_id" style="width: 100%;">
                                 <option value="">-- Select Store --</option>
                                 @foreach($stores as $store)
                                     <option value="{{ $store->id }}">
@@ -322,21 +322,14 @@
                 handleAllBulkPageGeneration();
             });
             function handleAllBulkPageGeneration() {
-                const form = $('#bulkPageForm');
-                const storeId = form.find('#bulk_store_id').val();
+                const form = $('#bulkAllPageForm');
+                const storeId = form.find('#bulk_all_store_id').val();
+                console.log(storeId);
 
                 if (!storeId) {
                     alert('Please select store to move forward');
                     return;
                 }
-
-                // You can now perform an AJAX request to your bulk generation endpoint
-                console.log({
-                    _token: '{{ csrf_token() }}',
-                    store_id: storeId,
-                    page_type: pageType,
-                    template_id: templateId
-                });
 
                 $.ajax({
                     url: '{{ route('store_navigation_page.generate_all_bulk') }}', // You need to create this route

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Constants\StorePageType;
 use App\Constants\WebStorePageType;
+use App\Jobs\ShopifyIndvPagesSyncJob;
 use App\Jobs\StoreBrandPageSyncJob;
 use App\Models\Brand;
 use App\Models\Device;
@@ -217,28 +218,52 @@ class StoreNavigationPagesController extends Controller
             'store_id' => 'required',
         ]);
         $store = Store::findOrFail($request->store_id);
+        $allBrandTemplate = StorePageTemplate::where('name', 'All Brands')->first();
+        $brandTemplate = StorePageTemplate::where('name', 'Brand')->first();
+        $brandDeviceProductTemplate = StorePageTemplate::where('name', 'Brand Device Product Types')->first();
+        $productTypeBrands = StorePageTemplate::where('name', 'Product types brands')->first();
+        $brandDevicesTemplate = StorePageTemplate::where('name', 'Brand Devices')->first();
 
         StoreBrandPageSyncJob::
         withChain([
-//            new StoreBrandPageSyncJob(
-//                $request->store_id,
-//                WebStorePageType::BRAND,
-//
-//            ),
-//            new StoreBrandPageSyncJob(
-//                $request->store_id,
-//                WebStorePageType::BRAND_DEVICE_PRODUCT_TYPES,
-//                $store->default_brand_device_product_type_page_template_id
-//            ),
-//            new StoreBrandPageSyncJob(
-//                $request->store_id,
-//                WebStorePageType::BRAND_DEVICES,
-//                $store->default_brand_device_page_template_id
-//            ),
-        ])->dispatch(
+            new StoreBrandPageSyncJob(
                 $request->store_id,
-                WebStorePageType::ALL_BRANDS,
-                $store->default_brand_page_template_id
-            );
+                WebStorePageType::PRODUCT_TYPE,
+                $brandTemplate->id
+            ),
+            new StoreBrandPageSyncJob(
+                $request->store_id,
+                WebStorePageType::BRAND_DEVICE_PRODUCT_TYPES,
+                $brandDeviceProductTemplate->id
+            ),
+            new ShopifyIndvPagesSyncJob(
+                $request->store_id,
+                WebStorePageType::BRAND_DEVICE_PRODUCT_TYPES
+            ),
+            new StoreBrandPageSyncJob(
+                $request->store_id,
+                WebStorePageType::PRODUCT_TYPE_BRANDS,
+                $productTypeBrands->id
+            ),
+            new ShopifyIndvPagesSyncJob(
+                $request->store_id,
+                WebStorePageType::PRODUCT_TYPE_BRANDS
+            ),
+            new StoreBrandPageSyncJob(
+                $request->store_id,
+                WebStorePageType::BRAND_DEVICES,
+                $brandDevicesTemplate->id
+            ),
+            new ShopifyIndvPagesSyncJob(
+                $request->store_id,
+                WebStorePageType::BRAND_DEVICES
+            ),
+        ])->dispatch(
+            $request->store_id,
+            WebStorePageType::BRAND,
+            $brandTemplate->id
+        );
+
+        return response()->json(['success' => true, 'message' => 'Store navigation pages generating successfully.']);
     }
 }
