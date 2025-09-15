@@ -93,6 +93,9 @@ class MessagesController extends Controller
         // Filter by user id
         QueryFilters::applyFilter($query, $request, 'user_id', 'user_id_operator', 'user_id');
 
+        // Filter by username
+        QueryFilters::applyFilter($query, $request, 'subject', 'username_operator', 'username');
+
         // Filter by store id
         if($request->has('store_id') && $request->store_id != ''){
             $query->where('store_id',$request->store_id);
@@ -834,7 +837,7 @@ class MessagesController extends Controller
             $imagepath = $request->input('imagepath');
             $imagename = $request->input('imagename');
             if ($ticket_id) {
-                $ticketDetail = Message::with('store', 'customer')->where('id', $ticket_id)->first();
+                $ticketDetail = Message::with('store', 'store.storeType', 'customer')->where('id', $ticket_id)->first();
                 $previousMessage = HDMessage::with('parts')->where('ticket_id', $ticket_id)->orderBy('created_at', 'desc')->first();
 
                 $prev_content = '';
@@ -884,10 +887,10 @@ class MessagesController extends Controller
                     $imapConfig = [];
                     $filepath = $imagepath;
 
-                    if ($prev_content != '') {
+                    if ($prev_content != '' && (isset($ticketDetail->store->storeType->name) && strtolower($ticketDetail->store->storeType->name) == 'ebay')) {
                         Log::info("Email Previous Content" . $prev_content);
                         $newMessageBody = $message_to_send . PHP_EOL. "<div style='margin-left:20px; border-left:2px solid #ccc; padding-left:10px;'>
-                                        " . nl2br($prev_content) . "
+                                        " . $prev_content. "
                                     </div>";
                     } else {
                         $newMessageBody = nl2br($message_to_send);
