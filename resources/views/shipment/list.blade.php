@@ -1594,6 +1594,9 @@
                         });
 
                         //$('#shipmentTable_wrapper').find('.row div:first').html('Total : <b>' + response.totalRecords + '</b>');
+                    }else{
+                        $('#totalRecords').html('Total : <b>0</b>');
+
                     }
 
                 }

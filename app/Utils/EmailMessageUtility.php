@@ -3,6 +3,7 @@
 namespace App\Utils;
 
 use App\Utils\mail\AmazonEmailParser;
+use App\Utils\mail\EbayEmailParser;
 use App\Utils\mail\ShopifyEmailParser;
 use App\Utils\mail\WalmartEmailParser;
 use Illuminate\Support\Facades\Log;
@@ -183,6 +184,11 @@ class EmailMessageUtility
                                 $shopifyEmailParser = new ShopifyEmailParser($fullMessage);
                                 $shopifyEmailParser->getMessage(strip_tags($body));
                                 $parsedData = $shopifyEmailParser->getEntities();
+                                break;
+                            case 'ebay':
+                                $ebayEmailParser = new EbayEmailParser($fullMessage);
+                                $ebayEmailParser->getMessage(strip_tags($body));
+                                $parsedData = $ebayEmailParser->getEntities();
                                 break;
                         }
                     }

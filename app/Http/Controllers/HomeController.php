@@ -507,10 +507,10 @@ On Fri, 29 Aug 2025 at 23:36, phonil <phonil.ebay@gmail.com> wrote:
 
 
         $connector = new EmailMessageUtility($smtpConfig, $imapConfig);
-        $receiveEmails = $connector->fetchEmails('Ebay', '2025-09-09 08:25:28','INBOX');
+        $receiveEmails = $connector->fetchEmails('Ebay', '2025-09-14 08:25:28','INBOX');
 
         //$store = Store::with('storeType')->where('id','0dd4de79-bba1-c47a-a7aa-822e6f015b8e')->first();
-        $store = Store::with('storeType')->where('id','fff036c8-6892-4184-9126-0130e4e505fb')->first();
+        $store = Store::with('storeType')->where('id','1968772b-cc55-d4e9-a126-7e81019be976')->first();
         $store_id = $store->id;
         if (count($receiveEmails ?? []) > 0) {
             foreach ($receiveEmails as $email) {
