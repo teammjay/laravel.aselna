@@ -6,6 +6,7 @@ use App\Constants\WebStorePageType;
 use App\Models\Brand;
 use App\Models\Device;
 use App\Models\ProductType;
+use App\Models\Store;
 use App\Models\StoreNavigationPage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Blade;
@@ -25,6 +26,13 @@ class Navigationutility
     public static function getLinks(mixed $store_id, mixed $page_type, Request $request): array
     {
         $finalLinkArray = [];
+        $skipDevicePages = false;
+        if ($store_id) {
+            $store = Store::where('id', $store_id)->first();
+            if ($store && $store->store_type_id == 1) {
+                $skipDevicePages = true;
+            }
+        }
         switch ($page_type) {
             case WebStorePageType::ALL_PRODUCT_TYPES:
                 $finalLinkArray['final_title'] = 'Product Category';
@@ -120,10 +128,11 @@ class Navigationutility
                 $brand = Brand::where('id', $request->device_brand_id)->firstOrFail();
                 $links = StoreNavigationPage::join('device', 'store_navigation_page.device_id', '=', 'device.id')
                     ->where('store_id', $store_id)
-                    ->where('page_type', WebStorePageType::DEVICE)
+                    ->where('page_type', $skipDevicePages ? WebStorePageType::DEVICE : WebStorePageType::BRAND_DEVICE_PRODUCT_TYPES)
                     ->where('device_brand_id', $brand->id)
                     ->orderBy('device.order', 'asc')
                     ->get();
+
                 $finalLinkArray['final_title'] = $brand->name;
                 foreach ($links as $link) {
                     if ($link->device->order <= 10) {
@@ -131,7 +140,7 @@ class Navigationutility
                             'id' => $link->id,
                             'title' => $link->device->name,
                             'imageUrl' => $link->store_image_url,
-                            'url' => "/collections/" . $link->url_path,
+                            'url' => ($skipDevicePages ? "/collections/" : "/pages/") . $link->url_path,
                             'popular' => true
                         ];
                     } else {
@@ -139,7 +148,7 @@ class Navigationutility
                             'id' => $link->id,
                             'title' => $link->device->name,
                             'imageUrl' => $link->store_image_url,
-                            'url' => "/collections/" . $link->url_path,
+                            'url' => ($skipDevicePages ? "/collections/" : "/pages/") . $link->url_path,
                             'popular' => false
                         ];
                     }

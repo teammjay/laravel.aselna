@@ -460,7 +460,7 @@ class OrderUtility
                     if(isset($itemDeviceDetail)) {
                         Log::info('Came Inside Item Device Detail');
                         $itemDetail = ListingItem::with('storeProduct', 'storeProduct.product')
-                            ->where('id', $itemDeviceDetail->item_id)->first();
+                            ->where('id', $itemDeviceDetail->listing_item_id)->first();
                     }
                 }
 

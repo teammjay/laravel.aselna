@@ -20,19 +20,27 @@ class ShopifyIndvPagesSyncJob implements ShouldQueue
 
     private Store $store;
 
+    private mixed $pageType;
     private ShopifyAuthService $shopifyAuthService;
 
-    public function __construct($storeID)
+    public function __construct($storeID, $pageType = null)
     {
         $this->storeID = $storeID;
+        $this->pageType = $pageType;
     }
 
     public function handle(): void
     {
         $this->setVariables();
+        $pagetTypes = [];
+        if ($this->pageType) {
+            $pagetTypes[] = $this->pageType;
+        } else {
+            $pagetTypes = [WebStorePageType::ALL_BRANDS, WebStorePageType::BRAND_DEVICES,
+                WebStorePageType::PRODUCT_TYPE_BRANDS, WebStorePageType::BRAND_DEVICE_PRODUCT_TYPES];
+        }
         $StoreNavigationPages = StoreNavigationPage::where('store_id', $this->storeID)
-            ->whereIn('page_type', [WebStorePageType::ALL_BRANDS, WebStorePageType::BRAND_DEVICES,
-                WebStorePageType::PRODUCT_TYPE_BRANDS, WebStorePageType::BRAND_DEVICE_PRODUCT_TYPES])
+            ->whereIn('page_type', $pagetTypes)
             ->get();
 
         foreach ($StoreNavigationPages as $StoreNavigationPage) {
