@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Constants\WebStorePageType;
 use App\Jobs\AmazonListingItemSyncJob;
 use App\Jobs\AmazonProductTypeSyncJob;
 use App\Jobs\BrandSyncJob;
@@ -57,6 +58,7 @@ use App\Jobs\ShippingCarrierJob;
 use App\Jobs\ShopifyCollectionDeviceSyncJob;
 use App\Jobs\ShopifyCollectionSyncJob;
 use App\Jobs\ShopifyDuplicateStoreProductsJob;
+use App\Jobs\ShopifyIndvPagesSyncJob;
 use App\Jobs\ShopifyListingProductsSyncJob;
 use App\Jobs\ShopifyPagesSyncJob;
 use App\Jobs\ShopifyStoreProductsSyncJob;
@@ -164,6 +166,7 @@ class SyncAllTables extends Command
 //        FetchWalmartOrdersJob::dispatch();
         //synccategorytospecification::dispatch();
 //        SystemPrinterSyncJob::dispatch();
+        ShopifyIndvPagesSyncJob::dispatch('5cc46182-9318-7a47-39bd-d3e38de6cce6', WebStorePageType::ALL_BRANDS);
 
 //        FetchEbayOrders::dispatch();
 //        FetchEmailMessagesJob::dispatch();
@@ -173,7 +176,7 @@ class SyncAllTables extends Command
 //        MagentoProductsSyncJob::dispatch();
 //        FetchMagentoCategoriesJob::dispatch();
 //        MagnetoAttributesSyncJob::dispatch();
-        ShopifyPagesSyncJob::dispatch();
+//        ShopifyPagesSyncJob::dispatch();
 //        SubmitShopifyProductsJob::dispatch();
 //        ShopifyListingProductsSyncJob::dispatch();
 //        ShopifyStoreProductsSyncJob::dispatch();
