@@ -130,7 +130,7 @@ class OrderOperationUtility
         }
 
         /* check endicia available limit*/
-        //self::checkCredit($orderOperation);
+        self::checkCredit($orderOperation);
 
         $shippingDocumentCreator = new ShipmentDocumentsCreator($orderOperation);
         //    $imageFormat = $shippingDocumentCreator->getLabelFormat();

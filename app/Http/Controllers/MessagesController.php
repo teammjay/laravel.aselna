@@ -374,116 +374,120 @@ class MessagesController extends Controller
     {
         $type = 'detail';
         $ticketDetail = Message::with('store','store.storeType')->where('id',$id)->first();
-        $ticketDetail->update(['message_read' => 1]);
-        $store_type_id = $ticketDetail->store->storeType->id;
-        $store_type_name = $ticketDetail->store->name;
-        $message_template = HdMessageTemplate::whereNull('order_operation_type')->orderBy('name')->get();
-        $messages = HDMessage::with('attachments')->where('ticket_id',$id)->orderBy('message_date','asc')->get();
-        $ticketTypeCode = HdTicketType::orderBy('name')->get();
-        $ticketAllLabels = HdTicketLabel::orderBy('name')->get();
-        $ticketLabels = HdTicketLabelLink::with('label')->where('hd_ticket_id',$id)->get();
-        $action = [];
-        $template = [];
-        $rma_done = $lable_generate = 0;
-        if(isset($ticketDetail->order_id) && $ticketDetail->order_id != NULL && $ticketDetail->order_id !=''){
-            $order_id = $ticketDetail->order_id;
-            $orderDetail = Order::with('orderItem','orderItem.product','orderItem.product.image','customer','customerAddress','orderOperation')->where('order_id',$order_id)->orWhere('purchase_order_id',$order_id)->first();
+        if($ticketDetail) {
+            $ticketDetail->update(['message_read' => 1]);
+            $store_type_id = $ticketDetail->store->storeType->id;
+            $store_type_name = $ticketDetail->store->name;
+            $message_template = HdMessageTemplate::whereNull('order_operation_type')->orderBy('name')->get();
+            $messages = HDMessage::with('attachments')->where('ticket_id', $id)->orderBy('message_date', 'asc')->get();
+            $ticketTypeCode = HdTicketType::orderBy('name')->get();
+            $ticketAllLabels = HdTicketLabel::orderBy('name')->get();
+            $ticketLabels = HdTicketLabelLink::with('label')->where('hd_ticket_id', $id)->get();
+            $action = [];
+            $template = [];
+            $rma_done = $lable_generate = 0;
+            if (isset($ticketDetail->order_id) && $ticketDetail->order_id != NULL && $ticketDetail->order_id != '') {
+                $order_id = $ticketDetail->order_id;
+                $orderDetail = Order::with('orderItem', 'orderItem.product', 'orderItem.product.image', 'customer', 'customerAddress', 'orderOperation')->where('order_id', $order_id)->orWhere('purchase_order_id', $order_id)->first();
 
-            if($orderDetail) {
-                $orderOperations = OrderOperation::with('carrier', 'shipFrom', 'operationItem','order','order.customer','store')->where('order_id', $orderDetail->id)->orderBy('created_at', 'desc')->get();
+                if ($orderDetail) {
+                    $orderOperations = OrderOperation::with('carrier', 'shipFrom', 'operationItem', 'order', 'order.customer', 'store')->where('order_id', $orderDetail->id)->orderBy('created_at', 'desc')->get();
 
-                if (isset($orderDetail->orderItem)) {
-                    $canbeShipped = $canbeRefund = $canbeReplace = $canbeReturned = 0;
-                    foreach ($orderDetail->orderItem as $oitem) {
-                        $canbeShipped += $oitem->quantity - $oitem->shipped_quantity - $oitem->canceled_quantity;
-                        $canbeRefund += $oitem->shipped_quantity - $oitem->canceled_quantity;
-                        $canbeReplace += $oitem->shipped_quantity - $oitem->canceled_quantity;
-                        $canbeReturned += $oitem->shipped_quantity - $oitem->refund_quantity - $oitem->return_request_quantity;
+                    if (isset($orderDetail->orderItem)) {
+                        $canbeShipped = $canbeRefund = $canbeReplace = $canbeReturned = 0;
+                        foreach ($orderDetail->orderItem as $oitem) {
+                            $canbeShipped += $oitem->quantity - $oitem->shipped_quantity - $oitem->canceled_quantity;
+                            $canbeRefund += $oitem->shipped_quantity - $oitem->canceled_quantity;
+                            $canbeReplace += $oitem->shipped_quantity - $oitem->canceled_quantity;
+                            $canbeReturned += $oitem->shipped_quantity - $oitem->refund_quantity - $oitem->return_request_quantity;
+                        }
+
+                        $action = [
+                            'canbeShipped' => $canbeShipped,
+                            'canbeRefund' => $canbeRefund,
+                            'canbeReplace' => $canbeReplace,
+                            'canbeReturned' => $canbeReturned,
+                        ];
                     }
 
-                    $action = [
-                        'canbeShipped' => $canbeShipped,
-                        'canbeRefund' => $canbeRefund,
-                        'canbeReplace' => $canbeReplace,
-                        'canbeReturned' => $canbeReturned,
-                    ];
-                }
+                    if (count($orderOperations ?? []) > 0) {
+                        $returnOperation = 0;
+                        $returnOperationCnt = 0;
+                        foreach ($orderOperations as $key => $op) {
+                            if (count($op->operationItem ?? []) > 0) {
+                                foreach ($op->operationItem as $oop) {
+                                    if ($oop->return_operation_item_id) {
+                                        $returnOperation += 1;
+                                    }
+                                }
+                            }
 
-                if (count($orderOperations ?? []) > 0) {
-                    $returnOperation = 0;
-                    $returnOperationCnt = 0;
-                    foreach ($orderOperations as $key=>$op) {
-                        if (count($op->operationItem ?? []) > 0) {
-                            foreach ($op->operationItem as $oop) {
-                                if ($oop->return_operation_item_id) {
-                                    $returnOperation += 1;
+                            if (isset($op) && $op->operation_type == OrderOperationType::OrderReturn && $op->label_creation_type == ShippingLabelCreationType::NoLabel && $returnOperation == 0) {
+                                $returnOperationCnt += 1;
+                            }
+
+                            if ($key == 0) {
+
+                                if ($op->operation_type == OrderOperationType::OrderReturn && $op->tracking_number != '') {
+                                    $templateDetail = HdMessageTemplate::getOrderOperationTemplate(OrderOperationType::OrderReturn, 0, 1);
+                                    $imageName = $op->tracking_number . '.jpg';
+                                    $template['imageName'] = $imageName;
+                                    $template['imageUrl'] = asset('storage/labels/' . $imageName);
+                                    $template['storagePath'] = storage_path('app/public/labels/' . $imageName);
+                                } else if ($op->operation_type == OrderOperationType::OrderReturn && ($op->tracking_number == null || $op->tracking_number)) {
+                                    $templateDetail = HdMessageTemplate::getOrderOperationTemplate(OrderOperationType::OrderReturn, 0, 0);
+
+                                } else if ($op->operation_type == OrderOperationType::OrderRefund || $op->operation_type == OrderOperationType::OrderReturnRefund) {
+
+                                    $templateDetail = HdMessageTemplate::getOrderOperationTemplate($op->operation_type, 0, 0);
+                                }
+
+                                $rma_number = $op->rma_number;
+
+                                $returnAddress = $this->getReturnAddress($op);
+
+                                if (isset($templateDetail)) {
+                                    $customer_name = isset($op->order->customer) ? $op->order->customer->full_name : '';
+                                    $store_name = isset($op->store) ? $op->store->name : '';
+                                    $data = [
+                                        'customer_firstName' => $customer_name,
+                                        'store_name' => $store_name,
+                                        'marketplaceName' => '',
+                                        'shipment_address' => '',
+                                        'shipment_date' => isset($op->ship_date) ? date('d M Y', strtotime($op->ship_date)) : '',
+                                        'order_date' => '',
+                                        'trackingNumber' => isset($op->tracking_number) ? $op->tracking_number : '',
+                                        'return_address' => $returnAddress,
+                                        'carrier_name' => isset($op->carrier) ? $op->carrier->name : '',
+                                        'rma_number' => (isset($rma_number) && $rma_number != '') ? $rma_number : '',
+                                    ];
+                                    $template_code = \Blade::render($templateDetail->template_code, $data);
+
+                                    $template['template_id'] = $templateDetail->id;
+                                    $template['template_code'] = $template_code;
                                 }
                             }
                         }
-
-                        if (isset($op) && $op->operation_type == OrderOperationType::OrderReturn && $op->label_creation_type == ShippingLabelCreationType::NoLabel && $returnOperation == 0) {
-                            $returnOperationCnt += 1;
-                        }
-
-                        if($key == 0){
-
-                            if($op->operation_type == OrderOperationType::OrderReturn && $op->tracking_number != ''){
-                                $templateDetail = HdMessageTemplate::getOrderOperationTemplate(OrderOperationType::OrderReturn, 0, 1);
-                                $imageName = $op->tracking_number.'.jpg';
-                                $template['imageName'] = $imageName;
-                                $template['imageUrl'] = asset('storage/labels/' .$imageName );
-                                $template['storagePath'] = storage_path('app/public/labels/' . $imageName);
-                            }else if($op->operation_type == OrderOperationType::OrderReturn && ($op->tracking_number == null || $op->tracking_number)){
-                                $templateDetail = HdMessageTemplate::getOrderOperationTemplate(OrderOperationType::OrderReturn, 0, 0);
-
-                            }else if($op->operation_type == OrderOperationType::OrderRefund || $op->operation_type == OrderOperationType::OrderReturnRefund ){
-
-                                $templateDetail = HdMessageTemplate::getOrderOperationTemplate($op->operation_type,0,0);
-                            }
-
-                            $rma_number = $op->rma_number;
-
-                            $returnAddress = $this->getReturnAddress($op);
-
-                            if(isset($templateDetail)){
-                                $customer_name = isset($op->order->customer) ? $op->order->customer->full_name : '';
-                                $store_name = isset($op->store) ? $op->store->name : '';
-                                $data = [
-                                    'customer_firstName' => $customer_name,
-                                    'store_name' => $store_name,
-                                    'marketplaceName' => '',
-                                    'shipment_address' => '',
-                                    'shipment_date' => isset($op->ship_date) ? date('d M Y',strtotime($op->ship_date)) : '',
-                                    'order_date' => '',
-                                    'trackingNumber' => isset($op->tracking_number) ? $op->tracking_number : '',
-                                    'return_address' => $returnAddress,
-                                    'carrier_name' => isset($op->carrier) ? $op->carrier->name : '',
-                                    'rma_number' => (isset($rma_number) && $rma_number != '') ? $rma_number : '',
-                                ];
-                                $template_code = \Blade::render($templateDetail->template_code, $data);
-
-                                $template['template_id'] = $templateDetail->id;
-                                $template['template_code'] = $template_code;
-                            }
-                        }
+                        $action['returnLable'] = $returnOperationCnt;
                     }
-                    $action['returnLable'] = $returnOperationCnt;
                 }
             }
-        }
 
-        $ticketHistory = '';
-        if(isset($ticketDetail->customer_id)){
-            $ticket_list = Message::where('customer_id',$ticketDetail->customer_id)->where('id','!=',$id)->orderBy('created_at','desc')->get();
-            if($ticket_list){
-                $ticketHistory = view('messages.ticket_history', ['ticket_list' => $ticket_list])->render();
+            $ticketHistory = '';
+            if (isset($ticketDetail->customer_id)) {
+                $ticket_list = Message::where('customer_id', $ticketDetail->customer_id)->where('id', '!=', $id)->orderBy('created_at', 'desc')->get();
+                if ($ticket_list) {
+                    $ticketHistory = view('messages.ticket_history', ['ticket_list' => $ticket_list])->render();
+                }
             }
+
+            $stores = Store::with('storeType')->get();
+
+            //print_r($action);
+            return view('messages.detail', compact('message_template', 'ticketDetail', 'messages', 'ticketTypeCode', 'action', 'store_type_name', 'ticketHistory', 'rma_done', 'lable_generate', 'type', 'template', 'ticketAllLabels', 'ticketLabels', 'stores'));
+        }else{
+            return redirect()->route('message.index');
         }
-
-        $stores = Store::with('storeType')->get();
-
-        //print_r($action);
-        return view('messages.detail', compact('message_template','ticketDetail','messages','ticketTypeCode','action','store_type_name','ticketHistory','rma_done','lable_generate','type','template','ticketAllLabels','ticketLabels','stores'));
     }
 
     public function search(Request $request)

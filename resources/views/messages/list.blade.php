@@ -179,36 +179,12 @@
             //location.href = "{{ url('messages/detail') }}/" + ticket_id;
         });
 
+        if($('#select_deselect_message').is(':checked')){
+            selectDeselectList($(this));
+        }
+
         $(document).on('click', '#select_deselect_message', function() {
-
-            var ele = $(this);
-            if(ele.is(':checked')){
-                $('#message-list tr').each(function () {
-                    $(this).find('input[name="message_id[]"]').prop('checked', true);
-                    $(this).addClass('bg-blue');
-                });
-            }else {
-
-                $('#message-list tr').each(function () {
-                    $(this).find('input[name="message_id[]"]').prop('checked', false);
-                    $(this).removeClass('bg-blue');
-                });
-            }
-
-            if($('input[name="message_id[]"]:checked').length) {
-                $('#open_message').removeAttr('disabled');
-                $('#mark_as_spam').removeAttr('disabled');
-                $('#delete_ticket').removeAttr('disabled');
-                $('#mark_as_important').removeAttr('disabled');
-                $('#mark_as_unread').removeAttr('disabled');
-            }else{
-                $('#open_message').attr('disabled',true);
-                $('#mark_as_spam').attr('disabled',true);
-                $('#delete_ticket').attr('disabled',true);
-                $('#mark_as_important').attr('disabled',true);
-                $('#mark_as_unread').attr('disabled',true);
-            }
-
+            selectDeselectList($(this));
         });
 
         $(document).on('dblclick','#message-list tr',function () {
@@ -393,6 +369,36 @@
             loadDatatables();
         }
     });
+
+    function selectDeselectList(ele){
+
+        if(ele.is(':checked')){
+            $('#message-list tr').each(function () {
+                $(this).find('input[name="message_id[]"]').prop('checked', true);
+                $(this).addClass('bg-blue');
+            });
+        }else {
+
+            $('#message-list tr').each(function () {
+                $(this).find('input[name="message_id[]"]').prop('checked', false);
+                $(this).removeClass('bg-blue');
+            });
+        }
+
+        if($('input[name="message_id[]"]:checked').length) {
+            $('#open_message').removeAttr('disabled');
+            $('#mark_as_spam').removeAttr('disabled');
+            $('#delete_ticket').removeAttr('disabled');
+            $('#mark_as_important').removeAttr('disabled');
+            $('#mark_as_unread').removeAttr('disabled');
+        }else{
+            $('#open_message').attr('disabled',true);
+            $('#mark_as_spam').attr('disabled',true);
+            $('#delete_ticket').attr('disabled',true);
+            $('#mark_as_important').attr('disabled',true);
+            $('#mark_as_unread').attr('disabled',true);
+        }
+    }
 
     function updateTicket(data) {
         let ticket_id = $('input[name="message_id[]"]:checked').val();
