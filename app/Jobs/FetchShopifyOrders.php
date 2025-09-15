@@ -240,7 +240,6 @@ class FetchShopifyOrders implements ShouldQueue
                                 /* create order operatation*/
                                 $orderOperationData = [
                                     'order_id' => $order_detail->id,
-                                    'ship_date' => date('Y-m-d H:i:s'),
                                     'insurance_value' => 0,
                                     'status' => $orderOperationstatus,
                                     'sync_message' => $sync_message,
