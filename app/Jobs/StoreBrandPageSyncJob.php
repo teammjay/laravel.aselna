@@ -5,6 +5,7 @@ namespace App\Jobs;
 use App\Constants\WebStorePageType;
 use App\Models\Brand;
 use App\Models\Device;
+use App\Models\DeviceInterface;
 use App\Models\Images;
 use App\Models\Interfaces;
 use App\Models\ProductType;
@@ -172,6 +173,107 @@ class StoreBrandPageSyncJob implements ShouldQueue
                         );
                     }
                 }
+                break;
+            case WebStorePageType::DEVICE:
+                $this->getPuplications();
+                Device::where('status', 'active')->orderBy('id')->chunk(100, function ($devices) use ($page_type, $template, $request) {
+                    foreach ($devices as $device) {
+                        $brand = $device->brand;
+                        $title = $brand->name . ' ' . $device->name . ' Accessories';
+
+                        $storePage = StoreNavigationPage::where('store_id', $this->store_id)
+                            ->where('page_type', WebStorePageType::DEVICE)
+                            ->where('device_id', $device->id)
+                            ->first();
+
+                        if (isset($storePage)) {
+                            $handle = $storePage->url_path;
+                        } else {
+                            $handle = $this->generateShopifyHandle($brand->name . ' ' . $device->name );
+                        }
+
+                        $collectionData['collection'] = [
+                            'title' => $title,
+                        ];
+                        $collectionData['collection']['ruleSet']['appliedDisjunctively'] = true;
+                        $path = '/store-images/' . $this->store->id . '/collections/' . $handle . '.jpg';
+
+                        try {
+                            $imagePath = FileUtility::uploadImage($this->store, 'app/public/device_images/' . $device->image, $path);
+                        } catch (\Exception $e) {
+                            $imagePath = '';
+                        }
+                        Log::info('Image path for device', ['device_id' => $device->id, 'image_path' => $imagePath]);
+                        $collection = null;
+
+                        if ($imagePath) {
+                            $collectionData['collection']['image'] = [
+                                'src' => $imagePath,
+                            ];
+                        } else {
+                            Log::error('Image upload failed for device', ['device_id' => $device->id, 'image' => $device->image]);
+                        }
+
+                        $interfaces = DeviceInterface::where('device_id', $device->id)->get();
+                        foreach ($interfaces as $interface) {
+                            $collectionData['collection']['ruleSet']['rules'][] = [
+                                'column' => 'TAG',
+                                'relation' => 'EQUALS',
+                                'condition' => $interface->interface_id,
+                            ];
+                        }
+
+                        if ($alreadyCollection = $this->shopifyAuthService->getCollectionByHandle($handle)) {
+                            Log::info('Collection already exists, updating collection', ['handle' => $handle]);
+                            $collectionData['collection']['id'] = $alreadyCollection['id'];
+                            $collectionData['collection']['handle'] = $handle;
+                            Log::info('Collection data update', ['collection_data' => $collectionData]);
+                            $response = $this->shopifyAuthService->updateCollection($collectionData);
+
+                            if (isset($response['data']['collectionUpdate'])) {
+                                $collection = $response['data']['collectionUpdate']['collection'];
+                            }
+                        }
+                        else
+                        {
+                            Log::info('Creating new collection', ['handle' => $handle]);
+
+                            foreach ($this->publications as $publication) {
+                                $collectionData['collection']['publications'][]['publicationId'] = $publication;
+                            }
+
+                            $collectionData['collection']['handle'] = $handle;
+                            Log::info('Collection data creation', ['collection_data' => $collectionData]);
+                            $response = $this->shopifyAuthService->createCollection($collectionData);
+
+                            if (isset($response['data']['collectionCreate'])) {
+                                $collection = $response['data']['collectionCreate']['collection'];
+                            }
+                        }
+                        Log::info('Collection ::' . json_encode($collection));
+                        if (isset($collection)) {
+                            $id =str_replace('gid://shopify/Collection/', '', $collection['id']);
+                            $imageUrl = $collection['image']['url'] ?? '';
+                            StoreNavigationPage::updateOrCreate(
+                                [
+                                    'store_id' => $this->store_id,
+                                    'page_type' => WebStorePageType::DEVICE,
+                                    'device_id' => $device->id,
+                                ],
+                                [
+                                    'store_id' => $this->store_id,
+                                    'page_type' => WebStorePageType::DEVICE,
+                                    'device_id' => $device->id,
+                                    'device_brand_id' => $device->brand_id,
+                                    'url_path' => $handle,
+                                    'store_image_url' => $imageUrl,
+                                    'title' => $title,
+                                    'page_id' => $id,
+                                ]
+                            );
+                        }
+                    }
+                });
                 break;
             case WebStorePageType::BRAND_DEVICE_PRODUCT_TYPES:
                 Device::where('status', 'active')->orderBy('id')->chunk(100, function ($devices) use ($page_type, $template, $request) {
