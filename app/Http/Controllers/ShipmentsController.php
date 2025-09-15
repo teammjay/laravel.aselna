@@ -861,7 +861,17 @@ class ShipmentsController extends Controller
                 $totalInsurance = 0;
                 foreach ($orderIds as $orderId) {
                     $orderOperation = OrderOperation::where('order_id', $orderId)->first();
-                    $totalweight += $orderOperation->weight_value;
+                    $product_weight = 0;
+                    foreach ($orderOperation->operationItem as $oitem) {
+                        if (isset($oitem->orderItem->product)) {
+                            $product_id = $oitem->orderItem->product->product_id;
+                            if ($product_id) {
+                                $product_detail = Catalog::findOrFail($product_id);
+                                $product_weight = $product_detail->product_weight * $oitem->quantity;
+                            }
+                        }
+                    }
+                    $totalweight += $orderOperation->weight_value ?? $product_weight;
                     $totalInsurance += $orderOperation->insurance_value;
                     if ($orderOperation) {
                         if (!isset($mainShipment)) {
