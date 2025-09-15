@@ -233,6 +233,11 @@ class StoreNavigationPagesController extends Controller
             ),
             new StoreBrandPageSyncJob(
                 $request->store_id,
+                WebStorePageType::DEVICE,
+                $brandTemplate->id
+            ),
+            new StoreBrandPageSyncJob(
+                $request->store_id,
                 WebStorePageType::BRAND_DEVICE_PRODUCT_TYPES,
                 $brandDeviceProductTemplate->id
             ),
