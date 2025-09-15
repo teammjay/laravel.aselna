@@ -118,7 +118,8 @@ class ListingController extends Controller
         $columnName = $request['columns'][$columnIndex]['data'];
         $columnSortOrder = $request['order'][0]['dir'];
 
-        $query = ListingItem::with([
+        // add select
+        $query = ListingItem::select('listing_item.*','saleCount','lastSaleDate')->with([
             'storeProduct:id,store_id,product_id',
             'storeProduct.store.storeType:id,name',
             'storeProduct.store:id,name,store_type_id',
@@ -127,13 +128,13 @@ class ListingController extends Controller
             'device.deviceType:id,name',
             'generationType:id,name',
             'manufacturer:id,name'
-        ])->addSelect([
-            'saleCount' => OrderItem::selectRaw('SUM(
-                COALESCE(shipped_quantity, 0)
-              - COALESCE(canceled_quantity, 0)
-              - COALESCE(refund_quantity, 0)
-            )')->whereColumn('order_item.sku', 'listing_item.sku')->limit(1)
-        ])
+        ]);//->addSelect([
+//            'saleCount' => OrderItem::selectRaw('SUM(
+//                COALESCE(shipped_quantity, 0)
+//              - COALESCE(canceled_quantity, 0)
+//              - COALESCE(refund_quantity, 0)
+//            )')->whereColumn('order_item.sku', 'listing_item.sku')->limit(1)
+//        ])
             /*->withSum(['orderItems as saleCount' => function ($query) {
             $query->whereNotNull('shipped_quantity')->where(function ($q) {
                 $q->whereNull('canceled_quantity')
@@ -143,26 +144,40 @@ class ListingController extends Controller
                     ->orWhere('refund_quantity', 0);
             });
         }], 'quantity')*/
-        ->addSelect([
-            'lastSaleDate' => OrderItem::selectRaw('MAX(created_at)')
-                ->whereColumn('order_item.sku', 'listing_item.sku')
-                ->whereNotNull('shipped_quantity')
-                ->where(function($q){
-                    $q->whereNull('canceled_quantity')->orWhere('canceled_quantity', 0);
-                })
-                ->where(function($q){
-                    $q->whereNull('refund_quantity')->orWhere('refund_quantity', 0);
-                })
-                ->limit(1)
-        ]);
+//        ->addSelect([
+//            'lastSaleDate' => OrderItem::selectRaw('MAX(created_at)')
+//                ->whereColumn('order_item.sku', 'listing_item.sku')
+//                ->whereNotNull('shipped_quantity')
+//                ->where(function($q){
+//                    $q->whereNull('canceled_quantity')->orWhere('canceled_quantity', 0);
+//                })
+//                ->where(function($q){
+//                    $q->whereNull('refund_quantity')->orWhere('refund_quantity', 0);
+//                })
+//                ->limit(1)
+//        ]);
         /*->withMax(['orderItems as lastSaleDate' => function ($query) {
             $query->whereNotNull('shipped_quantity')->whereNull('canceled_quantity')->orWhere('canceled_quantity', 0)->whereNull('refund_quantity')->orWhere('refund_quantity', 0);
         }], 'created_at');*/
 
+        $query->leftJoin(DB::raw('(
+                    SELECT oi.sku,
+                           SUM(COALESCE(oi.shipped_quantity, 0) - COALESCE(oi.canceled_quantity, 0) - COALESCE(oi.refund_quantity, 0)) AS saleCount,
+                           MAX(CASE
+                                    WHEN oi.shipped_quantity IS NOT NULL
+                                         AND (oi.canceled_quantity IS NULL OR oi.canceled_quantity = 0)
+                                         AND (oi.refund_quantity IS NULL OR oi.refund_quantity = 0)
+                                    THEN oi.created_at
+                                    ELSE NULL
+                               END) AS lastSaleDate
+                    FROM order_item oi
+                    GROUP BY oi.sku
+                ) AS oi'), 'oi.sku', '=', 'listing_item.sku');
+
         if ($request->has('store_id') && $request->store_id != '') {
 
-            /*$query->join('store_product', 'store_product.id', '=', 'listing_item.store_product_id')
-                ->where('store_product.store_id', $request->store_id);*/
+//            $query->join('store_product', 'store_product.id', '=', 'listing_item.store_product_id')
+//                ->where('store_product.store_id', $request->store_id);
 
             $query->whereRelation('storeProduct', 'store_id', $request->store_id);
             /*$query->whereHas('storeProduct', function ($q) use ($request) {
@@ -324,7 +339,7 @@ class ListingController extends Controller
         }
 
         //$productsRecord = $query->paginate($perPage); // Paginate results
-        //echo $query->toSql();die;
+//        echo $query->toSql();die;
         //$products = $query->skip($start)->take($perPage)->get(); // Paginate results
 
         /*echo '<pre>';
@@ -337,7 +352,7 @@ class ListingController extends Controller
             ->get();*/
         $products = $query->paginate($perPage, ['*'], 'page', floor($start/$perPage)+1);
         $totalRecordwithFilter = $totalRecords;
-        //echo $query->toSql();die;
+//        echo $query->toSql();die;
         //dd(DB::getQueryLog());
 
         $data = [];
