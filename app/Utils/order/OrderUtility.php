@@ -139,7 +139,6 @@ class OrderUtility
 
         $orderOperationData = [
             'order_id' => $order->id,
-            'ship_date' => date('Y-m-d H:i:s', $sorder['shippingInfo']['estimatedShipDate'] / 1000),
             'insurance_value' => $orderTotals,
             'status' => OrderOperationStatus::Created,
             'signature_confirmation' => 1,
@@ -426,7 +425,6 @@ class OrderUtility
         /* create order operatation*/
         $orderOperationData = [
             'order_id' => $order->id,
-            'ship_date' => date('Y-m-d H:i:s'),
             'insurance_value' => 0,
             'status' => $operationstatus,
             'signature_confirmation' => 1,
