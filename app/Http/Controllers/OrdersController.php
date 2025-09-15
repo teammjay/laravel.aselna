@@ -345,7 +345,6 @@ class OrdersController extends Controller
 
                                 $orderOperationData = [
                                     'order_id' => $order_detail->id,
-                                    'ship_date' => date('Y-m-d H:i:s'),
                                     'insurance_value' => 0,
                                     'status' => OrderOperationStatus::Created,
                                     'signature_confirmation' => 1,
@@ -457,7 +456,6 @@ class OrdersController extends Controller
                     /* create order operatation*/
                     $orderOperationData = [
                         'order_id' => $order_detail->id,
-                        'ship_date' => date('Y-m-d H:i:s'),
                         'insurance_value' => 0,
                         'status' => OrderOperationStatus::Created,
                         'signature_confirmation' => (isset($data['signature-confirmation-recommended']) && $data['signature-confirmation-recommended']) ? 1 : 0,
