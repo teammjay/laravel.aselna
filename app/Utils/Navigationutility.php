@@ -135,11 +135,16 @@ class Navigationutility
 
                 $finalLinkArray['final_title'] = $brand->name;
                 foreach ($links as $link) {
+                    $devicePage = StoreNavigationPage::where('store_id', $store_id)
+                        ->where('page_type', WebStorePageType::DEVICE)
+                        ->where('device_id', $link->device_id)
+                        ->first();
+
                     if ($link->device->order <= 10) {
                         $finalLinkArray['popular_link'][] = [
                             'id' => $link->id,
                             'title' => $link->device->name,
-                            'imageUrl' => $link->store_image_url,
+                            'imageUrl' => $devicePage->store_image_url,
                             'url' => ($skipDevicePages ? "/collections/" : "/pages/") . $link->url_path,
                             'popular' => true
                         ];
@@ -147,7 +152,7 @@ class Navigationutility
                         $finalLinkArray['other_link'][] = [
                             'id' => $link->id,
                             'title' => $link->device->name,
-                            'imageUrl' => $link->store_image_url,
+                            'imageUrl' => $devicePage->store_image_url,
                             'url' => ($skipDevicePages ? "/collections/" : "/pages/") . $link->url_path,
                             'popular' => false
                         ];
