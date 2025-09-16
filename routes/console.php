@@ -1,6 +1,7 @@
 <?php
 
 use App\Jobs\AmazonListingItemSyncJob;
+use App\Jobs\SendNotificationEmailSyncFailJob;
 use App\Jobs\WalmartListingItemSyncJob;
 use App\Jobs\BrandSyncJob;
 use App\Jobs\CategorySyncJob;
@@ -44,6 +45,8 @@ Schedule::job(new FetchEbayOrders())->hourly();
 Schedule::job(new FetchShopifyOrders())->hourly();
 Schedule::job(new SyncAllOrderStatusJob())->hourly();
 
+
+Schedule::job(new SendNotificationEmailSyncFailJob(2))->everyThirtyMinutes();
 
 // Email Message fetching
 Schedule::job(FetchEmailMessagesJob::class)->everyTenMinutes();
