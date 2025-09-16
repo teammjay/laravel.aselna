@@ -163,12 +163,12 @@
                         @foreach($shipmentDetail->operationItem as $key=>$oitem)
                             @php
                                 $url = '';
-                                if(isset($oitem->orderItem->listingItem) && !empty($oitem->orderItem->listingItem)){
-                                    $store_sku = $oitem->orderItem->listingItem->store_sku;
+                                if(isset($oitem->orderItem->listingItemViaId) && !empty($oitem->orderItem->listingItemViaId)){
+                                    $store_sku = $oitem->orderItem->listingItemViaId->store_sku;
                                     $store_type = isset($shipmentDetail->store->storeType->name) ? $shipmentDetail->store->storeType->name : '';
                                     $site_url = isset($shipmentDetail->store->store_url) ? $shipmentDetail->store->store_url : '';
-                                    $store_url = isset($oitem->orderItem->listingItem->store_url) ? $oitem->orderItem->listingItem->store_url : '';
-                                    if($store_sku != ''){
+                                    $store_url = isset($oitem->orderItem->listingItemViaId->store_url) ? $oitem->orderItem->listingItemViaId->store_url : '';
+                                    if($store_sku != '') {
                                         $url = \App\Utils\ListingUtility::generateItemUrl($store_type, $store_sku, $site_url, $store_url);
                                     }
                                 }
