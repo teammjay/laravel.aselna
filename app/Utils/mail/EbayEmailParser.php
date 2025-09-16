@@ -57,6 +57,11 @@ class EbayEmailParser extends ReceivedMessageParser
         if (str_contains($subject, 'sent a message about')) {
             $this->ticketTypeCode = HdTicketTypeCode::ORDER_INFORMATION;
             $this->addEntity(trim($this->ticketTypeCode), 'ticket_type_id');
+
+            if (preg_match('/^(.*?)\s+sent a message/i', $subject, $matches)) {
+                $username = $matches[1];
+                $this->addEntity(trim($username), 'username');
+            }
         }
 
         if (in_array($from, self::$marketplaceEmails)) {

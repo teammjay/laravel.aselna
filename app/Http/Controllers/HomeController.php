@@ -533,7 +533,7 @@ On Fri, 29 Aug 2025 at 23:36, phonil <phonil.ebay@gmail.com> wrote:
                         $customer_id = $customerDetail->id;
                     }
                 }
-
+                $username = NULL;
                 if (isset($email['parsedData']) && !empty($email['parsedData'])) {
                     if (isset($email['parsedData']['order_id'])) {
                         $order_id = html_entity_decode($email['parsedData']['order_id']);
@@ -552,6 +552,10 @@ On Fri, 29 Aug 2025 at 23:36, phonil <phonil.ebay@gmail.com> wrote:
 
                     if (isset($email['parsedData']['reason'])) {
                         $reason = html_entity_decode($email['parsedData']['reason']);
+                    }
+
+                    if (isset($email['parsedData']['username'])) {
+                        $username = html_entity_decode($email['parsedData']['username']);
                     }
 
                     if (isset($email['parsedData']['ticket_type_id'])) {
@@ -611,6 +615,7 @@ On Fri, 29 Aug 2025 at 23:36, phonil <phonil.ebay@gmail.com> wrote:
                 $ticketData = [
                     'ticket_type_id' => $ticketTypeDetail->id,
                     'ticket_email' => trim($email['from']),
+                    'username' => trim($username),
                     'status' => HdTicketStatus::NEEDS_ACTION,
                     'related_order_id' => $related_order_id,
                     'subject' => preg_replace('/[\x00-\x1F\x7F-\xFF]/', '', trim(mb_convert_encoding(htmlspecialchars_decode($email['subject']), 'UTF-8', 'UTF-8'))),

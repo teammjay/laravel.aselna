@@ -54,13 +54,13 @@ class EmailMessageUtility
     protected function initImapClient()
     {
         $this->client = (new ClientManager())->make([
-            'host'          => $this->imapConfig['host'],
-            'port'          => $this->imapConfig['port'],
-            'encryption'    => $this->imapConfig['encryption'],
+            'host' => $this->imapConfig['host'],
+            'port' => $this->imapConfig['port'],
+            'encryption' => $this->imapConfig['encryption'],
             'validate_cert' => $this->imapConfig['validate_cert'] ?? true,
-            'username'      => $this->imapConfig['username'],
-            'password'      => $this->imapConfig['password'],
-            'protocol'      => 'imap',
+            'username' => $this->imapConfig['username'],
+            'password' => $this->imapConfig['password'],
+            'protocol' => 'imap',
         ]);
     }
 
@@ -81,9 +81,9 @@ class EmailMessageUtility
                 });
             }*/
 
-            if($toEmail) {
+            if ($toEmail) {
 
-                Log::info("Email New Content". $message);
+                Log::info("Email New Content" . $message);
 
                 Mail::send([], [], function ($m) use ($toEmail, $subject, $message_id, $attachment, $message) {
                     $m->to($toEmail)
@@ -109,6 +109,48 @@ class EmailMessageUtility
     }
 
 
+    public function fetchTodaysEmail($folderName = 'INBOX')
+    {
+        try {
+            $this->client->connect();
+
+            // echo php version
+            //echo 'PHP version: ' . phpversion();
+
+            $today = \Carbon\Carbon::now('America/New_York');
+            $searchDateCriteria = $today->format('d-M-Y');
+
+            Log::info("Fetching email headers from folder: {$folderName} with filter date {$today->toDateTimeString()}");
+
+            $folder = $this->client->getFolder($folderName);
+
+            $query = $folder->query()
+                ->where('SINCE', $searchDateCriteria)
+                ->setFetchOptions(\Webklex\PHPIMAP\IMAP::FT_UID | \Webklex\PHPIMAP\IMAP::FT_PEEK);
+
+            $messages = $query->get();
+
+            $messageData = [];
+
+            foreach ($messages as $key => $message) {
+
+                $uid = $message->getUid();
+                Log::info("Processing email #{$key} with UID: {$uid}");
+                $fullMessage = $folder->query()->whereUid($uid)->get()->first();
+
+                $messageData[] = [
+                    'id' => $fullMessage->message_id->first(),
+                    'subject' => $fullMessage->subject->first()
+                ];
+                Log::info("Fetched message ID: " . $fullMessage->message_id->first() . " with subject: " . $fullMessage->subject->first());
+            }
+
+            return $messageData;
+        } catch (Exception $e) {
+            Log::error("Failed to fetch today's emails: " . $e->getMessage());
+            return null;
+        }
+    }
 
     public function fetchEmails($store_type, $filter_date, $folderName = 'INBOX', $limit = 20)
     {
@@ -130,13 +172,13 @@ class EmailMessageUtility
 
             $query = $folder->query()
                 ->where('SINCE', $searchDateCriteria)
-                ->where('BEFORE',$toDateCriteria)
+                ->where('BEFORE', $toDateCriteria)
                 ->setFetchOptions(\Webklex\PHPIMAP\IMAP::FT_UID | \Webklex\PHPIMAP\IMAP::FT_PEEK);
 
             $messages = $query->get();
 
             // Filter messages by exact time - more precise than IMAP can do
-            $filteredMessages = collect($messages)->filter(function($message) use ($filterDateObj) {
+            $filteredMessages = collect($messages)->filter(function ($message) use ($filterDateObj) {
                 try {
                     Log::info('Message checking :: ' . $message->getDate());
                     $messageDate = $message->getDate()->first();
@@ -168,7 +210,7 @@ class EmailMessageUtility
 
                     // Process data for this specific message
                     $parsedData = [];
-                    if($store_type != '') {
+                    if ($store_type != '') {
                         switch (strtolower($store_type)) {
                             case 'walmart':
                                 $walmartEmailParser = new WalmartEmailParser($fullMessage);
@@ -206,7 +248,7 @@ class EmailMessageUtility
                         ];
                     }
 
-                    if(str_contains($body, '<html>')) {
+                    if (str_contains($body, '<html>')) {
                         $body = $this->formatHtml($body);
                     }
 
@@ -266,7 +308,8 @@ class EmailMessageUtility
         }
     }
 
-    private function formatHtml($emailHtml){
+    private function formatHtml($emailHtml)
+    {
 
         // Remove multiple <br> in a row
         $html = preg_replace('/(<br\s*\/?>\s*){2,}/i', '<br>', $emailHtml);
@@ -293,7 +336,8 @@ class EmailMessageUtility
         return $innerHTML;
     }
 
-    private function parseEscalationEmail($emailBody){
+    private function parseEscalationEmail($emailBody)
+    {
 
         $data = [];
 
