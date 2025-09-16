@@ -842,13 +842,29 @@ class MessagesController extends Controller
             $imagename = $request->input('imagename');
             if ($ticket_id) {
                 $ticketDetail = Message::with('store', 'store.storeType', 'customer')->where('id', $ticket_id)->first();
-                $previousMessage = HDMessage::with('parts')->where('ticket_id', $ticket_id)->orderBy('created_at', 'desc')->first();
-
+                //$previousMessage = HDMessage::with('parts')->where('ticket_id', $ticket_id)->orderBy('created_at', 'desc')->first();
+                $previousMessage = HDMessage::where('ticket_id', $ticket_id)->orderBy('created_at', 'desc')->first();
+                //echo $ticketDetail->store->storeType->name;die;
+                //print_r($previousMessage);die;
                 $prev_content = '';
                 if ($previousMessage) {
-                    if (isset($previousMessage->parts)) {
+                    /*if (isset($previousMessage->parts)) {
                         $prev_content = $previousMessage->parts->content;
+                    }*/
+                    /*foreach($previousMessages as $pmsg ){
+                        if (isset($pmsg->message)) {
+                            $prev_content .=  "<div style='margin-left:20px; border-left:2px solid #ccc; padding-left:10px; margin-top:10px;'>
+                                                " . $pmsg->message. "
+                                            </div>";
+                        }
+                    }*/
+
+                    if (isset($previousMessage->message)) {
+                        $prev_content =  "<div style='margin-left:20px; border-left:2px solid #ccc; padding-left:10px; margin-top:10px;'>
+                                                " . $previousMessage->message. "
+                                            </div>";
                     }
+
                 }
 
                 if (isset($ticketDetail->ticket_email) && $ticketDetail->ticket_email != '') {
@@ -893,16 +909,17 @@ class MessagesController extends Controller
 
                     if ($prev_content != '' && (isset($ticketDetail->store->storeType->name) && strtolower($ticketDetail->store->storeType->name) == 'ebay')) {
                         Log::info("Email Previous Content" . $prev_content);
-                        $newMessageBody = $message_to_send . PHP_EOL. "<div style='margin-left:20px; border-left:2px solid #ccc; padding-left:10px;'>
-                                        " . $prev_content. "
-                                    </div>";
+                        $newMessageBody = nl2br($message_to_send) . PHP_EOL. $prev_content;
                     } else {
                         $newMessageBody = nl2br($message_to_send);
                     }
 
                     $connector = new EmailMessageUtility($smtpConfig, $imapConfig);
                     $response = $connector->sendEmail($email, $ticketDetail->subject, $newMessageBody, $ticketDetail->message_id, $filepath);
+                    //$response = $connector->sendEmail('jayesh@mjailab.com', $ticketDetail->subject, $newMessageBody, $ticketDetail->message_id, $filepath);
                     /*$response = $connector->sendEmail('jayesh@mjailab.com','Test Mail',$message_to_send, 'CAB3DxwfKHcaot+XFxHBW6Teiq38dDaHs2UU2UqipkfbHnYr+sg@mail.gmail.com', $filepath);*/
+
+                    //$response = true;
 
                     if ($response) {
 
