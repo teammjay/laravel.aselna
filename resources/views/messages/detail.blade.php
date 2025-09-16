@@ -146,11 +146,25 @@
     @if (session('error'))
         <div class="alert alert-danger">{{ session('error') }}</div>
     @endif
+
+    @php
+        $subject = $ticketDetail->subject;
+            if ($ticketDetail->username) {
+                $username = $ticketDetail->username;
+                $userLink = "https://www.ebay.com/usr/" . $username;
+                $subject = preg_replace(
+                    '/^' . preg_quote($username, '/') . '/',
+                    '<a class="text-blue" href="' . $userLink . '" target="_blank">' . $username . '</a>',
+                    $ticketDetail->subject,
+                    1
+                );
+            }
+    @endphp
     <div class="row">
         <div class="col-md-8">
             <div class="card">
                 <div class="card-header">
-                    <h2 class="ticket-title">ON <strong>{{ $ticketDetail->ticket_code }}</strong>    {{ $ticketDetail->subject }}</h2>
+                    <h2 class="ticket-title">ON <strong>{{ $ticketDetail->ticket_code }}</strong>  {!! $subject !!}</h2>
                 </div>
                 <div class="card-body">
 
