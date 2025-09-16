@@ -48,4 +48,9 @@ class OrderItem extends Model
     {
         return $this->belongsTo(ListingItem::class,'sku','sku');
     }
+
+    public function listingItemViaId()
+    {
+        return $this->belongsTo(ListingItem::class,'listing_item_id','id');
+    }
 }
