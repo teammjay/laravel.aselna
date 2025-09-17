@@ -56,14 +56,13 @@ class NewEggAuthService
         }
     }
 
-    public function submitItemCreationUpdateFeed(array $body)
+    public function submitFeed(array $body)
     {
         $endpoint = "datafeedmgmt/feeds/submitfeed";
         $query = [
             'sellerid'    => $this->sellerId,
             'requesttype' => 'ITEM_DATA',
         ];
-
 
         try {
 
