@@ -117,7 +117,7 @@ class EmailMessageUtility
             // echo php version
             //echo 'PHP version: ' . phpversion();
 
-            $today = \Carbon\Carbon::now('America/New_York');
+            $today = \Carbon\Carbon::now('America/New_York')->subDay();
             $searchDateCriteria = $today->format('d-M-Y');
 
             Log::info("Fetching email headers from folder: {$folderName} with filter date {$today->toDateTimeString()}");
@@ -125,10 +125,16 @@ class EmailMessageUtility
             $folder = $this->client->getFolder($folderName);
 
             $query = $folder->query()
-                ->where('SINCE', $searchDateCriteria)
-                ->setFetchOptions(\Webklex\PHPIMAP\IMAP::FT_UID | \Webklex\PHPIMAP\IMAP::FT_PEEK);
+                ->whereText('SINCE', $searchDateCriteria)
+                ->setFetchOptions(\Webklex\PHPIMAP\IMAP::FT_UID)
+                ->limit(10)
+                ->setFetchBody(false) // Don't fetch the full body content initially
+                ->setFetchFlags(false); // Skip flags to reduce data transfer
+//                ->setFetchAttachment(false); // Skip attachments
 
             $messages = $query->get();
+            $messageCount = $messages->count();
+            Log::info("Found {$messageCount} messages matching criteria");
 
             $messageData = [];
 
@@ -136,19 +142,33 @@ class EmailMessageUtility
 
                 $uid = $message->getUid();
                 Log::info("Processing email #{$key} with UID: {$uid}");
-                $fullMessage = $folder->query()->whereUid($uid)->get()->first();
+//                $fullMessage = $folder->query()->whereUid($uid)->get()->first();
 
                 $messageData[] = [
-                    'id' => $fullMessage->message_id->first(),
-                    'subject' => $fullMessage->subject->first()
+                    'message_id' => $message->message_id->first(),
+                    'subject' => $message->subject->first()
                 ];
-                Log::info("Fetched message ID: " . $fullMessage->message_id->first() . " with subject: " . $fullMessage->subject->first());
+
+//                Log::info("Fetched email with Subject: " . $fullMessage->subject->first());
+
+//                unset($fullMessage);
+
+                if ($key % 50 === 0 && $key > 0) {
+                    Log::info("Processed {$key} messages, running garbage collection");
+                    if (function_exists('gc_collect_cycles')) {
+                        gc_collect_cycles();
+                    }
+
+                    // Log memory usage
+                    $memoryUsage = memory_get_usage(true) / 1024 / 1024;
+                    Log::info("Current memory usage: {$memoryUsage} MB");
+                }
             }
 
             return $messageData;
         } catch (Exception $e) {
             Log::error("Failed to fetch today's emails: " . $e->getMessage());
-            return null;
+            return [];
         }
     }
 
