@@ -67,9 +67,10 @@ class SendNotificationEmailSyncFailJob implements ShouldQueue
                     $notFound = [];
 
                     foreach ($messages as $message) {
-                        Log::info('Checking message ID: ' . trim($message['message_id']));
+                        //trim <,> from message id
+                        Log::info('Checking message ID: ' . trim($message['message_id'], '<>'));
                         // check if message id exists in hd_messages table
-                        if (HDMessage::where('message_id' , trim($message['message_id']))->doesntExist()) {
+                        if (HDMessage::where('message_id' , trim($message['message_id'], '<>'))->doesntExist()) {
                             $notFound[] = $message;
                         };
                     }
