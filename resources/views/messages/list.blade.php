@@ -383,6 +383,8 @@
                 $(this).find('input[name="message_id[]"]').prop('checked', false);
                 $(this).removeClass('bg-blue');
             });
+
+            ele.prop('checked',false);
         }
 
         if($('input[name="message_id[]"]:checked').length) {
