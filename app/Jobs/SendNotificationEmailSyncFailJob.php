@@ -7,6 +7,7 @@ use App\Models\StoreMessageAccount;
 use App\Models\User;
 use App\Models\UserAccount;
 use App\Utils\EmailMessageUtility;
+use App\Utils\FastEmailService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Log;
@@ -34,7 +35,6 @@ class SendNotificationEmailSyncFailJob implements ShouldQueue
      */
     public function handle(): void
     {
-
         Log::info('Starting SendNotificationEmailSyncFailJob Job');
         $storeMessageAccounts = StoreMessageAccount::with('store','store.storeType','incomingAccount')
             ->where('active', 1)
@@ -60,7 +60,7 @@ class SendNotificationEmailSyncFailJob implements ShouldQueue
 
                     Log::info('Imap Config: ' . json_encode($imapConfig));
 
-                    $emailUtility = new EmailMessageUtility($smtpConfig, $imapConfig);
+                    $emailUtility = new FastEmailService($smtpConfig, $imapConfig);
 
                     $messages = $emailUtility->fetchTodaysEmail($folder);
 
@@ -76,12 +76,12 @@ class SendNotificationEmailSyncFailJob implements ShouldQueue
 
                     if (count($notFound) > 0) {
                         Log::info('Not found messages count: ' . count($notFound));
-                        $content = "Email Sync issue detected for store: {$maccount->store->name} - {$maccount->store->storeType->name}. \n Last sync at {$maccount->toDateTimeString()}";
+                        $content = "Email Sync issue detected for store: {$maccount->store->name} - {$maccount->store->storeType->name}.";
                         // Attach the list of not found messages
                         if (count($notFound) > 0) {
                             $content .= "\n\nThe following email messages were not synced:\n";
                             foreach ($notFound as $msg) {
-                                $content .= "Subject: {$msg['subject']}";
+                                $content .= "Subject: {$msg['subject']} \n";
                             }
                         }
                         Log::info('Content: '.$content);
