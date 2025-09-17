@@ -73,7 +73,7 @@ class MessagesController extends Controller
             $query->where('status',$request->status);
         }
         // Filter by ticket email
-        QueryFilters::applyFilter($query, $request, 'sender_email', 'sender_email_operator', 'sender_email');
+        QueryFilters::applyFilter($query, $request, 'ticket_email', 'sender_email_operator', 'sender_email');
 
         // Filter by ticket type
         QueryFilters::applyFilter($query, $request, 'ticket_type_id', 'ticket_type_operator', 'ticket_type');
@@ -94,7 +94,7 @@ class MessagesController extends Controller
         QueryFilters::applyFilter($query, $request, 'user_id', 'user_id_operator', 'user_id');
 
         // Filter by username
-        QueryFilters::applyFilter($query, $request, 'subject', 'username_operator', 'username');
+        QueryFilters::applyFilter($query, $request, 'username', 'username_operator', 'username');
 
         // Filter by store id
         if($request->has('store_id') && $request->store_id != ''){
