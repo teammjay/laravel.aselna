@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('order_operation', function (Blueprint $table) {
-            $table->timestamp('ship_date')->nullable()->change();
+            $table->dateTime('ship_date')->nullable()->change();
         });
     }
 
@@ -22,7 +22,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('order_operation', function (Blueprint $table) {
-            $table->timestamp('ship_date')->change();
+            $table->dateTime('ship_date')->change();
         });
     }
 };
