@@ -16,12 +16,12 @@ class NewEggAuthService
     protected $apiKey;
     protected $secretKey;
 
-    public function __construct($clientId, $clientSecret,$redirectUri,$refresh_token='')
+    public function __construct($sellerId, $clientId, $clientSecret)
     {
         $this->baseUrl  = env('NEWEGG_BASE_URL'); // e.g. https://api.newegg.com/marketplace/
-        $this->sellerId = config('NEWEGG_SELLER_ID');
-        $this->apiKey   = config('NEWEGG_API_KEY');
-        $this->secretKey = config('NEWEGG_SECRET_KEY');
+        $this->sellerId = $sellerId;
+        $this->apiKey   = $clientId;
+        $this->secretKey = $clientSecret;
 
         $this->client = new Client([
             'base_uri' => $this->baseUrl,
@@ -43,10 +43,8 @@ class NewEggAuthService
                     'Content-Type'  => 'application/json',
                     'Accept'        => 'application/json',
                 ],
-                'query' => [
-                    'sellerid' => $this->sellerId
-                ],
-                'json' => $body,
+                'query' => $query,
+                'body' => $body,
             ]);
 
             return json_decode($response->getBody()->getContents(), true);
@@ -56,7 +54,7 @@ class NewEggAuthService
         }
     }
 
-    public function submitItemCreationUpdateFeed(array $body)
+    public function submitFeed($file)
     {
         $endpoint = "datafeedmgmt/feeds/submitfeed";
         $query = [
@@ -64,6 +62,7 @@ class NewEggAuthService
             'requesttype' => 'ITEM_DATA',
         ];
 
+        $body = file_get_contents($file);
 
         try {
 

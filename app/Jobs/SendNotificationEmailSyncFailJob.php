@@ -67,9 +67,9 @@ class SendNotificationEmailSyncFailJob implements ShouldQueue
                     $notFound = [];
 
                     foreach ($messages as $message) {
-                        Log::info('Checking message ID: ' . trim($message['message_id']));
+                        Log::info('Checking message ID: ' . trim($message['message_id'], '<>'));
                         // check if message id exists in hd_messages table
-                        if (HDMessage::where('message_id' , trim($message['message_id']))->doesntExist()) {
+                        if (HDMessage::where('message_id' , trim($message['message_id'], '<>'))->doesntExist()) {
                             $notFound[] = $message;
                         };
                     }
@@ -81,11 +81,11 @@ class SendNotificationEmailSyncFailJob implements ShouldQueue
                         if (count($notFound) > 0) {
                             $content .= "\n\nThe following email messages were not synced:\n";
                             foreach ($notFound as $msg) {
-                                $content .= "Subject: {$msg['subject']} \n";
+                                $content .= "Subject: {$msg['subject']} | From: {$msg['from_name']} <{$msg['from_email']}> | Date: {$msg['date']} | Message ID: {$msg['message_id']}\n";
                             }
                         }
                         Log::info('Content: '.$content);
-//                        $this->sendMail($maccount->store, $content);
+                        $this->sendMail($maccount->store, $content);
                     }
                 }
             }
@@ -117,7 +117,7 @@ class SendNotificationEmailSyncFailJob implements ShouldQueue
                 $encryption = 'tls';
             }
 
-            Config::set('mail.mailers.smtp', [
+            Config::set('mail.mailers.custom_smtp', [
                 'transport' => 'smtp',
                 'host' => $userMessageAccount->outgoingAccount->server,
                 'port' => $userMessageAccount->outgoingAccount->port,
@@ -131,10 +131,10 @@ class SendNotificationEmailSyncFailJob implements ShouldQueue
             Config::set('mail.from.address', $userMessageAccount->outgoingAccount->email);
             Config::set('mail.from.name', $userMessageAccount->name);
 
-            Mail::send($content,
+            Mail::mailer('custom_smtp')->raw($content,
                 function ($message) use ($store, $sendTo, $cc_emails) {
-                    $message->to($sendTo)
-                        ->cc($cc_emails)
+                    $message->to($cc_emails)
+                        //->cc($cc_emails)
                         ->subject("Store Email Sync Issue Alert : {$store->name} - {$store->storeType->name}");
                 }
             );

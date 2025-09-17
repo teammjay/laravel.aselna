@@ -5,6 +5,7 @@ namespace App\Services\Marketplace\Service;
 use App\Constants\ListingStatus;
 use App\Constants\OrderStatus;
 use App\Models\Order;
+use App\Services\Auth\NewEggAuthService;
 use App\Utils\FileUtility;
 use DateTime;
 use App\Constants\FeedStatus;
@@ -99,46 +100,76 @@ class NewEggService implements MarketplaceServiceInterface
         ];
 
         foreach ($listingItems as $key => $listingItem) {
+            $item = $listingItem->item;
+            $productObj = $item->storeProduct->product;
+            $productColor = $productObj->productColor;
+            $price = $item->price;
+            if (!isset($price)) {
+                $price = $item->storeProduct->price;
+            }
+            if (!isset($price)) {
+                $price = $productObj->product_marketplace_price;
+            }
+
+            $keyFeatures = [];
+            foreach ($productObj->productKeyFeatures as $feature) {
+                if ($feature->value == '' || !isset($feature->value)) continue;
+                $keyFeatures[] = $feature->value;
+            }
+
+            $images = ListingItemProductImage::where('listing_item_id', $item->id)->get();
+            Log::info('Images: ' . json_encode($images));
+            Log::info('File System: ' . json_encode($fileSystem));
+            $imagesPath = [];
+            $mainImagePath = null;
+
+            foreach ($images as $image) {
+                if ($image->productImage && $image->main_image == 0) {
+                    $imagesPath[] = [
+                        'ImageUrl' => $fileSystem->url_base_path . $image->path
+                    ];
+                } else {
+                    $mainImagePath = $fileSystem->url_base_path . $image->path;
+                }
+            }
+
+            $itemImages['Image'] = $imagesPath;
 
             $items = [
                 [
                     "Action" => "Create Item",
                     "BasicInfo" => [
-                        "SellerPartNumber"       => "SKU001",
-                        "Manufacturer"           => "YourBrand",
+                        "SellerPartNumber"       => $item->sku,
+                        "Manufacturer"           => $listingInfo->store->name,
                         "ManufacturerPartsNumber" => "MPN001",
-                        "UPCOrISBN"              => "123456789012",
-                        "WebsiteShortTitle"      => "My Item Title",
-                        "BulletDescription"      => "Feature one^^Feature two^^Feature three",
-                        "ProductDescription"     => "This is a detailed description.",
-                        "ItemWeight"             => "2.5",
+                        "UPCOrISBN"              => $item->upc,
+                        "WebsiteShortTitle"      => htmlspecialchars($item->title),
+                        "BulletDescription"      => implode('^^',$keyFeatures),
+                        "ProductDescription"     => htmlspecialchars($item->description),
+                        "ItemWeight"             => ($item->storeProduct->product->product_weight * 0.0625) ?? null,
                         "PacksOrSets"             => "1",
-                        // Optionally: ItemDimension etc
                         "Currency"               => "USD",
-                        "SellingPrice"           => "49.99",
+                        "SellingPrice"           => $price,
                         "Shipping"               => "Free",
                         "Inventory"              => "100",
                         "ActivationMark"         => "True",
                         "ItemCondition"          => "New",
-                        // etc
+                        "ImageUrl"               => $mainImagePath,
+                        "ItemImages"             => $itemImages,
                     ],
                     "SubCategoryProperty" => [
                         "YourSubCategorySpecificFields" => [
                             "Field1" => "Value1",
                             "Field2" => "Value2",
-                            // etc
                         ]
                     ],
                     // Optional: custom variety for variants
                     "CustomVariety" => [
                         "CustomVariety1Name"  => "Color",
-                        "CustomVariety1Value" => "Red",
-                        "CustomVariety2Name"  => "Size",
-                        "CustomVariety2Value" => "M",
-                        // etc
+                        "CustomVariety1Value" => $productColor
                     ]
                 ],
-                // more items...
+
             ];
 
             $feed["NeweggEnvelope"]["Message"]["Itemfeed"]["Item"][] = $items;
@@ -178,6 +209,34 @@ class NewEggService implements MarketplaceServiceInterface
         );
 
         return $title;
+    }
+
+    public function submitFeed($feedId, $listingId)
+    {
+        $version = $this->version;
+        $listingInfo = Listing::where('id', $listingId)->first();
+        $store = $listingInfo->store;
+
+
+        $authService = new NewEggAuthService($store->seller_id, $store->access_key, $store->secret_key);
+
+        $fileName = $listingId . '.json';
+        $filePath = public_path('feeds/newegg/' . $fileName);
+        //echo $filePath;die;
+        Log::info('Feed Id : ' . $feedId);
+        $listingDetail = ListingFeed::where('listing_id', $listingId)->first();
+        $feed_id = $listingDetail->id;
+
+        $feedInfo = ListingFeed::findOrFail($feed_id);
+        $feedInfo->update(['submit_ts' => now(), 'number_of_attempts' => $feedInfo->number_of_attempts ?? 0 + 1]);
+
+        Log::info('File Path : ' . $filePath);
+        $response = $authService->submitFeed($filePath);
+        Log::info('Feed Submitted : ' . $feedId);
+
+        return response()->json([
+            'message' => 'success'
+        ], 200);
     }
 
 }
