@@ -8,10 +8,12 @@
         "php": "^8.2",
         "ext-dom": "*",
         "ext-ftp": "*",
+        "ext-iconv": "*",
         "ext-libxml": "*",
         "ext-simplexml": "*",
         "ext-soap": "*",
         "almasaeed2010/adminlte": "~3.0",
+        "ddeboer/imap": "^1.19",
         "google/apiclient": "^2.18",
         "guzzlehttp/guzzle": "^7.9",
         "hashids/hashids": "^5.0",
@@ -25,8 +27,7 @@
         "opis/json-schema": "^2.4",
         "setasign/fpdf": "^1.8",
         "vinkla/hashids": "^12.0",
-        "webklex/laravel-imap": "^6.2",
-        "ext-iconv": "*"
+        "webklex/laravel-imap": "^6.2"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",
