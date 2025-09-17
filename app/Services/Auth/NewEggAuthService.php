@@ -43,10 +43,8 @@ class NewEggAuthService
                     'Content-Type'  => 'application/json',
                     'Accept'        => 'application/json',
                 ],
-                'query' => [
-                    'sellerid' => $this->sellerId
-                ],
-                'json' => $body,
+                'query' => $query,
+                'body' => $body,
             ]);
 
             return json_decode($response->getBody()->getContents(), true);
@@ -56,13 +54,15 @@ class NewEggAuthService
         }
     }
 
-    public function submitFeed(array $body)
+    public function submitFeed($file)
     {
         $endpoint = "datafeedmgmt/feeds/submitfeed";
         $query = [
             'sellerid'    => $this->sellerId,
             'requesttype' => 'ITEM_DATA',
         ];
+
+        $body = file_get_contents($file);
 
         try {
 
