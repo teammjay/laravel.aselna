@@ -216,14 +216,9 @@ class NewEggService implements MarketplaceServiceInterface
         $version = $this->version;
         $listingInfo = Listing::where('id', $listingId)->first();
         $store = $listingInfo->store;
-        /*echo '<pre>';
-        print_r($store);
-        echo '</pre>';die;*/
-        $clientId = env('EBAY_CLIENT_ID');
-        $clientSecret = env('EBAY_CLIENT_SECRET');
-        $redirectUri = env('EBAY_REDIRECT_URI');
 
-        $authService = new NewEggAuthService($clientId, $clientSecret, $redirectUri, $store->user_id);
+
+        $authService = new NewEggAuthService($store->seller_id, $store->access_key, $store->secret_key);
 
         $fileName = $listingId . '.json';
         $filePath = public_path('feeds/newegg/' . $fileName);
@@ -232,14 +227,11 @@ class NewEggService implements MarketplaceServiceInterface
         $listingDetail = ListingFeed::where('listing_id', $listingId)->first();
         $feed_id = $listingDetail->id;
 
-
-        $taskID = $authService->createTask($version, $listingInfo);
-
         $feedInfo = ListingFeed::findOrFail($feed_id);
-        $feedInfo->update(['feed_id' => $taskID, 'submit_ts' => now(), 'number_of_attempts' => $feedInfo->number_of_attempts ?? 0 + 1]);
+        $feedInfo->update(['submit_ts' => now(), 'number_of_attempts' => $feedInfo->number_of_attempts ?? 0 + 1]);
 
         Log::info('File Path : ' . $filePath);
-        $response = $authService->submitFeed($taskID, $fileName, $filePath);
+        $response = $authService->submitFeed($filePath);
         Log::info('Feed Submitted : ' . $feedId);
 
         return response()->json([
