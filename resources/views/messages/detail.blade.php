@@ -133,6 +133,7 @@
         top:70%;
     }
     .clickable-row:hover{cursor:pointer; background: #f0f8ff;}
+    #UserInputtedText{white-space: break-spaces;}
 </style>
 @stop
 
