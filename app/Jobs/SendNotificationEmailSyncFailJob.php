@@ -43,53 +43,56 @@ class SendNotificationEmailSyncFailJob implements ShouldQueue
 
         foreach ($storeMessageAccounts as $maccount) {
             Log::info('Checking store account ID: ' . $maccount->id);
-            $smtpConfig = $imapConfig = [];
-            if ($maccount->incoming_account_id != '') {
-                Log::info('Processing store: ' . $maccount->store->name.' - '.$maccount->store->storeType->name);
-                if (isset($maccount->incomingAccount)) {
-                    Log::info('Processing incoming account: ' . $maccount->incomingAccount->user_id);
-                    $account = $maccount->incomingAccount;
-                    $folder = $maccount->incomingAccount->folders;
-                    $imapConfig = [
-                        'host' => $maccount->incomingAccount->server,
-                        'port' => $maccount->incomingAccount->port,
-                        'encryption' => 'ssl',
-                        'username' => $maccount->incomingAccount->user_id,
-                        'password' => $maccount->incomingAccount->password,
-                    ];
+            try {
+                $smtpConfig = $imapConfig = [];
+                if ($maccount->incoming_account_id != '') {
+                    Log::info('Processing store: ' . $maccount->store->name.' - '.$maccount->store->storeType->name);
+                    if (isset($maccount->incomingAccount)) {
+                        Log::info('Processing incoming account: ' . $maccount->incomingAccount->user_id);
+                        $account = $maccount->incomingAccount;
+                        $folder = $maccount->incomingAccount->folders;
+                        $imapConfig = [
+                            'host' => $maccount->incomingAccount->server,
+                            'port' => $maccount->incomingAccount->port,
+                            'encryption' => 'ssl',
+                            'username' => $maccount->incomingAccount->user_id,
+                            'password' => $maccount->incomingAccount->password,
+                        ];
 
-                    Log::info('Imap Config: ' . json_encode($imapConfig));
+                        Log::info('Imap Config: ' . json_encode($imapConfig));
 
-                    $emailUtility = new FastEmailService($smtpConfig, $imapConfig);
+                        $emailUtility = new FastEmailService($smtpConfig, $imapConfig);
 
-                    $messages = $emailUtility->fetchTodaysEmail($folder);
+                        $messages = $emailUtility->fetchTodaysEmail($folder);
 
-                    $notFound = [];
+                        $notFound = [];
 
-                    foreach ($messages as $message) {
-                        Log::info('Checking message ID: ' . trim($message['message_id']));
-                        // check if message id exists in hd_messages table
-                        if (HDMessage::where('message_id' , trim($message['message_id']))->doesntExist()) {
-                            $notFound[] = $message;
-                        };
-                    }
-
-                    if (count($notFound) > 0) {
-                        Log::info('Not found messages count: ' . count($notFound));
-                        $content = "Email Sync issue detected for store: {$maccount->store->name} - {$maccount->store->storeType->name}.";
-                        // Attach the list of not found messages
-                        if (count($notFound) > 0) {
-                            $content .= "\n\nThe following email messages were not synced:\n";
-                            foreach ($notFound as $msg) {
-                                $content .= "Subject: {$msg['subject']} \n";
-                            }
+                        foreach ($messages as $message) {
+                            Log::info('Checking message ID: ' . trim($message['message_id'], '<>'));
+                            // check if message id exists in hd_messages table
+                            if (HDMessage::where('message_id' , trim($message['message_id'], '<>'))->doesntExist()) {
+                                $notFound[] = $message;
+                            };
                         }
-                        Log::info('Content: '.$content);
-//                        $this->sendMail($maccount->store, $content);
+
+                        if (count($notFound) > 0) {
+                            Log::info('Not found messages count: ' . count($notFound));
+                            $content = "Email Sync issue detected for store: {$maccount->store->name} - {$maccount->store->storeType->name}.";
+                            // Attach the list of not found messages
+                            if (count($notFound) > 0) {
+                                $content .= "\n\nThe following email messages were not synced:\n";
+                                foreach ($notFound as $msg) {
+                                    $content .= "Subject: {$msg['subject']} | From: <{$msg['from_email']}> | Date: {$msg['date']} | Message ID: {$msg['message_id']}\n";
+                                }
+                            }
+                            Log::info('Content: '.$content);
+                            $this->sendMail($maccount->store, $content);
+                        }
                     }
                 }
+            } catch (\Exception $e) {
+                Log::error('Error processing store account ID ' . $maccount->id . ': ' . $e->getMessage());
             }
-
         }
     }
 
@@ -117,7 +120,7 @@ class SendNotificationEmailSyncFailJob implements ShouldQueue
                 $encryption = 'tls';
             }
 
-            Config::set('mail.mailers.smtp', [
+            Config::set('mail.mailers.custom_smtp', [
                 'transport' => 'smtp',
                 'host' => $userMessageAccount->outgoingAccount->server,
                 'port' => $userMessageAccount->outgoingAccount->port,
@@ -131,10 +134,10 @@ class SendNotificationEmailSyncFailJob implements ShouldQueue
             Config::set('mail.from.address', $userMessageAccount->outgoingAccount->email);
             Config::set('mail.from.name', $userMessageAccount->name);
 
-            Mail::send($content,
+            Mail::mailer('custom_smtp')->raw($content,
                 function ($message) use ($store, $sendTo, $cc_emails) {
-                    $message->to($sendTo)
-                        ->cc($cc_emails)
+                    $message->to($cc_emails)
+                        //->cc($cc_emails)
                         ->subject("Store Email Sync Issue Alert : {$store->name} - {$store->storeType->name}");
                 }
             );
