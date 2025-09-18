@@ -156,6 +156,14 @@ class ShipmentsController extends Controller
                     foreach ($order->operationItem as $opitem) {
                         $oitem = $opitem->orderItem;
 
+                        if (isset($oitem->product) && !empty($oitem->product)) {
+                            $imagename[] = $oitem->product->product_image;
+                            if (!empty($oitem->product->image)) {
+                                $image[] = asset('storage/' . $oitem->product->image->getFileUrl());
+                                $product_ids[] = $oitem->product->product_id;
+                            }
+                        }
+
                         if($opitem->sku != '') {
                             $parts = explode('-', $opitem->sku);
                             $product_code = isset($parts[0]) ? $parts[0] : '';
@@ -165,11 +173,6 @@ class ShipmentsController extends Controller
                         }else{
 
                           if (isset($oitem->product) && !empty($oitem->product)) {
-                              $imagename[] = $oitem->product->product_image;
-                              if (!empty($oitem->product->image)) {
-                                  $image[] = asset('storage/' . $oitem->product->image->getFileUrl());
-                                  $product_ids[] = $oitem->product->product_id;
-                              }
                               if ($oitem->product->product_sku != '') {
                                   $code .= $oitem->product->product_sku . ' x ' . $oitem->quantity . PHP_EOL;
                                   $onlycode .= $oitem->product->product_sku . '<br>';
