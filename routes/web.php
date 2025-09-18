@@ -104,6 +104,7 @@ Route::middleware('auth')->group(function () {
     Route::post('catalog/getspecification', [CatalogController::class, 'getSpecification'])->name('catalog.getspecification');
     Route::post('catalog/getspecificationoption', [CatalogController::class, 'getSpecificationOption'])->name('catalog.getspecificationoption');
     Route::post('catalog/getfieldoption', [CatalogController::class, 'getFieldOption'])->name('catalog.getfieldoption');
+    Route::post('catalog/getproductinterface', [CatalogController::class, 'getProductInterface'])->name('catalog.getproductinterface');
 
     Route::post('/generate-feed-file', [HomeController::class, 'generateFeedFile'])->name('generate-feed-file');
     Route::post('/generate-result-feed-file', [HomeController::class, 'generateResultFeedFile'])->name('generate-result-feed-file');
