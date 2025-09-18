@@ -30,7 +30,7 @@ class ShippingUtility
             ->where('shipping_solution_id', $shippingSolution->id)->first();
         Log::info('Shipping solution id :: ' . json_encode($shippingCarrierService));
         if (!isset($shippingCarrierService)) {
-            return "Unable Shipping Account is not assigned for '.$shippingCarrier->name.'. Please assing an active shipping account for this carrier.";
+            return "Shipping Account is not assigned for '.$shippingCarrier->name.'. Please assing an active shipping account for this carrier.";
         }
 
         $shippingPackage = $orderOperation->shippingPackage;
