@@ -155,32 +155,35 @@ class ShipmentsController extends Controller
                     $totalQty = 0;
                     foreach ($order->operationItem as $opitem) {
                         $oitem = $opitem->orderItem;
-                        if (isset($oitem->product) && !empty($oitem->product)) {
-                            $imagename[] = $oitem->product->product_image;
-                            if (!empty($oitem->product->image)) {
-                                $image[] = asset('storage/' . $oitem->product->image->getFileUrl());
-                                $product_ids[] = $oitem->product->product_id;
-                            }
-                            if ($oitem->product->product_sku != '') {
-                                $code .= $oitem->product->product_sku . ' x ' . $oitem->quantity . PHP_EOL;
-                                $onlycode .= $oitem->product->product_sku . '<br>';
-                            }
 
-                            $product_weight = $oitem->product->product_weight * $opitem->quantity;
-                            //$product_total_weight = $product_total_weight + $product_weight;
-
-                            /*if ($oitem->product->shipping_package_id != '') {
-                                $package_id = $oitem->product->shipping_package_id;
-                                $order->update(['shipping_package_id' => $package_id]);
-                            }*/
+                        if($opitem->sku != '') {
+                            $parts = explode('-', $opitem->sku);
+                            $product_code = isset($parts[0]) ? $parts[0] : '';
+                            //$product_detail = Catalog::where('product_sku', $product_code)->first();
+                            $code .= $product_code . ' x ' . $opitem->quantity . PHP_EOL;
+                            $onlycode .= $product_code . '<br>';
                         }else{
-                            if($opitem->sku != '') {
-                                $parts = explode('-', $opitem->sku);
-                                $product_code = isset($parts[0]) ? $parts[0] : '';
-                                //$product_detail = Catalog::where('product_sku', $product_code)->first();
-                                $code .= $product_code . ' x ' . $opitem->quantity . PHP_EOL;
-                                $onlycode .= $product_code . '<br>';
-                            }
+
+                          if (isset($oitem->product) && !empty($oitem->product)) {
+                              $imagename[] = $oitem->product->product_image;
+                              if (!empty($oitem->product->image)) {
+                                  $image[] = asset('storage/' . $oitem->product->image->getFileUrl());
+                                  $product_ids[] = $oitem->product->product_id;
+                              }
+                              if ($oitem->product->product_sku != '') {
+                                  $code .= $oitem->product->product_sku . ' x ' . $oitem->quantity . PHP_EOL;
+                                  $onlycode .= $oitem->product->product_sku . '<br>';
+                              }
+
+                              $product_weight = $oitem->product->product_weight * $opitem->quantity;
+                              //$product_total_weight = $product_total_weight + $product_weight;
+
+                              /*if ($oitem->product->shipping_package_id != '') {
+                                  $package_id = $oitem->product->shipping_package_id;
+                                  $order->update(['shipping_package_id' => $package_id]);
+                              }*/
+
+                          }
                         }
                         if(isset($oitem->quantity)){
                             $totalQty = $totalQty + $oitem->quantity;
