@@ -51,11 +51,12 @@ class CatalogController extends Controller
         $colors = ProductColor::orderBy('name')->get();
         $productConditions = ProductCondition::all();
         $targetAudience = ProductTargetAudience::all();
+        $shippingCarrierPackage = ShippingPackage::orderBy('name')->get();
         $interfaces = Interfaces::all();
         $devices = Device::all();
         $perPage = $this->perPage;
 
-        return view('catalog.list',compact('perPage','productTypes','manufacturers','productConditions','targetAudience','colors','interfaces', 'devices'));
+        return view('catalog.list',compact('perPage','productTypes','manufacturers','productConditions','targetAudience','colors','interfaces', 'devices','shippingCarrierPackage'));
     }
 
     /**
@@ -75,10 +76,16 @@ class CatalogController extends Controller
         /*$perPage = $request->input('perPage', $this->perPage);*/
 
         // Filter by product title
-        QueryFilters::applyFilter($query, $request, 'product_title', 'name_operator', 'name');
+        QueryFilters::applyFilter($query, $request, 'products.product_title', 'name_operator', 'name');
 
         // Filter by product title
-        QueryFilters::applyFilter($query, $request, 'product_sku', 'product_sku_operator', 'product_sku');
+        QueryFilters::applyFilter($query, $request, 'products.product_sku', 'product_sku_operator', 'product_sku');
+
+        // Filter by product description
+        QueryFilters::applyFilter($query, $request, 'products.product_description', 'product_description_operator', 'product_description');
+
+        // Filter by shippin package id
+        QueryFilters::applyFilter($query, $request, 'products.shipping_package_id', 'shipping_package_id_operator', 'shipping_package_id');
 
         // Filter by product type
         if($request->has('product_type') && $request->product_type != '') {
@@ -97,73 +104,74 @@ class CatalogController extends Controller
             }
 
             if (!empty($all_product_ids)) {
-                $query->whereIn('product_type', $all_product_ids);
+                $query->whereIn('products.product_type', $all_product_ids);
             }
         }
         //QueryFilters::applyFilter($query, $request, 'product_type', 'product_type_operator', 'product_type');
 
         // Filter by color
-        QueryFilters::applyFilter($query, $request, 'product_color', 'product_color_operator', 'product_color');
+        QueryFilters::applyFilter($query, $request, 'products.product_color', 'product_color_operator', 'product_color');
 
         // Filter by configurable
         if ($request->has('configurable') && $request->configurable != '') {
             if($request->configurable) {
-                $query->where('configurable', 0);
-                $query->orWhere('configurable', NULL);
+                $query->where('products.configurable', 0);
+                $query->orWhere('products.configurable', NULL);
             }
         }
 
+
         // Filter by manufacturer
         if ($request->has('manufacturer_id') && $request->manufacturer_id != '') {
-            $query->where('manufacturer_id', $request->manufacturer_id);
+            $query->where('products.manufacturer_id', $request->manufacturer_id);
         }
 
         // Filter by product condition
         if ($request->has('product_condition') && $request->product_condition != '') {
-            $query->where('product_condition_id', $request->product_condition);
+            $query->where('products.product_condition_id', $request->product_condition);
         }
 
         // Filter by product_weight
         if ($request->has('product_weight') && $request->product_weight != '') {
-            $query->where('product_weight', $request->product_weight);
+            $query->where('products.product_weight', $request->product_weight);
         }
 
         // Filter by product_weight
         if ($request->has('package_weight') && $request->package_weight != '') {
-            $query->where('package_weight', $request->package_weight);
+            $query->where('products.package_weight', $request->package_weight);
         }
 
         // Filter by target audience
         if ($request->has('target_aud') && $request->target_aud != '') {
-            $query->where('target_aud', $request->target_aud);
+            $query->where('products.target_aud', $request->target_aud);
         }
 
         // Filter by dimension width
         if ($request->has('dimensions_width') && $request->dimensions_width != '') {
-            $query->where('dimensions_width', $request->dimensions_width);
+            $query->where('products.dimensions_width', $request->dimensions_width);
         }
 
         // Filter by dimension height
         if ($request->has('dimensions_height') && $request->dimensions_height != '') {
-            $query->where('dimensions_height', $request->dimensions_height);
+            $query->where('products.dimensions_height', $request->dimensions_height);
         }
         // Filter by dimension length
         if ($request->has('dimensions_length') && $request->dimensions_length != '') {
-            $query->where('dimensions_length', $request->dimensions_length);
+            $query->where('products.dimensions_length', $request->dimensions_length);
         }
 
         // Filter by package dimension width
         if ($request->has('package_dimensions_width') && $request->package_dimensions_width != '') {
-            $query->where('package_dimensions_width', $request->package_dimensions_width);
+            $query->where('products.package_dimensions_width', $request->package_dimensions_width);
         }
 
         // Filter by package dimension height
         if ($request->has('package_dimensions_height') && $request->package_dimensions_height != '') {
-            $query->where('package_dimensions_height', $request->package_dimensions_height);
+            $query->where('products.package_dimensions_height', $request->package_dimensions_height);
         }
         // Filter by package dimension length
         if ($request->has('package_dimensions_length') && $request->package_dimensions_length != '') {
-            $query->where('package_dimensions_length', $request->package_dimensions_length);
+            $query->where('products.package_dimensions_length', $request->package_dimensions_length);
         }
 
         if ($request->has('interface') && $request->interface != '') {
@@ -183,72 +191,71 @@ class CatalogController extends Controller
 
         // Filter by created date
         if ($request->has('created_at') && $request->created_at != '') {
-            $query->where('created_at', $request->created_at);
+            $query->where('products.created_at', $request->created_at);
         }
 
         // Filter by price range
         if ($request->has('price_min') && $request->price_min != '') {
-            $query->where('product_price', '>=', $request->price_min);
+            $query->where('products.product_price', '>=', $request->price_min);
         }
 
         if ($request->has('price_max') && $request->price_max != '') {
-            $query->where('product_price', '<=', $request->price_max);
+            $query->where('products.product_price', '<=', $request->price_max);
         }
 
         // Filter by product status
         if ($request->has('status') && $request->status != '') {
-            $query->where('product_status', $request->status);
+            $query->where('products.product_status', $request->status);
         }
 
         if($columnName != ''){
             switch(strtolower($columnName)){
                 case 'product_id':
-                    $query->orderBy('product_id', $columnSortOrder);
+                    $query->orderBy('products.product_id', $columnSortOrder);
                     break;
                 case 'product_sku':
-                    $query->orderBy('product_sku', $columnSortOrder);
+                    $query->orderBy('products.product_sku', $columnSortOrder);
                     break;
                 case 'product_type':
-                    $query->orderBy('product_type', $columnSortOrder);
+                    $query->orderBy('products.product_type', $columnSortOrder);
                     break;
                 case 'product_title':
-                    $query->orderBy('product_title', $columnSortOrder);
+                    $query->orderBy('products.product_title', $columnSortOrder);
                     break;
                 case 'product_status':
-                    $query->orderBy('product_status', $columnSortOrder);
+                    $query->orderBy('products.product_status', $columnSortOrder);
                     break;
                 case 'configurable':
-                    $query->orderBy('configurable', $columnSortOrder);
+                    $query->orderBy('products.configurable', $columnSortOrder);
                     break;
                 case 'product_price':
-                    $query->orderBy('product_price', $columnSortOrder);
+                    $query->orderBy('products.product_price', $columnSortOrder);
                     break;
                 case 'manufacture_name':
-                    $query->orderBy('manufacturer_id', $columnSortOrder);
+                    $query->orderBy('products.manufacturer_id', $columnSortOrder);
                     break;
                 case 'product_color':
-                    $query->orderBy('product_color', $columnSortOrder);
+                    $query->orderBy('products.product_color', $columnSortOrder);
                     break;
                 case 'created_at':
-                    $query->orderBy('created_at', $columnSortOrder);
+                    $query->orderBy('products.created_at', $columnSortOrder);
                     break;
 
             }
         }
 
         $productTypes = ProductType::select('id')->where('code', 'ceabundle')->get()->toArray();
-        $query->whereNotIn('product_type', $productTypes);
+        $query->whereNotIn('products.product_type', $productTypes);
 
 //        $query->where('oem_generic',2);
-        $query->whereNull('parent_id');
-        $query->where('product_status','!=','discontinued');
+        $query->whereNull('products.parent_id');
+        $query->where('products.product_status','!=','discontinued');
         ///echo $query->toSql();die;
         /*$productsRecord = $query->paginate($perPage); // Paginate results
         $products = $query->skip($start)->take($perPage)->get(); // Paginate results
         $totalRecordwithFilter = $productsRecord->total();*/
         $totalRecords = $query->count();
-        $products = $query->orderBy($columnName, $columnSortOrder)
-            ->skip($start)
+        $products = $query->skip($start)
             ->take($perPage)
             ->get();
         $totalRecordwithFilter = $totalRecords;
@@ -1196,6 +1203,32 @@ class CatalogController extends Controller
             return response()->json([
                 'option' => '',
                 'field' => ''
+            ]);
+        }
+    }
+
+    public function getProductInterface(Request $request)
+    {
+
+        $product_type = $request->input('product_type');
+        if (!empty($product_type)) {
+            $option = '<option value="">--</option>';
+            $interface = Interfaces::select('id', 'name')->where('product_type_id', $product_type)->orderBy('name', 'asc')->get()->toArray();
+            if (!empty($interface)) {
+                foreach ($interface as $iface) {
+                    $option .= '<option value="' . $iface['id'] . '">' . $iface['name'] . '</option>';
+                }
+            }
+
+            return response()->json([
+                'success' => true,
+                'option' => $option
+            ]);
+
+        } else {
+            return response()->json([
+                'success' => false,
+                'option' => []
             ]);
         }
     }
