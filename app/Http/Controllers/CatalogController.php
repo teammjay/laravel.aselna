@@ -46,14 +46,17 @@ class CatalogController extends Controller
     public function index(Request $request)
     {
         session()->forget('pro_id');
-        $productTypes = ProductType::orderBy('name')->get();
+        /*$productTypes = ProductType::orderBy('name')->get();*/
+        $productTypes = ProductType::with('children')->whereIn('parent_id', function ($subquery) {
+            $subquery->select('id')->from('product_type')->where('code', 'cea');
+        })->orderBy('name', 'asc')->get();
         $manufacturers = Manufacturer::orderBy('name')->get();
         $colors = ProductColor::orderBy('name')->get();
         $productConditions = ProductCondition::all();
         $targetAudience = ProductTargetAudience::all();
         $shippingCarrierPackage = ShippingPackage::orderBy('name')->get();
         $interfaces = Interfaces::all();
-        $devices = Device::all();
+        $devices = Device::orderBy('name')->get();
         $perPage = $this->perPage;
 
         return view('catalog.list',compact('perPage','productTypes','manufacturers','productConditions','targetAudience','colors','interfaces', 'devices','shippingCarrierPackage'));
@@ -249,7 +252,7 @@ class CatalogController extends Controller
 
 //        $query->where('oem_generic',2);
         $query->whereNull('products.parent_id');
-        $query->where('products.product_status','!=','discontinued');
+        //$query->where('products.product_status','!=','discontinued');
         ///echo $query->toSql();die;
         /*$productsRecord = $query->paginate($perPage); // Paginate results
         $products = $query->skip($start)->take($perPage)->get(); // Paginate results
@@ -1212,8 +1215,18 @@ class CatalogController extends Controller
 
         $product_type = $request->input('product_type');
         if (!empty($product_type)) {
+
+            $productTypes = ProductType::select('id')->where('id', function ($subquery) use ($product_type) {
+                $subquery->select('parent_id')->from('product_type')->where('id', $product_type)->whereNotNull('parent_id');
+            })->get()->toArray();
+
+            /*echo '<pre>';
+            print_r($productTypes);
+            echo '</pre>';die;*/
+
+
             $option = '<option value="">--</option>';
-            $interface = Interfaces::select('id', 'name')->where('product_type_id', $product_type)->orderBy('name', 'asc')->get()->toArray();
+            $interface = Interfaces::select('id', 'name')->whereIn('product_type_id', $productTypes)->orderBy('name', 'asc')->get()->toArray();
             if (!empty($interface)) {
                 foreach ($interface as $iface) {
                     $option .= '<option value="' . $iface['id'] . '">' . $iface['name'] . '</option>';
