@@ -298,7 +298,7 @@
                             <div class="col-6">
                                 <select class="custom-select" name="status" id="status">
                                     <option value=""> --</option>
-                                    <option value="active"> Active</option>
+                                    <option value="active" selected> Active</option>
                                     <option value="discontinued"> Discontinued</option>
                                     <option value="out_of_stock"> Out of stock</option>
                                     <option value="draft"> Draft</option>
