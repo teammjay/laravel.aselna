@@ -20,7 +20,7 @@ use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
-class FetchEmailMessagesJob implements ShouldQueue
+class   FetchEmailMessagesJob implements ShouldQueue
 {
     use Queueable;
 
