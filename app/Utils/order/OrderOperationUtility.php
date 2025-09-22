@@ -1033,6 +1033,12 @@ class OrderOperationUtility
                     }
                     $success = $is_success;
                     break;
+                case 'temu' :
+                    // TODO Temu Order Implementation
+                    break;
+                case 'newegg' :
+                    // TODO NewEgg Order Implementation
+                    break;
             }
 
             // If everything went well, commit the transaction
