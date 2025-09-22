@@ -62,7 +62,7 @@ class FastEmailService
                     $messageData[] = [
                         'message_id' => $message->getId(),
                         'subject' => $message->getSubject(),
-                        'date' => $message->getDate()->format('Y-m-d H:i:s'),
+                        'date' => $message->getDate() ? $message->getDate()->format('Y-m-d H:i:s') : null,
                         'from' => $message->getFrom() ? $message->getFrom()->getAddress() : null
                     ];
 

@@ -62,8 +62,12 @@ class TemuAuthService
         ksort($params);
 
         // Concatenate key-value pairs
+        // value might be an array, so we need to handle that
         $queryString = '';
         foreach ($params as $key => $value) {
+            if (is_array($value)) {
+                $value = json_encode($value, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            }
             $queryString .= $key . $value;
         }
 
@@ -92,6 +96,7 @@ class TemuAuthService
         $request = new Request('POST', $this->endpoint, $headers, json_encode($data));
 
         $res = $client->sendAsync($request)->wait();
+        Log::info('Feed submission response: ' . $res->getBody());
 
         return json_decode($res->getBody(), true);
     }

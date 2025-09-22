@@ -61,7 +61,8 @@ class TemuService implements MarketplaceServiceInterface
         // json content
         $allfeedContent = file_get_contents($file);
 
-        foreach ($allfeedContent as $individualFeed) {
+        foreach (json_decode($allfeedContent,true) as $individualFeed) {
+            Log::info('Individual Feed: ' . json_encode($individualFeed));
             $response = $temuAuthService->submitFeed($individualFeed, $store);
 
             Log::info('Temu Feed Submission Response: ' . json_encode($response));
@@ -120,6 +121,11 @@ class TemuService implements MarketplaceServiceInterface
                     'catId' => $storeTypeCategory->store_type_code,
                 ],
                 'goodsDesc' => $item->description,
+                'goodsServicePromise' => [
+                    'costTemplateId' => 'WH-07170316943492765',
+                    'fulfillmentType' => 1,
+                    'shipmentLimitDay' => 2
+                ]
             ];
 
             $feedItem['skuList'] = [
