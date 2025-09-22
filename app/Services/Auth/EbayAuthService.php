@@ -524,6 +524,8 @@ class EbayAuthService
 
             $accessToken = $this->refreshToken();
 
+            Log::info('Fullfillment Request: ' .  json_encode($data));
+
             $response = $this->client->post("/sell/fulfillment/v1/order/{$orderId}/shipping_fulfillment", [
                 'verify' => false,
                 'headers' => [

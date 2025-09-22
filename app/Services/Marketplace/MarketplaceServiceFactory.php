@@ -7,6 +7,7 @@ use App\Services\Marketplace\Exceptions\MarketplaceNotSupportedException;
 use App\Services\Marketplace\Service\AmazonService;
 use App\Services\Marketplace\Service\MagentoService;
 use App\Services\Marketplace\Service\ShopifyService;
+use App\Services\Marketplace\Service\TemuService;
 use App\Services\Marketplace\Service\WalmartService;
 use App\Services\Marketplace\Service\EbayService;
 use App\Services\Marketplace\Service\GoogleShoppingService;
@@ -21,6 +22,7 @@ class MarketplaceServiceFactory
             'google shopping ads' => GoogleShoppingService::class,
             'magento' => MagentoService::class,
             'shopify' => ShopifyService::class,
+            'temu' => TemuService::class,
             default => null,
         };
 

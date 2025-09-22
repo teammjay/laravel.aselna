@@ -154,7 +154,7 @@ class SyncAllTables extends Command
 //            ProductAlternativeImagesSyncJob::dispatch();
 //        ]);
 //        DataPatch::dispatch();
-//           FeedGenerationJob::dispatch('2d075d34-03b5-436e-b5b1-2a45a508beb3');
+           FeedGenerationJob::dispatch('9043a2c1-0b2d-4a9e-89bd-c08a02f6637c');
         //    FeedGenerationJob::dispatch('4e7f02b9-3530-4e87-ad72-8cf5881ebe66');
 //        ListingItemImageCreate::dispatch('45a0b556-f1f8-445f-a83f-498ee612e680');
 //       FeedGenerationJob::dispatch('80415096-6ce4-4f55-b862-f1a3d3ba4662');
@@ -169,7 +169,7 @@ class SyncAllTables extends Command
 //        SystemPrinterSyncJob::dispatch();
 //        ShopifyIndvPagesSyncJob::dispatch('5cc46182-9318-7a47-39bd-d3e38de6cce6', WebStorePageType::ALL_BRANDS);
 
-        SendNotificationEmailSyncFailJob::dispatch(2);
+//        SendNotificationEmailSyncFailJob::dispatch(2);
 //        FetchEmailMessagesJob::dispatch();
 
 //        FetchEbayOrders::dispatch();
