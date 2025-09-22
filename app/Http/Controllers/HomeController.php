@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Constants\HdTicketStatus;
 use App\Constants\HdTicketTypeCode;
 use App\Constants\ListingSyncStatus;
+use App\Constants\OrderOperationStatus;
 use App\Helpers\QueryFilters;
 use App\Jobs\EbayListingItemSyncJob;
 use App\Jobs\FeedGenerationJob;
@@ -76,6 +77,15 @@ class HomeController extends Controller
     }
 
     public function testfunction(){
+
+        $operations = OrderOperation::with('order', 'operationItem', 'store', 'store.storeType')
+            ->where('status', OrderOperationStatus::LabelPrinted)
+            ->whereNotNull('tracking_number')
+            ->get();
+
+        echo '<pre>';
+        print_r($operations);
+        echo '</pre>';die;
 
         /*$stores = Store::with('storeType')->where('store_status','>',0)->get();
 

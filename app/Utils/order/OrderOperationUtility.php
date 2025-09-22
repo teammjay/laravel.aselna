@@ -37,8 +37,8 @@ class OrderOperationUtility
         }
 
         $label_generation = $request->input('label_generation');
-        $replacement = $request->input('replacement');
-        if ($label_generation) {
+        $replacement = $request->input('replacement') ?? '';
+        if ($label_generation && !isset($request['resubmit'])) {
             $carrier_id = $request->input('carrier_name');
             $carrier_package = $request->input('carrier_package');
             $carrier_service_id = $request->input('shipping_carrier_service');
@@ -267,6 +267,7 @@ class OrderOperationUtility
             }
 
             $orderOperation->tracking_number = $response['trackingNumber'];
+            $orderOperation->status = OrderOperationStatus::LabelPrinted;
             $orderOperation->save();
 
             self::updateMergedOrderIfExists($orderOperation, $response['trackingNumber']);

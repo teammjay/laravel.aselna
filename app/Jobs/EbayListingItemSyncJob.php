@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Constants\FeedStatus;
+use App\Constants\ListingStatus;
 use App\Constants\ListingSyncStatus;
 use App\Models\ListingItem;
 use App\Models\ListingItemLink;
@@ -60,6 +61,7 @@ class EbayListingItemSyncJob implements ShouldQueue
                 ->whereNotIn('listing_item.sync_status', [
                     ListingSyncStatus::CreationError,
                 ])
+                ->orderBy('listing_item.created_at','asc')
                 ->limit(100)
                 ->get();
 
@@ -112,11 +114,27 @@ class EbayListingItemSyncJob implements ShouldQueue
                         }
                         $itemDetail = ListingItem::where('sku', $item['SKU'])->first();
                         if ($itemDetail) {
-                            $itemDetail->update([
-                                'store_sku' => $item['ItemID'],
-                                'sync_status' => ListingSyncStatus::Synchronized,
-                            ]);
-                            Log::info("Updated item with SKU: " . $item['SKU'] . " and ItemID: " . $item['ItemID']);
+                            if(isset($item['ItemID']) && $item['ItemID'] != '') {
+                                $itemDetail->update([
+                                    'store_sku' => $item['ItemID'],
+                                    'sync_status' => ListingSyncStatus::Synchronized,
+                                ]);
+                                Log::info("Updated item with SKU: " . $item['SKU'] . " and ItemID: " . $item['ItemID']);
+                            }else{
+
+                                $date = \Carbon\Carbon::parse($itemDetail->created_at);
+                                if ($date->diffInDays(now()) >= 2) {
+                                    Log::info("Listing item older than 2 days - ".$itemDetail->sku);
+                                    $itemDetail->update([
+                                        'status' =>ListingStatus::getListingStatusName(3),
+                                    ]);
+                                }else{
+                                    $retry_count = $itemDetail->creation_retry_count ?? 0;
+                                    $itemDetail->update([
+                                        'creation_retry_count' => $retry_count + 1,
+                                    ]);
+                                }
+                            }
                         } else {
                             Log::info("No item found for SKU: " . $item['SKU']);
                         }
