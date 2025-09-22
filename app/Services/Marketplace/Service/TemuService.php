@@ -3,10 +3,12 @@
 namespace App\Services\Marketplace\Service;
 
 use App\Constants\FeedTypes;
+use App\Constants\WeightUnit;
 use App\Models\Listing;
 use App\Models\ListingFeed;
 use App\Models\ListingItemLink;
 use App\Models\ListingItemProductImage;
+use App\Services\Auth\TemuAuthService;
 use App\Services\Marketplace\Contracts\MarketplaceServiceInterface;
 use App\Utils\FileUtility;
 use Illuminate\Support\Facades\Log;
@@ -50,7 +52,20 @@ class TemuService implements MarketplaceServiceInterface
 
     public function submitFeed($feedId, $listingId)
     {
-        // TODO: Implement submitFeed() method.
+        $feedInfo = ListingFeed::findOrFail($feedId);
+        $listingInfo = Listing::where('id', $listingId)->first();
+        $store = $listingInfo->store;
+
+        $temuAuthService = new TemuAuthService();
+        $file = public_path('feeds/temu/' . $listingId . '.json');
+        // json content
+        $allfeedContent = file_get_contents($file);
+
+        foreach ($allfeedContent as $individualFeed) {
+            $response = $temuAuthService->submitFeed($individualFeed, $store);
+
+            Log::info('Temu Feed Submission Response: ' . json_encode($response));
+        }
     }
 
     public function getResultFeed(mixed $listingId, $feedId = null)
@@ -94,36 +109,47 @@ class TemuService implements MarketplaceServiceInterface
             Log::info('Images: ' . json_encode($images));
             Log::info('File System: ' . json_encode($fileSystem));
             $imagesPath = [];
-            $mainImagePath = [];
             foreach ($images as $image) {
-                if ($image->productImage && $image->main_image == 0) {
-                    $imagesPath[] = $fileSystem->url_base_path . $image->path;
-                } else {
-                    $mainImagePath = $fileSystem->url_base_path . $image->path;
-                }
+                $imagesPath[] = $fileSystem->url_base_path . $image->path;
             }
-            $jsonFeed['goodsBasic'] = [
-                'goodsName' => $item->title,
-                'catId' => $storeTypeCategory->category_id ?? '1000000',
-            ];
-            $jsonFeed['goodsDesc'] = '';
-            $jsonFeed['skuList'] = [
-                [
-                    'skuId' => $item->sku,
-                    'images' => $imagesPath,
-                    'length' => 10,
-                    'width' => 10,
-                    'height' => 10,
-                    'weight' => 0.5,
-                    'weightUnit' => 'kg',
-                    'volumeUnit' => round($price, 2),
-                    'specIdList'
 
+            $feedItem = [
+                'type' => 'bg.local.goods.add',
+                'goodsBasic' => [
+                    'goodsName' => $item->title,
+                    'catId' => $storeTypeCategory->store_type_code,
+                ],
+                'goodsDesc' => $item->description,
+            ];
+
+            $feedItem['skuList'] = [
+                [
+                    'height' => $productObj->package_dimensions_height,
+                    'images' => $imagesPath,
+                    'length' => $productObj->package_dimensions_length,
+                    'price' => [
+                        'basePrice' => [
+                            'amount' => floatval($productObj->product_marketplace_price),
+                            'currency' => 'USD'
+                        ],
+                        'listPrice' => [
+                            'amount' => floatval($price),
+                            'currency' => 'USD'
+                        ],
+                        'listPriceType' => 0
+                    ],
+                    'quantity' => $item->quantity,
+                    'specIdList' => [],
+                    'volumeUnit' => 'inches',
+                    'weight' => floatval($productObj->product_weight),
+                    'weightUnit' => WeightUnit::getUnitName($productObj->product_weight_unit),
+                    'width' => $productObj->package_dimensions_width,
                 ]
             ];
 
+            $jsonFeed[] = $feedItem;
         }
 
-        FileUtility::saveToFile(public_path('feeds/walmart/' . $listingId . '.json'), json_encode($jsonFeed));
+        FileUtility::saveToFile(public_path('feeds/temu/' . $listingId . '.json'), json_encode($jsonFeed));
     }
 }

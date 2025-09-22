@@ -12,11 +12,14 @@ class TemuAuthService
     private $appKey;
     private $appSecret;
 
+    private $accessToken;
+
     public function __construct()
     {
         $this->endpoint = env('TEMU_API_ENDPOINT', 'https://openapi-b-us.temu.com/openapi/router');
         $this->appKey = env('TEMU_APP_KEY');
         $this->appSecret = env('TEMU_APP_SECRET');
+        $this->accessToken = 'uplosijskhkphsp9k784eatdtk4eizqsegnmmekcslgyx1ni11jqzvjyxzu';
     }
 
     public function getCategories($parentId = 0)
@@ -25,8 +28,6 @@ class TemuAuthService
         $headers = [
             'content-type' => 'application/json',
         ];
-
-        $accessToken = 'uplosijskhkphsp9k784eatdtk4eizqsegnmmekcslgyx1ni11jqzvjyxzu';
 
         $categoryType = 'bg.local.goods.cats.get';
         $timestamp = time();
@@ -37,7 +38,7 @@ class TemuAuthService
             'app_key' => $this->appKey,
             'timestamp' => $timestamp,
             'data_type' => 'JSON',
-            'access_token' => $accessToken,
+            'access_token' => $this->accessToken,
         ];
 
         $params['sign'] = $this->generateSign($params, $this->appSecret);
@@ -71,5 +72,27 @@ class TemuAuthService
 
         // MD5 + uppercase
         return strtoupper(md5($rawString));
+    }
+
+    public function submitFeed($data, $store)
+    {
+        $client = new Client();
+        $headers = [
+            'content-type' => 'application/json',
+        ];
+
+        $data['timestamp'] = time();
+        $data['app_key'] = $this->appKey;
+        $data['data_type'] = 'JSON';
+        $data['access_token'] = $this->accessToken;
+        $data['sign'] = $this->generateSign($data, $this->appSecret);
+
+        Log::info('Submitting feed data: ' . json_encode($data));
+
+        $request = new Request('POST', $this->endpoint, $headers, json_encode($data));
+
+        $res = $client->sendAsync($request)->wait();
+
+        return json_decode($res->getBody(), true);
     }
 }

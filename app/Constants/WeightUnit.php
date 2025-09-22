@@ -59,6 +59,9 @@ class WeightUnit
 
     public static function getUnitName($unitId)
     {
+        if (!isset(self::names[$unitId])) {
+            return 'OZ';
+        }
         return self::names[$unitId];
     }
 
