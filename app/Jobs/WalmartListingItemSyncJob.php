@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Constants\FeedStatus;
+use App\Constants\ListingStatus;
 use App\Constants\ListingSyncStatus;
 use App\Models\ListingFeed;
 use App\Models\ListingItem;
@@ -51,6 +52,7 @@ class WalmartListingItemSyncJob implements ShouldQueue
                     FeedStatus::PROCESSED
                 ]);
             })
+            ->orderBy('listing_item.created_at','asc')
             ->chunk(100, function ($listingItemLinks) {
                 foreach ($listingItemLinks as $listingItemLink) {
                     Log::info('Syncing Walmart listing item: ' . $listingItemLink->item_id);
@@ -93,8 +95,8 @@ class WalmartListingItemSyncJob implements ShouldQueue
     {
         $store = $listingItemLink->listing->store;
         $itemDetail = $listingItemLink->listingItem;
-        Log::info("Listing Item Sku " . $itemDetail->store_sku != null);
-        Log::info("Listing Item UPC " . $itemDetail->upc != null);
+        Log::info("Listing Item Sku " . $itemDetail->store_sku);
+        Log::info("Listing Item UPC " . $itemDetail->upc);
         if($itemDetail->store_sku != null) return;
 
         try {
@@ -106,9 +108,23 @@ class WalmartListingItemSyncJob implements ShouldQueue
             if (isset($response['items'][0])) {
                 $item = $response['items'][0];
                 if(isset($item['itemId']) && $item['itemId'] != '') {
+                    Log::info("Update Listing Item with ".$item['itemId']);
                     $itemDetail->update([
                         'store_sku' => $item['itemId'],
                         'sync_status' => ListingSyncStatus::Synchronized,
+                    ]);
+                }
+            }else{
+                $date = \Carbon\Carbon::parse($itemDetail->created_at);
+                if ($date->diffInDays(now()) >= 2) {
+                    Log::info("Listing item older than 2 days - ".$itemDetail->upc);
+                    $itemDetail->update([
+                        'status' =>ListingStatus::getListingStatusName(3),
+                    ]);
+                }else{
+                    $retry_count = $itemDetail->creation_retry_count ?? 0;
+                    $itemDetail->update([
+                        'creation_retry_count' => $retry_count + 1,
                     ]);
                 }
             }

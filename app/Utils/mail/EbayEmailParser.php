@@ -133,70 +133,72 @@ class EbayEmailParser extends ReceivedMessageParser
         }
 
         $html = $this->message->getHtmlBody();
+        if($html) {
 
-        $html = preg_replace('/&(?!#?[a-zA-Z0-9]+;)/', '&amp;', $html);
-        $html = preg_replace('/&nbsp(?!;)/i', '&nbsp;', $html);
-        libxml_use_internal_errors(true);
-        $dom = new \DOMDocument();
-        $dom->loadHTML(
-            $html,
-            LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD | LIBXML_NOWARNING | LIBXML_NOERROR
-        );
+            $html = preg_replace('/&(?!#?[a-zA-Z0-9]+;)/', '&amp;', $html);
+            $html = preg_replace('/&nbsp(?!;)/i', '&nbsp;', $html);
+            libxml_use_internal_errors(true);
+            $dom = new \DOMDocument();
+            $dom->loadHTML(
+                $html,
+                LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD | LIBXML_NOWARNING | LIBXML_NOERROR
+            );
 
-        libxml_clear_errors();
+            libxml_clear_errors();
 
-        $xpath = new \DOMXPath($dom);
+            $xpath = new \DOMXPath($dom);
 
-        // Order ID (inside <a> with orderId param)
-        $orderNode = $xpath->query("//a[contains(@href,'orderId=')]");
-        $orderId = $orderNode->length > 0 ? trim($orderNode->item(0)->nodeValue) : null;
-        if($orderId) {
-            $this->addEntity(trim($orderId), 'order_id');
-        }
+            // Order ID (inside <a> with orderId param)
+            $orderNode = $xpath->query("//a[contains(@href,'orderId=')]");
+            $orderId = $orderNode->length > 0 ? trim($orderNode->item(0)->nodeValue) : null;
+            if ($orderId) {
+                $this->addEntity(trim($orderId), 'order_id');
+            }
 
-        $orderNode = $xpath->query("//td[contains(text(),'Order number:')]/following-sibling::td");
-        $itemId = $orderNode->length > 0 ? trim($orderNode->item(0)->nodeValue) : null;
-        if($itemId) {
-            $this->addEntity(trim($itemId), 'item_id');
-        }
+            $orderNode = $xpath->query("//td[contains(text(),'Order number:')]/following-sibling::td");
+            $itemId = $orderNode->length > 0 ? trim($orderNode->item(0)->nodeValue) : null;
+            if ($itemId) {
+                $this->addEntity(trim($itemId), 'item_id');
+            }
 
-        // Item ID (numeric only, after 'Item Id:')
-        $itemIdNode = $xpath->query("//td[contains(text(),'Item Id:')]/following-sibling::td");
-        $itemId = $itemIdNode->length > 0 ? trim($itemIdNode->item(0)->nodeValue) : null;
-        if($itemId) {
-            $this->addEntity(trim($itemId), 'item_id');
-        }
+            // Item ID (numeric only, after 'Item Id:')
+            $itemIdNode = $xpath->query("//td[contains(text(),'Item Id:')]/following-sibling::td");
+            $itemId = $itemIdNode->length > 0 ? trim($itemIdNode->item(0)->nodeValue) : null;
+            if ($itemId) {
+                $this->addEntity(trim($itemId), 'item_id');
+            }
 
-        // Buyer ID
-        $buyerIdNode = $xpath->query("//td[p[contains(text(),'Buyer Id:')]]/following-sibling::td/p");
-        $buyerId = $buyerIdNode->length > 0 ? trim($buyerIdNode->item(0)->nodeValue) : null;
-        if($buyerId) {
-            $this->addEntity(trim($buyerId), 'username');
-        }
+            // Buyer ID
+            $buyerIdNode = $xpath->query("//td[p[contains(text(),'Buyer Id:')]]/following-sibling::td/p");
+            $buyerId = $buyerIdNode->length > 0 ? trim($buyerIdNode->item(0)->nodeValue) : null;
+            if ($buyerId) {
+                $this->addEntity(trim($buyerId), 'username');
+            }
 
-        // Return ID
+            // Return ID
 
-        $returnIdNode = $xpath->query("//td[p[contains(text(),'Return Id:')]]/following-sibling::td/p");
-        $returnId = $returnIdNode->length > 0 ? trim($returnIdNode->item(0)->nodeValue) : null;
-        if($returnId) {
-            $this->addEntity(trim($returnId), 'return_id');
-        }
+            $returnIdNode = $xpath->query("//td[p[contains(text(),'Return Id:')]]/following-sibling::td/p");
+            $returnId = $returnIdNode->length > 0 ? trim($returnIdNode->item(0)->nodeValue) : null;
+            if ($returnId) {
+                $this->addEntity(trim($returnId), 'return_id');
+            }
 
-        $nodes = $xpath->query("//td[contains(@class,'product-bids')]");
-        //Log::info('Nodes : '.json_encode($nodes));
+            $nodes = $xpath->query("//td[contains(@class,'product-bids')]");
+            //Log::info('Nodes : '.json_encode($nodes));
 
-        if($nodes) {
-            foreach ($nodes as $node) {
-                $content = preg_replace('/<br\s*\/?>/i', "\n", $dom->saveHTML($node));
-                $content = strip_tags($content);
-                $lines = array_map('trim', explode("\n", $content));
+            if ($nodes) {
+                foreach ($nodes as $node) {
+                    $content = preg_replace('/<br\s*\/?>/i', "\n", $dom->saveHTML($node));
+                    $content = strip_tags($content);
+                    $lines = array_map('trim', explode("\n", $content));
 
-                foreach ($lines as $line) {
-                    if (preg_match('/^Item ID:\s*(\d+)/i', $line, $m)) {
-                        $this->addEntity(trim($m[1]), 'item_id');
-                    }
-                    if (preg_match('/^Order number:\s*([\d-]+)/i', $line, $m)) {
-                        $this->addEntity(trim($m[1]), 'order_id');
+                    foreach ($lines as $line) {
+                        if (preg_match('/^Item ID:\s*(\d+)/i', $line, $m)) {
+                            $this->addEntity(trim($m[1]), 'item_id');
+                        }
+                        if (preg_match('/^Order number:\s*([\d-]+)/i', $line, $m)) {
+                            $this->addEntity(trim($m[1]), 'order_id');
+                        }
                     }
                 }
             }
