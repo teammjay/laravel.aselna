@@ -82,7 +82,7 @@ class SendNotificationEmailSyncFailJob implements ShouldQueue
                             if (count($notFound) > 0) {
                                 $content .= "\n\nThe following email messages were not synced:\n";
                                 foreach ($notFound as $msg) {
-                                    $content .= "Subject: {$msg['subject']} | From: <{$msg['from_email']}> | Date: {$msg['date']} | Message ID: {$msg['message_id']}\n";
+                                    $content .= "Subject: {$msg['subject']} | From: <{$msg['from']}> | Date: {$msg['date']} | Message ID: {$msg['message_id']}\n";
                                 }
                             }
                             Log::info('Content: '.$content);
