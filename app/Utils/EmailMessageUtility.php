@@ -202,6 +202,9 @@ class EmailMessageUtility
                 try {
                     Log::info('Message checking :: ' . $message->getDate());
                     $messageDate = $message->getDate()->first();
+                    if ($messageDate === null || !$messageDate instanceof \Carbon\Carbon) {
+                        return true;
+                    }
                     return $messageDate->greaterThanOrEqualTo($filterDateObj);
                 } catch (Exception $e) {
                     Log::warning("Error filtering message date: " . $e->getMessage());
@@ -278,8 +281,8 @@ class EmailMessageUtility
                     }
 
                     $mDate = $fullMessage->getDate()->first();
-                    $convertedDate = $mDate->copy()->setTimezone(config('app.timezone'));
-                    $date = $convertedDate->format('Y-m-d H:i:s');
+                    $convertedDate = $mDate instanceof \Carbon\Carbon ? $mDate->copy()->setTimezone(config('app.timezone')) : null;
+                    $date = $convertedDate ? $convertedDate->format('Y-m-d H:i:s') : null;
 
                     // Build the email data array
                     $eData = [
@@ -293,7 +296,7 @@ class EmailMessageUtility
                         'cc' => isset($fullMessage->getCc()[0]) ? ($fullMessage->getCc()[0]->mail ?? null) : null,
                         'bcc' => isset($fullMessage->getBcc()[0]) ? ($fullMessage->getBcc()[0]->mail ?? null) : null,
                         'message_id' => $fullMessage->message_id->first(),
-                        'date' => $date,
+                        'date' => $date ?? $filterDateObj->format('Y-m-d H:i:s'),
                         'parsedData' => $parsedData,
                         'parts' => $parts,
                         'body' => $body,
