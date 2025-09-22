@@ -509,6 +509,8 @@ Route::middleware('auth')->group(function () {
 
     Route::controller(ShipmentsController::class)->group(function () {
         Route::get('/shipment', 'index')->name('shipment.list');
+        Route::get('/shipment/all', 'all_shipment')->name('shipment.alllist');
+        Route::post('shipment/all_filter', 'allFilter')->name('shipment.allfilter');
         Route::post('shipment/filter', 'filter')->name('shipment.filter');
         Route::get('/shipment/edit/{id}', 'edit')->name('shipment.edit');
         Route::post('/shipment/edit', 'update')->name('shipment.update');
