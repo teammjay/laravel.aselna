@@ -12,11 +12,14 @@ class TemuAuthService
     private $appKey;
     private $appSecret;
 
+    private $accessToken;
+
     public function __construct()
     {
         $this->endpoint = env('TEMU_API_ENDPOINT', 'https://openapi-b-us.temu.com/openapi/router');
         $this->appKey = env('TEMU_APP_KEY');
         $this->appSecret = env('TEMU_APP_SECRET');
+        $this->accessToken = 'uplosijskhkphsp9k784eatdtk4eizqsegnmmekcslgyx1ni11jqzvjyxzu';
     }
 
     public function getCategories($parentId = 0)
@@ -26,23 +29,19 @@ class TemuAuthService
             'content-type' => 'application/json',
         ];
 
-        $appKey = 'd3941506bdcfc2aa3c969f340fc3dfeu';
-        $appSecret = '341a86fc634897324e533f1553bde3195a70b51c';
-        $accessToken = 'uplosijskhkphsp9k784eatdtk4eizqsegnmmekcslgyx1ni11jqzvjyxzu';
-
         $categoryType = 'bg.local.goods.cats.get';
         $timestamp = time();
 
         $params = [
             'type' => $categoryType,
-            'parent_cat_id' => $parentId,
-            'app_key' => $appKey,
+            'parentCatId' => $parentId,
+            'app_key' => $this->appKey,
             'timestamp' => $timestamp,
             'data_type' => 'JSON',
-            'access_token' => $accessToken,
+            'access_token' => $this->accessToken,
         ];
 
-        $params['sign'] = $this->generateSign($params, $appSecret);
+        $params['sign'] = $this->generateSign($params, $this->appSecret);
 
         Log::info('Request Params: ' . json_encode($params));
 
@@ -73,5 +72,27 @@ class TemuAuthService
 
         // MD5 + uppercase
         return strtoupper(md5($rawString));
+    }
+
+    public function submitFeed($data, $store)
+    {
+        $client = new Client();
+        $headers = [
+            'content-type' => 'application/json',
+        ];
+
+        $data['timestamp'] = time();
+        $data['app_key'] = $this->appKey;
+        $data['data_type'] = 'JSON';
+        $data['access_token'] = $this->accessToken;
+        $data['sign'] = $this->generateSign($data, $this->appSecret);
+
+        Log::info('Submitting feed data: ' . json_encode($data));
+
+        $request = new Request('POST', $this->endpoint, $headers, json_encode($data));
+
+        $res = $client->sendAsync($request)->wait();
+
+        return json_decode($res->getBody(), true);
     }
 }
