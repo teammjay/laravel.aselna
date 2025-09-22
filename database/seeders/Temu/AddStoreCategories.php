@@ -4,7 +4,9 @@ namespace Database\Seeders\Temu;
 
 use App\Models\StoreCategory;
 use App\Models\StoreType;
+use App\Models\StoreTypeCategory;
 use App\Services\Auth\TemuAuthService;
+use App\Utils\Queue;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Log;
 
@@ -20,7 +22,8 @@ class AddStoreCategories extends Seeder
     {
         $this->temuAuthService = new TemuAuthService();
         $this->storeType = StoreType::where('code', 'temu')->first();
-        $this->fetchCategories();
+        $this->fetchCategories(2542);
+        $this->fetchCategories(24252);
     }
 
 
@@ -30,10 +33,10 @@ class AddStoreCategories extends Seeder
         $categories = $this->temuAuthService->getCategories($parentId);
         Log::info('Fetched categories: ' . json_encode($categories));
 
-        if (isset($categories['result']) && is_array($categories['result'])) {
+        if (isset($categories['result']) && is_array($categories['result']) && isset($categories['result']['goodsCatsList'])) {
             foreach ($categories['result']['goodsCatsList'] as $category) {
                 Log::info('Processing category: ' . $category['catName']);
-                $createdCategory = StoreCategory::updateOrCreate([
+                $createdCategory = StoreTypeCategory::updateOrCreate([
                     'store_type_code' => $category['catId'],
                     'code' => $category['catId'],
                     'store_type_id' => $this->storeType->id,
@@ -46,7 +49,7 @@ class AddStoreCategories extends Seeder
                 ]);
 
                 // Recursively fetch subcategories
-                $this->fetchCategories($category['cat_id'], $createdCategory->id);
+                $this->fetchCategories($category['catId'], $createdCategory->id);
             }
         }
     }

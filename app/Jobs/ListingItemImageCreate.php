@@ -67,6 +67,7 @@ class ListingItemImageCreate implements ShouldQueue
                         case 'amazon':
                         case 'ebay':
                         case 'magento':
+                        case 'temu':
                         case 'walmart':
                             $path = '/store-images/' . $store->id . '/' . $listingItem->id . '_' . $productImage->id . '.jpg';
                             break;

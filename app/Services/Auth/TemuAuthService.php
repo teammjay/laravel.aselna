@@ -26,8 +26,6 @@ class TemuAuthService
             'content-type' => 'application/json',
         ];
 
-        $appKey = 'd3941506bdcfc2aa3c969f340fc3dfeu';
-        $appSecret = '341a86fc634897324e533f1553bde3195a70b51c';
         $accessToken = 'uplosijskhkphsp9k784eatdtk4eizqsegnmmekcslgyx1ni11jqzvjyxzu';
 
         $categoryType = 'bg.local.goods.cats.get';
@@ -35,14 +33,14 @@ class TemuAuthService
 
         $params = [
             'type' => $categoryType,
-            'parent_cat_id' => $parentId,
-            'app_key' => $appKey,
+            'parentCatId' => $parentId,
+            'app_key' => $this->appKey,
             'timestamp' => $timestamp,
             'data_type' => 'JSON',
             'access_token' => $accessToken,
         ];
 
-        $params['sign'] = $this->generateSign($params, $appSecret);
+        $params['sign'] = $this->generateSign($params, $this->appSecret);
 
         Log::info('Request Params: ' . json_encode($params));
 
