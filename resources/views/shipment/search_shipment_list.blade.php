@@ -40,9 +40,9 @@
             <td>{!! $shipment['order_id'] !!}</td>
             <td>{!! $shipment['purchase_order_id'] !!}</td>
             <td>{{ $shipment['order_date'] }}</td>
-            <td>{{ $shipment['expected_shipment_date'] }}</td>
             <td>{{ $shipment['product_code'] }}</td>
             <td>{{ $shipment['weight'] }}</td>
+            <td>{{ $shipment['expected_shipment_date'] }}</td>
             <td>{{ $shipment['first_name'] }}</td>
             <td>{{ $shipment['last_name'] }}</td>
             <td>{{ $shipment['state'] }}</td>
