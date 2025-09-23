@@ -2,6 +2,7 @@
 
 use App\Jobs\AmazonListingItemSyncJob;
 use App\Jobs\SendNotificationEmailSyncFailJob;
+use App\Jobs\SendNotificationOrderSyncFailJob;
 use App\Jobs\WalmartListingItemSyncJob;
 use App\Jobs\BrandSyncJob;
 use App\Jobs\CategorySyncJob;
@@ -45,8 +46,10 @@ Schedule::job(new FetchEbayOrders())->hourly();
 Schedule::job(new FetchShopifyOrders())->hourly();
 Schedule::job(new SyncAllOrderStatusJob())->hourly();
 
+// I want to run this at every 45 Minute of the hour
 
 Schedule::job(new SendNotificationEmailSyncFailJob(2))->everyThirtyMinutes();
+Schedule::job(new SendNotificationOrderSyncFailJob(2))->hourly();
 
 // Email Message fetching
 Schedule::job(FetchEmailMessagesJob::class)->everyTenMinutes();
