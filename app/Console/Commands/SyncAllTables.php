@@ -196,6 +196,7 @@ class SyncAllTables extends Command
 //                'number_of_codes' => 20000
 //            ]
 //        );
+        ShopifyIndvPagesSyncJob::dispatch('5cc46182-9318-7a47-39bd-d3e38de6cce6', WebStorePageType::BRAND_DEVICES);
 
         $transactionIds = [
 ////            '9400150105798006163885',
