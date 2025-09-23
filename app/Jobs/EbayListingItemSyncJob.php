@@ -54,12 +54,14 @@ class EbayListingItemSyncJob implements ShouldQueue
                     return $query->whereNull('listing_item.store_sku')
                         ->orWhere('listing_item.store_sku', '');
                 })
+                ->where('listing_item.status','<>',ListingStatus::Deleted)
                 ->where(function ($query) {
                     return $query
                         ->where('listing_item.creation_retry_count', '<', 3)->orWhereNull('listing_item.creation_retry_count');
                 })
                 ->whereNotIn('listing_item.sync_status', [
                     ListingSyncStatus::CreationError,
+                    ListingSyncStatus::Synchronizing,
                 ])
                 ->orderBy('listing_item.created_at','asc')
                 ->limit(100)
@@ -123,8 +125,8 @@ class EbayListingItemSyncJob implements ShouldQueue
                             }else{
 
                                 $date = \Carbon\Carbon::parse($itemDetail->created_at);
-                                if ($date->diffInDays(now()) >= 2) {
-                                    Log::info("Listing item older than 2 days - ".$itemDetail->sku);
+                                if ($date->diffInDays(now()) >= 5) {
+                                    Log::info("Listing item older than 5 days - ".$itemDetail->sku);
                                     $itemDetail->update([
                                         'status' =>ListingStatus::Deleted,
                                     ]);
