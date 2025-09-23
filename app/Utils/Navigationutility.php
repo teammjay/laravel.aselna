@@ -126,37 +126,51 @@ class Navigationutility
 
             case WebStorePageType::BRAND_DEVICES:
                 $brand = Brand::where('id', $request->device_brand_id)->firstOrFail();
-                $links = StoreNavigationPage::join('device', 'store_navigation_page.device_id', '=', 'device.id')
+                $popularLinks = StoreNavigationPage::join('device', 'store_navigation_page.device_id', '=', 'device.id')
                     ->where('store_id', $store_id)
                     ->where('page_type', $skipDevicePages ? WebStorePageType::DEVICE : WebStorePageType::BRAND_DEVICE_PRODUCT_TYPES)
                     ->where('device_brand_id', $brand->id)
+                    ->where('device.order', '<=', 10)
+                    ->orderBy('device.order', 'asc')
+                    ->get();
+
+                $otherLinks = StoreNavigationPage::join('device', 'store_navigation_page.device_id', '=', 'device.id')
+                    ->where('store_id', $store_id)
+                    ->where('page_type', $skipDevicePages ? WebStorePageType::DEVICE : WebStorePageType::BRAND_DEVICE_PRODUCT_TYPES)
+                    ->where('device_brand_id', $brand->id)
+                    ->where('device.order', '>', 10)
                     ->orderBy('device.order', 'asc')
                     ->get();
 
                 $finalLinkArray['final_title'] = $brand->name;
-                foreach ($links as $link) {
+                foreach ($popularLinks as $link) {
                     $devicePage = StoreNavigationPage::where('store_id', $store_id)
                         ->where('page_type', WebStorePageType::DEVICE)
                         ->where('device_id', $link->device_id)
                         ->first();
 
-                    if ($link->device->order <= 10) {
-                        $finalLinkArray['popular_link'][] = [
-                            'id' => $link->id,
-                            'title' => $link->device->name,
-                            'imageUrl' => $devicePage->store_image_url,
-                            'url' => ($skipDevicePages ? "/collections/" : "/pages/") . $link->url_path,
-                            'popular' => true
-                        ];
-                    } else {
-                        $finalLinkArray['other_link'][] = [
-                            'id' => $link->id,
-                            'title' => $link->device->name,
-                            'imageUrl' => $devicePage->store_image_url,
-                            'url' => ($skipDevicePages ? "/collections/" : "/pages/") . $link->url_path,
-                            'popular' => false
-                        ];
-                    }
+                    $finalLinkArray['popular_link'][] = [
+                        'id' => $link->id,
+                        'title' => $link->device->name,
+                        'imageUrl' => $devicePage->store_image_url,
+                        'url' => ($skipDevicePages ? "/collections/" : "/pages/") . $link->url_path,
+                        'popular' => true
+                    ];
+                }
+
+                foreach ($otherLinks as $link) {
+                    $devicePage = StoreNavigationPage::where('store_id', $store_id)
+                        ->where('page_type', WebStorePageType::DEVICE)
+                        ->where('device_id', $link->device_id)
+                        ->first();
+
+                    $finalLinkArray['other_link'][] = [
+                        'id' => $link->id,
+                        'title' => $link->device->name,
+                        'imageUrl' => $devicePage->store_image_url,
+                        'url' => ($skipDevicePages ? "/collections/" : "/pages/") . $link->url_path,
+                        'popular' => false
+                    ];
                 }
                 break;
 
