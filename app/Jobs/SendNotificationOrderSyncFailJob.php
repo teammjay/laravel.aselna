@@ -133,7 +133,7 @@ class SendNotificationOrderSyncFailJob implements ShouldQueue
                 $encryption = 'tls';
             }
 
-            Config::set('mail.mailers.smtp', [
+            Config::set('mail.mailers.custom_smtp', [
                 'transport' => 'smtp',
                 'host' => $userMessageAccount->outgoingAccount->server,
                 'port' => $userMessageAccount->outgoingAccount->port,
