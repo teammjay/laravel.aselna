@@ -229,9 +229,9 @@
                                 <th>Order Id</th>
                                 <th>Purchase Order Id</th>
                                 <th>Order Date</th>
-                                <th>Shipment Date (expct)</th>
                                 <th>Product Code</th>
                                 <th>Weight</th>
+                                <th>Shipment Date (expct)</th>
                                 <th>First Name</th>
                                 <th>Last Name</th>
                                 <th>State</th>

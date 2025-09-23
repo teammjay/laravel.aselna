@@ -131,7 +131,7 @@ class Navigationutility
                     ->where('page_type', $skipDevicePages ? WebStorePageType::DEVICE : WebStorePageType::BRAND_DEVICE_PRODUCT_TYPES)
                     ->where('device_brand_id', $brand->id)
                     ->where('device.order', '<=', 10)
-                    ->orderBy('device.order', 'asc')
+                    ->orderBy('device.release_date', 'asc')
                     ->get();
 
                 $otherLinks = StoreNavigationPage::join('device', 'store_navigation_page.device_id', '=', 'device.id')
