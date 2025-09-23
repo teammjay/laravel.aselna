@@ -126,7 +126,7 @@ class EbayListingItemSyncJob implements ShouldQueue
                                 if ($date->diffInDays(now()) >= 2) {
                                     Log::info("Listing item older than 2 days - ".$itemDetail->sku);
                                     $itemDetail->update([
-                                        'status' =>ListingStatus::getListingStatusName(3),
+                                        'status' =>ListingStatus::Deleted,
                                     ]);
                                 }else{
                                     $retry_count = $itemDetail->creation_retry_count ?? 0;
