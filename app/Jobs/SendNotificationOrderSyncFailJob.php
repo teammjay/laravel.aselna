@@ -101,7 +101,7 @@ class SendNotificationOrderSyncFailJob implements ShouldQueue
 
                         Log::info('Message content send: '.$content);
 
-                        //$this->sendMail($store, $content);
+                        $this->sendMail($store, $content);
 
                     }
                 }
@@ -114,7 +114,6 @@ class SendNotificationOrderSyncFailJob implements ShouldQueue
         Log::info('User ID : '.$userId);
         $userDetail = User::findOrFail($userId);
         $sendTo = $userDetail->email;
-        $sendTo = 'jayesh@mjailab.com';
         $cc_emails = '';
         if($userDetail->cc_email != ''){
             $ccEmails = explode(PHP_EOL,$userDetail->cc_email);
@@ -148,10 +147,10 @@ class SendNotificationOrderSyncFailJob implements ShouldQueue
             Config::set('mail.from.address', $userMessageAccount->outgoingAccount->email);
             Config::set('mail.from.name', $userMessageAccount->name);
 
-            Mail::send($content,
+            Mail::mailer('custom_smtp')->raw($content,
                 function ($message) use ($store, $sendTo, $cc_emails) {
-                    $message->to($sendTo)
-                        ->cc($cc_emails)
+                    $message->to($cc_emails)
+//                        ->cc($cc_emails)
                         ->subject("Store Order Sync Issue Alert : {$store->name} - {$store->storeType->name}");
                 }
             );
