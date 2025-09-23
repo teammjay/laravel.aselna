@@ -63,6 +63,10 @@
         .hide{display:none;}
         /*#shipping_section{min-height: 100vh;}*/
         .clickable-row:hover{cursor:pointer; background: #f0f8ff !important;}
+        label:not(.form-check-label):not(.custom-file-label) {
+            font-weight: 700;
+            font-size: 14px;
+        }
     </style>
 @stop
 
@@ -76,7 +80,7 @@
         <div class="alert alert-danger alert-dismissible fade show">{{ session('error') }}</div>
     @endif
     <div class="row">
-        <div class="col-md-9">
+        <div class="col-md-10">
             <div class="card">
                 <div class="card-body">
                     <div class="row my-3">
@@ -240,7 +244,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
+        <div class="col-md-2">
             <div class="card">
                 <div class="card-body" id="shipping_section">
                 </div>
