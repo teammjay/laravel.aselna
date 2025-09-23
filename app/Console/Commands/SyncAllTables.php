@@ -55,6 +55,7 @@ use App\Jobs\ProductSyncJob;
 use App\Jobs\ProductTagSyncJob;
 use App\Jobs\ProductTypeKeywordSyncJob;
 use App\Jobs\SendNotificationEmailSyncFailJob;
+use App\Jobs\SendNotificationOrderSyncFailJob;
 use App\Jobs\ShippingCarrierJob;
 use App\Jobs\ShopifyCollectionDeviceSyncJob;
 use App\Jobs\ShopifyCollectionSyncJob;
@@ -169,7 +170,8 @@ class SyncAllTables extends Command
 //        SystemPrinterSyncJob::dispatch();
 //        ShopifyIndvPagesSyncJob::dispatch('5cc46182-9318-7a47-39bd-d3e38de6cce6', WebStorePageType::ALL_BRANDS);
 
-        SendNotificationEmailSyncFailJob::dispatch(2);
+//        SendNotificationEmailSyncFailJob::dispatch(2);
+        SendNotificationOrderSyncFailJob::dispatch(2);
 //        FetchEmailMessagesJob::dispatch();
 
 //        FetchEbayOrders::dispatch();
