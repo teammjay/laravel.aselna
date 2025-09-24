@@ -61,7 +61,7 @@ class TemuService implements MarketplaceServiceInterface
         // json content
         $allfeedContent = file_get_contents($file);
 
-        foreach (json_decode($allfeedContent,true) as $individualFeed) {
+        foreach (json_decode($allfeedContent, true) as $individualFeed) {
             Log::info('Individual Feed: ' . json_encode($individualFeed));
             $response = $temuAuthService->submitFeed($individualFeed, $store);
 
@@ -113,7 +113,7 @@ class TemuService implements MarketplaceServiceInterface
             $properties = [];
             $TemplateProperties = $template['result']['templateInfo']['goodsProperties'] ?? [];
             foreach ($TemplateProperties as $property) {
-                if($property['isSale'] == false) {
+                if ($property['isSale'] == false) {
                     switch ($property['controlType']) {
                         case 0 :
                             $properties[] = [
@@ -171,10 +171,10 @@ class TemuService implements MarketplaceServiceInterface
                 [
                     'height' => '' . $productObj->package_dimensions_height,
                     'images' => $imagesPath,
-                    'length' => ''. $productObj->package_dimensions_length,
+                    'length' => '' . $productObj->package_dimensions_length,
                     'price' => [
                         'basePrice' => [
-                            'amount' => floatval($price),
+                            'amount' => '' . floatval($price),
                             'currency' => 'USD'
                         ],
 //                        'listPrice' => [
@@ -186,10 +186,10 @@ class TemuService implements MarketplaceServiceInterface
                     'quantity' => $item->quantity,
                     'specIdList' => [],
                     'outSkuSn' => $item->sku,
-                    'volumeUnit' => 'inches',
-                    'weight' => ''.floatval($productObj->product_weight),
-                    'weightUnit' => WeightUnit::getUnitName($productObj->product_weight_unit),
-                    'width' => ''.$productObj->package_dimensions_width,
+                    'volumeUnit' => 'in',
+                    'weight' => '' . WeightUnit::convert($productObj->product_weight_unit ?? WeightUnit::OZ, WeightUnit::LB, $productObj->product_weight),
+                    'weightUnit' => 'lb',
+                    'width' => '' . $productObj->package_dimensions_width,
                 ]
             ];
 
