@@ -81,6 +81,7 @@ class TemuService implements MarketplaceServiceInterface
 
     private function generateCreateFeed($listingInfo, $listingId)
     {
+        $temuAuthService = new TemuAuthService();
         $listingItems = ListingItemLink::where('listing_id', $listingId)->cursor();
         $fileSystem = $listingInfo->store->fileSystem;
 
@@ -106,6 +107,11 @@ class TemuService implements MarketplaceServiceInterface
                 $keyFeatures[] = $feature->value;
             }
 
+            $template = $temuAuthService->getTemplate($storeTypeCategory->code);
+            Log::info('Template for Category ' . $storeTypeCategory->code . ': ' . json_encode($template));
+
+
+
             $images = ListingItemProductImage::where('listing_item_id', $item->id)->get();
             Log::info('Images: ' . json_encode($images));
             Log::info('File System: ' . json_encode($fileSystem));
@@ -115,10 +121,10 @@ class TemuService implements MarketplaceServiceInterface
             }
 
             $feedItem = [
-                'type' => 'bg.local.goods.add',
                 'goodsBasic' => [
                     'goodsName' => $item->title,
-                    'catId' => $storeTypeCategory->store_type_code,
+                    'catId' => (int)$storeTypeCategory->store_type_code,
+                    'importDesignation' => 'Made in USA',
                 ],
                 'goodsDesc' => $item->description,
                 'goodsServicePromise' => [
@@ -152,6 +158,7 @@ class TemuService implements MarketplaceServiceInterface
                     'width' => $productObj->package_dimensions_width,
                 ]
             ];
+
 
             $jsonFeed[] = $feedItem;
         }
