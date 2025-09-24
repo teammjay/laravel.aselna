@@ -61,7 +61,7 @@ class TemuService implements MarketplaceServiceInterface
         // json content
         $allfeedContent = file_get_contents($file);
 
-        foreach (json_decode($allfeedContent,true) as $individualFeed) {
+        foreach (json_decode($allfeedContent, true) as $individualFeed) {
             Log::info('Individual Feed: ' . json_encode($individualFeed));
             $response = $temuAuthService->submitFeed($individualFeed, $store);
 
@@ -81,6 +81,7 @@ class TemuService implements MarketplaceServiceInterface
 
     private function generateCreateFeed($listingInfo, $listingId)
     {
+        $temuAuthService = new TemuAuthService();
         $listingItems = ListingItemLink::where('listing_id', $listingId)->cursor();
         $fileSystem = $listingInfo->store->fileSystem;
 
@@ -106,6 +107,41 @@ class TemuService implements MarketplaceServiceInterface
                 $keyFeatures[] = $feature->value;
             }
 
+            $template = $temuAuthService->getTemplate($storeTypeCategory->code);
+            Log::info('Template for Category ' . $storeTypeCategory->code . ': ' . json_encode($template));
+
+            $properties = [];
+            $TemplateProperties = $template['result']['templateInfo']['goodsProperties'] ?? [];
+            foreach ($TemplateProperties as $property) {
+                if ($property['isSale'] == false) {
+                    switch ($property['controlType']) {
+                        case 0 :
+                            $properties[] = [
+                                'templatePid' => $property['templatePid'],
+                                'refPid' => $property['refPid'],
+                                'pid' => $property['pid'],
+                                'vid' => 0,
+                                'value' => ''
+                            ];
+                            break;
+                        case 1 :
+                            $properties[] = [
+                                'templatePid' => $property['templatePid'],
+                                'refPid' => $property['refPid'],
+                                'pid' => $property['pid'],
+                                'vid' => $property['values'][0]['vid'],
+                                'value' => $property['values'][0]['vid']
+                            ];
+                            break;
+                    }
+                }
+            }
+
+            $ShippingTemplates = $temuAuthService->geShippingTemplate();
+            Log::info('Shipping Templates: ' . json_encode($ShippingTemplates));
+
+            $templateID = $ShippingTemplates['result']['templateList'][0]['templateId'] ?? 'LFT-15741247532810352765';
+
             $images = ListingItemProductImage::where('listing_item_id', $item->id)->get();
             Log::info('Images: ' . json_encode($images));
             Log::info('File System: ' . json_encode($fileSystem));
@@ -115,43 +151,48 @@ class TemuService implements MarketplaceServiceInterface
             }
 
             $feedItem = [
-                'type' => 'bg.local.goods.add',
                 'goodsBasic' => [
                     'goodsName' => $item->title,
-                    'catId' => $storeTypeCategory->store_type_code,
+                    'catId' => (int)$storeTypeCategory->store_type_code,
+                    'importDesignation' => 'Made in USA',
                 ],
                 'goodsDesc' => $item->description,
                 'goodsServicePromise' => [
-                    'costTemplateId' => 'WH-07170316943492765',
+                    'costTemplateId' => $templateID,
                     'fulfillmentType' => 1,
                     'shipmentLimitDay' => 2
+                ],
+                'goodsProperty' => [
+                    'goodsProperties' => $properties
                 ]
             ];
 
             $feedItem['skuList'] = [
                 [
-                    'height' => $productObj->package_dimensions_height,
+                    'height' => '' . $productObj->package_dimensions_height,
                     'images' => $imagesPath,
-                    'length' => $productObj->package_dimensions_length,
+                    'length' => '' . $productObj->package_dimensions_length,
                     'price' => [
                         'basePrice' => [
-                            'amount' => floatval($productObj->product_marketplace_price),
+                            'amount' => '' . floatval($price),
                             'currency' => 'USD'
                         ],
-                        'listPrice' => [
-                            'amount' => floatval($price),
-                            'currency' => 'USD'
-                        ],
+//                        'listPrice' => [
+//                            'amount' => floatval($price),
+//                            'currency' => 'USD'
+//                        ],
                         'listPriceType' => 0
                     ],
                     'quantity' => $item->quantity,
                     'specIdList' => [],
-                    'volumeUnit' => 'inches',
-                    'weight' => floatval($productObj->product_weight),
-                    'weightUnit' => WeightUnit::getUnitName($productObj->product_weight_unit),
-                    'width' => $productObj->package_dimensions_width,
+                    'outSkuSn' => $item->sku,
+                    'volumeUnit' => 'in',
+                    'weight' => '' . WeightUnit::convert($productObj->product_weight_unit ?? WeightUnit::OZ, WeightUnit::LB, $productObj->product_weight),
+                    'weightUnit' => 'lb',
+                    'width' => '' . $productObj->package_dimensions_width,
                 ]
             ];
+
 
             $jsonFeed[] = $feedItem;
         }

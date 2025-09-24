@@ -187,7 +187,7 @@ class SyncAllTables extends Command
 //        ShopifyListingProductsSyncJob::dispatch();
 //        ShopifyStoreProductsSyncJob::dispatch();
 //        ProcessFeedGenerationJob::dispatch(json_decode('{"store_id":"3fab8878-e036-58c7-db30-addd3058875c","feed_type":"Google","fileType":"csv","product_code":["J14"],"device":null,"interface":null,"device_series":null,"fileName":"google_shopping_feed_2025-08-26-09-15-19.csv","filePath":"feeds\/google-shopping\/google_shopping_feed_2025-08-26-09-15-19.csv"}',true), 'fd066ad3-7059-4a87-a6e7-a18e5823f016');
-//        ShopifyDuplicateStoreProductsJob::dispatch('5cc46182-9318-7a47-39bd-d3e38de6cce6', 'e0225d70-b282-5f60-bbcc-55bb260645d7');
+        ShopifyDuplicateStoreProductsJob::dispatch('6c7009ce-eac1-a995-a986-27d5df0103ac', '47338682-e00d-4ab2-9db6-76343bb96162');
 //        UPCGenerateJob::dispatch(
 //            [
 //                'store' => '6f535170-ecf1-7fda-9b5e-c9045278bb47',
@@ -196,7 +196,7 @@ class SyncAllTables extends Command
 //                'number_of_codes' => 20000
 //            ]
 //        );
-        ShopifyIndvPagesSyncJob::dispatch('5cc46182-9318-7a47-39bd-d3e38de6cce6', WebStorePageType::BRAND_DEVICES);
+//        ShopifyIndvPagesSyncJob::dispatch('5cc46182-9318-7a47-39bd-d3e38de6cce6', WebStorePageType::BRAND_DEVICES);
 
         $transactionIds = [
 ////            '9400150105798006163885',

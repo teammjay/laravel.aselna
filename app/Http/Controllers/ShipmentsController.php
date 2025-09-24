@@ -291,12 +291,12 @@ class ShipmentsController extends Controller
     public function allFilter(Request $request)
     {
 
-        /*$draw = $request['draw'];
+        $draw = $request['draw'];
         $start = $request['start'];
         $perPage = $request['length'];
-        $columnIndex = $request['order'][0]['column'];
-        $columnName = $request['columns'][$columnIndex]['data'];
-        $columnSortOrder = $request['order'][0]['dir'];*/
+        //$columnIndex = $request['order'][0]['column'];
+        //$columnName = $request['columns'][$columnIndex]['data'];
+        //$columnSortOrder = $request['order'][0]['dir'];
 
         /*if ($request->input('combine_address', false) === 'true') {
             $this->mergeSameAddressOrders($request);
@@ -352,6 +352,13 @@ class ShipmentsController extends Controller
             });
         }
 
+        // Filter by order date
+        if ($request->has('order_date') && $request->order_date != '') {
+            $query->whereHas('order', function ($q) use($request){
+                $q->whereDate('order.order_date', $request->order_date);
+            });
+        }
+
         if ($request->has('operation_status') && $request->operation_status != '') {
             $query->where('order_operation.status', $request->operation_status);
         }
@@ -365,8 +372,55 @@ class ShipmentsController extends Controller
             $query->where('order_operation.store_id', $request->store_id);
         }
 
+        /*if($columnName != ''){
+            switch(strtolower($columnName)){
+                case 'status':
+                    break;
+                case 'carrier_package':
 
-        $order_operations = $query->distinct()->get();
+                    $query->whereHas('shippingPackage', function ($q) use($columnSortOrder){
+                        $q->orderBy('shipping_package.name', $columnSortOrder);
+                    });
+                    break;
+                case 'carrier_service':
+                    $query->whereHas('carrierService.ShippingCarrier', function ($q) use($columnSortOrder){
+                        $q->orderBy('shipping_carrier.name', $columnSortOrder);
+                    });
+                    break;
+                case 'store':
+                    break;
+                case 'order_id':
+                    break;
+                case 'purchase_order_id':
+                    break;
+                case 'order_date':
+                    break;
+                case 'product_code':
+                    break;
+                case 'weight':
+                    break;
+                case 'expected_shipment_date':
+                    break;
+                case 'first_name':
+                    break;
+                case 'last_name':
+                    break;
+                case 'state':
+                    break;
+
+            }
+        }*/
+
+
+        $query->join('order', 'order.id', '=', 'order_operation.order_id');
+        $query->orderBy('order.order_date', 'desc');
+        $totalRecords = $query->count();
+        $order_operations = $query->skip($start)
+            ->take($perPage)
+            ->get();
+        $totalRecordwithFilter = $totalRecords;
+
+        //$order_operations = $query->distinct()->get();
 
         /*echo '<pre>';
         print_r($order_operations);
@@ -378,7 +432,8 @@ class ShipmentsController extends Controller
                 $storeType = (isset($order->store->storeType) && !empty($order->store->storeType)) ? $order->store->storeType->name : '';
                 $code = '';
                 $onlycode = '';
-                $image = $imagename = $product_ids = [];
+                $image = '';
+                $imagename = $product_ids = [];
                 $product_total_weight = Common::calculateProductWeight($order);
                 $total_qty = [];
                 $package_id = $order->shipping_package_id;
@@ -390,7 +445,12 @@ class ShipmentsController extends Controller
                         if (isset($oitem->product) && !empty($oitem->product)) {
                             $imagename[] = $oitem->product->product_image;
                             if (!empty($oitem->product->image)) {
-                                $image[] = asset('storage/' . $oitem->product->image->getFileUrl());
+                                $img = asset('storage/' . $oitem->product->image->getFileUrl());
+
+                                $image .= '<div class="main-image">
+                                                <img src="'.$img.'" alt="'.$oitem->product->product_image.'" class="mainImage" width="70" height="70" data-product-id="'.$oitem->product->product_id.'">
+                                            </div>';
+
                                 $product_ids[] = $oitem->product->product_id;
                             }
                         }
@@ -417,8 +477,8 @@ class ShipmentsController extends Controller
                         $total_qty[] = $totalQty;
                     }
                 }
-                $orderIds = isset($order->order) ? [$order->order->order_id] : [];
-                $porderIds = isset($order->order) ? [$order->order->purchase_order_id] : [];
+                $orderIds = isset($order->order->order_id) ? [$order->order->order_id] : [];
+                $porderIds = isset($order->order->purchase_order_id) ? [$order->order->purchase_order_id] : [];
                 if (isset($order->orderIds)) {
                     $mergedOrderIds = json_decode($order->orderIds, true) ?? [];
                     foreach ($mergedOrderIds as $oid) {
@@ -441,6 +501,14 @@ class ShipmentsController extends Controller
                     $packageDetail = ShippingPackage::findOrFail($package_id);
                     $packageName = $packageDetail->name;
                 }*/
+
+                if(isset($opstatus)){
+                    $status = $opstatus;
+                }else{
+                    if($status == 1){
+                        $status = '<i class="fa fa-exclamation-triangle" style="font-size:24px" title="'.$status_message.'"></i>';
+                    }
+                }
                 $shipments[] = array(
                     "oid" => $order->oid,
                     "image" => (!empty($image)) ? $image : '',
@@ -453,7 +521,7 @@ class ShipmentsController extends Controller
                     "carrier_service" => isset($order->carrierService) ? $order->carrierService->ShippingCarrier->name . ' ' . $order->carrierService->name : '',
                     "store" => $order->store->name . ' - ' . $storeType,
                     "order_id" => implode(', <br/> ', $orderIds),
-                    "purchase_order_id" => implode(', <br/> ', $porderIds),
+                    "purchase_order_id" => (!empty($porderIds)) ? implode(', <br/> ', $porderIds) : '',
                     "order_date" => isset($order->order) ? $order->order->order_date : '',
                     "expected_shipment_date" => isset($order) ? $order->expected_shipment_date : '',
                     "product_code" => $code,
@@ -471,12 +539,22 @@ class ShipmentsController extends Controller
         print_r($shipments);
         echo '</pre>';die;*/
 
-        if ($request->ajax()) {
+        /*if ($request->ajax()) {
             return response()->json([
                 'html' => view('shipment.search_shipment_list', compact('shipments'))->render(),
                 'totalRecords' => $order_operations->count()
             ]);
-        }
+        }*/
+
+        $response = array(
+            "draw" => intval($draw),
+            "iTotalRecords" => $totalRecordwithFilter,
+            "iTotalDisplayRecords" => $totalRecordwithFilter,
+            "aaData" => $shipments
+        );
+
+        return $response;
+
     }
 
 
