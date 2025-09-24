@@ -121,10 +121,10 @@ class TemuService implements MarketplaceServiceInterface
             }
 
             $feedItem = [
-                'type' => 'bg.local.goods.add',
                 'goodsBasic' => [
                     'goodsName' => $item->title,
-                    'catId' => $storeTypeCategory->store_type_code,
+                    'catId' => (int)$storeTypeCategory->store_type_code,
+                    'importDesignation' => 'Made in USA',
                 ],
                 'goodsDesc' => $item->description,
                 'goodsServicePromise' => [
@@ -158,6 +158,7 @@ class TemuService implements MarketplaceServiceInterface
                     'width' => $productObj->package_dimensions_width,
                 ]
             ];
+
 
             $jsonFeed[] = $feedItem;
         }
