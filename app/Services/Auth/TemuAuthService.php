@@ -85,6 +85,7 @@ class TemuAuthService
             'content-type' => 'application/json',
         ];
 
+        $data['type'] = 'bg.local.goods.add';
         $data['timestamp'] = time();
         $data['app_key'] = $this->appKey;
         $data['data_type'] = 'JSON';
@@ -113,7 +114,7 @@ class TemuAuthService
 
         $params = [
             'type' => $categoryType,
-            'parentCatId' => $parentId,
+            'catId' => $parentId,
             'app_key' => $this->appKey,
             'timestamp' => $timestamp,
             'data_type' => 'JSON',
@@ -129,5 +130,10 @@ class TemuAuthService
         $res = $client->sendAsync($request)->wait();
 
         return json_decode($res->getBody(), true);
+    }
+
+    public function compiliancePropertyCheck()
+    {
+
     }
 }
