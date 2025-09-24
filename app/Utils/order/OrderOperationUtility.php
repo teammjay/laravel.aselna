@@ -378,12 +378,13 @@ class OrderOperationUtility
         foreach ($orderOperation->operationItem as $item) {
             $orderItem = $item->orderItem;
             $product = $item->orderItem->product;
-            $code = $product ? $product->product_sku : $item->sku;
+            /*$code = $product ? $product->product_sku : $item->sku;*/
+            $code = isset($item->sku) ? $item->sku : $product->product_sku;
 
             if (!isset($productMap[$code])) {
                 $productMap[$code] = 0;
             }
-            $productMap[$code] += $orderItem->quantity;
+            $productMap[$code] += $item->quantity;
         }
 
         // Get or generate product codes line
