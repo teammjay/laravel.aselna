@@ -112,7 +112,7 @@
                                 Order Date
                             </div>
                             <div class="col-8">
-                                <input type="text" name="order_date" id="order_date" class="form-control">
+                                <input type="text" name="order_date" id="order_date" class="form-control" autocomplete="off">
                             </div>
                         </div>
                     </div>
@@ -234,9 +234,9 @@
                             <th>Order Id</th>
                             <th>Purchase Order Id</th>
                             <th>Order Date</th>
-                            <th>Shipment Date (expct)</th>
                             <th>Product Code</th>
                             <th>Weight</th>
+                            <th>Shipment Date (expct)</th>
                             <th>First Name</th>
                             <th>Last Name</th>
                             <th>State</th>
@@ -318,52 +318,11 @@
             }
             $('.card-body').toggle();
         });
-        $('#created_at').datepicker({
+        $('#order_date').datepicker({
             dateFormat:'yy-mm-dd',
 
         });
 
-        $(document).on("click",".clickable-row", function(e) {
-
-            if ($(e.target).is('input,select,checkbox, a, img')) {
-                return;
-            }
-
-            var store_url = $(this).data("href");
-            if(store_url != '') {
-                window.open(store_url, '_blank');
-            }
-        });
-
-        let lastChecked = null;
-
-        $(document).on('mousedown','#shipment-list tr',function (e) {
-            let ele = $(this);
-            if (e.ctrlKey) {
-                // Prevent text selection
-                e.preventDefault();
-            }else{
-
-                $('#shipment-list tr').removeClass('bg-blue');
-                $('.pro-id').prop('checked', false);
-                ele.addClass('bg-blue');
-                ele.find('.pro-id').prop('checked', true);
-
-                var operation_id = ele.find('input[name="shipment_id[]"]').val();
-                getShippingDetail(operation_id);
-            }
-
-            let totalCnt = $('input[name="shipment_id[]"]:checked').length;
-            $('#total_selected').html('( <b>'+totalCnt+'</b> selected )');
-
-            if(ele.data('status') == 1){
-                $('#cancel_selected').addClass('hide');
-                $('#approved').removeClass('hide');
-            }else{
-                $('#cancel_selected').removeClass('hide');
-                $('#approved').addClass('hide');
-            }
-        });
 
         $(document).on('click','#refresh_list',function () {
             loadDatatables();
@@ -442,7 +401,77 @@
 
     });
 
-    function loadDatatables(){
+    function loadDatatables() {
+
+        $("#shipmentTable").dataTable().fnDestroy();
+
+        var table = $('#shipmentTable').DataTable({
+            "iDisplayLength": 20,
+            "info": true,
+            "responsive": true,
+            "lengthChange": true,
+            "autoWidth": false,
+            "processing": true,
+            "serverSide": true,
+            "searching": false,
+            "ordering": false,
+            "aLengthMenu": [20, 25, 50, 100],
+            'ajax': {
+                url: "{{ route('shipment.allfilter') }}",
+                type: "POST",
+                //dataType:'json',
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                },
+                data: function (d) {
+                    // Create a FormData object
+                    var formData = $('#filter-form').serializeArray(); // Serialize form inputs
+
+                    // Add form data to the DataTable's request payload
+                    $.each(formData, function (index, field) {
+                        d[field.name] = field.value; // Append form data to the DataTables request
+                    });
+
+                    d['store_id'] = $('#listing_store').val();
+
+                    var columnValues = [];
+                    if (table) {
+                        table.rows({search: 'applied'}).every(function (rowIdx) {
+                            var rowData = this.data();
+                            columnValues.push(rowData.id);
+                        });
+                    }
+
+                    // Add to the request payload
+                    d.columnValues = columnValues;
+
+                },
+            },
+            //"order": [[7, "desc"]],
+            'columns': [
+                {data: 'image'},
+                {data: 'status'},
+                {data: 'carrier_package'},
+                {data: 'carrier_service'},
+                {data: 'store'},
+                {data: 'order_id'},
+                {data: 'purchase_order_id'},
+                {data: 'order_date'},
+                {data: 'product_code'},
+                {data: 'weight'},
+                {data: 'expected_shipment_date'},
+                {data: 'first_name'},
+                {data: 'last_name'},
+                {data: 'state'}
+            ]
+        });
+
+        $('#productsTable_wrapper').removeClass('form-inline');
+
+        $.fn.dataTable.ext.errMode = 'throw';
+    }
+
+    function loadDatatablesold(){
 
         //$("#shipmentTable").dataTable().fnDestroy();
         $("#ajax-preloader").show();
