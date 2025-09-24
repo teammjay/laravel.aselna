@@ -97,7 +97,7 @@ class FeedController extends Controller
 
 
                 $data[] = array(
-                    "store" => (isset($feed->store)) ? $feed->store->name : 0,
+                    "store" => (isset($feed->store)) ? $feed->store->name . ' - ' . $feed->store->storeType->name : 0,
                     "marketplace" => isset($feed->marketplace) ? $feed->marketplace : '',
                     "file_type" => $feed->file_type,
                     "file_name" => $feed->file_name,
