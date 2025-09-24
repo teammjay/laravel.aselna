@@ -3,6 +3,7 @@
 use App\Jobs\AmazonListingItemSyncJob;
 use App\Jobs\SendNotificationEmailSyncFailJob;
 use App\Jobs\SendNotificationOrderSyncFailJob;
+use App\Jobs\ShopifyCombinedSyncing;
 use App\Jobs\WalmartListingItemSyncJob;
 use App\Jobs\BrandSyncJob;
 use App\Jobs\CategorySyncJob;
@@ -71,6 +72,8 @@ Schedule::job(new ProductImagesSyncJob())->dailyAt('04:00');
 Schedule::job(new DeviceInterfaces())->dailyAt('03:30');
 Schedule::job(new ProductInterfaces())->dailyAt('04:30');
 Schedule::job(new DeviceCarrierSyncJob())->dailyAt('05:30');
+
+//Schedule::job(new ShopifyCombinedSyncing())->dailyAt('06:00');
 
 
 
