@@ -113,6 +113,8 @@ class TemuService implements MarketplaceServiceInterface
             $ShippingTemplates = $temuAuthService->geShippingTemplate();
             Log::info('Shipping Templates: ' . json_encode($ShippingTemplates));
 
+            $templateID = $ShippingTemplates['result']['templateList'][0]['templateId'] ?? 'LFT-15741247532810352765';
+
 
 
             $images = ListingItemProductImage::where('listing_item_id', $item->id)->get();
@@ -131,7 +133,7 @@ class TemuService implements MarketplaceServiceInterface
                 ],
                 'goodsDesc' => $item->description,
                 'goodsServicePromise' => [
-                    'costTemplateId' => 'WH-07170316943492765',
+                    'costTemplateId' => $templateID,
                     'fulfillmentType' => 1,
                     'shipmentLimitDay' => 2
                 ]
