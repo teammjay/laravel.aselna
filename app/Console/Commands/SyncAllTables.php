@@ -171,7 +171,7 @@ class SyncAllTables extends Command
 //        ShopifyIndvPagesSyncJob::dispatch('5cc46182-9318-7a47-39bd-d3e38de6cce6', WebStorePageType::ALL_BRANDS);
 
 //        SendNotificationEmailSyncFailJob::dispatch(2);
-        SendNotificationOrderSyncFailJob::dispatch(2);
+//        SendNotificationOrderSyncFailJob::dispatch(2);
 //        FetchEmailMessagesJob::dispatch();
 
 //        FetchEbayOrders::dispatch();
