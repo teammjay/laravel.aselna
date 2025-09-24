@@ -110,12 +110,37 @@ class TemuService implements MarketplaceServiceInterface
             $template = $temuAuthService->getTemplate($storeTypeCategory->code);
             Log::info('Template for Category ' . $storeTypeCategory->code . ': ' . json_encode($template));
 
+            $properties = [];
+            $TemplateProperties = $template['result']['templateInfo']['goodsProperties'] ?? [];
+            foreach ($TemplateProperties as $property) {
+                if($property['isSale'] == false) {
+                    switch ($property['controlType']) {
+                        case 0 :
+                            $properties[] = [
+                                'templatePid' => $property['templatePid'],
+                                'refPid' => $property['refPid'],
+                                'pid' => $property['pid'],
+                                'vid' => 0,
+                                'value' => ''
+                            ];
+                            break;
+                        case 1 :
+                            $properties[] = [
+                                'templatePid' => $property['templatePid'],
+                                'refPid' => $property['refPid'],
+                                'pid' => $property['pid'],
+                                'vid' => $property['values'][0]['vid'],
+                                'value' => $property['values'][0]['vid']
+                            ];
+                            break;
+                    }
+                }
+            }
+
             $ShippingTemplates = $temuAuthService->geShippingTemplate();
             Log::info('Shipping Templates: ' . json_encode($ShippingTemplates));
 
             $templateID = $ShippingTemplates['result']['templateList'][0]['templateId'] ?? 'LFT-15741247532810352765';
-
-
 
             $images = ListingItemProductImage::where('listing_item_id', $item->id)->get();
             Log::info('Images: ' . json_encode($images));
@@ -136,6 +161,9 @@ class TemuService implements MarketplaceServiceInterface
                     'costTemplateId' => $templateID,
                     'fulfillmentType' => 1,
                     'shipmentLimitDay' => 2
+                ],
+                'goodsProperty' => [
+                    'goodsProperties' => $properties
                 ]
             ];
 
