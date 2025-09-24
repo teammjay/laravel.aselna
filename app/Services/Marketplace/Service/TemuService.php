@@ -81,6 +81,7 @@ class TemuService implements MarketplaceServiceInterface
 
     private function generateCreateFeed($listingInfo, $listingId)
     {
+        $temuAuthService = new TemuAuthService();
         $listingItems = ListingItemLink::where('listing_id', $listingId)->cursor();
         $fileSystem = $listingInfo->store->fileSystem;
 
@@ -105,6 +106,11 @@ class TemuService implements MarketplaceServiceInterface
                 if ($feature->value == '' || !isset($feature->value)) continue;
                 $keyFeatures[] = $feature->value;
             }
+
+            $template = $temuAuthService->getTemplate($storeTypeCategory->code);
+            Log::info('Template for Category ' . $storeTypeCategory->code . ': ' . json_encode($template));
+
+
 
             $images = ListingItemProductImage::where('listing_item_id', $item->id)->get();
             Log::info('Images: ' . json_encode($images));
