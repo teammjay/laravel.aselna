@@ -765,6 +765,9 @@
                         d[field.name] = field.value; // Append form data to the DataTables request
                     });
 
+                    if ($('#listing_store').val() !== '')
+                        d['store_id'] = $('#listing_store').val();
+
 
                     var columnValues = [];
                     if (table) {
