@@ -8,6 +8,7 @@ use App\Models\Interfaces;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class DeviceInterfaces implements ShouldQueue
@@ -36,10 +37,29 @@ class DeviceInterfaces implements ShouldQueue
                 }
             });
 
+        DeviceInterface::orderBy('id')->chunk(1000, function ($deviceInterfaces) {
+            foreach ($deviceInterfaces as $deviceInterface) {
+                $this->checkAndDelete($deviceInterface);
+            }
+        });
+
 //        $deviceAttributes = DB::connection('fonus_db')->table('tbl_device_attributes')->cursor();
 //        foreach ($deviceAttributes as $deviceAttribute) {
 ////            $this->createDeviceInterfaces($deviceAttribute);
 //        }
+    }
+
+    private function checkAndDelete(mixed $deviceInterface)
+    {
+        Log::info('Checking device interface: ' . $deviceInterface->id);
+        $isExists = DB::connection('easyesale_db')->table('cea_device_interface')
+            ->where('device_id' , $deviceInterface->device_id)
+            ->where('cea_interface_id' , $deviceInterface->interface_id)
+            ->doesntExist();
+
+        if ($isExists) {
+            $deviceInterface->delete();
+        }
     }
 
     private function createDeviceInterfaces(mixed $deviceAttribute)
@@ -62,6 +82,7 @@ class DeviceInterfaces implements ShouldQueue
 
     private function createDeviceInetrface(mixed $deviceInterface)
     {
+        Log::info('Syncing device interface: ' . $deviceInterface->id);
         if (Device::where('id', $deviceInterface->device_id)->doesntExist()) {
             return;
         }
