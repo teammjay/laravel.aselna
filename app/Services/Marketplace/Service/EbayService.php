@@ -1168,6 +1168,7 @@ class EbayService implements MarketplaceServiceInterface
                             'order_date' => date('Y-m-d H:i:s', strtotime($order['creationDate'])),
                             'order_status' => $order_status,
                             'order_total' => $order['totalFeeBasisAmount']['value'],
+                            'buyer_username' => $order['buyer']['username'],
                             'buyer_first_name' => $order['buyer']['buyerRegistrationAddress']['fullName'],
                             'buyer_last_name' => '',
                             'buyer_email' => $order['buyer']['buyerRegistrationAddress']['email'] ?? '',

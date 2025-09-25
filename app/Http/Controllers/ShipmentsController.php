@@ -372,6 +372,13 @@ class ShipmentsController extends Controller
             $query->where('order_operation.store_id', $request->store_id);
         }
 
+        // Filter by store
+        if ($request->has('resubmit_count') && $request->resubmit_count != '') {
+            $query->where('order_operation.resubmit_count', $request->resubmit_count);
+        }
+
+
+
         /*if($columnName != ''){
             switch(strtolower($columnName)){
                 case 'status':
@@ -441,7 +448,7 @@ class ShipmentsController extends Controller
                     $totalQty = 0;
                     foreach ($order->operationItem as $opitem) {
                         $oitem = $opitem->orderItem;
-
+                        $image .= '<input type="checkbox" class="pro-id" name="shipment_id[]" data-status="'.$order->status.'" value="'.$order->oid.'" style="visibility:hidden;"><div class="d-flex" style="gap:5px">';
                         if (isset($oitem->product) && !empty($oitem->product)) {
                             $imagename[] = $oitem->product->product_image;
                             if (!empty($oitem->product->image)) {
@@ -454,6 +461,7 @@ class ShipmentsController extends Controller
                                 $product_ids[] = $oitem->product->product_id;
                             }
                         }
+                        $image .= '</div>';
 
                         if($opitem->sku != '') {
                             $parts = explode('-', $opitem->sku);
@@ -531,6 +539,7 @@ class ShipmentsController extends Controller
                     "state" => (isset($order->order->customerAddress) && !empty($order->order->customerAddress)) ? $order->order->customerAddress->state : '',
                     'product_ids' => $product_ids,
                     'total_qty' => $total_qty,
+                    'submit_count' => $order->resubmit_count
                 );
             }
         }
@@ -1239,6 +1248,43 @@ class ShipmentsController extends Controller
         return response()->json([
             'success' => false
         ]);
+
+    }
+
+    public function resubmitShipment(Request $request)
+    {
+
+        $selected_shipment_ids = $request->input('shipment_ids');
+
+        try {
+            if ($selected_shipment_ids) {
+
+                foreach($selected_shipment_ids as $selected_shipment_id) {
+                    $orderOperation = OrderOperation::with('order', 'store', 'store.storeType', 'operationItem', 'operationItem.orderItem', 'carrier', 'carrierService')->where('id', $selected_shipment_id)->first();
+
+                    $request['label_generation'] = 1;
+                    $request['resubmit'] = 1;
+
+                    OrderOperationUtility::processShipment($orderOperation, $request);
+
+                }
+
+                return response()->json([
+                    'success' => true
+                ]);
+            } else {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Please select shipment'
+                ]);
+            }
+        } catch (\Exception $exception) {
+            Log::error('Shipment Marked Error: ' . $exception->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => $exception->getMessage()
+            ]);
+        }
 
     }
 

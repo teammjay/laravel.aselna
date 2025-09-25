@@ -75,19 +75,7 @@
     @if (session('error'))
         <div class="alert alert-danger alert-dismissible fade show">{{ session('error') }}</div>
     @endif
-    <div class="row my-3">
-        <div class="col-md-2">
-            <select class="form-control mt-3 mb-3" name="store_id" id="listing_store">
-                <option value="">All Stores</option>
-                @if(count($stores ?? []) > 0)
-                    @foreach($stores as $store)
-                        <option
-                                value="{{ $store->id }}">{{ $store->name }} {{ (!empty((array)$store->storeType)) ? ' - '.$store->storeType->name : '' }}</option>
-                    @endforeach
-                @endif
-            </select>
-        </div>
-    </div>
+
     <div class="card card-default">
         <div class="card-header">
             <h3 class="card-title"><a href="javascript:void(0);" class="text-blue">Add search condition</a></h3>
@@ -199,6 +187,17 @@
                             </div>
                         </div>
                     </div>
+
+                    <div class="col-md-3">
+                        <div class="row">
+                            <div class="col-4 text-right">
+                                Resubmit Count
+                            </div>
+                            <div class="col-8">
+                                <input type="number" name="resubmit_count" id="resubmit_count" class="form-control">
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="row pt-3">
@@ -218,6 +217,29 @@
             </form>
         </div>
     </div>
+    <div class="row my-3">
+        <div class="col-md-2">
+            <select class="form-control mt-3 mb-3" name="store_id" id="listing_store">
+                <option value="">All Stores</option>
+                @if(count($stores ?? []) > 0)
+                    @foreach($stores as $store)
+                        <option
+                                value="{{ $store->id }}">{{ $store->name }} {{ (!empty((array)$store->storeType)) ? ' - '.$store->storeType->name : '' }}</option>
+                    @endforeach
+                @endif
+            </select>
+        </div>
+        <div class="col-md-10 d-flex align-items-center" style="gap:10px;">
+            <button type="button" class="btn btn-default" id="refresh_list">
+                <i class="fa fa-fw fa-spinner"></i> Refresh
+            </button>
+            <button type="button" class="btn btn-default" id="resubmit_shipment" disabled="">
+                <i class="fa fa-fw fa-shipping-fast"></i> Resubmit
+            </button>
+
+            <span id="total_selected">( 0 selected )</span>
+        </div>
+    </div>
     <div class="row">
         <div class="col-md-12">
             <div class="">
@@ -227,15 +249,16 @@
                         <tr>
                             {{--<th></th>--}}
                             <th>Image</th>
+                            <th>Resubmit Count</th>
                             <th>Status</th>
                             <th>Carrier Package</th>
                             <th>Carrier Service</th>
                             <th>Store</th>
-                            <th>Order Id</th>
                             <th>Purchase Order Id</th>
                             <th>Order Date</th>
                             <th>Product Code</th>
                             <th>Weight</th>
+                            <th>Order Id</th>
                             <th>Shipment Date (expct)</th>
                             <th>First Name</th>
                             <th>Last Name</th>
@@ -323,6 +346,58 @@
 
         });
 
+        let lastChecked = null;
+        $(document).on('click','#shipment-list tr',function (e) {
+            let ele = $(this);
+
+            if (lastChecked && e.ctrlKey) {
+                e.preventDefault();
+
+                if(ele.find('.pro-id').is(':checked')){
+                    ele.removeClass('bg-blue');
+                    ele.find('.pro-id').prop('checked', false);
+                }else {
+                    ele.addClass('bg-blue');
+                    ele.find('.pro-id').prop('checked', true);
+                }
+
+                let checkboxes = $(".pro-id");
+                let start = checkboxes.index(ele.find('.proList'));
+                let end = checkboxes.index(lastChecked);
+
+                checkboxes.slice(Math.min(start, end), Math.max(start, end) + 1).prop("checked", lastChecked.checked).parents('tr').addClass('bg-blue');
+            }
+            lastChecked = ele.find('.pro-id');
+
+            let totalCnt = $('input[name="shipment_id[]"]:checked').length;
+            $('#total_selected').html('( <b>'+totalCnt+'</b> selected )');
+            if(totalCnt > 0){
+                $('#resubmit_shipment').removeAttr('disabled');
+            }
+
+        });
+
+        /*$(document).on('mousedown','#shipment-list tr',function (e) {
+            let ele = $(this);
+            if (e.ctrlKey) {
+                // Prevent text selection
+                e.preventDefault();
+            }else{
+
+                $('#shipment-list tr').removeClass('bg-blue');
+                $('.pro-id').prop('checked', false);
+                ele.addClass('bg-blue');
+                ele.find('.pro-id').prop('checked', true);
+            }
+
+            let totalCnt = $('input[name="shipment_id[]"]:checked').length;
+            $('#total_selected').html('( <b>'+totalCnt+'</b> selected )');
+
+            if(totalCnt > 0){
+                $('#resubmit_shipment').removeAttr('disabled');
+            }
+
+        });*/
 
         $(document).on('click','#refresh_list',function () {
             loadDatatables();
@@ -339,6 +414,58 @@
         });
 
         loadDatatables();
+
+        $(document).on('click','#resubmit_shipment',function () {
+
+            let shipment_ids = [];
+            $('input[name="shipment_id[]"]:checked').each(function () {
+                if($(this).data('status') == 3){
+                    shipment_ids.push($(this).val());
+                }
+
+            });
+
+            if(shipment_ids.length === 0){
+                alert('Please select label printed status shipment.');
+                return false;
+            }
+
+            $.ajax({
+                url: "{{ route('shipment.resubmitshipment') }}",
+                type: 'POST',
+                data: {
+                    shipment_ids: shipment_ids,
+                    "_token": '{{ csrf_token() }}'
+                },
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                },
+                success: function (response) {
+                    // If success, remove the user row from the table
+                    if (response.success) {
+                        location.reload();
+                    }
+                    else {
+                        alert(response.message);
+                    }
+                },
+                error: function (xhr) {
+                    // Handle error response
+                    if (xhr.status === 422) {
+                        let errors = xhr.responseJSON.errors;
+                        $.each(errors, function (key, messages) {
+                            alert(key + ': ' + messages[0]);
+                        });
+                    }
+                    /*const response = xhr.responseJSON;
+                    if ( response.errors) {
+                        alert(response.message);
+                    } else {
+                        alert('Error: ' + response.message);
+                    }*/
+                }
+            });
+        });
 
         $(document).on('click','.mainImage',function () {
             const productId = $(this).data('product-id'); // Get the product ID
@@ -450,15 +577,16 @@
             //"order": [[7, "desc"]],
             'columns': [
                 {data: 'image'},
+                {data: 'submit_count'},
                 {data: 'status'},
                 {data: 'carrier_package'},
                 {data: 'carrier_service'},
                 {data: 'store'},
-                {data: 'order_id'},
                 {data: 'purchase_order_id'},
                 {data: 'order_date'},
                 {data: 'product_code'},
                 {data: 'weight'},
+                {data: 'order_id'},
                 {data: 'expected_shipment_date'},
                 {data: 'first_name'},
                 {data: 'last_name'},
