@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Constants\FeedStatus;
+use App\Constants\ListingStatus;
 use App\Constants\ListingSyncStatus;
 use App\Models\ListingItem;
 use App\Models\ListingItemLink;
@@ -45,15 +46,17 @@ class AmazonListingItemSyncJob implements ShouldQueue
             ->join('listing_item', 'listing_item_link.item_id', '=', 'listing_item.id')
             ->join('listing', 'listing_item_link.listing_id', '=', 'listing.id')
             ->whereIn('listing.store_id', $amazon_store_ids)
-            //->whereNull('listing_item.store_sku')
+            ->whereNull('listing_item.store_sku')
+            ->where('listing_item.status','<>',ListingStatus::Deleted)
             ->whereIn('listing_item.sync_status', [
                 ListingSyncStatus::Synchronizing,
             ])
-            ->whereIn('listing.id', function ($subquery) use ($amazon_store_ids) {
+            ->whereNotIn('listing.id', function ($subquery) use ($amazon_store_ids) {
                 return $subquery->select('listing_id')->from('listing_feeds')->whereIn('store_id', $amazon_store_ids)->whereIn('status', [
-                    FeedStatus::PROCESSED
+                    FeedStatus::PROCESSING
                 ]);
             })
+            ->orderBy('listing_item.created_at','asc')
             ->chunk(100, function ($listingItemLinks) {
                 foreach ($listingItemLinks as $listingItemLink) {
                     Log::info('Syncing Amazon listing item: ' . $listingItemLink->item_id);
@@ -80,6 +83,19 @@ class AmazonListingItemSyncJob implements ShouldQueue
                     'store_sku' => $summary['asin'],
                     'sync_status' => ListingSyncStatus::Synchronized,
                 ]);
+            }else{
+                $date = \Carbon\Carbon::parse($itemDetail->created_at);
+                if ($date->diffInDays(now()) >= 5) {
+                    Log::info("Listing item older than 5 days - ".$itemDetail->sku);
+                    $itemDetail->update([
+                        'status' =>ListingStatus::Deleted,
+                    ]);
+                }else{
+                    $retry_count = $itemDetail->creation_retry_count ?? 0;
+                    $itemDetail->update([
+                        'creation_retry_count' => $retry_count + 1,
+                    ]);
+                }
             }
 
         } catch (\Exception $e) {

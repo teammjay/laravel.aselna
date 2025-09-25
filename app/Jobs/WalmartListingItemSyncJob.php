@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Constants\FeedStatus;
+use App\Constants\ListingStatus;
 use App\Constants\ListingSyncStatus;
 use App\Models\ListingFeed;
 use App\Models\ListingItem;
@@ -42,15 +43,17 @@ class WalmartListingItemSyncJob implements ShouldQueue
             ->join('listing_item', 'listing_item_link.item_id', '=', 'listing_item.id')
             ->join('listing', 'listing_item_link.listing_id', '=', 'listing.id')
             ->whereIn('listing.store_id', $walmart_store_ids)
-            //->whereNull('listing_item.store_sku')
+            ->whereNull('listing_item.store_sku')
+            ->where('listing_item.status','<>',ListingStatus::Deleted)
             ->whereIn('listing_item.sync_status', [
                 ListingSyncStatus::Synchronizing,
             ])
-            ->whereIn('listing.id', function ($subquery) use ($walmart_store_ids) {
+            ->whereNotIn('listing.id', function ($subquery) use ($walmart_store_ids) {
                 return $subquery->select('listing_id')->from('listing_feeds')->whereIn('store_id', $walmart_store_ids)->whereIn('status', [
-                    FeedStatus::PROCESSED
+                    FeedStatus::PROCESSING
                 ]);
             })
+            ->orderBy('listing_item.created_at','asc')
             ->chunk(100, function ($listingItemLinks) {
                 foreach ($listingItemLinks as $listingItemLink) {
                     Log::info('Syncing Walmart listing item: ' . $listingItemLink->item_id);
@@ -93,8 +96,8 @@ class WalmartListingItemSyncJob implements ShouldQueue
     {
         $store = $listingItemLink->listing->store;
         $itemDetail = $listingItemLink->listingItem;
-        Log::info("Listing Item Sku " . $itemDetail->store_sku != null);
-        Log::info("Listing Item UPC " . $itemDetail->upc != null);
+        Log::info("Listing Item Sku " . $itemDetail->store_sku);
+        Log::info("Listing Item UPC " . $itemDetail->upc);
         if($itemDetail->store_sku != null) return;
 
         try {
@@ -106,9 +109,23 @@ class WalmartListingItemSyncJob implements ShouldQueue
             if (isset($response['items'][0])) {
                 $item = $response['items'][0];
                 if(isset($item['itemId']) && $item['itemId'] != '') {
+                    Log::info("Update Listing Item with ".$item['itemId']);
                     $itemDetail->update([
                         'store_sku' => $item['itemId'],
                         'sync_status' => ListingSyncStatus::Synchronized,
+                    ]);
+                }
+            }else{
+                $date = \Carbon\Carbon::parse($itemDetail->created_at);
+                if ($date->diffInDays(now()) >= 5) {
+                    Log::info("Listing item older than 5 days - ".$itemDetail->upc);
+                    $itemDetail->update([
+                        'status' =>ListingStatus::Deleted,
+                    ]);
+                }else{
+                    $retry_count = $itemDetail->creation_retry_count ?? 0;
+                    $itemDetail->update([
+                        'creation_retry_count' => $retry_count + 1,
                     ]);
                 }
             }

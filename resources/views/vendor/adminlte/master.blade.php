@@ -86,6 +86,9 @@
         [class*=sidebar-dark-] .nav-sidebar>.nav-item>.nav-treeview {
             background-color: #000000;
         }
+        body,.form-control, .btn{
+            font-size:14px !important;
+        }
     </style>
 
     {{-- Favicon --}}

@@ -216,61 +216,61 @@ class ListingController extends Controller
         QueryFilters::applyRelationFilter($query, $request, 'storeProduct.store', 'name', 'store_operator', 'store');
 
         // Filter by sku
-        QueryFilters::applyFilter($query, $request, 'sku', 'sku_operator', 'sku');
+        QueryFilters::applyFilter($query, $request, 'listing_item.sku', 'sku_operator', 'sku');
 
         // Filter by title
-        QueryFilters::applyFilter($query, $request, 'title', 'title_operator', 'title');
+        QueryFilters::applyFilter($query, $request, 'listing_item.title', 'title_operator', 'title');
 
         // Filter by price
-        QueryFilters::applyFilter($query, $request, 'price', 'price_operator', 'price');
+        QueryFilters::applyFilter($query, $request, 'listing_item.price', 'price_operator', 'price');
 
         // Filter by ID
-        QueryFilters::applyFilter($query, $request, 'id', 'id_operator', 'id');
+        QueryFilters::applyFilter($query, $request, 'listing_item.id', 'id_operator', 'id');
 
         // Filter by sales count
-        QueryFilters::applyFilter($query, $request, 'sales_count', 'sales_count_operator', 'sales_count');
+        QueryFilters::applyFilter($query, $request, 'listing_item.sales_count', 'sales_count_operator', 'sales_count');
 
         // Filter by manufacturer
-        QueryFilters::applyFilter($query, $request, 'manufacturer_id', 'manufacturer_operator', 'manufacturer');
+        QueryFilters::applyFilter($query, $request, 'listing_item.manufacturer_id', 'manufacturer_operator', 'manufacturer');
 
         // Filter by sync message
-        QueryFilters::applyFilter($query, $request, 'sync_message', 'sync_message_operator', 'sync_message');
+        QueryFilters::applyFilter($query, $request, 'listing_item.sync_message', 'sync_message_operator', 'sync_message');
 
         // Filter by upc
-        QueryFilters::applyFilter($query, $request, 'upc', 'upc_operator', 'upc');
+        QueryFilters::applyFilter($query, $request, 'listing_item.upc', 'upc_operator', 'upc');
 
         // Filter by upc
-        QueryFilters::applyFilter($query, $request, 'store_sku', 'store_sku_operator', 'store_sku');
+        QueryFilters::applyFilter($query, $request, 'listing_item.store_sku', 'store_sku_operator', 'store_sku');
 
 
         // Filter by device
         if ($request->has('device') && $request->device != '') {
-            $query->where('device_id', $request->device);
+            $query->where('listing_item.device_id', $request->device);
         }
 
         // Filter by brand
         if ($request->has('device_brand') && $request->device_brand != '') {
-            $query->where('brand_id', $request->device_brand);
+            $query->where('listing_item.brand_id', $request->device_brand);
         }
 
         // Filter by qty
         if ($request->has('quantity') && $request->quantity != '') {
-            $query->where('quantity', $request->quantity);
+            $query->where('listing_item.quantity', $request->quantity);
         }
 
         // Filter by created date
         if ($request->has('item_created') && $request->item_created != '') {
-            $query->where('created_at', $request->item_created);
+            $query->where('listing_item.created_at', $request->item_created);
         }
 
         // Filter by last sale date
         if ($request->has('last_sale_date') && $request->last_sale_date != '') {
-            $query->where('last_sale_date', $request->last_sale_date);
+            $query->where('listing_item.last_sale_date', $request->last_sale_date);
         }
 
         // Filter by product status
         if ($request->has('listing_status') && $request->listing_status != '') {
-            $query->where('status', $request->listing_status);
+            $query->where('listing_item.status', $request->listing_status);
         }
 
         //        $query->groupBy('id','title','sku','store_sku','price','sales_count','last_sale_date','products.product_sku', 'products.dimensions_width', 'products.product_color', 'store.name', 'store.marketplace_name');

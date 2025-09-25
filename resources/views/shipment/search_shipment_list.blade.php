@@ -29,15 +29,19 @@
                 @endif
                 </div>
             </td>
-            <td>{!! ($shipment['status'] == 1) ? '<i class="fa fa-exclamation-triangle" style="font-size:24px" title="'.$shipment['status_message'].'"></i>' : '' !!}</td>
+            @if(isset($shipment['operationstatus']))
+                <td>{{ $shipment['operationstatus'] }}</td>
+            @else
+                <td>{!! ($shipment['status'] == 1) ? '<i class="fa fa-exclamation-triangle" style="font-size:24px" title="'.$shipment['status_message'].'"></i>' : '' !!}</td>
+            @endif
             <td>{{ $shipment['carrier_package'] }}</td>
             <td>{{ $shipment['carrier_service'] }}</td>
             <td>{{ $shipment['store'] }}</td>
-            <td>{!! $shipment['order_id'] !!}</td>
             <td>{!! $shipment['purchase_order_id'] !!}</td>
             <td>{{ $shipment['order_date'] }}</td>
             <td>{{ $shipment['product_code'] }}</td>
             <td>{{ $shipment['weight'] }}</td>
+            <td>{!! $shipment['order_id'] !!}</td>
             <td>{{ $shipment['expected_shipment_date'] }}</td>
             <td>{{ $shipment['first_name'] }}</td>
             <td>{{ $shipment['last_name'] }}</td>
@@ -48,6 +52,6 @@
     @endforeach
 @else
     <tr class="text-center">
-        <td colspan="11">No shipment found</td>
+        <td colspan="14">No shipment found</td>
     </tr>
 @endif

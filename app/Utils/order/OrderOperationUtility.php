@@ -37,8 +37,8 @@ class OrderOperationUtility
         }
 
         $label_generation = $request->input('label_generation');
-        $replacement = $request->input('replacement');
-        if ($label_generation) {
+        $replacement = $request->input('replacement') ?? '';
+        if ($label_generation && !isset($request['resubmit'])) {
             $carrier_id = $request->input('carrier_name');
             $carrier_package = $request->input('carrier_package');
             $carrier_service_id = $request->input('shipping_carrier_service');
@@ -63,11 +63,8 @@ class OrderOperationUtility
                 $updateRecord['products_rubber_stamp'] = $request['products_rubber_stamp'];
             }
             $orderOperation->update($updateRecord);
+            Log::info('Updated record :: ' . json_encode($updateRecord));
         }
-
-
-        Log::info('Updated record :: ' . json_encode($updateRecord));
-
 
         Log::info('Label generation type: ' . $label_generation);
         if (isset($label_generation)) {
@@ -267,6 +264,7 @@ class OrderOperationUtility
             }
 
             $orderOperation->tracking_number = $response['trackingNumber'];
+            $orderOperation->status = OrderOperationStatus::LabelPrinted;
             $orderOperation->save();
 
             self::updateMergedOrderIfExists($orderOperation, $response['trackingNumber']);
@@ -378,11 +376,12 @@ class OrderOperationUtility
             $orderItem = $item->orderItem;
             $product = $item->orderItem->product;
             $code = $product ? $product->product_sku : $item->sku;
+            /*$code = isset($item->sku) ? $item->sku : $product->product_sku;*/
 
             if (!isset($productMap[$code])) {
                 $productMap[$code] = 0;
             }
-            $productMap[$code] += $orderItem->quantity;
+            $productMap[$code] += $item->quantity;
         }
 
         // Get or generate product codes line
@@ -898,26 +897,28 @@ class OrderOperationUtility
                             ->where('merged_with', $orderOperation->id)
                             ->get();
 
-                        foreach ($orderOperations as $oop) {
-                            $response = $shopifyServie->updateFullfillment($oop->order_id, $orderOperation);
+                        if($orderOperations) {
+                            foreach ($orderOperations as $oop) {
+                                $response = $shopifyServie->updateFullfillment($oop->order_id, $orderOperation);
 
-                            if (!isset($response['errors'])) {
-                                $oop->update(['status' => OrderOperationStatus::MarkAsShipped,'ship_date' => now()]);
-                                if (isset($oop->order_id)) {
-                                    $order = Order::findOrFail($oop->order_id);
-                                    $order->update(['order_status' => OrderStatus::Shipped]);
-                                }
-
-                                if (isset($oop->order->orderItem)) {
-                                    foreach ($oop->order->orderItem as $o_item) {
-                                        $item_qty = $o_item->quantity;
-                                        $orderItem = OrderItem::findOrFail($o_item->id);
-                                        $orderItem->update(['shipped_quantity' => $item_qty]);
+                                if (!isset($response['errors'])) {
+                                    $oop->update(['status' => OrderOperationStatus::MarkAsShipped, 'ship_date' => now()]);
+                                    if (isset($oop->order_id)) {
+                                        $order = Order::findOrFail($oop->order_id);
+                                        $order->update(['order_status' => OrderStatus::Shipped]);
                                     }
+
+                                    if (isset($oop->order->orderItem)) {
+                                        foreach ($oop->order->orderItem as $o_item) {
+                                            $item_qty = $o_item->quantity;
+                                            $orderItem = OrderItem::findOrFail($o_item->id);
+                                            $orderItem->update(['shipped_quantity' => $item_qty]);
+                                        }
+                                    }
+                                    $success = true;
+                                } else {
+                                    $success = false;
                                 }
-                                $success = true;
-                            } else {
-                                $success = false;
                             }
                         }
                     } else {
@@ -931,9 +932,10 @@ class OrderOperationUtility
                     $orderOperations = OrderOperation::where('is_merged', true)
                         ->where('merged_with', $orderOperation->id)
                         ->get();
-
-                    foreach ($orderOperations as $o_item) {
-                        $walmartServie->shipmentUpdate($orderOperation, $o_item, $store);
+                    if($orderOperations) {
+                        foreach ($orderOperations as $o_item) {
+                            $walmartServie->shipmentUpdate($orderOperation, $o_item, $store);
+                        }
                     }
                     $success = $is_success;
                     break;
@@ -1027,9 +1029,10 @@ class OrderOperationUtility
                     $orderOperations = OrderOperation::where('is_merged',true)
                         ->where('merged_with',$orderOperation->id)
                         ->get();
-
-                    foreach ($orderOperations as $o_item) {
-                        $amazonService->createShipment($orderOperation,$o_item, $store);
+                    if($orderOperations) {
+                        foreach ($orderOperations as $o_item) {
+                            $amazonService->createShipment($orderOperation, $o_item, $store);
+                        }
                     }
                     $success = $is_success;
                     break;

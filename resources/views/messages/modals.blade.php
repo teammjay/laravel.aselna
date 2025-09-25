@@ -194,7 +194,7 @@
                                 <div class="col-md-4">
                                     <div class="row">
                                         <div class="col-4 text-right">
-                                            First Name
+                                            Buyer First Name
                                         </div>
                                         <div class="col-8">
                                             <input type="text" name="buyer_first_name" id="buyer_first_name" class="form-control">
@@ -204,7 +204,7 @@
                                 <div class="col-md-4">
                                     <div class="row">
                                         <div class="col-4 text-right">
-                                            Last Name
+                                            Buyer Last Name
                                         </div>
                                         <div class="col-8">
                                             <input type="text" name="buyer_last_name" id="buyer_last_name" class="form-control">
@@ -257,6 +257,18 @@
                                         </div>
                                     </div>
                                 </div>
+                                <div class="col-md-4">
+                                    <div class="row">
+                                        <div class="col-4 text-right">
+                                            Buyer Username
+                                        </div>
+                                        <div class="col-8">
+                                            <input type="text" name="buyer_username" id="buyer_username" class="form-control">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row pt-3">
                                 <div class="col-md-4">
                                     <div class="row">
                                         <div class="col-4 text-right">

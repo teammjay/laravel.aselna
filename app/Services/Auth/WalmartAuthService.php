@@ -335,12 +335,14 @@ class WalmartAuthService
                 'query' => $queryData,
             ]);
 
+            Log::info("getItemSearch Response: ".$response->getBody());
+
             return json_decode($response->getBody(), true);
         } catch (\Exception $e) {
-            return response()->json([
+            return $error = [
                 'error' => 'Walmart API request failed',
                 'message' => $e->getMessage()
-            ], 500);
+            ];
         }
     }
 }

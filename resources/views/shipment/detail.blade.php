@@ -33,6 +33,7 @@
                     </select>
                 </div>
             </div>
+
             <div class="row mt-1 g-3 align-items-center">
                 <div class="col-md-4">
                     <label for="ship_date">Ship Date</label>
@@ -41,6 +42,7 @@
                     <input type="text" class="form-control" id="ship_date" name="ship_date" value="{{ $shipmentDetail->ship_date }}">
                 </div>
             </div>
+
             <div class="row mt-1 g-3 align-items-center">
                 <div class="col-md-4">
                     <label for="insurance_value">Insurance Value</label>
@@ -64,6 +66,7 @@
                     </select>
                 </div>
             </div>
+
             <div class="row mt-1 g-3 align-items-center">
                 <div class="col-md-4">
                     <label for="carrier_package">Carrier Package</label>

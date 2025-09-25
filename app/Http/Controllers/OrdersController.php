@@ -105,6 +105,11 @@ class OrdersController extends Controller
             $query->whereDate('created_at', $request->created_at);
         }
 
+        // Filter by created date
+        if ($request->has('buyer_username') && $request->buyer_username != '') {
+            $query->whereLike('buyer_username', '%'.$request->buyer_username.'%');
+        }
+
         // Filter by product code
         if ($request->has('product_code') && $request->product_code != '') {
             $query->whereHas('orderItem', function ($q) use ($request) {

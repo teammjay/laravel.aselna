@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Constants\OrderOperationStatus;
 use App\Constants\OrderStatus;
 use App\Helpers\Common;
+use App\Helpers\QueryFilters;
 use App\Models\Catalog;
 use App\Models\CustomerAddress;
 use App\Models\LogisticCenter;
@@ -273,6 +274,295 @@ class ShipmentsController extends Controller
         );
 
         return $response;*/
+
+    }
+
+    public function all_shipment(Request $request)
+    {
+        $perPage = $this->perPage;
+        $stores = Store::with('storeType')->where('store_status', 1)->orderBy('name', 'asc')->get();
+        $shippingCarrier = ShippingCarrier::all();
+        $shippingCarrierPackage = ShippingPackage::all();
+        $shipFrom = LogisticCenter::all();
+
+        return view('shipment.all_shipment_list', compact('perPage', 'stores', 'shippingCarrier', 'shipFrom', 'shippingCarrierPackage'));
+    }
+
+    public function allFilter(Request $request)
+    {
+
+        $draw = $request['draw'];
+        $start = $request['start'];
+        $perPage = $request['length'];
+        //$columnIndex = $request['order'][0]['column'];
+        //$columnName = $request['columns'][$columnIndex]['data'];
+        //$columnSortOrder = $request['order'][0]['dir'];
+
+        /*if ($request->input('combine_address', false) === 'true') {
+            $this->mergeSameAddressOrders($request);
+        } else {
+            $this->unmergeSameAddressOrders($request);
+        }*/
+
+        $query = OrderOperation::with([
+            'order:id,order_id,order_date,buyer_first_name,buyer_last_name,customer_id,shipping_address_id,purchase_order_id',
+            'order.customer',
+            'order.customerAddress',
+            'order.orderItem',
+            'order.orderItem.product',
+            'order.orderItem.product.image',
+            'carrierService:id,name,shipping_carrier_id',
+            'carrierService.ShippingCarrier',
+            'store:id,name,store_type_id',
+            'shippingPackage:id,name',
+        ])->select('order_operation.*', 'order_operation.id as oid');
+
+        // Filter by order id
+        if ($request->has('order_id') && $request->order_id != '') {
+            $query->whereHas('order', function ($q) use($request){
+                $q->where('order.order_id', $request->order_id);
+            });
+        }
+
+        // Filter by purchase order id
+        if ($request->has('purchase_order_id') && $request->purchase_order_id != '') {
+            $query->whereHas('order', function ($q) use($request){
+                $q->where('order.purchase_order_id', $request->purchase_order_id);
+            });
+        }
+
+        // Filter by first name
+        if ($request->has('buyer_first_name') && $request->buyer_first_name != '') {
+            $query->whereHas('order', function ($q) use($request){
+                $q->whereLike('order.buyer_first_name', '%'.$request->buyer_first_name.'%');
+            });
+        }
+
+        // Filter by last name
+        if ($request->has('buyer_last_name') && $request->buyer_last_name != '') {
+            $query->whereHas('order', function ($q) use($request){
+                $q->whereLike('order.buyer_last_name', '%'.$request->buyer_last_name.'%');
+            });
+        }
+
+        // Filter by sku
+        if ($request->has('sku') && $request->sku != '') {
+            $query->whereHas('order.orderItem', function ($q) use($request){
+                $q->whereLike('order_item.sku', '%'.$request->sku.'%');
+            });
+        }
+
+        // Filter by order date
+        if ($request->has('order_date') && $request->order_date != '') {
+            $query->whereHas('order', function ($q) use($request){
+                $q->whereDate('order.order_date', $request->order_date);
+            });
+        }
+
+        if ($request->has('operation_status') && $request->operation_status != '') {
+            $query->where('order_operation.status', $request->operation_status);
+        }
+
+        if ($request->has('tracking_number') && $request->tracking_number != '') {
+            $query->where('order_operation.tracking_number', $request->tracking_number);
+        }
+
+        // Filter by store
+        if ($request->has('store_id') && $request->store_id != '') {
+            $query->where('order_operation.store_id', $request->store_id);
+        }
+
+        // Filter by store
+        if ($request->has('resubmit_count') && $request->resubmit_count != '') {
+            $query->where('order_operation.resubmit_count', $request->resubmit_count);
+        }
+
+
+
+        /*if($columnName != ''){
+            switch(strtolower($columnName)){
+                case 'status':
+                    break;
+                case 'carrier_package':
+
+                    $query->whereHas('shippingPackage', function ($q) use($columnSortOrder){
+                        $q->orderBy('shipping_package.name', $columnSortOrder);
+                    });
+                    break;
+                case 'carrier_service':
+                    $query->whereHas('carrierService.ShippingCarrier', function ($q) use($columnSortOrder){
+                        $q->orderBy('shipping_carrier.name', $columnSortOrder);
+                    });
+                    break;
+                case 'store':
+                    break;
+                case 'order_id':
+                    break;
+                case 'purchase_order_id':
+                    break;
+                case 'order_date':
+                    break;
+                case 'product_code':
+                    break;
+                case 'weight':
+                    break;
+                case 'expected_shipment_date':
+                    break;
+                case 'first_name':
+                    break;
+                case 'last_name':
+                    break;
+                case 'state':
+                    break;
+
+            }
+        }*/
+
+
+        $query->join('order', 'order.id', '=', 'order_operation.order_id');
+        $query->orderBy('order.order_date', 'desc');
+        $totalRecords = $query->count();
+        $order_operations = $query->skip($start)
+            ->take($perPage)
+            ->get();
+        $totalRecordwithFilter = $totalRecords;
+
+        //$order_operations = $query->distinct()->get();
+
+        /*echo '<pre>';
+        print_r($order_operations);
+        echo '</pre>';die;*/
+
+        $shipments = [];
+        if (!empty((array)$order_operations)) {
+            foreach ($order_operations as $key => $order) {
+                $storeType = (isset($order->store->storeType) && !empty($order->store->storeType)) ? $order->store->storeType->name : '';
+                $code = '';
+                $onlycode = '';
+                $image = '';
+                $imagename = $product_ids = [];
+                $product_total_weight = Common::calculateProductWeight($order);
+                $total_qty = [];
+                $package_id = $order->shipping_package_id;
+                if (isset($order->operationItem) && !empty($order->operationItem)) {
+                    $totalQty = 0;
+                    foreach ($order->operationItem as $opitem) {
+                        $oitem = $opitem->orderItem;
+                        $image .= '<input type="checkbox" class="pro-id" name="shipment_id[]" data-status="'.$order->status.'" value="'.$order->oid.'" style="visibility:hidden;"><div class="d-flex" style="gap:5px">';
+                        if (isset($oitem->product) && !empty($oitem->product)) {
+                            $imagename[] = $oitem->product->product_image;
+                            if (!empty($oitem->product->image)) {
+                                $img = asset('storage/' . $oitem->product->image->getFileUrl());
+
+                                $image .= '<div class="main-image">
+                                                <img src="'.$img.'" alt="'.$oitem->product->product_image.'" class="mainImage" width="70" height="70" data-product-id="'.$oitem->product->product_id.'">
+                                            </div>';
+
+                                $product_ids[] = $oitem->product->product_id;
+                            }
+                        }
+                        $image .= '</div>';
+
+                        if($opitem->sku != '') {
+                            $parts = explode('-', $opitem->sku);
+                            $product_code = isset($parts[0]) ? $parts[0] : '';
+                            //$product_detail = Catalog::where('product_sku', $product_code)->first();
+                            $code .= $product_code . ' x ' . $opitem->quantity . PHP_EOL;
+                            $onlycode .= $product_code . '<br>';
+                        }else{
+
+                            if (isset($oitem->product) && !empty($oitem->product)) {
+                                if ($oitem->product->product_sku != '') {
+                                    $code .= $oitem->product->product_sku . ' x ' . $oitem->quantity . PHP_EOL;
+                                    $onlycode .= $oitem->product->product_sku . '<br>';
+                                }
+                            }
+                        }
+                        if(isset($oitem->quantity)){
+                            $totalQty = $totalQty + $oitem->quantity;
+                        }
+
+                        $total_qty[] = $totalQty;
+                    }
+                }
+                $orderIds = isset($order->order->order_id) ? [$order->order->order_id] : [];
+                $porderIds = isset($order->order->purchase_order_id) ? [$order->order->purchase_order_id] : [];
+                if (isset($order->orderIds)) {
+                    $mergedOrderIds = json_decode($order->orderIds, true) ?? [];
+                    foreach ($mergedOrderIds as $oid) {
+                        $orderInfo = Order::where('id', $oid)->first();
+                        if ($orderInfo) {
+                            $orderIds[] = $orderInfo->order_id;
+                            $porderIds[] = $orderInfo->purchase_order_id;
+                        }
+                    }
+                }
+                $opstatus = OrderOperationStatus::getOrderStatusName($order->status);
+                $status = 0;
+                $status_message = '';
+                if($order->status_message != NULL){
+                    $status = 1;
+                    $status_message = $order->status_message;
+                }
+                $packageName = isset($order->shippingPackage) ? $order->shippingPackage->name : '';
+                /*if($package_id){
+                    $packageDetail = ShippingPackage::findOrFail($package_id);
+                    $packageName = $packageDetail->name;
+                }*/
+
+                if(isset($opstatus)){
+                    $status = $opstatus;
+                }else{
+                    if($status == 1){
+                        $status = '<i class="fa fa-exclamation-triangle" style="font-size:24px" title="'.$status_message.'"></i>';
+                    }
+                }
+                $shipments[] = array(
+                    "oid" => $order->oid,
+                    "image" => (!empty($image)) ? $image : '',
+                    "imagename" => (!empty($imagename)) ? $imagename : '',
+                    "product_id" => (!empty($product_ids)) ? $product_ids : '',
+                    "status" => $status,
+                    "operationstatus" => $opstatus,
+                    "status_message" => $status_message,
+                    "carrier_package" => $packageName,
+                    "carrier_service" => isset($order->carrierService) ? $order->carrierService->ShippingCarrier->name . ' ' . $order->carrierService->name : '',
+                    "store" => $order->store->name . ' - ' . $storeType,
+                    "order_id" => implode(', <br/> ', $orderIds),
+                    "purchase_order_id" => (!empty($porderIds)) ? implode(', <br/> ', $porderIds) : '',
+                    "order_date" => isset($order->order) ? $order->order->order_date : '',
+                    "expected_shipment_date" => isset($order) ? $order->expected_shipment_date : '',
+                    "product_code" => $code,
+                    "weight" => ($order->weight_value) ? $order->weight_value : $product_total_weight,
+                    "first_name" => (isset($order->order) && !empty($order->order)) ? $order->order->buyer_first_name : '',
+                    "last_name" => (isset($order->order) && !empty($order->order)) ? $order->order->buyer_last_name : '',
+                    "state" => (isset($order->order->customerAddress) && !empty($order->order->customerAddress)) ? $order->order->customerAddress->state : '',
+                    'product_ids' => $product_ids,
+                    'total_qty' => $total_qty,
+                    'submit_count' => $order->resubmit_count
+                );
+            }
+        }
+
+        /*echo '<pre>';
+        print_r($shipments);
+        echo '</pre>';die;*/
+
+        /*if ($request->ajax()) {
+            return response()->json([
+                'html' => view('shipment.search_shipment_list', compact('shipments'))->render(),
+                'totalRecords' => $order_operations->count()
+            ]);
+        }*/
+
+        $response = array(
+            "draw" => intval($draw),
+            "iTotalRecords" => $totalRecordwithFilter,
+            "iTotalDisplayRecords" => $totalRecordwithFilter,
+            "aaData" => $shipments
+        );
+
+        return $response;
 
     }
 
@@ -958,6 +1248,43 @@ class ShipmentsController extends Controller
         return response()->json([
             'success' => false
         ]);
+
+    }
+
+    public function resubmitShipment(Request $request)
+    {
+
+        $selected_shipment_ids = $request->input('shipment_ids');
+
+        try {
+            if ($selected_shipment_ids) {
+
+                foreach($selected_shipment_ids as $selected_shipment_id) {
+                    $orderOperation = OrderOperation::with('order', 'store', 'store.storeType', 'operationItem', 'operationItem.orderItem', 'carrier', 'carrierService')->where('id', $selected_shipment_id)->first();
+
+                    $request['label_generation'] = 1;
+                    $request['resubmit'] = 1;
+
+                    OrderOperationUtility::processShipment($orderOperation, $request);
+
+                }
+
+                return response()->json([
+                    'success' => true
+                ]);
+            } else {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Please select shipment'
+                ]);
+            }
+        } catch (\Exception $exception) {
+            Log::error('Shipment Marked Error: ' . $exception->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => $exception->getMessage()
+            ]);
+        }
 
     }
 

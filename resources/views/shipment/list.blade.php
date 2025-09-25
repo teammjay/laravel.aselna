@@ -43,6 +43,9 @@
         table th, .column-no-whitespace{
             white-space: nowrap;
         }
+        .column-whitespace{
+            white-space: break-spaces;
+        }
         .main-image img {
             /*width: 300px;
             height: 300px;*/
@@ -63,6 +66,10 @@
         .hide{display:none;}
         /*#shipping_section{min-height: 100vh;}*/
         .clickable-row:hover{cursor:pointer; background: #f0f8ff !important;}
+        label:not(.form-check-label):not(.custom-file-label) {
+            font-weight: 700;
+            font-size: 14px;
+        }
     </style>
 @stop
 
@@ -222,11 +229,11 @@
                                 <th>Carrier Package</th>
                                 <th>Carrier Service</th>
                                 <th>Store</th>
-                                <th>Order Id</th>
                                 <th>Purchase Order Id</th>
                                 <th>Order Date</th>
                                 <th>Product Code</th>
                                 <th>Weight</th>
+                                <th>Order Id</th>
                                 <th>Shipment Date (expct)</th>
                                 <th>First Name</th>
                                 <th>Last Name</th>
@@ -1579,12 +1586,16 @@
                             "searching": true,
                             "paging": false,
                             "info": false,
-                            "order": [[7, "desc"]],
+                            "order": [[6, "desc"]],
                             columnDefs: [
                                 {
                                     targets: [0],
                                     orderable: false
-                                }
+                                },
+                                {
+                                    targets: [2,3,4,5,6,7], // The column index
+                                    className: 'column-whitespace' // The class to add
+                                },
                             ],
                             drawCallback: function(settings) {
                                 let info = this.api().page.info();

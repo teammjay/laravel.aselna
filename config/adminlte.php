@@ -576,7 +576,12 @@ return [
                     'text' => 'Shipping Documents',
                     'url' => '/logistic_center_document',
                     'icon' => 'fa fa-fw fa-file',
-                ]
+                ],
+                [
+                    'text' => 'All Shipment',
+                    'url' => '/shipment/all',
+                    'icon' => 'fa fa-fw fa-shipping-fast',
+                ],
             ]
         ],
         [
