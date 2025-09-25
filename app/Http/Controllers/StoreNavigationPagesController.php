@@ -143,7 +143,7 @@ class StoreNavigationPagesController extends Controller
 
         $template = StorePageTemplate::findOrFail($request->template_id);
 
-        $links = Navigationutility::getLinks($request->store_id, $request->page_type, $request);
+        $links = Navigationutility::($request->store_id, $request->page_type, $request);
 
         $data = [
             'description' => $request->description ?? '',
