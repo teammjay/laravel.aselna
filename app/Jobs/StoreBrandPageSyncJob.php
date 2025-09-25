@@ -176,7 +176,7 @@ class StoreBrandPageSyncJob implements ShouldQueue
                 break;
             case WebStorePageType::DEVICE:
                 $this->getPuplications();
-                Device::where('status', 'active')->orderBy('id')->chunk(100, function ($devices) use ($page_type, $template, $request) {
+                Device::where('status', 'active')->where('brand_id','2202e395-74c9-4f90-9ab7-ebc7169ef3f1')->orderBy('id')->chunk(100, function ($devices) use ($page_type, $template, $request) {
                     foreach ($devices as $device) {
                         $brand = $device->brand;
                         $title = $brand->name . ' ' . $device->name . ' Accessories';
@@ -216,7 +216,8 @@ class StoreBrandPageSyncJob implements ShouldQueue
                             Log::error('Image upload failed for device', ['device_id' => $device->id, 'image' => $device->image]);
                         }
 
-                        $interfaces = DeviceInterface::where('device_id', $device->id)->get();
+                        // fetch 20
+                        $interfaces = DeviceInterface::where('device_id', $device->id)->first(60);
                         foreach ($interfaces as $interface) {
                             $collectionData['collection']['ruleSet']['rules'][] = [
                                 'column' => 'TAG',
