@@ -692,7 +692,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/store_navigation_page/add', 'store')->name('store_navigation_page.store');
         Route::get('/store_navigation_page/edit/{id}', 'edit')->name('store_navigation_page.edit');
         Route::post('/store_navigation_page/filter', 'filter')->name('store_navigation_page.filter');
-        Route::post('/store_navigation_page/generate_content', 'generateContent')->name('store_navigation_page.generateContent');
+        Route::post('/store_navigation_page/generate_content', 'generateContent')->name('store_navigation_page.generate_content');
         Route::post('/store_navigation_page/generate_bulk', 'generate_bulk')->name('store_navigation_page.generate_bulk');
         Route::post('/store_navigation_page/generate_all_bulk', 'generate_all_bulk')->name('store_navigation_page.generate_all_bulk');
         Route::post('/store_navigation_page/edit/{id}', 'update')->name('store_navigation_page.update');

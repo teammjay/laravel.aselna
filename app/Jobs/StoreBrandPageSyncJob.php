@@ -181,6 +181,8 @@ class StoreBrandPageSyncJob implements ShouldQueue
                         $brand = $device->brand;
                         $title = $brand->name . ' ' . $device->name . ' Accessories';
 
+                        Log::info('Device :: ' . $device->name . ' Brand :: ' . $brand->name);
+
                         $storePage = StoreNavigationPage::where('store_id', $this->store_id)
                             ->where('page_type', WebStorePageType::DEVICE)
                             ->where('device_id', $device->id)
