@@ -38,7 +38,9 @@ class ShopifyDuplicateStoreProductsJob implements ShouldQueue
     {
         $this->setVariables();
 
-        $this->duplicateStoreProducts();
+//        $this->duplicateStoreProducts();
+
+        $this->duplicateListingDetails();
     }
 
     private function setVariables()
@@ -85,6 +87,41 @@ class ShopifyDuplicateStoreProductsJob implements ShouldQueue
 //                            $newDetail->save();
 //                            Log::info("New Listing Item Detail ID: " . $newDetail->id . " for Listing Item ID: " . $newListingItem->id);
 //                        }
+                    }
+                }
+            });
+    }
+
+    private function duplicateListingDetails()
+    {
+        StoreProduct::where('store_id', $this->fromStoreId)
+            ->orderBy('id')
+            ->chunk(100, function ($products) {
+                foreach ($products as $product) {
+                    Log::info("Processing Product ID: " . $product->id . " for Store ID: " . $this->fromStoreId);
+                    $newStoreProduct = StoreProduct::where('store_id', $this->toStoreId)->where('product_id',$product->product_id)->first();
+                    if(isset($newStoreProduct)) {
+                        Log::info("Found corresponding Product ID: " . $newStoreProduct->id . " in Store ID: " . $this->toStoreId);
+                        $newListingItem = ListingItem::where('store_product_id', $newStoreProduct->id)
+                            ->first();
+                        $oldListingItem = ListingItem::where('store_product_id', $product->id)
+                            ->first();
+                        if ($newListingItem) {
+                            Log::info("Found Listing Item ID: " . $newListingItem->id . " for Store Product ID: " . $newStoreProduct->id);
+                            $listingItemDetails = ListingItemDetail::where('listing_item_id', $oldListingItem->id)->get();
+                            foreach ($listingItemDetails as $detail) {
+                                if (ListingItemDetail::where('listing_item_id', $newListingItem->id)->where('sku', $detail->sku)->exists()) {
+                                    Log::info("Listing Item Detail with SKU: " . $detail->sku . " already exists for Listing Item ID: " . $newListingItem->id . ". Skipping duplication.");
+                                    continue;
+                                }
+                                $newDetail = $detail->replicate();
+                                $newDetail->listing_item_id = $newListingItem->id;
+                                $newDetail->created_at = now();
+                                $newDetail->updated_at = now();
+                                $newDetail->save();
+                                Log::info("New Listing Item Detail ID: " . $newDetail->id . " for Listing Item ID: " . $newListingItem->id);
+                            }
+                        }
                     }
                 }
             });

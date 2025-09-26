@@ -43,6 +43,9 @@
         table th, .column-no-whitespace{
             white-space: nowrap;
         }
+        .column-whitespace{
+            white-space: break-spaces;
+        }
         .main-image img {
             /*width: 300px;
             height: 300px;*/
@@ -80,7 +83,7 @@
         <div class="alert alert-danger alert-dismissible fade show">{{ session('error') }}</div>
     @endif
     <div class="row">
-        <div class="col-md-10">
+        <div class="col-md-9">
             <div class="card">
                 <div class="card-body">
                     <div class="row my-3">
@@ -226,11 +229,11 @@
                                 <th>Carrier Package</th>
                                 <th>Carrier Service</th>
                                 <th>Store</th>
-                                <th>Order Id</th>
                                 <th>Purchase Order Id</th>
                                 <th>Order Date</th>
                                 <th>Product Code</th>
                                 <th>Weight</th>
+                                <th>Order Id</th>
                                 <th>Shipment Date (expct)</th>
                                 <th>First Name</th>
                                 <th>Last Name</th>
@@ -244,7 +247,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-2">
+        <div class="col-md-3">
             <div class="card">
                 <div class="card-body" id="shipping_section">
                 </div>
@@ -1583,12 +1586,16 @@
                             "searching": true,
                             "paging": false,
                             "info": false,
-                            "order": [[7, "desc"]],
+                            "order": [[6, "desc"]],
                             columnDefs: [
                                 {
                                     targets: [0],
                                     orderable: false
-                                }
+                                },
+                                {
+                                    targets: [2,3,4,5,6,7], // The column index
+                                    className: 'column-whitespace' // The class to add
+                                },
                             ],
                             drawCallback: function(settings) {
                                 let info = this.api().page.info();

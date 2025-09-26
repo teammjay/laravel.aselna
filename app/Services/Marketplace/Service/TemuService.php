@@ -61,7 +61,7 @@ class TemuService implements MarketplaceServiceInterface
         // json content
         $allfeedContent = file_get_contents($file);
 
-        foreach (json_decode($allfeedContent, true) as $individualFeed) {
+            foreach (json_decode($allfeedContent, true) as $individualFeed) {
             Log::info('Individual Feed: ' . json_encode($individualFeed));
             $response = $temuAuthService->submitFeed($individualFeed, $store);
 
@@ -110,32 +110,23 @@ class TemuService implements MarketplaceServiceInterface
             $template = $temuAuthService->getTemplate($storeTypeCategory->code);
             Log::info('Template for Category ' . $storeTypeCategory->code . ': ' . json_encode($template));
 
-            $properties = [];
+            $productData = [
+                'Brand' => $listingItem->brand->name ?? 'APPLE',
+                'Color' => 'Black',
+            ];
+
             $TemplateProperties = $template['result']['templateInfo']['goodsProperties'] ?? [];
-            foreach ($TemplateProperties as $property) {
-                if ($property['isSale'] == false) {
-                    switch ($property['controlType']) {
-                        case 0 :
-                            $properties[] = [
-                                'templatePid' => $property['templatePid'],
-                                'refPid' => $property['refPid'],
-                                'pid' => $property['pid'],
-                                'vid' => 0,
-                                'value' => ''
-                            ];
-                            break;
-                        case 1 :
-                            $properties[] = [
-                                'templatePid' => $property['templatePid'],
-                                'refPid' => $property['refPid'],
-                                'pid' => $property['pid'],
-                                'vid' => $property['values'][0]['vid'],
-                                'value' => $property['values'][0]['vid']
-                            ];
-                            break;
-                    }
-                }
-            }
+            $properties = $this->buildGoodsPropertiesPayload($TemplateProperties, $productData);
+            Log::info('Properties completed');
+
+            $TemplateSpecProperties = $template['result']['templateInfo']['goodsSpecProperties'] ?? [];
+            $specDetails = $this->getSpecDetails($TemplateSpecProperties,$productData);
+            $properties = array_merge($properties,$specDetails['properties']);
+
+            $specIdList = $specDetails['specIdList'];
+            Log::info('Properties :: ' . json_encode($properties));
+
+
 
             $ShippingTemplates = $temuAuthService->geShippingTemplate();
             Log::info('Shipping Templates: ' . json_encode($ShippingTemplates));
@@ -154,9 +145,9 @@ class TemuService implements MarketplaceServiceInterface
                 'goodsBasic' => [
                     'goodsName' => $item->title,
                     'catId' => (int)$storeTypeCategory->store_type_code,
-                    'importDesignation' => 'Made in USA',
+                    'importDesignation' => 'Made in the USA',
                 ],
-                'goodsDesc' => $item->description,
+//                'goodsDesc' => $item->description,
                 'goodsServicePromise' => [
                     'costTemplateId' => $templateID,
                     'fulfillmentType' => 1,
@@ -184,7 +175,7 @@ class TemuService implements MarketplaceServiceInterface
                         'listPriceType' => 0
                     ],
                     'quantity' => $item->quantity,
-                    'specIdList' => [],
+                    'specIdList' => $specIdList,
                     'outSkuSn' => $item->sku,
                     'volumeUnit' => 'in',
                     'weight' => '' . WeightUnit::convert($productObj->product_weight_unit ?? WeightUnit::OZ, WeightUnit::LB, $productObj->product_weight),
@@ -197,6 +188,135 @@ class TemuService implements MarketplaceServiceInterface
             $jsonFeed[] = $feedItem;
         }
 
+        Log::info('Json Feed :: '. json_encode($jsonFeed));
+
         FileUtility::saveToFile(public_path('feeds/temu/' . $listingId . '.json'), json_encode($jsonFeed));
+    }
+
+    public function buildGoodsPropertiesPayload(array $templateAttributes, array $productData): array
+    {
+        $finalPayload = [];
+
+        // Create a simple map of your product data for easy lookup.
+        // This assumes keys in $productData match the 'name' from the template.
+        $productValueMap = $productData;
+
+        foreach ($templateAttributes as $attribute) {
+            $attributeName = $attribute['name'];
+            Log::info('Attribute Name :: ' . $attributeName);
+
+            // Skip if your product data doesn't have a value for this attribute.
+            if (!isset($productValueMap[$attributeName])) {
+                continue;
+            }
+
+            $valueFromDb = $productValueMap[$attributeName];
+            Log::info('Attribute :: ' . json_encode($attribute));
+
+            switch ($attribute['controlType']) {
+                /**
+                 * Case 1: Select type property (Dropdowns, Checkboxes)
+                 * We need to find the matching 'vid' for the given value string.
+                 */
+                case 1:
+                case 3:
+                    // Normalize DB value to an array to handle multi-select gracefully.
+                    $selectedValues = is_array($valueFromDb) ? $valueFromDb : [$valueFromDb];
+
+                    // Create a lookup map for faster searching: ['Cotton' => ['vid' => 49, ...]]
+                    $optionsMap = array_column($attribute['values'], null, 'value');
+
+                    foreach ($selectedValues as $selectedValue) {
+                        if (isset($optionsMap[$selectedValue])) {
+                            $chosenOption = $optionsMap[$selectedValue];
+                            $finalPayload[] = [
+                                'templatePid' => $attribute['templatePid'],
+                                'refPid'      => $attribute['refPid'],
+                                'pid'         => $attribute['pid'],
+                                'vid'         => $chosenOption['vid'],
+                                'value'       => $chosenOption['value'],
+                            ];
+                        }
+                    }
+                    break;
+
+                case 0:
+                    $payloadObject = [
+                        'templatePid' => $attribute['templatePid'],
+                        'refPid'      => $attribute['refPid'],
+                        'pid'         => $attribute['pid'],
+                        'vid'         => 0, // 'vid' is 0 for input types as per docs.
+                        'value'       => (string) $valueFromDb,
+                    ];
+
+                    // Check if a unit is defined and add it to the payload.
+                    if (!empty($attribute['valueUnitList'])) {
+                        // Using the first available unit by default.
+                        // You might need more logic if multiple units are possible.
+                        $payloadObject['valueUnit'] = $attribute['valueUnitList'][0]['valueUnit'];
+                    }
+
+                    $finalPayload[] = $payloadObject;
+                    break;
+            }
+        }
+
+        return $finalPayload;
+    }
+
+    private function getSpecDetails(array $templateAttributes, array $productData): array
+    {
+        $finalPayload = [
+            'properties' => [],
+            'specIdList' => []
+        ];
+
+        // Create a simple map of your product data for easy lookup.
+        // This assumes keys in $productData match the 'name' from the template.
+        $productValueMap = $productData;
+
+        foreach ($templateAttributes as $attribute) {
+            $attributeName = $attribute['name'];
+            Log::info('Attribute Name :: ' . $attributeName);
+
+            // Skip if your product data doesn't have a value for this attribute.
+            if (!isset($productValueMap[$attributeName])) {
+                continue;
+            }
+
+            $valueFromDb = $productValueMap[$attributeName];
+            Log::info('Attribute :: ' . json_encode($attribute));
+
+            switch ($attribute['controlType']) {
+                /**
+                 * Case 1: Select type property (Dropdowns, Checkboxes)
+                 * We need to find the matching 'vid' for the given value string.
+                 */
+                case 1:
+                case 3:
+                    // Normalize DB value to an array to handle multi-select gracefully.
+                    $selectedValues = is_array($valueFromDb) ? $valueFromDb : [$valueFromDb];
+
+                    // Create a lookup map for faster searching: ['Cotton' => ['vid' => 49, ...]]
+                    $optionsMap = array_column($attribute['values'], null, 'value');
+
+                    foreach ($selectedValues as $selectedValue) {
+                        if (isset($optionsMap[$selectedValue])) {
+                            $chosenOption = $optionsMap[$selectedValue];
+                            $finalPayload['properties'][] = [
+                                'templatePid' => $attribute['templatePid'],
+                                'refPid'      => $attribute['refPid'],
+                                'pid'         => $attribute['pid'],
+                                'vid'         => $chosenOption['vid'],
+                                'specId'       => $chosenOption['specId'],
+                            ];
+                            $finalPayload['specIdList'][] = $chosenOption['specId'];
+                        }
+                    }
+                    break;
+            }
+        }
+
+        return $finalPayload;
     }
 }

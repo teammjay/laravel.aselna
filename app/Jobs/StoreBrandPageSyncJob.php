@@ -181,6 +181,8 @@ class StoreBrandPageSyncJob implements ShouldQueue
                         $brand = $device->brand;
                         $title = $brand->name . ' ' . $device->name . ' Accessories';
 
+                        Log::info('Device :: ' . $device->name . ' Brand :: ' . $brand->name);
+
                         $storePage = StoreNavigationPage::where('store_id', $this->store_id)
                             ->where('page_type', WebStorePageType::DEVICE)
                             ->where('device_id', $device->id)
@@ -214,7 +216,8 @@ class StoreBrandPageSyncJob implements ShouldQueue
                             Log::error('Image upload failed for device', ['device_id' => $device->id, 'image' => $device->image]);
                         }
 
-                        $interfaces = DeviceInterface::where('device_id', $device->id)->get();
+                        // fetch 20
+                        $interfaces = DeviceInterface::where('device_id', $device->id)->limit(60)->get();
                         foreach ($interfaces as $interface) {
                             $collectionData['collection']['ruleSet']['rules'][] = [
                                 'column' => 'TAG',

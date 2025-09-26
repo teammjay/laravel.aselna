@@ -260,6 +260,18 @@
                                 <div class="col-md-4">
                                     <div class="row">
                                         <div class="col-4 text-right">
+                                            Buyer Username
+                                        </div>
+                                        <div class="col-8">
+                                            <input type="text" name="buyer_username" id="buyer_username" class="form-control">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row pt-3">
+                                <div class="col-md-4">
+                                    <div class="row">
+                                        <div class="col-4 text-right">
                                             Created Date
                                         </div>
                                         <div class="col-8">
