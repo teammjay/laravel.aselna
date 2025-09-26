@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Models\Brand;
 use App\Models\Device;
+use App\Models\DeviceInterface;
 use App\Models\DeviceTypes;
 use Exception;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -11,6 +12,7 @@ use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use function Adminer\where;
 
 class DevicesSyncJob implements ShouldQueue
 {
@@ -38,6 +40,12 @@ class DevicesSyncJob implements ShouldQueue
                     $this->createSyncDevice($device);
                 }
             });
+
+        Device::orderBy('id')->chunk(1000, function ($devices) {
+            foreach ($devices as $device) {
+                $this->checkAndDelete($device);
+            }
+        });
 
 //        DB::connection('fonus_db')->table('tbl_device')
 //            ->orderBy('device_id')
@@ -105,6 +113,7 @@ class DevicesSyncJob implements ShouldQueue
     private function createSyncDevice(mixed $device)
     {
 //        $rating = DB::connection('easyesale_db')->table('cea_device_rating')->where('id', $device->rating_id)->select('value')->first();
+        $createdDevice = Device::where('id', $device->id)->first();
 
         $deviceData = [
             'id' => $device->id,
@@ -128,36 +137,48 @@ class DevicesSyncJob implements ShouldQueue
 //            'thumbnail_image' => $device->thumbnail_id
         ];
 
-        $Image = DB::connection('easyesale_db_wt_prefix')->table('sys_file')->where('id', $device->image_id)->first();
-        try {
-            $image_name = strtolower($Image->name);
-            if (isset($image_name) && env('APP_ENV') !== 'local') {
-                if (!file_exists(storage_path('app/public/device_images/' . $image_name))) {
-                    $image = file_get_contents('https://fonusaccessory.com/inv/inv_images/device_images/' . $image_name);
-                    file_put_contents(storage_path('app/public/device_images/' . $image_name), $image);
-                    $deviceData['image'] = $image_name;
+        if (isset($createdDevice) && $createdDevice->image) {
+            $Image = DB::connection('easyesale_db_wt_prefix')->table('sys_file')->where('id', $device->image_id)->first();
+            try {
+                $image_name = strtolower($Image->name);
+                if (isset($image_name) && env('APP_ENV') !== 'local') {
+                    if (!file_exists(storage_path('app/public/device_images/' . $image_name))) {
+                        $image = file_get_contents('https://fonusaccessory.com/inv/inv_images/device_images/' . $image_name);
+                        file_put_contents(storage_path('app/public/device_images/' . $image_name), $image);
+                        $deviceData['image'] = $image_name;
+                    }
                 }
+            } catch (Exception $e) {
+                Log::error('Error in Image Sync: ' . $e->getMessage());
             }
-        } catch (Exception $e) {
-            Log::error('Error in Image Sync: ' . $e->getMessage());
         }
 
-        $Thumbnail = DB::connection('easyesale_db_wt_prefix')->table('sys_file')->where('id', $device->thumbnail_id)->first();
-        try {
-            $thumbnail_name = strtolower($Thumbnail->name);
-            if (isset($thumbnail_name) && env('APP_ENV') !== 'local') {
-                if (!file_exists(storage_path('app/public/device_images/' . $thumbnail_name))) {
-                    $thumbnail = file_get_contents('https://fonusaccessory.com/inv/inv_images/device_images/' . $thumbnail_name);
-                    file_put_contents(storage_path('app/public/device_images/' . $thumbnail_name), $thumbnail);
-                    $deviceData['thumbnail_image'] = $thumbnail_name;
+        if (isset($createdDevice) && $createdDevice->thumbnail_image) {
+            $Thumbnail = DB::connection('easyesale_db_wt_prefix')->table('sys_file')->where('id', $device->thumbnail_id)->first();
+            try {
+                $thumbnail_name = strtolower($Thumbnail->name);
+                if (isset($thumbnail_name) && env('APP_ENV') !== 'local') {
+                    if (!file_exists(storage_path('app/public/device_images/' . $thumbnail_name))) {
+                        $thumbnail = file_get_contents('https://fonusaccessory.com/inv/inv_images/device_images/' . $thumbnail_name);
+                        file_put_contents(storage_path('app/public/device_images/' . $thumbnail_name), $thumbnail);
+                        $deviceData['thumbnail_image'] = $thumbnail_name;
+                    }
                 }
+            } catch (Exception $e) {
+                Log::error('Error in Thumbnail Sync: ' . $e->getMessage());
             }
-        } catch (Exception $e) {
-            Log::error('Error in Thumbnail Sync: ' . $e->getMessage());
         }
 
         Device::updateOrCreate([
             'id' => $device->id,
         ], $deviceData);
+    }
+
+    private function checkAndDelete(mixed $device)
+    {
+        if (DB::connection('easyesale_db')->table('cea_device')->where('id', $device->id)->doesntExist()) {
+            DeviceInterface::where('device_id', $device->id)->delete();
+            $device->delete();
+        }
     }
 }
