@@ -59,6 +59,7 @@ use App\Jobs\SendNotificationOrderSyncFailJob;
 use App\Jobs\ShippingCarrierJob;
 use App\Jobs\ShopifyCollectionDeviceSyncJob;
 use App\Jobs\ShopifyCollectionSyncJob;
+use App\Jobs\ShopifyCombinedSyncing;
 use App\Jobs\ShopifyDuplicateStoreProductsJob;
 use App\Jobs\ShopifyIndvPagesSyncJob;
 use App\Jobs\ShopifyListingProductsSyncJob;
@@ -169,6 +170,7 @@ class SyncAllTables extends Command
         //synccategorytospecification::dispatch();
 //        SystemPrinterSyncJob::dispatch();
 //        ShopifyIndvPagesSyncJob::dispatch('5cc46182-9318-7a47-39bd-d3e38de6cce6', WebStorePageType::ALL_BRANDS);
+//        ShopifyCombinedSyncing::dispatch();
 
 //        SendNotificationEmailSyncFailJob::dispatch(2);
 //        SendNotificationOrderSyncFailJob::dispatch(2);
@@ -196,7 +198,8 @@ class SyncAllTables extends Command
 //                'number_of_codes' => 20000
 //            ]
 //        );
-        ShopifyIndvPagesSyncJob::dispatch('47338682-e00d-4ab2-9db6-76343bb96162', WebStorePageType::BRAND_DEVICE_PRODUCT_TYPES);
+//        ShopifyIndvPagesSyncJob::dispatch('47338682-e00d-4ab2-9db6-76343bb96162', WebStorePageType::BRAND_DEVICE_PRODUCT_TYPES);
+        DevicesSyncJob::dispatch();
 
         $transactionIds = [
 ////            '9400150105798006163885',
