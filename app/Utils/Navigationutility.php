@@ -139,7 +139,7 @@ class Navigationutility
                     ->where('page_type', $skipDevicePages ? WebStorePageType::DEVICE : WebStorePageType::BRAND_DEVICE_PRODUCT_TYPES)
                     ->where('device_brand_id', $brand->id)
                     ->where('device.order', '>', 10)
-                    ->where('device.order', '<', 30)
+                    ->where('device.order', '<=', 30)
                     ->orderBy('device.order', 'asc')
                     ->get();
 
