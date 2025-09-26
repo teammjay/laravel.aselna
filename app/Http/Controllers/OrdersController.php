@@ -109,10 +109,10 @@ class OrdersController extends Controller
         if ($request->has('buyer_username') && $request->buyer_username != '') {
 
             $query->where(function ($q) use ($request) {
-                $q->whereRelation('customer', 'user_id', $request->buyer_username)
+                $q->whereRelation('customer', 'user_id', 'like', '%'.$request->buyer_username.'%')
                     ->orWhere('buyer_username', 'like', '%'.$request->buyer_username.'%');
             });
-            
+
         }
 
         // Filter by product code
