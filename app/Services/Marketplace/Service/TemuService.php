@@ -61,7 +61,7 @@ class TemuService implements MarketplaceServiceInterface
         // json content
         $allfeedContent = file_get_contents($file);
 
-            foreach (json_decode($allfeedContent, true) as $individualFeed) {
+        foreach (json_decode($allfeedContent, true) as $individualFeed) {
             Log::info('Individual Feed: ' . json_encode($individualFeed));
             $response = $temuAuthService->submitFeed($individualFeed, $store);
 
@@ -108,12 +108,9 @@ class TemuService implements MarketplaceServiceInterface
             }
 
             $template = $temuAuthService->getTemplate($storeTypeCategory->code);
-            Log::info('Template for Category ' . $storeTypeCategory->code . ': ' . json_encode($template));
+            //Log::info('Template for Category ' . $storeTypeCategory->code . ': ' . json_encode($template));
 
-            $productData = [
-                'Brand' => $listingItem->brand->name ?? 'APPLE',
-                'Color' => 'Black',
-            ];
+            $productData = $this->getProductData($listingItem);
 
             $TemplateProperties = $template['result']['templateInfo']['goodsProperties'] ?? [];
             $properties = $this->buildGoodsPropertiesPayload($TemplateProperties, $productData);
@@ -138,7 +135,12 @@ class TemuService implements MarketplaceServiceInterface
             Log::info('File System: ' . json_encode($fileSystem));
             $imagesPath = [];
             foreach ($images as $image) {
-                $imagesPath[] = $fileSystem->url_base_path . $image->path;
+                $imagesUrl = $fileSystem->url_base_path . $image->path;
+                $ImageResponse = $temuAuthService->uploadImage($imagesUrl);
+                Log::info('Response Image :: ' . json_encode($ImageResponse));
+                if(isset($ImageResponse['result']['url'])){
+                    $imagesPath[] = $ImageResponse['result']['url'];
+                }
             }
 
             $feedItem = [
@@ -168,10 +170,10 @@ class TemuService implements MarketplaceServiceInterface
                             'amount' => '' . floatval($price),
                             'currency' => 'USD'
                         ],
-//                        'listPrice' => [
-//                            'amount' => floatval($price),
-//                            'currency' => 'USD'
-//                        ],
+                        'listPrice' => [
+                            'amount' => floatval($price),
+                            'currency' => 'USD'
+                        ],
                         'listPriceType' => 0
                     ],
                     'quantity' => $item->quantity,
@@ -224,7 +226,7 @@ class TemuService implements MarketplaceServiceInterface
                     $selectedValues = is_array($valueFromDb) ? $valueFromDb : [$valueFromDb];
 
                     // Create a lookup map for faster searching: ['Cotton' => ['vid' => 49, ...]]
-                    $optionsMap = array_column($attribute['values'], null, 'value');
+                    $optionsMap = array_change_key_case(array_column($attribute['values'], null, 'value'),CASE_LOWER);
 
                     foreach ($selectedValues as $selectedValue) {
                         if (isset($optionsMap[$selectedValue])) {
@@ -298,9 +300,10 @@ class TemuService implements MarketplaceServiceInterface
                     $selectedValues = is_array($valueFromDb) ? $valueFromDb : [$valueFromDb];
 
                     // Create a lookup map for faster searching: ['Cotton' => ['vid' => 49, ...]]
-                    $optionsMap = array_column($attribute['values'], null, 'value');
+                    $optionsMap = array_change_key_case(array_column($attribute['values'], null, 'value'),CASE_LOWER);
 
                     foreach ($selectedValues as $selectedValue) {
+                        Log::info('Searching :: ' . $selectedValue);
                         if (isset($optionsMap[$selectedValue])) {
                             $chosenOption = $optionsMap[$selectedValue];
                             $finalPayload['properties'][] = [
@@ -318,5 +321,21 @@ class TemuService implements MarketplaceServiceInterface
         }
 
         return $finalPayload;
+    }
+
+    private function getProductData($listingItem)
+    {
+        $productData = [
+            'Brand' => $listingItem->brand->name ?? 'apple',
+            'Color' => 'black',
+        ];
+        $compatibleModels = [];
+        foreach ($listingItem->listingItem->devices as $k => $device) {
+            Log::info('Device Name ' . $device->device->name);
+            $compatibleModels[] = strtolower($device->device->name);
+        }
+        $productData['Compatible Model'] = $compatibleModels;
+
+        return $productData;
     }
 }

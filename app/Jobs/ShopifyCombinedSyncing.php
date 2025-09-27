@@ -26,7 +26,7 @@ class ShopifyCombinedSyncing implements ShouldQueue
      */
     public function handle(): void
     {
-        ProductSyncJob::withChain([
+        $chain = [
             new InterfaceSyncJob(),
             new DeviceSeriesSyncJob(),
             new CategorySyncJob(),
@@ -37,7 +37,7 @@ class ShopifyCombinedSyncing implements ShouldQueue
             new ProductInterfaces(),
             new ProductImagesSyncJob(),
             new SubmitShopifyProductsJob()
-        ])->dispatch();
+        ];
 
         $stores = Store::select('store.*')->join('store_type', 'store_type.id', '=', 'store.store_type_id')->where('store_type.code', 'shopify')->get();
 
@@ -54,52 +54,59 @@ class ShopifyCombinedSyncing implements ShouldQueue
                 $brandDeviceProductTemplate = StorePageTemplate::where('name', 'Brand Device Product Types')->first();
                 $productTypeBrands = StorePageTemplate::where('name', 'Product types brands')->first();
                 $brandDevicesTemplate = StorePageTemplate::where('name', 'Brand Devices')->first();
-
-                StoreBrandPageSyncJob::
-                withChain([
-                    new StoreBrandPageSyncJob(
-                        $store->id,
-                        WebStorePageType::PRODUCT_TYPE,
-                        $brandTemplate->id
-                    ),
-                    new StoreBrandPageSyncJob(
-                        $store->id,
-                        WebStorePageType::DEVICE,
-                        $brandTemplate->id
-                    ),
-                    new StoreBrandPageSyncJob(
-                        $store->id,
-                        WebStorePageType::BRAND_DEVICE_PRODUCT_TYPES,
-                        $brandDeviceProductTemplate->id
-                    ),
-                    new ShopifyIndvPagesSyncJob(
-                        $store->id,
-                        WebStorePageType::BRAND_DEVICE_PRODUCT_TYPES
-                    ),
-                    new StoreBrandPageSyncJob(
-                        $store->id,
-                        WebStorePageType::PRODUCT_TYPE_BRANDS,
-                        $productTypeBrands->id
-                    ),
-                    new ShopifyIndvPagesSyncJob(
-                        $store->id,
-                        WebStorePageType::PRODUCT_TYPE_BRANDS
-                    ),
-                    new StoreBrandPageSyncJob(
-                        $store->id,
-                        WebStorePageType::BRAND_DEVICES,
-                        $brandDevicesTemplate->id
-                    ),
-                    new ShopifyIndvPagesSyncJob(
-                        $store->id,
-                        WebStorePageType::BRAND_DEVICES
-                    ),
-                ])->dispatch(
+                $chain[] = new StoreBrandPageSyncJob(
                     $store->id,
                     WebStorePageType::BRAND,
                     $brandTemplate->id
                 );
+
+                $chain[] = new StoreBrandPageSyncJob(
+                    $store->id,
+                    WebStorePageType::PRODUCT_TYPE,
+                    $brandTemplate->id
+                );
+
+                $chain[] = new StoreBrandPageSyncJob(
+                    $store->id,
+                    WebStorePageType::DEVICE,
+                    $brandTemplate->id
+                );
+
+                $chain[] = new StoreBrandPageSyncJob(
+                    $store->id,
+                    WebStorePageType::BRAND_DEVICE_PRODUCT_TYPES,
+                    $brandDeviceProductTemplate->id
+                );
+
+                $chain[] = new ShopifyIndvPagesSyncJob(
+                    $store->id,
+                    WebStorePageType::BRAND_DEVICE_PRODUCT_TYPES
+                );
+
+                $chain[] = new StoreBrandPageSyncJob(
+                    $store->id,
+                    WebStorePageType::PRODUCT_TYPE_BRANDS,
+                    $productTypeBrands->id
+                );
+
+                $chain[] = new ShopifyIndvPagesSyncJob(
+                    $store->id,
+                    WebStorePageType::PRODUCT_TYPE_BRANDS
+                );
+
+                $chain[] = new StoreBrandPageSyncJob(
+                    $store->id,
+                    WebStorePageType::BRAND_DEVICES,
+                    $brandDevicesTemplate->id
+                );
+
+                $chain[] = new ShopifyIndvPagesSyncJob(
+                    $store->id,
+                    WebStorePageType::BRAND_DEVICES
+                );
             }
+
+            ProductSyncJob::withChain($chain)->dispatch();
         }
     }
 }
