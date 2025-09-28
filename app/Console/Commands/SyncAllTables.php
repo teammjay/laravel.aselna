@@ -199,7 +199,8 @@ class SyncAllTables extends Command
 //            ]
 //        );
 //        ShopifyIndvPagesSyncJob::dispatch('47338682-e00d-4ab2-9db6-76343bb96162', WebStorePageType::BRAND_DEVICE_PRODUCT_TYPES);
-        DevicesSyncJob::dispatch();
+//        DevicesSyncJob::dispatch();
+        DeviceInterfaces::dispatch();
 
         $transactionIds = [
 ////            '9400150105798006163885',

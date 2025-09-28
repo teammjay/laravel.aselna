@@ -58,22 +58,7 @@ Schedule::job(FetchEmailMessagesJob::class)->everyTenMinutes();
 // Products Syncing
 Schedule::job(new SubmitShopifyProductsJob())->hourly();
 
-//Category Syncing
-Schedule::job(new ShopifyCollectionSyncJob())->dailyAt('03:00');
-
-//Devices, Interfaces, and Brands Syncing at 1 2 and 3 AM
-Schedule::job(new ProductSyncJob())->dailyAt('00:30');
-Schedule::job(new InterfaceSyncJob())->dailyAt('01:00');
-Schedule::job(new DeviceSeriesSyncJob())->dailyAt('01:00');
-Schedule::job(new CategorySyncJob())->dailyAt('01:30');
-Schedule::job(new BrandSyncJob())->dailyAt('02:00');
-Schedule::job(new DevicesSyncJob())->dailyAt('02:30');
-Schedule::job(new ProductImagesSyncJob())->dailyAt('04:00');
-Schedule::job(new DeviceInterfaces())->dailyAt('03:30');
-Schedule::job(new ProductInterfaces())->dailyAt('04:30');
-Schedule::job(new DeviceCarrierSyncJob())->dailyAt('05:30');
-
-//Schedule::job(new ShopifyCombinedSyncing())->dailyAt('06:00');
+Schedule::job(new ShopifyCombinedSyncing())->dailyAt('12:30');
 
 
 
