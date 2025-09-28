@@ -384,7 +384,7 @@ class SubmitShopifyProductsJob implements ShouldQueue
         $response = $shopifyAuthService->saveProduct($productNewData);
         Log::info('Product: ' . json_encode($response));
 
-        if (isset($response['data']) && empty($response['data']['userErrors'])) {
+        if (isset($response['data']) && empty($response['data']['userErrors']) && isset($response['data']['productSet']['product'])) {
 
             $productId = $response['data']['productSet']['product']['id'];
             $productIdReplaced = str_replace('gid://shopify/Product/', '', $productId);
