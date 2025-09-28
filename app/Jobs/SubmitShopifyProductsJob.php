@@ -500,7 +500,7 @@ class SubmitShopifyProductsJob implements ShouldQueue
         $response = $shopifyAuthService->updateProduct($productUpdateData);
         $priceResponse = $shopifyAuthService->updatePrice($priceUpdatesData);
 
-        if (isset($response['data']) && empty($response['data']['userErrors'])) {
+        if (isset($response['data']) && empty($response['data']['userErrors']) && isset($response['data']['productUpdate']['product'])) {
             $productId = $response['data']['productUpdate']['product']['id'];
             $productIdReplaced = str_replace('gid://shopify/Product/', '', $productId);
             $handle = $response['data']['productUpdate']['product']['handle'];
