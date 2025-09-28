@@ -30,17 +30,15 @@ class DeviceInterfaces implements ShouldQueue
      */
     public function handle(): void
     {
-        DB::connection('easyesale_db')->table('cea_device_interface')->orderBy('id')
-            ->chunk(1000, function ($deviceInterfaces) {
-                foreach ($deviceInterfaces as $deviceInterface) {
-                    $this->createDeviceInetrface($deviceInterface);
-                }
-            });
+//        DB::connection('easyesale_db')->table('cea_device_interface')->orderBy('id')
+//            ->chunk(1000, function ($deviceInterfaces) {
+//                foreach ($deviceInterfaces as $deviceInterface) {
+//                    $this->createDeviceInetrface($deviceInterface);
+//                }
+//            });
 
         DeviceInterface::orderBy('id')->chunk(1000, function ($deviceInterfaces) {
-            foreach ($deviceInterfaces as $deviceInterface) {
-                $this->checkAndDelete($deviceInterface);
-            }
+            $this->checkAndDelete($deviceInterfaces);
         });
 
 //        $deviceAttributes = DB::connection('fonus_db')->table('tbl_device_attributes')->cursor();
@@ -49,16 +47,37 @@ class DeviceInterfaces implements ShouldQueue
 //        }
     }
 
-    private function checkAndDelete(mixed $deviceInterface)
+    private function checkAndDelete(mixed $deviceInterfaces)
     {
-        Log::info('Checking device interface: ' . $deviceInterface->id);
-        $isExists = DB::connection('easyesale_db')->table('cea_device_interface')
-            ->where('device_id' , $deviceInterface->device_id)
-            ->where('cea_interface_id' , $deviceInterface->interface_id)
-            ->doesntExist();
+        $deviceIds = [];
+        $interfaceMap = [];
 
-        if ($isExists) {
-            $deviceInterface->delete();
+        foreach ($deviceInterfaces as $deviceInterface) {
+            $key = $deviceInterface->device_id . '_' . $deviceInterface->interface_id;
+            $deviceIds[] = $deviceInterface->device_id;
+            $interfaceMap[$key] = $deviceInterface->id;
+        }
+
+        $existingRecords = DB::connection('easyesale_db')->table('cea_device_interface')
+            ->whereIn('device_id', array_unique($deviceIds))
+            ->select('device_id', 'cea_interface_id')
+            ->get();
+
+        $existingSet = [];
+        foreach ($existingRecords as $record) {
+            $existingSet[$record->device_id . '_' . $record->cea_interface_id] = true;
+        }
+
+        $idsToDelete = [];
+        foreach ($interfaceMap as $key => $id) {
+            if (!isset($existingSet[$key])) {
+                $idsToDelete[] = $id;
+            }
+        }
+
+        // Perform batch deletion if needed
+        if (!empty($idsToDelete)) {
+            DeviceInterface::whereIn('id', $idsToDelete)->delete();
         }
     }
 
