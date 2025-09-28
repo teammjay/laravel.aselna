@@ -15,7 +15,7 @@ class DeviceInterfaces implements ShouldQueue
 {
     use Queueable;
 
-    public $timeout = 3000;
+    public $timeout = 300000;
 
     /**
      * Create a new job instance.
