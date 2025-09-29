@@ -46,6 +46,7 @@ class SyncAllOrderStatusJob implements ShouldQueue
             ->whereNotIn('status', [
                 OrderOperationStatus::MarkAsShipped,
                 OrderOperationStatus::Delivered,
+                OrderOperationStatus::Canceled,
             ])
             ->when($this->orderId, function ($query) {
                 $query->where('order_id', $this->orderId);
@@ -142,7 +143,7 @@ class SyncAllOrderStatusJob implements ShouldQueue
 
                 Log::info('Walmart order response: ' . json_encode($response));
 
-                if (isset($response) && is_array($response) && isset($response['order'])) {
+                if (isset($response)) {
                     $ordersItems = $response['order']['orderLines']['orderLine'];
                     if (!empty($ordersItems)) {
                         foreach ($ordersItems as $item) {
