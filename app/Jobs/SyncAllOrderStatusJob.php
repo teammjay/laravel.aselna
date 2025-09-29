@@ -10,8 +10,10 @@ use App\Services\Auth\AmazonAuthService;
 use App\Services\Auth\EbayAuthService;
 use App\Services\Auth\ShopifyAuthService;
 use App\Services\Auth\WalmartAuthService;
+use Exception;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
 
 class SyncAllOrderStatusJob implements ShouldQueue
@@ -19,6 +21,8 @@ class SyncAllOrderStatusJob implements ShouldQueue
     use Queueable;
 
     public $orderId;
+
+    public $timeout = 30000;
 
     /**
      * Create a new job instance.
@@ -51,8 +55,12 @@ class SyncAllOrderStatusJob implements ShouldQueue
         //Log::info('Order Operations:'.json_encode($orderOperations));
         if (count($orderOperations ?? []) > 0) {
             foreach ($orderOperations as $operation) {
-
-                $this->checkOrderStatus($operation);
+                try {
+                    $this->checkOrderStatus($operation);
+                } catch (Exception $exception) {
+                    Log::error('Error syncing order status for OrderOperation ID ' . $operation->id . ': ' . $exception->getMessage());
+                    continue;
+                }
             }
         }
     }
@@ -134,7 +142,7 @@ class SyncAllOrderStatusJob implements ShouldQueue
 
                 Log::info('Walmart order response: ' . json_encode($response));
 
-                if (isset($response)) {
+                if (isset($response) && is_array($response) && isset($response['order'])) {
                     $ordersItems = $response['order']['orderLines']['orderLine'];
                     if (!empty($ordersItems)) {
                         foreach ($ordersItems as $item) {
