@@ -78,14 +78,44 @@ class HomeController extends Controller
 
     public function testfunction(){
 
-        $operations = OrderOperation::with('order', 'operationItem', 'store', 'store.storeType')
-            ->where('status', OrderOperationStatus::LabelPrinted)
-            ->whereNotNull('tracking_number')
-            ->get();
+        /*$walmart_store_ids = Store::where('store_type_id', function ($subquery) {
+            return $subquery->select('id')
+                ->from('store_type')
+                ->where('code', 'walmart');
+        })->pluck('id');
+        Log::info('Walmart store ids: ' . json_encode($walmart_store_ids));
 
+        $query = ListingItemLink::query()
+            ->join('listing_item', 'listing_item_link.item_id', '=', 'listing_item.id')
+            ->join('listing', 'listing_item_link.listing_id', '=', 'listing.id')
+            ->whereIn('listing.store_id', $walmart_store_ids)
+            ->where(function ($q){
+                $q->whereNull('listing_item.store_sku')
+                    ->orWhere('listing_item.store_sku','');
+            })
+            ->where('listing_item.status','<>',3)
+            ->where(function ($query) {
+                return $query
+                    ->where('listing_item.creation_retry_count', '<', 5)->orWhereNull('listing_item.creation_retry_count');
+            })
+            ->whereIn('listing_item.sync_status', [
+                ListingSyncStatus::CreationError,
+                ListingSyncStatus::Synchronizing,
+            ])
+            ->whereNotIn('listing.id', function ($subquery) use ($walmart_store_ids) {
+                return $subquery->select('listing_id')->from('listing_feeds')->whereIn('store_id', $walmart_store_ids)->whereIn('status', [
+                    FeedStatus::PROCESSING
+                ]);
+            })
+            ->orderBy('listing_item.created_at','asc');
+            //->get();
+
+        //dd(DB::getQueryLog());
+        //var_dump($query->toSql());die;
+        echo $query->toSql();die;
         echo '<pre>';
-        print_r($operations);
-        echo '</pre>';die;
+        print_r($query);
+        echo '</pre>';die;*/
 
         /*$stores = Store::with('storeType')->where('store_status','>',0)->get();
 
