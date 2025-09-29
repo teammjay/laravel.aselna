@@ -18,12 +18,14 @@ class SyncAllOrderStatusJob implements ShouldQueue
 {
     use Queueable;
 
+    public $orderId;
+
     /**
      * Create a new job instance.
      */
-    public function __construct()
+    public function __construct($orderId = null)
     {
-        //
+        $this->orderId = $orderId;
     }
 
     /**
@@ -41,6 +43,9 @@ class SyncAllOrderStatusJob implements ShouldQueue
                 OrderOperationStatus::MarkAsShipped,
                 OrderOperationStatus::Delivered,
             ])
+            ->when($this->orderId, function ($query) {
+                $query->where('order_id', $this->orderId);
+            })
             ->orderByDesc('ship_date')
             ->get();
         //Log::info('Order Operations:'.json_encode($orderOperations));
@@ -221,10 +226,15 @@ class SyncAllOrderStatusJob implements ShouldQueue
                             $operation->save();
                         }
 
-                        if (isset($orderDetail['cancelStatus']) && $orderDetail['cancelStatus']['cancelState'] != 'NONE_REQUESTED') {
+                        if (isset($orderDetail['cancelStatus']) && $orderDetail['cancelStatus']['cancelState'] != 'NONE_REQUESTED' && $orderDetail['cancelStatus']['cancelState'] != 'IN_PROGRESS') {
                             $order->update(['order_status' => OrderStatus::Canceled]);
                             if (!empty($operation)) {
                                 $operation->update(['status' => OrderOperationStatus::Canceled]);
+                            }
+                        } else if (isset($orderDetail['cancelStatus']) && $orderDetail['cancelStatus']['cancelState'] == 'IN_PROGRESS') {
+                            $order->update(['order_status' => OrderStatus::CanceledRequested]);
+                            if (!empty($operation)) {
+                                $operation->update(['status' => OrderOperationStatus::CanceledRequested]);
                             }
                         }
                     }

@@ -17,6 +17,9 @@ class OrderOperationStatus
     const ReturnedToSender = 11;
     const Canceled = 12;
     const MarkAsShipped = 13;
+
+    const CanceledRequested = 20;
+
     const Requested = 50;
     const Completed = 51;
     const Rejected = 55;
@@ -53,6 +56,7 @@ class OrderOperationStatus
         self::Requested => 'Requested',
         self::Completed => 'Completed',
         self::Rejected => 'Rejected',
+        self::CanceledRequested => 'Canceled Requested',
 
         self::ESCALATED => 'Escalated',
         self::PARTIAL_REFUND_OFFERED => 'Partial Refund Offered',

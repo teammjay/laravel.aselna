@@ -6,6 +6,7 @@ use App\Constants\OrderOperationStatus;
 use App\Constants\OrderStatus;
 use App\Helpers\Common;
 use App\Helpers\QueryFilters;
+use App\Jobs\SyncAllOrderStatusJob;
 use App\Models\Catalog;
 use App\Models\CustomerAddress;
 use App\Models\LogisticCenter;
@@ -857,6 +858,7 @@ class ShipmentsController extends Controller
                         'message' => 'Order Cancelled Successfully',
                     ]);
                 } else {
+                    SyncAllOrderStatusJob::dispatch($orderOperation->order_id);
                     return response()->json([
                         'success' => false,
                         'message' => isset($response['message']) ? $response['message'] : 'Something went wrong with API. Please try again!'
