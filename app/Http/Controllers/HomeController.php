@@ -85,36 +85,40 @@ class HomeController extends Controller
         })->pluck('id');
         Log::info('Walmart store ids: ' . json_encode($walmart_store_ids));
 
-        $query = ListingItemLink::query()
+        $records = ListingItemLink::query()
+            ->with(['listing','listingItem'])
             ->join('listing_item', 'listing_item_link.item_id', '=', 'listing_item.id')
             ->join('listing', 'listing_item_link.listing_id', '=', 'listing.id')
             ->whereIn('listing.store_id', $walmart_store_ids)
-            ->where(function ($q){
-                $q->whereNull('listing_item.store_sku')
-                    ->orWhere('listing_item.store_sku','');
-            })
-            ->where('listing_item.status','<>',3)
-            ->where(function ($query) {
-                return $query
-                    ->where('listing_item.creation_retry_count', '<', 5)->orWhereNull('listing_item.creation_retry_count');
-            })
+            ->whereRaw("COALESCE(listing_item.store_sku, '') = ''")
+            ->whereIn('listing_item.status', [1,2])
+            ->whereRaw('(listing_item.creation_retry_count < 5 OR listing_item.creation_retry_count IS NULL)')
             ->whereIn('listing_item.sync_status', [
                 ListingSyncStatus::CreationError,
                 ListingSyncStatus::Synchronizing,
             ])
-            ->whereNotIn('listing.id', function ($subquery) use ($walmart_store_ids) {
-                return $subquery->select('listing_id')->from('listing_feeds')->whereIn('store_id', $walmart_store_ids)->whereIn('status', [
-                    FeedStatus::PROCESSING
-                ]);
+            ->whereNotExists(function ($subquery) use ($walmart_store_ids) {
+                $subquery->selectRaw(1)
+                    ->from('listing_feeds')
+                    ->whereColumn('listing_feeds.listing_id', 'listing.id')
+                    ->whereIn('store_id', $walmart_store_ids)
+                    ->where('status', FeedStatus::PROCESSING);
             })
-            ->orderBy('listing_item.created_at','asc');
-            //->get();
+            ->orderBy('listing_item.created_at','asc')
+            //->limit(5)
+            ->chunk(100, function ($listingItemLinks) {
+                foreach ($listingItemLinks as $listingItemLink) {
+                    Log::info('Syncing Walmart listing item: ' . $listingItemLink->item_id);
+                    //$this->syncListingItem($listingItemLink);
+                }
+            });
+
 
         //dd(DB::getQueryLog());
         //var_dump($query->toSql());die;
-        echo $query->toSql();die;
+        //echo $query->toSql();die;
         echo '<pre>';
-        print_r($query);
+        print_r($records);
         echo '</pre>';die;*/
 
         /*$stores = Store::with('storeType')->where('store_status','>',0)->get();
