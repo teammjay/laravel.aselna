@@ -31,6 +31,8 @@ class OrderStatus
     const Refund = 9;
     const Replaced = 10;
 
+    const CanceledRequested = 20;
+
     const names = [
         self::Pending => 'Pending',
         self::Ready => 'Ready',
@@ -42,6 +44,7 @@ class OrderStatus
         self::SynchronizatonFailed => 'Synchronizaton Failed',
         self::Refund => 'Refund',
         self::Replaced => 'Replaced',
+        self::CanceledRequested => 'Canceled Requested',
     ];
 
     public static function getOrderStatusName($orderStatusId)

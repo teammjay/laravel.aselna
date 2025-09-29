@@ -597,32 +597,57 @@ class OrderOperationUtility
                 $redirectUri = env('EBAY_REDIRECT_URI');
 
                 $authService = new EbayAuthService($clientId, $clientSecret, $redirectUri, $store->user_id);
-                $payload = [
-                    'cancelReason' => ($reason != '') ? $reason : 'BUYER_ASKED_CANCEL',
-                    'legacyOrderId' => $orderOperation->order->order_id,
-                ];
-                $response = $authService->cancelOrder($payload);
+                $createdCancellation = $authService->checkCancellation($orderOperation->order->order_id);
+                if(isset($createdCancellation) && !isset($createdCancellation['error'])) {
+                    $cancellation = $createdCancellation['cancellations'][0];
 
-                if (!isset($response['cancelId'])) {
+                    if ($cancellation['cancelStatus'] == 'CANCEL_REQUESTED'
+                        && $cancellation['cancelState'] == 'APPROVAL_PENDING') {
+                        $response = $authService->approveCancellation($cancellation['cancelId']);
 
-                    if (isset($orderOperation->order->orderItem)) {
-                        foreach ($orderOperation->order->orderItem as $o_item) {
-                            $item_qty = $o_item->quantity;
-                            $orderItem = OrderItem::findOrFail($o_item->id);
-                            $orderItem->update(['canceled_quantity' => $item_qty]);
+                        if (isset($orderOperation->order->orderItem)) {
+                            foreach ($orderOperation->order->orderItem as $o_item) {
+                                $item_qty = $o_item->quantity;
+                                $orderItem = OrderItem::findOrFail($o_item->id);
+                                $orderItem->update(['canceled_quantity' => $item_qty]);
+
+                                $data['status'] = true;
+                                return $data;
+                            }
+                        } else {
+                            $data['status'] = false;
+                            $data['message'] = 'Cancellation code Need to be implemented for this type of data';
+                            return $data;
                         }
                     }
-                    Log::info('eBay cancer order error:' . json_encode($response['warnings']));
-                    $data['message'] = json_encode($response['warnings']);
-                    $data['status'] = false;
-                    return $data;
-                    //return false;
                 } else {
-                    //echo "Order canceled successfully!";
-                    Log::info('Shopify cancer order successful:');
-                    $data['status'] = true;
-                    return $data;
-                    //return true;
+                    $payload = [
+                        'cancelReason' => ($reason != '') ? $reason : 'BUYER_ASKED_CANCEL',
+                        'legacyOrderId' => $orderOperation->order->order_id,
+                    ];
+                    $response = $authService->cancelOrder($payload);
+
+                    if (!isset($response['cancelId'])) {
+
+                        if (isset($orderOperation->order->orderItem)) {
+                            foreach ($orderOperation->order->orderItem as $o_item) {
+                                $item_qty = $o_item->quantity;
+                                $orderItem = OrderItem::findOrFail($o_item->id);
+                                $orderItem->update(['canceled_quantity' => $item_qty]);
+                            }
+                        }
+                        Log::info('eBay cancer order error:' . json_encode($response['warnings']));
+                        $data['message'] = json_encode($response['warnings']);
+                        $data['status'] = false;
+                        return $data;
+                        //return false;
+                    } else {
+                        //echo "Order canceled successfully!";
+                        Log::info('Shopify cancer order successful:');
+                        $data['status'] = true;
+                        return $data;
+                        //return true;
+                    }
                 }
 
                 break;

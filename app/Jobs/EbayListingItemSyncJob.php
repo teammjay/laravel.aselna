@@ -57,7 +57,7 @@ class EbayListingItemSyncJob implements ShouldQueue
                 ->where('listing_item.status','<>',ListingStatus::Deleted)
                 ->where(function ($query) {
                     return $query
-                        ->where('listing_item.creation_retry_count', '<', 3)->orWhereNull('listing_item.creation_retry_count');
+                        ->where('listing_item.creation_retry_count', '<', 5)->orWhereNull('listing_item.creation_retry_count');
                 })
                 ->whereNotIn('listing_item.sync_status', [
                     ListingSyncStatus::CreationError,
