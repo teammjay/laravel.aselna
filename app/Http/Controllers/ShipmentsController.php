@@ -858,7 +858,6 @@ class ShipmentsController extends Controller
                         'message' => 'Order Cancelled Successfully',
                     ]);
                 } else {
-                    SyncAllOrderStatusJob::dispatch($orderOperation->order_id);
                     return response()->json([
                         'success' => false,
                         'message' => isset($response['message']) ? $response['message'] : 'Something went wrong with API. Please try again!'
