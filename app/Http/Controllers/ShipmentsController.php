@@ -6,6 +6,7 @@ use App\Constants\OrderOperationStatus;
 use App\Constants\OrderStatus;
 use App\Helpers\Common;
 use App\Helpers\QueryFilters;
+use App\Jobs\SyncAllOrderStatusJob;
 use App\Models\Catalog;
 use App\Models\CustomerAddress;
 use App\Models\LogisticCenter;

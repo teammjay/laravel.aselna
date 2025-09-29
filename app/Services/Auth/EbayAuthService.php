@@ -550,14 +550,13 @@ class EbayAuthService
 
     public function cancelOrder($data)
     {
-
         try {
             $accessToken = $this->refreshToken();
 
             $response = $this->client->post("/post-order/v2/cancellation", [
                 'verify' => false,
                 'headers' => [
-                    'Authorization' => 'Bearer ' . $accessToken,
+                    'Authorization' => 'IAF ' . $accessToken,
                     'Content-Type'  => 'application/json',
                 ],
                 'json' => $data,
@@ -711,6 +710,59 @@ class EbayAuthService
             ]);
 
             Log::info('Refund Response: ' . $response->getBody());
+
+            return json_decode($response->getBody(), true);
+
+        } catch (RequestException $e) {
+            if ($e->hasResponse()) {
+                $error = json_decode($e->getResponse()->getBody(), true);
+                return ['error' => $error];
+            }
+            return ['error' => $e->getMessage()];
+        }
+    }
+
+    public function checkCancellation($order_id)
+    {
+        try {
+
+            $accessToken = $this->refreshToken();
+
+            $response = $this->client->get("/post-order/v2/cancellation/search?legacy_order_id=" . $order_id, [
+                'verify' => false,
+                'headers' => [
+                    'Authorization' => 'IAF ' . $accessToken,
+                    'Content-Type'  => 'application/json',
+                ]
+            ]);
+
+            Log::info('Check Cancellation Response: ' . $response->getBody());
+
+            return json_decode($response->getBody(), true);
+
+        } catch (RequestException $e) {
+            if ($e->hasResponse()) {
+                $error = json_decode($e->getResponse()->getBody(), true);
+                return ['error' => $error];
+            }
+            return ['error' => $e->getMessage()];
+        }
+    }
+
+    public function approveCancellation(mixed $cancelId)
+    {
+        try {
+            $accessToken = $this->refreshToken();
+
+            $response = $this->client->post("/post-order/v2/cancellation/{$cancelId}/approve", [
+                'verify' => false,
+                'headers' => [
+                    'Authorization' => 'IAF ' . $accessToken,
+                    'Content-Type'  => 'application/json',
+                ]
+            ]);
+
+            Log::info('Approve Cancellation Response: ' . $response->getBody());
 
             return json_decode($response->getBody(), true);
 
