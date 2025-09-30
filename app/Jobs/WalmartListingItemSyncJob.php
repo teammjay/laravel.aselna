@@ -18,6 +18,8 @@ class WalmartListingItemSyncJob implements ShouldQueue
 {
     use Queueable;
 
+    public $timeout = 3000;
+
     /**
      * Create a new job instance.
      */
@@ -101,6 +103,7 @@ class WalmartListingItemSyncJob implements ShouldQueue
     {
         $store = $listingItemLink->listing->store;
         $itemDetail = $listingItemLink->listingItem;
+        Log::info("Store Name: " . $store->name);
         Log::info("Listing Item Sku " . $itemDetail->store_sku);
         Log::info("Listing Item UPC " . $itemDetail->upc);
         if($itemDetail->store_sku != null) return;
