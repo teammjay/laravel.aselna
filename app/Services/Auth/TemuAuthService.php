@@ -165,4 +165,34 @@ class TemuAuthService
 
         return json_decode($res->getBody(), true);
     }
+
+    public function getOrders(string $filterStartDateFormatted, null $param)
+    {
+        $client = new Client();
+        $headers = [
+            'content-type' => 'application/json',
+        ];
+
+        $categoryType = 'bg.order.list.v2.get';
+        $timestamp = time();
+
+        $params = [
+            'type' => $categoryType,
+            'app_key' => $this->appKey,
+            'timestamp' => $timestamp,
+            'data_type' => 'JSON',
+            'access_token' => $this->accessToken,
+        ];
+
+        if (isset($cursor)) {
+
+        } else {
+
+        }
+
+        $request = new Request('POST', $this->endpoint, $headers, json_encode($params));
+        $res = $client->sendAsync($request)->wait();
+
+        return json_decode($res->getBody(), true);
+    }
 }

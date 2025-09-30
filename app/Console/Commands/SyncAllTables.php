@@ -23,6 +23,7 @@ use App\Jobs\FetchEmailMessagesJob;
 use App\Jobs\FetchMagentoCategoriesJob;
 use App\Jobs\FetchMagentoProductsJob;
 use App\Jobs\FetchShopifyProductsJob;
+use App\Jobs\FetchTemuOrders;
 use App\Jobs\FetchWalmartOrdersJob;
 use App\Jobs\FileSystemSyncJob;
 use App\Jobs\GenerationTypeAndTemplateSync;
@@ -72,6 +73,7 @@ use App\Jobs\StoreSyncJob;
 use App\Jobs\StoreTypeListingSyncJob;
 use App\Jobs\StoreTypeSyncJob;
 use App\Jobs\SubmitShopifyProductsJob;
+use App\Jobs\SyncAllOrderStatusJob;
 use App\Jobs\synccategorytospecification;
 use App\Jobs\SystemPrinterSyncJob;
 use App\Jobs\UPCGenerateJob;
@@ -200,7 +202,9 @@ class SyncAllTables extends Command
 //        );
 //        ShopifyIndvPagesSyncJob::dispatch('47338682-e00d-4ab2-9db6-76343bb96162', WebStorePageType::BRAND_DEVICE_PRODUCT_TYPES);
 //        DevicesSyncJob::dispatch();
-        DeviceInterfaces::dispatch();
+//        DeviceInterfaces::dispatch();
+//        SyncAllOrderStatusJob::dispatch();
+        FetchTemuOrders::dispatch();
 
         $transactionIds = [
 ////            '9400150105798006163885',
