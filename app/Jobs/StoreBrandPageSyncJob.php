@@ -338,7 +338,7 @@ class StoreBrandPageSyncJob implements ShouldQueue
                         $handle = $this->generateShopifyHandle($title);
                     }
 
-                    $interfaces = Interfaces::where('product_type_id', $productType->id)->get();
+                    $interfaces = Interfaces::where('product_type_id', $productType->id)->get(60);
                     foreach ($interfaces as $interface) {
                         $collectionData['collection']['ruleSet']['rules'][] = [
                             'column' => 'TAG',
