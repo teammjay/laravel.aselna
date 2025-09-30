@@ -348,6 +348,7 @@ class TemuService implements MarketplaceServiceInterface
 
             $last_synchronization = OrderSynchronization::where('store_id', $store->id)->where('synchronization_type', OrderSyncronisationType::ORDER)->orderBy('last_order_update_date', 'desc')->orderBy('updated_at', 'desc')->first();
             $filterStartDate = OrderUtility::getLastSyncDate($store->id, OrderSyncronisationType::ORDER);
+            Log::info('Temu Order Last Sync Date: ' . $filterStartDate);
 
             $filterStartDateFormatted = date('Y-m-d\TH:i:s\Z', strtotime($filterStartDate));
             if (env('APP_ENV') !== 'local' && (!isset($store->user_id))) {
@@ -374,6 +375,7 @@ class TemuService implements MarketplaceServiceInterface
             $order_synchronization = OrderSynchronization::create($synchronizeArr);
 
             if (isset($last_synchronization) && strtotime($last_synchronization->last_order_update_date) > strtotime($last_order_update_date)) {
+                Log::info('Using last order update date from last synchronization :: ' . $last_synchronization->last_order_update_date);
                 $last_order_update_date = date('Y-m-d H:i:s', strtotime($last_synchronization->last_order_update_date));
             }
             $order_synchronization->update(['number_of_items' => $noOfOrder, 'last_order_update_date' => $last_order_update_date]);

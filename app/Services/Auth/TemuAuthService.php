@@ -166,7 +166,7 @@ class TemuAuthService
         return json_decode($res->getBody(), true);
     }
 
-    public function getOrders(string $filterStartDateFormatted, null $param)
+    public function getOrders(string $filterStartDateFormatted, $cursor)
     {
         $client = new Client();
         $headers = [
@@ -187,9 +187,12 @@ class TemuAuthService
         if (isset($cursor)) {
 
         } else {
-
+            $params['createAfter'] = $filterStartDateFormatted;
         }
 
+        $params['sign'] = $this->generateSign($params, $this->appSecret);
+
+        Log::info('Request Params: ' . json_encode($params));
         $request = new Request('POST', $this->endpoint, $headers, json_encode($params));
         $res = $client->sendAsync($request)->wait();
 
