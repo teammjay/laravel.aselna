@@ -338,14 +338,13 @@ class StoreBrandPageSyncJob implements ShouldQueue
                         $handle = $this->generateShopifyHandle($title);
                     }
 
-                    $interfaces = Interfaces::where('product_type_id', $productType->id)->get();
-                    foreach ($interfaces as $interface) {
-                        $collectionData['collection']['ruleSet']['rules'][] = [
-                            'column' => 'TAG',
-                            'relation' => 'EQUALS',
-                            'condition' => $interface->id,
-                        ];
-                    }
+                    $collectionData['collection']['ruleSet']['rules'][] = [
+                        'column' => 'TAG',
+                        'relation' => 'EQUALS',
+                        'condition' => $productType->id,
+                    ];
+
+                    $collection = null;
 
                     if ($alreadyCollection = $this->shopifyAuthService->getCollectionByHandle($handle)) {
                         Log::info('Collection already exists, updating collection', ['handle' => $handle]);
