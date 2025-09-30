@@ -52,6 +52,7 @@ class WalmartListingItemSyncJob implements ShouldQueue
             ->whereIn('listing_item.sync_status', [
                 ListingSyncStatus::CreationError,
                 ListingSyncStatus::Synchronizing,
+                ListingSyncStatus::Unsynchronize,
             ])
             ->whereNotExists(function ($subquery) use ($walmart_store_ids) {
                 $subquery->selectRaw(1)
