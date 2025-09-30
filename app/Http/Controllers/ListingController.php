@@ -242,6 +242,9 @@ class ListingController extends Controller
         // Filter by upc
         QueryFilters::applyFilter($query, $request, 'listing_item.store_sku', 'store_sku_operator', 'store_sku');
 
+        // Filter by sync_status
+        QueryFilters::applyFilter($query, $request, 'listing_item.sync_status', 'sync_status_operator', 'sync_status');
+
 
         // Filter by device
         if ($request->has('device') && $request->device != '') {

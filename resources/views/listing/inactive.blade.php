@@ -305,7 +305,7 @@
                                 </select>
                             </div>
                             <div class="col-6">
-                                <input type="text" name="sync_message" id="sync_message">
+                                <input type="text" class="form-control" name="sync_message" id="sync_message">
                             </div>
                         </div>
                     </div>
@@ -543,7 +543,22 @@
                             </div>
                             <div class="col-6">
                                 <select class="form-control" id="sync_status" name="sync_status">
-                                    <option></option>
+                                    <option value=""></option>
+                                    <option value="0">Synchronizing</option>
+                                    <option value="1">Unsynchronize</option>
+                                    <option value="2">SynchronizingInventory</option>
+                                    <option value="3">SynchronizingPrice</option>
+                                    <option value="4">PriceError</option>
+                                    <option value="5">InventoryError</option>
+                                    <option value="6">Synchronized</option>
+                                    <option value="7">CreationError</option>
+                                    <option value="8">UpdateError</option>
+                                    <option value="9">SynchronizingImage</option>
+                                    <option value="10">SynchronizingRelationship</option>
+                                    <option value="11">ImageError</option>
+                                    <option value="12">RelationshipError</option>
+                                    <option value="13">DeleteError</option>
+                                    <option value="14">OrderOperationError</option>
                                 </select>
                             </div>
                         </div>
