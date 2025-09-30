@@ -137,7 +137,7 @@ class DevicesSyncJob implements ShouldQueue
 //            'thumbnail_image' => $device->thumbnail_id
         ];
 
-        if (isset($createdDevice) && $createdDevice->image) {
+        if (isset($createdDevice) && !isset($createdDevice->image)) {
             $Image = DB::connection('easyesale_db_wt_prefix')->table('sys_file')->where('id', $device->image_id)->first();
             try {
                 $image_name = strtolower($Image->name);
@@ -153,7 +153,7 @@ class DevicesSyncJob implements ShouldQueue
             }
         }
 
-        if (isset($createdDevice) && $createdDevice->thumbnail_image) {
+        if (isset($createdDevice) && !isset($createdDevice->thumbnail_image)) {
             $Thumbnail = DB::connection('easyesale_db_wt_prefix')->table('sys_file')->where('id', $device->thumbnail_id)->first();
             try {
                 $thumbnail_name = strtolower($Thumbnail->name);

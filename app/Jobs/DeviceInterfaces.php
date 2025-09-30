@@ -30,12 +30,12 @@ class DeviceInterfaces implements ShouldQueue
      */
     public function handle(): void
     {
-//        DB::connection('easyesale_db')->table('cea_device_interface')->orderBy('id')
-//            ->chunk(1000, function ($deviceInterfaces) {
-//                foreach ($deviceInterfaces as $deviceInterface) {
-//                    $this->createDeviceInetrface($deviceInterface);
-//                }
-//            });
+        DB::connection('easyesale_db')->table('cea_device_interface')->orderBy('id')
+            ->chunk(1000, function ($deviceInterfaces) {
+                foreach ($deviceInterfaces as $deviceInterface) {
+                    $this->createDeviceInetrface($deviceInterface);
+                }
+            });
 
         DeviceInterface::orderBy('id')->chunk(1000, function ($deviceInterfaces) {
             $this->checkAndDelete($deviceInterfaces);
