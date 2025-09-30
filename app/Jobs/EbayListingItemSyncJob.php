@@ -62,6 +62,7 @@ class EbayListingItemSyncJob implements ShouldQueue
                 ->whereNotIn('listing_item.sync_status', [
                     ListingSyncStatus::CreationError,
                     ListingSyncStatus::Synchronizing,
+                    ListingSyncStatus::Unsynchronize,
                 ])
                 ->orderBy('listing_item.created_at','asc')
                 ->limit(100)
