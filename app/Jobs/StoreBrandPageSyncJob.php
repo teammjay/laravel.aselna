@@ -347,6 +347,8 @@ class StoreBrandPageSyncJob implements ShouldQueue
                         ];
                     }
 
+                    $collection = null;
+
                     if ($alreadyCollection = $this->shopifyAuthService->getCollectionByHandle($handle)) {
                         Log::info('Collection already exists, updating collection', ['handle' => $handle]);
                         $collectionData['collection']['id'] = $alreadyCollection['id'];
