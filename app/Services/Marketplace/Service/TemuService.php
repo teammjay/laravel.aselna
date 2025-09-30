@@ -3,14 +3,17 @@
 namespace App\Services\Marketplace\Service;
 
 use App\Constants\FeedTypes;
+use App\Constants\OrderSyncronisationType;
 use App\Constants\WeightUnit;
 use App\Models\Listing;
 use App\Models\ListingFeed;
 use App\Models\ListingItemLink;
 use App\Models\ListingItemProductImage;
+use App\Models\OrderSynchronization;
 use App\Services\Auth\TemuAuthService;
 use App\Services\Marketplace\Contracts\MarketplaceServiceInterface;
 use App\Utils\FileUtility;
+use App\Utils\order\OrderUtility;
 use Illuminate\Support\Facades\Log;
 
 class TemuService implements MarketplaceServiceInterface
@@ -117,12 +120,11 @@ class TemuService implements MarketplaceServiceInterface
             Log::info('Properties completed');
 
             $TemplateSpecProperties = $template['result']['templateInfo']['goodsSpecProperties'] ?? [];
-            $specDetails = $this->getSpecDetails($TemplateSpecProperties,$productData);
-            $properties = array_merge($properties,$specDetails['properties']);
+            $specDetails = $this->getSpecDetails($TemplateSpecProperties, $productData);
+            $properties = array_merge($properties, $specDetails['properties']);
 
             $specIdList = $specDetails['specIdList'];
             Log::info('Properties :: ' . json_encode($properties));
-
 
 
             $ShippingTemplates = $temuAuthService->geShippingTemplate();
@@ -138,7 +140,7 @@ class TemuService implements MarketplaceServiceInterface
                 $imagesUrl = $fileSystem->url_base_path . $image->path;
                 $ImageResponse = $temuAuthService->uploadImage($imagesUrl);
                 Log::info('Response Image :: ' . json_encode($ImageResponse));
-                if(isset($ImageResponse['result']['url'])){
+                if (isset($ImageResponse['result']['url'])) {
                     $imagesPath[] = $ImageResponse['result']['url'];
                 }
             }
@@ -190,7 +192,7 @@ class TemuService implements MarketplaceServiceInterface
             $jsonFeed[] = $feedItem;
         }
 
-        Log::info('Json Feed :: '. json_encode($jsonFeed));
+        Log::info('Json Feed :: ' . json_encode($jsonFeed));
 
         FileUtility::saveToFile(public_path('feeds/temu/' . $listingId . '.json'), json_encode($jsonFeed));
     }
@@ -226,17 +228,17 @@ class TemuService implements MarketplaceServiceInterface
                     $selectedValues = is_array($valueFromDb) ? $valueFromDb : [$valueFromDb];
 
                     // Create a lookup map for faster searching: ['Cotton' => ['vid' => 49, ...]]
-                    $optionsMap = array_change_key_case(array_column($attribute['values'], null, 'value'),CASE_LOWER);
+                    $optionsMap = array_change_key_case(array_column($attribute['values'], null, 'value'), CASE_LOWER);
 
                     foreach ($selectedValues as $selectedValue) {
                         if (isset($optionsMap[$selectedValue])) {
                             $chosenOption = $optionsMap[$selectedValue];
                             $finalPayload[] = [
                                 'templatePid' => $attribute['templatePid'],
-                                'refPid'      => $attribute['refPid'],
-                                'pid'         => $attribute['pid'],
-                                'vid'         => $chosenOption['vid'],
-                                'value'       => $chosenOption['value'],
+                                'refPid' => $attribute['refPid'],
+                                'pid' => $attribute['pid'],
+                                'vid' => $chosenOption['vid'],
+                                'value' => $chosenOption['value'],
                             ];
                         }
                     }
@@ -245,10 +247,10 @@ class TemuService implements MarketplaceServiceInterface
                 case 0:
                     $payloadObject = [
                         'templatePid' => $attribute['templatePid'],
-                        'refPid'      => $attribute['refPid'],
-                        'pid'         => $attribute['pid'],
-                        'vid'         => 0, // 'vid' is 0 for input types as per docs.
-                        'value'       => (string) $valueFromDb,
+                        'refPid' => $attribute['refPid'],
+                        'pid' => $attribute['pid'],
+                        'vid' => 0, // 'vid' is 0 for input types as per docs.
+                        'value' => (string)$valueFromDb,
                     ];
 
                     // Check if a unit is defined and add it to the payload.
@@ -300,7 +302,7 @@ class TemuService implements MarketplaceServiceInterface
                     $selectedValues = is_array($valueFromDb) ? $valueFromDb : [$valueFromDb];
 
                     // Create a lookup map for faster searching: ['Cotton' => ['vid' => 49, ...]]
-                    $optionsMap = array_change_key_case(array_column($attribute['values'], null, 'value'),CASE_LOWER);
+                    $optionsMap = array_change_key_case(array_column($attribute['values'], null, 'value'), CASE_LOWER);
 
                     foreach ($selectedValues as $selectedValue) {
                         Log::info('Searching :: ' . $selectedValue);
@@ -308,10 +310,10 @@ class TemuService implements MarketplaceServiceInterface
                             $chosenOption = $optionsMap[$selectedValue];
                             $finalPayload['properties'][] = [
                                 'templatePid' => $attribute['templatePid'],
-                                'refPid'      => $attribute['refPid'],
-                                'pid'         => $attribute['pid'],
-                                'vid'         => $chosenOption['vid'],
-                                'specId'       => $chosenOption['specId'],
+                                'refPid' => $attribute['refPid'],
+                                'pid' => $attribute['pid'],
+                                'vid' => $chosenOption['vid'],
+                                'specId' => $chosenOption['specId'],
                             ];
                             $finalPayload['specIdList'][] = $chosenOption['specId'];
                         }
@@ -337,5 +339,46 @@ class TemuService implements MarketplaceServiceInterface
         $productData['Compatible Model'] = $compatibleModels;
 
         return $productData;
+    }
+
+    public function getOrders(mixed $store)
+    {
+        try {
+            $temuAuthService = new TemuAuthService();
+
+            $last_synchronization = OrderSynchronization::where('store_id', $store->id)->where('synchronization_type', OrderSyncronisationType::ORDER)->orderBy('last_order_update_date', 'desc')->orderBy('updated_at', 'desc')->first();
+            $filterStartDate = OrderUtility::getLastSyncDate($store->id, OrderSyncronisationType::ORDER);
+
+            $filterStartDateFormatted = date('Y-m-d\TH:i:s\Z', strtotime($filterStartDate));
+            if (env('APP_ENV') !== 'local' && (!isset($store->user_id))) {
+                return null;
+            }
+
+            $orders = $temuAuthService->getOrders($filterStartDateFormatted, $last_synchronization->cursor ?? null);
+
+            $last_order_update_date = null;
+            $noOfOrder = 0;
+            $nextCursor = $orders['next'] ?? null;
+
+
+            $created_by = auth()->user()->name ?? 'admin';
+            $synchronizeArr = [
+                'store_id' => $store->id,
+                'synchronization_type' => OrderSyncronisationType::ORDER,
+                'filter_start_date' => isset($nextCursor) && isset($last_synchronization) ? $last_synchronization->filter_start_date : $filterStartDate,
+                'filter_end_date' => isset($nextCursor) && isset($last_synchronization) ? $last_synchronization->filter_end_date : date('Y-m-d H:i:s'),
+                'created_by' => $created_by,
+                'cursor' => $nextCursor
+            ];
+            //Log::info('Order Synchronization: ' . json_encode($synchronizeArr));
+            $order_synchronization = OrderSynchronization::create($synchronizeArr);
+
+            if (isset($last_synchronization) && strtotime($last_synchronization->last_order_update_date) > strtotime($last_order_update_date)) {
+                $last_order_update_date = date('Y-m-d H:i:s', strtotime($last_synchronization->last_order_update_date));
+            }
+            $order_synchronization->update(['number_of_items' => $noOfOrder, 'last_order_update_date' => $last_order_update_date]);
+        } catch (\Exception $e) {
+            Log::info('Ebay order error : ' . $e->getMessage());
+        }
     }
 }
