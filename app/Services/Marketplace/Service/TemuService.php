@@ -350,16 +350,15 @@ class TemuService implements MarketplaceServiceInterface
             $filterStartDate = OrderUtility::getLastSyncDate($store->id, OrderSyncronisationType::ORDER);
             Log::info('Temu Order Last Sync Date: ' . $filterStartDate);
 
-            $filterStartDateFormatted = date('Y-m-d\TH:i:s\Z', strtotime($filterStartDate));
-            if (env('APP_ENV') !== 'local' && (!isset($store->user_id))) {
-                return null;
-            }
+            $filterStartDateFormatted = strtotime($filterStartDate);
 
             $orders = $temuAuthService->getOrders($filterStartDateFormatted, $last_synchronization->cursor ?? null);
 
             $last_order_update_date = null;
             $noOfOrder = 0;
             $nextCursor = $orders['next'] ?? null;
+
+            Log::info('Temu Orders Response: ' . json_encode($orders));
 
 
             $created_by = auth()->user()->name ?? 'admin';
