@@ -603,6 +603,7 @@ class OrderOperationUtility
 
                     if ($cancellation['cancelStatus'] == 'CANCEL_REQUESTED'
                         && $cancellation['cancelState'] == 'APPROVAL_PENDING') {
+                        Log::info('Cancellation :: ' . json_encode($cancellation));
                         $response = $authService->approveCancellation($cancellation['cancelId']);
 
                         if (isset($orderOperation->order->orderItem)) {
