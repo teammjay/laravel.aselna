@@ -17,16 +17,9 @@ use App\Jobs\FetchEmailMessagesJob;
 use App\Jobs\FetchResultFeedAsync;
 use App\Jobs\FetchShopifyOrders;
 use App\Jobs\FetchWalmartOrdersJob;
-use App\Jobs\InterfaceSyncJob;
-use App\Jobs\ProductImagesSyncJob;
-use App\Jobs\ProductInterfaces;
-use App\Jobs\ProductSyncJob;
-use App\Jobs\ShopifyCollectionSyncJob;
 use App\Jobs\SyncAllOrderStatusJob;
 use App\Jobs\SubmitShopifyProductsJob;
 use App\Models\OrderSynchronization;
-use Illuminate\Foundation\Inspiring;
-use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
 
 
@@ -48,9 +41,8 @@ Schedule::job(new FetchShopifyOrders())->hourly();
 Schedule::job(new SyncAllOrderStatusJob())->hourly();
 
 // I want to run this at every 45 Minute of the hour
-
-Schedule::job(new SendNotificationEmailSyncFailJob(2))->everyThirtyMinutes();
-Schedule::job(new SendNotificationOrderSyncFailJob(2))->hourly();
+Schedule::job(new SendNotificationEmailSyncFailJob(2))->cron('4,34 * * * *');
+Schedule::job(new SendNotificationOrderSyncFailJob(2))->cron('4,34 * * * *');
 
 // Email Message fetching
 Schedule::job(FetchEmailMessagesJob::class)->everyTenMinutes();
