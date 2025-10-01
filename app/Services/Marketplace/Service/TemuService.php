@@ -328,7 +328,7 @@ class TemuService implements MarketplaceServiceInterface
     private function getProductData($listingItem)
     {
         $productData = [
-            'Brand' => $listingItem->brand->name ?? 'apple',
+//            'Brand' => $listingItem->brand->name ?? 'apple',
             'Color' => 'black',
         ];
         $compatibleModels = [];
