@@ -173,7 +173,7 @@ class TemuService implements MarketplaceServiceInterface
                             'currency' => 'USD'
                         ],
                         'listPrice' => [
-                            'amount' => floatval($price),
+                            'amount' => ''. floatval($price),
                             'currency' => 'USD'
                         ],
                         'listPriceType' => 0
