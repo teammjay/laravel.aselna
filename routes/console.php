@@ -17,16 +17,9 @@ use App\Jobs\FetchEmailMessagesJob;
 use App\Jobs\FetchResultFeedAsync;
 use App\Jobs\FetchShopifyOrders;
 use App\Jobs\FetchWalmartOrdersJob;
-use App\Jobs\InterfaceSyncJob;
-use App\Jobs\ProductImagesSyncJob;
-use App\Jobs\ProductInterfaces;
-use App\Jobs\ProductSyncJob;
-use App\Jobs\ShopifyCollectionSyncJob;
 use App\Jobs\SyncAllOrderStatusJob;
 use App\Jobs\SubmitShopifyProductsJob;
 use App\Models\OrderSynchronization;
-use Illuminate\Foundation\Inspiring;
-use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
 
 
