@@ -71,7 +71,7 @@ class ShipmentsController extends Controller
             'shippingPackage:id,name',
         ])->select('order_operation.*', 'order_operation.id as oid');
 
-        $query->where('order_operation.status', 0);
+        $query->whereIn('order_operation.status', [OrderOperationStatus::Created, OrderOperationStatus::CanceledRequested]);
         $query->where('order_operation.is_merged', '=', false);
 
         // Filter by store
