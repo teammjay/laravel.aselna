@@ -48,9 +48,8 @@ Schedule::job(new FetchShopifyOrders())->hourly();
 Schedule::job(new SyncAllOrderStatusJob())->hourly();
 
 // I want to run this at every 45 Minute of the hour
-
-Schedule::job(new SendNotificationEmailSyncFailJob(2))->everyThirtyMinutes();
-Schedule::job(new SendNotificationOrderSyncFailJob(2))->hourly();
+Schedule::job(new SendNotificationEmailSyncFailJob(2))->cron('4,34 * * * *');
+Schedule::job(new SendNotificationOrderSyncFailJob(2))->cron('4,34 * * * *');
 
 // Email Message fetching
 Schedule::job(FetchEmailMessagesJob::class)->everyTenMinutes();
