@@ -416,8 +416,12 @@ class OrderUtility
                 break;
         }
 
-        if (isset($sorder['cancelStatus']) && $sorder['cancelStatus']['cancelState'] != 'NONE_REQUESTED') {
+        if (isset($sorder['cancelStatus']) && $sorder['cancelStatus']['cancelState'] == 'CANCELED') {
             $operationstatus = OrderOperationStatus::Canceled;
+            $order->update(['order_status' => OrderStatus::Canceled]);
+        } else if (isset($sorder['cancelStatus']) && $sorder['cancelStatus']['cancelState'] == 'IN_PROGRESS') {
+            $operationstatus = OrderOperationStatus::CanceledRequested;
+            $order->update(['order_status' => OrderStatus::CanceledRequested]);
         }
 
         Log::info("Order Operation Status: " . $operationstatus);

@@ -173,7 +173,7 @@ class TemuService implements MarketplaceServiceInterface
                             'currency' => 'USD'
                         ],
                         'listPrice' => [
-                            'amount' => floatval($price),
+                            'amount' => '' . floatval($price),
                             'currency' => 'USD'
                         ],
                         'listPriceType' => 0
@@ -182,7 +182,7 @@ class TemuService implements MarketplaceServiceInterface
                     'specIdList' => $specIdList,
                     'outSkuSn' => $item->sku,
                     'volumeUnit' => 'in',
-                    'weight' => '' . WeightUnit::convert($productObj->product_weight_unit ?? WeightUnit::OZ, WeightUnit::LB, $productObj->product_weight),
+                    'weight' => '' . number_format(WeightUnit::convert($productObj->product_weight_unit ?? WeightUnit::OZ, WeightUnit::LB, $productObj->product_weight), 2, '.', ''),
                     'weightUnit' => 'lb',
                     'width' => '' . $productObj->package_dimensions_width,
                 ]
