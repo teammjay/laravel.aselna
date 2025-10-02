@@ -136,8 +136,8 @@ class SendNotificationEmailSyncFailJob implements ShouldQueue
 
             Mail::mailer('custom_smtp')->raw($content,
                 function ($message) use ($store, $sendTo, $cc_emails) {
-                    $message->to($cc_emails)
-                        //->cc($cc_emails)
+                    $message->to($sendTo)
+                        ->cc($cc_emails)
                         ->subject("Store Email Sync Issue Alert : {$store->name} - {$store->storeType->name}");
                 }
             );
