@@ -122,6 +122,7 @@ class ListingUtility
                 "magento" => "https://" . $product->store_sku . "/product/" . $product->store_sku,
                 "walmart" => "https://www.walmart.com/ip/" . $product->store_sku,
                 "newegg" => "https://www.newegg.com/p/" . $product->store_sku,
+                "temu" => "https://www.temu.com/goods.html?goods_id=".$product->store_sku,
                 default => "",
             };
         } else {
@@ -141,6 +142,7 @@ class ListingUtility
                 "magento" => $site_url . "/product/" . $store_sku,
                 "walmart" => "https://www.walmart.com/ip/" . $store_sku,
                 "newegg" => "https://www.newegg.com/p/" . $store_sku,
+                "temu" => "https://www.temu.com/goods.html?goods_id=".$store_sku,
                 default => "",
             };
         } else {
