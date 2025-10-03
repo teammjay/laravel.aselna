@@ -125,9 +125,11 @@ class DeviceController extends Controller
         $brands = Brand::all();
         $carriers = Carrier::all();
         $interfaces = Interfaces::all();
+        $deviceCarriers = [];
+        $deviceInterfaces = [];
 
 
-        return view('device.add', compact('deviceTypes', 'deviceSubTypes', 'deviceSeries', 'deviceRatings', 'deviceScreens', 'brands', 'carriers', 'interfaces'));
+        return view('device.add', compact('deviceTypes', 'deviceSubTypes', 'deviceSeries', 'deviceRatings', 'deviceScreens', 'brands', 'carriers', 'interfaces','deviceCarriers','deviceInterfaces'));
     }
 
     public function store(DeviceRequest $request)

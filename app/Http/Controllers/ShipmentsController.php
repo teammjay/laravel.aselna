@@ -1091,7 +1091,11 @@ class ShipmentsController extends Controller
                         $orderOperationItem->update($itemData);
 
                         $sku = preg_split('/[_-]/', $skus[$key])[0];
-                        $catalog = Catalog::where('product_sku', $sku)->first();
+                        $updateRecord['items'][] = [
+                            'sku' => $sku,
+                            'quantity' => $quantities[$key],
+                        ];
+                        $catalog = Catalog::where('product_sku', $sku)->where('product_status','active')->first();
                         if($catalog) {
                             $order_item_id = $orderOperationItem->order_item_id;
                             $order_item = OrderItem::findOrFail($order_item_id);
@@ -1099,9 +1103,21 @@ class ShipmentsController extends Controller
                         }
                     }
                 }
+
+                $norderOperation = OrderOperation::with([
+                    'carrierService:id,name,shipping_carrier_id',
+                    'carrierService.ShippingCarrier',
+                    'store:id,name,store_type_id',
+                    'shippingPackage:id,name'])->where('id',$order_operation_id)->first();
+
+                $updateRecord['shipping_carrier'] = $norderOperation->carrierService->name ?? null;
+                $updateRecord['carrier_service'] = isset($norderOperation->carrierService) ? $norderOperation->carrierService->ShippingCarrier->name . ' ' . $norderOperation->carrierService->name : null;
+                $updateRecord['shipping_package'] = $norderOperation->shippingPackage->name ?? null;
+                $updateRecord['id'] = $order_operation_id;
             }
             return response()->json([
-                'success' => true
+                'success' => true,
+                'operation' => $updateRecord
             ]);
         }
         return response()->json([
