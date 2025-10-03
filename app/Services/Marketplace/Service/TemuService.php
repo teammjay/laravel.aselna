@@ -2,11 +2,13 @@
 
 namespace App\Services\Marketplace\Service;
 
+use App\Constants\FeedStatus;
 use App\Constants\FeedTypes;
 use App\Constants\OrderSyncronisationType;
 use App\Constants\WeightUnit;
 use App\Models\Listing;
 use App\Models\ListingFeed;
+use App\Models\ListingItem;
 use App\Models\ListingItemLink;
 use App\Models\ListingItemProductImage;
 use App\Models\OrderSynchronization;
@@ -64,17 +66,75 @@ class TemuService implements MarketplaceServiceInterface
         // json content
         $allfeedContent = file_get_contents($file);
 
+        $successCount = 0;
+        $failedCount = 0;
+
         foreach (json_decode($allfeedContent, true) as $individualFeed) {
             Log::info('Individual Feed: ' . json_encode($individualFeed));
             $response = $temuAuthService->submitFeed($individualFeed, $store);
 
             Log::info('Temu Feed Submission Response: ' . json_encode($response));
+            if (isset($response) && $response['success'] == true) {
+                $successCount++;
+                $goodsId = $response['result']['goodsId'] ?? null;
+                if ($goodsId) {
+                    $sku = $individualFeed['skuList'][0]['outSkuSn'] ?? null;
+                    $listingItem = ListingItem::where('sku', $sku)->first();
+
+                    if ($listingItem) {
+                        $listingItem->update(['store_sku' => $goodsId]);
+                    }
+                }
+            } else {
+                $failedCount++;
+            }
         }
+
+        $feedId->update([
+            'success_count' => $successCount,
+            'failed_count' => $failedCount,
+            'status' => FeedStatus::PROCESSED
+        ]);
     }
 
     public function getResultFeed(mixed $listingId, $feedId = null)
     {
-        // TODO: Implement getResultFeed() method.
+        $temuAuthService = new TemuAuthService();
+        $listingItems = ListingItemLink::where('listing_id', $listingId)->get();
+        $outSkunList = [];
+        $feedInfo = ListingFeed::findOrFail($feedId);
+
+        foreach ($listingItems as $listingItem) {
+            $item = $listingItem->item;
+            $outSkuN = $item->sku;
+            $outSkunList[] = $outSkuN;
+        }
+        if (isset($outSkunList)) {
+            $response = $temuAuthService->getFeedResult($outSkunList);
+            Log::info('Temu Feed Result Response for SKU ' . $outSkuN . ': ' . json_encode($response));
+
+            if (isset($response) && $response['success'] == true) {
+                $successCount = 0;
+                $errorCount = 0;
+                foreach ($response['result']['resultList'] as $goodsInfo) {
+                    $sku = $goodsInfo['outSkuSn'] ?? null;
+                    $goodsId = $goodsInfo['goodsId'] ?? null;
+
+                    $listingItem = ListingItem::where('sku', $sku)->first();
+                    if ($listingItem && $goodsId) {
+                        $listingItem->update(['store_sku' => $goodsId]);
+                        $successCount++;
+                    } else {
+                        $errorCount++;
+                    }
+                }
+                $feedInfo->update([
+                    'success_count' => $successCount,
+                    'failed_count' => $errorCount,
+                    'status' => FeedStatus::PROCESSED
+                ]);
+            }
+        }
     }
 
     public function syncAttributes($store)
@@ -173,7 +233,7 @@ class TemuService implements MarketplaceServiceInterface
                             'currency' => 'USD'
                         ],
                         'listPrice' => [
-                            'amount' => floatval($price),
+                            'amount' => '' . floatval($price),
                             'currency' => 'USD'
                         ],
                         'listPriceType' => 0
@@ -182,7 +242,7 @@ class TemuService implements MarketplaceServiceInterface
                     'specIdList' => $specIdList,
                     'outSkuSn' => $item->sku,
                     'volumeUnit' => 'in',
-                    'weight' => '' . WeightUnit::convert($productObj->product_weight_unit ?? WeightUnit::OZ, WeightUnit::LB, $productObj->product_weight),
+                    'weight' => '' . number_format(WeightUnit::convert($productObj->product_weight_unit ?? WeightUnit::OZ, WeightUnit::LB, $productObj->product_weight), 2, '.', ''),
                     'weightUnit' => 'lb',
                     'width' => '' . $productObj->package_dimensions_width,
                 ]
@@ -328,7 +388,7 @@ class TemuService implements MarketplaceServiceInterface
     private function getProductData($listingItem)
     {
         $productData = [
-            'Brand' => $listingItem->brand->name ?? 'apple',
+//            'Brand' => $listingItem->brand->name ?? 'apple',
             'Color' => 'black',
         ];
         $compatibleModels = [];
