@@ -66,11 +66,33 @@ class SendNotificationEmailSyncFailJob implements ShouldQueue
                         $messages = $emailUtility->fetchTodaysEmail($folder);
 
                         $notFound = [];
+                        $currentTime = now();
+                        $bufferTimeMinutes = 5;
 
                         foreach ($messages as $message) {
+                            $messageId = trim(trim($message['message_id']), '<>');
                             Log::info('Checking message ID: ' . trim(trim($message['message_id']), '<>'));
+
+                            $messageDate = null;
+                            if (!empty($message['date'])) {
+                                try {
+                                    $messageDate = new \DateTime($message['date']);
+                                } catch (\Exception $e) {
+                                    Log::warning('Could not parse date for message ID: ' . $messageId);
+                                }
+                            }
+
+                            // Skip messages received within the buffer time
+                            if ($messageDate !== null) {
+                                $minutesSinceReceived = $currentTime->diffInMinutes($messageDate);
+                                if ($minutesSinceReceived <= $bufferTimeMinutes) {
+                                    Log::info("Skipping recent message (received {$minutesSinceReceived} minutes ago): {$messageId}");
+                                    continue;
+                                }
+                            }
+
                             // check if message id exists in hd_messages table
-                            if (HDMessage::where('message_id' , trim(trim($message['message_id']), '<>'))->doesntExist()) {
+                            if (HDMessage::where('message_id' , $messageId)->doesntExist()) {
                                 $notFound[] = $message;
                             };
                         }
