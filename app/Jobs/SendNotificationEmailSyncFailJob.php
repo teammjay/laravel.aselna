@@ -66,7 +66,7 @@ class SendNotificationEmailSyncFailJob implements ShouldQueue
                         $messages = $emailUtility->fetchTodaysEmail($folder);
 
                         $notFound = [];
-                        $currentTime = now();
+                        $currentTime = now(new \DateTimeZone('UTC'));
                         $bufferTimeMinutes = 5;
 
                         foreach ($messages as $message) {
@@ -84,7 +84,9 @@ class SendNotificationEmailSyncFailJob implements ShouldQueue
 
                             // Skip messages received within the buffer time
                             if ($messageDate !== null) {
-                                $minutesSinceReceived = $currentTime->diffInMinutes($messageDate);
+                                Log::info('Message Date: ' . $messageDate->format('Y-m-d H:i:s'));
+                                Log::info('Current Time: ' . $currentTime->format('Y-m-d H:i:s'));
+                                $minutesSinceReceived = abs($currentTime->diffInMinutes($messageDate));
                                 if ($minutesSinceReceived <= $bufferTimeMinutes) {
                                     Log::info("Skipping recent message (received {$minutesSinceReceived} minutes ago): {$messageId}");
                                     continue;
@@ -122,7 +124,7 @@ class SendNotificationEmailSyncFailJob implements ShouldQueue
         $userId = $this->userId;
         Log::info('User ID : '.$userId);
         $userDetail = User::findOrFail($userId);
-        $sendTo = $userDetail->email;
+        $sendTo = $userDetail->send_to_email;
         $cc_emails = '';
         if($userDetail->cc_email != ''){
             $cc_emails = array_filter(array_map('trim', explode(PHP_EOL, $userDetail->cc_email)));
