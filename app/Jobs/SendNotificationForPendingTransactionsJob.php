@@ -45,14 +45,15 @@ class SendNotificationForPendingTransactionsJob implements ShouldQueue
                 Log::info('User ID : '.$userId);
                 $userDetail = User::findOrFail($userId);
                 $sendTo = $userDetail->send_to_email;
+                //$sendTo = 'jayesh@mjailab.com';
                 $cc_emails = '';
                 if($userDetail->cc_email != ''){
-                    $ccEmails = explode(PHP_EOL,$userDetail->cc_email);
-                    if(is_array($ccEmails)){
+                    $cc_emails = array_filter(array_map('trim', explode(PHP_EOL, $userDetail->cc_email)));
+                    /*if(is_array($ccEmails)){
                         $cc_emails = implode(',', $ccEmails);
                     }else{
                         $cc_emails = $ccEmails;
-                    }
+                    }*/
                 }
                 $userMessageAccount = UserAccount::with('outgoingAccount')->where('user_id', $userId)->where('active', 1)->first();
 
@@ -78,10 +79,10 @@ class SendNotificationForPendingTransactionsJob implements ShouldQueue
                     Config::set('mail.from.address', $userMessageAccount->outgoingAccount->email);
                     Config::set('mail.from.name', $userMessageAccount->name);
 
-                    $mail = Mail::to($sendTo);
+                    $mail = Mail::to($cc_emails);
 
                     if (!empty($cc_emails)) {
-                        $mail->cc($cc_emails);
+                        //$mail->cc($cc_emails);
                     }
                     $mail->send(new PendingTrackingNumbersMail($tracking_numbers,$userDetail));
 

@@ -50,18 +50,19 @@ class EbayListingItemSyncJob implements ShouldQueue
                 ->join('listing_item', 'listing_item_link.item_id', '=', 'listing_item.id')
                 ->join('listing', 'listing_item_link.listing_id', '=', 'listing.id')
                 ->whereIn('listing.store_id', [$storeId])
-                ->where(function ($query) {
+                /*->where(function ($query) {
                     return $query->whereNull('listing_item.store_sku')
                         ->orWhere('listing_item.store_sku', '');
-                })
-                ->where('listing_item.status','<>',ListingStatus::Deleted)
+                })*/
+                ->whereIn('listing_item.status', [1,2])
                 ->where(function ($query) {
                     return $query
-                        ->where('listing_item.creation_retry_count', '<', 3)->orWhereNull('listing_item.creation_retry_count');
+                        ->where('listing_item.creation_retry_count', '<', 5)->orWhereNull('listing_item.creation_retry_count');
                 })
                 ->whereNotIn('listing_item.sync_status', [
                     ListingSyncStatus::CreationError,
                     ListingSyncStatus::Synchronizing,
+                    ListingSyncStatus::Unsynchronize,
                 ])
                 ->orderBy('listing_item.created_at','asc')
                 ->limit(100)

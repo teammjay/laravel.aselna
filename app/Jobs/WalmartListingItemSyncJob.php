@@ -18,6 +18,8 @@ class WalmartListingItemSyncJob implements ShouldQueue
 {
     use Queueable;
 
+    public $timeout = 3000;
+
     /**
      * Create a new job instance.
      */
@@ -40,18 +42,24 @@ class WalmartListingItemSyncJob implements ShouldQueue
         Log::info('Walmart store ids: ' . json_encode($walmart_store_ids));
 
         ListingItemLink::query()
+            ->with(['listing','listingItem'])
             ->join('listing_item', 'listing_item_link.item_id', '=', 'listing_item.id')
             ->join('listing', 'listing_item_link.listing_id', '=', 'listing.id')
             ->whereIn('listing.store_id', $walmart_store_ids)
-            ->whereNull('listing_item.store_sku')
-            ->where('listing_item.status','<>',ListingStatus::Deleted)
+            //->whereRaw("COALESCE(listing_item.store_sku, '') = ''")
+            ->whereIn('listing_item.status', [1,2])
+            ->whereRaw('(listing_item.creation_retry_count < 5 OR listing_item.creation_retry_count IS NULL)')
             ->whereIn('listing_item.sync_status', [
+                ListingSyncStatus::CreationError,
                 ListingSyncStatus::Synchronizing,
+                ListingSyncStatus::Unsynchronize,
             ])
-            ->whereNotIn('listing.id', function ($subquery) use ($walmart_store_ids) {
-                return $subquery->select('listing_id')->from('listing_feeds')->whereIn('store_id', $walmart_store_ids)->whereIn('status', [
-                    FeedStatus::PROCESSING
-                ]);
+            ->whereNotExists(function ($subquery) use ($walmart_store_ids) {
+                $subquery->selectRaw(1)
+                    ->from('listing_feeds')
+                    ->whereColumn('listing_feeds.listing_id', 'listing.id')
+                    ->whereIn('store_id', $walmart_store_ids);
+                    //->where('status', FeedStatus::PROCESSING);
             })
             ->orderBy('listing_item.created_at','asc')
             ->chunk(100, function ($listingItemLinks) {
@@ -96,6 +104,7 @@ class WalmartListingItemSyncJob implements ShouldQueue
     {
         $store = $listingItemLink->listing->store;
         $itemDetail = $listingItemLink->listingItem;
+        Log::info("Store Name: " . $store->name);
         Log::info("Listing Item Sku " . $itemDetail->store_sku);
         Log::info("Listing Item UPC " . $itemDetail->upc);
         if($itemDetail->store_sku != null) return;

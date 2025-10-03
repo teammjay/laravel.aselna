@@ -53,7 +53,7 @@ class OrdersController extends Controller
         $columnName = $request['columns'][$columnIndex]['data'];
         $columnSortOrder = $request['order'][0]['dir'];
 
-        $query = Order::with('orderItem','orderItem.product','store','store.storeType','orderOperations')->select('*');
+        $query = Order::with('orderItem','orderItem.product','store','store.storeType','orderOperations','customer')->select('*');
 
         // Filter by store
         if ($request->has('store_id') && $request->store_id != '') {
@@ -107,7 +107,12 @@ class OrdersController extends Controller
 
         // Filter by created date
         if ($request->has('buyer_username') && $request->buyer_username != '') {
-            $query->whereLike('buyer_username', '%'.$request->buyer_username.'%');
+
+            $query->where(function ($q) use ($request) {
+                $q->whereRelation('customer', 'user_id', 'like', '%'.$request->buyer_username.'%')
+                    ->orWhere('buyer_username', 'like', '%'.$request->buyer_username.'%');
+            });
+
         }
 
         // Filter by product code
