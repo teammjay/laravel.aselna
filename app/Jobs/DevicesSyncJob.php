@@ -33,6 +33,7 @@ class DevicesSyncJob implements ShouldQueue
      */
     public function handle(): void
     {
+        Log::info('Devices Sync Job Start');
         DB::connection('easyesale_db')->table('cea_device')
             ->orderBy('id')
             ->chunk(1000, function ($syncDevices) {
@@ -40,12 +41,16 @@ class DevicesSyncJob implements ShouldQueue
                     $this->createSyncDevice($device);
                 }
             });
+        Log::info('Devices Sync Job End');
 
+        Log::info('Devices Delete Job Start');
         Device::orderBy('id')->chunk(1000, function ($devices) {
+            Log::info('Processing chunk of ' . count($devices) . ' devices for deletion check.');
             foreach ($devices as $device) {
                 $this->checkAndDelete($device);
             }
         });
+        Log::info('Devices Delete Job End');
 
 //        DB::connection('fonus_db')->table('tbl_device')
 //            ->orderBy('device_id')
@@ -115,6 +120,11 @@ class DevicesSyncJob implements ShouldQueue
 //        $rating = DB::connection('easyesale_db')->table('cea_device_rating')->where('id', $device->rating_id)->select('value')->first();
         $createdDevice = Device::where('id', $device->id)->first();
 
+        if (isset($createdDevice) && $createdDevice->updated_at >= $device->update_ts) {
+            return;
+        }
+        Log::info('Syncing Device: ' . $device->model_name . ' (ID: ' . $device->id . ')');
+
         $deviceData = [
             'id' => $device->id,
             'name' => $device->model_name,
@@ -137,7 +147,7 @@ class DevicesSyncJob implements ShouldQueue
 //            'thumbnail_image' => $device->thumbnail_id
         ];
 
-        if (isset($createdDevice) && !isset($createdDevice->image)) {
+        if (isset($createdDevice)) {
             $Image = DB::connection('easyesale_db_wt_prefix')->table('sys_file')->where('id', $device->image_id)->first();
             try {
                 $image_name = strtolower($Image->name);
@@ -153,7 +163,7 @@ class DevicesSyncJob implements ShouldQueue
             }
         }
 
-        if (isset($createdDevice) && !isset($createdDevice->thumbnail_image)) {
+        if (isset($createdDevice)) {
             $Thumbnail = DB::connection('easyesale_db_wt_prefix')->table('sys_file')->where('id', $device->thumbnail_id)->first();
             try {
                 $thumbnail_name = strtolower($Thumbnail->name);

@@ -11,6 +11,7 @@ use App\Models\ProductType;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class InterfaceSyncJob implements ShouldQueue
@@ -32,10 +33,19 @@ class InterfaceSyncJob implements ShouldQueue
      */
     public function handle(): void
     {
+        Log::info('Interface Sync Job Start');
         $attributes = DB::connection('easyesale_db')->table('cea_interface')->cursor();
         foreach ($attributes as $attribute) {
             $this->createInterfaces($attribute);
         }
+        Log::info('Interface Sync Job End');
+
+        Log::info('Interface Delete Job Start');
+        Interfaces::orderBy('id')->chunk(1000, function ($attributes) {
+            Log::info('Processing chunk of ' . count($attributes) . ' interfaces for deletion check.');
+            $this->checkAndDelete($attributes);
+        });
+        Log::info('Interface Delete Job End');
 
     }
 
@@ -56,7 +66,21 @@ class InterfaceSyncJob implements ShouldQueue
         );
     }
 
+    private function checkAndDelete($attributes)
+    {
+        $attributeIds = [];
+        foreach ($attributes as $attribute) {
+            $attributeIds[] = $attribute->id;
+        }
 
+        $existingAttributeIds = DB::connection('easyesale_db')->table('cea_interface')->whereIn('id', $attributeIds)->pluck('id')->toArray();
+        $idsToDelete = array_diff($attributeIds, $existingAttributeIds);
+        Log::info('Deleting Interface IDs: ' . implode(',', $idsToDelete));
+
+        if (!empty($idsToDelete)) {
+            DB::table('interface')->whereIn('id', $idsToDelete)->delete();
+        }
+    }
 
 
 }
