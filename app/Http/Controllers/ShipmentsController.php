@@ -583,7 +583,8 @@ class ShipmentsController extends Controller
         $carrier_package = $request->input('carrier_package');
 
         if (!empty($selected_shipment)) {
-            foreach ($selected_shipment as $id) {
+            $updatedRecord = [];
+            foreach ($selected_shipment as $key=>$id) {
                 $updateRecord = array(
                     'shipping_carrier_id' => $carrier_id,
                     'shipping_carrier_service_id' => $carrier_service_id,
@@ -595,10 +596,21 @@ class ShipmentsController extends Controller
                 if ($orderOperation) {
                     $orderOperation->update($updateRecord);
                 }
+
+                $norderOperation = OrderOperation::with([
+                    'carrierService:id,name,shipping_carrier_id',
+                    'carrierService.ShippingCarrier',
+                    'shippingPackage:id,name'])->where('id',$id)->first();
+
+                $updatedRecord[$key]['shipping_carrier'] = $norderOperation->carrierService->name ?? null;
+                $updatedRecord[$key]['carrier_service'] = isset($norderOperation->carrierService) ? $norderOperation->carrierService->ShippingCarrier->name . ' ' . $norderOperation->carrierService->name : null;
+                $updatedRecord[$key]['shipping_package'] = $norderOperation->shippingPackage->name ?? null;
+                $updatedRecord[$key]['id'] = $id;
             }
 
             return response()->json([
-                'success' => true
+                'success' => true,
+                'operations' => $updatedRecord
             ]);
         }
         return response()->json([
