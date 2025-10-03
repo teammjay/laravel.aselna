@@ -1358,13 +1358,28 @@
 
     function updateShippingRow(response, table){
 
+        if (response.operations && Array.isArray(response.operations)) {
+            response.operations.forEach(function(operation) {
+
+                var row = table.row(function (idx, data, node) {
+                    return $(node).data('id') == operation.id;
+                });
+
+                if (row.any()) {
+                    var rowIndex = row.index();
+
+                    table.cell(rowIndex, 3).data(operation.carrier_service);
+                    table.cell(rowIndex, 2).data(operation.shipping_package);
+                }
+            });
+
+            table.draw(false);
+        }
+
         if(response.operation) {
+
             var operation = response.operation;
 
-
-
-
-            // Find the row in the DataTable by shipment ID
             var row = table.row(function (idx, data, node) {
                 return $(node).data('id') == operation.id;
             });
@@ -1372,7 +1387,6 @@
             if (row.any()) {
                 var rowIndex = row.index();
 
-                // Update only the columns you need
                 table.cell(rowIndex, 8).data(operation.weight_value);
                 table.cell(rowIndex, 3).data(operation.carrier_service);
                 table.cell(rowIndex, 2).data(operation.shipping_package);
@@ -1385,7 +1399,7 @@
                     table.cell(rowIndex, 7).data(itemsStr);
                 }
 
-                table.draw(false); // redraw without resetting sorting/paging
+                table.draw(false);
             }
         }
     }
