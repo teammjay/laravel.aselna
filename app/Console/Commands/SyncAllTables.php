@@ -78,6 +78,7 @@ use App\Jobs\synccategorytospecification;
 use App\Jobs\SystemPrinterSyncJob;
 use App\Jobs\UPCGenerateJob;
 use App\Jobs\UPCSyncJob;
+use App\Models\DeviceSeries;
 use App\Models\ListingTemplate;
 use App\Models\ProductMaterial;
 use App\Models\ProductSize;
@@ -177,6 +178,7 @@ class SyncAllTables extends Command
 //        SendNotificationEmailSyncFailJob::dispatch(2);
 //        SendNotificationOrderSyncFailJob::dispatch(2);
 //        FetchEmailMessagesJob::dispatch();
+//        InterfaceSyncJob::dispatch();
 
 //        FetchEbayOrders::dispatch();
 //        FetchEmailMessagesJob::dispatch();
@@ -204,7 +206,8 @@ class SyncAllTables extends Command
 //        DevicesSyncJob::dispatch();
 //        DeviceInterfaces::dispatch();
 //        SyncAllOrderStatusJob::dispatch();
-        FetchTemuOrders::dispatch();
+//        FetchTemuOrders::dispatch();
+        DevicesSyncJob::dispatch();
 
         $transactionIds = [
 ////            '9400150105798006163885',
