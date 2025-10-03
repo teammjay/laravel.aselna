@@ -44,8 +44,7 @@ class SendNotificationForPendingTransactionsJob implements ShouldQueue
                 $userId = $this->userId;
                 Log::info('User ID : '.$userId);
                 $userDetail = User::findOrFail($userId);
-                $sendTo = $userDetail->email;
-                $sendTo = 'jayesh@mjailab.com';
+                $sendTo = $userDetail->send_to_email;
                 $cc_emails = '';
                 if($userDetail->cc_email != ''){
                     $ccEmails = explode(PHP_EOL,$userDetail->cc_email);
