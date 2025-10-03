@@ -345,8 +345,10 @@
     <script src="{{ asset('js/jquery.datetimepicker.full.js') }}"></script>
 
     <script>
+        var shipmentTable;
     $(document).ready(function() {
         let isProcessingCancelled = false;
+
         $('#listing_store').select2();
         //$('#markAsShippedModal').modal('show');
         /*$('.card-header').on('click',function () {
@@ -1271,54 +1273,8 @@
 
         $(document).on('click','#updateShipment',function () {
 
-            const form = document.querySelector("#frmShippingDetail");
-            let formData = new FormData(form);
+            updateShipment();
 
-            const carrier_package = formData.get("carrier_package");
-            const label_generation = formData.get("label_generation");
-
-            /*if (!carrier_package || carrier_package.trim() === "") {
-                alert("Carrier package is required.");
-                return;
-            }*/
-
-
-            $.ajax({
-                url: "<?php echo e(route('shipment.updateshipment')); ?>",
-                type: 'POST',
-                data: formData,
-                processData: false,
-                contentType: false,
-                headers: {
-                    'X-CSRF-TOKEN': '<?php echo e(csrf_token()); ?>',
-                },
-                success: function (response) {
-                    // If success, remove the user row from the table
-                    if (response.success) {
-                        //alert('Shipped Updated successfully!!');
-                        //location.reload();
-                        loadDatatables();
-                    }
-                    else {
-                        alert(response.message);
-                    }
-                },
-                error: function (xhr) {
-                    // Handle error response
-                    if (xhr.status === 422) {
-                        let errors = xhr.responseJSON.errors;
-                        $.each(errors, function (key, messages) {
-                            alert(key + ': ' + messages[0]);
-                        });
-                    }
-                    /*const response = xhr.responseJSON;
-                    if ( response.errors) {
-                        alert(response.message);
-                    } else {
-                        alert('Error: ' + response.message);
-                    }*/
-                }
-            });
         });
 
         $(document).on('click', '#select_deselect_shipment', function() {
@@ -1374,7 +1330,9 @@
                 if (response.success) {
                     //alert('Shipped Updated successfully!!');
                     //location.reload();
-                    loadDatatables();
+
+                    updateShippingRow(response, shipmentTable)
+                    //loadDatatables();
                 }
                 else {
                     alert(response.message);
@@ -1396,6 +1354,54 @@
                 }*/
             }
         });
+    }
+
+    function updateShippingRow(response, table){
+
+        if (response.operations && Array.isArray(response.operations)) {
+            response.operations.forEach(function(operation) {
+
+                var row = table.row(function (idx, data, node) {
+                    return $(node).data('id') == operation.id;
+                });
+
+                if (row.any()) {
+                    var rowIndex = row.index();
+
+                    table.cell(rowIndex, 3).data(operation.carrier_service);
+                    table.cell(rowIndex, 2).data(operation.shipping_package);
+                }
+            });
+
+            table.draw(false);
+        }
+
+        if(response.operation) {
+
+            var operation = response.operation;
+
+            var row = table.row(function (idx, data, node) {
+                return $(node).data('id') == operation.id;
+            });
+
+            if (row.any()) {
+                var rowIndex = row.index();
+
+                table.cell(rowIndex, 8).data(operation.weight_value);
+                table.cell(rowIndex, 3).data(operation.carrier_service);
+                table.cell(rowIndex, 2).data(operation.shipping_package);
+
+                if(operation.items){
+                    var itemsStr = operation.items
+                        .map(item => `${item.sku} x ${item.quantity}`)
+                        .join("<br>");
+
+                    table.cell(rowIndex, 7).data(itemsStr);
+                }
+
+                table.draw(false);
+            }
+        }
     }
 
     function getShippingDetail(operation_id){
@@ -1522,7 +1528,10 @@
                 // If success, remove the user row from the table
                 if (response.success) {
                     alert('Records updated successfully!!');
-                    location.reload();
+                    //location.reload();
+
+                    updateShippingRow(response, shipmentTable);
+                    //loadDatatables();
                 }
             },
             error: function (xhr) {
@@ -1559,9 +1568,16 @@
 
         //$("#shipmentTable").dataTable().fnDestroy();
         $("#ajax-preloader").show();
+        var selected_op = $('#op_id').val();
+        var currentOrder = [6, "desc"];
+        var statesave = true;
         if ($.fn.DataTable.isDataTable('#shipmentTable')) {
-            $('#shipmentTable').DataTable().clear().destroy();
+            var table = $('#shipmentTable').DataTable();
+            currentOrder = table.order();
+            statesave = false;
+            table.destroy();
         }
+        console.log(currentOrder);
         $.ajax({
             url: "{{ route('shipment.filter') }}",
             type: 'POST',
@@ -1577,7 +1593,7 @@
                     $('#shipment-list').html(response.html);
 
                     if(response.totalRecords > 0) {
-                        var proTable = $('#shipmentTable').DataTable({
+                        shipmentTable = $('#shipmentTable').DataTable({
                             "iDisplayLength": 100,
                             "lengthChange": true,
                             "autoWidth": false,
@@ -1586,7 +1602,8 @@
                             "searching": true,
                             "paging": false,
                             "info": false,
-                            "order": [[6, "desc"]],
+                            "stateSave": statesave,
+                            "order": currentOrder,
                             columnDefs: [
                                 {
                                     targets: [0],
@@ -1597,10 +1614,23 @@
                                     className: 'column-whitespace' // The class to add
                                 },
                             ],
+                            stateSaveCallback: function(settings, data) {
+                                sessionStorage.setItem(
+                                    'DataTables_' + settings.sInstance,
+                                    JSON.stringify(data)
+                                );
+                            },
+                            stateLoadCallback: function(settings) {
+                                return JSON.parse(
+                                    sessionStorage.getItem('DataTables_' + settings.sInstance)
+                                );
+                            },
                             drawCallback: function(settings) {
                                 let info = this.api().page.info();
                                 //$('#shipmentTable_wrapper').find('.row div:first').html('Total : <b>' + info.recordsDisplay + '</b>');
                                 $('#totalRecords').html('Total : <b>' + info.recordsDisplay + '</b>');
+                                $('input[value="'+selected_op+'"]').prop('checked',true);
+                                $('input[value="'+selected_op+'"]').parents('tr').addClass('bg-blue');
                             }
                         });
 

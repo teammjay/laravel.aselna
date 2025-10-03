@@ -113,15 +113,15 @@ class SendNotificationOrderSyncFailJob implements ShouldQueue
         $userId = $this->userId;
         Log::info('User ID : '.$userId);
         $userDetail = User::findOrFail($userId);
-        $sendTo = $userDetail->email;
+        $sendTo = $userDetail->send_to_email;
         $cc_emails = '';
         if($userDetail->cc_email != ''){
-            $ccEmails = explode(PHP_EOL,$userDetail->cc_email);
-            if(is_array($ccEmails)){
+            $cc_emails = array_filter(array_map('trim', explode(PHP_EOL, $userDetail->cc_email)));
+            /*if(is_array($ccEmails)){
                 $cc_emails = implode(',', $ccEmails);
             }else{
                 $cc_emails = $ccEmails;
-            }
+            }*/
         }
         $userMessageAccount = UserAccount::with('outgoingAccount')->where('user_id', $userId)->where('active', 1)->first();
 

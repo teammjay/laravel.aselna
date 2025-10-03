@@ -1,6 +1,6 @@
 
 <form id="frmShippingDetail">
-    <input type="hidden" name="id" value="{{ $shipmentDetail->id }}">
+    <input type="hidden" name="id" id="op_id" value="{{ $shipmentDetail->id }}">
     <div class="row">
         <div class="col-md-12">
             <div class="row mt-1 g-3 align-items-center">

@@ -86,7 +86,7 @@
                                         <span class="error-message text-danger" id="name-error"></span>
                                     </div>
                                 </div>
-                                
+
                                 <div class="row mt-3 g-3 align-items-center">
                                     <div class="col-md-5">
                                         <label for="email">Email</label>
@@ -94,6 +94,15 @@
                                     <div class="col-md-7">
                                         <input type="text" class="form-control" id="email" name="email" value="{{ old('email',$user->email) }}">
                                         <span class="error-message text-danger" id="email-error"></span>
+                                    </div>
+                                </div>
+                                <div class="row mt-3 g-3 align-items-center">
+                                    <div class="col-md-5">
+                                        <label for="send_to_email">Send to Email</label>
+                                    </div>
+                                    <div class="col-md-7">
+                                        <input type="text" class="form-control" id="send_to_email" name="send_to_email" value="{{ old('send_to_email',$user->send_to_email) }}">
+                                        <span class="error-message text-danger" id="send_to_email-error"></span>
                                     </div>
                                 </div>
                                 <div class="row mt-3 g-3 align-items-center">
