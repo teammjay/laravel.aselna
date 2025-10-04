@@ -990,9 +990,15 @@
                                     alert(response.message);
                                 }
                             },
-                            error: function (xhr) {
-                                if (xhr.responseJSON.message) {
+                            error: function (xhr, textStatus, errorThrown) {
+                                $("#ajax-preloader").hide();
+
+                                if (xhr.status === 504) {
+                                    alert("Gateway Timeout.");
+                                }else if (xhr.responseJSON.message) {
                                     alert(xhr.responseJSON.message);
+                                }else {
+                                    alert("An unexpected error occurred: " + textStatus);
                                 }
                             },
                             complete: function () {
@@ -1066,13 +1072,19 @@
                                         location.reload();
                                     }
                                 },
-                                error: function (xhr) {
-                                    if (xhr.responseJSON.message) {
+                                error: function (xhr, textStatus, errorThrown) {
+                                    $("#ajax-preloader").hide();
+
+                                    if (xhr.status === 504) {
+                                        alert("Gateway Timeout.");
+                                    }else if (xhr.responseJSON.message) {
                                         if (xhr.responseJSON.message == 'Attempt to read property "upc_code" on null') {
                                             alert("Upc code missign for selected store. Please generate upc code and try again.");
                                         } else {
                                             alert(xhr.responseJSON.message);
                                         }
+                                    }else {
+                                        alert("An unexpected error occurred: " + textStatus);
                                     }
                                 },
                                 complete: function () {
@@ -2175,11 +2187,17 @@
                             }
                         }
                     },
-                    error: function (xhr) {
-                        /*if (xhr.responseJSON?.error) {
-                            $('#responseMessage').html('<p style="color:red;">' + xhr.responseJSON.error.image[0] + '</p>');
-                        }*/
-                    }
+                    error: function (xhr, textStatus, errorThrown) {
+                        $("#ajax-preloader").hide();
+
+                        if (xhr.status === 504) {
+                            alert("Gateway Timeout.");
+                        }else if (xhr.responseJSON.message) {
+                            alert(xhr.responseJSON.message);
+                        }else {
+                            alert("An unexpected error occurred: " + textStatus);
+                        }
+                    },
                 });
 
                 loadListingProduct(0);
