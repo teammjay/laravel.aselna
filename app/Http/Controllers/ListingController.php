@@ -2469,7 +2469,7 @@ class ListingController extends Controller
                                     case 4:
                                         $sku = StoreTypeListing::generateUniqueAlphabeticSku($product_codes[$key], 6);
                                         break;*/
-                                    case 'default':
+                                    default:
                                         $sku = StoreTypeListing::generateUniqueAlphabeticSku($product_codes[$key], 6);
                                         break;
                                 }
@@ -2490,7 +2490,7 @@ class ListingController extends Controller
                                     /*case 3:
                                         $upcCodes = UPCCodes::where('store', $store_id)->where('is_used', 0)->orderBy('sequence_id', 'asc')->first();
                                         break;*/
-                                    case 'default':
+                                    default:
                                         $upcCodes = UPCCodes::where('store', $store_id)->where('is_used', 0)->orderBy('sequence_id', 'asc')->first();
                                         break;
                                 }
@@ -2586,7 +2586,7 @@ class ListingController extends Controller
                                                     case 3:
                                                         $upcCodes = UPCCodes::where('store', $store_id)->where('is_used', 0)->orderBy('sequence_id', 'asc')->limit($limit)->get();
                                                         break;
-                                                    case 'default':
+                                                    default:
                                                         $upcCodes = UPCCodes::where('store', $store_id)->where('is_used', 0)->orderBy('sequence_id', 'asc')->limit($limit)->get();
                                                         break;
                                                 }
@@ -2637,7 +2637,7 @@ class ListingController extends Controller
                                                             case 4:
                                                                 $nsku = StoreTypeListing::generateUniqueAlphabeticSku($product_codes[$key], 6);
                                                                 break;*/
-                                                            case 'default':
+                                                            default:
                                                                 $nsku = StoreTypeListing::generateUniqueAlphabeticSku($product_codes[$key], 6);
                                                                 break;
                                                         }
@@ -2749,7 +2749,7 @@ class ListingController extends Controller
                 case 3:
                     $upcCodes = UPCCodes::where('store', $store_id)->where('is_used', 0)->orderBy('sequence_id', 'asc')->limit(1)->first();
                     break;
-                case 'default':
+                default:
                     $upcCodes = UPCCodes::where('store', $store_id)->where('is_used', 0)->orderBy('sequence_id', 'asc')->limit(1)->first();
                     break;
             }
