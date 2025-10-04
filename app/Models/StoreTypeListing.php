@@ -64,9 +64,9 @@ class StoreTypeListing extends Model
             $attempts++;
 
             if ($product_code != '') {
-                $sku = strtoupper($product_code . '-' . substr(uniqid('', true), -$length));
+                $sku = strtoupper($product_code . '-' . Str::random($length));
             } else {
-                $sku = strtoupper(substr(uniqid('', true), -$length));
+                $sku = strtoupper(Str::random($length));
             }
             Log::info("Generated SKU: $sku");
 
@@ -81,9 +81,9 @@ class StoreTypeListing extends Model
         } while ($attempts < $maxAttempts);
 
         if ($product_code != '') {
-            $fallbacksku = strtoupper($product_code . '-' . strtoupper(substr(uniqid('', true) . Str::random(3), -($length + 3))));
+            $fallbacksku = strtoupper($product_code . '-' . Str::random($length));
         } else {
-            $fallbacksku = strtoupper(strtoupper(substr(uniqid('', true) . Str::random(3), -($length + 3))));
+            $fallbacksku = strtoupper(Str::random($length));
         }
 
         Log::info("Fallback SKU: $fallbacksku");
