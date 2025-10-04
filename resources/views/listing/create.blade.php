@@ -1075,16 +1075,24 @@
                                 error: function (xhr, textStatus, errorThrown) {
                                     $("#ajax-preloader").hide();
 
-                                    if (xhr.status === 504) {
-                                        alert("Gateway Timeout.");
-                                    }else if (xhr.responseJSON.message) {
-                                        if (xhr.responseJSON.message == 'Attempt to read property "upc_code" on null') {
-                                            alert("Upc code missign for selected store. Please generate upc code and try again.");
+                                    $("#ajax-preloader").hide();
+
+                                    // Handle network or timeout issues
+                                    if (textStatus === 'timeout') {
+                                        alert("The request took too long and timed out. Please try again later.");
+                                    } else if (xhr.status === 504) {
+                                        alert("Gateway Timeout (504): The server took too long to respond. Please try again later.");
+                                    } else if (xhr.status === 0) {
+                                        alert("Network error: Please check your internet connection and try again.");
+                                    } else if (xhr.responseJSON && xhr.responseJSON.message) {
+                                        // Handle known Laravel validation or logic errors
+                                        if (xhr.responseJSON.message === 'Attempt to read property \"upc_code\" on null') {
+                                            alert("UPC code missing for selected store. Please generate UPC code and try again.");
                                         } else {
                                             alert(xhr.responseJSON.message);
                                         }
-                                    }else {
-                                        alert("An unexpected error occurred: " + textStatus);
+                                    } else {
+                                        alert("An unexpected error occurred: " + (errorThrown || textStatus));
                                     }
                                 },
                                 complete: function () {
@@ -2999,10 +3007,20 @@
                         $('#total_listing_product').html('0 rows');
                     }
                 },
-                error: function (xhr) {
-                    /*if (xhr.responseJSON?.error) {
-                        $('#responseMessage').html('<p style="color:red;">' + xhr.responseJSON.error.image[0] + '</p>');
-                    }*/
+                error: function (xhr, textStatus, errorThrown) {
+
+                    if (textStatus === 'timeout') {
+                        alert("The request took too long and timed out. Please try again later.");
+                    } else if (xhr.status === 504) {
+                        alert("Gateway Timeout (504): The server took too long to respond. Please try again later.");
+                    } else if (xhr.status === 0) {
+                        alert("Network error: Please check your internet connection and try again.");
+                    } else if (xhr.responseJSON && xhr.responseJSON.message) {
+                        // Handle known Laravel validation or logic errors
+                        alert(xhr.responseJSON.message);
+                    } else {
+                        alert("An unexpected error occurred: " + (errorThrown || textStatus));
+                    }
                 },
                 complete: function () {
                     $("#ajax-preloader").hide();
