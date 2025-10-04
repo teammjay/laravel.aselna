@@ -36,7 +36,7 @@ class StoreTypeListing extends Model
         });
     }
 
-    public static function generateUniqueAlphabeticSku($product_code = '', $length = 6)
+    /*public static function generateUniqueAlphabeticSku($product_code = '', $length = 6)
     {
         Log::info("Inside Generating SKU for product code: $product_code");
         do {
@@ -53,6 +53,41 @@ class StoreTypeListing extends Model
         } while ($exists);  // Check if SKU exists in the database
         Log::info("Returning SKU: $sku");
         return $sku;
+    }*/
+
+    public static function generateUniqueAlphabeticSku($product_code = '', $length = 6)
+    {
+        $attempts = 0;
+        $maxAttempts = 10;
+        Log::info("Inside Generating SKU for product code: $product_code");
+        do {
+            $attempts++;
+
+            if ($product_code != '') {
+                $sku = strtoupper($product_code . '-' . Str::random($length));
+            } else {
+                $sku = strtoupper(Str::random($length));
+            }
+            Log::info("Generated SKU: $sku");
+
+            $exists = ListingItem::where('sku', $sku)->exists() ||
+                ListingItemDetail::where('sku', $sku)->exists();
+
+            if (!$exists) {
+                Log::info("Returning SKU: $sku");
+                return $sku;
+            }
+
+        } while ($attempts < $maxAttempts);
+
+        if ($product_code != '') {
+            $fallbacksku = strtoupper($product_code . '-' . Str::random($length));
+        } else {
+            $fallbacksku = strtoupper(Str::random($length));
+        }
+
+        Log::info("Fallback SKU: $fallbacksku");
+        return $fallbacksku;
     }
 
 }

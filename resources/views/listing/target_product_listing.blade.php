@@ -1,5 +1,5 @@
-@if(count($devices ?? []) > 0)
-    @foreach($devices as $device)
+@if(count($devicesList ?? []) > 0)
+    @foreach($devicesList as $device)
         <tr class="targetRow product-{{ $device->product_id }} {{ (isset($selected_device[$device->product_id]) && is_array($selected_device[$device->product_id]) && in_array($device->id,$selected_device[$device->product_id])) ? 'bg-blue' : '' }}" >
             <td>
                 @if($is_selected)
