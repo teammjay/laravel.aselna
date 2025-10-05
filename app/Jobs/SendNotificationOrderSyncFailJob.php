@@ -147,7 +147,7 @@ class SendNotificationOrderSyncFailJob implements ShouldQueue
             Config::set('mail.from.address', $userMessageAccount->outgoingAccount->email);
             Config::set('mail.from.name', $userMessageAccount->name);
 
-            Log::info('Sending Store Order Sync Issue Mail to: '.$sendTo.' CC: '.$cc_emails);
+            Log::info('Sending Store Order Sync Issue Mail to: '.$sendTo.' CC: '. json_encode($cc_emails));
 
             Mail::mailer('custom_smtp')->raw($content,
                 function ($message) use ($store, $sendTo, $cc_emails) {
