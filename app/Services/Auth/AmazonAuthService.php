@@ -439,6 +439,8 @@ class AmazonAuthService
                 return "Error: Could not retrieve access token.";
             }
 
+            Log::info('Cancelling Order ID: ' . $orderId);
+
             $response =  $this->client->put("/fba/outbound/2020-07-01/fulfillmentOrders/{$orderId}/cancel", [
                 'headers' => [
                     'x-amz-access-token' => "{$accessToken}",
@@ -448,10 +450,14 @@ class AmazonAuthService
             ]);
 
             if ($response->getStatusCode() == 200) {
-                return 200;
+                return [
+                    'status' => 'success',
+                    'message' => 'Order cancelled successfully'
+                ];
             }
 
         } catch (Exception $exception) {
+            Log::info('Exception Message: ' . $exception->getMessage());
             return json_encode([
                 'error' => 'Amazon API request failed',
                 'message' => $exception->getMessage()
