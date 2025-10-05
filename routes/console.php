@@ -48,7 +48,7 @@ Schedule::job(new SendNotificationOrderSyncFailJob(2))->cron('4 * * * *');
 Schedule::job(FetchEmailMessagesJob::class)->everyTenMinutes();
 
 // Products Syncing
-Schedule::job(new SubmitShopifyProductsJob())->hourly();
+Schedule::job(new SubmitShopifyProductsJob())->cron('*/20 * * * *'); // Daily at 2:30 AM
 
 Schedule::job(new ShopifyCombinedSyncing())->dailyAt('12:30');
 
