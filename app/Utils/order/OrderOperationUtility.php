@@ -484,6 +484,7 @@ class OrderOperationUtility
 
     public static function cancelOrder($orderOperation, $reason = 'CUSTOMER_REQUESTED_SELLER_TO_CANCEL')
     {
+        Log::info('Cancel order for operation id: ' . $orderOperation->id);
         $store = $orderOperation->store;
         $storeType = $orderOperation->store->storeType->name;
         switch (strtolower($storeType)) {
@@ -656,16 +657,19 @@ class OrderOperationUtility
                 $amazonService = new AmazonService();
                 $response = $amazonService->cancelOrder($orderOperation, $store);
 
-                if (isset($orderOperation->order->orderItem)) {
+                if (isset($orderOperation->order->orderItem) && isset($response['status']) && $response['status'] == 'Success') {
                     foreach ($orderOperation->order->orderItem as $o_item) {
                         $item_qty = $o_item->quantity;
                         $orderItem = OrderItem::findOrFail($o_item->id);
                         $orderItem->update(['canceled_quantity' => $item_qty]);
-
-                        $data['status'] = true;
                     }
+                    $data['status'] = true;
+                    return $data;
+                } else {
+                    $data['status'] = false;
+                    $data['message'] = $response['message'] ?? 'Cancellation not working from API End';
+                    return $data;
                 }
-                break;
         }
     }
 

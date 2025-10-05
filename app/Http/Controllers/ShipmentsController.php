@@ -852,6 +852,7 @@ class ShipmentsController extends Controller
     {
 
         $selected_shipment_id = $request->input('id');
+        Log::info('Cancel Order Request :: ' . $selected_shipment_id);
         $reason = $request->input('reason');
 
         try {
