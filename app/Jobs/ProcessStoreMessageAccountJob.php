@@ -45,6 +45,7 @@ class ProcessStoreMessageAccountJob implements ShouldQueue
     {
         try {
             Log::info('Store Name: ' . $this->store->name);
+            Log::info('Store Type Name : ' . $this->store->storeType->name);
             $maccount = $this->storeMessageAccount;
             $store = $this->store;
             $store_type = $this->store_type;

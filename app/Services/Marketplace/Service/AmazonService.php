@@ -661,6 +661,7 @@ class AmazonService implements MarketplaceServiceInterface
 
     public function cancelOrder($orderOperation, mixed $store)
     {
+        Log::info('Cancelling order: ' . $orderOperation->order->order_id);
         $this->authService = new AmazonAuthService($store->seller_id, $store->secret_key, $store->api_key);
         $orderId = $orderOperation->order->order_id;
 
