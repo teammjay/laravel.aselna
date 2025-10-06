@@ -214,7 +214,7 @@
         });
 
         document.getElementById("resetForm").addEventListener("click", function () {
-            localStorage.removeItem("close_message_filters");
+            sessionStorage.removeItem("close_message_filters");
         });
 
     });
@@ -229,7 +229,7 @@
 
 
     document.addEventListener("DOMContentLoaded", function () {
-        let savedFilters = JSON.parse(localStorage.getItem("close_message_filters"));
+        let savedFilters = JSON.parse(sessionStorage.getItem("close_message_filters"));
         if (savedFilters) {
             console.log(savedFilters);
             Object.keys(savedFilters).forEach(function (key) {
@@ -280,7 +280,7 @@
                         d[field.name] = field.value; // Append form data to the DataTables request
                     });
 
-                    localStorage.setItem("close_message_filters", JSON.stringify(formData));
+                    sessionStorage.setItem("close_message_filters", JSON.stringify(formData));
 
                     d['status'] = 2;
 

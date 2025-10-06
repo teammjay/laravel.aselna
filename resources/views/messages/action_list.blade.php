@@ -330,7 +330,7 @@
             loadDatatables();
         });
 
-        /*let savedFilters = JSON.parse(localStorage.getItem("message_filters"));
+        /*let savedFilters = JSON.parse(sessionStorage.getItem("message_filters"));
         if (savedFilters) {
             console.log(savedFilters);
             Object.keys(savedFilters).forEach(function (key) {
@@ -348,7 +348,7 @@
         }*/
 
         document.getElementById("resetForm").addEventListener("click", function () {
-            localStorage.removeItem("message_filters");
+            sessionStorage.removeItem("message_filters");
         });
 
     });
@@ -363,7 +363,7 @@
 
 
     document.addEventListener("DOMContentLoaded", function () {
-        let savedFilters = JSON.parse(localStorage.getItem("message_filters"));
+        let savedFilters = JSON.parse(sessionStorage.getItem("message_filters"));
         if (savedFilters) {
             console.log(savedFilters);
             Object.keys(savedFilters).forEach(function (key) {
@@ -474,7 +474,7 @@
 
                     d['status'] = 0;
 
-                    localStorage.setItem("message_filters", JSON.stringify(formData));
+                    sessionStorage.setItem("message_filters", JSON.stringify(formData));
 
                     var columnValues = [];
                     if (table) {

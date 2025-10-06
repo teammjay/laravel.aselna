@@ -192,7 +192,10 @@ class TemuService implements MarketplaceServiceInterface
 
             $templateID = $ShippingTemplates['result']['templateList'][0]['templateId'] ?? 'LFT-15741247532810352765';
 
-            $images = ListingItemProductImage::where('listing_item_id', $item->id)->get();
+            $images = ListingItemProductImage::leftJoin('product_images', 'product_images.id', '=', 'listing_item_product_images.product_image_id')
+                ->where('listing_item_product_images.listing_item_id', $item->id)->orderBy('listing_item_product_images.main_image', 'desc')
+                ->get();
+
             Log::info('Images: ' . json_encode($images));
             Log::info('File System: ' . json_encode($fileSystem));
             $imagesPath = [];
@@ -209,17 +212,22 @@ class TemuService implements MarketplaceServiceInterface
                 'goodsBasic' => [
                     'goodsName' => $item->title,
                     'catId' => (int)$storeTypeCategory->store_type_code,
-                    'importDesignation' => 'Made in the USA',
+                    'importDesignation' => 'Imported',
                 ],
-//                'goodsDesc' => $item->description,
+                'goodsDesc' => $item->description,
                 'goodsServicePromise' => [
                     'costTemplateId' => $templateID,
                     'fulfillmentType' => 1,
                     'shipmentLimitDay' => 2
                 ],
+                'goodsOriginInfo' => [
+                    'originRegion1' => 'Mainland China',
+                    'originRegion2' => 'Guangdong'
+                ],
                 'goodsProperty' => [
                     'goodsProperties' => $properties
-                ]
+                ],
+                'bulletPoints' => $keyFeatures,
             ];
 
             $feedItem['skuList'] = [

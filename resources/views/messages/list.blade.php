@@ -334,7 +334,7 @@
         });
 
         document.getElementById("resetForm").addEventListener("click", function () {
-            localStorage.removeItem("all_message_filters");
+            sessionStorage.removeItem("all_message_filters");
         });
 
     });
@@ -349,7 +349,7 @@
 
 
     document.addEventListener("DOMContentLoaded", function () {
-        let savedFilters = JSON.parse(localStorage.getItem("all_message_filters"));
+        let savedFilters = JSON.parse(sessionStorage.getItem("all_message_filters"));
         if (savedFilters) {
             console.log(savedFilters);
             Object.keys(savedFilters).forEach(function (key) {
@@ -458,7 +458,7 @@
                         d[field.name] = field.value; // Append form data to the DataTables request
                     });
 
-                    localStorage.setItem("all_message_filters", JSON.stringify(formData));
+                    sessionStorage.setItem("all_message_filters", JSON.stringify(formData));
 
                     var columnValues = [];
                     if (table) {
