@@ -15,7 +15,7 @@
         @endphp
         <tr class="clickable-row" data-href="{{ $url }}">
             <td>
-                @if($oitem->product->image != '')
+                @if(isset($oitem->product) && $oitem->product->image != '')
                     <div class="main-image">
                         <img src="{{ asset('storage/' .$oitem->product->image->getFileUrl()) }}"
                                 loading="lazy" width="50" height="50" class="mainImage"
