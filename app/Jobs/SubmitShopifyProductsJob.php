@@ -497,6 +497,8 @@ class SubmitShopifyProductsJob implements ShouldQueue
 //            }
         $productUpdateData['media'] = $media;
 
+        Log::info('Product Update Data: ' . json_encode($productUpdateData));
+
         $response = $shopifyAuthService->updateProduct($productUpdateData);
         $priceResponse = $shopifyAuthService->updatePrice($priceUpdatesData);
 
