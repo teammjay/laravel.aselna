@@ -57,4 +57,4 @@ Schedule::job(new ShopifyCombinedSyncing())->dailyAt('12:30');
 Schedule::call(function () {
     // Delete all the records from yesterday to all previous days
     OrderSynchronization::where('updated_at', '<', now()->toDate())->delete();
-})->dailyAt('13:00')->name('clear syncronisation');
+})->dailyAt('00:00')->name('clear syncronisation');
