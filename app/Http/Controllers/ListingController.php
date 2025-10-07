@@ -2456,35 +2456,43 @@ class ListingController extends Controller
                         /* fetch all upc code at once*/
                         $upcCodes = $this->fetchUpcCode($store_detail, $store_id, count($product_titles));
 
+                        /* fetch all sku for all product code for listing*/
+                        $productCodes = array_unique($product_codes);
 
+                        $skus = ListingItem::where(function ($q) use ($productCodes) {
+                            foreach ($productCodes as $code) {
+                                $q->orWhere('sku', 'like', "{$code}-%");
+                            }
+                        })->pluck('sku')->toArray();
+
+                        $detailSkus = ListingItemDetail::where(function ($q) use ($productCodes) {
+                            foreach ($productCodes as $code) {
+                                $q->orWhere('sku', 'like', "{$code}-%");
+                            }
+                        })->pluck('sku')->toArray();
+
+                        $skuCache = array_flip(array_merge($skus, $detailSkus));
+
+                        /* fetch all sku for all product code for listing*/
 
                         foreach ($product_titles as $key => $product) {
 
-                            $existingSkus = ListingItem::whereLike('sku','%'.$product_codes[$key])->pluck('sku')->toArray();
-                            $detailSkus = ListingItemDetail::whereLike('sku','%'.$product_codes[$key])->pluck('sku')->toArray();
-                            $skuCache = array_flip(array_merge($existingSkus, $detailSkus));
+                            /*$existingSkus = ListingItem::whereLike('sku',$product_codes[$key].'-%')->pluck('sku')->toArray();
+                            $detailSkus = ListingItemDetail::whereLike('sku',$product_codes[$key].'-%')->pluck('sku')->toArray();
+                            $skuCache = array_flip(array_merge($existingSkus, $detailSkus));*/
 
                             //Log::info('Title :: ' . $key);
                             if ($store_detail->sku_generation_type) {
                                 switch ($store_detail->sku_generation_type) {
-                                    /*case 1:
-                                        $sku = StoreTypeListing::generateUniqueAlphabeticSku($product_codes[$key], 6);
-                                        break;*/
                                     case 2:
-                                        $sku = StoreTypeListing::generateUniqueAlphabeticSku('', 6);
+                                        $sku = StoreTypeListing::generateUniqueAlphabeticSku('', 6,$skuCache);
                                         break;
-                                   /* case 3:
-                                        $sku = StoreTypeListing::generateUniqueAlphabeticSku($product_codes[$key], 6);
-                                        break;
-                                    case 4:
-                                        $sku = StoreTypeListing::generateUniqueAlphabeticSku($product_codes[$key], 6);
-                                        break;*/
                                     default:
-                                        $sku = StoreTypeListing::generateUniqueAlphabeticSku($product_codes[$key], 6);
+                                        $sku = StoreTypeListing::generateUniqueAlphabeticSku($product_codes[$key], 6, $skuCache);
                                         break;
                                 }
                             } else {
-                                $sku = StoreTypeListing::generateUniqueAlphabeticSku($product_codes[$key], 6);
+                                $sku = StoreTypeListing::generateUniqueAlphabeticSku($product_codes[$key], 6, $skuCache);
                             }
 
                             $upc = $upcCodes[$key]['upc_code'] ?? null;
@@ -2587,14 +2595,14 @@ class ListingController extends Controller
                                                 if ($store_detail->sku_generation_type) {
                                                     switch ($store_detail->sku_generation_type) {
                                                         case 2:
-                                                            $nsku = StoreTypeListing::generateUniqueAlphabeticSku('', 6);
+                                                            $nsku = StoreTypeListing::generateUniqueAlphabeticSku('', 6, $skuCache);
                                                             break;
                                                         default:
-                                                            $nsku = StoreTypeListing::generateUniqueAlphabeticSku($product_codes[$key], 6);
+                                                            $nsku = StoreTypeListing::generateUniqueAlphabeticSku($product_codes[$key], 6, $skuCache);
                                                             break;
                                                     }
                                                 } else {
-                                                    $nsku = StoreTypeListing::generateUniqueAlphabeticSku($product_codes[$key], 6);
+                                                    $nsku = StoreTypeListing::generateUniqueAlphabeticSku($product_codes[$key], 6, $skuCache);
                                                 }
 
                                                 if (str_contains($product, '[^]')) {
@@ -2638,6 +2646,7 @@ class ListingController extends Controller
                                     }
                                 }
                             }
+                            Log::info(' Listing Product created successfully!');
                             $summary_products[$key]['models'] = implode(', ', $modelNames);
                         }
                         DB::commit();

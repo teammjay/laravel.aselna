@@ -33,6 +33,7 @@ use App\Models\ListingFeed;
 use App\Models\ListingItem;
 use App\Models\ListingItemLink;
 use App\Models\Message;
+use App\Models\ListingItemDetail;
 use App\Models\Order;
 use App\Models\OrderOperation;
 use App\Models\ProductType;
@@ -77,6 +78,45 @@ class HomeController extends Controller
     }
 
     public function testfunction(){
+
+
+        $shopifyService = new ShopifyAuthService('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', 'https://accessorychoice.myshopify.com');
+        $orderDetail = $shopifyService->getOrderDetail('6108743270539');
+
+        echo '<pre>';
+        print_r($orderDetail);
+        echo '</pre>';die;
+
+        /*$product_codes = 'J50';
+        $existingSkus = ListingItem::whereLike('sku',$product_codes.'-%')->pluck('sku')->toArray();
+        $detailSkus = ListingItemDetail::whereLike('sku',$product_codes.'-%')->pluck('sku')->toArray();
+        $skuCache = array_flip(array_merge($existingSkus, $detailSkus));
+        echo '<pre>';
+        print_r($skuCache);
+        echo '</pre>';die;*/
+
+        /*$stores = Store::select('store.*')->join('store_type', 'store_type.id', '=', 'store.store_type_id')->where('store_type.code','shopify')->get();
+
+        if(count($stores ?? []) > 0) {
+           foreach ($stores as $store) {
+               if ($store->name != 'AccessoryChoice') {
+                   continue;
+               }
+               $d = now()->subDays(3)->toDateTimeString();
+               $filterStartDateFormatted = date('Y-m-d\TH:i:s\Z', strtotime($d));
+               $shopifyService = new ShopifyService();
+               $orders = $shopifyService->getOrders($store,$filterStartDateFormatted);
+               echo '<pre>';
+               print_r($orders);
+               echo '</pre>';
+           }
+        }die;*/
+
+        /*$stores = Store::with('fileSystem','storeType')->where('name','AccessoryWiz')->get();
+        //dd($stores);
+        echo '<pre>';
+        print_r($stores);
+        echo '</pre>';die;
 
         /*$walmart_store_ids = Store::where('store_type_id', function ($subquery) {
             return $subquery->select('id')
@@ -884,26 +924,7 @@ On Fri, 29 Aug 2025 at 23:36, phonil <phonil.ebay@gmail.com> wrote:
             }
         }*/
 
-        /*$stores = Store::select('store.*')->join('store_type', 'store_type.id', '=', 'store.store_type_id')->where('store_type.code','shopify')->get();
 
-        if(count($stores ?? []) > 0) {
-            foreach ($stores as $store) {
-                if ($store->name != 'AccessoryWiz') {
-                    continue;
-                }
-                $shopifyService = new ShopifyService();
-                $orders = $shopifyService->getOrders($store);
-                echo '<pre>';
-                print_r($orders);
-                echo '</pre>';
-            }
-        }*/
-
-        /*$stores = Store::with('fileSystem','storeType')->where('name','AccessoryWiz')->get();
-        //dd($stores);
-        echo '<pre>';
-        print_r($stores);
-        echo '</pre>';die;*/
 
 
 

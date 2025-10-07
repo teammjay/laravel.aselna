@@ -508,6 +508,19 @@ GQL;
             }
           }
         }
+        risk {
+          recommendation
+          assessments {
+            provider {
+              title
+            }
+            riskLevel
+            facts {
+              description
+              sentiment
+            }
+          }
+        }
       }
     }
 GQL;

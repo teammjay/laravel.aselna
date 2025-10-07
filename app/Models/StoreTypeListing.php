@@ -55,7 +55,7 @@ class StoreTypeListing extends Model
         return $sku;
     }*/
 
-    public static function generateUniqueAlphabeticSku($product_code = '', $length = 6)
+    /*public static function generateUniqueAlphabeticSku($product_code = '', $length = 6)
     {
         $attempts = 0;
         $maxAttempts = 10;
@@ -88,6 +88,23 @@ class StoreTypeListing extends Model
 
         Log::info("Fallback SKU: $fallbacksku");
         return $fallbacksku;
+    }*/
+
+    public static function generateUniqueAlphabeticSku($product_code = '',$length = 6,&$skuCache = []) {
+
+        do {
+            if ($product_code != '') {
+                $sku = strtoupper($product_code . '-' . Str::random($length));
+            } else {
+                $sku = strtoupper(Str::random($length));
+            }
+
+            Log::info("Generated SKU: $sku");
+        } while (isset($skuCache[$sku]));
+
+        $skuCache[$sku] = true;
+
+        return $sku;
     }
 
 }
