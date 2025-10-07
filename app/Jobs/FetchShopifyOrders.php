@@ -228,10 +228,10 @@ class FetchShopifyOrders implements ShouldQueue
                                 $order_weight = $order['totalWeight'];
                                 $rulesDetails = ShippingServiceRule::getOrderShippingCarrierService($order_weight);
                                 $sync_message = NULL;
-                                if(isset($order['risk']['assessments']['riskLevel']) && $order['risk']['assessments']['riskLevel'] != 'NONE'){
+                                if(isset($order['risk']['assessments'][0]['riskLevel']) && $order['risk']['assessments'][0]['riskLevel'] != 'NONE'){
                                     $sync_message = '';
-                                    if(isset($order['risk']['assessments']['facts']) && is_array($order['risk']['assessments']['facts'])){
-                                        foreach($order['risk']['assessments']['facts'] as $facts){
+                                    if(isset($order['risk']['assessments'][0]['facts']) && is_array($order['risk']['assessments'][0]['facts'])){
+                                        foreach($order['risk']['assessments'][0]['facts'] as $facts){
                                             $sync_message .= $facts['description'].PHP_EOL;
                                         }
                                     }

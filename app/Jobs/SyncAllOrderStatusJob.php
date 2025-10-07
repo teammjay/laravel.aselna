@@ -131,6 +131,16 @@ class SyncAllOrderStatusJob implements ShouldQueue
 
                         $order->save();
                         $operation->save();
+                    } else if(isset($orderDetail['risk']['assessments'][0]['riskLevel']) && $orderDetail['risk']['assessments'][0]['riskLevel'] != 'NONE'){
+                        $sync_message = '';
+                        if(isset($order['risk']['assessments'][0]['facts']) && is_array($order['risk']['assessments'][0]['facts'])){
+                            foreach($order['risk']['assessments'][0]['facts'] as $facts){
+                                $sync_message .= $facts['description'].PHP_EOL;
+                            }
+
+                            $operation->sync_message = $sync_message;
+                            $operation->save();
+                        }
                     } else {
                         Log::info('Shopify order detail error: ' . json_encode($orderDetail));
                     }
