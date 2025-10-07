@@ -884,8 +884,15 @@
             let shipment_ids = [];
             isProcessingCancelled = false;
             $('input[name="shipment_id[]"]').each(function () {
-                shipment_ids.push($(this).val())
+                const status = $(this).data('status');
+
+                if(status === 1){
+                    return;
+                }
+                shipment_ids.push($(this).val());
             });
+
+
             shipment_details = [];
 
             if(shipment_ids.length === 0){
@@ -984,8 +991,13 @@
             let shipment_ids = [];
             isProcessingCancelled = false;
             $('input[name="shipment_id[]"]:checked').each(function () {
-                shipment_ids.push($(this).val())
+                const status = $(this).data('status');
+                if(status === 1){
+                    return;
+                }
+                shipment_ids.push($(this).val());
             });
+
 
             shipment_details = [];
 
