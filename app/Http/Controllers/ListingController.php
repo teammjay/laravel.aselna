@@ -2455,7 +2455,15 @@ class ListingController extends Controller
 
                         /* fetch all upc code at once*/
                         $upcCodes = $this->fetchUpcCode($store_detail, $store_id, count($product_titles));
+
+
+
                         foreach ($product_titles as $key => $product) {
+
+                            $existingSkus = ListingItem::whereLike('sku','%'.$product_codes[$key])->pluck('sku')->toArray();
+                            $detailSkus = ListingItemDetail::whereLike('sku','%'.$product_codes[$key])->pluck('sku')->toArray();
+                            $skuCache = array_flip(array_merge($existingSkus, $detailSkus));
+
                             //Log::info('Title :: ' . $key);
                             if ($store_detail->sku_generation_type) {
                                 switch ($store_detail->sku_generation_type) {

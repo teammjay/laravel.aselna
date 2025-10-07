@@ -70,6 +70,7 @@
             font-weight: 700;
             font-size: 14px;
         }
+        .bg-red.bg-blue{background-color: #007bff !important;}
     </style>
 @stop
 
