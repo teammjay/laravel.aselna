@@ -27,12 +27,11 @@ class OrderUtility
             ->orderBy('last_order_update_date', 'desc')->first();
 
         if ($lastOrderUpdateDate) {
-
             $date = \Carbon\Carbon::parse($lastOrderUpdateDate->last_order_update_date ?? $lastOrderUpdateDate->filter_end_date, 'EST')->addSeconds(10);
             return $date->toDateTimeString();
         } else {
             // get last 30 days
-            return now()->subDays(7)->toDateTimeString();
+            return now()->subDays(1)->toDateTimeString();
         }
     }
 
