@@ -32,6 +32,7 @@ class ProductImagesSyncJob implements ShouldQueue
      */
     public function handle(): void
     {
+        Log::info('ProductImagesSyncJob: Start');
         //add local env variable to check if we are in local environment
 //        if (env('APP_ENV') === 'local') return;
         $productImagesQ = DB::connection('fonus_db')
@@ -73,6 +74,12 @@ class ProductImagesSyncJob implements ShouldQueue
         if (!$product) return;
         $mainImageDetail = null;
         $thumbnailImageDetail = null;
+
+        $SystemProductImage = ProductImages::where('product_id', $product->product_id)->where('sort_order', $productImage->picture_id)->first();
+
+        if (isset($SystemProductImage) && $SystemProductImage->updated_at >= $productImage->date_updated) {
+            return;
+        }
 
         //check if file exists in storage
         try {
