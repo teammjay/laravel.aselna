@@ -199,21 +199,23 @@ class StoreBrandPageSyncJob implements ShouldQueue
                         ];
                         $collectionData['collection']['ruleSet']['appliedDisjunctively'] = true;
                         $path = '/store-images/' . $this->store->id . '/collections/' . $handle . '.jpg';
-
-                        try {
-                            $imagePath = FileUtility::uploadImage($this->store, 'app/public/device_images/' . $device->image, $path);
-                        } catch (\Exception $e) {
-                            $imagePath = '';
-                        }
-                        Log::info('Image path for device', ['device_id' => $device->id, 'image_path' => $imagePath]);
                         $collection = null;
 
-                        if ($imagePath) {
-                            $collectionData['collection']['image'] = [
-                                'src' => $imagePath,
-                            ];
-                        } else {
-                            Log::error('Image upload failed for device', ['device_id' => $device->id, 'image' => $device->image]);
+                        if ($device->updated_at <= $storePage->updated_at ?? now()) {
+                            try {
+                                $imagePath = FileUtility::uploadImage($this->store, 'app/public/device_images/' . $device->image, $path);
+                            } catch (\Exception $e) {
+                                $imagePath = '';
+                            }
+                            Log::info('Image path for device', ['device_id' => $device->id, 'image_path' => $imagePath]);
+
+                            if ($imagePath) {
+                                $collectionData['collection']['image'] = [
+                                    'src' => $imagePath,
+                                ];
+                            } else {
+                                Log::error('Image upload failed for device', ['device_id' => $device->id, 'image' => $device->image]);
+                            }
                         }
 
                         // fetch 20

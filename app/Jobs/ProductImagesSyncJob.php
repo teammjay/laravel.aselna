@@ -77,9 +77,11 @@ class ProductImagesSyncJob implements ShouldQueue
 
         $SystemProductImage = ProductImages::where('product_id', $product->product_id)->where('sort_order', $productImage->picture_id)->first();
 
+        Log::info('Product Image Date ' . $productImage->date_updated);
         if (isset($SystemProductImage) && $SystemProductImage->updated_at >= $productImage->date_updated) {
             return;
         }
+        Log::info('SystemProductImage Date ' . $SystemProductImage->updated_at);
 
         //check if file exists in storage
         try {
