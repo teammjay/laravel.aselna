@@ -211,9 +211,9 @@ class ShipmentsController extends Controller
                 }
                 $status = 0;
                 $status_message = '';
-                if($order->status_message != NULL){
+                if($order->sync_message != NULL){
                     $status = 1;
-                    $status_message = $order->status_message;
+                    $status_message = $order->sync_message;
                 }
                 $packageName = isset($order->shippingPackage) ? $order->shippingPackage->name : '';
                 if($package_id){
@@ -501,9 +501,9 @@ class ShipmentsController extends Controller
                 $opstatus = OrderOperationStatus::getOrderStatusName($order->status);
                 $status = 0;
                 $status_message = '';
-                if($order->status_message != NULL){
+                if($order->sync_message != NULL){
                     $status = 1;
-                    $status_message = $order->status_message;
+                    $status_message = $order->sync_message;
                 }
                 $packageName = isset($order->shippingPackage) ? $order->shippingPackage->name : '';
                 /*if($package_id){
@@ -1267,7 +1267,7 @@ class ShipmentsController extends Controller
             $orderOperation = OrderOperation::findOrFail($selected_shipment_id);
             if ($orderOperation) {
                 $updateRecord = [
-                    'status_message' => NULL
+                    'sync_message' => NULL
                 ];
                 $orderOperation->update($updateRecord);
             }
