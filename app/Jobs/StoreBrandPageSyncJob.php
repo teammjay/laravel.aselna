@@ -201,7 +201,6 @@ class StoreBrandPageSyncJob implements ShouldQueue
                         $path = '/store-images/' . $this->store->id . '/collections/' . $handle . '.jpg';
                         $collection = null;
 
-                        if ($device->updated_at <= $storePage->updated_at ?? now()) {
                             try {
                                 $imagePath = FileUtility::uploadImage($this->store, 'app/public/device_images/' . $device->image, $path);
                             } catch (\Exception $e) {
@@ -216,7 +215,6 @@ class StoreBrandPageSyncJob implements ShouldQueue
                             } else {
                                 Log::error('Image upload failed for device', ['device_id' => $device->id, 'image' => $device->image]);
                             }
-                        }
 
                         // fetch 20
                         $interfaces = DeviceInterface::where('device_id', $device->id)->limit(60)->get();
