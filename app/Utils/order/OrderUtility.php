@@ -32,7 +32,7 @@ class OrderUtility
             return $date->toDateTimeString();
         } else {
             // get last 30 days
-            return now()->subDays(30)->toDateTimeString();
+            return now()->subDays(7)->toDateTimeString();
         }
     }
 
