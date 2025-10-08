@@ -136,13 +136,18 @@ class EbayListingItemSyncJob implements ShouldQueue
             if (isset($response) && isset($response['Ack']) && $response['Ack'] == 'Success') {
                 $itemSkuArray = [];
                 if (isset($response['ItemArray']) && count($response['ItemArray']['Item'] ?? []) > 0) {
+                    $count = (int)$response['ReturnedItemCountActual'];
+                    if ($count == 1) {
+                        $response['ItemArray']['Item'] = [$response['ItemArray']['Item']];
+                    }
                     foreach ($response['ItemArray']['Item'] as $item) {
+                        Log::info("Processing item: " . json_encode($item));
                         if ($item['SKU'] == null || $item['SKU'] == '') {
                             Log::info("Item SKU is null or empty, skipping item.");
                             continue;
                         }
                         $itemSkuArray[] = $item['SKU'];
-                        $itemDetails = ListingItem::where('sku', $item['SKU'])->get();
+                        $itemDetails = ListingItem::where('sku', $item['SKU'])->whereNull('store_sku')->get();
                         foreach ($itemDetails as $itemDetail) {
                             if ($itemDetail) {
                                 if (isset($item['ItemID']) && $item['ItemID'] != '') {
@@ -151,7 +156,8 @@ class EbayListingItemSyncJob implements ShouldQueue
                                         'sync_status' => ListingSyncStatus::Synchronized,
                                     ]);
                                     Log::info("Updated item with SKU: " . $item['SKU'] . " and ItemID: " . $item['ItemID']);
-                                } else {
+                                } else
+                                {
 
                                     $date = \Carbon\Carbon::parse($itemDetail->created_at);
                                     if ($date->diffInDays(now()) >= 5) {
