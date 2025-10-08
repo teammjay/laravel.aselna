@@ -96,7 +96,7 @@ class EbayListingItemSyncJob implements ShouldQueue
 
 
 //            Log::info(("Diff In Date " . $itemDetail->created_at->diffInDays($minDate)));
-            if (isset($minDate) && $itemDetail->created_at && $minDate->diffInDays($itemDetail->created_at) > 119) {
+            if (isset($minDate) && $itemDetail->created_at && $minDate->diffInDays($itemDetail->created_at) > 114) {
                 Log::info("Listing item diff greater than 120 days - " . $itemDetail->sku);
                 continue;
             }
