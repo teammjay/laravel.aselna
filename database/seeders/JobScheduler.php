@@ -369,7 +369,12 @@ class JobScheduler extends Seeder
                 'name' => 'Shopify Combined Syncing',
                 'description' => 'Shopify Combined Syncing',
                 'class_name' => 'App\Jobs\ShopifyCombinedSyncing',
-            ]
+            ],
+            [
+                'name' => 'Ebay Listing Item Status Check',
+                'description' => 'Ebay Listing Item Status Check',
+                'class_name' => 'App\Jobs\EbayListingItemSyncJob',
+            ],
 
         ];
 

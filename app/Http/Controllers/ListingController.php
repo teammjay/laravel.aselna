@@ -2455,7 +2455,6 @@ class ListingController extends Controller
     }
 
 
-
     public function saveListingProducts(Request $request)
     {
 
@@ -2711,7 +2710,7 @@ class ListingController extends Controller
                                 }
                             }
                             Log::info(' Listing Product created successfully!');
-                            $summary_products[$key]['models'] = implode(', ', $modelNames);
+                            $summary_products[$key]['models'] = implode(', ', array_unique($modelNames));
                         }
                         DB::commit();
 
