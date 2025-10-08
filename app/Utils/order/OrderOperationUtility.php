@@ -558,6 +558,8 @@ class OrderOperationUtility
                     $finalData['orderCancellation']['orderLines']['orderLine'][] = $orderLine;
                     $count++;
                 }
+                Log::info('Walmart cancel order request: '. json_encode($finalData));
+
                 $authService = new WalmartAuthService($store->seller_id, $store->secret_key);
                 $response = $authService->cancelOrder($orderOperation->order->purchase_order_id, $finalData);
                 if (isset($response)) {

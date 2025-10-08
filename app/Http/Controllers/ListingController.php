@@ -2521,25 +2521,15 @@ class ListingController extends Controller
                         $upcCodes = $this->fetchUpcCode($store_detail, $store_id, count($product_titles));
 
                         /* fetch all sku for all product code for listing*/
-                        $productCodes = array_unique($product_codes);
-
-                        $skus = ListingItem::where(function ($q) use ($productCodes) {
-                            foreach ($productCodes as $code) {
-                                $q->orWhere('sku', 'like', "{$code}-%");
-                            }
-                        })->pluck('sku')->toArray();
-
-                        $detailSkus = ListingItemDetail::where(function ($q) use ($productCodes) {
-                            foreach ($productCodes as $code) {
-                                $q->orWhere('sku', 'like', "{$code}-%");
-                            }
-                        })->pluck('sku')->toArray();
-
-                        $skuCache = array_flip(array_merge($skus, $detailSkus));
-
-                        /* fetch all sku for all product code for listing*/
 
                         foreach ($product_titles as $key => $product) {
+
+                            $skus = ListingItem::Where('sku', 'like', "{$product_codes[$key]}-%")->pluck('sku')->toArray();
+                            $detailSkus = ListingItemDetail::Where('sku', 'like', "{$product_codes[$key]}-%")->pluck('sku')->toArray();
+
+                            $skuCache = array_flip(array_merge($skus, $detailSkus));
+
+                            Log::info('Count ::' . count($skuCache));
 
                             /*$existingSkus = ListingItem::whereLike('sku',$product_codes[$key].'-%')->pluck('sku')->toArray();
                             $detailSkus = ListingItemDetail::whereLike('sku',$product_codes[$key].'-%')->pluck('sku')->toArray();
@@ -2589,6 +2579,8 @@ class ListingController extends Controller
                                 'created_by' => $created_by,
                                 'updated_by' => $created_by
                             ];
+                            // log the time required to create store type listing
+                            Log::info('Before Store Type Listing ' . date('Y-m-d H:i:s'));
                             //Log::info(' Store Type Listing :: ' . json_encode($listingProductArr));
                             $record = StoreTypeListing::create($listingProductArr);
                             $store_type_listing_id = $record->id;
@@ -2630,10 +2622,11 @@ class ListingController extends Controller
                                     //Log::info(' Product Models :: ' . json_encode($product_models->$product_key));
                                     $product_model = $product_models->$product_key;
                                     if (isset($product_model) && is_array($product_model)) {
-
+                                        Log::info(' Models :: ' . count($product_model));
                                         foreach ($product_model as $k => $models) {
 
                                             if (!is_array($models) || empty($models)) continue;
+                                            Log::info(' Models :: ' . count($models));
                                             foreach ($models as $j => $model) {
 
                                                 if (!$model) continue;
@@ -2710,6 +2703,8 @@ class ListingController extends Controller
                                     }
                                 }
                             }
+
+                            Log::info('Before Store Type Listing ' . date('Y-m-d H:i:s'));
                             Log::info(' Listing Product created successfully!');
                             $summary_products[$key]['models'] = implode(', ', $modelNames);
                         }
