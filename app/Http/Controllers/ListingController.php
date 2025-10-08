@@ -1247,10 +1247,12 @@ class ListingController extends Controller
                                     if (str_contains($title_template, '#unique_code')) {
                                         $title_template = str_replace('#unique_code', '[^]', $title_template);
                                     }
-                                    if ($title_template) {
+
+                                    /*if ($title_template) {
                                         $titleGenerator = new TitleGenerator(0, $max_title_length, []);
                                         $title_template = $titleGenerator->getProductTitle($title_template, $product_title, $product_short_keyword, $product_long_keyword);
-                                    }
+                                    }*/
+
                                 }
 
                                 $devices = $this->getDevicesFromRequest($request, $product);
@@ -1297,6 +1299,23 @@ class ListingController extends Controller
                                             break;
                                     }
                                 }
+
+                                if (!empty($productsArray)) {
+                                    foreach ($productsArray as $k => $product) {
+                                        if (!empty($product)) {
+                                            foreach ($product as $key => $pro) {
+                                                if (isset($pro['title'])) {
+
+                                                    $titleGenerator = new TitleGenerator(0, $max_title_length, []);
+                                                    $newTitle = $titleGenerator->getProductTitle($pro['title'], $product_title, $product_short_keyword, $product_long_keyword);
+                                                    $productsArray[$k][$key]['title'] = $newTitle;
+                                                }
+
+                                            }
+                                        }
+                                    }
+                                }
+
                             }
                         //}
                     }
@@ -1956,7 +1975,61 @@ class ListingController extends Controller
         return implode(', ', $resultParts);
     }
 
-    private function groupDeviceModels($devices, $deviceSeparator='/'): array
+    private function groupDeviceModels($devices, $deviceSeparator = '/')
+    {
+        $grouped = [];
+
+        foreach ($devices as $device) {
+            $fullName = trim($device->name);
+            $brand = $device->brand_name;
+
+            $parts = explode(' ', $fullName);
+            $prefix = $brand === 'Apple' ? 'iPhone' : $parts[0];
+            $model = $parts[1] ?? '';
+            $suffix = implode(' ', array_slice($parts, 2)) ?: '__base__';
+
+            $groupKey = strtolower($brand) === 'apple' ? 'iPhone' : "$brand $prefix";
+
+            $grouped[$groupKey][$suffix][] = $model;
+        }
+
+        $result = [];
+
+        foreach ($grouped as $groupLabel => $suffixes) {
+            $allModels = [];
+            $allSuffixes = [];
+
+            foreach ($suffixes as $suffix => $models) {
+                $models = array_unique($models);
+                sort($models, SORT_NATURAL);
+
+                foreach ($models as $m) {
+                    if (is_numeric($m)) {
+                        $allModels[] = $m;
+                    } else {
+                        $allSuffixes[] = ucwords(strtolower($m));
+                    }
+                }
+
+                if ($suffix !== '__base__') {
+                    $allSuffixes[] = ucwords(strtolower($suffix));
+                }
+            }
+
+            $allModels = array_unique($allModels);
+            $allSuffixes = array_unique($allSuffixes);
+
+            $combined = array_merge($allModels, $allSuffixes);
+            $groupText = implode($deviceSeparator, $combined);
+
+            $result[] = $groupLabel . ' ' . $groupText;
+        }
+
+        return $result;
+    }
+
+
+    /*private function groupDeviceModelsOld($devices, $deviceSeparator='/'): array
     {
         $grouped = [];
 
@@ -1969,10 +2042,6 @@ class ListingController extends Controller
             }else{
                 $parts = explode(' ', $fullName);
             }
-
-           /* echo '<pre>';
-            print_r($parts);
-            echo '</pre>';*/
 
             $prefix = $brand === 'Apple' ? 'iPhone' : $parts[0];
             //$prefix = $parts[0];
@@ -1992,9 +2061,6 @@ class ListingController extends Controller
 
         //Log::info("grouped" . json_encode($grouped));
 
-        /*echo '<pre>';
-        print_r($grouped);
-        echo '</pre>';*/
 
         $result = [];
 
@@ -2039,12 +2105,8 @@ class ListingController extends Controller
 
         }
 
-        /*echo '<pre>';
-        print_r($result);
-        echo '</pre>';*/
-
         return $result;
-    }
+    }*/
 
     private function generateFreeGroupProductTitlesEbay($baseTitle, $product, $devices, $charLimit, $brand_seperator, $device_seperator, $compress, $generate_type, $pDetail, $store_product_id, $store_type)
     {
@@ -2391,6 +2453,8 @@ class ListingController extends Controller
 
         return $titles;
     }
+
+
 
     public function saveListingProducts(Request $request)
     {

@@ -892,7 +892,6 @@
                 shipment_ids.push($(this).val());
             });
 
-
             shipment_details = [];
 
             if(shipment_ids.length === 0){
@@ -997,7 +996,6 @@
                 }
                 shipment_ids.push($(this).val());
             });
-
 
             shipment_details = [];
 
