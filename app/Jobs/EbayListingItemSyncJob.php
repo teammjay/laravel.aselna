@@ -40,6 +40,10 @@ class EbayListingItemSyncJob implements ShouldQueue
         })->pluck('id');
         Log::info('Ebay store ids: ' . json_encode($ebay_store_ids));
 
+        if (env('APP_ENV') === 'local') {
+//            $ebay_store_ids = ['1968772b-cc55-d4e9-a126-7e81019be976'];
+        }
+
         foreach ($ebay_store_ids as $storeId) {
             $store = Store::find($storeId);
 
@@ -50,23 +54,24 @@ class EbayListingItemSyncJob implements ShouldQueue
                 ->join('listing_item', 'listing_item_link.item_id', '=', 'listing_item.id')
                 ->join('listing', 'listing_item_link.listing_id', '=', 'listing.id')
                 ->whereIn('listing.store_id', [$storeId])
-                /*->where(function ($query) {
+                ->where(function ($query) {
                     return $query->whereNull('listing_item.store_sku')
                         ->orWhere('listing_item.store_sku', '');
-                })*/
-                ->whereIn('listing_item.status', [1,2])
-                ->where(function ($query) {
-                    return $query
-                        ->where('listing_item.creation_retry_count', '<', 5)->orWhereNull('listing_item.creation_retry_count');
                 })
+                ->whereIn('listing_item.status', [1, 2])
+//                ->where(function ($query) {
+//                    return $query
+//                        ->where('listing_item.creation_retry_count', '<', 5)->orWhereNull('listing_item.creation_retry_count');
+//                })
                 ->whereNotIn('listing_item.sync_status', [
                     ListingSyncStatus::CreationError,
                     ListingSyncStatus::Synchronizing,
-                    ListingSyncStatus::Unsynchronize,
                 ])
-                ->orderBy('listing_item.created_at','asc')
+                ->orderBy('listing_item.created_at', 'asc')
                 ->limit(100)
                 ->get();
+
+//            Log::info("Sql Query: " . $listingItemLinks->toSql());
 
 //            Log::info("Listing Item Links Query: " . $listingItemLinks);
 //            continue;
@@ -79,9 +84,23 @@ class EbayListingItemSyncJob implements ShouldQueue
     private function syncListingItem($listingItemLinks, $store)
     {
         $skuArray = [];
+        $minDate = null;
         foreach ($listingItemLinks as $listingItemLink) {
             $itemDetail = $listingItemLink->listingItem;
             if ($itemDetail->store_sku != null) continue;
+
+
+            if ($itemDetail->created_at){
+                $minDate = $minDate == null ? $itemDetail->created_at : ($itemDetail->created_at < $minDate ? $itemDetail->created_at : $minDate);
+            }
+
+
+//            Log::info(("Diff In Date " . $itemDetail->created_at->diffInDays($minDate)));
+            if (isset($minDate) && $itemDetail->created_at && $minDate->diffInDays($itemDetail->created_at) > 119) {
+                Log::info("Listing item diff greater than 120 days - " . $itemDetail->sku);
+                continue;
+            }
+
             $skuArray[] = $itemDetail->sku;
 
             $retry_count = $itemDetail->creation_retry_count ?? 0;
@@ -97,6 +116,11 @@ class EbayListingItemSyncJob implements ShouldQueue
             return;
         }
 
+        if (env('APP_ENV') === 'local') {
+//            $skuArray = ['A16-5GLVBQ','Z96-P8XA0U','V65-DNWS7X','K11-N3MQS4','C49-VIVTG9','K34-RREHUR'];
+//            $skuArray = ['A16-5GLVBQ','Z96-P8XA0U','V65-DNWS7X'];
+//            $skuArray = ['K11-N3MQS4','C49-VIVTG9','K34-RREHUR','B90-RHZAJ9','E56-XAGDPL','C10-IOXWOQ'];
+        }
 
         try {
             Log::info("Calling Service");
@@ -106,40 +130,61 @@ class EbayListingItemSyncJob implements ShouldQueue
             $redirectUri = env('EBAY_REDIRECT_URI');
 
             $ebayAuthService = new EbayAuthService($clientId, $clientSecret, $redirectUri, $store->user_id);
-            $response = $ebayAuthService->getListingItems($skuArray);
+            $response = $ebayAuthService->getListingItems($skuArray, $minDate);
+            Log::info("Ebay getListingItems response: " . json_encode($response));
 
             if (isset($response) && isset($response['Ack']) && $response['Ack'] == 'Success') {
-                if (isset($response['ItemArray']) && count($response['ItemArray']['Item']) > 0) {
+                $itemSkuArray = [];
+                if (isset($response['ItemArray']) && count($response['ItemArray']['Item'] ?? []) > 0) {
                     foreach ($response['ItemArray']['Item'] as $item) {
                         if ($item['SKU'] == null || $item['SKU'] == '') {
                             Log::info("Item SKU is null or empty, skipping item.");
                             continue;
                         }
+                        $itemSkuArray[] = $item['SKU'];
                         $itemDetail = ListingItem::where('sku', $item['SKU'])->first();
                         if ($itemDetail) {
-                            if(isset($item['ItemID']) && $item['ItemID'] != '') {
+                            if (isset($item['ItemID']) && $item['ItemID'] != '') {
                                 $itemDetail->update([
                                     'store_sku' => $item['ItemID'],
                                     'sync_status' => ListingSyncStatus::Synchronized,
                                 ]);
                                 Log::info("Updated item with SKU: " . $item['SKU'] . " and ItemID: " . $item['ItemID']);
-                            }else{
+                            } else {
 
                                 $date = \Carbon\Carbon::parse($itemDetail->created_at);
                                 if ($date->diffInDays(now()) >= 5) {
-                                    Log::info("Listing item older than 5 days - ".$itemDetail->sku);
+                                    Log::info("Listing item older than 5 days - " . $itemDetail->sku);
                                     $itemDetail->update([
-                                        'status' =>ListingStatus::Deleted,
-                                    ]);
-                                }else{
-                                    $retry_count = $itemDetail->creation_retry_count ?? 0;
-                                    $itemDetail->update([
-                                        'creation_retry_count' => $retry_count + 1,
+                                        'status' => ListingStatus::Deleted,
                                     ]);
                                 }
+//                                else{
+//                                    $retry_count = $itemDetail->creation_retry_count ?? 0;
+//                                    $itemDetail->update([
+//                                        'creation_retry_count' => $retry_count + 1,
+//                                    ]);
+//                                }
                             }
                         } else {
                             Log::info("No item found for SKU: " . $item['SKU']);
+                        }
+                    }
+                }
+
+                if (isset($response['ReturnedItemCountActual']) && ((int)$response['ReturnedItemCountActual']) < count($skuArray)) {
+                    foreach ($skuArray as $sku) {
+                        if (!in_array($sku, $itemSkuArray)) {
+                            $itemDetail = ListingItem::where('sku', $sku)->first();
+                            if ($itemDetail) {
+                                $date = \Carbon\Carbon::parse($itemDetail->created_at);
+                                if ($date->diffInDays(now()) >= 5) {
+                                    Log::info("Listing item older than 5 days and not synced - " . $itemDetail->sku);
+                                    $itemDetail->update([
+                                        'status' => ListingStatus::Deleted,
+                                    ]);
+                                }
+                            }
                         }
                     }
                 }
