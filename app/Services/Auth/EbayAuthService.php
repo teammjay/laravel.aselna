@@ -606,7 +606,7 @@ class EbayAuthService
 
     }
 
-    public function getListingItems($skuList){
+    public function getListingItems($skuList, $minDate = null){
 
         try {
 
@@ -624,8 +624,20 @@ class EbayAuthService
             $pagination->addChild('PageNumber', '1');
 //            $xml->addChild('IncludeItemSpecifics','true');
 
-            $xml->addChild('StartTimeFrom', date('Y-m-d\TH:i:s\Z', strtotime('-119 days')));
-            $xml->addChild('StartTimeTo', date('Y-m-d\TH:i:s\Z', strtotime('now')));
+            if($minDate == null){
+                $minDate = strtotime('-119 days');
+                $maxDate = strtotime('now');
+            } else {
+                $maxDate = strtotime($minDate . ' +119 days');
+                $minDate = strtotime($minDate);
+            }
+
+            Log::info('Min Date ' . date('Y-m-d\TH:i:s\Z', $minDate));
+            Log::info('Max Date ' . date('Y-m-d\TH:i:s\Z', $maxDate));
+
+            // add starttime as 1 january 2025
+            $xml->addChild('StartTimeFrom', date('Y-m-d\TH:i:s\Z', $minDate));
+            $xml->addChild('StartTimeTo', date('Y-m-d\TH:i:s\Z', $maxDate));
 
             $outPutSelector = $xml->addChild('GranularityLevel', 'Coarse');
 
@@ -652,6 +664,7 @@ class EbayAuthService
             return $data;
 
         }catch (RequestException $e) {
+            Log::info('Item Detail Error ' . $e->getMessage());
             if ($e->hasResponse()) {
                 $errorBody = json_decode($e->getResponse()->getBody()->getContents(), true);
                 $this->handleApiErrors($errorBody);
