@@ -16,6 +16,7 @@ use App\Jobs\DeviceSeriesSyncJob;
 use App\Jobs\DevicesLinkSyncJob;
 use App\Jobs\DevicesSyncJob;
 use App\Jobs\DeviceTypesSyncJob;
+use App\Jobs\EbayListingItemSyncJob;
 use App\Jobs\FeedGenerationJob;
 use App\Jobs\FetchAmazonOrdersJob;
 use App\Jobs\FetchEbayOrders;
@@ -208,7 +209,8 @@ class SyncAllTables extends Command
 //        SyncAllOrderStatusJob::dispatch();
 //        FetchTemuOrders::dispatch();
 //        DevicesSyncJob::dispatch();
-        ProductImagesSyncJob::dispatch();
+//        ProductImagesSyncJob::dispatch();
+        EbayListingItemSyncJob::dispatch();
 
         $transactionIds = [
 ////            '9400150105798006163885',
