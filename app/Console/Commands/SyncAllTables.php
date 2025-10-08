@@ -207,7 +207,8 @@ class SyncAllTables extends Command
 //        DeviceInterfaces::dispatch();
 //        SyncAllOrderStatusJob::dispatch();
 //        FetchTemuOrders::dispatch();
-        DevicesSyncJob::dispatch();
+//        DevicesSyncJob::dispatch();
+        ProductImagesSyncJob::dispatch();
 
         $transactionIds = [
 ////            '9400150105798006163885',
