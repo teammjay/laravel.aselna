@@ -87,6 +87,26 @@ class HomeController extends Controller
         print_r($orderDetail);
         echo '</pre>';die;
 
+        /*$productCodes = ['J50','J52'];
+
+        $skus = ListingItem::where(function ($q) use ($productCodes) {
+            foreach ($productCodes as $code) {
+                $q->orWhere('sku', 'like', "{$code}-%");
+            }
+        })->pluck('sku')->toArray();
+
+        $detailSkus = ListingItemDetail::where(function ($q) use ($productCodes) {
+            foreach ($productCodes as $code) {
+                $q->orWhere('sku', 'like', "{$code}-%");
+            }
+        })->pluck('sku')->toArray();
+
+        $skuCache = array_flip(array_merge($skus, $detailSkus));
+        echo '<pre>';
+        print_r($skuCache);
+        echo '</pre>';die;*/
+
+
         /*$product_codes = 'J50';
         $existingSkus = ListingItem::whereLike('sku',$product_codes.'-%')->pluck('sku')->toArray();
         $detailSkus = ListingItemDetail::whereLike('sku',$product_codes.'-%')->pluck('sku')->toArray();

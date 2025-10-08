@@ -804,7 +804,7 @@
                         $('input[name="products[]"]:checked').each(function () {
                             selected_product.push($(this).val())
                         });
-                        if (selected_product.length === 0) {
+                        if (selected_product.length === 0 && $('#selected_product').is(':checked')) {
                             alert('Please select product to proceed.');
                         }else{
                             followSecondStep();
@@ -1212,15 +1212,13 @@
             $("#manufacturer_filter, #product_type_filter, #brand_filter, #rating_filter, #popularity_filter, #carrier_filter").gs_multiselect();
 
             $(document).on('click', '#selected_product', function() {
-                /*if($(this).is(':checked')){
-
+                if($(this).is(':checked')){
+                    $('.selectproRow').removeClass('bg-blue');
+                    $('.proCheck').prop('checked',false);
                 }else{
                     $('.selectproRow').removeClass('bg-blue');
                     $('.proCheck').prop('checked',true);
-                }*/
-
-                $('.selectproRow').removeClass('bg-blue');
-                $('.proCheck').prop('checked',false);
+                }
 
                 //let totalCnt = $('input[name="products[]"]:checked').length;
                 $('.total_sel_product').html('(Selected <b>0</b> item)');
