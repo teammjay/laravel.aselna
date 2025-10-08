@@ -151,14 +151,10 @@ class DevicesSyncJob implements ShouldQueue
         try {
             $image_name = strtolower($Image->name);
             if (isset($image_name) && env('APP_ENV') !== 'local') {
-                if (!file_exists(storage_path('app/public/device_images/' . $image_name))) {
-                    Log::info('Image URL: ' . 'https://fonusaccessory.com/inv/inv_images/device_images/' . $image_name);
-                    $image = file_get_contents('https://fonusaccessory.com/inv/inv_images/device_images/' . $image_name);
-                    file_put_contents(storage_path('app/public/device_images/' . $image_name), $image);
-                    $deviceData['image'] = $image_name;
-                } else {
-                    $deviceData['image'] = $image_name;
-                }
+                Log::info('Image URL: ' . 'https://fonusaccessory.com/inv/inv_images/device_images/' . $image_name);
+                $image = file_get_contents('https://fonusaccessory.com/inv/inv_images/device_images/' . $image_name);
+                file_put_contents(storage_path('app/public/device_images/' . $image_name), $image);
+                $deviceData['image'] = $image_name;
             }
         } catch (Exception $e) {
             Log::error('Error in Image Sync: ' . $e->getMessage());
@@ -168,13 +164,9 @@ class DevicesSyncJob implements ShouldQueue
         try {
             $thumbnail_name = strtolower($Thumbnail->name);
             if (isset($thumbnail_name) && env('APP_ENV') !== 'local') {
-                if (!file_exists(storage_path('app/public/device_images/' . $thumbnail_name))) {
-                    $thumbnail = file_get_contents('https://fonusaccessory.com/inv/inv_images/device_images/' . $thumbnail_name);
-                    file_put_contents(storage_path('app/public/device_images/' . $thumbnail_name), $thumbnail);
-                    $deviceData['thumbnail_image'] = $thumbnail_name;
-                } else {
-                    $deviceData['thumbnail_image'] = $thumbnail_name;
-                }
+                $thumbnail = file_get_contents('https://fonusaccessory.com/inv/inv_images/device_images/' . $thumbnail_name);
+                file_put_contents(storage_path('app/public/device_images/' . $thumbnail_name), $thumbnail);
+                $deviceData['thumbnail_image'] = $thumbnail_name;
             }
         } catch (Exception $e) {
             Log::error('Error in Thumbnail Sync: ' . $e->getMessage());
