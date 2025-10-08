@@ -142,32 +142,34 @@ class EbayListingItemSyncJob implements ShouldQueue
                             continue;
                         }
                         $itemSkuArray[] = $item['SKU'];
-                        $itemDetail = ListingItem::where('sku', $item['SKU'])->first();
-                        if ($itemDetail) {
-                            if (isset($item['ItemID']) && $item['ItemID'] != '') {
-                                $itemDetail->update([
-                                    'store_sku' => $item['ItemID'],
-                                    'sync_status' => ListingSyncStatus::Synchronized,
-                                ]);
-                                Log::info("Updated item with SKU: " . $item['SKU'] . " and ItemID: " . $item['ItemID']);
-                            } else {
-
-                                $date = \Carbon\Carbon::parse($itemDetail->created_at);
-                                if ($date->diffInDays(now()) >= 5) {
-                                    Log::info("Listing item older than 5 days - " . $itemDetail->sku);
+                        $itemDetails = ListingItem::where('sku', $item['SKU'])->get();
+                        foreach ($itemDetails as $itemDetail) {
+                            if ($itemDetail) {
+                                if (isset($item['ItemID']) && $item['ItemID'] != '') {
                                     $itemDetail->update([
-                                        'status' => ListingStatus::Deleted,
+                                        'store_sku' => $item['ItemID'],
+                                        'sync_status' => ListingSyncStatus::Synchronized,
                                     ]);
-                                }
+                                    Log::info("Updated item with SKU: " . $item['SKU'] . " and ItemID: " . $item['ItemID']);
+                                } else {
+
+                                    $date = \Carbon\Carbon::parse($itemDetail->created_at);
+                                    if ($date->diffInDays(now()) >= 5) {
+                                        Log::info("Listing item older than 5 days - " . $itemDetail->sku);
+                                        $itemDetail->update([
+                                            'status' => ListingStatus::Deleted,
+                                        ]);
+                                    }
 //                                else{
 //                                    $retry_count = $itemDetail->creation_retry_count ?? 0;
 //                                    $itemDetail->update([
 //                                        'creation_retry_count' => $retry_count + 1,
 //                                    ]);
 //                                }
+                                }
+                            } else {
+                                Log::info("No item found for SKU: " . $item['SKU']);
                             }
-                        } else {
-                            Log::info("No item found for SKU: " . $item['SKU']);
                         }
                     }
                 }
@@ -175,12 +177,13 @@ class EbayListingItemSyncJob implements ShouldQueue
                 if (isset($response['ReturnedItemCountActual']) && ((int)$response['ReturnedItemCountActual']) < count($skuArray)) {
                     foreach ($skuArray as $sku) {
                         if (!in_array($sku, $itemSkuArray)) {
-                            $itemDetail = ListingItem::where('sku', $sku)->first();
-                            if ($itemDetail) {
-                                $date = \Carbon\Carbon::parse($itemDetail->created_at);
+                            $itemDetails = ListingItem::where('sku', $sku)->get();
+                            foreach ($itemDetails as $item) {
+                                Log::info("Item with SKU: " . $sku . " not found in eBay response, marking as Deleted.");
+                                $date = \Carbon\Carbon::parse($item->created_at);
                                 if ($date->diffInDays(now()) >= 5) {
-                                    Log::info("Listing item older than 5 days and not synced - " . $itemDetail->sku);
-                                    $itemDetail->update([
+                                    Log::info("Listing item older than 5 days and not synced - " . $item->sku);
+                                    $item->update([
                                         'status' => ListingStatus::Deleted,
                                     ]);
                                 }
