@@ -404,7 +404,7 @@ class StoreController extends Controller
         $service = StoreShippingService::find($shippingId);
 
         if ($service) {
-//            $service->delete(); // Delete the shipping
+            $service->delete(); // Delete the shipping
 
             // Return a success response
             return response()->json(['success' => true, 'message' => 'Service deleted successfully']);
@@ -709,7 +709,7 @@ class StoreController extends Controller
         $center = StoreLogisticCenter::find($centerId);
 
         if ($center) {
-//            $center->delete(); // Delete the page
+            $center->delete(); // Delete the page
 
             // Return a success response
             return response()->json(['success' => true, 'message' => 'Logistic center deleted successfully']);
