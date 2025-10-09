@@ -1209,6 +1209,7 @@ class ListingController extends Controller
 
             if ($store_id && $product_ids) {
                 $productsArray = [];
+                //$products = StoreProduct::with('product', 'product.productType')->where('store_id', $store_id)->whereIn('product_id', $product_ids)->get();
                 foreach ($product_ids as $key => $product_id) {
 
                     $store_type_detail = StoreType::getStoreTypeDetailById($store_id);
@@ -1222,6 +1223,10 @@ class ListingController extends Controller
                     print_r($products);die;*/
                     /*if (count($products ?? []) > 0) {*/
                     if (!empty($product)) {
+
+                        /*if($products[$key]->product_id != $product_id) continue;
+
+                        $product = $products[$key];*/
 
                         //foreach ($products as $key => $product) {
                             $store_product_id = trim($product->id);
@@ -1373,6 +1378,14 @@ class ListingController extends Controller
         }
     }
 
+    protected function generateFinalTitle($title, $product_title, $product_short_keyword, $product_long_keyword, $max_title_length){
+
+        $titleGenerator = new TitleGenerator(0, $max_title_length, []);
+        $newTitle = $titleGenerator->getProductTitle($title, $product_title, $product_short_keyword, $product_long_keyword);
+
+        return $newTitle;
+    }
+
     public function getDevicesFromRequest(Request $request, $product)
     {
         $device_type = $request->input('device_type');
@@ -1450,7 +1463,7 @@ class ListingController extends Controller
     }
 
 
-    private function generateProductTitles($baseTitle, $product, $devices, $charLimit, $brand_seperator, $device_seperator, $compress, $generate_type, $pDetail, $store_product_id)
+    private function generateProductTitles($baseTitle, $product, $devices, $charLimit, $brand_seperator, $device_seperator, $compress, $generate_type, $pDetail, $store_product_id, $store_type)
     {
         $titles = [];
         $currentModels = [];
@@ -2491,6 +2504,8 @@ class ListingController extends Controller
                     echo '<pre>';die;*/
                     $created_by = auth()->user()->name ?? 'admin';
 
+                    Log::info('Start save listing ' . date('Y-m-d H:i:s'));
+
                     $listingArr = [
                         'store_id' => $store_id,
                         'generation_type_id' => $generation_type_id,
@@ -2519,6 +2534,8 @@ class ListingController extends Controller
                         /* fetch all upc code at once*/
                         $upcCodes = $this->fetchUpcCode($store_detail, $store_id, count($product_titles));
 
+                        Log::info('Fetch UPC ' . date('Y-m-d H:i:s'));
+
                         /* fetch all sku for all product code for listing*/
 
                         foreach ($product_titles as $key => $product) {
@@ -2529,6 +2546,7 @@ class ListingController extends Controller
                             $skuCache = array_flip(array_merge($skus, $detailSkus));
 
                             Log::info('Count ::' . count($skuCache));
+                            Log::info('Fetch all sku ' . date('Y-m-d H:i:s'));
 
                             /*$existingSkus = ListingItem::whereLike('sku',$product_codes[$key].'-%')->pluck('sku')->toArray();
                             $detailSkus = ListingItemDetail::whereLike('sku',$product_codes[$key].'-%')->pluck('sku')->toArray();
@@ -2611,9 +2629,11 @@ class ListingController extends Controller
 
                                 //Log::info(' Listing Item :: ' . json_encode($modelDetail));
                                 $item = ListingItem::create($modelDetail);
-                                if ($item) {
+                                /*if ($item) {
                                     UPCCodes::where('upc_code', $upc)->update(['is_used' => 1]);
-                                }
+                                }*/
+
+                                Log::info('Store listing Item' . date('Y-m-d H:i:s'));
                                 $listing_item_id = $item->id;
                                 $modelNames = [];
                                 if ($listing_item_id) {
@@ -2621,11 +2641,12 @@ class ListingController extends Controller
                                     //Log::info(' Product Models :: ' . json_encode($product_models->$product_key));
                                     $product_model = $product_models->$product_key;
                                     if (isset($product_model) && is_array($product_model)) {
-                                        Log::info(' Models :: ' . count($product_model));
+                                        //Log::info(' Models :: ' . count($product_model));
+                                        $itemDetail = [];
                                         foreach ($product_model as $k => $models) {
 
                                             if (!is_array($models) || empty($models)) continue;
-                                            Log::info(' Models :: ' . count($models));
+                                            //Log::info(' Models :: ' . count($models));
                                             foreach ($models as $j => $model) {
 
                                                 if (!$model) continue;
@@ -2668,24 +2689,40 @@ class ListingController extends Controller
                                                 $product = str_contains($product, '[^]') ? str_replace('[^]', $sku, $product) : $product;
 
                                                 $modelNames[] = $model->name;
-                                                $itemDetail = array(
+                                                $itemDetail[] = array(
+                                                    'id' => (string)Str::uuid(),
                                                     'sku' => $nsku,
                                                     'title' => $product,
                                                     'upc' => $upc,
                                                     'device_id' => $model->id,
                                                     'listing_item_id' => $listing_item_id,
                                                     'device_carrier_id' => $model->carrier_id ?? null,
-                                                    'created_by' => $created_by
+                                                    'created_by' => $created_by,
+                                                    'created_at' => now(),
+                                                    'updated_at' => now()
                                                 );
 
                                                 //Log::info(' Listing Item Detail :: ' . json_encode($itemDetail));
-                                                $rec = ListingItemDetail::create($itemDetail);
-                                                Log::info(' Listing Item Detail ID :: ' . $rec->id);
+                                                //$rec = ListingItemDetail::create($itemDetail);
+                                                //Log::info(' Listing Item Detail ID :: ' . $rec->id);
 
-                                                if ($rec && isset($upc)) {
+
+
+                                                /*if ($rec && isset($upc)) {
                                                     UPCCodes::where('upc_code', $upc)->update(['is_used' => 1]);
-                                                }
+                                                }*/
                                             }
+
+                                            Log::info('Store Listing Item Detail ' . date('Y-m-d H:i:s'));
+                                        }
+
+                                        foreach (array_chunk($itemDetail, 1000) as $chunk) {
+
+                                            DB::table('listing_item_detail')->insert($chunk);
+                                        }
+
+                                        if (isset($upc)) {
+                                            UPCCodes::where('upc_code', $upc)->update(['is_used' => 1]);
                                         }
 
                                         $itemLink = array(
@@ -2698,7 +2735,7 @@ class ListingController extends Controller
 
                                         //Log::info(' Listing Item Link :: ' . json_encode($itemLink));
                                         ListingItemLink::create($itemLink);
-                                        Log::info(' Listing Item Link created successfully!');
+                                        //Log::info(' Listing Item Link created successfully!');
                                     }
                                 }
                             }
