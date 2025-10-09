@@ -135,6 +135,7 @@
             width: 30px;
             height: 30px;
         }
+        .btn.addBtn{padding:0 7px;}
     </style>
 @stop
 @section('content_header')
@@ -214,7 +215,7 @@
 
                                     </div>
                                     <div class="border p-2" style="width: 13%;">
-                                        <label>Product Code Filter</label>
+                                        <label>Product Code Filter <a href="{{ url('catalog') }}" class="btn btn-primary addBtn" target="_blank">+</a></label>
                                         <div class="form-group d-flex position-relative">
                                             <input type="text" class="form-control" id="product_code_filter" placeholder="Search...."><i class="fa fa-search position-absolute" style="top: 50%;right: 5px;transform: translateY(-50%);"></i>
                                         </div>
@@ -223,16 +224,17 @@
                                         </div>
                                     </div>
                                     <div class="border p-2" style="width: 10%;">
-                                        <label>Device Series</label>
+                                        <label>Device Series <a href="{{ route('device_series.index') }}" class="btn btn-primary addBtn" target="_blank">+</a></label>
                                         <div class="form-group d-flex position-relative">
                                             <input type="text" class="form-control" id="device_series_filter" placeholder="Search...."><i class="fa fa-search position-absolute" style="top: 50%;right: 5px;transform: translateY(-50%);"></i>
                                         </div>
                                         <div id="device_series_list">
 
                                         </div>
+
                                     </div>
                                     <div class="border p-2 " style="width: 10%;">
-                                        <label>Device Filter</label>
+                                        <label>Device Filter <a href="{{ route('devices.index') }}" class="btn btn-primary addBtn" target="_blank">+</a></label>
                                         <div class="form-group d-flex position-relative">
                                             <input type="text" class="form-control" id="device_filter" placeholder="Search...."><i class="fa fa-search position-absolute" style="top: 50%;right: 5px;transform: translateY(-50%);"></i>
                                         </div>
