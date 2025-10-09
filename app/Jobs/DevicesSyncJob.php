@@ -147,7 +147,6 @@ class DevicesSyncJob implements ShouldQueue
 //            'thumbnail_image' => $device->thumbnail_id
         ];
 
-        $Image = DB::connection('easyesale_db_wt_prefix')->table('sys_file')->where('id', $device->image_id)->first();
         try {
             $image_name = strtolower($device->code) . '_1.jpg';
             Log::info('Image URL: ' . 'https://fonusaccessory.com/inv/inv_images/device_images/' . $image_name);
@@ -158,7 +157,6 @@ class DevicesSyncJob implements ShouldQueue
             Log::error('Error in Image Sync: ' . $e->getMessage());
         }
 
-        $Thumbnail = DB::connection('easyesale_db_wt_prefix')->table('sys_file')->where('id', $device->thumbnail_id)->first();
         try {
             $thumbnail_name = 'th_' . strtolower($device->code) . '_1.jpg';
             $thumbnail = file_get_contents('https://fonusaccessory.com/inv/inv_images/device_images/' . $thumbnail_name);
