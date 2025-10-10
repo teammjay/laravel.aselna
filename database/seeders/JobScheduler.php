@@ -375,7 +375,11 @@ class JobScheduler extends Seeder
                 'description' => 'Ebay Listing Item Status Check',
                 'class_name' => 'App\Jobs\EbayListingItemSyncJob',
             ],
-
+            [
+                'name' => 'Listing Item Detail Status Check',
+                'description' => 'Listing Item Detail Status Check',
+                'class_name' => 'App\Jobs\ListingItemDetailStatusCheckJob',
+            ],
         ];
 
         foreach ($jobs as $job) {
