@@ -2687,9 +2687,9 @@ class ListingController extends Controller
                                                     $nsku = StoreTypeListing::generateUniqueAlphabeticSku($product_codes[$key], 6, $skuCache);
                                                 }
 
-                                                if (str_contains($product, '[^]')) {
+                                                /*if (str_contains($product, '[^]')) {
                                                     $product = str_replace('[^]', $nsku, $product);
-                                                }
+                                                }*/
 
                                                 $product = str_contains($product, '[^]') ? str_replace('[^]', $sku, $product) : $product;
 
