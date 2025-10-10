@@ -37,4 +37,9 @@ class ListingItemDetail extends Model
     {
         return $this->belongsTo(Carrier::class,'device_carrier_id','id');
     }
+
+    public function listingItem()
+    {
+        return $this->belongsTo(ListingItem::class, 'listing_item_id');
+    }
 }

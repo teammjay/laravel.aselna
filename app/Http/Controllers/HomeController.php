@@ -80,12 +80,12 @@ class HomeController extends Controller
     public function testfunction(){
 
 
-        $shopifyService = new ShopifyAuthService('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', 'https://accessorychoice.myshopify.com');
+        /*$shopifyService = new ShopifyAuthService('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', 'https://accessorychoice.myshopify.com');
         $orderDetail = $shopifyService->getOrderDetail('6108743270539');
 
         echo '<pre>';
         print_r($orderDetail);
-        echo '</pre>';die;
+        echo '</pre>';die;*/
 
         /*$productCodes = ['J50','J52'];
 
