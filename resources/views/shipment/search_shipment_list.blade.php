@@ -10,7 +10,7 @@
                 }
             }
         @endphp
-        <tr data-id="{{ $shipment['oid'] }}" data-status="{{ $shipment['status'] }}" class="shipment-row {{ ($moreQty > 0 || $shipment['status'] == 1) ? 'bg-red' : '' }}">
+        <tr data-id="{{ $shipment['oid'] }}" data-status="{{ $shipment['status'] }}" class="shipment-row {{ ($moreQty > 0 || $shipment['status'] == 1) ? 'bg-red' : '' }} {{ ($shipment['status'] == 2) ? 'bg-warning' : '' }}">
 
             {{--<td>
                 <button type="button" class="btn btn-warning show-detail" data-id="{{ $shipment['oid'] }}">Show Detail</button><input type="checkbox" class="pro-id" name="shipment_id[]" value="{{ $shipment['oid'] }}" style="visibility:hidden;">
@@ -31,8 +31,12 @@
             </td>
             @if(isset($shipment['operationstatus']))
                 <td>{{ $shipment['operationstatus'] }}</td>
-            @else
+            @elseif($shipment['status'] == 1)
                 <td>{!! ($shipment['status'] == 1) ? '<i class="fa fa-exclamation-triangle" style="font-size:24px" title="'.$shipment['status_message'].'"></i>' : '' !!}</td>
+            @elseif($shipment['status'] == 2)
+                <td>{!! ($shipment['status'] == 2) ? '<i class="fa fa-exclamation-triangle" style="font-size:24px" title="'.$shipment['status_message'].'"></i>' : '' !!}</td>
+            @else
+                <td></td>
             @endif
             <td>{{ $shipment['carrier_package'] }}</td>
             <td>{{ $shipment['carrier_service'] }}</td>

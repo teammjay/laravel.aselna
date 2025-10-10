@@ -28,7 +28,7 @@ class ShopifyCombinedSyncing implements ShouldQueue
     {
         $chain = [
             new InterfaceSyncJob(),
-            new DeviceSeriesSyncJob(),
+//            new DeviceSeriesSyncJob(),
             new CategorySyncJob(),
             new BrandSyncJob(),
             new DevicesSyncJob(),

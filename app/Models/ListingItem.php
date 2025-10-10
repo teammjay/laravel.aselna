@@ -80,7 +80,7 @@ class ListingItem extends Model
         return $this->hasMany(OrderItem::class,'sku','sku');
     }
 
-    public function itemDetails()
+        public function itemDetails()
     {
         return $this->hasMany(ListingItemDetail::class);
     }

@@ -23,6 +23,7 @@ use App\Models\ShippingPackageShippingCarrierPackageLink;
 use App\Models\Store;
 use App\Utils\order\OrderOperationUtility;
 use App\Services\Marketplace\Service\ShopifyService;
+use Google\Service\ShoppingContent\OrderCancellation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
@@ -214,6 +215,10 @@ class ShipmentsController extends Controller
                 if($order->sync_message != NULL){
                     $status = 1;
                     $status_message = $order->sync_message;
+                }
+                if ($order->status == OrderOperationStatus::CanceledRequested) {
+                    $status = 2;
+                    $status_message = 'Customer Requested Cancellation for this order';
                 }
                 $packageName = isset($order->shippingPackage) ? $order->shippingPackage->name : '';
                 if($package_id){
