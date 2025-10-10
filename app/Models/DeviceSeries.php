@@ -23,4 +23,14 @@ class DeviceSeries extends Model
             }
         });
     }
+
+    public function linkedDevices()
+    {
+        return $this->hasMany(DevicesLinkedDevice::class, 'device_series_id');
+    }
+
+    public function devices()
+    {
+        return $this->belongsToMany(Device::class, 'device_series_linked_devices', 'device_series_id', 'device_id');
+    }
 }
