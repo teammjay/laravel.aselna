@@ -245,7 +245,7 @@ class EmailMessageUtility
                 sleep(1); // prevent server throttling
                 Log::info('Temp Messages Count :: ' . $tempMessages->count());
                 $query = null;
-            } while ($filteredMessages->count() < $limit);
+            } while ($tempMessages->count() > 0 && $filteredMessages->count() < $limit);
 
             $filteredMessages = $filteredMessages->values();
 
