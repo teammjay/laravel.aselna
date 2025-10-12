@@ -2540,8 +2540,13 @@ class ListingController extends Controller
 
                         foreach ($product_titles as $key => $product) {
 
-                            $skus = ListingItem::Where('sku', 'like', "{$product_codes[$key]}-%")->pluck('sku')->toArray();
-                            $detailSkus = ListingItemDetail::Where('sku', 'like', "{$product_codes[$key]}-%")->pluck('sku')->toArray();
+                            $skus = ListingItem::Where('sku', 'like', "{$product_codes[$key]}-%")->whereNotIn('status',[3])->pluck('sku')->toArray();
+
+                            $detailSkus = ListingItemDetail::where('sku', 'like', "{$product_codes[$key]}-%")->where(function ($q){
+                                $q->whereNull('kicked');
+                                $q->orWhere('kicked', 0);
+
+                            })->pluck('sku')->toArray();
 
                             $skuCache = array_flip(array_merge($skus, $detailSkus));
 
@@ -2682,9 +2687,9 @@ class ListingController extends Controller
                                                     $nsku = StoreTypeListing::generateUniqueAlphabeticSku($product_codes[$key], 6, $skuCache);
                                                 }
 
-                                                if (str_contains($product, '[^]')) {
+                                                /*if (str_contains($product, '[^]')) {
                                                     $product = str_replace('[^]', $nsku, $product);
-                                                }
+                                                }*/
 
                                                 $product = str_contains($product, '[^]') ? str_replace('[^]', $sku, $product) : $product;
 

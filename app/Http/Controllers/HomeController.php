@@ -80,12 +80,12 @@ class HomeController extends Controller
     public function testfunction(){
 
 
-        $shopifyService = new ShopifyAuthService('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', 'https://accessorychoice.myshopify.com');
+        /*$shopifyService = new ShopifyAuthService('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', 'https://accessorychoice.myshopify.com');
         $orderDetail = $shopifyService->getOrderDetail('6108743270539');
 
         echo '<pre>';
         print_r($orderDetail);
-        echo '</pre>';die;
+        echo '</pre>';die;*/
 
         /*$productCodes = ['J50','J52'];
 
@@ -611,7 +611,11 @@ On Fri, 29 Aug 2025 at 23:36, phonil <phonil.ebay@gmail.com> wrote:
 
 
         $connector = new EmailMessageUtility($smtpConfig, $imapConfig);
-        $receiveEmails = $connector->fetchEmails('Ebay', '2025-09-14 08:25:28','INBOX');
+        $receiveEmails = $connector->fetchEmails('Ebay', '2025-10-09 08:25:28','INBOX');
+
+        echo '<pre>';
+        print_r($receiveEmails);
+        echo '</pre>';die;
 
         //$store = Store::with('storeType')->where('id','0dd4de79-bba1-c47a-a7aa-822e6f015b8e')->first();
         $store = Store::with('storeType')->where('id','1968772b-cc55-d4e9-a126-7e81019be976')->first();
