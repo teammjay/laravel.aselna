@@ -172,7 +172,7 @@ class EmailMessageUtility
         }
     }
 
-    public function fetchEmails($store_type, $filter_date, $folderName = 'INBOX', $limit = 20)
+    public function fetchEmails($store_type, $filter_date, $folderName = 'INBOX', $limit = 10)
     {
         try {
             $this->client->connect();
@@ -199,9 +199,10 @@ class EmailMessageUtility
             $batchSize = 10;
 
             $filteredMessages = collect();
-            $page = 1;
+            $page = 0;
 
             do {
+                Log::info('Page ::' . $page . ' :: Fetching batch of size ' . $batchSize);
                 $query = $folder->query()
                     ->since($searchDateCriteria)
                     ->before($toDateCriteria)
@@ -245,7 +246,7 @@ class EmailMessageUtility
                 sleep(1); // prevent server throttling
                 Log::info('Temp Messages Count :: ' . $tempMessages->count());
                 $query = null;
-            } while ($tempMessages->count() > 0 && $filteredMessages->count() < $limit);
+            } while ($tempMessages->count() > 0 && $tempMessages->count() < $batchSize && $filteredMessages->count() < $limit);
 
             $filteredMessages = $filteredMessages->values();
 
