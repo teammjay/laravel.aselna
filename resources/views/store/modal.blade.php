@@ -289,6 +289,16 @@
                                         <span class="error-message text-danger" id="acc_in_tls_port-error"></span>
                                     </div>
                                     <div class="col-md-6">
+                                        <label for="acc_in_folders" class="col-form-label">Incoming Folder:</label>
+                                        <input type="text" name="acc_in_folders" class="form-control" id="acc_in_folders">
+                                        <span class="error-message text-danger" id="acc_in_folders-error"></span>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="acc_in_fetch_limit" class="col-form-label">Fetch Limit:</label>
+                                        <input type="text" name="acc_in_fetch_limit" class="form-control" id="acc_in_fetch_limit">
+                                        <span class="error-message text-danger" id="acc_in_fetch_limit-error"></span>
+                                    </div>
+                                    <div class="col-md-6">
                                         <label for="acc_in_requires_ssl" class="col-form-label">Required SSL:</label>
                                         <input type="checkbox" name="acc_in_requires_ssl" id="acc_in_requires_ssl">
                                     </div>
@@ -299,11 +309,6 @@
                                     <div class="col-md-6">
                                         <label for="acc_in_requires_authentication" class="col-form-label">Required Authentication:</label>
                                         <input type="checkbox" name="acc_in_requires_authentication" id="acc_in_requires_authentication">
-                                    </div>
-                                    <div class="col-md-12">
-                                        <label for="acc_in_folders" class="col-form-label">Incoming Folder:</label>
-                                        <input type="text" name="acc_in_folders" class="form-control" id="acc_in_folders">
-                                        <span class="error-message text-danger" id="acc_in_folders-error"></span>
                                     </div>
                                 </div>
                             </div>

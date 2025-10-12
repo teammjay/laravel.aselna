@@ -69,7 +69,7 @@ class ProcessStoreMessageAccountJob implements ShouldQueue
                     Log::info('Imap Config :' . json_encode($imapConfig));
 
                     $emailUtility = new EmailMessageUtility($smtpConfig, $imapConfig);
-                    $receiveEmails = $emailUtility->fetchEmails($store_type, $filter_date, $folder);
+                    $receiveEmails = $emailUtility->fetchEmails($store_type, $filter_date, $folder,$maccount->incomingAccount->fetch_limit);
                     $last_filter_date = '';
 
                     if (count($receiveEmails ?? []) > 0) {
