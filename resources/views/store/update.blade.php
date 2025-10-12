@@ -1559,6 +1559,7 @@
                                 $('#acc_in_ssl_port').val(response.incomingAccount.ssl_port);
                                 $('#acc_in_tls_port').val(response.incomingAccount.tls_port);
                                 $('#acc_in_folders').val(response.incomingAccount.folders);
+                                $('#acc_in_fetch_limit').val(response.incomingAccount.fetch_limit);
 
                                 if(response.incomingAccount.requires_ssl == 1){
                                     $('#acc_in_requires_ssl').prop('checked',true);
@@ -1569,6 +1570,7 @@
                                 if(response.incomingAccount.requires_authentication == 1){
                                     $('#acc_in_requires_authentication').prop('checked',true);
                                 }
+
                             }
 
                             if(response.outgoingAccount){

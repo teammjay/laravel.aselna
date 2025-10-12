@@ -20,13 +20,13 @@ class MessagingAccount extends Model
 
         static::creating(function ($model) {
             if (empty($model->id)) {
-                $model->id = (string) Str::uuid();
+                $model->id = (string)Str::uuid();
             }
         });
     }
 
 
-    protected $fillable = ['id','protocol','email','user_id','password','server','port','requires_ssl','requires_tls','requires_authentication','ssl_port','tls_port','filter_from_date','folders','last_sync_date','created_by','updated_by'];
+    protected $fillable = ['id', 'protocol', 'email', 'user_id', 'password', 'server', 'port', 'requires_ssl', 'requires_tls', 'requires_authentication', 'ssl_port', 'tls_port', 'filter_from_date', 'folders', 'last_sync_date', 'fetch_limit', 'created_by', 'updated_by'];
 
 
 }

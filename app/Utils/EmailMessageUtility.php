@@ -221,6 +221,7 @@ class EmailMessageUtility
                         if ($messageDate === null || !$messageDate instanceof \Carbon\Carbon) {
                             return true;
                         }
+                        Log::info("Message date: " . $messageDate->toDateTimeString() . " | Filter date: " . $filterDateObj->toDateTimeString());
                         return $messageDate->greaterThanOrEqualTo($filterDateObj);
                     } catch (Exception $e) {
                         Log::warning("Error filtering message date: " . $e->getMessage());
@@ -246,7 +247,7 @@ class EmailMessageUtility
                 sleep(1); // prevent server throttling
                 Log::info('Temp Messages Count :: ' . $tempMessages->count());
                 $query = null;
-            } while ($tempMessages->count() > 0 && $tempMessages->count() < $batchSize && $filteredMessages->count() < $limit);
+            } while ($tempMessages->count() > 0 && !($tempMessages->count() < $batchSize) && $filteredMessages->count() <= $limit);
 
             $filteredMessages = $filteredMessages->values();
 
