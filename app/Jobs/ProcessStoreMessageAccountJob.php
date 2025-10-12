@@ -28,7 +28,7 @@ class ProcessStoreMessageAccountJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public $timeout = 30000; // Set a timeout for the job
+    public $timeout = 60 * 25; // Set a timeout for the job
 
     protected $storeMessageAccount;
     protected $store;
