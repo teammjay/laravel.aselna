@@ -2722,7 +2722,7 @@ class ListingController extends Controller
                                             Log::info('Store Listing Item Detail ' . date('Y-m-d H:i:s'));
                                         }
 
-                                        foreach (array_chunk($itemDetail, 1000) as $chunk) {
+                                        foreach (array_chunk($itemDetail, 500) as $chunk) {
 
                                             //InsertListingItemDetailJob::dispatch($chunk);
                                             $jobs[] = new InsertListingItemDetailJob($chunk);
