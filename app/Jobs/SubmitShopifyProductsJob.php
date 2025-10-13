@@ -61,7 +61,7 @@ class SubmitShopifyProductsJob implements ShouldQueue
                 // get all te children and their children of cea products
                 // Get product types with parent code 'cea' and all their descendants recursively
                 $ceaProductTypes = [];
-                $ceaParentTypes = ProductType::select('id')->where('code', 'cea')->get()->pluck('id')->toArray();
+                    $ceaParentTypes = ProductType::select('id')->where('code', 'cea')->get()->pluck('id')->toArray();
 
                 // Get immediate children
                 $ceaChildrenTypes = ProductType::select('id')->whereIn('parent_id', $ceaParentTypes)->get()->pluck('id')->toArray();
@@ -289,6 +289,7 @@ class SubmitShopifyProductsJob implements ShouldQueue
             $sku = $listingItem->sku;
         } else {
             $sku = StoreTypeListing::generateUniqueAlphabeticSku($productData->product_sku, 6);
+            $listingItem->update(['sku' => $sku]);
         }
 
         $ManageMarketplaceProduct = ManageMarketplaceProduct::updateOrCreate([
@@ -404,7 +405,8 @@ class SubmitShopifyProductsJob implements ShouldQueue
 
             $listingItem->update([
                 'store_url' => $handle,
-                'store_sku' => $productIdReplaced . '-' . $variantIdReplaced
+                'store_sku' => $productIdReplaced . '-' . $variantIdReplaced,
+                'sku' => $sku
             ]);
 
             // Prepare inventory update array

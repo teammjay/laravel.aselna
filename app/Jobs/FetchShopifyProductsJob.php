@@ -37,6 +37,11 @@ class FetchShopifyProductsJob implements ShouldQueue
                     continue;
                 }
 
+                if (($store->auto_generate_listings ?? 0) == 0) {
+                    Log::info('Auto Generate Listings is disabled for store: ' . $store->name);
+                    continue;
+                }
+
                 Log::info('Store Name: ' . $store->name);
 
                 Log::info('Secret Key: ' . $store->secret_key);
@@ -135,6 +140,7 @@ class FetchShopifyProductsJob implements ShouldQueue
                             'upload_status' => 'success',
                             'upload_attempts' => 1,
                         ]);
+
                     }
                 }
             }
