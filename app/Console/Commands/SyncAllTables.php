@@ -210,7 +210,7 @@ class SyncAllTables extends Command
 //        FetchTemuOrders::dispatch();
 //        DevicesSyncJob::dispatch();
 //        ProductImagesSyncJob::dispatch();
-        EbayListingItemSyncJob::dispatch();
+        FetchEmailMessagesJob::dispatch();
 
         $transactionIds = [
 ////            '9400150105798006163885',

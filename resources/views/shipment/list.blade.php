@@ -886,7 +886,7 @@
             $('input[name="shipment_id[]"]').each(function () {
                 const status = $(this).data('status');
 
-                if(status === 1){
+                if(status === 1 || status === 2){
                     return;
                 }
                 shipment_ids.push($(this).val());
@@ -991,7 +991,7 @@
             isProcessingCancelled = false;
             $('input[name="shipment_id[]"]:checked').each(function () {
                 const status = $(this).data('status');
-                if(status === 1){
+                if(status === 1 || status === 2){
                     return;
                 }
                 shipment_ids.push($(this).val());

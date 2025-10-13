@@ -28,7 +28,7 @@ class ProcessStoreMessageAccountJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public $timeout = 30000; // Set a timeout for the job
+    public $timeout = 60 * 35; // Set a timeout for the job
 
     protected $storeMessageAccount;
     protected $store;
@@ -69,7 +69,7 @@ class ProcessStoreMessageAccountJob implements ShouldQueue
                     Log::info('Imap Config :' . json_encode($imapConfig));
 
                     $emailUtility = new EmailMessageUtility($smtpConfig, $imapConfig);
-                    $receiveEmails = $emailUtility->fetchEmails($store_type, $filter_date, $folder);
+                    $receiveEmails = $emailUtility->fetchEmails($store_type, $filter_date, $folder,$maccount->incomingAccount->fetch_limit);
                     $last_filter_date = '';
 
                     if (count($receiveEmails ?? []) > 0) {

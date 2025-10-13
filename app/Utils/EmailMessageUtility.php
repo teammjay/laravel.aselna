@@ -172,14 +172,14 @@ class EmailMessageUtility
         }
     }
 
-    public function fetchEmails($store_type, $filter_date, $folderName = 'INBOX', $limit = 20)
+    public function fetchEmails($store_type, $filter_date, $folderName = 'INBOX', $limit = 10)
     {
         try {
             $this->client->connect();
 
             $filterDateObj = \Carbon\Carbon::parse($filter_date, 'America/New_York');
             $today = \Carbon\Carbon::now('America/New_York')->addDay();
-            $maxDate = $filterDateObj->copy()->addDays(5);
+            $maxDate = $filterDateObj->copy()->addDays(3);
 
             $toDate = $maxDate->lessThan($today) ? $maxDate : $today;
 
@@ -190,27 +190,66 @@ class EmailMessageUtility
             $searchDateCriteria = $filterDateObj->format('d-M-Y');
             $toDateCriteria = $toDate->format('d-M-Y');
 
-            $query = $folder->query()
-                ->where('SINCE', $searchDateCriteria)
-                ->where('BEFORE', $toDateCriteria)
-                ->setFetchOptions(\Webklex\PHPIMAP\IMAP::FT_UID | \Webklex\PHPIMAP\IMAP::FT_PEEK);
+//            $query = $folder->query()
+//                ->where('SINCE', $searchDateCriteria)
+//                ->where('BEFORE', $toDateCriteria)
+//                ->setFetchOptions(\Webklex\PHPIMAP\IMAP::FT_UID | \Webklex\PHPIMAP\IMAP::FT_PEEK);
+//
+//            $messages = $query->get();
+            $batchSize = 10;
 
-            $messages = $query->get();
+            $filteredMessages = collect();
+            $page = 0;
 
-            // Filter messages by exact time - more precise than IMAP can do
-            $filteredMessages = collect($messages)->filter(function ($message) use ($filterDateObj) {
-                try {
-                    Log::info('Message checking :: ' . $message->getDate());
-                    $messageDate = $message->getDate()->first();
-                    if ($messageDate === null || !$messageDate instanceof \Carbon\Carbon) {
-                        return true;
+            do {
+                Log::info('Page ::' . $page . ' :: Fetching batch of size ' . $batchSize);
+                $query = $folder->query()
+                    ->since($searchDateCriteria)
+                    ->before($toDateCriteria)
+                    ->limit($batchSize, $page)
+                    ->setFetchOptions(\Webklex\PHPIMAP\IMAP::FT_UID | \Webklex\PHPIMAP\IMAP::FT_PEEK)
+                    ->setFetchBody(false)
+                    ->setFetchFlags(false);
+
+                $tempMessages = $query->get();
+                Log::info("Fetched batch {$page} with " . $tempMessages->count() . " messages");
+
+                // Filter messages by exact time within the loop
+                $filteredBatch = $tempMessages->filter(function ($message) use ($filterDateObj) {
+                    try {
+                        $messageDate = $message->getDate()->first();
+                        if ($messageDate === null || !$messageDate instanceof \Carbon\Carbon) {
+                            return true;
+                        }
+                        Log::info("Message date: " . $messageDate->toDateTimeString() . " | Filter date: " . $filterDateObj->toDateTimeString());
+                        return $messageDate->greaterThanOrEqualTo($filterDateObj);
+                    } catch (Exception $e) {
+                        Log::warning("Error filtering message date: " . $e->getMessage());
+                        return false;
                     }
-                    return $messageDate->greaterThanOrEqualTo($filterDateObj);
-                } catch (Exception $e) {
-                    Log::warning("Error filtering message date: " . $e->getMessage());
-                    return false;
+                });
+
+                $filteredMessages = $filteredMessages->merge($filteredBatch);
+                Log::info("Added " . $filteredBatch->count() . " filtered messages. Total filtered so far: " . $filteredMessages->count());
+
+                // Break the loop if we've already reached our limit
+                if ($filteredMessages->count() >= $limit) {
+                    $filteredMessages = $filteredMessages->take($limit);
+                    break;
                 }
-            })->take($limit)->values();
+
+                $page++;
+
+                if (function_exists('gc_collect_cycles')) {
+                    gc_collect_cycles();
+                }
+
+                sleep(1); // prevent server throttling
+                Log::info('Temp Messages Count :: ' . $tempMessages->count());
+                $query = null;
+            } while ($tempMessages->count() > 0 && !($tempMessages->count() < $batchSize) && $filteredMessages->count() <= $limit);
+
+            $filteredMessages = $filteredMessages->values();
 
             Log::info("Found " . count($filteredMessages) . " messages matching the time criteria");
 
@@ -327,6 +366,7 @@ class EmailMessageUtility
             return $emails;
         } catch (Exception $e) {
             Log::error("Failed to fetch emails: " . $e->getMessage());
+            Log::error("Failed to fetch emails: " . $e->getTraceAsString());
             return ['error' => 'Failed to fetch emails: ' . $e->getMessage()];
         }
     }
