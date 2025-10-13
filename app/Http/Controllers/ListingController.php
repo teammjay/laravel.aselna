@@ -7,6 +7,7 @@ use App\Constants\ListingStatus;
 use App\Constants\ListingSyncStatus;
 use App\Helpers\QueryFilters;
 use App\Jobs\FeedGenerationJob;
+use App\Jobs\InsertListingItemDetailJob;
 use App\Jobs\ListingItemImageCreate;
 use App\Models\Brand;
 use App\Models\Carrier;
@@ -2537,7 +2538,7 @@ class ListingController extends Controller
                         Log::info('Fetch UPC ' . date('Y-m-d H:i:s'));
 
                         /* fetch all sku for all product code for listing*/
-
+                        $jobs = [];
                         foreach ($product_titles as $key => $product) {
 
                             $skus = ListingItem::Where('sku', 'like', "{$product_codes[$key]}-%")->whereNotIn('status',[3])->pluck('sku')->toArray();
@@ -2723,7 +2724,9 @@ class ListingController extends Controller
 
                                         foreach (array_chunk($itemDetail, 1000) as $chunk) {
 
-                                            DB::table('listing_item_detail')->insert($chunk);
+                                            //InsertListingItemDetailJob::dispatch($chunk);
+                                            $jobs[] = new InsertListingItemDetailJob($chunk);
+                                            //DB::table('listing_item_detail')->insert($chunk);
                                         }
 
                                         if (isset($upc)) {
@@ -2753,10 +2756,13 @@ class ListingController extends Controller
 
                         $view = view('listing.listing_summary', compact('summary_products'))->render();
 
-                        Bus::chain([
-                            new ListingItemImageCreate($listing_id),
-                            new FeedGenerationJob($listing_id),
-                        ])->dispatch();
+                        Bus::chain(array_merge(
+                            $jobs,
+                            [
+                                new ListingItemImageCreate($listing_id),
+                                new FeedGenerationJob($listing_id),
+                            ]
+                        ))->dispatch();
 
                         return response()->json([
                             'success' => true,
