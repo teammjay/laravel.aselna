@@ -15,7 +15,6 @@ use App\Models\ProductSearchTerm;
 use App\Models\ProductSpecifcationUniqueInfo;
 use App\Models\ProductSpecification;
 use App\Models\ProductSpecificationInfo;
-use App\Models\ProductSpecificationOption;
 use App\Models\ProductSpecificationValue;
 use App\Models\ProductTags;
 use App\Models\ProductTargetAudience;
