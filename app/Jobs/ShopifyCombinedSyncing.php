@@ -27,7 +27,7 @@ class ShopifyCombinedSyncing implements ShouldQueue
     public function handle(): void
     {
         $chain = [
-           /* new InterfaceSyncJob(),
+            new InterfaceSyncJob(),
 //            new DeviceSeriesSyncJob(),
             new CategorySyncJob(),
             new BrandSyncJob(),
@@ -36,7 +36,7 @@ class ShopifyCombinedSyncing implements ShouldQueue
             new DeviceInterfaces(),
             new ProductInterfaces(),
             new ProductImagesSyncJob(),
-            new SubmitShopifyProductsJob()*/
+            new SubmitShopifyProductsJob()
         ];
 
         $stores = Store::select('store.*')->join('store_type', 'store_type.id', '=', 'store.store_type_id')->where('store_type.code', 'shopify')->get();
