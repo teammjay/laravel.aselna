@@ -1091,7 +1091,9 @@ class CatalogController extends Controller
         }
 
 
-        $specificationInfo = ProductSpecificationInfo::join('product_specification_info_category_link','product_specification_info_category_link.specification_info_id', '=', 'product_specification_info.id')->where('product_specification_info.store_type_id',$store_type_id)->where('product_specification_info_category_link.product_type_id',$category_id)->orderBy('product_specification_info.field_local_name')->get();
+        $specificationInfo = ProductSpecificationInfo::join('product_specification_info_category_link','product_specification_info_category_link.specification_info_id', '=', 'product_specification_info.id')
+            ->where('product_specification_info.store_type_id',$store_type_id)
+            ->where('product_specification_info_category_link.product_type_id',$category_id)->orderBy('product_specification_info.field_local_name')->get();
 
         return response()->json([
             'html' => view('catalog.specification', compact('specificationInfo','specificationArr'))->render(),
