@@ -288,4 +288,9 @@ class TemuAuthService
 
         return json_decode($res->getBody(), true);
     }
+
+    public function getCategorySpecifications($code)
+    {
+
+    }
 }

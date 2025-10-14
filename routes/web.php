@@ -54,7 +54,6 @@ use App\Http\Controllers\ShippingAccountPurchaseController;
 use App\Http\Controllers\AccountTransactionController;
 use App\Http\Controllers\ProductSpecificationInfoController;
 use App\Http\Controllers\ProductSpecificationValueController;
-use App\Http\Controllers\ProductSpecificationOptionsController;
 use App\Http\Controllers\OrderOperationReasonController;
 use App\Http\Controllers\PrintersController;
 use App\Http\Controllers\PrinterClientsController;
