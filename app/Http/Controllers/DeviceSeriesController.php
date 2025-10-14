@@ -32,10 +32,12 @@ class DeviceSeriesController extends Controller
         $status = $request->status ?? 'off';
         $statusCode = $status === 'on' ? 'active' : 'inactive';
 
-        $created_by = auth()->user()->name ?? 'admin';
-//        $request->merge(['created_by' => $created_by, 'updated_by' => $created_by, 'status' => $statusCode]);
+        $slug = \Str::slug($request->name);
 
-        DeviceSeries::create($request->only(['name','slug', 'created_by', 'updated_by']));
+        $created_by = auth()->user()->name ?? 'admin';
+        $request->merge(['created_by' => $created_by, 'updated_by' => $created_by, 'status' => $statusCode, 'slug' => $slug]);
+
+        DeviceSeries::create($request->only(['name','slug', 'created_by', 'updated_by', 'status']));
 
         $deviceSeries = DeviceSeries::where('slug', $request->slug)->first();
         Log::info('Created Device Series: ' . $deviceSeries->id);
