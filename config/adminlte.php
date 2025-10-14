@@ -724,6 +724,11 @@ return [
                     'text' => 'Saved Jobs',
                     'url' => '/jobs',
                     'icon' => 'far fa-fw fa-file'
+                ],
+                [
+                    'text' => 'Cron Jobs',
+                    'url' => '/scheduled_jobs',
+                    'icon' => 'far fa fa-briefcase'
                 ]
             ]
         ]

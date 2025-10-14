@@ -5,9 +5,10 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 
-class ProductSpecificationOption extends Model
+class ScheduledJobs extends Model
 {
-    protected $table = 'product_specification_option';
+    // Set a custom table name
+    protected $table = 'scheduled_cron_jobs';
 
     protected $keyType = 'string';
 
@@ -19,10 +20,11 @@ class ProductSpecificationOption extends Model
 
         static::creating(function ($model) {
             if (empty($model->id)) {
-                $model->id = (string)Str::uuid();
+                $model->id = (string) Str::uuid();
             }
         });
     }
-    protected $fillable = ['id', 'field_local_name','field_option','created_at','updated_at'];
 
+
+    protected $fillable = ['id','name','class_name','cron_expression','is_active','created_at','updated_at'];
 }

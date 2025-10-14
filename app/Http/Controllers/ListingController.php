@@ -2722,11 +2722,12 @@ class ListingController extends Controller
                                             Log::info('Store Listing Item Detail ' . date('Y-m-d H:i:s'));
                                         }
 
-                                        foreach (array_chunk($itemDetail, 1000) as $chunk) {
+                                        foreach (array_chunk($itemDetail, 500) as $chunk) {
 
                                             //InsertListingItemDetailJob::dispatch($chunk);
                                             $jobs[] = new InsertListingItemDetailJob($chunk);
                                             //DB::table('listing_item_detail')->insert($chunk);
+                                            //$jobs[] = $chunk;
                                         }
 
                                         if (isset($upc)) {
@@ -2755,6 +2756,17 @@ class ListingController extends Controller
                         DB::commit();
 
                         $view = view('listing.listing_summary', compact('summary_products'))->render();
+
+                        /*$batch = Bus::batch([])->then(function ($batch) use ($listing_id) {
+                            ListingItemImageCreate::dispatch($listing_id);
+                            FeedGenerationJob::dispatch($listing_id);
+                        })->catch(function ($batch, Throwable $e) {
+                            Log::error('Insert batch failed: ' . $e->getMessage());
+                        })->dispatch();
+
+                        foreach ($jobs as $chunk) {
+                            $batch->add([new InsertListingItemDetailJob($chunk)]);
+                        }*/
 
                         Bus::chain(array_merge(
                             $jobs,

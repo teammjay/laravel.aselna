@@ -27,7 +27,7 @@ class ShopifyCombinedSyncing implements ShouldQueue
     public function handle(): void
     {
         $chain = [
-            new InterfaceSyncJob(),
+           /* new InterfaceSyncJob(),
 //            new DeviceSeriesSyncJob(),
             new CategorySyncJob(),
             new BrandSyncJob(),
@@ -36,7 +36,7 @@ class ShopifyCombinedSyncing implements ShouldQueue
             new DeviceInterfaces(),
             new ProductInterfaces(),
             new ProductImagesSyncJob(),
-            new SubmitShopifyProductsJob()
+            new SubmitShopifyProductsJob()*/
         ];
 
         $stores = Store::select('store.*')->join('store_type', 'store_type.id', '=', 'store.store_type_id')->where('store_type.code', 'shopify')->get();
@@ -54,6 +54,7 @@ class ShopifyCombinedSyncing implements ShouldQueue
                 $brandDeviceProductTemplate = StorePageTemplate::where('name', 'Brand Device Product Types')->first();
                 $productTypeBrands = StorePageTemplate::where('name', 'Product types brands')->first();
                 $brandDevicesTemplate = StorePageTemplate::where('name', 'Brand Devices')->first();
+
                 $chain[] = new StoreBrandPageSyncJob(
                     $store->id,
                     WebStorePageType::BRAND,
@@ -103,6 +104,17 @@ class ShopifyCombinedSyncing implements ShouldQueue
                 $chain[] = new ShopifyIndvPagesSyncJob(
                     $store->id,
                     WebStorePageType::BRAND_DEVICES
+                );
+
+                $chain[] = new StoreBrandPageSyncJob(
+                    $store->id,
+                    WebStorePageType::ALL_BRANDS,
+                    $allBrandTemplate->id
+                );
+
+                $chain[] = new ShopifyIndvPagesSyncJob(
+                    $store->id,
+                    WebStorePageType::ALL_BRANDS
                 );
             }
 
