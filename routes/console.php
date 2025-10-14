@@ -19,6 +19,7 @@ use App\Jobs\FetchShopifyOrders;
 use App\Jobs\FetchWalmartOrdersJob;
 use App\Jobs\SyncAllOrderStatusJob;
 use App\Jobs\SubmitShopifyProductsJob;
+use App\Jobs\TransactionStatusCheckJob;
 use App\Models\OrderSynchronization;
 use Illuminate\Support\Facades\Schedule;
 
@@ -58,3 +59,6 @@ Schedule::call(function () {
     // Delete all the records from yesterday to all previous days
     OrderSynchronization::where('updated_at', '<', now()->toDate())->delete();
 })->dailyAt('00:00')->name('clear syncronisation');
+
+
+Schedule::job(new TransactionStatusCheckJob())->hourly();
