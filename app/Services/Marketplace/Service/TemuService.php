@@ -12,6 +12,9 @@ use App\Models\ListingItem;
 use App\Models\ListingItemLink;
 use App\Models\ListingItemProductImage;
 use App\Models\OrderSynchronization;
+use App\Models\ProductSpecification;
+use App\Models\ProductSpecificationInfo;
+use App\Models\ProductSpecificationValue;
 use App\Services\Auth\TemuAuthService;
 use App\Services\Marketplace\Contracts\MarketplaceServiceInterface;
 use App\Utils\FileUtility;
@@ -395,10 +398,14 @@ class TemuService implements MarketplaceServiceInterface
 
     private function getProductData($listingItem)
     {
-        $productData = [
-//            'Brand' => $listingItem->brand->name ?? 'apple',
-            'Color' => 'black',
-        ];
+        $itemDetail = $listingItem->item;
+        $storeProduct = $itemDetail->storeProduct;
+        $product = $storeProduct->product;
+
+        $productData = ProductSpecification::where('product_id', $product->product_id)
+            ->where('store_type_id', $storeProduct->store->store_type_id)->pluck('name','value')->toArray();
+        Log::info('Product Data from Specifications: ' . json_encode($productData));
+
         $compatibleModels = [];
         foreach ($listingItem->listingItem->devices as $k => $device) {
             Log::info('Device Name ' . $device->device->name);
