@@ -2,13 +2,15 @@
 
 namespace Database\Seeders\Temu;
 
+use App\Models\ListingRequirement;
+use App\Models\ProductSpecifcationUniqueInfo;
 use App\Models\ProductSpecificationInfo;
 use App\Models\ProductSpecificationValue;
 use App\Models\StoreType;
 use App\Models\StoreTypeCategory;
 use App\Services\Auth\TemuAuthService;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Log;
 
 class AddProductSpecificationInfo extends Seeder
 {
@@ -29,6 +31,7 @@ class AddProductSpecificationInfo extends Seeder
     private function fetchAndStoreSpecifications()
     {
         $categories = StoreTypeCategory::where('store_type_id', $this->storeType->id)->get();
+        $requirement = ['category' => '', 'type' => 'key_value', 'table' => 'product_specification', 'key_column' => 'name', 'key_value' => '', 'value_column' => 'value'];
 
         foreach ($categories as $category) {
             $specifications = $this->temuAuthService->getTemplate($category->code);
@@ -37,50 +40,89 @@ class AddProductSpecificationInfo extends Seeder
             $TemplateSpecProperties = $specifications['result']['templateInfo']['goodsSpecProperties'] ?? [];
 
             foreach ($TemplateProperties as $property) {
-                $productSpecification = ProductSpecificationInfo::updateOrCreate([
+                Log::info("Category Name :: " . $property['name']);
+                ProductSpecificationInfo::updateOrCreate([
                     'store_type_id' => $this->storeType->id,
-                    'store_type_category_id' => $category->id,
-                    'name' => $property['name'],
+                    'field_name' => $property['name'],
                 ], [
                     'store_type_id' => $this->storeType->id,
-                    'store_type_category_id' => $category->id,
-                    'name' => $property['name'],
+                    'field_name' => $property['name'],
                     'field_local_name' => $property['name'],
                     'required' => $property['required'] == true ? 1 : 0,
                 ]);
 
-                foreach ($property['values'] as $value) {
-                    ProductSpecificationValue::updateOrCreate([
-                        'product_specification_id' => $productSpecification->id,
-                        'field_value' => $value['value'],
-                    ], [
-                        'product_specification_id' => $productSpecification->id,
-                        'field_value' => $value['value']
-                    ]);
+                if ($property['required'] == true) {
+                    $requirement['category'] = $category->code;
+                    $requirement['key_value'] = $property['name'];
+
+                    ListingRequirement::updateOrCreate(
+                        [
+                            'category' => $requirement['category'],
+                            'type' => $requirement['type'],
+                            'column' => $requirement['column'] ?? null,
+                            'key_column' => $requirement['key_column'] ?? null,
+                            'key_value' => $requirement['key_value'] ?? null,
+                        ],
+                        [
+                            'category' => $requirement['category'],
+                            'type' => $requirement['type'],
+                            'table' => $requirement['table'],
+                            'column' => $requirement['column'] ?? null,
+                            'key_column' => $requirement['key_column'] ?? null,
+                            'key_value' => $requirement['key_value'] ?? null,
+                            'value_column' => $requirement['value_column'] ?? null,
+                        ]
+                    );
                 }
+
+                if ($property['controlType'] == 1) {
+                    $productSpecification = ProductSpecifcationUniqueInfo::updateOrCreate([
+                        'field_name' => $property['name'],
+                    ], [
+                        'field_name' => $property['name'],
+                    ]);
+
+                    foreach ($property['values'] as $value) {
+                        ProductSpecificationValue::updateOrCreate([
+                            'product_specification_id' => $productSpecification->id,
+                            'field_value' => $value['value'],
+                        ], [
+                            'product_specification_id' => $productSpecification->id,
+                            'field_value' => $value['value']
+                        ]);
+                    }
+                }
+
+
             }
 
             foreach ($TemplateSpecProperties as $specProperty) {
-                $productSpecification = ProductSpecificationInfo::updateOrCreate([
+                ProductSpecificationInfo::updateOrCreate([
                     'store_type_id' => $this->storeType->id,
-                    'store_type_category_id' => $category->id,
-                    'name' => $specProperty['name'],
+                    'field_name' => $specProperty['name'],
                 ], [
                     'store_type_id' => $this->storeType->id,
-                    'store_type_category_id' => $category->id,
-                    'name' => $specProperty['name'],
+                    'field_name' => $specProperty['name'],
                     'field_local_name' => $specProperty['name'],
                     'required' => $specProperty['required'] == true ? 1 : 0,
                 ]);
 
-                foreach ($specProperty['values'] as $value) {
-                    ProductSpecificationValue::updateOrCreate([
-                        'product_specification_id' => $productSpecification->id,
-                        'field_value' => $value['value'],
+                if ($property['controlType'] == 1) {
+                    $productSpecification = ProductSpecifcationUniqueInfo::updateOrCreate([
+                        'field_name' => $property['name'],
                     ], [
-                        'product_specification_id' => $productSpecification->id,
-                        'field_value' => $value['value']
+                        'field_name' => $property['name'],
                     ]);
+
+                    foreach ($property['values'] as $value) {
+                        ProductSpecificationValue::updateOrCreate([
+                            'product_specification_id' => $productSpecification->id,
+                            'field_value' => $value['value'],
+                        ], [
+                            'product_specification_id' => $productSpecification->id,
+                            'field_value' => $value['value']
+                        ]);
+                    }
                 }
             }
         }
