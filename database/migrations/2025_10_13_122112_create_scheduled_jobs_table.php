@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('scheduled_jobs', function (Blueprint $table) {
+        Schema::create('scheduled_cron_jobs', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->string('name');
             $table->string('class_name');
