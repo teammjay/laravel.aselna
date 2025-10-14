@@ -2725,9 +2725,9 @@ class ListingController extends Controller
                                         foreach (array_chunk($itemDetail, 500) as $chunk) {
 
                                             //InsertListingItemDetailJob::dispatch($chunk);
-                                            //$jobs[] = new InsertListingItemDetailJob($chunk);
+                                            $jobs[] = new InsertListingItemDetailJob($chunk);
                                             //DB::table('listing_item_detail')->insert($chunk);
-                                            $jobs[] = $chunk;
+                                            //$jobs[] = $chunk;
                                         }
 
                                         if (isset($upc)) {
