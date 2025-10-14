@@ -7,6 +7,7 @@ use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
 use App\Jobs\ListingItemSyncJob;
 use App\Jobs\ListingSyncJob;
 use App\Jobs\LogisticCentreSyncJob;
+use Illuminate\Support\Facades\Log;
 
 class Kernel extends ConsoleKernel
 {
@@ -20,6 +21,22 @@ class Kernel extends ConsoleKernel
 //        $schedule->job(new ListingItemSyncJob())->daily();
 //        $schedule->job(new ListingSyncJob())->daily();
 //        $schedule->job(new LogisticCentreSyncJob())->daily();
+
+
+        /*$jobs = \App\Models\ScheduledJobs::where('is_active', 1)->get();
+
+        foreach ($jobs as $job) {
+            if (class_exists($job->class_name)) {
+                $class = $job->class_name;
+                if (class_exists($class)) {
+                    $schedule->job(app($class))
+                        ->cron($job->cron_expression)
+                        ->name($job->name);
+                }else{
+                    Log::warning("Scheduled job class not found: {$class}");
+                }
+            }
+        }*/
     }
 
     /**

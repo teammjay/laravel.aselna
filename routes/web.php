@@ -68,6 +68,7 @@ use App\Http\Controllers\UsersController;
 use App\Services\Auth\EbayAuthService;
 use App\Http\Controllers\LogisticCenterDocumentController;
 use App\Http\Controllers\StoreNavigationPagesController;
+use App\Http\Controllers\ScheduledjobsController;
 
 Route::middleware('auth')->group(function () {
     Route::get('/devices/{id}/details', [DeviceController::class, 'getDeviceDetails']);
@@ -719,6 +720,15 @@ Route::middleware('auth')->group(function () {
         Route::post('/user/saveNotificationAccount', 'saveNotificationAccount')->name('user.notificationaccount');
         Route::post('/user/removenotificationaccount', 'removeNotificationAccount')->name('user.removenotificationaccount');
         Route::post('/user/getusernotificationAccount/', 'getUserNotificationAccount')->name('user.getusernotificationAccount');
+    });
+
+    Route::controller(ScheduledjobsController::class)->group(function () {
+        Route::get('/scheduled_jobs', 'index')->name('scheduled_jobs.index');
+        Route::get('/scheduled_jobs/add', 'create')->name('scheduled_jobs.create');
+        Route::post('/scheduled_jobs/add', 'store')->name('scheduled_jobs.store');
+        Route::get('/scheduled_jobs/edit/{id}', 'edit')->name('scheduled_jobs.edit');
+        Route::post('/scheduled_jobs/edit/{id}', 'update')->name('scheduled_jobs.update');
+        Route::get('/scheduled_jobs/delete/{id}', 'destroy')->name('scheduled_jobs.delete');
     });
 
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');

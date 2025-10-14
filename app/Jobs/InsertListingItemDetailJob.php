@@ -6,11 +6,15 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\SerializesModels;
+use Illuminate\Bus\Batchable;
 use Illuminate\Support\Facades\Log;
 
 class InsertListingItemDetailJob implements ShouldQueue
 {
     use Dispatchable, Queueable;
+    //use Dispatchable, Queueable, InteractsWithQueue, SerializesModels, Batchable;
 
     public $chunk;
 
