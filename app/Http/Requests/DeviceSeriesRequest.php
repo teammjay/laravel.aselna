@@ -23,7 +23,6 @@ class DeviceSeriesRequest extends FormRequest
     {
         return [
             'name' => 'required|string',
-            'slug' => 'required|string',
             'status' => 'required|in:on,off',
         ];
     }
