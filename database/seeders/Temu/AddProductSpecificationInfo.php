@@ -2,6 +2,7 @@
 
 namespace Database\Seeders\Temu;
 
+use App\Models\ListingRequirement;
 use App\Models\ProductSpecifcationUniqueInfo;
 use App\Models\ProductSpecificationInfo;
 use App\Models\ProductSpecificationValue;
@@ -30,6 +31,7 @@ class AddProductSpecificationInfo extends Seeder
     private function fetchAndStoreSpecifications()
     {
         $categories = StoreTypeCategory::where('store_type_id', $this->storeType->id)->get();
+        $requirement = ['category' => '', 'type' => 'key_value', 'table' => 'product_specification', 'key_column' => 'name', 'key_value' => '', 'value_column' => 'value'];
 
         foreach ($categories as $category) {
             $specifications = $this->temuAuthService->getTemplate($category->code);
@@ -49,6 +51,30 @@ class AddProductSpecificationInfo extends Seeder
                     'required' => $property['required'] == true ? 1 : 0,
                 ]);
 
+                if ($property['required'] == true) {
+                    $requirement['category'] = $category->code;
+                    $requirement['key_value'] = $property['name'];
+
+                    ListingRequirement::updateOrCreate(
+                        [
+                            'category' => $requirement['category'],
+                            'type' => $requirement['type'],
+                            'column' => $requirement['column'] ?? null,
+                            'key_column' => $requirement['key_column'] ?? null,
+                            'key_value' => $requirement['key_value'] ?? null,
+                        ],
+                        [
+                            'category' => $requirement['category'],
+                            'type' => $requirement['type'],
+                            'table' => $requirement['table'],
+                            'column' => $requirement['column'] ?? null,
+                            'key_column' => $requirement['key_column'] ?? null,
+                            'key_value' => $requirement['key_value'] ?? null,
+                            'value_column' => $requirement['value_column'] ?? null,
+                        ]
+                    );
+                }
+
                 if ($property['controlType'] == 1) {
                     $productSpecification = ProductSpecifcationUniqueInfo::updateOrCreate([
                         'field_name' => $property['name'],
@@ -66,7 +92,6 @@ class AddProductSpecificationInfo extends Seeder
                         ]);
                     }
                 }
-
 
 
             }
