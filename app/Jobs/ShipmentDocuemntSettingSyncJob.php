@@ -6,10 +6,14 @@ use App\Models\ShipmentDocumentSetting;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\DB;
+use App\Jobs\Concerns\TrackableJob;
 
 class ShipmentDocuemntSettingSyncJob implements ShouldQueue
 {
-    use Queueable;
+    use Queueable, TrackableJob {
+        TrackableJob::withChain insteadof Queueable;
+        Queueable::withChain as queueableWithChain;
+    }
 
     /**
      * Create a new job instance.

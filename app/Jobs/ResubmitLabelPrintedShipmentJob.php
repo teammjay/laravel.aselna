@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Jobs\Concerns\TrackableJob;
 use App\Constants\OrderOperationStatus;
 use App\Helpers\Common;
 use App\Models\Catalog;
@@ -14,7 +15,10 @@ use Illuminate\Support\Facades\Log;
 
 class ResubmitLabelPrintedShipmentJob implements ShouldQueue
 {
-    use Queueable;
+    use Queueable, TrackableJob {
+        TrackableJob::withChain insteadof Queueable;
+        Queueable::withChain as queueableWithChain;
+    }
 
     /**
      * Create a new job instance.

@@ -729,6 +729,11 @@ return [
                     'text' => 'Cron Jobs',
                     'url' => '/scheduled_jobs',
                     'icon' => 'far fa fa-briefcase'
+                ],
+                [
+                    'text' => 'Jobs Queue',
+                    'url' => '/queue_jobs',
+                    'icon' => 'far fa fa-list'
                 ]
             ]
         ]

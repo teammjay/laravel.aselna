@@ -27,10 +27,15 @@ use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
+use App\Jobs\Concerns\TrackableJob;
 
 class ProcessFeedGenerationJob implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Dispatchable, InteractsWithQueue, SerializesModels;
+    use Queueable, TrackableJob {
+        TrackableJob::withChain insteadof Queueable;
+        Queueable::withChain as queueableWithChain;
+    }
 
     public $timeout = 30000; // Set a timeout for the job
 

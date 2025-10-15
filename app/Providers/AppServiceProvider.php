@@ -3,16 +3,22 @@
 namespace App\Providers;
 
 
+use App\Models\JobStatus;
+use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Queue\Events\JobProcessing;
+use Illuminate\Queue\Events\JobProcessed;
+use Illuminate\Queue\Events\JobFailed;
 use Monolog\Logger;
 use Monolog\Handler\StreamHandler;
 use Opcodes\LogViewer\Facades\LogViewer;
 use App\Models\User;
 use Opcodes\LogViewer\LogFolder;
 use Illuminate\Support\Facades\Gate;
-
+use App\Jobs\Concerns\TrackableJob;
+use Illuminate\Support\Facades\Log;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -78,6 +84,51 @@ class AppServiceProvider extends ServiceProvider
 
                 $monolog->info($logMessage);
             }
+        });
+
+
+        // Before a job is pushed to the queue
+        Queue::createPayloadUsing(function ($connection, $queue, $payload) {
+            $job = $payload['data']['command'];
+            // Check if the job uses the TrackableJob trait
+            if (in_array(TrackableJob::class, class_uses_recursive($job))) {
+                // Manually create the tracking record here
+                $job->createTrackingRecord($payload['uuid']);
+            }
+            return [];
+        });
+
+        // When a worker starts processing a job
+        Queue::before(function (JobProcessing $event) {
+            $uuid = $event->job->uuid ?? $event->job->payload()['uuid'] ?? null;
+            JobStatus::where('job_id', $uuid)->update([
+                'status' => 'processing',
+                'started_at' => now(),
+            ]);
+        });
+
+        // When a job has completed successfully
+        Queue::after(function (JobProcessed $event) {
+            $uuid = $event->job->uuid ?? $event->job->payload()['uuid'] ?? null;
+            JobStatus::where('job_id', $uuid)->update([
+                'status' => 'completed',
+                'finished_at' => now(),
+            ]);
+        });
+
+        // When a job has failed
+        Queue::failing(function (JobFailed $event) {
+            $uuid = $event->job->uuid ?? $event->job->payload()['uuid'] ?? null;
+
+            $errorMessage = $event->exception->getMessage();
+            $errorFile = $event->exception->getFile();
+            $errorLine = $event->exception->getLine();
+
+            JobStatus::where('job_id', $uuid)->update([
+                'status' => 'failed',
+                'output' => $errorMessage .' in '. $errorFile .' at line '. $errorLine,
+                'finished_at' => now(),
+            ]);
         });
     }
 }

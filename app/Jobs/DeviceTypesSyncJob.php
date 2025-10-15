@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Jobs\Concerns\TrackableJob;
 use App\Models\DeviceSubTypes;
 use App\Models\DeviceTypes;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -15,7 +16,11 @@ use Illuminate\Support\Str;
 
 class DeviceTypesSyncJob implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Dispatchable, InteractsWithQueue, SerializesModels;
+    use Queueable, TrackableJob {
+        TrackableJob::withChain insteadof Queueable;
+        Queueable::withChain as queueableWithChain;
+    }
 
     public $timeout = 3000;
 

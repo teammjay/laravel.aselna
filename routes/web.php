@@ -68,6 +68,7 @@ use App\Services\Auth\EbayAuthService;
 use App\Http\Controllers\LogisticCenterDocumentController;
 use App\Http\Controllers\StoreNavigationPagesController;
 use App\Http\Controllers\ScheduledjobsController;
+use App\Http\Controllers\QueueJobsController;
 
 Route::middleware('auth')->group(function () {
     Route::get('/devices/{id}/details', [DeviceController::class, 'getDeviceDetails']);
@@ -729,6 +730,8 @@ Route::middleware('auth')->group(function () {
         Route::post('/scheduled_jobs/edit/{id}', 'update')->name('scheduled_jobs.update');
         Route::get('/scheduled_jobs/delete/{id}', 'destroy')->name('scheduled_jobs.delete');
     });
+
+    Route::get('/queue_jobs', [QueueJobsController::class, 'index'])->name('queue.list');
 
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 });

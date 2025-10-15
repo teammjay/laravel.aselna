@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Jobs\Concerns\TrackableJob;
 use App\Constants\FeedStatus;
 use App\Constants\ListingStatus;
 use App\Constants\ListingSyncStatus;
@@ -16,7 +17,10 @@ use const http\Client\Curl\FEATURES;
 
 class AmazonListingItemSyncJob implements ShouldQueue
 {
-    use Queueable;
+    use Queueable, TrackableJob {
+        TrackableJob::withChain insteadof Queueable;
+        Queueable::withChain as queueableWithChain;
+    }
 
     public $timeout = 3000;
 

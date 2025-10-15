@@ -13,7 +13,11 @@ use Illuminate\Support\Facades\Log;
 
 class InsertListingItemDetailJob implements ShouldQueue
 {
-    use Dispatchable, Queueable;
+    use Dispatchable;
+    use Queueable, TrackableJob {
+        TrackableJob::withChain insteadof Queueable;
+        Queueable::withChain as queueableWithChain;
+    }
     //use Dispatchable, Queueable, InteractsWithQueue, SerializesModels, Batchable;
 
     public $chunk;
