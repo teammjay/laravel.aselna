@@ -32,7 +32,6 @@ class ShopifyCombinedSyncing implements ShouldQueue
     public function handle(): void
     {
         $chain = [
-            new ProductSyncJob(),
             new InterfaceSyncJob(),
 //            new DeviceSeriesSyncJob(),
             new CategorySyncJob(),
@@ -124,8 +123,8 @@ class ShopifyCombinedSyncing implements ShouldQueue
 //                );
             }
 
-            self::queueableWithChain($chain)->dispatch();
-//            Bus::chain($chain)->dispatch(new ProductSyncJob());
+//            self::queueableWithChain($chain)->dispatch();
+            Bus::chain($chain)->dispatch(new ProductSyncJob());
         }
     }
 }
