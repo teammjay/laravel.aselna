@@ -113,7 +113,7 @@
                     //processData: false,
                     //contentType: false
                 },
-                "order": [[ 8, "desc" ]],
+                "order": [[ 9, "desc" ]],
                 'columns': [
                     { data: 'job_id'},
                     { data: 'chain_id' },
