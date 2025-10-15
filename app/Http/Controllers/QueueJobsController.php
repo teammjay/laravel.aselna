@@ -44,6 +44,7 @@ class QueueJobsController extends Controller
 
                 $data[] = array(
                     "job_id" => $job->job_id,
+                    "chain_id" => $job->chain_id,
                     "name" => $name,
                     "type" => $job->type,
                     "status" => '<span class="status-'.$job->status.'">'.ucfirst($job->status).'</span>',
