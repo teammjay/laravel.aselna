@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Jobs\Concerns\TrackableJob;
 use App\Constants\OrderStatus;
 use App\Models\ListingItem;
 use App\Models\Order;
@@ -15,7 +16,10 @@ use Illuminate\Support\Facades\Log;
 
 class FetchAmazonOrdersJob implements ShouldQueue
 {
-    use Queueable;
+    use Queueable, TrackableJob {
+        TrackableJob::withChain insteadof Queueable;
+        Queueable::withChain as queueableWithChain;
+    }
 
     public $timeout = 3000;
 

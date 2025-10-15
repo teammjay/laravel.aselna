@@ -20,10 +20,14 @@ use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Log;
+use App\Jobs\Concerns\TrackableJob;
 
 class StoreBrandPageSyncJob implements ShouldQueue
 {
-    use Queueable;
+    use Queueable, TrackableJob {
+        TrackableJob::withChain insteadof Queueable;
+        Queueable::withChain as queueableWithChain;
+    }
 
     public $timeout = 36000;
 

@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Jobs\Concerns\TrackableJob;
 use App\Models\HdMessageAttachment;
 use App\Models\HdMessageReference;
 use App\Models\Sequence;
@@ -24,9 +25,14 @@ use App\Constants\HdTicketStatus;
 use App\Constants\HdTicketTypeCode;
 use App\Utils\EmailMessageUtility;
 
+
 class ProcessStoreMessageAccountJob implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Dispatchable, InteractsWithQueue, SerializesModels;
+    use Queueable, TrackableJob {
+        TrackableJob::withChain insteadof Queueable;
+        Queueable::withChain as queueableWithChain;
+    }
 
     public $timeout = 60 * 35; // Set a timeout for the job
 

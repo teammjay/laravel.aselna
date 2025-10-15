@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Jobs\Concerns\TrackableJob;
 use App\Models\Category;
 use App\Models\ProductType;
 use App\Models\StoreType;
@@ -17,7 +18,10 @@ use Illuminate\Support\Str;
 
 class CategorySyncJob implements ShouldQueue
 {
-    use Queueable;
+    use Queueable, TrackableJob {
+        TrackableJob::withChain insteadof Queueable;
+        Queueable::withChain as queueableWithChain;
+    }
 
     public $timeout = 3000;
 

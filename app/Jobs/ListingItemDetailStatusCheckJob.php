@@ -11,7 +11,10 @@ use Illuminate\Support\Facades\Log;
 
 class ListingItemDetailStatusCheckJob implements ShouldQueue
 {
-    use Queueable;
+    use Queueable, TrackableJob {
+        TrackableJob::withChain insteadof Queueable;
+        Queueable::withChain as queueableWithChain;
+    }
 
     /**
      * Create a new job instance.

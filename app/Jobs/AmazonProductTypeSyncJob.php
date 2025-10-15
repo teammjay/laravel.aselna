@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Jobs\Concerns\TrackableJob;
 use App\Models\StoreType;
 use App\Models\StoreTypeCategory;
 use App\Services\Auth\AmazonAuthService;
@@ -11,7 +12,10 @@ use Illuminate\Support\Facades\Log;
 
 class AmazonProductTypeSyncJob implements ShouldQueue
 {
-    use Queueable;
+    use Queueable, TrackableJob {
+        TrackableJob::withChain insteadof Queueable;
+        Queueable::withChain as queueableWithChain;
+    }
 
     private $amazonAuthService;
 

@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Jobs\Concerns\TrackableJob;
 use App\Models\Carrier;
 use App\Models\Device;
 use App\Models\DeviceCarrier;
@@ -11,7 +12,10 @@ use Illuminate\Support\Facades\DB;
 
 class DeviceCarrierSyncJob implements ShouldQueue
 {
-    use Queueable;
+    use Queueable, TrackableJob {
+        TrackableJob::withChain insteadof Queueable;
+        Queueable::withChain as queueableWithChain;
+    }
 
     public $timeout = 3000;
 
