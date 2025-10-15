@@ -21,8 +21,8 @@
             <table id="queueJobsTable" class="table table-bordered table-striped">
                 <thead>
                 <tr>
-                    {{--<th>Chain ID</th>--}}
                     <th>Job ID</th>
+                    <th>Chain ID</th>
                     <th>Name</th>
                     <th>Job</th>
                     <th>Status</th>
@@ -82,7 +82,7 @@
                 "autoWidth": false,
                 "processing": true,
                 "serverSide": true,
-                "searching": false,
+                "searching": true,
                 "aLengthMenu": [10, 20, 25, 50, 100],
                 'ajax': {
                     url: "{{ route('queue.filter') }}",
@@ -116,6 +116,7 @@
                 "order": [[ 8, "desc" ]],
                 'columns': [
                     { data: 'job_id'},
+                    { data: 'chain_id' },
                     { data: 'name' },
                     { data: 'type' },
                     { data: 'status' },
