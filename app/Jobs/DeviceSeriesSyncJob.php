@@ -3,7 +3,6 @@
 namespace App\Jobs;
 
 use App\Jobs\Concerns\TrackableJob;
-use App\Jobs\Concerns\TrackableJob;
 use App\Models\DeviceSeries;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;

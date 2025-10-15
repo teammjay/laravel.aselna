@@ -7,7 +7,6 @@ use App\Models\DevicesLinkedDevice;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\DB;
-use App\Jobs\Concerns\TrackableJob;
 
 class DevicesLinkSyncJob implements ShouldQueue
 {
