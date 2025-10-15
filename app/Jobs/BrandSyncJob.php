@@ -12,7 +12,6 @@ use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
-use App\Jobs\Concerns\TrackableJob;
 
 class BrandSyncJob implements ShouldQueue
 {
