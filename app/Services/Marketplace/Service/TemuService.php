@@ -174,7 +174,7 @@ class TemuService implements MarketplaceServiceInterface
             }
 
             $template = $temuAuthService->getTemplate($storeTypeCategory->code);
-            //Log::info('Template for Category ' . $storeTypeCategory->code . ': ' . json_encode($template));
+            Log::info('Template for Category ' . $storeTypeCategory->code . ': ' . json_encode($template));
 
             $productData = $this->getProductData($listingItem);
 
