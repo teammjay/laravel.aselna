@@ -90,10 +90,23 @@ class AppServiceProvider extends ServiceProvider
         // Before a job is pushed to the queue
         Queue::createPayloadUsing(function ($connection, $queue, $payload) {
             $job = $payload['data']['command'];
+            Log::info('JOB Detail:'.json_encode($job));
+            Log::info('Payload Detail:'.json_encode($payload));
             // Check if the job uses the TrackableJob trait
             if (in_array(TrackableJob::class, class_uses_recursive($job))) {
                 // Manually create the tracking record here
-                $job->createTrackingRecord($payload['uuid']);
+                $extra = [];
+
+                if (property_exists($job, 'store_name')) {
+                    $extra['store_name'] = $job->store_name;
+                }
+                if (property_exists($job, 'store_type')) {
+                    $extra['store_type'] = $job->store_type;
+                }
+
+                Log::info('Extra Detail:'.json_encode($extra));
+
+                $job->createTrackingRecord($payload['uuid'], $extra);
             }
             return [];
         });

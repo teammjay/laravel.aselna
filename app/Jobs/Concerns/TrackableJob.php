@@ -10,10 +10,12 @@ trait TrackableJob
 {
     public $chainId;
 
+    public $jobId;
+
     /**
      * Create a new tracking record for the job.
      */
-    public function createTrackingRecord($jobId): void
+    public function createTrackingRecord($jobId, $extra = []): void
     {
 
         // Generate a chain ID if one doesn't exist
@@ -21,13 +23,34 @@ trait TrackableJob
             $this->chainId = (string) Str::uuid();
         }
 
+        if (empty($this->jobId)) {
+            $this->jobId = $jobId;
+        }
+
+        Log::info('Extra Parameter:'.json_encode($extra));
+        $tags = '';
+        if(!empty($extra)){
+            foreach($extra as $key=>$val){
+                $tags .= ' '.$val;
+            }
+        }
+
+        Log::info('Tags:'.$tags);
+
         JobStatus::create([
             'job_id' => $jobId,
             'type' => static::class,
             'queue' => $this->queue ?? 'default',
             'status' => 'pending',
             'chain_id' => $this->chainId,
+            'tags' => $tags,
         ]);
+    }
+
+    public function updateTrackingRecord(array $updates): void
+    {
+        Log::info('Updates:'.json_encode($updates));
+        JobStatus::where('job_id', $this->jobId ?? null)->update($updates);
     }
 
     /**

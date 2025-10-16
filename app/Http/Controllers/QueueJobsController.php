@@ -34,6 +34,9 @@ class QueueJobsController extends Controller
         // Filter by status
         QueryFilters::applyFilter($query, $request, 'status', 'status_operator', 'status');
 
+        // Filter by tags
+        QueryFilters::applyFilter($query, $request, 'tags', 'tags_operator', 'tags');
+
         // Filter by job type
         QueryFilters::applyFilter($query, $request, 'type', 'job_type_operator', 'job_type');
 
@@ -74,6 +77,7 @@ class QueueJobsController extends Controller
                     "started_at" => ($job->started_at) ? $job->started_at->diffForHumans() : "",
                     "finished_at" => ($job->finished_at) ? $job->finished_at->diffForHumans() : "",
                     "output" => ($job->output) ? '<i class="fa fa-exclamation-triangle show-error" style="font-size:24px" data-content="'.$job->output.'"></i>' : "",
+                    "tags" => $job->tags,
                     "created_at" => date('Y-m-d H:i:s',strtotime($job->created_at))
                 );
             }

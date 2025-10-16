@@ -22,6 +22,7 @@ class JobStatus extends Model
         'chain_id',
         'started_at',
         'finished_at',
+        'tags',
         'updated_at',
         'created_at',
     ];
