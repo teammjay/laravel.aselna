@@ -3,7 +3,9 @@
 namespace App\Jobs;
 
 use App\Models\Catalog;
+use App\Models\ProductSpecifcationUniqueInfo;
 use App\Models\ProductSpecification;
+use App\Models\ProductSpecificationValue;
 use App\Models\StoreType;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -52,13 +54,33 @@ class ProductSpecificationSyncJob implements ShouldQueue
         }
         $storeTypes = StoreType::all();
         foreach ($storeTypes as $storeType) {
+            $value = $productSpecification->value_;
+
+            if ($productSpecificationUnique = ProductSpecifcationUniqueInfo::where('field_name', $productSpecification->name)->first()) {
+                $newValue = ProductSpecificationValue::where('product_specification_id', $productSpecificationUnique->id)
+                    ->where('field_value', $value)
+                    ->first();
+                if ($newValue) {
+                    $value = $newValue->id;
+                } else {
+                    $newValue = ProductSpecificationValue::create([
+                        'product_specification_id' => $productSpecificationUnique->id,
+                        'field_value' => $value,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+                    $value = $newValue->id;
+                }
+            }
+
+
             ProductSpecification::updateOrCreate([
                 'name' => $productSpecification->name,
                 'product_id' => $productSpecification->product_id,
                 'store_type_id' => $storeType->id
             ], [
                 'name' => $productSpecification->name,
-                'value' => $productSpecification->value_,
+                'value' => $value,
                 'product_id' => $productSpecification->product_id,
                 'store_type_id' => $storeType->id,
                 'created_at' => now(),
