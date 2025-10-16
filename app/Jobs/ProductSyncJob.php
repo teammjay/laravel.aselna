@@ -148,6 +148,7 @@ class ProductSyncJob implements ShouldQueue
                 ProductKeyFeatures::updateOrInsert(
                     ['product_id' => $product_id, 'sort_order' => $key],
                     [
+                        'id' => (string)Str::uuid(),
                         'product_id' => $product_id,
                         'value' => $value,
                         'sort_order' => $key,
