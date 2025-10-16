@@ -203,7 +203,7 @@ class SyncAllTables extends Command
 //                'number_of_codes' => 20000
 //            ]
 //        );
-        ShopifyIndvPagesSyncJob::dispatch('47338682-e00d-4ab2-9db6-76343bb96162', WebStorePageType::ALL_BRANDS);
+//        ShopifyIndvPagesSyncJob::dispatch('47338682-e00d-4ab2-9db6-76343bb96162', WebStorePageType::BRAND_DEVICES);
 //        DevicesSyncJob::dispatch();
 //        DeviceInterfaces::dispatch();
 //        SyncAllOrderStatusJob::dispatch();
@@ -211,6 +211,7 @@ class SyncAllTables extends Command
 //        DevicesSyncJob::dispatch();
 //        ProductImagesSyncJob::dispatch();
 //        FetchEmailMessagesJob::dispatch();
+        ProductSpecificationSyncJob::dispatch();
 
         $transactionIds = [
 ////            '9400150105798006163885',

@@ -12,10 +12,14 @@ use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use App\Jobs\Concerns\TrackableJob;
 
 class ProductImagesSyncJob implements ShouldQueue
 {
-    use Queueable;
+    use Queueable, TrackableJob {
+        TrackableJob::withChain insteadof Queueable;
+        Queueable::withChain as queueableWithChain;
+    }
 
     public $timeout = 6000;
 
@@ -78,10 +82,9 @@ class ProductImagesSyncJob implements ShouldQueue
         $SystemProductImage = ProductImages::where('product_id', $product->product_id)->where('sort_order', $productImage->picture_id)->first();
 
         Log::info('Product Image Date ' . $productImage->date_updated);
-        if (isset($SystemProductImage) && $SystemProductImage->updated_at >= $productImage->date_updated) {
+        if (isset($SystemProductImage) && $SystemProductImage->updated_at >= ($productImage->date_updated ?? now())) {
             return;
         }
-        Log::info('SystemProductImage Date ' . $SystemProductImage->updated_at);
 
         //check if file exists in storage
         try {

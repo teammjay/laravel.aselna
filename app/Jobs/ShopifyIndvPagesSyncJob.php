@@ -9,10 +9,14 @@ use App\Services\Auth\ShopifyAuthService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Log;
+use App\Jobs\Concerns\TrackableJob;
 
 class ShopifyIndvPagesSyncJob implements ShouldQueue
 {
-    use Queueable;
+    use Queueable, TrackableJob {
+        TrackableJob::withChain insteadof Queueable;
+        Queueable::withChain as queueableWithChain;
+    }
 
     public $timeout = 36000;
 
@@ -45,6 +49,7 @@ class ShopifyIndvPagesSyncJob implements ShouldQueue
 
         foreach ($StoreNavigationPages as $StoreNavigationPage) {
             try {
+                Log::info('Syncing page: ' . $StoreNavigationPage->page_name . ' for store: ' . $this->store->name);
                 $this->shopifyAuthService->syncIndividualPage($StoreNavigationPage);
             } catch (\Exception $e) {
                 Log::error('Error in ShopifyIndvPagesSyncJob: ' . $e->getMessage());

@@ -15,10 +15,14 @@ use App\Services\Marketplace\Service\WalmartService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Log;
+use App\Jobs\Concerns\TrackableJob;
 
 class FetchWalmartOrdersJob implements ShouldQueue
 {
-    use Queueable;
+    use Queueable, TrackableJob {
+        TrackableJob::withChain insteadof Queueable;
+        Queueable::withChain as queueableWithChain;
+    }
 
     public $timeout = 3000;
 
@@ -34,7 +38,7 @@ class FetchWalmartOrdersJob implements ShouldQueue
     public function handle(): void
     {
         Log::info("Testing");
-        $stores = Store::select('store.*')->join('store_type', 'store_type.id', '=', 'store.store_type_id')->where('store_type.code', 'walmart')->get();
+        $stores = Store::select('store.*','store_type.name as storeTypeName')->join('store_type', 'store_type.id', '=', 'store.store_type_id')->where('store_type.code', 'walmart')->get();
 
         if (count($stores ?? []) > 0) {
             foreach ($stores as $store) {
@@ -43,6 +47,7 @@ class FetchWalmartOrdersJob implements ShouldQueue
                     continue;
                 }
 
+                $this->updateTrackingRecord(['tags' => $store->name .' '.$store->storeTypeName]);
                 $walmartService = new WalmartService();
                 $walmartService->getOrders($store);
 

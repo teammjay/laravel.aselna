@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Jobs\Concerns\TrackableJob;
 use App\Models\Store;
 use App\Services\Marketplace\Service\EbayService;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -10,7 +11,10 @@ use Illuminate\Support\Facades\Log;
 
 class FetchEbayOrders implements ShouldQueue
 {
-    use Queueable;
+    use Queueable, TrackableJob {
+        TrackableJob::withChain insteadof Queueable;
+        Queueable::withChain as queueableWithChain;
+    }
 
     public $timeout = 3000;
 
@@ -28,9 +32,10 @@ class FetchEbayOrders implements ShouldQueue
     public function handle(): void
     {
         /* get amazon stores*/
-        $stores = Store::select('store.*')->join('store_type', 'store_type.id', '=', 'store.store_type_id')->where('store_type.code','ebay')->get();
+        $stores = Store::select('store.*','store_type.name as storeTypeName')->join('store_type', 'store_type.id', '=', 'store.store_type_id')->where('store_type.code','ebay')->get();
 
         if(count($stores ?? []) > 0) {
+
             foreach ($stores as $store) {
 
                 if (env('APP_ENV') === 'local' && $store->name != 'phonil') {
@@ -39,6 +44,8 @@ class FetchEbayOrders implements ShouldQueue
                 Log::info('Store : ' . $store->name);
 
                 try {
+
+                    $this->updateTrackingRecord(['tags' => $store->storeTypeName]);
                     $ebayService = new EbayService();
                     $orders = $ebayService->getOrders($store);
                 } catch (\Exception $e) {

@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Jobs\Concerns\TrackableJob;
 use App\Models\HdMessageAttachment;
 use App\Models\HdMessageReference;
 use App\Models\Sequence;
@@ -24,21 +25,28 @@ use App\Constants\HdTicketStatus;
 use App\Constants\HdTicketTypeCode;
 use App\Utils\EmailMessageUtility;
 
+
 class ProcessStoreMessageAccountJob implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    //use InteractsWithQueue, SerializesModels;
+    use Queueable, Dispatchable, TrackableJob {
+        TrackableJob::withChain insteadof Dispatchable;
+        Dispatchable::withChain as dispatchableWithChain;
+    }
 
     public $timeout = 60 * 35; // Set a timeout for the job
 
     protected $storeMessageAccount;
     protected $store;
-    protected $store_type;
+    public $store_type;
+    public $store_name;
 
     public function __construct($storeMessageAccount, $store, $store_type)
     {
         $this->storeMessageAccount = $storeMessageAccount;
         $this->store = $store;
         $this->store_type = $store_type;
+        $this->store_name = $store->name;
     }
 
     public function handle()

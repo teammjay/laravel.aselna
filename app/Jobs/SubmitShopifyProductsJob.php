@@ -23,10 +23,14 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Log;
 use phpseclib3\File\ASN1\Element;
+use App\Jobs\Concerns\TrackableJob;
 
 class SubmitShopifyProductsJob implements ShouldQueue
 {
-    use Queueable;
+    use Queueable, TrackableJob {
+        TrackableJob::withChain insteadof Queueable;
+        Queueable::withChain as queueableWithChain;
+    }
 
     public $timeout = 30000;
 
@@ -61,7 +65,7 @@ class SubmitShopifyProductsJob implements ShouldQueue
                 // get all te children and their children of cea products
                 // Get product types with parent code 'cea' and all their descendants recursively
                 $ceaProductTypes = [];
-                    $ceaParentTypes = ProductType::select('id')->where('code', 'cea')->get()->pluck('id')->toArray();
+                $ceaParentTypes = ProductType::select('id')->where('code', 'cea')->get()->pluck('id')->toArray();
 
                 // Get immediate children
                 $ceaChildrenTypes = ProductType::select('id')->whereIn('parent_id', $ceaParentTypes)->get()->pluck('id')->toArray();
@@ -191,6 +195,11 @@ class SubmitShopifyProductsJob implements ShouldQueue
             ->chunk(100, function ($productImages) use ($store, $productData) {
                 if (!isset($store->fileSystem)) return;
                 foreach ($productImages as $productImage) {
+                    $generatedImage = GenerateProductImage::where('product_image_id', $productImage->id)->first();
+                    if (isset($generatedImage) && $generatedImage->updated_at >= $productImage->updated_at) {
+                        continue;
+                    }
+
                     $Image = $productImage->imageObj;
                     $path = '/store-images/' . $store->id . '/' . $productImage->id . '.jpg';
 
@@ -487,16 +496,17 @@ class SubmitShopifyProductsJob implements ShouldQueue
             'variant' => [$variantData],
         ];
 
-//            $this->generateProductImages($productData, $store);
+        $this->generateProductImages($productData, $store);
 
-//            $images = GenerateProductImage::where('product_id', $productData->product_id)->get();
+        $images = GenerateProductImage::where('product_id', $productData->product_id)->orderBy('main_image', 'desc')->get();
         $media = [];
-//            foreach ($images as $image) {
-//                $media[] = [
-//                    'mediaContentType' => 'IMAGE',
-//                    'originalSource' => $fileSystem->url_base_path . $image->path,
-//                ];
-//            }
+        foreach ($images as $image) {
+            $media[] = [
+                'mediaContentType' => 'IMAGE',
+                'originalSource' => $fileSystem->url_base_path . $image->path,
+            ];
+        }
+
         $productUpdateData['media'] = $media;
 
         Log::info('Product Update Data: ' . json_encode($productUpdateData));
@@ -522,7 +532,6 @@ class SubmitShopifyProductsJob implements ShouldQueue
             ]);
         } else {
             $proDetail->update([
-                'upload_status' => 'failed',
                 'updated_at' => now(),
                 'upload_attempts' => $proDetail->upload_attempts + 1
             ]);
@@ -614,6 +623,6 @@ class SubmitShopifyProductsJob implements ShouldQueue
         } else {
             $title = $productData->product_title;
         }
-        return trim($title) . ' - ' . $store->short_code  . $productData->product_sku;
+        return trim($title) . ' - ' . $store->short_code . $productData->product_sku;
     }
 }

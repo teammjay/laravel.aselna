@@ -9,10 +9,14 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use App\Models\Store;
 use Illuminate\Support\Facades\Log;
+use App\Jobs\Concerns\TrackableJob;
 
 class FetchShopifyProductsJob implements ShouldQueue
 {
-    use Queueable;
+    use Queueable, TrackableJob {
+        TrackableJob::withChain insteadof Queueable;
+        Queueable::withChain as queueableWithChain;
+    }
 
     public $timeout = 1800;
 
@@ -29,7 +33,7 @@ class FetchShopifyProductsJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $stores = Store::select('store.*')->join('store_type', 'store_type.id', '=', 'store.store_type_id')->where('store_type.code', 'shopify')->get();
+        $stores = Store::select('store.*','store_type.name as storeTypeName')->join('store_type', 'store_type.id', '=', 'store.store_type_id')->where('store_type.code', 'shopify')->get();
 
         if (count($stores ?? []) > 0) {
             foreach ($stores as $store) {
@@ -45,6 +49,8 @@ class FetchShopifyProductsJob implements ShouldQueue
                 Log::info('Store Name: ' . $store->name);
 
                 Log::info('Secret Key: ' . $store->secret_key);
+
+                $this->updateTrackingRecord(['tags' => $store->storeTypeName]);
 
                 $hasNextPage = true;
                 $afterCursor = null;

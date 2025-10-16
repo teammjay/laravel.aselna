@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Jobs\Concerns\TrackableJob;
 use App\Models\Device;
 use App\Models\DeviceInterface;
 use App\Models\Interfaces;
@@ -13,7 +14,10 @@ use Illuminate\Support\Str;
 
 class DeviceInterfaces implements ShouldQueue
 {
-    use Queueable;
+    use Queueable, TrackableJob {
+        TrackableJob::withChain insteadof Queueable;
+        Queueable::withChain as queueableWithChain;
+    }
 
     public $timeout = 300000;
 

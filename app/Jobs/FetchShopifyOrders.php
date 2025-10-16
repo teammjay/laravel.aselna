@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Jobs\Concerns\TrackableJob;
 use App\Constants\OrderOperationStatus;
 use App\Constants\OrderOperationType;
 use App\Constants\OrderStatus;
@@ -26,7 +27,10 @@ use Illuminate\Support\Facades\Log;
 
 class FetchShopifyOrders implements ShouldQueue
 {
-    use Queueable;
+    use Queueable, TrackableJob {
+        TrackableJob::withChain insteadof Queueable;
+        Queueable::withChain as queueableWithChain;
+    }
 
     public $timeout = 3000;
 
@@ -46,7 +50,7 @@ class FetchShopifyOrders implements ShouldQueue
 
         try {
             /* get shopify stores*/
-            $stores = Store::select('store.*')->join('store_type', 'store_type.id', '=', 'store.store_type_id')->where('store_type.code', 'shopify')->get();
+            $stores = Store::select('store.*','store_type.name as storeTypeName')->join('store_type', 'store_type.id', '=', 'store.store_type_id')->where('store_type.code', 'shopify')->get();
 
             if (count($stores ?? []) > 0) {
                 foreach ($stores as $store) {
@@ -54,6 +58,8 @@ class FetchShopifyOrders implements ShouldQueue
                         continue;
                     }
                     Log::info('Store : ' . $store->name);
+
+                    $this->updateTrackingRecord(['tags' => $store->storeTypeName]);
 
                     $ordersyncDetail = OrderSynchronization::where('store_id',$store->id)->where('synchronization_type', OrderSyncronisationType::ORDER)->orderByRaw('COALESCE(last_order_update_date,filter_end_date) desc')->first();
                     $filterStartDate = OrderUtility::getLastSyncDate($store->id, OrderSyncronisationType::ORDER);

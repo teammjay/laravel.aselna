@@ -1339,6 +1339,7 @@
                     if(response.html){
                         $('#specification_list').html(response.html);
                         $('.specification').select2();
+                        $('.specification-select').select2();
                         $('.select2').on('select2:open', function () {
                             // Wait for dropdown to render before focusing the search field
                             setTimeout(function () {
@@ -2060,6 +2061,7 @@
                         $('#specification_table tbody').append(html);
 
                         $('.specification').select2();
+                        $('.specification-select').select2();
                         $('.select2').on('select2:open', function () {
                             // Wait for dropdown to render before focusing the search field
                             setTimeout(function () {

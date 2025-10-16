@@ -166,11 +166,11 @@ class JobScheduler extends Seeder
                 'description' => 'Sync all listing templates',
                 'class_name' => 'App\Jobs\ListingTemplateSyncJob',
             ],
-            [
-                'name' => 'Store Pages Job Sync',
-                'description' => 'Sync all store pages',
-                'class_name' => 'App\Jobs\StorePagesJobSync',
-            ],
+//            [
+//                'name' => 'Store Pages Job Sync',
+//                'description' => 'Sync all store pages',
+//                'class_name' => 'App\Jobs\StorePagesJobSync',
+//            ],
             [
                 'name' => 'Device Carrier Sync',
                 'description' => 'Sync all device carriers',
