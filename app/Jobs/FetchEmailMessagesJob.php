@@ -17,6 +17,7 @@ use App\Models\StoreMessageAccount;
 use App\Utils\EmailMessageUtility;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Jobs\Concerns\TrackableJob;
@@ -49,12 +50,12 @@ class   FetchEmailMessagesJob implements ShouldQueue
 
             if (count($stores ?? []) > 0) {
                 foreach ($stores as $store) {
-                    if (env('APP_ENV') === 'local' && $store->name != 'phonil') {
+                    /*if (env('APP_ENV') === 'local' && $store->name != 'phonil') {
                         continue;
                     }
                     if (env('APP_ENV') === 'local' && $store->storeType->name != 'Ebay') {
                         continue;
-                    }
+                    }*/
                     Log::info('Processing store: ' . $store->name);
                     $storeMessageAccounts = StoreMessageAccount::with('incomingAccount', 'outgoingAccount')
                         ->where('store_id', $store->id)
@@ -65,6 +66,8 @@ class   FetchEmailMessagesJob implements ShouldQueue
                     if (count($storeMessageAccounts ?? []) > 0) {
                         foreach ($storeMessageAccounts as $maccount) {
                             // Dispatch a new job for each store message account
+                            Log::info('Processing store 2: ' . $store->name);
+                            //Bus::chain([])->dispatch(new ProcessStoreMessageAccountJob($maccount, $store, $store->storeType->name));
                             ProcessStoreMessageAccountJob::dispatch($maccount, $store, $store->storeType->name);
                         }
                     }

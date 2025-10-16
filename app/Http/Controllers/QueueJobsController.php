@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\JobStatus;
 use Illuminate\Http\Request;
+use App\Helpers\QueryFilters;
 
 class QueueJobsController extends Controller
 {
@@ -30,6 +31,27 @@ class QueueJobsController extends Controller
         // add select
         $query = JobStatus::select('*');
 
+        // Filter by status
+        QueryFilters::applyFilter($query, $request, 'status', 'status_operator', 'status');
+
+        // Filter by job type
+        QueryFilters::applyFilter($query, $request, 'type', 'job_type_operator', 'job_type');
+
+        // Filter by created date
+        if ($request->has('created_at') && $request->created_at != '') {
+            $query->whereDate('created_at', date('Y-m-d',strtotime($request->created_at)));
+        }
+
+        // Filter by started date
+        if ($request->has('started_at') && $request->started_at != '') {
+            $query->whereDate('started_at', date('Y-m-d',strtotime($request->started_at)));
+        }
+
+        // Filter by created date
+        if ($request->has('finished_at') && $request->finished_at != '') {
+            $query->whereDate('finished_at', date('Y-m-d',strtotime($request->finished_at)));
+        }
+
         $totalRecords = (clone $query)->toBase()->getCountForPagination();
         $query->orderBy($columnName, $columnSortOrder);
         $jobs = $query->paginate($perPage, ['*'], 'page', floor($start/$perPage)+1);
@@ -50,7 +72,7 @@ class QueueJobsController extends Controller
                     "queue" => $job->queue ?? '',
                     "started_at" => ($job->started_at) ? $job->started_at->diffForHumans() : "",
                     "finished_at" => ($job->finished_at) ? $job->finished_at->diffForHumans() : "",
-                    "output" => ($job->output) ? '<i class="fa fa-exclamation-triangle" style="font-size:24px" title="'.$job->output.'"></i>' : "",
+                    "output" => ($job->output) ? '<i class="fa fa-exclamation-triangle show-error" style="font-size:24px" data-content="'.$job->output.'"></i>' : "",
                     "created_at" => date('Y-m-d H:i:s',strtotime($job->created_at))
                 );
             }
