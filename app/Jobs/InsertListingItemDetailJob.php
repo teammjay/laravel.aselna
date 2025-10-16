@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Jobs\Concerns\TrackableJob;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -13,21 +14,25 @@ use Illuminate\Support\Facades\Log;
 
 class InsertListingItemDetailJob implements ShouldQueue
 {
-    use Dispatchable;
-    use Queueable, TrackableJob {
-        TrackableJob::withChain insteadof Queueable;
+    use Dispatchable, Queueable, TrackableJob {
+        TrackableJob::withChain insteadof Queueable, Dispatchable;
         Queueable::withChain as queueableWithChain;
+        Dispatchable::withChain as dispatchableWithChain;
     }
     //use Dispatchable, Queueable, InteractsWithQueue, SerializesModels, Batchable;
 
     public $chunk;
+    public $store_type;
+    public $store_name;
 
     /**
      * Create a new job instance.
      */
-    public function __construct(array $chunk)
+    public function __construct(array $chunk, $storeDetail)
     {
         $this->chunk = $chunk;
+        $this->store_type = $storeDetail->storeType->name ?? "";
+        $this->store_name = $storeDetail->name;
     }
 
     /**

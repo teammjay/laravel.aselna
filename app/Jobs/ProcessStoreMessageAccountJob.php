@@ -38,13 +38,15 @@ class ProcessStoreMessageAccountJob implements ShouldQueue
 
     protected $storeMessageAccount;
     protected $store;
-    protected $store_type;
+    public $store_type;
+    public $store_name;
 
     public function __construct($storeMessageAccount, $store, $store_type)
     {
         $this->storeMessageAccount = $storeMessageAccount;
         $this->store = $store;
         $this->store_type = $store_type;
+        $this->store_name = $store->name;
     }
 
     public function handle()

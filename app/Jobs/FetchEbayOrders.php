@@ -32,9 +32,10 @@ class FetchEbayOrders implements ShouldQueue
     public function handle(): void
     {
         /* get amazon stores*/
-        $stores = Store::select('store.*')->join('store_type', 'store_type.id', '=', 'store.store_type_id')->where('store_type.code','ebay')->get();
+        $stores = Store::select('store.*','store_type.name as storeTypeName')->join('store_type', 'store_type.id', '=', 'store.store_type_id')->where('store_type.code','ebay')->get();
 
         if(count($stores ?? []) > 0) {
+
             foreach ($stores as $store) {
 
                 if (env('APP_ENV') === 'local' && $store->name != 'phonil') {
@@ -43,6 +44,8 @@ class FetchEbayOrders implements ShouldQueue
                 Log::info('Store : ' . $store->name);
 
                 try {
+
+                    $this->updateTrackingRecord(['tags' => $store->storeTypeName]);
                     $ebayService = new EbayService();
                     $orders = $ebayService->getOrders($store);
                 } catch (\Exception $e) {

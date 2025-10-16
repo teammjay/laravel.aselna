@@ -2494,7 +2494,7 @@ class ListingController extends Controller
                     $store_id = $request->input('store_id');
                     $store_type = $request->input('store_type');
                     $manufacturer_id = $request->input('manufacturer_id');
-                    $store_detail = Store::where('id', $store_id)->first();
+                    $store_detail = Store::with('storeType')->where('id', $store_id)->first();
                     $product_models = $request->input('product_models');
                     if ($product_models) {
                         $product_models = json_decode($product_models);
@@ -2725,7 +2725,7 @@ class ListingController extends Controller
                                         foreach (array_chunk($itemDetail, 500) as $chunk) {
 
                                             //InsertListingItemDetailJob::dispatch($chunk);
-                                            $jobs[] = new InsertListingItemDetailJob($chunk);
+                                            $jobs[] = new InsertListingItemDetailJob($chunk, $store_detail);
                                             //DB::table('listing_item_detail')->insert($chunk);
                                             //$jobs[] = $chunk;
                                         }
