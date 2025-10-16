@@ -7,6 +7,7 @@ use App\Models\Store;
 use App\Models\StorePageTemplate;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Log;
 use App\Jobs\Concerns\TrackableJob;
 
@@ -110,19 +111,20 @@ class ShopifyCombinedSyncing implements ShouldQueue
                     WebStorePageType::BRAND_DEVICES
                 );
 
-                $chain[] = new StoreBrandPageSyncJob(
-                    $store->id,
-                    WebStorePageType::ALL_BRANDS,
-                    $allBrandTemplate->id
-                );
-
-                $chain[] = new ShopifyIndvPagesSyncJob(
-                    $store->id,
-                    WebStorePageType::ALL_BRANDS
-                );
+//                $chain[] = new StoreBrandPageSyncJob(
+//                    $store->id,
+//                    WebStorePageType::ALL_BRANDS,
+//                    $allBrandTemplate->id
+//                );
+//
+//                $chain[] = new ShopifyIndvPagesSyncJob(
+//                    $store->id,
+//                    WebStorePageType::ALL_BRANDS
+//                );
             }
 
-            ProductSyncJob::withChain($chain)->dispatch();
+//            self::queueableWithChain($chain)->dispatch();
+            Bus::chain($chain)->dispatch(new ProductSyncJob());
         }
     }
 }

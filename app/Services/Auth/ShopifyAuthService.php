@@ -511,7 +511,7 @@ class ShopifyAuthService
         }
         $query = ShopifyQueries::$pageFetch;
         Log::info('Checking if page exists with URL path: ' . $url_path);
-        $variables['handle'] = $url_path;
+        $variables['handle'] = 'handle:'.$url_path;
 
         $getPageData = $this->makeGraphQLRequest($query, $variables, '2025-07');
         Log::info('Get Page Data: ' . json_encode($getPageData));

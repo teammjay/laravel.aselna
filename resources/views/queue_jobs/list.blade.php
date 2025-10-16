@@ -18,6 +18,7 @@
 @stop
 
 @section('content')
+
     <div class="card card-secondary">
         <div class="card-header bg-white">
             <h3 class="card-title"><a href="javascript:void(0);" class="text-blue">Add search condition</a> </h3>
@@ -77,7 +78,6 @@
                             </div>
                         </div>
                     </div>
-
                     <div class="col-md-4">
                         <div class="row">
                             <div class="col-6 text-right">
@@ -139,6 +139,7 @@
             <tr>
                 {{--<th>Chain ID</th>--}}
                 <th>Job ID</th>
+                <th>Chain ID</th>
                 <th>Name</th>
                 <th>Job</th>
                 <th>Status</th>
@@ -276,9 +277,10 @@
                     //processData: false,
                     //contentType: false
                 },
-                "order": [[ 8, "desc" ]],
+                "order": [[ 9, "desc" ]],
                 'columns': [
                     { data: 'job_id'},
+                    { data: 'chain_id' },
                     { data: 'name' },
                     { data: 'type' },
                     { data: 'status' },
