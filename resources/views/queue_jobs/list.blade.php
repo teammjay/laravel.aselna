@@ -1,3 +1,4 @@
+@php use App\Constants\FilterCodes; @endphp
 @extends('adminlte::page')
 
 @section('title', 'Queue Jobs')
@@ -12,49 +13,181 @@
         .status-processing { color: blue; font-weight: 600; }
         .status-completed { color: green; font-weight: 600; }
         .status-failed { color: red; font-weight: 600; }
+        .show-error{cursor: pointer; color:#e71717;}
     </style>
 @stop
 
 @section('content')
-    <div class="card card-primary">
-        <div class="card-body">
-            <table id="queueJobsTable" class="table table-bordered table-striped">
-                <thead>
-                <tr>
-                    <th>Job ID</th>
-                    <th>Chain ID</th>
-                    <th>Name</th>
-                    <th>Job</th>
-                    <th>Status</th>
-                    <th>Queued</th>
-                    <th>Job Started</th>
-                    <th>Job Finished</th>
-                    <th>Error</th>
-                    <th>Created At</th>
-                </tr>
-                </thead>
-                <tbody>
-                {{--@foreach($jobs as $job)
-                    @php
 
-                        $jobType = explode('/',str_replace("\\","/",$job->type));
-                        $name = end($jobType);
-                    @endphp
-                    <tr>
-                        --}}{{--<td>{{ $job->chain_id }}</td>--}}{{--
-                        <td>{{ $job->job_id }}</td>
-                        <td>{{ $name }}</td>
-                        <td>{{ $job->type }}</td>
-                        <td><span class="status-{{ $job->status }}">{{ ucfirst($job->status) }}</span></td>
-                        <td>{{ $job->queue }}</td>
-                        <td>@if($job->started_at) {{ $job->started_at->diffForHumans() }} @endif</td>
-                        <td>@if($job->finished_at) {{ $job->finished_at->diffForHumans() }} @endif</td>
-                        <td>@if($job->output) <i class="fa fa-exclamation-triangle" style="font-size:24px" title="{{ $job->output }}"></i> @endif</td>
-                        <td>{{ $job->created_at}}</td>
-                    </tr>
-                @endforeach--}}
-                </tbody>
-            </table>
+    <div class="card card-secondary">
+        <div class="card-header bg-white">
+            <h3 class="card-title"><a href="javascript:void(0);" class="text-blue">Add search condition</a> </h3>
+            <i class="fa fa-angle-down float-right"></i>
+        </div>
+        <div class="card-body" style="display: none;">
+            <form id="filter-form">
+                <input type="hidden" name="store_id" id="store_id">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="row">
+                            <div class="col-3 text-right">
+                                Job
+                            </div>
+                            <div class="col-3">
+                                <select class="custom-select" id="" name="job_type_operator">
+                                    <option value="{{FilterCodes::CONTAINS}}">contains</option>
+                                    <option value="{{FilterCodes::STARTS_WITH}}">starts with</option>
+                                    <option value="{{FilterCodes::ENDS_WITH}}">ends with</option>
+                                    <option value="{{FilterCodes::EQUAL}}">=</option>
+                                    <option value="{{FilterCodes::IN}}">in</option>
+                                    <option value="{{FilterCodes::NOT_IN}}">not in</option>
+                                    <option value="{{FilterCodes::DOESNT_CONTAIN}}">doesn't contain</option>
+                                    <option value="{{FilterCodes::IS_SET}}">is set</option>
+                                </select>
+                            </div>
+                            <div class="col-6">
+                                <input type="text" name="job_type" id="job_type" class="form-control">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="row">
+                            <div class="col-3 text-right">
+                                Status
+                            </div>
+                            <div class="col-3">
+                                <select class="custom-select" id="" name="status_operator">
+                                    <option value="{{FilterCodes::CONTAINS}}">contains</option>
+                                    <option value="{{FilterCodes::STARTS_WITH}}">starts with</option>
+                                    <option value="{{FilterCodes::ENDS_WITH}}">ends with</option>
+                                    <option value="{{FilterCodes::EQUAL}}">=</option>
+                                    <option value="{{FilterCodes::IN}}">in</option>
+                                    <option value="{{FilterCodes::NOT_IN}}">not in</option>
+                                    <option value="{{FilterCodes::DOESNT_CONTAIN}}">doesn't contain</option>
+                                    <option value="{{FilterCodes::IS_SET}}">is set</option>
+                                </select>
+                            </div>
+                            <div class="col-6">
+                                <select class="form-control" id="status" name="status">
+                                    <option value=""></option>
+                                    <option value="pending">Pending</option>
+                                    <option value="processing">Processing</option>
+                                    <option value="completed">Completed</option>
+                                    <option value="failed">Failed</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="row">
+                            <div class="col-6 text-right">
+                                Created Date
+                            </div>
+                            <div class="col-6">
+                                <input type="text" name="created_at" id="created_at" class="form-control" autocomplete="off">
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="row mt-3">
+                    <div class="col-md-4">
+                        <div class="row">
+                            <div class="col-6 text-right">
+                                Job Start Date
+                            </div>
+                            <div class="col-6">
+                                <input type="text" name="started_at" id="started_at" class="form-control" autocomplete="off">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="row">
+                            <div class="col-6 text-right">
+                                Job End Date
+                            </div>
+                            <div class="col-6">
+                                <input type="text" name="finished_at" id="finished_at" class="form-control" autocomplete="off">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-2">
+                        <div class="form-group">
+                            <label>&nbsp;</label>
+                            <button type="submit" id="apply_filter" class="form-control btn btn-primary">Filter</button>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="form-group">
+                            <label>&nbsp;</label>
+                            <button type="reset" class="form-control btn  btn-reset btn-secondary">Reset</button>
+                        </div>
+                    </div>
+                </div>
+
+            </form>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table id="queueJobsTable" class="table table-bordered table-striped">
+            <thead>
+            <tr>
+                {{--<th>Chain ID</th>--}}
+                <th>Job ID</th>
+                <th>Chain ID</th>
+                <th>Name</th>
+                <th>Job</th>
+                <th>Status</th>
+                <th>Queued</th>
+                <th>Job Started</th>
+                <th>Job Finished</th>
+                <th>Error</th>
+                <th>Created At</th>
+            </tr>
+            </thead>
+            <tbody>
+            {{--@foreach($jobs as $job)
+                @php
+
+                    $jobType = explode('/',str_replace("\\","/",$job->type));
+                    $name = end($jobType);
+                @endphp
+                <tr>
+                    --}}{{--<td>{{ $job->chain_id }}</td>--}}{{--
+                    <td>{{ $job->job_id }}</td>
+                    <td>{{ $name }}</td>
+                    <td>{{ $job->type }}</td>
+                    <td><span class="status-{{ $job->status }}">{{ ucfirst($job->status) }}</span></td>
+                    <td>{{ $job->queue }}</td>
+                    <td>@if($job->started_at) {{ $job->started_at->diffForHumans() }} @endif</td>
+                    <td>@if($job->finished_at) {{ $job->finished_at->diffForHumans() }} @endif</td>
+                    <td>@if($job->output) <i class="fa fa-exclamation-triangle" style="font-size:24px" title="{{ $job->output }}"></i> @endif</td>
+                    <td>{{ $job->created_at}}</td>
+                </tr>
+            @endforeach--}}
+            </tbody>
+        </table>
+    </div>
+    <!-- Mark as cancel shipment modal -->
+    <div class="modal fade" id="erroInfoModal">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="erroInfoModalLabel">Error Info</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" style="word-wrap: break-word">
+
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                </div>
+            </div>
         </div>
     </div>
 @stop
@@ -66,6 +199,37 @@
                 sort:false,
                 "order": [[ 8, "desc" ]],
             });*/
+
+            $('#created_at,#started_at,#finished_at').datepicker();
+
+            $('.card-header').on('click',function () {
+                if($(this).find('.fa').hasClass('fa-angle-down')){
+                    $(this).find('.fa').removeClass('fa-angle-down');
+                    $(this).find('.fa').addClass('fa-angle-up');
+                }else{
+                    $(this).find('.fa').removeClass('fa-angle-up');
+                    $(this).find('.fa').addClass('fa-angle-down');
+                }
+                $('.card-body').toggle();
+            });
+
+
+            $(document).on('click', '.show-error', function(event) {
+                var content = $(this).data('content');
+                $('#erroInfoModal').find('.modal-body').html(content);
+                $('#erroInfoModal').modal('show');
+            });
+
+            $(document).on('change', '#per_page', function(event) {
+                $('#filter-form').submit();
+            });
+
+            $('#filter-form').on('submit', function(e) {
+                e.preventDefault(); // Prevent default form submission
+
+                loadDatatables();
+
+            });
 
             loadDatatables();
         });
@@ -92,7 +256,7 @@
                     },
                     data: function(d) {
                         // Create a FormData object
-                        /*var formData = $('#filter-form').serializeArray(); // Serialize form inputs
+                        var formData = $('#filter-form').serializeArray(); // Serialize form inputs
 
                         // Add form data to the DataTable's request payload
                         $.each(formData, function(index, field) {
@@ -108,7 +272,7 @@
                         }
 
                         // Add to the request payload
-                        d.columnValues = columnValues;*/
+                        d.columnValues = columnValues;
                     },
                     //processData: false,
                     //contentType: false
