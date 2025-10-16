@@ -18,6 +18,8 @@ class ProductSpecificationSyncJob implements ShouldQueue
         Queueable::withChain as queueableWithChain;
     }
 
+    public $timeout = 1200;
+
     /**
      * Create a new job instance.
      */
