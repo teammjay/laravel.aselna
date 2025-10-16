@@ -321,7 +321,7 @@ class EbayService implements MarketplaceServiceInterface
                                 $nameValueList->addChild('Value', htmlspecialchars($values));
                             }
                         } else {
-                            $nameValueList->addChild('Value', htmlspecialchars($specificaiton->value));
+                            $nameValueList->addChild('Value', htmlspecialchars($specificaiton->calculated_value()));
                         }
                     }
                 }
