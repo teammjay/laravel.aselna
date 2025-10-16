@@ -40,6 +40,7 @@ class ShopifyCombinedSyncing implements ShouldQueue
             new DeviceCarrierSyncJob(),
             new DeviceInterfaces(),
             new ProductInterfaces(),
+            new ProductSpecificationSyncJob(),
             new ProductImagesSyncJob(),
             new SubmitShopifyProductsJob()
         ];
