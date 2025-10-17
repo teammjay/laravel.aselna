@@ -28,7 +28,7 @@
 
                             <div class="col-md-12">
                                 <!-- resources/views/upload.blade.php -->
-                                <form action="{{ route('order.upload') }}" method="POST" enctype="multipart/form-data">
+                                <form action="{{ route('order.upload') }}" id="uploadForm" method="POST" enctype="multipart/form-data">
                                     @csrf
                                     <div class="form-group">
                                         <label for="store_id">Store</label>
@@ -49,7 +49,7 @@
                                     <div class="form-group">
                                         <input type="file" name="csv_file" required>
                                     </div>
-                                    <button type="submit" class="btn btn-primary">Import</button>
+                                    <button type="submit" id="import" class="btn btn-primary">Import</button>
                                 </form>
                             </div>
                         </div>
@@ -65,6 +65,15 @@
     <script>
         $(document).ready(function() {
             $('#store_id').select2();
+
+            const form = document.getElementById('uploadForm');
+            const button = document.getElementById('import');
+
+            form.addEventListener('submit', function(e) {
+                button.disabled = true; // Disable button
+                button.innerText = "Importing..."; // Optional: indicate progress
+            });
+
         });
     </script>
 @stop

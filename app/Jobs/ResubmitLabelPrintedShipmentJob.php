@@ -33,6 +33,8 @@ class ResubmitLabelPrintedShipmentJob implements ShouldQueue
      */
     public function handle(): void
     {
+        $this->updateTrackingRecord(['tags' => 'PrintLabel']);
+
         $operations = OrderOperation::with('order', 'operationItem', 'store', 'store.storeType')
             ->where('status', OrderOperationStatus::LabelPrinted)
             ->whereNotNull('tracking_number')

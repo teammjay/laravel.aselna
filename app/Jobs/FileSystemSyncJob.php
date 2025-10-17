@@ -28,6 +28,8 @@ class FileSystemSyncJob implements ShouldQueue
      */
     public function handle(): void
     {
+        $this->updateTrackingRecord(['tags' => 'Filesystem']);
+
         $listingItemLinksQ = DB::connection('easyesale_db')->table('file_system')
             ->orderBy('id');
 

@@ -36,6 +36,7 @@ class ProductImagesSyncJob implements ShouldQueue
      */
     public function handle(): void
     {
+        $this->updateTrackingRecord(['tags' => 'Product Images']);
         Log::info('ProductImagesSyncJob: Start');
         //add local env variable to check if we are in local environment
 //        if (env('APP_ENV') === 'local') return;

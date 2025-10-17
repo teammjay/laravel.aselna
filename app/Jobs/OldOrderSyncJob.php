@@ -32,6 +32,7 @@ class OldOrderSyncJob implements ShouldQueue
      */
     public function handle(): void
     {
+        $this->updateTrackingRecord(['tags' => 'Old Orders']);
         // Order Syncing
         DB::connection('easyesale_db')->table('order')
             ->where('create_ts', '>', now()->subDays(180))

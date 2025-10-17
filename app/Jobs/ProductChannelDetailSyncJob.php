@@ -29,6 +29,8 @@ class ProductChannelDetailSyncJob implements ShouldQueue
      */
     public function handle(): void
     {
+        $this->updateTrackingRecord(['tags' => 'Product Channel Detail']);
+
         DB::connection('easyesale_db')
             ->table('product_channel_detail')
             ->orderBy('id')

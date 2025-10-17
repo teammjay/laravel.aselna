@@ -33,6 +33,8 @@ class UPCGenerateJob implements ShouldQueue
      */
     public function handle(): void
     {
+        $this->updateTrackingRecord(['tags' => 'UPC Generate']);
+
         $upcData = $this->upcData;
         $store = $upcData['store'];
         $company_prefix = $upcData['company_prefix'];

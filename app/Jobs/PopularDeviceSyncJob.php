@@ -28,6 +28,7 @@ class PopularDeviceSyncJob implements ShouldQueue
      */
     public function handle(): void
     {
+        $this->updateTrackingRecord(['tags' => 'Popular Device']);
         DB::connection('easyesale_db')->table('cea_popular_device')->orderBy('id')
             ->chunk(1000, function ($popularDevices) {
                 foreach ($popularDevices as $popularDevice) {

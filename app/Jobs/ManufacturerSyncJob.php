@@ -31,6 +31,8 @@ class ManufacturerSyncJob implements ShouldQueue
      */
     public function handle(): void
     {
+        $this->updateTrackingRecord(['tags' => 'Manufaturer']);
+
         $manufaturer = DB::connection('easyesale_db')->table('manufacturer')->cursor();
 
         foreach ($manufaturer as $manufacture) {

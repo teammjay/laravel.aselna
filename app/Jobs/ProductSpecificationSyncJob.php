@@ -35,6 +35,7 @@ class ProductSpecificationSyncJob implements ShouldQueue
      */
     public function handle(): void
     {
+        $this->updateTrackingRecord(['tags' => 'Product Specification']);
         Log::info('Product Specification Sync Job started.');
         DB::connection('easyesale_db')
             ->table('product_specification')
@@ -54,6 +55,9 @@ class ProductSpecificationSyncJob implements ShouldQueue
         }
         $storeTypes = StoreType::all();
         foreach ($storeTypes as $storeType) {
+            if ($storeType->code == 'temu' || $storeType->code == 'amazon') {
+                continue;
+            }
             $value = $productSpecification->value_;
 
             if ($productSpecificationUnique = ProductSpecifcationUniqueInfo::where('field_name', $productSpecification->name)->first()) {

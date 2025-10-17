@@ -45,6 +45,8 @@ class ProductAlternativeImagesSyncJob implements ShouldQueue
 //                }
 //            });
 
+        $this->updateTrackingRecord(['tags' => 'Product Alternative Images']);
+
         $productImagesQ = DB::connection('fonus_db')
             ->table('tbl_product_main_images')
             ->orderBy('product_id');

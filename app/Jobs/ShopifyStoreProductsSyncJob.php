@@ -30,6 +30,8 @@ class ShopifyStoreProductsSyncJob implements ShouldQueue
      */
     public function handle(): void
     {
+        $this->updateTrackingRecord(['tags' => 'Shopify Store Products']);
+
         $storeIds = Store::join('store_type', 'store_type.id', '=', 'store.store_type_id')
             ->where('store_type.code', 'shopify')
             ->pluck('store.id');

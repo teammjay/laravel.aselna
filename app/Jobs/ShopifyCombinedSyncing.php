@@ -31,7 +31,10 @@ class ShopifyCombinedSyncing implements ShouldQueue
      */
     public function handle(): void
     {
+        $this->updateTrackingRecord(['tags' => 'Shopify Combined']);
+
         $chain = [
+            new ProductSyncJob(),
             new InterfaceSyncJob(),
 //            new DeviceSeriesSyncJob(),
             new CategorySyncJob(),
@@ -125,7 +128,7 @@ class ShopifyCombinedSyncing implements ShouldQueue
             }
 
 //            self::queueableWithChain($chain)->dispatch();
-            Bus::chain($chain)->dispatch(new ProductSyncJob());
+            Bus::chain($chain)->dispatch();
         }
     }
 }

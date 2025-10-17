@@ -29,6 +29,8 @@ class StoreTypeSyncJob implements ShouldQueue
      */
     public function handle(): void
     {
+        $this->updateTrackingRecord(['tags' => 'Store Type']);
+
         $storeTypes = DB::connection('easyesale_db')->table('store_type')->cursor();
         foreach ($storeTypes as $storeType) {
             $this->createStoreType($storeType);

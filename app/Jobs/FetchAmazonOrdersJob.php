@@ -36,8 +36,10 @@ class FetchAmazonOrdersJob implements ShouldQueue
      */
     public function handle(): void
     {
+
+        $this->updateTrackingRecord(['tags' => 'Amazon Orders']);
         /* get amazon stores*/
-        $stores = Store::join('store_type', 'store_type.id', '=', 'store.store_type_id')->where('store_type.code','amazon')->get();
+        $stores = Store::join('store_type', 'store_type.id', '=', 'store.store_type_id')->where('store_type.code','amazon')->where('store.store_status','<>',0)->get();
 
         if(count($stores ?? []) > 0){
             foreach($stores as $store){

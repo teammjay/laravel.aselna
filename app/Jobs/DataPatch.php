@@ -31,6 +31,8 @@ class DataPatch implements ShouldQueue
      */
     public function handle(): void
     {
+        $this->updateTrackingRecord(['tags' => 'Store Product Data Patch']);
+
         $all_product_ids = [];
         $product_sub_types = ProductType::select('id', 'code')->whereIn('parent_id', function ($subquery) {
             $subquery->select('id')->from('product_type')->where('code', 'cea');

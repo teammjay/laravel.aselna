@@ -50,16 +50,21 @@ class FetchShopifyOrders implements ShouldQueue
 
         try {
             /* get shopify stores*/
-            $stores = Store::select('store.*','store_type.name as storeTypeName')->join('store_type', 'store_type.id', '=', 'store.store_type_id')->where('store_type.code', 'shopify')->get();
+            $this->updateTrackingRecord(['tags' => 'Shopify Orders']);
+
+            $stores = Store::select('store.*','store_type.name as storeTypeName')->join('store_type', 'store_type.id', '=', 'store.store_type_id')->where('store_type.code', 'shopify')->where('store.store_status','<>',0)->get();
 
             if (count($stores ?? []) > 0) {
+                $tags = [];
                 foreach ($stores as $store) {
                     if ($store->secret_key == '' || $store->service_url == '') {
                         continue;
                     }
                     Log::info('Store : ' . $store->name);
 
-                    $this->updateTrackingRecord(['tags' => $store->storeTypeName]);
+                    $tags[] = $store->name;
+
+
 
                     $ordersyncDetail = OrderSynchronization::where('store_id',$store->id)->where('synchronization_type', OrderSyncronisationType::ORDER)->orderByRaw('COALESCE(last_order_update_date,filter_end_date) desc')->first();
                     $filterStartDate = OrderUtility::getLastSyncDate($store->id, OrderSyncronisationType::ORDER);
@@ -351,6 +356,8 @@ class FetchShopifyOrders implements ShouldQueue
                         Log::info("No Orders Found");
                     }
                 }
+
+                $this->updateTrackingRecord(['tags' => implode(' ',$tags).' Shopify Orders']);
             }
         } catch (\Exception $e) {
             Log::error('Error: ' . $e->getMessage());

@@ -20,12 +20,12 @@ class ShopifyIndvPagesSyncJob implements ShouldQueue
 
     public $timeout = 36000;
 
-    private mixed $storeID;
+    private $storeID;
 
-    private Store $store;
+    private $store;
 
-    private mixed $pageType;
-    private ShopifyAuthService $shopifyAuthService;
+    private $pageType;
+    private $shopifyAuthService;
 
     public function __construct($storeID, $pageType = null)
     {
@@ -35,6 +35,8 @@ class ShopifyIndvPagesSyncJob implements ShouldQueue
 
     public function handle(): void
     {
+        $this->updateTrackingRecord(['tags' => 'Shopify Individual Pages']);
+
         $this->setVariables();
         $pagetTypes = [];
         if ($this->pageType) {

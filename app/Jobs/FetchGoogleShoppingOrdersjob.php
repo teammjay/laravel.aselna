@@ -32,6 +32,8 @@ class FetchGoogleShoppingOrdersjob implements ShouldQueue
      */
     public function handle(): void
     {
+        $this->updateTrackingRecord(['tags' => 'Google Shopping Orders']);
+
         // get google shopping order
         $googleService = new GoogleShoppingService();
         $orders = $googleService->getOrders();

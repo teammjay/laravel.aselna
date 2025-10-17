@@ -28,6 +28,8 @@ class StoreMessageAccountSyncJob implements ShouldQueue
      */
     public function handle(): void
     {
+        $this->updateTrackingRecord(['tags' => 'Store Message Accounts']);
+
         DB::connection('easyesale_db')->table('store_message_account')->orderBy('id')
             ->chunk(100, function ($storeMessageAccounts) {
                 foreach ($storeMessageAccounts as $storeMessageAccount) {

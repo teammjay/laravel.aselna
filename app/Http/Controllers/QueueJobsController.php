@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\JobStatus;
+use App\Models\StoreType;
 use Illuminate\Http\Request;
 use App\Helpers\QueryFilters;
+use Illuminate\Support\Facades\DB;
 
 class QueueJobsController extends Controller
 {
@@ -14,7 +16,9 @@ class QueueJobsController extends Controller
         //$jobs = JobStatus::orderBy('created_at', 'desc')->get();
             //->groupBy('chain_id');
 
-        return view('queue_jobs.list');
+        $storeTypes = StoreType::orderBy('code')->get();
+
+        return view('queue_jobs.list',compact('storeTypes'));
     }
 
     public function filter(Request $request)
@@ -36,6 +40,9 @@ class QueueJobsController extends Controller
 
         // Filter by tags
         QueryFilters::applyFilter($query, $request, 'tags', 'tags_operator', 'tags');
+
+        // Filter by tags
+        QueryFilters::applyFilter($query, $request, 'tags', 'tags_operator', 'store_type');
 
         // Filter by job type
         QueryFilters::applyFilter($query, $request, 'type', 'job_type_operator', 'job_type');
@@ -76,7 +83,7 @@ class QueueJobsController extends Controller
                     "queue" => $job->queue ?? '',
                     "started_at" => ($job->started_at) ? $job->started_at->diffForHumans() : "",
                     "finished_at" => ($job->finished_at) ? $job->finished_at->diffForHumans() : "",
-                    "output" => ($job->output) ? '<i class="fa fa-exclamation-triangle show-error" style="font-size:24px" data-content="'.$job->output.'"></i>' : "",
+                    "output" => ($job->output) ? '<i class="fa fa-exclamation-triangle show-error" style="font-size:24px" data-content="'.addslashes(str_replace('"', '',$job->output)).'"></i>' : "",
                     "tags" => $job->tags,
                     "created_at" => date('Y-m-d H:i:s',strtotime($job->created_at))
                 );
@@ -91,5 +98,41 @@ class QueueJobsController extends Controller
         );
 
         return $response;
+    }
+
+    public function purgeRecords(Request $request){
+
+        $purge_opt = $request->input('purge_opt');
+        if($purge_opt){
+
+            $query = JobStatus::select('*');
+
+            switch($purge_opt){
+                case 'older_30_days':
+                    $query->where('created_at', '<', \Carbon\Carbon::now()->subDays(30));
+                    break;
+                case 'older_7_days':
+                    $query->where('created_at', '<', \Carbon\Carbon::now()->subDays(7));
+                    break;
+                case 'custom_period':
+                    $from_date = $request->input('from_date');
+                    $to_date = $request->input('to_date');
+                    $startDate = \Carbon\Carbon::parse($from_date);
+                    $endDate   = \Carbon\Carbon::parse($to_date);
+
+                    $datesToDelete = [$startDate, $endDate];
+
+                    $query->whereIn(DB::raw('DATE(created_at)'), $datesToDelete)->delete();
+
+                    //$query->whereBetween('created_at', [$startDate, $endDate]);
+                    break;
+            }
+
+            $query->delete();
+
+            return response()->json(['success' => true, 'message' => 'Record purged successfully!']);
+        }else{
+            return response()->json(['success' => false, 'message' => 'Option not selected!']);
+        }
     }
 }

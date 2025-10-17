@@ -49,8 +49,10 @@ class MagentoProductsSyncJob implements ShouldQueue
             $this->limit = 10;
         }
 
+        $this->updateTrackingRecord(['tags' => 'Magento Products']);
+
         $this->magentoService = new MagentoService();
-        $stores = Store::select('store.*')->with('fileSystem', 'storeType')->join('store_type', 'store_type.id', '=', 'store.store_type_id')->where('store_type.code', 'magento')->get();
+        $stores = Store::select('store.*')->with('fileSystem', 'storeType')->join('store_type', 'store_type.id', '=', 'store.store_type_id')->where('store_type.code', 'magento')->where('store.store_status','<>',0)->get();
 
         Log::info('Magento Simple Products Sync Job Started');
         if (count($stores ?? []) > 0) {

@@ -28,6 +28,7 @@ class ListingTemplateSyncJob implements ShouldQueue
      */
     public function handle(): void
     {
+        $this->updateTrackingRecord(['tags' => 'Listing Template']);
         DB::connection('easyesale_db')->table('listing_template')->orderBy('id')
             ->chunk(1000, function ($listingTemplates) {
                 foreach ($listingTemplates as $listingTemplate) {

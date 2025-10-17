@@ -30,6 +30,8 @@ class DevicesLinkSyncJob implements ShouldQueue
      */
     public function handle(): void
     {
+        $this->updateTrackingRecord(['tags' => 'Device Link']);
+
         $syncDevices = DB::connection('easyesale_db')->table('cea_device_cea_device_series_link')->get();
 
         foreach ($syncDevices as $device) {

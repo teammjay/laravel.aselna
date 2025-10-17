@@ -37,6 +37,7 @@ class synccategorytospecification implements ShouldQueue
     {
         $store_types = StoreType::all();
         if(!empty($store_types)){
+            $tags = [];
             foreach($store_types as $store_type){
                 $store_type_id = $store_type->id;
                 //$store_type_id = '9ea83e8c-5b36-d377-d583-f7560b67f6b0';
@@ -45,6 +46,8 @@ class synccategorytospecification implements ShouldQueue
                 echo $store_type->id;
                 print_r($specifications);
                 echo '</pre>';*/
+                $tags[] = $store_type;
+
                 if(count($specifications ?? []) > 0){
                     foreach($specifications as $key=>$spec){
                         Log::info('Key:'. $key);
@@ -92,6 +95,8 @@ class synccategorytospecification implements ShouldQueue
 
                 }
             }
+
+            $this->updateTrackingRecord(['tags' => implode(' ',$tags).' Category to Specification']);
         }
     }
 
