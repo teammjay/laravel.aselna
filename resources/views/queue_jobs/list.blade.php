@@ -14,6 +14,7 @@
         .status-completed { color: green; font-weight: 600; }
         .status-failed { color: red; font-weight: 600; }
         .show-error{cursor: pointer; color:#e71717;}
+        .hide{display: none;}
     </style>
 @stop
 
@@ -188,6 +189,14 @@
         </div>
     </div>
 
+    <div class="row mt-3 mb-3">
+        <div class="col-md-10 d-flex align-items-center" style="gap:10px;">
+            <button type="button" class="btn btn-default" id="purge_records">
+                <i class="fa fa-fw fa-trash"></i> Purge Records
+            </button>
+        </div>
+    </div>
+
     <div class="table-responsive">
         <table id="queueJobsTable" class="table table-bordered table-striped">
             <thead>
@@ -246,6 +255,43 @@
             </div>
         </div>
     </div>
+
+    <!-- purge option modal -->
+    <div class="modal fade" id="purgeOptionModal" role="dialog" aria-modal="true" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="erroInfoModalLabel">Purge Records</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" style="word-wrap: break-word">
+                    <div class="d-flex align-items-center">
+                        <input type="radio" class="mr-2" name="purge_opt" value="older_30_days" checked> <b>Older than 30 Days</b>
+                        <input type="radio" class="mr-2 ml-2" name="purge_opt" value="older_7_days"> Older than 7 Days
+                        <input type="radio" class="mr-2 ml-2" name="purge_opt" value="custom_period"> Between Dates
+                    </div>
+
+                    <div class="mt-5 hide" id="custom_period_sec">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div class="form-group">
+                                <label>From Date:</label>
+                                <input type="text" name="from_date" id="from_date" class="form-control">
+                            </div>
+
+                            <div class="form-group">
+                                <label>To Date:</label>
+                                <input type="text" name="to_date" id="to_date" class="form-control">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="purgeRecords"><i class="fa fa-check"></i> Purge </button>
+                </div>
+            </div>
+        </div>
+    </div>
 @stop
 
 @section('adminlte_js')
@@ -258,6 +304,9 @@
             });*/
 
             $('#created_at,#started_at,#finished_at').datepicker();
+            $('#from_date,#to_date').datepicker({
+                maxDate: '0'
+            });
 
             $('.card-header').on('click',function () {
                 if($(this).find('.fa').hasClass('fa-angle-down')){
@@ -296,7 +345,58 @@
                 }
             }, 30000);
 
-            //setInterval(loadDatatables, 30000);
+            $(document).on('click','input[name="purge_opt"]',function () {
+                if($(this).val() == 'custom_period'){
+                    $('#custom_period_sec').removeClass('hide');
+                }else{
+                    $('#custom_period_sec').addClass('hide');
+                }
+            });
+
+
+            $(document).on('click','#purge_records',function () {
+                const confirmation = confirm("Are you sure you want to purge the queue records?");
+                if (confirmation) {
+                    $('#purgeOptionModal').modal('show');
+                }
+
+            });
+
+            $(document).on('click','#purgeRecords',function () {
+
+                var purge_opt = $('input[name="purge_opt"]:checked').val();
+                var from_date = $('#from_date').val();
+                var to_date = $('#to_date').val();
+
+                if(purge_opt == ''){
+                    alert('Please select the purge option');
+                    return false;
+                }
+                $.ajax({
+                    url: "{{ route('queue.purge') }}",
+                    type: 'POST',
+                    data: {
+                        purge_opt: purge_opt,
+                        from_date:from_date,
+                        to_date:to_date,
+                        "_token": '{{ csrf_token() }}'
+                    },
+                    success: function (response) {
+                        // If success, remove the user row from the table
+                        if (response.success) {
+                            alert(response.message);
+                            $('#purgeOptionModal').modal('hide');
+                        }
+                    },
+                    error: function (xhr) {
+                        // Handle error response
+                        alert('Error: ' + xhr.responseJSON.error);
+                    }
+                });
+
+            });
+
+
         });
 
         function loadDatatables(){
