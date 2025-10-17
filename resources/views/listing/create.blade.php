@@ -2406,11 +2406,14 @@
                             var buttonId = 'errorButton-' + product_id;
                             $('button#' + buttonId).removeClass('btn-success').addClass('btn-danger').text(response.issues.length +' Errors').data('error',''+response.issues.length);
                             $('#errorModal-' +product_id + ' .modal-body').html(response.issue_table_html);
+                            $('#refreshErrorsBtn-' + product_id).show();
                         } else {
                             var buttonId = 'errorButton-' + product_id;
                             $('button#' + buttonId).removeClass('btn-danger').addClass('btn-success').text('0 Issues').data('error','0');
                             $('#errorModal-' +product_id + ' .modal-body').html('');
+                            $('#refreshErrorsBtn-' + product_id).hide();
                         }
+                        bindRefreshButtons();
                     },
                     error: function (xhr) {
                     },
@@ -2516,6 +2519,8 @@
                     }
                 });
             });
+
+            bindRefreshButtons();
 
         });
 
@@ -2689,6 +2694,7 @@
                     if (response.html) {
                         $('#productsTable2_wrapper').html(response.html);
                         generateKeywords();
+                        bindRefreshButtons();
                         $('.store-type-category').select2();
                         if(response.storeCategories){
                             $('#store_category').html(response.storeCategories);
@@ -3037,6 +3043,17 @@
             });
 
             $('.'+parentClass).html($select);
+        }
+
+        function bindRefreshButtons() {
+            $(document).off('click', '.refreshErrorsBtn'); // Prevent duplicate binding
+            $(document).on('click', '.refreshErrorsBtn', function () {
+                console.log("Listener working!");
+
+                var productId = $(this).data('pid');
+                console.log('stc-' + productId);
+                $('.stc-' + productId).trigger('change');
+            });
         }
     </script>
 @stop

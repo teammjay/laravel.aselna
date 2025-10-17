@@ -66,32 +66,45 @@ class TemuService implements MarketplaceServiceInterface
 
         $temuAuthService = new TemuAuthService();
         $file = public_path('feeds/temu/' . $listingId . '.json');
+        $resultFile = public_path('result-feeds/temu/' . $listingId . '.json');
         // json content
         $allfeedContent = file_get_contents($file);
 
         $successCount = 0;
         $failedCount = 0;
 
+        $allresults = [];
+
         foreach (json_decode($allfeedContent, true) as $individualFeed) {
-            Log::info('Individual Feed: ' . json_encode($individualFeed));
-            $response = $temuAuthService->submitFeed($individualFeed, $store);
+            try {
+                Log::info('Individual Feed: ' . json_encode($individualFeed));
+                $response = $temuAuthService->submitFeed($individualFeed, $store);
+                Log::info('Temu Feed Submission Response: ' . json_encode($response));
 
-            Log::info('Temu Feed Submission Response: ' . json_encode($response));
-            if (isset($response) && $response['success'] == true) {
-                $successCount++;
-                $goodsId = $response['result']['goodsId'] ?? null;
-                if ($goodsId) {
-                    $sku = $individualFeed['skuList'][0]['outSkuSn'] ?? null;
-                    $listingItem = ListingItem::where('sku', $sku)->first();
+                $allresults[] = $response;
 
-                    if ($listingItem) {
-                        $listingItem->update(['store_sku' => $goodsId]);
+                if (isset($response) && $response['success'] == true) {
+                    $successCount++;
+                    $goodsId = $response['result']['goodsId'] ?? null;
+                    if ($goodsId) {
+                        $sku = $individualFeed['skuList'][0]['outSkuSn'] ?? null;
+                        $listingItem = ListingItem::where('sku', $sku)->first();
+
+                        if ($listingItem) {
+                            $listingItem->update(['store_sku' => $goodsId]);
+                        }
                     }
+                } else {
+                    $failedCount++;
                 }
-            } else {
+            } catch (\Exception $e) {
+                Log::info('Temu Feed Submission Error: ' . $e->getMessage());
+                $allresults[] = ['error' => $e->getMessage()];
                 $failedCount++;
             }
         }
+
+        FileUtility::saveToFile($resultFile, json_encode($allresults));
 
         $feedId->update([
             'success_count' => $successCount,
@@ -102,42 +115,43 @@ class TemuService implements MarketplaceServiceInterface
 
     public function getResultFeed(mixed $listingId, $feedId = null)
     {
-        $temuAuthService = new TemuAuthService();
-        $listingItems = ListingItemLink::where('listing_id', $listingId)->get();
-        $outSkunList = [];
-        $feedInfo = ListingFeed::findOrFail($feedId);
-
-        foreach ($listingItems as $listingItem) {
-            $item = $listingItem->item;
-            $outSkuN = $item->sku;
-            $outSkunList[] = $outSkuN;
-        }
-        if (isset($outSkunList)) {
-            $response = $temuAuthService->getFeedResult($outSkunList);
-            Log::info('Temu Feed Result Response for SKU ' . $outSkuN . ': ' . json_encode($response));
-
-            if (isset($response) && $response['success'] == true) {
-                $successCount = 0;
-                $errorCount = 0;
-                foreach ($response['result']['resultList'] as $goodsInfo) {
-                    $sku = $goodsInfo['outSkuSn'] ?? null;
-                    $goodsId = $goodsInfo['goodsId'] ?? null;
-
-                    $listingItem = ListingItem::where('sku', $sku)->first();
-                    if ($listingItem && $goodsId) {
-                        $listingItem->update(['store_sku' => $goodsId]);
-                        $successCount++;
-                    } else {
-                        $errorCount++;
-                    }
-                }
-                $feedInfo->update([
-                    'success_count' => $successCount,
-                    'failed_count' => $errorCount,
-                    'status' => FeedStatus::PROCESSED
-                ]);
-            }
-        }
+//        $temuAuthService = new TemuAuthService();
+//        $listingItems = ListingItemLink::where('listing_id', $listingId)->get();
+//        $outSkunList = [];
+//        $feedInfo = ListingFeed::findOrFail($feedId);
+//
+//        foreach ($listingItems as $listingItem) {
+//            $item = $listingItem->item;
+//            $outSkuN = $item->sku;
+//            $outSkunList[] = $outSkuN;
+//        }
+//
+//        if (isset($outSkunList)) {
+//            $response = $temuAuthService->getFeedResult($outSkunList);
+//            Log::info('Temu Feed Result Response for SKU ' . $outSkuN . ': ' . json_encode($response));
+//
+//            if (isset($response) && $response['success'] == true) {
+//                $successCount = 0;
+//                $errorCount = 0;
+//                foreach ($response['result']['resultList'] as $goodsInfo) {
+//                    $sku = $goodsInfo['outSkuSn'] ?? null;
+//                    $goodsId = $goodsInfo['goodsId'] ?? null;
+//
+//                    $listingItem = ListingItem::where('sku', $sku)->first();
+//                    if ($listingItem && $goodsId) {
+//                        $listingItem->update(['store_sku' => $goodsId]);
+//                        $successCount++;
+//                    } else {
+//                        $errorCount++;
+//                    }
+//                }
+//                $feedInfo->update([
+//                    'success_count' => $successCount,
+//                    'failed_count' => $errorCount,
+//                    'status' => FeedStatus::PROCESSED
+//                ]);
+//            }
+//        }
     }
 
     public function syncAttributes($store)
@@ -177,16 +191,18 @@ class TemuService implements MarketplaceServiceInterface
             Log::info('Template for Category ' . $storeTypeCategory->code . ': ' . json_encode($template));
 
             $productData = $this->getProductData($listingItem);
+            $properties = [];
 
             $TemplateProperties = $template['result']['templateInfo']['goodsProperties'] ?? [];
-            $properties = $this->buildGoodsPropertiesPayload($TemplateProperties, $productData);
+            $specProperties = $this->buildGoodsPropertiesPayload($TemplateProperties, $productData);
+            $properties = array_merge($properties, $specProperties['properties']);
             Log::info('Properties completed');
 
             $TemplateSpecProperties = $template['result']['templateInfo']['goodsSpecProperties'] ?? [];
             $specDetails = $this->getSpecDetails($TemplateSpecProperties, $productData);
             $properties = array_merge($properties, $specDetails['properties']);
 
-            $specIdList = $specDetails['specIdList'];
+            $specIdList = array_merge($specDetails['specIdList'], $specProperties['specIdList']);
             Log::info('Properties :: ' . json_encode($properties));
 
 
@@ -270,7 +286,10 @@ class TemuService implements MarketplaceServiceInterface
 
     public function buildGoodsPropertiesPayload(array $templateAttributes, array $productData): array
     {
-        $finalPayload = [];
+        $finalPayload = [
+            'properties' => [],
+            'specIdList' => []
+        ];
 
         // Create a simple map of your product data for easy lookup.
         // This assumes keys in $productData match the 'name' from the template.
@@ -304,13 +323,14 @@ class TemuService implements MarketplaceServiceInterface
                     foreach ($selectedValues as $selectedValue) {
                         if (isset($optionsMap[$selectedValue])) {
                             $chosenOption = $optionsMap[$selectedValue];
-                            $finalPayload[] = [
+                            $finalPayload['properties'][] = [
                                 'templatePid' => $attribute['templatePid'],
                                 'refPid' => $attribute['refPid'],
                                 'pid' => $attribute['pid'],
                                 'vid' => $chosenOption['vid'],
                                 'value' => $chosenOption['value'],
                             ];
+                            $finalPayload['specIdList'][] = $chosenOption['specId'];
                         }
                     }
                     break;
@@ -331,7 +351,7 @@ class TemuService implements MarketplaceServiceInterface
                         $payloadObject['valueUnit'] = $attribute['valueUnitList'][0]['valueUnit'];
                     }
 
-                    $finalPayload[] = $payloadObject;
+                    $finalPayload['properties'][] = $payloadObject;
                     break;
             }
         }
