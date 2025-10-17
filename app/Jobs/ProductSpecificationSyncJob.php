@@ -55,6 +55,9 @@ class ProductSpecificationSyncJob implements ShouldQueue
         }
         $storeTypes = StoreType::all();
         foreach ($storeTypes as $storeType) {
+            if ($storeType->code == 'temu' || $storeType->code == 'amazon') {
+                continue;
+            }
             $value = $productSpecification->value_;
 
             if ($productSpecificationUnique = ProductSpecifcationUniqueInfo::where('field_name', $productSpecification->name)->first()) {
