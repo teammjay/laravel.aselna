@@ -8,6 +8,7 @@ use App\Models\ListingItemDetail;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Log;
+use App\Jobs\Concerns\TrackableJob;
 
 class ListingItemDetailStatusCheckJob implements ShouldQueue
 {
@@ -31,6 +32,9 @@ class ListingItemDetailStatusCheckJob implements ShouldQueue
     {
 
         try {
+
+            $this->updateTrackingRecord(['tags' => 'Listing Item Status Check']);
+
             ListingItemDetail::whereHas('listingItem', function ($query) {
                 $query->where('status', ListingStatus::Deleted);
             })->chunk(100, function ($itemDetails) {

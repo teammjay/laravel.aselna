@@ -28,6 +28,8 @@ class SyncTicketLabelJob implements ShouldQueue
      */
     public function handle(): void
     {
+        $this->updateTrackingRecord(['tags' => 'Ticket Labels']);
+
         DB::connection('easyesale_db')->table('hd_ticket_label')->orderBy('id')
             ->chunk(100, function ($ticketLabels) {
                 foreach ($ticketLabels as $ticketLabel) {

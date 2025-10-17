@@ -19,7 +19,7 @@ class StoreCategorySyncJob implements ShouldQueue
         Queueable::withChain as queueableWithChain;
     }
 
-    private mixed $storeID;
+    private $storeID;
     private $store;
 
     /**
@@ -35,6 +35,8 @@ class StoreCategorySyncJob implements ShouldQueue
      */
     public function handle(): void
     {
+        $this->updateTrackingRecord(['tags' => 'Store Category']);
+
         Log::info("Store Category Sync Job Started");
         $this->getVariables();
         $this->syncCategories();

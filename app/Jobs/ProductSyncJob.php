@@ -43,6 +43,8 @@ class ProductSyncJob implements ShouldQueue
      */
     public function handle(): void
     {
+        $this->updateTrackingRecord(['tags' => 'Products']);
+
         $easyesaleProductsQ = DB::connection('easyesale_db')->table('product')
             ->whereNull('deleted_by')
             ->whereNull('parent_id')

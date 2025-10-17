@@ -28,6 +28,7 @@ class ListingItemProductImageSyncJob implements ShouldQueue
      */
     public function handle(): void
     {
+        $this->updateTrackingRecord(['tags' => 'Listing Item Product Image']);
         $listingItemLinksQ = DB::connection('easyesale_db')->table('listing_item_product_image')
             ->orderBy('id');
 

@@ -31,16 +31,20 @@ class FetchTemuOrders implements ShouldQueue
      */
     public function handle(): void
     {
+        $this->updateTrackingRecord(['tags' => 'Temu Orders']);
         /* get temu stores*/
-        $stores = Store::select('store.*')->join('store_type', 'store_type.id', '=', 'store.store_type_id')->where('store_type.code','temu')->get();
+        $stores = Store::select('store.*')->join('store_type', 'store_type.id', '=', 'store.store_type_id')->where('store_type.code','temu')->where('store.store_status','<>',0)->get();
 
         if(count($stores ?? []) > 0) {
+            $tags = [];
             foreach ($stores as $store) {
 
                 if (env('APP_ENV') === 'local' && $store->name != 'phonil') {
                     continue;
                 }
                 Log::info('Store : ' . $store->name);
+
+                $tags[] = $store->name;
 
                 try {
                     $temuService = new TemuService();
@@ -49,6 +53,8 @@ class FetchTemuOrders implements ShouldQueue
                     Log::info('Error : ' . $e->getMessage());
                 }
             }
+
+            $this->updateTrackingRecord(['tags' => implode(' ',$tags) .' Temu Orders']);
         }
     }
 }

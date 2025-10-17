@@ -31,6 +31,8 @@ class ListingFeedSyncJob implements ShouldQueue
      */
     public function handle(): void
     {
+        $this->updateTrackingRecord(['tags' => 'Listing Feed']);
+
         $allFeedsQ = DB::connection('easyesale_db')
             ->table('listing_feed')
             ->orderBy('id');

@@ -33,6 +33,8 @@ class FetchMagentoCategoriesJob implements ShouldQueue
      */
     public function handle(): void
     {
+        $this->updateTrackingRecord(['tags' => 'Magento Categories']);
+
         $stores = Store::select('store.*')->with('fileSystem', 'storeType')->join('store_type', 'store_type.id', '=', 'store.store_type_id')->where('store_type.code', 'magento')->get();
 
         if (count($stores ?? []) > 0) {

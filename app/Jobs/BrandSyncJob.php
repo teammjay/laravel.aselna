@@ -35,6 +35,8 @@ class BrandSyncJob implements ShouldQueue
      */
     public function handle(): void
     {
+        $this->updateTrackingRecord(['tags' => 'Brand']);
+
         $esaleBrands = DB::connection('easyesale_db')->table('cea_brand')->cursor();
         foreach ($esaleBrands as $brand) {
             $this->createSyncBrand($brand);

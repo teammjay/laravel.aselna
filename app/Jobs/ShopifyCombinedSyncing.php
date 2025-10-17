@@ -31,6 +31,8 @@ class ShopifyCombinedSyncing implements ShouldQueue
      */
     public function handle(): void
     {
+        $this->updateTrackingRecord(['tags' => 'Shopify Combined']);
+
         $chain = [
             new InterfaceSyncJob(),
 //            new DeviceSeriesSyncJob(),

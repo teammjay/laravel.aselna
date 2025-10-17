@@ -32,6 +32,8 @@ class DeviceCarrierSyncJob implements ShouldQueue
      */
     public function handle(): void
     {
+        $this->updateTrackingRecord(['tags' => 'Device Carrier']);
+
         DB::connection('easyesale_db')->table('cea_device_carrier')->orderBy('id')
         ->chunk(100, function ($deviceCarriers) {
             foreach ($deviceCarriers as $deviceCarrier) {

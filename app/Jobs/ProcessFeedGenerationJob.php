@@ -58,6 +58,7 @@ class ProcessFeedGenerationJob implements ShouldQueue
     {
         try {
 
+            $this->updateTrackingRecord(['tags' => 'Feed Generation']);
             $feed_type = $this->data['feed_type'];
             $store_id = $this->data['store_id'];
             $fileType = $this->data['fileType'];

@@ -29,6 +29,8 @@ class ProductSpecificationSyncJob implements ShouldQueue
      */
     public function handle(): void
     {
+        $this->updateTrackingRecord(['tags' => 'Product Specification']);
+
         DB::connection('easyesale_db')->table('product_specification')->orderBy('id')
             ->chunk(1000, function ($productSpecifications) {
                 foreach ($productSpecifications as $productSpecification) {

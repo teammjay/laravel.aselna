@@ -28,6 +28,8 @@ class SyncMessageTemplateJob implements ShouldQueue
      */
     public function handle(): void
     {
+        $this->updateTrackingRecord(['tags' => 'Message Templates']);
+
         DB::connection('easyesale_db')->table('hd_message_template')->orderBy('id')
             ->chunk(100, function ($messageTemplates) {
                 foreach ($messageTemplates as $messageTemplate) {

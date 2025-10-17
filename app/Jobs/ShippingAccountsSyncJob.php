@@ -32,6 +32,8 @@ class ShippingAccountsSyncJob implements ShouldQueue
      */
     public function handle(): void
     {
+        $this->updateTrackingRecord(['tags' => 'Shipping Accounts']);
+
         DB::connection('easyesale_db')->table('shipping_account')
             ->orderBy('create_ts', 'desc')
             ->chunk(100, function ($shippingAccounts) {

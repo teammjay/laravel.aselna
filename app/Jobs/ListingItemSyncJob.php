@@ -31,6 +31,8 @@ class ListingItemSyncJob implements ShouldQueue
      */
     public function handle(): void
     {
+        $this->updateTrackingRecord(['tags' => 'Listing Item']);
+
         $listingItemsQ = DB::connection('easyesale_db')
             ->table('listing_item')
             // only on local

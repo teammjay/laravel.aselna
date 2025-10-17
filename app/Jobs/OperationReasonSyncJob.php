@@ -28,6 +28,7 @@ class OperationReasonSyncJob implements ShouldQueue
      */
     public function handle(): void
     {
+        $this->updateTrackingRecord(['tags' => 'Operation Reason']);
         DB::connection('easyesale_db')->table('order_operation_reason')->orderBy('id')
             ->chunk(1000, function ($operationReasons) {
                 foreach ($operationReasons as $operationReason) {

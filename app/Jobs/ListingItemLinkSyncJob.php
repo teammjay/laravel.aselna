@@ -31,6 +31,7 @@ class ListingItemLinkSyncJob implements ShouldQueue
      */
     public function handle(): void
     {
+        $this->updateTrackingRecord(['tags' => 'Listing Item Link']);
         $listingItemLinksQ = DB::connection('easyesale_db')->table('listing_item_link')
             ->orderBy('id');
 

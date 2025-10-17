@@ -43,6 +43,8 @@ class ShopifyCollectionDeviceSyncJob implements ShouldQueue
      */
     public function handle(): void
     {
+        $this->updateTrackingRecord(['tags' => 'Shopify Collection Device']);
+
         $this->setVariables();
         $this->getPuplications();
         Device::where('status', 'active')->orderBy('id')->chunk(100, function ($devices) {

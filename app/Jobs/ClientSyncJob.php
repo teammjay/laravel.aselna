@@ -28,6 +28,8 @@ class ClientSyncJob implements ShouldQueue
      */
     public function handle(): void
     {
+        $this->updateTrackingRecord(['tags' => 'Client']);
+
         DB::connection('easyesale_db')->table('client')
             ->orderBy('create_ts', 'desc')
             ->chunk(100, function ($clients) {

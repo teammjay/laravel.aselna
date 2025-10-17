@@ -29,6 +29,8 @@ class ShopifyCollectionSyncJob implements ShouldQueue
     public function handle(): void
     {
         try {
+            $this->updateTrackingRecord(['tags' => 'Shopify Collection']);
+
             $stores = Store::select('store.*')->with('fileSystem', 'storeType')->join('store_type', 'store_type.id', '=', 'store.store_type_id')->where('store_type.code', 'shopify')->get();
 
             if (count($stores ?? []) > 0) {

@@ -42,6 +42,8 @@ class TransactionStatusCheckJob implements ShouldQueue
                 $this->checkTransactionStatus($transactions);
             });*/
 
+        $this->updateTrackingRecord(['tags' => 'Endicia Transaction Status Check']);
+
         $shipping_account = ShippingAccount::whereLike('name','%Endicia Label Server%')->first();
         $sync_detail = AccountTransactionSynchronization::orderBy('created_at','desc')->first();
 

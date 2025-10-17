@@ -38,8 +38,10 @@ class FetchMagentoOrderJob implements ShouldQueue
      */
     public function handle(): void
     {
+        $this->updateTrackingRecord(['tags' => 'Magento Orders']);
+
         /* get amazon stores*/
-        $stores = Store::select('store.*')->join('store_type', 'store_type.id', '=', 'store.store_type_id')->where('store_type.code','magento')->get();
+        $stores = Store::select('store.*')->join('store_type', 'store_type.id', '=', 'store.store_type_id')->where('store_type.code','magento')->where('store.store_status','<>',0)->get();
 
         if(count($stores ?? []) > 0) {
             foreach ($stores as $store) {

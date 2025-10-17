@@ -33,6 +33,9 @@ class FetchShopifyProductsJob implements ShouldQueue
      */
     public function handle(): void
     {
+
+        $this->updateTrackingRecord(['tags' => 'Shopify Products']);
+
         $stores = Store::select('store.*','store_type.name as storeTypeName')->join('store_type', 'store_type.id', '=', 'store.store_type_id')->where('store_type.code', 'shopify')->get();
 
         if (count($stores ?? []) > 0) {

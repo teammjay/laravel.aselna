@@ -30,6 +30,8 @@ class GenerationTypeAndTemplateSync implements ShouldQueue
      */
     public function handle(): void
     {
+        $this->updateTrackingRecord(['tags' => 'Generation Type Template']);
+
         $listingGenerationType = DB::connection('easyesale_db')->table('cea_listing_generation_type')->cursor();
         foreach ($listingGenerationType as $generationType) {
             $this->createGenerationType($generationType);
