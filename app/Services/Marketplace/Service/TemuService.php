@@ -174,7 +174,7 @@ class TemuService implements MarketplaceServiceInterface
             }
 
             $template = $temuAuthService->getTemplate($storeTypeCategory->code);
-            //Log::info('Template for Category ' . $storeTypeCategory->code . ': ' . json_encode($template));
+            Log::info('Template for Category ' . $storeTypeCategory->code . ': ' . json_encode($template));
 
             $productData = $this->getProductData($listingItem);
 
@@ -402,9 +402,13 @@ class TemuService implements MarketplaceServiceInterface
         $storeProduct = $itemDetail->storeProduct;
         $product = $storeProduct->product;
 
-        $productData = ProductSpecification::where('product_id', $product->product_id)
-            ->where('store_type_id', $storeProduct->store->store_type_id)->pluck('name','value')->toArray();
-        Log::info('Product Data from Specifications: ' . json_encode($productData));
+        $productDataA = ProductSpecification::where('product_id', $product->product_id)
+            ->where('store_type_id', $storeProduct->store->store_type_id)->get();
+        $productData = [];
+
+        foreach ($productDataA as $data) {
+            $productData[$data->name] = $data->calculated_value();
+        }
 
         $compatibleModels = [];
         foreach ($listingItem->listingItem->devices as $k => $device) {

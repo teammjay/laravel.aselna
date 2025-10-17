@@ -307,11 +307,11 @@ class EbayService implements MarketplaceServiceInterface
 
                         $nameValueList = $itemSpecifics->addChild('NameValueList');
                         $nameValueList->addChild('Name', htmlspecialchars($specificaiton->name));
-                        if (str_contains($specificaiton->value, ',')) {
+                        if (str_contains($specificaiton->calculated_value(), ',')) {
                             if (strtolower($specificaiton->name) != 'type') {
-                                $values = explode(',', $specificaiton->value);
+                                $values = explode(',', $specificaiton->calculated_value());
                             } else {
-                                $values = $specificaiton->value;
+                                $values = $specificaiton->calculated_value();
                             }
                             if (is_array($values)) {
                                 foreach ($values as $val) {
@@ -321,7 +321,7 @@ class EbayService implements MarketplaceServiceInterface
                                 $nameValueList->addChild('Value', htmlspecialchars($values));
                             }
                         } else {
-                            $nameValueList->addChild('Value', htmlspecialchars($specificaiton->value));
+                            $nameValueList->addChild('Value', htmlspecialchars($specificaiton->calculated_value()));
                         }
                     }
                 }

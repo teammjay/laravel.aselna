@@ -61,10 +61,10 @@ class ProductSyncJob implements ShouldQueue
                     try {
                         $this->updateProduct($product);
 
-//                        $this->createProductTitleKeywords($product);
-//
-//                        $fonusProduct = DB::connection('fonus_db')->table('tbl_product')->where('custom_label', $product->code)->first();
-//                        $this->createProductFeatures($fonusProduct, $product->id);
+                        $this->createProductTitleKeywords($product);
+
+                        $fonusProduct = DB::connection('fonus_db')->table('tbl_product')->where('custom_label', $product->code)->first();
+                        $this->createProductFeatures($fonusProduct, $product->id);
                     } catch (Exception $e) {
                         Log::error($e->getMessage());
                     }
@@ -105,52 +105,60 @@ class ProductSyncJob implements ShouldQueue
 
     private function createProductTitleKeywords($product)
     {
-        if (!Catalog::where('product_id', $product->id)->exists()) {
-            return;
-        }
-        if (!DB::connection('easyesale_db')->table('product_title_keyword')->where('product_id', $product->id)) {
-            return;
-        }
-        $keywords = DB::connection('easyesale_db')->table('product_title_keyword')->where('product_id', $product->id)->get();
+        try {
+            if (!Catalog::where('product_id', $product->id)->exists()) {
+                return;
+            }
+            if (!DB::connection('easyesale_db')->table('product_title_keyword')->where('product_id', $product->id)) {
+                return;
+            }
+            $keywords = DB::connection('easyesale_db')->table('product_title_keyword')->where('product_id', $product->id)->get();
 
-        foreach ($keywords as $keyword) {
-            ProductTitleKeyword::updateOrInsert(
-                ['id' => $keyword->id,'product_id' => $product->id, 'keyword' => $keyword->keyword],
-                [
-                    'id' => $keyword->id,
-                    'keyword' => $keyword->keyword,
-                    'priority' => $keyword->priority,
-                    'product_id' => $product->id,
-                    'created_by' => 'system',
-                    'updated_by' => 'system',
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]
-            );
+            foreach ($keywords as $keyword) {
+                ProductTitleKeyword::updateOrInsert(
+                    ['id' => $keyword->id,'product_id' => $product->id, 'keyword' => $keyword->keyword],
+                    [
+                        'id' => $keyword->id,
+                        'keyword' => $keyword->keyword,
+                        'priority' => $keyword->priority,
+                        'product_id' => $product->id,
+                        'created_by' => 'system',
+                        'updated_by' => 'system',
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]
+                );
+            }
+        } catch (Exception $e) {
+            Log::info('Test Error ::' . $e->getMessage());
         }
     }
 
     private function createProductFeatures(mixed $product, $product_id)
     {
-        if (!isset($product)) return;
-        $bullet_points = [
-            '1' => $product->bullet_point1,
-            '2' => $product->bullet_point2,
-            '3' => $product->bullet_point3,
-            '4' => $product->bullet_point4,
-            '5' => $product->bullet_point5,
-            '6' => $product->bullet_point6,
-        ];
-        foreach ($bullet_points as $key => $value) {
-            ProductKeyFeatures::updateOrInsert(
-                ['product_id' => $product_id, 'sort_order' => $key],
-                [
-                    'id' => (string)Str::uuid(),
-                    'product_id' => $product_id,
-                    'value' => $value,
-                    'sort_order' => $key,
-                ]
-            );
+        try {
+            if (!isset($product)) return;
+            $bullet_points = [
+                '1' => $product->bullet_point1,
+                '2' => $product->bullet_point2,
+                '3' => $product->bullet_point3,
+                '4' => $product->bullet_point4,
+                '5' => $product->bullet_point5,
+                '6' => $product->bullet_point6,
+            ];
+            foreach ($bullet_points as $key => $value) {
+                ProductKeyFeatures::updateOrInsert(
+                    ['product_id' => $product_id, 'sort_order' => $key],
+                    [
+                        'id' => (string)Str::uuid(),
+                        'product_id' => $product_id,
+                        'value' => $value,
+                        'sort_order' => $key,
+                    ]
+                );
+            }
+        } catch (Exception $e) {
+            Log::info('Test Error ::' . $e->getMessage());
         }
     }
 

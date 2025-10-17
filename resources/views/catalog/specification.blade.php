@@ -26,7 +26,7 @@
                     <td class="field_option">
                         @if($specification->field == 'select')
 
-                            <select class="form-control" name="specification_value[]">
+                            <select class="form-control specification-select" name="specification_value[]">
                                 <option value=""></option>
                                 @if(count($specification->valoption ?? []) > 0)
                                     @foreach($specification->valoption as $vopt)
