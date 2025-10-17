@@ -851,19 +851,19 @@ class ListingController extends Controller
                 if ($store && $store->storeType->name === 'Magento') {
                     $storeCategories = StoreCategory::where('store_id', $store_id)->orderBy('name', 'asc')->get();
                 } else if ($store && $store->storeType->name === 'Temu') {
-//                    $parentCategories = StoreTypeCategory::whereNull('parent_id')
-//                        ->where('store_type_id', $store->storeType->id)
-//                        ->get();
-//                    $storeCategories = [];
-//                    foreach ($parentCategories as $parentCategory) {
-//                        $childPaths = $this->getTemuCategories($parentCategory, '');
-//                        $storeCategories = array_merge($storeCategories, $childPaths);
-//                    }
-                    $storeCategories = StoreTypeCategory::where('store_type_id', $store->storeType->id)
-                        ->orderBy('name', 'asc')
-                        ->get()
-                        ->unique('name')
-                        ->values(); // reset keys
+                    $parentCategories = StoreTypeCategory::whereNull('parent_id')
+                        ->where('store_type_id', $store->storeType->id)
+                        ->get();
+                    $storeCategories = [];
+                    foreach ($parentCategories as $parentCategory) {
+                        $childPaths = $this->getTemuCategories($parentCategory, '');
+                        $storeCategories = array_merge($storeCategories, $childPaths);
+                    }
+//                    $storeCategories = StoreTypeCategory::where('store_type_id', $store->storeType->id)
+//                        ->orderBy('name', 'asc')
+//                        ->get()
+//                        ->unique('name')
+//                        ->values(); // reset keys
                 } else {
                     //if the storetype code is amazon then fetch all the categories of specific marketplace codes
                     $storeCategories = StoreTypeCategory::select('store_type_category.*')
