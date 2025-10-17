@@ -177,16 +177,18 @@ class TemuService implements MarketplaceServiceInterface
             Log::info('Template for Category ' . $storeTypeCategory->code . ': ' . json_encode($template));
 
             $productData = $this->getProductData($listingItem);
+            $properties = [];
 
             $TemplateProperties = $template['result']['templateInfo']['goodsProperties'] ?? [];
-            $properties = $this->buildGoodsPropertiesPayload($TemplateProperties, $productData);
+            $specProperties = $this->buildGoodsPropertiesPayload($TemplateProperties, $productData);
+            $properties = array_merge($properties, $specProperties['properties']);
             Log::info('Properties completed');
 
             $TemplateSpecProperties = $template['result']['templateInfo']['goodsSpecProperties'] ?? [];
             $specDetails = $this->getSpecDetails($TemplateSpecProperties, $productData);
             $properties = array_merge($properties, $specDetails['properties']);
 
-            $specIdList = $specDetails['specIdList'];
+            $specIdList = array_merge($specDetails['specIdList'], $specProperties['specIdList']);
             Log::info('Properties :: ' . json_encode($properties));
 
 
@@ -270,7 +272,10 @@ class TemuService implements MarketplaceServiceInterface
 
     public function buildGoodsPropertiesPayload(array $templateAttributes, array $productData): array
     {
-        $finalPayload = [];
+        $finalPayload = [
+            'properties' => [],
+            'specIdList' => []
+        ];
 
         // Create a simple map of your product data for easy lookup.
         // This assumes keys in $productData match the 'name' from the template.
@@ -304,13 +309,14 @@ class TemuService implements MarketplaceServiceInterface
                     foreach ($selectedValues as $selectedValue) {
                         if (isset($optionsMap[$selectedValue])) {
                             $chosenOption = $optionsMap[$selectedValue];
-                            $finalPayload[] = [
+                            $finalPayload['properties'][] = [
                                 'templatePid' => $attribute['templatePid'],
                                 'refPid' => $attribute['refPid'],
                                 'pid' => $attribute['pid'],
                                 'vid' => $chosenOption['vid'],
                                 'value' => $chosenOption['value'],
                             ];
+                            $finalPayload['specIdList'][] = $chosenOption['specId'];
                         }
                     }
                     break;
@@ -331,7 +337,7 @@ class TemuService implements MarketplaceServiceInterface
                         $payloadObject['valueUnit'] = $attribute['valueUnitList'][0]['valueUnit'];
                     }
 
-                    $finalPayload[] = $payloadObject;
+                    $finalPayload['properties'][] = $payloadObject;
                     break;
             }
         }
