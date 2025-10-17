@@ -38,6 +38,8 @@ class CategorySyncJob implements ShouldQueue
      */
     public function handle(): void
     {
+        $this->updateTrackingRecord(['tags' => 'Category']);
+
         $distinctParentIds = DB::connection('easyesale_db')->table('product_type')->whereNull('parent_id')->cursor();
         //[{"parent_id":"7a099033-9940-ec5e-30bc-1511d3fc88ea"} I want to convert into array of values
         $distinctIds = [];

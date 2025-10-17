@@ -34,6 +34,8 @@ class AmazonProductTypeSyncJob implements ShouldQueue
      */
     public function handle(): void
     {
+        $this->updateTrackingRecord(['tags' => 'Amazon ProductType']);
+
         $this->amazonAuthService = new AmazonAuthService();
         StoreTypeCategory::whereIn('store_type_id', function ($subQuery) {
             return $subQuery->select('id')->from('store_type')->where('code', 'amazon');

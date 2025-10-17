@@ -31,6 +31,8 @@ class StoreProductSyncJob implements ShouldQueue
      */
     public function handle(): void
     {
+        $this->updateTrackingRecord(['tags' => 'Store Products']);
+
         $storeProductsQ = DB::connection('easyesale_db')->table('store_product')->orderBy('id');
 
         if (env('APP_ENV') === 'local') {

@@ -37,6 +37,8 @@ class EbayListingItemSyncJob implements ShouldQueue
     public function handle(): void
     {
         Log::info('EbayListingItemSyncJob started');
+        $this->updateTrackingRecord(['tags' => 'eBay Listing Item']);
+
         $ebay_store_ids = Store::where('store_type_id', function ($subquery) {
             return $subquery->select('id')
                 ->from('store_type')

@@ -29,6 +29,8 @@ class LogisticCentreSyncJob implements ShouldQueue
      */
     public function handle(): void
     {
+        $this->updateTrackingRecord(['tags' => 'Logistic Centers']);
+
         $logisticCentre = DB::connection('easyesale_db')->table('logistic_center')->cursor();
         foreach ($logisticCentre as $centre) {
             $this->createLogisticCentre($centre);

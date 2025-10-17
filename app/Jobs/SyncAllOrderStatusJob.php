@@ -41,6 +41,8 @@ class SyncAllOrderStatusJob implements ShouldQueue
      */
     public function handle(): void
     {
+        $this->updateTrackingRecord(['tags' => 'All Orders Status']);
+
         $orderOperations = OrderOperation::with(['order', 'store'])
             ->where(function ($query) {
                 $query->whereNull('tracking_number')

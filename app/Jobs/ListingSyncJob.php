@@ -30,6 +30,7 @@ class ListingSyncJob implements ShouldQueue
      */
     public function handle(): void
     {
+        $this->updateTrackingRecord(['tags' => 'Listings']);
         $listings = DB::connection('easyesale_db')
             ->table('listing')
 //            ->where('create_ts', '>=', now()->subYears(2))

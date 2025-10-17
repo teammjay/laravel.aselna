@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\JobStatus;
+use App\Models\StoreType;
 use Illuminate\Http\Request;
 use App\Helpers\QueryFilters;
 
@@ -14,7 +15,9 @@ class QueueJobsController extends Controller
         //$jobs = JobStatus::orderBy('created_at', 'desc')->get();
             //->groupBy('chain_id');
 
-        return view('queue_jobs.list');
+        $storeTypes = StoreType::orderBy('code')->get();
+
+        return view('queue_jobs.list',compact('storeTypes'));
     }
 
     public function filter(Request $request)
@@ -36,6 +39,9 @@ class QueueJobsController extends Controller
 
         // Filter by tags
         QueryFilters::applyFilter($query, $request, 'tags', 'tags_operator', 'tags');
+
+        // Filter by tags
+        QueryFilters::applyFilter($query, $request, 'tags', 'tags_operator', 'store_type');
 
         // Filter by job type
         QueryFilters::applyFilter($query, $request, 'type', 'job_type_operator', 'job_type');
@@ -76,7 +82,7 @@ class QueueJobsController extends Controller
                     "queue" => $job->queue ?? '',
                     "started_at" => ($job->started_at) ? $job->started_at->diffForHumans() : "",
                     "finished_at" => ($job->finished_at) ? $job->finished_at->diffForHumans() : "",
-                    "output" => ($job->output) ? '<i class="fa fa-exclamation-triangle show-error" style="font-size:24px" data-content="'.$job->output.'"></i>' : "",
+                    "output" => ($job->output) ? '<i class="fa fa-exclamation-triangle show-error" style="font-size:24px" data-content="'.addslashes($job->output).'"></i>' : "",
                     "tags" => $job->tags,
                     "created_at" => date('Y-m-d H:i:s',strtotime($job->created_at))
                 );

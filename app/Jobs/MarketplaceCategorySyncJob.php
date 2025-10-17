@@ -24,6 +24,9 @@ class MarketplaceCategorySyncJob implements ShouldQueue
     private mixed $storeId;
     private $store;
 
+    public $store_name;
+    public $store_type;
+
     /**
      * Create a new job instance.
      */
@@ -37,6 +40,7 @@ class MarketplaceCategorySyncJob implements ShouldQueue
      */
     public function handle(): void
     {
+
         Log::info("Store Category Sync Job Started");
         $this->getVariables();
         switch ($this->store->storeType->code) {
@@ -54,6 +58,8 @@ class MarketplaceCategorySyncJob implements ShouldQueue
     private function getVariables()
     {
         $this->store = Store::find($this->storeId);
+        $this->store_name = $this->store->name;
+        $this->store_type = $this->store->storeType->name;
     }
 
     private function syncShopifyCategories()

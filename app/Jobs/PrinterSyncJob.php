@@ -28,6 +28,8 @@ class PrinterSyncJob implements ShouldQueue
      */
     public function handle(): void
     {
+        $this->updateTrackingRecord(['tags' => 'Printers']);
+
         DB::connection('easyesale_db')->table('printer')->orderBy('id')
             ->chunk(100, function ($printers) {
                 foreach ($printers as $printer) {

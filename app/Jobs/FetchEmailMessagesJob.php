@@ -45,8 +45,11 @@ class   FetchEmailMessagesJob implements ShouldQueue
     public function handle(): void
     {
         try {
+
+            $this->updateTrackingRecord(['tags' => 'Email Messages']);
+
             /* get shopify stores*/
-            $stores = Store::with('storeType')->get();
+            $stores = Store::with('storeType')->where('store_status','<>',0)->get();
 
             if (count($stores ?? []) > 0) {
                 foreach ($stores as $store) {

@@ -28,6 +28,9 @@ class ProductTypeKeywordSyncJob implements ShouldQueue
      */
     public function handle(): void
     {
+
+        $this->updateTrackingRecord(['tags' => 'Product Type Keywords']);
+
         $productTypeKeywordQ = DB::connection('easyesale_db')->table('product_type_keyword')
             ->orderBy('id');
 

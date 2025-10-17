@@ -47,10 +47,12 @@ class SubmitShopifyProductsJob implements ShouldQueue
      */
     public function handle(): void
     {
+
         /* shopify stores*/
-        $stores = Store::select('store.*')->with('fileSystem', 'storeType')->join('store_type', 'store_type.id', '=', 'store.store_type_id')->where('store_type.code', 'shopify')->get();
+        $stores = Store::select('store.*')->with('fileSystem', 'storeType')->join('store_type', 'store_type.id', '=', 'store.store_type_id')->where('store_type.code', 'shopify')->where('store.store_status','<>',0)->get();
 
         if (count($stores ?? []) > 0) {
+            $tags = [];
             foreach ($stores as $store) {
                 Log::info('Store : ' . $store->name);
                 if (env('APP_ENV') == 'local' && trim(strtolower($store->name)) != strtolower('GetAccessory')) {
@@ -60,6 +62,8 @@ class SubmitShopifyProductsJob implements ShouldQueue
                     Log::info('Auto Generate Listings is disabled for store: ' . $store->name);
                     continue;
                 }
+
+                $tags[] = $store->name;
 
                 // Handle Created Products
                 // get all te children and their children of cea products
@@ -142,6 +146,8 @@ class SubmitShopifyProductsJob implements ShouldQueue
                     }
                 }
             }
+
+            $this->updateTrackingRecord(['tags' => implode(' ',$tags).' Submit Shopify Products']);
         }
     }
 

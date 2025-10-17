@@ -32,6 +32,8 @@ class StoreSyncJob implements ShouldQueue
      */
     public function handle(): void
     {
+        $this->updateTrackingRecord(['tags' => 'Stores']);
+
         $stores = DB::connection('fonus_db')->table('tbl_seller')->get();
         foreach ($stores as $store) {
 //            $this->createStore($store);

@@ -35,8 +35,8 @@ class StoreBrandPageSyncJob implements ShouldQueue
     protected $page_type;
     protected $template_id;
     private $store;
-    private ShopifyAuthService $shopifyAuthService;
-    private array $publications;
+    private $shopifyAuthService;
+    private $publications;
 
     /**
      * Create a new job instance.
@@ -56,6 +56,8 @@ class StoreBrandPageSyncJob implements ShouldQueue
      */
     public function handle(): void
     {
+        $this->updateTrackingRecord(['tags' => 'Store Brands']);
+
         $this->setVariables();
         Log::info('Testing Here');
         $request = new Request();

@@ -45,6 +45,8 @@ class WalmartListingItemSyncJob implements ShouldQueue
         })->pluck('id');
         Log::info('Walmart store ids: ' . json_encode($walmart_store_ids));
 
+        $this->updateTrackingRecord(['tags' => 'Walmart']);
+
         ListingItemLink::query()
             ->with(['listing','listingItem'])
             ->join('listing_item', 'listing_item_link.item_id', '=', 'listing_item.id')

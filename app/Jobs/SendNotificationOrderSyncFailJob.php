@@ -38,6 +38,9 @@ class SendNotificationOrderSyncFailJob implements ShouldQueue
      */
     public function handle(): void
     {
+
+        $this->updateTrackingRecord(['tags' => 'Send Notification Order Sync Fail']);
+
         $stores = Store::with('storeType')->where('store_status','>',0)->get();
 
         if(count($stores ?? []) > 0) {

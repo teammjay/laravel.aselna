@@ -35,6 +35,8 @@ class FetchMagentoProductsJob implements ShouldQueue
      */
     public function handle(): void
     {
+        $this->updateTrackingRecord(['tags' => 'Magento Products']);
+
         Log::info('Magento Products Fetch Job Started');
 
         // Get all Magento stores
@@ -42,6 +44,7 @@ class FetchMagentoProductsJob implements ShouldQueue
             ->with('fileSystem', 'storeType')
             ->join('store_type', 'store_type.id', '=', 'store.store_type_id')
             ->where('store_type.code', 'magento')
+            ->where('store.store_status','<>',0)
             ->get();
 
         if (count($stores ?? []) == 0) {
@@ -99,7 +102,7 @@ class FetchMagentoProductsJob implements ShouldQueue
     /**
      * Get products from Magento with pagination
      */
-    private function getProductsFromMagento(MagentoAuthService $authService, int $pageSize = 50, int $currentPage = 1): array
+    private function getProductsFromMagento(MagentoAuthService $authService, $pageSize = 50, $currentPage = 1): array
     {
         try {
             return $authService->getProducts($pageSize, $currentPage);

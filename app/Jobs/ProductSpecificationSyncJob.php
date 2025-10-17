@@ -35,6 +35,7 @@ class ProductSpecificationSyncJob implements ShouldQueue
      */
     public function handle(): void
     {
+        $this->updateTrackingRecord(['tags' => 'Product Specification']);
         Log::info('Product Specification Sync Job started.');
         DB::connection('easyesale_db')
             ->table('product_specification')

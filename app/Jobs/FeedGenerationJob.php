@@ -20,9 +20,9 @@ class FeedGenerationJob implements ShouldQueue
 
     public $timeout = 3000;
 
-    private mixed $listingId;
+    private $listingId;
 
-    private mixed $feedId;
+    private $feedId;
 
     /**
      * Create a new job instance.
@@ -43,7 +43,10 @@ class FeedGenerationJob implements ShouldQueue
 
         // get StoreType froms store that is inside listingfeed
         $storeType = $listingInfo->store->storeType->name;
+        $storeName = $listingInfo->store->name;
         Log::info('Store Type: ' . $storeType);
+
+        $this->updateTrackingRecord(['tags' => $storeName.' '.$storeType.' Feed Generation']);
 
         $marketplaceService = MarketplaceServiceFactory::create($storeType);
         Log::info('Marketplace Service Created');

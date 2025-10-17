@@ -37,6 +37,8 @@ class DeviceTypesSyncJob implements ShouldQueue
      */
     public function handle(): void
     {
+        $this->updateTrackingRecord(['tags' => 'Device Type']);
+
         $deviceTypes = DB::connection('easyesale_db')->table('cea_device_type')->cursor();
         foreach ($deviceTypes as $deviceType) {
             $this->createSyncDeviceType($deviceType);

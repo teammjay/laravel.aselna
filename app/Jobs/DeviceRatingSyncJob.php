@@ -30,6 +30,8 @@ class DeviceRatingSyncJob implements ShouldQueue
      */
     public function handle(): void
     {
+        $this->updateTrackingRecord(['tags' => 'Device Rating']);
+
         DB::connection('easyesale_db')
             ->table('cea_device_rating')
             ->orderBy('id')

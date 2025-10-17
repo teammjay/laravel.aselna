@@ -35,6 +35,8 @@ class ShippingCarrierJob implements ShouldQueue
      */
     public function handle(): void
     {
+        $this->updateTrackingRecord(['tags' => 'Shipping Carriers']);
+
         $shippingPackage = DB::connection('easyesale_db')->table('shipping_package')->get();
         foreach ($shippingPackage as $shippingCarrierPackage) {
             $this->createShippingPackage($shippingCarrierPackage);

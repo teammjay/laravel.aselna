@@ -33,6 +33,8 @@ class MagnetoAttributesSyncJob implements ShouldQueue
      */
     public function handle(): void
     {
+        $this->updateTrackingRecord(['tags' => 'Magento Attributes']);
+
         $storeType = StoreType::where('name', 'magento')->first();
         $stores = Store::where('store_type_id', $storeType->id)->get();
 

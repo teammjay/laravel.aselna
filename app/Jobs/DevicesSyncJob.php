@@ -38,6 +38,7 @@ class DevicesSyncJob implements ShouldQueue
     public function handle(): void
     {
         Log::info('Devices Sync Job Start');
+        $this->updateTrackingRecord(['tags' => 'Devices']);
         DB::connection('easyesale_db')->table('cea_device')
             ->orderBy('id')
             ->chunk(1000, function ($syncDevices) {
