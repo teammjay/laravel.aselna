@@ -84,14 +84,22 @@
                     </select>
                 </td>
                 <td>
-                    <button type="button"
-                            id="errorButton-{{$product->product_id}}"
-                            class="btn btn-sm no_of_errors {{count($issues[$product->product_id] ?? []) > 0 ? 'btn-danger' : 'btn-success' }}"
-                            data-bs-toggle="modal"
-                            data-error="{{ count($issues[$product->product_id] ?? []) }}"
-                            data-bs-target="#errorModal-{{ $product->product_id }}">
-                        {{ count($issues[$product->product_id] ?? []) }} Errors
-                    </button>
+                    <div class="d-flex align-items-center flex-column gap-2">
+                        <button type="button"
+                                id="errorButton-{{$product->product_id}}"
+                                class="btn btn-sm no_of_errors {{count($issues[$product->product_id] ?? []) > 0 ? 'btn-danger' : 'btn-success' }}"
+                                data-bs-toggle="modal"
+                                data-error="{{ count($issues[$product->product_id] ?? []) }}"
+                                data-bs-target="#errorModal-{{ $product->product_id }}">
+                            {{ count($issues[$product->product_id] ?? []) }} Errors
+                        </button>
+                        <button type="button" class="btn btn-sm btn-secondary refreshErrorsBtn"
+                                id="refreshErrorsBtn-{{ $product->product_id }}"
+                                style="{{ count($issues[$product->product_id] ?? []) > 0 ? '' : 'display:none;' }}"
+                                data-pid="{{ $product->product_id }}" title="Refresh Errors">
+                            <i class="fas fa-sync-alt"></i>
+                        </button>
+                    </div>
                 </td>
 
             </tr>
