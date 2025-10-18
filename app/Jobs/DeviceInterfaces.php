@@ -107,23 +107,25 @@ class DeviceInterfaces implements ShouldQueue
 
     private function createDeviceInetrface(mixed $deviceInterface)
     {
-        Log::info('Syncing device interface: ' . $deviceInterface->id);
-        if (Device::where('id', $deviceInterface->device_id)->doesntExist()) {
-            return;
+        try {
+            Log::info('Syncing device interface: ' . $deviceInterface->id);
+            if (Device::where('id', $deviceInterface->device_id)->doesntExist()) {
+                return;
+            }
+            if (Interfaces::where('id', $deviceInterface->cea_interface_id)->doesntExist()) {
+                return;
+            }
+            DeviceInterface::updateOrCreate([
+                'id' => $deviceInterface->id
+            ], [
+                'id' => $deviceInterface->id,
+                'device_id' => $deviceInterface->device_id,
+                'interface_id' => $deviceInterface->cea_interface_id,
+                'created_by' => 'system',
+                'updated_by' => 'system',
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error syncing device interface ID ' . $deviceInterface->id . ': ' . $e->getMessage());
         }
-        if (Interfaces::where('id', $deviceInterface->cea_interface_id)->doesntExist()) {
-            return;
-        }
-        DeviceInterface::updateOrCreate([
-            'id' => $deviceInterface->id
-        ], [
-            'id' => $deviceInterface->id,
-            'device_id' => $deviceInterface->device_id,
-            'interface_id' => $deviceInterface->cea_interface_id,
-            'created_by' => 'system',
-            'updated_by' => 'system',
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
     }
 }
