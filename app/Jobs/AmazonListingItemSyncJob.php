@@ -52,7 +52,7 @@ class AmazonListingItemSyncJob implements ShouldQueue
             ->join('listing_item', 'listing_item_link.item_id', '=', 'listing_item.id')
             ->join('listing', 'listing_item_link.listing_id', '=', 'listing.id')
             ->whereIn('listing.store_id', $amazon_store_ids)
-            //->whereRaw("COALESCE(listing_item.store_sku, '') = ''")
+            ->whereRaw("COALESCE(listing_item.store_sku, '') = ''")
             ->whereIn('listing_item.status', [1,2])
             ->whereRaw('(listing_item.creation_retry_count < 5 OR listing_item.creation_retry_count IS NULL)')
             ->whereIn('listing_item.sync_status', [
@@ -60,14 +60,14 @@ class AmazonListingItemSyncJob implements ShouldQueue
                 ListingSyncStatus::Synchronizing,
                 ListingSyncStatus::Unsynchronize,
             ])
-            ->whereNotExists(function ($subquery) use ($amazon_store_ids) {
+            /*->whereNotExists(function ($subquery) use ($amazon_store_ids) {
                 $subquery->selectRaw(1)
                     ->from('listing_feeds')
                     ->whereColumn('listing_feeds.listing_id', 'listing.id')
                     ->whereIn('store_id', $amazon_store_ids);
                     //->where('status', FeedStatus::PROCESSING);
-            })
-            ->orderBy('listing_item.created_at','asc')
+            })*/
+            ->orderBy('listing_item.created_at','desc')
             ->chunk(100, function ($listingItemLinks) {
                 foreach ($listingItemLinks as $listingItemLink) {
                     Log::info('Syncing Amazon listing item: ' . $listingItemLink->item_id);
