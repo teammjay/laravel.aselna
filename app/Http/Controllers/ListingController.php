@@ -1092,7 +1092,8 @@ class ListingController extends Controller
                 $field = 'carrier.name as carrier_name';
                 $field2 = 'carrier.id as carrier_id';
             }*/
-            $query = Device::distinct()->select('device.*', 'product_interface.product_id', 'products.product_sku', 'products.product_title','brands.name')->with(['brand', 'rating', 'deviceType', 'deviceSeries']);
+            $query = Device::select('device.*', 'product_interface.product_id', 'products.product_sku', 'products.product_title','brands.name as brand_name')
+                ->with(['brand', 'rating', 'deviceType', 'deviceSeries']);
             $query->leftJoin('brands', 'brands.id', '=', 'device.brand_id');
             $query->leftJoin('device_interface', 'device_interface.device_id', '=', 'device.id');
             $query->leftJoin('product_interface', 'product_interface.interface_id', '=', 'device_interface.interface_id');
@@ -1130,7 +1131,7 @@ class ListingController extends Controller
                 $query->whereIn('device.id', $devices);
             }
 
-            $query->orderBy('brands.name')->orderBy('device.name');
+            $query->orderBy('brand_name')->orderBy('device.name');
 
 
             $devicesList = $query->get();

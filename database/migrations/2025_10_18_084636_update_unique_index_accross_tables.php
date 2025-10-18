@@ -18,6 +18,10 @@ return new class extends Migration
         Schema::table('product_interface', function (Blueprint $table){
             $table->unique(['product_id','interface_id'],'product_interface_unique_idx');
         });
+
+        Schema::table('device_carrier', function (Blueprint $table){
+            $table->unique(['device_id','carrier_id'],'device_carrier_unique_idx');
+        });
     }
 
     /**
@@ -31,6 +35,10 @@ return new class extends Migration
 
         Schema::table('product_interface', function (Blueprint $table){
             $table->dropUnique('product_interface_unique_idx');
+        });
+
+        Schema::table('device_carrier', function (Blueprint $table){
+            $table->dropUnique('device_carrier_unique_idx');
         });
     }
 };
