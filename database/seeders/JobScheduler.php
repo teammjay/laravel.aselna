@@ -380,6 +380,12 @@ class JobScheduler extends Seeder
                 'description' => 'Listing Item Detail Status Check',
                 'class_name' => 'App\Jobs\ListingItemDetailStatusCheckJob',
             ],
+            [
+                //ProductSpecificationSyncJob
+                'name' => 'Product Specification Sync',
+                'description' => 'Sync all product specifications',
+                'class_name' => 'App\Jobs\ProductSpecificationSyncJob',
+            ]
         ];
 
         foreach ($jobs as $job) {
