@@ -58,7 +58,10 @@ trait TrackableJob
      */
     public function withChain(array $chain): array
     {
-        $this->chainId = (string) Str::uuid();
+        // Use existing chainId or generate new one
+        if (empty($this->chainId)) {
+            $this->chainId = (string) Str::uuid();
+        }
 
         foreach ($chain as $job) {
             if (method_exists($job, 'setChainId')) {
@@ -72,5 +75,10 @@ trait TrackableJob
     public function setChainId($chainId): void
     {
         $this->chainId = $chainId;
+    }
+
+    public function getChainId(): ?string
+    {
+        return $this->chainId;
     }
 }

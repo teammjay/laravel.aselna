@@ -10,6 +10,7 @@ use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Log;
 use App\Jobs\Concerns\TrackableJob;
+use Illuminate\Support\Str;
 
 class ShopifyCombinedSyncing implements ShouldQueue
 {
@@ -23,7 +24,8 @@ class ShopifyCombinedSyncing implements ShouldQueue
      */
     public function __construct()
     {
-        //
+        // Generate unique chainId for this job chain
+        $this->chainId = (string) Str::uuid();
     }
 
     /**
@@ -48,6 +50,13 @@ class ShopifyCombinedSyncing implements ShouldQueue
             new SubmitShopifyProductsJob()
         ];
 
+        // Set chainId for all initial jobs
+        foreach ($chain as $job) {
+            if (method_exists($job, 'setChainId')) {
+                $job->setChainId($this->chainId);
+            }
+        }
+
         $stores = Store::select('store.*')->join('store_type', 'store_type.id', '=', 'store.store_type_id')->where('store_type.code', 'shopify')->get();
 
         if (count($stores ?? []) > 0) {
@@ -64,56 +73,74 @@ class ShopifyCombinedSyncing implements ShouldQueue
                 $productTypeBrands = StorePageTemplate::where('name', 'Product types brands')->first();
                 $brandDevicesTemplate = StorePageTemplate::where('name', 'Brand Devices')->first();
 
-                $chain[] = new StoreBrandPageSyncJob(
+                $storeBrandJob1 = new StoreBrandPageSyncJob(
                     $store->id,
                     WebStorePageType::BRAND,
                     $brandTemplate->id
                 );
+                $storeBrandJob1->setChainId($this->chainId);
+                $chain[] = $storeBrandJob1;
 
-                $chain[] = new StoreBrandPageSyncJob(
+                $storeBrandJob2 = new StoreBrandPageSyncJob(
                     $store->id,
                     WebStorePageType::PRODUCT_TYPE,
                     $brandTemplate->id
                 );
+                $storeBrandJob2->setChainId($this->chainId);
+                $chain[] = $storeBrandJob2;
 
-                $chain[] = new StoreBrandPageSyncJob(
+                $storeBrandJob3 = new StoreBrandPageSyncJob(
                     $store->id,
                     WebStorePageType::DEVICE,
                     $brandTemplate->id
                 );
+                $storeBrandJob3->setChainId($this->chainId);
+                $chain[] = $storeBrandJob3;
 
-                $chain[] = new StoreBrandPageSyncJob(
+                $storeBrandJob4 = new StoreBrandPageSyncJob(
                     $store->id,
                     WebStorePageType::BRAND_DEVICE_PRODUCT_TYPES,
                     $brandDeviceProductTemplate->id
                 );
+                $storeBrandJob4->setChainId($this->chainId);
+                $chain[] = $storeBrandJob4;
 
-                $chain[] = new ShopifyIndvPagesSyncJob(
+                $shopifyIndvJob1 = new ShopifyIndvPagesSyncJob(
                     $store->id,
                     WebStorePageType::BRAND_DEVICE_PRODUCT_TYPES
                 );
+                $shopifyIndvJob1->setChainId($this->chainId);
+                $chain[] = $shopifyIndvJob1;
 
-                $chain[] = new StoreBrandPageSyncJob(
+                $storeBrandJob5 = new StoreBrandPageSyncJob(
                     $store->id,
                     WebStorePageType::PRODUCT_TYPE_BRANDS,
                     $productTypeBrands->id
                 );
+                $storeBrandJob5->setChainId($this->chainId);
+                $chain[] = $storeBrandJob5;
 
-                $chain[] = new ShopifyIndvPagesSyncJob(
+                $shopifyIndvJob2 = new ShopifyIndvPagesSyncJob(
                     $store->id,
                     WebStorePageType::PRODUCT_TYPE_BRANDS
                 );
+                $shopifyIndvJob2->setChainId($this->chainId);
+                $chain[] = $shopifyIndvJob2;
 
-                $chain[] = new StoreBrandPageSyncJob(
+                $storeBrandJob6 = new StoreBrandPageSyncJob(
                     $store->id,
                     WebStorePageType::BRAND_DEVICES,
                     $brandDevicesTemplate->id
                 );
+                $storeBrandJob6->setChainId($this->chainId);
+                $chain[] = $storeBrandJob6;
 
-                $chain[] = new ShopifyIndvPagesSyncJob(
+                $shopifyIndvJob3 = new ShopifyIndvPagesSyncJob(
                     $store->id,
                     WebStorePageType::BRAND_DEVICES
                 );
+                $shopifyIndvJob3->setChainId($this->chainId);
+                $chain[] = $shopifyIndvJob3;
 
 //                $chain[] = new StoreBrandPageSyncJob(
 //                    $store->id,

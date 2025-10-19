@@ -193,6 +193,8 @@ class TemuService implements MarketplaceServiceInterface
             $productData = $this->getProductData($listingItem);
             $properties = [];
 
+            Log::info('Product data :: ' . json_encode($productData));
+
             $TemplateProperties = $template['result']['templateInfo']['goodsProperties'] ?? [];
             $specProperties = $this->buildGoodsPropertiesPayload($TemplateProperties, $productData);
             $properties = array_merge($properties, $specProperties['properties']);
@@ -204,6 +206,22 @@ class TemuService implements MarketplaceServiceInterface
 
             $specIdList = array_merge($specDetails['specIdList'], $specProperties['specIdList']);
             Log::info('Properties :: ' . json_encode($properties));
+
+            if (empty($specIdList)) {
+                $userInputParentSpecList = $template['result']['userInputParentSpecList'];
+                foreach ($userInputParentSpecList as $spec) {
+                    switch ($spec['parentSpecName']) {
+                        case 'Color':
+                            if (isset($productColor)) {
+                                $specIdList[] = $spec['parentSpecId'];
+
+                            }
+                            break;
+                        default:
+                            break;
+                    }
+                }
+            }
 
 
             $ShippingTemplates = $temuAuthService->geShippingTemplate();
@@ -319,10 +337,13 @@ class TemuService implements MarketplaceServiceInterface
 
                     // Create a lookup map for faster searching: ['Cotton' => ['vid' => 49, ...]]
                     $optionsMap = array_change_key_case(array_column($attribute['values'], null, 'value'), CASE_LOWER);
+                    Log::info('Options Map :: ' . json_encode($optionsMap));
 
                     foreach ($selectedValues as $selectedValue) {
-                        if (isset($optionsMap[$selectedValue])) {
-                            $chosenOption = $optionsMap[$selectedValue];
+                        $searchingValue = strtolower($selectedValue);
+                        Log::info('Searching :: ' . $searchingValue);
+                        if (isset($optionsMap[$searchingValue])) {
+                            $chosenOption = $optionsMap[$searchingValue];
                             $finalPayload['properties'][] = [
                                 'templatePid' => $attribute['templatePid'],
                                 'refPid' => $attribute['refPid'],
@@ -330,7 +351,9 @@ class TemuService implements MarketplaceServiceInterface
                                 'vid' => $chosenOption['vid'],
                                 'value' => $chosenOption['value'],
                             ];
-                            $finalPayload['specIdList'][] = $chosenOption['specId'];
+                            if ($chosenOption['specId']) {
+                                $finalPayload['specIdList'][] = $chosenOption['specId'];
+                            }
                         }
                     }
                     break;
@@ -396,9 +419,10 @@ class TemuService implements MarketplaceServiceInterface
                     $optionsMap = array_change_key_case(array_column($attribute['values'], null, 'value'), CASE_LOWER);
 
                     foreach ($selectedValues as $selectedValue) {
-                        Log::info('Searching :: ' . $selectedValue);
-                        if (isset($optionsMap[$selectedValue])) {
-                            $chosenOption = $optionsMap[$selectedValue];
+                        $searchingValue = strtolower($selectedValue);
+                        Log::info('Searching :: ' . $searchingValue);
+                        if (isset($optionsMap[$searchingValue])) {
+                            $chosenOption = $optionsMap[$searchingValue];
                             $finalPayload['properties'][] = [
                                 'templatePid' => $attribute['templatePid'],
                                 'refPid' => $attribute['refPid'],
@@ -406,7 +430,9 @@ class TemuService implements MarketplaceServiceInterface
                                 'vid' => $chosenOption['vid'],
                                 'specId' => $chosenOption['specId'],
                             ];
-                            $finalPayload['specIdList'][] = $chosenOption['specId'];
+                            if ($chosenOption['specId']) {
+                                $finalPayload['specIdList'][] = $chosenOption['specId'];
+                            }
                         }
                     }
                     break;
