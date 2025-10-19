@@ -38,6 +38,8 @@ class QueueJobsController extends Controller
         // Filter by status
         QueryFilters::applyFilter($query, $request, 'status', 'status_operator', 'status');
 
+        QueryFilters::applyFilter($query, $request, 'chain_id', 'chain_id_operator', 'chain_id');
+
         // Filter by tags
         QueryFilters::applyFilter($query, $request, 'tags', 'tags_operator', 'tags');
 
