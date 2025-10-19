@@ -45,9 +45,16 @@ class ProductSyncJob implements ShouldQueue
     {
         $this->updateTrackingRecord(['tags' => 'Products']);
 
+        $producttypes = DB::connection('easyesale_db')->table('product_type')
+            ->select('id')->where('code', 'ceabundle')->get()->toArray();
+        Log::info('Product Types to Exclude :: ' . json_encode($producttypes));
+
         $easyesaleProductsQ = DB::connection('easyesale_db')->table('product')
             ->whereNull('deleted_by')
             ->whereNull('parent_id')
+            ->whereNotIn('product_type_id', array_map(function ($item) {
+                return $item->id;
+            }, $producttypes))
             ->orderBy('create_ts', 'desc');
 
         if (env('APP_ENV') === 'local') {
