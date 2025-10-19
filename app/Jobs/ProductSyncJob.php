@@ -168,6 +168,11 @@ class ProductSyncJob implements ShouldQueue
             // if (Catalog::where('product_sku', $product->code)->exists()) {
             //     return;
             // }
+            $alreadyExists = Catalog::where('product_id', $product->id)->first();
+            if (isset($alreadyExists) && $alreadyExists->updated_at >= $product->update_ts) {
+                Log::info("Product Skipped :: " . $product->code);
+                return;
+            }
             Log::info("Product Info :: " . json_encode($product));
             Catalog::updateOrInsert([
                 'product_id' => $product->id,
