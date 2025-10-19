@@ -186,6 +186,38 @@ class ListingUtility
                     $issues[] = "Missing value for key '{$req->key_value}' in '{$req->table}'";
                 }
             }
+
+            if ($req->type === 'any_fields') {
+                $fieldsData = json_decode($req->fields_json, true);
+                if (empty($fieldsData) || !is_array($fieldsData)) {
+                    continue;
+                }
+
+                $query = DB::table($req->table)->where('product_id', $productId);
+
+                if (Schema::hasColumn($req->table, 'store_type_id')) {
+                    $query->where('store_type_id', $storeTypeId);
+                }
+
+                $row = $query->first();
+                if (!$row) {
+                    $issues[] = "Missing record in '{$req->table}'";
+                    continue;
+                }
+
+                $hasValue = false;
+                foreach ($fieldsData as $field) {
+                    if (property_exists($row, $field) && !empty($row->{$field})) {
+                        $hasValue = true;
+                        break;
+                    }
+                }
+
+                if (!$hasValue) {
+                    $fieldsList = implode("', '", $fieldsData);
+                    $issues[] = "At least one of these fields must have a value: '{$fieldsList}'";
+                }
+            }
         }
 
         return $issues;
