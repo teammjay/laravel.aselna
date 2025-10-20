@@ -2008,6 +2008,7 @@ class ListingController extends Controller
     private function groupDeviceModels($devices, $deviceSeparator = '/')
     {
         $grouped = [];
+        $noOfDevices = count($devices);
 
         foreach ($devices as $device) {
             $fullName = trim($device->name);
@@ -2050,7 +2051,11 @@ class ListingController extends Controller
             $allSuffixes = array_unique($allSuffixes);
 
             $combined = array_merge($allModels, $allSuffixes);
-            $groupText = implode($deviceSeparator, $combined);
+            if (count($combined) <= 2 && $noOfDevices == 1) {
+                $groupText = implode(' ', $combined);
+            } else {
+                $groupText = implode($deviceSeparator, $combined);
+            }
 
             $result[] = $groupLabel . ' ' . $groupText;
         }
@@ -2169,6 +2174,7 @@ class ListingController extends Controller
         }
 
         $deviceSeries = $this->groupDeviceModels($devices, $device_seperator);
+        Log::info('Device Series :: ' . json_encode($deviceSeries));
 
         // Add the last title
         if (!empty($currentTitle)) {

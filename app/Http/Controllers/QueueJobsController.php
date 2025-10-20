@@ -84,7 +84,9 @@ class QueueJobsController extends Controller
                     "status" => '<span class="status-'.$job->status.'">'.ucfirst($job->status).'</span>',
                     "queue" => $job->queue ?? '',
                     "started_at" => ($job->started_at) ? $job->started_at->diffForHumans() : "",
-                    "finished_at" => ($job->finished_at) ? $job->finished_at->diffForHumans() : "",
+                    "finished_at" => $job->finished_at
+                        ? $job->finished_at->diffForHumans() . " (" . round($job->started_at->diffInMinutes($job->finished_at)) . " minutes)"
+                        : "",
                     "output" => ($job->output) ? '<i class="fa fa-exclamation-triangle show-error" style="font-size:24px" data-content="'.addslashes(str_replace('"', '',$job->output)).'"></i>' : "",
                     "tags" => $job->tags,
                     "created_at" => date('Y-m-d H:i:s',strtotime($job->created_at))
