@@ -39,6 +39,8 @@ class AddProductSpecificationInfo extends Seeder
             $TemplateProperties = $specifications['result']['templateInfo']['goodsProperties'] ?? [];
             $TemplateSpecProperties = $specifications['result']['templateInfo']['goodsSpecProperties'] ?? [];
 
+            $requirementCount = 0;
+
             foreach ($TemplateProperties as $property) {
                 Log::info("Category Name :: " . $property['name']);
                 ProductSpecificationInfo::updateOrCreate([
@@ -54,6 +56,7 @@ class AddProductSpecificationInfo extends Seeder
                 if ($property['required'] == true) {
                     $requirement['category'] = $category->code;
                     $requirement['key_value'] = $property['name'];
+                    $requirementCount++;
 
                     ListingRequirement::updateOrCreate(
                         [
@@ -107,6 +110,31 @@ class AddProductSpecificationInfo extends Seeder
                     'required' => $specProperty['required'] == true ? 1 : 0,
                 ]);
 
+                if ($property['required'] == true) {
+                    $requirement['category'] = $category->code;
+                    $requirement['key_value'] = $property['name'];
+                    $requirementCount++;
+
+                    ListingRequirement::updateOrCreate(
+                        [
+                            'category' => $requirement['category'],
+                            'type' => $requirement['type'],
+                            'column' => $requirement['column'] ?? null,
+                            'key_column' => $requirement['key_column'] ?? null,
+                            'key_value' => $requirement['key_value'] ?? null,
+                        ],
+                        [
+                            'category' => $requirement['category'],
+                            'type' => $requirement['type'],
+                            'table' => $requirement['table'],
+                            'column' => $requirement['column'] ?? null,
+                            'key_column' => $requirement['key_column'] ?? null,
+                            'key_value' => $requirement['key_value'] ?? null,
+                            'value_column' => $requirement['value_column'] ?? null,
+                        ]
+                    );
+                }
+
                 if ($property['controlType'] == 1) {
                     $productSpecification = ProductSpecifcationUniqueInfo::updateOrCreate([
                         'field_name' => $property['name'],
@@ -125,6 +153,17 @@ class AddProductSpecificationInfo extends Seeder
                     }
                 }
             }
+
+//            if ($requirementCount <= 0) {
+//                $userInputParentSpecList = $specifications['result']['userInputParentSpecList'] ?? [];
+//
+//            }
+//            ListingRequirement::create([
+//                'category' => 'electronics',
+//                'type' => 'any_fields',
+//                'table' => 'products',
+//                'fields_json' => json_encode(['field1', 'field2', 'field3'])
+//            ]);
         }
 
     }

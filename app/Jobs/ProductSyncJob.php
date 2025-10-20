@@ -28,7 +28,7 @@ class ProductSyncJob implements ShouldQueue
         Queueable::withChain as queueableWithChain;
     }
 
-    public $timeout = 3000;
+    public $timeout = 5000;
 
     /**
      * Create a new job instance.
@@ -45,9 +45,16 @@ class ProductSyncJob implements ShouldQueue
     {
         $this->updateTrackingRecord(['tags' => 'Products']);
 
+        $producttypes = DB::connection('easyesale_db')->table('product_type')
+            ->select('id')->where('code', 'ceabundle')->get()->toArray();
+        Log::info('Product Types to Exclude :: ' . json_encode($producttypes));
+
         $easyesaleProductsQ = DB::connection('easyesale_db')->table('product')
             ->whereNull('deleted_by')
             ->whereNull('parent_id')
+            ->whereNotIn('product_type_id', array_map(function ($item) {
+                return $item->id;
+            }, $producttypes))
             ->orderBy('create_ts', 'desc');
 
         if (env('APP_ENV') === 'local') {
@@ -168,6 +175,11 @@ class ProductSyncJob implements ShouldQueue
             // if (Catalog::where('product_sku', $product->code)->exists()) {
             //     return;
             // }
+            $alreadyExists = Catalog::where('product_id', $product->id)->first();
+            if (isset($alreadyExists) && $alreadyExists->updated_at >= $product->update_ts) {
+                Log::info("Product Skipped :: " . $product->code);
+                return;
+            }
             Log::info("Product Info :: " . json_encode($product));
             Catalog::updateOrInsert([
                 'product_id' => $product->id,
