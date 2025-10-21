@@ -2013,11 +2013,20 @@ class ListingController extends Controller
         foreach ($devices as $device) {
             $fullName = trim($device->name);
             $brand = $device->brand_name;
+            $parts = preg_split('/\s+/', $fullName);
+
+            if (count($parts) < 2) continue;
 
             $parts = explode(' ', $fullName);
-            $prefix = $brand === 'Apple' ? 'iPhone' : $parts[0];
-            $model = $parts[1] ?? '';
-            $suffix = implode(' ', array_slice($parts, 2)) ?: '__base__';
+            if($brand === 'Apple') {
+                $prefix = $brand === 'Apple' ? 'iPhone' : $parts[0];
+                $model = $parts[1] ?? '';
+                $suffix = implode(' ', array_slice($parts, 2)) ?: '__base__';
+            }else{
+                $prefix = $brand === 'Apple' ? 'iPhone' : $parts[1];
+                $model = $parts[2] ?? '';
+                $suffix = implode(' ', array_slice($parts, 3)) ?: '__base__';
+            }
 
             $groupKey = strtolower($brand) === 'apple' ? 'iPhone' : "$brand $prefix";
 
@@ -2052,7 +2061,7 @@ class ListingController extends Controller
 
             $combined = array_merge($allModels, $allSuffixes);
             if (count($combined) <= 2 && $noOfDevices == 1) {
-                $groupText = implode(' ', $combined);
+                $groupText = implode('', $combined);
             } else {
                 $groupText = implode($deviceSeparator, $combined);
             }
