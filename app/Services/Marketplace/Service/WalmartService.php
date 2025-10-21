@@ -211,7 +211,7 @@ class WalmartService implements MarketplaceServiceInterface
                 'locale' => 'en',
                 'sellingChannel' => 'marketplace',
                 'processMode' => 'REPLACE',
-                'version' => '4.8',
+                'version' => '5.0.20250828-17_32_59-api',
                 'mart' => 'WALMART_US',
                 'subCategory' => 'electronics_other',
                 'requestId' => $listingId,
