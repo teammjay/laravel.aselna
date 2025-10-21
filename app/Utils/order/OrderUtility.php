@@ -230,7 +230,7 @@ class OrderUtility
                         $orderItemData = [
                             'title' => $item['item']['productName'],
                             'order_id' => $order->id,
-                            'product_id' => $catalog->product_id ?? '03673b75-decc-0fe9-a6b0-7a97a0e3dc11',
+                            'product_id' => $catalog->product_id ?? null,
                             'client_id' => null,
 //                            'listing_item_id' => $itemDetail->id ?? '',
                             'sku' => $item['item']['sku'],
