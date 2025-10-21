@@ -162,7 +162,7 @@ class OrderUtility
             foreach ($ordersItems as $item) {
                 Log::info("Order Item: " . json_encode($item));
                 if ($item['item']['sku'] != '') {
-                    $itemDetail = ListingItem::where('sku', $item['item']['sku'])->first();
+                    $itemDetail = ListingItem::with('storeProduct', 'storeProduct.product')->where('sku', $item['item']['sku'])->first();
 
                     if (isset($itemDetail)) {
 
