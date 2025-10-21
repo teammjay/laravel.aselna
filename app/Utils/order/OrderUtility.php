@@ -170,9 +170,9 @@ class OrderUtility
                         $orderItemData = [
                             'title' => $item['item']['productName'],
                             'order_id' => $order->id,
-                            'product_id' => $itemDetail->storeProduct->product->product_id ?? '',
-                            'client_id' => $itemDetail->client ?? '',
-                            'listing_item_id' => $itemDetail->id ?? '',
+                            'product_id' => $itemDetail->storeProduct->product->product_id ?? null,
+                            'client_id' => $itemDetail->client ?? null,
+                            'listing_item_id' => $itemDetail->id ?? null,
                             'sku' => $item['item']['sku'],
                             //'store_sku' => $item['item']['upc'],
                             'quantity' => $item['orderLineQuantity']['amount'],
