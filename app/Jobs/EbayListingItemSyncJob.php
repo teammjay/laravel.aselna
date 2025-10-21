@@ -153,8 +153,11 @@ class EbayListingItemSyncJob implements ShouldQueue
                             continue;
                         }
                         $itemSkuArray[] = $item['SKU'];
-                        $itemDetails = ListingItem::where('sku', $item['SKU'])->whereNull('store_sku')->get();
-                        foreach ($itemDetails as $itemDetail) {
+                        $itemDetail = ListingItem::where('sku', $item['SKU'])->where(function ($query) {
+                            return $query->whereNull('store_sku')
+                                ->orWhere('store_sku', '');
+                        })->first();
+                        //foreach ($itemDetails as $itemDetail) {
                             if ($itemDetail) {
                                 if (isset($item['ItemID']) && $item['ItemID'] != '') {
                                     $itemDetail->update([
@@ -182,7 +185,7 @@ class EbayListingItemSyncJob implements ShouldQueue
                             } else {
                                 Log::info("No item found for SKU: " . $item['SKU']);
                             }
-                        }
+                        //}
                     }
                 }
 
