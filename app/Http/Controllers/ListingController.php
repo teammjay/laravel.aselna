@@ -2061,7 +2061,7 @@ class ListingController extends Controller
 
             $combined = array_merge($allModels, $allSuffixes);
             if (count($combined) <= 2 && $noOfDevices == 1) {
-                $groupText = implode('', $combined);
+                $groupText = implode(' ', $combined);
             } else {
                 $groupText = implode($deviceSeparator, $combined);
             }
