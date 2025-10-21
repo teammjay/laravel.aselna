@@ -215,7 +215,16 @@ class OrderUtility
                         if (env('APP_ENV') == 'local') {
                             $sku = 'Z67';
                         }
-                        $catalog = Catalog::where('product_sku', $sku)->first();
+
+                        $catalog = [];
+                        if($item['item']['sku'] !='') {
+                            $sku = preg_split('/[_-]/', $item['item']['sku'])[0];
+                            Log::info("Item SKU :: " . json_encode($sku));
+                            $catalog = Catalog::where('product_sku', $sku)->first();
+                            Log::info("Catalog Found :: " . json_encode($catalog));
+                        }
+
+                        //$catalog = Catalog::where('product_sku', $sku)->first();
 
 
                         $orderItemData = [
