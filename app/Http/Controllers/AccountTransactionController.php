@@ -22,6 +22,10 @@ class AccountTransactionController extends Controller
     public function index($id)
     {
         $account_id = $id;
+        /*$states = AccountTransaction::select('status', DB::raw('COUNT(*) as total'))
+            ->groupBy('status')
+            ->get();*/
+
 //        $shipping_account_transactions = AccountTransaction::with('shippingAccount')->where('shipping_account_id',$account_id)->get();
         $shipping_account = ShippingAccount::all();
         return view('shipping_account_transaction.list', compact('shipping_account', 'account_id'));
