@@ -178,8 +178,6 @@ class ListingUtility
                     $query->where('store_type_id', $storeTypeId);
                 }
 
-                Log::info($query->toRawSql());
-
                 $value = $query->value($req->value_column);
 
                 if (is_null($value) || $value === '') {
