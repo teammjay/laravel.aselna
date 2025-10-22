@@ -261,7 +261,9 @@ class WalmartService implements MarketplaceServiceInterface
                 } else {
                     $compatibleDevices[] = $device->device->brand->name . ' ' . $device->device->name;
                 }
-                if (in_array($device->device->brand->name, $compatibleBrands) == false && strtolower($device->device->brand->name) != 'apple') {
+                if (in_array($device->device->brand->name, $compatibleBrands) == false && strtolower($device->device->brand->name) == 'apple') {
+                    $compatibleBrands[] = $listingInfo->store->name;
+                } elseif (in_array($device->device->brand->name, $compatibleBrands) == false) {
                     $compatibleBrands[] = $device->device->brand->name;
                 }
             }
@@ -299,7 +301,7 @@ class WalmartService implements MarketplaceServiceInterface
                 'modelNumber' => $item->sku,
 //                'msrp' => floatval($productObj->product_mrsp),
                 'color' => $productColor->name ?? '',
-                'compatibleDevices' => $compatibleDevices,
+                'compatibleModels' => $compatibleDevices,
             ];
 
             if (in_array('has_written_warranty', $requiredAttributes)) $visibleAttributes['has_written_warranty'] = 'No';
@@ -330,10 +332,11 @@ class WalmartService implements MarketplaceServiceInterface
                     'unit' => 'in',
                     'measure' => $productObj->package_dimensions_length ?? 0,
                 ];
-            if (in_array('compatibleBrands',$requiredAttributes))
+            if (in_array('compatibleBrands', $requiredAttributes))
                 $visibleAttributes['compatibleBrands'] = $compatibleBrands;
-            if (in_array('cell_phone_case_type',$requiredAttributes))
+            if (in_array('cell_phone_case_type', $requiredAttributes))
                 $visibleAttributes['cell_phone_case_type'] = 'Holster';
+            if (in_array('msrp', $requiredAttributes)) $visibleAttributes['msrp'] = floatval($productObj->product_mrsp);
 
             $product['Visible'][$storeTypeCategory->name] = $visibleAttributes;
 
