@@ -204,18 +204,19 @@ class WalmartService implements MarketplaceServiceInterface
     {
         $listingItems = ListingItemLink::where('listing_id', $listingId)->cursor();
         $fileSystem = $listingInfo->store->fileSystem;
+        $store = $listingInfo->store;
 
         $jsonFeed = [
             'MPItemFeedHeader' => [
-                'subset' => 'EXTERNAL',
+//                'subset' => 'EXTERNAL',
                 'locale' => 'en',
-                'sellingChannel' => 'marketplace',
-                'processMode' => 'REPLACE',
+//                'sellingChannel' => 'marketplace',
+//                'processMode' => 'REPLACE',
                 'version' => '5.0.20250828-17_32_59-api',
-                'mart' => 'WALMART_US',
-                'subCategory' => 'electronics_other',
-                'requestId' => $listingId,
-                'requestBatchId' => $listingId . '_1',
+                'businessUnit' => 'WALMART_US',
+//                'subCategory' => 'electronics_other',
+//                'requestId' => $listingId,
+//                'requestBatchId' => $listingId . '_1',
             ]
         ];
 
@@ -253,11 +254,15 @@ class WalmartService implements MarketplaceServiceInterface
             ];
 
             $compatibleDevices = [];
+            $compatibleBrands = [];
             foreach ($item->devices as $device) {
                 if (isset($device->device->brand) && (strtolower($device->device->brand->name) == 'apple' || strtolower($device->device->brand->name) == 'unlocked')) {
                     $compatibleDevices[] = $device->device->name;
                 } else {
                     $compatibleDevices[] = $device->device->brand->name . ' ' . $device->device->name;
+                }
+                if (in_array($device->device->brand->name, $compatibleBrands) == false && strtolower($device->device->brand->name) != 'apple') {
+                    $compatibleBrands[] = $device->device->brand->name;
                 }
             }
 
@@ -280,8 +285,10 @@ class WalmartService implements MarketplaceServiceInterface
                 }
             }
 
+            $requiredAttributes = $this->getVisibleAttributes($storeTypeCategory->name, $store, $productObj, $listingInfo, $item);
+
             // skip only the first one for the secondary image
-            $product['Visible'][$storeTypeCategory->name] = [
+            $visibleAttributes = [
                 'productName' => $item->title,
                 'brand' => $listingInfo->store->name,
                 'shortDescription' => $item->description,
@@ -291,32 +298,44 @@ class WalmartService implements MarketplaceServiceInterface
                 'manufacturerPartNumber' => '' . $item->sku,
                 'modelNumber' => $item->sku,
                 'msrp' => floatval($productObj->product_mrsp),
-                'color' => [$productColor->name ?? ''],
+                'color' => $productColor->name ?? '',
                 'compatibleDevices' => $compatibleDevices,
-                'assembledProductLength' => [
-                    'unit' => 'in',
-                    'value' => $productObj->package_dimensions_length ?? '0',
-                ],
-                'assembledProductHeight' => [
-                    'unit' => 'in',
-                    'value' => $productObj->package_dimensions_height ?? '0',
-                ],
-                'assembledProductWidth' => [
-                    'unit' => 'in',
-                    'value' => $productObj->package_dimensions_width ?? '0',
-                ],
-                'netContent' => [
-                    'productNetContentUnit' => 'Each',
-                    'productNetContentMeasure' => '1',
-                ],
-                'smallPartsWarnings' => [
-                    '0 - No warning applicable'
-                ],
-                'isProp65WarningRequired' => 'No',
-                'condition' => 'New',
-                'has_nrtl_listing_certification' => 'No',
-                'has_written_warranty' => 'No',
             ];
+
+            if (in_array('has_written_warranty', $requiredAttributes)) $visibleAttributes['has_written_warranty'] = 'No';
+            if (in_array('has_nrtl_listing_certification', $requiredAttributes)) $visibleAttributes['has_nrtl_listing_certification'] = 'No';
+            if (in_array('condition', $requiredAttributes)) $visibleAttributes['condition'] = 'New';
+            if (in_array('isProp65WarningRequired', $requiredAttributes)) $visibleAttributes['isProp65WarningRequired'] = 'No';
+            if (in_array('smallPartsWarnings', $requiredAttributes))
+                $visibleAttributes['smallPartsWarnings'] = [
+                    '0 - No warning applicable'
+                ];
+            if (in_array('netContent', $requiredAttributes))
+                $visibleAttributes['netContent'] = [
+                    'productNetContentUnit' => 'Each',
+                    'productNetContentMeasure' => 1,
+                ];
+            if (in_array('assembledProductWidth', $requiredAttributes))
+                $visibleAttributes['assembledProductWidth'] = [
+                    'unit' => 'in',
+                    'measure' => $productObj->package_dimensions_width ?? 0,
+                ];
+            if (in_array('assembledProductHeight', $requiredAttributes))
+                $visibleAttributes['assembledProductHeight'] = [
+                    'unit' => 'in',
+                    'measure' => $productObj->package_dimensions_height ?? 0,
+                ];
+            if (in_array('assembledProductLength', $requiredAttributes))
+                $visibleAttributes['assembledProductLength'] = [
+                    'unit' => 'in',
+                    'measure' => $productObj->package_dimensions_length ?? 0,
+                ];
+            if (in_array('compatibleBrands',$requiredAttributes))
+                $visibleAttributes['compatibleBrands'] = $compatibleBrands;
+            if (in_array('cell_phone_case_type',$requiredAttributes))
+                $visibleAttributes['cell_phone_case_type'] = 'Holster';
+
+            $product['Visible'][$storeTypeCategory->name] = $visibleAttributes;
 
             $jsonFeed['MPItem'][] = $product;
         }
@@ -470,7 +489,7 @@ class WalmartService implements MarketplaceServiceInterface
                         $order = Order::updateOrCreate([
                             'order_id' => $sorder['customerOrderId'],
                             'purchase_order_id' => $sorder['purchaseOrderId'],
-                        ],[
+                        ], [
                             'order_id' => $sorder['customerOrderId'],
                             'purchase_order_id' => $sorder['purchaseOrderId'],
                             'order_date' => date('Y-m-d H:i:s', $sorder['orderDate'] / 1000),
@@ -518,7 +537,7 @@ class WalmartService implements MarketplaceServiceInterface
             $authService = new WalmartAuthService($store->seller_id, $store->secret_key);
             $filterStartDateFormatted = now()->subDays(2)->toIso8601String();
 
-            $response = $authService->getOrders($filterStartDateFormatted, null,1);
+            $response = $authService->getOrders($filterStartDateFormatted, null, 1);
 
             if (!isset($response)) {
                 Log::info("Error in Walmart Orders : ");
@@ -541,7 +560,7 @@ class WalmartService implements MarketplaceServiceInterface
 
             return $data;
 
-        }catch (\Exception $e) {
+        } catch (\Exception $e) {
             Log::error("Error in Walmart Orders: " . $e->getMessage());
             return null;
         }
@@ -607,7 +626,7 @@ class WalmartService implements MarketplaceServiceInterface
 
     }
 
-    public function shipmentUpdate($mainOrderOperation, $orderOperation,$store)
+    public function shipmentUpdate($mainOrderOperation, $orderOperation, $store)
     {
         $finalData = [];
         $count = 1;
@@ -675,5 +694,18 @@ class WalmartService implements MarketplaceServiceInterface
             $success = false;
         }
         return $success;
+    }
+
+    private function getVisibleAttributes($categoryName, $store)
+    {
+        $authService = new WalmartAuthService($store->seller_id, $store->secret_key);
+        $specifications = $authService->getProductSpecifications('MP_ITEM', '5.0.20250828-17_32_59-api', $categoryName);
+        if (isset($specifications)) {
+            $specMap = $specifications['schema']['properties']['MPItem']['items']['properties']['Visible']['properties'] ?? [];
+            foreach ($specMap as $key => $specification) {
+                return $specification['required'] ?? [];
+            }
+        }
+        return [];
     }
 }
