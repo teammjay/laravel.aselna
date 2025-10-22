@@ -301,6 +301,10 @@ class WalmartService implements MarketplaceServiceInterface
                     'unit' => 'in',
                     'value' => $productObj->package_dimensions_height ?? '0',
                 ],
+                'assembledProductWidth' => [
+                    'unit' => 'in',
+                    'value' => $productObj->package_dimensions_width ?? '0',
+                ],
                 'netContent' => [
                     'productNetContentUnit' => 'Each',
                     'productNetContentMeasure' => '1',
