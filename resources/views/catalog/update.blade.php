@@ -806,7 +806,11 @@
                                         @foreach($productAltImages as $images)
                                             <tr class="pro-alt-img-{{ $images->id }}" data-id="{{ $images->id }}">
                                                 <td><i class="fa fa-sort" title="Drag and drop row up or down to sort"></i></td>
-                                                <td><img src="{{ asset('storage/product_additional_images/'. $images->imageObj->name) }}" alt="{{ $images->image }}" width="70" height="70"></td>
+                                                <td>
+                                                    @if(isset($images->imageObj))
+                                                        <img src="{{ asset('storage/product_additional_images/'. $images->imageObj->name) }}" alt="{{ $images->image }}" width="70" height="70">
+                                                    @endif
+                                                </td>
                                                 <td>{{ $images->sort_order }}</td>
                                                 <td><button class="btn btn-danger delete-alt-btn" data-id="{{ $images->id }}"> <i class="fas fa-fw fa-trash"></i></button></td>
                                             </tr>
