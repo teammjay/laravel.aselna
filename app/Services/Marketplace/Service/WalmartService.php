@@ -236,8 +236,6 @@ class WalmartService implements MarketplaceServiceInterface
             $product = [
                 'Orderable' => [
                     'sku' => $item->sku,
-                    'brand' => $listingInfo->store->name,
-                    'productName' => $item->title,
                     'ShippingWeight' => floatval($productObj->product_weight),
                     'fulfillmentLagTime' => 1,
                     'productIdentifiers' => [
@@ -250,6 +248,7 @@ class WalmartService implements MarketplaceServiceInterface
                     'shipsInOriginalPackaging' => 'Yes',
                     'startDate' => '2019-01-01T08:00:00Z',
                     'MustShipAlone' => 'No',
+                    'country_of_origin_substantial_transformation' => 'China'
                 ]
             ];
 
@@ -283,15 +282,36 @@ class WalmartService implements MarketplaceServiceInterface
 
             // skip only the first one for the secondary image
             $product['Visible'][$storeTypeCategory->name] = [
+                'productName' => $item->title,
+                'brand' => $listingInfo->store->name,
                 'shortDescription' => $item->description,
+                'keyFeatures' => $keyFeatures,
                 'mainImageUrl' => $mainImagePath,
                 'productSecondaryImageURL' => $imagesPath,
-                'keyFeatures' => $keyFeatures,
                 'manufacturerPartNumber' => '' . $item->sku,
                 'modelNumber' => $item->sku,
                 'msrp' => floatval($productObj->product_mrsp),
                 'color' => [$productColor->name ?? ''],
                 'compatibleDevices' => $compatibleDevices,
+                'assembledProductLength' => [
+                    'unit' => 'in',
+                    'value' => $productObj->package_dimensions_length ?? '0',
+                ],
+                'assembledProductHeight' => [
+                    'unit' => 'in',
+                    'value' => $productObj->package_dimensions_height ?? '0',
+                ],
+                'netContent' => [
+                    'productNetContentUnit' => 'Each',
+                    'productNetContentMeasure' => '1',
+                ],
+                'smallPartsWarnings' => [
+                    '0 - No warning applicable'
+                ],
+                'isProp65WarningRequired' => 'No',
+                'condition' => 'New',
+                'has_nrtl_listing_certification' => 'No',
+                'has_written_warranty' => 'No',
             ];
 
             $jsonFeed['MPItem'][] = $product;
