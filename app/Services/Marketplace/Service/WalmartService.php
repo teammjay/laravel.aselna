@@ -297,7 +297,7 @@ class WalmartService implements MarketplaceServiceInterface
                 'productSecondaryImageURL' => $imagesPath,
                 'manufacturerPartNumber' => '' . $item->sku,
                 'modelNumber' => $item->sku,
-                'msrp' => floatval($productObj->product_mrsp),
+//                'msrp' => floatval($productObj->product_mrsp),
                 'color' => $productColor->name ?? '',
                 'compatibleDevices' => $compatibleDevices,
             ];
