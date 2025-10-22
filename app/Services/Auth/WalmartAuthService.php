@@ -318,7 +318,7 @@ class WalmartAuthService
 
             $url = $this->endpoint . "/items/walmart/search";
             $queryData = [
-                    'upc' => $upc
+                'upc' => $upc
             ];
 
             Log::info('Query Data: ' . json_encode($queryData));
@@ -335,7 +335,7 @@ class WalmartAuthService
                 'query' => $queryData,
             ]);
 
-            Log::info("getItemSearch Response: ".$response->getBody());
+            Log::info("getItemSearch Response: " . $response->getBody());
 
             return json_decode($response->getBody(), true);
         } catch (\Exception $e) {
@@ -344,5 +344,63 @@ class WalmartAuthService
                 'message' => $e->getMessage()
             ];
         }
+    }
+
+    public function fetchStoreCategories($feedType, $version)
+    {
+        Log::info('Fetching Walmart categories');
+        $accessToken = $this->authenticate();
+
+        $headers = [
+            'WM_SEC.ACCESS_TOKEN' => "{$accessToken}",
+            'Content-Type' => 'application/json',
+            'Accept' => 'application/json',
+            'WM_SVC.NAME' => 'Walmart Marketplace',
+            'WM_QOS.CORRELATION_ID' => uniqid(),
+        ];
+
+        $queryParams = [
+            'feedType' => $feedType,
+            'version' => $version
+        ];
+
+        // convert the query params to a query string
+        $request = new Request('GET', "{$this->endpoint}/items/taxonomy?" . http_build_query($queryParams), $headers);
+        $response = $this->client->sendAsync($request)->wait();
+
+        $categories = json_decode($response->getBody(), true);
+        Log::info('Walmart Categories fetched: ' . json_encode($categories));
+
+        return $categories;
+    }
+
+    public function getProductSpecifications($feedType, $version, $categoryName)
+    {
+        Log::info('Fetching Walmart Specificatrion');
+        $accessToken = $this->authenticate();
+
+        $headers = [
+            'WM_SEC.ACCESS_TOKEN' => "{$accessToken}",
+            'Content-Type' => 'application/json',
+            'Accept' => 'application/json',
+            'WM_SVC.NAME' => 'Walmart Marketplace',
+            'WM_QOS.CORRELATION_ID' => uniqid(),
+        ];
+
+        $bodyParams = [
+            'feedType' => $feedType,
+            'version' => $version,
+            'productTypes' =>[
+                $categoryName
+            ]
+        ];
+
+        // convert the body params to JSON
+        $request = new Request('POST', "{$this->endpoint}/items/spec", $headers, json_encode($bodyParams));
+        $response = $this->client->sendAsync($request)->wait();
+
+        $categories = json_decode($response->getBody(), true);
+
+        return $categories;
     }
 }
