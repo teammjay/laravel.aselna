@@ -301,9 +301,9 @@ class WalmartService implements MarketplaceServiceInterface
                 'modelNumber' => $item->sku,
 //                'msrp' => floatval($productObj->product_mrsp),
                 'color' => $productColor->name ?? '',
-                'compatibleModels' => $compatibleDevices,
             ];
 
+            if (in_array('compatibleModels', $requiredAttributes)) $visibleAttributes['compatibleModels'] = $compatibleDevices;
             if (in_array('has_written_warranty', $requiredAttributes)) $visibleAttributes['has_written_warranty'] = 'No';
             if (in_array('has_nrtl_listing_certification', $requiredAttributes)) $visibleAttributes['has_nrtl_listing_certification'] = 'No';
             if (in_array('condition', $requiredAttributes)) $visibleAttributes['condition'] = 'New';
@@ -706,7 +706,13 @@ class WalmartService implements MarketplaceServiceInterface
         if (isset($specifications)) {
             $specMap = $specifications['schema']['properties']['MPItem']['items']['properties']['Visible']['properties'] ?? [];
             foreach ($specMap as $key => $specification) {
-                return $specification['required'] ?? [];
+                $allProperties = [];
+                if (isset($specification['properties'])) {
+                    foreach ($specification['properties'] as $propKey => $property) {
+                        $allProperties[] = $propKey;
+                    }
+                    return $allProperties;
+                }
             }
         }
         return [];
