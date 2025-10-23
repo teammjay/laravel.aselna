@@ -217,10 +217,11 @@
         <table id="transactionsTable" class="table table-bordered table-striped">
             <thead>
             <tr>
-                <th>Shuipping Account</th>
+                <th>Shipping Account</th>
                 <th>Tracking Number</th>
                 <th>Transaction Date</th>
                 <th>Transaction ID</th>
+                <th>Store</th>
                 <th>Amount</th>
                 <th>Address</th>
                 <th>Status</th>
@@ -358,6 +359,7 @@
                     {data: 'tracking_number', name: 'tracking_number'},
                     {data: 'transaction_date', name: 'transaction_date'},
                     {data: 'transaction_id', name: 'transaction_id'},
+                    {data: 'store', name: 'store',orderable: false},
                     {data: 'amount', name: 'amount'},
                     {data: 'address', name: 'address'},
                     {data: 'status', name: 'status'},

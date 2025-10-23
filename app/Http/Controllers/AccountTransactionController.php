@@ -35,7 +35,7 @@ class AccountTransactionController extends Controller
     {
         $totalRecords = AccountTransaction::count();
 
-        $query = AccountTransaction::with('shippingAccount')->select('*');
+        $query = AccountTransaction::with('shippingAccount','store','store.storeType')->select('*');
 
         if ($request->has('tracking_number') && $request->tracking_number != '') {
             $query->where('tracking_number', $request->tracking_number);
@@ -91,6 +91,7 @@ class AccountTransactionController extends Controller
                 'tracking_number' => $transaction->tracking_number,
                 'transaction_date' => $transaction->transaction_date,
                 'transaction_id' => $transaction->transaction_id,
+                'store' => (isset($transaction->store) && isset($transaction->store->storeType)) ? $transaction->store->name . ' - ' . $transaction->store->storeType->name : '',
                 'amount' => $transaction->amount,
                 'address' => $transaction->address,
                 'status' => $transaction->status,
