@@ -74,6 +74,7 @@ class AddProductSpecificationInfo extends Seeder
                             'key_column' => $requirement['key_column'] ?? null,
                             'key_value' => $requirement['key_value'] ?? null,
                             'value_column' => $requirement['value_column'] ?? null,
+                            'store_type_id' => $this->storeType->id
                         ]
                     );
                 }
@@ -131,6 +132,7 @@ class AddProductSpecificationInfo extends Seeder
                             'key_column' => $requirement['key_column'] ?? null,
                             'key_value' => $requirement['key_value'] ?? null,
                             'value_column' => $requirement['value_column'] ?? null,
+                            'store_type_id' => $this->storeType->id
                         ]
                     );
                 }

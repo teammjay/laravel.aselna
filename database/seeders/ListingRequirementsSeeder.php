@@ -16,7 +16,7 @@ class ListingRequirementsSeeder extends Seeder
         $requirements = [
             ['category' => 'ELECTRONIC_CABLE', 'type' => 'column', 'table' => 'products', 'column' => 'package_weight_unit',],
             ['category' => 'ELECTRONIC_CABLE', 'type' => 'column', 'table' => 'products', 'column' => 'product_package_weight',],
-            ['category' => 'ELECTRONIC_CABLE', 'type' => 'key_value', 'table' => 'product_specification', 'key_column' => 'name', 'key_value' => 'Item Included', 'value_column' => 'value'],
+            ['category' => 'ELECTRONIC_CABLE', 'type' => 'key_value', 'table' => 'product_specification', 'key_column' => 'name', 'key_value' => 'Items Included', 'value_column' => 'value'],
             ['category' => 'ELECTRONIC_CABLE', 'type' => 'key_value', 'table' => 'product_specification', 'key_column' => 'name', 'key_value' => 'Connectivity', 'value_column' => 'value'],
             ['category' => 'ELECTRONIC_CABLE', 'type' => 'key_value', 'table' => 'product_specification', 'key_column' => 'name', 'key_value' => 'Connector Gender', 'value_column' => 'value'],
             ['category' => 'ELECTRONIC_CABLE', 'type' => 'key_value', 'table' => 'product_specification', 'key_column' => 'name', 'key_value' => 'Cable Length', 'value_column' => 'value'],
@@ -111,6 +111,7 @@ class ListingRequirementsSeeder extends Seeder
                     'key_column' => $requirement['key_column'] ?? null,
                     'key_value' => $requirement['key_value'] ?? null,
                     'value_column' => $requirement['value_column'] ?? null,
+                    'store_type_id' => '9ea83e8c-5b36-d377-d583-f7560b67f6b0',
                 ]
             );
         }

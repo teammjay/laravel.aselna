@@ -1,4 +1,5 @@
 <button type="button" class="btn btn-secondary" id="add_specification"> <i class="fa fa-plus-square"></i> Add</button>
+{{--<button type="button" class="btn btn-secondary" id="add_required_specification"> <i class="fa fa-plus-square"></i> Add Required</button>--}}
 <div class="card card-body border mt-2">
     <table class="table table-bordered" id="specification_table">
         <thead>

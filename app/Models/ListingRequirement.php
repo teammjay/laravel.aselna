@@ -14,5 +14,6 @@ class ListingRequirement extends Model
         'key_column',
         'key_value',
         'value_column',
+        'store_type_id',
     ];
 }
