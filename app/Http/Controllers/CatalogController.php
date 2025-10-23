@@ -1051,6 +1051,19 @@ class CatalogController extends Controller
         $store_type_id = $request->input('store_type_id');
         $product_id = $request->input('product_id');
         $categoryId = $request->input('category_id');
+//        $storeIds = Store::where('store_type_id', $store_type_id)->pluck('id')->toArray();
+//        $firstStoreProduct = StoreProduct::where('product_id', $product_id)
+//            ->whereNotNull('store_type_category_id')
+//            ->whereIn('store_id', $storeIds)
+//            ->first();
+//
+//        if (!isset($firstStoreProduct)) {
+//            return response()->json([
+//                'html' => '<p>No category found for the selected store type. Please select category in stores tab</p>',
+//            ]);
+//        }
+//        $categoryId = $firstStoreProduct->store_type_category_id;
+
         $specifications = ProductSpecification::where('store_type_id',$store_type_id)->where('product_id',$product_id)->orderBy('created_at','asc')->get();
         /*echo '<pre>';
         print_r($specifications);
@@ -1090,10 +1103,21 @@ class CatalogController extends Controller
             $category_id = $this->getAncestors($category, $info_category);
         }
 
+        $storetype = StoreType::where('id',$store_type_id)->first();
+        if (isset($storetype) && in_array($storetype->code, ['temu','amazon','walmart'])) {
+            Log::info('No category for store type code: '.$storetype->code);
+            $category_id = null;
+        }
+        Log::info('categoryId: '.$category_id);
 
-        $specificationInfo = ProductSpecificationInfo::join('product_specification_info_category_link','product_specification_info_category_link.specification_info_id', '=', 'product_specification_info.id')
-            ->where('product_specification_info.store_type_id',$store_type_id)
-            ->where('product_specification_info_category_link.product_type_id',$category_id)->orderBy('product_specification_info.field_local_name')->get();
+
+        $specificationInfo = ProductSpecificationInfo::where('product_specification_info.store_type_id',$store_type_id)
+            ->when(isset($category_id) && !empty($category_id), function ($query) use ($category_id) {
+                Log::info('category_id in when: '.$category_id);
+                $query->join('product_specification_info_category_link','product_specification_info_category_link.specification_info_id', '=', 'product_specification_info.id');
+                $query->where('product_specification_info_category_link.product_type_id',$category_id);
+            })
+            ->orderBy('product_specification_info.field_local_name')->get();
 
         return response()->json([
             'html' => view('catalog.specification', compact('specificationInfo','specificationArr'))->render(),
@@ -1103,12 +1127,14 @@ class CatalogController extends Controller
 
     private function getAncestors($category,$info_category)
     {
-        if ($category->parent) {
+        if (isset($category) && $category->parent) {
             //echo $category->parent->name . "\n";
             if(in_array($category->parent->id, $info_category)){
                 return $category->parent->id;
             }
             $this->getAncestors($category->parent,$info_category);
+        } else {
+            return null;
         }
     }
 
@@ -1130,8 +1156,21 @@ class CatalogController extends Controller
             $category = ProductType::with('ancestors')->find($categoryId);
             $category_id = $this->getAncestors($category, $info_category);
         }
+        $storetype = StoreType::where('id',$store_type_id)->first();
+        if (isset($storetype) && in_array($storetype->code, ['temu','walmart'])) {
+            Log::info('No category for store type code: '.$storetype->code);
+            $category_id = null;
+        }
+        Log::info('categoryId: '.$category_id);
 
-        $specificationInfo = ProductSpecificationInfo::join('product_specification_info_category_link','product_specification_info_category_link.specification_info_id', '=', 'product_specification_info.id')->where('product_specification_info.store_type_id',$store_type_id)->where('product_specification_info_category_link.product_type_id',$category_id)->orderBy('product_specification_info.field_local_name')->get();
+        $specificationInfo = ProductSpecificationInfo::where('product_specification_info.store_type_id',$store_type_id)
+            ->when(isset($category_id) && !empty($category_id), function ($query) use ($category_id) {
+                Log::info('category_id in when: '.$category_id);
+                $query->join('product_specification_info_category_link','product_specification_info_category_link.specification_info_id', '=', 'product_specification_info.id');
+                $query->where('product_specification_info_category_link.product_type_id',$category_id);
+            })
+            ->orderBy('product_specification_info.field_local_name')->get();
+
         $option = '<option value=""></option>';
         $field = $valoption = '';
         if(!empty($specificationInfo)){

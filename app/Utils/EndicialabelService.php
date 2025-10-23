@@ -86,6 +86,7 @@ class EndicialabelService
             $address = $shippingDetail['toAddress']['name'] . ' ' . $shippingDetail['toAddress']['address1'] . ' ' . $shippingDetail['toAddress']['address2'] . ' ' . $shippingDetail['toAddress']['city'] . ' ' . $shippingDetail['toAddress']['state'] . ' ' . $shippingDetail['toAddress']['postalCode'] . ' ' . $shippingDetail['toAddress']['country'];
             $transactionData = [
                 'shipping_account_id' => $shippingDetail['account_info'],
+                'store_id' => $shippingDetail['store_id'],
                 'tracking_number' => $trackingNumber,
                 'transaction_date' => date('Y-m-d H:i:s', strtotime($transactionDate)),
                 'transaction_id' => $transactionID,
