@@ -2075,7 +2075,9 @@
                     }
                 });
 
+            });
 
+            $(document).on('click', '#add_required_specification', function() {
 
             });
 
