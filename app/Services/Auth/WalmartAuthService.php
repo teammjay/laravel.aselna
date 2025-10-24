@@ -2,6 +2,7 @@
 
 namespace App\Services\Auth;
 
+use App\Services\CriticalErrorService;
 use App\Utils\FileUtility;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
@@ -143,6 +144,12 @@ class WalmartAuthService
 
             return json_decode($response->getBody(), true);
         } catch (\Exception $e) {
+
+            /*CriticalErrorService::report('Walmart Marketplace Order Sync failed', [
+                'marketplace' => 'Walmart',
+                'reason' => $e->getMessage() ?? 'Unknown',
+            ],['start_date' => $last_order_time]);*/
+
             return response()->json([
                 'error' => 'Walmart API request failed',
                 'message' => $e->getMessage()
@@ -183,6 +190,12 @@ class WalmartAuthService
 
             return json_decode($response->getBody(), true);
         } catch (\Exception $e) {
+
+            /*CriticalErrorService::report('Walmart Marketplace Order Detail failed', [
+                'marketplace' => 'Walmart',
+                'reason' => $e->getMessage() ?? 'Unknown',
+            ],['order_id' => $orderID]);*/
+
             return response()->json([
                 'error' => 'Walmart API request failed',
                 'message' => $e->getMessage()
@@ -219,12 +232,24 @@ class WalmartAuthService
             if ($e->hasResponse()) {
                 $status = $e->getResponse()->getStatusCode();
                 $body = (string)$e->getResponse()->getBody();
+
+                /*CriticalErrorService::report('Walmart API Error', [
+                    'marketplace' => 'Walmart',
+                    'reason' => $body ?? 'Unknown',
+                ],['status' => $status]);*/
+
                 Log::error("Walmart API error ({$status}): " . $body);
             } else {
                 Log::error('Request error (no response): ' . $e->getMessage());
             }
 
         } catch (\Exception $e) {
+
+            /*CriticalErrorService::report('Walmart Marketplace Ship Order failed', [
+                'marketplace' => 'Walmart',
+                'reason' => $e->getMessage() ?? 'Unknown',
+            ],['purchase_order_id' => $purchaseOrderId]);*/
+
             Log::error('Error shipping order: ' . $e->getMessage());
         }
         return false;
@@ -257,12 +282,22 @@ class WalmartAuthService
                 $status = $e->getResponse()->getStatusCode();
                 $body = (string)$e->getResponse()->getBody();
                 Log::error("Walmart API error ({$status}): " . $body);
+
+                /*CriticalErrorService::report('Walmart API Error', [
+                    'marketplace' => 'Walmart',
+                    'reason' => $body ?? 'Unknown',
+                ],['status' => $status]);*/
             } else {
                 Log::error('Request error (no response): ' . $e->getMessage());
             }
 
         } catch (\Exception $e) {
             Log::error('Error cancel order: ' . $e->getMessage());
+
+            /*CriticalErrorService::report('Walmart Marketplace Cancel Order failed', [
+                'marketplace' => 'Walmart',
+                'reason' => $e->getMessage() ?? 'Unknown',
+            ],['purchase_order_id' => $purchaseOrderId]);*/
         }
         return null;
 
@@ -294,6 +329,12 @@ class WalmartAuthService
             if ($e->hasResponse()) {
                 $status = $e->getResponse()->getStatusCode();
                 $body = (string)$e->getResponse()->getBody();
+
+                /*CriticalErrorService::report('Walmart API Error', [
+                    'marketplace' => 'Walmart',
+                    'reason' => $body ?? 'Unknown',
+                ],['status' => $status]);*/
+
                 Log::error("Walmart API error ({$status}): " . $body);
             } else {
                 Log::error('Request error (no response): ' . $e->getMessage());
@@ -301,6 +342,11 @@ class WalmartAuthService
 
         } catch (\Exception $e) {
             Log::error('Error refund order: ' . $e->getMessage());
+
+            /*CriticalErrorService::report('Walmart Marketplace Refund Order failed', [
+                'marketplace' => 'Walmart',
+                'reason' => $e->getMessage() ?? 'Unknown',
+            ],['purchase_order_id' => $purchaseOrderId]);*/
         }
         return null;
 

@@ -3,6 +3,7 @@
 namespace App\Services\Auth;
 
 use App\Constants\ShopifyQueries;
+use App\Services\CriticalErrorService;
 use GuzzleHttp\Client;
 use GuzzleHttp\Psr7\Request;
 use Illuminate\Support\Facades\Log;
@@ -59,6 +60,12 @@ class ShopifyAuthService
             return $result ?? null;
         } catch (\Exception $e) {
             Log::error('Error: ' . $e->getMessage());
+
+            /*CriticalErrorService::report('Shopify Marketplace API failed', [
+                'marketplace' => 'Shopify',
+                'reason' => $e->getMessage() ?? 'Unknown',
+            ],['request_body' => $bodyArray]);*/
+
             return null;
         }
     }

@@ -289,8 +289,35 @@ class TemuAuthService
         return json_decode($res->getBody(), true);
     }
 
-    public function getCategorySpecifications($code)
+    public function createSpecOption($category, mixed $parentSpecId, $value)
     {
+        $client = new Client();
+        $headers = [
+            'content-type' => 'application/json',
+        ];
 
+        $categoryType = 'bg.local.goods.spec.id.get';
+        $timestamp = time();
+
+        $params = [
+            'type' => $categoryType,
+            'app_key' => $this->appKey,
+            'timestamp' => $timestamp,
+            'catId' => $category,
+            'parentSpecId' => $parentSpecId,
+            'childSpecName' => $value,
+            'data_type' => 'JSON',
+            'access_token' => $this->accessToken,
+        ];
+
+        $params['sign'] = $this->generateSign($params, $this->appSecret);
+
+        Log::info('Request Params: ' . json_encode($params));
+
+        $request = new Request('POST', $this->endpoint, $headers, json_encode($params));
+
+        $res = $client->sendAsync($request)->wait();
+
+        return json_decode($res->getBody(), true);
     }
 }
