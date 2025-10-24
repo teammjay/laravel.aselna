@@ -420,10 +420,14 @@ class WalmartAuthService
         return $categories;
     }
 
-    public function getProductSpecifications($feedType, $version, $categoryName)
+    public function getProductSpecifications($feedType, $version, $categoryNameArr)
     {
         Log::info('Fetching Walmart Specificatrion');
         $accessToken = $this->authenticate();
+
+        if (!is_array($categoryNameArr)) {
+            $categoryNameArr = [$categoryNameArr];
+        }
 
         $headers = [
             'WM_SEC.ACCESS_TOKEN' => "{$accessToken}",
@@ -436,9 +440,7 @@ class WalmartAuthService
         $bodyParams = [
             'feedType' => $feedType,
             'version' => $version,
-            'productTypes' =>[
-                $categoryName
-            ]
+            'productTypes' => $categoryNameArr
         ];
 
         // convert the body params to JSON

@@ -16,6 +16,7 @@ use App\Models\ListingItemProductImage;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\OrderSynchronization;
+use App\Models\ProductSpecification;
 use App\Services\Auth\WalmartAuthService;
 use App\Services\Marketplace\Contracts\MarketplaceServiceInterface;
 use App\Utils\FileUtility;
@@ -287,7 +288,7 @@ class WalmartService implements MarketplaceServiceInterface
                 }
             }
 
-            $requiredAttributes = $this->getVisibleAttributes($storeTypeCategory->name, $store, $productObj, $listingInfo, $item);
+            $requiredAttributes = $this->getVisibleAttributes($storeTypeCategory->name, $store);
 
             // skip only the first one for the secondary image
             $visibleAttributes = [
@@ -303,14 +304,16 @@ class WalmartService implements MarketplaceServiceInterface
                 'color' => $productColor->name ?? '',
             ];
 
+            $specifications = $this->getProductSpecifications($listingItem);
+
             if (in_array('compatibleModels', $requiredAttributes)) $visibleAttributes['compatibleModels'] = $compatibleDevices;
-            if (in_array('has_written_warranty', $requiredAttributes)) $visibleAttributes['has_written_warranty'] = 'No';
-            if (in_array('has_nrtl_listing_certification', $requiredAttributes)) $visibleAttributes['has_nrtl_listing_certification'] = 'No';
-            if (in_array('condition', $requiredAttributes)) $visibleAttributes['condition'] = 'New';
-            if (in_array('isProp65WarningRequired', $requiredAttributes)) $visibleAttributes['isProp65WarningRequired'] = 'No';
+            if (in_array('has_written_warranty', $requiredAttributes)) $visibleAttributes['has_written_warranty'] = $specifications['has_written_warranty'] ?? 'No';
+            if (in_array('has_nrtl_listing_certification', $requiredAttributes)) $visibleAttributes['has_nrtl_listing_certification'] = $specifications['has_nrtl_listing_certification'] ?? 'No';
+            if (in_array('condition', $requiredAttributes)) $visibleAttributes['condition'] = $specifications['condition'] ?? 'New';
+            if (in_array('isProp65WarningRequired', $requiredAttributes)) $visibleAttributes['isProp65WarningRequired'] = $specifications['isProp65WarningRequired'] ?? 'No';
             if (in_array('smallPartsWarnings', $requiredAttributes))
                 $visibleAttributes['smallPartsWarnings'] = [
-                    '0 - No warning applicable'
+                    $specifications['smallPartsWarnings'] ?? '0 - No warning applicable'
                 ];
             if (in_array('netContent', $requiredAttributes))
                 $visibleAttributes['netContent'] = [
@@ -332,11 +335,15 @@ class WalmartService implements MarketplaceServiceInterface
                     'unit' => 'in',
                     'measure' => $productObj->package_dimensions_length ?? 0,
                 ];
-            if (in_array('compatibleBrands', $requiredAttributes))
-                $visibleAttributes['compatibleBrands'] = $compatibleBrands;
+            if (in_array('compatibleBrands', $requiredAttributes)) $visibleAttributes['compatibleBrands'] = $compatibleBrands;
             if (in_array('cell_phone_case_type', $requiredAttributes))
-                $visibleAttributes['cell_phone_case_type'] = 'Holster';
+                $visibleAttributes['cell_phone_case_type'] = $specifications['cell_phone_case_type'] ?? 'Holster';
             if (in_array('msrp', $requiredAttributes)) $visibleAttributes['msrp'] = floatval($productObj->product_mrsp);
+            foreach ($requiredAttributes as $attribute) {
+                if (!isset($visibleAttributes[$attribute]) && isset($specifications[$attribute])) {
+                    $visibleAttributes[$attribute] = $specifications[$attribute] ?? '';
+                }
+            }
 
             $product['Visible'][$storeTypeCategory->name] = $visibleAttributes;
 
@@ -716,5 +723,29 @@ class WalmartService implements MarketplaceServiceInterface
             }
         }
         return [];
+    }
+
+    private function getProductSpecifications($listingItem)
+    {
+        $itemDetail = $listingItem->item;
+        $storeProduct = $itemDetail->storeProduct;
+        $product = $storeProduct->product;
+
+        $productDataA = ProductSpecification::where('product_id', $product->product_id)
+            ->where('store_type_id', $storeProduct->store->store_type_id)->get();
+        $productData = [];
+
+        foreach ($productDataA as $data) {
+            $productData[$data->name] = $data->calculated_value();
+        }
+
+        $compatibleModels = [];
+        foreach ($listingItem->listingItem->devices as $k => $device) {
+            Log::info('Device Name ' . $device->device->name);
+            $compatibleModels[] = strtolower($device->device->name);
+        }
+        $productData['Compatible Model'] = $compatibleModels;
+
+        return $productData;
     }
 }

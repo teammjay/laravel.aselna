@@ -213,13 +213,27 @@ class TemuService implements MarketplaceServiceInterface
                     switch ($spec['parentSpecName']) {
                         case 'Color':
                             if (isset($productColor)) {
-                                $specIdList[] = $spec['parentSpecId'];
-
+                                $specOption = $temuAuthService->createSpecOption($storeTypeCategory->code, $spec['parentSpecId'], $productColor->color_name);
+                                if (isset($specOption) && isset($specOption['result']['specId'])) {
+                                    $specIdList[] = $specOption['result']['specId'];
+                                }
+                            }
+                            break;
+                        case 'Material':
+                            $material = $productObj->material ?? null;
+                            if (isset($material)) {
+                                $specOption = $temuAuthService->createSpecOption($storeTypeCategory->code, $spec['parentSpecId'], $material);
+                                if (isset($specOption) && isset($specOption['result']['specId'])) {
+                                    $specIdList[] = $specOption['result']['specId'];
+                                }
                             }
                             break;
                         default:
                             break;
                     }
+                }
+                if (count($specIdList) >= 1) {
+                    break;
                 }
             }
 
