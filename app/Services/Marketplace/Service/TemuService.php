@@ -209,7 +209,7 @@ class TemuService implements MarketplaceServiceInterface
 
             if (empty($specIdList)) {
                 $userInputParentSpecList = $template['result']['userInputParentSpecList'];
-                foreach ($userInputParentSpecList as $spec) {
+                 foreach ($userInputParentSpecList as $spec) {
                     switch ($spec['parentSpecName']) {
                         case 'Color':
                             if (isset($productColor)) {
@@ -236,6 +236,7 @@ class TemuService implements MarketplaceServiceInterface
                     break;
                 }
             }
+            Log::info('Spec ID List :: ' . json_encode($specIdList));
 
 
             $ShippingTemplates = $temuAuthService->geShippingTemplate();
@@ -252,6 +253,15 @@ class TemuService implements MarketplaceServiceInterface
             $imagesPath = [];
             foreach ($images as $image) {
                 $imagesUrl = $fileSystem->url_base_path . $image->path;
+                $imagePath = public_path($image->path);
+                [$width, $height] = getimagesize($imagePath);
+
+                // Skip if aspect ratio is not 1:1
+                if ($width !== $height) {
+                    Log::info('Skipping image due to aspect ratio: ' . $imagesUrl);
+                    continue;
+                }
+
                 $ImageResponse = $temuAuthService->uploadImage($imagesUrl);
                 Log::info('Response Image :: ' . json_encode($ImageResponse));
                 if (isset($ImageResponse['result']['url'])) {
