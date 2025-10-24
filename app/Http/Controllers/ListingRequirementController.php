@@ -12,7 +12,7 @@ class ListingRequirementController extends Controller
     public function index()
     {
         //$requirements = ListingRequirement::with('storeType')->get();
-        $storeTypes = StoreType::all();
+        $storeTypes = StoreType::orderBy('name')->get();
 
         return view('listing_requirements.index', compact('storeTypes'));
     }
