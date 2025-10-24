@@ -253,8 +253,7 @@ class TemuService implements MarketplaceServiceInterface
             $imagesPath = [];
             foreach ($images as $image) {
                 $imagesUrl = $fileSystem->url_base_path . $image->path;
-                $imagePath = public_path($image->path);
-                [$width, $height] = getimagesize($imagePath);
+                [$width, $height] = getimagesize($imagesUrl);
 
                 // Skip if aspect ratio is not 1:1
                 if ($width !== $height) {
