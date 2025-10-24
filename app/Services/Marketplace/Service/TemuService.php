@@ -106,7 +106,7 @@ class TemuService implements MarketplaceServiceInterface
 
         FileUtility::saveToFile($resultFile, json_encode($allresults));
 
-        $feedId->update([
+        $feedInfo->update([
             'success_count' => $successCount,
             'failed_count' => $failedCount,
             'status' => FeedStatus::PROCESSED
