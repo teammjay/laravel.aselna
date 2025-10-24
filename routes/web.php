@@ -558,6 +558,7 @@ Route::middleware('auth')->group(function () {
     });
 
     Route::resource('listing_requirements', ListingRequirementController::class);
+    Route::post('listing_requirements/filter', [ListingRequirementController::class, 'filter'])->name('listing_requirements.filter');
 
     Route::controller(ProductSpecificationInfoController::class)->group(function () {
         Route::get('/specification_info', 'index')->name('specification_info.index');

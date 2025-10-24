@@ -5,7 +5,7 @@
 
 <div class="mb-3">
     <label class="form-label">Type</label>
-    <select name="type" class="form-select" required>
+    <select name="type" class="form-control form-select" required>
         <option value="column" {{ old('type', $listingRequirement->type ?? '') == 'column' ? 'selected' : '' }}>Column</option>
         <option value="key_value" {{ old('type', $listingRequirement->type ?? '') == 'key_value' ? 'selected' : '' }}>Key-Value</option>
     </select>
