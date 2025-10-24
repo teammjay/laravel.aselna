@@ -231,9 +231,9 @@ class TemuService implements MarketplaceServiceInterface
                         default:
                             break;
                     }
-                }
-                if (count($specIdList) >= 1) {
-                    break;
+                     if (count($specIdList) >= 1) {
+                         break;
+                     }
                 }
             }
             Log::info('Spec ID List :: ' . json_encode($specIdList));
