@@ -1128,8 +1128,7 @@ On Fri, 29 Aug 2025 at 23:36, phonil <phonil.ebay@gmail.com> wrote:
                 }
             }
 
-            //Log::info('Files: ' . json_encode($files));
-            if (!empty($files) && false) {
+            if (!empty($files)) {
                 return response()->json(['success' => true,'file_path' => $files[0]]);
             } else {
                 $marketplaceService = MarketplaceServiceFactory::create($storeType);
