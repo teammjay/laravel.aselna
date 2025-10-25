@@ -53,31 +53,31 @@ class AddProductSpecificationInfo extends Seeder
                     'required' => $property['required'] == true ? 1 : 0,
                 ]);
 
-//                if ($property['required'] == true) {
-//                    $requirement['category'] = $category->code;
-//                    $requirement['key_value'] = $property['name'];
-//                    $requirementCount++;
-//
-//                    ListingRequirement::updateOrCreate(
-//                        [
-//                            'category' => $requirement['category'],
-//                            'type' => $requirement['type'],
-//                            'column' => $requirement['column'] ?? null,
-//                            'key_column' => $requirement['key_column'] ?? null,
-//                            'key_value' => $requirement['key_value'] ?? null,
-//                        ],
-//                        [
-//                            'category' => $requirement['category'],
-//                            'type' => $requirement['type'],
-//                            'table' => $requirement['table'],
-//                            'column' => $requirement['column'] ?? null,
-//                            'key_column' => $requirement['key_column'] ?? null,
-//                            'key_value' => $requirement['key_value'] ?? null,
-//                            'value_column' => $requirement['value_column'] ?? null,
-//                            'store_type_id' => $this->storeType->id
-//                        ]
-//                    );
-//                }
+                if ($property['required'] == true && $property['showType'] == 0) {
+                    $requirement['category'] = $category->code;
+                    $requirement['key_value'] = $property['name'];
+                    $requirementCount++;
+
+                    ListingRequirement::updateOrCreate(
+                        [
+                            'category' => $requirement['category'],
+                            'type' => $requirement['type'],
+                            'column' => $requirement['column'] ?? null,
+                            'key_column' => $requirement['key_column'] ?? null,
+                            'key_value' => $requirement['key_value'] ?? null,
+                        ],
+                        [
+                            'category' => $requirement['category'],
+                            'type' => $requirement['type'],
+                            'table' => $requirement['table'],
+                            'column' => $requirement['column'] ?? null,
+                            'key_column' => $requirement['key_column'] ?? null,
+                            'key_value' => $requirement['key_value'] ?? null,
+                            'value_column' => $requirement['value_column'] ?? null,
+                            'store_type_id' => $this->storeType->id
+                        ]
+                    );
+                }
 
                 if ($property['controlType'] == 1) {
                     $productSpecification = ProductSpecifcationUniqueInfo::updateOrCreate([
