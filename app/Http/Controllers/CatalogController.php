@@ -1144,6 +1144,10 @@ class CatalogController extends Controller
         $categoryId = $request->input('category_id');
         $specifications = $request->input('specifications');
 
+        if (!isset($specifications)) {
+            $specifications = [];
+        }
+
         $categoryCode = null;
         $category_id = null;
 
