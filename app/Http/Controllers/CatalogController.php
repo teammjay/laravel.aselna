@@ -6,6 +6,7 @@ use App\Helpers\QueryFilters;
 use App\Models\Catalog;
 use App\Models\Device;
 use App\Models\Interfaces;
+use App\Models\ListingRequirement;
 use App\Models\Manufacturer;
 use App\Models\ProductColor;
 use App\Models\ProductCondition;
@@ -58,7 +59,7 @@ class CatalogController extends Controller
         $devices = Device::orderBy('name')->get();
         $perPage = $this->perPage;
 
-        return view('catalog.list',compact('perPage','productTypes','manufacturers','productConditions','targetAudience','colors','interfaces', 'devices','shippingCarrierPackage'));
+        return view('catalog.list', compact('perPage', 'productTypes', 'manufacturers', 'productConditions', 'targetAudience', 'colors', 'interfaces', 'devices', 'shippingCarrierPackage'));
     }
 
     /**
@@ -74,7 +75,7 @@ class CatalogController extends Controller
         $columnName = $request['columns'][$columnIndex]['data'];
         $columnSortOrder = $request['order'][0]['dir'];
 
-        $query = Catalog::with('Manufacturer','productType','interfaces.interfaces', 'pinterface.interfaces')->select('*');
+        $query = Catalog::with('Manufacturer', 'productType', 'interfaces.interfaces', 'pinterface.interfaces')->select('*');
         /*$perPage = $request->input('perPage', $this->perPage);*/
 
         // Filter by product title
@@ -90,7 +91,7 @@ class CatalogController extends Controller
         QueryFilters::applyFilter($query, $request, 'products.shipping_package_id', 'shipping_package_id_operator', 'shipping_package_id');
 
         // Filter by product type
-        if($request->has('product_type') && $request->product_type != '') {
+        if ($request->has('product_type') && $request->product_type != '') {
             $all_product_ids[] = $request->product_type;
             $product_sub_types = ProductType::select('id')->where('parent_id', $request->product_type)->get()->toArray();
             if (!empty($product_sub_types)) {
@@ -116,7 +117,7 @@ class CatalogController extends Controller
 
         // Filter by configurable
         if ($request->has('configurable') && $request->configurable != '') {
-            if($request->configurable) {
+            if ($request->configurable) {
                 $query->where('products.configurable', 0);
                 $query->orWhere('products.configurable', NULL);
             }
@@ -183,7 +184,7 @@ class CatalogController extends Controller
         }
 
         if ($request->has('device') && $request->device != '') {
-            if(!$request->has('interface') || $request->interface == ''){
+            if (!$request->has('interface') || $request->interface == '') {
                 $query->leftJoin('product_interface', 'product_interface.product_id', '=', 'products.product_id');
             }
             $query->leftJoin('device_interface', 'device_interface.interface_id', '=', 'product_interface.interface_id');
@@ -210,8 +211,8 @@ class CatalogController extends Controller
             $query->where('products.product_status', $request->status);
         }
 
-        if($columnName != ''){
-            switch(strtolower($columnName)){
+        if ($columnName != '') {
+            switch (strtolower($columnName)) {
                 case 'product_id':
                     $query->orderBy('products.product_id', $columnSortOrder);
                     break;
@@ -263,35 +264,35 @@ class CatalogController extends Controller
         $totalRecordwithFilter = $totalRecords;
 
         $data = [];
-        if(!empty((array) $products)){
-            foreach($products as $key=>$product) {
-                if($product->configurable == 1){
+        if (!empty((array)$products)) {
+            foreach ($products as $key => $product) {
+                if ($product->configurable == 1) {
                     $checked = 'checked';
-                }else{
+                } else {
                     $checked = '';
                 }
 
                 $data[] = array(
-                    "product_id" => $product->product_id.'<input type="checkbox" class="pro-id" name="product['.$key.'][product_id]" value="'.$product->product_id.'" style="visibility:hidden;">',
-                    "product_image_url" => ($product->image) ? '<div class="main-image"><img src="'.asset('storage/' .$product->image->getFileUrl()).'" alt="'.$product->image.'" class="mainImage" width="70" height="70" data-product-id="'.$product->product_id.'"></div>' : '',
-                    "product_sku" => '<span class="prVal">'.$product->product_sku.'</span><input type="text" class="form-control bulk-edit" name="product['.$key.'][product_sku]" value="'.$product->product_sku.'" disabled>',
+                    "product_id" => $product->product_id . '<input type="checkbox" class="pro-id" name="product[' . $key . '][product_id]" value="' . $product->product_id . '" style="visibility:hidden;">',
+                    "product_image_url" => ($product->image) ? '<div class="main-image"><img src="' . asset('storage/' . $product->image->getFileUrl()) . '" alt="' . $product->image . '" class="mainImage" width="70" height="70" data-product-id="' . $product->product_id . '"></div>' : '',
+                    "product_sku" => '<span class="prVal">' . $product->product_sku . '</span><input type="text" class="form-control bulk-edit" name="product[' . $key . '][product_sku]" value="' . $product->product_sku . '" disabled>',
                     "product_type" => $product->productType->name,
-                    "product_title" => '<span class="prVal">'.$product->product_title.'</span><textarea class="form-control bulk-edit" name="product['.$key.'][product_title]" rows="3" disabled>'.$product->product_title.'</textarea>',
-                    "product_status" =>  '<span class="prVal">'.$product->product_status.'</span><select class="form-control bulk-edit" name="product['.$key.'][product_status]" disabled>
+                    "product_title" => '<span class="prVal">' . $product->product_title . '</span><textarea class="form-control bulk-edit" name="product[' . $key . '][product_title]" rows="3" disabled>' . $product->product_title . '</textarea>',
+                    "product_status" => '<span class="prVal">' . $product->product_status . '</span><select class="form-control bulk-edit" name="product[' . $key . '][product_status]" disabled>
                         <option value="active"> Active </option>
                         <option value="discontinued"> Discontinued </option>
-                        <option value="out_of_stock"> Out of stock </option></select>' ,
+                        <option value="out_of_stock"> Out of stock </option></select>',
                     /*"configurable" => '<input type="checkbox" class="configurable" data-id="'.$product->product_id.'" '.$checked.'>',*/
                     "marketplace_price" => $product->product_marketplace_price,
-                    "product_price" => '<span class="prVal">'.$product->product_price.'</span><input type="text" class="form-control bulk-edit" name="product['.$key.'][product_price]" value="'.$product->product_price.'" disabled>',
+                    "product_price" => '<span class="prVal">' . $product->product_price . '</span><input type="text" class="form-control bulk-edit" name="product[' . $key . '][product_price]" value="' . $product->product_price . '" disabled>',
                     "interface" => (isset($product->pinterface)) ? $product->pinterface->interfaces->name : '',
                     "manufacture_name" => isset($product->Manufacturer->name) ? $product->Manufacturer->name : '',
                     "product_color" => isset($product->color) ? $product->color->name : '',
-                    "created_at" => date('Y-m-d H:i:s',strtotime($product->created_at)),
-                    "action" => '<a href="'.route('catalog.edit', $product->product_id).'" class="btn btn-primary">
+                    "created_at" => date('Y-m-d H:i:s', strtotime($product->created_at)),
+                    "action" => '<a href="' . route('catalog.edit', $product->product_id) . '" class="btn btn-primary">
                                     <i class="fas fa-fw fa-pencil-alt"></i>
                                 </a>
-                                <button class="btn btn-danger delete-btn" data-id="'.$product->product_id.'"> <i class="fas fa-fw fa-trash"></i></button>'
+                                <button class="btn btn-danger delete-btn" data-id="' . $product->product_id . '"> <i class="fas fa-fw fa-trash"></i></button>'
                 );
             }
         }
@@ -343,7 +344,7 @@ class CatalogController extends Controller
             $record = Catalog::create(['product_status' => 'draft']);
             session(['pro_id' => $record->product_id]);
             $pro_id = $record->product_id;
-        }else{
+        } else {
             $pro_id = session('pro_id');
         }
         $pageAt = 'Add';
@@ -357,19 +358,19 @@ class CatalogController extends Controller
         $stores = Store::with('storeType')->get();
 
         $store_details = [];
-        if(count($stores ?? []) > 0){
-            foreach($stores as $key=>$store){
-                Log::info('store_type_id: '.$store->store_type_id);
+        if (count($stores ?? []) > 0) {
+            foreach ($stores as $key => $store) {
+                Log::info('store_type_id: ' . $store->store_type_id);
                 $store_details[$key]['store_detail'] = $store;
                 $storeCategories = StoreTypeCategory::select('store_type_category.*')
-                    ->leftJoin('store_type','store_type.id', '=', 'store_type_category.store_type_id')
-                    ->where('store_type.id',$store->store_type_id)
+                    ->leftJoin('store_type', 'store_type.id', '=', 'store_type_category.store_type_id')
+                    ->where('store_type.id', $store->store_type_id)
                     ->get();
                 $store_details[$key]['store_category'] = $storeCategories;
             }
         }
         $manufacturers = Manufacturer::all();
-        $productTypes = ProductType::with('children')->where('parent_id',NULL)->get();
+        $productTypes = ProductType::with('children')->where('parent_id', NULL)->get();
         $productConditions = ProductCondition::all();
         $interfaces = Interfaces::all();
         $productInterfaces = ProductInterface::where('product_id', $pro_id)->get();
@@ -381,10 +382,10 @@ class CatalogController extends Controller
         $specificationInfo = ProductSpecificationInfo::all();
         $shippingCarrierPackage = ShippingPackage::orderBy('name')->get();
         $productStoreType = DB::table('product_channel_detail')
-            ->select('product_channel_detail.id', 'product_channel_detail.status','store_type.name')
-            ->leftJoin('store_type','store_type.id','=','product_channel_detail.store_type_id')
-            ->where('product_id',$pro_id)->get();
-        return view('catalog.update', compact('product','keyFeatures','searchTerms','productImages','productTags','pageAt','store_details','manufacturers','productTypes','productConditions','titleKeywords','interfaces','productInterfaces','targetAudience','storeTypes','productStoreType','colors','productAltImages','specifications','specificationInfo','shippingCarrierPackage'));
+            ->select('product_channel_detail.id', 'product_channel_detail.status', 'store_type.name')
+            ->leftJoin('store_type', 'store_type.id', '=', 'product_channel_detail.store_type_id')
+            ->where('product_id', $pro_id)->get();
+        return view('catalog.update', compact('product', 'keyFeatures', 'searchTerms', 'productImages', 'productTags', 'pageAt', 'store_details', 'manufacturers', 'productTypes', 'productConditions', 'titleKeywords', 'interfaces', 'productInterfaces', 'targetAudience', 'storeTypes', 'productStoreType', 'colors', 'productAltImages', 'specifications', 'specificationInfo', 'shippingCarrierPackage'));
     }
 
     /**
@@ -408,7 +409,7 @@ class CatalogController extends Controller
 
             return redirect()->route('catalog.list')->with('success', 'Product created successfully!');
 
-        }catch (QueryException $e) {
+        } catch (QueryException $e) {
             // Handle the exception and show an error message
             Log::error('Error saving user: ' . $e->getMessage());
             return redirect()->back()->with('error', 'Failed to create product. Please try again.');
@@ -432,7 +433,7 @@ class CatalogController extends Controller
             $product->update($request->all());
             return response()->json(['success' => true, 'message' => 'Data updated successfully!']);
 
-        }catch (QueryException $e) {
+        } catch (QueryException $e) {
             // Handle the exception and show an error message
             return response()->json(['errors' => $e->getMessage()]);
         }
@@ -458,32 +459,32 @@ class CatalogController extends Controller
         $keyFeatures = ProductKeyFeatures::where('product_id', $id)->orderBy('sort_order')->get();
         $searchTerms = ProductSearchTerm::where('product_id', $id)->orderBy('sort_order')->get();
         $titleKeywords = ProductTitleKeyword::where('product_id', $id)->orderBy('priority')->get();
-        $productImages = ProductImages::where('product_id', $id)->orderBy('sort_order','asc')->get();
-        $productAltImages = ProductImageAlternative::where('product_id', $id)->orderBy('sort_order','asc')->get();
+        $productImages = ProductImages::where('product_id', $id)->orderBy('sort_order', 'asc')->get();
+        $productAltImages = ProductImageAlternative::where('product_id', $id)->orderBy('sort_order', 'asc')->get();
         $productTags = ProductTags::pluck('name')->values()->all();
         $stores = Store::with('storeType')->get();
 
         $store_details = [];
-        if(count($stores ?? []) > 0){
-            foreach($stores as $key=>$store){
-                Log::info('store_type_id: '.$store->store_type_id);
+        if (count($stores ?? []) > 0) {
+            foreach ($stores as $key => $store) {
+                Log::info('store_type_id: ' . $store->store_type_id);
                 /* check store active for product */
 //                $prochannel = DB::table('product_channel_detail')->where('store_type_id',$store->store_type_id)->where('product_id',$id)->first();
 //                if((!empty($prochannel) && $prochannel->status)) {
-                    $store_details[$key]['store_detail'] = $store;
-                    $storeCategories = StoreTypeCategory::select('store_type_category.*')
-                        ->leftJoin('store_type', 'store_type.id', '=', 'store_type_category.store_type_id')
-                        ->where('store_type.id', $store->store_type_id)
-                        ->get();
-                    $store_details[$key]['store_category'] = $storeCategories;
+                $store_details[$key]['store_detail'] = $store;
+                $storeCategories = StoreTypeCategory::select('store_type_category.*')
+                    ->leftJoin('store_type', 'store_type.id', '=', 'store_type_category.store_type_id')
+                    ->where('store_type.id', $store->store_type_id)
+                    ->get();
+                $store_details[$key]['store_category'] = $storeCategories;
 //                }
             }
         }
         $manufacturers = Manufacturer::all();
-        $productTypes = ProductType::with('children')->where('parent_id',NULL)->get();
+        $productTypes = ProductType::with('children')->where('parent_id', NULL)->get();
         $productConditions = ProductCondition::all();
         $storeProducts = StoreProduct::where('product_id', $id)->get();
-        $productStore = $storeProducts->pluck('store_id','store_type_category_id')->all();
+        $productStore = $storeProducts->pluck('store_id', 'store_type_category_id')->all();
         $productStoreCategory = $storeProducts->pluck('store_type_category_id')->values()->all();
         $interfaces = Interfaces::all();
         $productInterfaces = ProductInterface::where('product_id', $id)->get();
@@ -495,11 +496,11 @@ class CatalogController extends Controller
         //$specificationInfo = ProductSpecificationInfo::where('product_type_id',$product->product_type)->get();
         $shippingCarrierPackage = ShippingPackage::orderBy('name')->get();
         $productStoreType = DB::table('product_channel_detail')
-                            ->select('product_channel_detail.id','product_channel_detail.status','store_type.name')
-                            ->leftJoin('store_type','store_type.id','=','product_channel_detail.store_type_id')
-                            ->where('product_id',$id)->get();
+            ->select('product_channel_detail.id', 'product_channel_detail.status', 'store_type.name')
+            ->leftJoin('store_type', 'store_type.id', '=', 'product_channel_detail.store_type_id')
+            ->where('product_id', $id)->get();
 
-        return view('catalog.update', compact('product','keyFeatures','searchTerms','productImages','productTags','pageAt','store_details','manufacturers','productTypes','productConditions','productStore','productStoreCategory','titleKeywords','interfaces','productInterfaces','targetAudience','storeTypes','productStoreType','colors','productAltImages','specifications','shippingCarrierPackage'));
+        return view('catalog.update', compact('product', 'keyFeatures', 'searchTerms', 'productImages', 'productTags', 'pageAt', 'store_details', 'manufacturers', 'productTypes', 'productConditions', 'productStore', 'productStoreCategory', 'titleKeywords', 'interfaces', 'productInterfaces', 'targetAudience', 'storeTypes', 'productStoreType', 'colors', 'productAltImages', 'specifications', 'shippingCarrierPackage'));
     }
 
     /**
@@ -545,18 +546,18 @@ class CatalogController extends Controller
                 $product->update($request->all());
                 return response()->json(['success' => true, 'message' => 'Data saved successfully!']);
 
-            }catch (QueryException $e) {
+            } catch (QueryException $e) {
                 // Handle the exception and show an error message
                 return response()->json(['errors' => $e->getMessage()]);
             }
-        }elseif ($tabId == 3) {
+        } elseif ($tabId == 3) {
 
-        }elseif ($tabId == 4) {
+        } elseif ($tabId == 4) {
 
             $data = [];
-            for($i=0; $i < count($request->interfaces); $i++){
+            for ($i = 0; $i < count($request->interfaces); $i++) {
                 $data[] = array(
-                    'id' => (string) Str::uuid(),
+                    'id' => (string)Str::uuid(),
                     'product_id' => $productId,
                     'interface_id' => $request->interfaces[$i]
                 );
@@ -567,13 +568,13 @@ class CatalogController extends Controller
 
             return response()->json(['success' => true, 'message' => 'Data saved successfully!']);
 
-        }elseif ($tabId == 5) {
+        } elseif ($tabId == 5) {
 
             try {
                 $data = [];
-                for($i=0; $i < count($request->features); $i++){
+                for ($i = 0; $i < count($request->features); $i++) {
                     $data[] = array(
-                        'id' => (string) Str::uuid(),
+                        'id' => (string)Str::uuid(),
                         'product_id' => $productId,
                         'value' => $request->features[$i],
                         'sort_order' => $request->feature_sort_order[$i],
@@ -584,15 +585,15 @@ class CatalogController extends Controller
 
                 return response()->json(['success' => true, 'message' => 'Data saved successfully!']);
 
-            }catch (QueryException $e) {
+            } catch (QueryException $e) {
                 // Handle the exception and show an error message
                 return response()->json(['errors' => $e->getMessage()]);
             }
-        }elseif ($tabId == 6){
+        } elseif ($tabId == 6) {
             $data = [];
-            for($i=0; $i < count($request->search_term); $i++){
+            for ($i = 0; $i < count($request->search_term); $i++) {
                 $data[] = array(
-                    'id' => (string) Str::uuid(),
+                    'id' => (string)Str::uuid(),
                     'product_id' => $productId,
                     'term' => $request->search_term[$i],
                     'sort_order' => $request->search_sort_order[$i],
@@ -602,20 +603,20 @@ class CatalogController extends Controller
             ProductSearchTerm::insert($data);
 
             return response()->json(['success' => true, 'message' => 'Data saved successfully!']);
-        }elseif ($tabId == 8){
+        } elseif ($tabId == 8) {
             $data = [];
-            for($i=0; $i < count($request->tags); $i++){
+            for ($i = 0; $i < count($request->tags); $i++) {
                 $data[] = array(
-                    'id' => (string) Str::uuid(),
+                    'id' => (string)Str::uuid(),
                     'product_id' => $productId,
                     'name' => $request->tags[$i]
                 );
             }
             //ProductTags::where('product_id', $productId)->delete();
-            ProductTags::upsert($data, ['product_id','name'], ['name']);
+            ProductTags::upsert($data, ['product_id', 'name'], ['name']);
 
             return response()->json(['success' => true, 'message' => 'Data saved successfully!']);
-        }elseif ($tabId == 9){
+        } elseif ($tabId == 9) {
             unset($request['tab']);
             $request['overwrite_title'] = $request->has('overwrite_title') ? 1 : 0;
             $request['overwrite_description'] = $request->has('overwrite_description') ? 1 : 0;
@@ -628,12 +629,12 @@ class CatalogController extends Controller
             $created_by = auth()->user()->name ?? 'admin';
             $request->merge(['created_by' => $created_by, 'updated_by' => $created_by]);
 
-            $product = StoreProduct::where(['product_id' => $productId,'store_id' =>$request->input('store_id')])->first();
+            $product = StoreProduct::where(['product_id' => $productId, 'store_id' => $request->input('store_id')])->first();
             $productArr = isset($product) ? $product->toArray() : [];
             //print_r($productArr);die;
-            if(!empty($productArr)){
+            if (!empty($productArr)) {
                 $product->update($request->all());
-            }else{
+            } else {
                 StoreProduct::create($request->all());
             }
 
@@ -643,15 +644,15 @@ class CatalogController extends Controller
             /*echo '<pre>';
             print_r($request->input());
             echo '</pre>';exit;*/
-        }elseif($tabId == 11){
+        } elseif ($tabId == 11) {
             try {
                 $product = Catalog::findOrFail($productId);
                 $product->update($request->all());
 
                 $data = [];
-                for($i=0; $i < count($request->title_keyword); $i++){
+                for ($i = 0; $i < count($request->title_keyword); $i++) {
                     $data[] = array(
-                        'id' => (string) Str::uuid(),
+                        'id' => (string)Str::uuid(),
                         'product_id' => $productId,
                         'keyword' => $request->title_keyword[$i],
                         'priority' => $request->title_priority[$i],
@@ -662,29 +663,29 @@ class CatalogController extends Controller
 
                 return response()->json(['success' => true, 'message' => 'Data saved successfully!!']);
 
-            }catch (QueryException $e) {
+            } catch (QueryException $e) {
                 // Handle the exception and show an error message
                 return response()->json(['errors' => $e->getMessage()]);
             }
-        }elseif ($tabId == 12) {
+        } elseif ($tabId == 12) {
 
             try {
                 $data = [];
-                for($i=0; $i < count($request->specification); $i++){
+                for ($i = 0; $i < count($request->specification); $i++) {
                     $data[] = array(
-                        'id' => (string) Str::uuid(),
+                        'id' => (string)Str::uuid(),
                         'product_id' => $productId,
                         'name' => $request->specification[$i],
                         'value' => $request->specification_value[$i],
                         'store_type_id' => $request->specification_store_type_id
                     );
                 }
-                ProductSpecification::where(['product_id' => $productId,'store_type_id'=> $request->specification_store_type_id])->delete();
+                ProductSpecification::where(['product_id' => $productId, 'store_type_id' => $request->specification_store_type_id])->delete();
                 ProductSpecification::insert($data);
 
                 return response()->json(['success' => true, 'message' => 'Data saved successfully!']);
 
-            }catch (QueryException $e) {
+            } catch (QueryException $e) {
                 // Handle the exception and show an error message
                 return response()->json(['errors' => $e->getMessage()]);
             }
@@ -694,7 +695,8 @@ class CatalogController extends Controller
     /**
      * Submit the records from different tab.
      */
-    public function finalize(Request $request) {
+    public function finalize(Request $request)
+    {
         $productId = $request->input('product_id');
 
         $validator = Validator::make(request()->all(), [
@@ -763,7 +765,7 @@ class CatalogController extends Controller
         // Store the uploaded image and create a thumbnail
         if ($request->file('images')) {
 
-            foreach ($request->file('images') as $key=>$image) {
+            foreach ($request->file('images') as $key => $image) {
                 $extension = $image->getClientOriginalExtension();
                 $imageName = time() . '_' . uniqid() . '.' . $extension;
                 $storagePath = public_path('storage/product_images/' . $imageName);
@@ -783,15 +785,15 @@ class CatalogController extends Controller
 
                 $imageNames[] = $imageName;
                 $imagedata[] = array(
-                    'id' => (string) Str::uuid(),
+                    'id' => (string)Str::uuid(),
                     'product_id' => $productId,
                     'image' => $imageFile->id,
                     //'thumbnail_image' => $imageName,
-                    'sort_order' => (int) $key + 1,
+                    'sort_order' => (int)$key + 1,
                 );
 
-                if($key == 0){
-                    Catalog::where('product_id', $productId)->update(['product_image_url'=>$imageFile->id]);
+                if ($key == 0) {
+                    Catalog::where('product_id', $productId)->update(['product_image_url' => $imageFile->id]);
                 }
 
                 // Create thumbnail
@@ -806,7 +808,7 @@ class CatalogController extends Controller
                 $thumbnailNames[] = 'thumbnails/' . $imageName;*/
             }
             //print_r($imagedata);die;
-            $images = ProductImages::upsert($imagedata,['product_id','image'], ['image']);
+            $images = ProductImages::upsert($imagedata, ['product_id', 'image'], ['image']);
 
             return response()->json([
                 'success' => 'Image uploaded successfully!',
@@ -819,7 +821,8 @@ class CatalogController extends Controller
     }
 
     /* set default image*/
-    public function setDefaultImage(Request $request){
+    public function setDefaultImage(Request $request)
+    {
 
         $imageId = $request->input('image_id');
         $productId = $request->input('product_id');
@@ -830,18 +833,19 @@ class CatalogController extends Controller
             ProductImages::where('id', $imageId)->update(['main_image' => 1]);
 
             $imageDetail = ProductImages::find($imageId);
-            Catalog::where('product_id', $productId)->update(['product_image_url'=>$imageDetail->image]);
+            Catalog::where('product_id', $productId)->update(['product_image_url' => $imageDetail->image]);
 
             return response()->json(['success' => true, 'message' => 'Image set default successfully']);
 
-        }catch(QueryException $e){
+        } catch (QueryException $e) {
 
             return response()->json(['errors' => $e->getMessage()], 422);
         }
     }
 
     /* set image sort order*/
-    public function setImageOrder(Request $request){
+    public function setImageOrder(Request $request)
+    {
         $imageId = $request->input('image_id');
         $sort_order = $request->input('sort_order');
 
@@ -850,7 +854,7 @@ class CatalogController extends Controller
             ProductImages::where('id', $imageId)->update(['sort_order' => $sort_order]);
             return response()->json(['success' => true, 'message' => 'Set order  successfully']);
 
-        }catch(QueryException $e){
+        } catch (QueryException $e) {
 
             return response()->json(['errors' => $e->getMessage()], 422);
         }
@@ -862,78 +866,83 @@ class CatalogController extends Controller
 
         try {
             foreach ($order as $position => $id) {
-                ProductImages::where('id', $id)->update(['sort_order' => ($position+1)]);
+                ProductImages::where('id', $id)->update(['sort_order' => ($position + 1)]);
             }
             return response()->json(['success' => true, 'message' => 'Set order  successfully']);
 
-        }catch(QueryException $e){
+        } catch (QueryException $e) {
 
             return response()->json(['errors' => $e->getMessage()], 422);
         }
 
     }
 
-    public function getStoreDetail(Request $request){
+    public function getStoreDetail(Request $request)
+    {
         $store_id = $request->input('store_id');
         $product_id = $request->input('product_id');
-        if($store_id){
+        if ($store_id) {
 
-            $storeProductDetail = StoreProduct::where(['store_id'=>$store_id,'product_id'=>$product_id])->first();
+            $storeProductDetail = StoreProduct::where(['store_id' => $store_id, 'product_id' => $product_id])->first();
 
-            if(!$storeProductDetail){
-                $storeProductDetail =  Catalog::where(['product_id'=>$product_id])->first();
+            if (!$storeProductDetail) {
+                $storeProductDetail = Catalog::where(['product_id' => $product_id])->first();
             }
             //print_r($storeProductDetail);die;
             return response()->json(['success' => true, 'data' => $storeProductDetail]);
-        }else{
-            return response()->json(['success' =>false]);
+        } else {
+            return response()->json(['success' => false]);
         }
     }
 
-    public function getProductChannel(Request $request){
+    public function getProductChannel(Request $request)
+    {
         $product_channel_id = $request->input('id');
 
         $productStoreType = DB::table('product_channel_detail')
-            ->select('product_channel_detail.id','product_channel_detail.store_type_id', 'product_channel_detail.status','store_type.name')
-            ->leftJoin('store_type','store_type.id','=','product_channel_detail.store_type_id')
-            ->where('product_channel_detail.id',$product_channel_id)->first();
+            ->select('product_channel_detail.id', 'product_channel_detail.store_type_id', 'product_channel_detail.status', 'store_type.name')
+            ->leftJoin('store_type', 'store_type.id', '=', 'product_channel_detail.store_type_id')
+            ->where('product_channel_detail.id', $product_channel_id)->first();
 
         return response()->json(['success' => true, 'data' => $productStoreType]);
 
     }
 
-    public function saveProductChannel(Request $request){
+    public function saveProductChannel(Request $request)
+    {
 
         try {
-            if($request->has('id') && $request->id == ''){
-              $request['id'] = (string)Str::uuid();
+            if ($request->has('id') && $request->id == '') {
+                $request['id'] = (string)Str::uuid();
             }
-            DB::table('product_channel_detail')->upsert($request->all(),['id'],['status']);
+            DB::table('product_channel_detail')->upsert($request->all(), ['id'], ['status']);
             return response()->json(['success' => true, 'message' => 'Data saved successfully']);
 
-        }catch (QueryException $e) {
+        } catch (QueryException $e) {
             // Handle the exception and show an error message
             return response()->json(['errors' => $e->getMessage()], 422);
         }
     }
 
-    public function deleteProductChannel(Request $request){
+    public function deleteProductChannel(Request $request)
+    {
 
         $product_channel_id = $request->input('id');
         DB::table('product_channel_detail')->where('id', $product_channel_id)->delete();
         return response()->json(['success' => true, 'message' => 'Data saved successfully!']);
     }
 
-    public function getImages(Request $request){
+    public function getImages(Request $request)
+    {
 
         $product_id = $request->productId;
         $pimages = [];
-        if($product_id){
-            $images = ProductImages::where('product_id',$product_id)->orderBy('sort_order','asc')->get();
-            if(!empty((array) $images)){
-                foreach($images as $img){
-                    if($img->imageObj) {
-                        $pimages[] = asset('storage/' .$img->imageObj->getFileUrl());
+        if ($product_id) {
+            $images = ProductImages::where('product_id', $product_id)->orderBy('sort_order', 'asc')->get();
+            if (!empty((array)$images)) {
+                foreach ($images as $img) {
+                    if ($img->imageObj) {
+                        $pimages[] = asset('storage/' . $img->imageObj->getFileUrl());
                     }
                 }
             }
@@ -941,7 +950,8 @@ class CatalogController extends Controller
         return response()->json($pimages);
     }
 
-    public function deleteImage(Request $request){
+    public function deleteImage(Request $request)
+    {
         $image_id = $request->image_id;
 
         if ($image_id) {
@@ -977,17 +987,17 @@ class CatalogController extends Controller
         // Store the uploaded image and create a thumbnail
         if ($request->file('alternate_images')) {
 
-            foreach ($request->file('alternate_images') as $key=>$image) {
+            foreach ($request->file('alternate_images') as $key => $image) {
                 $imageName = time() . '_' . uniqid() . '.' . $image->getClientOriginalExtension();
                 $image->move(public_path('storage/product_additional_images/'), $imageName);
                 $imageNames[] = $imageName;
                 $imagedata[] = array(
-                    'id' => (string) Str::uuid(),
+                    'id' => (string)Str::uuid(),
                     'product_id' => $productId,
                     'image' => $imageName,
                     //'thumbnail_image' => $imageName,
-                    'sort_order' => (int) $key + 1,
-                    'version_number' => (int) $key + 1,
+                    'sort_order' => (int)$key + 1,
+                    'version_number' => (int)$key + 1,
                 );
 
                 // Create thumbnail
@@ -1002,7 +1012,7 @@ class CatalogController extends Controller
                 $thumbnailNames[] = 'thumbnails/' . $imageName;*/
             }
             //print_r($imagedata);die;
-            $images = ProductImageAlternative::upsert($imagedata,['product_id','image'], ['image']);
+            $images = ProductImageAlternative::upsert($imagedata, ['product_id', 'image'], ['image']);
 
             return response()->json([
                 'success' => 'Image uploaded successfully!',
@@ -1014,7 +1024,8 @@ class CatalogController extends Controller
         return response()->json(['error' => 'Image upload failed.'], 500);
     }
 
-    public function deleteAlternativeImage(Request $request){
+    public function deleteAlternativeImage(Request $request)
+    {
         $image_id = $request->image_id;
 
         if ($image_id) {
@@ -1035,18 +1046,19 @@ class CatalogController extends Controller
 
         try {
             foreach ($order as $position => $id) {
-                ProductImageAlternative::where('id', $id)->update(['sort_order' => ($position+1)]);
+                ProductImageAlternative::where('id', $id)->update(['sort_order' => ($position + 1)]);
             }
             return response()->json(['success' => true, 'message' => 'Set order  successfully']);
 
-        }catch(QueryException $e){
+        } catch (QueryException $e) {
 
             return response()->json(['errors' => $e->getMessage()], 422);
         }
 
     }
 
-    public function getSpecification(Request $request){
+    public function getSpecification(Request $request)
+    {
 
         $store_type_id = $request->input('store_type_id');
         $product_id = $request->input('product_id');
@@ -1064,19 +1076,19 @@ class CatalogController extends Controller
 //        }
 //        $categoryId = $firstStoreProduct->store_type_category_id;
 
-        $specifications = ProductSpecification::where('store_type_id',$store_type_id)->where('product_id',$product_id)->orderBy('created_at','asc')->get();
+        $specifications = ProductSpecification::where('store_type_id', $store_type_id)->where('product_id', $product_id)->orderBy('created_at', 'asc')->get();
         /*echo '<pre>';
         print_r($specifications);
         echo '</pre>';die;*/
         $specificationArr = [];
-        if(!empty($specifications)){
-            foreach($specifications as $key=>$spec){
-                $specificationArr[$key]= $spec;
-                $field_option = ProductSpecifcationUniqueInfo::where('field_name',$spec->name)->first();
+        if (!empty($specifications)) {
+            foreach ($specifications as $key => $spec) {
+                $specificationArr[$key] = $spec;
+                $field_option = ProductSpecifcationUniqueInfo::where('field_name', $spec->name)->first();
                 $field = $valoption = '';
-                if(!empty($field_option)){
+                if (!empty($field_option)) {
                     $field = 'select';
-                    $valoption = ProductSpecificationValue::where('product_specification_id',$field_option->id)->get();
+                    $valoption = ProductSpecificationValue::where('product_specification_id', $field_option->id)->get();
                 }
                 $specificationArr[$key]->field = $field;
                 $specificationArr[$key]->valoption = $valoption;
@@ -1094,51 +1106,140 @@ class CatalogController extends Controller
         })->orderBy('name', 'asc')->get();
         $info_category = $info_category->pluck('id')->values()->all();
 
-        if(!isset($categoryId) && $categoryId == '') {
+        if (!isset($categoryId) && $categoryId == '') {
             $product_detail = Catalog::findOrFail($product_id);
             $category = ProductType::with('ancestors')->find($product_detail->product_type);
             $category_id = $this->getAncestors($category, $info_category);
-        }else{
+        } else {
             $category = ProductType::with('ancestors')->find($categoryId);
             $category_id = $this->getAncestors($category, $info_category);
         }
 
-        $storetype = StoreType::where('id',$store_type_id)->first();
-        if (isset($storetype) && in_array($storetype->code, ['temu','amazon','walmart'])) {
-            Log::info('No category for store type code: '.$storetype->code);
+        $storetype = StoreType::where('id', $store_type_id)->first();
+        if (isset($storetype) && in_array($storetype->code, ['temu', 'amazon', 'walmart'])) {
+            Log::info('No category for store type code: ' . $storetype->code);
             $category_id = null;
         }
-        Log::info('categoryId: '.$category_id);
+        Log::info('categoryId: ' . $category_id);
 
 
-        $specificationInfo = ProductSpecificationInfo::where('product_specification_info.store_type_id',$store_type_id)
+        $specificationInfo = ProductSpecificationInfo::where('product_specification_info.store_type_id', $store_type_id)
             ->when(isset($category_id) && !empty($category_id), function ($query) use ($category_id) {
-                Log::info('category_id in when: '.$category_id);
-                $query->join('product_specification_info_category_link','product_specification_info_category_link.specification_info_id', '=', 'product_specification_info.id');
-                $query->where('product_specification_info_category_link.product_type_id',$category_id);
+                Log::info('category_id in when: ' . $category_id);
+                $query->join('product_specification_info_category_link', 'product_specification_info_category_link.specification_info_id', '=', 'product_specification_info.id');
+                $query->where('product_specification_info_category_link.product_type_id', $category_id);
             })
             ->orderBy('product_specification_info.field_local_name')->get();
 
         return response()->json([
-            'html' => view('catalog.specification', compact('specificationInfo','specificationArr'))->render(),
+            'html' => view('catalog.specification', compact('specificationInfo', 'specificationArr'))->render(),
         ]);
 
     }
 
-    private function getAncestors($category,$info_category)
+    public function getRequiredSpecification(Request $request)
+    {
+        $store_type_id = $request->input('store_type_id');
+        $product_id = $request->input('product_id');
+        $categoryId = $request->input('category_id');
+        $specifications = $request->input('specifications');
+
+        $categoryCode = null;
+        $category_id = null;
+
+        $storetype = StoreType::where('id', $store_type_id)->first();
+        if (isset($storetype) && in_array($storetype->code, ['temu', 'walmart', 'amazon'])) {
+            $storeIds = Store::where('store_type_id', $store_type_id)->pluck('id')->toArray();
+            $firstStoreProduct = StoreProduct::where('product_id', $product_id)
+                ->whereNotNull('store_type_category_id')
+                ->whereIn('store_id', $storeIds)
+                ->first();
+
+            if (!isset($firstStoreProduct)) {
+                return response()->json([
+                    'html' => '',
+                    'message' => '<p>No category found for the selected store type. Please select category in stores tab</p>',
+                ]);
+            }
+            $categoryId = $firstStoreProduct->store_type_category_id;
+            $category_id = null;
+
+            $storeCategory = StoreTypeCategory::where('id', $categoryId)->first();
+            if (isset($storeCategory) && in_array($storetype->code, ['temu', 'walmart'])) {
+                $categoryCode = $storeCategory->code;
+            } else if (isset($storeCategory) && $storetype->code == 'amazon') {
+                $categoryCode = $storeCategory->marketplace_code;
+            }
+        } else {
+            return response()->json([
+                'html' => '',
+                'message' => 'No specification required for this store type.',
+            ]);
+        }
+
+        $requirements = ListingRequirement::where('type', 'key_value')
+            ->where('store_type_id', $store_type_id)
+            ->when(isset($categoryCode), function ($query) use ($categoryCode) {
+                $query->where('category', $categoryCode);
+            })
+            ->pluck('key_value')->toArray();
+
+        $specificationArr = [];
+        if (!empty($requirements)) {
+            foreach ($requirements as $key => $spec) {
+                Log::info('Spec: ' . $spec);
+                if (in_array($spec, $specifications)) {
+                    continue;
+                }
+                $specificationArr[$key] = (object)['name' => $spec];
+                $field_option = ProductSpecifcationUniqueInfo::where('field_name', $spec)->first();
+                $field = $valoption = '';
+                if (!empty($field_option)) {
+                    $field = 'select';
+                    $valoption = ProductSpecificationValue::where('product_specification_id', $field_option->id)->get();
+                }
+                $specificationArr[$key]->field = $field;
+                $specificationArr[$key]->valoption = $valoption;
+            }
+        }
+
+        if (empty($specificationArr)) {
+            return response()->json([
+                'html' => '',
+                'message' => 'No additional specification required for this category.',
+            ]);
+        }
+
+        $specificationInfo = ProductSpecificationInfo::where('product_specification_info.store_type_id', $store_type_id)
+            ->when(isset($category_id) && !empty($category_id), function ($query) use ($category_id) {
+                Log::info('category_id in when: ' . $category_id);
+                $query->join('product_specification_info_category_link', 'product_specification_info_category_link.specification_info_id', '=', 'product_specification_info.id');
+                $query->where('product_specification_info_category_link.product_type_id', $category_id);
+            })
+            ->orderBy('product_specification_info.field_local_name')->get();
+
+        Log::info('Specification Info: ' . json_encode($specificationInfo));
+
+        return response()->json([
+            'html' => view('catalog.specification_options', compact('specificationInfo', 'specificationArr'))->render(),
+        ]);
+    }
+
+    private function getAncestors($category, $info_category)
     {
         if (isset($category) && $category->parent) {
             //echo $category->parent->name . "\n";
-            if(in_array($category->parent->id, $info_category)){
+            if (in_array($category->parent->id, $info_category)) {
                 return $category->parent->id;
             }
-            $this->getAncestors($category->parent,$info_category);
+            $this->getAncestors($category->parent, $info_category);
         } else {
             return null;
         }
     }
 
-    public function getSpecificationOption(Request $request){
+    public function getSpecificationOption(Request $request)
+    {
         $store_type_id = $request->input('store_type_id');
         $product_id = $request->input('product_id');
         $categoryId = $request->input('category_id');
@@ -1148,47 +1249,47 @@ class CatalogController extends Controller
         })->orderBy('name', 'asc')->get();
         $info_category = $info_category->pluck('id')->values()->all();
 
-        if(!isset($categoryId) && $categoryId == '') {
+        if (!isset($categoryId) && $categoryId == '') {
             $product_detail = Catalog::findOrFail($product_id);
             $category = ProductType::with('ancestors')->find($product_detail->product_type);
             $category_id = $this->getAncestors($category, $info_category);
-        }else{
+        } else {
             $category = ProductType::with('ancestors')->find($categoryId);
             $category_id = $this->getAncestors($category, $info_category);
         }
-        $storetype = StoreType::where('id',$store_type_id)->first();
-        if (isset($storetype) && in_array($storetype->code, ['temu','walmart'])) {
-            Log::info('No category for store type code: '.$storetype->code);
+        $storetype = StoreType::where('id', $store_type_id)->first();
+        if (isset($storetype) && in_array($storetype->code, ['temu', 'walmart'])) {
+            Log::info('No category for store type code: ' . $storetype->code);
             $category_id = null;
         }
-        Log::info('categoryId: '.$category_id);
+        Log::info('categoryId: ' . $category_id);
 
-        $specificationInfo = ProductSpecificationInfo::where('product_specification_info.store_type_id',$store_type_id)
+        $specificationInfo = ProductSpecificationInfo::where('product_specification_info.store_type_id', $store_type_id)
             ->when(isset($category_id) && !empty($category_id), function ($query) use ($category_id) {
-                Log::info('category_id in when: '.$category_id);
-                $query->join('product_specification_info_category_link','product_specification_info_category_link.specification_info_id', '=', 'product_specification_info.id');
-                $query->where('product_specification_info_category_link.product_type_id',$category_id);
+                Log::info('category_id in when: ' . $category_id);
+                $query->join('product_specification_info_category_link', 'product_specification_info_category_link.specification_info_id', '=', 'product_specification_info.id');
+                $query->where('product_specification_info_category_link.product_type_id', $category_id);
             })
             ->orderBy('product_specification_info.field_local_name')->get();
 
         $option = '<option value=""></option>';
         $field = $valoption = '';
-        if(!empty($specificationInfo)){
-            foreach($specificationInfo as $spec){
-                $option .= '<option value="'.$spec->field_local_name.'">'.$spec->field_local_name.'</option>';
+        if (!empty($specificationInfo)) {
+            foreach ($specificationInfo as $spec) {
+                $option .= '<option value="' . $spec->field_local_name . '">' . $spec->field_local_name . '</option>';
 
-                $field_option = ProductSpecifcationUniqueInfo::where('field_name',$spec->name)->first();
+                $field_option = ProductSpecifcationUniqueInfo::where('field_name', $spec->name)->first();
 
-                if(!empty($field_option)){
+                if (!empty($field_option)) {
                     $field = 'select';
-                    $optionvalueArr = ProductSpecificationValue::where('product_specification_id',$field_option->id)->get();
-                    if(!empty($optionvalueArr)){
+                    $optionvalueArr = ProductSpecificationValue::where('product_specification_id', $field_option->id)->get();
+                    if (!empty($optionvalueArr)) {
                         $valoption = '<option value=""></option>';
-                        foreach($optionvalueArr as $val){
-                            $valoption .= '<option value="'.trim($val->id).'">'.trim($val->field_value).'</option>';
+                        foreach ($optionvalueArr as $val) {
+                            $valoption .= '<option value="' . trim($val->id) . '">' . trim($val->field_value) . '</option>';
                         }
                     }
-                }else{
+                } else {
                     $field = 'input';
                     $valoption = '';
                 }
@@ -1222,19 +1323,20 @@ class CatalogController extends Controller
         ]);
     }
 
-    public function getFieldOption(Request $request){
+    public function getFieldOption(Request $request)
+    {
 
         $field_name = $request->input('field_name');
         $field = $option = '';
-        $firstField = ProductSpecifcationUniqueInfo::where('field_name',$field_name)->first();
-        if(isset($firstField)){
+        $firstField = ProductSpecifcationUniqueInfo::where('field_name', $field_name)->first();
+        if (isset($firstField)) {
             $field_id = $firstField->id;
-            $field_options = ProductSpecificationValue::where('product_specification_id',$field_id)->get();
-            if(!empty($field_options)){
+            $field_options = ProductSpecificationValue::where('product_specification_id', $field_id)->get();
+            if (!empty($field_options)) {
                 $field = 'select';
                 $option = '<option value=""></option>';
-                foreach ($field_options as $key=>$field_option) {
-                    $option .= '<option value="'.trim($field_option->id).'">'.trim($field_option->field_value).'</option>';
+                foreach ($field_options as $key => $field_option) {
+                    $option .= '<option value="' . trim($field_option->id) . '">' . trim($field_option->field_value) . '</option>';
                 }
             }
 
