@@ -1142,7 +1142,7 @@ class CatalogController extends Controller
         $store_type_id = $request->input('store_type_id');
         $product_id = $request->input('product_id');
         $categoryId = $request->input('category_id');
-        $specifications = $request->input('specifications');
+        $specifications = $request->input('specifications',[]);
 
         if (!isset($specifications)) {
             $specifications = [];
