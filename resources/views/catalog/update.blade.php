@@ -2079,6 +2079,42 @@
 
             $(document).on('click', '#add_required_specification', function() {
 
+                var specifications = $('.specification').map(function(){ return $(this).val(); }).get();
+
+                $.ajax({
+                    url: "{{ route('catalog.getrequiredspecification') }}",
+                    method: "POST",
+                    data: {
+                        store_type_id: $('#specification_store_type_id').val(),
+                        product_id : '{{ $product->product_id }}',
+                        category_id : $('#product_type').val(),
+                        specifications: specifications,
+                        _token: "{{ csrf_token() }}"
+                    },
+                    success: function (response) {
+                        let nonemptySpec = specifications.filter(spec => spec !== null && spec !== undefined && spec !== "");
+
+                        if (response.html.trim() === '') {
+                            alert(response.message);
+                            return;
+                        }
+
+                        if (nonemptySpec.length > 0) {
+                            $('#specification_table tbody').append(response.html);
+                        } else {
+                            $('#specification_table tbody').html(response.html);
+                        }
+
+                        $('.specification').select2();
+                        $('.specification-select').select2();
+                        $('.select2').on('select2:open', function () {
+                            // Wait for dropdown to render before focusing the search field
+                            setTimeout(function () {
+                                document.querySelector('.select2-container--open .select2-search__field').focus();
+                            }, 0);
+                        });
+                    }
+                });
             });
 
             // Remove field group
