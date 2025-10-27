@@ -907,6 +907,10 @@ class ListingController extends Controller
                         }
                     }
                 }
+
+                /*echo '<pre>';
+                print_r($issues);
+                echo '</pre>';die;*/
                 $view = view('listing.selected_product_list', compact('products', 'storeCategories', 'storeTypeName', 'issues'))->render();
             } else if ($step == 3) {
                 $view = view('listing.select_device_product_list', compact('products', 'storeCategories', 'storeTypeName'))->render();

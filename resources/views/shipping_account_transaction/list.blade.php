@@ -75,7 +75,7 @@
         </div>
         <div class="card-body" style="display: none;">
             <form id="filter-form">
-                <input type="hidden" name="store_id" id="store_id">
+
                 <div class="row pt-3">
                     <div class="col-md-4">
                         <div class="row">
@@ -152,6 +152,23 @@
                     </div>
                 </div>
                 <div class="row pt-3">
+                    <div class="col-md-4">
+                        <div class="row">
+                            <div class="col-4 text-right">
+                                Store
+                            </div>
+                            <div class="col-8">
+                                <select class="form-control" name="store_id" id="store_id">
+                                    <option value=""></option>
+                                    @if(count($stores ?? []) > 0)
+                                        @foreach($stores as $store)
+                                            <option value="{{ $store->id }}">{{ $store->name }} - {{ $store->storeType->name }}</option>
+                                        @endforeach
+                                    @endif
+                                </select>
+                            </div>
+                        </div>
+                    </div>
                     <div class="col-md-4">
                         <div class="row">
                             <div class="col-4 text-right">

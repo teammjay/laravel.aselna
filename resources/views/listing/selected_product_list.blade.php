@@ -119,7 +119,7 @@
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="errorModalLabel-{{ $product->product_id }}">Errors for Product
+                    <h5 class="modal-title specPro" id="errorModalLabel-{{ $product->product_id }}" data-proid="{{ $product->product_id }}">Errors for Product
                         : {{ $product->product_title }}</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
@@ -132,6 +132,8 @@
                     @endif
                 </div>
                 <div class="modal-footer">
+                    <button class="btn btn-primary btn-sm" id="updateAllProductSpecification">Update All Selected Products</button>
+                    <button class="btn btn-primary btn-sm" id="updateProductSpecification">Update</button>
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                 </div>
             </div>
