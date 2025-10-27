@@ -1391,4 +1391,45 @@ class CatalogController extends Controller
             ]);
         }
     }
+
+    public function updateProductSpecification(Request $request){
+        $productIds = $request->input('product_ids');
+        $specifications = $request->input('specifications');
+        $specification_values = $request->input('specifications_values');
+        $store_id = $request->input('store_id');
+
+        //echo $store_id;die;
+
+        $store = Store::with('storeType')->where('id',$store_id)->first();
+
+        try {
+            $data = [];
+            for ($i = 0; $i < count($specifications); $i++) {
+                if($productIds){
+                    foreach ($productIds as $productId){
+                        $data[] = array(
+                            'id' => (string)Str::uuid(),
+                            'product_id' => $productId,
+                            'name' => $specifications[$i],
+                            'value' => $specification_values[$i],
+                            'store_type_id' => $store->storeType->id ?? null
+                        );
+                    }
+                }
+
+            }
+
+            /*echo '<pre>';
+            print_r($data);
+            echo '</pre>';die;*/
+
+            ProductSpecification::insert($data);
+
+            return response()->json(['success' => true]);
+
+        } catch (\Exception $e) {
+            // Handle the exception and show an error message
+            return response()->json(['errors' => $e->getMessage()]);
+        }
+    }
 }

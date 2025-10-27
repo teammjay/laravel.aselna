@@ -3,6 +3,10 @@
 namespace App\Utils;
 
 use App\Models\ListingRequirement;
+use App\Models\ProductSpecifcationUniqueInfo;
+use App\Models\ProductSpecification;
+use App\Models\ProductSpecificationInfo;
+use App\Models\ProductSpecificationValue;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
@@ -155,16 +159,19 @@ class ListingUtility
     {
         $requirements = ListingRequirement::where('category', $category)->get();
         $issues = [];
+        $specifications = [];
+        $fieldName = '';
 
-        foreach ($requirements as $req) {
+        foreach ($requirements as $key=>$req) {
            // Log::info("Requirement: " . json_encode($req));
             if ($req->type === 'column') {
                 $value = DB::table($req->table)
                     ->where('product_id', $productId)
                     ->value($req->column);
 
+                $fieldName = $req->column;
                 if (is_null($value) || $value === '') {
-                    $issues[] = "Missing column '{$req->column}' in '{$req->table}'";
+                    $issues[$key]['title'] = "Missing column '{$req->column}' in '{$req->table}'";
                 }
             }
 
@@ -177,12 +184,13 @@ class ListingUtility
                     // Assuming you have the store_type_id value (e.g., from the request)
                     $query->where('store_type_id', $storeTypeId);
                 }
-
+                $fieldName = $req->key_value;
                 $value = $query->value($req->value_column);
 
                 if (is_null($value) || $value === '') {
-                    $issues[] = "Missing value for key '{$req->key_value}' in '{$req->table}'";
+                    $issues[$key]['title'] = "Missing value for key '{$req->key_value}' in '{$req->table}'";
                 }
+
             }
 
             if ($req->type === 'any_fields') {
@@ -199,7 +207,7 @@ class ListingUtility
 
                 $row = $query->first();
                 if (!$row) {
-                    $issues[] = "Missing record in '{$req->table}'";
+                    $issues[$key]['title'] = "Missing record in '{$req->table}'";
                     continue;
                 }
 
@@ -213,7 +221,34 @@ class ListingUtility
 
                 if (!$hasValue) {
                     $fieldsList = implode("', '", $fieldsData);
-                    $issues[] = "At least one of these fields must have a value: '{$fieldsList}'";
+                    $issues[$key]['title'] = "At least one of these fields must have a value: '{$fieldsList}'";
+                }
+            }
+
+            if(isset($issues[$key]['title'])) {
+                $qquery = ProductSpecificationInfo::where('field_local_name', $fieldName);
+                if ($storeTypeId) {
+                    $qquery->where('store_type_id', $storeTypeId);
+                }
+
+                $specificationInfo = $qquery->orderBy('field_local_name')->first();
+
+                if ($specificationInfo) {
+
+                    $field_option = ProductSpecifcationUniqueInfo::where('field_name', $req->key_value)->first();
+                    $field = $valoption = '';
+                    if (!empty($field_option)) {
+                        $field = 'select';
+                        $valoption = ProductSpecificationValue::where('product_specification_id', $field_option->id)->get();
+                    }
+
+                    $issues[$key]['spec'] = [
+                        'field_id' => $specificationInfo->id,
+                        'field' => $specificationInfo->field_local_name,
+                        'field_type' => $field,
+                        'values' => $valoption,
+                    ];
+
                 }
             }
         }
