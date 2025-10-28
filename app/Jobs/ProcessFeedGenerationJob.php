@@ -31,10 +31,15 @@ use App\Jobs\Concerns\TrackableJob;
 
 class ProcessFeedGenerationJob implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, SerializesModels;
+    /*use Dispatchable, InteractsWithQueue, SerializesModels;
     use Queueable, TrackableJob {
         TrackableJob::withChain insteadof Queueable;
         Queueable::withChain as queueableWithChain;
+    }*/
+
+    use Queueable, Dispatchable, TrackableJob {
+        TrackableJob::withChain insteadof Dispatchable;
+        Dispatchable::withChain as dispatchableWithChain;
     }
 
     public $timeout = 30000; // Set a timeout for the job
@@ -58,7 +63,7 @@ class ProcessFeedGenerationJob implements ShouldQueue
     {
         try {
 
-            $this->updateTrackingRecord(['tags' => 'Feed Generation']);
+            $this->updateTrackingRecord(['tags' => 'Google/Microsoft Feed Generation']);
             $feed_type = $this->data['feed_type'];
             $store_id = $this->data['store_id'];
             $fileType = $this->data['fileType'];

@@ -61,10 +61,10 @@ class ShopifyAuthService
         } catch (\Exception $e) {
             Log::error('Error: ' . $e->getMessage());
 
-            /*CriticalErrorService::report('Shopify Marketplace API failed', [
+            CriticalErrorService::report('Shopify Marketplace API failed', [
                 'marketplace' => 'Shopify',
                 'reason' => $e->getMessage() ?? 'Unknown',
-            ],['request_body' => $bodyArray]);*/
+            ],['request_body' => $bodyArray]);
 
             return null;
         }

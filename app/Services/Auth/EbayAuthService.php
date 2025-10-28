@@ -2,6 +2,7 @@
 
 namespace App\Services\Auth;
 
+use App\Services\CriticalErrorService;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
 use Illuminate\Support\Facades\Log;
@@ -56,8 +57,6 @@ class EbayAuthService
                 ]
             ]);
 
-
-
             $data = json_decode($response->getBody(), true);
 
             Log::info('Token Created ' . $response->getBody());
@@ -65,6 +64,12 @@ class EbayAuthService
             return $data;
 
         } catch (\Exception $e) {
+
+            CriticalErrorService::report('Ebay Get Accesstoken failed', [
+                'marketplace' => 'eBay',
+                'reason' => $e->getMessage() ?? 'Unknown',
+            ]);
+
             Log::error('Error: ' . $e->getMessage());
             return null;
         }
@@ -103,6 +108,11 @@ class EbayAuthService
 
             return response()->json(['error' => 'Failed to refresh token'], 400);
         } catch (\Exception $e) {
+            CriticalErrorService::report('Ebay Refresh token failed', [
+                'marketplace' => 'eBay',
+                'reason' => $e->getMessage() ?? 'Unknown',
+            ]);
+
             Log::error('Error: ' . $e->getMessage());
             return null;
             /*return response()->json(['error' => $e->getMessage()], 400);*/
@@ -173,6 +183,12 @@ class EbayAuthService
 
         } catch (RequestException $e) {
             Log::info('Task Created Error ' . $e->getMessage());
+
+            CriticalErrorService::report('Ebay create task failed', [
+                'marketplace' => 'eBay',
+                'reason' => $e->getMessage() ?? 'Unknown',
+            ],['listing_info' => $listingInfo]);
+
             if ($e->hasResponse()) {
                 $errorBody = json_decode($e->getResponse()->getBody()->getContents(), true);
                 $this->handleApiErrors($errorBody);
@@ -215,6 +231,12 @@ class EbayAuthService
             return $response->getStatusCode() === 200 ? 'result-feeds/ebay/'.$listingId.'.zip' : false;
 
         }catch (RequestException $e) {
+
+            CriticalErrorService::report('Ebay get result feed failed', [
+                'marketplace' => 'eBay',
+                'reason' => $e->getMessage() ?? 'Unknown',
+            ],['listing_id' => $listingId, 'task_id' => $taskId]);
+
             if ($e->hasResponse()) {
                 $errorBody = json_decode($e->getResponse()->getBody()->getContents(), true);
                 $this->handleApiErrors($errorBody);
@@ -249,6 +271,12 @@ class EbayAuthService
             return $response->getStatusCode() === 200 ? $savePath : false;
 
         }catch (RequestException $e) {
+
+            CriticalErrorService::report('Ebay download feed failed', [
+                'marketplace' => 'eBay',
+                'reason' => $e->getMessage() ?? 'Unknown',
+            ],['listing_id' => $listingId, 'task_id' => $taskId]);
+
             if ($e->hasResponse()) {
                 $errorBody = json_decode($e->getResponse()->getBody()->getContents(), true);
                 $this->handleApiErrors($errorBody);
@@ -277,6 +305,12 @@ class EbayAuthService
 
             return json_decode($response->getBody(), true);
         } catch (RequestException $e) {
+
+            CriticalErrorService::report('Ebay get task detail failed', [
+                'marketplace' => 'eBay',
+                'reason' => $e->getMessage() ?? 'Unknown',
+            ],['task_id' => $taskId]);
+
             if ($e->hasResponse()) {
                 $errorBody = json_decode($e->getResponse()->getBody()->getContents(), true);
                 $this->handleApiErrors($errorBody);
@@ -290,49 +324,66 @@ class EbayAuthService
 
     public function uploadImageToEPS($imageUrl, $imageName)
     {
-        $accessToken = $this->refreshToken();
+        try {
+            $accessToken = $this->refreshToken();
 
-        $headers = [
-            'X-EBAY-API-COMPATIBILITY-LEVEL' => '1147',
-            'X-EBAY-API-CALL-NAME'           => 'UploadSiteHostedPictures',
-            'X-EBAY-API-SITEID'              => '0',
-            'Content-Type'                   => 'text/xml',
-            'X-EBAY-API-IAF-TOKEN'           => $accessToken,
-        ];
+            $headers = [
+                'X-EBAY-API-COMPATIBILITY-LEVEL' => '1147',
+                'X-EBAY-API-CALL-NAME' => 'UploadSiteHostedPictures',
+                'X-EBAY-API-SITEID' => '0',
+                'Content-Type' => 'text/xml',
+                'X-EBAY-API-IAF-TOKEN' => $accessToken,
+            ];
 
-        $xml = new \SimpleXMLElement('<?xml version="1.0" encoding="utf-8"?>
+            $xml = new \SimpleXMLElement('<?xml version="1.0" encoding="utf-8"?>
 <UploadSiteHostedPicturesRequest xmlns="urn:ebay:apis:eBLBaseComponents"></UploadSiteHostedPicturesRequest>');
 
-        $xml->addChild('PictureName',$imageName);
-        $xml->addChild('ExternalPictureURL',$imageUrl);
-        $xml->addChild('PictureSet','Supersize');
-        $xmlContent = $xml->asXML();
+            $xml->addChild('PictureName', $imageName);
+            $xml->addChild('ExternalPictureURL', $imageUrl);
+            $xml->addChild('PictureSet', 'Supersize');
+            $xmlContent = $xml->asXML();
 
-        $response = $this->client->post('ws/api.dll', [
-            'headers' => $headers,
-            'body'    => $xmlContent,
-        ]);
+            $response = $this->client->post('ws/api.dll', [
+                'headers' => $headers,
+                'body' => $xmlContent,
+            ]);
 
-        $body = $response->getBody()->getContents();
-        Log::info('UploadSiteHostedPictures Response ' . $response->getBody());
-        $xml = simplexml_load_string($body);
+            $body = $response->getBody()->getContents();
+            Log::info('UploadSiteHostedPictures Response ' . $response->getBody());
+            $xml = simplexml_load_string($body);
 
-        if (isset($xml->SiteHostedPictureDetails->FullURL)) {
+            if (isset($xml->SiteHostedPictureDetails->FullURL)) {
 
-            $imageUrl = (string)$xml->SiteHostedPictureDetails->FullURL;
-            $maxSize = 0;
+                $imageUrl = (string)$xml->SiteHostedPictureDetails->FullURL;
+                $maxSize = 0;
 
-            foreach ($xml->SiteHostedPictureDetails->PictureSetMember as $member) {
-                $size = (int) $member->PictureHeight;
-                if ($size > $maxSize) {
-                    $maxSize = $size;
-                    $imageUrl = (string) $member->MemberURL;
+                foreach ($xml->SiteHostedPictureDetails->PictureSetMember as $member) {
+                    $size = (int)$member->PictureHeight;
+                    if ($size > $maxSize) {
+                        $maxSize = $size;
+                        $imageUrl = (string)$member->MemberURL;
+                    }
                 }
+                return $imageUrl;
             }
-            return $imageUrl;
-        }
 
-        return null;
+            return null;
+        }catch (RequestException $e){
+
+            CriticalErrorService::report('Ebay upload images to EPS failed', [
+                'marketplace' => 'eBay',
+                'reason' => $e->getMessage() ?? 'Unknown',
+            ],['image_url' => $imageUrl]);
+
+            if ($e->hasResponse()) {
+                $errorBody = json_decode($e->getResponse()->getBody()->getContents(), true);
+                $this->handleApiErrors($errorBody);
+            } else {
+                Log::error('Error: ' . $e->getMessage());
+                return null;
+                /*throw new \Exception('Unexpected error occurred: ' . $e->getMessage());*/
+            }
+        }
     }
 
     public function uploadFile(string $taskId, string $fileName, string $filePath)
@@ -361,6 +412,12 @@ class EbayAuthService
             Log::info('Upload File Detail ' . $response->getBody());
             return json_decode($response->getBody(), true);
         } catch (RequestException $e) {
+
+            CriticalErrorService::report('Ebay upload file failed', [
+                'marketplace' => 'eBay',
+                'reason' => $e->getMessage() ?? 'Unknown',
+            ],['file_name' => $fileName, 'task_id' => $taskId]);
+
             if ($e->hasResponse()) {
                 $errorBody = json_decode($e->getResponse()->getBody()->getContents(), true);
                 $this->handleApiErrors($errorBody);
@@ -408,6 +465,12 @@ class EbayAuthService
             return json_decode($response->getBody(), true);
 
         } catch (RequestException $e) {
+
+            CriticalErrorService::report('Ebay order sync failed', [
+                'marketplace' => 'eBay',
+                'reason' => $e->getMessage() ?? 'Unknown',
+            ]);
+
             if ($e->hasResponse()) {
                 $errorBody = json_decode($e->getResponse()->getBody()->getContents(), true);
                 $this->handleApiErrors($errorBody);
@@ -540,6 +603,12 @@ class EbayAuthService
             return json_decode($response->getBody()->getContents(), true);
 
         } catch (RequestException $e) {
+
+            CriticalErrorService::report('Ebay create shipping fulfillment failed', [
+                'marketplace' => 'eBay',
+                'reason' => $e->getMessage() ?? 'Unknown',
+            ],['order_id' => $orderId, 'data' => $data]);
+
             if ($e->hasResponse()) {
                 $error = json_decode($e->getResponse()->getBody(), true);
                 return ['error' => $error];
@@ -567,6 +636,13 @@ class EbayAuthService
             return json_decode($response->getBody(), true);
 
         } catch (RequestException $e) {
+
+            CriticalErrorService::report('Ebay cancel order failed', [
+                'marketplace' => 'eBay',
+                'reason' => $e->getMessage() ?? 'Unknown',
+            ],['data' => $data]);
+
+
             if ($e->hasResponse()) {
                 $error = json_decode($e->getResponse()->getBody(), true);
                 return ['error' => $error];
@@ -594,6 +670,12 @@ class EbayAuthService
             return json_decode($response->getBody(), true);
 
         } catch (RequestException $e) {
+
+            CriticalErrorService::report('Ebay fetch listing info by sku failed', [
+                'marketplace' => 'eBay',
+                'reason' => $e->getMessage() ?? 'Unknown',
+            ],['sku' => $sku]);
+
             if ($e->hasResponse()) {
                 $errorBody = json_decode($e->getResponse()->getBody()->getContents(), true);
                 $this->handleApiErrors($errorBody);
@@ -665,6 +747,12 @@ class EbayAuthService
 
         }catch (RequestException $e) {
             Log::info('Item Detail Error ' . $e->getMessage());
+
+            CriticalErrorService::report('Ebay fetch listing item status sync failed', [
+                'marketplace' => 'eBay',
+                'reason' => $e->getMessage() ?? 'Unknown',
+            ],['sku_list' => $skuList]);
+
             if ($e->hasResponse()) {
                 $errorBody = json_decode($e->getResponse()->getBody()->getContents(), true);
                 $this->handleApiErrors($errorBody);
@@ -695,6 +783,12 @@ class EbayAuthService
             return json_decode($response->getBody(), true);
 
         } catch (RequestException $e) {
+
+            CriticalErrorService::report('Ebay get order detail api failed', [
+                'marketplace' => 'eBay',
+                'reason' => $e->getMessage() ?? 'Unknown',
+            ],['order_id' => $orderID]);
+
             if ($e->hasResponse()) {
                 $errorBody = json_decode($e->getResponse()->getBody()->getContents(), true);
                 $this->handleApiErrors($errorBody);
@@ -727,6 +821,12 @@ class EbayAuthService
             return json_decode($response->getBody(), true);
 
         } catch (RequestException $e) {
+
+            CriticalErrorService::report('Ebay issue refund failed', [
+                'marketplace' => 'eBay',
+                'reason' => $e->getMessage() ?? 'Unknown',
+            ],['order_id' => $orderId, 'data' => $data]);
+
             if ($e->hasResponse()) {
                 $error = json_decode($e->getResponse()->getBody(), true);
                 return ['error' => $error];
@@ -754,6 +854,12 @@ class EbayAuthService
             return json_decode($response->getBody(), true);
 
         } catch (RequestException $e) {
+
+            CriticalErrorService::report('Ebay check cancellation failed', [
+                'marketplace' => 'eBay',
+                'reason' => $e->getMessage() ?? 'Unknown',
+            ],['order_id' => $order_id]);
+
             if ($e->hasResponse()) {
                 $error = json_decode($e->getResponse()->getBody(), true);
                 return ['error' => $error];
@@ -780,6 +886,12 @@ class EbayAuthService
             return json_decode($response->getBody(), true);
 
         } catch (RequestException $e) {
+
+            CriticalErrorService::report('Ebay approve cancellation failed', [
+                'marketplace' => 'eBay',
+                'reason' => $e->getMessage() ?? 'Unknown',
+            ],['cancel_id' => $cancelId]);
+
             if ($e->hasResponse()) {
                 $error = json_decode($e->getResponse()->getBody(), true);
                 return ['error' => $error];
