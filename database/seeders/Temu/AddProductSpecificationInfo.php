@@ -92,7 +92,8 @@ class AddProductSpecificationInfo extends Seeder
                             'field_value' => $value['value'],
                         ], [
                             'product_specification_id' => $productSpecification->id,
-                            'field_value' => $value['value']
+                            'field_value' => $value['value'],
+                            'store_type_id' => $this->storeType->id,
                         ]);
                     }
                 }
