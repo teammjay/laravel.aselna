@@ -47,12 +47,13 @@ class AmazonUtility
         $productData = $itemDetail->storeProduct->product;
         Log::info('Product Id : ' . $productData->id);
         // combine the name and value into this string -> name : value, name : value
-        $special_features = ProductSpecification::where('product_id', $productData->product_id)
-            ->get()
-            ->map(function ($specification) {
-                return $specification->name . ' : ' . $specification->calculated_value();
-            })
-            ->where('store_type_id', $storeProduct->store->store_type_id)->first();
+       $special_features = ProductSpecification::where('product_id', $productData->product_id)
+           ->where('store_type_id', $storeProduct->store->store_type_id)
+           ->get()
+           ->map(function ($specification) {
+               return $specification->name . ' : ' . $specification->calculated_value();
+           })
+           ->implode(', ');
 
         // get value of items included
         $items_included = ProductSpecification::where('product_id', $productData->product_id)
@@ -89,11 +90,12 @@ class AmazonUtility
         $productData = $itemDetail->storeProduct->product;
 
         $special_features = ProductSpecification::where('product_id', $productData->product_id)
+            ->where('store_type_id', $storeProduct->store->store_type_id)
             ->get()
             ->map(function ($specification) {
                 return $specification->name . ' : ' . $specification->calculated_value();
             })
-            ->where('store_type_id', $storeProduct->store->store_type_id)->first();
+            ->implode(', ');
 
         $items_included = ProductSpecification::where('product_id', $productData->product_id)
             ->where('name', 'Items Included')
@@ -171,11 +173,12 @@ class AmazonUtility
         $productData = $itemDetail->storeProduct->product;
 
         $special_features = ProductSpecification::where('product_id', $productData->product_id)
+            ->where('store_type_id', $storeProduct->store->store_type_id)
             ->get()
             ->map(function ($specification) {
                 return $specification->name . ' : ' . $specification->calculated_value();
             })
-            ->where('store_type_id', $storeProduct->store->store_type_id)->first();
+            ->implode(', ');
 
         $mounting_type = ProductSpecification::where('product_id', $productData->product_id)
             ->where('name', 'Mounting Type')
@@ -248,11 +251,12 @@ class AmazonUtility
         $productData = $itemDetail->storeProduct->product;
 
         $special_features = ProductSpecification::where('product_id', $productData->product_id)
+            ->where('store_type_id', $storeProduct->store->store_type_id)
             ->get()
             ->map(function ($specification) {
                 return $specification->name . ' : ' . $specification->calculated_value();
             })
-            ->where('store_type_id', $storeProduct->store->store_type_id)->first();
+            ->implode(', ');
 
         $number_of_ports = ProductSpecification::where('product_id', $productData->product_id)
             ->where('name', 'Number of Ports')
@@ -292,11 +296,12 @@ class AmazonUtility
         $productData = $itemDetail->storeProduct->product;
 
         $special_features = ProductSpecification::where('product_id', $productData->product_id)
+            ->where('store_type_id', $storeProduct->store->store_type_id)
             ->get()
             ->map(function ($specification) {
                 return $specification->name . ' : ' . $specification->calculated_value();
             })
-            ->where('store_type_id', $storeProduct->store->store_type_id)->first();
+            ->implode(', ');
 
         $number_of_ports = ProductSpecification::where('product_id', $productData->product_id)
             ->where('name', 'Number of Ports')
@@ -380,11 +385,12 @@ class AmazonUtility
         $productData = $itemDetail->storeProduct->product;
 
         $special_features = ProductSpecification::where('product_id', $productData->product_id)
+            ->where('store_type_id', $storeProduct->store->store_type_id)
             ->get()
             ->map(function ($specification) {
                 return $specification->name . ' : ' . $specification->calculated_value();
             })
-            ->where('store_type_id', $storeProduct->store->store_type_id)->first();
+            ->implode(', ');
 
         $form_factor = ProductSpecification::where('product_id', $productData->product_id)
             ->where('name', 'Form Factor')
@@ -413,11 +419,12 @@ class AmazonUtility
         $productData = $itemDetail->storeProduct->product;
 
         $special_features = ProductSpecification::where('product_id', $productData->product_id)
+            ->where('store_type_id', $storeProduct->store->store_type_id)
             ->get()
             ->map(function ($specification) {
                 return $specification->name . ' : ' . $specification->calculated_value();
             })
-            ->where('store_type_id', $storeProduct->store->store_type_id)->first();
+            ->implode(', ');
 
         $mounting_type = ProductSpecification::where('product_id', $productData->product_id)
             ->where('name', 'Mounting Type')
