@@ -157,7 +157,7 @@ class ListingUtility
 
     public static function validate($category, $productId, $storeTypeId): array
     {
-        $requirements = ListingRequirement::where('category', $category)->get();
+        $requirements = ListingRequirement::where('category', $category)->where('store_type_id', $storeTypeId)->get();
         $issues = [];
         $specifications = [];
         $fieldName = '';
@@ -239,7 +239,7 @@ class ListingUtility
                     $field = $valoption = '';
                     if (!empty($field_option)) {
                         $field = 'select';
-                        $valoption = ProductSpecificationValue::where('product_specification_id', $field_option->id)->get();
+                        $valoption = self::getSpecValues($field_option, $category, $storeTypeId);
                     }
 
                     $issues[$key]['spec'] = [
@@ -254,6 +254,32 @@ class ListingUtility
         }
 
         return $issues;
+    }
+
+    /**
+     * @param $field_option
+     * @return mixed
+     */
+    public static function getSpecValues($field_option, $category, $storeTypeId)
+    {
+        $valoption = ProductSpecificationValue::where('product_specification_id', $field_option->id)
+            ->where('store_type_id', $storeTypeId)
+            ->where('category', $category)
+            ->get();
+
+        if ($valoption->isEmpty()) {
+            $valoption = ProductSpecificationValue::where('product_specification_id', $field_option->id)
+                ->where('store_type_id', $storeTypeId)
+                ->get();
+        }
+
+        if ($valoption->isEmpty()) {
+            $valoption = ProductSpecificationValue::where('product_specification_id', $field_option->id)
+                ->whereNull('store_type_id')
+                ->get();
+        }
+
+        return $valoption;
     }
 
 
