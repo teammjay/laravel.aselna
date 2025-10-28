@@ -20,18 +20,20 @@
                 @endif
             </td>
             <td>
-                @if(isset($issue['spec']['field_id']) && isset($issue['spec']['field_type']) && $issue['spec']['field_type'] == 'select')
+                @if(isset($issue['spec']['field_id']))
+                    @if(isset($issue['spec']['field_type']) && $issue['spec']['field_type'] == 'select')
 
-                    <select class="form-control specification-select specification_value" name="specification_value[]">
-                        <option value=""></option>
-                        @if(count($issue['spec']['values'] ?? []) > 0)
-                            @foreach($issue['spec']['values'] as $vopt)
-                                <option value="{{ trim($vopt->id) }}">{{ trim($vopt->field_value) }}</option>
-                            @endforeach
-                        @endif
-                    </select>
-                @else
-                    <textarea class="form-control specification_value" name="specification_value[]"></textarea>
+                        <select class="form-control specification-select specification_value" name="specification_value[]">
+                            <option value=""></option>
+                            @if(count($issue['spec']['values'] ?? []) > 0)
+                                @foreach($issue['spec']['values'] as $vopt)
+                                    <option value="{{ trim($vopt->id) }}">{{ trim($vopt->field_value) }}</option>
+                                @endforeach
+                            @endif
+                        </select>
+                    @else
+                        <textarea class="form-control specification_value" name="specification_value[]"></textarea>
+                    @endif
                 @endif
             </td>
 
