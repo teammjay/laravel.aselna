@@ -1088,7 +1088,15 @@ class CatalogController extends Controller
                 $field = $valoption = '';
                 if (!empty($field_option)) {
                     $field = 'select';
-                    $valoption = ProductSpecificationValue::where('product_specification_id', $field_option->id)->get();
+                    $valoption = ProductSpecificationValue::where('product_specification_id', $field_option->id)
+                        ->where('store_type_id', $store_type_id)
+                        ->get();
+
+                    if ($valoption->isEmpty()) {
+                        $valoption = ProductSpecificationValue::where('product_specification_id', $field_option->id)
+                            ->whereNull('store_type_id')
+                            ->get();
+                    }
                 }
                 $specificationArr[$key]->field = $field;
                 $specificationArr[$key]->valoption = $valoption;
@@ -1200,7 +1208,15 @@ class CatalogController extends Controller
                 $field = $valoption = '';
                 if (!empty($field_option)) {
                     $field = 'select';
-                    $valoption = ProductSpecificationValue::where('product_specification_id', $field_option->id)->get();
+                    $valoption = ProductSpecificationValue::where('product_specification_id', $field_option->id)
+                        ->where('store_type_id', $store_type_id)
+                        ->get();
+
+                    if ($valoption->isEmpty()) {
+                        $valoption = ProductSpecificationValue::where('product_specification_id', $field_option->id)
+                            ->whereNull('store_type_id')
+                            ->get();
+                    }
                 }
                 $specificationArr[$key]->field = $field;
                 $specificationArr[$key]->valoption = $valoption;
@@ -1286,7 +1302,15 @@ class CatalogController extends Controller
 
                 if (!empty($field_option)) {
                     $field = 'select';
-                    $optionvalueArr = ProductSpecificationValue::where('product_specification_id', $field_option->id)->get();
+                    $optionvalueArr = ProductSpecificationValue::where('product_specification_id', $field_option->id)
+                        ->where('store_type_id', $store_type_id)
+                        ->get();
+
+                    if ($optionvalueArr->isEmpty()) {
+                        $optionvalueArr = ProductSpecificationValue::where('product_specification_id', $field_option->id)
+                            ->whereNull('store_type_id')
+                            ->get();
+                    }
                     if (!empty($optionvalueArr)) {
                         $valoption = '<option value=""></option>';
                         foreach ($optionvalueArr as $val) {
@@ -1331,11 +1355,20 @@ class CatalogController extends Controller
     {
 
         $field_name = $request->input('field_name');
+        $store_type_id = $request->input('store_type_id');
         $field = $option = '';
         $firstField = ProductSpecifcationUniqueInfo::where('field_name', $field_name)->first();
         if (isset($firstField)) {
             $field_id = $firstField->id;
-            $field_options = ProductSpecificationValue::where('product_specification_id', $field_id)->get();
+            $field_options = ProductSpecificationValue::where('product_specification_id', $field_id)
+                ->where('store_type_id', $store_type_id)
+                ->get();
+
+            if ($field_options->isEmpty()) {
+                $field_options = ProductSpecificationValue::where('product_specification_id', $field_id)
+                    ->whereNull('store_type_id')
+                    ->get();
+            }
             if (!empty($field_options)) {
                 $field = 'select';
                 $option = '<option value=""></option>';
