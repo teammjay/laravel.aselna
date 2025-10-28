@@ -31,13 +31,7 @@ use App\Jobs\Concerns\TrackableJob;
 
 class ProcessFeedGenerationJob implements ShouldQueue
 {
-    /*use Dispatchable, InteractsWithQueue, SerializesModels;
-    use Queueable, TrackableJob {
-        TrackableJob::withChain insteadof Queueable;
-        Queueable::withChain as queueableWithChain;
-    }*/
-
-    use Queueable, Dispatchable, TrackableJob {
+    use Dispatchable, TrackableJob {
         TrackableJob::withChain insteadof Dispatchable;
         Dispatchable::withChain as dispatchableWithChain;
     }
