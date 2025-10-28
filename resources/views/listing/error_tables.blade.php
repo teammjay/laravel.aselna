@@ -5,7 +5,7 @@
         <th>Issue</th>
         <th>Field</th>
         <th>Value</th>
-        {{--<th>Action</th>--}}
+        <th>Action</th>
     </tr>
     </thead>
     <tbody>
@@ -20,7 +20,7 @@
                 @endif
             </td>
             <td>
-                @if(isset($issue['spec']['field_type']) && $issue['spec']['field_type'] == 'select')
+                @if(isset($issue['spec']['field_id']) && isset($issue['spec']['field_type']) && $issue['spec']['field_type'] == 'select')
 
                     <select class="form-control specification-select specification_value" name="specification_value[]">
                         <option value=""></option>
@@ -34,10 +34,13 @@
                     <textarea class="form-control specification_value" name="specification_value[]"></textarea>
                 @endif
             </td>
-            {{--<td>
-                <a href="/catalog/edit/{{ $product->product_id }}" target="_blank"
-                   class="btn btn-primary btn-sm">Resolve</a>
-            </td>--}}
+
+            <td>
+                @if(!isset($issue['spec']['field_id']))
+                    <a href="/catalog/edit/{{ $product->product_id }}" target="_blank"
+                       class="btn btn-primary btn-sm">Resolve</a>
+                @endif
+            </td>
         </tr>
     @endforeach
     </tbody>
