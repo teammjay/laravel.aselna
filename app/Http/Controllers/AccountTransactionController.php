@@ -6,6 +6,7 @@ use App\Models\AccountTransaction;
 use App\Models\OrderOperation;
 use App\Models\ShippingAccount;
 use App\Models\ShippingSettingCarrierAccount;
+use App\Models\Store;
 use App\Services\DataTable\DataTableService;
 use App\Utils\EndicialabelService;
 use App\Utils\shipment\ShipmentDocumentsCreator;
@@ -22,16 +23,22 @@ class AccountTransactionController extends Controller
     public function index($id)
     {
         $account_id = $id;
+        /*$states = AccountTransaction::select('status', DB::raw('COUNT(*) as total'))
+            ->groupBy('status')
+            ->get();*/
+
 //        $shipping_account_transactions = AccountTransaction::with('shippingAccount')->where('shipping_account_id',$account_id)->get();
+
+        $stores = Store::with('storeType')->where('store_status','>', 0)->orderBy('name')->get();
         $shipping_account = ShippingAccount::all();
-        return view('shipping_account_transaction.list', compact('shipping_account', 'account_id'));
+        return view('shipping_account_transaction.list', compact('shipping_account', 'account_id','stores'));
     }
 
     public function filter(Request $request)
     {
         $totalRecords = AccountTransaction::count();
 
-        $query = AccountTransaction::with('shippingAccount')->select('*');
+        $query = AccountTransaction::with('shippingAccount','store','store.storeType')->select('*');
 
         if ($request->has('tracking_number') && $request->tracking_number != '') {
             $query->where('tracking_number', $request->tracking_number);
@@ -61,6 +68,10 @@ class AccountTransactionController extends Controller
             $query->where('status', $request->status);
         }
 
+        if ($request->has('store_id') && $request->store_id != '') {
+            $query->where('store_id', $request->store_id);
+        }
+
 
 
         $columnIndex = $request->input('order.0.column', 0);
@@ -87,6 +98,7 @@ class AccountTransactionController extends Controller
                 'tracking_number' => $transaction->tracking_number,
                 'transaction_date' => $transaction->transaction_date,
                 'transaction_id' => $transaction->transaction_id,
+                'store' => (isset($transaction->store) && isset($transaction->store->storeType)) ? $transaction->store->name . ' - ' . $transaction->store->storeType->name : '',
                 'amount' => $transaction->amount,
                 'address' => $transaction->address,
                 'status' => $transaction->status,

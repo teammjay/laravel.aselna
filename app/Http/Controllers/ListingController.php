@@ -907,6 +907,10 @@ class ListingController extends Controller
                         }
                     }
                 }
+
+                /*echo '<pre>';
+                print_r($issues);
+                echo '</pre>';die;*/
                 $view = view('listing.selected_product_list', compact('products', 'storeCategories', 'storeTypeName', 'issues'))->render();
             } else if ($step == 3) {
                 $view = view('listing.select_device_product_list', compact('products', 'storeCategories', 'storeTypeName'))->render();
@@ -2013,11 +2017,20 @@ class ListingController extends Controller
         foreach ($devices as $device) {
             $fullName = trim($device->name);
             $brand = $device->brand_name;
+            $parts = preg_split('/\s+/', $fullName);
+
+            if (count($parts) < 2) continue;
 
             $parts = explode(' ', $fullName);
-            $prefix = $brand === 'Apple' ? 'iPhone' : $parts[0];
-            $model = $parts[1] ?? '';
-            $suffix = implode(' ', array_slice($parts, 2)) ?: '__base__';
+            if($brand === 'Apple') {
+                $prefix = $brand === 'Apple' ? 'iPhone' : $parts[0];
+                $model = $parts[1] ?? '';
+                $suffix = implode(' ', array_slice($parts, 2)) ?: '__base__';
+            }else{
+                $prefix = $brand === 'Apple' ? 'iPhone' : $parts[1];
+                $model = $parts[2] ?? '';
+                $suffix = implode(' ', array_slice($parts, 3)) ?: '__base__';
+            }
 
             $groupKey = strtolower($brand) === 'apple' ? 'iPhone' : "$brand $prefix";
 
@@ -3294,7 +3307,7 @@ class ListingController extends Controller
         ]);
     }
 
-    public function reList(Request $request)
+    /*public function reListOld(Request $request)
     {
 
         $selected_listing = $request->input('selected_list');
@@ -3324,28 +3337,24 @@ class ListingController extends Controller
                             're_list' => 1
                         ];
 
-                        /*echo '<pre>';
-                        print_r($listingArr);
-                        echo '</pre>';die;*/
-
                         $listrecord = Listing::create($listingArr);
                         $listing_id = $listrecord->id;
 
-                        /*$itemRecord = ListingItem::find($list->item_id);
-
-                        $clonedRecord = $itemRecord->replicate();
-                        $clonedRecord->save();
-                        $listing_item_id = $clonedRecord->id;
-
-                        $itemDetails = ListingItemDetail::where('listing_item_id', $list->item_id)->get();*/
+//                        $itemRecord = ListingItem::find($list->item_id);
+//
+//                        $clonedRecord = $itemRecord->replicate();
+//                        $clonedRecord->save();
+//                        $listing_item_id = $clonedRecord->id;
+//
+//                        $itemDetails = ListingItemDetail::where('listing_item_id', $list->item_id)->get();
 
                         if ($listing_id) {
-                            /*foreach ($itemDetails as $item_detail) {
-                                $itemDetail = ListingItemDetail::find($item_detail->id);
-                                $itemclonedRecord = $itemDetail->replicate();
-                                $itemclonedRecord->listing_item_id = $list->item_id;
-                                $itemclonedRecord->save();
-                            }*/
+//                            foreach ($itemDetails as $item_detail) {
+//                                $itemDetail = ListingItemDetail::find($item_detail->id);
+//                                $itemclonedRecord = $itemDetail->replicate();
+//                                $itemclonedRecord->listing_item_id = $list->item_id;
+//                                $itemclonedRecord->save();
+//                            }
 
                             $itemLink = array(
                                 'item_id' => $listingDetail->item_id,
@@ -3369,6 +3378,88 @@ class ListingController extends Controller
                 ]);
 
             } catch (Exception $e) {
+                return response()->json([
+                    'error' => $e->getMessage(),
+                ], 500);
+            }
+        }
+
+        return response()->json([
+            'error' => true,
+            'message' => 'Something went wrong! Please try again!'
+        ]);
+    }*/
+
+
+    public function reList(Request $request)
+    {
+
+        $selected_listing = $request->input('selected_list');
+        $selected_sku = $request->input('selected_sku');
+
+        if (!empty($selected_listing)) {
+            try {
+                Log::info('Inside Relist Sync ');
+                $listingsData = [];
+                $created_by = auth()->user()->name ?? 'admin';
+                foreach ($selected_listing as $key => $list) {
+
+                    $listingDetail = ListingItemLink::select('listing_item_link.*')->with('listing')->leftJoin('listing_item', 'listing_item.id', '=', 'listing_item_link.item_id')->where('listing_item_link.item_id', $list)->where('listing_item.sku', $selected_sku[$key])->first();
+
+                    if ($listingDetail && isset($listingDetail->listing)) {
+                        $store_id = $listingDetail->listing->store_id;
+                        $listingsData[$store_id][] = $listingDetail;
+                    }
+                }
+
+                if (empty($listingsData)) {
+                    return response()->json([
+                        'error' => true,
+                        'message' => 'No valid listings found!'
+                    ]);
+                }
+
+                foreach ($listingsData as $store_id => $listingDetails) {
+                    $baseListing = $listingDetails[0]->listing;
+
+                    $listingArr = [
+                        'store_id' => $store_id,
+                        'generation_type_id' => $baseListing->generation_type_id,
+                        'feed_type' => FeedTypes::CREATE,
+                        'status' => 0,
+                        'chained' => 1,
+                        'include_carriers' => $baseListing->include_carriers,
+                        'brand_combo' => $baseListing->brand_combo,
+                        'carrier_combo' => $baseListing->carrier_combo,
+                        'created_by' => $created_by,
+                        'updated_by' => $created_by,
+                        're_list' => 1
+                    ];
+
+                    $newListing = Listing::create($listingArr);
+                    $listing_id = $newListing->id;
+
+                    foreach ($listingDetails as $listingDetail) {
+                        ListingItemLink::create([
+                            'item_id' => $listingDetail->item_id,
+                            'listing_id' => $listing_id,
+                            'sync_status' => ListingSyncStatus::Synchronized,
+                            'created_by' => $created_by
+                        ]);
+                    }
+
+                    Bus::chain([
+                        new ListingItemImageCreate($listing_id),
+                        new FeedGenerationJob($listing_id),
+                    ])->dispatch();
+                }
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Re-list successfully!'
+                ]);
+
+            } catch (\Exception $e) {
                 return response()->json([
                     'error' => $e->getMessage(),
                 ], 500);

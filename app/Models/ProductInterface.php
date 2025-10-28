@@ -31,7 +31,7 @@ class ProductInterface extends Model
     public function product()
     {
         return $this->belongsTo(Catalog::class,'product_id','product_id')->where(function ($q) {
-            $q->where('product_status', 'active');
+            $q->whereIn('product_status', ['active','temporaryDisabled']);
         });
     }
 

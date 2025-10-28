@@ -162,7 +162,7 @@ class OrderUtility
             foreach ($ordersItems as $item) {
                 Log::info("Order Item: " . json_encode($item));
                 if ($item['item']['sku'] != '') {
-                    $itemDetail = ListingItem::where('sku', $item['item']['sku'])->first();
+                    $itemDetail = ListingItem::with('storeProduct', 'storeProduct.product')->where('sku', $item['item']['sku'])->first();
 
                     if (isset($itemDetail)) {
 
@@ -170,9 +170,9 @@ class OrderUtility
                         $orderItemData = [
                             'title' => $item['item']['productName'],
                             'order_id' => $order->id,
-                            'product_id' => $itemDetail->storeProduct->product->product_id ?? '',
-                            'client_id' => $itemDetail->client ?? '',
-                            'listing_item_id' => $itemDetail->id ?? '',
+                            'product_id' => $itemDetail->storeProduct->product->product_id ?? null,
+                            'client_id' => $itemDetail->client ?? null,
+                            'listing_item_id' => $itemDetail->id ?? null,
                             'sku' => $item['item']['sku'],
                             //'store_sku' => $item['item']['upc'],
                             'quantity' => $item['orderLineQuantity']['amount'],
@@ -215,13 +215,22 @@ class OrderUtility
                         if (env('APP_ENV') == 'local') {
                             $sku = 'Z67';
                         }
-                        $catalog = Catalog::where('product_sku', $sku)->first();
+
+                        $catalog = [];
+                        if($item['item']['sku'] !='') {
+                            $sku = preg_split('/[_-]/', $item['item']['sku'])[0];
+                            Log::info("Item SKU :: " . json_encode($sku));
+                            $catalog = Catalog::where('product_sku', $sku)->first();
+                            Log::info("Catalog Found :: " . json_encode($catalog));
+                        }
+
+                        //$catalog = Catalog::where('product_sku', $sku)->first();
 
 
                         $orderItemData = [
                             'title' => $item['item']['productName'],
                             'order_id' => $order->id,
-                            'product_id' => $catalog->product_id ?? '03673b75-decc-0fe9-a6b0-7a97a0e3dc11',
+                            'product_id' => $catalog->product_id ?? null,
                             'client_id' => null,
 //                            'listing_item_id' => $itemDetail->id ?? '',
                             'sku' => $item['item']['sku'],

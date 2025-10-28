@@ -129,6 +129,8 @@ class OrderOperationUtility
         /* check endicia available limit*/
         self::checkCredit($orderOperation);
 
+        $shipmentDetails['store_id'] = $orderOperation->store_id ?? null;
+
         $shippingDocumentCreator = new ShipmentDocumentsCreator($orderOperation);
         //    $imageFormat = $shippingDocumentCreator->getLabelFormat();
         //    $rotate = $shippingDocumentCreator->getImageRotate();

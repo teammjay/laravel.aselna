@@ -16,4 +16,9 @@ class ListingRequirement extends Model
         'value_column',
         'store_type_id',
     ];
+
+    public function storeType(){
+
+        return $this->belongsTo(StoreType::class, 'store_type_id');
+    }
 }

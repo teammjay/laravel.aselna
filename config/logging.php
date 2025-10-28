@@ -133,6 +133,12 @@ return [
             'path' => storage_path('logs/laravel.log'),
         ],
 
+        'critical' => [
+            'driver' => 'single',
+            'path' => storage_path('logs/critical.log'),
+            'level' => 'error',
+        ],
+
     ],
 
 ];

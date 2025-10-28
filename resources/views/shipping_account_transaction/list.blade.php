@@ -17,6 +17,56 @@
         <div class="alert alert-danger alert-dismissible fade show">{{ session('error') }}</div>
     @endif
 
+    {{--<div class="row">
+        <div class="col-12 col-sm-6 col-md-3">
+            <div class="info-box">
+                <span class="info-box-icon bg-info elevation-1"><i class="fas fa-cog"></i></span>
+
+                <div class="info-box-content">
+                    <span class="info-box-text">Completed</span>
+                    <span class="info-box-number">
+                          @if($states->status == 'completed')
+                              {{ $states->status }}
+                          @endif
+                  <small>%</small>
+                </span>
+                </div>
+                <!-- /.info-box-content -->
+            </div>
+            <!-- /.info-box -->
+        </div>
+        <!-- /.col -->
+        <div class="col-12 col-sm-6 col-md-3">
+            <div class="info-box mb-3">
+                <span class="info-box-icon bg-danger elevation-1"><i class="fas fa-thumbs-up"></i></span>
+
+                <div class="info-box-content">
+                    <span class="info-box-text">Pending</span>
+                    <span class="info-box-number">41,410</span>
+                </div>
+                <!-- /.info-box-content -->
+            </div>
+            <!-- /.info-box -->
+        </div>
+        <!-- /.col -->
+
+        <!-- fix for small devices only -->
+        <div class="clearfix hidden-md-up"></div>
+
+        <div class="col-12 col-sm-6 col-md-3">
+            <div class="info-box mb-3">
+                <span class="info-box-icon bg-success elevation-1"><i class="fas fa-shopping-cart"></i></span>
+
+                <div class="info-box-content">
+                    <span class="info-box-text">Cancelled</span>
+                    <span class="info-box-number">760</span>
+                </div>
+                <!-- /.info-box-content -->
+            </div>
+            <!-- /.info-box -->
+        </div>
+
+    </div>--}}
 
     <div class="card card-default">
         <div class="card-header">
@@ -25,7 +75,7 @@
         </div>
         <div class="card-body" style="display: none;">
             <form id="filter-form">
-                <input type="hidden" name="store_id" id="store_id">
+
                 <div class="row pt-3">
                     <div class="col-md-4">
                         <div class="row">
@@ -105,6 +155,23 @@
                     <div class="col-md-4">
                         <div class="row">
                             <div class="col-4 text-right">
+                                Store
+                            </div>
+                            <div class="col-8">
+                                <select class="form-control" name="store_id" id="store_id">
+                                    <option value=""></option>
+                                    @if(count($stores ?? []) > 0)
+                                        @foreach($stores as $store)
+                                            <option value="{{ $store->id }}">{{ $store->name }} - {{ $store->storeType->name }}</option>
+                                        @endforeach
+                                    @endif
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="row">
+                            <div class="col-4 text-right">
                                 Created Date
                             </div>
                             <div class="col-8">
@@ -167,10 +234,11 @@
         <table id="transactionsTable" class="table table-bordered table-striped">
             <thead>
             <tr>
-                <th>Shuipping Account</th>
+                <th>Shipping Account</th>
                 <th>Tracking Number</th>
                 <th>Transaction Date</th>
                 <th>Transaction ID</th>
+                <th>Store</th>
                 <th>Amount</th>
                 <th>Address</th>
                 <th>Status</th>
@@ -302,12 +370,13 @@
                         });
                     }
                 },
-                "order": [[ 9, "desc" ]],
+                "order": [[ 10, "desc" ]],
                 columns: [
                     {data: 'shipping_account', name: 'shipping_account',orderable: false, searchable: false},
                     {data: 'tracking_number', name: 'tracking_number'},
                     {data: 'transaction_date', name: 'transaction_date'},
                     {data: 'transaction_id', name: 'transaction_id'},
+                    {data: 'store', name: 'store',orderable: false},
                     {data: 'amount', name: 'amount'},
                     {data: 'address', name: 'address'},
                     {data: 'status', name: 'status'},
