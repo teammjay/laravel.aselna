@@ -174,7 +174,18 @@ class ListingController extends Controller
                     FROM order_item oi
                     GROUP BY oi.sku
                 ) AS oi'), 'oi.sku', '=', 'listing_item.sku');*/
-        $query->leftJoin('listing_item_detail', 'listing_item_detail.listing_item_id', '=', 'listing_item.id');
+        //$query->leftJoin('listing_item_detail', 'listing_item_detail.listing_item_id', '=', 'listing_item.id');
+
+        $combinedSku = DB::raw('(
+            SELECT sku, id AS listing_item_id
+            FROM listing_item
+            UNION
+            SELECT sku, listing_item_id
+            FROM listing_item_detail
+        ) AS items');
+
+        $query->leftJoin($combinedSku, 'items.listing_item_id', '=', 'listing_item.id');
+
         $query->leftJoin(DB::raw('(
                 SELECT oi.sku,
                        SUM(COALESCE(oi.shipped_quantity, 0) - COALESCE(oi.canceled_quantity, 0) - COALESCE(oi.refund_quantity, 0)) AS saleCount,
@@ -187,10 +198,7 @@ class ListingController extends Controller
                            END) AS lastSaleDate
                 FROM order_item oi
                 GROUP BY oi.sku
-            ) AS oi'), function ($join) {
-                $join->on('oi.sku', '=', 'listing_item.sku')
-                    ->orOn('oi.sku', '=', 'listing_item_detail.sku');
-        });
+            ) AS oi'), 'oi.sku', '=', 'items.sku');
 
         if ($request->has('store_id') && $request->store_id != '') {
 
