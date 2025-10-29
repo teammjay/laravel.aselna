@@ -90,6 +90,7 @@ class AddProductSpecificationInfo extends Seeder
                         ProductSpecificationValue::updateOrCreate([
                             'product_specification_id' => $productSpecification->id,
                             'field_value' => $value['value'],
+                            'category' => $category->code
                         ], [
                             'product_specification_id' => $productSpecification->id,
                             'field_value' => $value['value'],
