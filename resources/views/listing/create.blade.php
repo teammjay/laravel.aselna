@@ -7,7 +7,7 @@
     <link href="{{ asset('css/jquery.multiselect.css') }}" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <style>
-        /*.select2-container--default .select2-dropdown .select2-search__field:focus, .select2-container--default .select2-search--inline .select2-search__field:focus {
+        .select2-container--default .select2-dropdown .select2-search__field:focus, .select2-container--default .select2-search--inline .select2-search__field:focus {
             outline: 0;
             border: none;
         }
@@ -22,7 +22,7 @@
             right: 1px;
             width: 20px;
             transform: translateY(-50%);
-        }*/
+        }
         #product_type_filter option, #manufacturer_filter option, select[multiple] option {
             border-bottom: 1px solid #eaeaea;
         }
@@ -2407,6 +2407,7 @@
                             $('button#' + buttonId).removeClass('btn-success').addClass('btn-danger').text(Object.keys(response.issues).length +' Errors').data('error',''+Object.keys(response.issues).length);
                             $('#errorModal-' +product_id + ' .modal-body').html(response.issue_table_html);
                             $('#refreshErrorsBtn-' + product_id).show();
+
                         } else {
                             var buttonId = 'errorButton-' + product_id;
                             $('button#' + buttonId).removeClass('btn-danger').addClass('btn-success').text('0 Issues').data('error','0');
@@ -2719,7 +2720,6 @@
                     if (response.html) {
                         $('#productsTable2_wrapper').html(response.html);
                         generateKeywords();
-                        bindRefreshButtons();
                         $('.store-type-category').select2();
                         if(response.storeCategories){
                             $('#store_category').html(response.storeCategories);
@@ -2730,6 +2730,7 @@
                             const targetModal = $(this).data('bs-target');
                             $(targetModal).modal('show');
                         });
+                        bindRefreshButtons();
                     }
                 },
                 error: function (xhr) {
@@ -3079,6 +3080,20 @@
                 console.log('stc-' + productId);
                 $('.stc-' + productId).trigger('change');
             });
+
+            $('.specification-select').each(function () {
+                const $select = $(this);
+                if ($select.hasClass('select2-hidden-accessible')) {
+                    $select.select2('destroy');
+                }
+
+                const $modal = $select.closest('.modal');
+                $select.select2({
+                    width: '100%',
+                    dropdownParent: $modal.length ? $modal : $(document.body)
+                });
+            });
+
         }
 
         function updateSpecification(product_ids, category_ids){
