@@ -392,10 +392,32 @@ class ListingController extends Controller
                     $productcode = '';
                 };
 
+                $query = DB::table('order_item')
+                    ->selectRaw('
+                        SUM(COALESCE(shipped_quantity, 0)
+                            - COALESCE(canceled_quantity, 0)
+                            - COALESCE(refund_quantity, 0)) AS saleCount,
+                        MAX(CASE
+                            WHEN shipped_quantity IS NOT NULL
+                                 AND (canceled_quantity IS NULL OR canceled_quantity = 0)
+                                 AND (refund_quantity IS NULL OR refund_quantity = 0)
+                            THEN created_at
+                        END) AS lastSaleDate
+                    ')
+                    ->where('sku', $product->sku);
+                $sales = $query->first();
+                $saleCount = 0;
+                $lastSaleDate = '';
+
+                if ($sales) {
+                    $saleCount = $sales->saleCount ?? 0;
+                    $lastSaleDate = $sales->lastSaleDate ?? '';
+                }
+
                 $data[] = array(
                     "sku" => $product->sku . '<input type="checkbox" class="proList" name="listing_item[]" data-sku="' . $product->sku . '" data-code="' . $productcode . '" value="' . $product->id . '" style="visibility:hidden;">',
-                    "sales_count" => (isset($product->saleCount)) ? $product->saleCount : 0,
-                    "last_sale_date" => isset($product->lastSaleDate) ? $product->lastSaleDate : '',
+                    "sales_count" => $saleCount,
+                    "last_sale_date" => $lastSaleDate,
                     "store_sku" => $product->store_sku,
                     "product_sku" => (!empty((array)$product->storeProduct) && !empty((array)$product->storeProduct->product)) ? $product->storeProduct->product->product_sku : '',
                     "store_name" => ((!empty((array)$product->storeProduct) && !empty((array)$product->storeProduct->store)) ? $product->storeProduct->store->name : '') . ((!empty((array)$product->storeProduct) && !empty((array)$product->storeProduct->store) && !empty((array)$product->storeProduct->store->storeType)) ? ' - ' . $product->storeProduct->store->storeType->name : ''),
