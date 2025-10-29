@@ -90,6 +90,7 @@ class AddProductSpecificationInfo extends Seeder
                         ProductSpecificationValue::updateOrCreate([
                             'product_specification_id' => $productSpecification->id,
                             'field_value' => $value['value'],
+                            'store_type_id' => $this->storeType->id,
                             'category' => $category->code
                         ], [
                             'product_specification_id' => $productSpecification->id,
@@ -151,9 +152,13 @@ class AddProductSpecificationInfo extends Seeder
                         ProductSpecificationValue::updateOrCreate([
                             'product_specification_id' => $productSpecification->id,
                             'field_value' => $value['value'],
+                            'store_type_id' => $this->storeType->id,
+                            'category' => $category->code
                         ], [
                             'product_specification_id' => $productSpecification->id,
-                            'field_value' => $value['value']
+                            'field_value' => $value['value'],
+                            'store_type_id' => $this->storeType->id,
+                            'category' => $category->code
                         ]);
                     }
                 }
