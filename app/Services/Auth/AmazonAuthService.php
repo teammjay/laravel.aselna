@@ -20,7 +20,7 @@ class AmazonAuthService
 
     private $marketplaceIDs;
 
-    public function __construct($clientId, $clientSecret,$refresh_token='')
+    public function __construct($clientId, $clientSecret, $refresh_token = '')
     {
         $this->client = new Client([
             'base_uri' => 'https://sellingpartnerapi-na.amazon.com',
@@ -33,7 +33,7 @@ class AmazonAuthService
 
     public function getAccessToken()
     {
-        if(isset($this->accessToken) && $this->expireTime > time()) {
+        if (isset($this->accessToken) && $this->expireTime > time()) {
             return $this->accessToken;
         }
 
@@ -129,7 +129,7 @@ class AmazonAuthService
     public function getResultFeed($feedId, $listingId)
     {
         $accessToken = $this->getAccessToken();
-        $savePath = public_path('result-feeds/amazon/'.$listingId.'.zip');
+        $savePath = public_path('result-feeds/amazon/' . $listingId . '.zip');
 
         $response = $this->client->get('/feeds/2021-06-30/feeds/' . $feedId, [
             'headers' => [
@@ -150,9 +150,9 @@ class AmazonAuthService
         $documentResult = json_decode($response->getBody(), true);
         $doocumentUrl = $documentResult['url'];
 
-        Log::info('Document URL: '. $doocumentUrl);
+        Log::info('Document URL: ' . $doocumentUrl);
 
-        if(isset($documentResult['compressionAlgorithm']) && $documentResult['compressionAlgorithm'] == 'GZIP') {
+        if (isset($documentResult['compressionAlgorithm']) && $documentResult['compressionAlgorithm'] == 'GZIP') {
 
 //            if (env('APP_ENV') !== 'local') {
 //                chown($savePath, 'aselna');
@@ -180,18 +180,18 @@ class AmazonAuthService
                 chown('result-feeds/amazon/' . $listingId . '.json', 'aselna');
                 chgrp('result-feeds/amazon/' . $listingId . '.json', 'psacln');
             }
-            return 'result-feeds/amazon/'. $listingId. '.json';
+            return 'result-feeds/amazon/' . $listingId . '.json';
         } else {
             $response = $this->client->get($doocumentUrl, []);
-            Log::info('Feed Document: '. $response->getBody());
+            Log::info('Feed Document: ' . $response->getBody());
             FileUtility::saveToFile(public_path('result-feeds/amazon/' . $listingId . '.xml'), $response->getBody());
-            return 'result-feeds/amazon/'. $listingId. '.xml';
+            return 'result-feeds/amazon/' . $listingId . '.xml';
         }
     }
 
     private function getMarketplaceIDs()
     {
-        if(isset($this->marketplaceIDs)) {
+        if (isset($this->marketplaceIDs)) {
             return $this->marketplaceIDs;
         }
         $accessToken = $this->getAccessToken();
@@ -208,7 +208,7 @@ class AmazonAuthService
 
         $marketplaceIDs = [];
         foreach ($marketplaces['payload'] as $marketplace) {
-            if($marketplace['marketplace']['domainName'] == 'www.amazon.com') {
+            if ($marketplace['marketplace']['domainName'] == 'www.amazon.com') {
                 $marketplaceIDs[] = $marketplace['marketplace']['id'];
             }
         }
@@ -253,12 +253,12 @@ class AmazonAuthService
                     'x-amz-date' => gmdate('Ymd\THis\Z'),
                 ],
                 'query' => [
-                    'MarketplaceIds' => implode(',',$marketplaceIDs),
+                    'MarketplaceIds' => implode(',', $marketplaceIDs),
                     'CreatedAfter' => now()->subDays(7)->toISOString(),
                 ],
             ]);
 
-            Log::info('Order Response'.$response->getBody());
+            Log::info('Order Response' . $response->getBody());
 
             $data = json_decode($response->getBody(), true);
 
@@ -325,9 +325,8 @@ class AmazonAuthService
         return json_decode($response->getBody(), true);
     }
 
-    public function getProductTypeSchema($productType)
+    public function getProductTypeSchema($productType, $marketPlaceID)
     {
-        $marketPlaceID = $this->getMarketplaceIDs();
         $accessToken = $this->getAccessToken();
         Log::info('Access Token Created ' . $accessToken);
         Log::info('Fetching schema for product type: ' . $productType);
@@ -362,7 +361,7 @@ class AmazonAuthService
         return $schemaJson;
     }
 
-    public function fetchListingInfoBySku($sku,$userIdentifier)
+    public function fetchListingInfoBySku($sku, $userIdentifier)
     {
         $marketPlaceID = $this->getMarketplaceIDs();
         $accessToken = $this->getAccessToken();
@@ -442,7 +441,7 @@ class AmazonAuthService
 
             Log::info('Cancelling Order ID: ' . $orderId);
 
-            $response =  $this->client->put("/fba/outbound/2020-07-01/fulfillmentOrders/{$orderId}/cancel", [
+            $response = $this->client->put("/fba/outbound/2020-07-01/fulfillmentOrders/{$orderId}/cancel", [
                 'headers' => [
                     'x-amz-access-token' => "{$accessToken}",
                     'Content-Type' => 'application/json',
