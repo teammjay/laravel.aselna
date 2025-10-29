@@ -31,6 +31,7 @@ class AddProductSpecificationInfo extends Seeder
 
     private function fetchAndStoreSpecifications()
     {
+        $marketPlaceID = $this->getMarketplaceIDs();
         $categories = StoreTypeCategory::where('store_type_id', $this->storeType->id)
             ->whereNotNull('marketplace_code')
             ->select('marketplace_code')
@@ -40,7 +41,7 @@ class AddProductSpecificationInfo extends Seeder
         foreach ($categories as $category) {
 //            $this->amazonAuthService = new AmazonAuthService($this->store->seller_id, $this->store->secret_key, $this->store->api_key);
             $this->amazonAuthService = new AmazonAuthService(env('AMAZON_CLIENT_ID'), env('AMAZON_CLIENT_SECRET'), env('AMAZON_REFRESH_TOKEN'));
-            $specifications = $this->amazonAuthService->getProductTypeSchema($category->marketplace_code);
+            $specifications = $this->amazonAuthService->getProductTypeSchema($category->marketplace_code, $marketPlaceID);
 
             $properties = $specifications['properties'] ?? [];
 
@@ -67,7 +68,7 @@ class AddProductSpecificationInfo extends Seeder
                     ]);
 
                     foreach ($itemValue['anyOf'] as $anyOf) {
-                        if(isset($anyOf['enum'])) {
+                        if (isset($anyOf['enum'])) {
                             foreach ($anyOf['enum'] as $enumValue) {
                                 Log::info('Storing enum value: ' . $enumValue);
 
