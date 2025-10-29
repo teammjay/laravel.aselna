@@ -330,6 +330,7 @@ class AmazonAuthService
         $marketPlaceID = $this->getMarketplaceIDs();
         $accessToken = $this->getAccessToken();
         Log::info('Access Token Created ' . $accessToken);
+        Log::info('Fetching schema for product type: ' . $productType);
 
         $response = $this->client->get('/definitions/2020-09-01/productTypes/' . $productType, [
             'headers' => [
