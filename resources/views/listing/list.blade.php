@@ -1235,6 +1235,10 @@
                 {
                     targets: 6, // The column index
                     className: 'column-no-whitespace' // The class to add
+                },
+                {
+                    targets: [1,2], // Index of the column you want to disable sorting for
+                    orderable: false // Disable sorting
                 }
             ],
             "createdRow": function(row, data, dataIndex) {
