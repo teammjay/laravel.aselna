@@ -161,7 +161,7 @@ class ListingController extends Controller
             $query->whereNotNull('shipped_quantity')->whereNull('canceled_quantity')->orWhere('canceled_quantity', 0)->whereNull('refund_quantity')->orWhere('refund_quantity', 0);
         }], 'created_at');*/
 
-        $query->leftJoin(DB::raw('(
+        /*$query->leftJoin(DB::raw('(
                     SELECT oi.sku,
                            SUM(COALESCE(oi.shipped_quantity, 0) - COALESCE(oi.canceled_quantity, 0) - COALESCE(oi.refund_quantity, 0)) AS saleCount,
                            MAX(CASE
@@ -173,7 +173,24 @@ class ListingController extends Controller
                                END) AS lastSaleDate
                     FROM order_item oi
                     GROUP BY oi.sku
-                ) AS oi'), 'oi.sku', '=', 'listing_item.sku');
+                ) AS oi'), 'oi.sku', '=', 'listing_item.sku');*/
+        $query->leftJoin('listing_item_detail', 'listing_item_detail.listing_item_id', '=', 'listing_item.id');
+        $query->leftJoin(DB::raw('(
+                SELECT oi.sku,
+                       SUM(COALESCE(oi.shipped_quantity, 0) - COALESCE(oi.canceled_quantity, 0) - COALESCE(oi.refund_quantity, 0)) AS saleCount,
+                       MAX(CASE
+                                WHEN oi.shipped_quantity IS NOT NULL
+                                     AND (oi.canceled_quantity IS NULL OR oi.canceled_quantity = 0)
+                                     AND (oi.refund_quantity IS NULL OR oi.refund_quantity = 0)
+                                THEN oi.created_at
+                                ELSE NULL
+                           END) AS lastSaleDate
+                FROM order_item oi
+                GROUP BY oi.sku
+            ) AS oi'), function ($join) {
+                $join->on('oi.sku', '=', 'listing_item.sku')
+                    ->orOn('oi.sku', '=', 'listing_item_detail.sku');
+        });
 
         if ($request->has('store_id') && $request->store_id != '') {
 
@@ -1287,7 +1304,7 @@ class ListingController extends Controller
                             if ($generate_type_name) {
                                 switch (trim(strtolower($generate_type_name))) {
                                     case 'combined devices':
-                                        $productsArray[] = $this->generateProductTitles($title_template, $product, $devices, $max_title_length, $brand_seperator, $device_seperator, $compress, $generate_type, $pDetail, $store_product_id, $store_type);
+                                        $productsArray[] = $this->generateFreeGroupProductTitles($title_template, $product, $devices, $max_title_length, $brand_seperator, $device_seperator, $compress, $generate_type, $pDetail, $store_product_id, $store_type);
                                         break;
                                     case 'free group':
                                         $prevBrand = null;
@@ -1709,6 +1726,193 @@ class ListingController extends Controller
     private function generateFreeGroupProductTitles($baseTitle, $product, $devices, $charLimit, $brand_seperator, $device_seperator, $compress, $generate_type, $pDetail, $store_product_id, $store_type)
     {
         $titles = [];
+        $cnt = 0;
+
+        $brandModels = [];
+        $brandDeviceObjects = [];
+        foreach ($devices as $device) {
+            $brand = $device->brand_name;
+            $model = trim($device->name);
+
+            if (stripos($model, $brand) === 0) {
+                $model = trim(substr($model, strlen($brand)));
+            }
+
+            $brandModels[$brand][] = $model;
+            $brandDeviceObjects[$brand][] = $device;
+        }
+
+        $compressedDevices = [];
+        foreach ($brandModels as $brand => $models) {
+            $models = array_unique($models);
+
+            if (strtolower($brand) === 'apple') {
+                $groups = [];
+                foreach ($models as $m) {
+                    if (preg_match('/^(iPhone|iPad|iPod)/i', $m, $match)) {
+                        $base = ucfirst(strtolower($match[1]));
+                        $groups[$base][] = trim(str_replace($match[1], '', $m));
+                    } else {
+                        $groups['Other'][] = $m;
+                    }
+                }
+
+                foreach ($groups as $base => $suffixList) {
+                    $numbers = [];
+                    $suffixes = [];
+
+                    foreach ($suffixList as $s) {
+                        if (preg_match('/([0-9]+)/', $s, $numMatch)) {
+                            $numbers[] = $numMatch[1];
+                        }
+                        if (preg_match('/[0-9]+\s*([A-Za-z+ ]+)/', $s, $sufMatch)) {
+                            $suffixes[] = trim($sufMatch[1]);
+                        }
+                    }
+
+                    $numbers = array_unique(array_filter($numbers));
+                    sort($numbers, SORT_NATURAL);
+                    $suffixes = array_unique(array_filter($suffixes));
+
+                    $numPart = $numbers ? implode('/', $numbers) : '';
+                    $sufPart = $suffixes ? '/' . implode('/', $suffixes) : '';
+                    $final = trim("$base $numPart$sufPart");
+
+                    $compressedDevices[$brand] = $final;
+                }
+                continue;
+            }
+
+            $prefixParts = [];
+            $splitModels = array_map(fn($m) => explode(' ', $m), $models);
+            $minLength = min(array_map('count', $splitModels));
+
+            for ($i = 0; $i < $minLength; $i++) {
+                $word = $splitModels[0][$i];
+                $same = true;
+                foreach ($splitModels as $parts) {
+                    if (!isset($parts[$i]) || strtolower($parts[$i]) !== strtolower($word)) {
+                        $same = false;
+                        break;
+                    }
+                }
+                if ($same) {
+                    $prefixParts[] = $word;
+                } else {
+                    break;
+                }
+            }
+
+            $prefix = implode(' ', $prefixParts);
+
+            $numbers = [];
+            $suffixes = [];
+            foreach ($models as $m) {
+                $clean = trim(preg_replace('/^' . preg_quote($prefix, '/') . '\s*/i', '', $m));
+
+                if (preg_match('/([0-9]+)/', $clean, $numMatch)) {
+                    $numbers[] = $numMatch[1];
+                }
+
+                if (preg_match('/[0-9]+\s*([A-Za-z+ ]+)/', $clean, $sufMatch)) {
+                    $suffixes[] = trim($sufMatch[1]);
+                }
+            }
+
+            $numbers = array_unique(array_filter($numbers));
+            sort($numbers, SORT_NATURAL);
+            $suffixes = array_unique(array_filter($suffixes));
+
+            $numPart = $numbers ? implode('/', $numbers) : '';
+            $sufPart = $suffixes ? '/' . implode('/', $suffixes) : '';
+            $finalModel = trim("$prefix $numPart$sufPart");
+
+            if (strtolower($brand) == 'apple') {
+                $compressedDevices[$brand] = $finalModel;
+            } else {
+                $compressedDevices[$brand] = "$brand $finalModel";
+            }
+        }
+
+
+        $currentDevices = [];
+        $currentModels = [];
+        $currentModelDetails = [];
+        foreach ($compressedDevices as $brand => $comp) {
+            $testDevices = array_merge($currentDevices, [$comp]);
+            $tempTitle = str_replace(
+                ['#model_series', '#devices', '#device_series'],
+                [implode($device_seperator, $testDevices), implode($device_seperator, $testDevices), implode($device_seperator, $testDevices)],
+                $baseTitle
+            );
+
+            $brandDeviceList = $brandDeviceObjects[$brand] ?? [];
+
+            if (strlen($tempTitle) > $charLimit && !empty($currentDevices)) {
+                // Save current title
+                $titles[$cnt]['title'] = str_replace(
+                    ['#model_series', '#devices', '#device_series'],
+                    [implode($device_seperator, $currentDevices), implode($device_seperator, $currentDevices), implode($device_seperator, $currentDevices)],
+                    $baseTitle
+                );
+                $titles[$cnt]['product_code'] = $product->product->product_sku;
+                $titles[$cnt]['product_id'] = $product->product_id;
+                $titles[$cnt]['price'] = $pDetail['price'];
+                $titles[$cnt]['price_overwrite'] = $pDetail['price_overwrite'];
+                $titles[$cnt]['store_type_category_id'] = $pDetail['store_type_category_id'];
+                $titles[$cnt]['generate_type'] = $generate_type;
+                $titles[$cnt]['store_product_id'] = $store_product_id;
+                $titles[$cnt]['brand_id'] = $device->brand_id;
+                $titles[$cnt]['device_id'] = $device->id;
+                $titles[$cnt]['model'] = $currentModels;
+                $titles[$cnt]['model_detail'] = $currentModelDetails;
+
+                $cnt++;
+                $currentDevices = [$comp];
+                $currentModels = array_column($brandDeviceList, 'name');
+                $currentModelDetails = $brandDeviceList;
+            } else {
+                $currentDevices[] = $comp;
+                foreach ($brandDeviceList as $dev) {
+                    $currentModels[] = $dev->name;
+                    $currentModelDetails[] = $dev;
+                }
+            }
+        }
+
+        if (!empty($currentDevices)) {
+            $titles[$cnt]['title'] = str_replace(
+                ['#model_series', '#devices', '#device_series'],
+                [implode($device_seperator, $currentDevices), implode($device_seperator, $currentDevices), implode($device_seperator, $currentDevices)],
+                $baseTitle
+            );
+            $titles[$cnt]['product_code'] = $product->product->product_sku;
+            $titles[$cnt]['product_id'] = $product->product_id;
+            $titles[$cnt]['price'] = $pDetail['price'];
+            $titles[$cnt]['price_overwrite'] = $pDetail['price_overwrite'];
+            $titles[$cnt]['store_type_category_id'] = $pDetail['store_type_category_id'];
+            $titles[$cnt]['generate_type'] = $generate_type;
+            $titles[$cnt]['store_product_id'] = $store_product_id;
+            $titles[$cnt]['brand_id'] = $device->brand_id;
+            $titles[$cnt]['device_id'] = $device->id;
+            $titles[$cnt]['model'] = $currentModels;
+            $titles[$cnt]['model_detail'] = $currentModelDetails;
+        }
+
+        if (count($titles) > 1) {
+            $total = count($titles);
+            foreach ($titles as $i => &$t) {
+                $t['title'] .= " (" . ($i + 1) . "/$total)";
+            }
+        }
+
+        return $titles;
+    }
+
+
+    private function generateFreeGroupProductTitlesBKP($baseTitle, $product, $devices, $charLimit, $brand_seperator, $device_seperator, $compress, $generate_type, $pDetail, $store_product_id, $store_type)
+    {
+        $titles = [];
         $currentModels = [];
         $currentDevices = [];
         $currentTitle = $baseTitle;
@@ -1847,167 +2051,6 @@ class ListingController extends Controller
         return $titles;
     }
 
-    private function generateFreeGroupProductTitlesEbayBKP1($baseTitle, $product, $devices, $charLimit, $brand_seperator, $device_seperator, $compress, $generate_type, $pDetail, $store_product_id, $store_type)
-    {
-        $titles = [];
-        $currentModels = [];
-        $currentDevices = [];
-        $currentTitle = $baseTitle;
-        $separator = $brand_seperator; // Separator between device names
-        $lastBrand = null;
-        $lastModel = null;
-        $currentBrand = null;
-        $currentMod = null;
-        $allDevice = [];
-        $cnt = 0;
-
-        foreach ($devices as $key => $device) {
-            // Split the device into brand and model
-            $currentBrand = $device->brand_name . ' ' . $device->name;
-            if (strtolower($device->brand_name) == 'apple') {
-                $currentBrand = $device->name;
-            }
-
-            $currentMod = $device->name;
-            $parts = explode(' ', $device->name, 2);
-            $brand = $parts[0];
-            $model = $parts[1] ?? '';
-
-            // Use only the model if the brand is the same as the last one
-            if ($compress) {
-                if ($brand === $lastBrand) {
-                    // Match model suffix like 'Plus', 'Ultra', etc.
-                    preg_match('/\s+(Plus|Ultra|Pro|FE|4G|5G)$/i', $currentMod, $matches);
-                    $suffix = $matches[1] ?? '';
-
-                    // Extract model number only (S20, S21, etc.)
-                    preg_match('/S\d{2}/i', $currentMod, $modelMatch);
-                    $modelNumber = $modelMatch[0] ?? $currentMod;
-                    //echo $suffix.'<br>';
-                    if ($suffix) {
-                        /*if($lastModel == $suffix){
-                            $nameToAdd = $modelNumber;
-                        }else{
-                            $nameToAdd = $modelNumber.' '.$suffix;
-                        }*/
-                        $nameToAdd = $modelNumber;
-                        $lastModel = $suffix;
-                    } else {
-                        $nameToAdd = $currentMod;
-                    }
-                } else {
-                    if ($key == 0) {
-                        $parts2 = explode(' ', $model, 2);
-                        if (isset($parts2[0])) {
-                            $modelname = $parts2[0];
-                        }
-                        /*$nameToAdd = $device->brand_name.' '.$brand.' '.$modelname;*/
-                        $nameToAdd = $currentBrand;
-                    } else {
-                        //$nameToAdd = $brand_seperator.' '.$currentBrand;
-                        $nameToAdd = $currentMod;
-                    }
-                    //$nameToAdd = $currentMod;
-                }
-                //$nameToAdd = ($brand === $lastBrand) ? $model : $currentBrand;
-            } else {
-                $nameToAdd = $currentBrand;
-            }
-
-            //echo '<pre>';
-            //print_r($currentDevices);
-            //echo '</pre>';
-
-            //echo $nameToAdd;
-            if (!in_array($currentBrand, $currentDevices) && !in_array($currentBrand, $allDevice)) {
-                $tempDevices = array_merge($currentDevices, [$nameToAdd]);
-                $tempDeviceString = implode($device_seperator, $tempDevices);
-                $tempTitle = str_replace('#devices', $tempDeviceString, $baseTitle);
-            }
-
-            if (!in_array($currentBrand, $currentDevices) && !in_array($currentBrand, $allDevice)) {
-                $tempDevices = array_merge($currentDevices, [$currentBrand]);
-                $tempDeviceString = implode($device_seperator, $tempDevices);
-                $tempTitle = str_replace('#device_series', $tempDeviceString, $tempTitle);
-            }
-
-
-            $tempModels = array_merge($currentModels, [str_replace($device->brand_name . ' ', '', $currentBrand)]);
-            $tempModelString = implode($device_seperator, $tempModels);
-            $tempTitle = str_replace('#model_series', $tempModelString, $tempTitle);
-
-            if (strlen($tempTitle) > $charLimit || (!str_contains($baseTitle, '#device_series'))) {
-                //$cnt++;
-                //continue;
-            }
-
-            $titles[$cnt]['title'] = $tempTitle;
-            $titles[$cnt]['product_code'] = $product->product->product_sku;
-            $titles[$cnt]['product_id'] = $product->product_id;
-            $titles[$cnt]['price'] = $pDetail['price'];
-            $titles[$cnt]['price_overwrite'] = $pDetail['price_overwrite'];
-            $titles[$cnt]['store_type_category_id'] = $pDetail['store_type_category_id'];
-            $titles[$cnt]['generate_type'] = $generate_type;
-            $titles[$cnt]['store_product_id'] = $store_product_id;
-            $titles[$cnt]['brand_id'] = $device->brand_id;
-            $titles[$cnt]['device_id'] = $device->id;
-            $titles[$cnt]['model'][] = $device->name;
-            $titles[$cnt]['model_detail'][] = $device;
-            $currentModels[] = str_replace($device->brand_name . ' ', '', $nameToAdd);
-
-            /*if(empty($currentDevices)){
-                $currentDevices[] = $nameToAdd;
-            }else {
-                $currentDevices[] = $nameToAdd;
-            }*/
-            if (!in_array($currentBrand, $currentDevices) && !in_array($currentBrand, $allDevice)) {
-                $currentDevices[] = $nameToAdd;
-            }
-            // Update the last brand
-            $lastBrand = $brand;
-            $allDevice[] = $currentBrand;
-        }
-
-        /*echo '<pre>';
-        print_r($currentDevices);
-        echo '</pre>';die;*/
-
-        // Add the last title
-        if (!empty($currentTitle)) {
-            $titles[$cnt]['title'] = str_replace(['#model_series', '#devices', '#device_series'], [implode($device_seperator, $currentModels), implode($device_seperator, $currentDevices), implode($device_seperator, $currentDevices)], $baseTitle);
-        }
-
-        return $titles;
-    }
-
-    private function compressModelsBySuffix($devices): string
-    {
-        $modelGroups = [];
-
-        foreach ($devices as $device) {
-            $currentBrand = $device->brand_name . ' ' . $device->name;
-            $parts = explode(' ', $currentBrand);
-            if (count($parts) >= 2) {
-                $suffix = array_pop($parts); // Last word as suffix
-                $base = array_pop($parts);   // Second-last word as model (e.g., S20, S21)
-            } else {
-                $suffix = '';
-                $base = $currentBrand;
-            }
-
-            $modelGroups[$suffix][] = $base;
-        }
-
-        // Build output strings per suffix group
-        $resultParts = [];
-        foreach ($modelGroups as $suffix => $models) {
-            $uniqueModels = array_unique($models);
-            $joined = implode('/', $uniqueModels);
-            $resultParts[] = $suffix ? "$joined $suffix" : $joined;
-        }
-
-        return implode(', ', $resultParts);
-    }
 
     private function groupDeviceModels($devices, $deviceSeparator = '/')
     {

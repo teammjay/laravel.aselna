@@ -2525,18 +2525,26 @@
             $(document).on('click','#updateProductSpecification',function () {
                 var pro_id = $(this).parents('.modal-content').find('.specPro').data('proid');
                 var products_ids= [];
+                var category_ids = [];
                 products_ids.push(pro_id);
-                updateSpecification(products_ids);
+
+                var cid = $('.stc-'+pro_id).val();
+                category_ids.push(cid);
+                updateSpecification(products_ids, category_ids);
             });
 
             $(document).on('click','#updateAllProductSpecification',function () {
                 var products_ids = [];
+                var category_ids = [];
                 $('input[name="selected_product[]"]').each(function () {
                     var pid = $(this).val();
                     products_ids.push(pid);
+
+                    var cid = $('.stc-'+pid).val();
+                    category_ids.push(cid);
                 });
 
-                updateSpecification(products_ids);
+                updateSpecification(products_ids, category_ids);
             });
 
         });
@@ -3073,7 +3081,7 @@
             });
         }
 
-        function updateSpecification(product_ids){
+        function updateSpecification(product_ids, category_ids){
 
             console.log(product_ids);
 
@@ -3097,6 +3105,7 @@
                     method: "POST",
                     data: {
                         product_ids: product_ids,
+                        category_ids: category_ids,
                         store_id: $('#listing_store').val(),
                         specifications: specifications,
                         specifications_values: specifications_values,
