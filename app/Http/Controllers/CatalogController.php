@@ -1445,7 +1445,7 @@ class CatalogController extends Controller
                         if($issues){
                             foreach($issues as $issue){
                                 if(isset($issue['spec']['field']) && $issue['spec']['field'] == $specifications[$i]){
-                                    $exists = ProductSpecification::where(['product_id' => $productId, 'name' => $specifications[$i], ])->exists();
+                                    $exists = ProductSpecification::where(['product_id' => $productId, 'name' => $specifications[$i],'store_type_id' => $store->storeType->id ])->exists();
                                     if(!$exists && $specification_values[$i] != '') {
                                         $data[] = array(
                                             'id' => (string)Str::uuid(),

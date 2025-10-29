@@ -474,6 +474,8 @@ class OrderUtility
                     }
                 }
 
+                // sale count update
+
                 Log::info("Came Till Here 1 :: " . json_encode($itemDetail));
                 if (isset($itemDetail)) {
                     $orderItemData = [
