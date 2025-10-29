@@ -24,7 +24,7 @@ class ProductSpecificationValue extends Model
         });
     }
 
-    protected $fillable = ['id', 'product_specification_id', 'field_value', 'store_type_id', 'created_by', 'updated_by', 'created_at', 'updated_at'];
+    protected $fillable = ['id', 'product_specification_id', 'field_value', 'store_type_id', 'created_by', 'updated_by', 'created_at', 'updated_at', 'category'];
 
     public function specificationInfo()
     {
