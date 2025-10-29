@@ -1065,7 +1065,7 @@ class CatalogController extends Controller
         $store_type_id = $request->input('store_type_id');
         $product_id = $request->input('product_id');
         $categoryId = $request->input('category_id');
-        if (isset($storetype) && in_array($storetype->code, ['temu','amazon', 'walmart'])) {
+        if (isset($storetype) && in_array($storetype->code, ['temu', 'amazon', 'walmart'])) {
             $storeIds = Store::where('store_type_id', $store_type_id)->pluck('id')->toArray();
             $firstStoreProduct = StoreProduct::where('product_id', $product_id)
                 ->whereNotNull('store_type_category_id')
@@ -1092,7 +1092,7 @@ class CatalogController extends Controller
                 $field = $valoption = '';
                 if (!empty($field_option)) {
                     $field = 'select';
-                    $valoption = ListingUtility::getSpecValues($field_option, $store_type_id, $categoryId);
+                    $valoption = ListingUtility::getSpecValues($field_option, $categoryId, $store_type_id);
                 }
                 $specificationArr[$key]->field = $field;
                 $specificationArr[$key]->valoption = $valoption;
@@ -1204,7 +1204,7 @@ class CatalogController extends Controller
                 $field = $valoption = '';
                 if (!empty($field_option)) {
                     $field = 'select';
-                    $valoption = ListingUtility::getSpecValues($field_option, $store_type_id, $categoryId);
+                    $valoption = ListingUtility::getSpecValues($field_option, $categoryId, $store_type_id);
                 }
                 $specificationArr[$key]->field = $field;
                 $specificationArr[$key]->valoption = $valoption;
@@ -1290,7 +1290,7 @@ class CatalogController extends Controller
 
                 if (!empty($field_option)) {
                     $field = 'select';
-                    $optionvalueArr = ListingUtility::getSpecValues($field_option, $store_type_id, $categoryId);
+                    $optionvalueArr = ListingUtility::getSpecValues($field_option, $categoryId, $store_type_id);
 
                     if (!empty($optionvalueArr)) {
                         $valoption = '<option value=""></option>';
@@ -1357,7 +1357,7 @@ class CatalogController extends Controller
         $field = $option = '';
         $firstField = ProductSpecifcationUniqueInfo::where('field_name', $field_name)->first();
         if (isset($firstField)) {
-            $field_options = ListingUtility::getSpecValues($firstField, $store_type_id, $categoryId);
+            $field_options = ListingUtility::getSpecValues($firstField, $categoryId, $store_type_id);
 
             if (!empty($field_options)) {
                 $field = 'select';
@@ -1430,8 +1430,8 @@ class CatalogController extends Controller
         try {
             $data = [];
             for ($i = 0; $i < count($specifications); $i++) {
-                if($productIds){
-                    foreach ($productIds as $key=>$productId){
+                if ($productIds) {
+                    foreach ($productIds as $key => $productId) {
 
                         $category_id = $categoryIds[$key];
 
@@ -1442,11 +1442,11 @@ class CatalogController extends Controller
                             $issues = ListingUtility::validate($currentCategory->store_type_code, $productId, $store->storeType->id);
                         }
 
-                        if($issues){
-                            foreach($issues as $issue){
-                                if(isset($issue['spec']['field']) && $issue['spec']['field'] == $specifications[$i]){
-                                    $exists = ProductSpecification::where(['product_id' => $productId, 'name' => $specifications[$i],'store_type_id' => $store->storeType->id ])->exists();
-                                    if(!$exists && $specification_values[$i] != '') {
+                        if ($issues) {
+                            foreach ($issues as $issue) {
+                                if (isset($issue['spec']['field']) && $issue['spec']['field'] == $specifications[$i]) {
+                                    $exists = ProductSpecification::where(['product_id' => $productId, 'name' => $specifications[$i], 'store_type_id' => $store->storeType->id])->exists();
+                                    if (!$exists && $specification_values[$i] != '') {
                                         $data[] = array(
                                             'id' => (string)Str::uuid(),
                                             'product_id' => $productId,
@@ -1465,7 +1465,7 @@ class CatalogController extends Controller
             /*echo '<pre>';
             print_r($data);
             echo '</pre>';die;*/
-            if($data){
+            if ($data) {
                 ProductSpecification::insert($data);
             }
 
