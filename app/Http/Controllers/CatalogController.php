@@ -1092,7 +1092,7 @@ class CatalogController extends Controller
                 $field = $valoption = '';
                 if (!empty($field_option)) {
                     $field = 'select';
-                    $valoption = ListingUtility::getSpecValues($field_option->id, $store_type_id, $categoryId);
+                    $valoption = ListingUtility::getSpecValues($field_option, $store_type_id, $categoryId);
                 }
                 $specificationArr[$key]->field = $field;
                 $specificationArr[$key]->valoption = $valoption;
@@ -1204,7 +1204,7 @@ class CatalogController extends Controller
                 $field = $valoption = '';
                 if (!empty($field_option)) {
                     $field = 'select';
-                    $valoption = ListingUtility::getSpecValues($field_option->id, $store_type_id, $categoryId);
+                    $valoption = ListingUtility::getSpecValues($field_option, $store_type_id, $categoryId);
                 }
                 $specificationArr[$key]->field = $field;
                 $specificationArr[$key]->valoption = $valoption;
@@ -1290,7 +1290,7 @@ class CatalogController extends Controller
 
                 if (!empty($field_option)) {
                     $field = 'select';
-                    $optionvalueArr = ListingUtility::getSpecValues($field_option->id, $store_type_id, $categoryId);
+                    $optionvalueArr = ListingUtility::getSpecValues($field_option, $store_type_id, $categoryId);
 
                     if (!empty($optionvalueArr)) {
                         $valoption = '<option value=""></option>';
@@ -1357,8 +1357,7 @@ class CatalogController extends Controller
         $field = $option = '';
         $firstField = ProductSpecifcationUniqueInfo::where('field_name', $field_name)->first();
         if (isset($firstField)) {
-            $field_id = $firstField->id;
-            $field_options = ListingUtility::getSpecValues($field_id, $store_type_id, $categoryId);
+            $field_options = ListingUtility::getSpecValues($firstField, $store_type_id, $categoryId);
 
             if (!empty($field_options)) {
                 $field = 'select';
