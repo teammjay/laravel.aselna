@@ -161,7 +161,7 @@ class ListingController extends Controller
             $query->whereNotNull('shipped_quantity')->whereNull('canceled_quantity')->orWhere('canceled_quantity', 0)->whereNull('refund_quantity')->orWhere('refund_quantity', 0);
         }], 'created_at');*/
 
-        /*$query->leftJoin(DB::raw('(
+        $query->leftJoin(DB::raw('(
                     SELECT oi.sku,
                            SUM(COALESCE(oi.shipped_quantity, 0) - COALESCE(oi.canceled_quantity, 0) - COALESCE(oi.refund_quantity, 0)) AS saleCount,
                            MAX(CASE
@@ -173,10 +173,10 @@ class ListingController extends Controller
                                END) AS lastSaleDate
                     FROM order_item oi
                     GROUP BY oi.sku
-                ) AS oi'), 'oi.sku', '=', 'listing_item.sku');*/
+                ) AS oi'), 'oi.sku', '=', 'listing_item.sku');
         //$query->leftJoin('listing_item_detail', 'listing_item_detail.listing_item_id', '=', 'listing_item.id');
 
-        $combinedSku = DB::raw('(
+        /*$combinedSku = DB::raw('(
             SELECT sku, id AS listing_item_id
             FROM listing_item
             UNION
@@ -198,7 +198,7 @@ class ListingController extends Controller
                            END) AS lastSaleDate
                 FROM order_item oi
                 GROUP BY oi.sku
-            ) AS oi'), 'oi.sku', '=', 'items.sku');
+            ) AS oi'), 'oi.sku', '=', 'items.sku');*/
 
         if ($request->has('store_id') && $request->store_id != '') {
 
