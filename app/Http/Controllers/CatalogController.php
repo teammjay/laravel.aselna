@@ -29,6 +29,7 @@ use App\Models\StoreProduct;
 use App\Models\StoreType;
 use App\Models\StoreTypeCategory;
 use App\Models\SysFile;
+use App\Utils\ListingUtility;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
@@ -1427,6 +1428,7 @@ class CatalogController extends Controller
 
     public function updateProductSpecification(Request $request){
         $productIds = $request->input('product_ids');
+        $categoryIds = $request->input('category_ids');
         $specifications = $request->input('specifications');
         $specification_values = $request->input('specifications_values');
         $store_id = $request->input('store_id');
@@ -1439,24 +1441,43 @@ class CatalogController extends Controller
             $data = [];
             for ($i = 0; $i < count($specifications); $i++) {
                 if($productIds){
-                    foreach ($productIds as $productId){
-                        $data[] = array(
-                            'id' => (string)Str::uuid(),
-                            'product_id' => $productId,
-                            'name' => $specifications[$i],
-                            'value' => $specification_values[$i],
-                            'store_type_id' => $store->storeType->id ?? null
-                        );
+                    foreach ($productIds as $key=>$productId){
+
+                        $category_id = $categoryIds[$key];
+
+                        $currentCategory = StoreTypeCategory::where('id', $category_id)->first();
+                        if ('Amazon' == $store->storeType->name) {
+                            $issues = ListingUtility::validate($currentCategory->marketplace_code, $productId, $store->storeType->id);
+                        } else {
+                            $issues = ListingUtility::validate($currentCategory->store_type_code, $productId, $store->storeType->id);
+                        }
+
+                        if($issues){
+                            foreach($issues as $issue){
+                                if(isset($issue['spec']['field']) && $issue['spec']['field'] == $specifications[$i]){
+                                    $exists = ProductSpecification::where(['product_id' => $productId, 'name' => $specifications[$i], ])->exists();
+                                    if(!$exists && $specification_values[$i] != '') {
+                                        $data[] = array(
+                                            'id' => (string)Str::uuid(),
+                                            'product_id' => $productId,
+                                            'name' => $specifications[$i],
+                                            'value' => $specification_values[$i],
+                                            'store_type_id' => $store->storeType->id ?? null
+                                        );
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
-
             }
 
             /*echo '<pre>';
             print_r($data);
             echo '</pre>';die;*/
-
-            ProductSpecification::insert($data);
+            if($data){
+                ProductSpecification::insert($data);
+            }
 
             return response()->json(['success' => true]);
 
