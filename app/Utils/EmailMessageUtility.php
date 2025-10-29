@@ -2,6 +2,7 @@
 
 namespace App\Utils;
 
+use App\Services\CriticalErrorService;
 use App\Utils\mail\AmazonEmailParser;
 use App\Utils\mail\EbayEmailParser;
 use App\Utils\mail\ShopifyEmailParser;
@@ -172,7 +173,7 @@ class EmailMessageUtility
         }
     }
 
-    public function fetchEmails($store_type, $filter_date, $folderName = 'INBOX', $limit = 10)
+    public function fetchEmails($store_type, $filter_date, $folderName = 'INBOX', $limit = 10, $storeName = null)
     {
         try {
             $this->client->connect();
@@ -365,6 +366,12 @@ class EmailMessageUtility
             Log::info("Successfully processed " . count($emails) . " emails");
             return $emails;
         } catch (Exception $e) {
+
+            CriticalErrorService::report('Fetch emails failed', [
+                'marketplace' => ucfirst($store_type),
+                'reason' => $e->getMessage() ?? 'Unknown',
+            ],['store_type' => $store_type,'store_name' => $storeName]);
+
             Log::error("Failed to fetch emails: " . $e->getMessage());
             Log::error("Failed to fetch emails: " . $e->getTraceAsString());
             return ['error' => 'Failed to fetch emails: ' . $e->getMessage()];

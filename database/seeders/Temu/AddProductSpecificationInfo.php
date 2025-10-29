@@ -53,7 +53,7 @@ class AddProductSpecificationInfo extends Seeder
                     'required' => $property['required'] == true ? 1 : 0,
                 ]);
 
-                if ($property['required'] == true) {
+                if ($property['required'] == true && $property['showType'] == 0) {
                     $requirement['category'] = $category->code;
                     $requirement['key_value'] = $property['name'];
                     $requirementCount++;
@@ -90,9 +90,12 @@ class AddProductSpecificationInfo extends Seeder
                         ProductSpecificationValue::updateOrCreate([
                             'product_specification_id' => $productSpecification->id,
                             'field_value' => $value['value'],
+                            'category' => $category->code
                         ], [
                             'product_specification_id' => $productSpecification->id,
-                            'field_value' => $value['value']
+                            'field_value' => $value['value'],
+                            'store_type_id' => $this->storeType->id,
+                            'category' => $category->code
                         ]);
                     }
                 }

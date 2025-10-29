@@ -6,6 +6,7 @@ use App\Models\AccountTransaction;
 use App\Models\OrderOperation;
 use App\Models\ShippingAccount;
 use App\Models\ShippingSettingCarrierAccount;
+use App\Models\Store;
 use App\Services\DataTable\DataTableService;
 use App\Utils\EndicialabelService;
 use App\Utils\shipment\ShipmentDocumentsCreator;
@@ -27,8 +28,10 @@ class AccountTransactionController extends Controller
             ->get();*/
 
 //        $shipping_account_transactions = AccountTransaction::with('shippingAccount')->where('shipping_account_id',$account_id)->get();
+
+        $stores = Store::with('storeType')->where('store_status','>', 0)->orderBy('name')->get();
         $shipping_account = ShippingAccount::all();
-        return view('shipping_account_transaction.list', compact('shipping_account', 'account_id'));
+        return view('shipping_account_transaction.list', compact('shipping_account', 'account_id','stores'));
     }
 
     public function filter(Request $request)
@@ -63,6 +66,10 @@ class AccountTransactionController extends Controller
 
         if ($request->has('status') && $request->status != '') {
             $query->where('status', $request->status);
+        }
+
+        if ($request->has('store_id') && $request->store_id != '') {
+            $query->where('store_id', $request->store_id);
         }
 
 

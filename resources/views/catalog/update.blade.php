@@ -2135,6 +2135,8 @@
                     method: "POST",
                     data: {
                         field_name: $(this).val(),
+                        store_type_id: $('#specification_store_type_id').val(),
+                         product_id : '{{ $product->product_id }}',
                         _token: "{{ csrf_token() }}"
                     },
                     success: function (response) {

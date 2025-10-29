@@ -29,6 +29,7 @@ use App\Models\StoreProduct;
 use App\Models\StoreType;
 use App\Models\StoreTypeCategory;
 use App\Models\SysFile;
+use App\Utils\ListingUtility;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
@@ -40,6 +41,7 @@ class CatalogController extends Controller
 {
 
     private $perPage = 10;
+
     /**
      * Display a listing of the resource.
      */
@@ -671,7 +673,7 @@ class CatalogController extends Controller
 
             try {
                 $data = [];
-                for ($i = 0; $i < count($request->specification); $i++) {
+                for ($i = 0; $i < count($request->specification ?? []); $i++) {
                     $data[] = array(
                         'id' => (string)Str::uuid(),
                         'product_id' => $productId,
@@ -1063,18 +1065,20 @@ class CatalogController extends Controller
         $store_type_id = $request->input('store_type_id');
         $product_id = $request->input('product_id');
         $categoryId = $request->input('category_id');
-//        $storeIds = Store::where('store_type_id', $store_type_id)->pluck('id')->toArray();
-//        $firstStoreProduct = StoreProduct::where('product_id', $product_id)
-//            ->whereNotNull('store_type_category_id')
-//            ->whereIn('store_id', $storeIds)
-//            ->first();
-//
-//        if (!isset($firstStoreProduct)) {
-//            return response()->json([
-//                'html' => '<p>No category found for the selected store type. Please select category in stores tab</p>',
-//            ]);
-//        }
-//        $categoryId = $firstStoreProduct->store_type_category_id;
+        if (isset($storetype) && in_array($storetype->code, ['temu','amazon', 'walmart'])) {
+            $storeIds = Store::where('store_type_id', $store_type_id)->pluck('id')->toArray();
+            $firstStoreProduct = StoreProduct::where('product_id', $product_id)
+                ->whereNotNull('store_type_category_id')
+                ->whereIn('store_id', $storeIds)
+                ->first();
+
+            if (!isset($firstStoreProduct)) {
+                return response()->json([
+                    'html' => '<p>No category found for the selected store type. Please select category in stores tab</p>',
+                ]);
+            }
+            $categoryId = $firstStoreProduct->store_type_category_id;
+        }
 
         $specifications = ProductSpecification::where('store_type_id', $store_type_id)->where('product_id', $product_id)->orderBy('created_at', 'asc')->get();
         /*echo '<pre>';
@@ -1088,7 +1092,7 @@ class CatalogController extends Controller
                 $field = $valoption = '';
                 if (!empty($field_option)) {
                     $field = 'select';
-                    $valoption = ProductSpecificationValue::where('product_specification_id', $field_option->id)->get();
+                    $valoption = ListingUtility::getSpecValues($field_option, $store_type_id, $categoryId);
                 }
                 $specificationArr[$key]->field = $field;
                 $specificationArr[$key]->valoption = $valoption;
@@ -1101,24 +1105,24 @@ class CatalogController extends Controller
         echo '</pre>';die;*/
 
 
-        $info_category = ProductType::with('children')->whereIn('parent_id', function ($subquery) {
-            $subquery->select('id')->from('product_type')->where('code', 'cea');
-        })->orderBy('name', 'asc')->get();
-        $info_category = $info_category->pluck('id')->values()->all();
-
-        if (!isset($categoryId) && $categoryId == '') {
-            $product_detail = Catalog::findOrFail($product_id);
-            $category = ProductType::with('ancestors')->find($product_detail->product_type);
-            $category_id = $this->getAncestors($category, $info_category);
-        } else {
-            $category = ProductType::with('ancestors')->find($categoryId);
-            $category_id = $this->getAncestors($category, $info_category);
-        }
-
         $storetype = StoreType::where('id', $store_type_id)->first();
         if (isset($storetype) && in_array($storetype->code, ['temu', 'amazon', 'walmart'])) {
             Log::info('No category for store type code: ' . $storetype->code);
             $category_id = null;
+        } else {
+            $info_category = ProductType::with('children')->whereIn('parent_id', function ($subquery) {
+                $subquery->select('id')->from('product_type')->where('code', 'cea');
+            })->orderBy('name', 'asc')->get();
+            $info_category = $info_category->pluck('id')->values()->all();
+
+            if (!isset($categoryId) && $categoryId == '') {
+                $product_detail = Catalog::findOrFail($product_id);
+                $category = ProductType::with('ancestors')->find($product_detail->product_type);
+                $category_id = $this->getAncestors($category, $info_category);
+            } else {
+                $category = ProductType::with('ancestors')->find($categoryId);
+                $category_id = $this->getAncestors($category, $info_category);
+            }
         }
         Log::info('categoryId: ' . $category_id);
 
@@ -1142,7 +1146,7 @@ class CatalogController extends Controller
         $store_type_id = $request->input('store_type_id');
         $product_id = $request->input('product_id');
         $categoryId = $request->input('category_id');
-        $specifications = $request->input('specifications',[]);
+        $specifications = $request->input('specifications', []);
 
         if (!isset($specifications)) {
             $specifications = [];
@@ -1200,7 +1204,7 @@ class CatalogController extends Controller
                 $field = $valoption = '';
                 if (!empty($field_option)) {
                     $field = 'select';
-                    $valoption = ProductSpecificationValue::where('product_specification_id', $field_option->id)->get();
+                    $valoption = ListingUtility::getSpecValues($field_option, $store_type_id, $categoryId);
                 }
                 $specificationArr[$key]->field = $field;
                 $specificationArr[$key]->valoption = $valoption;
@@ -1286,7 +1290,8 @@ class CatalogController extends Controller
 
                 if (!empty($field_option)) {
                     $field = 'select';
-                    $optionvalueArr = ProductSpecificationValue::where('product_specification_id', $field_option->id)->get();
+                    $optionvalueArr = ListingUtility::getSpecValues($field_option, $store_type_id, $categoryId);
+
                     if (!empty($optionvalueArr)) {
                         $valoption = '<option value=""></option>';
                         foreach ($optionvalueArr as $val) {
@@ -1331,11 +1336,29 @@ class CatalogController extends Controller
     {
 
         $field_name = $request->input('field_name');
+        $product_id = $request->input('product_id');
+        $store_type_id = $request->input('store_type_id');
+        $categoryId = null;
+        if (isset($storetype) && in_array($storetype->code, ['temu', 'walmart', 'amazon'])) {
+            $storeIds = Store::where('store_type_id', $store_type_id)->pluck('id')->toArray();
+            $firstStoreProduct = StoreProduct::where('product_id', $product_id)
+                ->whereNotNull('store_type_category_id')
+                ->whereIn('store_id', $storeIds)
+                ->first();
+
+            if (!isset($firstStoreProduct)) {
+                return response()->json([
+                    'html' => '',
+                    'message' => '<p>No category found for the selected store type. Please select category in stores tab</p>',
+                ]);
+            }
+            $categoryId = $firstStoreProduct->store_type_category_id;
+        }
         $field = $option = '';
         $firstField = ProductSpecifcationUniqueInfo::where('field_name', $field_name)->first();
         if (isset($firstField)) {
-            $field_id = $firstField->id;
-            $field_options = ProductSpecificationValue::where('product_specification_id', $field_id)->get();
+            $field_options = ListingUtility::getSpecValues($firstField, $store_type_id, $categoryId);
+
             if (!empty($field_options)) {
                 $field = 'select';
                 $option = '<option value=""></option>';
@@ -1389,6 +1412,68 @@ class CatalogController extends Controller
                 'success' => false,
                 'option' => []
             ]);
+        }
+    }
+
+    public function updateProductSpecification(Request $request)
+    {
+        $productIds = $request->input('product_ids');
+        $categoryIds = $request->input('category_ids');
+        $specifications = $request->input('specifications');
+        $specification_values = $request->input('specifications_values');
+        $store_id = $request->input('store_id');
+
+        //echo $store_id;die;
+
+        $store = Store::with('storeType')->where('id', $store_id)->first();
+
+        try {
+            $data = [];
+            for ($i = 0; $i < count($specifications); $i++) {
+                if($productIds){
+                    foreach ($productIds as $key=>$productId){
+
+                        $category_id = $categoryIds[$key];
+
+                        $currentCategory = StoreTypeCategory::where('id', $category_id)->first();
+                        if ('Amazon' == $store->storeType->name) {
+                            $issues = ListingUtility::validate($currentCategory->marketplace_code, $productId, $store->storeType->id);
+                        } else {
+                            $issues = ListingUtility::validate($currentCategory->store_type_code, $productId, $store->storeType->id);
+                        }
+
+                        if($issues){
+                            foreach($issues as $issue){
+                                if(isset($issue['spec']['field']) && $issue['spec']['field'] == $specifications[$i]){
+                                    $exists = ProductSpecification::where(['product_id' => $productId, 'name' => $specifications[$i], ])->exists();
+                                    if(!$exists && $specification_values[$i] != '') {
+                                        $data[] = array(
+                                            'id' => (string)Str::uuid(),
+                                            'product_id' => $productId,
+                                            'name' => $specifications[$i],
+                                            'value' => $specification_values[$i],
+                                            'store_type_id' => $store->storeType->id ?? null
+                                        );
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            /*echo '<pre>';
+            print_r($data);
+            echo '</pre>';die;*/
+            if($data){
+                ProductSpecification::insert($data);
+            }
+
+            return response()->json(['success' => true]);
+
+        } catch (\Exception $e) {
+            // Handle the exception and show an error message
+            return response()->json(['errors' => $e->getMessage()]);
         }
     }
 }

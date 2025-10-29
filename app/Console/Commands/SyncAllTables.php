@@ -163,7 +163,7 @@ class SyncAllTables extends Command
 //           FeedGenerationJob::dispatch('9043a2c1-0b2d-4a9e-89bd-c08a02f6637c');
         //    FeedGenerationJob::dispatch('4e7f02b9-3530-4e87-ad72-8cf5881ebe66');
 //        ListingItemImageCreate::dispatch('45a0b556-f1f8-445f-a83f-498ee612e680');
-//       FeedGenerationJob::dispatch('9e3a9574-643a-4af1-bbde-e68d58ab141a');
+//       FeedGenerationJob::dispatch('315d3b6c-65d8-466e-b217-cdc089b6a9c5');
         //    ListingItemImageCreate::dispatch('4dcf1d3f-b723-4b31-a075-3702c0746b10');
 //        FetchAmazonOrdersJob::dispatch();
 //        StoreCategorySyncJob::dispatch('94428796-cdf9-dc2b-a1e7-aa4100066fd9');
@@ -211,7 +211,7 @@ class SyncAllTables extends Command
 //        DevicesSyncJob::dispatch();
 //        ProductImagesSyncJob::dispatch();
 //        FetchEmailMessagesJob::dispatch();
-        EbayListingItemSyncJob::dispatch();
+//        EbayListingItemSyncJob::dispatch();
 
         $transactionIds = [
 ////            '9400150105798006163885',

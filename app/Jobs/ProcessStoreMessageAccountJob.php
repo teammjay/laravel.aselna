@@ -7,6 +7,7 @@ use App\Models\HdMessageAttachment;
 use App\Models\HdMessageReference;
 use App\Models\Sequence;
 use App\Models\SysFile;
+use App\Services\CriticalErrorService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -77,7 +78,7 @@ class ProcessStoreMessageAccountJob implements ShouldQueue
                     Log::info('Imap Config :' . json_encode($imapConfig));
 
                     $emailUtility = new EmailMessageUtility($smtpConfig, $imapConfig);
-                    $receiveEmails = $emailUtility->fetchEmails($store_type, $filter_date, $folder,$maccount->incomingAccount->fetch_limit);
+                    $receiveEmails = $emailUtility->fetchEmails($store_type, $filter_date, $folder,$maccount->incomingAccount->fetch_limit, $this->store_name);
                     $last_filter_date = '';
 
                     if (count($receiveEmails ?? []) > 0) {
@@ -367,6 +368,12 @@ class ProcessStoreMessageAccountJob implements ShouldQueue
                 }
             }
         } catch (\Exception $e) {
+
+            CriticalErrorService::report('Store message account job failed', [
+                'marketplace' => ucfirst($this->store_type),
+                'reason' => $e->getMessage() ?? 'Unknown',
+            ],['store_type' => $this->store_type, 'store_name' => $this->store_name,'store_message_account' => $this->storeMessageAccount]);
+
             Log::error('Error processing store message account: ' . $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine());
         }
     }

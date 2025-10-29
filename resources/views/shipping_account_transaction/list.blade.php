@@ -7,6 +7,28 @@
     <h1>Shipping Account Transaction</h1>
 @stop
 
+@section('adminlte_css')
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <style>
+        .select2-container--default .select2-dropdown .select2-search__field:focus, .select2-container--default .select2-search--inline .select2-search__field:focus {
+            outline: 0;
+            border: none;
+        }
+        .select2-container{width:100% !important;}
+        .select2-container .select2-selection--single{
+            height: calc(2.25rem + 2px);
+        }
+        .select2-container--default .select2-selection--single .select2-selection__arrow {
+            height: auto;
+            position: absolute;
+            top: 50%;
+            right: 1px;
+            width: 20px;
+            transform: translateY(-50%);
+        }
+    </style>
+@stop
+
 @section('content')
     @csrf
     @if (session('success'))
@@ -75,7 +97,7 @@
         </div>
         <div class="card-body" style="display: none;">
             <form id="filter-form">
-                <input type="hidden" name="store_id" id="store_id">
+
                 <div class="row pt-3">
                     <div class="col-md-4">
                         <div class="row">
@@ -152,6 +174,23 @@
                     </div>
                 </div>
                 <div class="row pt-3">
+                    <div class="col-md-4">
+                        <div class="row">
+                            <div class="col-4 text-right">
+                                Store
+                            </div>
+                            <div class="col-8">
+                                <select class="form-control" name="store_id" id="store_id">
+                                    <option value=""></option>
+                                    @if(count($stores ?? []) > 0)
+                                        @foreach($stores as $store)
+                                            <option value="{{ $store->id }}">{{ $store->name }} - {{ $store->storeType->name }}</option>
+                                        @endforeach
+                                    @endif
+                                </select>
+                            </div>
+                        </div>
+                    </div>
                     <div class="col-md-4">
                         <div class="row">
                             <div class="col-4 text-right">
@@ -252,9 +291,12 @@
 @stop
 
 @section('adminlte_js')
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script>
         $(document).ready(function() {
             var accountTransactionTable = null;
+
+            $('#store_id').select2();
 
             $('.card-header').on('click', function () {
                 if ($(this).find('.fa').hasClass('fa-angle-down')) {

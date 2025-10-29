@@ -2402,11 +2402,12 @@
                         'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                     },
                     success: function (response) {
-                        if (response.issues && response.issues.length > 0) {
+                        if (response.issues && Object.keys(response.issues).length > 0) {
                             var buttonId = 'errorButton-' + product_id;
-                            $('button#' + buttonId).removeClass('btn-success').addClass('btn-danger').text(response.issues.length +' Errors').data('error',''+response.issues.length);
+                            $('button#' + buttonId).removeClass('btn-success').addClass('btn-danger').text(Object.keys(response.issues).length +' Errors').data('error',''+Object.keys(response.issues).length);
                             $('#errorModal-' +product_id + ' .modal-body').html(response.issue_table_html);
                             $('#refreshErrorsBtn-' + product_id).show();
+
                         } else {
                             var buttonId = 'errorButton-' + product_id;
                             $('button#' + buttonId).removeClass('btn-danger').addClass('btn-success').text('0 Issues').data('error','0');
@@ -2451,9 +2452,9 @@
                         for (let i = 0; i < selected_product.length; i++) {
                             var product_id = selected_product[i];
 
-                            if (response.issues.product_id && response.issues.product_id.length > 0) {
+                            if (response.issues.product_id && Object.keys(response.issues.product_id).length > 0) {
                                 var buttonId = 'errorButton-' + product_id;
-                                $('button#' + buttonId).removeClass('btn-success').addClass('btn-danger').text(response.issues.product_id.length +' Errors').data('error',''+response.issues.product_id.length);
+                                $('button#' + buttonId).removeClass('btn-success').addClass('btn-danger').text(Object.keys(response.issues.product_id).length +' Errors').data('error',''+Object.keys(response.issues.product_id).length);
                                 $('#errorModal-' +product_id + ' .modal-body').html(response.issue_table_html);
                             } else {
                                 var buttonId = 'errorButton-' + product_id;
@@ -2521,6 +2522,31 @@
             });
 
             bindRefreshButtons();
+
+            $(document).on('click','#updateProductSpecification',function () {
+                var pro_id = $(this).parents('.modal-content').find('.specPro').data('proid');
+                var products_ids= [];
+                var category_ids = [];
+                products_ids.push(pro_id);
+
+                var cid = $('.stc-'+pro_id).val();
+                category_ids.push(cid);
+                updateSpecification(products_ids, category_ids);
+            });
+
+            $(document).on('click','#updateAllProductSpecification',function () {
+                var products_ids = [];
+                var category_ids = [];
+                $('input[name="selected_product[]"]').each(function () {
+                    var pid = $(this).val();
+                    products_ids.push(pid);
+
+                    var cid = $('.stc-'+pid).val();
+                    category_ids.push(cid);
+                });
+
+                updateSpecification(products_ids, category_ids);
+            });
 
         });
 
@@ -2694,7 +2720,6 @@
                     if (response.html) {
                         $('#productsTable2_wrapper').html(response.html);
                         generateKeywords();
-                        bindRefreshButtons();
                         $('.store-type-category').select2();
                         if(response.storeCategories){
                             $('#store_category').html(response.storeCategories);
@@ -2705,6 +2730,7 @@
                             const targetModal = $(this).data('bs-target');
                             $(targetModal).modal('show');
                         });
+                        bindRefreshButtons();
                     }
                 },
                 error: function (xhr) {
@@ -3054,6 +3080,64 @@
                 console.log('stc-' + productId);
                 $('.stc-' + productId).trigger('change');
             });
+
+            $('.specification-select').each(function () {
+                const $select = $(this);
+                if ($select.hasClass('select2-hidden-accessible')) {
+                    $select.select2('destroy');
+                }
+
+                const $modal = $select.closest('.modal');
+                $select.select2({
+                    width: '100%',
+                    dropdownParent: $modal.length ? $modal : $(document.body)
+                });
+            });
+
+        }
+
+        function updateSpecification(product_ids, category_ids){
+
+            console.log(product_ids);
+
+            var $openModal = $('.modal.show');
+            var modalID = $openModal.attr('id');
+
+            var specifications = [];
+            $('#'+modalID).find('.specification').each(function () {
+                specifications.push($(this).val());
+            });
+
+            var specifications_values = [];
+            $('#'+modalID).find('.specification_value').each(function () {
+                specifications_values.push($(this).val());
+            });
+
+            if(product_ids) {
+
+                $.ajax({
+                    url: "{{ route('catalog.updateproductspecification') }}",
+                    method: "POST",
+                    data: {
+                        product_ids: product_ids,
+                        category_ids: category_ids,
+                        store_id: $('#listing_store').val(),
+                        specifications: specifications,
+                        specifications_values: specifications_values,
+                        _token: "{{ csrf_token() }}"
+                    },
+                    success: function (response) {
+
+                        if(response.success){
+                            $('#'+modalID).modal('hide');
+
+                            for(i in product_ids){
+                                $('#refreshErrorsBtn-'+product_ids[i]).trigger('click');
+                            }
+                        }
+                    }
+                });
+            }
         }
     </script>
 @stop
