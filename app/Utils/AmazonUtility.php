@@ -141,7 +141,7 @@ class AmazonUtility
             ->where('store_type_id', $storeProduct->store->store_type_id)->first();
 
         $form_factor = ProductSpecification::where('product_id', $productData->product_id)
-            ->where('name', 'form_factor')
+            ->where('name', 'headphones_form_factor')
             ->where('store_type_id', $storeProduct->store->store_type_id)->first();
 
         $items_count = ProductSpecification::where('product_id', $productData->product_id)
