@@ -36,7 +36,7 @@ class AddProductSpecificationInfo extends Seeder
         $marketPlaceID = $this->amazonAuthService->getMarketplaceIDs();
         $categories = StoreTypeCategory::where('store_type_id', $this->storeType->id)
             ->whereNotNull('marketplace_code')
-            ->whereIn('marketplace_code', $qualifiedcategoryCodes)
+            //->whereIn('marketplace_code', $qualifiedcategoryCodes)
             ->select('marketplace_code')
             ->distinct()
             ->get();
