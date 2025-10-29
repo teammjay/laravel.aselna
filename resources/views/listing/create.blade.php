@@ -7,7 +7,7 @@
     <link href="{{ asset('css/jquery.multiselect.css') }}" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <style>
-        .select2-container--default .select2-dropdown .select2-search__field:focus, .select2-container--default .select2-search--inline .select2-search__field:focus {
+        /*.select2-container--default .select2-dropdown .select2-search__field:focus, .select2-container--default .select2-search--inline .select2-search__field:focus {
             outline: 0;
             border: none;
         }
@@ -22,7 +22,7 @@
             right: 1px;
             width: 20px;
             transform: translateY(-50%);
-        }
+        }*/
         #product_type_filter option, #manufacturer_filter option, select[multiple] option {
             border-bottom: 1px solid #eaeaea;
         }
