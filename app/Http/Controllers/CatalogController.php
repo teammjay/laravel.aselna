@@ -673,7 +673,7 @@ class CatalogController extends Controller
 
             try {
                 $data = [];
-                for ($i = 0; $i < count($request->specification); $i++) {
+                for ($i = 0; $i < count($request->specification ?? []); $i++) {
                     $data[] = array(
                         'id' => (string)Str::uuid(),
                         'product_id' => $productId,
