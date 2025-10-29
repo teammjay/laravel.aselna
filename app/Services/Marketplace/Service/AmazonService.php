@@ -127,7 +127,6 @@ class AmazonService implements MarketplaceServiceInterface
                     $message['attributes'] = array_merge($message['attributes'], $fieldsByProductType);
                 }
 
-                $message['attributes']['parentage_level'] = 'parent';
                 $bulletPoints = [];
                 foreach ($storeProduct->features as $feature) {
                     $safeText = htmlspecialchars($feature->value, ENT_QUOTES | ENT_XML1, 'UTF-8');
