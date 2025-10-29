@@ -31,10 +31,12 @@ class AddProductSpecificationInfo extends Seeder
 
     private function fetchAndStoreSpecifications()
     {
+        $qualifiedcategoryCodes = ['ELECTRONIC_CABLE', 'SCREEN_PROTECTOR', 'HEADPHONES', 'PORTABLE_ELECTRONIC_DEVICE_MOUNT', 'CELL_PHONE_HOLSTER', 'CHARGING_ADAPTER', 'POWER_BANK', 'CAMERA_TRIPOD', 'PORTABLE_ELECTRONIC_DEVICE_ARMBAND', 'PORTABLE_ELECTRONIC_DEVICE_STAND', 'CELLULAR_PHONE_CASE'];
         $this->amazonAuthService = new AmazonAuthService(env('AMAZON_CLIENT_ID'), env('AMAZON_CLIENT_SECRET'), env('AMAZON_REFRESH_TOKEN'));
         $marketPlaceID = $this->amazonAuthService->getMarketplaceIDs();
         $categories = StoreTypeCategory::where('store_type_id', $this->storeType->id)
             ->whereNotNull('marketplace_code')
+            ->whereIn('marketplace_code', $qualifiedcategoryCodes)
             ->select('marketplace_code')
             ->distinct()
             ->get();
@@ -75,7 +77,8 @@ class AddProductSpecificationInfo extends Seeder
                                 ProductSpecificationValue::updateOrCreate([
                                     'product_specification_id' => $productSpecification->id,
                                     'field_value' => $enumValue,
-                                    'category' => $category->code
+                                    'category' => $category->marketplace_code,
+                                    'store_type_id' => $this->storeType->id,
                                 ], [
                                     'product_specification_id' => $productSpecification->id,
                                     'field_value' => $enumValue,

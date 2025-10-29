@@ -11,7 +11,7 @@ return new class extends Migration {
     public function up(): void
     {
         Schema::table('product_specification', function (Blueprint $table) {
-            $table->index(['product_id', 'store_type_id', 'name'],'prod_store_name_idx');
+            $table->index(['product_id', 'store_type_id', 'name'], 'prod_store_name_idx');
             $table->index(['product_id', 'store_type_id'], 'prod_store_idx');
         });
 
@@ -20,8 +20,9 @@ return new class extends Migration {
         });
 
         Schema::table('product_specification_values', function (Blueprint $table) {
-            $table->index(['product_specification_id', 'store_type_id', 'category'],'spec_store_cat_idx');
-            $table->index(['product_specification_id', 'store_type_id'],'spec_store_idx');
+            $table->index(['product_specification_id', 'store_type_id', 'category', 'field_value'], 'spec_store_cat_value_idx');
+            $table->index(['product_specification_id', 'store_type_id', 'category'], 'spec_store_cat_idx');
+            $table->index(['product_specification_id', 'store_type_id'], 'spec_store_idx');
         });
 
     }
@@ -41,6 +42,7 @@ return new class extends Migration {
         });
 
         Schema::table('product_specification_values', function (Blueprint $table) {
+            $table->dropIndex('spec_store_cat_value_idx');
             $table->dropIndex('spec_store_cat_idx');
             $table->dropIndex('spec_store_idx');
         });
