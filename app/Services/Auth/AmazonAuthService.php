@@ -189,7 +189,7 @@ class AmazonAuthService
         }
     }
 
-    private function getMarketplaceIDs()
+    public function getMarketplaceIDs()
     {
         if (isset($this->marketplaceIDs)) {
             return $this->marketplaceIDs;
