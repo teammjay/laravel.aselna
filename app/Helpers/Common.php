@@ -54,7 +54,7 @@ class Common
                 $lastSaleDate = $salesData->lastSaleDate;
 
                 $itemDetail->update([
-                    'sale_count' => $saleCount,
+                    'sales_count' => $saleCount,
                     'last_sale_date' => $lastSaleDate,
                 ]);
 
