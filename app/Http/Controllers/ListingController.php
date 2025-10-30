@@ -2090,25 +2090,27 @@ class ListingController extends Controller
         foreach ($devices as $device) {
             $fullName = trim($device->name);
             $brand = $device->brand_name;
-            $parts = preg_split('/\s+/', $fullName);
-
-            if (count($parts) < 2) continue;
+//            $parts = preg_split('/\s+/', $fullName);
+//
+//            if (count($parts) < 2) continue;
 
             $parts = explode(' ', $fullName);
-            if($brand === 'Apple') {
-                $prefix = $brand === 'Apple' ? 'iPhone' : $parts[0];
+//            if($brand === 'Apple') {
+                $prefix = $parts[0];
                 $model = $parts[1] ?? '';
                 $suffix = implode(' ', array_slice($parts, 2)) ?: '__base__';
-            }else{
-                $prefix = $brand === 'Apple' ? 'iPhone' : $parts[1];
-                $model = $parts[2] ?? '';
-                $suffix = implode(' ', array_slice($parts, 3)) ?: '__base__';
-            }
+//            }else{
+//                $prefix = $brand === 'Apple' ? 'iPhone' : $parts[1];
+//                $model = $parts[2] ?? '';
+//                $suffix = implode(' ', array_slice($parts, 3)) ?: '__base__';
+//            }
 
-            $groupKey = strtolower($brand) === 'apple' ? 'iPhone' : "$brand $prefix";
+            $groupKey = strtolower($brand) === 'apple' ? "$prefix" : "$brand $prefix";
 
             $grouped[$groupKey][$suffix][] = $model;
+
         }
+        Log::info("grouped" . json_encode($grouped));
 
         $result = [];
 
@@ -2124,12 +2126,12 @@ class ListingController extends Controller
                     if (is_numeric($m)) {
                         $allModels[] = $m;
                     } else {
-                        $allSuffixes[] = ucwords(strtolower($m));
+                        $allSuffixes[] = $m;
                     }
                 }
 
                 if ($suffix !== '__base__') {
-                    $allSuffixes[] = ucwords(strtolower($suffix));
+                    $allSuffixes[] = $suffix;
                 }
             }
 
@@ -2137,7 +2139,7 @@ class ListingController extends Controller
             $allSuffixes = array_unique($allSuffixes);
 
             $combined = array_merge($allModels, $allSuffixes);
-            if (count($combined) <= 2 && $noOfDevices == 1) {
+            if (count($combined) <= 2 && $noOfDevices == 1 || (count($suffixes) == 1 && count($models) == 1)) {
                 $groupText = implode(' ', $combined);
             } else {
                 $groupText = implode($deviceSeparator, $combined);
