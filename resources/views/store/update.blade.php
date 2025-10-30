@@ -803,7 +803,7 @@
                                             <option value=""></option>
                                             @if(count($fileSystems ?? []) > 0)
                                                 @foreach($fileSystems as $fs)
-                                                    <option value="{{ $fs->id }}" {{ $fs->id == $store->file_system_id ? 'selected' : '' }}>{{ $fs->host }}</option>
+                                                    <option value="{{ $fs->id }}" {{ $fs->id == $store->file_system_id ? 'selected' : '' }}>{{ $fs->host }} ({{ $fs->url_base_path }})</option>
                                                 @endforeach
                                             @endif
                                         </select>
