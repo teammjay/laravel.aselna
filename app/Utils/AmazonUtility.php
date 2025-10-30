@@ -144,6 +144,10 @@ class AmazonUtility
             ->where('name', 'headphones_form_factor')
             ->where('store_type_id', $storeProduct->store->store_type_id)->first();
 
+        $EarPlacement = ProductSpecification::where('product_id', $productData->product_id)
+            ->where('name', 'headphones_ear_placement')
+            ->where('store_type_id', $storeProduct->store->store_type_id)->first();
+
         $items_count = ProductSpecification::where('product_id', $productData->product_id)
             ->where('name', 'Number of Items')
             ->where('store_type_id', $storeProduct->store->store_type_id)->first();
@@ -153,7 +157,7 @@ class AmazonUtility
             ->where('store_type_id', $storeProduct->store->store_type_id)->first();
 
         return [
-            'headphones_ear_placement' => [['value' => $form_factor->calculated_value()]],
+            'headphones_ear_placement' => [['value' => $EarPlacement->calculated_value()]],
             'warranty_description' => [['value' => $warranty->calculated_value(), 'language_tag' => 'en_US']],
             'item_package_weight' => FieldUtility::getItemPackageWeight($productData),
             'color' => [['value' => $productData->color->name, 'language_tag' => 'en_US']],

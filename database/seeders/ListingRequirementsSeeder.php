@@ -35,6 +35,7 @@ class ListingRequirementsSeeder extends Seeder
             ['category' => 'HEADPHONES', 'type' => 'column', 'table' => 'products', 'column' => 'product_color',],
             ['category' => 'HEADPHONES', 'type' => 'key_value', 'table' => 'product_specification', 'key_column' => 'name', 'key_value' => 'Items Included', 'value_column' => 'value'],
             ['category' => 'HEADPHONES', 'type' => 'key_value', 'table' => 'product_specification', 'key_column' => 'name', 'key_value' => 'connectivity_technology', 'value_column' => 'value'],
+            ['category' => 'HEADPHONES', 'type' => 'key_value', 'table' => 'product_specification', 'key_column' => 'name', 'key_value' => 'headphones_ear_placement', 'value_column' => 'value'],
             ['category' => 'HEADPHONES', 'type' => 'key_value', 'table' => 'product_specification', 'key_column' => 'name', 'key_value' => 'headphones_form_factor', 'value_column' => 'value'],
             ['category' => 'HEADPHONES', 'type' => 'key_value', 'table' => 'product_specification', 'key_column' => 'name', 'key_value' => 'Number of Items', 'value_column' => 'value'],
             ['category' => 'HEADPHONES', 'type' => 'key_value', 'table' => 'product_specification', 'key_column' => 'name', 'key_value' => 'Warranty', 'value_column' => 'value'],
