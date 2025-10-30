@@ -256,7 +256,7 @@ class TemuService implements MarketplaceServiceInterface
                 [$width, $height] = getimagesize($imagesUrl);
 
                 // Skip if aspect ratio is not 1:1
-                if ($width !== $height && $width >= 800 && $height >= 800) {
+                if ($width !== $height && $width <= 800 && $height <= 800) {
                     Log::info('Skipping image due to aspect ratio: ' . $imagesUrl);
                     continue;
                 }
