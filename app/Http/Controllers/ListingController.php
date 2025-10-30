@@ -120,7 +120,7 @@ class ListingController extends Controller
         $columnSortOrder = $request['order'][0]['dir'];
 
         // add select
-        $query = ListingItem::select('listing_item.*', 'saleCount', 'lastSaleDate')->with([
+        $query = ListingItem::select('listing_item.*')->with([
             'storeProduct:id,store_id,product_id',
             'storeProduct.store.storeType:id,name',
             'storeProduct.store:id,name,store_type_id',
@@ -161,7 +161,7 @@ class ListingController extends Controller
             $query->whereNotNull('shipped_quantity')->whereNull('canceled_quantity')->orWhere('canceled_quantity', 0)->whereNull('refund_quantity')->orWhere('refund_quantity', 0);
         }], 'created_at');*/
 
-        $query->leftJoin(DB::raw('(
+        /*$query->leftJoin(DB::raw('(
                     SELECT oi.sku,
                            SUM(COALESCE(oi.shipped_quantity, 0) - COALESCE(oi.canceled_quantity, 0) - COALESCE(oi.refund_quantity, 0)) AS saleCount,
                            MAX(CASE
@@ -173,7 +173,7 @@ class ListingController extends Controller
                                END) AS lastSaleDate
                     FROM order_item oi
                     GROUP BY oi.sku
-                ) AS oi'), 'oi.sku', '=', 'listing_item.sku');
+                ) AS oi'), 'oi.sku', '=', 'listing_item.sku');*/
         //$query->leftJoin('listing_item_detail', 'listing_item_detail.listing_item_id', '=', 'listing_item.id');
 
         /*$combinedSku = DB::raw('(
@@ -347,8 +347,8 @@ class ListingController extends Controller
             $totalRecords = (clone $query)->toBase()->getCountForPagination();
             $sortableColumns = [
                 'sku' => 'sku',
-                'sales_count' => 'saleCount',
-                'last_sale_date' => 'lastSaleDate',
+                'sales_count' => 'sales_count',
+                'last_sale_date' => 'last_sale_date',
                 'store_sku' => 'store_sku',
                 'store_name' => 'store.name',
                 'title' => 'title',
@@ -392,7 +392,7 @@ class ListingController extends Controller
                     $productcode = '';
                 };
 
-                $query = DB::table('order_item')
+                /*$query = DB::table('order_item')
                     ->selectRaw('
                         SUM(COALESCE(shipped_quantity, 0)
                             - COALESCE(canceled_quantity, 0)
@@ -412,12 +412,12 @@ class ListingController extends Controller
                 if ($sales) {
                     $saleCount = $sales->saleCount ?? 0;
                     $lastSaleDate = $sales->lastSaleDate ?? '';
-                }
+                }*/
 
                 $data[] = array(
                     "sku" => $product->sku . '<input type="checkbox" class="proList" name="listing_item[]" data-sku="' . $product->sku . '" data-code="' . $productcode . '" value="' . $product->id . '" style="visibility:hidden;">',
-                    "sales_count" => $saleCount,
-                    "last_sale_date" => $lastSaleDate,
+                    "sales_count" => $product->sales_count ?? 0,
+                    "last_sale_date" => $product->last_sale_date ?? '',
                     "store_sku" => $product->store_sku,
                     "product_sku" => (!empty((array)$product->storeProduct) && !empty((array)$product->storeProduct->product)) ? $product->storeProduct->product->product_sku : '',
                     "store_name" => ((!empty((array)$product->storeProduct) && !empty((array)$product->storeProduct->store)) ? $product->storeProduct->store->name : '') . ((!empty((array)$product->storeProduct) && !empty((array)$product->storeProduct->store) && !empty((array)$product->storeProduct->store->storeType)) ? ' - ' . $product->storeProduct->store->storeType->name : ''),
@@ -3249,6 +3249,11 @@ class ListingController extends Controller
             $listingItem = ListingItem::find($listing_item_id);
             if (!$listingItem) continue;
 
+            if($listingItem && ($listingItem->store_sku == '' || $listingItem->store_sku == NULL)){
+                $listingItem->update(['status' => ListingStatus::Deleted]);
+                continue;
+            }
+
             $sku = $selected_sku[$key] ?? null;
 
             $listingDetail = ListingItemLink::select('listing_item_link.*')
@@ -3271,7 +3276,7 @@ class ListingController extends Controller
         if (empty($storeGroupedItems)) {
             return response()->json([
                 'error' => true,
-                'message' => 'No valid listings found for items.'
+                'message' => 'No valid listings found for items OR listing item inactivated.'
             ]);
         }
 
