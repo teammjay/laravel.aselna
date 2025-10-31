@@ -1824,8 +1824,8 @@ class ListingController extends Controller
                     sort($numbers, SORT_NATURAL);
                     $suffixes = array_unique(array_filter($suffixes));
 
-                    $numPart = $numbers ? implode('/', $numbers) : '';
-                    $sufPart = $suffixes ? '/' . implode('/', $suffixes) : '';
+                    $numPart = $numbers ? implode($device_seperator, $numbers) : '';
+                    $sufPart = $suffixes ? $device_seperator . implode($device_seperator, $suffixes) : '';
                     $final = trim("$base $numPart$sufPart");
 
                     $compressedDevices[$brand] = $final;
@@ -1937,8 +1937,8 @@ class ListingController extends Controller
             print_r($orderedSuffixes);
             echo '</pre>';die;*/
 
-            $numPart = $orderedNumbers ? implode('/', $orderedNumbers) : '';
-            $sufPart = $orderedSuffixes ? '/' . implode('/', $orderedSuffixes) : '';
+            $numPart = $orderedNumbers ? implode($device_seperator, $orderedNumbers) : '';
+            $sufPart = $orderedSuffixes ? $device_seperator . implode($device_seperator, $orderedSuffixes) : '';
             //$finalModel = trim("$prefix $numPart$sufPart");
 
             if (!$numPart && $sufPart) {
@@ -2173,6 +2173,167 @@ class ListingController extends Controller
 
 
     private function groupDeviceModels($devices, $deviceSeparator = '/')
+    {
+        $brandModels = [];
+        $brandDeviceObjects = [];
+        foreach ($devices as $device) {
+            $brand = $device->brand_name;
+            $model = trim($device->name);
+
+            if (stripos($model, $brand) === 0) {
+                $model = trim(substr($model, strlen($brand)));
+            }
+
+            $brandModels[$brand][] = $model;
+            $brandDeviceObjects[$brand][] = $device;
+        }
+
+        $compressedDevices = [];
+        foreach ($brandModels as $brand => $models) {
+            $models = array_unique($models);
+
+            if (strtolower($brand) === 'apple') {
+                $groups = [];
+                foreach ($models as $m) {
+                    if (preg_match('/^(iPhone|iPad|iPod)/i', $m, $match)) {
+                        $base = ucfirst(strtolower($match[1]));
+                        $groups[$base][] = trim(str_replace($match[1], '', $m));
+                    } else {
+                        $groups['Other'][] = $m;
+                    }
+                }
+
+                foreach ($groups as $base => $suffixList) {
+                    $numbers = [];
+                    $suffixes = [];
+
+                    foreach ($suffixList as $s) {
+                        /*if (preg_match('/([0-9]+)/', $s, $numMatch)) {
+                            $numbers[] = $numMatch[1];
+                        }*/
+                        if (preg_match('/\b([A-Z]*\d+[A-Z]*|[A-Z]{2,})\b/i', $s, $numMatch)) {
+                            $numbers[] = $numMatch[1];
+                        }
+                        if (preg_match('/[0-9]+\s*([A-Za-z+ ]+)/', $s, $sufMatch)) {
+                            $suffixes[] = trim($sufMatch[1]);
+                        }
+
+                        /*$tokens = preg_split('/[\s\-\/]+/', $s);
+                        foreach ($tokens as $token) {
+                            $token = trim($token);
+                            if ($token === '') continue;
+
+                            if (preg_match('/^[A-Z]*\d+[A-Z]*$/', $token)) {
+                                if (preg_match('/^\d/', $token)) {
+                                    $suffixes[] = $token;
+                                } else {
+                                    $numbers[] = $token;
+                                }
+                            }
+                            else {
+                                $suffixes[] = $token;
+                            }
+                        }*/
+                    }
+
+                    $numbers = array_unique(array_filter($numbers));
+                    sort($numbers, SORT_NATURAL);
+                    $suffixes = array_unique(array_filter($suffixes));
+
+                    $numPart = $numbers ? implode($deviceSeparator, $numbers) : '';
+                    $sufPart = $suffixes ? $deviceSeparator . implode($deviceSeparator, $suffixes) : '';
+                    $final = trim("$base $numPart$sufPart");
+
+                    $compressedDevices[] = $final;
+                }
+                continue;
+            }
+
+            $prefixParts = [];
+            $splitModels = array_map(fn($m) => explode(' ', $m), $models);
+            $minLength = min(array_map('count', $splitModels));
+
+            for ($i = 0; $i < $minLength; $i++) {
+                $word = $splitModels[0][$i];
+                $same = true;
+                foreach ($splitModels as $parts) {
+                    if (!isset($parts[$i]) || strtolower($parts[$i]) !== strtolower($word)) {
+                        $same = false;
+                        break;
+                    }
+                }
+                if ($same) {
+                    $prefixParts[] = $word;
+                } else {
+                    break;
+                }
+            }
+
+            $prefix = implode(' ', $prefixParts);
+
+            $numbers = [];
+            $suffixes = [];
+            foreach ($models as $m) {
+                $clean = trim(preg_replace('/^' . preg_quote($prefix, '/') . '\s*/i', '', $m));
+
+                preg_match_all('/[A-Z0-9]+/i', $clean, $tokens);
+                $tokens = array_map(null, $tokens[0]);
+
+                foreach ($tokens as $token) {
+                    if (preg_match('/\d/', $token)) {
+                        $numbers[] = $token;
+                    }
+                    elseif (strlen($token) > 1) {
+                        $suffixes[] = $token;
+                    }
+                }
+            }
+
+            $numbers = array_unique(array_filter($numbers));
+            sort($numbers, SORT_NATURAL);
+            $suffixes = array_unique(array_filter($suffixes));
+
+            usort($numbers, 'strnatcasecmp');
+
+            $pureModels = [];
+            $networkSuffixes = [];
+
+            foreach ($numbers as $n) {
+                if (preg_match('/^(5G|4G|LTE|PLUS|PRO|ULTRA|MAX|MINI)$/i', $n)) {
+                    $networkSuffixes[] = $n;
+                } else {
+                    $pureModels[] = $n;
+                }
+            }
+
+            //$orderedNumbers = array_merge($pureModels, $networkSuffixes);
+            $orderedNumbers = $pureModels;//array_merge($pureModels, $networkSuffixes);
+            $orderedSuffixes = array_unique(array_merge($suffixes, $networkSuffixes));
+
+
+            $numPart = $orderedNumbers ? implode($deviceSeparator, $orderedNumbers) : '';
+            $sufPart = $orderedSuffixes ? $deviceSeparator . implode($deviceSeparator, $orderedSuffixes) : '';
+            //$finalModel = trim("$prefix $numPart$sufPart");
+
+            if (!$numPart && $sufPart) {
+                $finalModel = trim("$prefix$sufPart");
+            } else {
+                $finalModel = trim("$prefix $numPart$sufPart");
+            }
+
+            if (strtolower($brand) == 'apple') {
+                $compressedDevices[] = $finalModel;
+            } else {
+                $compressedDevices[] = "$brand $finalModel";
+            }
+        }
+
+
+        return $compressedDevices;
+    }
+
+
+    private function groupDeviceModels123($devices, $deviceSeparator = '/')
     {
         $grouped = [];
         $noOfDevices = count($devices);
