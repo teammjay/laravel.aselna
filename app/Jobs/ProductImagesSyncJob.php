@@ -89,9 +89,6 @@ class ProductImagesSyncJob implements ShouldQueue
 
         //check if file exists in storage
         try {
-            if (file_exists(storage_path('app/public/product_images/' . $productImage->picture_name))) {
-                $mainImageDetail = SysFile::where('name', $productImage->picture_name)->first();
-            }
             if(!isset($mainImageDetail)) {
                 Log::info('ProductImagesSyncJob: ' . $productImage->picture_name);
                 $imagePath = 'https://fonusaccessory.com/inv/inv_images/main_product_images/' . $productImage->picture_name;
@@ -102,9 +99,6 @@ class ProductImagesSyncJob implements ShouldQueue
         }
 
         try {
-            if (file_exists(storage_path('app/public/product_images/' . $productImage->thumbnail_picture_name))) {
-                $thumbnailImageDetail = SysFile::where('name', $productImage->thumbnail_picture_name)->first();
-            }
             if(!isset($thumbnailImageDetail)) {
                 $imageThumbnail = 'https://fonusaccessory.com/inv/inv_images/main_product_images/' . $productImage->thumbnail_picture_name;
                 $thumbnailImageDetail = FileUtility::saveImage($imageThumbnail, 'product_images', $productImage->thumbnail_picture_name);
