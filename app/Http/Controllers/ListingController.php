@@ -467,11 +467,12 @@ class ListingController extends Controller
             $subquery->select('id')->from('product_type')->where('code', 'cea');
         })->orderBy('name', 'asc')->get();
         $deviceTypes = DeviceTypes::all();
+        $preselectedDeviceTypes = ['Cell Phone','Tablet','iPod'];
         $listingGenerationTypes = ListingGenerationType::orderBy('code', 'asc')->get();
         $brands = Brand::orderBy('name', 'asc')->get();
         $deviceRating = DeviceRating::orderBy('value', 'asc')->get();
         $carriers = Carrier::orderBy('name', 'asc')->get();
-        return view('listing.create', compact('pageAt', 'stores', 'manufacturers', 'productTypes', 'deviceTypes', 'brands', 'listingGenerationTypes', 'deviceRating', 'carriers'));
+        return view('listing.create', compact('pageAt', 'stores', 'manufacturers', 'productTypes', 'deviceTypes','preselectedDeviceTypes', 'brands', 'listingGenerationTypes', 'deviceRating', 'carriers'));
     }
 
     /**
@@ -917,7 +918,9 @@ class ListingController extends Controller
                         ->leftJoin('store_type', 'store_type.id', '=', 'store_type_category.store_type_id')
                         ->leftJoin('store', 'store_type.id', '=', 'store.store_type_id')
                         ->when($store->storeType->name === 'Amazon', function ($query) use ($store) {
-                            $qualifiedcategoryCodes = ['ELECTRONIC_CABLE', 'SCREEN_PROTECTOR', 'HEADPHONES', 'PORTABLE_ELECTRONIC_DEVICE_MOUNT', 'CELL_PHONE_HOLSTER', 'CHARGING_ADAPTER', 'POWER_BANK', 'CAMERA_TRIPOD', 'PORTABLE_ELECTRONIC_DEVICE_ARMBAND', 'PORTABLE_ELECTRONIC_DEVICE_STAND', 'CELLULAR_PHONE_CASE'];
+                            $qualifiedcategoryCodes = ['ELECTRONIC_CABLE', 'SCREEN_PROTECTOR', 'HEADPHONES', 'PORTABLE_ELECTRONIC_DEVICE_MOUNT', 'CELL_PHONE_HOLSTER',
+                                'CHARGING_ADAPTER', 'POWER_BANK', 'CAMERA_TRIPOD', 'PORTABLE_ELECTRONIC_DEVICE_ARMBAND', 'PORTABLE_ELECTRONIC_DEVICE_STAND', 'CELLULAR_PHONE_CASE',
+                                'ELECTRONIC_ADAPTER', 'CABLE_OR_ADAPTER', 'INPUT_PEN', 'MULTIPORT_HUB'];
                             return $query->whereIn('store_type_category.marketplace_code', $qualifiedcategoryCodes);
                         })
                         ->where('store.id', $store_id)
@@ -926,12 +929,14 @@ class ListingController extends Controller
                 }
 
 
-                if(count($storeCategories ?? []) > 0){
-                    foreach($storeCategories as $key2=>$sCat){
-                        if($storeTypeName->storeTypeName === 'Magento'){
-                            $cat_option .= '<option value="'.$sCat->id.'">'.$sCat->name.'</option>';
-                        }else{
-                            $cat_option .= '<option value="'.$sCat->id.'">'.$sCat->name.'</option>';
+                if (count($storeCategories ?? []) > 0) {
+                    foreach ($storeCategories as $key2 => $sCat) {
+                        if ($storeTypeName->storeTypeName === 'Magento') {
+                            $cat_option .= '<option value="' . $sCat->id . '">' . $sCat->name . '</option>';
+                        } else if($storeTypeName->storeTypeName === 'Amazon') {
+                            $cat_option .= '<option value="' . $sCat->id . '">' . $sCat->name . ' (' . $sCat->marketplace_code. ') ' . '</option>';
+                        } else {
+                            $cat_option .= '<option value="' . $sCat->id . '">' . $sCat->name . '</option>';
                         }
                     }
                 }

@@ -490,7 +490,8 @@
                                         @if(count($deviceTypes ?? []) > 0)
                                             @foreach($deviceTypes as $dType)
                                                 <div class="form-group d-flex align-items-baseline mb-1">
-                                                    <input type="checkbox" class="ml-2 mr-2" name="device_type[]" value="{{ $dType->id }}"> <span>{{ $dType->name }}</span>
+                                                    <input type="checkbox" class="ml-2 mr-2" name="device_type[]" value="{{ $dType->id }}"
+                                                           {{ in_array($dType->name, $preselectedDeviceTypes) ? 'checked' : '' }}> <span>{{ $dType->name }}</span>
                                                 </div>
                                             @endforeach
                                         @endif
@@ -1151,7 +1152,9 @@
 
 
             $('#productsTable').DataTable();
-            $('#productListingTable').DataTable({});
+            $('#productListingTable').DataTable({
+                "bDestroy": true,
+            });
             $('#listing_store').select2();
 
             $('#listing_store').on('select2:open', function () {
@@ -2670,6 +2673,7 @@
                                 "autoWidth": false,
                                 "processing": false,
                                 "serverSide": false,
+                                "bDestroy": true,
                                 "searching": false,
                                 "paging": false,
                                 "info": false,
@@ -3016,6 +3020,7 @@
                                 "processing": false,
                                 "serverSide": false,
                                 "searching": false,
+                                "bDestroy": true,
                                 "paging": false,
                                 "info": false,
                                 "order": [[sortCol, "asc"]],
