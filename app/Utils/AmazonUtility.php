@@ -61,11 +61,11 @@ class AmazonUtility
             ->where('store_type_id', $storeProduct->store->store_type_id)->first();
 
         $connectivity = ProductSpecification::where('product_id', $productData->product_id)
-            ->where('name', 'Connectivity')
+            ->where('name', 'connectivity_technology')
             ->where('store_type_id', $storeProduct->store->store_type_id)->first();
 
         $connector_gender = ProductSpecification::where('product_id', $productData->product_id)
-            ->where('name', 'Connector Gender')
+            ->where('name', 'connector_gender')
             ->where('store_type_id', $storeProduct->store->store_type_id)->first();
 
         $items_count = ProductSpecification::where('product_id', $productData->product_id)
@@ -137,11 +137,15 @@ class AmazonUtility
             ->where('store_type_id', $storeProduct->store->store_type_id)->first();
 
         $connectivity = ProductSpecification::where('product_id', $productData->product_id)
-            ->where('name', 'Connectivity')
+            ->where('name', 'connectivity_technology')
             ->where('store_type_id', $storeProduct->store->store_type_id)->first();
 
         $form_factor = ProductSpecification::where('product_id', $productData->product_id)
-            ->where('name', 'form_factor')
+            ->where('name', 'headphones_form_factor')
+            ->where('store_type_id', $storeProduct->store->store_type_id)->first();
+
+        $EarPlacement = ProductSpecification::where('product_id', $productData->product_id)
+            ->where('name', 'headphones_ear_placement')
             ->where('store_type_id', $storeProduct->store->store_type_id)->first();
 
         $items_count = ProductSpecification::where('product_id', $productData->product_id)
@@ -153,7 +157,7 @@ class AmazonUtility
             ->where('store_type_id', $storeProduct->store->store_type_id)->first();
 
         return [
-            'headphones_ear_placement' => [['value' => $form_factor->calculated_value()]],
+            'headphones_ear_placement' => [['value' => $EarPlacement->calculated_value()]],
             'warranty_description' => [['value' => $warranty->calculated_value(), 'language_tag' => 'en_US']],
             'item_package_weight' => FieldUtility::getItemPackageWeight($productData),
             'color' => [['value' => $productData->color->name, 'language_tag' => 'en_US']],
@@ -181,7 +185,7 @@ class AmazonUtility
             ->implode(', ');
 
         $mounting_type = ProductSpecification::where('product_id', $productData->product_id)
-            ->where('name', 'Mounting Type')
+            ->where('name', 'mounting_type')
             ->where('store_type_id', $storeProduct->store->store_type_id)->first();
 
         $items_included = ProductSpecification::where('product_id', $productData->product_id)
@@ -263,7 +267,7 @@ class AmazonUtility
             ->where('store_type_id', $storeProduct->store->store_type_id)->first();
 
         $connectivity = ProductSpecification::where('product_id', $productData->product_id)
-            ->where('name', 'Connectivity')
+            ->where('name', 'connectivity_technology')
             ->where('store_type_id', $storeProduct->store->store_type_id)->first();
 
         $items_count = ProductSpecification::where('product_id', $productData->product_id)
@@ -308,7 +312,7 @@ class AmazonUtility
             ->where('store_type_id', $storeProduct->store->store_type_id)->first();
 
         $connectivity = ProductSpecification::where('product_id', $productData->product_id)
-            ->where('name', 'Connectivity')
+            ->where('name', 'connectivity_technology')
             ->where('store_type_id', $storeProduct->store->store_type_id)->first();
 
         $items_count = ProductSpecification::where('product_id', $productData->product_id)
@@ -320,11 +324,11 @@ class AmazonUtility
             ->where('store_type_id', $storeProduct->store->store_type_id)->first();
 
         $power_source_type = ProductSpecification::where('product_id', $productData->product_id)
-            ->where('name', 'Power Source type')
+            ->where('name', 'power_source_type')
             ->where('store_type_id', $storeProduct->store->store_type_id)->first();
 
         $recommended_use = ProductSpecification::where('product_id', $productData->product_id)
-            ->where('name', 'Recommended Uses')
+            ->where('name', 'recommended_uses_for_product')
             ->where('store_type_id', $storeProduct->store->store_type_id)->first();
 
         return [
@@ -427,7 +431,7 @@ class AmazonUtility
             ->implode(', ');
 
         $mounting_type = ProductSpecification::where('product_id', $productData->product_id)
-            ->where('name', 'Mounting Type')
+            ->where('name', 'mounting_type')
             ->where('store_type_id', $storeProduct->store->store_type_id)
             ->first();
 

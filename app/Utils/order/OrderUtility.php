@@ -5,6 +5,7 @@ namespace App\Utils\order;
 use App\Constants\OrderOperationType;
 use App\Constants\OrderOperationStatus;
 use App\Constants\OrderStatus;
+use App\Helpers\Common;
 use App\Models\Catalog;
 use App\Models\Customer;
 use App\Models\CustomerAddress;
@@ -166,6 +167,9 @@ class OrderUtility
 
                     if (isset($itemDetail)) {
 
+                        // sale count update
+                        $sku = $item['item']['sku'];
+                        Common::updateListingItemSaleDetail($sku, $itemDetail);
 
                         $orderItemData = [
                             'title' => $item['item']['productName'],
@@ -474,10 +478,13 @@ class OrderUtility
                     }
                 }
 
-                // sale count update
-
                 Log::info("Came Till Here 1 :: " . json_encode($itemDetail));
                 if (isset($itemDetail)) {
+
+                    // sale count update
+                    $sku = $item['sku'];
+                    Common::updateListingItemSaleDetail($sku, $itemDetail);
+
                     $orderItemData = [
                         'title' => $item['title'],
                         'order_id' => $order->id,

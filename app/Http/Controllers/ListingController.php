@@ -120,7 +120,7 @@ class ListingController extends Controller
         $columnSortOrder = $request['order'][0]['dir'];
 
         // add select
-        $query = ListingItem::select('listing_item.*', 'saleCount', 'lastSaleDate')->with([
+        $query = ListingItem::select('listing_item.*')->with([
             'storeProduct:id,store_id,product_id',
             'storeProduct.store.storeType:id,name',
             'storeProduct.store:id,name,store_type_id',
@@ -161,7 +161,7 @@ class ListingController extends Controller
             $query->whereNotNull('shipped_quantity')->whereNull('canceled_quantity')->orWhere('canceled_quantity', 0)->whereNull('refund_quantity')->orWhere('refund_quantity', 0);
         }], 'created_at');*/
 
-        $query->leftJoin(DB::raw('(
+        /*$query->leftJoin(DB::raw('(
                     SELECT oi.sku,
                            SUM(COALESCE(oi.shipped_quantity, 0) - COALESCE(oi.canceled_quantity, 0) - COALESCE(oi.refund_quantity, 0)) AS saleCount,
                            MAX(CASE
@@ -173,7 +173,7 @@ class ListingController extends Controller
                                END) AS lastSaleDate
                     FROM order_item oi
                     GROUP BY oi.sku
-                ) AS oi'), 'oi.sku', '=', 'listing_item.sku');
+                ) AS oi'), 'oi.sku', '=', 'listing_item.sku');*/
         //$query->leftJoin('listing_item_detail', 'listing_item_detail.listing_item_id', '=', 'listing_item.id');
 
         /*$combinedSku = DB::raw('(
@@ -347,8 +347,8 @@ class ListingController extends Controller
             $totalRecords = (clone $query)->toBase()->getCountForPagination();
             $sortableColumns = [
                 'sku' => 'sku',
-                'sales_count' => 'saleCount',
-                'last_sale_date' => 'lastSaleDate',
+                'sales_count' => 'sales_count',
+                'last_sale_date' => 'last_sale_date',
                 'store_sku' => 'store_sku',
                 'store_name' => 'store.name',
                 'title' => 'title',
@@ -392,7 +392,7 @@ class ListingController extends Controller
                     $productcode = '';
                 };
 
-                $query = DB::table('order_item')
+                /*$query = DB::table('order_item')
                     ->selectRaw('
                         SUM(COALESCE(shipped_quantity, 0)
                             - COALESCE(canceled_quantity, 0)
@@ -412,12 +412,12 @@ class ListingController extends Controller
                 if ($sales) {
                     $saleCount = $sales->saleCount ?? 0;
                     $lastSaleDate = $sales->lastSaleDate ?? '';
-                }
+                }*/
 
                 $data[] = array(
                     "sku" => $product->sku . '<input type="checkbox" class="proList" name="listing_item[]" data-sku="' . $product->sku . '" data-code="' . $productcode . '" value="' . $product->id . '" style="visibility:hidden;">',
-                    "sales_count" => $saleCount,
-                    "last_sale_date" => $lastSaleDate,
+                    "sales_count" => $product->sales_count ?? 0,
+                    "last_sale_date" => $product->last_sale_date ?? '',
                     "store_sku" => $product->store_sku,
                     "product_sku" => (!empty((array)$product->storeProduct) && !empty((array)$product->storeProduct->product)) ? $product->storeProduct->product->product_sku : '',
                     "store_name" => ((!empty((array)$product->storeProduct) && !empty((array)$product->storeProduct->store)) ? $product->storeProduct->store->name : '') . ((!empty((array)$product->storeProduct) && !empty((array)$product->storeProduct->store) && !empty((array)$product->storeProduct->store->storeType)) ? ' - ' . $product->storeProduct->store->storeType->name : ''),
@@ -1792,20 +1792,40 @@ class ListingController extends Controller
                     $suffixes = [];
 
                     foreach ($suffixList as $s) {
-                        if (preg_match('/([0-9]+)/', $s, $numMatch)) {
+                        /*if (preg_match('/([0-9]+)/', $s, $numMatch)) {
+                            $numbers[] = $numMatch[1];
+                        }*/
+                        if (preg_match('/\b([A-Z]*\d+[A-Z]*|[A-Z]{2,})\b/i', $s, $numMatch)) {
                             $numbers[] = $numMatch[1];
                         }
                         if (preg_match('/[0-9]+\s*([A-Za-z+ ]+)/', $s, $sufMatch)) {
                             $suffixes[] = trim($sufMatch[1]);
                         }
+
+                        /*$tokens = preg_split('/[\s\-\/]+/', $s);
+                        foreach ($tokens as $token) {
+                            $token = trim($token);
+                            if ($token === '') continue;
+
+                            if (preg_match('/^[A-Z]*\d+[A-Z]*$/', $token)) {
+                                if (preg_match('/^\d/', $token)) {
+                                    $suffixes[] = $token;
+                                } else {
+                                    $numbers[] = $token;
+                                }
+                            }
+                            else {
+                                $suffixes[] = $token;
+                            }
+                        }*/
                     }
 
                     $numbers = array_unique(array_filter($numbers));
                     sort($numbers, SORT_NATURAL);
                     $suffixes = array_unique(array_filter($suffixes));
 
-                    $numPart = $numbers ? implode('/', $numbers) : '';
-                    $sufPart = $suffixes ? '/' . implode('/', $suffixes) : '';
+                    $numPart = $numbers ? implode($device_seperator, $numbers) : '';
+                    $sufPart = $suffixes ? $device_seperator . implode($device_seperator, $suffixes) : '';
                     $final = trim("$base $numPart$sufPart");
 
                     $compressedDevices[$brand] = $final;
@@ -1840,12 +1860,45 @@ class ListingController extends Controller
             foreach ($models as $m) {
                 $clean = trim(preg_replace('/^' . preg_quote($prefix, '/') . '\s*/i', '', $m));
 
-                if (preg_match('/([0-9]+)/', $clean, $numMatch)) {
+                /*if (preg_match('/([0-9]+)/', $clean, $numMatch)) {
                     $numbers[] = $numMatch[1];
+                }*/
+
+                /*if (preg_match('/\b([A-Z]*\d+[A-Z]*|[A-Z]{2,})\b/i', $clean, $numMatch)) {
+                    $numbers[] = strtoupper($numMatch[1]);
                 }
 
                 if (preg_match('/[0-9]+\s*([A-Za-z+ ]+)/', $clean, $sufMatch)) {
                     $suffixes[] = trim($sufMatch[1]);
+                }*/
+
+                /*$tokens = preg_split('/[\s\-\/]+/', $clean);
+                foreach ($tokens as $token) {
+                    $token = trim($token);
+                    if ($token === '') continue;
+
+                    if (preg_match('/^[A-Z]*\d+[A-Z]*$/', $token)) {
+                        if (preg_match('/^\d/', $token)) {
+                            $suffixes[] = $token;
+                        } else {
+                            $numbers[] = $token;
+                        }
+                    }
+                    else {
+                        $suffixes[] = $token;
+                    }
+                }*/
+
+                preg_match_all('/[A-Z0-9]+/i', $clean, $tokens);
+                $tokens = array_map(null, $tokens[0]);
+
+                foreach ($tokens as $token) {
+                    if (preg_match('/\d/', $token)) {
+                        $numbers[] = $token;
+                    }
+                    elseif (strlen($token) > 1) {
+                        $suffixes[] = $token;
+                    }
                 }
             }
 
@@ -1853,9 +1906,46 @@ class ListingController extends Controller
             sort($numbers, SORT_NATURAL);
             $suffixes = array_unique(array_filter($suffixes));
 
-            $numPart = $numbers ? implode('/', $numbers) : '';
-            $sufPart = $suffixes ? '/' . implode('/', $suffixes) : '';
-            $finalModel = trim("$prefix $numPart$sufPart");
+            usort($numbers, 'strnatcasecmp');
+
+            $pureModels = [];
+            $networkSuffixes = [];
+
+            foreach ($numbers as $n) {
+                if (preg_match('/^(5G|4G|LTE|PLUS|PRO|ULTRA|MAX|MINI)$/i', $n)) {
+                    $networkSuffixes[] = $n;
+                } else {
+                    $pureModels[] = $n;
+                }
+            }
+
+            //$orderedNumbers = array_merge($pureModels, $networkSuffixes);
+            $orderedNumbers = $pureModels;//array_merge($pureModels, $networkSuffixes);
+            $orderedSuffixes = array_unique(array_merge($suffixes, $networkSuffixes));
+
+            /*$networkKeywords = ['5G', '4G', 'LTE'];
+            foreach ($networkKeywords as $net) {
+                if (in_array($net, array_map(null, $orderedSuffixes))) {
+                    $orderedNumbers = array_filter($orderedNumbers, function ($n) use ($net) {
+                        return $n !== $net;
+                    });
+                }
+            }*/
+
+            /*echo '<pre>';
+            print_r($orderedNumbers);
+            print_r($orderedSuffixes);
+            echo '</pre>';die;*/
+
+            $numPart = $orderedNumbers ? implode($device_seperator, $orderedNumbers) : '';
+            $sufPart = $orderedSuffixes ? $device_seperator . implode($device_seperator, $orderedSuffixes) : '';
+            //$finalModel = trim("$prefix $numPart$sufPart");
+
+            if (!$numPart && $sufPart) {
+                $finalModel = trim("$prefix$sufPart");
+            } else {
+                $finalModel = trim("$prefix $numPart$sufPart");
+            }
 
             if (strtolower($brand) == 'apple') {
                 $compressedDevices[$brand] = $finalModel;
@@ -2084,31 +2174,194 @@ class ListingController extends Controller
 
     private function groupDeviceModels($devices, $deviceSeparator = '/')
     {
+        $brandModels = [];
+        $brandDeviceObjects = [];
+        foreach ($devices as $device) {
+            $brand = $device->brand_name;
+            $model = trim($device->name);
+
+            if (stripos($model, $brand) === 0) {
+                $model = trim(substr($model, strlen($brand)));
+            }
+
+            $brandModels[$brand][] = $model;
+            $brandDeviceObjects[$brand][] = $device;
+        }
+
+        $compressedDevices = [];
+        foreach ($brandModels as $brand => $models) {
+            $models = array_unique($models);
+
+            if (strtolower($brand) === 'apple') {
+                $groups = [];
+                foreach ($models as $m) {
+                    if (preg_match('/^(iPhone|iPad|iPod)/i', $m, $match)) {
+                        $base = ucfirst(strtolower($match[1]));
+                        $groups[$base][] = trim(str_replace($match[1], '', $m));
+                    } else {
+                        $groups['Other'][] = $m;
+                    }
+                }
+
+                foreach ($groups as $base => $suffixList) {
+                    $numbers = [];
+                    $suffixes = [];
+
+                    foreach ($suffixList as $s) {
+                        /*if (preg_match('/([0-9]+)/', $s, $numMatch)) {
+                            $numbers[] = $numMatch[1];
+                        }*/
+                        if (preg_match('/\b([A-Z]*\d+[A-Z]*|[A-Z]{2,})\b/i', $s, $numMatch)) {
+                            $numbers[] = $numMatch[1];
+                        }
+                        if (preg_match('/[0-9]+\s*([A-Za-z+ ]+)/', $s, $sufMatch)) {
+                            $suffixes[] = trim($sufMatch[1]);
+                        }
+
+                        /*$tokens = preg_split('/[\s\-\/]+/', $s);
+                        foreach ($tokens as $token) {
+                            $token = trim($token);
+                            if ($token === '') continue;
+
+                            if (preg_match('/^[A-Z]*\d+[A-Z]*$/', $token)) {
+                                if (preg_match('/^\d/', $token)) {
+                                    $suffixes[] = $token;
+                                } else {
+                                    $numbers[] = $token;
+                                }
+                            }
+                            else {
+                                $suffixes[] = $token;
+                            }
+                        }*/
+                    }
+
+                    $numbers = array_unique(array_filter($numbers));
+                    sort($numbers, SORT_NATURAL);
+                    $suffixes = array_unique(array_filter($suffixes));
+
+                    $numPart = $numbers ? implode($deviceSeparator, $numbers) : '';
+                    $sufPart = $suffixes ? $deviceSeparator . implode($deviceSeparator, $suffixes) : '';
+                    $final = trim("$base $numPart$sufPart");
+
+                    $compressedDevices[] = $final;
+                }
+                continue;
+            }
+
+            $prefixParts = [];
+            $splitModels = array_map(fn($m) => explode(' ', $m), $models);
+            $minLength = min(array_map('count', $splitModels));
+
+            for ($i = 0; $i < $minLength; $i++) {
+                $word = $splitModels[0][$i];
+                $same = true;
+                foreach ($splitModels as $parts) {
+                    if (!isset($parts[$i]) || strtolower($parts[$i]) !== strtolower($word)) {
+                        $same = false;
+                        break;
+                    }
+                }
+                if ($same) {
+                    $prefixParts[] = $word;
+                } else {
+                    break;
+                }
+            }
+
+            $prefix = implode(' ', $prefixParts);
+
+            $numbers = [];
+            $suffixes = [];
+            foreach ($models as $m) {
+                $clean = trim(preg_replace('/^' . preg_quote($prefix, '/') . '\s*/i', '', $m));
+
+                preg_match_all('/[A-Z0-9]+/i', $clean, $tokens);
+                $tokens = array_map(null, $tokens[0]);
+
+                foreach ($tokens as $token) {
+                    if (preg_match('/\d/', $token)) {
+                        $numbers[] = $token;
+                    }
+                    elseif (strlen($token) > 1) {
+                        $suffixes[] = $token;
+                    }
+                }
+            }
+
+            $numbers = array_unique(array_filter($numbers));
+            sort($numbers, SORT_NATURAL);
+            $suffixes = array_unique(array_filter($suffixes));
+
+            usort($numbers, 'strnatcasecmp');
+
+            $pureModels = [];
+            $networkSuffixes = [];
+
+            foreach ($numbers as $n) {
+                if (preg_match('/^(5G|4G|LTE|PLUS|PRO|ULTRA|MAX|MINI)$/i', $n)) {
+                    $networkSuffixes[] = $n;
+                } else {
+                    $pureModels[] = $n;
+                }
+            }
+
+            //$orderedNumbers = array_merge($pureModels, $networkSuffixes);
+            $orderedNumbers = $pureModels;//array_merge($pureModels, $networkSuffixes);
+            $orderedSuffixes = array_unique(array_merge($suffixes, $networkSuffixes));
+
+
+            $numPart = $orderedNumbers ? implode($deviceSeparator, $orderedNumbers) : '';
+            $sufPart = $orderedSuffixes ? $deviceSeparator . implode($deviceSeparator, $orderedSuffixes) : '';
+            //$finalModel = trim("$prefix $numPart$sufPart");
+
+            if (!$numPart && $sufPart) {
+                $finalModel = trim("$prefix$sufPart");
+            } else {
+                $finalModel = trim("$prefix $numPart$sufPart");
+            }
+
+            if (strtolower($brand) == 'apple') {
+                $compressedDevices[] = $finalModel;
+            } else {
+                $compressedDevices[] = "$brand $finalModel";
+            }
+        }
+
+
+        return $compressedDevices;
+    }
+
+
+    private function groupDeviceModels123($devices, $deviceSeparator = '/')
+    {
         $grouped = [];
         $noOfDevices = count($devices);
 
         foreach ($devices as $device) {
             $fullName = trim($device->name);
             $brand = $device->brand_name;
-            $parts = preg_split('/\s+/', $fullName);
-
-            if (count($parts) < 2) continue;
+//            $parts = preg_split('/\s+/', $fullName);
+//
+//            if (count($parts) < 2) continue;
 
             $parts = explode(' ', $fullName);
-            if($brand === 'Apple') {
-                $prefix = $brand === 'Apple' ? 'iPhone' : $parts[0];
+//            if($brand === 'Apple') {
+                $prefix = $parts[0];
                 $model = $parts[1] ?? '';
                 $suffix = implode(' ', array_slice($parts, 2)) ?: '__base__';
-            }else{
-                $prefix = $brand === 'Apple' ? 'iPhone' : $parts[1];
-                $model = $parts[2] ?? '';
-                $suffix = implode(' ', array_slice($parts, 3)) ?: '__base__';
-            }
+//            }else{
+//                $prefix = $brand === 'Apple' ? 'iPhone' : $parts[1];
+//                $model = $parts[2] ?? '';
+//                $suffix = implode(' ', array_slice($parts, 3)) ?: '__base__';
+//            }
 
-            $groupKey = strtolower($brand) === 'apple' ? 'iPhone' : "$brand $prefix";
+            $groupKey = strtolower($brand) === 'apple' ? "$prefix" : "$brand $prefix";
 
             $grouped[$groupKey][$suffix][] = $model;
+
         }
+        Log::info("grouped" . json_encode($grouped));
 
         $result = [];
 
@@ -2124,12 +2377,12 @@ class ListingController extends Controller
                     if (is_numeric($m)) {
                         $allModels[] = $m;
                     } else {
-                        $allSuffixes[] = ucwords(strtolower($m));
+                        $allSuffixes[] = $m;
                     }
                 }
 
                 if ($suffix !== '__base__') {
-                    $allSuffixes[] = ucwords(strtolower($suffix));
+                    $allSuffixes[] = $suffix;
                 }
             }
 
@@ -2137,7 +2390,7 @@ class ListingController extends Controller
             $allSuffixes = array_unique($allSuffixes);
 
             $combined = array_merge($allModels, $allSuffixes);
-            if (count($combined) <= 2 && $noOfDevices == 1) {
+            if (count($combined) <= 2 && $noOfDevices == 1 || (count($suffixes) == 1 && count($models) == 1)) {
                 $groupText = implode(' ', $combined);
             } else {
                 $groupText = implode($deviceSeparator, $combined);
@@ -3249,6 +3502,11 @@ class ListingController extends Controller
             $listingItem = ListingItem::find($listing_item_id);
             if (!$listingItem) continue;
 
+            if($listingItem && ($listingItem->store_sku == '' || $listingItem->store_sku == NULL)){
+                $listingItem->update(['status' => ListingStatus::Deleted]);
+                continue;
+            }
+
             $sku = $selected_sku[$key] ?? null;
 
             $listingDetail = ListingItemLink::select('listing_item_link.*')
@@ -3271,7 +3529,7 @@ class ListingController extends Controller
         if (empty($storeGroupedItems)) {
             return response()->json([
                 'error' => true,
-                'message' => 'No valid listings found for items.'
+                'message' => 'No valid listings found for items OR listing item inactivated.'
             ]);
         }
 

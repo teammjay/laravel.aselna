@@ -23,7 +23,7 @@ class FieldUtility
             'length' => [[
 //                'decimal_value' => 3,
                 'string_value' => $cable_length->calculated_value(),
-//                'unit' => LengthUnit::getAmazonUnitName(5),
+                'unit' => LengthUnit::getAmazonUnitName(5),
             ]],
             'type' => [[
                 'language_tag' => 'en_US',
