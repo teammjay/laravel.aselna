@@ -1792,8 +1792,11 @@ class ListingController extends Controller
                     $suffixes = [];
 
                     foreach ($suffixList as $s) {
-                        if (preg_match('/([0-9]+)/', $s, $numMatch)) {
+                        /*if (preg_match('/([0-9]+)/', $s, $numMatch)) {
                             $numbers[] = $numMatch[1];
+                        }*/
+                        if (preg_match('/\b([A-Z]*\d+[A-Z]*|[A-Z]{2,})\b/i', $s, $numMatch)) {
+                            $numbers[] = strtoupper($numMatch[1]);
                         }
                         if (preg_match('/[0-9]+\s*([A-Za-z+ ]+)/', $s, $sufMatch)) {
                             $suffixes[] = trim($sufMatch[1]);
@@ -1840,8 +1843,12 @@ class ListingController extends Controller
             foreach ($models as $m) {
                 $clean = trim(preg_replace('/^' . preg_quote($prefix, '/') . '\s*/i', '', $m));
 
-                if (preg_match('/([0-9]+)/', $clean, $numMatch)) {
+                /*if (preg_match('/([0-9]+)/', $clean, $numMatch)) {
                     $numbers[] = $numMatch[1];
+                }*/
+
+                if (preg_match('/\b([A-Z]*\d+[A-Z]*|[A-Z]{2,})\b/i', $clean, $numMatch)) {
+                    $numbers[] = strtoupper($numMatch[1]);
                 }
 
                 if (preg_match('/[0-9]+\s*([A-Za-z+ ]+)/', $clean, $sufMatch)) {
