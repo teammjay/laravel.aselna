@@ -3020,7 +3020,7 @@
                                 "processing": false,
                                 "serverSide": false,
                                 "searching": false,
-                                // "bDestroy": true,
+                                "bDestroy": true,
                                 "paging": false,
                                 "info": false,
                                 "order": [[sortCol, "asc"]],
