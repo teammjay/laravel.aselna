@@ -1890,7 +1890,7 @@ class ListingController extends Controller
                 }*/
 
                 preg_match_all('/[A-Z0-9]+/i', $clean, $tokens);
-                $tokens = array_map('strtoupper', $tokens[0]);
+                $tokens = array_map(null, $tokens[0]);
 
                 foreach ($tokens as $token) {
                     if (preg_match('/\d/', $token)) {
@@ -1925,7 +1925,7 @@ class ListingController extends Controller
 
             /*$networkKeywords = ['5G', '4G', 'LTE'];
             foreach ($networkKeywords as $net) {
-                if (in_array($net, array_map('strtoupper', $orderedSuffixes))) {
+                if (in_array($net, array_map(null, $orderedSuffixes))) {
                     $orderedNumbers = array_filter($orderedNumbers, function ($n) use ($net) {
                         return $n !== $net;
                     });
