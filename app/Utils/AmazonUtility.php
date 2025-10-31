@@ -278,6 +278,18 @@ class AmazonUtility
             ->where('name', 'Warranty')
             ->where('store_type_id', $storeProduct->store->store_type_id)->first();
 
+        $outPutVoltage = ProductSpecification::where('product_id', $productData->product_id)
+            ->where('name', 'output_voltage_value')
+            ->where('store_type_id', $storeProduct->store->store_type_id)->first();
+
+        $inputVoltage = ProductSpecification::where('product_id', $productData->product_id)
+            ->where('name', 'input_voltage_value')
+            ->where('store_type_id', $storeProduct->store->store_type_id)->first();
+
+        $outputCurrent = ProductSpecification::where('product_id', $productData->product_id)
+            ->where('name', 'output_current_value')
+            ->where('store_type_id', $storeProduct->store->store_type_id)->first();
+
 
         return [
             'warranty_description' => [['value' => $warranty->calculated_value(), 'language_tag' => 'en_US']],
@@ -285,11 +297,11 @@ class AmazonUtility
             'connector_type' => [['value' => $connectivity->calculated_value(), 'language_tag' => 'en_US']],
             'connectivity_technology' => [['value' => 'USB', 'language_tag' => 'en_US']],
             'number_of_ports' => [['value' => $number_of_ports->calculated_value()]],
-            'output_current' => [['value' => $productData->output_current_value, 'unit' => $productData->output_current_unit]],
-            'input_voltage' => [['value' => $productData->input_voltage_value, 'unit' => $productData->input_voltage_unit]],
+            'output_current' => [['value' => $outputCurrent->calculated_value(), 'unit' => 'amps']],
+            'input_voltage' => [['value' => $inputVoltage->calculated_value(), 'unit' => 'volts']],
             'special_feature' => [['value' => $special_features, 'language_tag' => 'en_US']],
             'compatible_phone_models' => FieldUtility::getComaptiblePhoneModels($itemDetail),
-            'output_voltage' => [['value' => $productData->output_voltage_value, 'unit' => $productData->output_voltage_unit]],
+            'output_voltage' => [['value' => $outPutVoltage->calculated_value(), 'unit' => 'volts']],
             'supplier_declared_dg_hz_regulation' => [['value' => 'not_applicable']],
         ];
     }
@@ -331,6 +343,10 @@ class AmazonUtility
             ->where('name', 'recommended_uses_for_product')
             ->where('store_type_id', $storeProduct->store->store_type_id)->first();
 
+        $outPutVoltage = ProductSpecification::where('product_id', $productData->product_id)
+            ->where('name', 'output_voltage_value')
+            ->where('store_type_id', $storeProduct->store->store_type_id)->first();
+
         return [
             'warranty_description' => [['value' => $warranty->calculated_value(), 'language_tag' => 'en_US']],
             'recommended_uses_for_product' => [['value' => $recommended_use->calculated_value(), 'language_tag' => 'en_US']],
@@ -344,7 +360,7 @@ class AmazonUtility
             'number_of_ports' => [[
                 'value' => $number_of_ports->calculated_value()
             ]],
-            'voltage' => [['value' => $productData->output_voltage_value, 'unit' => $productData->output_voltage_unit]],
+            'voltage' => [['value' => $outPutVoltage->calculated_value(), 'unit' => 'volts']],
             'battery' => [['value' => '20000', 'unit' => 'amp_hours']],
             'special_feature' => [['value' => $special_features, 'language_tag' => 'en_US']],
             'number_of_items' => [['value' => $items_count->calculated_value()]],
