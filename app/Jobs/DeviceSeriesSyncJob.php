@@ -31,23 +31,23 @@ class DeviceSeriesSyncJob implements ShouldQueue
      */
     public function handle(): void
     {
-        Log::info('Device Series Sync Job Start');
-        $this->updateTrackingRecord(['tags' => 'Device Series']);
-        DB::connection('easyesale_db')->table('cea_device_series')
-            ->orderBy('id')
-            ->chunk(1000, function ($syncDeviceSeries) {
-                foreach ($syncDeviceSeries as $deviceSeries) {
-                    $this->createSyncDeviceSeries($deviceSeries);
-                }
-            });
-        Log::info('Device Series Sync Job End');
-
-        Log::info('Device Series Delete Job Start');
-        DeviceSeries::orderBy('id')->chunk(1000, function ($deviceSeries) {
-            Log::info('Processing chunk of ' . count($deviceSeries) . ' device series for deletion check.');
-            $this->checkAndDelete($deviceSeries);
-        });
-        Log::info('Device Series Delete Job End');
+//        Log::info('Device Series Sync Job Start');
+//        $this->updateTrackingRecord(['tags' => 'Device Series']);
+//        DB::connection('easyesale_db')->table('cea_device_series')
+//            ->orderBy('id')
+//            ->chunk(1000, function ($syncDeviceSeries) {
+//                foreach ($syncDeviceSeries as $deviceSeries) {
+//                    $this->createSyncDeviceSeries($deviceSeries);
+//                }
+//            });
+//        Log::info('Device Series Sync Job End');
+//
+//        Log::info('Device Series Delete Job Start');
+//        DeviceSeries::orderBy('id')->chunk(1000, function ($deviceSeries) {
+//            Log::info('Processing chunk of ' . count($deviceSeries) . ' device series for deletion check.');
+//            $this->checkAndDelete($deviceSeries);
+//        });
+//        Log::info('Device Series Delete Job End');
     }
 
     private function createSyncDeviceSeries(mixed $deviceSeries)
