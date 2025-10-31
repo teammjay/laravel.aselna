@@ -16,7 +16,7 @@ use Illuminate\Support\Str;
 
 class DeviceTypesSyncJob implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, SerializesModels;
+    //use Dispatchable, InteractsWithQueue, SerializesModels;
     use Queueable, TrackableJob {
         TrackableJob::withChain insteadof Queueable;
         Queueable::withChain as queueableWithChain;
