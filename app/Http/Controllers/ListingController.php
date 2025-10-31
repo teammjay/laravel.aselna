@@ -1796,11 +1796,28 @@ class ListingController extends Controller
                             $numbers[] = $numMatch[1];
                         }*/
                         if (preg_match('/\b([A-Z]*\d+[A-Z]*|[A-Z]{2,})\b/i', $s, $numMatch)) {
-                            $numbers[] = strtoupper($numMatch[1]);
+                            $numbers[] = $numMatch[1];
                         }
                         if (preg_match('/[0-9]+\s*([A-Za-z+ ]+)/', $s, $sufMatch)) {
                             $suffixes[] = trim($sufMatch[1]);
                         }
+
+                        /*$tokens = preg_split('/[\s\-\/]+/', $s);
+                        foreach ($tokens as $token) {
+                            $token = trim($token);
+                            if ($token === '') continue;
+
+                            if (preg_match('/^[A-Z]*\d+[A-Z]*$/', $token)) {
+                                if (preg_match('/^\d/', $token)) {
+                                    $suffixes[] = $token;
+                                } else {
+                                    $numbers[] = $token;
+                                }
+                            }
+                            else {
+                                $suffixes[] = $token;
+                            }
+                        }*/
                     }
 
                     $numbers = array_unique(array_filter($numbers));
@@ -1847,12 +1864,41 @@ class ListingController extends Controller
                     $numbers[] = $numMatch[1];
                 }*/
 
-                if (preg_match('/\b([A-Z]*\d+[A-Z]*|[A-Z]{2,})\b/i', $clean, $numMatch)) {
+                /*if (preg_match('/\b([A-Z]*\d+[A-Z]*|[A-Z]{2,})\b/i', $clean, $numMatch)) {
                     $numbers[] = strtoupper($numMatch[1]);
                 }
 
                 if (preg_match('/[0-9]+\s*([A-Za-z+ ]+)/', $clean, $sufMatch)) {
                     $suffixes[] = trim($sufMatch[1]);
+                }*/
+
+                /*$tokens = preg_split('/[\s\-\/]+/', $clean);
+                foreach ($tokens as $token) {
+                    $token = trim($token);
+                    if ($token === '') continue;
+
+                    if (preg_match('/^[A-Z]*\d+[A-Z]*$/', $token)) {
+                        if (preg_match('/^\d/', $token)) {
+                            $suffixes[] = $token;
+                        } else {
+                            $numbers[] = $token;
+                        }
+                    }
+                    else {
+                        $suffixes[] = $token;
+                    }
+                }*/
+
+                preg_match_all('/[A-Z0-9]+/i', $clean, $tokens);
+                $tokens = array_map('strtoupper', $tokens[0]);
+
+                foreach ($tokens as $token) {
+                    if (preg_match('/\d/', $token)) {
+                        $numbers[] = $token;
+                    }
+                    elseif (strlen($token) > 1) {
+                        $suffixes[] = $token;
+                    }
                 }
             }
 
@@ -1860,9 +1906,46 @@ class ListingController extends Controller
             sort($numbers, SORT_NATURAL);
             $suffixes = array_unique(array_filter($suffixes));
 
-            $numPart = $numbers ? implode('/', $numbers) : '';
-            $sufPart = $suffixes ? '/' . implode('/', $suffixes) : '';
-            $finalModel = trim("$prefix $numPart$sufPart");
+            usort($numbers, 'strnatcasecmp');
+
+            $pureModels = [];
+            $networkSuffixes = [];
+
+            foreach ($numbers as $n) {
+                if (preg_match('/^(5G|4G|LTE|PLUS|PRO|ULTRA|MAX|MINI)$/i', $n)) {
+                    $networkSuffixes[] = $n;
+                } else {
+                    $pureModels[] = $n;
+                }
+            }
+
+            //$orderedNumbers = array_merge($pureModels, $networkSuffixes);
+            $orderedNumbers = $pureModels;//array_merge($pureModels, $networkSuffixes);
+            $orderedSuffixes = array_unique(array_merge($suffixes, $networkSuffixes));
+
+            /*$networkKeywords = ['5G', '4G', 'LTE'];
+            foreach ($networkKeywords as $net) {
+                if (in_array($net, array_map('strtoupper', $orderedSuffixes))) {
+                    $orderedNumbers = array_filter($orderedNumbers, function ($n) use ($net) {
+                        return $n !== $net;
+                    });
+                }
+            }*/
+
+            /*echo '<pre>';
+            print_r($orderedNumbers);
+            print_r($orderedSuffixes);
+            echo '</pre>';die;*/
+
+            $numPart = $orderedNumbers ? implode('/', $orderedNumbers) : '';
+            $sufPart = $orderedSuffixes ? '/' . implode('/', $orderedSuffixes) : '';
+            //$finalModel = trim("$prefix $numPart$sufPart");
+
+            if (!$numPart && $sufPart) {
+                $finalModel = trim("$prefix$sufPart");
+            } else {
+                $finalModel = trim("$prefix $numPart$sufPart");
+            }
 
             if (strtolower($brand) == 'apple') {
                 $compressedDevices[$brand] = $finalModel;
