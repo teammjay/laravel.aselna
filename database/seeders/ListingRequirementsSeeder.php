@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\ListingRequirement;
+use App\Models\ProductSpecificationInfo;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
@@ -89,9 +90,40 @@ class ListingRequirementsSeeder extends Seeder
             ['category' => 'CELLULAR_PHONE_CASE', 'type' => 'key_value', 'table' => 'product_specification', 'key_column' => 'name', 'key_value' => 'Warranty', 'value_column' => 'value'],
             ['category' => 'CELLULAR_PHONE_CASE', 'type' => 'key_value', 'table' => 'product_specification', 'key_column' => 'name', 'key_value' => 'Number of Items', 'value_column' => 'value'],
             ['category' => 'CELLULAR_PHONE_CASE', 'type' => 'key_value', 'table' => 'product_specification', 'key_column' => 'name', 'key_value' => 'Material', 'value_column' => 'value'],
+            ['category' => 'ELECTRONIC_ADAPTER', 'type' => 'key_value', 'table' => 'product_specification', 'key_column' => 'name', 'key_value' => 'Number of Items', 'value_column' => 'value'],
+            ['category' => 'ELECTRONIC_ADAPTER', 'type' => 'key_value', 'table' => 'product_specification', 'key_column' => 'name', 'key_value' => 'Warranty', 'value_column' => 'value'],
+            ['category' => 'ELECTRONIC_ADAPTER', 'type' => 'key_value', 'table' => 'product_specification', 'key_column' => 'name', 'key_value' => 'connector_type', 'value_column' => 'value'],
+            ['category' => 'CABLE_OR_ADAPTER', 'type' => 'key_value', 'table' => 'product_specification', 'key_column' => 'name', 'key_value' => 'Number of Items', 'value_column' => 'value'],
+            ['category' => 'CABLE_OR_ADAPTER', 'type' => 'key_value', 'table' => 'product_specification', 'key_column' => 'name', 'key_value' => 'Warranty', 'value_column' => 'value'],
+            ['category' => 'CABLE_OR_ADAPTER', 'type' => 'key_value', 'table' => 'product_specification', 'key_column' => 'name', 'key_value' => 'Material', 'value_column' => 'value'],
+            ['category' => 'CABLE_OR_ADAPTER', 'type' => 'key_value', 'table' => 'product_specification', 'key_column' => 'name', 'key_value' => 'connector_gender', 'value_column' => 'value'],
+            ['category' => 'CABLE_OR_ADAPTER', 'type' => 'key_value', 'table' => 'product_specification', 'key_column' => 'name', 'key_value' => 'Cable Length', 'value_column' => 'value'],
+            ['category' => 'INPUT_PEN', 'type' => 'key_value', 'table' => 'product_specification', 'key_column' => 'name', 'key_value' => 'Number of Items', 'value_column' => 'value'],
+            ['category' => 'INPUT_PEN', 'type' => 'key_value', 'table' => 'product_specification', 'key_column' => 'name', 'key_value' => 'Cable Length', 'value_column' => 'value'],
+            ['category' => 'INPUT_PEN', 'type' => 'key_value', 'table' => 'product_specification', 'key_column' => 'name', 'key_value' => 'connector_type', 'value_column' => 'value'],
+            ['category' => 'INPUT_PEN', 'type' => 'key_value', 'table' => 'product_specification', 'key_column' => 'name', 'key_value' => 'connector_gender', 'value_column' => 'value'],
+            ['category' => 'MULTIPORT_HUB', 'type' => 'key_value', 'table' => 'product_specification', 'key_column' => 'name', 'key_value' => 'Number of Items', 'value_column' => 'value'],
+            ['category' => 'MULTIPORT_HUB', 'type' => 'key_value', 'table' => 'product_specification', 'key_column' => 'name', 'key_value' => 'Warranty', 'value_column' => 'value'],
+            ['category' => 'MULTIPORT_HUB', 'type' => 'key_value', 'table' => 'product_specification', 'key_column' => 'name', 'key_value' => 'total_usb_ports', 'value_column' => 'value'],
+            ['category' => 'MULTIPORT_HUB', 'type' => 'key_value', 'table' => 'product_specification', 'key_column' => 'name', 'key_value' => 'special_feature', 'value_column' => 'value'],
+            ['category' => 'MULTIPORT_HUB', 'type' => 'key_value', 'table' => 'product_specification', 'key_column' => 'name', 'key_value' => 'data_transfer_rate', 'value_column' => 'value'],
+            ['category' => 'MULTIPORT_HUB', 'type' => 'key_value', 'table' => 'product_specification', 'key_column' => 'name', 'key_value' => 'hardware_interface', 'value_column' => 'value'],
+            ['category' => 'MULTIPORT_HUB', 'type' => 'key_value', 'table' => 'product_specification', 'key_column' => 'name', 'key_value' => 'number_of_ports', 'value_column' => 'value'],
         ];
 
         foreach ($requirements as $requirement) {
+            ProductSpecificationInfo::updateOrCreate(
+                [
+                    'store_type_id' => '9ea83e8c-5b36-d377-d583-f7560b67f6b0',
+                    'field_name' => $requirement['key_value'] ?? $requirement['column'],
+                ],
+                [
+                    'store_type_id' => '9ea83e8c-5b36-d377-d583-f7560b67f6b0',
+                    'field_name' => $requirement['key_value'] ?? $requirement['column'],
+                    'field_local_name' => $requirement['key_value'] ?? $requirement['column'],
+                ]
+            );
+
             ListingRequirement::updateOrCreate(
                 [
                     'category' => $requirement['category'],

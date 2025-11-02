@@ -1189,13 +1189,18 @@ class ListingController extends Controller
 
             $query->orderBy('brand_name')->orderBy('device.name');
 
+            if (count($product_ids) > 1) {
+                $query->limit(2000);
+            }
+
+            $count = $query->count();
 
             $devicesList = $query->get();
             //echo '<pre>';
             //print_r($devices);
             // echo '</pre>';die;
             //echo $query->toSql();die;
-            $count = $devicesList->count();
+//            $count = $devicesList->count();
 
 
             $view = view('listing.target_product_listing', compact('devicesList', 'selected_device', 'is_selected'))->render();

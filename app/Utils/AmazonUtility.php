@@ -37,6 +37,14 @@ class AmazonUtility
                 return self::getCellularPhoneCase($itemDetail);
             case 'PHONE_ACCESSORY':
                 return self::getPhoneAccessory($itemDetail);
+            case 'ELECTRONIC_ADAPTER':
+                return self::getElectronicAdapterFields($itemDetail);
+            case 'CABLE_OR_ADAPTER':
+                return self::getCableOrAdapterFields($itemDetail);
+            case 'INPUT_PEN':
+                return self::getInputPenFields($itemDetail);
+            case 'MULTIPORT_HUB':
+                return self::getMultiportHubFields($itemDetail);
         }
         return [];
     }
@@ -47,13 +55,13 @@ class AmazonUtility
         $productData = $itemDetail->storeProduct->product;
         Log::info('Product Id : ' . $productData->id);
         // combine the name and value into this string -> name : value, name : value
-       $special_features = ProductSpecification::where('product_id', $productData->product_id)
-           ->where('store_type_id', $storeProduct->store->store_type_id)
-           ->get()
-           ->map(function ($specification) {
-               return $specification->name . ' : ' . $specification->calculated_value();
-           })
-           ->implode(', ');
+        $special_features = ProductSpecification::where('product_id', $productData->product_id)
+            ->where('store_type_id', $storeProduct->store->store_type_id)
+            ->get()
+            ->map(function ($specification) {
+                return $specification->name . ' : ' . $specification->calculated_value();
+            })
+            ->implode(', ');
 
         // get value of items included
         $items_included = ProductSpecification::where('product_id', $productData->product_id)
@@ -507,8 +515,155 @@ class AmazonUtility
 
     private static function getPhoneAccessory($itemDetail)
     {
+        $storeProduct = $itemDetail->storeProduct;
+        $productData = $itemDetail->storeProduct->product;
+        Log::info('Product Id : ' . $productData->id);
+
         return [
 
+        ];
+    }
+
+    private static function getElectronicAdapterFields($itemDetail)
+    {
+        $storeProduct = $itemDetail->storeProduct;
+        $productData = $itemDetail->storeProduct->product;
+        Log::info('Product Id : ' . $productData->id);
+
+        $connector_type = ProductSpecification::where('product_id', $productData->product_id)
+            ->where('name', 'connector_type')
+            ->where('store_type_id', $storeProduct->store->store_type_id)->first();
+
+        $items_count = ProductSpecification::where('product_id', $productData->product_id)
+            ->where('name', 'Number of Items')
+            ->where('store_type_id', $storeProduct->store->store_type_id)->first();
+
+        $warranty = ProductSpecification::where('product_id', $productData->product_id)
+            ->where('name', 'Warranty')
+            ->where('store_type_id', $storeProduct->store->store_type_id)->first();
+
+        return [
+            'supplier_declared_dg_hz_regulation' => [['value' => 'not_applicable']],
+            'warranty_description' => [['value' => $warranty->calculated_value(), 'language_tag' => 'en_US']],
+            'number_of_items' => [['value' => $items_count->calculated_value()]],
+            'connector_type' => [['value' => $connector_type->calculated_value(), 'language_tag' => 'en_US']]
+        ];
+    }
+
+    private static function getCableOrAdapterFields($itemDetail)
+    {
+        $storeProduct = $itemDetail->storeProduct;
+        $productData = $itemDetail->storeProduct->product;
+        Log::info('Product Id : ' . $productData->id);
+
+        $items_count = ProductSpecification::where('product_id', $productData->product_id)
+            ->where('name', 'Number of Items')
+            ->where('store_type_id', $storeProduct->store->store_type_id)->first();
+
+        $warranty = ProductSpecification::where('product_id', $productData->product_id)
+            ->where('name', 'Warranty')
+            ->where('store_type_id', $storeProduct->store->store_type_id)->first();
+
+        $material = ProductSpecification::where('product_id', $productData->product_id)
+            ->where('name', 'Material')
+            ->where('store_type_id', $storeProduct->store->store_type_id)->first();
+
+        $connector_gender = ProductSpecification::where('product_id', $productData->product_id)
+            ->where('name', 'connector_gender')
+            ->where('store_type_id', $storeProduct->store->store_type_id)->first();
+
+        $connector_type = ProductSpecification::where('product_id', $productData->product_id)
+            ->where('name', 'connector_type')
+            ->where('store_type_id', $storeProduct->store->store_type_id)->first();
+
+        return [
+            'number_of_items' => [['value' => $items_count->calculated_value()]],
+            'warranty_description' => [['value' => $warranty->calculated_value(), 'language_tag' => 'en_US']],
+            'supplier_declared_dg_hz_regulation' => [['value' => 'not_applicable']],
+            'material' => [['value' => $material->calculated_value(), 'language_tag' => 'en_US']],
+            'connector_gender' => [['value' => $connector_gender->calculated_value()]],
+            'cable' => FieldUtility::getCableFieldValue($productData),
+            'connector_type' => [['value' => $connector_type->calculated_value(), 'language_tag' => 'en_US']]
+        ];
+    }
+
+    private static function getInputPenFields($itemDetail)
+    {
+        $storeProduct = $itemDetail->storeProduct;
+        $productData = $itemDetail->storeProduct->product;
+        Log::info('Product Id : ' . $productData->id);
+        $connector_gender = ProductSpecification::where('product_id', $productData->product_id)
+            ->where('name', 'connector_gender')
+            ->where('store_type_id', $storeProduct->store->store_type_id)->first();
+
+        $items_count = ProductSpecification::where('product_id', $productData->product_id)
+            ->where('name', 'Number of Items')
+            ->where('store_type_id', $storeProduct->store->store_type_id)->first();
+
+        $warranty = ProductSpecification::where('product_id', $productData->product_id)
+            ->where('name', 'Warranty')
+            ->where('store_type_id', $storeProduct->store->store_type_id)->first();
+
+        $connector_type = ProductSpecification::where('product_id', $productData->product_id)
+            ->where('name', 'connector_type')
+            ->where('store_type_id', $storeProduct->store->store_type_id)->first();
+
+        return [
+            'number_of_items' => [['value' => $items_count->calculated_value()]],
+            'warranty_description' => [['value' => $warranty->calculated_value(), 'language_tag' => 'en_US']],
+            'supplier_declared_dg_hz_regulation' => [['value' => 'not_applicable']],
+            'cable' => FieldUtility::getCableFieldValue($productData),
+            'connector_type' => [['value' => $connector_type->calculated_value(), 'language_tag' => 'en_US']],
+            'connector_gender' => [['value' => $connector_gender->calculated_value()]],
+        ];
+    }
+
+    private static function getMultiportHubFields($itemDetail)
+    {
+        $storeProduct = $itemDetail->storeProduct;
+        $productData = $itemDetail->storeProduct->product;
+        Log::info('Product Id : ' . $productData->id);
+
+        $items_count = ProductSpecification::where('product_id', $productData->product_id)
+            ->where('name', 'Number of Items')
+            ->where('store_type_id', $storeProduct->store->store_type_id)->first();
+
+        $warranty = ProductSpecification::where('product_id', $productData->product_id)
+            ->where('name', 'Warranty')
+            ->where('store_type_id', $storeProduct->store->store_type_id)->first();
+
+        $total_usb_ports = ProductSpecification::where('product_id', $productData->product_id)
+            ->where('name', 'total_usb_ports')
+            ->where('store_type_id', $storeProduct->store->store_type_id)->first();
+
+        $special_feature = ProductSpecification::where('product_id', $productData->product_id)
+            ->where('name', 'special_feature')
+            ->where('store_type_id', $storeProduct->store->store_type_id)->first();
+
+        $data_transfer_rate = ProductSpecification::where('product_id', $productData->product_id)
+            ->where('name', 'data_transfer_rate')
+            ->where('store_type_id', $storeProduct->store->store_type_id)->first();
+
+        $hardware_interface = ProductSpecification::where('product_id', $productData->product_id)
+            ->where('name', 'hardware_interface')
+            ->where('store_type_id', $storeProduct->store->store_type_id)->first();
+
+        $number_of_ports = ProductSpecification::where('product_id', $productData->product_id)
+            ->where('name', 'number_of_ports')
+            ->where('store_type_id', $storeProduct->store->store_type_id)->first();
+
+        return [
+            'number_of_items' => [['value' => $items_count->calculated_value()]],
+            'warranty_description' => [['value' => $warranty->calculated_value(), 'language_tag' => 'en_US']],
+            'supplier_declared_dg_hz_regulation' => [['value' => 'not_applicable']],
+            'total_usb_ports' => [['value' => $total_usb_ports->calculated_value()]],
+            'special_feature' => [['value' => $special_feature->calculated_value(), 'language_tag' => 'en_US']],
+            'data_transfer_rate' => [[
+                'value' => $data_transfer_rate->calculated_value(),
+                'unit' => 'megabytes_per_second'
+            ]],
+            'hardware_interface' => [['value' => $hardware_interface->calculated_value()]],
+            'number_of_ports' => [['value' => $number_of_ports->calculated_value()]]
         ];
     }
 }
