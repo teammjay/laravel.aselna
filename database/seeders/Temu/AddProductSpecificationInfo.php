@@ -2,6 +2,7 @@
 
 namespace Database\Seeders\Temu;
 
+use App\Models\ProductSpecificationValueDependency;
 use App\Models\ListingRequiredFields;
 use App\Models\ListingRequirement;
 use App\Models\ProductSpecifcationUniqueInfo;
@@ -104,27 +105,50 @@ class AddProductSpecificationInfo extends Seeder
                 }
 
                 if (isset($property['templatePropertyValueParentList'])) {
-                    foreach ($property['templatePropertyValueParentList'] as $parentValue) {
-                        if (isset($parentValue['parentVids'])) {
-                            foreach ($parentValue['parentVids'] as $parentVid) {
-                                $parentValue = ProductSpecificationValue::where('store_type_id', $this->storeType->id)
+                    // Process parent-child value dependencies for UI
+                    foreach ($property['templatePropertyValueParentList'] as $parentChildMapping) {
+                        if (isset($parentChildMapping['parentVids']) && isset($parentChildMapping['vids'])) {
+                            foreach ($parentChildMapping['parentVids'] as $parentVid) {
+                                // Find the parent field and value
+                                $parentValueRecord = ProductSpecificationValue::where('store_type_id', $this->storeType->id)
                                     ->where('category', $category->code)
                                     ->where('marketplace_value_id', $parentVid)->first();
 
-                                if ($parentValue) {
+                                if ($parentValueRecord) {
+                                    // Create field requirement dependency
                                     ListingRequiredFields::updateOrCreate([
                                         'store_type_id' => $this->storeType->id,
                                         'category' => $category->code,
-                                        'parent_field' => $parentValue->specificationInfo->field_name,
-                                        'parent_value' => $parentValue->field_value,
+                                        'parent_field' => $parentValueRecord->specificationInfo->field_name,
+                                        'parent_value' => $parentValueRecord->field_value,
                                         'dependent_field' => $property['name'],
                                     ], [
                                         'store_type_id' => $this->storeType->id,
                                         'category' => $category->code,
-                                        'parent_field' => $parentValue->specificationInfo->field_name,
-                                        'parent_value' => $parentValue->field_value,
+                                        'parent_field' => $parentValueRecord->specificationInfo->field_name,
+                                        'parent_value' => $parentValueRecord->field_value,
                                         'dependent_field' => $property['name'],
                                     ]);
+
+                                    // Create field value dependencies for each child value
+                                    foreach ($parentChildMapping['vids'] as $childVid) {
+                                        ProductSpecificationValueDependency::updateOrCreate([
+                                            'parent_field_name' => $parentValueRecord->specificationInfo->field_name,
+                                            'parent_field_value_id' => $parentValueRecord->field_value,
+                                            'child_field_name' => $property['name'],
+                                            'child_field_value_id' => (string)$childVid,
+                                            'category' => $category->code,
+                                            'store_type_id' => $this->storeType->id,
+                                        ], [
+                                            'parent_field_name' => $parentValueRecord->specificationInfo->field_name,
+                                            'parent_field_value_id' => $parentValueRecord->field_value,
+                                            'child_field_name' => $property['name'],
+                                            'child_field_value_id' => (string)$childVid,
+                                            'category' => $category->code,
+                                            'store_type_id' => $this->storeType->id,
+                                            'is_active' => true,
+                                        ]);
+                                    }
                                 }
                             }
                         }
