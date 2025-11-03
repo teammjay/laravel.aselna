@@ -35,6 +35,8 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Auth;
 
 
 class CatalogController extends Controller
@@ -294,7 +296,7 @@ class CatalogController extends Controller
                     "action" => '<a href="' . route('catalog.edit', $product->product_id) . '" class="btn btn-primary">
                                     <i class="fas fa-fw fa-pencil-alt"></i>
                                 </a>
-                                <button class="btn btn-danger delete-btn" data-id="' . $product->product_id . '"> <i class="fas fa-fw fa-trash"></i></button>'
+                                <button type="button" class="btn btn-danger delete-btn" data-module="catalog" data-id="' . $product->product_id . '"> <i class="fas fa-fw fa-trash"></i></button>'
                 );
             }
         }
@@ -728,22 +730,28 @@ class CatalogController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $id)
+    public function destroy(Request $request, $id)
     {
+
+        $request->validate([
+            'password' => 'required',
+        ]);
+
+        if (!Hash::check($request->password, Auth::user()->password)) {
+            return redirect()->route('catalog.list')->with('error', 'Password is incorrect');
+        }
+
         // Find the user by id
         $product = Catalog::findOrFail($id);
 
         if ($product) {
-//            $product->delete(); // Delete the user
+            $product->delete(); // Delete the product
+            return redirect()->route('catalog.list')->with('success', 'Product deleted successfully.');
 
             // Return a success response
-            session()->flash('success', 'Product deleted successfully!');
-            return response()->json(['success' => 'Product deleted successfully!']);
+            //session()->flash('success', 'Product deleted successfully!');
+            //return response()->json(['success' => 'Product deleted successfully!']);
         }
-
-        // If the user doesn't exist, return an error
-        session()->flash('error', 'Product not found!');
-        return response()->json(['error' => 'Product not found!'], 404);
     }
 
     /**

@@ -31,6 +31,8 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use function Ramsey\Uuid\Generator\timestamp;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Auth;
 
 class StoreController extends Controller
 {
@@ -417,19 +419,29 @@ class StoreController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $id)
+    public function destroy(Request $request, string $id)
     {
+
+        $request->validate([
+            'password' => 'required',
+        ]);
+
+        if (!Hash::check($request->password, Auth::user()->password)) {
+            return redirect()->route('store.list')->with('error', 'Password is incorrect');
+        }
+
         // Find the store by id
         $store = Store::findOrFail($id);
 
         if ($store) {
-//            $store->delete(); // Delete the store
+            $store->delete(); // Delete the store
+            return redirect()->route('store.list')->with('success', 'Store deleted successfully.');
             // Return a success response
-            return response()->json(['success' => 'Store deleted successfully!']);
+            //return response()->json(['success' => 'Store deleted successfully!']);
         }
 
         // If the store doesn't exist, return an error
-        return response()->json(['error' => 'Store not found!'], 404);
+        //return response()->json(['error' => 'Store not found!'], 404);
     }
 
     public function savePages(Request $request){

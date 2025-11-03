@@ -1790,7 +1790,7 @@ class ListingController extends Controller
                 $groups = [];
                 foreach ($models as $m) {
                     if (preg_match('/^(iPhone|iPad|iPod)/i', $m, $match)) {
-                        $base = ucfirst(strtolower($match[1]));
+                        $base = $match[1];
                         $groups[$base][] = trim(str_replace($match[1], '', $m));
                     } else {
                         $groups['Other'][] = $m;
@@ -1805,11 +1805,14 @@ class ListingController extends Controller
                         /*if (preg_match('/([0-9]+)/', $s, $numMatch)) {
                             $numbers[] = $numMatch[1];
                         }*/
-                        if (preg_match('/\b([A-Z]*\d+[A-Z]*|[A-Z]{2,})\b/i', $s, $numMatch)) {
+                        if (preg_match('/\b([A-Z]*\d+(?:\.\d+)?(?:\s*\(\d{4}\s*\d*(?:st|nd|rd|th)?\s*Gen\))?[A-Z]*|[A-Z]{2,})\b/i', $s, $numMatch)) {
                             $numbers[] = $numMatch[1];
                         }
-                        if (preg_match('/[0-9]+\s*([A-Za-z+ ]+)/', $s, $sufMatch)) {
-                            $suffixes[] = trim($sufMatch[1]);
+                        if (preg_match('/(?:[0-9]+|[A-Z]{1,3})\s+([A-Za-z+ ]+)/i', $s, $sufMatch)) {
+                            $val = trim($sufMatch[1]);
+                            if (strlen($val) > 1) {
+                                $suffixes[] = $val;
+                            }
                         }
 
                         /*$tokens = preg_split('/[\s\-\/]+/', $s);
@@ -2206,7 +2209,7 @@ class ListingController extends Controller
                 $groups = [];
                 foreach ($models as $m) {
                     if (preg_match('/^(iPhone|iPad|iPod)/i', $m, $match)) {
-                        $base = ucfirst(strtolower($match[1]));
+                        $base = $match[1];
                         $groups[$base][] = trim(str_replace($match[1], '', $m));
                     } else {
                         $groups['Other'][] = $m;
@@ -2218,32 +2221,38 @@ class ListingController extends Controller
                     $suffixes = [];
 
                     foreach ($suffixList as $s) {
-                        /*if (preg_match('/([0-9]+)/', $s, $numMatch)) {
-                            $numbers[] = $numMatch[1];
-                        }*/
-                        if (preg_match('/\b([A-Z]*\d+[A-Z]*|[A-Z]{2,})\b/i', $s, $numMatch)) {
+//                        if (preg_match('/([0-9]+)/', $s, $numMatch)) {
+//                            $numbers[] = $numMatch[1];
+//                        }
+
+                        if (preg_match('/\b([A-Z]*\d+(?:\.\d+)?(?:\s*\(\d{4}\s*\d*(?:st|nd|rd|th)?\s*Gen\))?[A-Z]*|[A-Z]{2,})\b/i', $s, $numMatch)) {
                             $numbers[] = $numMatch[1];
                         }
-                        if (preg_match('/[0-9]+\s*([A-Za-z+ ]+)/', $s, $sufMatch)) {
-                            $suffixes[] = trim($sufMatch[1]);
+                        if (preg_match('/(?:[0-9]+|[A-Z]{1,3})\s+([A-Za-z+ ]+)/i', $s, $sufMatch)) {
+                            $val = trim($sufMatch[1]);
+                            if (strlen($val) > 1) {
+                                $suffixes[] = $val;
+                            }
                         }
 
-                        /*$tokens = preg_split('/[\s\-\/]+/', $s);
-                        foreach ($tokens as $token) {
-                            $token = trim($token);
-                            if ($token === '') continue;
-
-                            if (preg_match('/^[A-Z]*\d+[A-Z]*$/', $token)) {
-                                if (preg_match('/^\d/', $token)) {
-                                    $suffixes[] = $token;
-                                } else {
-                                    $numbers[] = $token;
-                                }
-                            }
-                            else {
-                                $suffixes[] = $token;
-                            }
-                        }*/
+                        //$tokens = preg_split('/[\s\-\/]+/', $s);
+//                        $tokens = preg_split('/(?<![0-9A-Za-z])[\s\-\/]+(?![0-9A-Za-z])/', $s);
+//
+//                        foreach ($tokens as $token) {
+//                            $token = trim($token);
+//                            if ($token === '') continue;
+//
+//                            if (preg_match('/^[A-Z]*\d+[A-Z]*$/', $token)) {
+//                                if (preg_match('/^\d/', $token)) {
+//                                    $suffixes[] = $token;
+//                                } else {
+//                                    $numbers[] = $token;
+//                                }
+//                            }
+//                            else {
+//                                $suffixes[] = $token;
+//                            }
+//                        }
                     }
 
                     $numbers = array_unique(array_filter($numbers));
@@ -2251,13 +2260,18 @@ class ListingController extends Controller
                     $suffixes = array_unique(array_filter($suffixes));
 
                     $numPart = $numbers ? implode($deviceSeparator, $numbers) : '';
-                    $sufPart = $suffixes ? $deviceSeparator . implode($deviceSeparator, $suffixes) : '';
+                    if($numPart) {
+                        $sufPart = $suffixes ? $deviceSeparator . implode($deviceSeparator, $suffixes) : '';
+                    }else{
+                        $sufPart = $suffixes ? implode($deviceSeparator, $suffixes) : '';
+                    }
                     $final = trim("$base $numPart$sufPart");
 
                     $compressedDevices[] = $final;
                 }
                 continue;
             }
+
 
             $prefixParts = [];
             $splitModels = array_map(fn($m) => explode(' ', $m), $models);
@@ -2324,6 +2338,8 @@ class ListingController extends Controller
             $numPart = $orderedNumbers ? implode($deviceSeparator, $orderedNumbers) : '';
             $sufPart = $orderedSuffixes ? $deviceSeparator . implode($deviceSeparator, $orderedSuffixes) : '';
             //$finalModel = trim("$prefix $numPart$sufPart");
+
+
 
             if (!$numPart && $sufPart) {
                 $finalModel = trim("$prefix$sufPart");
@@ -2521,7 +2537,6 @@ class ListingController extends Controller
             $titles[$cnt]['model'][] = $device->name;
             $titles[$cnt]['model_detail'][] = $device;
         }
-
         $deviceSeries = $this->groupDeviceModels($devices, $device_seperator);
         Log::info('Device Series :: ' . json_encode($deviceSeries));
 

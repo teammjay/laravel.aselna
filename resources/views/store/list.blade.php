@@ -7,6 +7,14 @@
 @stop
 
 @section('content')
+    @csrf
+    @if (session('success'))
+        <div class="alert alert-success alert-dismissible fade show">{{ session('success') }}</div>
+    @endif
+
+    @if (session('error'))
+        <div class="alert alert-danger alert-dismissible fade show">{{ session('error') }}</div>
+    @endif
     <div class="row my-3">
         <div class="col-md-2">
             <a href="{{ route('store.create') }}" class="btn btn-secondary">
@@ -209,13 +217,17 @@
                 });
             });
 
-            $(document).on('click', '.delete-btn', function() {
+            /*$(document).on('click', '.delete-btn', function() {
                 var storeId = $(this).data('id');
                 var token = '{{ csrf_token() }}'; // CSRF token for security
 
                 // Confirm the deletion
                 if (confirm("Are you sure you want to delete this store?")) {
-                    $.ajax({
+
+                    $('#deleteModal').find('.frmRecordDelete').attr('action', "{{ url('stores/destroy') }}/" + storeId);
+                    $('#deleteModal').modal('show');
+
+                    /!*$.ajax({
                         url: "{{ url('stores/destroy') }}/" + storeId,   // Laravel route for deletion
                         type: 'GET',
                         data: {
@@ -232,9 +244,9 @@
                             // Handle error response
                             alert('Error: ' + xhr.responseJSON.error);
                         }
-                    });
+                    });*!/
                 }
-            });
+            });*/
 
             $(document).on('click', '.authorize', function() {
                 let ele = $(this);

@@ -86,7 +86,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/catalog/edit/{id}', [CatalogController::class, 'edit'])->name('catalog.edit');
     Route::post('/catalog/edit', [CatalogController::class, 'update'])->name('catalog.update');
     //Route::delete('/catalog/destroy', [CatalogController::class, 'destroy'])->name('catalog.delete');
-    Route::get('/catalog/destroy/{id}', [CatalogController::class, 'destroy'])->name('catalog.delete');
+    //Route::get('/catalog/destroy/{id}', [CatalogController::class, 'destroy'])->name('catalog.delete');
+    Route::delete('/catalog/destroy/{id}', [CatalogController::class, 'destroy'])->name('records.destroy');
     Route::get('/catalog/{id}', [CatalogController::class, 'show'])->name('catalog.show');
     Route::post('/upload-image', [CatalogController::class, 'uploadImage'])->name('catalog.upload');
     Route::post('/set-default', [CatalogController::class, 'setDefaultImage'])->name('catalog.set_default');
@@ -121,7 +122,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/stores/finalize', 'finalize')->name('store.final');
         Route::get('/stores/edit/{id}', 'edit')->name('store.edit');
         Route::post('/stores/edit', 'update')->name('store.update');
-        Route::get('/stores/destroy/{id}', 'destroy')->name('store.delete');
+        Route::delete('/stores/destroy/{id}', 'destroy')->name('store.delete');
         Route::post('/stores/removeshipping', 'removeShipping')->name('store.removeshipping');
         Route::post('/stores/saveShippingService', 'saveShippingService')->name('store.shippingservice');
         Route::post('/stores/savePages', 'savePages')->name('store.pages');
@@ -249,7 +250,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/store_type/add', 'store')->name('store_type.store');
         Route::get('/store_type/edit/{id}', 'edit')->name('store_type.edit');
         Route::post('/store_type/edit/{id}', 'update')->name('store_type.update');
-        Route::get('/store_type/delete/{id}', 'destroy')->name('store_type.delete');
+        Route::delete('/store_type/destroy/{id}', 'destroy')->name('store_type.delete');
     });
 
     Route::controller(StorePagesController::class)->group(function () {
@@ -258,7 +259,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/store_page/add', 'store')->name('store_page.store');
         Route::get('/store_page/edit/{id}', 'edit')->name('store_page.edit');
         Route::post('/store_page/edit/{id}', 'update')->name('store_page.update');
-        Route::get('/store_page/delete/{id}', 'destroy')->name('store_page.delete');
+        Route::delete('/store_page/destroy/{id}', 'destroy')->name('store_page.delete');
     });
 
     Route::controller(StorePageTemplatesController::class)->group(function () {
@@ -267,7 +268,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/store_page_template/add', 'store')->name('store_page_templates.store');
         Route::get('/store_page_template/edit/{id}', 'edit')->name('store_page_templates.edit');
         Route::post('/store_page_template/edit/{id}', 'update')->name('store_page_templates.update');
-        Route::get('/store_page_template/delete/{id}', 'destroy')->name('store_page_templates.delete');
+        Route::delete('/store_page_template/destroy/{id}', 'destroy')->name('store_page_templates.delete');
     });
 
     Route::controller(StoreTypeCategoryController::class)->group(function () {
@@ -276,7 +277,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/store_type_category/add', 'store')->name('store_type_category.store');
         Route::get('/store_type_category/edit/{id}', 'edit')->name('store_type_category.edit');
         Route::post('/store_type_category/edit/{id}', 'update')->name('store_type_category.update');
-        Route::get('/store_type_category/delete/{id}', 'destroy')->name('store_type_category.delete');
+        Route::delete('/store_type_category/destroy/{id}', 'destroy')->name('store_type_category.delete');
         Route::post('/store_type_category/getparentcategory', 'getParentCategory')->name('store_type_category.getparentcategory');
     });
 

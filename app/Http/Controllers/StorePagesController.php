@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Store;
 use App\Models\StorePage;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Auth;
 
 class StorePagesController extends Controller
 {
@@ -71,11 +73,20 @@ class StorePagesController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $id)
+    public function destroy(Request $request, string $id)
     {
-//        StorePage::findOrFail($id)->delete();
 
-        return redirect()->route('store_pages.index')
+        $request->validate([
+            'password' => 'required',
+        ]);
+
+        if (!Hash::check($request->password, Auth::user()->password)) {
+            return redirect()->route('store_page.index')->with('error', 'Password is incorrect');
+        }
+
+        StorePage::findOrFail($id)->delete();
+
+        return redirect()->route('store_page.index')
             ->with('success', 'Store page deleted successfully.');
     }
 }
