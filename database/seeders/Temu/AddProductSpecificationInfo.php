@@ -2,6 +2,7 @@
 
 namespace Database\Seeders\Temu;
 
+use App\Models\ListingRequiredFields;
 use App\Models\ListingRequirement;
 use App\Models\ProductSpecifcationUniqueInfo;
 use App\Models\ProductSpecificationInfo;
@@ -96,8 +97,37 @@ class AddProductSpecificationInfo extends Seeder
                             'product_specification_id' => $productSpecification->id,
                             'field_value' => $value['value'],
                             'store_type_id' => $this->storeType->id,
-                            'category' => $category->code
+                            'category' => $category->code,
+                            'marketplace_value_id' => $value['vid']
                         ]);
+                    }
+                }
+
+                if (isset($property['templatePropertyValueParentList'])) {
+                    foreach ($property['templatePropertyValueParentList'] as $parentValue) {
+                        if (isset($parentValue['parentVids'])) {
+                            foreach ($parentValue['parentVids'] as $parentVid) {
+                                $parentValue = ProductSpecificationValue::where('store_type_id', $this->storeType->id)
+                                    ->where('category', $category->code)
+                                    ->where('marketplace_value_id', $parentVid)->first();
+
+                                if ($parentValue) {
+                                    ListingRequiredFields::updateOrCreate([
+                                        'store_type_id' => $this->storeType->id,
+                                        'category' => $category->code,
+                                        'parent_field' => $parentValue->specificationInfo->field_name,
+                                        'parent_value' => $parentValue->field_value,
+                                        'dependent_field' => $property['name'],
+                                    ], [
+                                        'store_type_id' => $this->storeType->id,
+                                        'category' => $category->code,
+                                        'parent_field' => $parentValue->specificationInfo->field_name,
+                                        'parent_value' => $parentValue->field_value,
+                                        'dependent_field' => $property['name'],
+                                    ]);
+                                }
+                            }
+                        }
                     }
                 }
 
