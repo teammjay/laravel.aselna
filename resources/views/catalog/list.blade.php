@@ -502,6 +502,7 @@
     <div id="pagination">
         {{--@include('catalog.pagination', ['products' => $products])--}}
     </div>
+
 @stop
 
 @section('adminlte_js')
@@ -696,13 +697,16 @@
             });
         }*/
 
-            $(document).on('click', '.delete-btn', function () {
+            /*$(document).on('click', '.delete-btn', function () {
                 var productId = $(this).data('id');
                 var token = '{{ csrf_token() }}'; // CSRF token for security
 
                 // Confirm the deletion
                 if (confirm("Are you sure you want to delete this product?")) {
-                    $.ajax({
+
+                    $('#deleteModal').find('.frmRecordDelete').attr('action', "{{ url('catalog/destroy') }}/" + productId);
+                    $('#deleteModal').modal('show');
+                    /!*$.ajax({
                         url: "{{ url('catalog/destroy') }}/" + productId,   // Laravel route for deletion
                         type: 'GET',
                         data: {
@@ -718,9 +722,9 @@
                             // Handle error response
                             alert('Error: ' + xhr.responseJSON.error);
                         }
-                    });
+                    });*!/
                 }
-            });
+            });*/
 
             $(document).on('click', '#show_simple_products', function () {
                 $('#configurable').remove();

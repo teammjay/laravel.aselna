@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\StoreType;
 use Illuminate\Http\Request;
 use App\Http\Requests\StoreTypesRequest;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Auth;
 
 class StoreTypesController extends Controller
 {
@@ -72,8 +74,17 @@ class StoreTypesController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $id)
+    public function destroy(Request $request, string $id)
     {
+
+        $request->validate([
+            'password' => 'required',
+        ]);
+
+        if (!Hash::check($request->password, Auth::user()->password)) {
+            return redirect()->route('store_type.index')->with('error', 'Password is incorrect');
+        }
+
         StoreType::findOrFail($id)->delete();
 
         return redirect()->route('store_type.index')

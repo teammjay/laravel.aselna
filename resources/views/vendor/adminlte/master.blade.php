@@ -121,6 +121,31 @@
     {{-- Body Content --}}
     @yield('body')
 
+    <!-- Delete Confirmation Modal -->
+    <div class="modal fade" id="deleteModal">
+        <div class="modal-dialog modal-dialog-centered" style="max-width:600px;">
+            <form method="POST" class="frmRecordDelete w-100" action="">
+                @csrf
+                @method('DELETE')
+
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title text-bold">Confirm Deletion</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p>Please enter your password to confirm deletion:</p>
+                        <input type="password" name="password" class="form-control" required>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-danger">Delete</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
     {{-- Base Scripts (depends on Laravel asset bundling tool) --}}
     @if(config('adminlte.enabled_laravel_mix', false))
         <script src="{{ mix(config('adminlte.laravel_mix_js_path', 'js/app.js')) }}"></script>
@@ -173,6 +198,20 @@
         }, 5000);
 
         $(document).ready(function() {
+
+            $(document).on('click', '.delete-btn', function () {
+                var recordId = $(this).data('id');
+                var module = $(this).data('module');
+                var token = '{{ csrf_token() }}'; // CSRF token for security
+
+                if (confirm("Are you sure you want to delete this record?")) {
+
+                    var actionUrl = "{{ url('') }}/" + module + "/destroy/" + recordId;
+
+                    $('#deleteModal').find('.frmRecordDelete').attr('action', actionUrl);
+                    $('#deleteModal').modal('show');
+                }
+            });
 
             $(document).ajaxStart(function () {
                 $("#ajax-preloader").show(); // Show preloader when AJAX starts
