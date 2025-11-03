@@ -7,6 +7,7 @@ use App\Models\ProductSpecifcationUniqueInfo;
 use App\Models\ProductSpecification;
 use App\Models\ProductSpecificationInfo;
 use App\Models\ProductSpecificationValue;
+use App\Models\ListingRequiredFields;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
@@ -126,7 +127,7 @@ class ListingUtility
                 "magento" => "https://" . $product->store_sku . "/product/" . $product->store_sku,
                 "walmart" => "https://www.walmart.com/ip/" . $product->store_sku,
                 "newegg" => "https://www.newegg.com/p/" . $product->store_sku,
-                "temu" => "https://www.temu.com/goods.html?goods_id=".$product->store_sku,
+                "temu" => "https://www.temu.com/goods.html?goods_id=" . $product->store_sku,
                 default => "",
             };
         } else {
@@ -135,18 +136,18 @@ class ListingUtility
     }
 
 
-    public static function generateItemUrl($store_type, $store_sku = '', $site_url = '',$store_url = '')
+    public static function generateItemUrl($store_type, $store_sku = '', $site_url = '', $store_url = '')
     {
         //Log::info("Product: " . json_encode($product));
         if ($store_type != '' && $store_sku != '') {
             return match (strtolower($store_type)) {
-            "ebay" => "https://www.ebay.com/itm/" . $store_sku . "/" . $store_sku,
+                "ebay" => "https://www.ebay.com/itm/" . $store_sku . "/" . $store_sku,
                 "amazon" => "https://www.amazon.com/dp/" . $store_sku,
                 "shopify" => $site_url . "/products/" . $store_url,
                 "magento" => $site_url . "/product/" . $store_sku,
                 "walmart" => "https://www.walmart.com/ip/" . $store_sku,
                 "newegg" => "https://www.newegg.com/p/" . $store_sku,
-                "temu" => "https://www.temu.com/goods.html?goods_id=".$store_sku,
+                "temu" => "https://www.temu.com/goods.html?goods_id=" . $store_sku,
                 default => "",
             };
         } else {
@@ -161,9 +162,12 @@ class ListingUtility
         $issues = [];
         $specifications = [];
         $fieldName = '';
+        $productData = [];
 
-        foreach ($requirements as $key=>$req) {
-           // Log::info("Requirement: " . json_encode($req));
+        $productData = self::collectProductData($productId, $storeTypeId);
+
+        foreach ($requirements as $key => $req) {
+            // Log::info("Requirement: " . json_encode($req));
             if ($req->type === 'column') {
                 $value = DB::table($req->table)
                     ->where('product_id', $productId)
@@ -253,7 +257,121 @@ class ListingUtility
             }
         }
 
+        // Validate field dependencies
+        $dependencyIssues = self::validateFieldDependencies($productData, $category, $storeTypeId);
+
+        // Merge dependency issues with existing issues
+        $issues = array_merge($issues, $dependencyIssues);
+
         return $issues;
+    }
+
+    /**
+     * Collect all product data from various tables for dependency validation
+     */
+    private static function collectProductData($productId, $storeTypeId): array
+    {
+        $productData = [];
+
+        try {
+            $specifications = ProductSpecification::where('product_id', $productId)
+                ->get();
+
+            foreach ($specifications as $spec) {
+                $productData[$spec->name] = $spec->calculated_value();
+            }
+
+        } catch (\Exception $e) {
+            Log::error('Error collecting product data for dependency validation: ' . $e->getMessage());
+        }
+
+        return $productData;
+    }
+
+    /**
+     * Validate field dependencies based on the field_dependencies table
+     */
+    private static function validateFieldDependencies($productData, $category, $storeTypeId): array
+    {
+        $dependencyIssues = [];
+
+        try {
+            // Get all active field dependencies for this category and store type
+            $dependencies = ListingRequiredFields::active()
+                ->forCategoryAndStore($category, $storeTypeId)
+                ->get();
+
+            Log::info("Product Data for Dependency Validation: " . json_encode($productData));
+
+            foreach ($dependencies as $dependency) {
+                Log::info("Validating dependency: " . json_encode($dependency));
+                $parentField = $dependency->parent_field;
+                $parentValue = $dependency->parent_value;
+                $dependentField = $dependency->dependent_field;
+                Log::info("Parent Field: " . $parentField . ", Parent Value: " . $parentValue . ", Dependent Field: " . $dependentField);
+
+                if (isset($productData[$parentField]) && $productData[$parentField] == $parentValue) {
+                    Log::info("Parent condition met for field '{$parentField}' with value '{$parentValue}'");
+
+                    if (!isset($productData[$dependentField]) ||
+                        empty($productData[$dependentField]) ||
+                        $productData[$dependentField] === '') {
+
+                        $issueKey = 'dependency_' . $dependency->id;
+                        $dependencyIssues[$issueKey]['title'] = "Field '{$dependentField}' is required when '{$parentField}' is '{$parentValue}'";
+
+                        // Try to get specification info for the dependent field
+                        $specInfo = self::getFieldSpecificationInfo($dependentField, $storeTypeId, $category);
+                        if ($specInfo) {
+                            $dependencyIssues[$issueKey]['spec'] = $specInfo;
+                        }
+                    }
+                }
+            }
+
+        } catch (\Exception $e) {
+            Log::error('Error validating field dependencies: ' . $e->getMessage());
+        }
+
+        return $dependencyIssues;
+    }
+
+    /**
+     * Get specification info for a field
+     */
+    private static function getFieldSpecificationInfo($fieldName, $storeTypeId, $category): ?array
+    {
+        try {
+            $qquery = ProductSpecificationInfo::where('field_local_name', $fieldName);
+            if ($storeTypeId) {
+                $qquery->where('store_type_id', $storeTypeId);
+            }
+
+            $specificationInfo = $qquery->orderBy('field_local_name')->first();
+
+            if (!$specificationInfo) {
+                return null;
+            }
+
+            $field_option = ProductSpecifcationUniqueInfo::where('field_name', $fieldName)->first();
+            $field = $valoption = '';
+
+            if (!empty($field_option)) {
+                $field = 'select';
+                $valoption = self::getSpecValues($field_option, $category, $storeTypeId);
+            }
+
+            return [
+                'field_id' => $specificationInfo->id,
+                'field' => $specificationInfo->field_local_name,
+                'field_type' => $field,
+                'values' => $valoption,
+            ];
+
+        } catch (\Exception $e) {
+            Log::error('Error getting field specification info: ' . $e->getMessage());
+            return null;
+        }
     }
 
     /**
