@@ -40,11 +40,11 @@ class JobScheduler extends Seeder
                 'description' => 'Sync all device ratings',
                 'class_name' => 'App\Jobs\DeviceRatingSyncJob',
             ],
-            [
-                'name' => 'Device Series Sync',
-                'description' => 'Sync all device series',
-                'class_name' => 'App\Jobs\DeviceSeriesSyncJob',
-            ],
+//            [
+//                'name' => 'Device Series Sync',
+//                'description' => 'Sync all device series',
+//                'class_name' => 'App\Jobs\DeviceSeriesSyncJob',
+//            ],
             [
                 'name' => 'Brand Sync',
                 'description' => 'Sync all brands',
