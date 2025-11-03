@@ -7,6 +7,14 @@
 @stop
 
 @section('content')
+    @csrf
+    @if (session('success'))
+        <div class="alert alert-success alert-dismissible fade show">{{ session('success') }}</div>
+    @endif
+
+    @if (session('error'))
+        <div class="alert alert-danger alert-dismissible fade show">{{ session('error') }}</div>
+    @endif
     <div class="row my-3">
         <div class="col-md-3">
             <a href="{{ route('store_page_templates.create') }}" class="btn btn-primary">
@@ -39,9 +47,12 @@
                             <a href="{{ route('store_page_templates.edit', $sPage->id) }}" class="btn btn-primary" title="Edit">
                                 <i class="fas fa-fw fa-pencil-alt"></i>
                             </a>
-                            <a href="{{ route('store_page_templates.delete', $sPage->id) }}" class="btn btn-danger" title="Remove">
+
+                            <button type="button" class="btn btn-danger delete-btn" data-module="store_page_template" data-id="{{ $sPage->id }}" title="Remove"> <i class="fas fa-fw fa-trash"></i></button>
+
+                            {{--<a href="{{ route('store_page_templates.delete', $sPage->id) }}" class="btn btn-danger" title="Remove">
                                 <i class="fas fa-fw fa-trash"></i>
-                            </a>
+                            </a>--}}
                         </td>
                     </tr>
                 @endforeach

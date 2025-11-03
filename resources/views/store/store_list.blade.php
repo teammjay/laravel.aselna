@@ -35,7 +35,7 @@
                 <a href="{{ route('store.edit', $store->id) }}" class="btn btn-primary" title="Edit">
                     <i class="fas fa-fw fa-pencil-alt"></i>
                 </a>
-                <button class="btn btn-danger delete-btn" data-id="{{ $store->id }}" title="Remove"> <i class="fas fa-fw fa-trash"></i></button>
+                <button type="button" class="btn btn-danger delete-btn" data-module="stores" data-id="{{ $store->id }}" title="Remove"> <i class="fas fa-fw fa-trash"></i></button>
                 <a href="{{ route('store.authorize', $store->id) }}" class="btn btn-secondary" title="Authorize">Authorize</a>
             </td>
         </tr>

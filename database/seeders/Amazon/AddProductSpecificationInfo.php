@@ -31,12 +31,15 @@ class AddProductSpecificationInfo extends Seeder
 
     private function fetchAndStoreSpecifications()
     {
-        $qualifiedcategoryCodes = ['ELECTRONIC_CABLE', 'SCREEN_PROTECTOR', 'HEADPHONES', 'PORTABLE_ELECTRONIC_DEVICE_MOUNT', 'CELL_PHONE_HOLSTER', 'CHARGING_ADAPTER', 'POWER_BANK', 'CAMERA_TRIPOD', 'PORTABLE_ELECTRONIC_DEVICE_ARMBAND', 'PORTABLE_ELECTRONIC_DEVICE_STAND', 'CELLULAR_PHONE_CASE'];
+        $qualifiedcategoryCodes = ['ELECTRONIC_CABLE', 'SCREEN_PROTECTOR', 'HEADPHONES', 'PORTABLE_ELECTRONIC_DEVICE_MOUNT', 'CELL_PHONE_HOLSTER', 'CHARGING_ADAPTER',
+            'POWER_BANK', 'CAMERA_TRIPOD', 'PORTABLE_ELECTRONIC_DEVICE_ARMBAND', 'PORTABLE_ELECTRONIC_DEVICE_STAND', 'CELLULAR_PHONE_CASE',
+            'CABLE_OR_ADAPTER', 'INPUT_PEN', 'MULTIPORT_HUB', 'ELECTRONIC_ADAPTER', 'MULTIPORT_HUB'];
+
         $this->amazonAuthService = new AmazonAuthService(env('AMAZON_CLIENT_ID'), env('AMAZON_CLIENT_SECRET'), env('AMAZON_REFRESH_TOKEN'));
         $marketPlaceID = $this->amazonAuthService->getMarketplaceIDs();
         $categories = StoreTypeCategory::where('store_type_id', $this->storeType->id)
             ->whereNotNull('marketplace_code')
-            //->whereIn('marketplace_code', $qualifiedcategoryCodes)
+            ->whereIn('marketplace_code', $qualifiedcategoryCodes)
             ->select('marketplace_code')
             ->distinct()
             ->get();
@@ -87,6 +90,39 @@ class AddProductSpecificationInfo extends Seeder
                                 ]);
                             }
                         }
+                    }
+                }
+
+                if (isset($itemValue) && isset($itemValue['enum'])) {
+                    ProductSpecificationInfo::updateOrCreate([
+                        'store_type_id' => $this->storeType->id,
+                        'field_name' => $nameKey,
+                    ], [
+                        'store_type_id' => $this->storeType->id,
+                        'field_name' => $nameKey,
+                        'field_local_name' => $nameKey,
+                    ]);
+
+                    $productSpecification = ProductSpecifcationUniqueInfo::updateOrCreate([
+                        'field_name' => $nameKey,
+                    ], [
+                        'field_name' => $nameKey,
+                    ]);
+
+                    foreach ($itemValue['enum'] as $enumValue) {
+                        Log::info('Storing enum value: ' . $enumValue);
+
+                        ProductSpecificationValue::updateOrCreate([
+                            'product_specification_id' => $productSpecification->id,
+                            'field_value' => $enumValue,
+                            'category' => $category->marketplace_code,
+                            'store_type_id' => $this->storeType->id,
+                        ], [
+                            'product_specification_id' => $productSpecification->id,
+                            'field_value' => $enumValue,
+                            'store_type_id' => $this->storeType->id,
+                            'category' => $category->marketplace_code
+                        ]);
                     }
                 }
 
