@@ -27,7 +27,7 @@ class FeedGenerationJob implements ShouldQueue
     /**
      * Create a new job instance.
      */
-    public function __construct($ListingId,$feedId = null)
+    public function __construct($ListingId, $feedId = null)
     {
         $this->listingId = $ListingId;
         $this->feedId = $feedId;
@@ -42,11 +42,12 @@ class FeedGenerationJob implements ShouldQueue
         Log::info('Listing : ' . $listingInfo);
 
         // get StoreType froms store that is inside listingfeed
+        $store = $listingInfo->store;
         $storeType = $listingInfo->store->storeType->name;
         $storeName = $listingInfo->store->name;
         Log::info('Store Type: ' . $storeType);
 
-        $this->updateTrackingRecord(['tags' => $storeName.' '.$storeType.' Feed Generation']);
+        $this->updateTrackingRecord(['tags' => $storeName . ' ' . $storeType . ' Feed Generation']);
 
         $marketplaceService = MarketplaceServiceFactory::create($storeType);
         Log::info('Marketplace Service Created');
@@ -67,17 +68,19 @@ class FeedGenerationJob implements ShouldQueue
         Log::info("get_current_user() : " . get_current_user());
         Log::info('Feed Data Updated' . json_encode($feedInfo));
 
-        $marketplaceService->generateFeed($this->listingId,$feedInfo->id);
+        $marketplaceService->generateFeed($this->listingId, $feedInfo->id);
         Log::info('Feed Generated');
         $itemCount = ListingItemLink::where('listing_id', $this->listingId)->count();
 
         ListingFeed::where(['listing_id' => $this->listingId])->update(['number_of_items' => $itemCount]);
         ListingItemLink::where('listing_id', $this->listingId)->update(['feed_id' => $feedInfo->id]);
 
-//        $marketplaceService->submitFeed('',$this->listingId);
-//
+        if (isset($store->auto_submit_listing) && $store->auto_submit_listing == 1) {
+            $marketplaceService->submitFeed($feedInfo->id, $this->listingId);
+            Log::info('Feed Submitted');
+        } else {
+            Log::info('Auto Submit Listing is Disabled. Skipping Feed Submission.');
+        }
 //        $marketplaceService->getResultFeed($this->listingId);
-
-
     }
 }
