@@ -8,6 +8,7 @@ use App\Models\ProductSpecification;
 use App\Models\ProductSpecificationInfo;
 use App\Models\ProductSpecificationValue;
 use App\Models\ListingRequiredFields;
+use App\Models\ProductSpecificationValueDependency;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
@@ -229,7 +230,7 @@ class ListingUtility
                 }
             }
 
-            if(isset($issues[$key]['title'])) {
+            if (isset($issues[$key]['title'])) {
                 $qquery = ProductSpecificationInfo::where('field_local_name', $fieldName);
                 if ($storeTypeId) {
                     $qquery->where('store_type_id', $storeTypeId);
@@ -304,11 +305,9 @@ class ListingUtility
             Log::info("Product Data for Dependency Validation: " . json_encode($productData));
 
             foreach ($dependencies as $dependency) {
-                Log::info("Validating dependency: " . json_encode($dependency));
                 $parentField = $dependency->parent_field;
                 $parentValue = $dependency->parent_value;
                 $dependentField = $dependency->dependent_field;
-                Log::info("Parent Field: " . $parentField . ", Parent Value: " . $parentValue . ", Dependent Field: " . $dependentField);
 
                 if (isset($productData[$parentField]) && $productData[$parentField] == $parentValue) {
                     Log::info("Parent condition met for field '{$parentField}' with value '{$parentValue}'");
@@ -321,7 +320,7 @@ class ListingUtility
                         $dependencyIssues[$issueKey]['title'] = "Field '{$dependentField}' is required when '{$parentField}' is '{$parentValue}'";
 
                         // Try to get specification info for the dependent field
-                        $specInfo = self::getFieldSpecificationInfo($dependentField, $storeTypeId, $category);
+                        $specInfo = self::getFieldSpecificationInfo($dependentField, $storeTypeId, $category, $parentField, $parentValue);
                         if ($specInfo) {
                             $dependencyIssues[$issueKey]['spec'] = $specInfo;
                         }
@@ -339,7 +338,7 @@ class ListingUtility
     /**
      * Get specification info for a field
      */
-    private static function getFieldSpecificationInfo($fieldName, $storeTypeId, $category): ?array
+    private static function getFieldSpecificationInfo($fieldName, $storeTypeId, $category, $parentField, $parentValue): ?array
     {
         try {
             $qquery = ProductSpecificationInfo::where('field_local_name', $fieldName);
@@ -358,7 +357,10 @@ class ListingUtility
 
             if (!empty($field_option)) {
                 $field = 'select';
-                $valoption = self::getSpecValues($field_option, $category, $storeTypeId);
+                $childValueIds = ProductSpecificationValueDependency::getChildValues(
+                    $parentField, $parentValue, $fieldName, $category, $storeTypeId
+                );
+                $valoption = self::getSpecValues($field_option, $category, $storeTypeId, $childValueIds);
             }
 
             return [
@@ -378,22 +380,31 @@ class ListingUtility
      * @param $field_option
      * @return mixed
      */
-    public static function getSpecValues($field_option, $category, $storeTypeId)
+    public static function getSpecValues($field_option, $category, $storeTypeId, $childValueIds = null)
     {
         $valoption = ProductSpecificationValue::where('product_specification_id', $field_option->id)
             ->where('store_type_id', $storeTypeId)
             ->where('category', $category)
+            ->when(!empty($childValueIds), function ($query) use ($childValueIds) {
+                $query->whereIn('marketplace_value_id', $childValueIds);
+            })
             ->get();
 
         if ($valoption->isEmpty()) {
             $valoption = ProductSpecificationValue::where('product_specification_id', $field_option->id)
                 ->where('store_type_id', $storeTypeId)
+                ->when(!empty($childValueIds), function ($query) use ($childValueIds) {
+                    $query->whereIn('marketplace_value_id', $childValueIds);
+                })
                 ->get();
         }
 
         if ($valoption->isEmpty()) {
             $valoption = ProductSpecificationValue::where('product_specification_id', $field_option->id)
                 ->whereNull('store_type_id')
+                ->when(!empty($childValueIds), function ($query) use ($childValueIds) {
+                    $query->whereIn('marketplace_value_id', $childValueIds);
+                })
                 ->get();
         }
 
