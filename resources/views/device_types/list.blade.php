@@ -7,6 +7,14 @@
 @stop
 
 @section('content')
+    @csrf
+    @if (session('success'))
+        <div class="alert alert-success alert-dismissible fade show">{{ session('success') }}</div>
+    @endif
+
+    @if (session('error'))
+        <div class="alert alert-danger alert-dismissible fade show">{{ session('error') }}</div>
+    @endif
     <div class="row my-3">
         <div class="col-md-3">
             <a href="{{ route('device_types.create') }}" class="btn btn-primary">
@@ -63,9 +71,7 @@
                     <a href="{{ route('device_types.edit', $deviceType->id) }}" class="btn btn-primary">
                         Edit
                     </a>
-                    <a href="{{ route('device_types.delete', $deviceType->id) }}" class="btn btn-danger">
-                        Delete
-                    </a>
+                    <button type="button" class="btn btn-danger delete-btn" data-module="device_types" data-id="{{ $deviceType->id }}" title="Remove">Delete</button>
                 </td>
             </tr>
         @endforeach

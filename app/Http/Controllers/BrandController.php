@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Http\Requests\BrandRequest;
 use App\Models\Brand;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Auth;
 
 class BrandController extends Controller
 {
@@ -71,12 +73,22 @@ class BrandController extends Controller
         return redirect()->route('brand.list');
     }
 
-    public function destroy($id)
+    public function destroy(Request $request, $id)
     {
+
+        $request->validate([
+            'password' => 'required',
+        ]);
+
+        if (!Hash::check($request->password, Auth::user()->password)) {
+            return redirect()->route('brand.list')->with('error', 'Password is incorrect');
+        }
+
         // delete the brand
-        // Brand::findOrFail($id)->delete();
+        Brand::findOrFail($id)->delete();
 
         // redirect to the brands list
-        return redirect()->route('brand.list');
+        return redirect()->route('brand.list')
+            ->with('success', 'Brand deleted successfully.');
     }
 }

@@ -18,6 +18,8 @@ use App\Models\Interfaces;
 use App\Services\DataTable\DataTableService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Auth;
 
 class DeviceController extends Controller
 {
@@ -232,9 +234,18 @@ class DeviceController extends Controller
             ->with('success', 'Device updated successfully.');
     }
 
-    public function destroy($id)
+    public function destroy(Request $request, $id)
     {
-        // Device::findOrFail($id)->delete();
+
+        $request->validate([
+            'password' => 'required',
+        ]);
+
+        if (!Hash::check($request->password, Auth::user()->password)) {
+            return redirect()->route('devices.index')->with('error', 'Password is incorrect');
+        }
+
+        Device::findOrFail($id)->delete();
 
         return redirect()->route('devices.index')
             ->with('success', 'Device deleted successfully.');
