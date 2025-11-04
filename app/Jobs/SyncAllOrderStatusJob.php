@@ -185,6 +185,11 @@ class SyncAllOrderStatusJob implements ShouldQueue
                                         $operation->tracking_number = $trackingNumber;
                                     }
 
+                                    if (isset($item['intentToCancel']) && $item['intentToCancel'] == "TRUE") {
+                                        $order->order_status = OrderStatus::CanceledRequested;
+                                        $operation->status = OrderOperationStatus::CanceledRequested;
+                                    }
+
                                     $order->save();
                                     $operation->save();
                                 }
