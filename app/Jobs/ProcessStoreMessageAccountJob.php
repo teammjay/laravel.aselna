@@ -272,6 +272,11 @@ class ProcessStoreMessageAccountJob implements ShouldQueue
 
                                 if (isset($hd_message->id) && !empty($email['parts'])) {
                                     $email['parts']['message_id'] = $hd_message->id;
+
+                                    $partmsg = mb_convert_encoding($email['parts']['content'], 'UTF-8', 'UTF-8');
+                                    $partmsg = preg_replace('/[^\x00-\x7F]+/', ' ', $partmsg);
+                                    $email['parts']['content'] = $partmsg;
+
                                     HdMessagePart::updateOrCreate([
                                         'message_id' => $hd_message->id,
                                     ], $email['parts']);
