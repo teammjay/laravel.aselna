@@ -596,14 +596,14 @@ On Fri, 29 Aug 2025 at 23:36, phonil <phonil.ebay@gmail.com> wrote:
             'host' => 'imap.gmail.com',
             'port' => 993,
             'encryption' => 'ssl',
-            //'username' => 'odemobile.shopify@gmail.com',
+            'username' => 'odemobile.shopify@gmail.com',
             //'username' => 'cs@odemobile.com',
-            'username' => 'phonil.ebay@gmail.com',
+            //'username' => 'phonil.ebay@gmail.com',
             //'username' => 'accessorychoice.wmt@gmail.com',
             //'username' => 'snhdigital.ebay@gmail.com',
-            //'password' => 'deczsvfmubmpxtsf',
+            'password' => 'deczsvfmubmpxtsf',
             //'password' => 'qaym xjqg icea syxw',
-            'password' => 'qynvjqjqqaqqramo',
+            //'password' => 'qynvjqjqqaqqramo',
             //'password' => 'hbmevmsyjuwqcpsm',
             //'password' => 'vtldhcsfeciyzhwm',
         ];
@@ -611,7 +611,7 @@ On Fri, 29 Aug 2025 at 23:36, phonil <phonil.ebay@gmail.com> wrote:
 
 
         $connector = new EmailMessageUtility($smtpConfig, $imapConfig);
-        $receiveEmails = $connector->fetchEmails('Ebay', '2025-10-09 08:25:28','INBOX');
+        $receiveEmails = $connector->fetchEmails('Ebay', '2025-11-05 08:25:28','INBOX');
 
         echo '<pre>';
         print_r($receiveEmails);
