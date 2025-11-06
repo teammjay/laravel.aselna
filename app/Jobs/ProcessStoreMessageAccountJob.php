@@ -372,7 +372,7 @@ class ProcessStoreMessageAccountJob implements ShouldQueue
             $extraInfo = [
                 'store_id' => $this->store->id
             ];
-            \App\Helpers\ErrorLogger::log($e, __METHOD__, $extraInfo);
+            \App\Helpers\ErrorLogger::log($e, 'FetchEmailMessages', $extraInfo);
 
             CriticalErrorService::report('Store message account job failed', [
                 'marketplace' => ucfirst($this->store_type),

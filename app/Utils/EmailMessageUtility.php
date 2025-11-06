@@ -105,7 +105,7 @@ class EmailMessageUtility
             return true;
         } catch (\Throwable $e) {
 
-            \App\Helpers\ErrorLogger::log($e, __METHOD__);
+            \App\Helpers\ErrorLogger::log($e, 'FetchEmailMessages');
 
             Log::info("Failed to send email: " . $e->getMessage());
             return false;
@@ -173,7 +173,7 @@ class EmailMessageUtility
 
         } catch (\Throwable $e) {
 
-            \App\Helpers\ErrorLogger::log($e, __METHOD__);
+            \App\Helpers\ErrorLogger::log($e, 'FetchEmailMessages');
 
             Log::error("Failed to fetch today's emails: " . $e->getMessage());
             return [];
@@ -374,7 +374,7 @@ class EmailMessageUtility
             return $emails;
         } catch (\Throwable $e) {
 
-            \App\Helpers\ErrorLogger::log($e, __METHOD__);
+            \App\Helpers\ErrorLogger::log($e, 'FetchEmailMessages');
 
             CriticalErrorService::report('Fetch emails failed', [
                 'marketplace' => ucfirst($store_type),

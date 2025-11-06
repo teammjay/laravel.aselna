@@ -736,7 +736,12 @@ return [
                     'icon' => 'far fa fa-list'
                 ]
             ]
-        ]
+        ],
+        [
+            'text' => 'Error Log Dashboard',
+            'url' => '/error_logs',
+            'icon' => 'fa fa-exclamation-triangle',
+        ],
 //        [
 //            'text' => 'pages',
 //            'url' => 'admin/pages',

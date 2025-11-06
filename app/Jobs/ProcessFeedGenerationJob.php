@@ -323,7 +323,7 @@ class ProcessFeedGenerationJob implements ShouldQueue
 
         } catch (\Throwable $e) {
 
-            \App\Helpers\ErrorLogger::log($e, __METHOD__);
+            \App\Helpers\ErrorLogger::log($e, 'ProcessFeedGeneration');
 
             Log::error('Error processing feed generation: ' . $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine());
         }

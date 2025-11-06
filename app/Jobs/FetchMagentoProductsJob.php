@@ -96,7 +96,7 @@ class FetchMagentoProductsJob implements ShouldQueue
             }
         } catch (\Throwable $e) {
 
-            \App\Helpers\ErrorLogger::log($e, __METHOD__);
+            \App\Helpers\ErrorLogger::log($e, 'fetchProductsFromStore');
 
             Log::error('Error fetching products from store: ' . $store->name . ', Error: ' . $e->getMessage());
         }
@@ -111,7 +111,7 @@ class FetchMagentoProductsJob implements ShouldQueue
             return $authService->getProducts($pageSize, $currentPage);
         } catch (\Throwable $e) {
 
-            \App\Helpers\ErrorLogger::log($e, __METHOD__);
+            \App\Helpers\ErrorLogger::log($e, 'getProductsFromMagento');
 
             Log::error('Error getting products from Magento: ' . $e->getMessage());
             return ['items' => []];
@@ -187,7 +187,7 @@ class FetchMagentoProductsJob implements ShouldQueue
             );
         } catch (\Throwable $e) {
 
-            \App\Helpers\ErrorLogger::log($e, __METHOD__);
+            \App\Helpers\ErrorLogger::log($e, 'saveProductToDatabase');
 
             Log::error('Error saving product to database: ' . $e->getMessage());
             Log::error('Product data: ' . json_encode($product));

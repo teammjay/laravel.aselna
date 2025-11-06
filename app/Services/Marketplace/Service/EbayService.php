@@ -1205,7 +1205,7 @@ class EbayService implements MarketplaceServiceInterface
             return $orders;
         } catch (\Throwable $e) {
 
-            \App\Helpers\ErrorLogger::log($e, __METHOD__);
+            \App\Helpers\ErrorLogger::log($e, 'EbayGetOrders');
 
             Log::info('Ebay order error : ' . $e->getMessage());
         }
