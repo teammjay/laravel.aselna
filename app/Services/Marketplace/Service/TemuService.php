@@ -109,6 +109,8 @@ class TemuService implements MarketplaceServiceInterface
         $feedInfo->update([
             'success_count' => $successCount,
             'failed_count' => $failedCount,
+            'submit_ts' => now(),
+            'number_of_attempts' => ($feedInfo->number_of_attempts ?? 0) + 1,
             'status' => FeedStatus::PROCESSED
         ]);
     }

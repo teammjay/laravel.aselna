@@ -6,6 +6,8 @@ use App\Http\Requests\DeviceSubTypeRequest;
 use App\Http\Requests\DeviceTypeRequest;
 use App\Models\DeviceTypes;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Auth;
 
 class DeviceTypesController extends Controller
 {
@@ -70,10 +72,19 @@ class DeviceTypesController extends Controller
         }
     }
 
-    public function destroy($id)
+    public function destroy(Request $request, $id)
     {
+
+        $request->validate([
+            'password' => 'required',
+        ]);
+
+        if (!Hash::check($request->password, Auth::user()->password)) {
+            return redirect()->route('device_types.list')->with('error', 'Password is incorrect');
+        }
+
         // delete the device type
-//        DeviceTypes::findOrFail($id)->delete();
+        DeviceTypes::findOrFail($id)->delete();
         // redirect to the device types list with success message
         return redirect()->route('device_types.list')->with('success', 'Device type deleted successfully.');
     }

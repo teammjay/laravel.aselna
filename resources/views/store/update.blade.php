@@ -372,7 +372,22 @@
                                         <input type="text" class="form-control" id="logo_code_base64" name="logo_code_base64" value="{{ old('logo_code_base64',$store->logo_code_base64) }}">
                                     </div>
                                 </div>
-
+                                <div class="row mt-3 g-3 align-items-center">
+                                    <div class="col-md-5">
+                                        <label for="auto_submit_listing">Auto Submit listing</label>
+                                    </div>
+                                    <div class="col-md-7">
+                                        <input type="checkbox" id="auto_submit_listing" name="auto_submit_listing" {{ ($store->auto_submit_listing == 1) ? 'checked' : '' }}>
+                                    </div>
+                                </div>
+                                <div class="row mt-3 g-3 align-items-center">
+                                    <div class="col-md-5">
+                                        <label for="re_submit_listing">Re Submit listing</label>
+                                    </div>
+                                    <div class="col-md-7">
+                                        <input type="checkbox" id="re_submit_listing" name="re_submit_listing" {{ ($store->re_submit_listing == 1) ? 'checked' : '' }}>
+                                    </div>
+                                </div>
                             </div>
                             <div class="col-md-4">
                                 <div class="row mt-3 g-3 align-items-center">

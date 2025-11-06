@@ -407,7 +407,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/brands/add', 'store')->name('brand.store');
         Route::get('/brands/edit/{id}', 'edit')->name('brand.edit');
         Route::post('/brands/edit/{id}', 'update')->name('brand.update');
-        Route::get('/brands/delete/{id}', 'destroy')->name('brand.delete');
+        Route::delete('/brands/destroy/{id}', 'destroy')->name('brand.delete');
     });
 
     Route::controller(DeviceTypesController::class)->group(function () {
@@ -416,7 +416,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/device_types/add', 'store')->name('device_types.store');
         Route::get('/device_types/edit/{id}', 'edit')->name('device_types.edit');
         Route::post('/device_types/edit/{id}', 'update')->name('device_types.update');
-        Route::get('/device_types/delete/{id}', 'destroy')->name('device_types.delete');
+        Route::delete('/device_types/destroy/{id}', 'destroy')->name('device_types.delete');
     });
 
     Route::controller(DeviceSubTypesController::class)->group(function () {
@@ -461,7 +461,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/devices/add', 'store')->name('devices.store');
         Route::get('/devices/edit/{id}', 'edit')->name('devices.edit');
         Route::post('/devices/edit/{id}', 'update')->name('devices.update');
-        Route::get('/devices/delete/{id}', 'destroy')->name('devices.delete');
+        Route::delete('/devices/destroy/{id}', 'destroy')->name('devices.delete');
     });
 
     Route::controller(CustomerController::class)->group(function () {

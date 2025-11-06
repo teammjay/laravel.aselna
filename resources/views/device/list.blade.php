@@ -7,6 +7,14 @@
 @stop
 
 @section('content')
+    @csrf
+    @if (session('success'))
+        <div class="alert alert-success alert-dismissible fade show">{{ session('success') }}</div>
+    @endif
+
+    @if (session('error'))
+        <div class="alert alert-danger alert-dismissible fade show">{{ session('error') }}</div>
+    @endif
     <div class="row my-3">
         <div class="col-md-3">
             <a href="{{ route('devices.create') }}" class="btn btn-primary">
@@ -279,7 +287,7 @@
                         data: 'action', name: 'action', orderable: false, searchable: false,
                         render: function (data, type, row) {
                             return '<a href="{{ route('devices.edit', ['id' => ':id']) }}'.replace(':id','') + row.id + '" class="btn btn-primary">Edit</a>' +
-                                '<a href="{{ route('devices.delete', ['id' => ':id']) }}'.replace(':id','') + row.id + '" class="btn btn-danger">Delete</a>';
+                                    '<button type="button" class="btn btn-danger delete-btn" data-module="devices" data-id="'+ row.id +'" title="Remove">Delete</button>';
                         }
                     }
                 ],
@@ -291,7 +299,7 @@
             // Device Details Modal Handler
             $('body').on('click', '#deviceTable tbody tr', function(e) {
 
-                if ($(e.target).is('a, img')) {
+                if ($(e.target).is('a, img, button')) {
                     return;
                 }
                 var deviceId = $(this).data('device-id');

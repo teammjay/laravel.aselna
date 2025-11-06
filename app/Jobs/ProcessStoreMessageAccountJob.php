@@ -243,6 +243,10 @@ class ProcessStoreMessageAccountJob implements ShouldQueue
                             }
 
                             if (isset($hd_ticket->id)) {
+
+                                $msg = mb_convert_encoding($email['body'], 'UTF-8', 'UTF-8');
+                                $msg = preg_replace('/[^\x00-\x7F]+/', ' ', $msg);
+
                                 $hdMessageData = [
                                     'ticket_id' => $hd_ticket->id,
                                     'subject' => preg_replace('/[\x00-\x1F\x7F-\xFF]/', '', trim(mb_convert_encoding(htmlspecialchars_decode($email['subject']), 'UTF-8', 'UTF-8'))),
@@ -254,7 +258,7 @@ class ProcessStoreMessageAccountJob implements ShouldQueue
                                     'messaging_account_id' => $maccount->incomingAccount->id,
                                     'from_email' => trim($email['from']),
                                     'from_name' => trim($email['name']),
-                                    'message' => $email['body'],
+                                    'message' => iconv('UTF-8', 'UTF-8//IGNORE', $msg),
                                     'in_reply_to' => $email['in_reply_to'],
                                     'draft' => 0,
                                     'reply_to_name' => $email['reply_to_name'],
