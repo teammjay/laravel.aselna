@@ -254,7 +254,7 @@ class ProcessStoreMessageAccountJob implements ShouldQueue
                                     'messaging_account_id' => $maccount->incomingAccount->id,
                                     'from_email' => trim($email['from']),
                                     'from_name' => trim($email['name']),
-                                    'message' => $email['body'],
+                                    'message' => iconv('UTF-8', 'UTF-8//IGNORE', $email['body']),
                                     'in_reply_to' => $email['in_reply_to'],
                                     'draft' => 0,
                                     'reply_to_name' => $email['reply_to_name'],
