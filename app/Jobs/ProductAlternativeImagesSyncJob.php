@@ -81,7 +81,10 @@ class ProductAlternativeImagesSyncJob implements ShouldQueue
             }
 
             $imageData['image'] = $mainImageDetail->id;
-        } catch (Exception $e) {
+        } catch (\Throwable $e) {
+
+            \App\Helpers\ErrorLogger::log($e, __METHOD__);
+
             Log::error('ProductImagesSyncJob: ' . $e->getMessage());
         }
 
@@ -94,7 +97,10 @@ class ProductAlternativeImagesSyncJob implements ShouldQueue
             }
 
             $imageData['thumbnail_image'] = $thumbnailImageDetail->id;
-        } catch (Exception $e) {
+        } catch (\Throwable $e) {
+
+            \App\Helpers\ErrorLogger::log($e, __METHOD__);
+
             Log::error('ProductImagesSyncJob: ' . $e->getMessage());
         }
 
@@ -141,7 +147,10 @@ class ProductAlternativeImagesSyncJob implements ShouldQueue
             if (!isset($imageData['image'])) {
                 $imageData['image'] = '';
             }
-        } catch (Exception $e) {
+        } catch (\Throwable $e) {
+
+            \App\Helpers\ErrorLogger::log($e, __METHOD__);
+
             $imageData['image'] = '';
             Log::error('ProductAlternateImagesSyncJob From EasyEsale: ' . $e->getMessage());
         }
@@ -162,7 +171,10 @@ class ProductAlternativeImagesSyncJob implements ShouldQueue
             if (!isset($imageData['thumbnail_image'])) {
                 $imageData['thumbnail_image'] = '';
             }
-        } catch (Exception $e) {
+        } catch (\Throwable $e) {
+
+            \App\Helpers\ErrorLogger::log($e, __METHOD__);
+
             $imageData['thumbnail_image'] = '';
             Log::error('ProductAlternateImagesSyncJob From EasyEsale: ' . $e->getMessage());
         }

@@ -28,5 +28,5 @@ class ErrorLog extends Model
         });
     }
 
-    protected $fillable = ['id', 'store_id', 'error_level', 'error_source', 'operation', 'status','message', 'stack_trace','resolved_date','created_at','updated_at'];
+    protected $fillable = ['id', 'store_id', 'error_level', 'error_source', 'operation', 'status','message', 'stack_trace','resolved_date','hash_string','error_count','created_at','updated_at'];
 }

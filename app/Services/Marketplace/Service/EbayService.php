@@ -1203,7 +1203,10 @@ class EbayService implements MarketplaceServiceInterface
             Log::info('Final Last Order Update Date : ' . $last_order_update_date . ' No of Orders : ' . $noOfOrder);
             $order_synchronization->update(['number_of_items' => $noOfOrder, 'last_order_update_date' => $last_order_update_date]);
             return $orders;
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
+
+            \App\Helpers\ErrorLogger::log($e, __METHOD__);
+
             Log::info('Ebay order error : ' . $e->getMessage());
         }
     }

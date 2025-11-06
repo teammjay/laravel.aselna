@@ -94,7 +94,10 @@ class FetchMagentoProductsJob implements ShouldQueue
                     $currentPage++;
                 }
             }
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
+
+            \App\Helpers\ErrorLogger::log($e, __METHOD__);
+
             Log::error('Error fetching products from store: ' . $store->name . ', Error: ' . $e->getMessage());
         }
     }
@@ -106,7 +109,10 @@ class FetchMagentoProductsJob implements ShouldQueue
     {
         try {
             return $authService->getProducts($pageSize, $currentPage);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
+
+            \App\Helpers\ErrorLogger::log($e, __METHOD__);
+
             Log::error('Error getting products from Magento: ' . $e->getMessage());
             return ['items' => []];
         }
@@ -179,7 +185,10 @@ class FetchMagentoProductsJob implements ShouldQueue
                     'upload_attempts' => 1
                 ]
             );
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
+
+            \App\Helpers\ErrorLogger::log($e, __METHOD__);
+
             Log::error('Error saving product to database: ' . $e->getMessage());
             Log::error('Product data: ' . json_encode($product));
         }

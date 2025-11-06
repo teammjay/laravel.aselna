@@ -48,7 +48,10 @@ class FetchEbayOrders implements ShouldQueue
                     $this->updateTrackingRecord(['tags' => $store->storeTypeName.' Orders']);
                     $ebayService = new EbayService();
                     $orders = $ebayService->getOrders($store);
-                } catch (\Exception $e) {
+                } catch (\Throwable $e) {
+
+                    \App\Helpers\ErrorLogger::log($e, __METHOD__);
+
                     Log::info('Error : ' . $e->getMessage());
                 }
 

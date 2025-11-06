@@ -49,7 +49,14 @@ class FetchTemuOrders implements ShouldQueue
                 try {
                     $temuService = new TemuService();
                     $orders = $temuService->getOrders($store);
-                } catch (\Exception $e) {
+                } catch (\Throwable $e) {
+
+                    $extraInfo = [
+                        'store_id' => $store->id
+                    ];
+
+                    \App\Helpers\ErrorLogger::log($e, __METHOD__, $extraInfo);
+
                     Log::info('Error : ' . $e->getMessage());
                 }
             }

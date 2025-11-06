@@ -94,7 +94,10 @@ class ProductImagesSyncJob implements ShouldQueue
                 $imagePath = 'https://fonusaccessory.com/inv/inv_images/main_product_images/' . $productImage->picture_name;
                 $mainImageDetail = FileUtility::saveImage($imagePath, 'product_images', $productImage->picture_name);
             }
-        } catch (Exception $e) {
+        } catch (\Throwable $e) {
+
+            \App\Helpers\ErrorLogger::log($e, __METHOD__);
+
             Log::error('ProductImagesSyncJob: ' . $e->getMessage());
         }
 
@@ -103,7 +106,10 @@ class ProductImagesSyncJob implements ShouldQueue
                 $imageThumbnail = 'https://fonusaccessory.com/inv/inv_images/main_product_images/' . $productImage->thumbnail_picture_name;
                 $thumbnailImageDetail = FileUtility::saveImage($imageThumbnail, 'product_images', $productImage->thumbnail_picture_name);
             }
-        } catch (Exception $e) {
+        } catch (\Throwable $e) {
+
+            \App\Helpers\ErrorLogger::log($e, __METHOD__);
+
             Log::error('ProductImagesSyncJob: ' . $e->getMessage());
         }
 
@@ -125,7 +131,10 @@ class ProductImagesSyncJob implements ShouldQueue
                 'thumbnail_image' => $thumbnailImageDetail ? $thumbnailImageDetail->id : null,
                 'sort_order' => $productImage->picture_id
             ]);
-        } catch (Exception $e) {
+        } catch (\Throwable $e) {
+
+            \App\Helpers\ErrorLogger::log($e, __METHOD__);
+
             Log::error('ProductImagesSyncJob: ' . $e->getMessage());
         }
     }
@@ -160,7 +169,10 @@ class ProductImagesSyncJob implements ShouldQueue
             if (!isset($imageData['image'])) {
                 $imageData['image'] = '';
             }
-        } catch (Exception $e) {
+        } catch (\Throwable $e) {
+
+            \App\Helpers\ErrorLogger::log($e, __METHOD__);
+
             $imageData['image'] = '';
             //Log::error('ProductImagesSyncJob From EasyEsale1: ' . $e->getMessage());
         }
@@ -180,7 +192,10 @@ class ProductImagesSyncJob implements ShouldQueue
             if (!isset($imageData['thumbnail_image'])) {
                 $imageData['thumbnail_image'] = null;
             }
-        } catch (Exception $e) {
+        } catch (\Throwable $e) {
+
+            \App\Helpers\ErrorLogger::log($e, __METHOD__);
+
             $imageData['thumbnail_image'] = null;
             //Log::error('ProductImagesSyncJob From EasyEsale2: ' . $e->getMessage());
         }
