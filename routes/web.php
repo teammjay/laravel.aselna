@@ -590,7 +590,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/printer/add', 'store')->name('printer.store');
         Route::get('/printer/edit/{id}', 'edit')->name('printer.edit');
         Route::post('/printer/edit/{id}', 'update')->name('printer.update');
-        Route::get('/printer/delete/{id}', 'destroy')->name('printer.delete');
+        Route::delete('/printer/destroy/{id}', 'destroy')->name('printer.delete');
     });
 
     Route::controller(PrinterClientsController::class)->group(function () {
@@ -617,7 +617,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/shipping_account/add', 'store')->name('shipping_account.store');
         Route::get('/shipping_account/edit/{id}', 'edit')->name('shipping_account.edit');
         Route::post('/shipping_account/edit/{id}', 'update')->name('shipping_account.update');
-        Route::get('/shipping_account/delete/{id}', 'destroy')->name('shipping_account.delete');
+        Route::delete('/shipping_account/destroy/{id}', 'destroy')->name('shipping_account.delete');
         Route::post('/shipping_account/getaccountcredit', 'getAccountCredit')->name('shipping_account.getaccountcredit');
         Route::post('/shipping_account/purchasecredit', 'purchaseCredit')->name('shipping_account.purchasecredit');
     });
