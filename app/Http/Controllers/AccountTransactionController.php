@@ -29,7 +29,7 @@ class AccountTransactionController extends Controller
 
 //        $shipping_account_transactions = AccountTransaction::with('shippingAccount')->where('shipping_account_id',$account_id)->get();
 
-        $stores = Store::with('storeType')->where('store_status','>', 0)->orderBy('name')->get();
+        $stores = Store::with('storeType')->where('store_status','<>', 0)->orderBy('name')->get();
         $shipping_account = ShippingAccount::all();
         return view('shipping_account_transaction.list', compact('shipping_account', 'account_id','stores'));
     }

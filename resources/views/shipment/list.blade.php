@@ -4,7 +4,7 @@
 @section('title', 'Shipment')
 
 @section('content_header')
-    <h1>Shipment</h1>
+    <div class="pt-1"></div>
 @stop
 
 @section('adminlte_css')
@@ -85,9 +85,14 @@
     @endif
     <div class="row">
         <div class="col-md-9">
-            <div class="card">
-                <div class="card-body">
-                    <div class="row my-3">
+            <div class="card updateinfo-card">
+                <div class="card-header">
+                    <h3 class="card-title"><a href="javascript:void(0);" class="text-blue">Update Options</a></h3>
+                    <i class="fa fa-angle-down float-right"></i>
+                </div>
+
+                <div class="card-body pb-1"  style="display: none;">
+                    <div class="row">
                         <div class="col-md-3">
                             <div class="card">
                                 <div class="card-header">
@@ -179,7 +184,11 @@
                             </div>
                         </div>
                     </div>
-                    <div class="row my-3">
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-body pt-3">
+                    <div class="row mb-1 mt-0">
                         <div class="col-md-2">
                             <select class="form-control mt-3 mb-3" name="store_id" id="listing_store">
                                 <option value="">All Stores</option>
@@ -351,17 +360,31 @@
         let isProcessingCancelled = false;
 
         $('#listing_store').select2();
+
+        var updateinfo = sessionStorage.getItem("update_info");
+
+        if(updateinfo == 'open'){
+            $(this).find('.fa').removeClass('fa-angle-down');
+            $(this).find('.fa').addClass('fa-angle-up');
+            $('.updateinfo-card > .card-body').show();
+        }else{
+            $(this).find('.fa').removeClass('fa-angle-up');
+            $(this).find('.fa').addClass('fa-angle-down');
+            $('.updateinfo-card > .card-body').hide();
+        }
         //$('#markAsShippedModal').modal('show');
-        /*$('.card-header').on('click',function () {
+        $('.updateinfo-card .card-header').on('click',function () {
             if($(this).find('.fa').hasClass('fa-angle-down')){
                 $(this).find('.fa').removeClass('fa-angle-down');
                 $(this).find('.fa').addClass('fa-angle-up');
+                sessionStorage.setItem("update_info", 'open');
             }else{
                 $(this).find('.fa').removeClass('fa-angle-up');
                 $(this).find('.fa').addClass('fa-angle-down');
+                sessionStorage.setItem("update_info", 'close');
             }
-            $('.card-body').toggle();
-        });*/
+            $('.updateinfo-card > .card-body').toggle();
+        });
         $('#created_at').datepicker({
             dateFormat:'yy-mm-dd',
 
@@ -1610,7 +1633,7 @@
                             "autoWidth": false,
                             "processing": false,
                             "serverSide": false,
-                            "searching": true,
+                            "searching": false,
                             "paging": false,
                             "info": false,
                             "stateSave": statesave,

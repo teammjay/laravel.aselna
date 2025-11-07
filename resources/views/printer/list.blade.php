@@ -7,6 +7,14 @@
 @stop
 
 @section('content')
+    @csrf
+    @if (session('success'))
+        <div class="alert alert-success alert-dismissible fade show">{{ session('success') }}</div>
+    @endif
+
+    @if (session('error'))
+        <div class="alert alert-danger alert-dismissible fade show">{{ session('error') }}</div>
+    @endif
     <div class="row my-3">
         <div class="col-md-3">
             <a href="{{ route('printer.create') }}" class="btn btn-primary">
@@ -42,9 +50,7 @@
                             <a href="{{ route('printer.edit', $sType->id) }}" class="btn btn-primary" title="Edit">
                                 <i class="fas fa-fw fa-pencil-alt"></i>
                             </a>
-                            <a href="{{ route('printer.delete', $sType->id) }}" class="btn btn-danger" title="Remove">
-                                <i class="fas fa-fw fa-trash"></i>
-                            </a>
+                            <button type="button" class="btn btn-danger delete-btn" data-module="printer" data-id="{{ $sType->id }}" title="Remove"> <i class="fas fa-fw fa-trash"></i></button>
                         </td>
                     </tr>
                 @endforeach

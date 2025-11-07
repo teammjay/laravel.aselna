@@ -59,9 +59,7 @@
                                         <a href="{{ route('shipping_account.edit', $ship_acc->id) }}" class="btn btn-primary" title="Edit">
                                             <i class="fas fa-fw fa-pencil-alt"></i>
                                         </a>
-                                        <a href="{{ route('shipping_account.delete', $ship_acc->id) }}" class="btn btn-danger" title="Remove">
-                                            <i class="fas fa-fw fa-trash"></i>
-                                        </a>
+                                        <button type="button" class="btn btn-danger delete-btn" data-module="shipping_account" data-id="{{ $ship_acc->id }}" title="Remove"> <i class="fas fa-fw fa-trash"></i></button>
                                     </td>
                                 </tr>
                             @endforeach
