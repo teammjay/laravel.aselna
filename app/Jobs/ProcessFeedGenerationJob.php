@@ -235,9 +235,8 @@ class ProcessFeedGenerationJob implements ShouldQueue
                                                 ->where('device_id', $device->id)->first();
 
                                             if (!$item_detail) {
-                                                continue;
-//                                                Log::info('Inserting new listing item detail for listing item ID: ' . $listitem->id . ' and device ID: ' . $device->id);
-//                                                $item_detail = $this->insertListingItemDetail($storeDetail, $product_code, $listitem, $device);
+                                                Log::info('Inserting new listing item detail for listing item ID: ' . $listitem->id . ' and device ID: ' . $device->id);
+                                                $item_detail = $this->insertListingItemDetail($storeDetail, $product_code, $listitem, $device);
                                             }
 
                                             $typeDetail = ProductType::with('parent')->where('id', $itemDetail->product->product_type)->first();
