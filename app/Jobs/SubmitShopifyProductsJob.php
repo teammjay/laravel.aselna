@@ -135,7 +135,7 @@ class SubmitShopifyProductsJob implements ShouldQueue
                     ->whereNotIn('product_type', $productTypes)
                     ->whereIn('product_type', $ceaProductTypes)
                     ->whereNull('parent_id')
-                    ->whereIn('product_status', ['discontinued','discontinued','draft'])
+                    ->whereIn('product_status', ['discontinued','temporaryDisabled','draft'])
                     ->orderBy('created_at', 'desc')
                     ->limit(100)
                     ->get();
@@ -180,6 +180,7 @@ class SubmitShopifyProductsJob implements ShouldQueue
 
         if (isset($productData->productType) && !empty($productData->productType->name)) {
             $tags[] = $productData->productType->name;
+            $tags[] = strtolower(str_replace(' ', '-', $productData->productType->name));
         }
 
         if (isset($productData->productType) && !empty($productData->productType->parent) && !empty($productData->productType->parent->id)) {
@@ -188,6 +189,7 @@ class SubmitShopifyProductsJob implements ShouldQueue
 
         if (isset($productData->productType) && !empty($productData->productType->parent) && !empty($productData->productType->parent->name)) {
             $tags[] = $productData->productType->parent->name;
+            $tags[] = strtolower(str_replace(' ', '-', $productData->productType->parent->name));
         }
 
         $tags[] = 'upsell-enable';
