@@ -184,7 +184,7 @@
                                     <option value=""></option>
                                     @if(count($stores ?? []) > 0)
                                         @foreach($stores as $store)
-                                            <option value="{{ $store->id }}">{{ $store->name }} - {{ $store->storeType->name }}</option>
+                                            <option value="{{ $store->id }}">{{ $store->name }} - {{ $store->storeType->name ?? '' }}</option>
                                         @endforeach
                                     @endif
                                 </select>

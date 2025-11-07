@@ -137,11 +137,13 @@ class AmazonService implements MarketplaceServiceInterface
                 $message['attributes']['bullet_point'] = $bulletPoints;
                 $message['attributes']['list_price'] = [['value' => number_format($itemDetail->price, 2), 'currency' => 'USD']];
 
-                $message['attributes']['item_package_dimensions'] = [[
-                    'length' => ['value' => $productData->package_dimensions_length, 'unit' => 'inches'],
-                    'width' => ['value' => $productData->package_dimensions_width, 'unit' => 'inches'],
-                    'height' => ['value' => $productData->package_dimensions_height, 'unit' => 'inches']
-                ]];
+                if (isset($productData->package_dimensions_length) && isset($productData->package_dimensions_width) && isset($productData->package_dimensions_height)) {
+                    $message['attributes']['item_package_dimensions'] = [[
+                        'length' => ['value' => $productData->package_dimensions_length, 'unit' => 'inches'],
+                        'width' => ['value' => $productData->package_dimensions_width, 'unit' => 'inches'],
+                        'height' => ['value' => $productData->package_dimensions_height, 'unit' => 'inches']
+                    ]];
+                }
 
                 if (isset($listingInfo->manufacturer_id) || isset($storeProduct->store)) {
                     $brandName = '';

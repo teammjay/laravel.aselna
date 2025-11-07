@@ -6,6 +6,8 @@ use App\Http\Requests\PrintersRequest;
 use App\Models\Printer;
 use App\Models\PrinterClient;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Auth;
 
 class PrintersController extends Controller
 {
@@ -76,9 +78,18 @@ class PrintersController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $id)
+    public function destroy(Request $request, string $id)
     {
-//        Printer::findOrFail($id)->delete();
+
+        $request->validate([
+            'password' => 'required',
+        ]);
+
+        if (!Hash::check($request->password, Auth::user()->password)) {
+            return redirect()->route('printer.index')->with('error', 'Password is incorrect');
+        }
+
+        Printer::findOrFail($id)->delete();
 
         return redirect()->route('printer.index')
             ->with('success', 'Printer deleted successfully.');

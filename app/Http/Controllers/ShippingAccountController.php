@@ -11,6 +11,8 @@ use App\Utils\EndicialabelService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Auth;
 
 class ShippingAccountController extends Controller
 {
@@ -80,9 +82,18 @@ class ShippingAccountController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $id)
+    public function destroy(Request $request, string $id)
     {
-//        ShippingAccount::findOrFail($id)->delete();
+
+        $request->validate([
+            'password' => 'required',
+        ]);
+
+        if (!Hash::check($request->password, Auth::user()->password)) {
+            return redirect()->route('shipping_account.index')->with('error', 'Password is incorrect');
+        }
+
+        ShippingAccount::findOrFail($id)->delete();
 
         return redirect()->route('shipping_account.index')
             ->with('success', 'Shipping account deleted successfully.');
