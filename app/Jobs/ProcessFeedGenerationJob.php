@@ -223,9 +223,7 @@ class ProcessFeedGenerationJob implements ShouldQueue
                                             $item_detail = ListingItemDetail::where('listing_item_id', $listitem->id)
                                                 ->where('device_id', $device->id)->first();
 
-                                            $productTitle = '';
-                                            $productTitle .= ' ' . $device->name . ' ';
-                                            $productTitle .= $title;
+                                            $productTitle = $device->name . ' ' . $title;
 
                                             if (!$item_detail) {
                                                 Log::info('Inserting new listing item detail for listing item ID: ' . $listitem->id . ' and device ID: ' . $device->id);
