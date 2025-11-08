@@ -179,7 +179,7 @@ class SubmitShopifyProductsJob implements ShouldQueue
         }
 
         if (isset($productData->productType) && !empty($productData->productType->name)) {
-            $tags[] = $productData->productType->name;
+//            $tags[] = $productData->productType->name;
             $tags[] = strtolower(str_replace(' ', '-', $productData->productType->name));
         }
 
@@ -188,7 +188,7 @@ class SubmitShopifyProductsJob implements ShouldQueue
         }
 
         if (isset($productData->productType) && !empty($productData->productType->parent) && !empty($productData->productType->parent->name)) {
-            $tags[] = $productData->productType->parent->name;
+//            $tags[] = $productData->productType->parent->name;
             $tags[] = strtolower(str_replace(' ', '-', $productData->productType->parent->name));
         }
 
@@ -523,6 +523,7 @@ class SubmitShopifyProductsJob implements ShouldQueue
         $priceResponse = $shopifyAuthService->updatePrice($priceUpdatesData);
 
         if (isset($response['data']) && empty($response['data']['userErrors']) && isset($response['data']['productUpdate']['product'])) {
+            Log::info('Product Update Data: Response : ');
             $productId = $response['data']['productUpdate']['product']['id'];
             $productIdReplaced = str_replace('gid://shopify/Product/', '', $productId);
             $handle = $response['data']['productUpdate']['product']['handle'];
