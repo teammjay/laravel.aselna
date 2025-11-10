@@ -205,17 +205,6 @@ class ProcessFeedGenerationJob implements ShouldQueue
                                         $product_url = \App\Utils\ListingUtility::generateItemUrl($store_type, $store_sku, $site_url, $store_url);
                                     }
 
-                                    $productTitle = '';
-                                    if (isset($listitem->brand->name)) {
-                                        $productTitle .= $listitem->brand->name;
-                                    }
-
-                                    if (isset($listitem->device->name)) {
-                                        $productTitle .= ' ' . $listitem->device->name . ' ';
-                                    }
-
-                                    $productTitle .= $title;
-
                                     $item_url = StoreNavigationPage::where('store_id', $store_id)
                                         ->where('page_type', WebStorePageType::DEVICE)
                                         ->where('device_id', $listitem->device_id)
@@ -234,10 +223,11 @@ class ProcessFeedGenerationJob implements ShouldQueue
                                             $item_detail = ListingItemDetail::where('listing_item_id', $listitem->id)
                                                 ->where('device_id', $device->id)->first();
 
+                                            $productTitle = $device->name . ' ' . $title;
+
                                             if (!$item_detail) {
-                                                continue;
-//                                                Log::info('Inserting new listing item detail for listing item ID: ' . $listitem->id . ' and device ID: ' . $device->id);
-//                                                $item_detail = $this->insertListingItemDetail($storeDetail, $product_code, $listitem, $device);
+                                                Log::info('Inserting new listing item detail for listing item ID: ' . $listitem->id . ' and device ID: ' . $device->id);
+                                                $item_detail = $this->insertListingItemDetail($storeDetail, $product_code, $listitem, $device);
                                             }
 
                                             $typeDetail = ProductType::with('parent')->where('id', $itemDetail->product->product_type)->first();
@@ -396,7 +386,6 @@ class ProcessFeedGenerationJob implements ShouldQueue
         $newlistingItem = ListingItemDetail::create($itemDetail);
 
         return $newlistingItem;
-
     }
 
     private function generateProductDetail($product_id, $store_type_id)
