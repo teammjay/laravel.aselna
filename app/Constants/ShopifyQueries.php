@@ -712,14 +712,15 @@ GQL;
           }
         }
 GQL;
+
     public static $productPublish = <<<GQL
         mutation productPublish(\$input: ProductPublishInput!) {
           productPublish(input: \$input) {
             product {
-              # Product fields
+                id
             }
             shop {
-              # Shop fields
+                id
             }
             userErrors {
               field
@@ -728,7 +729,4 @@ GQL;
           }
         }
 GQL;
-
-
-
 }
