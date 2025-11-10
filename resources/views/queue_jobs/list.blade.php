@@ -418,7 +418,27 @@
 
             });
 
+            document.getElementById("resetForm").addEventListener("click", function () {
+                sessionStorage.removeItem("queue_jobs_filters");
+            });
+        });
 
+        document.addEventListener("DOMContentLoaded", function () {
+            let savedFilters = JSON.parse(sessionStorage.getItem("queue_jobs_filters"));
+            if (savedFilters) {
+                console.log(savedFilters);
+                Object.keys(savedFilters).forEach(function (key) {
+
+                    //console.log(savedFilters[key]);
+                    let input = $('#filter-form [name="'+savedFilters[key].name+'"]');
+                    if (input) {
+                        input.val(savedFilters[key].value)
+                    }
+
+                });
+
+                loadDatatables();
+            }
         });
 
         function loadDatatables(){
@@ -434,6 +454,7 @@
                 "processing": true,
                 "serverSide": true,
                 "searching": true,
+                "stateSave": true,
                 "aLengthMenu": [10, 20, 25, 50, 100],
                 'ajax': {
                     url: "{{ route('queue.filter') }}",
@@ -449,6 +470,8 @@
                         $.each(formData, function(index, field) {
                             d[field.name] = field.value; // Append form data to the DataTables request
                         });
+
+                        sessionStorage.setItem("queue_jobs_filters", JSON.stringify(formData));
 
                         var columnValues = [];
                         if (table) {
@@ -483,7 +506,19 @@
                         targets: [0,1,7], // Index of the column you want to disable sorting for
                         orderable: false // Disable sorting
                     }
-                ]
+                ],
+                stateSaveCallback: function(settings, data) {
+                    sessionStorage.setItem(
+                        'DataTables_' + settings.sInstance,
+                        JSON.stringify(data)
+                    );
+                },
+
+                stateLoadCallback: function(settings) {
+                    return JSON.parse(
+                        sessionStorage.getItem('DataTables_' + settings.sInstance)
+                    );
+                }
             });
 
             $( '#queueJobsTable_wrapper').removeClass( 'form-inline' );

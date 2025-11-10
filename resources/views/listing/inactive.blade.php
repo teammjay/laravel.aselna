@@ -597,7 +597,7 @@
                     <div class="col-md-2">
                         <div class="form-group">
                             <label>&nbsp;</label>
-                            <button type="reset" class="form-control btn  btn-reset btn-secondary">Reset</button>
+                            <button type="reset" id="resetForm" class="form-control btn  btn-reset btn-secondary">Reset</button>
                         </div>
                     </div>
                 </div>
@@ -657,7 +657,7 @@
         </div>
     </div>
     <div class="table-responsive">
-        <table id="productsTable" class="table table-bordered table-striped">
+        <table id="inactiveListTable" class="table table-bordered table-striped">
             <thead>
             <tr>
                 <th>SKU</th>
@@ -1059,13 +1059,39 @@
             });
         });
 
+        document.getElementById("resetForm").addEventListener("click", function () {
+            sessionStorage.removeItem("all_inactive_listing_filters");
+        });
+
+    });
+
+    document.addEventListener("DOMContentLoaded", function () {
+        let savedFilters = JSON.parse(sessionStorage.getItem("all_inactive_listing_filters"));
+        if (savedFilters) {
+            console.log(savedFilters);
+            Object.keys(savedFilters).forEach(function (key) {
+
+                //console.log(savedFilters[key]);
+                let input = $('#filter-form [name="'+savedFilters[key].name+'"]');
+                if (input) {
+                    input.val(savedFilters[key].value)
+                }
+
+                if( savedFilters[key].name == 'store_id'){
+                    $('#listing_store').val(savedFilters[key].value);
+                }
+
+            });
+
+            loadDatatables();
+        }
     });
 
     function loadDatatables(){
 
-        $("#productsTable").dataTable().fnDestroy();
+        $("#inactiveListTable").dataTable().fnDestroy();
 
-        var table = $('#productsTable').DataTable({
+        var table = $('#inactiveListTable').DataTable({
             "iDisplayLength": 20,
             "info": true,
             "responsive": true,
@@ -1074,6 +1100,7 @@
             "processing": true,
             "serverSide": true,
             "searching": false,
+            "stateSave": true,
             "aLengthMenu": [20, 25, 50, 100],
             'ajax': {
                 url: "{{ route('listing.filter') }}",
@@ -1089,6 +1116,8 @@
                     $.each(formData, function(index, field) {
                         d[field.name] = field.value; // Append form data to the DataTables request
                     });
+
+                    sessionStorage.setItem("all_inactive_listing_filters", JSON.stringify(formData));
 
                     d['listing_status'] = 3;
 
@@ -1138,10 +1167,22 @@
                     targets: 6, // The column index
                     className: 'column-no-whitespace' // The class to add
                 }
-            ]
+            ],
+            stateSaveCallback: function(settings, data) {
+                sessionStorage.setItem(
+                    'DataTables_' + settings.sInstance,
+                    JSON.stringify(data)
+                );
+            },
+
+            stateLoadCallback: function(settings) {
+                return JSON.parse(
+                    sessionStorage.getItem('DataTables_' + settings.sInstance)
+                );
+            }
         });
 
-        $( '#productsTable_wrapper').removeClass( 'form-inline' );
+        $( '#inactiveListTable_wrapper').removeClass( 'form-inline' );
 
         $.fn.dataTable.ext.errMode = 'throw';
     }

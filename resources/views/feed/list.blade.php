@@ -732,8 +732,14 @@
             document.body.removeChild(link);
         });
 
+
         loadDatatables();
 
+    });
+
+    document.addEventListener("DOMContentLoaded", function () {
+        var store_id = sessionStorage.getItem("feed_store_id");
+        $('#listing_store').val(store_id);
     });
 
     function loadDatatables(){
@@ -750,6 +756,19 @@
             "serverSide": true,
             "searching": false,
             "aLengthMenu": [10, 20, 25, 50, 100],
+            "stateSave":true,
+            stateSaveCallback: function(settings, data) {
+                sessionStorage.setItem(
+                    'DataTables_' + settings.sInstance,
+                    JSON.stringify(data)
+                );
+            },
+
+            stateLoadCallback: function(settings) {
+                return JSON.parse(
+                    sessionStorage.getItem('DataTables_' + settings.sInstance)
+                );
+            },
             'ajax': {
                 url: "{{ route('feed.filter') }}",
                 type: "POST",
@@ -767,6 +786,8 @@
 
                     if ($('#listing_store').val() !== '')
                         d['store_id'] = $('#listing_store').val();
+
+                    sessionStorage.setItem("feed_store_id", $('#listing_store').val());
 
 
                     var columnValues = [];

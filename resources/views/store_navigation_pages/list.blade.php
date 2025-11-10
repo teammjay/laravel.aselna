@@ -85,7 +85,7 @@
                     <div class="col-md-2">
                         <div class="form-group">
                             <label>&nbsp;</label>
-                            <button type="reset" class="form-control btn  btn-reset btn-secondary">Reset</button>
+                            <button type="reset" id="resetForm" class="form-control btn  btn-reset btn-secondary">Reset</button>
                         </div>
                     </div>
                 </div>
@@ -214,13 +214,15 @@
     <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap4.min.js"></script>
     <script>
+        var navigationTable;
         $(document).ready(function () {
             $('#bulk_store_id').select2();
             $('#store_id').select2();
 
-            let navigationTable = $('#navigationPageTable').DataTable({
+            navigationTable = $('#navigationPageTable').DataTable({
                 processing: true,
                 serverSide: true,
+                stateSave: true,
                 ajax: {
                     url: "{{ route('store_navigation_page.filter') }}",
                     type: "POST",
@@ -236,6 +238,9 @@
                         $.each(formData, function (index, field) {
                             d[field.name] = field.value; // Append form data to the DataTables request
                         });
+
+
+                        sessionStorage.setItem("store_navigation_filters", JSON.stringify(formData));
                     }
                 },
                 columns: [
@@ -251,6 +256,22 @@
                         className: 'text-center'
                     }
                 ],
+                stateSaveCallback: function(settings, data) {
+                    sessionStorage.setItem(
+                        'DataTables_' + settings.sInstance,
+                        JSON.stringify(data)
+                    );
+                },
+
+                stateLoadCallback: function(settings) {
+                    return JSON.parse(
+                        sessionStorage.getItem('DataTables_' + settings.sInstance)
+                    );
+                }
+            });
+
+            document.getElementById("resetForm").addEventListener("click", function () {
+                sessionStorage.removeItem("store_navigation_filters");
             });
 
             $('.card-header').on('click', function () {
@@ -351,6 +372,27 @@
                         alert('An error occurred while generating bulk pages.');
                     }
                 });
+            }
+        });
+
+        document.addEventListener("DOMContentLoaded", function () {
+            let savedFilters = JSON.parse(sessionStorage.getItem("store_navigation_filters"));
+            if (savedFilters) {
+                console.log(savedFilters);
+                Object.keys(savedFilters).forEach(function (key) {
+
+                    //console.log(savedFilters[key]);
+                    let input = $('#filter-form [name="'+savedFilters[key].name+'"]');
+                    if (input) {
+                        input.val(savedFilters[key].value)
+                    }
+
+                    if( savedFilters[key].name == 'store_id'){
+                        $('#store_id').val(savedFilters[key].value);
+                    }
+
+                });
+
             }
         });
     </script>

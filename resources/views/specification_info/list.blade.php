@@ -68,7 +68,21 @@
 @section('adminlte_js')
     <script>
         $(document).ready(function () {
-            $('#specificationInfoTable').DataTable();
+            $('#specificationInfoTable').DataTable({
+                stateSave:true,
+                stateSaveCallback: function(settings, data) {
+                    sessionStorage.setItem(
+                        'DataTables_' + settings.sInstance,
+                        JSON.stringify(data)
+                    );
+                },
+
+                stateLoadCallback: function(settings) {
+                    return JSON.parse(
+                        sessionStorage.getItem('DataTables_' + settings.sInstance)
+                    );
+                },
+            });
         });
     </script>
 @stop

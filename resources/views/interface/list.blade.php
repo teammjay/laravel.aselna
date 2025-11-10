@@ -104,7 +104,7 @@
                     <div class="col-md-2">
                         <div class="form-group">
                             <label>&nbsp;</label>
-                            <button type="reset" class="form-control btn  btn-reset btn-secondary">Reset</button>
+                            <button type="reset" id="resetForm" class="form-control btn  btn-reset btn-secondary">Reset</button>
                         </div>
                     </div>
                 </div>
@@ -156,6 +156,19 @@
                     processing: true,
                     serverSide: true,
                     searching: false,
+                    stateSave:true,
+                    stateSaveCallback: function(settings, data) {
+                        sessionStorage.setItem(
+                            'DataTables_' + settings.sInstance,
+                            JSON.stringify(data)
+                        );
+                    },
+
+                    stateLoadCallback: function(settings) {
+                        return JSON.parse(
+                            sessionStorage.getItem('DataTables_' + settings.sInstance)
+                        );
+                    },
                     ajax: {
                         url: '{{ route('interface-data') }}',
                         data: function (d) {
@@ -163,6 +176,9 @@
                             $.each(formData, function (index, field) {
                                 d[field.name] = field.value;
                             });
+
+                            sessionStorage.setItem("interface_filters", JSON.stringify(formData));
+
                         }
                     },
                     "columns": [
@@ -197,6 +213,10 @@
                 }
             );
 
+            document.getElementById("resetForm").addEventListener("click", function () {
+                sessionStorage.removeItem("interface_filters");
+            });
+
             $('#apply_filter').on('click', function (event) {
                 event.preventDefault();
                 interfacetable.ajax.reload();
@@ -212,6 +232,25 @@
                 }
                 $('.card-body').toggle();
             });
+        });
+
+        document.addEventListener("DOMContentLoaded", function () {
+            let savedFilters = JSON.parse(sessionStorage.getItem("interface_filters"));
+            if (savedFilters) {
+                console.log(savedFilters);
+                Object.keys(savedFilters).forEach(function (key) {
+
+                    //console.log(savedFilters[key]);
+                    let input = $('#filter-form [name="'+savedFilters[key].name+'"]');
+                    if (input) {
+                        input.val(savedFilters[key].value)
+                    }
+
+
+                });
+
+                loadDatatables();
+            }
         });
     </script>
 @stop
