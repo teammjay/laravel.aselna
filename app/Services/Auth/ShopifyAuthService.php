@@ -192,6 +192,40 @@ class ShopifyAuthService
         }
     }
 
+    public function addTags($entityId,$tags)
+    {
+        $variables = [
+            'id' => $entityId,
+            'tags' => $tags
+        ];
+        if (!empty($variables)) {
+            $response = $this->makeGraphQLRequest(ShopifyQueries::$AddTags, $variables);
+
+            Log::info('Add Tags Response: ' . json_encode($response));
+
+            return $response;
+        } else {
+            return false;
+        }
+    }
+
+    public function removeTags($entityId,$tags)
+    {
+        $variables = [
+            'id' => $entityId,
+            'tags' => $tags
+        ];
+        if (!empty($variables)) {
+            $response = $this->makeGraphQLRequest(ShopifyQueries::$removeTags, $variables);
+
+            Log::info('Remove Tags Response: ' . json_encode($response));
+
+            return $response;
+        } else {
+            return false;
+        }
+    }
+
     public function getOrders($sync_start_date)
     {
 
