@@ -153,6 +153,7 @@ class SubmitShopifyProductsJob implements ShouldQueue
 
     public function getAllTags($productData, array $tags)
     {
+        $removeTags = [];
         ProductTags::where('product_id', $productData['product_id'])->get()->each(function ($tag) use (&$tags) {
             $tags[] = $tag->name;
         });
@@ -179,7 +180,7 @@ class SubmitShopifyProductsJob implements ShouldQueue
         }
 
         if (isset($productData->productType) && !empty($productData->productType->name)) {
-//            $tags[] = $productData->productType->name;
+            $removeTags[] = $productData->productType->name;
             $tags[] = strtolower(str_replace(' ', '-', $productData->productType->name));
         }
 
@@ -188,12 +189,15 @@ class SubmitShopifyProductsJob implements ShouldQueue
         }
 
         if (isset($productData->productType) && !empty($productData->productType->parent) && !empty($productData->productType->parent->name)) {
-//            $tags[] = $productData->productType->parent->name;
+            $removeTags[] = $productData->productType->parent->name;
             $tags[] = strtolower(str_replace(' ', '-', $productData->productType->parent->name));
         }
 
         $tags[] = 'upsell-enable';
-        return $tags;
+        return [
+            'addTags' => $tags,
+            'removeTags' => $removeTags
+        ];
     }
 
     public function generateProductImages($productData, $store)
@@ -343,7 +347,7 @@ class SubmitShopifyProductsJob implements ShouldQueue
         $tags = [];
         $tags = $this->getAllTags($productData, $tags);
         Log::info('Tags: ' . json_encode($tags));
-        $tagsString = implode(',', $tags);
+        $tagsString = implode(',', $tags['addTags']);
 
         $productOptions[] = [
             'name' => 'Title',
@@ -483,7 +487,7 @@ class SubmitShopifyProductsJob implements ShouldQueue
         $descriptionHtml .= '<p>' . $productData->product_description . '</p>';
 
         $tags = $this->getAllTags($productData, []);
-        $finalTagsString = implode(', ', $tags);
+        $finalTagsString = implode(', ', $tags['addTags']);
 
         $variantData = [
             'id' => $proDetail->marketplace_variant_id,
@@ -493,7 +497,7 @@ class SubmitShopifyProductsJob implements ShouldQueue
         $productUpdateData = [
             'product' => [
                 'id' => $proDetail->marketplace_product_id,
-                'tags' => $tags,
+                'tags' => $tags['addTags'],
                 'title' => $productTitle,
                 'descriptionHtml' => $descriptionHtml,
             ],
@@ -521,6 +525,9 @@ class SubmitShopifyProductsJob implements ShouldQueue
 
         $response = $shopifyAuthService->updateProduct($productUpdateData);
         $priceResponse = $shopifyAuthService->updatePrice($priceUpdatesData);
+        $shopifyAuthService->removeTags($proDetail->marketplace_product_id,$tags['removeTags']);
+        $shopifyAuthService->addTags($proDetail->marketplace_product_id,$tags['addTags']);
+
 
         if (isset($response['data']) && empty($response['data']['userErrors']) && isset($response['data']['productUpdate']['product'])) {
             Log::info('Product Update Data: Response : ');
