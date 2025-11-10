@@ -594,16 +594,17 @@ class OrderUtility
         }
     }
 
-    public static function mapTemuOrders($order, $sorder, $store)
+    public static function mapTemuOrders($order, $presentOrder, $store)
     {
         $firstname = $lastname = '';
         $customer_address = null;
         $customer_detail = null;
 
-        if ($sorder['buyer']) {
-            $buyerInfo = $sorder['buyer']['buyerInfo'] ?? [];
-            if (isset($buyerInfo['fullName'])) {
-                $nameArr = explode(' ', $buyerInfo['fullName']);
+        if ($presentOrder['shippingInfo']) {
+            $buyerInfo = $presentOrder['shippingInfo'] ?? [];
+            Log::info('Shipping Info ::' . json_encode($buyerInfo));
+            if (isset($buyerInfo['receiptName'])) {
+                $nameArr = explode(' ', $buyerInfo['receiptName']);
                 $firstname = $nameArr[0] ?? '';
                 $lastname = $nameArr[1] ?? '';
             }
@@ -611,41 +612,41 @@ class OrderUtility
             $customerData = [
                 'first_name' => $firstname,
                 'last_name' => $lastname,
-                'full_name' => $buyerInfo['fullName'] ?? '',
-                'user_id' => $sorder['buyer']['username'] ?? '',
+                'full_name' => $buyerInfo['receiptName'] ?? '',
+                'user_id' => $buyerInfo['receiptAdditionalName'] ?? '',
             ];
 
             $customer_detail = Customer::updateOrCreate([
-                'user_id' => $sorder['buyer']['username'] ?? '',
+                'full_name' => $buyerInfo['receiptName'] ?? '',
             ], $customerData);
 
             // Process shipping address if available
-            if (isset($sorder['shippingAddress'])) {
-                $addressLine1 = $sorder['shippingAddress']['addressLine1'] ?? '';
-                $addressLine2 = $sorder['shippingAddress']['addressLine2'] ?? '';
+            if (isset($presentOrder['shippingInfo'])) {
+                $addressLine1 = $buyerInfo['addressLine1'] ?? '';
+                $addressLine2 = $buyerInfo['addressLine2'] ?? '';
 
                 $customer_address_data = [
                     'customer_id' => $customer_detail->id,
                     'full_name' => $firstname . ' ' . $lastname,
                     'address_line_1' => $addressLine1,
                     'address_line_2' => $addressLine2,
-                    'city' => $sorder['shippingAddress']['city'] ?? '',
-                    'state' => $sorder['shippingAddress']['state'] ?? '',
-                    'zip' => explode('-', $sorder['shippingAddress']['postalCode'] ?? '')[0],
-                    'country_code' => $sorder['shippingAddress']['countryCode'] ?? '',
-                    'address_combined' => $addressLine1 . ' ' . $addressLine2,
+//                    'city' => $presentOrder['shippingAddress']['city'] ?? '',
+//                    'state' => $presentOrder['shippingAddress']['state'] ?? '',
+                    'zip' => explode('-', $buyerInfo['postCode'] ?? '')[0],
+                    'country_code' => $buyerInfo['shippingAddress']['countryCode'] ?? '',
+                    'address_combined' => $buyerInfo['addressLineAll'],
                 ];
 
                 $customer_address = CustomerAddress::updateOrCreate([
                     'customer_id' => $customer_detail->id,
-                    'address_combined' => $addressLine1 . ' ' . $addressLine2,
+                    'address_combined' => $buyerInfo['addressLineAll'],
                 ], $customer_address_data);
 
                 // Handle phone number if available
-                if (isset($buyerInfo['phone']) && $buyerInfo['phone'] != null) {
+                if (isset($buyerInfo['mobile']) && $buyerInfo['mobile'] != null) {
                     $customer_phone_data = [
                         'customer_id' => $customer_detail->id,
-                        'phone_no' => $buyerInfo['phone'],
+                        'phone_no' => $buyerInfo['mobile'],
                     ];
 
                     CustomerPhone::updateOrCreate($customer_phone_data, $customer_phone_data);
@@ -655,16 +656,16 @@ class OrderUtility
 
         $estimateShipmentDate = null;
         $estimateDeliveryDate = null;
-        if (isset($sorder['fulfillmentDetails'])) {
-            $estimateShipmentDate = $sorder['fulfillmentDetails']['shipByDate'] ?? null;
-            $estimateDeliveryDate = $sorder['fulfillmentDetails']['deliverByDate'] ?? null;
-        }
+//        if (isset($presentOrder['fulfillmentDetails'])) {
+//            $estimateShipmentDate = $presentOrder['fulfillmentDetails']['shipByDate'] ?? null;
+//            $estimateDeliveryDate = $presentOrder['fulfillmentDetails']['deliverByDate'] ?? null;
+//        }
 
         $orderData = [
             'buyer_first_name' => $firstname,
             'buyer_last_name' => $lastname,
             'customer_id' => $customer_detail->id ?? null,
-            'purchase_order_id' => $sorder['orderId'],
+//            'purchase_order_id' => $presentOrder['orderId'],
             'shipping_address_id' => $customer_address->id ?? null,
             'expected_shipment_date' => isset($estimateShipmentDate) ? date('Y-m-d H:i:s', strtotime($estimateShipmentDate)) : '',
             'expected_delivery_date' => isset($estimateDeliveryDate) ? date('Y-m-d H:i:s', strtotime($estimateDeliveryDate)) : '',
@@ -672,158 +673,158 @@ class OrderUtility
 
         $order->update($orderData);
 
-        Log::info("Order Status: " . $sorder['orderStatus']);
-        switch (strtolower($sorder['orderStatus'])) {
-            case 'shipped':
-            case 'delivered':
-                $operationstatus = OrderOperationStatus::MarkAsShipped;
-                break;
-            case 'cancelled':
-                $operationstatus = OrderOperationStatus::Canceled;
-                break;
-            case 'pending':
-            default:
-                $operationstatus = OrderOperationStatus::Created;
-                break;
-        }
+//        Log::info("Order Status: " . $presentOrder['orderStatus']);
+//        switch (strtolower($presentOrder['orderStatus'])) {
+//            case 'shipped':
+//            case 'delivered':
+//                $operationstatus = OrderOperationStatus::MarkAsShipped;
+//                break;
+//            case 'cancelled':
+//                $operationstatus = OrderOperationStatus::Canceled;
+//                break;
+//            case 'pending':
+//            default:
+//                $operationstatus = OrderOperationStatus::Created;
+//                break;
+//        }
 
-        Log::info("Order Operation Status: " . $operationstatus);
+//        Log::info("Order Operation Status: " . $operationstatus);
 
         /* create order operation */
-        $orderOperationData = [
-            'order_id' => $order->id,
-            'insurance_value' => $sorder['totalAmount']['value'] ?? 0,
-            'status' => $operationstatus,
-            'signature_confirmation' => 1,
-            'shipping_package_id' => ShippingPackage::getDefaultShippingPackage(),
-            'store_id' => $store->id,
-            'operation_type' => OrderOperationType::OrderShipment,
-            'label_creation_type' => 1,
-            'print_to_file' => 0,
-            'seller_provides_return_label' => 0,
-            'order_synchronization_id' => $order->order_synchronization_id
-        ];
-
-        $order_operation_detail = OrderOperation::updateOrCreate([
-            'order_id' => $order->id,
-        ], $orderOperationData);
-
-        // Process order items
-        $orderItems = $sorder['orderItems'] ?? [];
-        if (!empty($orderItems)) {
-            foreach ($orderItems as $item) {
-                $itemDetail = ListingItem::with('storeProduct', 'storeProduct.product')->where('sku', $item['sku'])->first();
-
-                if (!isset($itemDetail)) {
-                    $itemDeviceDetail = ListingItemDetail::where('sku', $item['sku'])->first();
-                    if (isset($itemDeviceDetail)) {
-                        Log::info('Found Item Device Detail');
-                        $itemDetail = ListingItem::with('storeProduct', 'storeProduct.product')
-                            ->where('id', $itemDeviceDetail->listing_item_id)->first();
-                    }
-                }
-
-                if (isset($itemDetail)) {
-                    $orderItemData = [
-                        'title' => $item['productName'] ?? $item['title'] ?? '',
-                        'order_id' => $order->id,
-                        'product_id' => $itemDetail->storeProduct->product->product_id,
-                        'client_id' => $itemDetail->client,
-                        'listing_item_id' => $itemDetail->id,
-                        'sku' => $item['sku'],
-                        'store_sku' => $item['productId'] ?? $item['itemId'] ?? '',
-                        'quantity' => $item['quantity'],
-                        'id1' => '',
-                        'item_price' => $item['unitPrice']['value'] ?? 0,
-                        'shipping_price' => $item['shippingPrice']['value'] ?? 0,
-                        'item_tax' => $item['tax']['value'] ?? 0,
-                        'shipping_tax' => 0,
-                        'shipping_quantity' => $item['quantity'],
-                    ];
-
-                    $order_item = OrderItem::updateOrCreate([
-                        'order_id' => $order->id,
-                        'product_id' => $itemDetail->storeProduct->product->product_id,
-                    ], $orderItemData);
-
-                    if ($order_item->id) {
-                        $orderOperationItemData = [
-                            'order_item_id' => $order_item->id,
-                            'order_operation_id' => $order_operation_detail->id,
-                            'sku' => $item['sku'],
-                            'quantity' => $item['quantity'],
-                            'client_id' => '',
-                            'sync_status' => 6
-                        ];
-
-                        OrderOperationItem::updateOrCreate([
-                            'order_item_id' => $order_item->id,
-                            'order_operation_id' => $order_operation_detail->id
-                        ], $orderOperationItemData);
-
-                        if (isset($itemDetail->storeProduct->product->shipping_package_id) && $itemDetail->storeProduct->product->shipping_package_id != '') {
-                            $package_id = $itemDetail->storeProduct->product->shipping_package_id;
-                            $order_operation_detail->update(['shipping_package_id' => $package_id]);
-                        }
-                    }
-                } else {
-                    Log::info("Item Not Found :: " . json_encode($item));
-                    // Try to find catalog by splitting the SKU
-                    $catalog = [];
-                    if ($item['sku'] != '') {
-                        $sku = preg_split('/[_-]/', $item['sku'])[0];
-                        Log::info("Item SKU :: " . json_encode($sku));
-                        $catalog = Catalog::where('product_sku', $sku)->first();
-                        Log::info("Catalog Found :: " . json_encode($catalog));
-                    }
-
-                    $orderItemData = [
-                        'title' => $item['productName'] ?? $item['title'] ?? '',
-                        'order_id' => $order->id,
-                        'product_id' => $catalog->product_id ?? null,
-                        'client_id' => null,
-                        'sku' => $item['sku'],
-                        'store_sku' => $item['productId'] ?? $item['itemId'] ?? '',
-                        'quantity' => $item['quantity'],
-                        'id1' => '',
-                        'item_price' => $item['unitPrice']['value'] ?? 0,
-                        'shipping_price' => $item['shippingPrice']['value'] ?? 0,
-                        'item_tax' => $item['tax']['value'] ?? 0,
-                        'shipping_tax' => 0,
-                        'shipping_quantity' => $item['quantity'],
-                    ];
-
-                    Log::info("Order Item Data :: " . json_encode($orderItemData));
-
-                    $order_item = OrderItem::updateOrCreate([
-                        'order_id' => $order->id,
-                        'store_sku' => $item['productId'] ?? $item['itemId'] ?? '',
-                    ], $orderItemData);
-
-                    if ($order_item->id) {
-                        $orderOperationItemData = [
-                            'order_item_id' => $order_item->id,
-                            'order_operation_id' => $order_operation_detail->id,
-                            'sku' => $item['sku'],
-                            'quantity' => $item['quantity'],
-                            'client_id' => null,
-                            'sync_status' => 6
-                        ];
-
-                        Log::info("Order Operation Item Data :: " . json_encode($orderOperationItemData));
-
-                        OrderOperationItem::updateOrCreate([
-                            'order_item_id' => $order_item->id,
-                            'order_operation_id' => $order_operation_detail->id
-                        ], $orderOperationItemData);
-
-                        if (isset($catalog->shipping_package_id) && $catalog->shipping_package_id != '') {
-                            $package_id = $catalog->shipping_package_id;
-                            $order_operation_detail->update(['shipping_package_id' => $package_id]);
-                        }
-                    }
-                }
-            }
-        }
+//        $orderOperationData = [
+//            'order_id' => $order->id,
+//            'insurance_value' => $presentOrder['totalAmount']['value'] ?? 0,
+//            'status' => $operationstatus,
+//            'signature_confirmation' => 1,
+//            'shipping_package_id' => ShippingPackage::getDefaultShippingPackage(),
+//            'store_id' => $store->id,
+//            'operation_type' => OrderOperationType::OrderShipment,
+//            'label_creation_type' => 1,
+//            'print_to_file' => 0,
+//            'seller_provides_return_label' => 0,
+//            'order_synchronization_id' => $order->order_synchronization_id
+//        ];
+//
+//        $order_operation_detail = OrderOperation::updateOrCreate([
+//            'order_id' => $order->id,
+//        ], $orderOperationData);
+//
+//        // Process order items
+//        $orderItems = $presentOrder['orderItems'] ?? [];
+//        if (!empty($orderItems)) {
+//            foreach ($orderItems as $item) {
+//                $itemDetail = ListingItem::with('storeProduct', 'storeProduct.product')->where('sku', $item['sku'])->first();
+//
+//                if (!isset($itemDetail)) {
+//                    $itemDeviceDetail = ListingItemDetail::where('sku', $item['sku'])->first();
+//                    if (isset($itemDeviceDetail)) {
+//                        Log::info('Found Item Device Detail');
+//                        $itemDetail = ListingItem::with('storeProduct', 'storeProduct.product')
+//                            ->where('id', $itemDeviceDetail->listing_item_id)->first();
+//                    }
+//                }
+//
+//                if (isset($itemDetail)) {
+//                    $orderItemData = [
+//                        'title' => $item['productName'] ?? $item['title'] ?? '',
+//                        'order_id' => $order->id,
+//                        'product_id' => $itemDetail->storeProduct->product->product_id,
+//                        'client_id' => $itemDetail->client,
+//                        'listing_item_id' => $itemDetail->id,
+//                        'sku' => $item['sku'],
+//                        'store_sku' => $item['productId'] ?? $item['itemId'] ?? '',
+//                        'quantity' => $item['quantity'],
+//                        'id1' => '',
+//                        'item_price' => $item['unitPrice']['value'] ?? 0,
+//                        'shipping_price' => $item['shippingPrice']['value'] ?? 0,
+//                        'item_tax' => $item['tax']['value'] ?? 0,
+//                        'shipping_tax' => 0,
+//                        'shipping_quantity' => $item['quantity'],
+//                    ];
+//
+//                    $order_item = OrderItem::updateOrCreate([
+//                        'order_id' => $order->id,
+//                        'product_id' => $itemDetail->storeProduct->product->product_id,
+//                    ], $orderItemData);
+//
+//                    if ($order_item->id) {
+//                        $orderOperationItemData = [
+//                            'order_item_id' => $order_item->id,
+//                            'order_operation_id' => $order_operation_detail->id,
+//                            'sku' => $item['sku'],
+//                            'quantity' => $item['quantity'],
+//                            'client_id' => '',
+//                            'sync_status' => 6
+//                        ];
+//
+//                        OrderOperationItem::updateOrCreate([
+//                            'order_item_id' => $order_item->id,
+//                            'order_operation_id' => $order_operation_detail->id
+//                        ], $orderOperationItemData);
+//
+//                        if (isset($itemDetail->storeProduct->product->shipping_package_id) && $itemDetail->storeProduct->product->shipping_package_id != '') {
+//                            $package_id = $itemDetail->storeProduct->product->shipping_package_id;
+//                            $order_operation_detail->update(['shipping_package_id' => $package_id]);
+//                        }
+//                    }
+//                } else {
+//                    Log::info("Item Not Found :: " . json_encode($item));
+//                    // Try to find catalog by splitting the SKU
+//                    $catalog = [];
+//                    if ($item['sku'] != '') {
+//                        $sku = preg_split('/[_-]/', $item['sku'])[0];
+//                        Log::info("Item SKU :: " . json_encode($sku));
+//                        $catalog = Catalog::where('product_sku', $sku)->first();
+//                        Log::info("Catalog Found :: " . json_encode($catalog));
+//                    }
+//
+//                    $orderItemData = [
+//                        'title' => $item['productName'] ?? $item['title'] ?? '',
+//                        'order_id' => $order->id,
+//                        'product_id' => $catalog->product_id ?? null,
+//                        'client_id' => null,
+//                        'sku' => $item['sku'],
+//                        'store_sku' => $item['productId'] ?? $item['itemId'] ?? '',
+//                        'quantity' => $item['quantity'],
+//                        'id1' => '',
+//                        'item_price' => $item['unitPrice']['value'] ?? 0,
+//                        'shipping_price' => $item['shippingPrice']['value'] ?? 0,
+//                        'item_tax' => $item['tax']['value'] ?? 0,
+//                        'shipping_tax' => 0,
+//                        'shipping_quantity' => $item['quantity'],
+//                    ];
+//
+//                    Log::info("Order Item Data :: " . json_encode($orderItemData));
+//
+//                    $order_item = OrderItem::updateOrCreate([
+//                        'order_id' => $order->id,
+//                        'store_sku' => $item['productId'] ?? $item['itemId'] ?? '',
+//                    ], $orderItemData);
+//
+//                    if ($order_item->id) {
+//                        $orderOperationItemData = [
+//                            'order_item_id' => $order_item->id,
+//                            'order_operation_id' => $order_operation_detail->id,
+//                            'sku' => $item['sku'],
+//                            'quantity' => $item['quantity'],
+//                            'client_id' => null,
+//                            'sync_status' => 6
+//                        ];
+//
+//                        Log::info("Order Operation Item Data :: " . json_encode($orderOperationItemData));
+//
+//                        OrderOperationItem::updateOrCreate([
+//                            'order_item_id' => $order_item->id,
+//                            'order_operation_id' => $order_operation_detail->id
+//                        ], $orderOperationItemData);
+//
+//                        if (isset($catalog->shipping_package_id) && $catalog->shipping_package_id != '') {
+//                            $package_id = $catalog->shipping_package_id;
+//                            $order_operation_detail->update(['shipping_package_id' => $package_id]);
+//                        }
+//                    }
+//                }
+//            }
+//        }
     }
 }

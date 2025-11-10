@@ -236,7 +236,7 @@ class ShopifyAuthService
         if (!empty($variables['input'])) {
             $response = $this->makeGraphQLRequest(ShopifyQueries::$productPublish, $variables);
 
-            Log::info('Remove Tags Response: ' . json_encode($response));
+            Log::info('Product Publish Response: ' . json_encode($response));
 
             return $response;
         } else {
