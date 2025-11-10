@@ -134,7 +134,7 @@
                     <div class="col-md-2">
                         <div class="form-group">
                             <label>&nbsp;</label>
-                            <button type="reset" class="form-control btn  btn-reset btn-secondary">Reset</button>
+                            <button type="reset" id="resetForm" class="form-control btn  btn-reset btn-secondary">Reset</button>
                         </div>
                     </div>
                 </div>
@@ -174,6 +174,10 @@
         $(document).ready(function() {
             // $('#store_id').select2();
 
+            document.getElementById("resetForm").addEventListener("click", function () {
+                sessionStorage.removeItem("upc_code_filters");
+            });
+
             $('.card-header').on('click', function () {
                 if ($(this).find('.fa').hasClass('fa-angle-down')) {
                     $(this).find('.fa').removeClass('fa-angle-down');
@@ -190,6 +194,7 @@
                     processing: true,
                     serverSide: true,
                     searching: false,
+                    stateSave: true,
                     ajax: {
                         url: "{{ route('upc-code-data') }}",
                         data: function (d) {
@@ -201,6 +206,8 @@
                             $.each(formData, function (index, field) {
                                 d[field.name] = field.value; // Append form data to the DataTables request
                             });
+
+                            sessionStorage.setItem("upc_code_filters", JSON.stringify(formData));
                         }
                     },
                     columns: [
@@ -240,6 +247,28 @@
             });
 
         } );
+
+        document.addEventListener("DOMContentLoaded", function () {
+            let savedFilters = JSON.parse(sessionStorage.getItem("upc_code_filters"));
+            if (savedFilters) {
+                console.log(savedFilters);
+                Object.keys(savedFilters).forEach(function (key) {
+
+                    //console.log(savedFilters[key]);
+                    let input = $('#filter-form [name="'+savedFilters[key].name+'"]');
+                    if (input) {
+                        input.val(savedFilters[key].value)
+                    }
+
+                    if( savedFilters[key].name == 'store_id'){
+                        $('#listing_store').val(savedFilters[key].value);
+                    }
+
+                });
+
+            }
+        });
+
     </script>
 @stop
 

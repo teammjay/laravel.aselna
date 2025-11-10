@@ -229,7 +229,7 @@
                             <input type="checkbox" id="select_deselect_shipment"> <label for="selected_product">Select/Deselect All</label>
                         </div>
                     </div>
-                    <div class="table-responsive pb-5" style="max-height: 500px; overflow: auto;">
+                    <div class="table-responsive pb-5" style="max-height: 75vh; overflow: auto;">
                         <table id="shipmentTable" class="table table-bordered table-striped">
                             <thead>
                             <tr>

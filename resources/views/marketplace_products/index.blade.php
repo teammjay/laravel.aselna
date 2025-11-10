@@ -77,7 +77,7 @@
                     <div class="col-md-2">
                         <div class="form-group">
                             <label>&nbsp;</label>
-                            <button type="reset" class="form-control btn  btn-reset btn-secondary">Reset</button>
+                            <button type="reset" id="resetForm" class="form-control btn  btn-reset btn-secondary">Reset</button>
                         </div>
                     </div>
                 </div>
@@ -137,6 +137,19 @@
             var productsTable = $('#productsTable').DataTable({
                 processing: true,
                 serverSide: true,
+                stateSave:true,
+                stateSaveCallback: function(settings, data) {
+                    sessionStorage.setItem(
+                        'DataTables_' + settings.sInstance,
+                        JSON.stringify(data)
+                    );
+                },
+
+                stateLoadCallback: function(settings) {
+                    return JSON.parse(
+                        sessionStorage.getItem('DataTables_' + settings.sInstance)
+                    );
+                },
                 ajax: {
                     url: '{{ route('marketplace_product.filter') }}',
                     type: "POST",
@@ -150,6 +163,8 @@
                         $.each(formData, function (i, field) {
                             d[field.name] = field.value;
                         });
+
+                        sessionStorage.setItem("maketplace_product_filters", JSON.stringify(formData));
                     }
                 },
                 columns: [
@@ -172,6 +187,25 @@
             $('#listing_store').on('change', function () {
                 productsTable.ajax.reload();
             });
+
+            document.getElementById("resetForm").addEventListener("click", function () {
+                sessionStorage.removeItem("maketplace_product_filters");
+            });
         });
+
+        document.addEventListener("DOMContentLoaded", function () {
+            let savedFilters = JSON.parse(sessionStorage.getItem("maketplace_product_filters"));
+            if (savedFilters) {
+                Object.keys(savedFilters).forEach(function (key) {
+
+                    //console.log(savedFilters[key]);
+                    let input = $('#filter-form [name="'+savedFilters[key].name+'"]');
+                    if (input) {
+                        input.val(savedFilters[key].value)
+                    }
+                });
+            }
+        });
+
     </script>
 @endsection

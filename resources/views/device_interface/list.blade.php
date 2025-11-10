@@ -106,6 +106,19 @@
                     processing: true,
                     serverSide: true,
                     searching: false,
+                    stateSave:true,
+                    stateSaveCallback: function(settings, data) {
+                        sessionStorage.setItem(
+                            'DataTables_' + settings.sInstance,
+                            JSON.stringify(data)
+                        );
+                    },
+
+                    stateLoadCallback: function(settings) {
+                        return JSON.parse(
+                            sessionStorage.getItem('DataTables_' + settings.sInstance)
+                        );
+                    },
                     ajax: {
                         url: '{{ route('device-interface-data') }}',
                         data: function (d) {
