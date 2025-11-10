@@ -694,7 +694,7 @@ class OrderUtility
         /* create order operation */
         $orderOperationData = [
             'order_id' => $order->id,
-//            'insurance_value' => $presentOrder['totalAmount']['value'] ?? 0,
+            'insurance_value' => 0, // TODO Need to add Insurance Value
             'status' => $operationstatus,
             'signature_confirmation' => 1,
             'shipping_package_id' => ShippingPackage::getDefaultShippingPackage(),
@@ -805,28 +805,28 @@ class OrderUtility
                             'store_sku' => $item['skuId'] ?? $item['goodsId'] ?? '',
                         ], $orderItemData);
 
-//                        if ($order_item->id) {
-//                            $orderOperationItemData = [
-//                                'order_item_id' => $order_item->id,
-//                                'order_operation_id' => $order_operation_detail->id,
-//                                'sku' => $item['sku'],
-//                                'quantity' => $item['quantity'],
-//                                'client_id' => null,
-//                                'sync_status' => 6
-//                            ];
-//
-//                            Log::info("Order Operation Item Data :: " . json_encode($orderOperationItemData));
-//
-//                            OrderOperationItem::updateOrCreate([
-//                                'order_item_id' => $order_item->id,
-//                                'order_operation_id' => $order_operation_detail->id
-//                            ], $orderOperationItemData);
-//
-//                            if (isset($catalog->shipping_package_id) && $catalog->shipping_package_id != '') {
-//                                $package_id = $catalog->shipping_package_id;
-//                                $order_operation_detail->update(['shipping_package_id' => $package_id]);
-//                            }
-//                        }
+                        if ($order_item->id) {
+                            $orderOperationItemData = [
+                                'order_item_id' => $order_item->id,
+                                'order_operation_id' => $order_operation_detail->id,
+                                'sku' => $productSku,
+                                'quantity' => $item['quantity'],
+                                'client_id' => null,
+                                'sync_status' => 6
+                            ];
+
+                            Log::info("Order Operation Item Data :: " . json_encode($orderOperationItemData));
+
+                            OrderOperationItem::updateOrCreate([
+                                'order_item_id' => $order_item->id,
+                                'order_operation_id' => $order_operation_detail->id
+                            ], $orderOperationItemData);
+
+                            if (isset($catalog->shipping_package_id) && $catalog->shipping_package_id != '') {
+                                $package_id = $catalog->shipping_package_id;
+                                $order_operation_detail->update(['shipping_package_id' => $package_id]);
+                            }
+                        }
                     }
                 }
             }
