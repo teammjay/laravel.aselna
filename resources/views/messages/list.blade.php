@@ -441,6 +441,7 @@
             "processing": true,
             "serverSide": true,
             "searching": false,
+            "stateSave": true,
             "aLengthMenu": [20, 25, 50, 100],
             'ajax': {
                 url: "{{ route('message.getdata') }}",
@@ -499,6 +500,20 @@
                     // Add class to the row if message is not read
                     $(row).addClass('unread');
                 }
+            },
+            stateSaveCallback: function(settings, data) {
+                console.log(data);
+                sessionStorage.setItem(
+                    'DataTables_' + settings.sInstance,
+                    JSON.stringify(data)
+                );
+            },
+
+            stateLoadCallback: function(settings) {
+                console.log(settings);
+                return JSON.parse(
+                    sessionStorage.getItem('DataTables_' + settings.sInstance)
+                );
             }
         });
 

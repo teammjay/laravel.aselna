@@ -227,7 +227,7 @@
                     <div class="col-md-2">
                         <div class="form-group">
                             <label>&nbsp;</label>
-                            <button type="reset" class="form-control btn btn-secondary">Reset</button>
+                            <button type="reset" id="resetForm" class="form-control btn btn-secondary">Reset</button>
                         </div>
                     </div>
                 </div>
@@ -393,8 +393,34 @@
                 });
             });
 
+            document.getElementById("resetForm").addEventListener("click", function () {
+                sessionStorage.removeItem("all_orders_filters");
+            });
+
             loadDatatables();
 
+        });
+
+        document.addEventListener("DOMContentLoaded", function () {
+            let savedFilters = JSON.parse(sessionStorage.getItem("all_orders_filters"));
+            if (savedFilters) {
+                console.log(savedFilters);
+                Object.keys(savedFilters).forEach(function (key) {
+
+                    //console.log(savedFilters[key]);
+                    let input = $('#filter-form [name="'+savedFilters[key].name+'"]');
+                    if (input) {
+                        input.val(savedFilters[key].value)
+                    }
+
+                    if( savedFilters[key].name == 'store_id'){
+                        $('#listing_store').val(savedFilters[key].value);
+                    }
+
+                });
+
+                loadDatatables();
+            }
         });
 
         function loadDatatables() {
@@ -411,6 +437,19 @@
                 "serverSide": true,
                 "searching": false,
                 "aLengthMenu": [20, 25, 50, 100],
+                "stateSave":true,
+                stateSaveCallback: function(settings, data) {
+                    sessionStorage.setItem(
+                        'DataTables_' + settings.sInstance,
+                        JSON.stringify(data)
+                    );
+                },
+
+                stateLoadCallback: function(settings) {
+                    return JSON.parse(
+                        sessionStorage.getItem('DataTables_' + settings.sInstance)
+                    );
+                },
                 'ajax': {
                     url: "{{ route('order.filter') }}",
                     type: "POST",
@@ -426,6 +465,8 @@
                         $.each(formData, function (index, field) {
                             d[field.name] = field.value; // Append form data to the DataTables request
                         });
+
+                        sessionStorage.setItem("all_orders_filters", JSON.stringify(formData));
 
                         var columnValues = [];
                         if (table) {

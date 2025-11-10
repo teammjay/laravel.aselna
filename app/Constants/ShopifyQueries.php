@@ -688,5 +688,47 @@ GQL;
         }
     }
 GQL;
+    public static $AddTags = <<<GQL
+        mutation addTags(\$id: ID!, \$tags: [String!]!) {
+          tagsAdd(id: \$id, tags: \$tags) {
+            node {
+              id
+            }
+            userErrors {
+              message
+            }
+          }
+        }
+GQL;
+    public static $removeTags = <<<GQL
+        mutation removeTags(\$id: ID!, \$tags: [String!]!) {
+          tagsRemove(id: \$id, tags: \$tags) {
+            node {
+              id
+            }
+            userErrors {
+              message
+            }
+          }
+        }
+GQL;
+    public static $productPublish = <<<GQL
+        mutation productPublish(\$input: ProductPublishInput!) {
+          productPublish(input: \$input) {
+            product {
+              # Product fields
+            }
+            shop {
+              # Shop fields
+            }
+            userErrors {
+              field
+              message
+            }
+          }
+        }
+GQL;
+
+
 
 }

@@ -33,6 +33,7 @@ class SubmitShopifyProductsJob implements ShouldQueue
     }
 
     public $timeout = 30000;
+    private array $publications;
 
     /**
      * Create a new job instance.
@@ -64,6 +65,15 @@ class SubmitShopifyProductsJob implements ShouldQueue
                 }
 
                 $tags[] = $store->name;
+
+                $shopifyAuthService = new ShopifyAuthService($store->secret_key, $store->service_url);
+                $publications = $shopifyAuthService->getPublications();
+
+                $publicationIds = [];
+                foreach ($publications['data']['publications']['edges'] as $publication) {
+                    $publicationIds[]['publicationId'] = $publication['node']['id'];
+                }
+                $this->publications = $publicationIds;
 
                 // Handle Created Products
                 // get all te children and their children of cea products
@@ -153,6 +163,7 @@ class SubmitShopifyProductsJob implements ShouldQueue
 
     public function getAllTags($productData, array $tags)
     {
+        $removeTags = [];
         ProductTags::where('product_id', $productData['product_id'])->get()->each(function ($tag) use (&$tags) {
             $tags[] = $tag->name;
         });
@@ -179,7 +190,7 @@ class SubmitShopifyProductsJob implements ShouldQueue
         }
 
         if (isset($productData->productType) && !empty($productData->productType->name)) {
-            $tags[] = $productData->productType->name;
+            $removeTags[] = $productData->productType->name;
             $tags[] = strtolower(str_replace(' ', '-', $productData->productType->name));
         }
 
@@ -188,12 +199,15 @@ class SubmitShopifyProductsJob implements ShouldQueue
         }
 
         if (isset($productData->productType) && !empty($productData->productType->parent) && !empty($productData->productType->parent->name)) {
-            $tags[] = $productData->productType->parent->name;
+            $removeTags[] = $productData->productType->parent->name;
             $tags[] = strtolower(str_replace(' ', '-', $productData->productType->parent->name));
         }
 
         $tags[] = 'upsell-enable';
-        return $tags;
+        return [
+            'addTags' => $tags,
+            'removeTags' => $removeTags
+        ];
     }
 
     public function generateProductImages($productData, $store)
@@ -343,7 +357,7 @@ class SubmitShopifyProductsJob implements ShouldQueue
         $tags = [];
         $tags = $this->getAllTags($productData, $tags);
         Log::info('Tags: ' . json_encode($tags));
-        $tagsString = implode(',', $tags);
+        $tagsString = implode(',', $tags['addTags']);
 
         $productOptions[] = [
             'name' => 'Title',
@@ -433,8 +447,8 @@ class SubmitShopifyProductsJob implements ShouldQueue
                 'locationId' => $locationId,
                 'delta' => 20
             ];
-
-            $response = $shopifyAuthService->updateInventory($inventoryUpdates);
+            $shopifyAuthService->updateInventory($inventoryUpdates);
+            $shopifyAuthService->productPublish($productId,$this->publications);
 
             if (isset($response['data']) && empty($response['data']['userErrors'])) {
                 Log::info('SKU : ' . $sku);
@@ -483,7 +497,7 @@ class SubmitShopifyProductsJob implements ShouldQueue
         $descriptionHtml .= '<p>' . $productData->product_description . '</p>';
 
         $tags = $this->getAllTags($productData, []);
-        $finalTagsString = implode(', ', $tags);
+        $finalTagsString = implode(', ', $tags['addTags']);
 
         $variantData = [
             'id' => $proDetail->marketplace_variant_id,
@@ -493,7 +507,7 @@ class SubmitShopifyProductsJob implements ShouldQueue
         $productUpdateData = [
             'product' => [
                 'id' => $proDetail->marketplace_product_id,
-                'tags' => $finalTagsString,
+                'tags' => $tags['addTags'],
                 'title' => $productTitle,
                 'descriptionHtml' => $descriptionHtml,
             ],
@@ -521,8 +535,13 @@ class SubmitShopifyProductsJob implements ShouldQueue
 
         $response = $shopifyAuthService->updateProduct($productUpdateData);
         $priceResponse = $shopifyAuthService->updatePrice($priceUpdatesData);
+        $shopifyAuthService->removeTags($proDetail->marketplace_product_id,$tags['removeTags']);
+        $shopifyAuthService->addTags($proDetail->marketplace_product_id,$tags['addTags']);
+        $shopifyAuthService->productPublish($proDetail->marketplace_product_id,$this->publications);
+
 
         if (isset($response['data']) && empty($response['data']['userErrors']) && isset($response['data']['productUpdate']['product'])) {
+            Log::info('Product Update Data: Response : ');
             $productId = $response['data']['productUpdate']['product']['id'];
             $productIdReplaced = str_replace('gid://shopify/Product/', '', $productId);
             $handle = $response['data']['productUpdate']['product']['handle'];

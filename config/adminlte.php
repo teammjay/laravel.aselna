@@ -589,11 +589,11 @@ return [
             'url' => '/printers',
             'icon' => 'fa fa-fw fa-print'
         ],
-        [
-            'text' => 'Printer Clients',
-            'url' => '/printer_clients',
-            'icon' => 'fa fa-fw fa-print'
-        ],
+//        [
+//            'text' => 'Printer Clients',
+//            'url' => '/printer_clients',
+//            'icon' => 'fa fa-fw fa-print'
+//        ],
         [
             'text' => 'Users',
             'url' => '/user',

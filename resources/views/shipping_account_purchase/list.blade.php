@@ -89,7 +89,7 @@
                     <div class="col-md-2">
                         <div class="form-group">
                             <label>&nbsp;</label>
-                            <button type="reset" class="form-control btn btn-secondary">Reset</button>
+                            <button type="reset" id="resetForm" class="form-control btn btn-secondary">Reset</button>
                         </div>
                     </div>
                 </div>
@@ -286,6 +286,7 @@
                 processing: true,
                 serverSide: true,
                 searching: false,
+                stateSave: true,
                 ajax: {
                     // csrf
                     headers: {
@@ -298,6 +299,8 @@
                         $.each(formData, function (index, field) {
                             d[field.name] = field.value;
                         });
+
+                        sessionStorage.setItem("account_purchase_filters", JSON.stringify(formData));
                     }
                 },
                 "order": [[ 4, "desc" ]],
@@ -311,6 +314,18 @@
                 createdRow: function (row, data, dataIndex) {
                     // Assuming `data.id` holds the transaction ID
                     $(row).attr('data-id', data.tracking_number);
+                },
+                stateSaveCallback: function(settings, data) {
+                    sessionStorage.setItem(
+                        'DataTables_' + settings.sInstance,
+                        JSON.stringify(data)
+                    );
+                },
+
+                stateLoadCallback: function(settings) {
+                    return JSON.parse(
+                        sessionStorage.getItem('DataTables_' + settings.sInstance)
+                    );
                 }
             });
 
@@ -318,6 +333,29 @@
                 e.preventDefault(); // Prevent default form submission
                 accountPurchaseTable.ajax.reload();
             });
+
+            document.getElementById("resetForm").addEventListener("click", function () {
+                sessionStorage.removeItem("account_purchase_filters");
+            });
+
+
+        });
+
+        document.addEventListener("DOMContentLoaded", function () {
+            let savedFilters = JSON.parse(sessionStorage.getItem("account_purchase_filters"));
+            if (savedFilters) {
+                console.log(savedFilters);
+                Object.keys(savedFilters).forEach(function (key) {
+
+                    //console.log(savedFilters[key]);
+                    let input = $('#filter-form [name="'+savedFilters[key].name+'"]');
+                    if (input) {
+                        input.val(savedFilters[key].value)
+                    }
+
+
+                });
+            }
         });
 
     </script>

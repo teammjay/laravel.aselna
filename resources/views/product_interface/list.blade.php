@@ -80,7 +80,7 @@
                     <div class="col-md-2">
                         <div class="form-group">
                             <label>&nbsp;</label>
-                            <button type="reset" class="form-control btn  btn-reset btn-secondary">Reset</button>
+                            <button type="reset" id="resetForm" class="form-control btn  btn-reset btn-secondary">Reset</button>
                         </div>
                     </div>
                 </div>
@@ -118,10 +118,28 @@
     <script>
         var productInterfaceTable = null;
         $(document).ready(function () {
+
+            document.getElementById("resetForm").addEventListener("click", function () {
+                sessionStorage.removeItem("product_interface_filters");
+            });
+
             productInterfaceTable = $('#productInterfaceTable').DataTable({
                 processing: true,
                 serverSide: true,
                 searching: false,
+                stateSave:true,
+                stateSaveCallback: function(settings, data) {
+                    sessionStorage.setItem(
+                        'DataTables_' + settings.sInstance,
+                        JSON.stringify(data)
+                    );
+                },
+
+                stateLoadCallback: function(settings) {
+                    return JSON.parse(
+                        sessionStorage.getItem('DataTables_' + settings.sInstance)
+                    );
+                },
                 ajax: {
                     url: '{{ route('product-interface-data') }}',
                     data: function (d) {
@@ -129,13 +147,18 @@
                         $.each(formData, function (index, field) {
                             d[field.name] = field.value;
                         });
+
+                        sessionStorage.setItem("product_interface_filters", JSON.stringify(formData));
                     }
                 },
                 columns: [
                     {
                         data: null, name: 'product_name',
                         render: function (data, type, row) {
-                            return row.product.product_title;
+                            if (row.product && row.product.product_title) {
+                                return row.product.product_title;
+                            }
+                            return '';
                         }
                     },
                     {
@@ -172,6 +195,24 @@
                 }
                 $('.card-body').toggle();
             });
+        });
+
+        document.addEventListener("DOMContentLoaded", function () {
+            let savedFilters = JSON.parse(sessionStorage.getItem("product_interface_filters"));
+            if (savedFilters) {
+                console.log(savedFilters);
+                Object.keys(savedFilters).forEach(function (key) {
+
+                    //console.log(savedFilters[key]);
+                    let input = $('#filter-form [name="'+savedFilters[key].name+'"]');
+                    if (input) {
+                        input.val(savedFilters[key].value)
+                    }
+
+
+                });
+
+            }
         });
     </script>
 @stop

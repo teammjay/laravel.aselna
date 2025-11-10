@@ -39,7 +39,7 @@ class StoreNavigationPagesController extends Controller
         $columnName = $request['columns'][$columnIndex]['data'];
         $columnSortOrder = $request['order'][0]['dir'];
 
-        $query = StoreNavigationPage::select('*');
+        $query = StoreNavigationPage::with('store','store.storeType')->select('*');
 
         if ($request->has('store_id') && $request->input('store_id') != '') {
             $query->where('store_id', $request->input('store_id'));
@@ -58,11 +58,13 @@ class StoreNavigationPagesController extends Controller
 
         $data = [];
         if (!empty((array)$pages)) {
+            $storeType = $page->store->storeType->name ?? '';
+            $storeName = $page->store->name ?? '';
             foreach ($pages as $page) {
                 $data[] = [
                     'id' => $page->id,
                     'title' => $page->title,
-                    'store_name' => $page->store->name . ' - ' . $page->store->storeType->name ?? '',
+                    'store_name' =>  $storeName. ' - ' . $storeType,
                     'navigation_type' => WebStorePageType::getPageTypeName($page->page_type),
                     'created_by' => $page->created_by,
                     'updated_by' => $page->updated_by,

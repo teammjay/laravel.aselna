@@ -76,7 +76,7 @@
                         <div class="col-md-2">
                             <div class="form-group">
                                 <label>&nbsp;</label>
-                                <button type="reset" class="form-control btn btn-secondary">Reset</button>
+                                <button type="reset" id="resetForm" class="form-control btn btn-secondary">Reset</button>
                             </div>
                         </div>
                     </div>
@@ -158,7 +158,32 @@
                 accountTransactionTable.ajax.reload();
             });
 
+            document.getElementById("resetForm").addEventListener("click", function () {
+                sessionStorage.removeItem("all_listing_requirement_filters");
+            });
 
+        });
+
+        document.addEventListener("DOMContentLoaded", function () {
+            let savedFilters = JSON.parse(sessionStorage.getItem("all_listing_requirement_filters"));
+            if (savedFilters) {
+                console.log(savedFilters);
+                Object.keys(savedFilters).forEach(function (key) {
+
+                    //console.log(savedFilters[key]);
+                    let input = $('#filter-form [name="'+savedFilters[key].name+'"]');
+                    if (input) {
+                        input.val(savedFilters[key].value)
+                    }
+
+                    if( savedFilters[key].name == 'store_id'){
+                        $('#listing_store').val(savedFilters[key].value);
+                    }
+
+                });
+
+                accountTransactionTable.ajax.reload();
+            }
         });
 
         function loadDatatables(){
@@ -174,6 +199,7 @@
                 "processing": true,
                 "serverSide": true,
                 "searching": true,
+                "stateSave": true,
                 "aLengthMenu": [10, 20, 25, 50, 100],
                 ajax: {
                     url: '{{ route('listing_requirements.filter') }}',
@@ -189,6 +215,8 @@
                         $.each(formData, function(index, field) {
                             d[field.name] = field.value; // Append form data to the DataTables request
                         });
+
+                        sessionStorage.setItem("all_listing_requirement_filters", JSON.stringify(formData));
 
                         var columnValues = [];
                         if (accountTransactionTable) {
@@ -213,7 +241,19 @@
                     {data: 'key_value', name: 'key_value'},
                     {data: 'value_column', name: 'value_column'},
                     {data: 'action', name: 'action'}
-                ]
+                ],
+                stateSaveCallback: function(settings, data) {
+                    sessionStorage.setItem(
+                        'DataTables_' + settings.sInstance,
+                        JSON.stringify(data)
+                    );
+                },
+
+                stateLoadCallback: function(settings) {
+                    return JSON.parse(
+                        sessionStorage.getItem('DataTables_' + settings.sInstance)
+                    );
+                }
             });
 
 

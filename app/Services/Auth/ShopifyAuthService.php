@@ -64,7 +64,7 @@ class ShopifyAuthService
             CriticalErrorService::report('Shopify Marketplace API failed', [
                 'marketplace' => 'Shopify',
                 'reason' => $e->getMessage() ?? 'Unknown',
-            ],['request_body' => $bodyArray]);
+            ], ['request_body' => $bodyArray]);
 
             return null;
         }
@@ -185,6 +185,58 @@ class ShopifyAuthService
             $response = $this->makeGraphQLRequest(ShopifyQueries::$productVariantUpdate, $priceUpdatesData);
 
             //Log::info('Price Update Response: ' . json_encode($response));
+
+            return $response;
+        } else {
+            return false;
+        }
+    }
+
+    public function addTags($entityId, $tags)
+    {
+        $variables = [
+            'id' => $entityId,
+            'tags' => $tags
+        ];
+        if (!empty($variables)) {
+            $response = $this->makeGraphQLRequest(ShopifyQueries::$AddTags, $variables);
+
+            Log::info('Add Tags Response: ' . json_encode($response));
+
+            return $response;
+        } else {
+            return false;
+        }
+    }
+
+    public function removeTags($entityId, $tags)
+    {
+        $variables = [
+            'id' => $entityId,
+            'tags' => $tags
+        ];
+        if (!empty($variables)) {
+            $response = $this->makeGraphQLRequest(ShopifyQueries::$removeTags, $variables);
+
+            Log::info('Remove Tags Response: ' . json_encode($response));
+
+            return $response;
+        } else {
+            return false;
+        }
+    }
+
+    public function productPublish($entityId, $productPublications)
+    {
+        $variables['input'] = [
+            'id' => $entityId,
+            'productPublications' => $productPublications
+        ];
+
+        if (!empty($variables['input'])) {
+            $response = $this->makeGraphQLRequest(ShopifyQueries::$productPublish, $variables);
+
+            Log::info('Remove Tags Response: ' . json_encode($response));
 
             return $response;
         } else {
@@ -518,7 +570,7 @@ class ShopifyAuthService
         }
         $query = ShopifyQueries::$pageFetch;
         Log::info('Checking if page exists with URL path: ' . $url_path);
-        $variables['handle'] = 'handle:'.$url_path;
+        $variables['handle'] = 'handle:' . $url_path;
 
         $getPageData = $this->makeGraphQLRequest($query, $variables, '2025-07');
         Log::info('Get Page Data: ' . json_encode($getPageData));
