@@ -536,8 +536,8 @@ class TemuService implements MarketplaceServiceInterface
                     $persist = false;
                     $statusChange = false;
 
-                    if ($order == null) {
-                        $order = Order::updateOrCreate([
+                    if ($presentOrder == null) {
+                        $presentOrder = Order::updateOrCreate([
                             'order_id' => $parentOrder['parentOrderSn'],
                         ], [
                             'order_id' => $parentOrder['parentOrderSn'],
@@ -554,7 +554,7 @@ class TemuService implements MarketplaceServiceInterface
                     }
 
                     if ($statusChange) {
-                        OrderUtility::mapTemuOrders($order, $porder, $store);
+                        OrderUtility::mapTemuOrders($presentOrder, $porder, $store);
                     }
 
                     if ($last_order_update_date === null || strtotime($parentOrder['parentOrderTime'] / 1000) > strtotime($last_order_update_date)) {
