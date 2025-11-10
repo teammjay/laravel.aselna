@@ -673,8 +673,8 @@ class OrderUtility
 
         $order->update($orderData);
 
-        Log::info("Order Status: " . $presentOrder['parentOrderMap']['orderStatus']);
-        switch (strtolower($presentOrder['parentOrderMap']['orderStatus'])) {
+        Log::info("Order Status: " . $presentOrder['parentOrderMap']['parentOrderStatus']);
+        switch (strtolower($presentOrder['parentOrderMap']['parentOrderStatus'])) {
             case 4:
             case 5:
                 $operationstatus = OrderOperationStatus::MarkAsShipped;
