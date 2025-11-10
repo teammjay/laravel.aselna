@@ -781,6 +781,29 @@
                     }
                 });
             });
+
+            document.getElementById("resetForm").addEventListener("click", function () {
+                sessionStorage.removeItem("catalog_filters");
+            });
+
+        });
+
+        document.addEventListener("DOMContentLoaded", function () {
+            let savedFilters = JSON.parse(sessionStorage.getItem("catalog_filters"));
+            if (savedFilters) {
+                console.log(savedFilters);
+                Object.keys(savedFilters).forEach(function (key) {
+
+                    //console.log(savedFilters[key]);
+                    let input = $('#filter-form [name="'+savedFilters[key].name+'"]');
+                    if (input) {
+                        input.val(savedFilters[key].value)
+                    }
+
+                });
+
+                loadDatatables();
+            }
         });
 
         function loadDatatables() {
@@ -825,6 +848,8 @@
                         $.each(formData, function (index, field) {
                             d[field.name] = field.value; // Append form data to the DataTables request
                         });
+
+                        sessionStorage.setItem("catalog_filters", JSON.stringify(formData));
 
                         var columnValues = [];
                         if (table) {
