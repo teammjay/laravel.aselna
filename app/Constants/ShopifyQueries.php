@@ -712,6 +712,23 @@ GQL;
           }
         }
 GQL;
+    public static $productPublish = <<<GQL
+        mutation productPublish(\$input: ProductPublishInput!) {
+          productPublish(input: \$input) {
+            product {
+              # Product fields
+            }
+            shop {
+              # Shop fields
+            }
+            userErrors {
+              field
+              message
+            }
+          }
+        }
+GQL;
+
 
 
 }

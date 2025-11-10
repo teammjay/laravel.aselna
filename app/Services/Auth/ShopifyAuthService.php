@@ -64,7 +64,7 @@ class ShopifyAuthService
             CriticalErrorService::report('Shopify Marketplace API failed', [
                 'marketplace' => 'Shopify',
                 'reason' => $e->getMessage() ?? 'Unknown',
-            ],['request_body' => $bodyArray]);
+            ], ['request_body' => $bodyArray]);
 
             return null;
         }
@@ -192,7 +192,7 @@ class ShopifyAuthService
         }
     }
 
-    public function addTags($entityId,$tags)
+    public function addTags($entityId, $tags)
     {
         $variables = [
             'id' => $entityId,
@@ -209,7 +209,7 @@ class ShopifyAuthService
         }
     }
 
-    public function removeTags($entityId,$tags)
+    public function removeTags($entityId, $tags)
     {
         $variables = [
             'id' => $entityId,
@@ -217,6 +217,24 @@ class ShopifyAuthService
         ];
         if (!empty($variables)) {
             $response = $this->makeGraphQLRequest(ShopifyQueries::$removeTags, $variables);
+
+            Log::info('Remove Tags Response: ' . json_encode($response));
+
+            return $response;
+        } else {
+            return false;
+        }
+    }
+
+    public function productPublish($entityId, $productPublications)
+    {
+        $variables['input'] = [
+            'id' => $entityId,
+            'productPublications' => $productPublications
+        ];
+
+        if (!empty($variables['input'])) {
+            $response = $this->makeGraphQLRequest(ShopifyQueries::$productPublish, $variables);
 
             Log::info('Remove Tags Response: ' . json_encode($response));
 
@@ -552,7 +570,7 @@ class ShopifyAuthService
         }
         $query = ShopifyQueries::$pageFetch;
         Log::info('Checking if page exists with URL path: ' . $url_path);
-        $variables['handle'] = 'handle:'.$url_path;
+        $variables['handle'] = 'handle:' . $url_path;
 
         $getPageData = $this->makeGraphQLRequest($query, $variables, '2025-07');
         Log::info('Get Page Data: ' . json_encode($getPageData));

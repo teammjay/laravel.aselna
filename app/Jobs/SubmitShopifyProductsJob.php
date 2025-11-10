@@ -33,6 +33,7 @@ class SubmitShopifyProductsJob implements ShouldQueue
     }
 
     public $timeout = 30000;
+    private array $publications;
 
     /**
      * Create a new job instance.
@@ -64,6 +65,15 @@ class SubmitShopifyProductsJob implements ShouldQueue
                 }
 
                 $tags[] = $store->name;
+
+                $shopifyAuthService = new ShopifyAuthService($store->secret_key, $store->service_url);
+                $publications = $shopifyAuthService->getPublications();
+
+                $publicationIds = [];
+                foreach ($publications['data']['publications']['edges'] as $publication) {
+                    $publicationIds[]['publicationId'] = $publication['node']['id'];
+                }
+                $this->publications = $publicationIds;
 
                 // Handle Created Products
                 // get all te children and their children of cea products
@@ -437,8 +447,8 @@ class SubmitShopifyProductsJob implements ShouldQueue
                 'locationId' => $locationId,
                 'delta' => 20
             ];
-
-            $response = $shopifyAuthService->updateInventory($inventoryUpdates);
+            $shopifyAuthService->updateInventory($inventoryUpdates);
+            $shopifyAuthService->productPublish($productId,$this->publications);
 
             if (isset($response['data']) && empty($response['data']['userErrors'])) {
                 Log::info('SKU : ' . $sku);
@@ -527,6 +537,7 @@ class SubmitShopifyProductsJob implements ShouldQueue
         $priceResponse = $shopifyAuthService->updatePrice($priceUpdatesData);
         $shopifyAuthService->removeTags($proDetail->marketplace_product_id,$tags['removeTags']);
         $shopifyAuthService->addTags($proDetail->marketplace_product_id,$tags['addTags']);
+        $shopifyAuthService->productPublish($proDetail->marketplace_product_id,$this->publications);
 
 
         if (isset($response['data']) && empty($response['data']['userErrors']) && isset($response['data']['productUpdate']['product'])) {
