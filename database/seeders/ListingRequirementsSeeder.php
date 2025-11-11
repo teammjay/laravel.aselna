@@ -94,6 +94,7 @@ class ListingRequirementsSeeder extends Seeder
             ['category' => 'CABLE_OR_ADAPTER', 'type' => 'key_value', 'table' => 'product_specification', 'key_column' => 'name', 'key_value' => 'Warranty', 'value_column' => 'value'],
             ['category' => 'CABLE_OR_ADAPTER', 'type' => 'key_value', 'table' => 'product_specification', 'key_column' => 'name', 'key_value' => 'Material', 'value_column' => 'value'],
             ['category' => 'CABLE_OR_ADAPTER', 'type' => 'key_value', 'table' => 'product_specification', 'key_column' => 'name', 'key_value' => 'connector_gender', 'value_column' => 'value'],
+            ['category' => 'CABLE_OR_ADAPTER', 'type' => 'key_value', 'table' => 'product_specification', 'key_column' => 'name', 'key_value' => 'connector_type', 'value_column' => 'value'],
             ['category' => 'CABLE_OR_ADAPTER', 'type' => 'key_value', 'table' => 'product_specification', 'key_column' => 'name', 'key_value' => 'Cable Length', 'value_column' => 'value'],
             ['category' => 'INPUT_PEN', 'type' => 'key_value', 'table' => 'product_specification', 'key_column' => 'name', 'key_value' => 'Number of Items', 'value_column' => 'value'],
             ['category' => 'INPUT_PEN', 'type' => 'key_value', 'table' => 'product_specification', 'key_column' => 'name', 'key_value' => 'Cable Length', 'value_column' => 'value'],
