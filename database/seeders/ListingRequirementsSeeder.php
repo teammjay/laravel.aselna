@@ -61,9 +61,7 @@ class ListingRequirementsSeeder extends Seeder
             ['category' => 'CHARGING_ADAPTER', 'type' => 'key_value', 'table' => 'product_specification', 'key_column' => 'name', 'key_value' => 'Number of Items', 'value_column' => 'value'],
             ['category' => 'CHARGING_ADAPTER', 'type' => 'key_value', 'table' => 'product_specification', 'key_column' => 'name', 'key_value' => 'Warranty', 'value_column' => 'value'],
             ['category' => 'POWER_BANK', 'type' => 'column', 'table' => 'products', 'column' => 'dimensions_length',],
-            ['category' => 'POWER_BANK', 'type' => 'column', 'table' => 'products', 'column' => 'dimensions_length_unit',],
             ['category' => 'POWER_BANK', 'type' => 'column', 'table' => 'products', 'column' => 'dimensions_width',],
-            ['category' => 'POWER_BANK', 'type' => 'column', 'table' => 'products', 'column' => 'dimensions_width_unit',],
             // TODO Needed more feilds
             ['category' => 'POWER_BANK', 'type' => 'key_value', 'table' => 'product_specification', 'key_column' => 'name', 'key_value' => 'output_voltage_value', 'value_column' => 'value'],
             ['category' => 'POWER_BANK', 'type' => 'key_value', 'table' => 'product_specification', 'key_column' => 'name', 'key_value' => 'connectivity_technology', 'value_column' => 'value'],
@@ -73,7 +71,6 @@ class ListingRequirementsSeeder extends Seeder
             ['category' => 'POWER_BANK', 'type' => 'key_value', 'table' => 'product_specification', 'key_column' => 'name', 'key_value' => 'power_source_type', 'value_column' => 'value'],
             ['category' => 'POWER_BANK', 'type' => 'key_value', 'table' => 'product_specification', 'key_column' => 'name', 'key_value' => 'recommended_uses_for_product', 'value_column' => 'value'],
             ['category' => 'CAMERA_TRIPOD', 'type' => 'column', 'table' => 'products', 'column' => 'dimensions_length',],
-            ['category' => 'CAMERA_TRIPOD', 'type' => 'column', 'table' => 'products', 'column' => 'dimensions_length_unit',],
             ['category' => 'CAMERA_TRIPOD', 'type' => 'key_value', 'table' => 'product_specification', 'key_column' => 'name', 'key_value' => 'Items Included', 'value_column' => 'value'],
             ['category' => 'CAMERA_TRIPOD', 'type' => 'key_value', 'table' => 'product_specification', 'key_column' => 'name', 'key_value' => 'Number of Items', 'value_column' => 'value'],
             ['category' => 'CAMERA_TRIPOD', 'type' => 'key_value', 'table' => 'product_specification', 'key_column' => 'name', 'key_value' => 'Warranty', 'value_column' => 'value'],
@@ -110,6 +107,11 @@ class ListingRequirementsSeeder extends Seeder
             ['category' => 'MULTIPORT_HUB', 'type' => 'key_value', 'table' => 'product_specification', 'key_column' => 'name', 'key_value' => 'hardware_interface', 'value_column' => 'value'],
             ['category' => 'MULTIPORT_HUB', 'type' => 'key_value', 'table' => 'product_specification', 'key_column' => 'name', 'key_value' => 'number_of_ports', 'value_column' => 'value'],
         ];
+
+        foreach ($requirements as $requirement) {
+            ListingRequirement::where('store_type_id', '9ea83e8c-5b36-d377-d583-f7560b67f6b0')->where('category', $requirement['category'])->delete();
+            ListingRequirement::whereNull('store_type_id')->where('category', $requirement['category'])->delete();
+        }
 
         foreach ($requirements as $requirement) {
             ProductSpecificationInfo::updateOrCreate(

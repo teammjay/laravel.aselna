@@ -361,8 +361,8 @@ class AmazonUtility
             'power_source_type' => [['value' => $power_source_type->calculated_value(), 'language_tag' => 'en_US']],
             'connector_type' => [['value' => $connectivity->calculated_value(), 'language_tag' => 'en_US']],
             'item_length_width_thickness' => [[
-                'length' => ['value' => $productData->dimensions_length, 'unit' => LengthUnit::getAmazonUnitName($productData->dimensions_length_unit)],
-                'width' => ['value' => $productData->dimensions_width, 'unit' => LengthUnit::getAmazonUnitName($productData->dimensions_width_unit)],
+                'length' => ['value' => $productData->dimensions_length, 'unit' => LengthUnit::getAmazonUnitName(1)],
+                'width' => ['value' => $productData->dimensions_width, 'unit' => LengthUnit::getAmazonUnitName(1)],
                 'thickness' => ['value' => '1', 'unit' => 'inches'],
             ]],
             'number_of_ports' => [[
@@ -399,7 +399,7 @@ class AmazonUtility
 
         return [
             'warranty_description' => [['value' => $warranty->calculated_value(), 'language_tag' => 'en_US']],
-            'maximum_height' => [['value' => $productData->dimensions_length, 'unit' => LengthUnit::getAmazonUnitName($productData->dimensions_length_unit)]],
+            'maximum_height' => [['value' => $productData->dimensions_length, 'unit' => LengthUnit::getAmazonUnitName(1)]],
             'number_of_items' => [['value' => $items_count->calculated_value()]],
             'material' => [['value' => $material->calculated_value(), 'language_tag' => 'en_US']],
             'included_components' => [['value' => $items_included->calculated_value(), 'language_tag' => 'en_US']],
