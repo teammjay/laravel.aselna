@@ -4,6 +4,7 @@ namespace App\Services\Marketplace\Service;
 
 use App\Constants\FeedStatus;
 use App\Constants\FeedTypes;
+use App\Constants\OrderStatus;
 use App\Constants\OrderSyncronisationType;
 use App\Constants\WeightUnit;
 use App\Models\Listing;
@@ -11,6 +12,7 @@ use App\Models\ListingFeed;
 use App\Models\ListingItem;
 use App\Models\ListingItemLink;
 use App\Models\ListingItemProductImage;
+use App\Models\Order;
 use App\Models\OrderSynchronization;
 use App\Models\ProductSpecification;
 use App\Models\ProductSpecificationInfo;
@@ -508,9 +510,6 @@ class TemuService implements MarketplaceServiceInterface
             $noOfOrder = 0;
             $nextCursor = $orders['next'] ?? null;
 
-            Log::info('Temu Orders Response: ' . json_encode($orders));
-
-
             $created_by = auth()->user()->name ?? 'admin';
             $synchronizeArr = [
                 'store_id' => $store->id,
@@ -522,6 +521,50 @@ class TemuService implements MarketplaceServiceInterface
             ];
             //Log::info('Order Synchronization: ' . json_encode($synchronizeArr));
             $order_synchronization = OrderSynchronization::create($synchronizeArr);
+
+            Log::info('Temu Orders Response: ' . json_encode($orders));
+            if (isset($orders['result']) && isset($orders['result']['totalItemNum']) && $orders['result']['totalItemNum'] > 0) {
+                $last_order_update_date = $order_synchronization->last_order_update_date ?? null;
+                foreach ($orders['result']['pageItems'] as $porder) {
+                    $parentOrder = $porder['parentOrderMap'];
+                    $presentOrder = Order::where('order_id',$parentOrder['parentOrderSn'])->first();
+                    $shippingInfo = $temuAuthService->getShippingInfo($parentOrder['parentOrderSn']);
+                    if (isset($shippingInfo) && isset($shippingInfo['result'])){
+                        $porder['shippingInfo'] = $shippingInfo['result'];
+                    }
+
+                    $persist = false;
+                    $statusChange = false;
+
+                    if ($presentOrder == null) {
+                        $presentOrder = Order::updateOrCreate([
+                            'order_id' => $parentOrder['parentOrderSn'],
+                        ], [
+                            'order_id' => $parentOrder['parentOrderSn'],
+                            'order_date' => date('Y-m-d H:i:s', $parentOrder['parentOrderTime'] / 1000),
+                            'order_status' => OrderStatus::Synchronizing,
+                            'store_id' => $store->id,
+                            'order_synchronization_id' => $order_synchronization->id
+                        ]);
+                        $persist = true;
+                        $statusChange = true;
+                    } else {
+                        // TODO Need To implement status change
+                        $statusChange = true;
+                    }
+
+                    if ($statusChange) {
+                        OrderUtility::mapTemuOrders($presentOrder, $porder, $store);
+                    }
+
+                    if ($last_order_update_date === null || strtotime($parentOrder['parentOrderTime'] / 1000) > strtotime($last_order_update_date)) {
+                        $last_order_update_date = date('Y-m-d H:i:s', $parentOrder['parentOrderTime'] / 1000);
+                    }
+                }
+            } else {
+                Log::error('Orders Not found');
+                return null;
+            }
 
             if (isset($last_synchronization) && strtotime($last_synchronization->last_order_update_date) > strtotime($last_order_update_date)) {
                 Log::info('Using last order update date from last synchronization :: ' . $last_synchronization->last_order_update_date);

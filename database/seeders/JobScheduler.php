@@ -385,6 +385,12 @@ class JobScheduler extends Seeder
                 'name' => 'Product Specification Sync',
                 'description' => 'Sync all product specifications',
                 'class_name' => 'App\Jobs\ProductSpecificationSyncJob',
+            ],
+            [
+                //FetchTemuOrders
+                'name' => 'Fetch Temu Orders Sync Job',
+                'description' => 'Fetch Temu orders',
+                'class_name' => 'App\Jobs\FetchTemuOrders',
             ]
         ];
 
