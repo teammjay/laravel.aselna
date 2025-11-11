@@ -1783,6 +1783,7 @@ class ListingController extends Controller
         }
 
         $compressedDevices = [];
+        $modelSeries = [];
         foreach ($brandModels as $brand => $models) {
             $models = array_unique($models);
 
@@ -1842,6 +1843,7 @@ class ListingController extends Controller
                     $final = trim("$base $numPart$sufPart");
 
                     $compressedDevices[$brand] = $final;
+                    $modelSeries[$brand] = $final;
                 }
                 continue;
             }
@@ -1965,17 +1967,22 @@ class ListingController extends Controller
             } else {
                 $compressedDevices[$brand] = "$brand $finalModel";
             }
+
+            $modelSeries[$brand] = $finalModel;
         }
 
 
         $currentDevices = [];
+        $currentModelSeries = [];
         $currentModels = [];
         $currentModelDetails = [];
         foreach ($compressedDevices as $brand => $comp) {
             $testDevices = array_merge($currentDevices, [$comp]);
+            $mb = $modelSeries[$brand];
+            $testMDevices = array_merge($currentModelSeries, [$mb]);
             $tempTitle = str_replace(
                 ['#model_series', '#devices', '#device_series'],
-                [implode($device_seperator, $testDevices), implode($device_seperator, $testDevices), implode($device_seperator, $testDevices)],
+                [implode($device_seperator, $testMDevices), implode($device_seperator, $testDevices), implode($device_seperator, $testDevices)],
                 $baseTitle
             );
 
@@ -1985,7 +1992,7 @@ class ListingController extends Controller
                 // Save current title
                 $titles[$cnt]['title'] = str_replace(
                     ['#model_series', '#devices', '#device_series'],
-                    [implode($device_seperator, $currentDevices), implode($device_seperator, $currentDevices), implode($device_seperator, $currentDevices)],
+                    [implode($device_seperator, $currentModelSeries), implode($device_seperator, $currentDevices), implode($device_seperator, $currentDevices)],
                     $baseTitle
                 );
                 $titles[$cnt]['product_code'] = $product->product->product_sku;
@@ -2002,10 +2009,12 @@ class ListingController extends Controller
 
                 $cnt++;
                 $currentDevices = [$comp];
+                $currentModelSeries = [$mb];
                 $currentModels = array_column($brandDeviceList, 'name');
                 $currentModelDetails = $brandDeviceList;
             } else {
                 $currentDevices[] = $comp;
+                $currentModelSeries[] = $mb;
                 foreach ($brandDeviceList as $dev) {
                     $currentModels[] = $dev->name;
                     $currentModelDetails[] = $dev;
@@ -2016,7 +2025,7 @@ class ListingController extends Controller
         if (!empty($currentDevices)) {
             $titles[$cnt]['title'] = str_replace(
                 ['#model_series', '#devices', '#device_series'],
-                [implode($device_seperator, $currentDevices), implode($device_seperator, $currentDevices), implode($device_seperator, $currentDevices)],
+                [implode($device_seperator, $currentModelSeries), implode($device_seperator, $currentDevices), implode($device_seperator, $currentDevices)],
                 $baseTitle
             );
             $titles[$cnt]['product_code'] = $product->product->product_sku;
@@ -2202,6 +2211,7 @@ class ListingController extends Controller
         }
 
         $compressedDevices = [];
+        $modelSeries = [];
         foreach ($brandModels as $brand => $models) {
             $models = array_unique($models);
 
@@ -2268,6 +2278,7 @@ class ListingController extends Controller
                     $final = trim("$base $numPart$sufPart");
 
                     $compressedDevices[] = $final;
+                    $modelSeries[] = $final;
                 }
                 continue;
             }
@@ -2352,10 +2363,12 @@ class ListingController extends Controller
             } else {
                 $compressedDevices[] = "$brand $finalModel";
             }
+
+            $modelSeries[] = $finalModel;
         }
 
 
-        return $compressedDevices;
+        return array('compressedDevices' => $compressedDevices,'modelSeries' => $modelSeries);
     }
 
 
@@ -2537,12 +2550,15 @@ class ListingController extends Controller
             $titles[$cnt]['model'][] = $device->name;
             $titles[$cnt]['model_detail'][] = $device;
         }
-        $deviceSeries = $this->groupDeviceModels($devices, $device_seperator);
+        $results = $this->groupDeviceModels($devices, $device_seperator);
+        $deviceSeries = $results['compressedDevices'];
+        $modelSeries = $results['modelSeries'];
         Log::info('Device Series :: ' . json_encode($deviceSeries));
 
         // Add the last title
         if (!empty($currentTitle)) {
-            $titles[$cnt]['title'] = str_replace('#device_series', implode($brand_seperator, $deviceSeries), $baseTitle);
+            //$titles[$cnt]['title'] = str_replace('#device_series', implode($brand_seperator, $deviceSeries), $baseTitle);
+            $titles[$cnt]['title'] = str_replace(['#model_series', '#devices', '#device_series'], [implode($device_seperator, $modelSeries), implode($device_seperator, $deviceSeries), implode($device_seperator, $deviceSeries)], $baseTitle);
         }
 
         return $titles;

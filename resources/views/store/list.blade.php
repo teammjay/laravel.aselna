@@ -106,7 +106,7 @@
                     <div class="col-md-2">
                         <div class="form-group">
                             <label>&nbsp;</label>
-                            <button type="reset" class="form-control btn btn-secondary">Reset</button>
+                            <button type="reset" id="resetForm" class="form-control btn btn-secondary">Reset</button>
                         </div>
                     </div>
                 </div>
@@ -158,14 +158,29 @@
                 $('.card-body').toggle();
             });
 
-            $('#storeTable').DataTable({
+            /*$('#storeTable').DataTable({
+                stateSave:true,
+                stateSaveCallback: function(settings, data) {
+                    sessionStorage.setItem(
+                        'DataTables_' + settings.sInstance,
+                        JSON.stringify(data)
+                    );
+                },
+
+                stateLoadCallback: function(settings) {
+                    return JSON.parse(
+                        sessionStorage.getItem('DataTables_' + settings.sInstance)
+                    );
+                },
                 columnDefs: [
                     {
                         targets: [5,8,9],
                         orderable: false
                     }
                 ]
-            });
+            });*/
+
+            //loadDatatables();
 
             // Handle pagination links click
             $(document).on('click', '.pagination a', function(event) {
@@ -188,33 +203,12 @@
 
             $('#filter-form').on('submit', function(e) {
                 e.preventDefault(); // Prevent default form submission
-                var perPage =  '{{ $perPage }}';
-                var page =  1;
-                if ($.fn.DataTable.isDataTable('#storeTable')) {
-                    $('#storeTable').DataTable().clear().destroy();
-                }
-                $.ajax({
-                    url: "{{ route('stores.filter') }}?page=" + page + "&perPage=" + perPage,
-                    method: 'GET',
-                    data: $(this).serialize(),
-                    success: function(response) {
-                        // Update the product list and pagination
-                        $('#store-list').html(response.html);
-                        //$('#pagination').html(response.pagination);
+                loadDatatables();
 
-                        $('#storeTable').DataTable({
-                            columnDefs: [
-                                {
-                                    targets: [5,8,9],
-                                    orderable: false
-                                }
-                            ]
-                        });
-                    },
-                    error: function(xhr) {
-                        console.error('Error:', xhr);
-                    }
-                });
+            });
+
+            document.getElementById("resetForm").addEventListener("click", function () {
+                sessionStorage.removeItem("store_filters");
             });
 
             /*$(document).on('click', '.delete-btn', function() {
@@ -308,6 +302,69 @@
                 });
             });
         });
+
+        document.addEventListener("DOMContentLoaded", function () {
+            let savedFilters = JSON.parse(sessionStorage.getItem("store_filters"));
+            if (savedFilters) {
+                console.log(savedFilters);
+                Object.keys(savedFilters).forEach(function (key) {
+
+                    console.log(savedFilters[key]);
+                    let input = $('#filter-form [name="'+savedFilters[key].name+'"]');
+                    if (input) {
+                        input.val(savedFilters[key].value)
+                    }
+
+                });
+
+                loadDatatables();
+            }
+        });
+
+        function loadDatatables() {
+            var perPage =  '{{ $perPage }}';
+            var page =  1;
+            $('#storeTable').DataTable().clear().destroy();
+
+            var formData = $('#filter-form').serializeArray();
+
+            sessionStorage.setItem("store_filters", JSON.stringify(formData));
+            $.ajax({
+                url: "{{ route('stores.filter') }}?page=" + page + "&perPage=" + perPage,
+                method: 'GET',
+                data: formData,
+                success: function(response) {
+                    // Update the product list and pagination
+                    $('#store-list').html(response.html);
+                    $('#pagination').html(response.pagination);
+
+                    $('#storeTable').DataTable({
+                        stateSave:true,
+                        stateSaveCallback: function(settings, data) {
+                            sessionStorage.setItem(
+                                'DataTables_' + settings.sInstance,
+                                JSON.stringify(data)
+                            );
+                        },
+
+                        stateLoadCallback: function(settings) {
+                            return JSON.parse(
+                                sessionStorage.getItem('DataTables_' + settings.sInstance)
+                            );
+                        },
+                        columnDefs: [
+                            {
+                                targets: [5,8,9],
+                                orderable: false
+                            }
+                        ]
+                    });
+                },
+                error: function(xhr) {
+                    console.error('Error:', xhr);
+                }
+            });
+        }
     </script>
 @stop
 

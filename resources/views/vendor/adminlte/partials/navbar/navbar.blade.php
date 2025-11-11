@@ -14,6 +14,11 @@
 
         {{-- Custom left links --}}
         @yield('content_top_nav_left')
+
+        <li class="nav-item d-none d-sm-inline-block">
+            <h1 class="pl-0 pr-0 pt-1 nav-link" style="font-size: 1.5rem; color:#333;">@yield('title', 'Dashboard')</h1>
+        </li>
+
     </ul>
 
     {{-- Navbar right links --}}

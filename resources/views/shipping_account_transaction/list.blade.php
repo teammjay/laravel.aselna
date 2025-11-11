@@ -184,7 +184,7 @@
                                     <option value=""></option>
                                     @if(count($stores ?? []) > 0)
                                         @foreach($stores as $store)
-                                            <option value="{{ $store->id }}">{{ $store->name }} - {{ $store->storeType->name }}</option>
+                                            <option value="{{ $store->id }}">{{ $store->name }} - {{ $store->storeType->name ?? '' }}</option>
                                         @endforeach
                                     @endif
                                 </select>
@@ -229,7 +229,7 @@
                     <div class="col-md-2">
                         <div class="form-group">
                             <label>&nbsp;</label>
-                            <button type="reset" class="form-control btn btn-secondary">Reset</button>
+                            <button type="reset" id="resetForm" class="form-control btn btn-secondary">Reset</button>
                         </div>
                     </div>
                 </div>
@@ -293,8 +293,8 @@
 @section('adminlte_js')
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script>
+        var accountTransactionTable = null;
         $(document).ready(function() {
-            var accountTransactionTable = null;
 
             $('#store_id').select2();
 
@@ -381,6 +381,7 @@
                 processing: true,
                 serverSide: true,
                 searching: false,
+                stateSave: true,
                 ajax: {
                     // csrf
                     headers: {
@@ -393,6 +394,8 @@
                         $.each(formData, function (index, field) {
                             d[field.name] = field.value;
                         });
+
+                        sessionStorage.setItem("account_transaction_filters", JSON.stringify(formData));
                     }
                 },
                 "order": [[ 10, "desc" ]],
@@ -416,6 +419,18 @@
                 createdRow: function (row, data, dataIndex) {
                     // Assuming `data.id` holds the transaction ID
                     $(row).attr('data-id', data.tracking_number);
+                },
+                stateSaveCallback: function(settings, data) {
+                    sessionStorage.setItem(
+                        'DataTables_' + settings.sInstance,
+                        JSON.stringify(data)
+                    );
+                },
+
+                stateLoadCallback: function(settings) {
+                    return JSON.parse(
+                        sessionStorage.getItem('DataTables_' + settings.sInstance)
+                    );
                 }
             });
 
@@ -423,6 +438,12 @@
                 e.preventDefault(); // Prevent default form submission
                 accountTransactionTable.ajax.reload();
             });
+
+            document.getElementById("resetForm").addEventListener("click", function () {
+                sessionStorage.removeItem("account_transaction_filters");
+            });
+
+
 
             $('#reprintLabel').on('click', function () {
                 var selectedTransactions = $('#transaction-list tr.active');
@@ -512,6 +533,28 @@
             {{--        }--}}
             {{--    });--}}
             {{--}--}}
+        });
+
+        document.addEventListener("DOMContentLoaded", function () {
+            let savedFilters = JSON.parse(sessionStorage.getItem("account_transaction_filters"));
+            if (savedFilters) {
+                console.log(savedFilters);
+                Object.keys(savedFilters).forEach(function (key) {
+
+                    console.log(savedFilters[key]);
+                    let input = $('#filter-form [name="'+savedFilters[key].name+'"]');
+                    if (input) {
+                        input.val(savedFilters[key].value)
+                    }
+
+                    if( savedFilters[key].name == 'store_id'){
+                        $('#listing_store').val(savedFilters[key].value);
+                    }
+
+                });
+
+                //accountTransactionTable.ajax.reload();
+            }
         });
 
     </script>
