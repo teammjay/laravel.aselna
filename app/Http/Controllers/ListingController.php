@@ -1288,6 +1288,7 @@ class ListingController extends Controller
             if ($store_id && $product_ids) {
                 $productsArray = [];
                 //$products = StoreProduct::with('product', 'product.productType')->where('store_id', $store_id)->whereIn('product_id', $product_ids)->get();
+                $prod_image = [];
                 foreach ($product_ids as $key => $product_id) {
 
                     $store_type_detail = StoreType::getStoreTypeDetailById($store_id);
@@ -1295,7 +1296,7 @@ class ListingController extends Controller
                     //$products = StoreProduct::getStoreProducts($product_ids);
                     $product = StoreProduct::with('product', 'product.productType','product.image')->where('store_id', $store_id)->where('product_id', $product_id)->first();
 
-                    $prod_image = '';
+
                     if (!empty($product)) {
 
                         /*if($products[$key]->product_id != $product_id) continue;
@@ -1314,7 +1315,7 @@ class ListingController extends Controller
                             }
 
                             if(isset($product->product->image)){
-                                $prod_image = asset('storage/' .$product->product->image->getFileUrl());
+                                $prod_image[$key] = asset('storage/' .$product->product->image->getFileUrl());
                             }
                             $product_short_keyword = isset($pDetail['short_keyword']) ? $pDetail['short_keyword'] : '';
                             $product_long_keyword = isset($pDetail['long_keyword']) ? $pDetail['long_keyword'] : '';
@@ -1387,7 +1388,7 @@ class ListingController extends Controller
                                                 $titleGenerator = new TitleGenerator(0, $max_title_length, []);
                                                 $newTitle = $titleGenerator->getProductTitle($pro['title'], $product_title, $product_short_keyword, $product_long_keyword);
                                                 $productsArray[$k][$key]['title'] = $newTitle;
-                                                $productsArray[$k][$key]['pimage'] = $prod_image;
+                                                $productsArray[$k][$key]['pimage'] = $prod_image[$k];
                                             }
 
                                         }
