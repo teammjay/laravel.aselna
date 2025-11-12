@@ -350,4 +350,76 @@ class TemuAuthService
 
         return json_decode($res->getBody(), true);
     }
+
+    public function getOrderInfo($parentOrderSn)
+    {
+        try {
+            $client = new Client();
+            $headers = [
+                'content-type' => 'application/json',
+            ];
+
+            $apiType = 'bg.order.detail.v2.get';
+            $timestamp = time();
+
+            $params = [
+                'type' => $apiType,
+                'app_key' => $this->appKey,
+                'access_token' => $this->accessToken,
+                'timestamp' => $timestamp,
+                'data_type' => 'JSON',
+                'parentOrderSn' => $parentOrderSn
+            ];
+
+            $params['sign'] = $this->generateSign($params, $this->appSecret);
+
+            Log::info('Get Orer Info Request Params: ' . json_encode($params));
+
+            $request = new Request('POST', $this->endpoint, $headers, json_encode($params));
+
+            $res = $client->sendAsync($request)->wait();
+
+            return json_decode($res->getBody(), true);
+
+        }catch (\Exception $e){
+            Log::info('Temu get order info error : ' . $e->getMessage());
+            return $e->getMessage();
+        }
+    }
+
+    public function getCarrierInfo($regionId = 'US')
+    {
+        try {
+            $client = new Client();
+            $headers = [
+                'content-type' => 'application/json',
+            ];
+
+            $apiType = 'bg.logistics.companies.get';
+            $timestamp = time();
+
+            $params = [
+                'type' => $apiType,
+                'app_key' => $this->appKey,
+                'access_token' => $this->accessToken,
+                'timestamp' => $timestamp,
+                'data_type' => 'JSON',
+                'regionId' => $regionId
+            ];
+
+            $params['sign'] = $this->generateSign($params, $this->appSecret);
+
+            Log::info('Carrier Request Params: ' . json_encode($params));
+
+            $request = new Request('POST', $this->endpoint, $headers, json_encode($params));
+
+            $res = $client->sendAsync($request)->wait();
+
+            return json_decode($res->getBody(), true);
+
+        }catch (\Exception $e){
+            Log::info('Temu carier info error : ' . $e->getMessage());
+            return $e->getMessage();
+        }
+    }
 }

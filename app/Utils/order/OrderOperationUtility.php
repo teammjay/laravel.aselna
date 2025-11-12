@@ -17,6 +17,7 @@ use App\Services\Auth\ShopifyAuthService;
 use App\Services\Auth\WalmartAuthService;
 use App\Services\Marketplace\Service\AmazonService;
 use App\Services\Marketplace\Service\ShopifyService;
+use App\Services\Marketplace\Service\TemuService;
 use App\Services\Marketplace\Service\WalmartService;
 use App\Utils\EndicialabelService;
 use App\Utils\shipment\ShipmentDocumentsCreator;
@@ -747,7 +748,7 @@ class OrderOperationUtility
 
                 Log::info('Shopify order refunded response:'.json_encode($response));*/
 
-                $shopifyServie = new ShopifyService($store->secret_key, $store->service_url);
+                $shopifyServie = new ShopifyService();
                 $response = $shopifyServie->refundOrder($shipmentDetail->order->order_id, $store);
 
                 Log::info('Shopify order refunded response:' . json_encode($response));
@@ -1071,7 +1072,18 @@ class OrderOperationUtility
                     $success = $is_success;
                     break;
                 case 'temu' :
-                    // TODO Temu Order Implementation
+                    $temuService = new TemuService();
+                    $is_success = $temuService->createShipment($orderOperation,$orderOperation, $store);
+
+                    $orderOperations = OrderOperation::where('is_merged',true)
+                        ->where('merged_with',$orderOperation->id)
+                        ->get();
+                    if($orderOperations) {
+                        foreach ($orderOperations as $o_item) {
+                            $temuService->createShipment($orderOperation, $o_item, $store);
+                        }
+                    }
+                    $success = $is_success;
                     break;
                 case 'newegg' :
                     // TODO NewEgg Order Implementation

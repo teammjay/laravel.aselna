@@ -9,6 +9,7 @@ use App\Models\OrderOperation;
 use App\Services\Auth\AmazonAuthService;
 use App\Services\Auth\EbayAuthService;
 use App\Services\Auth\ShopifyAuthService;
+use App\Services\Auth\TemuAuthService;
 use App\Services\Auth\WalmartAuthService;
 use Exception;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -300,6 +301,38 @@ class SyncAllOrderStatusJob implements ShouldQueue
                     }
                     if (isset($amazonOrder['EarliestShipDate'])) {
                         $operation->expected_delivery_date = date('Y-m-d H:i:s', strtotime($amazonOrder['EarliestShipDate']));
+                    }
+                    $order->save();
+                    $operation->save();
+                }
+                break;
+            case 'temu':
+                $temuAuthService = new TemuAuthService();
+                $orderDetail = $temuAuthService->getOrderInfo($order->order_id);
+                Log::info('Temu order detail: ' . json_encode($orderDetail));
+
+                if (isset($orderDetail) && isset($orderDetail['result'])){
+                    $temuOrder = $orderDetail['result'];
+                    if (isset($temuOrder['parentOrderMap']) && $temuOrder['parentOrderMap']['parentOrderSn'] == $order->order_id) {
+                        if (isset($temuOrder['parentOrderMap']['parentOrderStatus'])) {
+                            switch (strtolower($temuOrder['parentOrderMap']['parentOrderStatus'])) {
+                                case 'shipped';
+                                    $order->order_status = OrderStatus::Shipped;
+                                    $operation->status = OrderOperationStatus::MarkAsShipped;
+                                    break;
+                                case 'canceled';
+                                    $order->order_status = OrderStatus::Canceled;
+                                    $operation->status = OrderOperationStatus::Canceled;
+                                    break;
+                                case 'pending';
+                                case 'un_shipping';
+                                    $order->order_status = OrderStatus::Pending;
+                                    break;
+                                case 'partially_shipped';
+                                    $order->order_status = OrderStatus::PartiallyShipped;
+                                    break;
+                            }
+                        }
                     }
                     $order->save();
                     $operation->save();
