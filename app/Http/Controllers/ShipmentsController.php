@@ -1266,6 +1266,7 @@ class ShipmentsController extends Controller
     public function approveShipment(Request $request){
 
         $selected_shipment_id = $request->input('shipment_id');
+        $status = $request->input('status');
 
         if($selected_shipment_id != ''){
 
@@ -1274,6 +1275,9 @@ class ShipmentsController extends Controller
                 $updateRecord = [
                     'sync_message' => NULL
                 ];
+                if($status == 2){
+                    $updateRecord['status'] = OrderOperationStatus::Created;
+                }
                 $orderOperation->update($updateRecord);
             }
             return response()->json([

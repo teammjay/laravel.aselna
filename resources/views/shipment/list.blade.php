@@ -430,7 +430,7 @@
             let totalCnt = $('input[name="shipment_id[]"]:checked').length;
             $('#total_selected').html('( <b>'+totalCnt+'</b> selected )');
 
-            if(ele.data('status') == 1){
+            if(ele.data('status') > 1){
                 $('#cancel_selected').addClass('hide');
                 $('#approved').removeClass('hide');
             }else{
@@ -464,7 +464,7 @@
             let totalCnt = $('input[name="shipment_id[]"]:checked').length;
             $('#total_selected').html('( <b>'+totalCnt+'</b> selected )');
 
-            if(ele.data('status') == 1){
+            if(ele.data('status') > 1){
                 $('#cancel_selected').addClass('hide');
                 $('#approved').removeClass('hide');
             }else{
@@ -554,13 +554,17 @@
         });
 
         $(document).on('click','#approved',function () {
-            var shipment_id = $('input[name="shipment_id[]"]:checked').val();
+            var ele = $('input[name="shipment_id[]"]:checked');
+            var shipment_id = ele.val();
+            var status = ele.data('status');
+
             if(shipment_id != '' && shipment_id != null){
                 $.ajax({
                     url: "{{ route('shipment.approveshipment') }}",
                     type: 'POST',
                     data: {
                         shipment_id: shipment_id,
+                        status: status,
                         "_token": '{{ csrf_token() }}'
                     },
                     success: function (response) {
