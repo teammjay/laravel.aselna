@@ -771,6 +771,7 @@
         let product_model = {};
         let product_models = {};
         let productDetail = {};
+        let apply_price_count = 0;
         document.addEventListener('DOMContentLoaded', () => {
             const tabs = document.querySelectorAll('[data-toggle="tab"]');
             let currentIndex = 0;
@@ -810,6 +811,7 @@
                         if (selected_product.length === 0 && $('#selected_product').is(':checked')) {
                             alert('Please select product to proceed.');
                         }else{
+                            apply_price_count = 0
                             followSecondStep();
                             currentIndex++;
                             activateTab(currentIndex);
@@ -2482,32 +2484,54 @@
 
             });
 
+
             $(document).on('click','#apply_price',function () {
-                var new_price = $('#price_to_increase').val();
-                var price_type = $('#price_type').val();
+                var confirmation = true
+                if(apply_price_count > 0){
+                    var confirmation = confirm("you already ran this, do you want to run it again?");
+                }
+                if(confirmation) {
+                    var new_price = $('#price_to_increase').val();
+                    var price_type = $('#price_type').val();
 
-                if(price_type == 'fixed'){
+                    if (price_type == 'fixed') {
 
-                    $('.sproRow').each(function () {
-                        let ele = $(this);
-                        if(ele.find('.price-overwrite').is(':checked')) {
-                            var currentvalue = ele.find('.pro-price').val();
-                            var newvalue = parseFloat(currentvalue) + parseFloat(new_price);
-                            ele.find('.pro-price').val(parseFloat(newvalue).toFixed(2));
+                        $('.sproRow').each(function () {
+                            let ele = $(this);
+                            if (ele.find('.price-overwrite').is(':checked')) {
+                                var currentvalue = ele.find('.pro-price').val();
+                                var newvalue = parseFloat(currentvalue) + parseFloat(new_price);
+                                ele.find('.pro-price').val(parseFloat(newvalue).toFixed(2));
+
+
+                            }
+                        });
+
+                    } else {
+
+                        $('.sproRow').each(function () {
+                            let ele = $(this);
+                            if (ele.find('.price-overwrite').is(':checked')) {
+                                var currentvalue = ele.find('.pro-price').val();
+                                var newPrice = (parseFloat(currentvalue) * new_price) / 100;
+                                var newvalue = parseFloat(currentvalue) + parseFloat(newPrice);
+                                ele.find('.pro-price').val(parseFloat(newvalue).toFixed(2));
+                            }
+                        });
+                    }
+
+                    const checkboxes = document.querySelectorAll('.price-overwrite');
+                    let checkedCount = 0;
+
+                    checkboxes.forEach(function(checkbox) {
+                        if (checkbox.checked) {
+                            checkedCount++;
                         }
                     });
 
-                }else{
-
-                    $('.sproRow').each(function () {
-                        let ele = $(this);
-                        if(ele.find('.price-overwrite').is(':checked')) {
-                            var currentvalue = ele.find('.pro-price').val();
-                            var newPrice = (parseFloat(currentvalue) * new_price) / 100;
-                            var newvalue = parseFloat(currentvalue) + parseFloat(newPrice);
-                            ele.find('.pro-price').val(parseFloat(newvalue).toFixed(2));
-                        }
-                    });
+                    if(checkedCount) {
+                        apply_price_count = apply_price_count + 1;
+                    }
                 }
             });
 
@@ -2721,6 +2745,7 @@
                     'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                 },
                 success: function (response) {
+                    console.log(response);
                     if (response.html) {
                         $('#productsTable2_wrapper').html(response.html);
                         generateKeywords();
@@ -2735,6 +2760,11 @@
                             $(targetModal).modal('show');
                         });
                         bindRefreshButtons();
+                    }else{
+                        $('#productsTable2_wrapper').html('');
+                        if(response.message){
+                            alert(response.message);
+                        }
                     }
                 },
                 error: function (xhr) {

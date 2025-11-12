@@ -848,137 +848,144 @@ class ListingController extends Controller
      */
     public function getSelectedProducts(Request $request)
     {
+        try {
 
-        $product_ids = $request->input('product_ids');
-        $product_details = $request->input('product_detail');
-        $store_id = $request->input('store_id');
-        $store = null;
-        $step = $request->input('step');
-        $view = '';
-        if (!empty($product_ids)) {
-            /* check product exist in store product or not*/
-            $productDetails = Catalog::select('product_id', 'product_type')->whereIn('product_id', $product_ids)->get();
-            if ($productDetails) {
-                $created_by = auth()->user()->name ?? 'admin';
-                foreach ($productDetails as $pid) {
-                    $product_exist = StoreProduct::where('product_id', $pid->product_id)->where('store_id', $store_id)->count();
-                    if (!$product_exist) {
-                        $sPr = [
-                            'product_id' => $pid->product_id,
-                            'title' => $pid->product_title,
-                            'store_type_category_id' => $pid->product_type,
-                            'price' => $pid->product_marketplace_price,
-                            'msrp' => $pid->product_msrp,
-                            'description' => $pid->product_description,
-                            'store_id' => $store_id,
-                            'created_by' => $created_by,
-                            'updated_by' => $created_by
-                        ];
-                        StoreProduct::create($sPr);
+            $product_ids = $request->input('product_ids');
+            $product_details = $request->input('product_detail');
+            $store_id = $request->input('store_id');
+            $store = null;
+            $step = $request->input('step');
+            $view = '';
+            if (!empty($product_ids)) {
+                /* check product exist in store product or not*/
+                $productDetails = Catalog::select('product_id', 'product_type')->whereIn('product_id', $product_ids)->get();
+                if ($productDetails) {
+                    $created_by = auth()->user()->name ?? 'admin';
+                    foreach ($productDetails as $pid) {
+                        $product_exist = StoreProduct::where('product_id', $pid->product_id)->where('store_id', $store_id)->count();
+                        if (!$product_exist) {
+                            $sPr = [
+                                'product_id' => $pid->product_id,
+                                'title' => $pid->product_title,
+                                'store_type_category_id' => $pid->product_type,
+                                'price' => $pid->product_marketplace_price,
+                                'msrp' => $pid->product_msrp,
+                                'description' => $pid->product_description,
+                                'store_id' => $store_id,
+                                'created_by' => $created_by,
+                                'updated_by' => $created_by
+                            ];
+                            StoreProduct::create($sPr);
+                        }
                     }
                 }
-            }
 
-            /* check product exist in store product or not*/
-            $query = StoreProduct::select('store_product.id', 'store_product.store_type_category_id', 'store_product.product_id', 'store_product.title', 'store_product.price', 'store_product.overwrite_price', 'store_product.created_at', 'product_type.name as ProductType')->with('Product');
-            $query->leftJoin('products', 'products.product_id', '=', 'store_product.product_id');
-            $query->leftJoin('product_type', 'products.product_type', '=', 'product_type.id');
-            $query->whereIn('store_product.product_id', $product_ids);
-            $query->where('store_product.store_id', $store_id);
-            $products = $query->get();
+                /* check product exist in store product or not*/
+                $query = StoreProduct::select('store_product.id', 'store_product.store_type_category_id', 'store_product.product_id', 'store_product.title', 'store_product.price', 'store_product.overwrite_price', 'store_product.created_at', 'product_type.name as ProductType')->with('Product');
+                $query->leftJoin('products', 'products.product_id', '=', 'store_product.product_id');
+                $query->leftJoin('product_type', 'products.product_type', '=', 'product_type.id');
+                $query->whereIn('store_product.product_id', $product_ids);
+                $query->where('store_product.store_id', $store_id);
+                $products = $query->get();
 
-            $storeTypeName = Store::select('store_type.name as storeTypeName')
-                ->leftJoin('store_type', 'store_type.id', '=', 'store.store_type_id')
-                ->where('store.id', $store_id)
-                ->first();
+                $storeTypeName = Store::select('store_type.name as storeTypeName')
+                    ->leftJoin('store_type', 'store_type.id', '=', 'store.store_type_id')
+                    ->where('store.id', $store_id)
+                    ->first();
 
-            $storeCategories = [];
-            $cat_option = '';
-            if ($store_id) {
-                $store = Store::with('storeType')->find($store_id);
-                if ($store && $store->storeType->name === 'Magento') {
-                    $storeCategories = StoreCategory::where('store_id', $store_id)->orderBy('name', 'asc')->get();
-                } else if ($store && $store->storeType->name === 'Temu') {
-                    $parentCategories = StoreTypeCategory::whereNull('parent_id')
-                        ->where('store_type_id', $store->storeType->id)
-                        ->get();
-                    $storeCategories = [];
-                    foreach ($parentCategories as $parentCategory) {
-                        $childPaths = $this->getTemuCategories($parentCategory, '');
-                        $storeCategories = array_merge($storeCategories, $childPaths);
-                    }
+                $storeCategories = [];
+                $cat_option = '';
+                if ($store_id) {
+                    $store = Store::with('storeType')->find($store_id);
+                    if ($store && $store->storeType->name === 'Magento') {
+                        $storeCategories = StoreCategory::where('store_id', $store_id)->orderBy('name', 'asc')->get();
+                    } else if ($store && $store->storeType->name === 'Temu') {
+                        $parentCategories = StoreTypeCategory::whereNull('parent_id')
+                            ->where('store_type_id', $store->storeType->id)
+                            ->get();
+                        $storeCategories = [];
+                        foreach ($parentCategories as $parentCategory) {
+                            $childPaths = $this->getTemuCategories($parentCategory, '');
+                            $storeCategories = array_merge($storeCategories, $childPaths);
+                        }
 //                    $storeCategories = StoreTypeCategory::where('store_type_id', $store->storeType->id)
 //                        ->orderBy('name', 'asc')
 //                        ->get()
 //                        ->unique('name')
 //                        ->values(); // reset keys
-                } else {
-                    //if the storetype code is amazon then fetch all the categories of specific marketplace codes
-                    $storeCategories = StoreTypeCategory::select('store_type_category.*')
-                        ->leftJoin('store_type', 'store_type.id', '=', 'store_type_category.store_type_id')
-                        ->leftJoin('store', 'store_type.id', '=', 'store.store_type_id')
-                        ->when($store->storeType->name === 'Amazon', function ($query) use ($store) {
-                            $qualifiedcategoryCodes = ['ELECTRONIC_CABLE', 'SCREEN_PROTECTOR', 'HEADPHONES', 'PORTABLE_ELECTRONIC_DEVICE_MOUNT', 'CELL_PHONE_HOLSTER',
-                                'CHARGING_ADAPTER', 'POWER_BANK', 'CAMERA_TRIPOD', 'PORTABLE_ELECTRONIC_DEVICE_ARMBAND', 'PORTABLE_ELECTRONIC_DEVICE_STAND', 'CELLULAR_PHONE_CASE',
-                                'ELECTRONIC_ADAPTER', 'CABLE_OR_ADAPTER', 'INPUT_PEN', 'MULTIPORT_HUB'];
-                            return $query->whereIn('store_type_category.marketplace_code', $qualifiedcategoryCodes);
-                        })
-                        ->where('store.id', $store_id)
-                        ->orderBy('store_type_category.name', 'asc')
-                        ->get();
-                }
-
-
-                if (count($storeCategories ?? []) > 0) {
-                    foreach ($storeCategories as $key2 => $sCat) {
-                        if ($storeTypeName->storeTypeName === 'Magento') {
-                            $cat_option .= '<option value="' . $sCat->id . '">' . $sCat->name . '</option>';
-                        } else if($storeTypeName->storeTypeName === 'Amazon') {
-                            $cat_option .= '<option value="' . $sCat->id . '">' . $sCat->name . ' (' . $sCat->marketplace_code. ') ' . '</option>';
-                        } else {
-                            $cat_option .= '<option value="' . $sCat->id . '">' . $sCat->name . '</option>';
-                        }
+                    } else {
+                        //if the storetype code is amazon then fetch all the categories of specific marketplace codes
+                        $storeCategories = StoreTypeCategory::select('store_type_category.*')
+                            ->leftJoin('store_type', 'store_type.id', '=', 'store_type_category.store_type_id')
+                            ->leftJoin('store', 'store_type.id', '=', 'store.store_type_id')
+                            ->when($store->storeType->name === 'Amazon', function ($query) use ($store) {
+                                $qualifiedcategoryCodes = ['ELECTRONIC_CABLE', 'SCREEN_PROTECTOR', 'HEADPHONES', 'PORTABLE_ELECTRONIC_DEVICE_MOUNT', 'CELL_PHONE_HOLSTER',
+                                    'CHARGING_ADAPTER', 'POWER_BANK', 'CAMERA_TRIPOD', 'PORTABLE_ELECTRONIC_DEVICE_ARMBAND', 'PORTABLE_ELECTRONIC_DEVICE_STAND', 'CELLULAR_PHONE_CASE',
+                                    'ELECTRONIC_ADAPTER', 'CABLE_OR_ADAPTER', 'INPUT_PEN', 'MULTIPORT_HUB'];
+                                return $query->whereIn('store_type_category.marketplace_code', $qualifiedcategoryCodes);
+                            })
+                            ->where('store.id', $store_id)
+                            ->orderBy('store_type_category.name', 'asc')
+                            ->get();
                     }
-                }
-            }
 
 
-            if ($step == 2) {
-                $issues = [];
-                foreach ($products as $storeProduct) {
-                    $categoryId = $storeProduct->store_type_category_id;
-                    if (isset($categoryId)) {
-                        Log::info("Category ID: " . $categoryId);
-                        $currentCategory = StoreTypeCategory::where('id', $categoryId)->first();
-                        if (isset($currentCategory)) {
-                            if ('Amazon' == $store->storeType->name) {
-                                $issues[$storeProduct->product_id] = ListingUtility::validate($currentCategory->marketplace_code, $storeProduct->product_id, $store->storeType->id);
+                    if (count($storeCategories ?? []) > 0) {
+                        foreach ($storeCategories as $key2 => $sCat) {
+                            if ($storeTypeName->storeTypeName === 'Magento') {
+                                $cat_option .= '<option value="' . $sCat->id . '">' . $sCat->name . '</option>';
+                            } else if ($storeTypeName->storeTypeName === 'Amazon') {
+                                $cat_option .= '<option value="' . $sCat->id . '">' . $sCat->name . ' (' . $sCat->marketplace_code . ') ' . '</option>';
                             } else {
-                                $issues[$storeProduct->product_id] = ListingUtility::validate($currentCategory->store_type_code, $storeProduct->product_id, $store->storeType->id);
+                                $cat_option .= '<option value="' . $sCat->id . '">' . $sCat->name . '</option>';
                             }
                         }
                     }
                 }
 
-                /*echo '<pre>';
-                print_r($issues);
-                echo '</pre>';die;*/
-                $view = view('listing.selected_product_list', compact('products', 'storeCategories', 'storeTypeName', 'issues'))->render();
-            } else if ($step == 3) {
-                $view = view('listing.select_device_product_list', compact('products', 'storeCategories', 'storeTypeName'))->render();
-            }
 
-            if ($request->ajax()) {
+                if ($step == 2) {
+                    $issues = [];
+                    foreach ($products as $storeProduct) {
+                        $categoryId = $storeProduct->store_type_category_id;
+                        if (isset($categoryId)) {
+                            Log::info("Category ID: " . $categoryId);
+                            $currentCategory = StoreTypeCategory::where('id', $categoryId)->first();
+                            if (isset($currentCategory)) {
+                                if ('Amazon' == $store->storeType->name) {
+                                    $issues[$storeProduct->product_id] = ListingUtility::validate($currentCategory->marketplace_code, $storeProduct->product_id, $store->storeType->id);
+                                } else {
+                                    $issues[$storeProduct->product_id] = ListingUtility::validate($currentCategory->store_type_code, $storeProduct->product_id, $store->storeType->id);
+                                }
+                            }
+                        }
+                    }
+
+                    /*echo '<pre>';
+                    print_r($issues);
+                    echo '</pre>';die;*/
+                    $view = view('listing.selected_product_list', compact('products', 'storeCategories', 'storeTypeName', 'issues'))->render();
+                } else if ($step == 3) {
+                    $view = view('listing.select_device_product_list', compact('products', 'storeCategories', 'storeTypeName'))->render();
+                }
+
+                if ($request->ajax()) {
+                    return response()->json([
+                        'success' => true,
+                        'html' => $view,
+                        'storeCategories' => $cat_option,
+                    ]);
+                }
+
+            } else {
                 return response()->json([
-                    'success' => true,
-                    'html' => $view,
-                    'storeCategories' => $cat_option,
+                    'success' => false
                 ]);
             }
-
-        } else {
+        }catch (\Exception $e){
             return response()->json([
-                'success' => false
+                'success' => false,
+                'message' => $e->getMessage(),
             ]);
         }
     }
@@ -1277,11 +1284,6 @@ class ListingController extends Controller
             $product_details = $request->input('product_detail');
             $store_type = $request->input('store_type');
             // $use_store_as_brand = $request->input('use_store_as_brand');
-//            Log::info(' product_details :: ' . json_encode($product_details));
-            /*echo '<pre>';
-            print_r($product_ids);
-            print_r($product_details);
-            echo '</pre>';*/
 
             if ($store_id && $product_ids) {
                 $productsArray = [];
@@ -1291,13 +1293,9 @@ class ListingController extends Controller
                     $store_type_detail = StoreType::getStoreTypeDetailById($store_id);
                     $max_title_length = $store_type_detail->max_title_length;
                     //$products = StoreProduct::getStoreProducts($product_ids);
-                    $product = StoreProduct::with('product', 'product.productType')->where('store_id', $store_id)->where('product_id', $product_id)->first();
-//                    echo $query2->toSql();die;
-//                    Log::info(' products :: ' . json_encode($products));
+                    $product = StoreProduct::with('product', 'product.productType','product.image')->where('store_id', $store_id)->where('product_id', $product_id)->first();
 
-                    /*echo '<pre>';
-                    print_r($products);die;*/
-                    /*if (count($products ?? []) > 0) {*/
+                    $prod_image = '';
                     if (!empty($product)) {
 
                         /*if($products[$key]->product_id != $product_id) continue;
@@ -1314,9 +1312,10 @@ class ListingController extends Controller
                                 Log::info('SKIP Product Detail:');
                                 continue;
                             }
-                            /*echo '<pre>';
-                            print_r($product_details[$store_product_id]);
-                            echo '</pre>';*/
+
+                            if(isset($product->product->image)){
+                                $prod_image = asset('storage/' .$product->product->image->getFileUrl());
+                            }
                             $product_short_keyword = isset($pDetail['short_keyword']) ? $pDetail['short_keyword'] : '';
                             $product_long_keyword = isset($pDetail['long_keyword']) ? $pDetail['long_keyword'] : '';
                             $product_title = $pDetail['title'];
@@ -1337,9 +1336,6 @@ class ListingController extends Controller
                             }
 
                             $devices = $this->getDevicesFromRequest($request, $product);
-                            /*echo '<pre>';
-                            print_r($devices);
-                            echo '<pre>';die;*/
 
                             if ($generate_type_name) {
                                 switch (trim(strtolower($generate_type_name))) {
@@ -1350,7 +1346,7 @@ class ListingController extends Controller
                                         $prevBrand = null;
                                         $flag = false;
                                         $brandName = null;
-                                        foreach ($devices as $key => $val) {
+                                        foreach ($devices as $val) {
                                             $brandName = $val->brand_name;
                                             if ($prevBrand != NULL && $brandName != $prevBrand && str_contains($title_template, '#device_series')) {
                                                 $flag = true;
@@ -1375,6 +1371,7 @@ class ListingController extends Controller
                                         break;
                                     case 'carrier group':
                                         $productsArray[] = $this->generateCarrierGroupProductTitles($title_template, $product, $devices, $generate_type, $pDetail, $store_product_id, $store_type);
+                                        break;
                                     case 'all carriers':
                                         $productsArray[] = $this->generateAllCarrierProductTitles($title_template, $product, $devices, $generate_type, $pDetail, $store_product_id, $store_type);
                                         break;
@@ -1390,6 +1387,7 @@ class ListingController extends Controller
                                                 $titleGenerator = new TitleGenerator(0, $max_title_length, []);
                                                 $newTitle = $titleGenerator->getProductTitle($pro['title'], $product_title, $product_short_keyword, $product_long_keyword);
                                                 $productsArray[$k][$key]['title'] = $newTitle;
+                                                $productsArray[$k][$key]['pimage'] = $prod_image;
                                             }
 
                                         }
@@ -1398,13 +1396,8 @@ class ListingController extends Controller
                             }
 
                         }
-                        //}
                     }
                 }
-
-                /*echo '<pre>';
-                print_r($productsArray);
-                echo '</pre>';die;*/
 
                 if (!empty($productsArray)) {
                     $view = view('listing.target_listing', compact('productsArray', 'max_title_length'))->render();
