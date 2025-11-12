@@ -199,6 +199,36 @@ class TemuAuthService
         return json_decode($res->getBody(), true);
     }
 
+    public function getOrderInfo($parentOrderSn)
+    {
+        $client = new Client();
+        $headers = [
+            'content-type' => 'application/json',
+        ];
+
+        $categoryType = 'bg.order.detail.v2.get';
+        $timestamp = time();
+
+        $params = [
+            'type' => $categoryType,
+            'app_key' => $this->appKey,
+            'timestamp' => $timestamp,
+            'parentOrderSn' => $parentOrderSn,
+            'data_type' => 'JSON',
+            'access_token' => $this->accessToken,
+        ];
+
+        $params['sign'] = $this->generateSign($params, $this->appSecret);
+
+        Log::info('Request Params: ' . json_encode($params));
+
+        $request = new Request('POST', $this->endpoint, $headers, json_encode($params));
+
+        $res = $client->sendAsync($request)->wait();
+
+        return json_decode($res->getBody(), true);
+    }
+
     public function uploadImage(string $imagesUrl)
     {
         $client = new Client();
@@ -350,4 +380,59 @@ class TemuAuthService
 
         return json_decode($res->getBody(), true);
     }
+
+    public function getLogisticsInfo($regionId)
+    {
+        $client = new Client();
+        $headers = [
+            'content-type' => 'application/json',
+        ];
+
+        $categoryType = 'bg.logistics.companies.get';
+        $timestamp = time();
+
+        $params = [
+            'type' => $categoryType,
+            'app_key' => $this->appKey,
+            'timestamp' => $timestamp,
+            'regionId' => $regionId,
+            'data_type' => 'JSON',
+            'access_token' => $this->accessToken,
+        ];
+
+        $params['sign'] = $this->generateSign($params, $this->appSecret);
+
+        Log::info('Request Params: ' . json_encode($params));
+
+        $request = new Request('POST', $this->endpoint, $headers, json_encode($params));
+
+        $res = $client->sendAsync($request)->wait();
+
+        return json_decode($res->getBody(), true);
+    }
+
+    public function callOrderShipment($data)
+    {
+        $client = new Client();
+        $headers = [
+            'content-type' => 'application/json',
+        ];
+
+        $data['type'] = 'bg.logistics.shipment.v2.confirm';
+        $data['timestamp'] = time();
+        $data['app_key'] = $this->appKey;
+        $data['data_type'] = 'JSON';
+        $data['access_token'] = $this->accessToken;
+        $data['sign'] = $this->generateSign($data, $this->appSecret);
+
+        Log::info('Request Params: ' . json_encode($data));
+
+        $request = new Request('POST', $this->endpoint, $headers, json_encode($data));
+
+        $res = $client->sendAsync($request)->wait();
+
+        return json_decode($res->getBody(), true);
+    }
+
+
 }
