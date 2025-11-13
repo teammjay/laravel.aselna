@@ -207,6 +207,8 @@
 
             });
 
+            loadDatatables();
+
             document.getElementById("resetForm").addEventListener("click", function () {
                 sessionStorage.removeItem("store_filters");
             });

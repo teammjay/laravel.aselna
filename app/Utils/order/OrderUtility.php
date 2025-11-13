@@ -736,7 +736,7 @@ class OrderUtility
                             'client_id' => $itemDetail->client,
                             'listing_item_id' => $itemDetail->id,
                             'sku' => $item['sku'],
-                            'store_sku' => $item['productId'] ?? $item['itemId'] ?? '',
+                            'store_sku' => $item['orderSn'] ?? '',
                             'quantity' => $item['quantity'],
                             'id1' => '',
                             'item_price' => $item['unitPrice']['value'] ?? 0,

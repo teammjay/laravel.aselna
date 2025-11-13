@@ -1166,8 +1166,7 @@
                 }, 0);
             });
 
-            /*$('#listing_store').on('select2:select', function (e) {
-                /!* check selected store upc exist or not*!/
+            $('#listing_store').on('select2:select', function (e) {
                 var data = e.params.data;
                 var store_id = data.id;
                 $.ajax({
@@ -1182,28 +1181,39 @@
                     success: function (response) {
                         if(response.success){
                             $('#alertModal').find('.modal-header').removeClass('bg-danger').removeClass('bg-info');
-                            if(response.upc_cnt == 0){
+                            if(response.upc_cnt == 0 || response.upc_cnt < 1000){
                                 $('#alertModal').find('.modal-header').addClass('bg-danger');
                                 $('#alertModalLabel').html('Alert');
-                                $('#alertModal').find('.modal-body').html('Upc code not available for selected store. Please generate upc code first!');
-                            }else{
-                                $('#alertModal').find('.modal-header').addClass('bg-info');
+                                $('#alertModal').find('.modal-body').html(' - Upc code not available for selected store. Please generate upc code first!');
+
+                                $('#alertModal').modal('show');
+                            }else {
+                                /*$('#alertModal').find('.modal-header').addClass('bg-info');
                                 $('#alertModalLabel').html('Information');
-                                $('#alertModal').find('.modal-body').html(response.upc_cnt+' upc code available for selected store. If you require more please generate!');
+                                $('#alertModal').find('.modal-body').html('- <b>'+response.upc_cnt+' </b> upc code available for selected store. If you require more please generate!');*/
                             }
-                            $('#alertModal').modal('show');
+
+                            if(!response.filesystem){
+                                $('#alertModal').find('.modal-header').addClass('bg-danger');
+                                $('#alertModalLabel').html('Alert');
+                                $('#alertModal').find('.modal-body').append('<p class="text-red"> - File system host is not set for this store. Please set it before create listing.</p>')
+
+                                $('#alertModal').modal('show');
+                            }
+
+
                         }
                     },
                     error: function (xhr) {
-                        /!*if (xhr.responseJSON?.error) {
+                        if (xhr.responseJSON?.error) {
                             $('#responseMessage').html('<p style="color:red;">' + xhr.responseJSON.error.image[0] + '</p>');
-                        }*!/
+                        }
                     },
                     complete: function () {
                         $("#ajax-preloader").hide();
                     }
                 });
-            });*/
+            });
 
             $(document).on('click', '#searchBtn', function() {
                 if($('#listing_store').val() == ''){

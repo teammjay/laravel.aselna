@@ -213,7 +213,7 @@ class TemuService implements MarketplaceServiceInterface
 
             if (empty($specIdList)) {
                 $userInputParentSpecList = $template['result']['userInputParentSpecList'];
-                 foreach ($userInputParentSpecList as $spec) {
+                foreach ($userInputParentSpecList as $spec) {
                     switch ($spec['parentSpecName']) {
                         case 'Color':
                             if (isset($productColor)) {
@@ -235,9 +235,9 @@ class TemuService implements MarketplaceServiceInterface
                         default:
                             break;
                     }
-                     if (count($specIdList) >= 1) {
-                         break;
-                     }
+                    if (count($specIdList) >= 1) {
+                        break;
+                    }
                 }
             }
             Log::info('Spec ID List :: ' . json_encode($specIdList));
@@ -527,9 +527,9 @@ class TemuService implements MarketplaceServiceInterface
                 $last_order_update_date = $order_synchronization->last_order_update_date ?? null;
                 foreach ($orders['result']['pageItems'] as $porder) {
                     $parentOrder = $porder['parentOrderMap'];
-                    $presentOrder = Order::where('order_id',$parentOrder['parentOrderSn'])->first();
+                    $presentOrder = Order::where('order_id', $parentOrder['parentOrderSn'])->first();
                     $shippingInfo = $temuAuthService->getShippingInfo($parentOrder['parentOrderSn']);
-                    if (isset($shippingInfo) && isset($shippingInfo['result'])){
+                    if (isset($shippingInfo) && isset($shippingInfo['result'])) {
                         $porder['shippingInfo'] = $shippingInfo['result'];
                     }
 
@@ -576,25 +576,61 @@ class TemuService implements MarketplaceServiceInterface
         }
     }
 
-    public function createShipment($mainOrderOperation, $orderOperation, $store){
-
-        try{
-
+    public function createShipment($mainOrderOperation, $orderOperation, $store)
+    {
+        try {
             $temuAuthService = new TemuAuthService();
+            $warehouseDetails = $temuAuthService->getWarehouseInfo();
+            $orderId = $orderOperation->order->order_id;
+            $trackingNumber = $mainOrderOperation->tracking_number;
+            $orderInfo = $temuAuthService->getOrderInfo($orderId);
+            Log::info('WareHouse List' . json_encode($warehouseDetails));
+            if (isset($warehouseDetails) && count($warehouseDetails['result']['warehouseList']) > 0) {
+                $warehouseDetail = $warehouseDetails['result']['warehouseList'][0];
+                $carrierDetails = $temuAuthService->getLogisticsInfo($warehouseDetail['regionId1']);
+                Log::info('Selected Carrier' . json_encode($carrierDetails));
 
-            $carrierDetails = $temuAuthService->getCarrierInfo('US');
+                if (isset($carrierDetails['result'])) {
+                    $result = $carrierDetails['result'];
+                    $logisticsServiceProviderId = null;
+                    foreach ($result as $logistic) {
+                        if ($logistic['logisticsBrandName'] == 'USPS') {
+                            $logisticsServiceProviderId = $logistic['logisticsServiceProviderId'];
+                        }
+                    }
+                    if ($logisticsServiceProviderId == null) {
+                        return 'No Logistic Came';
+                    }
 
-            if(isset($carrierDetails['result'])){
-                $result = $carrierDetails['result'];
-                $logisticsServiceProviderId = $result['logisticsServiceProviderId'];
-                $logisticsServiceProviderName = $result['logisticsServiceProviderName'];
-                $logisticsBrandName = $result['logisticsBrandName'];
+                    $data = [
+                        'sendType' => 0,
+                        'sendRequestList' => [
+                            'carrierId' => $logisticsServiceProviderId,
+                            'trackingNumber' => $trackingNumber,
+                            'selfShippingWarehouseId' => $warehouseDetail['warehouseId'],
+                            'orderSendInfoList' => []
+                        ]
+                    ];
+
+                    $orderItems = [];
+                    foreach ($mainOrderOperation->order->orderItem as $item) {
+                        $orderItems[] = [
+                            'parentOrderSn' => $orderId,
+                            'orderSn' => $item->store_sku,
+                            'quantity' => $item->quantity
+                        ];
+                    }
+                    $data['sendRequestList']['orderSendInfoList'] = $orderItems;
+
+                    Log::info("Request For Shipment" . json_encode($data));
+
+//                    $temuAuthService->callOrderShipment($data);
+                }
             }
 
-        }catch (\Exception $e){
+        } catch (\Exception $e) {
             Log::info('Temu shipment error : ' . $e->getMessage());
         }
 
     }
-
 }

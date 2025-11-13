@@ -384,6 +384,51 @@ class AmazonAuthService
         return json_decode($response->getBody(), true);
     }
 
+    public function fetchListingItems($userIdentifier, $skus)
+    {
+        $marketPlaceID = $this->getMarketplaceIDs();
+        $accessToken = $this->getAccessToken();
+        Log::info('Access Token Created ' . $accessToken);
+        $pageToken = null;
+        $items = [];
+        try {
+            do {
+                $response = $this->client->get(
+                    '/listings/2021-08-01/items/' . $userIdentifier,
+                    [
+                        'headers' => [
+                            'x-amz-access-token' => "{$accessToken}",
+                            'Content-Type' => 'application/json',
+                        ],
+                        'query' => [
+                            'marketplaceIds' => implode(',', $marketPlaceID),
+                            //'includedData' => 'issues,attributes,summaries,offers,fulfillmentAvailability',
+                            'identifiersType' => 'SKU',
+                            'identifiers' => $skus,
+                            'includedData' => 'summaries',
+                            'sortBy' => 'lastUpdatedDate',
+                            'sortOrder' => 'DESC',
+                            'pageToken' => $pageToken,
+
+                        ]
+                    ]
+                );
+
+                $result = json_decode($response->getBody(), true);
+                if(isset($result['items'])){
+                    $items = array_merge($items, $result['items'] ?? []);
+                    $pageToken = $result['pagination']['nextToken'] ?? null;
+                }
+            }while ($pageToken);
+
+            return $items;
+
+        }catch (ApiException $e) {
+            Log::error("Amazon fetchAllListings failed: " . $e->getMessage());
+            return [];
+        }
+    }
+
     public function getOrderInfo($orderId)
     {
         $accessToken = $this->getAccessToken();
