@@ -599,7 +599,7 @@ class TemuService implements MarketplaceServiceInterface
                         }
                     }
                     if ($logisticsServiceProviderId == null) {
-                        return 'No Logistic Came';
+                        return false;
                     }
 
                     $data = [
@@ -624,13 +624,16 @@ class TemuService implements MarketplaceServiceInterface
 
                     Log::info("Request For Shipment" . json_encode($data));
 
-//                    $temuAuthService->callOrderShipment($data);
+                    $temuAuthService->callOrderShipment($data);
+                    return true;
                 }
             }
 
+            return  false;
         } catch (\Exception $e) {
             Log::info('Temu shipment error : ' . $e->getMessage());
         }
 
+        return false;
     }
 }
