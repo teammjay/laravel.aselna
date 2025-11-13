@@ -431,10 +431,10 @@
             $('#total_selected').html('( <b>'+totalCnt+'</b> selected )');
 
             if(ele.data('status') > 1){
-                $('#cancel_selected').addClass('hide');
+                //$('#cancel_selected').addClass('hide');
                 $('#approved').removeClass('hide');
             }else{
-                $('#cancel_selected').removeClass('hide');
+                //$('#cancel_selected').removeClass('hide');
                 $('#approved').addClass('hide');
             }
 
@@ -465,10 +465,10 @@
             $('#total_selected').html('( <b>'+totalCnt+'</b> selected )');
 
             if(ele.data('status') > 1){
-                $('#cancel_selected').addClass('hide');
+                //$('#cancel_selected').addClass('hide');
                 $('#approved').removeClass('hide');
             }else{
-                $('#cancel_selected').removeClass('hide');
+                //$('#cancel_selected').removeClass('hide');
                 $('#approved').addClass('hide');
             }
         });
@@ -570,7 +570,7 @@
                     success: function (response) {
                         // If success, remove the user row from the table
                         if (response.success) {
-                            $('#cancel_selected').removeClass('hide');
+                            //$('#cancel_selected').removeClass('hide');
                             $('#approved').addClass('hide');
                             loadDatatables();
                         }
