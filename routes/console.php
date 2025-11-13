@@ -40,6 +40,7 @@ Schedule::job(new FetchWalmartOrdersJob())->everyThirtyMinutes();
 Schedule::job(new FetchEbayOrders())->everyThirtyMinutes();
 Schedule::job(new FetchShopifyOrders())->everyThirtyMinutes();
 Schedule::job(new SyncAllOrderStatusJob())->everyThirtyMinutes();
+Schedule::job(new FetchWalmartOrdersJob())->everyThirtyMinutes();
 
 // I want to run this at every 45 Minute of the hour
 Schedule::job(new SendNotificationEmailSyncFailJob(2))->cron('12 * * * *');
