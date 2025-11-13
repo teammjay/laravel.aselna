@@ -578,7 +578,6 @@ class TemuService implements MarketplaceServiceInterface
 
     public function createShipment($mainOrderOperation, $orderOperation, $store)
     {
-
         try {
             $temuAuthService = new TemuAuthService();
             $warehouseDetails = $temuAuthService->getWarehouseInfo();
@@ -586,17 +585,22 @@ class TemuService implements MarketplaceServiceInterface
             $trackingNumber = $mainOrderOperation->tracking_number;
             $orderInfo = $temuAuthService->getOrderInfo($orderId);
             Log::info('WareHouse List' . json_encode($warehouseDetails));
-            if (isset($warehouseDetails) && count($warehouseDetails['result']) > 0) {
-                $warehouseDetail = $warehouseDetails['result'][0];
-                Log::info('Selected Warehouse' . $warehouseDetail);
-                $carrierDetails = $temuAuthService->getCarrierInfo($warehouseDetail['regionId1']);
-
+            if (isset($warehouseDetails) && count($warehouseDetails['result']['warehouseList']) > 0) {
+                $warehouseDetail = $warehouseDetails['result']['warehouseList'][0];
+                $carrierDetails = $temuAuthService->getLogisticsInfo($warehouseDetail['regionId1']);
+                Log::info('Selected Carrier' . json_encode($carrierDetails));
 
                 if (isset($carrierDetails['result'])) {
                     $result = $carrierDetails['result'];
-                    $logisticsServiceProviderId = $result['logisticsServiceProviderId'];
-                    $logisticsServiceProviderName = $result['logisticsServiceProviderName'];
-                    $logisticsBrandName = $result['logisticsBrandName'];
+                    $logisticsServiceProviderId = null;
+                    foreach ($result as $logistic) {
+                        if ($logistic['logisticsBrandName'] == 'USPS') {
+                            $logisticsServiceProviderId = $logistic['logisticsServiceProviderId'];
+                        }
+                    }
+                    if ($logisticsServiceProviderId == null) {
+                        return 'No Logistic Came';
+                    }
 
                     $data = [
                         'sendType' => 0,
@@ -629,5 +633,4 @@ class TemuService implements MarketplaceServiceInterface
         }
 
     }
-
 }
