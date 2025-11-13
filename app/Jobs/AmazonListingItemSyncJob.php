@@ -39,7 +39,7 @@ class AmazonListingItemSyncJob implements ShouldQueue
     {
         Log::info('AmazonListingItemSyncJob started');
         $this->updateTrackingRecord(['tags' => 'Amazon ListingItem']);
-        $amazon_store_ids = Store::where('id','c476797e-9682-cc87-c841-5ecc63b9b002')->where('store_type_id', function ($subquery) {
+        $amazon_store_ids = Store::where('store_type_id', function ($subquery) {
             return $subquery->select('id')
                 ->from('store_type')
                 ->where('code', 'amazon');
