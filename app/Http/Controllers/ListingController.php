@@ -3842,18 +3842,18 @@ class ListingController extends Controller
     {
 
         $store_id = $request->input('store_id');
-
         if ($store_id) {
-
             $upc_count = UPCCodes::where('store', $store_id)->where('is_used', 0)->count();
+            $storeDetail = Store::findOrFail($store_id);
 
             return response()->json([
                 'success' => true,
-                'upc_cnt' => $upc_count
+                'upc_cnt' => $upc_count,
+                'filesystem' => $storeDetail->file_system_id,
             ]);
         }
         return response()->json([
-            'error' => true,
+            'success' => false,
             'message' => 'Something went wrong! Please try again!'
         ]);
     }
