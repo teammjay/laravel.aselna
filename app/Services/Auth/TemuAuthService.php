@@ -469,4 +469,33 @@ class TemuAuthService
             return $e->getMessage();
         }
     }
+
+    public function getWarehouseInfo()
+    {
+        $client = new Client();
+        $headers = [
+            'content-type' => 'application/json',
+        ];
+
+        $categoryType = 'bg.logistics.warehouse.list.get';
+        $timestamp = time();
+
+        $params = [
+            'type' => $categoryType,
+            'app_key' => $this->appKey,
+            'timestamp' => $timestamp,
+            'data_type' => 'JSON',
+            'access_token' => $this->accessToken,
+        ];
+
+        $params['sign'] = $this->generateSign($params, $this->appSecret);
+
+        Log::info('Request Params: ' . json_encode($params));
+
+        $request = new Request('POST', $this->endpoint, $headers, json_encode($params));
+
+        $res = $client->sendAsync($request)->wait();
+
+        return json_decode($res->getBody(), true);
+    }
 }
