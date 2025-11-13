@@ -1185,6 +1185,8 @@
                                 $('#alertModal').find('.modal-header').addClass('bg-danger');
                                 $('#alertModalLabel').html('Alert');
                                 $('#alertModal').find('.modal-body').html(' - Upc code not available for selected store. Please generate upc code first!');
+
+                                $('#alertModal').modal('show');
                             }else {
                                 /*$('#alertModal').find('.modal-header').addClass('bg-info');
                                 $('#alertModalLabel').html('Information');
@@ -1195,9 +1197,11 @@
                                 $('#alertModal').find('.modal-header').addClass('bg-danger');
                                 $('#alertModalLabel').html('Alert');
                                 $('#alertModal').find('.modal-body').append('<p class="text-red"> - File system host is not set for this store. Please set it before create listing.</p>')
+
+                                $('#alertModal').modal('show');
                             }
 
-                            $('#alertModal').modal('show');
+                           
                         }
                     },
                     error: function (xhr) {
