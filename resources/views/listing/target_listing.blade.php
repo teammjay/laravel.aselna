@@ -4,7 +4,11 @@
             @foreach($product as $key=>$pro)
                 @if(isset($pro['product_id']))
                     <tr class="listingRow listingproduct-{{ $pro['product_id'] }}" data-proid="{{ $pro['product_id'] }}" data-key="{{ $key }}">
-                        <td></td>
+                        <td>
+                            @if(isset($pro['pimage']) && $pro['pimage'] !='')
+                                <img src="{{ $pro['pimage'] }}" alt="{{ $pro['pimage'] }}" width="70" height="70">
+                            @endif
+                        </td>
                         <td>
                             {{--<input type="hidden" name="generate_type[]" value="{{ $pro['generate_type'] }}">--}}
                             <input type="hidden" name="final_store_product_id[]" value="{{ $pro['store_product_id'] }}">

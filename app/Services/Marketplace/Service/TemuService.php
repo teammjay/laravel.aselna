@@ -575,4 +575,26 @@ class TemuService implements MarketplaceServiceInterface
             Log::info('Ebay order error : ' . $e->getMessage());
         }
     }
+
+    public function createShipment($mainOrderOperation, $orderOperation, $store){
+
+        try{
+
+            $temuAuthService = new TemuAuthService();
+
+            $carrierDetails = $temuAuthService->getCarrierInfo('US');
+
+            if(isset($carrierDetails['result'])){
+                $result = $carrierDetails['result'];
+                $logisticsServiceProviderId = $result['logisticsServiceProviderId'];
+                $logisticsServiceProviderName = $result['logisticsServiceProviderName'];
+                $logisticsBrandName = $result['logisticsBrandName'];
+            }
+
+        }catch (\Exception $e){
+            Log::info('Temu shipment error : ' . $e->getMessage());
+        }
+
+    }
+
 }

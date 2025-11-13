@@ -430,11 +430,11 @@
             let totalCnt = $('input[name="shipment_id[]"]:checked').length;
             $('#total_selected').html('( <b>'+totalCnt+'</b> selected )');
 
-            if(ele.data('status') == 1){
-                $('#cancel_selected').addClass('hide');
+            if(ele.data('status') > 1){
+                //$('#cancel_selected').addClass('hide');
                 $('#approved').removeClass('hide');
             }else{
-                $('#cancel_selected').removeClass('hide');
+                //$('#cancel_selected').removeClass('hide');
                 $('#approved').addClass('hide');
             }
 
@@ -464,11 +464,11 @@
             let totalCnt = $('input[name="shipment_id[]"]:checked').length;
             $('#total_selected').html('( <b>'+totalCnt+'</b> selected )');
 
-            if(ele.data('status') == 1){
-                $('#cancel_selected').addClass('hide');
+            if(ele.data('status') > 1){
+                //$('#cancel_selected').addClass('hide');
                 $('#approved').removeClass('hide');
             }else{
-                $('#cancel_selected').removeClass('hide');
+                //$('#cancel_selected').removeClass('hide');
                 $('#approved').addClass('hide');
             }
         });
@@ -554,19 +554,23 @@
         });
 
         $(document).on('click','#approved',function () {
-            var shipment_id = $('input[name="shipment_id[]"]:checked').val();
+            var ele = $('input[name="shipment_id[]"]:checked');
+            var shipment_id = ele.val();
+            var status = ele.data('status');
+
             if(shipment_id != '' && shipment_id != null){
                 $.ajax({
                     url: "{{ route('shipment.approveshipment') }}",
                     type: 'POST',
                     data: {
                         shipment_id: shipment_id,
+                        status: status,
                         "_token": '{{ csrf_token() }}'
                     },
                     success: function (response) {
                         // If success, remove the user row from the table
                         if (response.success) {
-                            $('#cancel_selected').removeClass('hide');
+                            //$('#cancel_selected').removeClass('hide');
                             $('#approved').addClass('hide');
                             loadDatatables();
                         }
