@@ -319,7 +319,12 @@
                 });
 
                 loadDatatables();
+            }else{
+                loadDatatables();
             }
+
+            
+
         });
 
         function loadDatatables() {
