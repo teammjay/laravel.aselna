@@ -42,7 +42,7 @@ class WalmartListingItemSyncJob implements ShouldQueue
             return $subquery->select('id')
                 ->from('store_type')
                 ->where('code', 'walmart');
-        })->pluck('id');
+        })->where('store_status','<>',0)->pluck('id');
         Log::info('Walmart store ids: ' . json_encode($walmart_store_ids));
 
         $this->updateTrackingRecord(['tags' => 'Walmart']);

@@ -406,6 +406,7 @@ class AmazonAuthService
                             'identifiersType' => 'SKU',
                             'identifiers' => $skus,
                             'includedData' => 'summaries',
+                            'createdAfter' => now()->subMonth()->toIso8601String(),
                             'sortBy' => 'lastUpdatedDate',
                             'sortOrder' => 'DESC',
                             'pageToken' => $pageToken,
@@ -415,6 +416,9 @@ class AmazonAuthService
                 );
 
                 $result = json_decode($response->getBody(), true);
+
+                Log::info('Amazon Listing Items Result: ' . json_encode($result));
+
                 if(isset($result['items'])){
                     $items = array_merge($items, $result['items'] ?? []);
                     $pageToken = $result['pagination']['nextToken'] ?? null;
@@ -423,7 +427,7 @@ class AmazonAuthService
 
             return $items;
 
-        }catch (ApiException $e) {
+        }catch (Exception $e) {
             Log::error("Amazon fetchAllListings failed: " . $e->getMessage());
             return [];
         }
