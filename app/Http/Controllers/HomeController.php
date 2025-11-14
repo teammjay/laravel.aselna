@@ -79,8 +79,6 @@ class HomeController extends Controller
 
     public function testfunction(){
 
-        \App\Jobs\AmazonListingItemSyncJob::dispatch();
-        die;
 
         /*$shopifyService = new ShopifyAuthService('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', 'https://accessorychoice.myshopify.com');
         $orderDetail = $shopifyService->getOrderDetail('6108743270539');

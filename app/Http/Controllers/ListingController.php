@@ -1796,10 +1796,88 @@ class ListingController extends Controller
                     $numbers = [];
                     $suffixes = [];
 
+                    if ($base == 'iPad') {
+
+                        $cleanList = [];
+
+                        // Normalize suffix list
+                        foreach ($suffixList as $s) {
+
+                            preg_match_all('/\([^()]+\)/', $s, $parenMatches);
+                            $parenBlocks = $parenMatches[0] ?? [];
+
+                            $clean = trim(str_replace($parenBlocks, " ", $s));
+                            preg_match_all('/[A-Za-z0-9\."]+/', $clean, $tokens);
+
+                            $tokens = $tokens[0];
+                            $cleanModel = implode(" ", $tokens);
+
+                            foreach ($parenBlocks as $pb) {
+                                $cleanModel .= " $pb";
+                            }
+
+                            $cleanList[] = trim($cleanModel);
+                        }
+
+                        $first = $cleanList[0];
+
+                        preg_match('/^(iPad(?:\s+[A-Za-z0-9]+)*)/i', $first, $pm);
+                        $seriesPrefix = trim($pm[1] ?? "iPad");
+
+                        $firstBody = trim(preg_replace(
+                            '/^' . preg_quote($seriesPrefix, '/') . '\s*/i',
+                            '',
+                            $first
+                        ));
+
+                        preg_match('/^[0-9\."]+/', $firstBody, $sz);
+                        $firstSize = $sz[0] ?? "";
+
+                        preg_match('/\(.+\)/', $firstBody, $gm);
+                        $firstGen = $gm[0] ?? "";
+
+                        $finalParts = [];
+                        $finalParts[] = $firstBody; // full first entry
+
+                        foreach (array_slice($cleanList, 1) as $cm) {
+
+                            $m = trim(preg_replace(
+                                '/^' . preg_quote($seriesPrefix, '/') . '\s*/i',
+                                '',
+                                $cm
+                            ));
+
+                            preg_match('/^[0-9\."]+/', $m, $sz2);
+                            $size = $sz2[0] ?? "";
+
+                            preg_match('/\(.+\)/', $m, $gm2);
+                            $gen = $gm2[0] ?? "";
+
+                            if ($size && $size === $firstSize) {
+                                if (count($finalParts) >= 2) {
+                                    $m = trim(substr($m, strlen($size)));
+                                }
+                            }
+
+                            $m = trim(preg_replace('/\s+/', ' ', $m));
+                            $finalParts[] = $m;
+                        }
+
+                        $final = $seriesPrefix . " " . implode($device_seperator, $finalParts);
+
+                        $compressedDevices[$brand] = $final;
+                        $modelSeries[$brand] = $final;
+
+                        continue;
+                    }
+
+
                     foreach ($suffixList as $s) {
                         /*if (preg_match('/([0-9]+)/', $s, $numMatch)) {
                             $numbers[] = $numMatch[1];
                         }*/
+
+
                         if (preg_match('/\b([A-Z]*\d+(?:\.\d+)?(?:\s*\(\d{4}\s*\d*(?:st|nd|rd|th)?\s*Gen\))?[A-Z]*|[A-Z]{2,})\b/i', $s, $numMatch)) {
                             $numbers[] = $numMatch[1];
                         }
@@ -1864,50 +1942,117 @@ class ListingController extends Controller
 
             $prefix = implode(' ', $prefixParts);
 
+            if (stripos($prefix, 'Galaxy Tab') === 0) {
+
+                // Remove prefix and normalize
+                $cleanModels = [];
+                foreach ($models as $m) {
+                    $cleanModels[] = trim(preg_replace('/^' . preg_quote($prefix, '/') . '\s*/i', '', $m));
+                }
+
+                // Grouping by series
+                $seriesGroups = [];
+                foreach ($cleanModels as $cm) {
+
+                    // Detect "S10", "S9", "S6", etc
+                    if (preg_match('/\bS\d{1,2}\b/i', $cm, $match)) {
+                        $series = strtoupper($match[0]);
+                    } else {
+                        $series = 'OTHER';
+                    }
+
+                    $seriesGroups[$series][] = $cm;
+                }
+
+                // Build final output list
+                $finalParts = [];
+
+                foreach ($seriesGroups as $series => $items) {
+
+                    $first = array_shift($items);
+                    $finalParts[] = $first;
+
+                    $firstTokens = $this->tokenize($first);
+
+                    foreach ($items as $it) {
+
+                        $clean = preg_replace('/^' . preg_quote($series, '/') . '\s*/i', '', $it);
+
+                        $parts = $this->tokenize($clean);
+                        $filtered = [];
+
+                        foreach ($parts as $p) {
+
+                            if ($p['raw'] === '') continue;
+
+                            $dup = false;
+                            foreach ($firstTokens as $f) {
+                                if ($f['compare'] !== '' && $f['compare'] === $p['compare']) {
+                                    $dup = true;
+                                    break;
+                                }
+                            }
+
+                            if (!$dup) {
+                                $filtered[] = $p['raw']; // keep full original raw text
+                            }
+                        }
+
+                        $finalParts[] = trim(implode(' ', $filtered));
+                    }
+                }
+
+                $finalParts = array_values(array_unique(array_filter($finalParts)));
+
+                $finalModel = $prefix . ' ' . implode($device_seperator, $finalParts);
+
+                $compressedDevices[$brand] = "$brand $finalModel";
+                $modelSeries[$brand] = $finalModel;
+
+                continue;
+            }
+
             $numbers = [];
             $suffixes = [];
             foreach ($models as $m) {
                 $clean = trim(preg_replace('/^' . preg_quote($prefix, '/') . '\s*/i', '', $m));
+                $tokens = preg_split('/[\s\-\/]+/', $clean);
 
-                /*if (preg_match('/([0-9]+)/', $clean, $numMatch)) {
-                    $numbers[] = $numMatch[1];
-                }*/
-
-                /*if (preg_match('/\b([A-Z]*\d+[A-Z]*|[A-Z]{2,})\b/i', $clean, $numMatch)) {
-                    $numbers[] = strtoupper($numMatch[1]);
-                }
-
-                if (preg_match('/[0-9]+\s*([A-Za-z+ ]+)/', $clean, $sufMatch)) {
-                    $suffixes[] = trim($sufMatch[1]);
-                }*/
-
-                /*$tokens = preg_split('/[\s\-\/]+/', $clean);
                 foreach ($tokens as $token) {
-                    $token = trim($token);
-                    if ($token === '') continue;
 
-                    if (preg_match('/^[A-Z]*\d+[A-Z]*$/', $token)) {
-                        if (preg_match('/^\d/', $token)) {
-                            $suffixes[] = $token;
-                        } else {
-                            $numbers[] = $token;
+                    $original = trim($token);
+                    if ($original === '') continue;
+
+                    //echo $original.'<br>';
+
+                    // model code
+                    if (preg_match('/^[A-Za-z]+\d+$/', $original)) {
+                        $numbers[] = $original;
+                        continue;
+                    }
+
+                    // suffix
+                    if (preg_match('/^[A-Za-z]+$/', $original)) {
+                        // Tab is not a suffix
+                        if (strcasecmp($original, 'Tab') !== 0) {
+                            $suffixes[] = $original;
                         }
+                        continue;
                     }
-                    else {
-                        $suffixes[] = $token;
-                    }
-                }*/
 
-                preg_match_all('/[A-Z0-9]+/i', $clean, $tokens);
-                $tokens = array_map(null, $tokens[0]);
+                    // screen size
+                    if (preg_match('/^\d+(\.\d+)?$/', $original)) {
+                        continue;
+                    }
 
-                foreach ($tokens as $token) {
-                    if (preg_match('/\d/', $token)) {
-                        $numbers[] = $token;
+                    // year
+                    if (preg_match('/^(19|20)\d{2}$/', $original)) {
+                        $suffixes[] = $original;
+                        continue;
                     }
-                    elseif (strlen($token) > 1) {
-                        $suffixes[] = $token;
-                    }
+
+                    // others
+                    $suffixes[] = $original;
                 }
             }
 
@@ -1932,19 +2077,6 @@ class ListingController extends Controller
             $orderedNumbers = $pureModels;//array_merge($pureModels, $networkSuffixes);
             $orderedSuffixes = array_unique(array_merge($suffixes, $networkSuffixes));
 
-            /*$networkKeywords = ['5G', '4G', 'LTE'];
-            foreach ($networkKeywords as $net) {
-                if (in_array($net, array_map(null, $orderedSuffixes))) {
-                    $orderedNumbers = array_filter($orderedNumbers, function ($n) use ($net) {
-                        return $n !== $net;
-                    });
-                }
-            }*/
-
-            /*echo '<pre>';
-            print_r($orderedNumbers);
-            print_r($orderedSuffixes);
-            echo '</pre>';die;*/
 
             $numPart = $orderedNumbers ? implode($device_seperator, $orderedNumbers) : '';
             $sufPart = $orderedSuffixes ? $device_seperator . implode($device_seperator, $orderedSuffixes) : '';
@@ -2224,10 +2356,86 @@ class ListingController extends Controller
                     $numbers = [];
                     $suffixes = [];
 
+                    if ($base == 'iPad') {
+
+                        $cleanList = [];
+
+                        // Normalize suffix list
+                        foreach ($suffixList as $s) {
+
+                            preg_match_all('/\([^()]+\)/', $s, $parenMatches);
+                            $parenBlocks = $parenMatches[0] ?? [];
+
+                            $clean = trim(str_replace($parenBlocks, " ", $s));
+                            preg_match_all('/[A-Za-z0-9\."]+/', $clean, $tokens);
+
+                            $tokens = $tokens[0];
+                            $cleanModel = implode(" ", $tokens);
+
+                            foreach ($parenBlocks as $pb) {
+                                $cleanModel .= " $pb";
+                            }
+
+                            $cleanList[] = trim($cleanModel);
+                        }
+
+                        $first = $cleanList[0];
+
+                        preg_match('/^(iPad(?:\s+[A-Za-z0-9]+)*)/i', $first, $pm);
+                        $seriesPrefix = trim($pm[1] ?? "iPad");
+
+                        $firstBody = trim(preg_replace(
+                            '/^' . preg_quote($seriesPrefix, '/') . '\s*/i',
+                            '',
+                            $first
+                        ));
+
+                        preg_match('/^[0-9\."]+/', $firstBody, $sz);
+                        $firstSize = $sz[0] ?? "";
+
+                        preg_match('/\(.+\)/', $firstBody, $gm);
+                        $firstGen = $gm[0] ?? "";
+
+                        $finalParts = [];
+                        $finalParts[] = $firstBody; // full first entry
+
+                        foreach (array_slice($cleanList, 1) as $cm) {
+
+                            $m = trim(preg_replace(
+                                '/^' . preg_quote($seriesPrefix, '/') . '\s*/i',
+                                '',
+                                $cm
+                            ));
+
+                            preg_match('/^[0-9\."]+/', $m, $sz2);
+                            $size = $sz2[0] ?? "";
+
+                            preg_match('/\(.+\)/', $m, $gm2);
+                            $gen = $gm2[0] ?? "";
+
+                            if ($size && $size === $firstSize) {
+                                if (count($finalParts) >= 2) {
+                                    $m = trim(substr($m, strlen($size)));
+                                }
+                            }
+
+                            $m = trim(preg_replace('/\s+/', ' ', $m));
+                            $finalParts[] = $m;
+                        }
+
+                        $final = $seriesPrefix . " " . implode($deviceSeparator, $finalParts);
+
+                        $compressedDevices[] = $final;
+                        $modelSeries[] = $final;
+
+                        continue;
+                    }
+
                     foreach ($suffixList as $s) {
 //                        if (preg_match('/([0-9]+)/', $s, $numMatch)) {
 //                            $numbers[] = $numMatch[1];
 //                        }
+
 
                         if (preg_match('/\b([A-Z]*\d+(?:\.\d+)?(?:\s*\(\d{4}\s*\d*(?:st|nd|rd|th)?\s*Gen\))?[A-Z]*|[A-Z]{2,})\b/i', $s, $numMatch)) {
                             $numbers[] = $numMatch[1];
@@ -2300,12 +2508,80 @@ class ListingController extends Controller
 
             $prefix = implode(' ', $prefixParts);
 
+            if (stripos($prefix, 'Galaxy Tab') === 0) {
+
+                // Remove prefix and normalize
+                $cleanModels = [];
+                foreach ($models as $m) {
+                    $cleanModels[] = trim(preg_replace('/^' . preg_quote($prefix, '/') . '\s*/i', '', $m));
+                }
+
+                // Grouping by series
+                $seriesGroups = [];
+                foreach ($cleanModels as $cm) {
+
+                    // Detect "S10", "S9", "S6", etc
+                    if (preg_match('/\bS\d{1,2}\b/i', $cm, $match)) {
+                        $series = strtoupper($match[0]);
+                    } else {
+                        $series = 'OTHER';
+                    }
+
+                    $seriesGroups[$series][] = $cm;
+                }
+
+                // Build final output list
+                $finalParts = [];
+
+                foreach ($seriesGroups as $series => $items) {
+
+                    $first = array_shift($items);
+                    $finalParts[] = $first;
+
+                    $firstTokens = $this->tokenize($first);
+
+                    foreach ($items as $it) {
+
+                        $clean = preg_replace('/^' . preg_quote($series, '/') . '\s*/i', '', $it);
+                        $parts = $this->tokenize($clean);
+                        $filtered = [];
+
+                        foreach ($parts as $p) {
+
+                            if ($p['raw'] === '') continue;
+
+                            $dup = false;
+                            foreach ($firstTokens as $f) {
+                                if ($f['compare'] !== '' && $f['compare'] === $p['compare']) {
+                                    $dup = true;
+                                    break;
+                                }
+                            }
+
+                            if (!$dup) {
+                                $filtered[] = $p['raw']; // keep full original raw text
+                            }
+                        }
+
+                        $finalParts[] = trim(implode(' ', $filtered));
+                    }
+                }
+
+                $finalParts = array_values(array_unique(array_filter($finalParts)));
+                $finalModel = $prefix . ' ' . implode($deviceSeparator, $finalParts);
+
+                $compressedDevices[] = "$brand $finalModel";
+                $modelSeries[] = $finalModel;
+
+                continue;
+            }
+
             $numbers = [];
             $suffixes = [];
             foreach ($models as $m) {
                 $clean = trim(preg_replace('/^' . preg_quote($prefix, '/') . '\s*/i', '', $m));
 
-                preg_match_all('/[A-Z0-9]+/i', $clean, $tokens);
+                /*preg_match_all('/[A-Z0-9]+/i', $clean, $tokens);
                 $tokens = array_map(null, $tokens[0]);
 
                 foreach ($tokens as $token) {
@@ -2315,12 +2591,58 @@ class ListingController extends Controller
                     elseif (strlen($token) > 1) {
                         $suffixes[] = $token;
                     }
+                }*/
+
+                //echo $clean.'<br>';
+                $tokens = preg_split('/[\s\-\/]+/', $clean);
+
+                foreach ($tokens as $token) {
+
+                    $original = trim($token);
+                    if ($original === '') continue;
+
+                    //echo $original.'<br>';
+
+                    // model code
+                    if (preg_match('/^[A-Za-z]+\d+$/', $original)) {
+                        $numbers[] = $original;
+                        continue;
+                    }
+
+                    // suffix
+                    if (preg_match('/^[A-Za-z]+$/', $original)) {
+                        // Tab is not a suffix
+                        if (strcasecmp($original, 'Tab') !== 0) {
+                            $suffixes[] = $original;
+                        }
+                        continue;
+                    }
+
+                    // screen size
+                    if (preg_match('/^\d+(\.\d+)?$/', $original)) {
+                        continue;
+                    }
+
+                    // year
+                    if (preg_match('/^(19|20)\d{2}$/', $original)) {
+                        $suffixes[] = $original;
+                        continue;
+                    }
+
+                    // others
+                    $suffixes[] = $original;
                 }
             }
+
 
             $numbers = array_unique(array_filter($numbers));
             sort($numbers, SORT_NATURAL);
             $suffixes = array_unique(array_filter($suffixes));
+
+            /*echo '<pre>';
+            print_r($numbers);
+            print_r($suffixes);
+            echo '</pre>';die;*/
 
             usort($numbers, 'strnatcasecmp');
 
@@ -2363,6 +2685,27 @@ class ListingController extends Controller
 
 
         return array('compressedDevices' => $compressedDevices,'modelSeries' => $modelSeries);
+    }
+
+    private function tokenize($str) {
+        // Split only on spaces
+        $raw = preg_split('/\s+/', trim($str));
+
+        $tokens = [];
+
+        foreach ($raw as $r) {
+            if ($r === '') continue;
+
+            // "Comparable" version: letters only, for matching
+            $compare = strtolower(preg_replace('/[^a-z]/i', '', $r));
+
+            $tokens[] = [
+                'raw'     => $r,       // preserve full text (14.6", (2024), SM-T800)
+                'compare' => $compare  // simplified token
+            ];
+        }
+
+        return $tokens;
     }
 
 
