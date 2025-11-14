@@ -434,6 +434,37 @@ class TemuAuthService
         return json_decode($res->getBody(), true);
     }
 
+    public function getShipmentInfo($parentOrderSn,$orderSn)
+    {
+        $client = new Client();
+        $headers = [
+            'content-type' => 'application/json',
+        ];
+
+        $categoryType = 'bg.logistics.shipment.v2.get';
+        $timestamp = time();
+
+        $params = [
+            'type' => $categoryType,
+            'app_key' => $this->appKey,
+            'timestamp' => $timestamp,
+            'parentOrderSn' => $parentOrderSn,
+            'orderSn' => $orderSn,
+            'data_type' => 'JSON',
+            'access_token' => $this->accessToken,
+        ];
+
+        $params['sign'] = $this->generateSign($params, $this->appSecret);
+
+        Log::info('Request Params: ' . json_encode($params));
+
+        $request = new Request('POST', $this->endpoint, $headers, json_encode($params));
+
+        $res = $client->sendAsync($request)->wait();
+
+        return json_decode($res->getBody(), true);
+    }
+
     public function getCarrierInfo($regionId = 'US')
     {
         try {

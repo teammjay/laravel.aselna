@@ -583,7 +583,6 @@ class TemuService implements MarketplaceServiceInterface
             $warehouseDetails = $temuAuthService->getWarehouseInfo();
             $orderId = $orderOperation->order->order_id;
             $trackingNumber = $mainOrderOperation->tracking_number;
-            $orderInfo = $temuAuthService->getOrderInfo($orderId);
             Log::info('WareHouse List' . json_encode($warehouseDetails));
             if (isset($warehouseDetails) && count($warehouseDetails['result']['warehouseList']) > 0) {
                 $warehouseDetail = $warehouseDetails['result']['warehouseList'][0];
