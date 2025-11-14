@@ -13,6 +13,6 @@ class TemuAuthServiceTest extends TestCase
         $temuAuthService = new TemuAuthService('https://openapi-b-us.temu.com/openapi/router', 'd3941506bdcfc2aa3c969f340fc3dfeu', '341a86fc634897324e533f1553bde3195a70b51c');
 //        $response = $temuAuthService->getGoodsInfo('602516079113451');
 
-        $temuAuthService->getTemplate('4354');
+        $temuAuthService->getShipmentInfo('PO-211-01284607959671926','211-01284623688311926');
     }
 }

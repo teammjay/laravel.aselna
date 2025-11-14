@@ -404,7 +404,7 @@ class AmazonAuthService
                             'marketplaceIds' => implode(',', $marketPlaceID),
                             //'includedData' => 'issues,attributes,summaries,offers,fulfillmentAvailability',
                             'identifiersType' => 'SKU',
-                            'identifiers' => $skus,
+                            'identifiers' => implode(',',$skus),
                             'includedData' => 'summaries',
                             'createdAfter' => now()->subMonth()->toIso8601String(),
                             'sortBy' => 'lastUpdatedDate',
