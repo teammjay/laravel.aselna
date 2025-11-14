@@ -730,19 +730,19 @@ class OrderUtility
 
                     if (isset($itemDetail)) {
                         $orderItemData = [
-                            'title' => $item['productName'] ?? $item['title'] ?? '',
+                            'title' => $item['originalGoodsName'] ?? $item['title'] ?? '',
                             'order_id' => $order->id,
                             'product_id' => $itemDetail->storeProduct->product->product_id,
                             'client_id' => $itemDetail->client,
+                            'sku' => $productSku,
                             'listing_item_id' => $itemDetail->id,
-                            'sku' => $item['sku'],
-                            'store_sku' => $item['productId'] ?? $item['itemId'] ?? '',
+                            'store_sku' => $item['skuId'] ?? $item['goodsId'] ?? '',
                             'quantity' => $item['quantity'],
                             'id1' => '',
-                            'item_price' => $item['unitPrice']['value'] ?? 0,
-                            'shipping_price' => $item['shippingPrice']['value'] ?? 0,
-                            'item_tax' => $item['tax']['value'] ?? 0,
-                            'shipping_tax' => 0,
+//                            'item_price' => $item['unitPrice']['value'] ?? 0,
+//                            'shipping_price' => $item['shippingPrice']['value'] ?? 0,
+//                            'item_tax' => $item['tax']['value'] ?? 0,
+//                            'shipping_tax' => 0,
                             'shipping_quantity' => $item['quantity'],
                         ];
 
@@ -755,12 +755,13 @@ class OrderUtility
                             $orderOperationItemData = [
                                 'order_item_id' => $order_item->id,
                                 'order_operation_id' => $order_operation_detail->id,
-                                'sku' => $item['sku'],
+                                'sku' => $productSku,
                                 'quantity' => $item['quantity'],
-                                'client_id' => '',
+                                'client_id' => null,
                                 'sync_status' => 6
                             ];
 
+                            Log::info("Order Operation Item Data :: " . json_encode($orderOperationItemData));
                             OrderOperationItem::updateOrCreate([
                                 'order_item_id' => $order_item->id,
                                 'order_operation_id' => $order_operation_detail->id
