@@ -612,9 +612,14 @@ class ListingController extends Controller
             $query->whereIn('products.product_id',$enableProducts);
 
             /*$query->where('store_product.store_id', $request->input('store_id'))->OrWhereNull('store_product.store_id');*/
-            $query->leftJoin('store_product', 'products.product_id', '=', 'store_product.product_id');
-            $query->where('store_product.store_id', $request->input('store_id'));
-            $query->where('store_product.active', 1);
+//            $query->leftJoin('store_product', 'products.product_id', '=', 'store_product.product_id');
+//            $query->where('store_product.store_id', $request->input('store_id'));
+//            $query->where('store_product.active', 1);
+            $query->leftJoin('store_product', function ($join) use ($request) {
+                $join->on('products.product_id', '=', 'store_product.product_id')
+                    ->where('store_product.store_id', $request->input('store_id'))
+                    ->where('store_product.active', 1);
+            });
         }
         // Filter by product code
         if ($request->has('product_code') && $request->product_code != '') {
