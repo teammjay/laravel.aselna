@@ -477,6 +477,7 @@ class CatalogController extends Controller
 //                $prochannel = DB::table('product_channel_detail')->where('store_type_id',$store->store_type_id)->where('product_id',$id)->first();
 //                if((!empty($prochannel) && $prochannel->status)) {
                 $store_details[$key]['store_detail'] = $store;
+                $store_details[$key]['store_product'] = StoreProduct::where('product_id', $id)->where('store_id', $store->id)->first();
                 $storeCategories = StoreTypeCategory::select('store_type_category.*')
                     ->leftJoin('store_type', 'store_type.id', '=', 'store_type_category.store_type_id')
                     ->where('store_type.id', $store->store_type_id)
