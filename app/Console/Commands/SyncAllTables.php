@@ -212,6 +212,7 @@ class SyncAllTables extends Command
 //        ProductImagesSyncJob::dispatch();
 //        FetchEmailMessagesJob::dispatch();
 //        EbayListingItemSyncJob::dispatch();
+        AmazonListingItemSyncJob::dispatch();
 
         $transactionIds = [
 ////            '9400150105798006163885',
