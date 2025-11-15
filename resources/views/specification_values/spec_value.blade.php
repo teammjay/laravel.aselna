@@ -10,7 +10,11 @@
                     {{ $specification_value->storeType->name }}
                 @endif
             </td>
-            <td>{{$specification_value->category}}</td>
+            <td>
+                @if(isset($specification_value->storeTypeCategory->marketplace_code))
+                    {{ $specification_value->storeTypeCategory->marketplace_code }}
+                @endif
+            </td>
             <td>
                 <button type="button" data-id="{{$specification_value->id}}"
                         class="btn btn-danger remove-specification"><i
@@ -23,6 +27,8 @@
         <td>
             <textarea class="form-control" name="field_value[]"></textarea>
         </td>
+        <td></td>
+        <td></td>
         <td>
             <button type="button" class="btn btn-danger remove-specification"><i
                     class="fas fa-fw fa-trash"></i></button>

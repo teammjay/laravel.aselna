@@ -6,6 +6,7 @@ use App\Models\ProductSpecifcationUniqueInfo;
 use App\Models\ProductSpecificationInfo;
 use App\Models\ProductSpecificationValue;
 use App\Models\StoreType;
+use App\Models\StoreTypeCategory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
@@ -72,9 +73,9 @@ class ProductSpecificationValueController extends Controller
         $specification_infos = ProductSpecificationInfo::select('field_name')->distinct()->get();
         //$specification_values = ProductSpecificationValue::where('product_specification_id', $id)->get();
         $storeTypes = StoreType::orderBy('name')->get();
-        $categories = ProductSpecificationValue::select('category')->orderBy('category')->groupBy('category')->get();
+        //$categories = ProductSpecificationValue::select('category')->orderBy('category')->groupBy('category')->get();
 
-        return view('specification_values.add', compact( 'specification_infos', 'specification_info','storeTypes','categories'));
+        return view('specification_values.add', compact( 'specification_infos', 'specification_info','storeTypes'));
     }
 
     /**
@@ -104,8 +105,8 @@ class ProductSpecificationValueController extends Controller
                 ProductSpecificationValue::create([
                     'product_specification_id' => $request->get('field_name'),
                     'field_value' => $value,
-                    'store_type_id' => $request->input('store_type_id') ?? NULL,
-                    'category' => $request->input('category') ?? NULL,
+                    'store_type_id' => $request->get('store_type_id') ?? NULL,
+                    'category' => $request->get('category') ?? NULL,
                     'created_by' => $updated_by,
                     'updated_by' => $updated_by
                 ]);
@@ -141,7 +142,7 @@ class ProductSpecificationValueController extends Controller
     public function getSpecValue(Request $request){
         $id = $request->input('id');
 
-        $query = ProductSpecificationValue::with('storeType')->where('product_specification_id', $id);
+        $query = ProductSpecificationValue::with('storeType','storeTypeCategory')->where('product_specification_id', $id);
         if ($request->has('store_type_id') && $request->input('store_type_id') != '') {
             $query->where('store_type_id', $request->input('store_type_id'));
         }
@@ -152,17 +153,24 @@ class ProductSpecificationValueController extends Controller
 
         $specification_values = $query->get();
 
+        $categories = StoreTypeCategory::where('store_type_id',$request->input('store_type_id'))->orderBy('name')->get();
+        $catoptions = '<option value="">-- Category --</option>';
+        if($categories){
+            foreach($categories as $cat){
+                $catoptions .= '<option value="'.$cat->marketplace_code.'">'.$cat->name.'</option>';
+            }
+        }
+
+        $html = '';
         if($specification_values) {
             $html = view('specification_values.spec_value', compact('specification_values'))->render();
-
-            return response()->json([
-                'success'=> true,
-                'html' => $html,
-            ]);
         }
 
         return response()->json([
-            'success'=> false
+            'success'=> true,
+            'html' => $html,
+            'catoptions' => $catoptions
         ]);
+
     }
 }
