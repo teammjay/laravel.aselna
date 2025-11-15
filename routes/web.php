@@ -582,6 +582,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/specification_values/edit/{id}', 'update')->name('specification_values.update');
         Route::get('/specification_values/delete/{id}', 'destroy')->name('specification_values.delete');
         Route::post('/specification_values/removevalue', 'removeValue')->name('specification_values.removevalue');
+        Route::post('/specification_values/getspecvalue', 'getSpecValue')->name('specification_values.getspecvalue');
     });
 
     Route::controller(PrintersController::class)->group(function () {

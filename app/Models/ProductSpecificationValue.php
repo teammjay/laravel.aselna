@@ -30,4 +30,8 @@ class ProductSpecificationValue extends Model
     {
         return $this->belongsTo(ProductSpecifcationUniqueInfo::class, 'product_specification_id');
     }
+
+    public function storeType(){
+        return $this->belongsTo(StoreType::class,'store_type_id');
+    }
 }
