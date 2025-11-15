@@ -20,11 +20,11 @@ class ProductChannelDetail extends Model
         parent::boot();
 
         static::creating(function ($model) {
-            if (empty($model->product_id)) {
-                $model->product_id = (string)Str::uuid();
+            if (empty($model->id)) {
+                $model->id = (string)Str::uuid();
             }
         });
     }
 
-    protected $fillable = ['id', 'channel_id', 'product_id', 'status', 'created_by', 'updated_by'];
+    protected $fillable = ['id', 'store_type_id', 'product_id', 'status', 'created_by', 'updated_by'];
 }
