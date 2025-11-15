@@ -45,18 +45,31 @@ class FieldUtility
         $compatible_phones = [];
         $index = 0;
         foreach ($itemDetail->devices as $device) {
-            if ($maxCount > 0 && $index >= $maxCount) {
-                break;
-            }
-            $deviceDetail = $device->device;
-            Log::info("Device :: " . json_encode($deviceDetail));
+            $deviceName = $device->device->name;
 
-            $compatible_phones[] = [
-                'language_tag' => 'en_US',
-                'value' => self::getFullDeviceName($deviceDetail),
-            ];
-            $index++;
+            if (strlen($combinedDeviceName . ', ' . $deviceName) > 2000) {
+                if ($count < 3) {
+                    $count++;;
+                    $compatible_phones[] = ['value' => $combinedDeviceName, 'language_tag' => 'en_US'];
+                    $combinedDeviceName = '';
+                } else break;
+            } else {
+                $combinedDeviceName .= ', ' . $deviceName;
+            }
         }
+
+//        foreach ($itemDetail->devices as $device) {
+//            if ($maxCount > 0 && $index >= $maxCount) {
+//                break;
+//            }
+//            $deviceDetail = $device->device;
+//
+//            $compatible_phones[] = [
+//                'language_tag' => 'en_US',
+//                'value' => self::getFullDeviceName($deviceDetail),
+//            ];
+//            $index++;
+//        }
         return $compatible_phones;
     }
 
