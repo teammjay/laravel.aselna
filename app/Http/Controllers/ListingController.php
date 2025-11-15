@@ -706,9 +706,9 @@ class ListingController extends Controller
             $query->whereIn('products.product_type', $all_product_ids);
         }
         //$query->limit(10);
-//        $products = $query->distinct()->get();
+        $products = $query->distinct()->get();
         //dd(DB::getQueryLog());
-        echo $query->toSql();die;
+//        echo $query->toSql();die;
         /*echo '<pre>';
         print_r($products);
         echo '</pre>';die;*/
