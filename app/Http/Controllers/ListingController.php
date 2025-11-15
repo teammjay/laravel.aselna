@@ -614,11 +614,14 @@ class ListingController extends Controller
             /*$query->where('store_product.store_id', $request->input('store_id'))->OrWhereNull('store_product.store_id');*/
 //            $query->leftJoin('store_product', 'products.product_id', '=', 'store_product.product_id');
 //            $query->where('store_product.store_id', $request->input('store_id'));
-//            $query->where('store_product.active', 1);
             $query->leftJoin('store_product', function ($join) use ($request) {
                 $join->on('products.product_id', '=', 'store_product.product_id')
-                    ->where('store_product.store_id', $request->input('store_id'))
-                    ->where('store_product.active', 1);
+                    ->where('store_product.store_id', $request->input('store_id'));
+            });
+
+            $query->where(function ($q) {
+                $q->where('store_product.active', 1)
+                    ->orWhereNull('store_product.id');
             });
         }
         // Filter by product code
@@ -703,9 +706,9 @@ class ListingController extends Controller
             $query->whereIn('products.product_type', $all_product_ids);
         }
         //$query->limit(10);
-        $products = $query->distinct()->get();
+//        $products = $query->distinct()->get();
         //dd(DB::getQueryLog());
-//        echo $query->toSql();die;
+        echo $query->toSql();die;
         /*echo '<pre>';
         print_r($products);
         echo '</pre>';die;*/
