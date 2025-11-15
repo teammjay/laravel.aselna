@@ -2002,7 +2002,7 @@ class ListingController extends Controller
                 foreach ($cleanModels as $cm) {
 
                     // Detect "S10", "S9", "S6", etc
-                    if (preg_match('/\bS\d{1,2}\b/i', $cm, $match)) {
+                    if (preg_match('/\b[A-Za-z]\d{1,2}\b/i', $cm, $match)) {
                         $series = strtoupper($match[0]);
                     } else {
                         $series = 'OTHER';
@@ -2053,7 +2053,7 @@ class ListingController extends Controller
                 if(count($finalParts ?? []) == 1) {
                     $finalModel = $prefix . $device_seperator . implode($device_seperator, $finalParts);
                 }else{
-                    $finalModel = $prefix . ' ' . implode($device_seperator, $finalParts);
+                    $finalModel = $prefix . ' ' . implode(' ', $finalParts);
                 }
 
                 $compressedDevices[$brand] = "$brand $finalModel";
@@ -2563,6 +2563,11 @@ class ListingController extends Controller
 //                        }
                     }
 
+                    /*echo '<pre>';
+                    print_r($numbers);
+                    print_r($suffixes);
+                    echo '</pre>';*/
+
                     $numbers = array_filter($numbers);
                     sort($numbers, SORT_NATURAL);
                     $suffixes = array_unique(array_filter($suffixes));
@@ -2570,8 +2575,10 @@ class ListingController extends Controller
                     if(count($numbers) > 1) {
                         $sufPart = $suffixes ? $deviceSeparator . implode($deviceSeparator, $suffixes) : '';
                     }else{
-                        $sufPart = $suffixes ? ' '.implode($deviceSeparator, $suffixes) : '';
+                        $sufPart = $suffixes ? ' '.implode(' ', $suffixes) : '';
                     }
+
+                    //echo $sufPart;die;
 
                     $numPart = $numbers ? implode($deviceSeparator, array_unique($numbers)) : '';
 
@@ -2619,7 +2626,7 @@ class ListingController extends Controller
                 foreach ($cleanModels as $cm) {
 
                     // Detect "S10", "S9", "S6", etc
-                    if (preg_match('/\bS\d{1,2}\b/i', $cm, $match)) {
+                    if (preg_match('/\b[A-Za-z]\d{1,2}\b/i', $cm, $match)) {
                         $series = strtoupper($match[0]);
                     } else {
                         $series = 'OTHER';
@@ -2668,9 +2675,18 @@ class ListingController extends Controller
                 /*echo '<pre>';
                 print_r($prefix);
                 print_r($finalParts);
-                echo '</pre>';die;*/
+                echo '</pre>';*/
 
-                $finalParts = array_values(array_unique(array_filter($finalParts)));
+                //$finalParts = array_values(array_unique(array_filter($finalParts)));
+
+                $array = array_unique(array_reverse(array_filter($finalParts)));
+                $array = array_reverse($array);
+                $finalParts = array_values($array);
+
+                /*echo '<pre>';
+                print_r($finalParts);
+                echo '<pre>';die;*/
+
                 if(count($finalParts ?? []) == 1) {
                     $finalModel = $prefix . $deviceSeparator . implode($deviceSeparator, $finalParts);
                 }else{

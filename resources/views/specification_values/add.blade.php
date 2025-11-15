@@ -63,11 +63,7 @@
                                     </select>
                                     <select class="form-control w-40" name="category" id="category">
                                         <option value="">-- Category --</option>
-                                        @if(count($categories ?? []) > 0)
-                                            @foreach($categories as $cat)
-                                                <option value="{{ $cat->category }}">{{ ucfirst($cat->category) }}</option>
-                                            @endforeach
-                                        @endif
+
                                     </select>
                                 </div>
 
@@ -167,14 +163,14 @@
             });
 
             $(document).on('change','#store_type_id',function () {
-                getSpecValue();
+                getSpecValue(0);
             });
 
             $(document).on('change','#category',function () {
-                getSpecValue();
+                getSpecValue(1);
             });
 
-            function getSpecValue(){
+            function getSpecValue(catchange){
 
                 $.ajax({
                     type: 'POST',
@@ -192,6 +188,12 @@
                         if(response.success){
                             if(response.html){
                                 $('#field_value tbody').html(response.html);
+                            }else{
+                                $('#field_value tbody').html('');
+                            }
+
+                            if(response.catoptions && catchange == 0){
+                                $('#category').html(response.catoptions);
                             }
                         }
                     },
