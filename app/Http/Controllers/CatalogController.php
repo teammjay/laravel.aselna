@@ -8,6 +8,7 @@ use App\Models\Device;
 use App\Models\Interfaces;
 use App\Models\ListingRequirement;
 use App\Models\Manufacturer;
+use App\Models\ProductChannelDetail;
 use App\Models\ProductColor;
 use App\Models\ProductCondition;
 use App\Models\ProductInterface;
@@ -922,10 +923,18 @@ class CatalogController extends Controller
     {
 
         try {
-            if ($request->has('id') && $request->id == '') {
-                $request['id'] = (string)Str::uuid();
-            }
-            DB::table('product_channel_detail')->upsert($request->all(), ['id'], ['status']);
+            $store_type_id = $request->input('store_type_id');
+            $product_id = $request->input('product_id');
+            $status = $request->input('status');
+            ProductChannelDetail::updateOrCreate([
+                'store_type_id' => $store_type_id,
+                'product_id' => $product_id,
+            ],[
+                'store_type_id' => $store_type_id,
+                'product_id' => $product_id,
+                'status' => $status
+            ]);
+
             return response()->json(['success' => true, 'message' => 'Data saved successfully']);
 
         } catch (QueryException $e) {

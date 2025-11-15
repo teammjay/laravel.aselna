@@ -28,6 +28,7 @@ use App\Models\ListingItemHistory;
 use App\Models\ListingItemLink;
 use App\Models\Manufacturer;
 use App\Models\OrderItem;
+use App\Models\ProductChannelDetail;
 use App\Models\ProductTitleKeyword;
 use App\Models\ProductType;
 use App\Models\Store;
@@ -561,7 +562,9 @@ class ListingController extends Controller
 //        $query->leftJoin('product_type', 'products.product_type', '=', 'product_type.id');
 
         //DB::enableQueryLog();
-        $query = Catalog::with('StoreProduct', 'image', 'productType', 'interfaces.interfaces', 'pinterface.interfaces')->select('products.product_id', 'product_sku', 'product_title', 'product_price', 'product_qty', 'products.created_at', 'product_type', 'product_image_url')->where('products.product_status', 1);
+        $query = Catalog::with('StoreProduct', 'image', 'productType', 'interfaces.interfaces', 'pinterface.interfaces')
+            ->select('products.product_id', 'product_sku', 'product_title', 'product_price', 'product_qty', 'products.created_at', 'product_type', 'product_image_url')
+            ->where('products.product_status', 1);
 
 
         // Handle Only Active Products (Remove the bundled products)
@@ -602,8 +605,16 @@ class ListingController extends Controller
 
         // Filter by product store
         if ($request->has('store_id') && $request->input('store_id') != '') {
+            $store = Store::where('id',$request->input('store_id'))->first();
+            $enableProducts = ProductChannelDetail::where('store_type_id',$store->store_type_id)->where('status',1)->pluck('product_id');
+            Log::info('Enable Products :: ' . json_encode($enableProducts));
+
+            $query->whereIn('products.product_id',$enableProducts);
+
             /*$query->where('store_product.store_id', $request->input('store_id'))->OrWhereNull('store_product.store_id');*/
-            /*$query->where('store_product.store_id', $request->input('store_id'));*/
+            $query->leftJoin('store_product', 'products.product_id', '=', 'store_product.product_id');
+            $query->where('store_product.store_id', $request->input('store_id'));
+            $query->where('store_product.active', 1);
         }
         // Filter by product code
         if ($request->has('product_code') && $request->product_code != '') {
@@ -689,7 +700,7 @@ class ListingController extends Controller
         //$query->limit(10);
         $products = $query->distinct()->get();
         //dd(DB::getQueryLog());
-        //echo $query->toSql();die;
+//        echo $query->toSql();die;
         /*echo '<pre>';
         print_r($products);
         echo '</pre>';die;*/
