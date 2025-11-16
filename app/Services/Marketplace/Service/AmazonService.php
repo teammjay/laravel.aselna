@@ -218,12 +218,15 @@ class AmazonService implements MarketplaceServiceInterface
                     if (strlen($combinedDeviceName . ', ' . $deviceName) > 2000) {
                         if ($count < 1000) {
                             $count++;;
-                            $compatibleDevices[] = ['value' => $combinedDeviceName, 'language_tag' => 'en_US'];
+                            $compatibleDevices[] = ['value' => ltrim($combinedDeviceName, ', '), 'language_tag' => 'en_US'];
                             $combinedDeviceName = '';
                         } else break;
                     } else {
                         $combinedDeviceName .= ', ' . $deviceName;
                     }
+                }
+                if (!empty($combinedDeviceName)) {
+                    $compatibleDevices[] = ['value' => ltrim($combinedDeviceName, ', '), 'language_tag' => 'en_US'];
                 }
                 $message['attributes']['compatible_devices'] = $compatibleDevices;
             }

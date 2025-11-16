@@ -44,18 +44,23 @@ class FieldUtility
     {
         $compatible_phones = [];
         $index = 0;
+        $combinedDeviceName = '';
         foreach ($itemDetail->devices as $device) {
-            $deviceName = $device->device->name;
+            $deviceName = $device->device->brand->name . ' ' . $device->device->name;
 
             if (strlen($combinedDeviceName . ', ' . $deviceName) > 2000) {
                 if ($count < 3) {
                     $count++;;
-                    $compatible_phones[] = ['value' => $combinedDeviceName, 'language_tag' => 'en_US'];
+                    $compatible_phones[] = ['value' => ltrim($combinedDeviceName, ', '), 'language_tag' => 'en_US'];
                     $combinedDeviceName = '';
                 } else break;
             } else {
                 $combinedDeviceName .= ', ' . $deviceName;
             }
+        }
+
+        if (!empty($combinedDeviceName)) {
+            $compatible_phones[] = ['value' => ltrim($combinedDeviceName, ', '), 'language_tag' => 'en_US'];
         }
 
 //        foreach ($itemDetail->devices as $device) {
