@@ -164,7 +164,7 @@ class AmazonAuthService
             ]);
 
             $compressedContent = file_get_contents($savePath);
-            if (env('APP_ENV') !== 'local') {
+            if (file_exists($savePath) && env('APP_ENV') !== 'local' ) {
                 chown($savePath, 'aselna');
                 chgrp($savePath, 'psacln');
             }
@@ -175,10 +175,12 @@ class AmazonAuthService
                 return null;
             }
 
-            FileUtility::saveToFile(public_path('result-feeds/amazon/' . $listingId . '.json'), $decompressedContent);
-            if (env('APP_ENV') !== 'local') {
-                chown('result-feeds/amazon/' . $listingId . '.json', 'aselna');
-                chgrp('result-feeds/amazon/' . $listingId . '.json', 'psacln');
+            $filePath = 'result-feeds/amazon/' . $listingId . '.json';
+
+            FileUtility::saveToFile(public_path($filePath), $decompressedContent);
+            if (file_exists(public_path($filePath)) && env('APP_ENV') !== 'local') {
+                chown(public_path($filePath), 'aselna');
+                chgrp(public_path($filePath), 'psacln');
             }
             return 'result-feeds/amazon/' . $listingId . '.json';
         } else {
