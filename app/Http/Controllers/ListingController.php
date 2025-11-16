@@ -609,14 +609,10 @@ class ListingController extends Controller
 //            $enableProducts = ProductChannelDetail::where('store_type_id',$store->store_type_id)->where('status',1)->pluck('product_id');
 //            Log::info('Enable Products :: ' . json_encode($enableProducts));
 
-            $query->whereIn('products.product_id',function () use ($store) {
-                $subquery = DB::table('product_channel_detail')
-                    ->select('product_id')
-                    ->where('store_type_id', '=', $store->store_type_id)
-                    ->where('status', '=',1);
-                return $subquery;
+            $query->whereIn('products.product_id', function ($subquery) use ($store) {
+                $subquery->select('product_id')->from('product_channel_detail')->where('store_type_id', $store->store_type_id)
+                    ->where('status', 1);
             });
-
             /*$query->where('store_product.store_id', $request->input('store_id'))->OrWhereNull('store_product.store_id');*/
 //            $query->leftJoin('store_product', 'products.product_id', '=', 'store_product.product_id');
 //            $query->where('store_product.store_id', $request->input('store_id'));
