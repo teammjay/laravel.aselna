@@ -17,7 +17,9 @@ class AddStoreTypeCategorySeeder extends Seeder
         $storeTypeCategories = [
             ['name' => 'cable-or-adapters', 'marketplace_code' => 'CABLE_OR_ADAPTER'],
             ['name' => 'stylus', 'marketplace_code' => 'INPUT_PEN'],
-            ['name' => 'usb-hubs', 'marketplace_code' => 'MULTIPORT_HUB']
+            ['name' => 'usb-hubs', 'marketplace_code' => 'MULTIPORT_HUB'],
+            ['name' => 'keyboards', 'marketplace_code' => 'KEYBOARDS'],
+            ['name' => 'speakers', 'marketplace_code' => 'SPEAKERS']
         ];
 
         $storeType = StoreType::where('code', 'amazon')->first();

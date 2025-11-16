@@ -13,7 +13,7 @@ use App\Services\Auth\AmazonAuthService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Log;
-use const http\Client\Curl\FEATURES;
+//use const http\Client\Curl\FEATURES;
 
 class AmazonListingItemSyncJob implements ShouldQueue
 {
@@ -43,7 +43,7 @@ class AmazonListingItemSyncJob implements ShouldQueue
             return $subquery->select('id')
                 ->from('store_type')
                 ->where('code', 'amazon');
-        })->pluck('id');
+        })->where('store_status','<>',0)->pluck('id');
         Log::info('Amazon store ids: ' . json_encode($amazon_store_ids));
 
         //join listing_item_link and listing_item and listing
@@ -78,7 +78,7 @@ class AmazonListingItemSyncJob implements ShouldQueue
                     $itemDetail = $listingItemLink->listingItem;
                     if($itemDetail->store_sku != null) return;
 
-                    Log::info("Listing Item Sku " . $itemDetail->store_sku);
+                    Log::info("Listing Item Sku " . $itemDetail->sku);
                     $itemSkus[$store_id][] = $itemDetail->sku;
 
                 }
@@ -97,6 +97,7 @@ class AmazonListingItemSyncJob implements ShouldQueue
                     if($items){
                         $amazonAuthService = new AmazonAuthService($store->seller_id, $store->secret_key,$store->api_key);
                         $resultItems = $amazonAuthService->fetchListingItems($store->user_id,$items);
+                        Log::info("Result Items :: " . json_encode($resultItems));
 
                         if($resultItems){
                             foreach($resultItems as $item){

@@ -43,7 +43,7 @@ class EbayListingItemSyncJob implements ShouldQueue
             return $subquery->select('id')
                 ->from('store_type')
                 ->where('code', 'ebay');
-        })->pluck('id');
+        })->where('store_status','<>',0)->pluck('id');
         Log::info('Ebay store ids: ' . json_encode($ebay_store_ids));
 
         if (env('APP_ENV') === 'local') {

@@ -12,6 +12,7 @@
         .select2-container .select2-selection--single {
             height: auto !important;
         }
+
     </style>
 @endsection
 
@@ -24,7 +25,7 @@
             <div class="card-body">
                 <div class="row">
                     <div class="col-md-6">
-                        @if(isset($specification_info->id)) <input type="hidden" name="field_name" value="{{$specification_info->id}}"> @endif
+                        @if(isset($specification_info->id)) <input type="hidden" name="field_name" id="specification_info_id" value="{{$specification_info->id}}"> @endif
                         <div class="form-group" >
                             <label for="field_name">Field Name</label>
                             <select class="form-control @error('field_name') is-invalid @enderror" id="field_name"
@@ -48,19 +49,36 @@
                         <div class="form-group">
                             <label for="field_value">Field Value</label>
                             <div id="specification_value_list">
-                                <button type="button" class="btn btn-secondary" id="add_specification"><i
-                                        class="fa fa-plus-square"></i> Add
-                                </button>
+                                <div class="d-flex align-items-center justify-content-between" style="gap:10px;">
+                                    <button type="button" class="btn btn-secondary" id="add_specification"><i
+                                            class="fa fa-plus-square"></i> Add
+                                    </button>
+                                    <select class="form-control w-40" name="store_type_id" id="store_type_id">
+                                        <option value="">-- Store Type --</option>
+                                        @if(count($storeTypes ?? []) > 0)
+                                            @foreach($storeTypes as $stype)
+                                                <option value="{{ $stype->id }}">{{ ucfirst($stype->name) }}</option>
+                                            @endforeach
+                                        @endif
+                                    </select>
+                                    <select class="form-control w-40" name="category" id="category">
+                                        <option value="">-- Category --</option>
+
+                                    </select>
+                                </div>
+
                                 <div class="card card-body border mt-2">
                                     <table class="table table-bordered" id="field_value">
                                         <thead>
                                         <tr>
                                             <th>Value</th>
+                                            <th>Store Type</th>
+                                            <th>Category</th>
                                             <th>Action</th>
                                         </tr>
                                         </thead>
                                         <tbody>
-                                        @if(isset($specification_values))
+                                        {{--@if(isset($specification_values))
                                             @foreach($specification_values as $specification_value)
                                                 <tr class="field-group">
                                                     <td>
@@ -84,7 +102,7 @@
                                                         class="fas fa-fw fa-trash"></i></button>
                                             </td>
                                         </tr>
-                                        @endif
+                                        @endif--}}
                                         </tbody>
                                     </table>
                                 </div>
@@ -112,9 +130,9 @@
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script>
         $(document).ready(function () {
-            $('#field_name').select2();
+            $('#field_name,#store_type_id, #category').select2();
             $(document).on('click', '#add_specification', function () {
-                $('#specification_value_list tbody').append('<tr class="field-group"   ><td><textarea class="form-control" name="field_value[]"></textarea></td><td><button type="button" class="btn btn-danger remove-specification"> <i class="fas fa-fw fa-trash"></i></button></td></tr>')
+                $('#field_value tbody').prepend('<tr class="field-group"   ><td><textarea class="form-control" name="field_value[]"></textarea></td><td></td><td></td><td><button type="button" class="btn btn-danger remove-specification"> <i class="fas fa-fw fa-trash"></i></button></td></tr>')
             });
 
             $(document).on('click', '.remove-specification', function () {
@@ -143,6 +161,52 @@
                 }
                 $(this).parents('tr.field-group').remove();
             });
+
+            $(document).on('change','#store_type_id',function () {
+                getSpecValue(0);
+            });
+
+            $(document).on('change','#category',function () {
+                getSpecValue(1);
+            });
+
+            function getSpecValue(catchange){
+
+                $.ajax({
+                    type: 'POST',
+                    url: "{{ route('specification_values.getspecvalue') }}",
+                    data: {
+                        id: $('#specification_info_id').val(),
+                        store_type_id: $('#store_type_id').val(),
+                        category: $('#category').val(),
+                    },
+                    headers: {
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    },
+                    dataType: 'json',
+                    success: function (response) {
+                        if(response.success){
+                            if(response.html){
+                                $('#field_value tbody').html(response.html);
+                            }else{
+                                $('#field_value tbody').html('');
+                            }
+
+                            if(response.catoptions && catchange == 0){
+                                $('#category').html(response.catoptions);
+                            }
+                        }
+                    },
+                    error: function (xhr) {
+                        if (xhr.status === 422) {
+                            var errors = xhr.responseJSON.errors;
+                            alert(errors[Object.keys(errors)[0]][0]);
+                        } else {
+                            alert('An error occurred while syncing categories');
+                        }
+                    }
+                });
+            }
 
         });
     </script>

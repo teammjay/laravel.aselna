@@ -164,7 +164,7 @@ class AmazonAuthService
             ]);
 
             $compressedContent = file_get_contents($savePath);
-            if (env('APP_ENV') !== 'local') {
+            if (file_exists($savePath) && env('APP_ENV') !== 'local' ) {
                 chown($savePath, 'aselna');
                 chgrp($savePath, 'psacln');
             }
@@ -175,10 +175,12 @@ class AmazonAuthService
                 return null;
             }
 
-            FileUtility::saveToFile(public_path('result-feeds/amazon/' . $listingId . '.json'), $decompressedContent);
-            if (env('APP_ENV') !== 'local') {
-                chown('result-feeds/amazon/' . $listingId . '.json', 'aselna');
-                chgrp('result-feeds/amazon/' . $listingId . '.json', 'psacln');
+            $filePath = 'result-feeds/amazon/' . $listingId . '.json';
+
+            FileUtility::saveToFile(public_path($filePath), $decompressedContent);
+            if (file_exists(public_path($filePath)) && env('APP_ENV') !== 'local') {
+                chown(public_path($filePath), 'aselna');
+                chgrp(public_path($filePath), 'psacln');
             }
             return 'result-feeds/amazon/' . $listingId . '.json';
         } else {
@@ -404,8 +406,9 @@ class AmazonAuthService
                             'marketplaceIds' => implode(',', $marketPlaceID),
                             //'includedData' => 'issues,attributes,summaries,offers,fulfillmentAvailability',
                             'identifiersType' => 'SKU',
-                            'identifiers' => $skus,
+                            'identifiers' => implode(',',$skus),
                             'includedData' => 'summaries',
+                            'createdAfter' => now()->subMonth()->toIso8601String(),
                             'sortBy' => 'lastUpdatedDate',
                             'sortOrder' => 'DESC',
                             'pageToken' => $pageToken,
@@ -415,6 +418,9 @@ class AmazonAuthService
                 );
 
                 $result = json_decode($response->getBody(), true);
+
+                Log::info('Amazon Listing Items Result: ' . json_encode($result));
+
                 if(isset($result['items'])){
                     $items = array_merge($items, $result['items'] ?? []);
                     $pageToken = $result['pagination']['nextToken'] ?? null;
@@ -423,7 +429,7 @@ class AmazonAuthService
 
             return $items;
 
-        }catch (ApiException $e) {
+        }catch (Exception $e) {
             Log::error("Amazon fetchAllListings failed: " . $e->getMessage());
             return [];
         }
