@@ -564,7 +564,7 @@ class ListingController extends Controller
         //DB::enableQueryLog();
         $query = Catalog::with('StoreProduct', 'image', 'productType', 'interfaces.interfaces', 'pinterface.interfaces')
             ->select('products.product_id', 'product_sku', 'product_title', 'product_price', 'product_qty', 'products.created_at', 'product_type', 'product_image_url')
-            ->where('products.product_status', 1);
+            ->where('products.product_status', '=','active');
 
 
         // Handle Only Active Products (Remove the bundled products)
@@ -606,10 +606,16 @@ class ListingController extends Controller
         // Filter by product store
         if ($request->has('store_id') && $request->input('store_id') != '') {
             $store = Store::where('id',$request->input('store_id'))->first();
-            $enableProducts = ProductChannelDetail::where('store_type_id',$store->store_type_id)->where('status',1)->pluck('product_id');
-            Log::info('Enable Products :: ' . json_encode($enableProducts));
+//            $enableProducts = ProductChannelDetail::where('store_type_id',$store->store_type_id)->where('status',1)->pluck('product_id');
+//            Log::info('Enable Products :: ' . json_encode($enableProducts));
 
-            $query->whereIn('products.product_id',$enableProducts);
+            $query->whereIn('products.product_id',function () use ($store) {
+                $subquery = DB::table('product_channel_detail')
+                    ->select('product_id')
+                    ->where('store_type_id', '=', $store->store_type_id)
+                    ->where('status', '=',1);
+                return $subquery;
+            });
 
             /*$query->where('store_product.store_id', $request->input('store_id'))->OrWhereNull('store_product.store_id');*/
 //            $query->leftJoin('store_product', 'products.product_id', '=', 'store_product.product_id');
