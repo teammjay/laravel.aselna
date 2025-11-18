@@ -52,104 +52,104 @@ class AddProductSpecificationInfo extends Seeder
 
             $properties = $specifications['properties'] ?? [];
 
-            foreach ($properties as $nameKey => $material) {
-                Log::info('Processing attribute: ' . $nameKey);
-
-                $itemProperties = $material['items']['properties'];
-                $itemValue = $itemProperties['value'] ?? null;
-
-                if (isset($itemValue) && isset($itemValue['anyOf'])) {
-                    ProductSpecificationInfo::updateOrCreate([
-                        'store_type_id' => $this->storeType->id,
-                        'field_name' => $nameKey,
-                    ], [
-                        'store_type_id' => $this->storeType->id,
-                        'field_name' => $nameKey,
-                        'field_local_name' => $nameKey,
-                    ]);
-
-                    $productSpecification = ProductSpecifcationUniqueInfo::updateOrCreate([
-                        'field_name' => $nameKey,
-                    ], [
-                        'field_name' => $nameKey,
-                    ]);
-
-                    foreach ($itemValue['anyOf'] as $anyOf) {
-                        if (isset($anyOf['enum'])) {
-                            foreach ($anyOf['enum'] as $enumValue) {
-                                Log::info('Storing enum value: ' . $enumValue);
-
-                                ProductSpecificationValue::updateOrCreate([
-                                    'product_specification_id' => $productSpecification->id,
-                                    'field_value' => $enumValue,
-                                    'category' => $category->marketplace_code,
-                                    'store_type_id' => $this->storeType->id,
-                                ], [
-                                    'product_specification_id' => $productSpecification->id,
-                                    'field_value' => $enumValue,
-                                    'store_type_id' => $this->storeType->id,
-                                    'category' => $category->marketplace_code
-                                ]);
-                            }
-                        }
-                    }
-                }
-
-                if (isset($itemValue) && isset($itemValue['enum'])) {
-                    ProductSpecificationInfo::updateOrCreate([
-                        'store_type_id' => $this->storeType->id,
-                        'field_name' => $nameKey,
-                    ], [
-                        'store_type_id' => $this->storeType->id,
-                        'field_name' => $nameKey,
-                        'field_local_name' => $nameKey,
-                    ]);
-
-                    $productSpecification = ProductSpecifcationUniqueInfo::updateOrCreate([
-                        'field_name' => $nameKey,
-                    ], [
-                        'field_name' => $nameKey,
-                    ]);
-
-                    foreach ($itemValue['enum'] as $enumValue) {
-                        Log::info('Storing enum value: ' . $enumValue);
-
-                        ProductSpecificationValue::updateOrCreate([
-                            'product_specification_id' => $productSpecification->id,
-                            'field_value' => $enumValue,
-                            'category' => $category->marketplace_code,
-                            'store_type_id' => $this->storeType->id,
-                        ], [
-                            'product_specification_id' => $productSpecification->id,
-                            'field_value' => $enumValue,
-                            'store_type_id' => $this->storeType->id,
-                            'category' => $category->marketplace_code
-                        ]);
-                    }
-                }
-
-
-                //skip if attribute is not searchable and not required
-//                if (($attribute['searchable'] ?? false) == false && ($attribute['required'] ?? false) == false) {
-//                    continue;
+//            foreach ($properties as $nameKey => $material) {
+//                Log::info('Processing attribute: ' . $nameKey);
+//
+//                $itemProperties = $material['items']['properties'];
+//                $itemValue = $itemProperties['value'] ?? null;
+//
+//                if (isset($itemValue) && isset($itemValue['anyOf'])) {
+//                    ProductSpecificationInfo::updateOrCreate([
+//                        'store_type_id' => $this->storeType->id,
+//                        'field_name' => $nameKey,
+//                    ], [
+//                        'store_type_id' => $this->storeType->id,
+//                        'field_name' => $nameKey,
+//                        'field_local_name' => $nameKey,
+//                    ]);
+//
+//                    $productSpecification = ProductSpecifcationUniqueInfo::updateOrCreate([
+//                        'field_name' => $nameKey,
+//                    ], [
+//                        'field_name' => $nameKey,
+//                    ]);
+//
+//                    foreach ($itemValue['anyOf'] as $anyOf) {
+//                        if (isset($anyOf['enum'])) {
+//                            foreach ($anyOf['enum'] as $enumValue) {
+//                                Log::info('Storing enum value: ' . $enumValue);
+//
+//                                ProductSpecificationValue::updateOrCreate([
+//                                    'product_specification_id' => $productSpecification->id,
+//                                    'field_value' => $enumValue,
+//                                    'category' => $category->marketplace_code,
+//                                    'store_type_id' => $this->storeType->id,
+//                                ], [
+//                                    'product_specification_id' => $productSpecification->id,
+//                                    'field_value' => $enumValue,
+//                                    'store_type_id' => $this->storeType->id,
+//                                    'category' => $category->marketplace_code
+//                                ]);
+//                            }
+//                        }
+//                    }
 //                }
 //
-//                //skip if attribute is already exists
-//                $existingAttribute = ProductSpecificationInfo::where('store_type_id', $this->storeType->id)
-//                    ->where('field_name', $attribute['name'])
-//                    ->first();
+//                if (isset($itemValue) && isset($itemValue['enum'])) {
+//                    ProductSpecificationInfo::updateOrCreate([
+//                        'store_type_id' => $this->storeType->id,
+//                        'field_name' => $nameKey,
+//                    ], [
+//                        'store_type_id' => $this->storeType->id,
+//                        'field_name' => $nameKey,
+//                        'field_local_name' => $nameKey,
+//                    ]);
 //
-//                if ($existingAttribute) {
-//                    continue;
+//                    $productSpecification = ProductSpecifcationUniqueInfo::updateOrCreate([
+//                        'field_name' => $nameKey,
+//                    ], [
+//                        'field_name' => $nameKey,
+//                    ]);
+//
+//                    foreach ($itemValue['enum'] as $enumValue) {
+//                        Log::info('Storing enum value: ' . $enumValue);
+//
+//                        ProductSpecificationValue::updateOrCreate([
+//                            'product_specification_id' => $productSpecification->id,
+//                            'field_value' => $enumValue,
+//                            'category' => $category->marketplace_code,
+//                            'store_type_id' => $this->storeType->id,
+//                        ], [
+//                            'product_specification_id' => $productSpecification->id,
+//                            'field_value' => $enumValue,
+//                            'store_type_id' => $this->storeType->id,
+//                            'category' => $category->marketplace_code
+//                        ]);
+//                    }
 //                }
 //
-//                ProductSpecificationInfo::create([
-//                    'store_type_id' => $this->storeType->id,
-//                    'field_name' => $attribute['name'],
-//                    'field_local_name' => $attribute['name'],
-//                    'required' => ($attribute['required'] ?? false) == true ? 1 : 0,
-//                ]);
-            }
+//
+//                //skip if attribute is not searchable and not required
+////                if (($attribute['searchable'] ?? false) == false && ($attribute['required'] ?? false) == false) {
+////                    continue;
+////                }
+////
+////                //skip if attribute is already exists
+////                $existingAttribute = ProductSpecificationInfo::where('store_type_id', $this->storeType->id)
+////                    ->where('field_name', $attribute['name'])
+////                    ->first();
+////
+////                if ($existingAttribute) {
+////                    continue;
+////                }
+////
+////                ProductSpecificationInfo::create([
+////                    'store_type_id' => $this->storeType->id,
+////                    'field_name' => $attribute['name'],
+////                    'field_local_name' => $attribute['name'],
+////                    'required' => ($attribute['required'] ?? false) == true ? 1 : 0,
+////                ]);
+//            }
 
 //            $schemaObject = json_decode($fullSchemaJson);
             $calculator = new AmazonRequirementCalculator($specifications);
@@ -161,8 +161,9 @@ class AddProductSpecificationInfo extends Seeder
             $requiredList = $calculator->getRequiredFieldsV2();
 
             foreach ($requiredList as $requiredField) {
+                $commonField = false;
                 if (in_array($requiredField, $skipCommonFields)) {
-                    continue;
+                    $commonField = true;
                 }
                 Log::info('Storing required field: ' . $requiredField);
 
@@ -176,7 +177,7 @@ class AddProductSpecificationInfo extends Seeder
                     'required' => 1,
                 ]);
 
-                $this->addListingRequirement($this->storeType->id, $category->marketplace_code, $requiredField);
+                $this->addListingRequirement($this->storeType->id, $category->marketplace_code, $requiredField,$commonField);
             }
 
             sleep(15);
@@ -184,18 +185,20 @@ class AddProductSpecificationInfo extends Seeder
 
     }
 
-    private function addListingRequirement(mixed $id, $code, mixed $required)
+    private function addListingRequirement(mixed $id, $code, mixed $required,$commonField)
     {
-        $requirement = ['type' => 'key_value', 'table' => 'product_specification', 'key_column' => 'name', 'key_value' => '', 'value_column' => 'value'];
+        $requirement = ['type' => 'key_value', 'table' => 'product_specification', 'key_column' => 'name', 'key_value' => null, 'value_column' => 'value'];
         switch ($required) {
             case 'color':
                 $requirement['table'] = 'products';
                 $requirement['column'] = 'product_color';
+                $requirement['key_value'] = $required;
                 break;
             case 'item_length_width':
             case 'item_length_width_thickness':
                 $requirement['table'] = 'products';
                 $requirement['column'] = 'package_dimensions_length';
+                $requirement['key_value'] = $required;
                 break;
 //            case 'assembledProductHeight':
 //                $requirement['table'] = 'products';
@@ -204,6 +207,7 @@ class AddProductSpecificationInfo extends Seeder
             case 'item_package_weight':
                 $requirement['table'] = 'products';
                 $requirement['column'] = 'product_package_weight';
+                $requirement['key_value'] = $required;
                 break;
             case 'cable':
                 $requirement['key_value'] = 'Cable Length';
@@ -216,7 +220,7 @@ class AddProductSpecificationInfo extends Seeder
         if (isset($requirement['column'])) {
             $requirement['type'] = 'column';
             $requirement['key_column'] = null;
-            $requirement['key_value'] = null;
+//            $requirement['key_value'] = null;
             $requirement['value_column'] = null;
         }
 
@@ -240,7 +244,8 @@ class AddProductSpecificationInfo extends Seeder
                 'key_column' => $requirement['key_column'] ?? null,
                 'key_value' => $requirement['key_value'] ?? null,
                 'value_column' => $requirement['value_column'] ?? null,
-                'store_type_id' => $id
+                'store_type_id' => $id,
+                'is_common' => $commonField
             ]
         );
     }

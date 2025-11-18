@@ -159,7 +159,7 @@ class ListingUtility
 
     public static function validate($category, $productId, $storeTypeId): array
     {
-        $requirements = ListingRequirement::where('category', $category)->where('store_type_id', $storeTypeId)->get();
+        $requirements = ListingRequirement::where('category', $category)->where('store_type_id', $storeTypeId)->where('is_common', 0)->get();
         $issues = [];
         $specifications = [];
         $fieldName = '';

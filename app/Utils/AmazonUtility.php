@@ -681,7 +681,11 @@ class AmazonUtility
             if (!isset($requirement->key_value)) {
                 continue;
             }
-            $requirementValues[$requirement->key_value] = self::getRequirementValue($requirement, $itemDetail, $storeProduct);
+            $valueArray = self::getRequirementValue($requirement, $itemDetail, $storeProduct);
+            if ($requirement->is_common == 1 && empty($valueArray)) {
+                continue;
+            }
+            $requirementValues[$requirement->key_value] = $valueArray;
         }
         return $requirementValues;
     }
