@@ -529,4 +529,122 @@ class TemuAuthService
 
         return json_decode($res->getBody(), true);
     }
+
+    public function issueRefund($parentAfterSalesSn, $parentOrderSn){
+
+        try {
+            $client = new Client();
+            $headers = [
+                'content-type' => 'application/json',
+            ];
+
+            $apiType = 'temu.aftersales.refund.issue';
+            $timestamp = time();
+
+            $params = [
+                'type' => $apiType,
+                'app_key' => $this->appKey,
+                'access_token' => $this->accessToken,
+                'timestamp' => $timestamp,
+                'data_type' => 'JSON',
+                'parentAfterSalesSn' => $parentAfterSalesSn,
+                'parentOrderSn' => $parentOrderSn,
+                'openApiRefundType' => 1,
+            ];
+
+            $params['sign'] = $this->generateSign($params, $this->appSecret);
+
+            Log::info('Issue Refund Params: ' . json_encode($params));
+
+            $request = new Request('POST', $this->endpoint, $headers, json_encode($params));
+
+            $res = $client->sendAsync($request)->wait();
+
+            return json_decode($res->getBody(), true);
+
+        }catch (\Exception $e){
+            Log::info('Temu issue refund error : ' . $e->getMessage());
+            return $e->getMessage();
+        }
+    }
+
+    public function getAfterSalesList($parentOrderSn = []){
+
+        try {
+            $client = new Client();
+            $headers = [
+                'content-type' => 'application/json',
+            ];
+
+            $apiType = 'bg.aftersales.parentaftersales.list.get';
+            $timestamp = time();
+
+            $params = [
+                'type' => $apiType,
+                'app_key' => $this->appKey,
+                'access_token' => $this->accessToken,
+                'timestamp' => $timestamp,
+                'data_type' => 'JSON',
+                'parentOrderSnList' => $parentOrderSn,
+                'pageSize' => 200,
+                'pageNo' => 1,
+            ];
+
+            $params['sign'] = $this->generateSign($params, $this->appSecret);
+
+            Log::info('After Sales Parent After Sales List Request Params: ' . json_encode($params));
+
+            $request = new Request('POST', $this->endpoint, $headers, json_encode($params));
+
+            $res = $client->sendAsync($request)->wait();
+
+            return json_decode($res->getBody(), true);
+
+        }catch (\Exception $e){
+            Log::info('Temu Sales Parent After Sales List Error : ' . $e->getMessage());
+            return $e->getMessage();
+        }
+    }
+
+    public function cancelOrder($parentOrderSn, $reason = 'CUSTOMER REQUEST'){
+        try {
+            $client = new Client();
+            $headers = [
+                'content-type' => 'application/json',
+            ];
+
+            $apiType = 'temu.order.cancel.appeal.apply';
+            $timestamp = time();
+
+            $params = [
+                'type' => $apiType,
+                'app_key' => $this->appKey,
+                'access_token' => $this->accessToken,
+                'timestamp' => $timestamp,
+                'data_type' => 'JSON',
+                'cancelType' => 2,
+                'applyOrder' => [
+                    'parentOrderSn' => $parentOrderSn,
+                ],
+                'reason' => [
+                    'description' => $reason,
+                    'proofUrlList' => '',
+                ]
+            ];
+
+            $params['sign'] = $this->generateSign($params, $this->appSecret);
+
+            Log::info('Cancel Order Apply Request Params: ' . json_encode($params));
+
+            $request = new Request('POST', $this->endpoint, $headers, json_encode($params));
+
+            $res = $client->sendAsync($request)->wait();
+
+            return json_decode($res->getBody(), true);
+
+        }catch (\Exception $e){
+            Log::info('Temu Cancel Order Apply Error : ' . $e->getMessage());
+            return $e->getMessage();
+        }
+    }
 }
