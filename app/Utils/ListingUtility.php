@@ -250,7 +250,7 @@ class ListingUtility
                     $issues[$key]['spec'] = [
                         'field_id' => $specificationInfo->id,
                         'field' => $specificationInfo->field_local_name,
-                        'spec_id' => $field_option->id,
+                        'spec_id' => $field_option->id ?? null,
                         'field_type' => $field,
                         'values' => $valoption,
                     ];
