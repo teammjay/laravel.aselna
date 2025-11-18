@@ -14,6 +14,7 @@ use App\Models\OrderOperation;
 use App\Models\ShippingAccountPurchase;
 use App\Services\Auth\EbayAuthService;
 use App\Services\Auth\ShopifyAuthService;
+use App\Services\Auth\TemuAuthService;
 use App\Services\Auth\WalmartAuthService;
 use App\Services\Marketplace\Service\AmazonService;
 use App\Services\Marketplace\Service\ShopifyService;
@@ -675,7 +676,19 @@ class OrderOperationUtility
                     $data['message'] = $response['message'] ?? 'Cancellation not working from API End';
                     return $data;
                 }
+                break;
+            case 'temu':
+
+                $order_id = $orderOperation->order_id;
+
+                $temuService = new TemuAuthService();
+                $response = $temuService->cancelOrder($order_id, $store);
+
+                break;
         }
+
+        $data['status'] = false;
+        return $data;
     }
 
     private static function returnReplaceOrder($orderOperation)
@@ -710,6 +723,7 @@ class OrderOperationUtility
             }
         }
 
+        return false;
     }
 
     private static function refundOrder($orderOperation)
@@ -882,10 +896,40 @@ class OrderOperationUtility
                             $orderItem->update(['refund_quantity' => $item_qty]);
                         }
                     }
+
+                    return true;
+                }else{
+                    return false;
                 }
 
                 break;
+            case 'temu':
+
+                $orderId = $orderOperation->order_id;
+
+                $temuService = new TemuService();
+                $result = $temuService->refundOrder($orderId);
+                /*if (isset($result['success']) && $result['success']) {
+                    $orderOperation->update(['status' => OrderOperationStatus::REFUNDED]);
+                    if (isset($orderId)) {
+                        $order = Order::findOrFail($orderId);
+                        $order->update(['order_status' => OrderStatus::Refund]);
+                    }
+
+                    if (isset($orderOperation->order->orderItem)) {
+                        foreach ($orderOperation->order->orderItem as $o_item) {
+                            $item_qty = $o_item->quantity;
+                            $orderItem = OrderItem::findOrFail($o_item->id);
+                            $orderItem->update(['refund_quantity' => $item_qty]);
+                        }
+                    }
+                    return true;
+                }*/
+
+                break;
         }
+
+        return false;
     }
 
     private static function createShipment($orderOperation): array

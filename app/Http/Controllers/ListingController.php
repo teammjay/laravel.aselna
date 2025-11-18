@@ -2074,7 +2074,7 @@ class ListingController extends Controller
                 if(count($finalParts ?? []) == 1) {
                     $finalModel = $prefix . $device_seperator . implode($device_seperator, $finalParts);
                 }else{
-                    $finalModel = $prefix . ' ' . implode(' ', $finalParts);
+                    $finalModel = $prefix . ' ' . implode($device_seperator, $finalParts);
                 }
 
                 $compressedDevices[$brand] = "$brand $finalModel";
