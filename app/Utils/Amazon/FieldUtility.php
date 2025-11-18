@@ -78,6 +78,18 @@ class FieldUtility
         return $compatible_phones;
     }
 
+    public static function getSpecialFeatures($productData,$storeProduct)
+    {
+        $special_features = ProductSpecification::where('product_id', $productData->product_id)
+            ->where('store_type_id', $storeProduct->store->store_type_id)
+            ->get()
+            ->map(function ($specification) {
+                return $specification->name . ' : ' . $specification->calculated_value();
+            })
+            ->implode(', ');
+        return [['value' => $special_features, 'language_tag' => 'en_US']];
+    }
+
     public static function getFullDeviceName($deviceDetail)
     {
         if ($deviceDetail->brand->name == 'Apple' || $deviceDetail->brand->name == 'Google') {

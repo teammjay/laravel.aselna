@@ -4,6 +4,7 @@ namespace App\Utils;
 
 use App\Constants\LengthUnit;
 use App\Constants\WeightUnit;
+use App\Models\ListingRequirement;
 use App\Models\ProductSpecification;
 use App\Utils\Amazon\FieldUtility;
 use Illuminate\Support\Facades\Log;
@@ -665,5 +666,77 @@ class AmazonUtility
             'hardware_interface' => [['value' => $hardware_interface->calculated_value()]],
             'number_of_ports' => [['value' => $number_of_ports->calculated_value()]]
         ];
+    }
+
+    public static function getFieldsForProductTypesV2($marketplace_code, $itemDetail)
+    {
+        $storeProduct = $itemDetail->storeProduct;
+        $requirements = ListingRequirement::where('category', $marketplace_code)
+            ->where('store_type_id', $storeProduct->store->store_type_id)
+            ->get();
+
+        $requirementValues = [];
+
+        foreach ($requirements as $requirement) {
+            $requirementValues[$requirement->key_value] = self::getRequirementValue($requirement, $itemDetail, $storeProduct);
+        }
+        return $requirementValues;
+    }
+
+    public static function getRequirementValue(mixed $requirement, mixed $itemDetail, mixed $storeProduct)
+    {
+        $productData = $storeProduct->product;
+        $value = ProductSpecification::where('product_id', $productData->product_id)
+            ->where('name', $requirement->key_value)
+            ->where('store_type_id', $storeProduct->store->store_type_id)->first();
+        switch ($requirement->key_value) {
+            case 'compatible_phone_models' :
+                return FieldUtility::getComaptiblePhoneModels($itemDetail);
+            case 'cable':
+                return FieldUtility::getCableFieldValue($productData);
+            case 'item_package_weight':
+                return FieldUtility::getItemPackageWeight($productData);
+            case 'special_feature':
+                return FieldUtility::getSpecialFeatures($productData, $storeProduct);
+            case 'item_hardness':
+                return FieldUtility::getItemHardness($productData);
+            case 'item_length_width':
+                return [[
+                    'length' => ['value' => $productData->package_dimensions_length, 'unit' => 'inches'],
+                    'width' => ['value' => $productData->package_dimensions_width, 'unit' => 'inches'],
+                ]];
+            case 'color':
+                return [['value' => $productData->color->name, 'language_tag' => 'en_US']];
+            case 'data_transfer_rate':
+                if ($value) {
+                    return [[
+                        'value' => $value->calculated_value(),
+                        'unit' => 'megabytes_per_second'
+                    ]];
+                }
+                break;
+            case 'item_length_width_thickness':
+                return [[
+                    'length' => ['value' => $productData->dimensions_length, 'unit' => LengthUnit::getAmazonUnitName(1)],
+                    'width' => ['value' => $productData->dimensions_width, 'unit' => LengthUnit::getAmazonUnitName(1)],
+                    'thickness' => ['value' => '1', 'unit' => 'inches'],
+                ]];
+            case 'maximum_height':
+                return [['value' => $productData->dimensions_length, 'unit' => LengthUnit::getAmazonUnitName(1)]];
+            case 'input_voltage':
+            case 'output_voltage':
+                if ($value) {
+                    return [['value' => $value->calculated_value(), 'unit' => 'volts']];
+                }
+                break;
+            case 'model_name':
+            case 'model_number':
+                return [['value' => $itemDetail->sku, 'language_tag' => 'en_US']];
+            default:
+                if ($value) {
+                    return [['value' => $value->calculated_value(), 'language_tag' => 'en_US']];
+                }
+        }
+        return [];
     }
 }

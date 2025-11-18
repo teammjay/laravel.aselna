@@ -373,6 +373,13 @@ class ProcessStoreMessageAccountJob implements ShouldQueue
                             $last_filter_datef = \Carbon\Carbon::parse($last_filter_date)->setTimezone('America/New_York');
                             $account->update(['filter_from_date' => $last_filter_datef]);
                         }
+                    } else {
+                        $filterDateObj = \Carbon\Carbon::parse($filter_date, 'America/New_York');
+                        $maxDate = $filterDateObj->copy()->addDays(1);
+                        Log::info("Diff " . json_encode(\Carbon\Carbon::now('America/New_York')->diffInDays($filterDateObj, false)));
+                        if (\Carbon\Carbon::now('America/New_York')->diffInDays($filterDateObj, false) < -1) {
+                            $account->update(['filter_from_date' => $maxDate->toDateString()]);
+                        }
                     }
                 }
             }
