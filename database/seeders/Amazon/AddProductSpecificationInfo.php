@@ -2,6 +2,7 @@
 
 namespace Database\Seeders\Amazon;
 
+use App\Models\ListingRequirement;
 use App\Models\ProductSpecifcationUniqueInfo;
 use App\Models\ProductSpecificationInfo;
 use App\Models\ProductSpecificationValue;
@@ -9,6 +10,7 @@ use App\Models\Store;
 use App\Models\StoreType;
 use App\Models\StoreTypeCategory;
 use App\Services\Auth\AmazonAuthService;
+use App\Utils\Amazon\AmazonRequirementCalculator;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Log;
 
@@ -34,19 +36,19 @@ class AddProductSpecificationInfo extends Seeder
         $qualifiedcategoryCodes = ['ELECTRONIC_CABLE', 'SCREEN_PROTECTOR', 'HEADPHONES', 'PORTABLE_ELECTRONIC_DEVICE_MOUNT', 'CELL_PHONE_HOLSTER', 'CHARGING_ADAPTER',
             'POWER_BANK', 'CAMERA_TRIPOD', 'PORTABLE_ELECTRONIC_DEVICE_ARMBAND', 'PORTABLE_ELECTRONIC_DEVICE_STAND', 'CELLULAR_PHONE_CASE',
             'CABLE_OR_ADAPTER', 'INPUT_PEN', 'MULTIPORT_HUB', 'ELECTRONIC_ADAPTER', 'MULTIPORT_HUB'];
+        $requirement = ['category' => '', 'type' => 'key_value', 'table' => 'product_specification', 'key_column' => 'name', 'key_value' => '', 'value_column' => 'value'];
 
         $this->amazonAuthService = new AmazonAuthService(env('AMAZON_CLIENT_ID'), env('AMAZON_CLIENT_SECRET'), env('AMAZON_REFRESH_TOKEN'));
         $marketPlaceID = $this->amazonAuthService->getMarketplaceIDs();
         $categories = StoreTypeCategory::where('store_type_id', $this->storeType->id)
             ->whereNotNull('marketplace_code')
-            ->whereIn('marketplace_code', $qualifiedcategoryCodes)
+//            ->whereIn('marketplace_code', $qualifiedcategoryCodes)
             ->select('marketplace_code')
             ->distinct()
             ->get();
 
         foreach ($categories as $category) {
-//            $this->amazonAuthService = new AmazonAuthService($this->store->seller_id, $this->store->secret_key, $this->store->api_key);
-            $specifications = $this->amazonAuthService->getProductTypeSchema($category->marketplace_code, $marketPlaceID);
+            $specifications = $this->amazonAuthService->getProductTypeSchema($category->marketplace_code, $marketPlaceID ?? ['ATVPDKIKX0DER']);
 
             $properties = $specifications['properties'] ?? [];
 
@@ -149,8 +151,97 @@ class AddProductSpecificationInfo extends Seeder
 //                ]);
             }
 
+//            $schemaObject = json_decode($fullSchemaJson);
+            $calculator = new AmazonRequirementCalculator($specifications);
+            $productData = [];
+            $skipCommonFields = ["brand", "bullet_point", "country_of_origin", "item_name", "item_type_keyword", "product_description", "compatible_devices", "fulfillment_availability", "condition_type", "list_price",
+                "item_package_dimensions", "merchant_suggested_asin", "externally_assigned_product_identifier", "manufacturer", "part_number", "product_description", "special_feature", "item_hardness", "compatible_phone_models"
+                , "model_name", "model_number", "batteries_required"];
+
+            $requiredList = $calculator->getRequiredFieldsV2();
+
+            foreach ($requiredList as $requiredField) {
+                if (in_array($requiredField, $skipCommonFields)) {
+                    continue;
+                }
+                Log::info('Storing required field: ' . $requiredField);
+
+                ProductSpecificationInfo::updateOrCreate([
+                    'store_type_id' => $this->storeType->id,
+                    'field_name' => $requiredField,
+                ], [
+                    'store_type_id' => $this->storeType->id,
+                    'field_name' => $requiredField,
+                    'field_local_name' => $requiredField,
+                    'required' => 1,
+                ]);
+
+                $this->addListingRequirement($this->storeType->id, $category->marketplace_code, $requiredField);
+            }
+
             sleep(15);
         }
 
+    }
+
+    private function addListingRequirement(mixed $id, $code, mixed $required)
+    {
+        $requirement = ['type' => 'key_value', 'table' => 'product_specification', 'key_column' => 'name', 'key_value' => '', 'value_column' => 'value'];
+        switch ($required) {
+            case 'color':
+                $requirement['table'] = 'products';
+                $requirement['column'] = 'product_color';
+                break;
+            case 'item_length_width':
+            case 'item_length_width_thickness':
+                $requirement['table'] = 'products';
+                $requirement['column'] = 'package_dimensions_length';
+                break;
+//            case 'assembledProductHeight':
+//                $requirement['table'] = 'products';
+//                $requirement['column'] = 'package_dimensions_height';
+//                break;
+            case 'item_package_weight':
+                $requirement['table'] = 'products';
+                $requirement['column'] = 'product_package_weight';
+                break;
+            case 'cable':
+                $requirement['key_value'] = 'Cable Length';
+                break;
+            default:
+                $requirement['key_value'] = $required;
+                break;
+        }
+
+        if (isset($requirement['column'])) {
+            $requirement['type'] = 'column';
+            $requirement['key_column'] = null;
+            $requirement['key_value'] = null;
+            $requirement['value_column'] = null;
+        }
+
+        $requirement['category'] = $code;
+
+        Log::info('Requirement to add: ' . json_encode($requirement));
+
+        ListingRequirement::updateOrCreate(
+            [
+                'category' => $requirement['category'],
+                'type' => $requirement['type'],
+                'column' => $requirement['column'] ?? null,
+                'key_column' => $requirement['key_column'] ?? null,
+                'key_value' => $requirement['key_value'] ?? null,
+            ],
+            [
+                'category' => $requirement['category'],
+                'type' => $requirement['type'],
+                'table' => $requirement['table'],
+                'column' => $requirement['column'] ?? null,
+                'key_column' => $requirement['key_column'] ?? null,
+                'key_value' => $requirement['key_value'] ?? null,
+                'value_column' => $requirement['value_column'] ?? null,
+                'store_type_id' => $id
+            ]
+        );
     }
 }

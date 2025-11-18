@@ -122,7 +122,8 @@ class AmazonService implements MarketplaceServiceInterface
                     $message['attributes']['item_type_keyword'] = [['value' => $currentCategory->name]];
                 }
 
-                $fieldsByProductType = AmazonUtility::getFieldsForProductTypes($currentCategory->marketplace_code, $itemDetail);
+//                $fieldsByProductType = AmazonUtility::getFieldsForProductTypes($currentCategory->marketplace_code, $itemDetail);
+                $fieldsByProductType = AmazonUtility::getFieldsForProductTypesV2($currentCategory->marketplace_code, $itemDetail);
                 if (isset($fieldsByProductType)) {
                     $message['attributes'] = array_merge($message['attributes'], $fieldsByProductType);
                 }
@@ -251,140 +252,6 @@ class AmazonService implements MarketplaceServiceInterface
         );
     }
 
-    public function generateCreateFeedOld($listingInfo, $listingId)
-    {
-        $userIdentifier = $listingInfo->store->user_id;
-        //Log::info('User Identifier: ' . json_encode($listingInfo->store));
-        $listingItems = ListingItemLink::where('listing_id', $listingId)->cursor();
-
-        // Build JSON feed structure
-        $feed = [
-            'header' => [
-                'sellerId' => $userIdentifier,
-                'version' => '2.0',
-                'issueLocale' => 'en_US'
-            ],
-            'messages' => []
-        ];
-
-        $index = 1;
-
-        foreach ($listingItems as $listingItem) {
-            $itemDetail = $listingItem->item;
-            $storeProduct = $itemDetail->storeProduct;
-            $productData = $itemDetail->storeProduct->product;
-
-            // Build message structure
-            $message = [
-                'messageId' => $index,
-                'sku' => $itemDetail->sku,
-                'operationType' => 'UPDATE',
-                'requirements' => 'LISTING',
-                'attributes' => [
-//                    'item_name' => [[
-//                        'value' => $itemDetail->title,
-//                        'language_tag' => 'en_US',
-//                        'marketplace_id' => 'ATVPDKIKX0DER'
-//                    ]],
-//                    'condition_type' => [['value' => 'New']],
-//                    'brand' => [['value' => $storeProduct->store->brand_name ?? '', 'language_tag' => 'en_US']],
-//                    'product_description' => [['value' => $productData->product_description, 'language_tag' => 'en_US']],
-//                    'part_number' => [['value' => $itemDetail->mpn]],
-//                    // Required Amazon attributes
-//                    'product_tax_code' => [['value' => 2040274]],
-//                    'number_of_items' => [['value' => 1]],
-//                    'included_components' => [['value' => 'Dashboard Mount', 'language_tag' => 'en_US']],
-//                    'item_package_weight' => [['value' => 1, 'unit' => 'pounds']],
-//                    'batteries_required' => [['value' => false]],
-//                    // 'number_of_boxes' => [['value' => 1]],
-//                    'merchant_suggested_asin' => [['value' => 'B0C5X3K7Q2']],
-//                    'warranty_description' => [['value' => '2 Year Manufacturer', 'language_tag' => 'en_US']],
-//                    'country_of_origin' => [['value' => 'China']],
-//                    'supplier_declared_dg_hz_regulation' => [['value' => 'not_applicable']],
-//                    'material' => [['value' => 'Plastic']],
-//                    'externally_assigned_product_identifier' => [[[
-//                        'value' => $itemDetail->upc,
-//                        'type' => 'UPC'
-//                    ]]],
-                ]
-            ];
-
-            // Add pricing information
-//            $price = $itemDetail->price ?: $itemDetail->storeProduct->price ?: $productData->product_price;
-
-//            if (isset($productData)) {
-//                $message['attributes']['item_package_dimensions'] = [[
-//                    'length' => ['value' => $productData->package_dimensions_length, 'unit' => 'inches'],
-//                    'width' => ['value' => $productData->package_dimensions_width, 'unit' => 'inches'],
-//                    'height' => ['value' => $productData->package_dimensions_height, 'unit' => 'inches']
-//                ]];
-//            }
-
-//            $message['attributes']['list_price'] = [['value' => number_format($itemDetail->price, 2), 'currency' => 'USD']];
-//            if (isset($storeProduct->store)) {
-//                $message['attributes']['manufacturer'] = [['value' => $storeProduct->store->brand_name, 'language_tag' => 'en_US']];
-//            }
-
-            if (isset($productData)) {
-//                $bulletPoints = [];
-//                foreach ($storeProduct->features as $feature) {
-//                    $safeText = htmlspecialchars($feature->value, ENT_QUOTES | ENT_XML1, 'UTF-8');
-//                    if (!empty(trim($safeText))) {
-//                        $bulletPoints[] = ['value' => $safeText, 'language_tag' => 'en_US'];
-//                    }
-//                }
-//                $message['attributes']['bullet_point'] = $bulletPoints;
-//
-//                // Build category hierarchy
-//                $categoryId = $storeProduct->store_type_category_id;
-//                $tempCategoryId = $categoryId;
-//                $parentCategory = null;
-//                $subCategory = null;
-//                $currentCategory = StoreTypeCategory::where('id', $categoryId)->first();
-//
-//                while ($parentCategory = StoreTypeCategory::where('id', $tempCategoryId)->first()) {
-//                    if (isset($parentCategory->parent_id)) {
-//                        $tempCategoryId = $parentCategory->parent_id;
-//                        $subCategory = $parentCategory;
-//                    } else {
-//                        break;
-//                    }
-//                }
-
-//                if ($currentCategory) {
-//                    $message['productType'] = 'PORTABLE_ELECTRONIC_DEVICE_MOUNT';
-//                    $message['attributes']['item_type_keyword'] = [['value' => $currentCategory->name]];
-//                }
-
-//                $listingItemDetails = ListingItemDetail::where('listing_item_id', $itemDetail->id)->get();
-//                $CompatiblePhoneModels = '';
-//                foreach ($listingItemDetails as $listingItemDetail) {
-//                    $device = $listingItemDetail->device;
-//                    $deviceBrand = $device->brand;
-//                    $CompatiblePhoneModels = $CompatiblePhoneModels . $deviceBrand->name . ' ' . $device->name . ', ';
-//                }
-//                $CompatiblePhoneModels = rtrim($CompatiblePhoneModels, ', ');
-
-//                $message['attributes']['compatible_phone_models'] = [['value' => $CompatiblePhoneModels]];
-
-                //combine 5 keywords and add into one element. do this for all the keywords
-//                $productKeywords = ProductTypeKeyword::where('product_type_id', $productData->product_type)
-//                    ->limit(30)
-//                    ->get()
-//                    ->pluck('keyword');
-
-            }
-
-            $feed['messages'][] = $message;
-
-            $index++;
-        }
-
-        FileUtility::saveToFile(
-            public_path('feeds/amazon/' . $listingId . '.json'),
-            json_encode($feed, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)
-        );
-    }
 
     public function submitFeed($feedId, $listingId)
     {
