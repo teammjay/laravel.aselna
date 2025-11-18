@@ -1449,7 +1449,7 @@
                 $('.listingRow').each(function () {
                     $(this).find('textarea').each(function () {
                         var currentvalue = $(this).val();
-                        var updatedString = currentvalue.replace(new RegExp(searchTerm, "g"), replaceText);
+                        var updatedString = currentvalue.replace(searchTerm, replaceText);
                         $(this).val(updatedString);
                     });
                 });
