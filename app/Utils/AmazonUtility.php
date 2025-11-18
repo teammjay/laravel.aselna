@@ -678,6 +678,9 @@ class AmazonUtility
         $requirementValues = [];
 
         foreach ($requirements as $requirement) {
+            if (!isset($requirement->key_value)) {
+                continue;
+            }
             $requirementValues[$requirement->key_value] = self::getRequirementValue($requirement, $itemDetail, $storeProduct);
         }
         return $requirementValues;
