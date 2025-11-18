@@ -15,6 +15,7 @@ class ListingRequirement extends Model
         'key_value',
         'value_column',
         'store_type_id',
+        'is_common'
     ];
 
     public function storeType(){
