@@ -159,7 +159,7 @@ class ListingUtility
 
     public static function validate($category, $productId, $storeTypeId): array
     {
-        $requirements = ListingRequirement::where('category', $category)->where('store_type_id', $storeTypeId)->get();
+        $requirements = ListingRequirement::where('category', $category)->where('store_type_id', $storeTypeId)->where('is_common', 0)->get();
         $issues = [];
         $specifications = [];
         $fieldName = '';
@@ -250,6 +250,7 @@ class ListingUtility
                     $issues[$key]['spec'] = [
                         'field_id' => $specificationInfo->id,
                         'field' => $specificationInfo->field_local_name,
+                        'spec_id' => $field_option->id ?? null,
                         'field_type' => $field,
                         'values' => $valoption,
                     ];
@@ -366,6 +367,7 @@ class ListingUtility
             return [
                 'field_id' => $specificationInfo->id,
                 'field' => $specificationInfo->field_local_name,
+                'spec_id' => $field_option->id ?? null,
                 'field_type' => $field,
                 'values' => $valoption,
             ];

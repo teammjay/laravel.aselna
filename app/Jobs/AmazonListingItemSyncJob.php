@@ -79,7 +79,7 @@ class AmazonListingItemSyncJob implements ShouldQueue
                     if($itemDetail->store_sku != null) return;
 
                     Log::info("Listing Item Sku " . $itemDetail->sku);
-                    $itemSkus[$store_id][] = $itemDetail->sku;
+                    $itemSkus[$store_id][] = trim($itemDetail->sku);
 
                 }
                 Log::info("Listing Item Sku list " . json_encode($itemSkus));
@@ -99,9 +99,11 @@ class AmazonListingItemSyncJob implements ShouldQueue
                         $resultItems = $amazonAuthService->fetchListingItems($store->user_id,$items);
                         Log::info("Result Items :: " . json_encode($resultItems));
 
+                        $itemFetch = [];
                         if($resultItems){
                             foreach($resultItems as $item){
                                 if(isset($item['sku']) && $item['sku'] != ''){
+                                    $itemFetch[] = $item['sku'];
                                     $itemDetail = ListingItem::where('sku',$item['sku'])->first();
                                     if($itemDetail){
                                         if(isset($item['summaries'])) {
@@ -125,6 +127,27 @@ class AmazonListingItemSyncJob implements ShouldQueue
                                                 ]);
                                             }
                                         }
+                                    }
+                                }
+                            }
+                        }
+
+                        if($itemFetch) {
+                            foreach ($items as $item) {
+                                if (!in_array($item, $itemFetch)) {
+                                    $itemDetail = ListingItem::where('sku', $item)->first();
+
+                                    $date = \Carbon\Carbon::parse($itemDetail->created_at);
+                                    if ($date->diffInDays(now()) >= 5) {
+                                        Log::info("Listing item older than 5 days - ".$itemDetail->sku);
+                                        $itemDetail->update([
+                                            'status' =>ListingStatus::Deleted,
+                                        ]);
+                                    }else{
+                                        $retry_count = $itemDetail->creation_retry_count ?? 0;
+                                        $itemDetail->update([
+                                            'creation_retry_count' => $retry_count + 1,
+                                        ]);
                                     }
                                 }
                             }

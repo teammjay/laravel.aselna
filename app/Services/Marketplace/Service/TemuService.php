@@ -635,4 +635,34 @@ class TemuService implements MarketplaceServiceInterface
 
         return false;
     }
+
+    public function refundOrder($parentOrderSn){
+        try{
+
+            $temuAuthService = new TemuAuthService();
+            $afterSalesList = $temuAuthService->getAfterSalesList($parentOrderSn);
+            Log::info('Temu getAfterSalesList response : ' . json_encode($afterSalesList));
+
+            if (isset($afterSalesList['result']['data']) && count($afterSalesList['result']['data']) > 0) {
+                $orderDetail = $afterSalesList['result']['data'][0];
+                $parentAfterSalesSn = $orderDetail['parentAfterSalesSn'];
+                //$refundOrderDetails = $temuAuthService->issueRefund($parentAfterSalesSn, $parentOrderSn);
+
+                //Log::info('Temu issueRefund response : ' . json_encode($refundOrderDetails));
+
+                //return $refundOrderDetails;
+                return true;
+            }else{
+                if(isset($afterSalesList['success']) && !$afterSalesList['success']){
+                    Log::info('Temu refund error : ' . json_encode($afterSalesList));
+                    return false;
+                }
+            }
+
+            return false;
+        }catch (\Exception $e) {
+            Log::info('Temu refund error : ' . $e->getMessage());
+            return false;
+        }
+    }
 }

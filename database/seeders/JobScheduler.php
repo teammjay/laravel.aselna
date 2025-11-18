@@ -391,6 +391,12 @@ class JobScheduler extends Seeder
                 'name' => 'Fetch Temu Orders Sync Job',
                 'description' => 'Fetch Temu orders',
                 'class_name' => 'App\Jobs\FetchTemuOrders',
+            ],
+            [
+                //FetchTemuOrders
+                'name' => 'Amazon listing item status check',
+                'description' => 'Amazon Listing Item Status Check',
+                'class_name' => 'App\Jobs\AmazonListingItemSyncJob',
             ]
         ];
 

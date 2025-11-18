@@ -42,6 +42,10 @@
                     <a href="/catalog/edit/{{ $product->product_id }}" target="_blank"
                        class="btn btn-primary btn-sm">Resolve</a>
                 @endif
+                @if( isset($issue['spec']['field_type']) && isset($issue['spec']['spec_id']) && $issue['spec']['field_type'] == 'select')
+                        <a href="/specification_values/edit/{{ $issue['spec']['spec_id'] }}" target="_blank"
+                           class="btn btn-primary btn-sm">Add Value</a>
+                @endif
             </td>
         </tr>
     @endforeach
