@@ -549,6 +549,11 @@ class TemuService implements MarketplaceServiceInterface
                         $persist = true;
                         $statusChange = true;
                     } else {
+                        $presentOrder = Order::updateOrCreate([
+                            'order_id' => $parentOrder['parentOrderSn'],
+                        ], [
+                            'order_date' => date('Y-m-d H:i:s', $parentOrder['parentOrderTime']),
+                        ]);
                         // TODO Need To implement status change
                         $statusChange = true;
                     }
