@@ -623,7 +623,8 @@ class TemuService implements MarketplaceServiceInterface
 
                     Log::info("Request For Shipment" . json_encode($data));
 
-                    $temuAuthService->callOrderShipment($data);
+                    $response = $temuAuthService->callOrderShipment($data);
+                    Log::info('Temu Shipment Response : ' . json_encode($response));
                     return true;
                 }
             }
