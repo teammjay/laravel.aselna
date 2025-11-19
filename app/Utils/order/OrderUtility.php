@@ -654,8 +654,8 @@ class OrderUtility
             }
         }
 
-        $estimateShipmentDate = null;
-        $estimateDeliveryDate = null;
+        $estimateShipmentDate = $presentOrder['parentOrderMap']['expectShipLatestTime'];
+        $estimateDeliveryDate = $presentOrder['parentOrderMap']['latestDeliveryTime'];
 //        if (isset($presentOrder['fulfillmentDetails'])) {
 //            $estimateShipmentDate = $presentOrder['fulfillmentDetails']['shipByDate'] ?? null;
 //            $estimateDeliveryDate = $presentOrder['fulfillmentDetails']['deliverByDate'] ?? null;
@@ -667,8 +667,8 @@ class OrderUtility
             'customer_id' => $customer_detail->id ?? null,
 //            'purchase_order_id' => $presentOrder['orderId'],
             'shipping_address_id' => $customer_address->id ?? null,
-            'expected_shipment_date' => isset($estimateShipmentDate) ? date('Y-m-d H:i:s', strtotime($estimateShipmentDate)) : '',
-            'expected_delivery_date' => isset($estimateDeliveryDate) ? date('Y-m-d H:i:s', strtotime($estimateDeliveryDate)) : '',
+            'expected_shipment_date' => isset($estimateShipmentDate) ? date('Y-m-d H:i:s', $estimateShipmentDate) : '',
+            'expected_delivery_date' => isset($estimateDeliveryDate) ? date('Y-m-d H:i:s', $estimateDeliveryDate) : '',
         ];
 
         $order->update($orderData);
