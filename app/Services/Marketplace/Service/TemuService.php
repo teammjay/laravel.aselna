@@ -541,7 +541,7 @@ class TemuService implements MarketplaceServiceInterface
                             'order_id' => $parentOrder['parentOrderSn'],
                         ], [
                             'order_id' => $parentOrder['parentOrderSn'],
-                            'order_date' => date('Y-m-d H:i:s', $parentOrder['parentOrderTime'] / 1000),
+                            'order_date' => date('Y-m-d H:i:s', $parentOrder['parentOrderTime']),
                             'order_status' => OrderStatus::Synchronizing,
                             'store_id' => $store->id,
                             'order_synchronization_id' => $order_synchronization->id
@@ -557,8 +557,8 @@ class TemuService implements MarketplaceServiceInterface
                         OrderUtility::mapTemuOrders($presentOrder, $porder, $store);
                     }
 
-                    if ($last_order_update_date === null || strtotime($parentOrder['parentOrderTime'] / 1000) > strtotime($last_order_update_date)) {
-                        $last_order_update_date = date('Y-m-d H:i:s', $parentOrder['parentOrderTime'] / 1000);
+                    if ($last_order_update_date === null || strtotime($parentOrder['parentOrderTime']) > strtotime($last_order_update_date)) {
+                        $last_order_update_date = date('Y-m-d H:i:s', $parentOrder['parentOrderTime']);
                     }
                 }
             } else {
