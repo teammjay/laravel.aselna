@@ -1,6 +1,7 @@
 <?php
 
 use App\Jobs\AmazonListingItemSyncJob;
+use App\Jobs\FetchTemuOrders;
 use App\Jobs\SendNotificationEmailSyncFailJob;
 use App\Jobs\SendNotificationOrderSyncFailJob;
 use App\Jobs\ShopifyCombinedSyncing;
@@ -40,7 +41,7 @@ Schedule::job(new FetchWalmartOrdersJob())->everyThirtyMinutes();
 Schedule::job(new FetchEbayOrders())->everyThirtyMinutes();
 Schedule::job(new FetchShopifyOrders())->everyThirtyMinutes();
 Schedule::job(new SyncAllOrderStatusJob())->everyThirtyMinutes();
-Schedule::job(new FetchWalmartOrdersJob())->everyThirtyMinutes();
+Schedule::job(new FetchTemuOrders())->everyThirtyMinutes();
 
 // I want to run this at every 45 Minute of the hour
 Schedule::job(new SendNotificationEmailSyncFailJob(2))->cron('12 * * * *');
