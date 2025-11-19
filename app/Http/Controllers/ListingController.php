@@ -2817,10 +2817,10 @@ class ListingController extends Controller
             sort($numbers, SORT_NATURAL);
             $suffixes = array_unique(array_filter($suffixes));
 
-            echo '<pre>';
+            /*echo '<pre>';
             print_r($numbers);
             print_r($suffixes);
-            echo '</pre>';die;
+            echo '</pre>';die;*/
 
             usort($numbers, 'strnatcasecmp');
 
