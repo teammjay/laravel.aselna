@@ -569,6 +569,19 @@
                                             </div>
 
                                         </div>
+
+                                        <div>
+                                            <div class="form-group">
+                                                <label>Title Replace Search Text:</label>
+                                                <input type="text" class="form-control" name="series_search_text" id="series_search_text" placeholder="Search">
+                                            </div>
+                                            <div class="form-group mt-3">
+                                                <label>Title Replace Value Text:</label>
+                                                <input type="text" class="form-control" name="series_replace_value" id="series_replace_value" placeholder="Replace">
+                                            </div>
+
+                                        </div>
+
                                     </div>
                                     <div class="d-flex" style="gap:10px;">
                                         <div class="form-group mb-1 mt-3">
@@ -970,6 +983,8 @@
                                 carrier_combo:carrier_combo,
                                 brand_combo:brand_combo,
                                 manufacturer_id:$('#use-store-brand').val(),
+                                series_search_text:$('#series_search_text').val(),
+                                series_replace_value:$('#series_replace_value').val(),
                             },
                             /* processData: false,
                              contentType: false,*/
@@ -2856,6 +2871,79 @@
                 }
             });
 
+            let deviceSeries = [];
+            $('input[name="device_series[]"]').each(function()
+            {
+                deviceSeries.push($(this).val())
+            });
+
+            if(deviceSeries.length){
+                $.ajax({
+                    url: "{{ route('listing.getdeviceseries') }}",
+                    type: 'POST',
+                    data: {
+                        deviceSeries:deviceSeries,
+                    },
+                    headers: {
+                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                    },
+                    success: function (response) {
+                        if (response.success) {
+                            if(response.option) {
+                                let data = response.data;
+                                $('#series_replace_value').val(response.option);
+
+                                $('#series_search_text').autocomplete({
+
+                                    source: function (request, response) {
+                                        actemp = data.details;
+                                        response(data.display);
+                                    },
+                                    minLength: 0,
+                                    select: function (event, ui) {
+                                        $('#series_search_text').val(ui.item.label);
+                                        return false;
+                                    }
+                                }).focus(function () {
+                                    $('#series_search_text').keydown();
+                                });
+                            }else{
+                                $('#series_replace_value').val('');
+                            }
+
+                            if(response.voption){
+                                let vdata = response.vdata;
+                                $('#series_replace_value').val(response.voption);
+
+                                $('#series_replace_value').autocomplete({
+
+                                    source: function (request, response) {
+                                        actemp = vdata.details;
+                                        response(vdata.display);
+                                    },
+                                    minLength: 0,
+                                    select: function (event, ui) {
+                                        $('#series_replace_value').val(ui.item.label);
+                                        return false;
+                                    }
+                                }).focus(function () {
+                                    $('#series_replace_value').keydown();
+                                });
+                            }else{
+                                $('#series_replace_value').val('');
+                            }
+                        }
+                    },
+                    error: function (xhr) {
+                        /*if (xhr.responseJSON?.error) {
+                            $('#responseMessage').html('<p style="color:red;">' + xhr.responseJSON.error.image[0] + '</p>');
+                        }*/
+                    },
+                    complete: function () {
+                        $("#ajax-preloader").hide();
+                    }
+                });
+            }
 
         }
 

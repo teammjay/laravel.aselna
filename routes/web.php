@@ -170,6 +170,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/listing/relist', 'reList')->name('listing.relist');
         Route::post('/listing/checkupcexist', 'checkUpcExist')->name('listing.checkupcexist');
         Route::post('/listing/getstoremanufacturer', 'getStoreManufacturer')->name('listing.getstoremanufacturer');
+        Route::post('/listing/getdeviceseries', 'getDeviceSeries')->name('listing.getdeviceseries');
     });
 
     Route::controller(ListingGenerationTypeController::class)->group(function () {
