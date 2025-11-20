@@ -1451,6 +1451,7 @@
                         var currentvalue = $(this).val();
                         var updatedString = currentvalue.replace(searchTerm, replaceText);
                         $(this).val(updatedString);
+                        $(this).trigger('input').trigger('change');
                     });
                 });
             });

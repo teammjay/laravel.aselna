@@ -223,7 +223,7 @@ class EmailMessageUtility
                             return true;
                         }
                         Log::info("Message date: " . $messageDate->toDateTimeString() . " | Filter date: " . $filterDateObj->toDateTimeString());
-                        return $messageDate->greaterThanOrEqualTo($filterDateObj);
+                        return $messageDate->greaterThan($filterDateObj);
                     } catch (Exception $e) {
                         Log::warning("Error filtering message date: " . $e->getMessage());
                         return false;
