@@ -62,6 +62,9 @@ class StoreTypesController extends Controller
     {
         $request->validated();
 
+        $request['acknowledge_order'] = $request->has('acknowledge_order') ? 1 : 0;
+        $request['create_image_per_listing'] = $request->has('create_image_per_listing') ? 1 : 0;
+
         $updated_by = auth()->user()->name ?? 'admin';
         $request->merge(['updated_by' => $updated_by]);
 
