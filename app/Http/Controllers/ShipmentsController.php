@@ -896,8 +896,10 @@ class ShipmentsController extends Controller
         }
     }
 
-    public function canceledShipment(Request $request){
+    public function updateShipmentStatus(Request $request){
         $selected_shipment_ids = $request->input('operation_ids');
+        $status = $request->input('status');
+        $orderstatus = $request->input('orderstatus');
 
         try {
             if ($selected_shipment_ids) {
@@ -905,16 +907,16 @@ class ShipmentsController extends Controller
 
                 if (!empty($orderOperations)) {
                     foreach($orderOperations as $orderOperation){
-                        $orderOperation->update(['status' => OrderOperationStatus::Canceled]);
+                        $orderOperation->update(['status' => $status]);
                         if (isset($orderOperation->order->id)) {
                             $order = Order::findOrFail($orderOperation->order->id);
-                            $order->update(['order_status' => OrderStatus::Canceled]);
+                            $order->update(['order_status' => $orderstatus]);
                         }
                     }
 
                     return response()->json([
                         'success' => true,
-                        'message' => 'Order Cancelled Successfully',
+                        'message' => 'Shipment status updated successfully',
                     ]);
                 } else {
                     return response()->json([
