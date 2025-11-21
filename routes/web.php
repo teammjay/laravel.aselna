@@ -531,7 +531,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/shipment/updateshipment', 'updateShipment')->name('shipment.updateshipment');
         Route::post('/shipment/approveshipment', 'approveShipment')->name('shipment.approveshipment');
         Route::post('/shipment/resubmitshipment', 'resubmitShipment')->name('shipment.resubmitshipment');
-        Route::post('/shipment/canceledshipment', 'canceledShipment')->name('shipment.canceledshipment');
+        Route::post('/shipment/updateshipmentstatus', 'updateShipmentStatus')->name('shipment.updateshipmentstatus');
     });
 
     Route::controller(ShippingCarrierPackageController::class)->group(function () {
