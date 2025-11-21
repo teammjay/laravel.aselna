@@ -220,6 +220,14 @@
                                 Approved
                             </button>
 
+                            <button type="button" class="btn btn-default change_shipment_status" data-status="12" data-ostatus="5">
+                                Mark As Canceled
+                            </button>
+
+                            <button type="button" class="btn btn-default change_shipment_status" data-status="13" data-ostatus="4">
+                                Mark As Shipped (Without Feed)
+                            </button>
+
                             <span id="total_selected">( 0 selected )</span>
                         </div>
                     </div>
@@ -620,6 +628,53 @@
                 alert('Please select shipment first');
             }
         });
+
+        $(document).on('click','.change_shipment_status',function () {
+
+            let confirmation = confirm("are you sure want to update this shipments?");
+            let status = $(this).data('status');
+            let orderstatus = $(this).data('ostatus');
+
+            if(confirmation) {
+                let shipment_ids = [];
+                $('input[name="shipment_id[]"]:checked').each(function () {
+                    shipment_ids.push($(this).val());
+                });
+
+                if (shipment_ids.length === 0) {
+                    alert('Please select shipment first.');
+                    return false;
+                }
+
+                if (shipment_ids.length) {
+                    $.ajax({
+                        url: "{{ route('shipment.updateshipmentstatus') }}",
+                        type: 'POST',
+                        data: {
+                            operation_ids: shipment_ids,
+                            status: status,
+                            orderstatus: orderstatus,
+                            "_token": '{{ csrf_token() }}'
+                        },
+                        success: function (response) {
+                            // If success, remove the user row from the table
+                            if (response.success) {
+                                alert('Shipment updated successfuly.');
+                                location.reload();
+                            }
+                        },
+                        error: function (xhr) {
+                            // Handle error response
+                            alert('Error: ' + xhr.responseJSON.error);
+                        }
+                    });
+                } else {
+                    alert('Please select shipment first');
+                }
+            }
+        });
+
+
 
 
 
