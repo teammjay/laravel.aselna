@@ -220,6 +220,10 @@
                                 Approved
                             </button>
 
+                            <button type="button" class="btn btn-default" id="mark_as_canceled">
+                                Mark As Canceled
+                            </button>
+
                             <span id="total_selected">( 0 selected )</span>
                         </div>
                     </div>
@@ -620,6 +624,49 @@
                 alert('Please select shipment first');
             }
         });
+
+        $(document).on('click','#mark_as_canceled',function () {
+
+            let confirmation = confirm("are you sure want to canceled this orders?");
+
+            if(confirmation) {
+                let shipment_ids = [];
+                $('input[name="shipment_id[]"]:checked').each(function () {
+                    shipment_ids.push($(this).val());
+                });
+
+                if (shipment_ids.length === 0) {
+                    alert('Please select shipment first.');
+                    return false;
+                }
+
+                if (shipment_ids.length) {
+                    $.ajax({
+                        url: "{{ route('shipment.canceledshipment') }}",
+                        type: 'POST',
+                        data: {
+                            operation_ids: shipment_ids,
+                            "_token": '{{ csrf_token() }}'
+                        },
+                        success: function (response) {
+                            // If success, remove the user row from the table
+                            if (response.success) {
+                                alert('Shipment canceled successfuly.');
+                                location.reload();
+                            }
+                        },
+                        error: function (xhr) {
+                            // Handle error response
+                            alert('Error: ' + xhr.responseJSON.error);
+                        }
+                    });
+                } else {
+                    alert('Please select shipment first');
+                }
+            }
+        });
+
+
 
 
 

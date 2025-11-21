@@ -896,6 +896,47 @@ class ShipmentsController extends Controller
         }
     }
 
+    public function canceledShipment(Request $request){
+        $selected_shipment_ids = $request->input('operation_ids');
+
+        try {
+            if ($selected_shipment_ids) {
+                $orderOperations = OrderOperation::with('order', 'store', 'store.storeType')->whereIn('id', $selected_shipment_ids)->get();
+
+                if (!empty($orderOperations)) {
+                    foreach($orderOperations as $orderOperation){
+                        $orderOperation->update(['status' => OrderOperationStatus::Canceled]);
+                        if (isset($orderOperation->order->id)) {
+                            $order = Order::findOrFail($orderOperation->order->id);
+                            $order->update(['order_status' => OrderStatus::Canceled]);
+                        }
+                    }
+
+                    return response()->json([
+                        'success' => true,
+                        'message' => 'Order Cancelled Successfully',
+                    ]);
+                } else {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Order operation not found. Please try again!'
+                    ]);
+                }
+
+            } else {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Please select shipment'
+                ]);
+            }
+        } catch (\Exception $exception) {
+            return response()->json([
+                'success' => false,
+                'message' => $exception->getMessage()
+            ]);
+        }
+    }
+
     public function shipSelected(Request $request)
     {
         $selected_shipment_id = $request->input('shipment_ids');
