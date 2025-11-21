@@ -3031,14 +3031,28 @@ class ListingController extends Controller
             // Normal logic for models WITHOUT parentheses
             $parts = array_values(array_filter(explode(' ', $m), fn($p) => $p !== ''));
 
-            $series = $parts[0];
+            $first = $parts[0];
+            $second = $parts[1] ?? '';
 
-            if (isset($parts[1])) {
-                $firstCharSecond = substr($parts[1], 0, 1);
-                if ($firstCharSecond !== '' && is_numeric($firstCharSecond)) {
-                    $series = $parts[0] . ' ' . $parts[1];
-                } elseif (strpbrk($parts[0], '0123456789') !== false) {
-                    $series = $parts[0];
+            $prefix2 = $first . ' ' . $second;
+
+            if (
+                strcasecmp($first, 'Tab') === 0 ||
+                strcasecmp($first, 'Watch') === 0 ||
+                strcasecmp($first, 'Book') === 0 ||
+                strcasecmp($first, 'iPad') === 0
+            ) {
+                $series = $prefix2;
+            } else {
+                $series = $parts[0];
+
+                if (isset($parts[1])) {
+                    $firstCharSecond = substr($parts[1], 0, 1);
+                    if ($firstCharSecond !== '' && is_numeric($firstCharSecond)) {
+                        $series = $parts[0] . ' ' . $parts[1];
+                    } elseif (strpbrk($parts[0], '0123456789') !== false) {
+                        $series = $parts[0];
+                    }
                 }
             }
 
