@@ -103,7 +103,6 @@ class AmazonService implements MarketplaceServiceInterface
                         'marketplace_id' => 'ATVPDKIKX0DER'
                     ]],
                     'product_description' => [['value' => $productData->product_description, 'language_tag' => 'en_US']],
-                    'batteries_required' => [['value' => false]],
                     'externally_assigned_product_identifier' => [[
                         'value' => $itemDetail->upc,
                         'type' => 'upc'
