@@ -105,7 +105,10 @@ class ProcessFeedGenerationJob implements ShouldQueue
             }
 
             //$query->orderBy('products.product_sku','asc');
-            //$query->limit(10);
+            if (env('APP_ENV') == 'local') {
+                $query->limit(10);
+            }
+
             $products = $query->distinct()->get();
 
             switch (strtolower($feed_type)) {
@@ -201,9 +204,6 @@ class ProcessFeedGenerationJob implements ShouldQueue
                                     $store_type = isset($storeDetail->storeType->name) ? $storeDetail->storeType->name : '';
                                     $site_url = isset($storeDetail->store_url) ? $storeDetail->store_url : '';
                                     $store_url = isset($listitem->store_url) ? $listitem->store_url : '';
-                                    if ($store_sku != '') {
-                                        $product_url = \App\Utils\ListingUtility::generateItemUrl($store_type, $store_sku, $site_url, $store_url);
-                                    }
 
                                     $item_url = StoreNavigationPage::where('store_id', $store_id)
                                         ->where('page_type', WebStorePageType::DEVICE)
@@ -228,6 +228,15 @@ class ProcessFeedGenerationJob implements ShouldQueue
                                             if (!$item_detail) {
                                                 Log::info('Inserting new listing item detail for listing item ID: ' . $listitem->id . ' and device ID: ' . $device->id);
                                                 $item_detail = $this->insertListingItemDetail($storeDetail, $product_code, $listitem, $device);
+                                            }
+
+                                            $devicePage = StoreNavigationPage::where('store_id', $store_id)
+                                                ->where('page_type', WebStorePageType::DEVICE)
+                                                ->where('device_id', $device->id)
+                                                ->first();
+
+                                            if ($store_sku != '') {
+                                                $product_url = \App\Utils\ListingUtility::generateItemUrl($store_type, $store_sku, $site_url, $store_url,$devicePage->url_path ?? '');
                                             }
 
                                             $typeDetail = ProductType::with('parent')->where('id', $itemDetail->product->product_type)->first();
