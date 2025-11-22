@@ -7,6 +7,7 @@ use App\Constants\ListingSyncStatus;
 use App\Models\Catalog;
 use App\Models\GenerateProductImage;
 use App\Models\ListingItem;
+use App\Models\ListingItemProductImage;
 use App\Models\ProductImageAlternative;
 use App\Models\ProductTitleKeyword;
 use App\Models\ProductType;
@@ -548,6 +549,8 @@ class SubmitShopifyProductsJob implements ShouldQueue
             $variantId = $response['data']['productUpdate']['product']['variants']['nodes'][0]['id'];
             $variantIdReplaced = str_replace('gid://shopify/ProductVariant/', '', $variantId);
 
+            $this->handleMediaImages($response['data']['productUpdate']['product'],$listingItem);
+
             $listingItem->update([
                 'store_url' => $handle,
                 'store_sku' => $productIdReplaced . '-' . $variantIdReplaced
@@ -651,5 +654,24 @@ class SubmitShopifyProductsJob implements ShouldQueue
             $title = $productData->product_title;
         }
         return trim($title) . ' - ' . $store->short_code . $productData->product_sku;
+    }
+
+    private function handleMediaImages($product, $listingItem)
+    {
+        $media = $product['media']['nodes'];
+        foreach ($media as $mediaItem) {
+            if ($mediaItem['mediaContentType'] == 'IMAGE') {
+                Log::info('Media Image: ' . json_encode($mediaItem));
+                $imageUrl = $mediaItem['preview']['image']['url'];
+                Log::info('Image URL: ' . $imageUrl);
+                ListingItemProductImage::updateOrCreate([
+                    'listing_item_id' => $listingItem->id,
+                    'path' => $imageUrl,
+                ], [
+                    'listing_item_id' => $listingItem->id,
+                    'path' => $imageUrl,
+                ]);
+            }
+        }
     }
 }
