@@ -739,6 +739,8 @@ class AmazonUtility
             case 'model_name':
             case 'model_number':
                 return [['value' => $itemDetail->sku, 'language_tag' => 'en_US']];
+            case 'batteries_required':
+                return [['value' => 'false']];
             default:
                 if ($value) {
                     return [['value' => $value->calculated_value(), 'language_tag' => 'en_US']];
