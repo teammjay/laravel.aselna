@@ -703,10 +703,10 @@ class AmazonUtility
                 return FieldUtility::getCableFieldValue($productData);
             case 'item_package_weight':
                 return FieldUtility::getItemPackageWeight($productData);
-            case 'special_feature':
-                return FieldUtility::getSpecialFeatures($productData, $storeProduct);
-            case 'item_hardness':
-                return FieldUtility::getItemHardness($productData);
+//            case 'special_feature':
+//                return FieldUtility::getSpecialFeatures($productData, $storeProduct);
+//            case 'item_hardness':
+//                return FieldUtility::getItemHardness($productData);
             case 'item_length_width':
                 return [[
                     'length' => ['value' => $productData->package_dimensions_length, 'unit' => 'inches'],

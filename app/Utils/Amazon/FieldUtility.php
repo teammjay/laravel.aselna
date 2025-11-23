@@ -32,6 +32,14 @@ class FieldUtility
         ]];
     }
 
+    public static function getItemHardness(mixed $productData)
+    {
+        return [[
+            'value' => '9H Hardness',
+            'language_tag' => 'en_US',
+        ]];
+    }
+
     public static function getItemPackageWeight($productData)
     {
         return [[
@@ -98,12 +106,6 @@ class FieldUtility
         return $deviceDetail->brand->name . ' ' . $deviceDetail->name;
     }
 
-    public static function getItemHardness(mixed $productData)
-    {
-        return [[
-            'value' => '9H Hardness',
-            'language_tag' => 'en_US',
-        ]];
-    }
+
 
 }
