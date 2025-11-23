@@ -209,9 +209,6 @@ class AddProductSpecificationInfo extends Seeder
                 $requirement['column'] = 'product_package_weight';
                 $requirement['key_value'] = $required;
                 break;
-            case 'cable':
-                $requirement['key_value'] = 'Cable Length';
-                break;
             default:
                 $requirement['key_value'] = $required;
                 break;

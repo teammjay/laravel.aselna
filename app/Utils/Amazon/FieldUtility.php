@@ -16,7 +16,7 @@ class FieldUtility
             ->first();
 
         $cable_length = ProductSpecification::where('product_id', $productData->product_id)
-            ->where('name', 'Cable Length')
+            ->where('name', 'cable')
             ->first();
 
         return [[
