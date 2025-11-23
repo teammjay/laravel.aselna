@@ -16,7 +16,7 @@ class FieldUtility
             ->first();
 
         $cable_length = ProductSpecification::where('product_id', $productData->product_id)
-            ->where('name', 'Cable Length')
+            ->where('name', 'cable')
             ->first();
 
         return [[
@@ -29,6 +29,14 @@ class FieldUtility
                 'language_tag' => 'en_US',
                 'value' => $type->calculated_value(),
             ]]
+        ]];
+    }
+
+    public static function getItemHardness(mixed $productData)
+    {
+        return [[
+            'value' => '9H Hardness',
+            'language_tag' => 'en_US',
         ]];
     }
 
@@ -98,12 +106,6 @@ class FieldUtility
         return $deviceDetail->brand->name . ' ' . $deviceDetail->name;
     }
 
-    public static function getItemHardness(mixed $productData)
-    {
-        return [[
-            'value' => '9H Hardness',
-            'language_tag' => 'en_US',
-        ]];
-    }
+
 
 }
