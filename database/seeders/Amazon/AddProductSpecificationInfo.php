@@ -155,7 +155,7 @@ class AddProductSpecificationInfo extends Seeder
             $calculator = new AmazonRequirementCalculator($specifications);
             $productData = [];
             $skipCommonFields = ["brand", "bullet_point", "country_of_origin", "item_name", "item_type_keyword", "product_description", "compatible_devices", "fulfillment_availability", "condition_type", "list_price",
-                "item_package_dimensions", "merchant_suggested_asin", "externally_assigned_product_identifier", "manufacturer", "part_number", "product_description", "special_feature", "item_hardness", "compatible_phone_models"
+                "item_package_dimensions", "merchant_suggested_asin", "externally_assigned_product_identifier", "manufacturer", "part_number", "product_description", "compatible_phone_models"
                 , "model_name", "model_number", "batteries_required"];
 
             $requiredList = $calculator->getRequiredFieldsV2();
@@ -208,9 +208,6 @@ class AddProductSpecificationInfo extends Seeder
                 $requirement['table'] = 'products';
                 $requirement['column'] = 'product_package_weight';
                 $requirement['key_value'] = $required;
-                break;
-            case 'cable':
-                $requirement['key_value'] = 'Cable Length';
                 break;
             default:
                 $requirement['key_value'] = $required;
