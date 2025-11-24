@@ -615,7 +615,7 @@ GQL;
                 edges {
                     node {
                         id
-                        altText
+                        alt
                         originalSrc
                     }
                 }
