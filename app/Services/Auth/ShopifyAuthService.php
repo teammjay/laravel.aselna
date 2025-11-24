@@ -596,10 +596,11 @@ class ShopifyAuthService
         }
     }
 
-    public function deleteProductImage(mixed $mediaId)
+    public function deleteProductImage(mixed $mediaIds,$productId)
     {
         $variables = [
-            'id' => $mediaId
+            'mediaIds' => $mediaIds,
+            'productId' => $productId
         ];
 
         $response = $this->makeGraphQLRequest(ShopifyQueries::$deleteProductImage, $variables);
