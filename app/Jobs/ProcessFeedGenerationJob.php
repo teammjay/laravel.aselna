@@ -10,6 +10,7 @@ use App\Models\GenerateProductImage;
 use App\Models\GoodUpc;
 use App\Models\ListingItem;
 use App\Models\ListingItemDetail;
+use App\Models\ListingItemProductImage;
 use App\Models\ProductImages;
 use App\Models\ProductSpecification;
 use App\Models\ProductTitleKeyword;
@@ -165,6 +166,17 @@ class ProcessFeedGenerationJob implements ShouldQueue
                         $images = array();
                         Log::info('Processing product ID: ' . $itemDetail->id);
 
+                        $listingItemImages = ListingItemProductImage::where('listing_item_id',$itemDetail->id)->get();
+                        $mainImage = null;
+
+                        foreach ($listingItemImages as $image) {
+                            if($image->main_image == 1){
+                                $mainImage = $image->path;
+                            } else {
+                                $images[] = $image->path;
+                            }
+                        }
+
                         /*$this->generateProductImages($itemDetail, $storeDetail);
                         $productImages = GenerateProductImage::where('product_id', $itemDetail->product_id)->get();
                         foreach ($productImages as $image) {
@@ -249,7 +261,7 @@ class ProcessFeedGenerationJob implements ShouldQueue
                                                 $ptype_id,
                                                 $product_type,
                                                 $product_url,
-                                                (!empty($images)) ? implode(',', $images) : '',
+                                                (isset($mainImage)) ? $mainImage : '',
                                                 (isset($itemDetail->product->condition)) ? $itemDetail->product->condition->name : '',
                                                 'in stock',
                                                 (($itemDetail->product->product_marketplace_price != '') ? $itemDetail->product->product_marketplace_price : $itemDetail->product->product_price) . ' USD',
@@ -262,7 +274,7 @@ class ProcessFeedGenerationJob implements ShouldQueue
                                                 (isset($itemDetail->product->color->name)) ? $itemDetail->product->color->name : '',
                                                 (isset($itemDetail->product->size->value)) ? $itemDetail->product->size->value . ' ' . $itemDetail->product->size->value_unit : '',
                                                 'US::Standard:3.99 USD',
-                                                '',
+                                                (isset($images) && count($images) > 0) ? implode(',', $images) : '',
                                                 (isset($listitem->qunatity)) ? $listitem->qunatity : 500,
                                                 'return_policy_days: "30"',
                                                 (isset($item_detail->device->brand->name)) ? $item_detail->device->brand->name : '',
