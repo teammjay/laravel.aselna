@@ -773,14 +773,26 @@ GQL;
 GQL;
 
     public static $deleteProductImage = <<<GQL
-    mutation deleteProductImage(\$id: ID!) {
-      productImageDelete(id: \$id) {
-        deletedImageId
-        userErrors {
-          field
-          message
+        mutation productDeleteMedia(\$mediaIds: [ID!]!, \$productId: ID!) {
+          productDeleteMedia(mediaIds: \$mediaIds, productId: \$productId) {
+            deletedMediaIds
+            deletedProductImageIds
+            mediaUserErrors {
+              field
+              message
+            }
+            product {
+              id
+              title
+              media(first: 5) {
+                nodes {
+                  alt
+                  mediaContentType
+                  status
+                }
+              }
+            }
+          }
         }
-      }
-    }
 GQL;
 }

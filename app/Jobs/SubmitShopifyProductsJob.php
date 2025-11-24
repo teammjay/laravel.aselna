@@ -706,13 +706,18 @@ class SubmitShopifyProductsJob implements ShouldQueue
         $oldImages = $shopifyAuthService->getProductImages($marketplace_product_id);
         Log::info('Old Images: ' . json_encode($oldImages));
         $Images = $oldImages['data']['product']['media']['nodes'];
+        $mediaIds = [];
         foreach ($Images as $image) {
-            Log::info('Image :: '. json_encode($image));
+            Log::info('Image :: ' . json_encode($image));
             $mediaId = $image['id'];
             $altText = $image['alt'];
             if ($altText == null || $altText == '') {
-                $shopifyAuthService->deleteProductImage($mediaId);
+                $mediaIds[] = $mediaId;
             }
         }
+        if (count($mediaIds) == 0) {
+            return;
+        }
+        $shopifyAuthService->deleteProductImage($mediaIds, $marketplace_product_id);
     }
 }
