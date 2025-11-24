@@ -15,6 +15,18 @@ class ShopifyQueries
                         id
                     }
                 }
+                media(first: 249) {
+                    nodes {
+                        alt
+                        mediaContentType
+                        preview {
+                            status
+                            image {
+                                url
+                            }
+                        }
+                    }
+                }
             }
             userErrors {
                 code
@@ -36,12 +48,15 @@ GQL;
                     id
                 }
             }
-          media(first: 10) {
+          media(first: 249) {
             nodes {
               alt
               mediaContentType
               preview {
                 status
+                image {
+                    url
+                }
               }
             }
           }
@@ -595,6 +610,25 @@ GQL;
     }
 GQL;
 
+    public static $getProductImages = <<<GQL
+    query GetProductImages(\$id: ID!) {
+        product(id: \$id) {
+            id
+            title
+            media(first: 250) {
+                edges {
+                    node {
+                        id
+                        alt
+                        originalSrc
+                    }
+                }
+            }
+        }
+    }
+GQL;
+
+
     public static $getProductsWithCursor = <<<GQL
     query GetProducts(\$cursor: String) {
         products(first: 100,after: \$cursor) {
@@ -732,5 +766,17 @@ GQL;
             }
           }
         }
+GQL;
+
+    public static $deleteProductImage = <<<GQL
+    mutation deleteProductImage(\$id: ID!) {
+      productImageDelete(id: \$id) {
+        deletedImageId
+        userErrors {
+          field
+          message
+        }
+      }
+    }
 GQL;
 }
