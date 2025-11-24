@@ -616,11 +616,15 @@ GQL;
             id
             title
             media(first: 250) {
-                edges {
-                    node {
-                        id
-                        alt
-                        originalSrc
+                nodes {
+                    id
+                    alt
+                    mediaContentType
+                    preview {
+                        status
+                        image {
+                            url
+                        }
                     }
                 }
             }
