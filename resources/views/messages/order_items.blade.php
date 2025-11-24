@@ -15,6 +15,14 @@
         @endphp
         <tr class="clickable-row" data-href="{{ $url }}">
             <td>
+                <div class="btn-group float-right" role="group">
+                    <button id="btnGroupDrop2" type="button" class="dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="fa fa-ellipsis-v"></i></button>
+                    <div class="dropdown-menu" aria-labelledby="btnGroupDrop2">
+                        <a class="dropdown-item show_attributes" href="javascript:void(0)" data-id="{{ $oitem->id }}">Show Attributes</a>
+                    </div>
+                </div>
+            </td>
+            <td>
                 @if(isset($oitem->product) && $oitem->product->image != '')
                     <div class="main-image">
                         <img src="{{ asset('storage/' .$oitem->product->image->getFileUrl()) }}"
