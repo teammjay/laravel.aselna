@@ -10,6 +10,9 @@
 @section('adminlte_css')
 <style>
     .clickable-row:hover{cursor:pointer; background: #f0f8ff;}
+    #btnGroupDrop2::after{
+        display:none;
+    }
 </style>
 @stop
 
@@ -328,6 +331,7 @@
                         <table id="itemTable" class="table table-bordered table-striped">
                             <thead>
                             <tr>
+                                <th></th>
                                 <th>Thumbnail</th>
                                 <th>Sku</th>
                                 <th>Store Sku</th>
@@ -355,6 +359,14 @@
                                         }
                                     @endphp
                                     <tr class="clickable-row" data-href="{{ $url }}">
+                                        <td>
+                                            <div class="btn-group float-right" role="group">
+                                                <button id="btnGroupDrop2" type="button" class="dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="fa fa-ellipsis-v"></i></button>
+                                                <div class="dropdown-menu" aria-labelledby="btnGroupDrop2">
+                                                    <a class="dropdown-item show_attributes" href="javascript:void(0)" data-id="{{ $item->id }}">Show Attributes</a>
+                                                </div>
+                                            </div>
+                                        </td>
                                         <td>
                                             @if(isset($item->product) && $item->product->image != '')
                                                 <div class="main-image">
@@ -424,6 +436,34 @@
                     <button type="button" class="btn btn-secondary closeaddressbtn" data-dismiss="modal">Cancle</button>
                     <button type="button" class="btn btn-primary" id="saveAddress"><i class="fa fa-check"></i> Ok
                     </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- show attributes modal -->
+    <div class="modal fade" id="showAttributesModal">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="showAttributesModalLabel">Postal Address</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <table class="table table-bordered" id="tblItemAttribute">
+                        <thead>
+                            <tr>
+                                <th>Key</th>
+                                <th>Value</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+
+                        </tbody>
+                    </table>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
                 </div>
             </div>
         </div>
@@ -564,6 +604,53 @@
                             // If success, remove the user row from the table
                             if (response.success) {
                                 window.open(response.label_url, '_blank');
+                            }
+                        },
+                        error: function (xhr) {
+                            // Handle error response
+                            alert('Error: ' + xhr.responseJSON.error);
+                        }
+                    });
+                }
+            });
+
+            $(document).on('click', '.show_attributes', function () {
+                var order_item_id = $(this).data('id');
+                if (order_item_id != '' && order_item_id != null) {
+                    $.ajax({
+                        url: "{{ route('order.getorderitemattributes') }}",
+                        type: 'POST',
+                        data: {
+                            order_item_id: order_item_id,
+                            "_token": '{{ csrf_token() }}'
+                        },
+                        success: function (response) {
+                            // If success, remove the user row from the table
+
+                            console.log(response);
+                            if (response.success) {
+
+                                if(response.attr) {
+                                    var rowHtml = '';
+                                    for(i in response.attr){
+
+                                        var key = response.attr[i].key;
+                                        var value = response.attr[i].value;
+
+                                        if (!value || value.toString().trim() === "") {
+                                            value = "N/A";
+                                        }
+
+                                        if (!key || key.toString().trim() === "") {
+                                            key = "N/A";
+                                        }
+
+                                        rowHtml += '<tr><td>' + key + '</td><td>' + value + '</td></tr>';
+
+                                    }
+                                    $('#tblItemAttribute').find('tbody').html(rowHtml);
+                                }
+                                $('#showAttributesModal').modal('show');
                             }
                         },
                         error: function (xhr) {

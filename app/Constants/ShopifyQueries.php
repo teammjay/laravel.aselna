@@ -153,6 +153,10 @@ GQL;
                                 source
                                 rate
                             }
+                            customAttributes {
+                                key
+                                value
+                            }
                         }
                     }
                 }

@@ -13,6 +13,7 @@ use App\Models\CustomerAddress;
 use App\Models\CustomerPhone;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\OrderItemAttribute;
 use App\Models\OrderOperation;
 use App\Models\OrderOperationItem;
 use App\Models\OrderSynchronization;
@@ -58,6 +59,10 @@ class FetchShopifyOrders implements ShouldQueue
                 $tags = [];
                 foreach ($stores as $store) {
                     if ($store->secret_key == '' || $store->service_url == '') {
+                        continue;
+                    }
+
+                    if($store->id != '99ede22c-fc39-7f9f-cd0d-34d4b9a70c21'){
                         continue;
                     }
                     Log::info('Store : ' . $store->name);
@@ -334,6 +339,26 @@ class FetchShopifyOrders implements ShouldQueue
                                                 if(isset($product_detail->shipping_package_id) && $product_detail->shipping_package_id != '') {
                                                     $package_id = $product_detail->shipping_package_id;
                                                     $order_operation_detail->update(['shipping_package_id' => $package_id]);
+                                                }
+
+                                                /* save order item attribute*/
+
+                                                if(isset($item['customAttributes']) && !empty($item['customAttributes'])){
+                                                    foreach($item['customAttributes'] as $attr){
+                                                        $orderItemAttrData = [
+                                                            'key' => $attr['key'],
+                                                            'value' => $attr['value'],
+                                                            'order_item_id' => $order_item->id
+                                                        ];
+
+                                                        Log::info('Custom Attributes:'.json_encode($orderItemAttrData));
+
+                                                        OrderItemAttribute::updateOrCreate([
+                                                            'key' => $attr['key'],
+                                                            'value' => $attr['value'],
+                                                            'order_item_id' => $order_item->id
+                                                        ], $orderItemAttrData);
+                                                    }
                                                 }
                                             }
                                         }

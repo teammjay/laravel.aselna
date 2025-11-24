@@ -71,6 +71,9 @@
             font-size: 14px;
         }
         .bg-red.bg-blue{background-color: #007bff !important;}
+        #btnGroupDrop2::after{
+            display:none;
+        }
     </style>
 @stop
 
@@ -349,6 +352,34 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary closeaddressbtn" data-dismiss="modal">Cancle</button>
                     <button type="button" class="btn btn-primary" id="saveAddress"><i class="fa fa-check"></i> Ok </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- show attributes modal -->
+    <div class="modal fade" id="showAttributesModal">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="showAttributesModalLabel">Postal Address</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <table class="table table-bordered" id="tblItemAttribute">
+                        <thead>
+                        <tr>
+                            <th>Key</th>
+                            <th>Value</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+
+                        </tbody>
+                    </table>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
                 </div>
             </div>
         </div>
@@ -1393,6 +1424,53 @@
         $(document).on('change', '#frmShippingDetail input, #frmShippingDetail select, #frmShippingDetail textarea', function() {
             // Your code to execute when a change occurs in any of these elements
             updateShipment();
+        });
+
+        $(document).on('click', '.show_attributes', function () {
+            var order_item_id = $(this).data('id');
+            if (order_item_id != '' && order_item_id != null) {
+                $.ajax({
+                    url: "{{ route('order.getorderitemattributes') }}",
+                    type: 'POST',
+                    data: {
+                        order_item_id: order_item_id,
+                        "_token": '{{ csrf_token() }}'
+                    },
+                    success: function (response) {
+                        // If success, remove the user row from the table
+
+                        console.log(response);
+                        if (response.success) {
+
+                            if(response.attr) {
+                                var rowHtml = '';
+                                for(i in response.attr){
+
+                                    var key = response.attr[i].key;
+                                    var value = response.attr[i].value;
+
+                                    if (!value || value.toString().trim() === "") {
+                                        value = "N/A";
+                                    }
+
+                                    if (!key || key.toString().trim() === "") {
+                                        key = "N/A";
+                                    }
+
+                                    rowHtml += '<tr><td>' + key + '</td><td>' + value + '</td></tr>';
+
+                                }
+                                $('#tblItemAttribute').find('tbody').html(rowHtml);
+                            }
+                            $('#showAttributesModal').modal('show');
+                        }
+                    },
+                    error: function (xhr) {
+                        // Handle error response
+                        alert('Error: ' + xhr.responseJSON.error);
+                    }
+                });
+            }
         });
     });
 

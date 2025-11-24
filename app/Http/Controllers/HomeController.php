@@ -79,6 +79,13 @@ class HomeController extends Controller
 
     public function testfunction(){
 
+        /*$store = Store::findOrFail('99ede22c-fc39-7f9f-cd0d-34d4b9a70c21');
+        $date = date('Y-m-d\TH:i:s\Z',strtotime('-5days'));
+        $shopifyService = new ShopifyService();
+        $orders = $shopifyService->getOrders($store, $date);
+        echo '<pre>';
+        print_r($orders);
+        echo '</pre>';die;*/
 
         /*$shopifyService = new ShopifyAuthService('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', 'https://accessorychoice.myshopify.com');
         $orderDetail = $shopifyService->getOrderDetail('6108743270539');
