@@ -107,10 +107,10 @@ class ProcessFeedGenerationJob implements ShouldQueue
             }
 
             //$query->orderBy('products.product_sku','asc');
-            if (env('APP_ENV') == 'local') {
-//                $query->limit(10);
-                $query->where('store_product.id', '00550a14-0b84-444a-9ca3-b592ee4676c6');
-            }
+//            if (env('APP_ENV') == 'local') {
+////                $query->limit(10);
+//                $query->where('store_product.id', '00550a14-0b84-444a-9ca3-b592ee4676c6');
+//            }
 
             $products = $query->distinct()->get();
 
@@ -182,7 +182,9 @@ class ProcessFeedGenerationJob implements ShouldQueue
                                 }
                             });
 
-                        $product_description .= ' ' . $itemDetail->product->product_description;
+                        if (isset($itemDetail->product->product_description)) {
+                            $product_description .= ' ' . $itemDetail->product->product_description;
+                        }
                         $product_description = trim($product_description);
 
                         $ptype_id = (isset($itemDetail->StoreTypeCategory) && !empty($itemDetail->StoreTypeCategory)) ? $itemDetail->StoreTypeCategory->store_type_code : '';
