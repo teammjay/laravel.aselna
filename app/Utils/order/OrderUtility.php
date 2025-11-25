@@ -481,7 +481,7 @@ class OrderUtility
                 }
 
                 Log::info("Came Till Here 1 :: " . json_encode($itemDetail));
-                if (isset($itemDetail)) {
+                if (isset($itemDetail) && isset($itemDetail->storeProduct) && isset($itemDetail->storeProduct->product)) {
 
                     // sale count update
                     $sku = $item['sku'];
@@ -548,7 +548,7 @@ class OrderUtility
                     $orderItemData = [
                         'title' => $item['title'],
                         'order_id' => $order->id,
-                        'product_id' => $catalog->product_id ?? null,
+                        'product_id' => $catalog-> product_id?? null,
                         'client_id' => null,
 //                        'listing_item_id' => $itemDetail->id,
                         'sku' => $item['sku'],
