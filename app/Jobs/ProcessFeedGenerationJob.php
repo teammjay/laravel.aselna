@@ -107,7 +107,8 @@ class ProcessFeedGenerationJob implements ShouldQueue
 
             //$query->orderBy('products.product_sku','asc');
             if (env('APP_ENV') == 'local') {
-                $query->limit(10);
+//                $query->limit(10);
+                $query->where('store_product.id', '00550a14-0b84-444a-9ca3-b592ee4676c6');
             }
 
             $products = $query->distinct()->get();
@@ -166,17 +167,6 @@ class ProcessFeedGenerationJob implements ShouldQueue
                         $images = array();
                         Log::info('Processing product ID: ' . $itemDetail->id);
 
-                        $listingItemImages = ListingItemProductImage::where('listing_item_id',$itemDetail->id)->get();
-                        $mainImage = null;
-
-                        foreach ($listingItemImages as $image) {
-                            if($image->main_image == 1){
-                                $mainImage = $image->path;
-                            } else {
-                                $images[] = $image->path;
-                            }
-                        }
-
                         /*$this->generateProductImages($itemDetail, $storeDetail);
                         $productImages = GenerateProductImage::where('product_id', $itemDetail->product_id)->get();
                         foreach ($productImages as $image) {
@@ -225,6 +215,19 @@ class ProcessFeedGenerationJob implements ShouldQueue
                                     if ($item_url && !isset($listitem->url)) {
                                         $listitem->update(['url' => $item_url->url_path]);
                                     }
+
+                                    $listingItemImages = ListingItemProductImage::where('listing_item_id',$listitem->id)->get();
+                                    $mainImage = null;
+
+                                    foreach ($listingItemImages as $image) {
+                                        if($image->main_image == 1){
+                                            $mainImage = $image->path;
+                                        } else {
+                                            $images[] = $image->path;
+                                        }
+                                    }
+                                    Log::info('Main image for listing item ID ' . $listitem->id . ': ' . $mainImage);
+                                    Log::info('Additional images for listing item ID ' . $listitem->id . ': ' . json_encode($images));
 
                                     $compatibledevices = $this->getCompatibleDevices($itemDetail->product_id, $this->data['device'], $this->data['device_series']);
 
