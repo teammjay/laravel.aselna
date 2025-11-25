@@ -12,6 +12,7 @@ use App\Models\ListingItem;
 use App\Models\ListingItemDetail;
 use App\Models\ListingItemProductImage;
 use App\Models\ProductImages;
+use App\Models\ProductKeyFeatures;
 use App\Models\ProductSpecification;
 use App\Models\ProductTitleKeyword;
 use App\Models\ProductType;
@@ -172,6 +173,17 @@ class ProcessFeedGenerationJob implements ShouldQueue
                         foreach ($productImages as $image) {
                             $images[] = $fileSystem->url_base_path . $image->path;
                         }*/
+                        $product_description = '';
+                        ProductKeyFeatures::where('product_id', $itemDetail->product_id)
+                            ->orderBy('sort_order', 'asc')
+                            ->chunk(100, function ($keyFeatures) use (&$product_description) {
+                                foreach ($keyFeatures as $feature) {
+                                    $product_description .= trim((string)$feature->feature) . '. ';
+                                }
+                            });
+
+                        $product_description .= ' ' . $itemDetail->product->product_description;
+                        $product_description = trim($product_description);
 
                         $ptype_id = (isset($itemDetail->StoreTypeCategory) && !empty($itemDetail->StoreTypeCategory)) ? $itemDetail->StoreTypeCategory->store_type_code : '';
                         $product_type = '';
@@ -238,7 +250,13 @@ class ProcessFeedGenerationJob implements ShouldQueue
                                             $item_detail = ListingItemDetail::where('listing_item_id', $listitem->id)
                                                 ->where('device_id', $device->id)->first();
 
-                                            $productTitle = $device->name . ' ' . $title;
+                                            if (strtolower($device->brand->name) == 'apple') {
+                                                $productTitle = $device->name . ' - ' . $title;
+                                            } else {
+                                                $productTitle = $device->brand->name . ' ' . $device->name . ' - ' . $title;
+                                            }
+
+                                            $final_description = $device->brand->name . ' ' . $device->name . ' - ' . $title . ' for ' . $device->name . '. ' . $product_description;
 
                                             if (!$item_detail) {
                                                 Log::info('Inserting new listing item detail for listing item ID: ' . $listitem->id . ' and device ID: ' . $device->id);
@@ -257,10 +275,13 @@ class ProcessFeedGenerationJob implements ShouldQueue
                                             $typeDetail = ProductType::with('parent')->where('id', $itemDetail->product->product_type)->first();
                                             $product_type = $this->getCategoryPath($typeDetail);
 
+                                            // item group id logic
+                                            $itemGroupId = $item_detail->sku . '-' . $device->code;
+
                                             fputcsv($fileHandle, [
                                                 $item_detail->sku,
                                                 $productTitle,
-                                                ($itemDetail->overwrite_description) ? $itemDetail->description : $itemDetail->product->product_description,
+                                                $final_description,
                                                 $ptype_id,
                                                 $product_type,
                                                 $product_url,
@@ -271,7 +292,7 @@ class ProcessFeedGenerationJob implements ShouldQueue
                                                 (isset($item_detail->upc)) ? $item_detail->upc : '',
                                                 (isset($itemDetail->product->Manufacturer)) ? $itemDetail->product->Manufacturer->name : '',
                                                 $item_detail->sku,
-                                                '',
+                                                (isset($device) ? $itemGroupId : ''),
                                                 '',
                                                 '',
                                                 (isset($itemDetail->product->color->name)) ? $itemDetail->product->color->name : '',
@@ -424,7 +445,7 @@ class ProcessFeedGenerationJob implements ShouldQueue
 
             $section = trim((string)$section);
             $key = trim((string)$specification->name);
-            $value = trim((string)$specification->value);
+            $value = trim((string)$specification->calculated_value());
 
             if ($section === '' || $key === '' || $value === '') {
                 continue;
@@ -442,6 +463,7 @@ class ProcessFeedGenerationJob implements ShouldQueue
         $query = Device::select('device.*', 'product_interface.product_id')->with('brand', 'rating')->with('deviceType', 'deviceSeries');
         $query->leftJoin('device_interface', 'device_interface.device_id', '=', 'device.id');
         $query->leftJoin('product_interface', 'product_interface.interface_id', '=', 'device_interface.interface_id');
+        $query->leftJoin('brands', 'brands.id', '=', 'device.brand_id');
 
         $query->where('product_interface.product_id', $product_id);
 
@@ -455,6 +477,7 @@ class ProcessFeedGenerationJob implements ShouldQueue
             $devices = DevicesLinkedDevice::select('device_id')->whereIn('device_series_id', $deviceSeries)->get();
             $query->whereIn('device.id', $devices);
         }
+        $query->orderBy('brands.name', 'asc');
         $query->orderBy('device.name', 'asc');
 
         Log::info('Compatible Devices Query: ' . $query->toSql());
