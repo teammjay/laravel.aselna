@@ -664,11 +664,13 @@
                 var notes = $(this).val();
                 //if(notes != '') {
                     let ticket_id = '{{ $ticketDetail->id }}';
+
+                    var ticket_ids = [ticket_id];
                     $.ajax({
                         type: "POST",
                         url: "{{ route('message.updateticket') }}",
                         data: {
-                            ticket_id: ticket_id,
+                            ticket_id: ticket_ids,
                             notes: notes
                         },
                         headers: {
@@ -1179,6 +1181,7 @@
                 $('#image_storage_path').val('');
                 $('.lableImageGroup').addClass('hide');
                 $('.lable-image').html('');
+                $('#attach_file').val('');
             });
 
 
@@ -1553,6 +1556,53 @@
                 setTimeout(function(){
                     $('body').addClass('modal-open');
                 },500);
+            });
+
+            $(document).on('click', '.show_attributes', function () {
+                var order_item_id = $(this).data('id');
+                if (order_item_id != '' && order_item_id != null) {
+                    $.ajax({
+                        url: "{{ route('order.getorderitemattributes') }}",
+                        type: 'POST',
+                        data: {
+                            order_item_id: order_item_id,
+                            "_token": '{{ csrf_token() }}'
+                        },
+                        success: function (response) {
+                            // If success, remove the user row from the table
+
+                            console.log(response);
+                            if (response.success) {
+
+                                if(response.attr) {
+                                    var rowHtml = '';
+                                    for(i in response.attr){
+
+                                        var key = response.attr[i].key;
+                                        var value = response.attr[i].value;
+
+                                        if (!value || value.toString().trim() === "") {
+                                            value = "N/A";
+                                        }
+
+                                        if (!key || key.toString().trim() === "") {
+                                            key = "N/A";
+                                        }
+
+                                        rowHtml += '<tr><td>' + key + '</td><td>' + value + '</td></tr>';
+
+                                    }
+                                    $('#tblItemAttribute').find('tbody').html(rowHtml);
+                                }
+                                $('#showAttributesModal').modal('show');
+                            }
+                        },
+                        error: function (xhr) {
+                            // Handle error response
+                            alert('Error: ' + xhr.responseJSON.error);
+                        }
+                    });
+                }
             });
 
         });

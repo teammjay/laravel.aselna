@@ -53,4 +53,9 @@ class OrderItem extends Model
     {
         return $this->belongsTo(ListingItem::class,'listing_item_id','id');
     }
+
+    public function orderItemAttribute()
+    {
+        return $this->hasMany(OrderItemAttribute::class,'id');
+    }
 }

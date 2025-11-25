@@ -12,6 +12,7 @@ use App\Models\CustomerPhone;
 use App\Models\ListingItem;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\OrderItemAttribute;
 use App\Models\OrderOperation;
 use App\Models\OrderOperationItem;
 use App\Models\OrderSynchronization;
@@ -659,6 +660,23 @@ class OrdersController extends Controller
             ]);
         }
         return back()->withErrors(['error' => 'Order not found.']);
+    }
+
+    public function getOrderItemAttributes(Request $request){
+        try {
+            $order_item_id = $request->input('order_item_id');
+
+            if ($order_item_id) {
+                $orderItemAttributes = OrderItemAttribute::where('order_item_id', $order_item_id)->get()->toArray();
+
+                return response()->json(['success' => true, 'attr' => $orderItemAttributes, 'message' => 'Data saved successfully!']);
+            }
+
+            return response()->json(['success' => false, 'message' => 'No order item found!']);
+        }catch (\Exception $e) {
+            // Handle the exception and show an error message
+            return response()->json(['errors' => $e->getMessage()]);
+        }
     }
 
 }

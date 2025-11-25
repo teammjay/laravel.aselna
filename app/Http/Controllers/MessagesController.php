@@ -2038,7 +2038,7 @@ class MessagesController extends Controller
     public function imageUpload(Request $request){
 
         $request->validate([
-            'attach_file' => 'required|image|mimes:jpeg,png,jpg|max:4096'
+            'attach_file' => 'required|mimetypes:image/jpeg,image/png,application/pdf'
         ]);
 
         $ticket_id= $request->input('ticket_id');
