@@ -690,6 +690,20 @@ class OrderOperationUtility
                 $temuService = new TemuAuthService();
                 $response = $temuService->cancelOrder($order_id, $store);
 
+                if (isset($orderOperation->order->orderItem) && isset($response['success']) && $response['success']) {
+                    foreach ($orderOperation->order->orderItem as $o_item) {
+                        $item_qty = $o_item->quantity;
+                        $orderItem = OrderItem::findOrFail($o_item->id);
+                        $orderItem->update(['canceled_quantity' => $item_qty]);
+                    }
+                    $data['status'] = true;
+                    return $data;
+                } else {
+                    $data['status'] = false;
+                    $data['message'] = $response['message'] ?? 'Cancellation not working from API End';
+                    return $data;
+                }
+
                 break;
         }
 
@@ -915,7 +929,7 @@ class OrderOperationUtility
 
                 $temuService = new TemuService();
                 $result = $temuService->refundOrder($orderId);
-                /*if (isset($result['success']) && $result['success']) {
+                if (isset($result['success']) && $result['success']) {
                     $orderOperation->update(['status' => OrderOperationStatus::REFUNDED]);
                     if (isset($orderId)) {
                         $order = Order::findOrFail($orderId);
@@ -930,7 +944,7 @@ class OrderOperationUtility
                         }
                     }
                     return true;
-                }*/
+                }
 
                 break;
         }
