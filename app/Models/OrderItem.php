@@ -34,9 +34,7 @@ class OrderItem extends Model
 
     public function product()
     {
-        return $this->belongsTo(Catalog::class,'product_id')->where(function ($q) {
-            $q->whereIn('product_status', ['active','temporaryDisabled']);
-        });
+        return $this->belongsTo(Catalog::class,'product_id');
     }
 
     public function orderOperationItem()
