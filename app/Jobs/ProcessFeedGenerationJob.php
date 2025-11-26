@@ -161,8 +161,6 @@ class ProcessFeedGenerationJob implements ShouldQueue
                         'path' => $getPartPath($current_file_index)
                     ];
 
-                    // Write product rows
-
                     foreach ($products as $itemDetail) {
 
                         $images = array();
@@ -178,7 +176,7 @@ class ProcessFeedGenerationJob implements ShouldQueue
                             ->orderBy('sort_order', 'asc')
                             ->chunk(100, function ($keyFeatures) use (&$product_description) {
                                 foreach ($keyFeatures as $feature) {
-                                    $product_description .= trim((string)$feature->feature) . '. ';
+                                    $product_description .= trim((string)$feature->value) . '. ';
                                 }
                             });
 
