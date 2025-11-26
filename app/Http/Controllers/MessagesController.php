@@ -832,6 +832,12 @@ class MessagesController extends Controller
 
         try {
 
+
+            if($request->has('activetab') && $request->input('activetab') == 1){
+                return response()->json([
+                    'success' => false
+                ]);
+            }
             $ticket_id = $request->input('ticket_id');
             $message_to_send = $request->input('message_to_send');
             $customer_id = $request->input('customer_id');
@@ -1565,6 +1571,7 @@ class MessagesController extends Controller
                 'shipping_carrier_service_id' => NULL,
                 'shipping_account_transaction_id' => NULL,
                 'hd_ticket_id' => $ticket_id,
+                'return_label_set_from_address' => $request->return_label_from_address,
             ];
 
             $newOrderOperation = OrderOperation::create($clonedOrderOperation);

@@ -152,7 +152,13 @@ class OrderOperationUtility
         $shipFrom = $orderOperation->shipFrom;
 
         if (OrderOperationType::isReturn($operation_type)) {
-            $shipmentDetails['fromAddress'] = self::getAddress($shipFrom->returnAddress);
+            if($orderOperation->return_label_set_from_address == 2){
+                $shipmentDetails['fromAddress'] = self::getAddress($shipFrom->returnAddress);
+            }else{
+                //$shipmentDetails['fromAddress'] = self::getAddress($shipFrom->fromAddress);
+                $shipmentDetails['fromAddress'] = self::mapCustomerAddress($orderOperation);
+            }
+
             $shipmentDetails['toAddress'] = self::getAddress($shipFrom->returnAddress);
             $shipmentDetails['is_return'] = true;
         } else {

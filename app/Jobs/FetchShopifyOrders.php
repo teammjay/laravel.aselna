@@ -62,9 +62,9 @@ class FetchShopifyOrders implements ShouldQueue
                         continue;
                     }
 
-                    if($store->id != '99ede22c-fc39-7f9f-cd0d-34d4b9a70c21'){
-                        continue;
-                    }
+//                    if($store->id != '99ede22c-fc39-7f9f-cd0d-34d4b9a70c21'){
+//                        continue;
+//                    }
                     Log::info('Store : ' . $store->name);
 
                     $tags[] = $store->name;
