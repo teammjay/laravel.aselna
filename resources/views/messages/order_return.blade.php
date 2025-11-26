@@ -176,7 +176,7 @@
                                 </div>
                                 <div class="col-md-8">
                                     @if(isset($shipmentDetail->order->customerAddress))
-                                        <a href="javascript:void(0);" class="text-blue .edit_address" id="edit_address"
+                                        <a href="javascript:void(0);" class="text-blue edit_address" id="edit_address"
                                            data-id="{{ $shipmentDetail->order->customerAddress->id }}">
                                             {{ $shipmentDetail->order->customer->first_name }} {{ $shipmentDetail->order->customer->last_name }}<br>
                                             {{ $shipmentDetail->order->customerAddress->address_line_1 }},<br>
@@ -191,17 +191,26 @@
                             </div>
                             <div class="row mt-3 g-3 align-items-center">
                                 <div class="col-md-4">
+                                    <label for="shipping_address">Set Label From Address</label>
+                                </div>
+                                <div class="col-md-8">
+                                    <input type="radio" name="return_label_from_address" value="1" checked> Customer Address
+                                    <input type="radio" name="return_label_from_address" value="2"> Logistic Center Address
+                                </div>
+                            </div>
+                            <div class="row mt-3 g-3 align-items-center">
+                                <div class="col-md-4">
                                     <label>Signature</label>
                                 </div>
                                 <div class="col-md-8">
                                     <div>
-                                        <input type="radio" name="signature" value="signature" checked> None
+                                        <input type="radio" name="signature" value="signature" title="signature" checked> None
                                     </div>
                                     <div>
-                                        <input type="radio" name="signature" value="directsignature"> Direct Signature
+                                        <input type="radio" name="signature" value="directsignature" title="signature"> Direct Signature
                                     </div>
                                     <div>
-                                        <input type="radio" name="signature" value="adultsignature"> Adult Signature
+                                        <input type="radio" name="signature" value="adultsignature" title="signature"> Adult Signature
                                     </div>
                                 </div>
                             </div>

@@ -297,6 +297,7 @@
                         <div class="col-md-9 border-r">
                             <div class="d-flex align-items-center" style="gap:10px;">
                                 <div class="btn-group" role="group">
+                                    <input type="hidden" id="activetab" value="">
                                     <button id="btnGroupDrop1" type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="fa fa-paper-plane"></i> Submit</button>
                                     <div class="dropdown-menu" aria-labelledby="btnGroupDrop1">
                                         <a class="dropdown-item submit_message" href="javascript:void(0);" data-close="2">Submit and Close Ticket</a>
@@ -305,6 +306,7 @@
                                     </div>
                                 </div>
                                 {{--<button type="button" class="btn btn-primary" name="submit_message" id="submit_message"><i class="fa fa-paper-plane"></i> Submit</button>--}}
+                                <div class="shipping_btn_sec d-flex align-items-center" style="gap:10px;">
                                 @php
                                     $displayReturned = $displayReplace = $displayRefund = $displayShipped = $displayCanceled = $displayReturnLabel = 'hide';
                                     if(isset($action['canbeReturned']) && $action['canbeReturned'] > 0){
@@ -341,6 +343,7 @@
                                     <button type="button" class="btn btn-default {{ $displayShipped }}" name="ship_order" id="ship_order">Ship Order</button>
                                     <button type="button" class="btn btn-default {{ $displayCanceled }}" name="cancel_order" id="cancel_order">Cancel Order</button>
                                 {{--@endif--}}
+                                </div>
                             </div>
                         </div>
                         <div class="col-md-3">
@@ -518,11 +521,15 @@
             });
 
             $(document).on('click','#internalNotes-tab',function () {
-                $('.btn-sec').hide();
+                //$('.btn-sec').hide();
+                $('#activetab').val(1);
+                $('.shipping_btn_sec').addClass('hide');
             });
 
             $(document).on('click','#composeMessage-tab',function () {
-                $('.btn-sec').show();
+                //$('.btn-sec').show();
+                $('#activetab').val(0);
+                $('.shipping_btn_sec').removeClass('hide');
             });
 
             loadOrderDetail();
@@ -660,38 +667,38 @@
                 }
             });
 
-            $(document).on('blur','#internal_notes',function () {
-                var notes = $(this).val();
-                //if(notes != '') {
-                    let ticket_id = '{{ $ticketDetail->id }}';
+            {{--$(document).on('blur','#internal_notes',function () {--}}
+                {{--var notes = $(this).val();--}}
+                {{--//if(notes != '') {--}}
+                    {{--let ticket_id = '{{ $ticketDetail->id }}';--}}
 
-                    var ticket_ids = [ticket_id];
-                    $.ajax({
-                        type: "POST",
-                        url: "{{ route('message.updateticket') }}",
-                        data: {
-                            ticket_id: ticket_ids,
-                            notes: notes
-                        },
-                        headers: {
-                            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                        },
+                    {{--var ticket_ids = [ticket_id];--}}
+                    {{--$.ajax({--}}
+                        {{--type: "POST",--}}
+                        {{--url: "{{ route('message.updateticket') }}",--}}
+                        {{--data: {--}}
+                            {{--ticket_id: ticket_ids,--}}
+                            {{--notes: notes--}}
+                        {{--},--}}
+                        {{--headers: {--}}
+                            {{--'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')--}}
+                        {{--},--}}
 
-                        success: function (data) {
-                            if (notes != '') {
-                                $('#internalNotes-tab').addClass('text-red').find('i').removeClass('fa-sticky-note').addClass('fa-exclamation-triangle');
-                            }else{
-                                $('#internalNotes-tab').removeClass('text-red').find('i').removeClass('fa-exclamation-triangle').addClass('fa-sticky-note');
-                            }
-                        },
-                        error: function (xhr) {
-                        },
-                        complete: function () {
-                            $("#ajax-preloader").hide();
-                        }
-                    });
-                //}
-            });
+                        {{--success: function (data) {--}}
+                            {{--if (notes != '') {--}}
+                                {{--$('#internalNotes-tab').addClass('text-red').find('i').removeClass('fa-sticky-note').addClass('fa-exclamation-triangle');--}}
+                            {{--}else{--}}
+                                {{--$('#internalNotes-tab').removeClass('text-red').find('i').removeClass('fa-exclamation-triangle').addClass('fa-sticky-note');--}}
+                            {{--}--}}
+                        {{--},--}}
+                        {{--error: function (xhr) {--}}
+                        {{--},--}}
+                        {{--complete: function () {--}}
+                            {{--$("#ajax-preloader").hide();--}}
+                        {{--}--}}
+                    {{--});--}}
+                {{--//}--}}
+            {{--});--}}
 
 
 
@@ -731,55 +738,95 @@
                 var template_id = $('#message_template').val();
                 var message_to_send = $('#message_to_send').val();
                 var customer_id = $('#customer_id').val();
-                //var ticket_id = '{{ $ticketDetail->id }}';
+                var activetab = $('#activetab').val();
+                var ticket_id = '{{ $ticketDetail->id }}';
                 var ticket_status = $(this).data('close');
-                if(message_to_send == ''){
-                    alert('Please add text to send message');
-                    return false;
-                }
 
-                var labelimage = '';
-                var imagepath = '';
-                var imagename = '';
-                if($('#image_url').val() != ''){
-                    var labelimage = $('#image_url').val();
-                    var imagepath = $('#image_storage_path').val();
-                    var imagename = $('.lable-image').html();
-                }
-                $.ajax({
-                    type: "POST",
-                    url: "{{ route('message.sendmessagetemplate') }}",
-                    data: {
-                        template_id: template_id,
-                        message_to_send: message_to_send,
-                        customer_id: customer_id,
-                        ticket_id: ticket_id,
-                        ticket_status: ticket_status,
-                        labelimage: labelimage,
-                        imagepath: imagepath,
-                        imagename: imagename,
-                    },
-                    headers: {
-                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                    },
+                if(activetab == 0) {
 
-                    success: function(data) {
-                        if(data.success){
-                            alert('Message send successfuly.');
-                            history.back()
-                            /*if(ticket_status){
-                                window.location.href = "{{ route('message.need_action') }}";
+                    if(message_to_send == ''){
+                        alert('Please add text to send message');
+                        return false;
+                    }
+
+                    var labelimage = '';
+                    var imagepath = '';
+                    var imagename = '';
+                    if($('#image_url').val() != ''){
+                        var labelimage = $('#image_url').val();
+                        var imagepath = $('#image_storage_path').val();
+                        var imagename = $('.lable-image').html();
+                    }
+                    $.ajax({
+                        type: "POST",
+                        url: "{{ route('message.sendmessagetemplate') }}",
+                        data: {
+                            template_id: template_id,
+                            message_to_send: message_to_send,
+                            customer_id: customer_id,
+                            ticket_id: ticket_id,
+                            ticket_status: ticket_status,
+                            labelimage: labelimage,
+                            imagepath: imagepath,
+                            imagename: imagename,
+                            activetab: activetab,
+                        },
+                        headers: {
+                            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                        },
+
+                        success: function (data) {
+                            if (data.success) {
+                                alert('Message send successfuly.');
+                                history.back();
+                                /*if(ticket_status){
+                                    window.location.href = "{{ route('message.need_action') }}";
                             }else{
                                 location.reload();
                             }*/
+                            }
+                        },
+                        error: function (xhr) {
+                        },
+                        complete: function () {
+                            $("#ajax-preloader").hide();
                         }
-                    },
-                    error: function (xhr) {
-                    },
-                    complete: function () {
-                        $("#ajax-preloader").hide();
-                    }
-                });
+                    });
+                }else{
+
+                    var notes = $('#internal_notes').val();
+                    let ticket_id = '{{ $ticketDetail->id }}';
+                    var ticket_ids = [ticket_id];
+                    $.ajax({
+                        type: "POST",
+                        url: "{{ route('message.updateticket') }}",
+                        data: {
+                            ticket_id: ticket_ids,
+                            notes: notes,
+                            status: ticket_status,
+                        },
+                        headers: {
+                            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                        },
+
+                        success: function (data) {
+                            if (notes != '') {
+                                $('#internalNotes-tab').addClass('text-red').find('i').removeClass('fa-sticky-note').addClass('fa-exclamation-triangle');
+                            }else{
+                                $('#internalNotes-tab').removeClass('text-red').find('i').removeClass('fa-exclamation-triangle').addClass('fa-sticky-note');
+                            }
+
+                            if(ticket_status == 2){
+                                history.back();
+                            }
+                        },
+                        error: function (xhr) {
+                        },
+                        complete: function () {
+                            $("#ajax-preloader").hide();
+                        }
+                    });
+                }
             });
 
             $(document).on('click','#rma',function () {
