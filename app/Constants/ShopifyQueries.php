@@ -15,6 +15,18 @@ class ShopifyQueries
                         id
                     }
                 }
+                media(first: 249) {
+                    nodes {
+                        alt
+                        mediaContentType
+                        preview {
+                            status
+                            image {
+                                url
+                            }
+                        }
+                    }
+                }
             }
             userErrors {
                 code
@@ -36,12 +48,15 @@ GQL;
                     id
                 }
             }
-          media(first: 10) {
+          media(first: 249) {
             nodes {
               alt
               mediaContentType
               preview {
                 status
+                image {
+                    url
+                }
               }
             }
           }
@@ -137,6 +152,10 @@ GQL;
                                 price
                                 source
                                 rate
+                            }
+                            customAttributes {
+                                key
+                                value
                             }
                         }
                     }
@@ -591,6 +610,29 @@ GQL;
     }
 GQL;
 
+    public static $getProductImages = <<<GQL
+    query GetProductImages(\$id: ID!) {
+        product(id: \$id) {
+            id
+            title
+            media(first: 250) {
+                nodes {
+                    id
+                    alt
+                    mediaContentType
+                    preview {
+                        status
+                        image {
+                            url
+                        }
+                    }
+                }
+            }
+        }
+    }
+GQL;
+
+
     public static $getProductsWithCursor = <<<GQL
     query GetProducts(\$cursor: String) {
         products(first: 100,after: \$cursor) {
@@ -725,6 +767,30 @@ GQL;
             userErrors {
               field
               message
+            }
+          }
+        }
+GQL;
+
+    public static $deleteProductImage = <<<GQL
+        mutation productDeleteMedia(\$mediaIds: [ID!]!, \$productId: ID!) {
+          productDeleteMedia(mediaIds: \$mediaIds, productId: \$productId) {
+            deletedMediaIds
+            deletedProductImageIds
+            mediaUserErrors {
+              field
+              message
+            }
+            product {
+              id
+              title
+              media(first: 5) {
+                nodes {
+                  alt
+                  mediaContentType
+                  status
+                }
+              }
             }
           }
         }

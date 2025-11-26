@@ -180,7 +180,7 @@ class OrderUtility
                             'sku' => $item['item']['sku'],
                             //'store_sku' => $item['item']['upc'],
                             'quantity' => $item['orderLineQuantity']['amount'],
-                            'id1' => '',
+                            'id1' => $item['lineNumber'],
                             'item_price' => ($item['charges']['charge'][0]['chargeType'] == 'PRODUCT') ? $item['charges']['charge'][0]['chargeAmount']['amount'] : 0,
                             'shipping_price' => ($item['charges']['charge'][0]['chargeType'] == 'SHIPPING') ? $item['charges']['charge'][0]['chargeAmount']['amount'] : 0,
                             'item_tax' => ($item['charges']['charge'][0]['chargeType'] == 'PRODUCT_TAX') ? $item['charges']['charge']['tax'][0]['taxAmount']['amount'] : 0,
@@ -191,6 +191,7 @@ class OrderUtility
                         $order_item = OrderItem::updateOrCreate([
                             'order_id' => $order->id,
                             'sku' => $item['item']['sku'],
+                            'id1' => $item['lineNumber'],
                         ], $orderItemData);
 
                         if ($order_item->id) {
@@ -240,7 +241,7 @@ class OrderUtility
                             'sku' => $item['item']['sku'],
                             //'store_sku' => $item['item']['upc'],
                             'quantity' => $item['orderLineQuantity']['amount'],
-                            'id1' => '',
+                            'id1' => $item['lineNumber'],
                             'item_price' => ($item['charges']['charge'][0]['chargeType'] == 'PRODUCT') ? $item['charges']['charge'][0]['chargeAmount']['amount'] : 0,
                             'shipping_price' => ($item['charges']['charge'][0]['chargeType'] == 'SHIPPING') ? $item['charges']['charge'][0]['chargeAmount']['amount'] : 0,
                             'item_tax' => ($item['charges']['charge'][0]['chargeType'] == 'PRODUCT_TAX') ? $item['charges']['charge']['tax'][0]['taxAmount']['amount'] : 0,
@@ -251,6 +252,7 @@ class OrderUtility
                         $order_item = OrderItem::updateOrCreate([
                             'order_id' => $order->id,
                             'sku' => $item['item']['sku'],
+                            'id1' => $item['lineNumber'],
                         ], $orderItemData);
 
                         if ($order_item->id) {
@@ -479,7 +481,7 @@ class OrderUtility
                 }
 
                 Log::info("Came Till Here 1 :: " . json_encode($itemDetail));
-                if (isset($itemDetail)) {
+                if (isset($itemDetail) && isset($itemDetail->storeProduct) && isset($itemDetail->storeProduct->product)) {
 
                     // sale count update
                     $sku = $item['sku'];
@@ -546,7 +548,7 @@ class OrderUtility
                     $orderItemData = [
                         'title' => $item['title'],
                         'order_id' => $order->id,
-                        'product_id' => $catalog->product_id ?? null,
+                        'product_id' => $catalog-> product_id?? null,
                         'client_id' => null,
 //                        'listing_item_id' => $itemDetail->id,
                         'sku' => $item['sku'],

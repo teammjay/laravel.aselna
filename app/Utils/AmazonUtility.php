@@ -703,10 +703,10 @@ class AmazonUtility
                 return FieldUtility::getCableFieldValue($productData);
             case 'item_package_weight':
                 return FieldUtility::getItemPackageWeight($productData);
-            case 'special_feature':
-                return FieldUtility::getSpecialFeatures($productData, $storeProduct);
-            case 'item_hardness':
-                return FieldUtility::getItemHardness($productData);
+//            case 'special_feature':
+//                return FieldUtility::getSpecialFeatures($productData, $storeProduct);
+//            case 'item_hardness':
+//                return FieldUtility::getItemHardness($productData);
             case 'item_length_width':
                 return [[
                     'length' => ['value' => $productData->package_dimensions_length, 'unit' => 'inches'],
@@ -739,6 +739,8 @@ class AmazonUtility
             case 'model_name':
             case 'model_number':
                 return [['value' => $itemDetail->sku, 'language_tag' => 'en_US']];
+            case 'batteries_required':
+                return [['value' => 'false']];
             default:
                 if ($value) {
                     return [['value' => $value->calculated_value(), 'language_tag' => 'en_US']];

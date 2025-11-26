@@ -1291,8 +1291,16 @@
 
         function saveProductChannel() {
             const form = document.querySelector("#frmproductChannel");
+            // Temporarily enable the disabled field
+            const storeType = form.querySelector('#store_type_id');
+            const wasDisabled = storeType.disabled;
+            storeType.disabled = false;
+
             let formData = new FormData(form);
             formData.append('product_id', '{{ $product->product_id }}');
+
+            // Restore the disabled state
+            storeType.disabled = wasDisabled;
 
             $.ajax({
                 type: 'POST',
@@ -1467,7 +1475,8 @@
                 });
             });
 
-            $(document).on('click', '.delete-product-channel', function() {
+            $(document).on('click', '.delete-product-channel', function(e) {
+                e.preventDefault();
 
                 $.ajax({
                     url: "{{ route('catalog.deleteproductchannel') }}",
@@ -1481,6 +1490,7 @@
                     success: function (response) {
                         if (response.success) {
                             alert(response.message)
+                            location.reload();
                         }
                     },
                     error: function (xhr) {

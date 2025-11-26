@@ -503,6 +503,19 @@ class ShopifyAuthService
 
     }
 
+    public function getProductImages($productId = null)
+    {
+
+        $variable = [];
+        if ($productId != null) {
+            Log::info('Product ID: ' . $productId);
+            $variable = ['id' => $productId];
+        }
+        $response = $this->makeGraphQLRequest(ShopifyQueries::$getProductImages, $variable);
+
+        return $response;
+    }
+
     public function getCollectionByHandle(string $handle)
     {
         $query = ShopifyQueries::$getCollectionByHandle;
@@ -581,5 +594,19 @@ class ShopifyAuthService
         } else {
             return ['exists' => false];
         }
+    }
+
+    public function deleteProductImage(mixed $mediaIds,$productId)
+    {
+        $variables = [
+            'mediaIds' => $mediaIds,
+            'productId' => $productId
+        ];
+
+        $response = $this->makeGraphQLRequest(ShopifyQueries::$deleteProductImage, $variables);
+
+        Log::info('Delete Product Image Response: ' . json_encode($response));
+
+        return $response;
     }
 }
