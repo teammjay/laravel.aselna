@@ -915,7 +915,7 @@ class OrderOperationUtility
 
                 $temuService = new TemuService();
                 $result = $temuService->refundOrder($orderId);
-                /*if (isset($result['success']) && $result['success']) {
+                if (isset($result['success']) && $result['success']) {
                     $orderOperation->update(['status' => OrderOperationStatus::REFUNDED]);
                     if (isset($orderId)) {
                         $order = Order::findOrFail($orderId);
@@ -930,7 +930,7 @@ class OrderOperationUtility
                         }
                     }
                     return true;
-                }*/
+                }
 
                 break;
         }
