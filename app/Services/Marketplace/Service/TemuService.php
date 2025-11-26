@@ -652,12 +652,12 @@ class TemuService implements MarketplaceServiceInterface
             if (isset($afterSalesList['result']['data']) && count($afterSalesList['result']['data']) > 0) {
                 $orderDetail = $afterSalesList['result']['data'][0];
                 $parentAfterSalesSn = $orderDetail['parentAfterSalesSn'];
-                //$refundOrderDetails = $temuAuthService->issueRefund($parentAfterSalesSn, $parentOrderSn);
+                $refundOrderDetails = $temuAuthService->issueRefund($parentAfterSalesSn, $parentOrderSn);
 
-                //Log::info('Temu issueRefund response : ' . json_encode($refundOrderDetails));
+                Log::info('Temu issueRefund response : ' . json_encode($refundOrderDetails));
 
-                //return $refundOrderDetails;
-                return true;
+                return $refundOrderDetails;
+                //return true;
             }else{
                 if(isset($afterSalesList['success']) && !$afterSalesList['success']){
                     Log::info('Temu refund error : ' . json_encode($afterSalesList));
