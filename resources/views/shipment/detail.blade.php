@@ -183,19 +183,22 @@
                                     }
                                 }
                             @endphp
-                            <tr class="clickable-row" data-href="{{ $url }}">
-                                <td>
+                            <tr>
+
+                                <td valign="center">
                                     <div class="btn-group float-right" role="group">
-                                        <button id="btnGroupDrop2" type="button" class="dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="fa fa-ellipsis-v"></i></button>
+                                        <button id="btnGroupDrop2" type="button" class="dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="fa fa-info-circle"></i></button>
                                         <div class="dropdown-menu" aria-labelledby="btnGroupDrop2">
                                             <a class="dropdown-item show_attributes" href="javascript:void(0)" data-id="{{ $oitem->orderItem->id }}">Show Attributes</a>
+                                            <a class="dropdown-item clickable-row" data-href="{{ $url }}" href="javascript:void(0)">Open Store Page</a>
                                         </div>
                                     </div>
                                 </td>
+
                                 <td>
                                     @if(isset($oitem->orderItem->product) && !empty($oitem->orderItem->product->image))
                                         <div class="main-image">
-                                            <img src="{{  asset('storage/'. $oitem->orderItem->product->image->getFileUrl()) }}" alt="{{  $oitem->orderItem->product->product_image_url }}" class="mainImage" width="70" height="70" data-product-id="{{ $oitem->orderItem->product->product_id }}">
+                                            <img src="{{  asset('storage/'. $oitem->orderItem->product->image->getFileUrl()) }}" alt="{{  $oitem->orderItem->product->product_image_url }}" class="mainImage" width="50" height="50" data-product-id="{{ $oitem->orderItem->product->product_id }}">
                                         </div>
                                     @endif
                                 </td>

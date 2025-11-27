@@ -74,6 +74,7 @@
         #btnGroupDrop2::after{
             display:none;
         }
+        .dropdown-toggle{font-size:18px;}
     </style>
 @stop
 
@@ -431,9 +432,9 @@
 
         $(document).on("click",".clickable-row", function(e) {
 
-            if ($(e.target).is('input,select,checkbox, a, img')) {
+            /*if ($(e.target).is('input,select,checkbox, a, img')) {
                 return;
-            }
+            }*/
 
             var store_url = $(this).data("href");
             if(store_url != '') {
