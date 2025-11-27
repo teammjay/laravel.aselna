@@ -134,6 +134,7 @@
     }
     .clickable-row:hover{cursor:pointer; background: #f0f8ff;}
     #UserInputtedText{white-space: break-spaces;}
+    .dropdown-toggle{font-size:18px;}
 </style>
 @stop
 
@@ -658,9 +659,9 @@
 
             $(document).on("click",".clickable-row", function(e) {
 
-                if ($(e.target).is('input,select,checkbox, a, img')) {
+                /*if ($(e.target).is('input,select,checkbox, a, img')) {
                     return;
-                }
+                }*/
                 var store_url = $(this).data("href");
                 if(store_url != '') {
                     window.open(store_url, '_blank');
@@ -1536,6 +1537,7 @@
                             $('#image_url').val(response.image_url);
                             $('#image_storage_path').val(response.imagesPath);
                             $('.lable-image').html(response.image_name);
+                            $('#attach_file').val('');
                         }
                     },
                     error: function(xhr) {

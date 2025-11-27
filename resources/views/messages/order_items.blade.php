@@ -13,12 +13,13 @@
                 }
             }
         @endphp
-        <tr class="clickable-row" data-href="{{ $url }}">
+        <tr>
             <td>
                 <div class="btn-group float-right" role="group">
-                    <button id="btnGroupDrop2" type="button" class="dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="fa fa-ellipsis-v"></i></button>
+                    <button id="btnGroupDrop2" type="button" class="dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="fa fa-info-circle"></i></button>
                     <div class="dropdown-menu" aria-labelledby="btnGroupDrop2">
                         <a class="dropdown-item show_attributes" href="javascript:void(0)" data-id="{{ $oitem->id }}">Show Attributes</a>
+                        <a class="dropdown-item clickable-row" data-href="{{ $url }}" href="javascript:void(0)">Open Store Page</a>
                     </div>
                 </div>
             </td>
