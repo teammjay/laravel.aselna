@@ -186,9 +186,9 @@ class OrderOperationUtility
         $shipmentDetails['MailpieceShape'] = $orderOperation->shipping_solution_carrier_package->solution_code;
         $shipmentDetails['transactionId'] = $orderOperation->order->order_id;
 
-        if($shipmentDetails['MailpieceShape'] == 'Letter') {
-            $shipmentDetails['MailpieceShape'] = 'ENVELOPE';
-        }
+//        if($shipmentDetails['MailpieceShape'] == 'Letter') {
+//            $shipmentDetails['MailpieceShape'] = 'ENVELOPE';
+//        }
 
         Log::info('Image creation error 1');
 
