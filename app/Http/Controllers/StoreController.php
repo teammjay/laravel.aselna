@@ -74,7 +74,12 @@ class StoreController extends Controller
         $store_types = StoreType::all();
         $listing_templates = ListingTemplate::all();
         $shipping_services = ShippingCarrierService::leftJoin('shipping_carrier', 'shipping_carrier_service.shipping_carrier_id', '=', 'shipping_carrier.id')->select('shipping_carrier_service.id', 'shipping_carrier_service.name', 'shipping_carrier.name as carrierName')->get();
-        $storeDevices = StoreDeviceType::where('store_id', $store_id)->get();
+        $storeDevices = StoreDeviceType::where('store_id', $store_id)
+            ->get()
+            ->groupBy('purpose')
+            ->map(function ($items) {
+                return $items->pluck('device')->all();
+            });
         $storeShippingService = StoreShippingService::where('store_id', $store_id)->get();
         $storePages = StorePage::with('PageType')->where('store_id', $store_id)->get();
         $storeCategories = StoreCategory::where('store_id', $store_id)->get();
@@ -270,11 +275,14 @@ class StoreController extends Controller
         }elseif($tabId == 12){
             try {
                 $data = [];
-                for($i=0; $i < count($request->devices); $i++){
-                    $data[] = array(
-                        'store_id' => $storeId,
-                        'device_type_id' => $request->devices[$i]
-                    );
+                foreach ($request->devices ?? [] as $key => $devices) {
+                    for ($i = 0; $i < count($devices); $i++) {
+                        $data[] = array(
+                            'store_id' => $storeId,
+                            'purpose' => $key,
+                            'device_type_id' => $devices[$i]
+                        );
+                    }
                 }
                 StoreDeviceType::where('store_id', $storeId)->delete();
                 StoreDeviceType::upsert($data, ['store_id','device_type_id'], ['device_type_id']);
@@ -362,8 +370,13 @@ class StoreController extends Controller
         $listing_templates = ListingTemplate::all();
         $shipping_services = ShippingCarrierService::leftJoin('shipping_carrier', 'shipping_carrier_service.shipping_carrier_id', '=', 'shipping_carrier.id')->select('shipping_carrier_service.id', 'shipping_carrier_service.name', 'shipping_carrier.name as carrierName')->get();
 
-        $storeDevices = StoreDeviceType::where('store_id', $id)->get();
-        $storeDevices = $storeDevices->pluck('device_type_id')->values()->all();
+        $storeDevices = StoreDeviceType::where('store_id', $id)
+            ->get()
+            ->groupBy('purpose')
+            ->map(function ($items) {
+                return $items->pluck('device_type_id')->all();
+            });
+
         $storeShippingService = StoreShippingService::where('store_id', $id)->get();
         $storePages = StorePage::with('PageType')->where('store_id', $id)->get();
         $storeCategories = StoreCategory::where('store_id', $id)->get();
