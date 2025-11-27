@@ -17,6 +17,7 @@ use App\Models\ProductSpecification;
 use App\Models\ProductTitleKeyword;
 use App\Models\ProductType;
 use App\Models\Store;
+use App\Models\StoreDeviceType;
 use App\Models\StoreNavigationPage;
 use App\Models\StoreProduct;
 use App\Models\StoreType;
@@ -42,6 +43,7 @@ class ProcessFeedGenerationJob implements ShouldQueue
 
     protected $feed_id;
     protected $data;
+    protected $store_id;
 
     /**
      * Create a new job instance.
@@ -61,7 +63,7 @@ class ProcessFeedGenerationJob implements ShouldQueue
 
             $this->updateTrackingRecord(['tags' => 'Google/Microsoft Feed Generation']);
             $feed_type = $this->data['feed_type'];
-            $store_id = $this->data['store_id'];
+            $this->store_id = $store_id = $this->data['store_id'];
             $fileType = $this->data['fileType'];
             $storeDetail = Store::with('storeType')->where('id', $store_id)->first();
             $fileSystem = $storeDetail->fileSystem;
@@ -460,6 +462,11 @@ class ProcessFeedGenerationJob implements ShouldQueue
 
     private function getCompatibleDevices($product_id, $devices, $deviceSeries)
     {
+        $compatibleDeviceTypes = StoreDeviceType::where('store_id', $this->store_id)
+            ->where('purpose', 'feed')
+            ->pluck('device_type_id')
+            ->toArray();
+
         $query = Device::select('device.*', 'product_interface.product_id')->with('brand', 'rating')->with('deviceType', 'deviceSeries');
         $query->leftJoin('device_interface', 'device_interface.device_id', '=', 'device.id');
         $query->leftJoin('product_interface', 'product_interface.interface_id', '=', 'device_interface.interface_id');
@@ -470,6 +477,8 @@ class ProcessFeedGenerationJob implements ShouldQueue
         if ($devices) {
             $query->whereIn('device.id', $devices);
         }
+
+        $query->whereIn('device_type_id',$compatibleDeviceTypes);
 
         $query->where('device.status', 'active');
 
