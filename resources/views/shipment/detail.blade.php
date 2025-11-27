@@ -202,7 +202,9 @@
                                         </div>
                                     @endif
                                 </td>
-                                <td><input type="hidden" name="opi_ids[{{ $key }}]" value="{{ $oitem->id }}"><input type="text" class="form-control" name="sku[{{ $key }}]" value="{{ $oitem->sku }}" style="width:122px;"></td>
+                                <td>
+                                    <input type="hidden" name="opi_ids[{{ $key }}]" value="{{ $oitem->id }}">
+                                    <input type="text" class="form-control" name="sku[{{ $key }}]" value="{{ $oitem->sku }}" style="width:122px;"></td>
                                 <td><input type="text" class="form-control" name="quantity[{{ $key }}]" value="{{ $oitem->orderItem->quantity }}"></td>
                             </tr>
                         @endforeach
