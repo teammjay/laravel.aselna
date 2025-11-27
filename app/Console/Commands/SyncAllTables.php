@@ -174,7 +174,7 @@ class SyncAllTables extends Command
         //synccategorytospecification::dispatch();
 //        SystemPrinterSyncJob::dispatch();
 //        ShopifyIndvPagesSyncJob::dispatch('5cc46182-9318-7a47-39bd-d3e38de6cce6', WebStorePageType::ALL_BRANDS);
-//        ShopifyCombinedSyncing::dispatch();
+        ShopifyCombinedSyncing::dispatch();
 
 //        SendNotificationEmailSyncFailJob::dispatch(2);
 //        SendNotificationOrderSyncFailJob::dispatch(2);

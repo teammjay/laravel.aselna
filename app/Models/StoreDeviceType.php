@@ -10,7 +10,7 @@ class StoreDeviceType extends Model
     // Set a custom table name
     protected $table = 'store_device_type';
 
-    public $timestamps = true;
+    public $timestamps = false;
 
     protected $keyType = 'string';
 
@@ -27,5 +27,5 @@ class StoreDeviceType extends Model
         });
     }
 
-    protected $fillable = ['store_id','device_type_id'];
+    protected $fillable = ['store_id','device_type_id','purpose'];
 }
