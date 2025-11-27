@@ -10,6 +10,7 @@ use App\Models\Images;
 use App\Models\Interfaces;
 use App\Models\ProductType;
 use App\Models\Store;
+use App\Models\StoreDeviceType;
 use App\Models\StoreNavigationPage;
 use App\Models\StorePageTemplate;
 use App\Services\Auth\ShopifyAuthService;
@@ -66,6 +67,11 @@ class StoreBrandPageSyncJob implements ShouldQueue
         $request->merge(['created_by' => $created_by, 'updated_by' => $created_by]);
         Log::info('Page Type :: ' . $this->template_id);
         $template = StorePageTemplate::findOrFail($this->template_id);
+        $compatibleDeviceTypes = StoreDeviceType::where('store_id', $this->store_id)
+            ->where('purpose', 'listing')
+            ->pluck('device_type_id')
+            ->toArray();
+
         $page_type = $this->page_type;
         switch ($page_type) {
             case WebStorePageType::BRAND_DEVICES:
@@ -182,7 +188,7 @@ class StoreBrandPageSyncJob implements ShouldQueue
                 break;
             case WebStorePageType::DEVICE:
                 $this->getPuplications();
-                Device::where('status', 'active')->orderBy('id')->chunk(100, function ($devices) use ($page_type, $template, $request) {
+                Device::where('status', 'active')->whereIn('device_type_id',$compatibleDeviceTypes)->orderBy('id')->chunk(100, function ($devices) use ($page_type, $template, $request) {
                     foreach ($devices as $device) {
                         $brand = $device->brand;
                         $title = $brand->name . ' ' . $device->name . ' Accessories';
@@ -285,7 +291,7 @@ class StoreBrandPageSyncJob implements ShouldQueue
                 });
                 break;
             case WebStorePageType::BRAND_DEVICE_PRODUCT_TYPES:
-                Device::where('status', 'active')->orderBy('id')->chunk(100, function ($devices) use ($page_type, $template, $request) {
+                Device::where('status', 'active')->whereIn('device_type_id',$compatibleDeviceTypes)->orderBy('id')->chunk(100, function ($devices) use ($page_type, $template, $request) {
                     foreach ($devices as $device) {
                         Log::info('Device :: ' . $device->name);
                         $deviceCollectionPage = StoreNavigationPage::where('store_id', $this->store_id)
