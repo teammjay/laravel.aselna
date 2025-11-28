@@ -156,7 +156,9 @@ class AmazonListingItemSyncJob implements ShouldQueue
                 }
             }
 
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
+
+            \App\Helpers\ErrorLogger::log($e, __METHOD__);
 
             Log::error('Error syncing Amazon listing item: ' . $e->getMessage(), [
                 'skus' => $itemSkus,
@@ -197,7 +199,16 @@ class AmazonListingItemSyncJob implements ShouldQueue
                 }
             }
 
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
+
+            $extraInfo = [
+                'listing_item_id' => $itemDetail->id,
+                'store_id' => $store->id,
+                'sku' => $itemDetail->sku,
+            ];
+
+            \App\Helpers\ErrorLogger::log($e, __METHOD__, $extraInfo);
+
             $itemDetail->update([
                 'sync_status' => ListingSyncStatus::CreationError,
             ]);

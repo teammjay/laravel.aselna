@@ -82,7 +82,14 @@ class FetchShopifyProductsJob implements ShouldQueue
                         } else {
                             $hasNextPage = false;
                         }
-                    } catch (\Exception $e) {
+                    } catch (\Throwable $e) {
+
+                        $extraInfo = [
+                            'store_id' => $store->id
+                        ];
+
+                        \App\Helpers\ErrorLogger::log($e, __METHOD__, $extraInfo);
+
                         Log::error('Error fetching products for store: ' . $store->name . ' - ' . $e->getMessage());
                         // Optionally, you can break the loop or continue based on your error handling strategy
                         $hasNextPage = false; // Stop the loop on error

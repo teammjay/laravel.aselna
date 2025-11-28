@@ -95,6 +95,9 @@ class ProductImagesSyncJob implements ShouldQueue
                 $mainImageDetail = FileUtility::saveImage($imagePath, 'product_images', $productImage->picture_name);
             }
         } catch (Exception $e) {
+
+            \App\Helpers\ErrorLogger::log($e, __METHOD__);
+
             Log::error('ProductImagesSyncJob: ' . $e->getMessage());
         }
 
@@ -104,6 +107,9 @@ class ProductImagesSyncJob implements ShouldQueue
                 $thumbnailImageDetail = FileUtility::saveImage($imageThumbnail, 'product_images', $productImage->thumbnail_picture_name);
             }
         } catch (Exception $e) {
+
+            \App\Helpers\ErrorLogger::log($e, __METHOD__);
+
             Log::error('ProductImagesSyncJob: ' . $e->getMessage());
         }
 
@@ -126,6 +132,9 @@ class ProductImagesSyncJob implements ShouldQueue
                 'sort_order' => $productImage->picture_id
             ]);
         } catch (Exception $e) {
+
+            \App\Helpers\ErrorLogger::log($e, __METHOD__);
+
             Log::error('ProductImagesSyncJob: ' . $e->getMessage());
         }
     }
@@ -161,6 +170,9 @@ class ProductImagesSyncJob implements ShouldQueue
                 $imageData['image'] = '';
             }
         } catch (Exception $e) {
+
+            \App\Helpers\ErrorLogger::log($e, __METHOD__);
+
             $imageData['image'] = '';
             //Log::error('ProductImagesSyncJob From EasyEsale1: ' . $e->getMessage());
         }

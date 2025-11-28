@@ -101,7 +101,10 @@ class SendNotificationForPendingTransactionsJob implements ShouldQueue
                 }
             }
 
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
+
+            \App\Helpers\ErrorLogger::log($e, __METHOD__);
+
             Log::error('Mail sending failed', [
                 'error' => $e->getMessage(),
                 'timestamp' => now()

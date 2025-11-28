@@ -124,7 +124,10 @@ class DeviceInterfaces implements ShouldQueue
                 'created_by' => 'system',
                 'updated_by' => 'system',
             ]);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
+
+            \App\Helpers\ErrorLogger::log($e, __METHOD__);
+
             Log::error('Error syncing device interface ID ' . $deviceInterface->id . ': ' . $e->getMessage());
         }
     }

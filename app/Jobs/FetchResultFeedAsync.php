@@ -73,7 +73,14 @@ class FetchResultFeedAsync implements ShouldQueue
                 $feed->status = FeedStatus::PROCESSED;
                 $feed->save();
             }
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
+
+            $extraInfo = [
+                'feed_id' => $feed->id
+            ];
+
+            \App\Helpers\ErrorLogger::log($e, __METHOD__, $extraInfo);
+
             Log::error('Error fetching result feed: ' . $e->getMessage());
             $feed->status = FeedStatus::FAILED;
             $feed->status_check_count = ($feed->status_check_count ?? 0) + 1;

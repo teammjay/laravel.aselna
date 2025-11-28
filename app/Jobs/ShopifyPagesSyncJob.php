@@ -49,7 +49,10 @@ class ShopifyPagesSyncJob implements ShouldQueue
                 }
             }
 
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
+
+            \App\Helpers\ErrorLogger::log($e, __METHOD__);
+
             // Log the error or handle it as needed
             Log::error('Error in ShopifyCollectionSyncJob: ' . $e->getMessage());
         }

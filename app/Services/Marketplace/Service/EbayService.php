@@ -1083,6 +1083,9 @@ class EbayService implements MarketplaceServiceInterface
                 return null;
             }
         }catch (\Exception $e) {
+
+            \App\Helpers\ErrorLogger::log($e, __METHOD__);
+
             Log::info('Ebay order error : ' . $e->getMessage());
         }
     }
@@ -1204,6 +1207,9 @@ class EbayService implements MarketplaceServiceInterface
             $order_synchronization->update(['number_of_items' => $noOfOrder, 'last_order_update_date' => $last_order_update_date]);
             return $orders;
         } catch (\Exception $e) {
+
+            \App\Helpers\ErrorLogger::log($e, __METHOD__);
+
             Log::info('Ebay order error : ' . $e->getMessage());
         }
     }

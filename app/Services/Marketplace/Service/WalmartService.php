@@ -532,6 +532,12 @@ class WalmartService implements MarketplaceServiceInterface
 
             return $response;
         } catch (\Exception $e) {
+
+            $extraInfo = [
+                'store_id' => $store->id
+            ];
+            \App\Helpers\ErrorLogger::log($e, __METHOD__, $extraInfo);
+
             Log::error("Error in Walmart Orders: " . $e->getMessage());
             return null;
         }

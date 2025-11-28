@@ -76,7 +76,10 @@ class   FetchEmailMessagesJob implements ShouldQueue
                     }
                 }
             }
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
+
+            \App\Helpers\ErrorLogger::log($e, __METHOD__);
+
             Log::error('Error in FetchEmailMessagesJob: ' . $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine());
         }
     }

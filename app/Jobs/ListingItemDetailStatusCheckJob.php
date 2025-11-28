@@ -43,8 +43,11 @@ class ListingItemDetailStatusCheckJob implements ShouldQueue
                     $detail->update(['kicked' => 1]);
                 }
             });
-        }catch (\Exception $e) {
-                Log::error("Error Listing Item Detail Status Check : " . $e->getMessage());
+        }catch (\Throwable $e) {
+
+            \App\Helpers\ErrorLogger::log($e, __METHOD__);
+
+            Log::error("Error Listing Item Detail Status Check : " . $e->getMessage());
         }
     }
 

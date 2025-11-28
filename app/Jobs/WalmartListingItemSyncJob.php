@@ -149,7 +149,16 @@ class WalmartListingItemSyncJob implements ShouldQueue
                 }
             }
 
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
+
+            $extraInfo = [
+                'listing_item_id' => $itemDetail->id,
+                'store_id' => $store->id,
+                'upc' => $itemDetail->upc,
+            ];
+
+            \App\Helpers\ErrorLogger::log($e, __METHOD__, $extraInfo);
+
             $itemDetail->update([
                 'sync_status' => ListingSyncStatus::CreationError,
             ]);

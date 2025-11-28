@@ -83,7 +83,14 @@ class SendNotificationEmailSyncFailJob implements ShouldQueue
                             if (!empty($message['date'])) {
                                 try {
                                     $messageDate = new \DateTime($message['date']);
-                                } catch (\Exception $e) {
+                                } catch (\Throwable $e) {
+
+                                    $extraInfo = [
+                                        'messageId' => $messageId
+                                    ];
+
+                                    \App\Helpers\ErrorLogger::log($e, __METHOD__, $extraInfo);
+
                                     Log::warning('Could not parse date for message ID: ' . $messageId);
                                 }
                             }
@@ -121,7 +128,14 @@ class SendNotificationEmailSyncFailJob implements ShouldQueue
                         }
                     }
                 }
-            } catch (\Exception $e) {
+            } catch (\Throwable $e) {
+
+                $extraInfo = [
+                    'maccount_id' => $maccount->id
+                ];
+
+                \App\Helpers\ErrorLogger::log($e, __METHOD__, $extraInfo);
+
                 Log::error('Error processing store account ID ' . $maccount->id . ': ' . $e->getMessage());
             }
         }

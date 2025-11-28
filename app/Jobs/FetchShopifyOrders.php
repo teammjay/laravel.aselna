@@ -384,7 +384,10 @@ class FetchShopifyOrders implements ShouldQueue
 
                 $this->updateTrackingRecord(['tags' => implode(' ',$tags).' Shopify Orders']);
             }
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
+
+            \App\Helpers\ErrorLogger::log($e, __METHOD__);
+
             Log::error('Error: ' . $e->getMessage());
         }
     }

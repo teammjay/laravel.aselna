@@ -208,7 +208,10 @@ class EbayListingItemSyncJob implements ShouldQueue
                 }
             }
 
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
+
+            \App\Helpers\ErrorLogger::log($e, __METHOD__);
+
             Log::error('Error syncing Ebay listing item: ' . $e->getMessage(), [
                 'store_id' => $store->id,
             ]);

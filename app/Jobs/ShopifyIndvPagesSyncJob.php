@@ -53,7 +53,10 @@ class ShopifyIndvPagesSyncJob implements ShouldQueue
             try {
                 Log::info('Syncing page: ' . $StoreNavigationPage->page_name . ' for store: ' . $this->store->name);
                 $this->shopifyAuthService->syncIndividualPage($StoreNavigationPage);
-            } catch (\Exception $e) {
+            } catch (\Throwable $e) {
+
+                \App\Helpers\ErrorLogger::log($e, __METHOD__);
+
                 Log::error('Error in ShopifyIndvPagesSyncJob: ' . $e->getMessage());
             }
         }
