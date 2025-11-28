@@ -4,6 +4,7 @@ namespace App\Services\Marketplace\Service;
 
 use App\Constants\FeedStatus;
 use App\Constants\FeedTypes;
+use App\Constants\ListingStatus;
 use App\Constants\ListingSyncStatus;
 use App\Constants\OrderOperationStatus;
 use App\Constants\OrderStatus;
@@ -158,6 +159,15 @@ class WalmartService implements MarketplaceServiceInterface
                 }
             }
 
+        } else if ($feedInfo->feed_type == FeedTypes::DELETE) {
+            foreach ($response['itemDetails']['itemIngestionStatus'] as $item) {
+                $listingItems = ListingItem::where('sku', $item['sku'])->get();
+                foreach ($listingItems as $listingItem) {
+                    if (($item['ingestionStatus']) && $item['ingestionStatus'] == 'SUCCESS') {
+                        $listingItem->update(['status' => ListingStatus::Deleted]);
+                    }
+                }
+            }
         }
 
         if ($response['feedStatus'] == 'PROCESSED' && intval($response['itemsSucceeded']) > 0
