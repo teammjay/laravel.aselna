@@ -193,18 +193,18 @@ class WalmartService implements MarketplaceServiceInterface
                     $listingItem->update([
                         'sync_status' => ListingSyncStatus::Synchronized
                     ]);
-                    $successCnt++;
+//                    $successCnt++;
                 } else {
                     $listingItem->update([
                         'sync_status' => ListingSyncStatus::Unsynchronize
                     ]);
-                    $failCnt++;
+//                    $failCnt++;
                 }
             }
-            $feedInfo->update([
-                'success_count' => $successCnt,
-                'fail_count' => $failCnt
-            ]);
+//            $feedInfo->update([
+//                'success_count' => $successCnt,
+//                'fail_count' => $failCnt
+//            ]);
         }
         /* counting based on store sku*/
 
