@@ -1200,7 +1200,8 @@ class ShipmentsController extends Controller
                 OrderStatus::Refund,
                 OrderStatus::Replaced,
                 OrderStatus::PartiallyShipped,
-                OrderStatus::SynchronizatonFailed
+                OrderStatus::SynchronizatonFailed,
+                OrderStatus::CanceledRequested
             ])
             ->whereIn('id', function ($query) {
                 $query->select('order_id')
