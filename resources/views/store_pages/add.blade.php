@@ -27,7 +27,7 @@
                         <div class="form-group">
                             <label for="store_id">Store</label>
                             <select class="form-control @error('store_id') is-invalid @enderror" name="store_id" id="store_id" required>
-                                <option value="">--</option>
+                                <option value="">- All Store -</option>
                                 @if(count($stores ?? []) > 0)
                                     @foreach($stores as $store)
                                         <option value="{{ $store->id }}" @if(isset($store_pages) && $store_pages['store_id'] == $store->id) selected @endif>{{ $store->name }} {{ (!empty((array)$store->storeType)) ? ' - '.$store->storeType->name : '' }}</option>

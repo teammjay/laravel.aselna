@@ -100,10 +100,14 @@
     </div>
 
     <div class="row my-3">
-        <div class="col-md-2">
+        <div class="col-md-10">
             <button type="button" class="btn btn-secondary" id="check_balance">
                 Check balance & add credit
             </button>
+        </div>
+
+        <div class="col-md-2">
+            <span id="clear_session_filter" class="btn btn-secondary float-right mr-2">Clear Filter</span>
         </div>
 
     </div>
@@ -336,6 +340,12 @@
 
             document.getElementById("resetForm").addEventListener("click", function () {
                 sessionStorage.removeItem("account_purchase_filters");
+            });
+
+            $(document).on('click','#clear_session_filter',function () {
+                sessionStorage.removeItem("account_purchase_filters");
+                $('#filter-form')[0].reset();
+                accountPurchaseTable.ajax.reload();
             });
 
 
