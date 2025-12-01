@@ -220,7 +220,7 @@
     <div class="row my-3">
         <div class="col-md-2">
             <select class="form-control mt-3 mb-3" name="store_id" id="listing_store">
-                <option value="">All Stores</option>
+                <option value="">- All Store -</option>
                 @if(count($stores ?? []) > 0)
                     @foreach($stores as $store)
                         <option

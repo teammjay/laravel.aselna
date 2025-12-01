@@ -16,15 +16,17 @@
         <div class="alert alert-danger alert-dismissible fade show">{{ session('error') }}</div>
     @endif
     <div class="row my-3">
-        <div class="col-md-2">
+        <div class="col-md-10">
             <a href="{{ route('store.create') }}" class="btn btn-secondary">
                 Add new store
             </a>
-        </div>
-        <div class="col-md-2">
-            <a href="{{ route('customers.create') }}" class="btn btn-outline-info">
+
+           <a href="{{ route('customers.create') }}" class="btn btn-outline-info">
                 Create Customer
             </a>
+        </div>
+        <div class="col-md-2">
+            <span id="clear_session_filter" class="btn btn-secondary float-right mr-2">Clear Filter</span>
         </div>
     </div>
     <div class="card card-default">
@@ -145,6 +147,7 @@
 @section('adminlte_js')
 
     <script>
+        var storetable;
         $(document).ready(function() {
 
             $('.card-header').on('click',function () {
@@ -302,6 +305,15 @@
                     }
                 });
             });
+
+            $(document).on('click','#clear_session_filter',function () {
+                sessionStorage.removeItem("store_filters");
+                $('#filter-form')[0].reset();
+                $('#storeTable_filter input').val('');
+                storetable.search('').draw();
+                loadDatatables();
+            });
+
         });
 
         document.addEventListener("DOMContentLoaded", function () {
@@ -344,7 +356,7 @@
                     $('#store-list').html(response.html);
                     $('#pagination').html(response.pagination);
 
-                    $('#storeTable').DataTable({
+                    storetable = $('#storeTable').DataTable({
                         stateSave:true,
                         stateSaveCallback: function(settings, data) {
                             sessionStorage.setItem(

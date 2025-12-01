@@ -40,6 +40,12 @@ class AccountTransactionController extends Controller
 
         $query = AccountTransaction::with('shippingAccount','store','store.storeType')->select('*');
 
+
+
+        if ($request->has('shipping_account_id') && $request->shipping_account_id != '') {
+            $query->where('shipping_account_id', $request->shipping_account_id);
+        }
+
         if ($request->has('tracking_number') && $request->tracking_number != '') {
             $query->where('tracking_number', $request->tracking_number);
         }

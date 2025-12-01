@@ -55,7 +55,7 @@
 
         <div class="col-md-2">
             <select class="form-control" id="messages_store" name="messages_store">
-                <option value="">All stores</option>
+                <option value="">- All Store -</option>
                 @if(count($stores ?? []) > 0)
                     @foreach($stores as $store)
                         @if(!empty($store->messageAccount) && $store->messageAccount->active == 1)

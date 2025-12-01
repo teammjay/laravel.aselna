@@ -193,7 +193,7 @@
                                     <div class="border p-2">
                                         <button type="button" id="searchBtn" class="btn btn-primary w-100">Search</button>
                                         <select class="form-control mt-3 mb-3" name="store_id" id="listing_store">
-                                            <option value="">--</option>
+                                            <option value="">- All Store -</option>
                                             @if(count($stores ?? []) > 0)
                                                 @foreach($stores as $store)
                                                     <option value="{{ $store->id }}" data-storetype="{{ (!empty((array)$store->storeType)) ? $store->storeType->name : '' }}">{{ $store->name }} {{ (!empty((array)$store->storeType)) ? ' - '.$store->storeType->name : '' }}</option>

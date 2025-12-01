@@ -69,7 +69,7 @@
     <div class="row my-3">
         <div class="col-md-2">
             <select class="form-control mt-3 mb-3" name="store_id" id="listing_store">
-                <option value="">All Stores</option>
+                <option value="">- All Store -</option>
                 @if(count($stores ?? []) > 0)
                     @foreach($stores as $store)
                         <option
@@ -78,13 +78,16 @@
                 @endif
             </select>
         </div>
-        <div class="col-md-10 d-flex align-items-center" style="gap:10px;">
+        <div class="col-md-8 d-flex align-items-center" style="gap:10px;">
             <button type="button" class="btn btn-default" id="edit_order" disabled="">
                 <i class="fas fa-fw fa-pencil-alt"></i> Edit
             </button>
             <button type="button" class="btn btn-default" id="create_message" disabled="">
                 <i class="fas fa-fw fa-envelope"></i> Create Message
             </button>
+        </div>
+        <div class="col-md-2">
+            <span id="clear_session_filter" class="btn btn-secondary float-right mr-2">Clear Filter</span>
         </div>
     </div>
     <div class="card card-default">
@@ -273,6 +276,7 @@
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
     <script>
+
         $(document).ready(function () {
             $('#listing_store').select2();
             $('.card-header').on('click', function () {
@@ -398,6 +402,14 @@
             });
 
             loadDatatables();
+
+            $(document).on('click','#clear_session_filter',function () {
+                sessionStorage.removeItem("all_orders_filters");
+                $('#listing_store').val('').trigger('change');
+                $('#store_id').val('');
+                $('#filter-form')[0].reset();
+                loadDatatables();
+            });
 
         });
 

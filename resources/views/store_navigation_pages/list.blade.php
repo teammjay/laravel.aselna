@@ -92,16 +92,21 @@
             </form>
         </div>
     </div>
-    <div class="row my-3 gap-2">
-        <a href="{{ route('store_navigation_page.create') }}" class="btn btn-primary">
-            Add Navigation Page
-        </a>
-        <button class="btn btn-primary" id="generate_bulk_pages" data-toggle="modal" data-target="#bulkPageModal">
-            Generate Bulk Page
-        </button>
-        <button class="btn btn-primary" id="generate_bulk_all_pages" data-toggle="modal" data-target="#bulkAllPageModal">
-            Generate Bulk Combine Page
-        </button>
+    <div class="row my-3">
+        <div class="col-md-10">
+            <a href="{{ route('store_navigation_page.create') }}" class="btn btn-primary">
+                Add Navigation Page
+            </a>
+            <button class="btn btn-primary" id="generate_bulk_pages" data-toggle="modal" data-target="#bulkPageModal">
+                Generate Bulk Page
+            </button>
+            <button class="btn btn-primary" id="generate_bulk_all_pages" data-toggle="modal" data-target="#bulkAllPageModal">
+                Generate Bulk Combine Page
+            </button>
+        </div>
+        <div class="col-md-2">
+            <span id="clear_session_filter" class="btn btn-secondary float-right mr-2">Clear Filter</span>
+        </div>
     </div>
     <table id="navigationPageTable" class="table table-bordered table-striped">
         <thead>
@@ -272,6 +277,13 @@
 
             document.getElementById("resetForm").addEventListener("click", function () {
                 sessionStorage.removeItem("store_navigation_filters");
+            });
+
+            $(document).on('click','#clear_session_filter',function () {
+                sessionStorage.removeItem("store_navigation_filters");
+                $('#store_id').val('').trigger('change');
+                $('#filter-form')[0].reset();
+                navigationTable.ajax.reload();
             });
 
             $('.card-header').on('click', function () {

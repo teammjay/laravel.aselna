@@ -47,9 +47,10 @@
 @section('content')
 
     <div class="card card-secondary">
-        <div class="card-header bg-white">
+        <div class="card-header bg-white align-items-center">
             <h3 class="card-title"><a href="javascript:void(0);" class="text-blue">Add search condition</a> </h3>
             <i class="fa fa-angle-down float-right"></i>
+
         </div>
         <div class="card-body" style="display: none;">
             @include('messages.filter_form', ['ticketTypes' => $ticketTypes])
@@ -59,7 +60,7 @@
 
         <div class="col-md-2">
             <select class="form-control" id="messages_store" name="messages_store">
-                <option value="">All stores</option>
+                <option value="">- All Store -</option>
                 @if(count($stores ?? []) > 0)
                     @foreach($stores as $store)
                         @if(!empty($store->messageAccount) && $store->messageAccount->active == 1)
@@ -70,7 +71,7 @@
             </select>
 
         </div>
-        <div class="col-md-9 d-flex">
+        <div class="col-md-8 d-flex">
             <button type="button" class="btn btn-default mr-2" id="open_message" disabled="">
                 <i class="fas fa-fw fa-pencil-alt"></i> Open
             </button>
@@ -95,6 +96,11 @@
                 <input type="checkbox" id="select_deselect_message"> <label class="mb-0" for="selected_product">Select/Deselect All</label>
             </div>
 
+
+
+        </div>
+        <div class="col-md-2">
+            <span id="clear_session_filter" class="btn btn-secondary float-right mr-2">Clear Filter</span>
         </div>
     </div>
     <div class="table-responsive">
@@ -347,6 +353,13 @@
         }
     };
 
+    $(document).on('click','#clear_session_filter',function () {
+        sessionStorage.removeItem("all_message_filters");
+        $('#messages_store').val('');
+        $('#store_id').val('');
+        $('#filter-form')[0].reset();
+        loadDatatables();
+    });
 
     document.addEventListener("DOMContentLoaded", function () {
         let savedFilters = JSON.parse(sessionStorage.getItem("all_message_filters"));
