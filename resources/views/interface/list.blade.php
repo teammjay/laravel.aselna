@@ -9,10 +9,13 @@
 
 @section('content')
     <div class="row my-3">
-        <div class="col-md-3">
+        <div class="col-md-10">
             <a href="{{ route('interface.create') }}" class="btn btn-primary">
                 Add Interface
             </a>
+        </div>
+        <div class="col-md-2">
+            <span id="clear_session_filter" class="btn btn-secondary float-right mr-2">Clear Filter</span>
         </div>
     </div>
     <div class="card card-primary">
@@ -232,6 +235,12 @@
                 }
                 $('.card-body').toggle();
             });
+
+            $(document).on('click','#clear_session_filter',function () {
+                sessionStorage.removeItem("interface_filters");
+                $('#filter-form')[0].reset();
+                interfacetable.ajax.reload();
+            });
         });
 
         document.addEventListener("DOMContentLoaded", function () {
@@ -249,7 +258,7 @@
 
                 });
 
-                loadDatatables();
+                interfacetable.ajax.reload();
             }
         });
     </script>
