@@ -69,7 +69,8 @@
                 </a>
             @endif
             <a class="btn btn-default btn-flat float-right @if(!$profile_url) btn-block @endif"
-               href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+               id="btn-logout"
+               href="#">
                 <i class="fa fa-fw fa-power-off text-red"></i>
                 {{ __('adminlte::adminlte.log_out') }}
             </a>
@@ -84,3 +85,13 @@
     </ul>
 
 </li>
+
+<script>
+    // added click event listener to logout link for better accessibility
+    document.getElementById('btn-logout').addEventListener('click', function(event) {
+        event.preventDefault();
+        localStorage.clear();
+        sessionStorage.clear();
+        document.getElementById('logout-form').submit();
+    });
+</script>

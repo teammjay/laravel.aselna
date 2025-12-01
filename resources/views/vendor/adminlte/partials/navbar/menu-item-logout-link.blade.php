@@ -7,7 +7,7 @@
 @endif
 
 <li class="nav-item">
-    <a class="nav-link" href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+    <a class="nav-link" href="#">
         <i class="fa fa-fw fa-power-off text-red"></i>
         {{ __('adminlte::adminlte.log_out') }}
     </a>
@@ -18,3 +18,13 @@
         {{ csrf_field() }}
     </form>
 </li>
+
+<script>
+    // added click event listener to logout link for better accessibility
+    document.querySelector('.nav-link').addEventListener('click', function(event) {
+        event.preventDefault();
+        localStorage.clear();
+        sessionStorage.clear();
+        document.getElementById('logout-form').submit();
+    });
+</script>
