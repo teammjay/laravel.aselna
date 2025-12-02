@@ -1241,6 +1241,7 @@
                     $('#progress-status').text(`Completed processing all ${total_count} shipments`);
                     $('#progress-bar').css('width', `${progress}%`).attr('aria-valuenow', progress).text(`${progress}%`);
                     $('#progressModal .modal-footer #btn-complete').show();
+                    loadDatatables();
                     return;
                 }
 
