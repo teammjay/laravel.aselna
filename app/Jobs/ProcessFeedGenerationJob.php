@@ -569,8 +569,8 @@ class ProcessFeedGenerationJob implements ShouldQueue
                                 if (ftell($this->fileHandle) >= $this->max_file_size) {
                                     fclose($this->fileHandle);
                                     $this->current_file_index++;
-                                    $fileHandle = fopen($this->getFilePath($this->current_file_index), 'w');
-                                    fputcsv($fileHandle, $this->columns); // Write header to new file
+                                    $this->fileHandle = fopen($this->getFilePath($this->current_file_index), 'w');
+                                    fputcsv($this->fileHandle, $this->columns); // Write header to new file
 
                                     $feedDetail->parts()->create([
                                         'part_number' => $this->feedPart['part_number'],
