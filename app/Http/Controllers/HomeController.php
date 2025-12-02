@@ -79,11 +79,11 @@ class HomeController extends Controller
     }
 
     public function testfunction(){
-        $sku= 'G69-YPKB';
+        /*$sku= 'G69-YPKB';
         $itemDetail = ListingItem::with('storeProduct', 'storeProduct.product')->where('sku', $sku)->first();
         Common::updateListingItemSaleDetail($sku, $itemDetail);
 
-        die;
+        die;*/
 
         /*$store = Store::findOrFail('99ede22c-fc39-7f9f-cd0d-34d4b9a70c21');
         $date = date('Y-m-d\TH:i:s\Z',strtotime('-5days'));
