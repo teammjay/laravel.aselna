@@ -169,7 +169,6 @@ class OrderUtility
 
                         // sale count update
                         $sku = $item['item']['sku'];
-                        Common::updateListingItemSaleDetail($sku, $itemDetail);
 
                         $orderItemData = [
                             'title' => $item['item']['productName'],
@@ -195,6 +194,8 @@ class OrderUtility
                         ], $orderItemData);
 
                         if ($order_item->id) {
+
+                            Common::updateListingItemSaleDetail($sku, $itemDetail);
 
                             $orderOperationItemData = [
                                 'order_item_id' => $order_item->id,
@@ -256,6 +257,9 @@ class OrderUtility
                         ], $orderItemData);
 
                         if ($order_item->id) {
+
+                            $itemDetail = ListingItem::with('storeProduct', 'storeProduct.product')->where('sku', $item['item']['sku'])->first();
+                            Common::updateListingItemSaleDetail($item['item']['sku'], $itemDetail);
 
                             $orderOperationItemData = [
                                 'order_item_id' => $order_item->id,
@@ -570,6 +574,10 @@ class OrderUtility
                     ], $orderItemData);
 
                     if ($order_item->id) {
+
+                        $itemDetail = ListingItem::with('storeProduct', 'storeProduct.product')->where('sku', $item['sku'])->first();
+                        Common::updateListingItemSaleDetail($item['sku'], $itemDetail);
+
                         $orderOperationItemData = [
                             'order_item_id' => $order_item->id,
                             'order_operation_id' => $order_operation_detail->id,
@@ -754,6 +762,9 @@ class OrderUtility
                         ], $orderItemData);
 
                         if ($order_item->id) {
+
+                            Common::updateListingItemSaleDetail($productSku, $itemDetail);
+
                             $orderOperationItemData = [
                                 'order_item_id' => $order_item->id,
                                 'order_operation_id' => $order_operation_detail->id,
@@ -809,6 +820,10 @@ class OrderUtility
                         ], $orderItemData);
 
                         if ($order_item->id) {
+
+                            $itemDetail = ListingItem::with('storeProduct', 'storeProduct.product')->where('sku', $productSku)->first();
+                            Common::updateListingItemSaleDetail($productSku, $itemDetail);
+
                             $orderOperationItemData = [
                                 'order_item_id' => $order_item->id,
                                 'order_operation_id' => $order_operation_detail->id,
