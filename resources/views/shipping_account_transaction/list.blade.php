@@ -451,6 +451,7 @@
             $(document).on('click','#clear_session_filter',function () {
                 sessionStorage.removeItem("account_transaction_filters");
                 $('#filter-form')[0].reset();
+                $('#store_id').val('').trigger('change');
                 accountTransactionTable.ajax.reload();
             });
 
