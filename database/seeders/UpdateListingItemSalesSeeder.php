@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Log;
 
 class UpdateListingItemSalesSeeder extends Seeder
 {
@@ -50,7 +51,7 @@ class UpdateListingItemSalesSeeder extends Seeder
                                 'sales_count'    => $count,
                                 'last_sale_date' => $date,
                             ]);
-
+                        Log::info('Sales count update: Listing Item ID-'.$listing->id);
                         $totalUpdated++;
                         continue;
                     }
@@ -67,7 +68,7 @@ class UpdateListingItemSalesSeeder extends Seeder
                                 'sales_count'    => $count,
                                 'last_sale_date' => $date,
                             ]);
-
+                        Log::info('Sales count update: Listing Item ID-'.$detail->listing_item_id);
                         $totalUpdated++;
                     }
                 }
