@@ -2456,13 +2456,20 @@ class ListingController extends Controller
                 $cleanModels[] = trim(preg_replace('/^' . preg_quote($prefix, '/') . '\s*/i', '', $m));
             }
 
-            $groupModels = $this->groupFormatedDeviceModels($cleanModels);
+            //$groupModels = $this->groupFormatedDeviceModels($cleanModels);
+            $groupModels = $this->compressModels($cleanModels);
 
             if($groupModels){
 
                 $finalModel = implode($device_seperator,$groupModels);
 
-                $compressedDevices[$brand] = "$brand $prefix $finalModel";
+                if (strtolower($brand) == 'apple') {
+                    $compressedDevices[$brand] = "$prefix $finalModel";
+                } else {
+                    $compressedDevices[$brand] = "$brand $prefix $finalModel";
+                }
+
+                //$compressedDevices[$brand] = "$brand $prefix $finalModel";
                 $modelSeries[$brand] = "$prefix $finalModel";
             }
 
@@ -3010,6 +3017,191 @@ class ListingController extends Controller
         return array('compressedDevices' => $compressedDevices,'modelSeries' => $modelSeries);
     }
 
+    private function compressModels(array $models, $sep = '/')
+    {
+        $models = array_values(array_filter(array_map('trim', $models)));
+        if (count($models) === 0) return '';
+        if (count($models) === 1) return $models[0];
+
+        $groups = [];
+        $groupOrder = [];
+
+        foreach ($models as $m) {
+            $parts = preg_split('/\s+/', $m);
+            $first = $parts[0] ?? '';
+            $key   = mb_strtolower($first);
+
+            if (!isset($groups[$key])) {
+                $groups[$key] = [
+                    'keyRaw' => $first, // original capitalization
+                    'items'  => []
+                ];
+                $groupOrder[] = $key;
+            }
+            $groups[$key]['items'][] = $m;
+        }
+
+        usort($groupOrder, function ($a, $b) {
+            $isNumA = ctype_digit($a);
+            $isNumB = ctype_digit($b);
+
+            if ($isNumA && $isNumB) {
+                return (int)$a <=> (int)$b;
+            }
+            if ($isNumA !== $isNumB) {
+                return $isNumA ? -1 : 1;
+            }
+            return 0;
+        });
+
+        $compressGroup = function (array $groupModels, $sep) {
+            $groupModels = array_values(array_filter(array_map('trim', $groupModels)));
+            if (count($groupModels) === 0) return '';
+            if (count($groupModels) === 1) return $groupModels[0];
+
+            $split = array_map(fn($m) => preg_split('/\s+/', $m), $groupModels);
+
+            $common = [];
+            $idx = 0;
+            while (true) {
+                $token = $split[0][$idx] ?? null;
+                if ($token === null) break;
+
+                $allSame = true;
+                foreach ($split as $parts) {
+                    if (!isset($parts[$idx]) || mb_strtolower($parts[$idx]) !== mb_strtolower($token)) {
+                        $allSame = false;
+                        break;
+                    }
+                }
+                if (!$allSame) break;
+
+                $common[] = $token;
+                $idx++;
+            }
+
+            $prefixStr = trim(implode(' ', $common));
+
+            $tails = [];
+            foreach ($split as $parts) {
+                $tailParts = array_slice($parts, count($common));
+                $tails[]   = trim(implode(' ', $tailParts));
+            }
+
+            $hasBase = in_array('', $tails, true);
+
+            $nonEmptyTails = array_values(array_filter($tails, fn($t) => $t !== ''));
+
+            $groupable   = [];
+            $baseOrder   = [];
+            $nonGrouped  = [];
+
+            foreach ($nonEmptyTails as $tail) {
+                if (preg_match('/^(.*?)(\s*\(.*\))$/', $tail, $m)) {
+                    $base  = trim($m[1]);
+                    $paren = trim($m[2]);
+
+                    if($base === '') {
+                        $nonGrouped[] = $tail;
+                        continue;
+                    }
+
+                    if(!isset($groupable[$base])) {
+                        $groupable[$base] = [];
+                        $baseOrder[] = $base;
+                    }
+                    $groupable[$base][] = $paren;
+                }else{
+                    $nonGrouped[] = $tail;
+                }
+            }
+
+            $compressedNonEmpty = [];
+
+            foreach ($nonGrouped as $ng) {
+                $compressedNonEmpty[] = $ng;
+            }
+
+            if (!empty($groupable)) {
+                $sortedBases = $baseOrder;
+                usort($sortedBases, function($a, $b) {
+                    if (preg_match('/^\d+/', $a, $ma) && preg_match('/^\d+/', $b, $mb)) {
+                        return (int)$ma[0] <=> (int)$mb[0];
+                    }
+                    return strcasecmp($a, $b);
+                });
+
+                foreach ($sortedBases as $base) {
+                    $parens = $groupable[$base];
+                    if (count($parens) === 1) {
+                        $compressedNonEmpty[] = $base . ' ' . $parens[0];
+                    } else {
+                        $first = array_shift($parens);
+                        $str   = $base . ' ' . $first;
+                        foreach ($parens as $p) {
+                            $str .= $sep . preg_replace('/^\s+/', '', $p);
+                        }
+                        $compressedNonEmpty[] = $str;
+                    }
+                }
+            }
+
+            $parts = [];
+            $firstNonEmptyUsed = false;
+
+            if ($hasBase && $prefixStr !== '') {
+                $parts[] = $prefixStr; // e.g. "12"
+            }
+
+            foreach ($compressedNonEmpty as $i => $tail) {
+                if ($tail === '') continue;
+
+                if (!$firstNonEmptyUsed) {
+                    if ($prefixStr !== '') {
+                        $parts[] = $prefixStr . ' ' . $tail;
+                    } else {
+                        $parts[] = $tail;
+                    }
+                    $firstNonEmptyUsed = true;
+                } else {
+                    $parts[] = $tail;
+                }
+            }
+
+            if (!$hasBase && empty($parts) && $prefixStr !== '' && !empty($compressedNonEmpty)) {
+                foreach ($compressedNonEmpty as $i => $tail) {
+                    if ($i === 0) {
+                        $parts[] = $prefixStr . ' ' . $tail;
+                    } else {
+                        $parts[] = $tail;
+                    }
+                }
+            }
+
+            // If nothing built yet, fallback to joining originals
+            if (empty($parts)) {
+                return implode($sep, $groupModels);
+                //return $groupModels;
+            }
+            //return $parts;
+            return implode($sep, $parts);
+        };
+
+        $allParts = [];
+        foreach ($groupOrder as $gKey) {
+            $group = $groups[$gKey];
+            $groupStr = $compressGroup($group['items'], $sep);
+            if ($groupStr !== '') {
+                $allParts[] = $groupStr;
+            }
+        }
+        return $allParts;
+        //return implode($sep, $allParts);
+    }
+
+
+
+
 
     private function groupFormatedDeviceModels(array $models) {
         $grouped = [];
@@ -3134,6 +3326,7 @@ class ListingController extends Controller
 
             $prefixParts = [];
             $splitModels = array_map(fn($m) => explode(' ', $m), $models);
+
             $minLength = min(array_map('count', $splitModels));
 
             for ($i = 0; $i < $minLength; $i++) {
@@ -3145,6 +3338,7 @@ class ListingController extends Controller
                         break;
                     }
                 }
+
                 if ($same) {
                     $prefixParts[] = $word;
                 } else {
@@ -3152,22 +3346,32 @@ class ListingController extends Controller
                 }
             }
 
-
+            //print_r($prefixParts);die;
             //$prefix = implode(' ', $prefixParts);
-            $prefix = $prefixParts[0];
+            $prefix = $prefixParts[0] ?? '';
 
             $cleanModels = [];
             foreach ($models as $m) {
                 $cleanModels[] = trim(preg_replace('/^' . preg_quote($prefix, '/') . '\s*/i', '', $m));
             }
 
-            $groupModels = $this->groupFormatedDeviceModels($cleanModels);
+            //$groupModels = $this->groupFormatedDeviceModels($cleanModels);
+            $groupModels = $this->compressModels($cleanModels);
+
+
+            //echo $groupModels;die;
 
             if($groupModels){
 
                 $finalModel = implode($deviceSeparator,$groupModels);
 
-                $compressedDevices[] = "$brand $prefix $finalModel";
+                if (strtolower($brand) == 'apple') {
+                    $compressedDevices[] = "$prefix $finalModel";
+                } else {
+                    $compressedDevices[] = "$brand $prefix $finalModel";
+                }
+
+                //$compressedDevices[] = "$brand $prefix $finalModel";
                 $modelSeries[] = "$prefix $finalModel";
             }
 
