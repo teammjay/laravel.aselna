@@ -40,7 +40,7 @@ class CriticalErrorService
     protected static function process($errorData)
     {
         // Log to file
-        Log::channel('critical')->error('Critical Error', $errorData);
+        Log::channel('critical')->error('Critical Error - '.$errorData['message'], $errorData);
 
         //  storOptionallye to DB
         // \App\Models\CriticalError::create($errorData);

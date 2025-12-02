@@ -1010,18 +1010,31 @@
                 </div>
                 <div class="tab-pane fade" id="tab12" role="tabpanel" aria-labelledby="devices-tab">
                     <form method="POST" id="frmtab12">
-                        <div class="row">
-                            <div class="col-md-4">
-                                @if(count($devices ?? []) > 0)
+                        <div class="table-responsive">
+                            <table class="table table-bordered" style="min-width: 500px;">
+                                <thead>
+                                    <tr>
+                                        <th>Device</th>
+                                        <th>Listing</th>
+                                        <th>Feed</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
                                     @foreach($devices as $device)
-                                        <div class="form-group">
-                                            <input type="checkbox" name="devices[]" value="{{ $device->id }}" @if(is_array($storeDevices)){{ in_array($device->id,($storeDevices ?? [])) ? 'checked' : '' }} @endif>  {{ $device->name }}
-                                        </div>
-
+                                        <tr>
+                                            <td>{{ $device->name }}</td>
+                                            <td class="text-center">
+                                                <input type="checkbox" name="devices[listing][]" value="{{ $device->id }}"
+                                                    @if(isset($storeDevices['listing']) && in_array($device->id, $storeDevices['listing'])) checked @endif>
+                                            </td>
+                                            <td class="text-center">
+                                                <input type="checkbox" name="devices[feed][]" value="{{ $device->id }}"
+                                                       @if(isset($storeDevices['feed']) && in_array($device->id, $storeDevices['feed'])) checked @endif>
+                                            </td>
+                                        </tr>
                                     @endforeach
-                                @endif
-
-                            </div>
+                                </tbody>
+                            </table>
                         </div>
                         <div class="card-footer text-center mt-3">
                             <button type="button" class="btn btn-success" onclick="saveStoreTabData(12)">Save</button>

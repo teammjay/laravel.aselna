@@ -55,7 +55,7 @@
 
         <div class="col-md-2">
             <select class="form-control" id="messages_store" name="messages_store">
-                <option value="">All stores</option>
+                <option value="">- All Store -</option>
                 @if(count($stores ?? []) > 0)
                     @foreach($stores as $store)
                         @if(!empty($store->messageAccount) && $store->messageAccount->active == 1)
@@ -66,11 +66,15 @@
             </select>
 
         </div>
-        <div class="col-md-9 d-flex">
+        <div class="col-md-8 d-flex">
             <button type="button" class="btn btn-default" id="open_message" disabled="">
                 <i class="fas fa-fw fa-pencil-alt"></i> Open
             </button>
 
+        </div>
+
+        <div class="col-md-2">
+            <span id="clear_session_filter" class="btn btn-secondary float-right mr-2">Clear Filter</span>
         </div>
     </div>
     <div class="table-responsive">
@@ -227,6 +231,13 @@
         }
     };
 
+    $(document).on('click','#clear_session_filter',function () {
+        sessionStorage.removeItem("all_message_filters");
+        $('#messages_store').val('');
+        $('#store_id').val('');
+        $('#filter-form')[0].reset();
+        loadDatatables();
+    });
 
     document.addEventListener("DOMContentLoaded", function () {
         let savedFilters = JSON.parse(sessionStorage.getItem("close_message_filters"));

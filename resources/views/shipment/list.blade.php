@@ -74,6 +74,7 @@
         #btnGroupDrop2::after{
             display:none;
         }
+        .dropdown-toggle{font-size:18px;}
     </style>
 @stop
 
@@ -194,7 +195,7 @@
                     <div class="row mb-1 mt-0">
                         <div class="col-md-2">
                             <select class="form-control mt-3 mb-3" name="store_id" id="listing_store">
-                                <option value="">All Stores</option>
+                                <option value="">- All Store -</option>
                                 @if(count($stores ?? []) > 0)
                                     @foreach($stores as $store)
                                         <option value="{{ $store->id }}">{{ $store->name }} {{ (!empty((array)$store->storeType)) ? ' - '.$store->storeType->name : '' }}</option>
@@ -431,9 +432,9 @@
 
         $(document).on("click",".clickable-row", function(e) {
 
-            if ($(e.target).is('input,select,checkbox, a, img')) {
+            /*if ($(e.target).is('input,select,checkbox, a, img')) {
                 return;
-            }
+            }*/
 
             var store_url = $(this).data("href");
             if(store_url != '') {
@@ -1240,6 +1241,7 @@
                     $('#progress-status').text(`Completed processing all ${total_count} shipments`);
                     $('#progress-bar').css('width', `${progress}%`).attr('aria-valuenow', progress).text(`${progress}%`);
                     $('#progressModal .modal-footer #btn-complete').show();
+                    loadDatatables();
                     return;
                 }
 

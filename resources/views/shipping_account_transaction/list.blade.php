@@ -105,7 +105,7 @@
                                 Shipping Account
                             </div>
                             <div class="col-8">
-                                <select class="form-control" name="">
+                                <select class="form-control" name="shipping_account_id" id="shipping_account_id">
                                     <option value="">--</option>
                                     @if(count($shipping_account ?? []) > 0)
                                         @foreach($shipping_account as $sa)
@@ -181,7 +181,7 @@
                             </div>
                             <div class="col-8">
                                 <select class="form-control" name="store_id" id="store_id">
-                                    <option value=""></option>
+                                    <option value="">- All Store -</option>
                                     @if(count($stores ?? []) > 0)
                                         @foreach($stores as $store)
                                             <option value="{{ $store->id }}">{{ $store->name }} - {{ $store->storeType->name ?? '' }}</option>
@@ -240,13 +240,17 @@
     </div>
 
     <div class="row my-3">
-        <div class="col-md-2">
+        <div class="col-md-10">
             <button class="btn btn-primary" id="cancleLabel">
                 Void
             </button>
             <button class="btn btn-secondary" id="reprintLabel">
                 Re-print
             </button>
+        </div>
+
+        <div class="col-md-2">
+            <span id="clear_session_filter" class="btn btn-secondary float-right mr-2">Clear Filter</span>
         </div>
 
     </div>
@@ -444,6 +448,13 @@
             });
 
 
+            $(document).on('click','#clear_session_filter',function () {
+                sessionStorage.removeItem("account_transaction_filters");
+                $('#filter-form')[0].reset();
+                $('#store_id').val('').trigger('change');
+                accountTransactionTable.ajax.reload();
+            });
+
 
             $('#reprintLabel').on('click', function () {
                 var selectedTransactions = $('#transaction-list tr.active');
@@ -478,7 +489,11 @@
                         alert('Error: ' + xhr.responseJSON.error);
                     }
                 });
+
+
             });
+
+
 
             {{--function loadTransactions(){--}}
 
@@ -547,13 +562,13 @@
                         input.val(savedFilters[key].value)
                     }
 
-                    if( savedFilters[key].name == 'store_id'){
-                        $('#listing_store').val(savedFilters[key].value);
+                    if( savedFilters[key].name == 'shipping_account_id'){
+                        $('#shipping_account_id').val(savedFilters[key].value);
                     }
 
                 });
 
-                //accountTransactionTable.ajax.reload();
+                //$('#filter-form')[0].submit();
             }
         });
 

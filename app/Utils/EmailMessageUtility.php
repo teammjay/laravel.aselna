@@ -367,7 +367,7 @@ class EmailMessageUtility
             return $emails;
         } catch (Exception $e) {
 
-            CriticalErrorService::report('Fetch emails failed', [
+            CriticalErrorService::report('Fetch emails failed:'.$storeName.'-'.$store_type, [
                 'marketplace' => ucfirst($store_type),
                 'reason' => $e->getMessage() ?? 'Unknown',
             ],['store_type' => $store_type,'store_name' => $storeName]);
