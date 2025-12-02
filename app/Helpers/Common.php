@@ -62,10 +62,11 @@ class Common
                     'sales_count' => $saleCount,
                     'last_sale_date' => $lastSaleDate,
                 ]);*/
-
-                $itemDetail->sales_count = $saleCount;
-                $itemDetail->last_sale_date = $lastSaleDate;
-                $itemDetail->save();
+                if($itemDetail) {
+                    $itemDetail->sales_count = $saleCount;
+                    $itemDetail->last_sale_date = $lastSaleDate;
+                    $itemDetail->save();
+                }
 
                 return true;
             }
