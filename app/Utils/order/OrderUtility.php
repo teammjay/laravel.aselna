@@ -137,10 +137,16 @@ class OrderUtility
 
         $order->update($orderData);
 
+        $operationstatus = OrderOperationStatus::Created;
+
+        if (isset($item['intentToCancel']) && $item['intentToCancel'] == "TRUE") {
+            $operationstatus = OrderOperationStatus::CanceledRequested;
+        }
+
         $orderOperationData = [
             'order_id' => $order->id,
             'insurance_value' => $orderTotals,
-            'status' => OrderOperationStatus::Created,
+            'status' => $operationstatus,
             'signature_confirmation' => 1,
             'store_id' => $store->id,
             'shipping_package_id' => ShippingPackage::getDefaultShippingPackage(),
@@ -302,11 +308,6 @@ class OrderUtility
                     } else if ($lineStatus['status'] === 'Cancelled') {
                         $order->order_status = OrderStatus::Canceled;
                         $order_operation_detail->status = OrderOperationStatus::Canceled;
-                        $order->save();
-                        $order_operation_detail->save();
-                    } else if (isset($lineStatus['intentToCancel']) && $lineStatus['intentToCancel'] == "TRUE") {
-                        $order->order_status = OrderStatus::CanceledRequested;
-                        $order_operation_detail->status = OrderOperationStatus::CanceledRequested;
                         $order->save();
                         $order_operation_detail->save();
                     }
