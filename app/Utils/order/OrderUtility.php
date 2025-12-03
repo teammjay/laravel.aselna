@@ -304,6 +304,11 @@ class OrderUtility
                         $order_operation_detail->status = OrderOperationStatus::Canceled;
                         $order->save();
                         $order_operation_detail->save();
+                    } else if (isset($lineStatus['intentToCancel']) && $lineStatus['intentToCancel'] == "TRUE") {
+                        $order->order_status = OrderStatus::CanceledRequested;
+                        $order_operation_detail->status = OrderOperationStatus::CanceledRequested;
+                        $order->save();
+                        $order_operation_detail->save();
                     }
                     Log::info("Order Line Cancelled: " . json_encode($item));
                 }
