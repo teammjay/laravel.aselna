@@ -470,7 +470,7 @@
             let totalCnt = $('input[name="shipment_id[]"]:checked').length;
             $('#total_selected').html('( <b>'+totalCnt+'</b> selected )');
 
-            if(ele.data('status') > 1){
+            if(ele.data('status') >= 1){
                 //$('#cancel_selected').addClass('hide');
                 $('#approved').removeClass('hide');
             }else{
@@ -504,7 +504,7 @@
             let totalCnt = $('input[name="shipment_id[]"]:checked').length;
             $('#total_selected').html('( <b>'+totalCnt+'</b> selected )');
 
-            if(ele.data('status') > 1){
+            if(ele.data('status') >= 1){
                 //$('#cancel_selected').addClass('hide');
                 $('#approved').removeClass('hide');
             }else{
