@@ -18,6 +18,7 @@ class Kernel extends ConsoleKernel
     {
         $schedule->command('logs:rotate')->everyOddHour();
         $schedule->command('app:result-feed-sync')->everyMinute();
+        $schedule->command('app:run-daily-update-listing-sales')->twiceDaily(2, 14);
 //        $schedule->job(new ListingItemSyncJob())->daily();
 //        $schedule->job(new ListingSyncJob())->daily();
 //        $schedule->job(new LogisticCentreSyncJob())->daily();

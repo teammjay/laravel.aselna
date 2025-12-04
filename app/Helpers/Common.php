@@ -49,14 +49,24 @@ class Common
                 ->where('sku', $sku)
                 ->first();
 
+            Log::info('sales data:'.json_encode($salesData));
+
             if($salesData) {
                 $saleCount = (int)($salesData->saleCount ?? 0);
                 $lastSaleDate = $salesData->lastSaleDate;
 
-                $itemDetail->update([
+                Log::info('Update sales count:'.$sku);
+                Log::info('sales count itemdetail:'.json_encode($itemDetail));
+
+                /*$itemDetail->update([
                     'sales_count' => $saleCount,
                     'last_sale_date' => $lastSaleDate,
-                ]);
+                ]);*/
+                if($itemDetail) {
+                    $itemDetail->sales_count = $saleCount;
+                    $itemDetail->last_sale_date = $lastSaleDate;
+                    $itemDetail->save();
+                }
 
                 return true;
             }
