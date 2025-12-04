@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Helpers\Common;
 use App\Models\Catalog;
 use App\Models\ManageMarketplaceProduct;
 use App\Services\Auth\ShopifyAuthService;
@@ -36,7 +37,11 @@ class FetchShopifyProductsJob implements ShouldQueue
 
         $this->updateTrackingRecord(['tags' => 'Shopify Products']);
 
-        $stores = Store::select('store.*','store_type.name as storeTypeName')->join('store_type', 'store_type.id', '=', 'store.store_type_id')->where('store_type.code', 'shopify')->get();
+        /* get active store jobs*/
+        $store_ids = Common::getActiveStoreJobs('FetchShopifyProductsJob','shopify');
+        /* get active store jobs*/
+
+        $stores = Store::select('store.*','store_type.name as storeTypeName')->join('store_type', 'store_type.id', '=', 'store.store_type_id')->where('store_type.code', 'shopify')->whereIn('id',$store_ids)->get();
 
         if (count($stores ?? []) > 0) {
             foreach ($stores as $store) {

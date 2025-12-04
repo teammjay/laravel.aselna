@@ -18,10 +18,24 @@ class Kernel extends ConsoleKernel
     {
         $schedule->command('logs:rotate')->everyOddHour();
         $schedule->command('app:result-feed-sync')->everyMinute();
+        $schedule->command('app:run-daily-update-listing-sales')->twiceDaily(2, 14);
 //        $schedule->job(new ListingItemSyncJob())->daily();
 //        $schedule->job(new ListingSyncJob())->daily();
 //        $schedule->job(new LogisticCentreSyncJob())->daily();
 
+        $jobs = \App\Models\ScheduledJobs::where('is_active', true)->get();
+
+        foreach ($jobs as $job) {
+            $class = $job->job->class_name;
+
+            if (!class_exists($class)) continue;
+
+            $params = json_decode($job->parameters, true) ?? [];
+
+            $schedule->job(new $class(...array_values($params)))
+                ->cron($job->cron_expression)
+                ->name("{$job->name}");
+        }
 
         /*$jobs = \App\Models\ScheduledJobs::where('is_active', 1)->get();
 

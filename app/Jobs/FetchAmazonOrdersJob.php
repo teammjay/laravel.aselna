@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Helpers\Common;
 use App\Jobs\Concerns\TrackableJob;
 use App\Constants\OrderStatus;
 use App\Models\ListingItem;
@@ -38,8 +39,13 @@ class FetchAmazonOrdersJob implements ShouldQueue
     {
 
         $this->updateTrackingRecord(['tags' => 'Amazon Orders']);
+
+        /* get active store jobs*/
+        $store_ids = Common::getActiveStoreJobs('FetchAmazonOrdersJob','amazon');
+        /* get active store jobs*/
+
         /* get amazon stores*/
-        $stores = Store::join('store_type', 'store_type.id', '=', 'store.store_type_id')->where('store_type.code','amazon')->where('store.store_status','<>',0)->get();
+        $stores = Store::join('store_type', 'store_type.id', '=', 'store.store_type_id')->where('store_type.code','amazon')->where('store.store_status','<>',0)->whereIn('id',$store_ids)->get();
 
         if(count($stores ?? []) > 0){
             foreach($stores as $store){

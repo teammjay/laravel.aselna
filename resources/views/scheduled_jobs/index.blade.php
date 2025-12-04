@@ -41,6 +41,15 @@
                     <a href="{{ route('scheduled_jobs.edit', $job) }}" class="btn btn-warning btn-sm">
                         Edit
                     </a>
+                    <a href="{{ route('scheduled_jobs.delete', $ptype->id) }}" class="btn btn-danger" title="Remove">
+                        <i class="fas fa-fw fa-trash"></i>
+                    </a>
+                    <form method="POST" action="{{ route('scheduled_jobs.run', $job->id) }}">
+                        @csrf
+                        <button class="btn btn-primary px-3 ml-1">
+                            Run Now
+                        </button>
+                    </form>
                 </td>
             </tr>
         @endforeach

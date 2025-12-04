@@ -26,5 +26,6 @@ class ScheduledJobs extends Model
     }
 
 
-    protected $fillable = ['id','name','class_name','cron_expression','is_active','created_at','updated_at'];
+    protected $fillable = ['id','name','class_name','cron_expression','parameters','last_run_at','last_status','is_active','created_at','updated_at'];
+
 }

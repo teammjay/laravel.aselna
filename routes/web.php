@@ -737,6 +737,8 @@ Route::middleware('auth')->group(function () {
         Route::get('/scheduled_jobs/edit/{id}', 'edit')->name('scheduled_jobs.edit');
         Route::post('/scheduled_jobs/edit/{id}', 'update')->name('scheduled_jobs.update');
         Route::get('/scheduled_jobs/delete/{id}', 'destroy')->name('scheduled_jobs.delete');
+        Route::post('/scheduled_jobs/{job}/run', 'run')->name('scheduled_jobs.run');
+        Route::post('/scheduled_jobs/getstore', 'getStore')->name('scheduled_jobs.getstore');
     });
 
     Route::controller(ErrorlogDashboardController::class)->group(function () {

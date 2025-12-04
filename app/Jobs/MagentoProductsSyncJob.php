@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Constants\MarketPlaceUploadStatus;
+use App\Helpers\Common;
 use App\Models\Catalog;
 use App\Models\Device;
 use App\Models\GenerateProductImage;
@@ -51,8 +52,12 @@ class MagentoProductsSyncJob implements ShouldQueue
 
         $this->updateTrackingRecord(['tags' => 'Magento Products']);
 
+        /* get active store jobs*/
+        $store_ids = Common::getActiveStoreJobs('MagentoProductsSyncJob','magento');
+        /* get active store jobs*/
+
         $this->magentoService = new MagentoService();
-        $stores = Store::select('store.*')->with('fileSystem', 'storeType')->join('store_type', 'store_type.id', '=', 'store.store_type_id')->where('store_type.code', 'magento')->where('store.store_status','<>',0)->get();
+        $stores = Store::select('store.*')->with('fileSystem', 'storeType')->join('store_type', 'store_type.id', '=', 'store.store_type_id')->where('store_type.code', 'magento')->where('store.store_status','<>',0)->whereIn('id',$store_ids)->get();
 
         Log::info('Magento Simple Products Sync Job Started');
         if (count($stores ?? []) > 0) {

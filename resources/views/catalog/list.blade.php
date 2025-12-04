@@ -52,7 +52,7 @@
                 Add Catalog
             </a>
         </div>
-        <div class="col-md-10 d-flex align-items-center" style="gap:10px;">
+        <div class="col-md-8 d-flex align-items-center" style="gap:10px;">
             <button type="button" class="btn btn-default hide" id="show_listing">
                 Show Listing
             </button>
@@ -65,6 +65,9 @@
             <button type="button" class="btn btn-default" id="update_product" disabled="">
                 Update Product
             </button>
+        </div>
+        <div class="col-md-2">
+            <span id="clear_session_filter" class="btn btn-secondary float-right mr-2">Clear Filter</span>
         </div>
     </div>
     <div class="card card-default">
@@ -459,7 +462,7 @@
                     <div class="col-md-2">
                         <div class="form-group">
                             <label>&nbsp;</label>
-                            <button type="reset" id="resetBtn" class="form-control btn btn-secondary">Reset</button>
+                            <button type="reset" id="resetForm"  class="form-control btn btn-secondary">Reset</button>
                         </div>
                     </div>
                 </div>
@@ -784,6 +787,12 @@
 
             document.getElementById("resetForm").addEventListener("click", function () {
                 sessionStorage.removeItem("catalog_filters");
+            });
+
+            $(document).on('click','#clear_session_filter',function () {
+                sessionStorage.removeItem("catalog_filters");
+                $('#filter-form')[0].reset();
+                loadDatatables();
             });
 
         });

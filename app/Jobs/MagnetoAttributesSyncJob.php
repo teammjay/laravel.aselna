@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Helpers\Common;
 use App\Models\Brand;
 use App\Models\Device;
 use App\Models\Store;
@@ -35,8 +36,12 @@ class MagnetoAttributesSyncJob implements ShouldQueue
     {
         $this->updateTrackingRecord(['tags' => 'Magento Attributes']);
 
+        /* get active store jobs*/
+        $store_ids = Common::getActiveStoreJobs('MagnetoAttributesSyncJob','magento');
+        /* get active store jobs*/
+
         $storeType = StoreType::where('name', 'magento')->first();
-        $stores = Store::where('store_type_id', $storeType->id)->get();
+        $stores = Store::where('store_type_id', $storeType->id)->whereIn('id',$store_ids)->get();
 
         foreach ($stores as $store) {
             $this->SyncAttributesIfNeeded($store);

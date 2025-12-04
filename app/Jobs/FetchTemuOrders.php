@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Helpers\Common;
 use App\Jobs\Concerns\TrackableJob;
 use App\Models\Store;
 use App\Services\Marketplace\Service\TemuService;
@@ -32,8 +33,13 @@ class FetchTemuOrders implements ShouldQueue
     public function handle(): void
     {
         $this->updateTrackingRecord(['tags' => 'Temu Orders']);
+
+        /* get active store jobs*/
+        $store_ids = Common::getActiveStoreJobs('FetchTemuOrders','temu');
+        /* get active store jobs*/
+
         /* get temu stores*/
-        $stores = Store::select('store.*')->join('store_type', 'store_type.id', '=', 'store.store_type_id')->where('store_type.code','temu')->where('store.store_status','<>',0)->get();
+        $stores = Store::select('store.*')->join('store_type', 'store_type.id', '=', 'store.store_type_id')->where('store_type.code','temu')->where('store.store_status','<>',0)->whereIn('id',$store_ids)->get();
 
         if(count($stores ?? []) > 0) {
             $tags = [];

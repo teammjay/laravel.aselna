@@ -3,6 +3,9 @@
 namespace App\Helpers;
 
 use App\Models\Catalog;
+use App\Models\ScheduledJobs;
+use App\Models\StoreScheduledCronJobs;
+use App\Models\StoreType;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -49,14 +52,24 @@ class Common
                 ->where('sku', $sku)
                 ->first();
 
+            Log::info('sales data:'.json_encode($salesData));
+
             if($salesData) {
                 $saleCount = (int)($salesData->saleCount ?? 0);
                 $lastSaleDate = $salesData->lastSaleDate;
 
-                $itemDetail->update([
+                Log::info('Update sales count:'.$sku);
+                Log::info('sales count itemdetail:'.json_encode($itemDetail));
+
+                /*$itemDetail->update([
                     'sales_count' => $saleCount,
                     'last_sale_date' => $lastSaleDate,
-                ]);
+                ]);*/
+                if($itemDetail) {
+                    $itemDetail->sales_count = $saleCount;
+                    $itemDetail->last_sale_date = $lastSaleDate;
+                    $itemDetail->save();
+                }
 
                 return true;
             }
@@ -66,5 +79,29 @@ class Common
 
             Log::error('Error in Update Listing Item Sales Detail ('.$sku.'): ' . $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine());
         }
+
+        return false;
+    }
+
+    public static function getActiveStoreJobs($job_name, $storeType=''){
+
+        if($job_name) {
+            $scheduleJob = ScheduledJobs::where('name', $job_name)->first();
+
+            if ($scheduleJob) {
+                $query = StoreScheduledCronJobs::select('store_id')->where('scheduled_job_id', $scheduleJob->id);
+                if($storeType){
+                    $query->where('store_type_id', function ($subquery) use ($storeType) {
+                        return $subquery->select('id')
+                            ->from('store_type')
+                            ->where('code', $storeType)->get();
+                    });
+                }
+                $store_ids = $query->get()->pluck('store_id')->toArray();
+
+                return $store_ids;
+            }
+        }
+        return false;
     }
 }

@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Constants\HdTicketStatus;
 use App\Constants\HdTicketTypeCode;
+use App\Helpers\Common;
 use App\Models\Customer;
 use App\Models\CustomerEmail;
 use App\Models\HDMessage;
@@ -48,8 +49,12 @@ class   FetchEmailMessagesJob implements ShouldQueue
 
             $this->updateTrackingRecord(['tags' => 'Email Messages']);
 
+            /* get active store jobs*/
+            $store_ids = Common::getActiveStoreJobs('FetchEmailMessagesJob');
+            /* get active store jobs*/
+
             /* get shopify stores*/
-            $stores = Store::with('storeType')->where('store_status','<>',0)->get();
+            $stores = Store::with('storeType')->where('store_status','<>',0)->whereIn('id',$store_ids)->get();
 
             if (count($stores ?? []) > 0) {
                 foreach ($stores as $store) {

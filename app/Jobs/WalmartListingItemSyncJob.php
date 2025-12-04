@@ -5,6 +5,7 @@ namespace App\Jobs;
 use App\Constants\FeedStatus;
 use App\Constants\ListingStatus;
 use App\Constants\ListingSyncStatus;
+use App\Helpers\Common;
 use App\Models\ListingFeed;
 use App\Models\ListingItem;
 use App\Models\ListingItemLink;
@@ -38,11 +39,16 @@ class WalmartListingItemSyncJob implements ShouldQueue
     public function handle(): void
     {
         Log::info('WalmartListingItemSyncJob started');
+
+        /* get active store jobs*/
+        $store_ids = Common::getActiveStoreJobs('WalmartListingItemSyncJob','walmart');
+        /* get active store jobs*/
+
         $walmart_store_ids = Store::where('store_type_id', function ($subquery) {
             return $subquery->select('id')
                 ->from('store_type')
                 ->where('code', 'walmart');
-        })->where('store_status','<>',0)->pluck('id');
+        })->where('store_status','<>',0)->whereIn('id',$store_ids)->pluck('id');
         Log::info('Walmart store ids: ' . json_encode($walmart_store_ids));
 
         $this->updateTrackingRecord(['tags' => 'Walmart']);

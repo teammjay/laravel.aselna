@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Helpers\Common;
 use App\Jobs\Concerns\TrackableJob;
 use App\Constants\FeedStatus;
 use App\Constants\ListingStatus;
@@ -39,11 +40,15 @@ class EbayListingItemSyncJob implements ShouldQueue
         Log::info('EbayListingItemSyncJob started');
         $this->updateTrackingRecord(['tags' => 'eBay Listing Item']);
 
+        /* get active store jobs*/
+        $store_ids = Common::getActiveStoreJobs('EbayListingItemSyncJob','ebay');
+        /* get active store jobs*/
+
         $ebay_store_ids = Store::where('store_type_id', function ($subquery) {
             return $subquery->select('id')
                 ->from('store_type')
                 ->where('code', 'ebay');
-        })->where('store_status','<>',0)->pluck('id');
+        })->where('store_status','<>',0)->whereIn('id',$store_ids)->pluck('id');
         Log::info('Ebay store ids: ' . json_encode($ebay_store_ids));
 
         if (env('APP_ENV') === 'local') {

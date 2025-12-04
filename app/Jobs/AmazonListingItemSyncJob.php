@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Helpers\Common;
 use App\Jobs\Concerns\TrackableJob;
 use App\Constants\FeedStatus;
 use App\Constants\ListingStatus;
@@ -39,11 +40,16 @@ class AmazonListingItemSyncJob implements ShouldQueue
     {
         Log::info('AmazonListingItemSyncJob started');
         $this->updateTrackingRecord(['tags' => 'Amazon ListingItem']);
+
+        /* get active store jobs*/
+        $store_ids = Common::getActiveStoreJobs('AmazonListingItemSyncJob','amazon');
+        /* get active store jobs*/
+
         $amazon_store_ids = Store::where('store_type_id', function ($subquery) {
             return $subquery->select('id')
                 ->from('store_type')
                 ->where('code', 'amazon');
-        })->where('store_status','<>',0)->pluck('id');
+        })->where('store_status','<>',0)->whereIn('id',$store_ids)->pluck('id');
         Log::info('Amazon store ids: ' . json_encode($amazon_store_ids));
 
         //join listing_item_link and listing_item and listing

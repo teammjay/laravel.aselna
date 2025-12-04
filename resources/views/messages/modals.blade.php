@@ -155,7 +155,7 @@
                                         </div>
                                         <div class="col-8">
                                             <select class="form-control" name="store_id" id="store_id">
-                                                <option value="">All Stores</option>
+                                                <option value="">- All Store -</option>
                                                 @if(count($stores ?? []) > 0)
                                                     @foreach($stores as $store)
                                                         <option

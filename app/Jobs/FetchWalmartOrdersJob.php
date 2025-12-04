@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Constants\OrderStatus;
+use App\Helpers\Common;
 use App\Models\Customer;
 use App\Models\ListingItem;
 use App\Models\Order;
@@ -39,7 +40,12 @@ class FetchWalmartOrdersJob implements ShouldQueue
     {
         Log::info("Testing");
         $this->updateTrackingRecord(['tags' => 'Walmart Orders']);
-        $stores = Store::select('store.*','store_type.name as storeTypeName')->join('store_type', 'store_type.id', '=', 'store.store_type_id')->where('store_type.code', 'walmart')->where('store.store_status','<>',0)->get();
+
+        /* get active store jobs*/
+        $store_ids = Common::getActiveStoreJobs('FetchWalmartOrdersJob','walmart');
+        /* get active store jobs*/
+
+        $stores = Store::select('store.*','store_type.name as storeTypeName')->join('store_type', 'store_type.id', '=', 'store.store_type_id')->where('store_type.code', 'walmart')->where('store.store_status','<>',0)->whereIn('id',$store_ids)->get();
 
         if (count($stores ?? []) > 0) {
             $tags = [];

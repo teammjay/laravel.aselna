@@ -5,6 +5,12 @@
 @stop
 
 @section('content')
+    @if(session('success'))
+        <div class="alert alert-success">{{ session('success') }}</div>
+    @endif
+    @if(session('error'))
+        <div class="alert alert-danger">{{ session('error') }}</div>
+    @endif
     <form
             action="{{ isset($scheduled_job) ? route('scheduled_jobs.update',['id' => $scheduled_job->id]) : route('scheduled_jobs.store') }}"
             method="POST">
@@ -50,6 +56,27 @@
                             </div>
                         </div>
 
+                        <div class="form-group">
+                            <label for="parameters" class="col-form-label">Parameters  (JSON):</label>
+                            <textarea name="parameters" class="form-control">{{ $scheduled_job->parameters }}</textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="parameters" class="col-form-label">Store Type:</label>
+                            <select name="store_type_id" id="store_type_id" class="form-control">
+                                <option value="">- Store Type -</option>
+                                @if($storeTypes)
+                                    @foreach($storeTypes as $stype)
+                                        <option value="{{ $stype->id }}">{{ $stype->name }}</option>
+                                    @endforeach
+                                @endif
+                            </select>
+                        </div>
+
+                        <div class="form-group" id="store_list">
+
+                        </div>
+
 
                         <div class="row">
                             <div class="col-md-6">
@@ -76,3 +103,37 @@
         </div>
     </form>
 @endsection
+
+@section('adminlte_js')
+    <script>
+        var job_id = '{{ $scheduled_job->id }}';
+        $(document).ready(function () {
+            $(document).on('change','#store_type_id',function () {
+
+                var store_type_id = $(this).val();
+                $.ajax({
+                    url: "{{ route('scheduled_jobs.getstore') }}",   // Laravel route for deletion
+                    type: 'POST',
+                    data: {
+                        store_type_id: store_type_id,
+                        job_id: job_id,
+                        "_token": '{{ csrf_token() }}'
+                    },
+                    success: function (response) {
+                        // If success, remove the user row from the table
+                        if (response.success) {
+                            if(response.options){
+                                $('#store_list').html(response.options);
+                            }
+                        }
+                    },
+                    error: function (xhr) {
+                        // Handle error response
+                        alert('Error: ' + xhr.responseJSON.error);
+                    }
+                });
+            });
+
+        });
+    </script>
+@stop

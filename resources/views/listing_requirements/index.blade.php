@@ -7,6 +7,7 @@
 @section('content')
     <div class="pt-2">
         <a href="{{ route('listing_requirements.create') }}" class="btn btn-primary mb-3">Add New Requirement</a>
+        <span id="clear_session_filter" class="btn btn-secondary float-right mr-2">Clear Filter</span>
 
         @if (session('success'))
             <div class="alert alert-success">{{ session('success') }}</div>
@@ -160,6 +161,12 @@
 
             document.getElementById("resetForm").addEventListener("click", function () {
                 sessionStorage.removeItem("all_listing_requirement_filters");
+            });
+
+            $(document).on('click','#clear_session_filter',function () {
+                sessionStorage.removeItem("all_listing_requirement_filters");
+                $('#filter-form')[0].reset();
+                loadDatatables();
             });
 
         });

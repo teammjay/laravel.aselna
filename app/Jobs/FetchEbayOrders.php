@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Helpers\Common;
 use App\Jobs\Concerns\TrackableJob;
 use App\Models\Store;
 use App\Services\Marketplace\Service\EbayService;
@@ -31,8 +32,14 @@ class FetchEbayOrders implements ShouldQueue
      */
     public function handle(): void
     {
-        /* get amazon stores*/
-        $stores = Store::select('store.*','store_type.name as storeTypeName')->join('store_type', 'store_type.id', '=', 'store.store_type_id')->where('store_type.code','ebay')->where('store.store_status','<>',0)->get();
+        $this->updateTrackingRecord(['tags' => 'eBay Orders']);
+
+        /* get active store jobs*/
+        $store_ids = Common::getActiveStoreJobs('FetchEbayOrders','ebay');
+        /* get active store jobs*/
+
+        /* get ebay stores*/
+        $stores = Store::select('store.*','store_type.name as storeTypeName')->join('store_type', 'store_type.id', '=', 'store.store_type_id')->where('store_type.code','ebay')->where('store.store_status','<>',0)->whereIn('id',$store_ids)->get();
 
         if(count($stores ?? []) > 0) {
 
