@@ -155,6 +155,7 @@
                 <th>Error Count</th>
                 <th>Error Level</th>
                 <th>Operaton</th>
+                <th>Message</th>
                 <th>Status</th>
                 <th>Stack Trace</th>
             </tr>
@@ -369,12 +370,13 @@
                     { data: 'error_count' },
                     { data: 'error_level' },
                     { data: 'operation' },
+                    { data: 'message' },
                     { data: 'status' },
                     { data: 'stack_trace' },
                 ],
                 columnDefs: [
                     {
-                        targets: [0,4,6,7], // Index of the column you want to disable sorting for
+                        targets: [0,4,6,7,8], // Index of the column you want to disable sorting for
                         orderable: false // Disable sorting
                     }
                 ]

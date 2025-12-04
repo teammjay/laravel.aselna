@@ -85,6 +85,7 @@ class ErrorlogDashboardController extends Controller
                     "error_count" => $error->error_count,
                     "error_level" => 'Error',
                     "operation" => $name,
+                    "message" => $error->message,
                     "status" => 'Created',
                     "stack_trace" => ($error->stack_trace) ? '<i class="fa fa-exclamation-triangle show-error" style="font-size:24px" data-content="'.addslashes(str_replace('"', '',$error->stack_trace)).'"></i>' : "",
                 );
