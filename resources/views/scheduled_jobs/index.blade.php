@@ -41,7 +41,7 @@
                     <a href="{{ route('scheduled_jobs.edit', $job) }}" class="btn btn-warning btn-sm">
                         Edit
                     </a>
-                    <a href="{{ route('scheduled_jobs.delete', $ptype->id) }}" class="btn btn-danger" title="Remove">
+                    <a href="{{ route('scheduled_jobs.delete', $job->id) }}" class="btn btn-danger" title="Remove">
                         <i class="fas fa-fw fa-trash"></i>
                     </a>
                     <form method="POST" action="{{ route('scheduled_jobs.run', $job->id) }}">
