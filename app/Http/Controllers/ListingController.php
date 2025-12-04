@@ -3054,6 +3054,8 @@ class ListingController extends Controller
             return 0;
         });
 
+
+
         $compressGroup = function (array $groupModels, $sep) {
             $groupModels = array_values(array_filter(array_map('trim', $groupModels)));
             if (count($groupModels) === 0) return '';
@@ -3091,6 +3093,58 @@ class ListingController extends Controller
             $hasBase = in_array('', $tails, true);
 
             $nonEmptyTails = array_values(array_filter($tails, fn($t) => $t !== ''));
+
+            /*if (!empty($nonEmptyTails)) {
+
+                $matches = [];
+                $ok = true;
+
+                foreach ($nonEmptyTails as $tail) {
+                    // pattern: A12 5G, A13 5G, A14 5G
+                    if (!preg_match('/^([A-Za-z]+)(\d+)\s+(\S+)$/', $tail, $m)) {
+                        $ok = false;
+                        break;
+                    }
+                    // $m[1] = A
+                    // $m[2] = 12, 13, 14
+                    // $m[3] = 5G (or any single-word suffix)
+                    $matches[] = [$m[1], $m[2], $m[3]];
+                }
+
+                if ($ok && count($matches) === count($nonEmptyTails)) {
+
+                    $alpha  = $matches[0][0]; // "A"
+                    $suffix = $matches[0][2]; // "5G"
+                    $nums   = [];
+
+                    foreach ($matches as [$a, $num, $suf]) {
+                        // all must share same letter prefix (A) and same suffix (5G)
+                        if (strcasecmp($a, $alpha) !== 0 || strcasecmp($suf, $suffix) !== 0) {
+                            $ok = false;
+                            break;
+                        }
+                        $nums[] = $num;
+                    }
+
+                    if ($ok) {
+                        // sort & dedupe numbers
+                        $nums = array_values(array_unique($nums));
+                        natsort($nums);
+                        $nums = array_values($nums);
+
+                        // keep "A" with each number: A12/A13/A14
+                        $seriesPart = implode($sep, array_map(fn($n) => $alpha . $n, $nums));
+
+                        // prepend prefix (e.g. "Galaxy")
+                        $result = trim(
+                            ($prefixStr !== '' ? $prefixStr . ' ' : '') .
+                            $seriesPart . ' ' . $suffix
+                        );
+
+                        return $result;
+                    }
+                }
+            }*/
 
             $groupable   = [];
             $baseOrder   = [];
@@ -3191,6 +3245,8 @@ class ListingController extends Controller
         foreach ($groupOrder as $gKey) {
             $group = $groups[$gKey];
             $groupStr = $compressGroup($group['items'], $sep);
+            //print_r($group);
+            //echo $groupStr.'<br>';
             if ($groupStr !== '') {
                 $allParts[] = $groupStr;
             }
@@ -3358,12 +3414,18 @@ class ListingController extends Controller
             //$groupModels = $this->groupFormatedDeviceModels($cleanModels);
             $groupModels = $this->compressModels($cleanModels);
 
-
+            /*echo '<pre>';
+            print_r($groupModels);
+            echo '</pre>';*/
             //echo $groupModels;die;
 
             if($groupModels){
 
-                $finalModel = implode($deviceSeparator,$groupModels);
+                if(is_array($groupModels)) {
+                    $finalModel = implode($deviceSeparator, $groupModels);
+                }else{
+                    $finalModel = $groupModels;
+                }
 
                 if (strtolower($brand) == 'apple') {
                     $compressedDevices[] = "$prefix $finalModel";
