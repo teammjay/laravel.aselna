@@ -2895,7 +2895,7 @@
                                 $('#series_search_text').val(response.option);
 
                                 $('#series_search_text').autocomplete({
-
+                                    disabled: false,
                                     source: function (request, response) {
                                         actemp = data.details;
                                         response(data.display);
@@ -2917,7 +2917,7 @@
                                 $('#series_replace_value').val(response.voption);
 
                                 $('#series_replace_value').autocomplete({
-
+                                    disabled: false,
                                     source: function (request, response) {
                                         actemp = vdata.details;
                                         response(vdata.display);
