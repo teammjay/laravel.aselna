@@ -2892,7 +2892,7 @@
                         if (response.success) {
                             if(response.option) {
                                 let data = response.data;
-                                $('#series_replace_value').val(response.option);
+                                $('#series_search_text').val(response.option);
 
                                 $('#series_search_text').autocomplete({
 
@@ -2943,6 +2943,15 @@
                     complete: function () {
                         $("#ajax-preloader").hide();
                     }
+                });
+            }else{
+                $('#series_search_text').val('');
+                $("#series_search_text").autocomplete({
+                    disabled: true
+                });
+                $('#series_replace_value').val('');
+                $("#series_replace_value").autocomplete({
+                    disabled: true
                 });
             }
 
