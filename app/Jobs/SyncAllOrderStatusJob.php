@@ -54,6 +54,7 @@ class SyncAllOrderStatusJob implements ShouldQueue
                 OrderOperationStatus::MarkAsShipped,
                 OrderOperationStatus::Delivered,
                 OrderOperationStatus::Canceled,
+                OrderOperationStatus::CanceledRequested
             ])
             ->when($this->orderId, function ($query) {
                 $query->where('order_id', $this->orderId);
