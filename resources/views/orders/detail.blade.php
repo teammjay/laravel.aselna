@@ -204,8 +204,13 @@
                                     @if(isset($orderDetail->customerAddress))
                                         <a href="javascript:void(0);" class="text-blue" id="edit_address"
                                            data-id="{{ $orderDetail->customerAddress->id }}">
-                                            {{ $orderDetail->customer->first_name }} {{ $orderDetail->customer->last_name }}
-                                            <br>
+
+                                            @if(isset($orderDetail->customerAddress->full_name) && $orderDetail->customerAddress->full_name != null)
+                                                {{ $orderDetail->customerAddress->full_name }}<br>
+                                            @else
+                                                {{ $orderDetail->customer->first_name }} {{ $orderDetail->customer->last_name }}<br>
+                                            @endif
+
                                             {{ $orderDetail->customerAddress->address_line_1 }},<br>
                                             @if($orderDetail->customerAddress->address_line_2 != '')
                                                 {{ $orderDetail->customerAddress->address_line_2 }},<br>

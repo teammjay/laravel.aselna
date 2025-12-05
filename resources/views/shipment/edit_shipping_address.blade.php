@@ -3,6 +3,14 @@
         <div class="col-md-12">
             <div class="row mt-3 g-3 align-items-center">
                 <div class="col-md-4">
+                    <label for="first_name">Fullname</label>
+                </div>
+                <div class="col-md-8">
+                    <input type="text" class="form-control" name="full_name" id="full_name" value="{{ isset($addressDetail->full_name) ? $addressDetail->full_name : '' }}">
+                </div>
+            </div>
+            <div class="row mt-3 g-3 align-items-center">
+                <div class="col-md-4">
                     <label for="first_name">First Name</label>
                 </div>
                 <div class="col-md-8">
