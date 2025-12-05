@@ -750,6 +750,10 @@ class ShipmentsController extends Controller
                 $fullname = $address->customer->full_name . ', <br>';
             }
 
+            if (isset($request['full_name']) && $request['full_name'] != '') {
+                $fullname = $request['full_name'] . ',<br>';
+            }
+
             if (isset($request['address_line_1']) && $request['address_line_1'] != '') {
                 $address1 = $request['address_line_1'] . ',<br>';
             }
