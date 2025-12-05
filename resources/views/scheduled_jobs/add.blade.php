@@ -4,6 +4,15 @@
     <h1>{{ isset($device) ? 'Edit Cron Job' : 'Add Cron Job' }}</h1>
 @stop
 
+@section('adminlte_css')
+<style>
+    .storetypelist li {
+        display: inline-block;
+        width: 48%;
+        margin-bottom: 5px;
+    }
+</style>
+@stop
 @section('content')
     @if(session('success'))
         <div class="alert alert-success">{{ session('success') }}</div>
@@ -63,19 +72,24 @@
 
                         <div class="form-group">
                             <label for="parameters" class="col-form-label">Store Type:</label>
-                            <select name="store_type_id" id="store_type_id" class="form-control">
+                            <ul class="storetypelist">
+                                @if($storeTypes)
+                                    @foreach($storeTypes as $stype)
+                                        <li><input type="checkbox" name="store_type_id[]" value="{{ $stype->id }}"/> {{  $stype->name }}</li>
+                                    @endforeach
+                                @endif
+                            </ul>
+                            {{--<select name="store_type_id" id="store_type_id" class="form-control">
                                 <option value="">- Store Type -</option>
                                 @if($storeTypes)
                                     @foreach($storeTypes as $stype)
                                         <option value="{{ $stype->id }}">{{ $stype->name }}</option>
                                     @endforeach
                                 @endif
-                            </select>
+                            </select>--}}
                         </div>
 
-                        <div class="form-group" id="store_list">
 
-                        </div>
 
 
                         <div class="row">
@@ -88,6 +102,16 @@
                             </div>
                         </div>
 
+                    </div>
+                    <div class="col-md-6">
+                        <table class="table table-bordered" id="store_list">
+                            <thead>
+                            <th>Store</th>
+                            <th>Active</th>
+                            </thead>
+                            <tbody>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
 
@@ -108,9 +132,14 @@
     <script>
         var job_id = '{{ $scheduled_job->id }}';
         $(document).ready(function () {
-            $(document).on('change','#store_type_id',function () {
+            $(document).on('click','input[name="store_type_id[]"]',function () {
 
-                var store_type_id = $(this).val();
+                var store_type_id = [];
+                $('input[name="store_type_id[]"]').each(function () {
+                    if($(this).is(':checked')){
+                        store_type_id.push($(this).val());
+                    }
+                });
                 $.ajax({
                     url: "{{ route('scheduled_jobs.getstore') }}",   // Laravel route for deletion
                     type: 'POST',
@@ -123,7 +152,7 @@
                         // If success, remove the user row from the table
                         if (response.success) {
                             if(response.options){
-                                $('#store_list').html(response.options);
+                                $('#store_list tbody').html(response.options);
                             }
                         }
                     },

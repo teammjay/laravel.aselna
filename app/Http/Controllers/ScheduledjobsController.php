@@ -125,16 +125,16 @@ class ScheduledjobsController extends Controller
 
     public function getStore(Request $request){
 
-        $store_type_id = $request->input('store_type_id');
+        $store_type_ids = $request->input('store_type_id');
         $job_id = $request->input('job_id');
         $storeOption = '';
         $storeIds = [];
-        if($store_type_id){
+        if($store_type_ids){
             if($job_id){
                 $storeIds = StoreScheduledCronJobs::where('scheduled_job_id',$job_id)->get()->pluck('store_id')->toArray();
                 //print_r($storeIds);die;
             }
-            $stores = Store::where('store_type_id',$store_type_id)->where('store_status','<>', 0)->get();
+            $stores = Store::with('storeType')->whereIn('store_type_id',$store_type_ids)->where('store_status','<>', 0)->orderBy('name')->get();
 
             if($stores){
                 foreach($stores as $store){
@@ -143,7 +143,14 @@ class ScheduledjobsController extends Controller
                     }else{
                         $sel = '';
                     }
-                    $storeOption .= '<input type="checkbox" name="store_id[]" value="'.$store->id.'" '.$sel.'/> '.$store->name.'<br>';
+                    //$storeOption .= '<input type="checkbox" name="store_id[]" value="'.$store->id.'" '.$sel.'/> '.$store->name.'<br>';
+
+                    $storeOption .= '<tr class="store_row" id="store_'.$store->id.'" data-id="'.$store->id.'">
+                                        <td>'.$store->name.' - '.$store->storeType->name.'</td>
+                                        <td align="center">
+                                            <input type="checkbox" name="store_id[]" value="'.$store->id.'" '.$sel.'/>
+                                        </td>
+                                    </tr>';
                 }
             }
         }
