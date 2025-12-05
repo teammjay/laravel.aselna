@@ -101,6 +101,23 @@ class ProcessFeedGenerationJob implements ShouldQueue
             $feedDetail = Feed::findOrFail($this->feed_id);
             Log::info('Feed detail: ' . json_encode($feedDetail));
 
+            $productTypes = ProductType::select('id')->where('code', 'ceabundle')->get()->toArray();
+            $ceaProductTypes = [];
+            $ceaParentTypes = ProductType::select('id')->where('code', 'cea')->get()->pluck('id')->toArray();
+
+            // Get immediate children
+            $ceaChildrenTypes = ProductType::select('id')->whereIn('parent_id', $ceaParentTypes)->get()->pluck('id')->toArray();
+            $ceaProductTypes = array_merge($ceaProductTypes, $ceaParentTypes, $ceaChildrenTypes);
+
+            // Get descendants recursively
+            $nextLevelParents = $ceaChildrenTypes;
+            foreach ($nextLevelParents as $parentId) {
+                $children = ProductType::select('id')->where('parent_id', $parentId)->get()->pluck('id')->toArray();
+                if (!empty($children)) {
+                    $ceaProductTypes = array_merge($ceaProductTypes, $children);
+                }
+            }
+
             $query = StoreProduct::with('product', 'product.size', 'StoreTypeCategory', 'product.condition', 'product.Manufacturer', 'product.images', 'product.productType', 'product.interfaces', 'product.interfaces.interfaces', 'product.color');
             //$query = Catalog::with('StoreProduct', 'images', 'productType', 'interfaces.interfaces', 'pinterface.interfaces','condition','Manufacturer')->where('products.product_status', 1);
 
@@ -111,7 +128,11 @@ class ProcessFeedGenerationJob implements ShouldQueue
             }
 
             $query->leftJoin('products', 'store_product.product_id', '=', 'products.product_id');
-            $query->where('products.oem_generic', 2);
+//            $query->where('products.oem_generic', 2);
+            $query->whereNotIn('products.product_type', $productTypes);
+            $query->whereIn('products.product_type', $ceaProductTypes);
+            $query->whereNull('products.parent_id');
+            $query->where('product_status', '=', 'active');
 
             if (isset($this->data['product_code']) && $this->data['product_code'] != '') {
 

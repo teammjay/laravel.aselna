@@ -95,6 +95,7 @@ class OrderUtility
 
         $customer_address_data = [
             'customer_id' => $customer_detail->id,
+            'full_name' => $sorder['shippingInfo']['postalAddress']['name'],
             'address_line_1' => $sorder['shippingInfo']['postalAddress']['address1'],
             'address_line_2' => $sorder['shippingInfo']['postalAddress']['address2'] ?? '',
             'city' => $sorder['shippingInfo']['postalAddress']['city'],
@@ -138,10 +139,6 @@ class OrderUtility
         $order->update($orderData);
 
         $operationstatus = OrderOperationStatus::Created;
-
-        if (isset($item['intentToCancel']) && $item['intentToCancel'] == "TRUE") {
-            $operationstatus = OrderOperationStatus::CanceledRequested;
-        }
 
         $orderOperationData = [
             'order_id' => $order->id,
@@ -312,6 +309,11 @@ class OrderUtility
                     } else if ($lineStatus['status'] === 'Cancelled') {
                         $order->order_status = OrderStatus::Canceled;
                         $order_operation_detail->status = OrderOperationStatus::Canceled;
+                        $order->save();
+                        $order_operation_detail->save();
+                    } else if (isset($item['intentToCancel']) && $item['intentToCancel'] == "TRUE") {
+                        $order->order_status = OrderStatus::CanceledRequested;
+                        $order_operation_detail->status = OrderOperationStatus::CanceledRequested;
                         $order->save();
                         $order_operation_detail->save();
                     }
