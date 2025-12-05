@@ -95,6 +95,7 @@ class OrderUtility
 
         $customer_address_data = [
             'customer_id' => $customer_detail->id,
+            'full_name' => $sorder['shippingInfo']['postalAddress']['name'],
             'address_line_1' => $sorder['shippingInfo']['postalAddress']['address1'],
             'address_line_2' => $sorder['shippingInfo']['postalAddress']['address2'] ?? '',
             'city' => $sorder['shippingInfo']['postalAddress']['city'],

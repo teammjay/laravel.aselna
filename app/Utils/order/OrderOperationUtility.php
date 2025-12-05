@@ -1182,7 +1182,7 @@ class OrderOperationUtility
             return [];
         }
         return [
-            'name' => $shipAddress->name,
+            'name' => $shipAddress->full_name,
             'address1' => $shipAddress->address_line_1,
             'address2' => $shipAddress->address_line_2 ?? '',
             'address3' => $shipAddress->address_line_3 ?? '',
