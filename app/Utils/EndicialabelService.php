@@ -275,7 +275,9 @@ class EndicialabelService
         $labelRequest->addAttribute('LabelSize', $shipmentDetails['label_size']);
         $labelRequest->addAttribute('ImageResolution', $shipmentDetails['image_resolution'] ?? '203');
         $labelRequest->addAttribute('ImageRotation', $shipmentDetails['ImageRotation'] ?? 'Rotate180');
-//        $labelRequest->addAttribute('LabelType', $shipmentDetails['']);
+        if (isset($shipmentDetails['label_type'])) {
+            $labelRequest->addAttribute('LabelType', $shipmentDetails['label_type']);
+        }
 
         $labelRequest->addChild('RequesterID', $shipmentDetails['requesterId']);
         $labelRequest->addChild('AccountID', $shipmentDetails['accountId']);
