@@ -459,12 +459,15 @@ class ProcessFeedGenerationJob implements ShouldQueue
                 ->orderBy('sort_order', 'asc')
                 ->chunk(100, function ($keyFeatures) use (&$product_description) {
                     foreach ($keyFeatures as $feature) {
-                        $product_description .= trim((string)$feature->value) . '. ';
+                        if (isset($feature->value)) {
+                            $product_description .= trim((string)$feature->value) . '. ';
+                        }
                     }
                 });
 
             if (isset($itemDetail->product->product_description)) {
-                $product_description .= ' ' . $itemDetail->product->product_description;
+                $cleanDescription = str_replace(["\r", "\n"], ' ', $itemDetail->product->product_description);
+                $product_description .= ' ' . trim($cleanDescription);
             }
             $product_description = trim($product_description);
 
