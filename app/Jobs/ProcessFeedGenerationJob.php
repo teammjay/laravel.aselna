@@ -314,6 +314,7 @@ class ProcessFeedGenerationJob implements ShouldQueue
         }
 
         $query->where('device.status', 'active');
+        $query->where('device.order','<', 10);
 
         if ($deviceSeries) {
             $devices = DevicesLinkedDevice::select('device_id')->whereIn('device_series_id', $deviceSeries)->get();
