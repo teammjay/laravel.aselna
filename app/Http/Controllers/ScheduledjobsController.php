@@ -51,7 +51,12 @@ class ScheduledjobsController extends Controller
     {
         $scheduled_job = ScheduledJobs::findOrFail($id);
         $storeTypes = StoreType::orderBy('name')->get();
-        return view('scheduled_jobs.add', compact('scheduled_job','storeTypes'));
+        $storeTypeIds = StoreScheduledCronJobs::where('scheduled_job_id',$id)
+                        ->groupBy('store_type_id')
+                        ->distinct()
+                        ->pluck('store_type_id')
+                        ->toArray();
+        return view('scheduled_jobs.add', compact('scheduled_job','storeTypes','storeTypeIds'));
     }
 
     /**
@@ -66,29 +71,32 @@ class ScheduledjobsController extends Controller
         ScheduledJobs::findOrFail($id)->update($request->all());
 
         if($request->has('store_type_id')){
-            $stores = $request->store_id;
 
             StoreScheduledCronJobs::where([
-                'scheduled_job_id' => $id,
-                'store_type_id' => $request->store_type_id
+                'scheduled_job_id' => $id
             ])->delete();
 
-            if($stores){
-                foreach($stores as $store_id){
+            foreach($request->store_type_id as $store_type_id){
+                $stores = $request->store_id;
 
-                    StoreScheduledCronJobs::updateOrCreate([
-                        'scheduled_job_id' => $id,
-                        'store_id' => $store_id,
-                        'store_type_id' => $request->store_type_id
-                    ],
-                        [
+                if($stores){
+                    foreach($stores as $store_id){
+                        $storeDetail = Store::with('storeType')->where('id', $store_id)->first();
+                        StoreScheduledCronJobs::updateOrCreate([
                             'scheduled_job_id' => $id,
                             'store_id' => $store_id,
-                            'store_type_id' => $request->store_type_id
-                        ]
-                    );
+                            'store_type_id' => $storeDetail->storeType->id
+                        ],
+                            [
+                                'scheduled_job_id' => $id,
+                                'store_id' => $store_id,
+                                'store_type_id' => $storeDetail->storeType->id
+                            ]
+                        );
+                    }
                 }
             }
+
 
         }
 
@@ -134,7 +142,15 @@ class ScheduledjobsController extends Controller
                 $storeIds = StoreScheduledCronJobs::where('scheduled_job_id',$job_id)->get()->pluck('store_id')->toArray();
                 //print_r($storeIds);die;
             }
-            $stores = Store::with('storeType')->whereIn('store_type_id',$store_type_ids)->where('store_status','<>', 0)->orderBy('name')->get();
+
+            $stores = Store::with('storeType')
+                ->leftJoin('store_type', 'store.store_type_id', '=', 'store_type.id')
+                ->whereIn('store.store_type_id', $store_type_ids)
+                ->where('store.store_status', '<>', 0)
+                ->orderBy('store_type.name')
+                ->orderBy('store.name')
+                ->select('store.*')
+                ->get();
 
             if($stores){
                 foreach($stores as $store){

@@ -75,7 +75,19 @@
                             <ul class="storetypelist">
                                 @if($storeTypes)
                                     @foreach($storeTypes as $stype)
-                                        <li><input type="checkbox" name="store_type_id[]" value="{{ $stype->id }}"/> {{  $stype->name }}</li>
+                                        @php
+                                            if(isset($scheduled_job->store_type) && $stype->code != $scheduled_job->store_type) {
+                                                continue;
+                                            }
+
+                                            if(isset($storeTypeIds) && in_array($stype->id,$storeTypeIds)){
+                                                $checked = 'checked';
+                                            }else{
+                                                $checked = '';
+                                            }
+
+                                        @endphp
+                                        <li><input type="checkbox" name="store_type_id[]" value="{{ $stype->id }}" {{ $checked }}/> {{  $stype->name }}</li>
                                     @endforeach
                                 @endif
                             </ul>
@@ -104,14 +116,16 @@
 
                     </div>
                     <div class="col-md-6">
-                        <table class="table table-bordered" id="store_list">
-                            <thead>
-                            <th>Store</th>
-                            <th>Active</th>
-                            </thead>
-                            <tbody>
-                            </tbody>
-                        </table>
+                        <div style="max-height: 100vh; overflow-y: scroll">
+                            <table class="table table-bordered" id="store_list">
+                                <thead>
+                                <th>Store</th>
+                                <th>Active</th>
+                                </thead>
+                                <tbody>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
 
@@ -132,6 +146,17 @@
     <script>
         var job_id = '{{ $scheduled_job->id }}';
         $(document).ready(function () {
+
+            var store_type_id = [];
+            $('input[name="store_type_id[]"]').each(function () {
+                if($(this).is(':checked')){
+                    store_type_id.push($(this).val());
+                }
+            });
+            if(store_type_id.length) {
+                loadStores(store_type_id, job_id);
+            }
+
             $(document).on('click','input[name="store_type_id[]"]',function () {
 
                 var store_type_id = [];
@@ -140,6 +165,13 @@
                         store_type_id.push($(this).val());
                     }
                 });
+
+                loadStores(store_type_id, job_id);
+
+            });
+
+            function loadStores(store_type_id, job_id){
+
                 $.ajax({
                     url: "{{ route('scheduled_jobs.getstore') }}",   // Laravel route for deletion
                     type: 'POST',
@@ -161,7 +193,7 @@
                         alert('Error: ' + xhr.responseJSON.error);
                     }
                 });
-            });
+            }
 
         });
     </script>

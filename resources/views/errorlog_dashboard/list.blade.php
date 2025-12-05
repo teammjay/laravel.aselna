@@ -36,7 +36,7 @@
                             </div>
                             <div class="col-6">
                                 <select class="form-control" id="store_type" name="store_id">
-                                    <option value=""></option>
+                                    <option value="">- All Store -</option>
                                     @if(count($stores ?? []) > 0)
                                         @foreach($stores as $store)
                                             <option value="{{ $store->id }}">{{ ucfirst($store->name) }} - {{ isset($store->storeType) ? ucfirst($store->storeType->code) : '' }}</option>
@@ -70,8 +70,15 @@
                     </div>
                     <div class="col-md-4">
                         <div class="row">
-                            <div class="col-6 text-right">
+                            <div class="col-4 text-right">
                                 Created Date
+                            </div>
+                            <div class="col-2">
+                                <select class="custom-select" id="" name="created_at_operator">
+                                    <option value=">=">>=</option>
+                                    <option value=">">></option>
+                                    <option value="=">=</option>
+                                </select>
                             </div>
                             <div class="col-6">
                                 <input type="text" name="created_at" id="created_at" class="form-control" autocomplete="off">
@@ -107,8 +114,15 @@
                     </div>
                     <div class="col-md-4">
                         <div class="row">
-                            <div class="col-6 text-right">
+                            <div class="col-4 text-right">
                                 Updated Date
+                            </div>
+                            <div class="col-2">
+                                <select class="custom-select" id="" name="updated_at_operator">
+                                    <option value=">=">>=</option>
+                                    <option value=">">></option>
+                                    <option value="=">=</option>
+                                </select>
                             </div>
                             <div class="col-6">
                                 <input type="text" name="updated_at" id="updated_at" class="form-control" autocomplete="off">
@@ -229,9 +243,12 @@
                 "order": [[ 8, "desc" ]],
             });*/
 
-            $('#created_at,#updated_at').datepicker();
+            $('#created_at,#updated_at').datepicker({
+                dateFormat: 'yy-mm-dd'
+            });
             $('#from_date,#to_date').datepicker({
-                maxDate: '0'
+                maxDate: '0',
+                dateFormat: 'yy-mm-dd'
             });
 
             $('.card-header').on('click',function () {
@@ -306,6 +323,7 @@
                         if (response.success) {
                             alert(response.message);
                             $('#purgeOptionModal').modal('hide');
+                            location.reload();
                         }
                     },
                     error: function (xhr) {

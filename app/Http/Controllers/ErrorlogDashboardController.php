@@ -41,15 +41,21 @@ class ErrorlogDashboardController extends Controller
         // Filter by tags
         QueryFilters::applyFilter($query, $request, 'store_type', 'store_type_operator', 'store_type');
 
+        // Filter by created at
+        QueryFilters::applyFilter($query, $request, 'created_at', 'created_at_operator', 'created_at');
+
+        // Filter by updated at
+        QueryFilters::applyFilter($query, $request, 'updated_at', 'updated_at_operator', 'updated_at');
+
         // Filter by created date
-        if ($request->has('created_at') && $request->created_at != '') {
+        /*if ($request->has('created_at') && $request->created_at != '') {
             $query->whereDate('created_at', date('Y-m-d',strtotime($request->created_at)));
-        }
+        }*/
 
         // Filter by updated date
-        if ($request->has('updated_at') && $request->updated_at != '') {
+        /*if ($request->has('updated_at') && $request->updated_at != '') {
             $query->whereDate('updated_at', date('Y-m-d',strtotime($request->updated_at)));
-        }
+        }*/
 
         // Filter by store
         if ($request->has('store_id') && $request->store_id != '') {
@@ -63,7 +69,7 @@ class ErrorlogDashboardController extends Controller
         $totalRecordwithFilter = $totalRecords;
 
         /*echo '<pre>';
-        print_r($errorlogs);
+        print_r($query->toSql());
         echo '</pre>';die;*/
 
         $data = [];
