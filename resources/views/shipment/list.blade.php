@@ -470,7 +470,7 @@
             let totalCnt = $('input[name="shipment_id[]"]:checked').length;
             $('#total_selected').html('( <b>'+totalCnt+'</b> selected )');
 
-            if(ele.data('status') > 1){
+            if(ele.data('status') >= 1){
                 //$('#cancel_selected').addClass('hide');
                 $('#approved').removeClass('hide');
             }else{
@@ -504,7 +504,7 @@
             let totalCnt = $('input[name="shipment_id[]"]:checked').length;
             $('#total_selected').html('( <b>'+totalCnt+'</b> selected )');
 
-            if(ele.data('status') > 1){
+            if(ele.data('status') >= 1){
                 //$('#cancel_selected').addClass('hide');
                 $('#approved').removeClass('hide');
             }else{
@@ -1241,6 +1241,7 @@
                     $('#progress-status').text(`Completed processing all ${total_count} shipments`);
                     $('#progress-bar').css('width', `${progress}%`).attr('aria-valuenow', progress).text(`${progress}%`);
                     $('#progressModal .modal-footer #btn-complete').show();
+                    loadDatatables();
                     return;
                 }
 
