@@ -193,13 +193,17 @@ class WalmartService implements MarketplaceServiceInterface
                     $listingItem->update([
                         'sync_status' => ListingSyncStatus::Synchronized
                     ]);
-//                    $successCnt++;
+                    $successCnt++;
                 } else {
                     $listingItem->update([
                         'sync_status' => ListingSyncStatus::Unsynchronize
                     ]);
-//                    $failCnt++;
+                    $failCnt++;
                 }
+            }
+
+            if($failCnt > 0){
+                $this->resubmitFailedItems($listingId);
             }
 //            $feedInfo->update([
 //                'success_count' => $successCnt,
@@ -211,7 +215,7 @@ class WalmartService implements MarketplaceServiceInterface
         return 'result-feeds/walmart/' . $feedInfo->id . '.json';
     }
 
-    private function generateCreateFeed($listingInfo, $listingId)
+    private function generateCreateFeed($listingInfo, $listingId, $skuFilter = [])
     {
         $listingItems = ListingItemLink::where('listing_id', $listingId)->cursor();
         $fileSystem = $listingInfo->store->fileSystem;
@@ -233,6 +237,15 @@ class WalmartService implements MarketplaceServiceInterface
 
         foreach ($listingItems as $listingItem) {
             $item = $listingItem->item;
+
+            if (!$item) {
+                continue;
+            }
+
+            if (!empty($skuFilter) && !in_array($item->sku, $skuFilter, true)) {
+                continue;
+            }
+
             $storeTypeCategory = $item->storeProduct->storeTypeCategory;
             $productObj = $item->storeProduct->product;
             $productColor = $productObj->productColor;
@@ -763,5 +776,56 @@ class WalmartService implements MarketplaceServiceInterface
         $productData['Compatible Model'] = $compatibleModels;
 
         return $productData;
+    }
+
+    public function resubmitFailedItems($listingId, $maxRetry = 3)
+    {
+        // 1. Get failed SKUs from the feed, within retry limit
+        $failedItems = ListingItemLink::select('listing_item.id,listing_item.sku')->leftJoin('listing_item', 'listing_item.id', '=', 'listing_item_link.item_id')->where('listing_item_link.listing_id', $listingId)->where('listing_item.sync_status', ListingSyncStatus::Unsynchronize)->where('listing_item.submit_count', '<=', $maxRetry)->get();
+
+        if ($failedItems->isEmpty()) {
+            return null;
+        }
+
+        $skuFilter = $failedItems->pluck('sku')->unique()->values()->all();
+
+        return DB::transaction(function () use ($listingId, $skuFilter, $failedItems) {
+
+            $listingInfo = Listing::with('store')->where('id', $listingId)->first();
+            $store = $listingInfo->store;
+
+            $feedInfo = ListingFeed::where('listing_id', $listingId)->first();
+
+            // 2. Create a new ListingFeed row for this resubmit
+            $created_by = auth()->user()->name ?? 'admin';
+
+            $feedData = array(
+                'listing_id' => $listingId,
+                'status' => 0,
+                'feed_type' => FeedTypes::RESUBMIT,
+                'store_id' => $listingInfo->store_id,
+                'number_of_items' => $feedInfo->number_of_items,
+                'created_by' => $created_by
+            );
+
+            $newFeed = ListingFeed::updateOrCreate([
+                'listing_id' => $listingId,
+                'feed_type' => FeedTypes::RESUBMIT
+            ], $feedData);
+
+            $xmlContent = $this->generateCreateFeed($listingInfo, $listingId, $skuFilter);
+
+            if (isset($store->auto_submit_listing) && $store->auto_submit_listing == 1) {
+                $this->submitFeed($newFeed->id, $listingId);
+
+                // 5. Increase submit_count for items we just resubmitted
+                ListingItem::whereIn('id', $failedItems->pluck('id'))
+                    ->update([
+                        'submit_count' => DB::raw('submit_count + 1'),
+                    ]);
+            }
+
+            return $newFeed;
+        });
     }
 }

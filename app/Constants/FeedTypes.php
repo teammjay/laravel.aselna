@@ -21,6 +21,8 @@ class FeedTypes
 
     const ORDER_CANCEL = 9;
 
+    const RESUBMIT = 10;
+
     const ITEM_REPORT = 50;
 
     const names = [
@@ -34,6 +36,7 @@ class FeedTypes
         self::SHIPMENT_UPDATE => 'Shipment Update',
         self::ORDER_CANCEL => 'Order Cancel',
         self::ITEM_REPORT => 'Item Report',
+        self::RESUBMIT => 'Re-submit',
     ];
 
     public static function getFeedName($feedId)
