@@ -781,7 +781,7 @@ class WalmartService implements MarketplaceServiceInterface
     public function resubmitFailedItems($listingId, $maxRetry = 3)
     {
         // 1. Get failed SKUs from the feed, within retry limit
-        $failedItems = ListingItemLink::select('listing_item.id,listing_item.sku')->leftJoin('listing_item', 'listing_item.id', '=', 'listing_item_link.item_id')->where('listing_item_link.listing_id', $listingId)->where('listing_item.sync_status', ListingSyncStatus::Unsynchronize)->where('listing_item.submit_count', '<=', $maxRetry)->get();
+        $failedItems = ListingItemLink::select('listing_item.id','listing_item.sku')->leftJoin('listing_item', 'listing_item.id', '=', 'listing_item_link.item_id')->where('listing_item_link.listing_id', $listingId)->where('listing_item.sync_status', ListingSyncStatus::Unsynchronize)->where('listing_item.submit_count', '<=', $maxRetry)->get();
 
         if ($failedItems->isEmpty()) {
             return null;
@@ -804,7 +804,7 @@ class WalmartService implements MarketplaceServiceInterface
                 'status' => 0,
                 'feed_type' => FeedTypes::RESUBMIT,
                 'store_id' => $listingInfo->store_id,
-                'number_of_items' => $feedInfo->number_of_items,
+                'number_of_items' => count($skuFilter),
                 'created_by' => $created_by
             );
 

@@ -81,10 +81,10 @@ class HomeController extends Controller
 
     public function testfunction(){
 
-        $listingId = '595a7800-8451-4e69-a430-dd519f5b1f3f';
+        /*$listingId = '595a7800-8451-4e69-a430-dd519f5b1f3f';
         $failedItems = ListingItemLink::select('listing_item.id,listing_item.sku')->leftJoin('listing_item', 'listing_item.id', '=', 'listing_item_link.item_id')->where('listing_item_link.listing_id', $listingId)->where('sync_status', ListingSyncStatus::Unsynchronize)->where('creation_retry_count', '<', 3);
 
-        echo $failedItems->toSql();die;
+        echo $failedItems->toSql();die;*/
         /*$sku= 'G69-YPKB';
         $itemDetail = ListingItem::with('storeProduct', 'storeProduct.product')->where('sku', $sku)->first();
         Common::updateListingItemSaleDetail($sku, $itemDetail);
