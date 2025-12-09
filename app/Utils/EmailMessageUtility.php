@@ -103,9 +103,14 @@ class EmailMessageUtility
             }
             Log::info("Email sent successfully to {$toEmail}.");
             return true;
-        } catch (Exception $e) {
+        } catch (\Throwable $e) {
 
             \App\Helpers\ErrorLogger::log($e, __METHOD__);
+
+            CriticalErrorService::report('Email message send fail', [
+                'marketplace' => '',
+                'reason' => $e->getMessage() ?? 'Unknown',
+            ],['toemail' => $toEmail]);
 
             Log::info("Failed to send email: " . $e->getMessage());
             return false;
@@ -371,7 +376,7 @@ class EmailMessageUtility
 
             Log::info("Successfully processed " . count($emails) . " emails");
             return $emails;
-        } catch (Exception $e) {
+        } catch (\Throwable $e) {
 
             \App\Helpers\ErrorLogger::log($e, __METHOD__);
 

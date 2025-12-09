@@ -58,7 +58,7 @@ class ShopifyAuthService
             $result = json_decode($res->getBody(), true);
 
             return $result ?? null;
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             Log::error('Error: ' . $e->getMessage());
 
             CriticalErrorService::report('Shopify Marketplace API failed - EndPoint: '.$this->endpoint, [
@@ -273,8 +273,9 @@ class ShopifyAuthService
 
         } catch (\Exception $e) {
             Log::error('Error: ' . $e->getMessage());
-            return null;
+
         }
+        return null;
     }
 
     public function getLatestOrders()
@@ -290,6 +291,7 @@ class ShopifyAuthService
             Log::error('Error: ' . $e->getMessage());
             return null;
         }
+        return null;
     }
 
     public function getPublications()

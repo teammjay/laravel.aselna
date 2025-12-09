@@ -11,6 +11,7 @@ use App\Models\ListingItem;
 use App\Models\ListingItemLink;
 use App\Models\Store;
 use App\Services\Auth\WalmartAuthService;
+use App\Services\CriticalErrorService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Log;
@@ -168,11 +169,17 @@ class WalmartListingItemSyncJob implements ShouldQueue
             $itemDetail->update([
                 'sync_status' => ListingSyncStatus::CreationError,
             ]);
+
             Log::error('Error syncing Walmart listing item: ' . $e->getMessage(), [
                 'listing_item_id' => $itemDetail->id,
                 'store_id' => $store->id,
                 'upc' => $itemDetail->upc,
             ]);
+
+            CriticalErrorService::report('Error syncing Walmart listing item', [
+                'marketplace' => ucfirst($store->name),
+                'reason' => $e->getMessage() ?? 'Unknown',
+            ],['store_name' => $store->name]);
         }
     }
 

@@ -16,6 +16,7 @@ use App\Services\Auth\EbayAuthService;
 use App\Services\Auth\ShopifyAuthService;
 use App\Services\Auth\TemuAuthService;
 use App\Services\Auth\WalmartAuthService;
+use App\Services\CriticalErrorService;
 use App\Services\Marketplace\Service\AmazonService;
 use App\Services\Marketplace\Service\ShopifyService;
 use App\Services\Marketplace\Service\TemuService;
@@ -343,7 +344,13 @@ class OrderOperationUtility
             } else {
                 Log::error('Shipping account not found for purchase auto credit');
             }
-        }catch (\Exception $e) {
+        }catch (\Throwable $e) {
+
+            CriticalErrorService::report('Error processing check transaction credit', [
+                'marketplace' => '',
+                'reason' => $e->getMessage() ?? 'Unknown',
+            ],['order_operation' => $orderOperation]);
+
             Log::error('Error processing check transaction credit: ' . $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine());
         }
     }
@@ -963,6 +970,12 @@ class OrderOperationUtility
                 $errors = self::createLabel($orderOperation);
                 if (isset($errors) && !empty($errors)) {
                     //DB::rollBack();
+
+                    CriticalErrorService::report('Error processing check transaction credit', [
+                        'marketplace' => '',
+                        'reason' => $e->getMessage() ?? 'Unknown',
+                    ],['order_operation' => $orderOperation]);
+
                     throw new \Exception($errors);
                 }
             }

@@ -24,6 +24,7 @@ use App\Models\StoreProduct;
 use App\Models\StoreType;
 use App\Models\StoreTypeListing;
 use App\Models\UPCCodes;
+use App\Services\CriticalErrorService;
 use App\Utils\FileUtility;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -46,17 +47,17 @@ class ProcessFeedGenerationJob implements ShouldQueue
     protected $data;
     protected $store_id;
     protected $compatibleDeviceTypes;
-    private ?Store $storeDetail;
+    private $storeDetail;
     private $store_type_detail;
-    private int $current_file_index;
-    private array $feedPart;
-    private string $directory;
+    private $current_file_index;
+    private $feedPart;
+    private $directory;
     private $fileNameBase;
     private $fileExtension;
     /**
      * @var array|string[]
      */
-    private array $columns;
+    private $columns;
     /**
      * @var false|resource
      */
@@ -197,9 +198,14 @@ class ProcessFeedGenerationJob implements ShouldQueue
                 'status' => 1,
             ]);
 
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
 
             \App\Helpers\ErrorLogger::log($e, __METHOD__);
+
+            CriticalErrorService::report('Error processing feed generation', [
+                'marketplace' => $this->storeDetail->storeType->name ?? '',
+                'reason' => $e->getMessage() ?? 'Unknown',
+            ],['store_id' => $this->store_id]);
 
             Log::error('Error processing feed generation: ' . $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine());
         }

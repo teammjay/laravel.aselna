@@ -143,7 +143,7 @@ class WalmartAuthService
             ]);
 
             return json_decode($response->getBody(), true);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
 
             CriticalErrorService::report('Walmart Order Sync failed', [
                 'marketplace' => 'Walmart',
@@ -189,7 +189,7 @@ class WalmartAuthService
             ]);
 
             return json_decode($response->getBody(), true);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
 
             CriticalErrorService::report('Walmart Order Detail failed', [
                 'marketplace' => 'Walmart',
@@ -243,7 +243,7 @@ class WalmartAuthService
                 Log::error('Request error (no response): ' . $e->getMessage());
             }
 
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
 
             CriticalErrorService::report('Walmart Ship Order failed', [
                 'marketplace' => 'Walmart',
@@ -291,7 +291,7 @@ class WalmartAuthService
                 Log::error('Request error (no response): ' . $e->getMessage());
             }
 
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             Log::error('Error cancel order: ' . $e->getMessage());
 
             CriticalErrorService::report('Walmart Cancel Order failed', [
@@ -340,7 +340,7 @@ class WalmartAuthService
                 Log::error('Request error (no response): ' . $e->getMessage());
             }
 
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             Log::error('Error refund order: ' . $e->getMessage());
 
             CriticalErrorService::report('Walmart Refund Order failed', [
@@ -384,7 +384,7 @@ class WalmartAuthService
             Log::info("getItemSearch Response: " . $response->getBody());
 
             return json_decode($response->getBody(), true);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
 
             CriticalErrorService::report('Walmart Item Search by upc failed', [
                 'marketplace' => 'Walmart',

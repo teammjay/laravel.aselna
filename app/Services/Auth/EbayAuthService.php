@@ -63,7 +63,7 @@ class EbayAuthService
 
             return $data;
 
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
 
             CriticalErrorService::report('Ebay Get Accesstoken failed', [
                 'marketplace' => 'eBay',
@@ -107,7 +107,7 @@ class EbayAuthService
             }
 
             return response()->json(['error' => 'Failed to refresh token'], 400);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             CriticalErrorService::report('Ebay Refresh token failed', [
                 'marketplace' => 'eBay',
                 'reason' => $e->getMessage() ?? 'Unknown',

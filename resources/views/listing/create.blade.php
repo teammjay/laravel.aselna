@@ -821,7 +821,8 @@
                         $('input[name="products[]"]:checked').each(function () {
                             selected_product.push($(this).val())
                         });
-                        if (selected_product.length === 0 && $('#selected_product').is(':checked')) {
+
+                        if (selected_product.length === 0 || (selected_product.length === 0 && $('#selected_product').is(':checked'))) {
                             alert('Please select product to proceed.');
                         }else{
                             apply_price_count = 0
@@ -1194,6 +1195,7 @@
                         'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                     },
                     success: function (response) {
+                        var alert = false;
                         if(response.success){
                             $('#alertModal').find('.modal-header').removeClass('bg-danger').removeClass('bg-info');
                             if(response.upc_cnt == 0 || response.upc_cnt < 1000){
@@ -1209,11 +1211,18 @@
                             }
 
                             if(!response.filesystem){
+                                alert = true;
                                 $('#alertModal').find('.modal-header').addClass('bg-danger');
                                 $('#alertModalLabel').html('Alert');
                                 $('#alertModal').find('.modal-body').append('<p class="text-red"> - File system host is not set for this store. Please set it before create listing.</p>')
 
                                 $('#alertModal').modal('show');
+                            }
+
+                            if(alert){
+                                $('#nextBtn').attr('disabled',true);
+                            }else{
+                                $('#nextBtn').attr('disabled',false);
                             }
 
 

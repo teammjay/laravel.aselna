@@ -39,7 +39,7 @@ class FetchTemuOrders implements ShouldQueue
         /* get active store jobs*/
 
         /* get temu stores*/
-        $stores = Store::select('store.*')->join('store_type', 'store_type.id', '=', 'store.store_type_id')->where('store_type.code','temu')->where('store.store_status','<>',0)->whereIn('id',$store_ids)->get();
+        $stores = Store::select('store.*')->join('store_type', 'store_type.id', '=', 'store.store_type_id')->where('store_type.code','temu')->where('store.store_status','<>',0)->whereIn('store.id',$store_ids)->get();
 
         if(count($stores ?? []) > 0) {
             $tags = [];
