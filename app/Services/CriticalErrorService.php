@@ -95,7 +95,7 @@ class CriticalErrorService
             Config::set('mail.from.address', $userMessageAccount->outgoingAccount->email);
             Config::set('mail.from.name', $userMessageAccount->name);
 
-            Mail::mailer('custom_smtp')->raw($errorData['context'],
+            Mail::mailer('custom_smtp')->raw(json_encode($errorData['context']),
                 function ($message) use ($errorData, $sendTo, $cc_emails) {
                     $message->to($sendTo)
                         ->cc($cc_emails)
