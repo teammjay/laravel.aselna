@@ -58,7 +58,7 @@ class CriticalErrorService
 
     private static function sendNotificationEmail($errorData){
 
-        $userId = 2;
+        $userId = 1;
         Log::info('User ID : '.$userId);
         $userDetail = User::findOrFail($userId);
         $sendTo = $userDetail->send_to_email;
