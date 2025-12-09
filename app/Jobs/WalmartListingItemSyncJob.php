@@ -45,11 +45,17 @@ class WalmartListingItemSyncJob implements ShouldQueue
         $store_ids = Common::getActiveStoreJobs('WalmartListingItemSyncJob','walmart');
         /* get active store jobs*/
 
-        $walmart_store_ids = Store::where('store_type_id', function ($subquery) {
+        $query = Store::where('store_type_id', function ($subquery) {
             return $subquery->select('id')
                 ->from('store_type')
                 ->where('code', 'walmart');
-        })->where('store_status','<>',0)->whereIn('id',$store_ids)->pluck('id');
+        })->where('store_status','<>',0);
+
+        if(!empty($store_ids)) {
+            $query->whereIn('id', $store_ids);
+        }
+        $walmart_store_ids = $query->pluck('id');
+
         Log::info('Walmart store ids: ' . json_encode($walmart_store_ids));
 
         $this->updateTrackingRecord(['tags' => 'Walmart']);

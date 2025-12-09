@@ -45,7 +45,12 @@ class FetchAmazonOrdersJob implements ShouldQueue
         /* get active store jobs*/
 
         /* get amazon stores*/
-        $stores = Store::join('store_type', 'store_type.id', '=', 'store.store_type_id')->where('store_type.code','amazon')->where('store.store_status','<>',0)->whereIn('store.id',$store_ids)->get();
+        $query = Store::join('store_type', 'store_type.id', '=', 'store.store_type_id')->where('store_type.code','amazon')->where('store.store_status','<>',0);
+        if(!empty($store_ids)){
+            $query->whereIn('store.id',$store_ids);
+        }
+        $stores = $query->get();
+        //$stores = Store::join('store_type', 'store_type.id', '=', 'store.store_type_id')->where('store_type.code','amazon')->where('store.store_status','<>',0)->whereIn('store.id',$store_ids)->get();
 
         if(count($stores ?? []) > 0){
             foreach($stores as $store){

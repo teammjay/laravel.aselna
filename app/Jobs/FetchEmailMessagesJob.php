@@ -54,7 +54,11 @@ class   FetchEmailMessagesJob implements ShouldQueue
             /* get active store jobs*/
 
             /* get shopify stores*/
-            $stores = Store::with('storeType')->where('store_status','<>',0)->whereIn('id',$store_ids)->get();
+            $query = Store::with('storeType')->where('store_status','<>',0);
+            if(!empty($store_ids)){
+                $query->whereIn('id',$store_ids);
+            }
+            $stores = $query->get();
 
             if (count($stores ?? []) > 0) {
                 foreach ($stores as $store) {

@@ -45,7 +45,13 @@ class FetchWalmartOrdersJob implements ShouldQueue
         $store_ids = Common::getActiveStoreJobs('FetchWalmartOrdersJob','walmart');
         /* get active store jobs*/
 
-        $stores = Store::select('store.*','store_type.name as storeTypeName')->join('store_type', 'store_type.id', '=', 'store.store_type_id')->where('store_type.code', 'walmart')->where('store.store_status','<>',0)->whereIn('store.id',$store_ids)->get();
+        $query = Store::select('store.*','store_type.name as storeTypeName')->join('store_type', 'store_type.id', '=', 'store.store_type_id')->where('store_type.code', 'walmart')->where('store.store_status','<>',0);
+        if(!empty($store_ids)){
+            $query->whereIn('store.id',$store_ids);
+        }
+        $stores = $query->get();
+
+        //$stores = Store::select('store.*','store_type.name as storeTypeName')->join('store_type', 'store_type.id', '=', 'store.store_type_id')->where('store_type.code', 'walmart')->where('store.store_status','<>',0)->whereIn('store.id',$store_ids)->get();
 
         if (count($stores ?? []) > 0) {
             $tags = [];

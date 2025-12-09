@@ -56,8 +56,14 @@ class MagentoProductsSyncJob implements ShouldQueue
         $store_ids = Common::getActiveStoreJobs('MagentoProductsSyncJob','magento');
         /* get active store jobs*/
 
+        $query = Store::select('store.*')->with('fileSystem', 'storeType')->join('store_type', 'store_type.id', '=', 'store.store_type_id')->where('store_type.code', 'magento')->where('store.store_status','<>',0);
+        if(!empty($store_ids)){
+            $query->whereIn('store.id',$store_ids);
+        }
+        $stores = $query->get();
+
         $this->magentoService = new MagentoService();
-        $stores = Store::select('store.*')->with('fileSystem', 'storeType')->join('store_type', 'store_type.id', '=', 'store.store_type_id')->where('store_type.code', 'magento')->where('store.store_status','<>',0)->whereIn('store.id',$store_ids)->get();
+        //$stores = Store::select('store.*')->with('fileSystem', 'storeType')->join('store_type', 'store_type.id', '=', 'store.store_type_id')->where('store_type.code', 'magento')->where('store.store_status','<>',0)->whereIn('store.id',$store_ids)->get();
 
         Log::info('Magento Simple Products Sync Job Started');
         if (count($stores ?? []) > 0) {

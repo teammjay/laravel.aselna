@@ -52,7 +52,7 @@
                                 Operation
                             </div>
                             <div class="col-3">
-                                <select class="custom-select" id="" name="operation_operator">
+                                <select class="custom-select" id="operation_operator" name="operation_operator">
                                     <option value="{{FilterCodes::CONTAINS}}">contains</option>
                                     <option value="{{FilterCodes::STARTS_WITH}}">starts with</option>
                                     <option value="{{FilterCodes::ENDS_WITH}}">ends with</option>
@@ -74,7 +74,7 @@
                                 Created Date
                             </div>
                             <div class="col-2">
-                                <select class="custom-select" id="" name="created_at_operator">
+                                <select class="custom-select" id="created_at_operator" name="created_at_operator">
                                     <option value=">=">>=</option>
                                     <option value=">">></option>
                                     <option value="=">=</option>
@@ -96,7 +96,7 @@
                                 Stack Trace
                             </div>
                             <div class="col-3">
-                                <select class="custom-select" id="" name="status_operator">
+                                <select class="custom-select" id="status_operator" name="status_operator">
                                     <option value="{{FilterCodes::CONTAINS}}">contains</option>
                                     <option value="{{FilterCodes::STARTS_WITH}}">starts with</option>
                                     <option value="{{FilterCodes::ENDS_WITH}}">ends with</option>
@@ -118,7 +118,7 @@
                                 Updated Date
                             </div>
                             <div class="col-2">
-                                <select class="custom-select" id="" name="updated_at_operator">
+                                <select class="custom-select" id="updated_at_operator" name="updated_at_operator">
                                     <option value=">=">>=</option>
                                     <option value=">">></option>
                                     <option value="=">=</option>

@@ -45,11 +45,17 @@ class AmazonListingItemSyncJob implements ShouldQueue
         $store_ids = Common::getActiveStoreJobs('AmazonListingItemSyncJob','amazon');
         /* get active store jobs*/
 
-        $amazon_store_ids = Store::where('store_type_id', function ($subquery) {
+        $query = Store::where('store_type_id', function ($subquery) {
             return $subquery->select('id')
                 ->from('store_type')
                 ->where('code', 'amazon');
-        })->where('store_status','<>',0)->whereIn('id',$store_ids)->pluck('id');
+        })->where('store_status','<>',0);
+
+        if(!empty($store_ids)) {
+            $query->whereIn('id', $store_ids);
+        }
+
+        $amazon_store_ids = $query->pluck('id');
         Log::info('Amazon store ids: ' . json_encode($amazon_store_ids));
 
         //join listing_item_link and listing_item and listing

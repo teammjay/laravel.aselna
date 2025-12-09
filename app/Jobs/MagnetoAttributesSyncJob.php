@@ -41,7 +41,13 @@ class MagnetoAttributesSyncJob implements ShouldQueue
         /* get active store jobs*/
 
         $storeType = StoreType::where('name', 'magento')->first();
-        $stores = Store::where('store_type_id', $storeType->id)->whereIn('id',$store_ids)->get();
+        $query = Store::where('store_type_id', $storeType->id);
+
+        if(!empty($store_ids)) {
+            $query->whereIn('id', $store_ids);
+        }
+
+        $stores = $query->get();
 
         foreach ($stores as $store) {
             $this->SyncAttributesIfNeeded($store);

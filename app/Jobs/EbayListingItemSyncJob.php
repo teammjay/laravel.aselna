@@ -44,11 +44,18 @@ class EbayListingItemSyncJob implements ShouldQueue
         $store_ids = Common::getActiveStoreJobs('EbayListingItemSyncJob','ebay');
         /* get active store jobs*/
 
-        $ebay_store_ids = Store::where('store_type_id', function ($subquery) {
+        $query = Store::where('store_type_id', function ($subquery) {
             return $subquery->select('id')
                 ->from('store_type')
                 ->where('code', 'ebay');
-        })->where('store_status','<>',0)->whereIn('id',$store_ids)->pluck('id');
+        })->where('store_status','<>',0);
+
+        if(!empty($store_ids)) {
+            $query->whereIn('id', $store_ids);
+        }
+
+        $ebay_store_ids = $query->pluck('id');
+
         Log::info('Ebay store ids: ' . json_encode($ebay_store_ids));
 
         if (env('APP_ENV') === 'local') {
