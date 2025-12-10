@@ -608,49 +608,51 @@
                 var customer_name = $('#customer_name').val();
                 var store_name = $('#store_name').val();
                 var order_id = $('#order_id').val();
-                $.ajax({
-                    type: "POST",
-                    url: "{{ route('message.getmessagetemplate') }}",
-                    data: {
-                        template_id: template_id,
-                        customer_name: customer_name,
-                        store_name: store_name,
-                        ticket_id: ticket_id,
-                        order_id: order_id,
-                    },
-                    headers: {
-                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                    },
+                if(template_id != '') {
+                    $.ajax({
+                        type: "POST",
+                        url: "{{ route('message.getmessagetemplate') }}",
+                        data: {
+                            template_id: template_id,
+                            customer_name: customer_name,
+                            store_name: store_name,
+                            ticket_id: ticket_id,
+                            order_id: order_id,
+                        },
+                        headers: {
+                            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                        },
 
-                    success: function(data) {
-                        if(data.success){
+                        success: function (data) {
+                            if (data.success) {
 
-                            if($('#message_to_send').val() != '' && data.templateCode != ''){
-                                if (confirm("Are you sure, you want to overwrite the template?") == true) {
+                                if ($('#message_to_send').val() != '' && data.templateCode != '') {
+                                    if (confirm("Are you sure, you want to overwrite the template?") == true) {
+                                        $('#template_id').val(data.template_id);
+                                        $('#message_to_send').val(data.templateCode);
+                                    }
+                                } else if (data.templateCode != '') {
                                     $('#template_id').val(data.template_id);
-                                    $('#message_to_send').html(data.templateCode);
+                                    $('#message_to_send').val(data.templateCode);
                                 }
-                            }else if(data.templateCode != ''){
-                                $('#template_id').val(data.template_id);
-                                $('#message_to_send').html(data.templateCode);
-                            }
 
-                            //$('#message_to_send').html(data.templateCode);
-                            //$('#template_id').val(data.template_id);
-                            if(data.image_name){
-                                $('.lableImageGroup').removeClass('hide');
-                                $('#image_url').val(data.image_url);
-                                $('#image_storage_path').val(data.imagesPath);
-                                $('.lable-image').html(data.image_name);
+                                //$('#message_to_send').html(data.templateCode);
+                                //$('#template_id').val(data.template_id);
+                                if (data.image_name) {
+                                    $('.lableImageGroup').removeClass('hide');
+                                    $('#image_url').val(data.image_url);
+                                    $('#image_storage_path').val(data.imagesPath);
+                                    $('.lable-image').html(data.image_name);
+                                }
                             }
+                        },
+                        error: function (xhr) {
+                        },
+                        complete: function () {
+                            $("#ajax-preloader").hide();
                         }
-                    },
-                    error: function (xhr) {
-                    },
-                    complete: function () {
-                        $("#ajax-preloader").hide();
-                    }
-                });
+                    });
+                }
             });
 
             $(document).on('click','#close_ticket',function () {
