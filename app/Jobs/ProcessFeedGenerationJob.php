@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Constants\WebStorePageType;
 use App\Models\Device;
+use App\Models\DeviceRating;
 use App\Models\DevicesLinkedDevice;
 use App\Models\Feed;
 use App\Models\GenerateProductImage;
@@ -297,6 +298,9 @@ class ProcessFeedGenerationJob implements ShouldQueue
 
     private function getCompatibleDevices($product_id, $devices, $deviceSeries)
     {
+        $excludedRating = DeviceRating::whereIn('value',[8])->pluck('id')->toArray();
+        $includedRatings = DeviceRating::whereIn('value',[1,2,9,10])->pluck('id')->toArray();
+        Log::info('Excluded Device Ratings: ' . json_encode($excludedRating));
         $query = Device::select('device.*', 'product_interface.product_id')->with('brand', 'rating')->with('deviceType', 'deviceSeries');
         $query->leftJoin('device_interface', 'device_interface.device_id', '=', 'device.id');
         $query->leftJoin('product_interface', 'product_interface.interface_id', '=', 'device_interface.interface_id');
@@ -314,6 +318,8 @@ class ProcessFeedGenerationJob implements ShouldQueue
         }
 
         $query->where('device.status', 'active');
+        $query->whereNotIn('device.rating_id', $excludedRating);
+        $query->whereIn('device.rating_id', $includedRatings);
 
         if ($deviceSeries) {
             $devices = DevicesLinkedDevice::select('device_id')->whereIn('device_series_id', $deviceSeries)->get();
@@ -459,12 +465,15 @@ class ProcessFeedGenerationJob implements ShouldQueue
                 ->orderBy('sort_order', 'asc')
                 ->chunk(100, function ($keyFeatures) use (&$product_description) {
                     foreach ($keyFeatures as $feature) {
-                        $product_description .= trim((string)$feature->value) . '. ';
+                        if (isset($feature->value)) {
+                            $product_description .= trim((string)$feature->value) . '. ';
+                        }
                     }
                 });
 
             if (isset($itemDetail->product->product_description)) {
-                $product_description .= ' ' . $itemDetail->product->product_description;
+                $cleanDescription = str_replace(["\r", "\n"], ' ', $itemDetail->product->product_description);
+                $product_description .= ' ' . trim($cleanDescription);
             }
             $product_description = trim($product_description);
 

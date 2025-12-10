@@ -18,7 +18,7 @@ class ShopifyListingProductsSyncJob implements ShouldQueue
         Queueable::withChain as queueableWithChain;
     }
 
-    public $timeout = 60000;
+    public $timeout = 600000;
 
     /**
      * Create a new job instance.
@@ -36,8 +36,10 @@ class ShopifyListingProductsSyncJob implements ShouldQueue
         $this->updateTrackingRecord(['tags' => 'Shopify Listing Products']);
 
         $storeIds = Store::join('store_type', 'store_type.id', '=', 'store.store_type_id')
-            ->where('store_type.code', 'shopify')
+            ->where('store_type.code', 'walmart')
+            ->whereIn('store.name',['OdeMobile','AWAccessory'])
             ->pluck('store.id');
+
         DB::connection('easyesale_db')->table('listing_item')
             ->whereIn('store_product_id', function ($query) use ($storeIds) {
                 $query->select('store_product.id')
