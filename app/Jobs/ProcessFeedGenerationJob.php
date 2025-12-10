@@ -286,7 +286,7 @@ class ProcessFeedGenerationJob implements ShouldQueue
         $productSpecification = ProductSpecification::where('product_id', $product_id)->where('store_type_id', $store_type_id)->get();
         $section = 'General';
         $kvSep = ':';
-        $pairSep = ',';
+        $pairSep = ' - ';
         $parts = [];
         foreach ($productSpecification as $specification) {
 
@@ -486,7 +486,8 @@ class ProcessFeedGenerationJob implements ShouldQueue
             }
             $product_description = trim($product_description);
 
-            $ptype_id = (isset($itemDetail->StoreTypeCategory) && !empty($itemDetail->StoreTypeCategory)) ? $itemDetail->StoreTypeCategory->store_type_code : '';
+            //$ptype_id = (isset($itemDetail->StoreTypeCategory) && !empty($itemDetail->StoreTypeCategory)) ? $itemDetail->StoreTypeCategory->store_type_code : '';
+            $ptype_id = 264;
             $product_type = '';
             if (isset($itemDetail->product)) {
                 $product_code = $itemDetail->product->product_sku;
@@ -595,7 +596,7 @@ class ProcessFeedGenerationJob implements ShouldQueue
                                     (isset($itemDetail->product->size->value)) ? $itemDetail->product->size->value . ' ' . $itemDetail->product->size->value_unit : '',
                                     'US::Standard:3.99 USD',
                                     (isset($images) && count($images) > 0) ? implode(',', $images) : '',
-                                    (isset($listitem->qunatity)) ? $listitem->qunatity : 500,
+                                    (isset($listitem->qunatity)) ? $listitem->qunatity : 1000,
                                     'return_policy_days: "30"',
                                     (isset($item_detail->device->brand->name)) ? $item_detail->device->brand->name : '',
                                     (isset($item_detail->device->name)) ? $item_detail->device->name : '',
