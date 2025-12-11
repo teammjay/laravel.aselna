@@ -3017,7 +3017,7 @@ class ListingController extends Controller
         return array('compressedDevices' => $compressedDevices,'modelSeries' => $modelSeries);
     }
 
-    private function compressModels(array $models, $sep = '/')
+    private function compressModels2(array $models, $sep = '/')
     {
         $models = array_values(array_filter(array_map('trim', $models)));
         if (count($models) === 0) return '';
@@ -3093,58 +3093,6 @@ class ListingController extends Controller
             $hasBase = in_array('', $tails, true);
 
             $nonEmptyTails = array_values(array_filter($tails, fn($t) => $t !== ''));
-
-            /*if (!empty($nonEmptyTails)) {
-
-                $matches = [];
-                $ok = true;
-
-                foreach ($nonEmptyTails as $tail) {
-                    // pattern: A12 5G, A13 5G, A14 5G
-                    if (!preg_match('/^([A-Za-z]+)(\d+)\s+(\S+)$/', $tail, $m)) {
-                        $ok = false;
-                        break;
-                    }
-                    // $m[1] = A
-                    // $m[2] = 12, 13, 14
-                    // $m[3] = 5G (or any single-word suffix)
-                    $matches[] = [$m[1], $m[2], $m[3]];
-                }
-
-                if ($ok && count($matches) === count($nonEmptyTails)) {
-
-                    $alpha  = $matches[0][0]; // "A"
-                    $suffix = $matches[0][2]; // "5G"
-                    $nums   = [];
-
-                    foreach ($matches as [$a, $num, $suf]) {
-                        // all must share same letter prefix (A) and same suffix (5G)
-                        if (strcasecmp($a, $alpha) !== 0 || strcasecmp($suf, $suffix) !== 0) {
-                            $ok = false;
-                            break;
-                        }
-                        $nums[] = $num;
-                    }
-
-                    if ($ok) {
-                        // sort & dedupe numbers
-                        $nums = array_values(array_unique($nums));
-                        natsort($nums);
-                        $nums = array_values($nums);
-
-                        // keep "A" with each number: A12/A13/A14
-                        $seriesPart = implode($sep, array_map(fn($n) => $alpha . $n, $nums));
-
-                        // prepend prefix (e.g. "Galaxy")
-                        $result = trim(
-                            ($prefixStr !== '' ? $prefixStr . ' ' : '') .
-                            $seriesPart . ' ' . $suffix
-                        );
-
-                        return $result;
-                    }
-                }
-            }*/
 
             $groupable   = [];
             $baseOrder   = [];
@@ -3256,6 +3204,278 @@ class ListingController extends Controller
     }
 
 
+    private function compressModels(array $models, $sep = '/')
+    {
+        // normalize
+        $models = array_values(array_filter(array_map('trim', $models)));
+        if (count($models) === 0) return '';
+        if (count($models) === 1) return $models[0];
+
+        // split into token arrays
+        $split = array_map(fn($m) => preg_split('/\s+/', $m), $models);
+
+        // find longest common prefix across all models (word-by-word)
+        $common = [];
+        $idx = 0;
+        while (true) {
+            $token = $split[0][$idx] ?? null;
+            if ($token === null) break;
+            $allSame = true;
+            foreach ($split as $parts) {
+                if (!isset($parts[$idx]) || mb_strtolower($parts[$idx]) !== mb_strtolower($token)) {
+                    $allSame = false;
+                    break;
+                }
+            }
+            if (!$allSame) break;
+            $common[] = $token;
+            $idx++;
+        }
+        $prefixStr = trim(implode(' ', $common));
+
+        // build tails (parts after prefix) for each model
+        $tails = [];
+        foreach ($split as $parts) {
+            $tailParts = array_slice($parts, count($common));
+            $tails[] = trim(implode(' ', $tailParts)); // '' if base
+        }
+
+        $hasBase = in_array('', $tails, true);
+        $nonEmptyTails = array_values(array_filter($tails, fn($t) => $t !== ''));
+
+        if (!empty($nonEmptyTails)) {
+            $matches = [];
+            $ok = true;
+            foreach ($nonEmptyTails as $tail) {
+                if (!preg_match('/^([A-Za-z]+)(\d+)\s+(\S+)$/', $tail, $m)) {
+                    $ok = false;
+                    break;
+                }
+                $matches[] = [$m[1], $m[2], $m[3]];
+            }
+
+            if ($ok && count($matches) === count($nonEmptyTails)) {
+                $alpha = $matches[0][0];
+                $suffix = $matches[0][2];
+                $nums = [];
+                foreach ($matches as [$a, $num, $suf]) {
+                    if (strcasecmp($a, $alpha) !== 0 || strcasecmp($suf, $suffix) !== 0) {
+                        $ok = false;
+                        break;
+                    }
+                    $nums[] = $num;
+                }
+
+                if ($ok) {
+                    $nums = array_values(array_unique($nums));
+                    natsort($nums);
+                    $nums = array_values($nums);
+                    $seriesPart = implode($sep, array_map(fn($n) => $alpha . $n, $nums));
+                    $res = trim(($prefixStr !== '' ? $prefixStr . ' ' : '') . $seriesPart . ' ' . $suffix);
+                    return $res;
+                }
+            }
+        }
+        $groupable = []; $baseOrder = []; $nonGrouped = [];
+        foreach ($nonEmptyTails as $tail) {
+            if (preg_match('/^(.*?)(\s*\(.*\))$/', $tail, $m)) {
+                $base = trim($m[1]); $paren = trim($m[2]);
+                if ($base === '') { $nonGrouped[] = $tail; continue; }
+                if (!isset($groupable[$base])) { $groupable[$base] = []; $baseOrder[] = $base; }
+                $groupable[$base][] = $paren;
+            } else {
+                $nonGrouped[] = $tail;
+            }
+        }
+
+        $compressedNonEmpty = [];
+        foreach ($nonGrouped as $ng) $compressedNonEmpty[] = $ng;
+
+        if (!empty($groupable)) {
+            $sortedBases = $baseOrder;
+            usort($sortedBases, function($a, $b) {
+                if (preg_match('/^\d+/', $a, $ma) && preg_match('/^\d+/', $b, $mb)) {
+                    return (int)$ma[0] <=> (int)$mb[0];
+                }
+                return strcasecmp($a, $b);
+            });
+
+            foreach ($sortedBases as $base) {
+                $parens = $groupable[$base];
+                if (count($parens) === 1) {
+                    $compressedNonEmpty[] = $base . ' ' . $parens[0];
+                } else {
+                    $first = array_shift($parens);
+                    $s = $base . ' ' . $first;
+                    foreach ($parens as $p) $s .= $sep . preg_replace('/^\s+/', '', $p);
+                    $compressedNonEmpty[] = $s;
+                }
+            }
+        }
+
+        $parts = []; $firstNonEmptyUsed = false;
+        if ($hasBase && $prefixStr !== '') {
+            $parts[] = $prefixStr;
+        }
+
+        foreach ($compressedNonEmpty as $i => $tail) {
+            if ($tail === '') continue;
+            if (!$firstNonEmptyUsed) {
+                if ($prefixStr !== '') $parts[] = $prefixStr . ' ' . $tail;
+                else $parts[] = $tail;
+                $firstNonEmptyUsed = true;
+            } else {
+                $parts[] = $tail;
+            }
+        }
+
+        if (!$hasBase && empty($parts) && $prefixStr !== '' && !empty($compressedNonEmpty)) {
+            foreach ($compressedNonEmpty as $i => $tail) {
+                if ($i === 0) $parts[] = $prefixStr . ' ' . $tail;
+                else $parts[] = $tail;
+            }
+        }
+
+        $final = [];
+        $seen = [];
+
+        foreach ($parts as $p) {
+            $p = trim($p);
+            if ($p === '') continue;
+            $key = mb_strtolower($p);
+
+            if (!isset($seen[$key])) {
+                // not seen before — add
+                $final[] = $p;
+                $seen[$key] = count($final) - 1; // store index
+                continue;
+            }
+
+            $existingIndex = $seen[$key];
+            $existing = $final[$existingIndex];
+
+            if (mb_strlen($p) > mb_strlen($existing)) {
+                $final[$existingIndex] = $p;
+            }
+        }
+
+        // final string (preserve prefix if needed earlier in your logic)
+
+        //return $final;
+        return $this->compact_parts($final);
+        //return implode($sep, $final);
+    }
+
+
+    private function compact_parts(array $parts)
+    {
+        $out = [];
+        $seenFirst = []; // group key => true
+
+        foreach ($parts as $p) {
+            $p = trim($p);
+            if ($p === '') continue;
+
+            // split on whitespace, preserve words for safe removal
+            $words = preg_split('/\s+/', $p);
+            $firstWord = mb_strtolower($words[0]);
+
+            if (!isset($seenFirst[$firstWord])) {
+                // first occurrence of this group -> keep full form
+                $out[] = $p;
+                $seenFirst[$firstWord] = true;
+                continue;
+            }
+
+            // subsequent occurrence -> remove the first token if it appears at start
+            // use a regex so we preserve punctuation/quotes
+            $rest = preg_replace('/^\s*' . preg_quote($words[0], '/') . '\s*/iu', '', $p);
+
+            // if removing first word left empty (rare), keep the original first word
+            $out[] = ($rest === '') ? $words[0] : $rest;
+        }
+
+        return $out;
+    }
+
+
+    private function normalize_device_series_array($input)
+    {
+
+        $parts = array_values(array_filter(array_map('trim', $input)));
+        if (empty($parts)) return [];
+
+        // Codes that start a new series even without numbers
+        $knownSeriesCodes = ['XR', 'XS', 'SE','G', '5G'];
+
+        $result = [];
+        $currentSeriesKey = null;
+        $seenTokens = [];   // seriesKey => seen tokens
+
+        // Helper: detect if part begins a new series
+        $isSeriesStart = function(string $part) use ($knownSeriesCodes): bool {
+            $p = trim($part);
+            if (preg_match('/\d/', $p)) return true;        // contains number → series
+            if (preg_match('/^\(.*\)$/', $p)) return true;  // (2020)
+            if (in_array(strtoupper($p), $knownSeriesCodes)) return true;
+            return false;
+        };
+
+        // Tokenizer for splitting parts
+        $tokenize = function(string $str): array {
+            $str = trim($str);
+            if ($str === '') return [];
+            return preg_split('/\s+/', $str);
+        };
+
+        foreach ($parts as $part) {
+
+            // ---------------------------
+            // NEW SERIES START
+            // ---------------------------
+            if ($isSeriesStart($part)) {
+                // Build series key
+                if (preg_match('/\d+(\.\d+)?/', $part, $m)) {
+                    $currentSeriesKey = $m[0]; // e.g. 11, 12.4
+                } else {
+                    $currentSeriesKey = strtoupper($part);
+                }
+
+                // Reset new series
+                $result[] = $part;
+                $seenTokens[$currentSeriesKey] = [];
+
+                // Register tokens inside the series header too
+                foreach ($tokenize($part) as $tk) {
+                    $seenTokens[$currentSeriesKey][] = strtolower($tk);
+                }
+
+                continue;
+            }
+
+            // ---------------------------
+            // NO SERIES START YET — treat as standalone
+            // ---------------------------
+            if ($currentSeriesKey === null) {
+                $result[] = $part;
+                continue;
+            }
+
+            // ---------------------------
+            // WITHIN A SERIES — dedupe tokens
+            // ---------------------------
+            foreach ($tokenize($part) as $token) {
+                $key = strtolower($token);
+
+                if (!in_array($key, $seenTokens[$currentSeriesKey])) {
+                    $result[] = $token;
+                    $seenTokens[$currentSeriesKey][] = $key;
+                }
+            }
+        }
+
+        return $result;
+    }
 
 
 
@@ -3338,28 +3558,8 @@ class ListingController extends Controller
         return $nparts;
     }
 
-
     private function groupDeviceModels($devices, $deviceSeparator = '/')
     {
-
-        // Example usage with your array:
-        /*$models = [
-            "S23","S23 Plus","S23 Ultra",
-            "S21","S21 FE 5G","S21 Plus",
-            "S21 Ultra","S22","S22 Plus","S22 Ultra",
-            "13","13 Mini","13 Pro","13 Pro Max",
-            "14","14 Plus","14 Pro","14 Pro Max",
-            "SE (2020)","SE (2022)",
-            "XR","XS","XS Max",
-            "10.2 (2019 7th Gen)",
-            "10.2\" (2020 8th Gen)",
-            "G",
-            "G 5G (2023)",
-            "G 5G (2024)"
-        ];
-        echo '<pre>';
-        print_r($this->groupFormatedDeviceModels($models));
-        echo '</pre>';die;*/
 
         $brandModels = [];
         $brandDeviceObjects = [];
@@ -3412,11 +3612,15 @@ class ListingController extends Controller
             }
 
             //$groupModels = $this->groupFormatedDeviceModels($cleanModels);
-            $groupModels = $this->compressModels($cleanModels);
-
             /*echo '<pre>';
-            print_r($groupModels);
+            print_r($cleanModels);
             echo '</pre>';*/
+            $clean = $this->compressModels($cleanModels);
+            $groupModels = $this->normalize_device_series_array($clean);
+
+           /* echo '<pre>';
+            print_r($groupModels);
+            echo '</pre>';die;*/
             //echo $groupModels;die;
 
             if($groupModels){
@@ -3441,7 +3645,7 @@ class ListingController extends Controller
             print_r($groupModels);
             print_r($compressedDevices);
             print_r($modelSeries);
-            echo '<pre>';die;*/
+            echo '</pre>';die;*/
 
         }
 
