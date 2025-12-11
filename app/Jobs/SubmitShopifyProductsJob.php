@@ -522,10 +522,10 @@ class SubmitShopifyProductsJob implements ShouldQueue
             'variant' => [$variantData],
         ];
 
-//        $this->deleteOldProductImages($shopifyAuthService, $proDetail->marketplace_product_id);
+        $this->deleteOldProductImages($shopifyAuthService, $proDetail->marketplace_product_id);
         $this->handleOldImages($shopifyAuthService, $proDetail->marketplace_product_id, $listingItem);
 
-        $this->generateProductImages($productData, $store);
+//        $this->generateProductImages($productData, $store);
 
         $images = GenerateProductImage::where('product_id', $productData->product_id)->orderBy('main_image', 'desc')->get();
         $media = [];
@@ -546,7 +546,7 @@ class SubmitShopifyProductsJob implements ShouldQueue
         }
 
         if (count($media) > 0) {
-            $productUpdateData['media'] = $media;
+//            $productUpdateData['media'] = $media;
         }
 
         Log::info('Product Update Data: ' . json_encode($productUpdateData));
@@ -730,6 +730,8 @@ class SubmitShopifyProductsJob implements ShouldQueue
 
     private function handleOldImages(ShopifyAuthService $shopifyAuthService, $marketplace_product_id, $listingItem)
     {
+        ListingItemProductImage::where('listing_item_id', $listingItem->id)->whereNull('product_image_id')->delete();
+
         $oldImages = $shopifyAuthService->getProductImages($marketplace_product_id);
         $this->handleMediaImages($oldImages['data']['product'], $listingItem);
     }
