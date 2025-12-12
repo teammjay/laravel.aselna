@@ -120,7 +120,7 @@ class SubmitShopifyProductsJob implements ShouldQueue
                 $AlreadyCreatedIds = ManageMarketplaceProduct::select('product_id')
                     ->where('upload_status', 'success')->where('store_id', $store->id)
                     ->orderBy('updated_at', 'asc')
-                    ->limit(600)
+                    ->limit(1000)
                     ->get();
 
                 $products = Catalog::select('*')->with('productType', 'productKeyFeatures', 'productColor')
