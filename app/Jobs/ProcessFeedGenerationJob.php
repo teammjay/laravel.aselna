@@ -286,13 +286,13 @@ class ProcessFeedGenerationJob implements ShouldQueue
         $productSpecification = ProductSpecification::where('product_id', $product_id)->where('store_type_id', $store_type_id)->get();
         $section = 'General';
         $kvSep = ':';
-        $pairSep = ' - ';
+        $pairSep = ',';
         $parts = [];
         foreach ($productSpecification as $specification) {
 
             $section = trim((string)$section);
             $key = trim((string)$specification->name);
-            $value = trim((string)$specification->calculated_value());
+            $value = ucfirst(trim((string)$specification->calculated_value()));
 
             if ($section === '' || $key === '' || $value === '') {
                 continue;
@@ -491,7 +491,7 @@ class ProcessFeedGenerationJob implements ShouldQueue
             $product_type = '';
             if (isset($itemDetail->product)) {
                 $product_code = $itemDetail->product->product_sku;
-                $keywords = ProductTitleKeyword::select('product_id', 'keyword')->where('product_id', $itemDetail->product_id)->orderBy('priority', 'asc')->limit(5)->get();
+                $keywords = ProductTitleKeyword::select('product_id', 'keyword')->where('product_id', $itemDetail->product_id)->orderBy('priority', 'asc')->limit(6)->get();
                 $title = '';
                 $title_keyword = [];
                 if (!empty($keywords)) {
@@ -551,9 +551,9 @@ class ProcessFeedGenerationJob implements ShouldQueue
                                     ->where('device_id', $device->id)->first();
 
                                 if (strtolower($device->brand->name) == 'apple') {
-                                    $productTitle = $device->name . ' - ' . $title . ' - ' . $this->storeDetail->short_code . $itemDetail->product_sku;
+                                    $productTitle = $device->name . ' - ' . $title . ' - ' . $this->storeDetail->short_code . $itemDetail->product->product_sku;
                                 } else {
-                                    $productTitle = $device->brand->name . ' ' . $device->name . ' - ' . $title . ' - ' . $this->storeDetail->short_code . $itemDetail->product_sku;
+                                    $productTitle = $device->brand->name . ' ' . $device->name . ' - ' . $title . ' - ' . $this->storeDetail->short_code . $itemDetail->product->product_sku;
                                 }
 
                                 $final_description = $device->brand->name . ' ' . $device->name . ' - ' . $title . ' for ' . $device->name . '. ' . $product_description;
@@ -573,7 +573,8 @@ class ProcessFeedGenerationJob implements ShouldQueue
                                 }
 
                                 // item group id logic
-                                $itemGroupId = $item_detail->sku . '-' . $device->code;
+                                //$itemGroupId = $item_detail->sku . '-' . $device->code;
+                                $itemGroupId = $listitem->sku . '-' . $device->code;
 
                                 fputcsv($this->fileHandle, [
                                     $item_detail->sku,
@@ -583,7 +584,7 @@ class ProcessFeedGenerationJob implements ShouldQueue
                                     $product_type,
                                     $product_url,
                                     (isset($mainImage)) ? $mainImage : '',
-                                    (isset($itemDetail->product->condition)) ? $itemDetail->product->condition->name : '',
+                                    (isset($itemDetail->product->condition)) ? strtolower($itemDetail->product->condition->name) : '',
                                     'in stock',
                                     (($itemDetail->product->product_price != '') ? $itemDetail->product->product_price : $itemDetail->product->product_price) . ' USD',
                                     (isset($item_detail->upc)) ? $item_detail->upc : '',
@@ -594,7 +595,7 @@ class ProcessFeedGenerationJob implements ShouldQueue
                                     '',
                                     (isset($itemDetail->product->color->name)) ? $itemDetail->product->color->name : '',
                                     (isset($itemDetail->product->size->value)) ? $itemDetail->product->size->value . ' ' . $itemDetail->product->size->value_unit : '',
-                                    'US::Standard:3.99 USD',
+                                    'US::Standard:4.99 USD',
                                     (isset($images) && count($images) > 0) ? implode(',', $images) : '',
                                     (isset($listitem->qunatity)) ? $listitem->qunatity : 1000,
                                     'return_policy_days: "30"',
