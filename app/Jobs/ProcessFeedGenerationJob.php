@@ -574,7 +574,7 @@ class ProcessFeedGenerationJob implements ShouldQueue
 
                                 // item group id logic
                                 //$itemGroupId = $item_detail->sku . '-' . $device->code;
-                                $itemGroupId = $listitem->sku . '-' . $device->code;
+                                $itemGroupId = (isset($listitem->sku) && $listitem->sku != '') ? $listitem->sku : $item_detail->sku . '-' . $device->code;
 
                                 fputcsv($this->fileHandle, [
                                     $item_detail->sku,
