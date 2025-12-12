@@ -575,7 +575,7 @@ class ProcessFeedGenerationJob implements ShouldQueue
                                     (isset($mainImage)) ? $mainImage : '',
                                     (isset($itemDetail->product->condition)) ? $itemDetail->product->condition->name : '',
                                     'in stock',
-                                    (($itemDetail->product->product_marketplace_price != '') ? $itemDetail->product->product_marketplace_price : $itemDetail->product->product_price) . ' USD',
+                                    (($itemDetail->product->product_price != '') ? $itemDetail->product->product_price : $itemDetail->product->product_price) . ' USD',
                                     (isset($item_detail->upc)) ? $item_detail->upc : '',
                                     (isset($this->storeDetail->brand_name)) ? $this->storeDetail->brand_name : '',
                                     $item_detail->sku,
