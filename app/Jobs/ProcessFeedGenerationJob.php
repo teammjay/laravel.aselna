@@ -556,7 +556,7 @@ class ProcessFeedGenerationJob implements ShouldQueue
                                     $productTitle = $device->brand->name . ' ' . $device->name . ' - ' . $title . ' - ' . $this->storeDetail->short_code . $itemDetail->product->product_sku;
                                 }
 
-                                $final_description = $device->brand->name . ' ' . $device->name . ' - ' . $title . ' for ' . $device->name . '. ' . $product_description;
+                                $final_description = $device->brand->name . ' ' . $device->name . ' - ' . $title . ' - ' . $this->storeDetail->short_code . $itemDetail->product->product_sku. ' for ' . $device->name . '. ' . $product_description;
 
                                 if (!$item_detail) {
                                     Log::info('Inserting new listing item detail for listing item ID: ' . $listitem->id . ' and device ID: ' . $device->id);
