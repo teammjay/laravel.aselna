@@ -18,7 +18,7 @@
                     <div class="col-md-6">
                         <div class="form-check">
                             <input type="checkbox" class="form-check-input @error('code') is-invalid @enderror"
-                                   @if((isset($device_series) && $device_series->status === 'active') || old('status') == 'on') checked @endif name="status" id="status">
+                                   @if((isset($device_series) && $device_series->status === 'active') || old('status') == 'on' || !isset($device_series)) checked @endif name="status" id="status">
                             <label class="form-check-label" for="status">Status</label>
                             @error('status')
                             <span class="text-danger">{{ $message }}</span>
@@ -38,7 +38,7 @@
                             @endif
                         </div>
                     </div>
-                    <div class="col-md-6">
+                    {{--<div class="col-md-6">
                         <div class="form-group">
                             <label for="slug">Device Series slug</label>
                             <input type="text" class="form-control @error('slug') is-invalid @enderror" id="slug"
@@ -48,7 +48,7 @@
                                 <span class="text-danger">{{ $errors->first('slug') }}</span>
                             @endif
                         </div>
-                    </div>
+                    </div>--}}
                 </div>
                 <div class="row">
                     <div class="col-md-12">

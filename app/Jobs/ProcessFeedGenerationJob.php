@@ -551,9 +551,9 @@ class ProcessFeedGenerationJob implements ShouldQueue
                                     ->where('device_id', $device->id)->first();
 
                                 if (strtolower($device->brand->name) == 'apple') {
-                                    $productTitle = $device->name . ' - ' . $title;
+                                    $productTitle = $device->name . ' - ' . $title . ' - ' . $this->storeDetail->short_code . $itemDetail->product_sku;
                                 } else {
-                                    $productTitle = $device->brand->name . ' ' . $device->name . ' - ' . $title;
+                                    $productTitle = $device->brand->name . ' ' . $device->name . ' - ' . $title . ' - ' . $this->storeDetail->short_code . $itemDetail->product_sku;
                                 }
 
                                 $final_description = $device->brand->name . ' ' . $device->name . ' - ' . $title . ' for ' . $device->name . '. ' . $product_description;
@@ -585,9 +585,9 @@ class ProcessFeedGenerationJob implements ShouldQueue
                                     (isset($mainImage)) ? $mainImage : '',
                                     (isset($itemDetail->product->condition)) ? $itemDetail->product->condition->name : '',
                                     'in stock',
-                                    (($itemDetail->product->product_marketplace_price != '') ? $itemDetail->product->product_marketplace_price : $itemDetail->product->product_price) . ' USD',
+                                    (($itemDetail->product->product_price != '') ? $itemDetail->product->product_price : $itemDetail->product->product_price) . ' USD',
                                     (isset($item_detail->upc)) ? $item_detail->upc : '',
-                                    (isset($itemDetail->product->Manufacturer)) ? $itemDetail->product->Manufacturer->name : '',
+                                    (isset($this->storeDetail->brand_name)) ? $this->storeDetail->brand_name : '',
                                     $item_detail->sku,
                                     (isset($device) ? $itemGroupId : ''),
                                     '',

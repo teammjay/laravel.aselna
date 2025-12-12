@@ -120,7 +120,7 @@ class SubmitShopifyProductsJob implements ShouldQueue
                 $AlreadyCreatedIds = ManageMarketplaceProduct::select('product_id')
                     ->where('upload_status', 'success')->where('store_id', $store->id)
                     ->orderBy('updated_at', 'asc')
-                    ->limit(600)
+                    ->limit(1000)
                     ->get();
 
                 $products = Catalog::select('*')->with('productType', 'productKeyFeatures', 'productColor')
@@ -525,7 +525,7 @@ class SubmitShopifyProductsJob implements ShouldQueue
         $this->deleteOldProductImages($shopifyAuthService, $proDetail->marketplace_product_id);
         $this->handleOldImages($shopifyAuthService, $proDetail->marketplace_product_id, $listingItem);
 
-//        $this->generateProductImages($productData, $store);
+        $this->generateProductImages($productData, $store);
 
         $images = GenerateProductImage::where('product_id', $productData->product_id)->orderBy('main_image', 'desc')->get();
         $media = [];
@@ -546,7 +546,7 @@ class SubmitShopifyProductsJob implements ShouldQueue
         }
 
         if (count($media) > 0) {
-//            $productUpdateData['media'] = $media;
+            $productUpdateData['media'] = $media;
         }
 
         Log::info('Product Update Data: ' . json_encode($productUpdateData));
