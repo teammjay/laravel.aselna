@@ -132,6 +132,7 @@ class FetchShopifyProductsJob implements ShouldQueue
                                     'marketplace_variant_id' => $variantId,
                                     'upload_status' => 'success',
                                     'upload_attempts' => 1,
+                                    'upc_code' => $listingItem->upc,
                                 ]);
 
                                 $listingItem->update([
