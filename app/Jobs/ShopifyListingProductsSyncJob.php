@@ -36,8 +36,8 @@ class ShopifyListingProductsSyncJob implements ShouldQueue
         $this->updateTrackingRecord(['tags' => 'Shopify Listing Products']);
 
         $storeIds = Store::join('store_type', 'store_type.id', '=', 'store.store_type_id')
-            ->where('store_type.code', 'walmart')
-            ->whereIn('store.name',['OdeMobile','AWAccessory'])
+            ->where('store_type.code', 'shopify')
+            ->whereIn('store.name',['OdeMobile'])
             ->pluck('store.id');
 
         DB::connection('easyesale_db')->table('listing_item')
@@ -118,6 +118,9 @@ class ShopifyListingProductsSyncJob implements ShouldQueue
 
     private function createListingItemData(mixed $listingItemData)
     {
+        if (ListingItemDetail::where('id', $listingItemData->id)->exists()) {
+            return;
+        }
         ListingItemDetail::updateOrCreate([
             'id' => $listingItemData->id
         ], [
