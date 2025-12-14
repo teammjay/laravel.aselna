@@ -129,32 +129,37 @@ class FetchShopifyProductsJob implements ShouldQueue
 
 
                 if ($sku) {
-                    $listingItem = ListingItem::where('store_sku',$sku)->first();
-                    if (isset($listingItem) && isset($listingItem->storeProduct) && isset($listingItem->storeProduct->product)) {
-                        $productData = $listingItem->storeProduct->product;
-                        $handle = $product['handle'];
-                        $product_code = $productData->product_sku;
-                        ManageMarketplaceProduct::updateOrCreate([
-                            'product_id' => $listingItem->storeProduct->product_id,
-                            'product_code' => $product_code,
-                            'store_id' => $store->id,
-                            'sku' => $sku,
-                        ], [
-                            'product_id' => $listingItem->storeProduct->product_id,
-                            'product_code' => $product_code,
-                            'sku' => $sku,
-                            'store_id' => $store->id,
-                            'marketplace_product_id' => $product['id'],
-                            'marketplace_variant_id' => $variantId,
-                            'upload_status' => 'success',
-                            'upload_attempts' => 1,
-                        ]);
+                    $listingItems = ListingItem::where('sku',$sku)->get();
+                    if (count($listingItems) > 0) {
+                        foreach ($listingItems as $listingItem) {
+                            if (isset($listingItem->storeProduct->product)) {
+                                $productData = $listingItem->storeProduct->product;
+                                $handle = $product['handle'];
+                                $product_code = $productData->product_sku;
+                                ManageMarketplaceProduct::updateOrCreate([
+                                    'product_id' => $listingItem->storeProduct->product_id,
+                                    'product_code' => $product_code,
+                                    'store_id' => $store->id,
+                                    'sku' => $sku,
+                                ], [
+                                    'product_id' => $listingItem->storeProduct->product_id,
+                                    'product_code' => $product_code,
+                                    'sku' => $sku,
+                                    'store_id' => $store->id,
+                                    'marketplace_product_id' => $product['id'],
+                                    'marketplace_variant_id' => $variantId,
+                                    'upload_status' => 'success',
+                                    'upload_attempts' => 1,
+                                ]);
 
-                        $listingItem->update([
-                            'store_url' => $handle,
-                            'store_sku' => $product['id'] . '-' . $variantId,
-                        ]);
-                    } else {
+                                $listingItem->update([
+                                    'store_url' => $handle,
+                                    'store_sku' => $product['id'] . '-' . $variantId,
+                                ]);
+                            }
+                        }
+                    }
+                     else {
                         $skuPart = explode('-', $sku);
                         $product_code = $skuPart[0];
                         if ($product_code) {
