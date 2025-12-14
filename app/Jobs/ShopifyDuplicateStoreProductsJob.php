@@ -18,7 +18,7 @@ class ShopifyDuplicateStoreProductsJob implements ShouldQueue
         Queueable::withChain as queueableWithChain;
     }
 
-    public $timeout = 2400;
+    public $timeout = 600000;
 
     protected $fromStoreId;
     protected $toStoreId;
@@ -46,7 +46,7 @@ class ShopifyDuplicateStoreProductsJob implements ShouldQueue
 
 //        $this->duplicateStoreProducts();
 
-        $this->duplicateListingDetails();
+//        $this->duplicateListingDetails();
     }
 
     private function setVariables()

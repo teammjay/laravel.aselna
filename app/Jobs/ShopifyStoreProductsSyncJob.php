@@ -17,6 +17,8 @@ class ShopifyStoreProductsSyncJob implements ShouldQueue
         Queueable::withChain as queueableWithChain;
     }
 
+    public $timeout = 30000;
+
     /**
      * Create a new job instance.
      */
@@ -34,6 +36,7 @@ class ShopifyStoreProductsSyncJob implements ShouldQueue
 
         $storeIds = Store::join('store_type', 'store_type.id', '=', 'store.store_type_id')
             ->where('store_type.code', 'shopify')
+            ->whereIn('store.name',['OdeMobile'])
             ->pluck('store.id');
 
         DB::connection('easyesale_db')->table('store_product')
