@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Helpers\Common;
 use App\Models\Catalog;
+use App\Models\ListingItem;
 use App\Models\ManageMarketplaceProduct;
 use App\Services\Auth\ShopifyAuthService;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -126,39 +127,20 @@ class FetchShopifyProductsJob implements ShouldQueue
                     }
                 }
 
+
                 if ($sku) {
-                    $skuPart = explode('-', $sku);
-                    $product_code = $skuPart[0];
-                    if ($product_code) {
-                        Log::info('Processing Product Code: ' . $product_code . ' for Store: ' . $store->name);
-                        $productDetails = Catalog::whereLike('product_sku', $product_code)->get();
-                        if( count($productDetails) > 1) {
-                            Log::warning('Multiple products found for SKU: ' . $product_code . ' in Store: ' . $store->name);
-                            foreach ($productDetails as $detail) {
-                                Log::info('Product ID: ' . $detail->product_id . ' - SKU: ' . $detail->product_sku);
-                                //match title by starting keyword.
-                                $firstWord = explode(' ', $productTitle)[0];
-                                Log::info('First Word from Title: ' . $firstWord);
-                                if (str_starts_with($detail->product_title, $firstWord)) {
-                                    Log::info('Matched Product: ' . $detail->product_sku . ' with Title: ' . $productTitle);
-                                    $productDetail = $detail;
-                                    break; // Use the first matching product
-                                }
-                            }
-                        } else {
-                            $productDetail = $productDetails->first();
-                        }
-                        if (!$productDetail) {
-                            Log::warning('Product not found for SKU: ' . $product_code . ' in Store: ' . $store->name);
-                            continue; // Skip to the next product if not found
-                        }
+                    $listingItem = ListingItem::where('store_sku',$sku)->first();
+                    if (isset($listingItem) && isset($listingItem->storeProduct) && isset($listingItem->storeProduct->product)) {
+                        $productData = $listingItem->storeProduct->product;
+                        $handle = $product['handle'];
+                        $product_code = $productData->product_sku;
                         ManageMarketplaceProduct::updateOrCreate([
-                            'product_id' => $productDetail->product_id,
+                            'product_id' => $listingItem->storeProduct->product_id,
                             'product_code' => $product_code,
                             'store_id' => $store->id,
                             'sku' => $sku,
                         ], [
-                            'product_id' => $productDetail->product_id,
+                            'product_id' => $listingItem->storeProduct->product_id,
                             'product_code' => $product_code,
                             'sku' => $sku,
                             'store_id' => $store->id,
@@ -168,6 +150,53 @@ class FetchShopifyProductsJob implements ShouldQueue
                             'upload_attempts' => 1,
                         ]);
 
+                        $listingItem->update([
+                            'store_url' => $handle,
+                            'store_sku' => $product['id'] . '-' . $variantId,
+                        ]);
+                    } else {
+                        $skuPart = explode('-', $sku);
+                        $product_code = $skuPart[0];
+                        if ($product_code) {
+                            Log::info('Processing Product Code: ' . $product_code . ' for Store: ' . $store->name);
+                            $productDetails = Catalog::whereLike('product_sku', $product_code)->get();
+                            if( count($productDetails) > 1) {
+                                Log::warning('Multiple products found for SKU: ' . $product_code . ' in Store: ' . $store->name);
+                                foreach ($productDetails as $detail) {
+                                    Log::info('Product ID: ' . $detail->product_id . ' - SKU: ' . $detail->product_sku);
+                                    //match title by starting keyword.
+                                    $firstWord = explode(' ', $productTitle)[0];
+                                    Log::info('First Word from Title: ' . $firstWord);
+                                    if (str_starts_with($detail->product_title, $firstWord)) {
+                                        Log::info('Matched Product: ' . $detail->product_sku . ' with Title: ' . $productTitle);
+                                        $productDetail = $detail;
+                                        break; // Use the first matching product
+                                    }
+                                }
+                            } else {
+                                $productDetail = $productDetails->first();
+                            }
+                            if (!$productDetail) {
+                                Log::warning('Product not found for SKU: ' . $product_code . ' in Store: ' . $store->name);
+                                continue; // Skip to the next product if not found
+                            }
+                            ManageMarketplaceProduct::updateOrCreate([
+                                'product_id' => $productDetail->product_id,
+                                'product_code' => $product_code,
+                                'store_id' => $store->id,
+                                'sku' => $sku,
+                            ], [
+                                'product_id' => $productDetail->product_id,
+                                'product_code' => $product_code,
+                                'sku' => $sku,
+                                'store_id' => $store->id,
+                                'marketplace_product_id' => $product['id'],
+                                'marketplace_variant_id' => $variantId,
+                                'upload_status' => 'success',
+                                'upload_attempts' => 1,
+                            ]);
+
+                        }
                     }
                 }
             }

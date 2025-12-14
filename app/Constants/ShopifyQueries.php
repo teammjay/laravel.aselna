@@ -639,6 +639,7 @@ GQL;
             nodes {
                 id
                 title
+                handle
                 variants (first: 10){
                     edges {
                         node {
