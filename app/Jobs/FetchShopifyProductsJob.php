@@ -4,7 +4,9 @@ namespace App\Jobs;
 
 use App\Helpers\Common;
 use App\Models\Catalog;
+use App\Models\GenerateProductImage;
 use App\Models\ListingItem;
+use App\Models\ListingItemProductImage;
 use App\Models\ManageMarketplaceProduct;
 use App\Services\Auth\ShopifyAuthService;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -88,7 +90,7 @@ class FetchShopifyProductsJob implements ShouldQueue
                             // Prepare for next page
                             $hasNextPage = $productsData['pageInfo']['hasNextPage'];
                             $afterCursor = $productsData['pageInfo']['endCursor'] ?? null;
-                            $this->manageProducts($allProducts, $store);
+                            $this->manageProducts($allProducts, $store, $shopifyAuth);
                             Log::info('End Cursor: ' . $afterCursor);
 //                            $hasNextPage = false;
                         } else {
@@ -111,7 +113,7 @@ class FetchShopifyProductsJob implements ShouldQueue
         }
     }
 
-    private function manageProducts($products, $store)
+    private function manageProducts($products, $store, $shopifyAuthService)
     {
         if (isset($products)) {
             foreach ($products as $product) {
@@ -150,6 +152,7 @@ class FetchShopifyProductsJob implements ShouldQueue
                                     'marketplace_variant_id' => $variantId,
                                     'upload_status' => 'success',
                                     'upload_attempts' => 1,
+                                    'upc_code' => $listingItem->upc,
                                 ]);
 
                                 $listingItem->update([
@@ -157,6 +160,9 @@ class FetchShopifyProductsJob implements ShouldQueue
                                     'store_sku' => $product['id'] . '-' . $variantId,
                                 ]);
                             }
+
+                            $oldImages = $shopifyAuthService->getProductImages($product['id']);
+                            $this->handleMediaImages($oldImages['data']['product'], $listingItem);
                         }
                     }
                      else {
@@ -208,4 +214,40 @@ class FetchShopifyProductsJob implements ShouldQueue
         }
 
     }
+
+    private function handleMediaImages($product, $listingItem)
+    {
+        $media = $product['media']['nodes'];
+        Log::info('No of Media Items: ' . json_encode($media));
+        foreach ($media as $mediaItem) {
+            if ($mediaItem['mediaContentType'] == 'IMAGE') {
+                if (!isset($mediaItem['preview']['image']['url'])) {
+                    continue;
+                }
+                Log::info('Media Image: ' . json_encode($mediaItem));
+                $imageUrl = $mediaItem['preview']['image']['url'];
+                if (ListingItemProductImage::where('listing_item_id', $listingItem->id)->where('path', $imageUrl)->exists()) {
+                    continue;
+                }
+                $altText = $mediaItem['alt'] ?? '';
+                Log::info('Image URL: ' . $imageUrl);
+                $generatedImage = GenerateProductImage::where('product_image_id', $altText)
+                    ->first();
+                if (isset($generatedImage)) {
+                    ListingItemProductImage::updateOrCreate([
+                        'listing_item_id' => $listingItem->id,
+                        'path' => $imageUrl,
+                    ], [
+                        'listing_item_id' => $listingItem->id,
+                        'product_image_id' => $generatedImage->product_image_id,
+                        'main_image' => $generatedImage->main_image,
+                        'image_file_system_id' => $generatedImage->image_file_system_id,
+                        'reference_id' => $generatedImage->reference_id,
+                        'path' => $imageUrl,
+                    ]);
+                }
+            }
+        }
+    }
+
 }
