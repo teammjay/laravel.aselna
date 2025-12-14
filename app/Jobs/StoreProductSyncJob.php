@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Models\Catalog;
+use App\Models\Store;
 use App\Models\StoreProduct;
 use Exception;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -32,6 +33,11 @@ class StoreProductSyncJob implements ShouldQueue
     public function handle(): void
     {
         $this->updateTrackingRecord(['tags' => 'Store Products']);
+
+        $storeIds = Store::join('store_type', 'store_type.id', '=', 'store.store_type_id')
+            ->where('store_type.code', 'shopify')
+            ->whereIn('store.name',['OdeMobile'])
+            ->pluck('store.id');
 
         $storeProductsQ = DB::connection('easyesale_db')->table('store_product')->orderBy('id');
 
