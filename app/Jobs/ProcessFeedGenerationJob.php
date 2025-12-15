@@ -525,6 +525,11 @@ class ProcessFeedGenerationJob implements ShouldQueue
                             $listitem->update(['url' => $item_url->url_path]);
                         }
 
+                        $productTitle = NULL;
+                        if(isset($listitem->title) && $listitem->title != NULL){
+                            $productTitle = $listitem->title;
+                        }
+
                         $typeDetail = ProductType::with('parent')->where('id', $itemDetail->product->product_type)->first();
                         $product_type = $this->getCategoryPath($typeDetail);
 
@@ -550,10 +555,13 @@ class ProcessFeedGenerationJob implements ShouldQueue
                                 $item_detail = ListingItemDetail::where('listing_item_id', $listitem->id)
                                     ->where('device_id', $device->id)->first();
 
-                                if (strtolower($device->brand->name) == 'apple') {
-                                    $productTitle = $device->name . ' - ' . $title . ' - ' . $this->storeDetail->short_code . $itemDetail->product->product_sku;
-                                } else {
-                                    $productTitle = $device->brand->name . ' ' . $device->name . ' - ' . $title . ' - ' . $this->storeDetail->short_code . $itemDetail->product->product_sku;
+                                if($productTitle == NULL) {
+
+                                    if (strtolower($device->brand->name) == 'apple') {
+                                        $productTitle = $device->name . ' - ' . $title . ' - ' . $this->storeDetail->short_code . $itemDetail->product->product_sku;
+                                    } else {
+                                        $productTitle = $device->brand->name . ' ' . $device->name . ' - ' . $title . ' - ' . $this->storeDetail->short_code . $itemDetail->product->product_sku;
+                                    }
                                 }
 
                                 $final_description = $device->brand->name . ' ' . $device->name . ' - ' . $title . ' - ' . $this->storeDetail->short_code . $itemDetail->product->product_sku. ' for ' . $device->name . '. ' . $product_description;
