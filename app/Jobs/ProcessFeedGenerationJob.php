@@ -498,7 +498,7 @@ class ProcessFeedGenerationJob implements ShouldQueue
 
                 $keywords = ProductTitleKeyword::select('product_id', 'keyword')->where('product_id', $itemDetail->product_id)->orderBy('priority', 'asc')->limit(6)->get();
                 $title = '';
-                $productTitle = NULL;
+                $itemProductTitle = NULL;
                 $title_keyword = [];
                 if (!empty($keywords)) {
                     foreach ($keywords as $key => $val) {
@@ -508,7 +508,7 @@ class ProcessFeedGenerationJob implements ShouldQueue
                 }
 
                 if (isset($itemDetail->title)) {
-                    $productTitle = $title = $itemDetail->title;
+                    $itemProductTitle = $title = $itemDetail->title;
                 }
 
                 $custom_label_3_prefix = '';
@@ -566,6 +566,8 @@ class ProcessFeedGenerationJob implements ShouldQueue
                                 Log::info('Processing compatible device ID: ' . $device->id . ' for listing item ID: ' . $listitem->id);
                                 $item_detail = ListingItemDetail::where('listing_item_id', $listitem->id)
                                     ->where('device_id', $device->id)->first();
+
+                                $productTitle = $itemProductTitle;
 
                                 if(isset($item_detail->title) && $item_detail->title != NULL){
                                     $productTitle = $item_detail->title;
