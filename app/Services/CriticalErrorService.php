@@ -101,7 +101,7 @@ class CriticalErrorService
             Mail::mailer('custom_smtp')->raw(json_encode($errorData['context']),
                 function ($message) use ($errorData, $sendTo, $cc_emails) {
                     $message->to($sendTo)
-                        ->cc($cc_emails)
+                        //->cc($cc_emails)
                         ->subject("Critical Alert : {$errorData['message']}");
                 }
             );
