@@ -296,6 +296,11 @@ class ProcessFeedGenerationJob implements ShouldQueue
             $key = trim((string)$specification->name);
             $value = ucfirst(trim((string)$specification->calculated_value()));
 
+            // if value contains , replace with -
+            if (strpos($value, ',') !== false) {
+                $value = str_replace(',', ' - ', $value);
+            }
+
             if ($section === '' || $key === '' || $value === '') {
                 continue;
             }
@@ -581,21 +586,17 @@ class ProcessFeedGenerationJob implements ShouldQueue
                                 }
 
                                 if($productTitle == NULL) {
-
-                                    if (strtolower($device->brand->name) == 'apple') {
-                                        $productTitle = $device->name . ' - ' . $title . ' - ' . $this->storeDetail->short_code . $itemDetail->product->product_sku;
-                                    } else {
-                                        $productTitle = $device->brand->name . ' ' . $device->name . ' - ' . $title . ' - ' . $this->storeDetail->short_code . $itemDetail->product->product_sku;
-                                    }
-                                } else {
-                                    if (strtolower($device->brand->name) == 'apple') {
-                                        $productTitle = $device->name . ' - ' . $productTitle;
-                                    } else {
-                                        $productTitle = $device->brand->name . ' ' . $device->name . ' - ' . $productTitle;
-                                    }
+                                    $productTitle = $title . '  - ' . $this->storeDetail->short_code . $itemDetail->product->product_sku;
                                 }
 
-                                $final_description = $device->brand->name . ' ' . $device->name . ' - ' . $title . '  - ' . $this->storeDetail->short_code . $itemDetail->product->product_sku. ' for ' . $device->name . '. ' . $product_description;
+                                $final_description = $device->brand->name . ' ' . $device->name . ' - ' . $productTitle . '  - ' . ' for ' . $device->name . '. ' . $product_description;
+
+                                if (strtolower($device->brand->name) == 'apple') {
+                                    $productTitle = $device->name . ' - ' . $productTitle;
+                                } else {
+                                    $productTitle = $device->brand->name . ' ' . $device->name . ' - ' . $productTitle;
+                                }
+
 
                                 if (!$item_detail) {
                                     Log::info('Inserting new listing item detail for listing item ID: ' . $listitem->id . ' and device ID: ' . $device->id);
