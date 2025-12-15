@@ -585,6 +585,12 @@ class ProcessFeedGenerationJob implements ShouldQueue
                                     } else {
                                         $productTitle = $device->brand->name . ' ' . $device->name . ' - ' . $title . ' - ' . $this->storeDetail->short_code . $itemDetail->product->product_sku;
                                     }
+                                } else {
+                                    if (strtolower($device->brand->name) == 'apple') {
+                                        $productTitle = $device->name . ' - ' . $productTitle;
+                                    } else {
+                                        $productTitle = $device->brand->name . ' ' . $device->name . ' - ' . $productTitle;
+                                    }
                                 }
 
                                 $final_description = $device->brand->name . ' ' . $device->name . ' - ' . $title . '  - ' . $this->storeDetail->short_code . $itemDetail->product->product_sku. ' for ' . $device->name . '. ' . $product_description;
