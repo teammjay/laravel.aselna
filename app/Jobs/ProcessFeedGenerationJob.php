@@ -475,7 +475,7 @@ class ProcessFeedGenerationJob implements ShouldQueue
                 ->chunk(100, function ($keyFeatures) use (&$product_description) {
                     foreach ($keyFeatures as $feature) {
                         if (isset($feature->value)) {
-                            $product_description .= trim((string)$feature->value) . '. ';
+                            $product_description .= trim((string)$feature->value) . ' ';
                         }
                     }
                 });
