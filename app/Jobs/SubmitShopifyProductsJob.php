@@ -614,7 +614,6 @@ class SubmitShopifyProductsJob implements ShouldQueue
         if (!isset($product_exist)) {
             $sPr = [
                 'product_id' => $productData->product_id,
-                'title' => $productData->product_title,
                 'store_type_category_id' => $productData->product_type,
                 'price' => $productData->product_marketplace_price,
                 'msrp' => $productData->product_msrp,
@@ -635,7 +634,6 @@ class SubmitShopifyProductsJob implements ShouldQueue
                 ],
                 [
                     'store_product_id' => $product_exist->id,
-                    'title' => $productData->product_title,
                     'description' => $productData->product_description ?? '',
                     'price' => $productData->product_marketplace_price,
                     'quantity' => ($store->default_listing_quantity) ?: 10,
