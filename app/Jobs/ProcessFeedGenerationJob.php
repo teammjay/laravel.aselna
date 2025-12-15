@@ -17,7 +17,9 @@ use App\Models\ProductKeyFeatures;
 use App\Models\ProductSpecification;
 use App\Models\ProductTitleKeyword;
 use App\Models\ProductType;
+use App\Models\ProductTypeStoreTypeCATLink;
 use App\Models\Store;
+use App\Models\StoreCategory;
 use App\Models\StoreDeviceType;
 use App\Models\StoreNavigationPage;
 use App\Models\StoreProduct;
@@ -283,7 +285,7 @@ class ProcessFeedGenerationJob implements ShouldQueue
     private function generateProductDetail($product_id, $store_type_id)
     {
 
-        $productSpecification = ProductSpecification::where('product_id', $product_id)->where('store_type_id', $store_type_id)->get();
+        $productSpecification = ProductSpecification::where('product_id', $product_id)->where('store_type_id', $store_type_id)->orderBy('name','asc')->get();
         $section = 'General';
         $kvSep = ':';
         $pairSep = ',';
@@ -487,12 +489,16 @@ class ProcessFeedGenerationJob implements ShouldQueue
             $product_description = trim($product_description);
 
             //$ptype_id = (isset($itemDetail->StoreTypeCategory) && !empty($itemDetail->StoreTypeCategory)) ? $itemDetail->StoreTypeCategory->store_type_code : '';
-            $ptype_id = 264;
+
             $product_type = '';
             if (isset($itemDetail->product)) {
                 $product_code = $itemDetail->product->product_sku;
+                $ptype_id = $this->getProductCategoryCode($itemDetail->product->product_type);
+                if (!isset($ptype_id)) $ptype_id = 264;
+
                 $keywords = ProductTitleKeyword::select('product_id', 'keyword')->where('product_id', $itemDetail->product_id)->orderBy('priority', 'asc')->limit(6)->get();
                 $title = '';
+                $productTitle = NULL;
                 $title_keyword = [];
                 if (!empty($keywords)) {
                     foreach ($keywords as $key => $val) {
@@ -500,6 +506,17 @@ class ProcessFeedGenerationJob implements ShouldQueue
                     }
                     $title = implode(' ', $title_keyword);
                 }
+
+                if (isset($itemDetail->title)) {
+                    $productTitle = $title = $itemDetail->title;
+                }
+
+                $custom_label_3_prefix = '';
+                $singular_name = $itemDetail->product->productType->singular_name ?? '';
+                if ($singular_name != '') {
+                    $custom_label_3_prefix = $singular_name . ' for ';
+                }
+
 
                 $prodDetail = $this->generateProductDetail($itemDetail->product_id, $this->store_type_detail->id);
 
@@ -550,17 +567,19 @@ class ProcessFeedGenerationJob implements ShouldQueue
                                 $item_detail = ListingItemDetail::where('listing_item_id', $listitem->id)
                                     ->where('device_id', $device->id)->first();
 
-                                $productTitle = NULL;
                                 if(isset($item_detail->title) && $item_detail->title != NULL){
                                     $productTitle = $item_detail->title;
                                 }
+                                $custom_label_3 = '';
 
                                 if($productTitle == NULL) {
 
                                     if (strtolower($device->brand->name) == 'apple') {
                                         $productTitle = $device->name . ' - ' . $title . ' - ' . $this->storeDetail->short_code . $itemDetail->product->product_sku;
+                                        $custom_label_3 = $custom_label_3_prefix . $device->name;
                                     } else {
                                         $productTitle = $device->brand->name . ' ' . $device->name . ' - ' . $title . ' - ' . $this->storeDetail->short_code . $itemDetail->product->product_sku;
+                                        $custom_label_3 = $custom_label_3_prefix . $device->brand->name . ' ' . $device->name;
                                     }
                                 }
 
@@ -582,7 +601,7 @@ class ProcessFeedGenerationJob implements ShouldQueue
 
                                 // item group id logic
                                 //$itemGroupId = $item_detail->sku . '-' . $device->code;
-                                $itemGroupId = $listitem->sku . '-' . $device->code;
+                                $itemGroupId = $listitem->sku . '-' . $device->code ;
 
                                 fputcsv($this->fileHandle, [
                                     $item_detail->sku,
@@ -610,7 +629,7 @@ class ProcessFeedGenerationJob implements ShouldQueue
                                     (isset($item_detail->device->brand->name)) ? $item_detail->device->brand->name : '',
                                     (isset($item_detail->device->name)) ? $item_detail->device->name : '',
                                     '',
-                                    ($itemDetail->overwrite_title) ? $itemDetail->title : $itemDetail->product->product_title,
+                                    $custom_label_3,
                                     (isset($itemDetail->product->product_sku)) ? $itemDetail->product->product_sku : '',
                                     $prodDetail
                                 ]);
@@ -640,5 +659,22 @@ class ProcessFeedGenerationJob implements ShouldQueue
                 }
             }
         }
+    }
+
+    private function getProductCategoryCode($id)
+    {
+        $category = ProductType::find($id);
+        while (isset($category) && $category->parent_id != null) {
+            $parentCategory = ProductType::find($category->parent_id);
+            $category = $parentCategory;
+        }
+
+        $categorycode =  ProductTypeStoreTypeCATLink::join('store_type_category', 'store_type_category.id', '=', 'product_type_store_type_cat_link.store_type_category_id')
+            ->where('store_type_category.store_type_id', $this->store_type_detail->id)
+            ->where('product_type_id' , $category->id)
+            ->select('store_type_category.code')
+            ->first();
+
+        return $categorycode ? $categorycode->code : '';
     }
 }
