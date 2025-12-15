@@ -572,14 +572,18 @@ class ProcessFeedGenerationJob implements ShouldQueue
                                 }
                                 $custom_label_3 = '';
 
+                                if (strtolower($device->brand->name) == 'apple') {
+                                    $custom_label_3 = $custom_label_3_prefix . $device->name;
+                                } else {
+                                    $custom_label_3 = $custom_label_3_prefix . $device->brand->name . ' ' . $device->name;
+                                }
+
                                 if($productTitle == NULL) {
 
                                     if (strtolower($device->brand->name) == 'apple') {
                                         $productTitle = $device->name . ' - ' . $title . ' - ' . $this->storeDetail->short_code . $itemDetail->product->product_sku;
-                                        $custom_label_3 = $custom_label_3_prefix . $device->name;
                                     } else {
                                         $productTitle = $device->brand->name . ' ' . $device->name . ' - ' . $title . ' - ' . $this->storeDetail->short_code . $itemDetail->product->product_sku;
-                                        $custom_label_3 = $custom_label_3_prefix . $device->brand->name . ' ' . $device->name;
                                     }
                                 }
 
@@ -669,7 +673,7 @@ class ProcessFeedGenerationJob implements ShouldQueue
             $category = $parentCategory;
         }
 
-        $categorycode =  ProductTypeStoreTypeCATLink::join('store_type_category', 'store_type_category.id', '=', 'product_type_store_type_cat_link.store_type_category_id')
+        $categorycode =  ProductTypeStoreTypeCATLink::join('store_type_category', 'store_type_category.id', '=', 'product_type_store_type_category_link.channel_category_id')
             ->where('store_type_category.store_type_id', $this->store_type_detail->id)
             ->where('product_type_id' , $category->id)
             ->select('store_type_category.code')
