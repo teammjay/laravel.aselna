@@ -846,7 +846,7 @@
                             }
                         });
                         $('.no_of_errors').each(function () {
-                            console.log($(this).data('error'));
+                            //console.log($(this).data('error'));
                             if($(this).data('error') != '0'){
                                 product_errors = true;
                             }
@@ -1037,7 +1037,7 @@
                                 flag = true;
                             }
                         });
-                        console.log(flag);
+                        //console.log(flag);
                         if(flag){
                             alert('The title length is greater than maximum length so product can not generated');
                             return false;
@@ -1397,7 +1397,7 @@
                 if($(this).data('bs-dismiss') === 'modal') {
                     var $modal = $(this).closest('.modal');
                     var modalId = $modal.attr('id');
-                    console.log(modalId);
+                    //console.log(modalId);
                     $('#' + modalId).modal('hide');
                 }
             })
@@ -2780,7 +2780,7 @@
                     'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                 },
                 success: function (response) {
-                    console.log(response);
+                    //console.log(response);
                     if (response.html) {
                         $('#productsTable2_wrapper').html(response.html);
                         generateKeywords();
@@ -2899,8 +2899,10 @@
                     },
                     success: function (response) {
                         if (response.success) {
+
+                            let vdata = response.vdata;
+                            let data = response.data;
                             if(response.option) {
-                                let data = response.data;
                                 $('#series_search_text').val(response.option);
 
                                 $('#series_search_text').autocomplete({
@@ -2912,6 +2914,18 @@
                                     minLength: 0,
                                     select: function (event, ui) {
                                         $('#series_search_text').val(ui.item.label);
+                                        selectedIndex = data.display.findIndex(
+                                            item => item.label === ui.item.label
+                                        );
+
+                                        if (selectedIndex === null) return;
+
+                                        let source = vdata.display;
+
+                                        if (source[selectedIndex]) {
+                                            $('#series_replace_value').val(source[selectedIndex].label);
+                                        }
+
                                         return false;
                                     }
                                 }).focus(function () {
@@ -2922,7 +2936,7 @@
                             }
 
                             if(response.voption){
-                                let vdata = response.vdata;
+
                                 $('#series_replace_value').val(response.voption);
 
                                 $('#series_replace_value').autocomplete({
@@ -3226,10 +3240,10 @@
         function bindRefreshButtons() {
             $(document).off('click', '.refreshErrorsBtn'); // Prevent duplicate binding
             $(document).on('click', '.refreshErrorsBtn', function () {
-                console.log("Listener working!");
+                //console.log("Listener working!");
 
                 var productId = $(this).data('pid');
-                console.log('stc-' + productId);
+                //console.log('stc-' + productId);
                 $('.stc-' + productId).trigger('change');
             });
 
@@ -3250,7 +3264,7 @@
 
         function updateSpecification(product_ids, category_ids){
 
-            console.log(product_ids);
+            //console.log(product_ids);
 
             var $openModal = $('.modal.show');
             var modalID = $openModal.attr('id');
