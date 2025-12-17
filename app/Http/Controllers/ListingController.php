@@ -1323,8 +1323,10 @@ class ListingController extends Controller
                         ],[]);
                     }
                 }
-
-                $searchReplaceArr = DeviceSeriesSearchReplace::whereIn('device_series_id',$device_series)->get();
+                $searchReplaceArr = [];
+                if($device_series) {
+                    $searchReplaceArr = DeviceSeriesSearchReplace::whereIn('device_series_id', $device_series)->get();
+                }
 
                 $prod_image = [];
                 foreach ($product_ids as $key => $product_id) {
@@ -2473,11 +2475,19 @@ class ListingController extends Controller
 
             //$groupModels = $this->groupFormatedDeviceModels($cleanModels);
             $clean = $this->compressModels($cleanModels);
-            $groupModels = $this->normalize_model_series($clean);
+            if(is_array($clean)) {
+                $groupModels = $this->normalize_model_series($clean, $prefix);
+            }else{
+                $groupModels = $clean;
+            }
 
             if($groupModels){
 
-                $finalModel = implode($device_seperator,$groupModels);
+                if(is_array($groupModels)) {
+                    $finalModel = implode($deviceSeparator, $groupModels);
+                }else{
+                    $finalModel = $groupModels;
+                }
 
                 if (strtolower($brand) == 'apple') {
                     $compressedDevices[$brand] = "$prefix $finalModel";
@@ -3225,7 +3235,7 @@ class ListingController extends Controller
         // normalize
         $models = array_values(array_filter(array_map('trim', $models)));
         if (count($models) === 0) return '';
-        if (count($models) === 1) return $models[0];
+        if (count($models) === 1) return $models;
 
         // split into token arrays
         $split = array_map(fn($m) => preg_split('/\s+/', $m), $models);
@@ -3539,9 +3549,14 @@ class ListingController extends Controller
         return $result;
     }
 
-    function normalize_model_series(array $models)
+    private function normalize_model_series(array $models, $prefix)
     {
-        $knownSpecialSeries = ['XR','XS','SE','G'];
+        $knownSpecialSeries = ['XR','XS','SE'];
+
+        /*echo '<pre>';
+        echo $prefix;
+        print_r($models);
+        echo '</pre>';*/
 
         $result = [];
         $currentSeries = null;
@@ -3551,10 +3566,7 @@ class ListingController extends Controller
             $model = trim($model);
             if ($model === '') continue;
 
-            $tokens = preg_split('/\s+/', $model);
-            $first = $tokens[0];
-
-            if (preg_match('/^(Tab\s*)?(S|A|M)\d+[A-Za-z]*/i', $model)) {
+            if (preg_match('/^(?:Galaxy\s+)?(?:Tab\s+)?(S|A|M)\d+[A-Za-z]*/i', $model)) {
 
                 preg_match('/(S|A|M)\d+[A-Za-z]*/i', $model, $pm);
                 $prefix = $pm[0];
@@ -3562,25 +3574,60 @@ class ListingController extends Controller
                 if ($prefix !== $currentSeries) {
                     $currentSeries = $prefix;
                     $result[] = $model;
-                    $seriesPattern = '/^(Tab\s*)?' . preg_quote($prefix, '/') . '\s*/i';
-                    $seenTokens[$prefix] = [];
+                    $seenTokens[$currentSeries] = [];
                     continue;
                 }
 
-                $clean = trim(preg_replace($seriesPattern, '', $model));
-                $key = strtolower($clean);
+                $clean = trim(preg_replace(
+                    '/^(?:Galaxy\s+)?(?:Tab\s+)?' . preg_quote($prefix, '/') . '\s*/i',
+                    '',
+                    $model
+                ));
 
+                $key = strtolower($clean);
                 if (!in_array($key, $seenTokens[$currentSeries])) {
                     $result[] = $clean;
                     $seenTokens[$currentSeries][] = $key;
                 }
+
                 continue;
             }
 
+            $tokens = preg_split('/\s+/', $model);
+            $first = $tokens[0];
+            $sec = $tokens[1] ?? null;
+
+//            if (preg_match('/^(Tab\s*)?(S|A|M)\d+[A-Za-z]*/i', $model)) {
+//
+//                preg_match('/(S|A|M)\d+[A-Za-z]*/i', $model, $pm);
+//                $prefix = $pm[0];
+//
+//                if ($prefix !== $currentSeries) {
+//                    $currentSeries = $prefix;
+//                    $result[] = $model;
+//                    $seriesPattern = '/^(Tab\s*)?' . preg_quote($prefix, '/') . '\s*/i';
+//                    $seenTokens[$prefix] = [];
+//                    continue;
+//                }
+//
+//                $clean = trim(preg_replace($seriesPattern, '', $model));
+//                $key = strtolower($clean);
+//
+//                if (!in_array($key, $seenTokens[$currentSeries])) {
+//                    $result[] = $clean;
+//                    $seenTokens[$currentSeries][] = $key;
+//                }
+//                continue;
+//            }
             if (preg_match('/^[0-9]+[a-zA-Z]*$/', $first)) {
                 $currentSeries = $first;
-                $result[] = $first;
-                $seenTokens[$currentSeries] = [ strtolower($first) ];
+                if($sec == '5G'){
+                    $result[] = $first;
+                    $seenTokens[$currentSeries] = [strtolower($first)];
+                }else {
+                    $result[] = $model;
+                    $seenTokens[$currentSeries] = [strtolower($model)];
+                }
                 continue;
             }
 
@@ -3604,15 +3651,41 @@ class ListingController extends Controller
                 continue;
             }
 
-            foreach ($tokens as $tok) {
-                $key = strtolower($tok);
+            /*$clean = $model;
+            $key   = strtolower($clean);*/
 
-                $result[] = $tok;
+            /*echo '<pre>';
+            print_r($seenTokens);
+            print_r($currentSeries);
+            echo '</pre>';*/
+
+            /*if (!in_array($key, $seenTokens[$currentSeries])) {
+                $result[] = $clean;
+                $seenTokens[$currentSeries][] = $key;
+            }*/
+
+            if($prefix == 'iPhone') {
+                foreach ($tokens as $tok) {
+                    $key = strtolower($tok);
+
+                    if (!in_array($key, $seenTokens[$currentSeries])) {
+                        $result[] = $tok;
+                        $seenTokens[$currentSeries][] = $key;
+                    }
+                }
+            }else{
+                $clean = $model;
+                $key   = strtolower($clean);
                 if (!in_array($key, $seenTokens[$currentSeries])) {
+                    $result[] = $clean;
                     $seenTokens[$currentSeries][] = $key;
                 }
             }
         }
+
+        /*echo '<pre>';
+        print_r($result);
+        echo '</pre>';die;*/
 
         return $result;
     }
@@ -3817,9 +3890,12 @@ class ListingController extends Controller
             }
 
             //$groupModels = $this->groupFormatedDeviceModels($cleanModels);
-
             $clean = $this->compressModels($cleanModels);
-            $groupModels = $this->normalize_model_series($clean);
+            if(is_array($clean)) {
+                $groupModels = $this->normalize_model_series($clean, $prefix);
+            }else{
+                $groupModels = $clean;
+            }
 
             /*echo '<pre>';
             print_r($groupModels);

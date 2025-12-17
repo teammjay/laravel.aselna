@@ -2902,7 +2902,7 @@
 
                             let vdata = response.vdata;
                             let data = response.data;
-                            if(response.option) {
+                            if(response.option != "") {
                                 $('#series_search_text').val(response.option);
 
                                 $('#series_search_text').autocomplete({
@@ -2932,10 +2932,13 @@
                                     $('#series_search_text').keydown();
                                 });
                             }else{
-                                $('#series_replace_value').val('');
+                                $('#series_search_text').val('');
+                                if ($('#series_search_text').length && $('#series_search_text').data('ui-autocomplete')) {
+                                    $("#series_search_text").autocomplete('destroy');
+                                }
                             }
 
-                            if(response.voption){
+                            if(response.voption != ""){
 
                                 $('#series_replace_value').val(response.voption);
 
@@ -2955,6 +2958,9 @@
                                 });
                             }else{
                                 $('#series_replace_value').val('');
+                                if ($('#series_replace_value').length && $('#series_replace_value').data('ui-autocomplete')) {
+                                    $("#series_replace_value").autocomplete('destroy');
+                                }
                             }
                         }
                     },
