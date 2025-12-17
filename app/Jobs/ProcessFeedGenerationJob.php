@@ -574,9 +574,6 @@ class ProcessFeedGenerationJob implements ShouldQueue
 
                                 $productTitle = $itemProductTitle;
 
-                                if(isset($item_detail->title) && $item_detail->title != NULL){
-                                    $productTitle = $item_detail->title;
-                                }
                                 $custom_label_3 = '';
 
                                 if (strtolower($device->brand->name) == 'apple') {
@@ -589,7 +586,7 @@ class ProcessFeedGenerationJob implements ShouldQueue
                                     $productTitle = $title . '  - ' . $this->storeDetail->short_code . $itemDetail->product->product_sku;
                                 }
 
-                                $final_description = $device->brand->name . ' ' . $device->name . ' - ' . $productTitle . '  - ' . ' for ' . $device->name . '. ' . $product_description;
+                                $final_description = $device->brand->name . ' ' . $device->name . ' - ' . $productTitle . ' for ' . $device->name . '. ' . $product_description;
 
                                 if (strtolower($device->brand->name) == 'apple') {
                                     $productTitle = $device->name . ' - ' . $productTitle;
@@ -674,19 +671,23 @@ class ProcessFeedGenerationJob implements ShouldQueue
         }
     }
 
-    private function getProductCategoryCode($id)
+    public function getProductCategoryCode($id)
     {
-        $category = ProductType::find($id);
+        $category = ProductType::where('id',$id)->first();
         while (isset($category) && $category->parent_id != null) {
-            $parentCategory = ProductType::find($category->parent_id);
+            $parentCategory = ProductType::where('id',$category->parent_id)->first();
+
+            $categorycode =  ProductTypeStoreTypeCATLink::join('store_type_category', 'store_type_category.id', '=', 'product_type_store_type_category_link.channel_category_id')
+                ->where('store_type_category.store_type_id', $this->store_type_detail->id)
+                ->where('product_type_id' , $category->id)
+                ->select('store_type_category.code')
+                ->first();
+
+            if (isset($categorycode)) {
+                return $categorycode->code;
+            }
             $category = $parentCategory;
         }
-
-        $categorycode =  ProductTypeStoreTypeCATLink::join('store_type_category', 'store_type_category.id', '=', 'product_type_store_type_category_link.channel_category_id')
-            ->where('store_type_category.store_type_id', $this->store_type_detail->id)
-            ->where('product_type_id' , $category->id)
-            ->select('store_type_category.code')
-            ->first();
 
         return $categorycode ? $categorycode->code : '';
     }
