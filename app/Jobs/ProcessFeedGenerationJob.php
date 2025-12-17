@@ -207,7 +207,7 @@ class ProcessFeedGenerationJob implements ShouldQueue
             CriticalErrorService::report('Error processing feed generation', [
                 'marketplace' => $this->storeDetail->storeType->name ?? '',
                 'reason' => $e->getMessage() ?? 'Unknown',
-            ],['store_id' => $this->store_id]);
+            ], ['store_id' => $this->store_id]);
 
             Log::error('Error processing feed generation: ' . $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine());
         }
@@ -285,7 +285,7 @@ class ProcessFeedGenerationJob implements ShouldQueue
     private function generateProductDetail($product_id, $store_type_id)
     {
 
-        $productSpecification = ProductSpecification::where('product_id', $product_id)->where('store_type_id', $store_type_id)->orderBy('name','asc')->get();
+        $productSpecification = ProductSpecification::where('product_id', $product_id)->where('store_type_id', $store_type_id)->orderBy('name', 'asc')->get();
         $section = 'General';
         $kvSep = ':';
         $pairSep = ',';
@@ -314,8 +314,8 @@ class ProcessFeedGenerationJob implements ShouldQueue
 
     private function getCompatibleDevices($product_id, $devices, $deviceSeries)
     {
-        $excludedRating = DeviceRating::whereIn('value',[8])->pluck('id')->toArray();
-        $includedRatings = DeviceRating::whereIn('value',[1,2,9,10])->pluck('id')->toArray();
+        $excludedRating = DeviceRating::whereIn('value', [8])->pluck('id')->toArray();
+        $includedRatings = DeviceRating::whereIn('value', [1, 2, 9, 10])->pluck('id')->toArray();
         Log::info('Excluded Device Ratings: ' . json_encode($excludedRating));
         $query = Device::select('device.*', 'product_interface.product_id')->with('brand', 'rating')->with('deviceType', 'deviceSeries');
         $query->leftJoin('device_interface', 'device_interface.device_id', '=', 'device.id');
@@ -449,7 +449,8 @@ class ProcessFeedGenerationJob implements ShouldQueue
         }
     }
 
-     public function getFilePath ($index) {
+    public function getFilePath($index)
+    {
         return $this->directory . '/' . $this->fileNameBase . "_part{$index}." . $this->fileExtension;
     }
 
@@ -481,7 +482,7 @@ class ProcessFeedGenerationJob implements ShouldQueue
                 ->orderBy('sort_order', 'asc')
                 ->chunk(100, function ($keyFeatures) use (&$product_description) {
                     foreach ($keyFeatures as $feature) {
-                        if (isset($feature->value)) {
+                        if (isset($feature->value) && !empty($feature->value)) {
                             $product_description .= trim((string)$feature->value) . ' ';
                         }
                     }
@@ -582,17 +583,32 @@ class ProcessFeedGenerationJob implements ShouldQueue
                                     $custom_label_3 = $custom_label_3_prefix . $device->brand->name . ' ' . $device->name;
                                 }
 
-                                if($productTitle == NULL) {
-                                    $productTitle = $title . '  - ' . $this->storeDetail->short_code . $itemDetail->product->product_sku;
+                                if ($productTitle == NULL) {
+                                    $productTitle = $title . ' - ' . $this->storeDetail->short_code . $itemDetail->product->product_sku;
                                 }
 
-                                $final_description = $device->brand->name . ' ' . $device->name . ' - ' . $productTitle . ' for ' . $device->name . '. ' . $product_description;
+                                $final_description = $device->brand->name . ' ' . $device->name . ' - ' . $title . '  - ' . $this->storeDetail->short_code . $itemDetail->product->product_sku . ' for ' . $device->name . '. ' . $product_description;
 
-                                if (strtolower($device->brand->name) == 'apple') {
-                                    $productTitle = $device->name . ' - ' . $productTitle;
-                                } else {
-                                    $productTitle = $device->brand->name . ' ' . $device->name . ' - ' . $productTitle;
+                                if ($this->can_add_device_to_title($productTitle, $device)) {
+                                    if (strpos($productTitle, ' ') !== false &&
+                                        (str_contains(strtolower($this->storeDetail->store_url), 'accessorychoice') || str_contains(strtolower($this->storeDetail->store_url), 'accessorywiz')
+                                            || str_contains(strtolower($this->storeDetail->store_url), 'aselna') || str_contains(strtolower($this->storeDetail->store_url), 'neva'))) {
+                                        $productTitle = str_replace(',', ' for ' . $device->brand->name . ' ' . $device->name . ' -', $productTitle);
+                                    } else {
+                                        $deviceType = $device->deviceType;
+                                        if ($deviceType->code != 1 && $deviceType->code != 2) {
+                                            // Smartphone or Tablet
+                                            $productTitle = $device->brand->name . ' ' . $device->name . ' Compatible ' . $productTitle;
+                                        } else {
+                                            $productTitle = $device->brand->name . ' ' . $device->name . ' - ' . $productTitle;
+                                        }
+                                    }
                                 }
+
+                                $productTitle = str_replace('Apple ', '', $productTitle);
+                                $productTitle = str_replace('apple', '', $productTitle);
+                                $productTitle = trim($productTitle);
+                                $productTitle = str_replace(' +', ' ', $productTitle);
 
 
                                 if (!$item_detail) {
@@ -611,7 +627,7 @@ class ProcessFeedGenerationJob implements ShouldQueue
 
                                 // item group id logic
                                 //$itemGroupId = $item_detail->sku . '-' . $device->code;
-                                $itemGroupId = $listitem->sku . '-' . $device->code ;
+                                $itemGroupId = $listitem->sku . '-' . $device->code;
 
                                 fputcsv($this->fileHandle, [
                                     $item_detail->sku,
@@ -673,13 +689,13 @@ class ProcessFeedGenerationJob implements ShouldQueue
 
     public function getProductCategoryCode($id)
     {
-        $category = ProductType::where('id',$id)->first();
+        $category = ProductType::where('id', $id)->first();
         while (isset($category) && $category->parent_id != null) {
-            $parentCategory = ProductType::where('id',$category->parent_id)->first();
+            $parentCategory = ProductType::where('id', $category->parent_id)->first();
 
-            $categorycode =  ProductTypeStoreTypeCATLink::join('store_type_category', 'store_type_category.id', '=', 'product_type_store_type_category_link.channel_category_id')
+            $categorycode = ProductTypeStoreTypeCATLink::join('store_type_category', 'store_type_category.id', '=', 'product_type_store_type_category_link.channel_category_id')
                 ->where('store_type_category.store_type_id', $this->store_type_detail->id)
-                ->where('product_type_id' , $category->id)
+                ->where('product_type_id', $category->id)
                 ->select('store_type_category.code')
                 ->first();
 
@@ -690,5 +706,16 @@ class ProcessFeedGenerationJob implements ShouldQueue
         }
 
         return $categorycode ? $categorycode->code : '';
+    }
+
+    private function can_add_device_to_title(null $productTitle, mixed $device)
+    {
+        if ($productTitle == null) {
+            return true;
+        }
+        if (stripos(mb_strtolower($productTitle), mb_strtolower($device->name)) === false) {
+            return true;
+        }
+        return false;
     }
 }
