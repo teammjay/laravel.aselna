@@ -65,6 +65,7 @@ class ProcessFeedGenerationJob implements ShouldQueue
      */
     private $fileHandle;
     private int $max_file_size;
+    private $category_store_type_detail;
 
     /**
      * Create a new job instance.
@@ -89,6 +90,7 @@ class ProcessFeedGenerationJob implements ShouldQueue
             $this->storeDetail = Store::with('storeType')->where('id', $store_id)->first();
             $fileSystem = $this->storeDetail->fileSystem;
             $this->store_type_detail = StoreType::getStoreTypeDetailById($store_id);
+            $this->category_store_type_detail = StoreType::where('code', 'googleShopping')->first();
 
             $this->max_file_size = 200 * 1024 * 1024;
 
@@ -515,6 +517,8 @@ class ProcessFeedGenerationJob implements ShouldQueue
 
                 if (isset($itemDetail->title)) {
                     $itemProductTitle = $title = $itemDetail->title;
+                } else  {
+                    $title = $title . '  - ' . $this->storeDetail->short_code . $itemDetail->product->product_sku;
                 }
 
                 $custom_label_3_prefix = '';
@@ -584,10 +588,18 @@ class ProcessFeedGenerationJob implements ShouldQueue
                                 }
 
                                 if ($productTitle == NULL) {
-                                    $productTitle = $title . ' - ' . $this->storeDetail->short_code . $itemDetail->product->product_sku;
+                                    $productTitle = $title;
                                 }
 
-                                $final_description = $device->brand->name . ' ' . $device->name . ' - ' . $title . '  - ' . $this->storeDetail->short_code . $itemDetail->product->product_sku . ' for ' . $device->name . '. ' . $product_description;
+                                $deviceType = $device->deviceType;
+                                $descriptionTitle = '';
+                                if ($deviceType->code != 1 && $deviceType->code != 2) {
+                                    $descriptionTitle = $device->brand->name . ' ' . $device->name . ' Compatible ' . $title;
+                                } else {
+                                    $descriptionTitle = $device->brand->name . ' ' . $device->name . ' - ' . $title;
+                                }
+
+                                $final_description = $descriptionTitle . ' for ' . $device->name . '. ' . $product_description;
 
                                 if ($this->can_add_device_to_title($productTitle, $device)) {
                                     if (strpos($productTitle, ' ') !== false &&
@@ -595,7 +607,7 @@ class ProcessFeedGenerationJob implements ShouldQueue
                                             || str_contains(strtolower($this->storeDetail->store_url), 'aselna') || str_contains(strtolower($this->storeDetail->store_url), 'neva'))) {
                                         $productTitle = str_replace(',', ' for ' . $device->brand->name . ' ' . $device->name . ' -', $productTitle);
                                     } else {
-                                        $deviceType = $device->deviceType;
+
                                         if ($deviceType->code != 1 && $deviceType->code != 2) {
                                             // Smartphone or Tablet
                                             $productTitle = $device->brand->name . ' ' . $device->name . ' Compatible ' . $productTitle;
@@ -608,7 +620,7 @@ class ProcessFeedGenerationJob implements ShouldQueue
                                 $productTitle = str_replace('Apple ', '', $productTitle);
                                 $productTitle = str_replace('apple', '', $productTitle);
                                 $productTitle = trim($productTitle);
-                                $productTitle = str_replace(' +', ' ', $productTitle);
+                                $productTitle = preg_replace('/\s+\+/', ' ', $productTitle);
 
 
                                 if (!$item_detail) {
@@ -694,8 +706,9 @@ class ProcessFeedGenerationJob implements ShouldQueue
             $parentCategory = ProductType::where('id', $category->parent_id)->first();
 
             $categorycode = ProductTypeStoreTypeCATLink::join('store_type_category', 'store_type_category.id', '=', 'product_type_store_type_category_link.channel_category_id')
-                ->where('store_type_category.store_type_id', $this->store_type_detail->id)
+                ->where('store_type_category.store_type_id', $this->category_store_type_detail->id)
                 ->where('product_type_id', $category->id)
+                ->orderBy('store_type_category.code', 'desc')
                 ->select('store_type_category.code')
                 ->first();
 
@@ -708,7 +721,7 @@ class ProcessFeedGenerationJob implements ShouldQueue
         return $categorycode ? $categorycode->code : '';
     }
 
-    private function can_add_device_to_title(null $productTitle, mixed $device)
+    private function can_add_device_to_title($productTitle, mixed $device)
     {
         if ($productTitle == null) {
             return true;
