@@ -617,6 +617,7 @@ class SubmitShopifyProductsJob implements ShouldQueue
                 'store_type_category_id' => $productData->product_type,
                 'price' => $productData->product_marketplace_price,
                 'msrp' => $productData->product_msrp,
+                'active' => 1,
                 'description' => $productData->product_description,
                 'store_id' => $store->id,
                 'created_by' => 'system',
