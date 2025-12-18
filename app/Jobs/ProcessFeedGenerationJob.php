@@ -659,13 +659,23 @@ class ProcessFeedGenerationJob implements ShouldQueue
                                     $item_detail = $this->insertListingItemDetail($product_code, $listitem, $device);
                                 }
 
+                                $collection_url = '';
+
                                 $devicePage = StoreNavigationPage::where('store_id', $this->store_id)
                                     ->where('page_type', WebStorePageType::DEVICE)
                                     ->where('device_id', $device->id)
                                     ->first();
 
+                                if ($item_detail->url) {
+                                    $collection_url = $item_detail->url;
+                                }
+
+                                if (!isset($collection_url)) {
+                                    $collection_url = $devicePage->url_path ?? '';
+                                }
+
                                 if ($store_sku != '') {
-                                    $product_url = \App\Utils\ListingUtility::generateItemUrl($store_type, $store_sku, $site_url, $store_url, $devicePage->url_path ?? '');
+                                    $product_url = \App\Utils\ListingUtility::generateItemUrl($store_type, $store_sku, $site_url, $store_url, $collection_url);
                                 }
 
                                 $custom_label_1 = '';
