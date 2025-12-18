@@ -770,13 +770,13 @@ class ProcessFeedGenerationJob implements ShouldQueue
 
         if (isset($manufacturerLink)) {
             if (strtolower($manufacturerLink->manufacturer_name) == 'hco') {
-                return 'StoreNAme';
+                return $this->storeDetail->name;
             } else {
                 return $manufacturerLink->manufacturer_name;
             }
         } else {
             if ($manufacturer->name == 'Use store as Brand' || strtolower($manufacturer->name) == 'hco') {
-                return 'StoreName';
+                return $this->storeDetail->name;
             } else {
                 return $manufacturer->name;
             }
