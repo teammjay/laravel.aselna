@@ -494,7 +494,8 @@ class ProcessFeedGenerationJob implements ShouldQueue
                 $cleanDescription = str_replace(["\r", "\n"], ' ', $itemDetail->product->product_description);
                 $product_description .= $cleanDescription;
             }
-            $product_description = $product_description;
+            $product_description = str_replace(["\r", "\n"], ' ', $product_description);
+            $product_description = str_replace([";"], '.', $product_description);
 
             //$ptype_id = (isset($itemDetail->StoreTypeCategory) && !empty($itemDetail->StoreTypeCategory)) ? $itemDetail->StoreTypeCategory->store_type_code : '';
 
@@ -523,7 +524,7 @@ class ProcessFeedGenerationJob implements ShouldQueue
 
                 $custom_label_3_prefix = '';
                 $singular_name = $itemDetail->product->productType->singular_name ?? '';
-                if ($singular_name != '') {
+                if (isset($singular_name) && $singular_name != '') {
                     $custom_label_3_prefix = $singular_name . ' for ';
                 }
 
