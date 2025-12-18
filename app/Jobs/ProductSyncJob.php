@@ -70,8 +70,8 @@ class ProductSyncJob implements ShouldQueue
 
                         $this->createProductTitleKeywords($product);
 
-                        $fonusProduct = DB::connection('fonus_db')->table('tbl_product')->where('custom_label', $product->code)->first();
-                        $this->createProductFeatures($fonusProduct, $product->id);
+//                        $fonusProduct = DB::connection('fonus_db')->table('tbl_product')->where('custom_label', $product->code)->first();
+//                        $this->createProductFeatures($fonusProduct, $product->id);
                     } catch (Exception $e) {
                         Log::error($e->getMessage());
                     }
