@@ -492,7 +492,7 @@ class ProcessFeedGenerationJob implements ShouldQueue
 
             if (isset($itemDetail->product->product_description)) {
                 $cleanDescription = str_replace(["\r", "\n"], ' ', $itemDetail->product->product_description);
-                $product_description .= ' ' . trim($cleanDescription);
+                $product_description .= trim($cleanDescription);
             }
             $product_description = trim($product_description);
 
