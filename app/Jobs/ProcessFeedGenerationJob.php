@@ -511,6 +511,7 @@ class ProcessFeedGenerationJob implements ShouldQueue
                 $keywords = ProductTitleKeyword::select('product_id', 'keyword')->where('product_id', $itemDetail->product_id)->orderBy('priority', 'asc')->limit(6)->get();
                 $title = '';
                 $itemProductTitle = NULL;
+                $product_price = '';
                 $title_keyword = [];
                 if (!empty($keywords)) {
                     foreach ($keywords as $key => $val) {
@@ -531,6 +532,14 @@ class ProcessFeedGenerationJob implements ShouldQueue
 
                 if (isset($itemDetail->Manufacturer)) {
                     $manufacturer = $itemDetail->Manufacturer;
+                }
+
+                if (isset($itemDetail->product)) {
+                    $product_price = $itemDetail->product->product_price;
+                }
+
+                if (isset($itemDetail->price) && isset($itemDetail->overwrite_price) && $itemDetail->overwrite_price == 1) {
+                    $product_price = $itemDetail->price;
                 }
 
                 $custom_label_3_prefix = '';
@@ -582,6 +591,10 @@ class ProcessFeedGenerationJob implements ShouldQueue
                             $manufacturer = $listitem->manufacturer;
                         }
                         $manufacturer_name = $this->getManufacturerName($manufacturer);
+
+                        if (isset($listitem->price) && isset($listitem->overwrite_price) && $listitem->overwrite_price == 1) {
+                            $product_price = $listitem->price;
+                        }
 
                         Log::info('Main image for listing item ID ' . $listitem->id . ': ' . $mainImage);
                         Log::info('Additional images for listing item ID ' . $listitem->id . ': ' . json_encode($images));
@@ -678,7 +691,7 @@ class ProcessFeedGenerationJob implements ShouldQueue
                                     (isset($mainImage)) ? $mainImage : '',
                                     (isset($itemDetail->product->condition)) ? strtolower($itemDetail->product->condition->name) : '',
                                     'in stock',
-                                    (($itemDetail->product->product_price != '') ? $itemDetail->product->product_price : $itemDetail->product->product_price) . ' USD',
+                                    $product_price . ' USD',
                                     (isset($item_detail->upc)) ? $item_detail->upc : '',
                                     $manufacturer_name,
                                     $item_detail->sku,
