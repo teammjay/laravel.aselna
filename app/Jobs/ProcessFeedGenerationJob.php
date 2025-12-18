@@ -485,7 +485,7 @@ class ProcessFeedGenerationJob implements ShouldQueue
                 ->chunk(100, function ($keyFeatures) use (&$product_description) {
                     foreach ($keyFeatures as $feature) {
                         if (isset($feature->value) && !empty($feature->value)) {
-                            $product_description .= trim((string)$feature->value) . ' ';
+                            $product_description .= ((string)$feature->value) . ' ';
                         }
                     }
                 });
@@ -620,7 +620,7 @@ class ProcessFeedGenerationJob implements ShouldQueue
                                 $productTitle = str_replace('Apple ', '', $productTitle);
                                 $productTitle = str_replace('apple', '', $productTitle);
                                 $productTitle = trim($productTitle);
-                                $productTitle = preg_replace('/\s+\+/', ' ', $productTitle);
+                                $productTitle = preg_replace('/ +/', ' ', $productTitle);
 
 
                                 if (!$item_detail) {
