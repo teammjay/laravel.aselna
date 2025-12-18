@@ -891,6 +891,7 @@ class ListingController extends Controller
                                 'title' => $pid->product_title,
                                 'store_type_category_id' => $pid->product_type,
                                 'price' => $pid->product_marketplace_price,
+                                'active' => 1,
                                 'msrp' => $pid->product_msrp,
                                 'description' => $pid->product_description,
                                 'store_id' => $store_id,
