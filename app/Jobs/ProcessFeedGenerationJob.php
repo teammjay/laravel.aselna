@@ -25,6 +25,7 @@ use App\Models\StoreNavigationPage;
 use App\Models\StoreProduct;
 use App\Models\StoreType;
 use App\Models\StoreTypeListing;
+use App\Models\StoreTypeManufaturerLink;
 use App\Models\UPCCodes;
 use App\Services\CriticalErrorService;
 use App\Utils\FileUtility;
@@ -477,6 +478,7 @@ class ProcessFeedGenerationJob implements ShouldQueue
         foreach ($products as $itemDetail) {
 
             $images = array();
+            $manufacturer = null;
             $manufacturer_name = '';
             Log::info('Processing product ID: ' . $itemDetail->id);
 
@@ -524,11 +526,11 @@ class ProcessFeedGenerationJob implements ShouldQueue
                 }
 
                 if (isset($itemDetail->product->Manufacturer)) {
-                    $manufacturer_name = $itemDetail->product->Manufacturer->name;
+                    $manufacturer = $itemDetail->product->Manufacturer;
                 }
 
                 if (isset($itemDetail->Manufacturer)) {
-                    $manufacturer_name = $itemDetail->Manufacturer->name;
+                    $manufacturer = $itemDetail->Manufacturer;
                 }
 
                 $custom_label_3_prefix = '';
@@ -577,8 +579,10 @@ class ProcessFeedGenerationJob implements ShouldQueue
                         }
 
                         if (isset($listitem->manufacturer)) {
-                            $manufacturer_name = $listitem->manufacturer->name;
+                            $manufacturer = $listitem->manufacturer;
                         }
+                        $manufacturer_name = $this->getManufacturerName($manufacturer);
+
                         Log::info('Main image for listing item ID ' . $listitem->id . ': ' . $mainImage);
                         Log::info('Additional images for listing item ID ' . $listitem->id . ': ' . json_encode($images));
 
@@ -753,5 +757,29 @@ class ProcessFeedGenerationJob implements ShouldQueue
             return true;
         }
         return false;
+    }
+
+    private function getManufacturerName($manufacturer)
+    {
+        if ($manufacturer == null) {
+            return '';
+        }
+        $manufacturerLink = StoreTypeManufaturerLink::where('store_type_id', $this->store_type_detail->id)
+            ->where('manufacturer_id', $manufacturer->id)
+            ->first();
+
+        if (isset($manufacturerLink)) {
+            if (strtolower($manufacturerLink->manufacturer_name) == 'hco') {
+                return 'StoreNAme';
+            } else {
+                return $manufacturerLink->manufacturer_name;
+            }
+        } else {
+            if ($manufacturer->name == 'Use store as Brand' || strtolower($manufacturer->name) == 'hco') {
+                return 'StoreName';
+            } else {
+                return $manufacturer->name;
+            }
+        }
     }
 }
