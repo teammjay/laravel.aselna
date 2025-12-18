@@ -477,6 +477,7 @@ class ProcessFeedGenerationJob implements ShouldQueue
         foreach ($products as $itemDetail) {
 
             $images = array();
+            $manufacturer_name = '';
             Log::info('Processing product ID: ' . $itemDetail->id);
 
             $product_description = '';
@@ -495,7 +496,7 @@ class ProcessFeedGenerationJob implements ShouldQueue
                 $product_description .= $cleanDescription;
             }
             $product_description = str_replace(["\r", "\n"], ' ', $product_description);
-            $product_description = str_replace([";"], '.', $product_description);
+//            $product_description = str_replace([";"], '.', $product_description);
 
             //$ptype_id = (isset($itemDetail->StoreTypeCategory) && !empty($itemDetail->StoreTypeCategory)) ? $itemDetail->StoreTypeCategory->store_type_code : '';
 
@@ -520,6 +521,14 @@ class ProcessFeedGenerationJob implements ShouldQueue
                     $itemProductTitle = $title = $itemDetail->title;
                 } else  {
                     $title = $title . '  - ' . $this->storeDetail->short_code . $itemDetail->product->product_sku;
+                }
+
+                if (isset($itemDetail->product->Manufacturer)) {
+                    $manufacturer_name = $itemDetail->product->Manufacturer->name;
+                }
+
+                if (isset($itemDetail->Manufacturer)) {
+                    $manufacturer_name = $itemDetail->Manufacturer->name;
                 }
 
                 $custom_label_3_prefix = '';
@@ -565,6 +574,10 @@ class ProcessFeedGenerationJob implements ShouldQueue
                             } else {
                                 $images[] = $image->path;
                             }
+                        }
+
+                        if (isset($listitem->manufacturer)) {
+                            $manufacturer_name = $listitem->manufacturer->name;
                         }
                         Log::info('Main image for listing item ID ' . $listitem->id . ': ' . $mainImage);
                         Log::info('Additional images for listing item ID ' . $listitem->id . ': ' . json_encode($images));
@@ -638,6 +651,15 @@ class ProcessFeedGenerationJob implements ShouldQueue
                                     $product_url = \App\Utils\ListingUtility::generateItemUrl($store_type, $store_sku, $site_url, $store_url, $devicePage->url_path ?? '');
                                 }
 
+                                $custom_label_1 = '';
+                                $custom_label_2 = '';
+
+                                if ($deviceType->code != 1 && $deviceType->code != 2) {
+                                    $custom_label_2 = (isset($item_detail->device->name)) ? $item_detail->device->name : '';
+                                } else {
+                                    $custom_label_1 = (isset($item_detail->device->name)) ? $item_detail->device->name : '';
+                                }
+
                                 // item group id logic
                                 //$itemGroupId = $item_detail->sku . '-' . $device->code;
                                 $itemGroupId = $listitem->sku . '-' . $device->code;
@@ -654,7 +676,7 @@ class ProcessFeedGenerationJob implements ShouldQueue
                                     'in stock',
                                     (($itemDetail->product->product_price != '') ? $itemDetail->product->product_price : $itemDetail->product->product_price) . ' USD',
                                     (isset($item_detail->upc)) ? $item_detail->upc : '',
-                                    (isset($this->storeDetail->brand_name)) ? $this->storeDetail->brand_name : '',
+                                    $manufacturer_name,
                                     $item_detail->sku,
                                     (isset($device) ? $itemGroupId : ''),
                                     '',
@@ -666,8 +688,8 @@ class ProcessFeedGenerationJob implements ShouldQueue
                                     (isset($listitem->qunatity)) ? $listitem->qunatity : 1000,
                                     'return_policy_days: "30"',
                                     (isset($item_detail->device->brand->name)) ? $item_detail->device->brand->name : '',
-                                    (isset($item_detail->device->name)) ? $item_detail->device->name : '',
-                                    '',
+                                    $custom_label_1,
+                                    $custom_label_2,
                                     $custom_label_3,
                                     (isset($itemDetail->product->product_sku)) ? $itemDetail->product->product_sku : '',
                                     $prodDetail
@@ -709,7 +731,7 @@ class ProcessFeedGenerationJob implements ShouldQueue
             $categorycode = ProductTypeStoreTypeCATLink::join('store_type_category', 'store_type_category.id', '=', 'product_type_store_type_category_link.channel_category_id')
                 ->where('store_type_category.store_type_id', $this->category_store_type_detail->id)
                 ->where('product_type_id', $category->id)
-                ->orderBy('store_type_category.code', 'desc')
+                ->orderBy('product_type_store_type_category_link.id', 'desc')
                 ->select('store_type_category.code')
                 ->first();
 
