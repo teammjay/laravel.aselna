@@ -322,6 +322,7 @@ class SubmitShopifyProductsJob implements ShouldQueue
         $fileSystem = $store->fileSystem;
         $shopifyAuthService = new ShopifyAuthService($store->secret_key, $store->service_url);
         $product_id = $sku = $upcCode = NULL;
+        $createdHandle = NULL;
 
         $listingItem = $this->addListingItem($productData, $store);
 
@@ -332,6 +333,7 @@ class SubmitShopifyProductsJob implements ShouldQueue
 
         if (isset($listingItem->sku)) {
             $sku = $listingItem->sku;
+            $createdHandle = $listingItem->store_url;
         } else {
             $sku = StoreTypeListing::generateUniqueAlphabeticSku($productData->product_sku, 6);
             $listingItem->update(['sku' => $sku]);
@@ -401,6 +403,7 @@ class SubmitShopifyProductsJob implements ShouldQueue
                 'vendor' => $store->name,
                 'productType' => $productData->productType->name,
                 'tags' => $tagsString,
+                'handle' => $createdHandle,
                 'productOptions' => $productOptions,
                 'files' => $files,
                 'variants' => [
