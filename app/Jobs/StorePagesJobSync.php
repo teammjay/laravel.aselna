@@ -36,12 +36,12 @@ class StorePagesJobSync implements ShouldQueue
     {
         $this->updateTrackingRecord(['tags' => 'Store Pages']);
 
-        DB::connection('easyesale_db')->table('store_page')->orderBy('id')
-            ->chunk(1000, function ($storePages) {
-                foreach ($storePages as $storePage) {
-                    $this->createStorePage($storePage);
-                }
-            });
+//        DB::connection('easyesale_db')->table('store_page')->orderBy('id')
+//            ->chunk(1000, function ($storePages) {
+//                foreach ($storePages as $storePage) {
+//                    $this->createStorePage($storePage);
+//                }
+//            });
 
         DB::connection('easyesale_db')->table('store_navigation_page')->orderBy('id')
             ->chunk(1000, function ($storeNavigationPages) {
