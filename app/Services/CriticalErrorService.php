@@ -107,7 +107,7 @@ class CriticalErrorService
                 }
             );*/
 
-            Mail::mailer('log')->send(
+            Mail::mailer('custom_smtp')->send(
                 'emails.critical-alert',
                 [
                     'marketplace' => $errorData['context']['marketplace'] ?? 'N/A',
