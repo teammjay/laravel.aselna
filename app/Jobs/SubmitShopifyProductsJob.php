@@ -521,7 +521,6 @@ class SubmitShopifyProductsJob implements ShouldQueue
             'variant' => [$variantData],
         ];
 
-//        $this->deleteOldProductImages($shopifyAuthService, $proDetail->marketplace_product_id);
         $this->handleOldImages($shopifyAuthService, $proDetail->marketplace_product_id, $listingItem);
 
         $this->generateProductImages($productData, $store);
@@ -710,14 +709,18 @@ class SubmitShopifyProductsJob implements ShouldQueue
         }
     }
 
-    private function deleteOldProductImages(ShopifyAuthService $shopifyAuthService, $marketplace_product_id)
+    private function deleteOldProductImages(ShopifyAuthService $shopifyAuthService, $marketplace_product_id,$AlreadyImages)
     {
         $oldImages = $shopifyAuthService->getProductImages($marketplace_product_id);
         Log::info('Old Images: ' . json_encode($oldImages));
         $Images = $oldImages['data']['product']['media']['nodes'];
         $mediaIds = [];
         foreach ($Images as $image) {
+            $imageUrl = $image['preview']['image']['url'] ?? '';
             Log::info('Image :: ' . json_encode($image));
+            if (isset($AlreadyImages) && array_key_exists($imageUrl, $AlreadyImages)) {
+                continue;
+            }
             $mediaId = $image['id'];
             $altText = $image['alt'];
             if ($altText == null || $altText == '') {
@@ -752,5 +755,7 @@ class SubmitShopifyProductsJob implements ShouldQueue
         }
         $oldImages = $shopifyAuthService->getProductImages($marketplace_product_id);
         $this->handleMediaImages($oldImages['data']['product'], $listingItem,$AlreadyImages);
+
+        $this->deleteOldProductImages($shopifyAuthService, $marketplace_product_id,$AlreadyImages);
     }
 }
