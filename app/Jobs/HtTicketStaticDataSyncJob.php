@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Models\Device;
 use App\Models\HdTicketType;
+use App\Services\CriticalErrorService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\DB;
@@ -31,9 +32,18 @@ class HtTicketStaticDataSyncJob implements ShouldQueue
     {
         $this->updateTrackingRecord(['tags' => 'HD Ticket']);
 
-        $ticketTypes = DB::connection('easyesale_db')->table('hd_ticket_type')->get();
-        foreach ($ticketTypes as $ticketType) {
-            $this->createTicketType($ticketType);
+        try {
+            $ticketTypes = DB::connection('easyesale_db')->table('hd_ticket_type')->get();
+            foreach ($ticketTypes as $ticketType) {
+                $this->createTicketType($ticketType);
+            }
+        }catch (\Throwable $e) {
+
+            CriticalErrorService::report('Hd Ticlet Static Data Sync Job Failed', [
+                'marketplace' => 'N/A',
+                'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
+            ]);
         }
     }
 

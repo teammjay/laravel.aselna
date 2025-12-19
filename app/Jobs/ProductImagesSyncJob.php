@@ -6,6 +6,7 @@ use App\Models\Catalog;
 use App\Models\ProductImages;
 use App\Models\SysFile;
 use App\Utils\FileUtility;
+use App\Services\CriticalErrorService;
 use Exception;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -38,25 +39,36 @@ class ProductImagesSyncJob implements ShouldQueue
     {
         $this->updateTrackingRecord(['tags' => 'Product Images']);
         Log::info('ProductImagesSyncJob: Start');
-        //add local env variable to check if we are in local environment
+
+        try {
+            //add local env variable to check if we are in local environment
 //        if (env('APP_ENV') === 'local') return;
-        $productImagesQ = DB::connection('fonus_db')
-            ->table('tbl_product_images')
-            ->where('picture_type_id', '=', '1')
-            ->orderBy('product_id','desc');
+            $productImagesQ = DB::connection('fonus_db')
+                ->table('tbl_product_images')
+                ->where('picture_type_id', '=', '1')
+                ->orderBy('product_id', 'desc');
 
-        if (env('APP_ENV') === 'local') {
-            $productImagesQ->limit(40);
-        }
-
-        $productImagesQ->chunk(1000, function ($productImages) {
-            foreach ($productImages as $productImage) {
-                Log::info('ProductImagesSyncJob: ' . $productImage->product_id);
-                $this->createProductImage($productImage);
+            if (env('APP_ENV') === 'local') {
+                $productImagesQ->limit(40);
             }
-        });
 
-        Log::info('ProductImagesSyncJob From : Done');
+            $productImagesQ->chunk(1000, function ($productImages) {
+                foreach ($productImages as $productImage) {
+                    Log::info('ProductImagesSyncJob: ' . $productImage->product_id);
+                    $this->createProductImage($productImage);
+                }
+            });
+
+            Log::info('ProductImagesSyncJob From : Done');
+
+        }catch (\Throwable $e) {
+
+            CriticalErrorService::report('Product Images Sync Job Failed', [
+                'marketplace' => 'N/A',
+                'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
+            ]);
+        }
 //
 //        $easyImagesQ = DB::connection('easyesale_db')
 //            ->table('product_image')

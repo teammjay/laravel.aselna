@@ -20,6 +20,7 @@ use App\Models\StoreProduct;
 use App\Models\StoreTypeListing;
 use App\Models\UPCCodes;
 use App\Services\Auth\ShopifyAuthService;
+use App\Services\CriticalErrorService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\DB;
@@ -50,116 +51,127 @@ class SubmitShopifyProductsJob implements ShouldQueue
      */
     public function handle(): void
     {
+        try {
+            /* shopify stores*/
+            $stores = Store::select('store.*')->with('fileSystem', 'storeType')->join('store_type', 'store_type.id', '=', 'store.store_type_id')->where('store_type.code', 'shopify')->where('store.store_status', '<>', 0)->get();
 
-        /* shopify stores*/
-        $stores = Store::select('store.*')->with('fileSystem', 'storeType')->join('store_type', 'store_type.id', '=', 'store.store_type_id')->where('store_type.code', 'shopify')->where('store.store_status', '<>', 0)->get();
+            if (count($stores ?? []) > 0) {
+                $tags = [];
+                foreach ($stores as $store) {
+                    Log::info('Store : ' . $store->name);
+                    if (env('APP_ENV') == 'local' && trim(strtolower($store->name)) != strtolower('GetAccessory')) {
+                        continue;
+                    }
+                    if (($store->auto_generate_listings ?? 0) == 0) {
+                        Log::info('Auto Generate Listings is disabled for store: ' . $store->name);
+                        continue;
+                    }
 
-        if (count($stores ?? []) > 0) {
-            $tags = [];
-            foreach ($stores as $store) {
-                Log::info('Store : ' . $store->name);
-                if (env('APP_ENV') == 'local' && trim(strtolower($store->name)) != strtolower('GetAccessory')) {
-                    continue;
-                }
-                if (($store->auto_generate_listings ?? 0) == 0) {
-                    Log::info('Auto Generate Listings is disabled for store: ' . $store->name);
-                    continue;
-                }
+                    $tags[] = $store->name;
 
-                $tags[] = $store->name;
+                    $shopifyAuthService = new ShopifyAuthService($store->secret_key, $store->service_url);
+                    $publications = $shopifyAuthService->getPublications();
 
-                $shopifyAuthService = new ShopifyAuthService($store->secret_key, $store->service_url);
-                $publications = $shopifyAuthService->getPublications();
+                    $publicationIds = [];
+                    foreach ($publications['data']['publications']['edges'] as $publication) {
+                        $publicationIds[]['publicationId'] = $publication['node']['id'];
+                    }
+                    $this->publications = $publicationIds;
 
-                $publicationIds = [];
-                foreach ($publications['data']['publications']['edges'] as $publication) {
-                    $publicationIds[]['publicationId'] = $publication['node']['id'];
-                }
-                $this->publications = $publicationIds;
+                    // Handle Created Products
+                    // get all te children and their children of cea products
+                    // Get product types with parent code 'cea' and all their descendants recursively
+                    $ceaProductTypes = [];
+                    $ceaParentTypes = ProductType::select('id')->where('code', 'cea')->get()->pluck('id')->toArray();
 
-                // Handle Created Products
-                // get all te children and their children of cea products
-                // Get product types with parent code 'cea' and all their descendants recursively
-                $ceaProductTypes = [];
-                $ceaParentTypes = ProductType::select('id')->where('code', 'cea')->get()->pluck('id')->toArray();
+                    // Get immediate children
+                    $ceaChildrenTypes = ProductType::select('id')->whereIn('parent_id', $ceaParentTypes)->get()->pluck('id')->toArray();
+                    $ceaProductTypes = array_merge($ceaProductTypes, $ceaParentTypes, $ceaChildrenTypes);
 
-                // Get immediate children
-                $ceaChildrenTypes = ProductType::select('id')->whereIn('parent_id', $ceaParentTypes)->get()->pluck('id')->toArray();
-                $ceaProductTypes = array_merge($ceaProductTypes, $ceaParentTypes, $ceaChildrenTypes);
+                    // Get descendants recursively
+                    $nextLevelParents = $ceaChildrenTypes;
+                    foreach ($nextLevelParents as $parentId) {
+                        $children = ProductType::select('id')->where('parent_id', $parentId)->get()->pluck('id')->toArray();
+                        if (!empty($children)) {
+                            $ceaProductTypes = array_merge($ceaProductTypes, $children);
+                        }
+                    }
 
-                // Get descendants recursively
-                $nextLevelParents = $ceaChildrenTypes;
-                foreach ($nextLevelParents as $parentId) {
-                    $children = ProductType::select('id')->where('parent_id', $parentId)->get()->pluck('id')->toArray();
-                    if (!empty($children)) {
-                        $ceaProductTypes = array_merge($ceaProductTypes, $children);
+                    Log::info('CEA Product Types and descendants: ' . count($ceaProductTypes));
+
+                    $AlreadyCreatedIds = ManageMarketplaceProduct::select('product_id')->where('upload_status', 'success')->where('store_id', $store->id)->get();
+                    $productTypes = ProductType::select('id')->where('code', 'ceabundle')->get()->toArray();
+                    $products = Catalog::select('*')->with('productType', 'productKeyFeatures', 'productColor')
+                        ->whereNotIn('product_type', $productTypes)
+                        ->whereIn('product_type', $ceaProductTypes)
+                        ->whereNull('parent_id')
+                        ->where('product_status', '=', 'active')
+                        //->where('product_sku', 'E74')
+                        ->whereNotIn('product_id', $AlreadyCreatedIds)
+                        ->orderBy('created_at', 'desc')
+                        ->limit(100)
+                        ->get();
+                    foreach ($products as $product) {
+                        $this->createProduct($product, $store);
+                        if (env('APP_ENV') == 'local') {
+                            break;
+                        }
+                    }
+
+                    // Handle Updated Products
+                    $AlreadyCreatedIds = ManageMarketplaceProduct::select('product_id')
+                        ->where('upload_status', 'success')->where('store_id', $store->id)
+                        ->orderBy('updated_at', 'asc')
+                        ->limit(1000)
+                        ->get();
+
+                    $products = Catalog::select('*')->with('productType', 'productKeyFeatures', 'productColor')
+                        ->whereNotIn('product_type', $productTypes)
+                        ->whereIn('product_type', $ceaProductTypes)
+                        ->whereNull('parent_id')
+                        ->where('product_status', '=', 'active')
+                        //->where('product_sku', 'E74')
+                        ->whereIn('product_id', $AlreadyCreatedIds)
+                        ->orderBy('created_at', 'desc')
+                        ->limit(500)
+                        ->get();
+
+                    foreach ($products as $product) {
+                        $this->updateProduct($product, $store);
+                        if (env('APP_ENV') == 'local') {
+                            break;
+                        }
+                    }
+
+                    // Handle Discontinued Products
+                    $discontinuedProducts = Catalog::select('*')->with('productType', 'productKeyFeatures', 'productColor')
+                        ->whereNotIn('product_type', $productTypes)
+                        ->whereIn('product_type', $ceaProductTypes)
+                        ->whereNull('parent_id')
+                        ->whereIn('product_status', ['discontinued', 'temporaryDisabled', 'draft'])
+                        ->orderBy('created_at', 'desc')
+                        ->limit(100)
+                        ->get();
+                    foreach ($discontinuedProducts as $product) {
+                        $this->discontinueProduct($product, $store);
+                        if (env('APP_ENV') == 'local') {
+                            break;
+                        }
                     }
                 }
 
-                Log::info('CEA Product Types and descendants: ' . count($ceaProductTypes));
-
-                $AlreadyCreatedIds = ManageMarketplaceProduct::select('product_id')->where('upload_status', 'success')->where('store_id', $store->id)->get();
-                $productTypes = ProductType::select('id')->where('code', 'ceabundle')->get()->toArray();
-                $products = Catalog::select('*')->with('productType', 'productKeyFeatures', 'productColor')
-                    ->whereNotIn('product_type', $productTypes)
-                    ->whereIn('product_type', $ceaProductTypes)
-                    ->whereNull('parent_id')
-                    ->where('product_status', '=', 'active')
-                    //->where('product_sku', 'E74')
-                    ->whereNotIn('product_id', $AlreadyCreatedIds)
-                    ->orderBy('created_at', 'desc')
-                    ->limit(100)
-                    ->get();
-                foreach ($products as $product) {
-                    $this->createProduct($product, $store);
-                    if (env('APP_ENV') == 'local') {
-                        break;
-                    }
-                }
-
-                // Handle Updated Products
-                $AlreadyCreatedIds = ManageMarketplaceProduct::select('product_id')
-                    ->where('upload_status', 'success')->where('store_id', $store->id)
-                    ->orderBy('updated_at', 'asc')
-                    ->limit(1000)
-                    ->get();
-
-                $products = Catalog::select('*')->with('productType', 'productKeyFeatures', 'productColor')
-                    ->whereNotIn('product_type', $productTypes)
-                    ->whereIn('product_type', $ceaProductTypes)
-                    ->whereNull('parent_id')
-                    ->where('product_status', '=', 'active')
-                    //->where('product_sku', 'E74')
-                    ->whereIn('product_id', $AlreadyCreatedIds)
-                    ->orderBy('created_at', 'desc')
-                    ->limit(200)
-                    ->get();
-
-                foreach ($products as $product) {
-                    $this->updateProduct($product, $store);
-                    if (env('APP_ENV') == 'local') {
-                        break;
-                    }
-                }
-
-                // Handle Discontinued Products
-                $discontinuedProducts = Catalog::select('*')->with('productType', 'productKeyFeatures', 'productColor')
-                    ->whereNotIn('product_type', $productTypes)
-                    ->whereIn('product_type', $ceaProductTypes)
-                    ->whereNull('parent_id')
-                    ->whereIn('product_status', ['discontinued', 'temporaryDisabled', 'draft'])
-                    ->orderBy('created_at', 'desc')
-                    ->limit(100)
-                    ->get();
-                foreach ($discontinuedProducts as $product) {
-                    $this->discontinueProduct($product, $store);
-                    if (env('APP_ENV') == 'local') {
-                        break;
-                    }
-                }
+                $this->updateTrackingRecord(['tags' => implode(' ', $tags) . ' Submit Shopify Products']);
             }
+        }catch (\Throwable $e) {
 
-            $this->updateTrackingRecord(['tags' => implode(' ', $tags) . ' Submit Shopify Products']);
+            CriticalErrorService::report('Submit Shopify Products Sync Job Failed', [
+                'marketplace' => 'Shopify',
+                'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
+            ]);
+
+            Log::error('Error: ' . $e->getMessage());
+
         }
     }
 

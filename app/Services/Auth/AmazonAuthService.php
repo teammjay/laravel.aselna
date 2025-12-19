@@ -4,6 +4,7 @@ namespace App\Services\Auth;
 
 use App\Constants\FeedTypes;
 use App\Models\Listing;
+use App\Services\CriticalErrorService;
 use App\Utils\FileUtility;
 use Exception;
 use GuzzleHttp\Client;
@@ -33,66 +34,89 @@ class AmazonAuthService
 
     public function getAccessToken()
     {
-        if (isset($this->accessToken) && $this->expireTime > time()) {
-            return $this->accessToken;
+        try {
+            if (isset($this->accessToken) && $this->expireTime > time()) {
+                return $this->accessToken;
+            }
+
+            $client = new Client([
+                'base_uri' => 'https://api.amazon.com',
+            ]);
+
+            /*$response = $client->post('/auth/o2/token', [
+                'form_params' => [
+                    'grant_type' => 'refresh_token',
+                    'refresh_token' => env('AMAZON_REFRESH_TOKEN'),
+                    'client_id' => env('AMAZON_CLIENT_ID'),
+                    'client_secret' => env('AMAZON_CLIENT_SECRET'),
+                ]
+            ]);*/
+
+            Log::info('Client Id :: ' . $this->client_id . ' :: ' . $this->client_secret);
+
+            $response = $client->post('/auth/o2/token', [
+                'form_params' => [
+                    'grant_type' => 'refresh_token',
+                    'refresh_token' => $this->refresh_token,
+                    'client_id' => $this->client_id,
+                    'client_secret' => $this->client_secret,
+                ]
+            ]);
+
+            $responseBody = json_decode($response->getBody(), true);
+            $this->expireTime = time() + $responseBody['expires_in'];
+
+            return $this->accessToken = $responseBody['access_token'];
+        } catch (\Throwable $e) {
+
+            CriticalErrorService::report('Amazon Accesstoken failed', [
+                'marketplace' => 'Amazon',
+                'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
+            ]);
+
+            Log::error('Error: ' . $e->getMessage());
+            return null;
         }
-
-        $client = new Client([
-            'base_uri' => 'https://api.amazon.com',
-        ]);
-
-        /*$response = $client->post('/auth/o2/token', [
-            'form_params' => [
-                'grant_type' => 'refresh_token',
-                'refresh_token' => env('AMAZON_REFRESH_TOKEN'),
-                'client_id' => env('AMAZON_CLIENT_ID'),
-                'client_secret' => env('AMAZON_CLIENT_SECRET'),
-            ]
-        ]);*/
-
-        Log::info('Client Id :: ' . $this->client_id . ' :: ' . $this->client_secret);
-
-        $response = $client->post('/auth/o2/token', [
-            'form_params' => [
-                'grant_type' => 'refresh_token',
-                'refresh_token' => $this->refresh_token,
-                'client_id' => $this->client_id,
-                'client_secret' => $this->client_secret,
-            ]
-        ]);
-
-        $responseBody = json_decode($response->getBody(), true);
-        $this->expireTime = time() + $responseBody['expires_in'];
-
-        return $this->accessToken = $responseBody['access_token'];
     }
 
     public function uploadProductFeed($feedContent)
     {
-        $accessToken = $this->getAccessToken();
-        Log::info('Access Token Created ' . $accessToken);
+        try {
+            $accessToken = $this->getAccessToken();
+            Log::info('Access Token Created ' . $accessToken);
 
-        $response = $this->client->post('/feeds/2021-06-30/documents', [
-            'headers' => [
-                'x-amz-access-token' => "{$accessToken}",
-            ],
-            'json' => [
-                'contentType' => 'text/xml; charset=UTF-8',
-            ]
-        ]);
-        Log::info('Feed Upload Response: ' . $response->getBody());
+            $response = $this->client->post('/feeds/2021-06-30/documents', [
+                'headers' => [
+                    'x-amz-access-token' => "{$accessToken}",
+                ],
+                'json' => [
+                    'contentType' => 'text/xml; charset=UTF-8',
+                ]
+            ]);
+            Log::info('Feed Upload Response: ' . $response->getBody());
 
-        $uploadDetails = json_decode($response->getBody(), true);
-        $uploadUrl = $uploadDetails['url'];
-        Log::info('Upload URL: ' . json_encode($uploadUrl));
+            $uploadDetails = json_decode($response->getBody(), true);
+            $uploadUrl = $uploadDetails['url'];
+            Log::info('Upload URL: ' . json_encode($uploadUrl));
 
-        $this->client->put($uploadUrl, [
-            'headers' => ['Content-Type' => 'text/xml; charset=UTF-8'],
-            'body' => $feedContent,
-        ]);
-        Log::info('Feed Content Uploaded');
+            $this->client->put($uploadUrl, [
+                'headers' => ['Content-Type' => 'text/xml; charset=UTF-8'],
+                'body' => $feedContent,
+            ]);
+            Log::info('Feed Content Uploaded');
 
-        return $uploadDetails['feedDocumentId'];
+            return $uploadDetails['feedDocumentId'];
+        }catch (\Throwable $e) {
+
+            CriticalErrorService::report('Upload Product Feed Failed', [
+                'marketplace' => 'Amazon',
+                'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
+            ]);
+
+            Log::error('Error: ' . $e->getMessage());
+        }
     }
 
     public function submitFeed(mixed $generatedFeedId, $listingId)
@@ -267,6 +291,13 @@ class AmazonAuthService
             return $data['payload']['Orders'] ?? [];
 
         } catch (RequestException $e) {
+
+            CriticalErrorService::report('Amazon API Request Failed', [
+                'marketplace' => 'Amazon',
+                'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
+            ]);
+
             return response()->json([
                 'error' => 'Amazon API request failed',
                 'message' => $e->getMessage()
@@ -294,6 +325,13 @@ class AmazonAuthService
             return $data['payload']['OrderItems'] ?? [];
 
         } catch (RequestException $e) {
+
+            CriticalErrorService::report('Amazon API Request Failed', [
+                'marketplace' => 'Amazon',
+                'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
+            ]);
+
             return response()->json([
                 'error' => 'Amazon API request failed',
                 'message' => $e->getMessage()
@@ -430,6 +468,13 @@ class AmazonAuthService
             return $items;
 
         }catch (Exception $e) {
+
+            CriticalErrorService::report('Amazon fetch AllListings Failed', [
+                'marketplace' => 'Amazon',
+                'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
+            ],['marketplaceId' => $marketPlaceID]);
+
             Log::error("Amazon fetchAllListings failed: " . $e->getMessage());
             return [];
         }
@@ -475,6 +520,13 @@ class AmazonAuthService
 
             return json_decode($response->getBody(), true);
         } catch (Exception $exception) {
+
+            CriticalErrorService::report('Amazon API request failed', [
+                'marketplace' => 'Amazon',
+                'reason' => $exception->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
+            ],['amazon_order_id'=>$amazonOrderId]);
+
             return json_encode([
                 'error' => 'Amazon API request failed',
                 'message' => $exception->getMessage()
@@ -509,6 +561,13 @@ class AmazonAuthService
 
         } catch (Exception $exception) {
             Log::info('Exception Message: ' . $exception->getMessage());
+
+            CriticalErrorService::report('Amazon API request failed', [
+                'marketplace' => 'Amazon',
+                'reason' => $exception->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
+            ],['amazon_order_id'=>$orderId]);
+
             return json_encode([
                 'error' => 'Amazon API request failed',
                 'message' => $exception->getMessage()

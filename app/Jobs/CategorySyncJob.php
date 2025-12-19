@@ -10,6 +10,7 @@ use App\Models\StoreTypeCategories;
 use App\Models\StoreTypeCategory;
 use App\Models\SubCategory;
 use App\Utils\Queue;
+use App\Services\CriticalErrorService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\DB;
@@ -38,48 +39,61 @@ class CategorySyncJob implements ShouldQueue
      */
     public function handle(): void
     {
+
         $this->updateTrackingRecord(['tags' => 'Category']);
+        try {
 
-        $distinctParentIds = DB::connection('easyesale_db')->table('product_type')->whereNull('parent_id')->cursor();
-        //[{"parent_id":"7a099033-9940-ec5e-30bc-1511d3fc88ea"} I want to convert into array of values
-        $distinctIds = [];
-        foreach ($distinctParentIds as $distinctId) {
-            // Log::info("Id :: " . $distinctId->id);
-            $distinctIds[] = $distinctId->id;
-        }
-        $queue = new Queue();
+            $distinctParentIds = DB::connection('easyesale_db')->table('product_type')->whereNull('parent_id')->cursor();
+            //[{"parent_id":"7a099033-9940-ec5e-30bc-1511d3fc88ea"} I want to convert into array of values
+            $distinctIds = [];
+            foreach ($distinctParentIds as $distinctId) {
+                // Log::info("Id :: " . $distinctId->id);
+                $distinctIds[] = $distinctId->id;
+            }
+            $queue = new Queue();
 
-        $categories = DB::connection('easyesale_db')->table('product_type')->whereIn('id', $distinctIds)->cursor();
-        foreach ($categories as $category) {
-            $queue->enqueue($category->id);
-            $this->createProductType($category);
-        }
-
-        while ($queue->size() > 0) {
-            $nextId = $queue->peek();
-            $queue->dequeue();
-            $categories = DB::connection('easyesale_db')->table('product_type')->where('parent_id', $nextId)->cursor();
+            $categories = DB::connection('easyesale_db')->table('product_type')->whereIn('id', $distinctIds)->cursor();
             foreach ($categories as $category) {
                 $queue->enqueue($category->id);
                 $this->createProductType($category);
             }
-        }
 
-        $queue = new Queue();
-        $storeTypeCategories = DB::connection('easyesale_db')->table('channel_category')->whereNull('parent_id')->cursor();
-        foreach ($storeTypeCategories as $storeTypeCategory) {
-            $queue->enqueue($storeTypeCategory->id);
-            $this->createStoreTypeCategories($storeTypeCategory);
-        }
+            while ($queue->size() > 0) {
+                $nextId = $queue->peek();
+                $queue->dequeue();
+                $categories = DB::connection('easyesale_db')->table('product_type')->where('parent_id', $nextId)->cursor();
+                foreach ($categories as $category) {
+                    $queue->enqueue($category->id);
+                    $this->createProductType($category);
+                }
+            }
 
-        while ($queue->size() > 0) {
-            $nextId = $queue->peek();
-            $queue->dequeue();
-            $storeTypeCategories = DB::connection('easyesale_db')->table('channel_category')->where('parent_id',$nextId)->cursor();
+            $queue = new Queue();
+            $storeTypeCategories = DB::connection('easyesale_db')->table('channel_category')->whereNull('parent_id')->cursor();
             foreach ($storeTypeCategories as $storeTypeCategory) {
                 $queue->enqueue($storeTypeCategory->id);
                 $this->createStoreTypeCategories($storeTypeCategory);
             }
+
+            while ($queue->size() > 0) {
+                $nextId = $queue->peek();
+                $queue->dequeue();
+                $storeTypeCategories = DB::connection('easyesale_db')->table('channel_category')->where('parent_id', $nextId)->cursor();
+                foreach ($storeTypeCategories as $storeTypeCategory) {
+                    $queue->enqueue($storeTypeCategory->id);
+                    $this->createStoreTypeCategories($storeTypeCategory);
+                }
+            }
+        }catch (\Throwable $e) {
+
+            CriticalErrorService::report('Category Sync Job Failed', [
+                'marketplace' => 'N/A',
+                'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
+            ]);
+
+            Log::error('Error: ' . $e->getMessage());
+
         }
     }
 

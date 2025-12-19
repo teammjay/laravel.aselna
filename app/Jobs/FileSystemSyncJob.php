@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Models\FileSystem;
+use App\Services\CriticalErrorService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\DB;
@@ -30,14 +31,23 @@ class FileSystemSyncJob implements ShouldQueue
     {
         $this->updateTrackingRecord(['tags' => 'Filesystem']);
 
-        $listingItemLinksQ = DB::connection('easyesale_db')->table('file_system')
-            ->orderBy('id');
+        try {
+            $listingItemLinksQ = DB::connection('easyesale_db')->table('file_system')
+                ->orderBy('id');
 
-        $listingItemLinksQ->chunk(1000, function ($listingItemLinks) {
-            foreach ($listingItemLinks as $listingItemLink) {
-                $this->createListingItemLink($listingItemLink);
-            }
-        });
+            $listingItemLinksQ->chunk(1000, function ($listingItemLinks) {
+                foreach ($listingItemLinks as $listingItemLink) {
+                    $this->createListingItemLink($listingItemLink);
+                }
+            });
+        }catch (\Throwable $e) {
+
+            CriticalErrorService::report('File System Sync Job Failed', [
+                'marketplace' => 'N/A',
+                'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
+            ]);
+        }
     }
 
     private function createListingItemLink(mixed $listingItemLink)

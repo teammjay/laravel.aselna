@@ -7,6 +7,7 @@ use App\Models\ProductImageAlternative;
 use App\Models\ProductImages;
 use App\Models\SysFile;
 use App\Utils\FileUtility;
+use App\Services\CriticalErrorService;
 use Exception;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -47,15 +48,24 @@ class ProductAlternativeImagesSyncJob implements ShouldQueue
 
         $this->updateTrackingRecord(['tags' => 'Product Alternative Images']);
 
-        $productImagesQ = DB::connection('fonus_db')
-            ->table('tbl_product_main_images')
-            ->orderBy('product_id');
+        try {
+            $productImagesQ = DB::connection('fonus_db')
+                ->table('tbl_product_main_images')
+                ->orderBy('product_id');
 
-        $productImagesQ->chunk(1000, function ($productsImages) {
+            $productImagesQ->chunk(1000, function ($productsImages) {
                 foreach ($productsImages as $productImage) {
                     $this->createProductImageFonus($productImage);
                 }
             });
+        }catch (\Throwable $e) {
+
+            CriticalErrorService::report('Product Alternative Images Sync Job Failed', [
+                'marketplace' => 'N/A',
+                'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
+            ]);
+        }
     }
 
     private function createProductImageFonus(mixed $productImage)

@@ -65,7 +65,7 @@ class ProcessFeedGenerationJob implements ShouldQueue
      * @var false|resource
      */
     private $fileHandle;
-    private int $max_file_size;
+    private $max_file_size;
     private $category_store_type_detail;
 
     /**
@@ -210,6 +210,7 @@ class ProcessFeedGenerationJob implements ShouldQueue
             CriticalErrorService::report('Error processing feed generation', [
                 'marketplace' => $this->storeDetail->storeType->name ?? '',
                 'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
             ], ['store_id' => $this->store_id]);
 
             Log::error('Error processing feed generation: ' . $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine());

@@ -7,6 +7,7 @@ use App\Models\Brand;
 use App\Models\Device;
 use App\Models\Store;
 use App\Models\StoreType;
+use App\Services\CriticalErrorService;
 use App\Services\Marketplace\MarketplaceServiceFactory;
 use App\Services\Marketplace\Service\MagentoService;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -36,21 +37,31 @@ class MagnetoAttributesSyncJob implements ShouldQueue
     {
         $this->updateTrackingRecord(['tags' => 'Magento Attributes']);
 
-        /* get active store jobs*/
-        $store_ids = Common::getActiveStoreJobs('MagnetoAttributesSyncJob','magento');
-        /* get active store jobs*/
+        try {
+            /* get active store jobs*/
+            $store_ids = Common::getActiveStoreJobs('MagnetoAttributesSyncJob', 'magento');
+            /* get active store jobs*/
 
-        $storeType = StoreType::where('name', 'magento')->first();
-        $query = Store::where('store_type_id', $storeType->id);
+            $storeType = StoreType::where('name', 'magento')->first();
+            $query = Store::where('store_type_id', $storeType->id);
 
-        if(!empty($store_ids)) {
-            $query->whereIn('id', $store_ids);
-        }
+            if (!empty($store_ids)) {
+                $query->whereIn('id', $store_ids);
+            }
 
-        $stores = $query->get();
+            $stores = $query->get();
 
-        foreach ($stores as $store) {
-            $this->SyncAttributesIfNeeded($store);
+            foreach ($stores as $store) {
+                $this->SyncAttributesIfNeeded($store);
+            }
+        }catch (\Throwable $e) {
+
+            CriticalErrorService::report('Magento Attributes Sync Job Failed', [
+                'marketplace' => 'Magento',
+                'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
+            ]);
+
         }
     }
 

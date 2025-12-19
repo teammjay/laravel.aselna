@@ -2,6 +2,7 @@
 
 namespace App\Utils;
 
+use App\Services\CriticalErrorService;
 use Ddeboer\Imap\Server;
 use Ddeboer\Imap\Search\Date\Since;
 use Exception;
@@ -88,6 +89,13 @@ class FastEmailService
             return $messageData;
 
         } catch (Exception $e) {
+
+            CriticalErrorService::report('Fast Email Service Failed', [
+                'marketplace' => 'N/A',
+                'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
+            ]);
+
             Log::error("Error fetching emails: " . $e->getMessage());
             return [];
         }

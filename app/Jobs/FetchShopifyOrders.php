@@ -21,6 +21,7 @@ use App\Models\OrderSynchronization;
 use App\Models\ShippingPackage;
 use App\Models\ShippingServiceRule;
 use App\Models\Store;
+use App\Services\CriticalErrorService;
 use App\Services\Marketplace\Service\ShopifyService;
 use App\Utils\order\OrderUtility;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -398,6 +399,12 @@ class FetchShopifyOrders implements ShouldQueue
         } catch (\Throwable $e) {
 
             \App\Helpers\ErrorLogger::log($e, __METHOD__);
+
+            CriticalErrorService::report('Fetch Shopify Orders Sync Job Failed', [
+                'marketplace' => 'Shopify',
+                'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
+            ]);
 
             Log::error('Error: ' . $e->getMessage());
         }

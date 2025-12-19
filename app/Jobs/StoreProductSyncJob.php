@@ -5,6 +5,7 @@ namespace App\Jobs;
 use App\Models\Catalog;
 use App\Models\Store;
 use App\Models\StoreProduct;
+use App\Services\CriticalErrorService;
 use Exception;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -34,25 +35,33 @@ class StoreProductSyncJob implements ShouldQueue
     {
         $this->updateTrackingRecord(['tags' => 'Store Products']);
 
-        $storeIds = Store::join('store_type', 'store_type.id', '=', 'store.store_type_id')
-            ->where('store_type.code', 'shopify')
-            ->whereIn('store.name',['OdeMobile'])
-            ->pluck('store.id');
-
-        $storeProductsQ = DB::connection('easyesale_db')->table('store_product')->orderBy('id');
-
-        if (env('APP_ENV') === 'local') {
-            Log::info('Local Environment');
-//            $storeProductsQ->whereRaw('id in (select store_product_id from oydera_listing_item where id in (select item_id from oydera_listing_item_link where listing_id = \'1dd2cd15-757d-d9fc-02af-21a1eba741e7\'))');
-        }
-
         try {
+            $storeIds = Store::join('store_type', 'store_type.id', '=', 'store.store_type_id')
+                ->where('store_type.code', 'shopify')
+                ->whereIn('store.name',['OdeMobile'])
+                ->pluck('store.id');
+
+            $storeProductsQ = DB::connection('easyesale_db')->table('store_product')->orderBy('id');
+
+            if (env('APP_ENV') === 'local') {
+                Log::info('Local Environment');
+    //            $storeProductsQ->whereRaw('id in (select store_product_id from oydera_listing_item where id in (select item_id from oydera_listing_item_link where listing_id = \'1dd2cd15-757d-d9fc-02af-21a1eba741e7\'))');
+            }
+
+
             $storeProductsQ->chunk(1000, function ($storeProducts) {
                 foreach ($storeProducts as $storeProduct) {
                     $this->createStoreProduct($storeProduct);
                 }
             });
         } catch (Exception $e) {
+
+            CriticalErrorService::report('Store Products Sync Job Failed', [
+                'marketplace' => 'N/A',
+                'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
+            ]);
+
             Log::error($e->getMessage());
         }
     }

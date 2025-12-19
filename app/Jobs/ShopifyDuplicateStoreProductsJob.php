@@ -7,6 +7,7 @@ use App\Models\ListingItemDetail;
 use App\Models\Store;
 use App\Models\StoreNavigationPage;
 use App\Models\StoreProduct;
+use App\Services\CriticalErrorService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Log;
@@ -43,7 +44,20 @@ class ShopifyDuplicateStoreProductsJob implements ShouldQueue
     {
         $this->updateTrackingRecord(['tags' => 'Shopify Duplicate Store Products']);
 
-        $this->setVariables();
+        try {
+            $this->setVariables();
+
+        }catch (\Throwable $e) {
+
+            CriticalErrorService::report('Shopify Duplicate Store Products Job Failed', [
+                'marketplace' => 'Shopify',
+                'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
+            ]);
+
+            Log::error('Error: ' . $e->getMessage());
+
+        }
 
 //        $this->duplicateStoreProducts();
 

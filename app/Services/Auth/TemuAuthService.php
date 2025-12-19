@@ -2,6 +2,7 @@
 
 namespace App\Services\Auth;
 
+use App\Services\CriticalErrorService;
 use GuzzleHttp\Client;
 use GuzzleHttp\Psr7\Request;
 use Illuminate\Support\Facades\Log;
@@ -80,26 +81,38 @@ class TemuAuthService
 
     public function submitFeed($data, $store)
     {
-        $client = new Client();
-        $headers = [
-            'content-type' => 'application/json',
-        ];
+        try {
+            $client = new Client();
+            $headers = [
+                'content-type' => 'application/json',
+            ];
 
-        $data['type'] = 'bg.local.goods.add';
-        $data['timestamp'] = time();
-        $data['app_key'] = $this->appKey;
-        $data['data_type'] = 'JSON';
-        $data['access_token'] = $this->accessToken;
-        $data['sign'] = $this->generateSign($data, $this->appSecret);
+            $data['type'] = 'bg.local.goods.add';
+            $data['timestamp'] = time();
+            $data['app_key'] = $this->appKey;
+            $data['data_type'] = 'JSON';
+            $data['access_token'] = $this->accessToken;
+            $data['sign'] = $this->generateSign($data, $this->appSecret);
 
-        Log::info('Submitting feed data: ' . json_encode($data));
+            Log::info('Submitting feed data: ' . json_encode($data));
 
-        $request = new Request('POST', $this->endpoint, $headers, json_encode($data));
+            $request = new Request('POST', $this->endpoint, $headers, json_encode($data));
 
-        $res = $client->sendAsync($request)->wait();
-        Log::info('Feed submission response: ' . $res->getBody());
+            $res = $client->sendAsync($request)->wait();
+            Log::info('Feed submission response: ' . $res->getBody());
 
-        return json_decode($res->getBody(), true);
+            return json_decode($res->getBody(), true);
+        }catch (\Throwable $e) {
+
+            CriticalErrorService::report('Temu Submit Feed Failed', [
+                'marketplace' => 'Temu',
+                'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
+            ],['data'=> $data]);
+
+            Log::error('Error: ' . $e->getMessage());
+
+        }
     }
 
     public function getTemplate($parentId)

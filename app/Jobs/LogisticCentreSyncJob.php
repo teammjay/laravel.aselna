@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Models\LogisticCenter;
 use App\Models\StoreLogisticCenter;
+use App\Services\CriticalErrorService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\DB;
@@ -31,14 +32,23 @@ class LogisticCentreSyncJob implements ShouldQueue
     {
         $this->updateTrackingRecord(['tags' => 'Logistic Centers']);
 
-        $logisticCentre = DB::connection('easyesale_db')->table('logistic_center')->cursor();
-        foreach ($logisticCentre as $centre) {
-            $this->createLogisticCentre($centre);
-        }
+        try {
+            $logisticCentre = DB::connection('easyesale_db')->table('logistic_center')->cursor();
+            foreach ($logisticCentre as $centre) {
+                $this->createLogisticCentre($centre);
+            }
 
-        $storeLogisticCentre = DB::connection('easyesale_db')->table('store_logistic_center')->cursor();
-        foreach ($storeLogisticCentre as $centre) {
-            $this->createStoreLogisticCentre($centre);
+            $storeLogisticCentre = DB::connection('easyesale_db')->table('store_logistic_center')->cursor();
+            foreach ($storeLogisticCentre as $centre) {
+                $this->createStoreLogisticCentre($centre);
+            }
+        }catch (\Throwable $e) {
+
+            CriticalErrorService::report('Logistic Center Sync Job Failed', [
+                'marketplace' => 'N/A',
+                'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
+            ]);
         }
     }
 

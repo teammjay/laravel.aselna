@@ -56,6 +56,7 @@ class EndicialabelService
             CriticalErrorService::report('Endicia create label failed', [
                 'marketplace' => '',
                 'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
             ],['operation_id' => $orderOperationId]);
 
             throw new Exception('Error creating label: ' . $e->getMessage());
@@ -80,6 +81,7 @@ class EndicialabelService
             CriticalErrorService::report('Endicia Label Error Message', [
                 'marketplace' => '',
                 'reason' => $errorMessage ?? 'Unknown',
+                'method' => __METHOD__
             ],['operation_id' => $orderOperationId,'shippingDetail' => $shippingDetail]);
 
             return ['error' => $errorMessage];
@@ -160,6 +162,7 @@ class EndicialabelService
             CriticalErrorService::report('Error saving label image', [
                 'marketplace' => '',
                 'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
             ],['operation_id' => $orderOperationId,'shippingDetail' => $shippingDetail]);
 
             return ['error' => 'Failed to save label image'];
@@ -183,6 +186,7 @@ class EndicialabelService
                 CriticalErrorService::report('Failed to read file content', [
                     'marketplace' => '',
                     'reason' => 'Failed to read file content',
+                    'method' => __METHOD__
                 ],['file_path' => $filePath]);
 
                 throw new Exception('Failed to read file content');
@@ -214,6 +218,7 @@ class EndicialabelService
             CriticalErrorService::report('Error editing label image', [
                 'marketplace' => '',
                 'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
             ],['file_path' => $filePath]);
 
             Log::error('Error editing label image: ' . $e->getMessage());
@@ -248,6 +253,7 @@ class EndicialabelService
                 CriticalErrorService::report('Failed to load stamp image', [
                     'marketplace' => '',
                     'reason' => 'Failed to load image',
+                    'method' => __METHOD__
                 ],['image_path' => $imagePath]);
 
                 throw new ExcepgenerateStampImagetion('Failed to load image');
@@ -297,6 +303,7 @@ class EndicialabelService
             CriticalErrorService::report('Error editing label image', [
                 'marketplace' => '',
                 'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
             ],['image_path' => $imagePath]);
 
             Log::error('Error editing label image: ' . $e->getMessage());
@@ -471,6 +478,7 @@ class EndicialabelService
                 CriticalErrorService::report('Cancel label soap error', [
                     'marketplace' => '',
                     'reason' => $e->getResponse()->getBody()->getContents() ?? 'Unknown',
+                    'method' => __METHOD__
                 ]);
 
                 Log::error('SOAP Error Response: ' . $e->getResponse()->getBody()->getContents());
@@ -575,6 +583,7 @@ class EndicialabelService
             CriticalErrorService::report('Endicia credit limit api error', [
                 'marketplace' => '',
                 'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
             ]);
 
             Log::info('Return Data Error: ' . json_encode($e->getMessage()));
@@ -637,6 +646,7 @@ class EndicialabelService
             CriticalErrorService::report('Endicia purchase credit limit api error', [
                 'marketplace' => '',
                 'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
             ]);
 
             Log::info('Return Data Error: ' . json_encode($e->getMessage()));
@@ -719,6 +729,7 @@ class EndicialabelService
             CriticalErrorService::report('Endicia fetch transaction list api error', [
                 'marketplace' => '',
                 'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
             ]);
 
             Log::info('Return Data Error: ' . json_encode($e->getMessage()));

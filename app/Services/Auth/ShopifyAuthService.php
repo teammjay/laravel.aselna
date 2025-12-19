@@ -64,7 +64,8 @@ class ShopifyAuthService
             CriticalErrorService::report('Shopify Marketplace API failed - EndPoint: '.$this->endpoint, [
                 'marketplace' => 'Shopify',
                 'reason' => $e->getMessage() ?? 'Unknown',
-            ], ['variables' => $variables]);
+                'method' => __METHOD__
+            ], ['request_body' => $bodyArray]);
 
             return null;
         }

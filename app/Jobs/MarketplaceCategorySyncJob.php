@@ -6,6 +6,7 @@ use App\Models\Store;
 use App\Models\StoreCategory;
 use App\Services\Auth\MagentoAuthService;
 use App\Services\Auth\ShopifyAuthService;
+use App\Services\CriticalErrorService;
 use App\Utils\Queue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -21,7 +22,7 @@ class MarketplaceCategorySyncJob implements ShouldQueue
 
     public $timeout = 3000;
 
-    private mixed $storeId;
+    private $storeId;
     private $store;
 
     public $store_name;
@@ -40,18 +41,29 @@ class MarketplaceCategorySyncJob implements ShouldQueue
      */
     public function handle(): void
     {
+        $this->updateTrackingRecord(['tags' => 'MarketplaceCategory']);
 
-        Log::info("Store Category Sync Job Started");
-        $this->getVariables();
-        switch ($this->store->storeType->code) {
-            case 'shopify':
-                $this->syncShopifyCategories();
-                break;
-            case 'magento':
-                $this->syncMagentoCategories();
-                break;
-            default:
-                Log::info("Store Type not found");
+        try {
+            Log::info("Store Category Sync Job Started");
+            $this->getVariables();
+            switch ($this->store->storeType->code) {
+                case 'shopify':
+                    $this->syncShopifyCategories();
+                    break;
+                case 'magento':
+                    $this->syncMagentoCategories();
+                    break;
+                default:
+                    Log::info("Store Type not found");
+            }
+        }catch (\Throwable $e) {
+
+            CriticalErrorService::report('Marketplace Category Sync Job Failed', [
+                'marketplace' => 'N/A',
+                'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
+            ],['store_id' => $this->storeId]);
+
         }
     }
 

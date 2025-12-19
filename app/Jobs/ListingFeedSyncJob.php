@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Models\Listing;
 use App\Models\ListingFeed;
+use App\Services\CriticalErrorService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\DB;
@@ -33,19 +34,29 @@ class ListingFeedSyncJob implements ShouldQueue
     {
         $this->updateTrackingRecord(['tags' => 'Listing Feed']);
 
-        $allFeedsQ = DB::connection('easyesale_db')
-            ->table('listing_feed')
-            ->orderBy('id');
+        try {
+            $allFeedsQ = DB::connection('easyesale_db')
+                ->table('listing_feed')
+                ->orderBy('id');
 
-        if (env('APP_ENV') === 'local') {
-            $allFeedsQ->whereNotNull('listing_id');
-        }
-
-        $allFeedsQ->chunk(1000, function ($allFeeds) {
-            foreach ($allFeeds as $feed) {
-                $this->createListingFeed($feed);
+            if (env('APP_ENV') === 'local') {
+                $allFeedsQ->whereNotNull('listing_id');
             }
-        });
+
+            $allFeedsQ->chunk(1000, function ($allFeeds) {
+                foreach ($allFeeds as $feed) {
+                    $this->createListingFeed($feed);
+                }
+            });
+        }catch (\Throwable $e) {
+
+            CriticalErrorService::report('Listing Feed Sync Job Failed', [
+                'marketplace' => 'N/A',
+                'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
+            ]);
+
+        }
     }
 
     private function createListingFeed($feed)

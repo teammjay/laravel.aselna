@@ -6,6 +6,7 @@ use App\Jobs\Concerns\TrackableJob;
 use App\Models\StoreType;
 use App\Models\StoreTypeCategory;
 use App\Services\Auth\AmazonAuthService;
+use App\Services\CriticalErrorService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Log;
@@ -34,19 +35,31 @@ class AmazonProductTypeSyncJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $this->updateTrackingRecord(['tags' => 'Amazon ProductType']);
+        try {
+            $this->updateTrackingRecord(['tags' => 'Amazon ProductType']);
 
-        $this->amazonAuthService = new AmazonAuthService();
-        StoreTypeCategory::whereIn('store_type_id', function ($subQuery) {
-            return $subQuery->select('id')->from('store_type')->where('code', 'amazon');
-        })
-            ->whereNull('marketplace_code')
-            ->orderBy('id')->chunk(1000, function ($storeProductTypes) {
-            foreach ($storeProductTypes as $storeProductType) {
-                $this->syncAmazonProductType($storeProductType);
-                sleep(1);
-            }
-        });
+            $this->amazonAuthService = new AmazonAuthService();
+            StoreTypeCategory::whereIn('store_type_id', function ($subQuery) {
+                return $subQuery->select('id')->from('store_type')->where('code', 'amazon');
+            })
+                ->whereNull('marketplace_code')
+                ->orderBy('id')->chunk(1000, function ($storeProductTypes) {
+                    foreach ($storeProductTypes as $storeProductType) {
+                        $this->syncAmazonProductType($storeProductType);
+                        sleep(1);
+                    }
+                });
+        }catch (\Throwable $e) {
+
+            CriticalErrorService::report('Amazon Product Type Sync Job Failed', [
+                'marketplace' => 'Amazon',
+                'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
+            ]);
+
+            Log::error('Error: ' . $e->getMessage());
+
+        }
     }
 
     private function syncAmazonProductType(mixed $storeProductType)

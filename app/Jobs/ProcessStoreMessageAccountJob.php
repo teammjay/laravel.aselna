@@ -401,6 +401,7 @@ class ProcessStoreMessageAccountJob implements ShouldQueue
             CriticalErrorService::report('Store message account job failed:'.$this->store_name.'-'.$this->store_type, [
                 'marketplace' => ucfirst($this->store_type),
                 'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
             ],['store_type' => $this->store_type, 'store_name' => $this->store_name,'store_message_account' => $this->storeMessageAccount]);
 
             Log::error('Error processing store message account: ' . $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine());

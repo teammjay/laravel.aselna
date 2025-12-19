@@ -4,6 +4,8 @@ namespace App\Jobs;
 
 use App\Jobs\Concerns\TrackableJob;
 use App\Models\PostalAddress;
+use App\Services\CriticalErrorService;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\DB;
@@ -41,28 +43,41 @@ class AddressesSyncJob implements ShouldQueue
 
     private function createSyncAddress(mixed $address)
     {
-        PostalAddress::updateOrCreate(
-            [
-                'id' => $address->id
-            ],
-            [
-                'id' => $address->id,
-                'first_name' => $address->first_name,
-                'last_name' => $address->last_name,
-                'company' => $address->company,
-                'address_line_1' => $address->address_line1,
-                'address_line_2' => $address->address_line2,
-                'address_line_3' => $address->address_line3,
-                'city' => $address->city,
-                'state_or_region' => $address->state_or_region,
-                'postal_code' => $address->postal_code,
-                'country' => $address->county,
-                'country_code' => $address->country_code,
-                'phone' => $address->phone,
-                'email' => $address->email,
-                'district' => $address->district,
-                'client' => $address->client,
-            ]
-        );
+        try {
+            PostalAddress::updateOrCreate(
+                [
+                    'id' => $address->id
+                ],
+                [
+                    'id' => $address->id,
+                    'first_name' => $address->first_name,
+                    'last_name' => $address->last_name,
+                    'company' => $address->company,
+                    'address_line_1' => $address->address_line1,
+                    'address_line_2' => $address->address_line2,
+                    'address_line_3' => $address->address_line3,
+                    'city' => $address->city,
+                    'state_or_region' => $address->state_or_region,
+                    'postal_code' => $address->postal_code,
+                    'country' => $address->county,
+                    'country_code' => $address->country_code,
+                    'phone' => $address->phone,
+                    'email' => $address->email,
+                    'district' => $address->district,
+                    'client' => $address->client,
+                ]
+            );
+        }catch (\Throwable $e) {
+
+            CriticalErrorService::report('Address sync job failed', [
+                'marketplace' => '',
+                'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
+            ]);
+
+            Log::error('Error: ' . $e->getMessage());
+
+        }
+
     }
 }

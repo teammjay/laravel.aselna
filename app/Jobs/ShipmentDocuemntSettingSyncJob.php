@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Models\ShipmentDocumentSetting;
+use App\Services\CriticalErrorService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\DB;
@@ -30,9 +31,18 @@ class ShipmentDocuemntSettingSyncJob implements ShouldQueue
     {
         $this->updateTrackingRecord(['tags' => 'Shipment Document Settings']);
 
-        $shippingDocuments = DB::connection('easyesale_db')->table('shipping_document_setting')->get();
-        foreach ($shippingDocuments as $shippingdocument) {
-            $this->createShippingDocuments($shippingdocument);
+        try {
+            $shippingDocuments = DB::connection('easyesale_db')->table('shipping_document_setting')->get();
+            foreach ($shippingDocuments as $shippingdocument) {
+                $this->createShippingDocuments($shippingdocument);
+            }
+        }catch (\Throwable $e) {
+
+            CriticalErrorService::report('Shipment Document Setting Sync Job Failed', [
+                'marketplace' => 'N/A',
+                'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
+            ]);
         }
     }
 

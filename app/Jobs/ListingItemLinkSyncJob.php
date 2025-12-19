@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Models\ListingItemLink;
+use App\Services\CriticalErrorService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\DB;
@@ -32,19 +33,29 @@ class ListingItemLinkSyncJob implements ShouldQueue
     public function handle(): void
     {
         $this->updateTrackingRecord(['tags' => 'Listing Item Link']);
-        $listingItemLinksQ = DB::connection('easyesale_db')->table('listing_item_link')
-            ->orderBy('id');
 
-        if (env('APP_ENV') === 'local') {
-            $listingItemLinksQ->whereRaw('item_id in (select item_id from oydera_listing_item_link where listing_id = \'1dd2cd15-757d-d9fc-02af-21a1eba741e7\')');
+        try {
+            $listingItemLinksQ = DB::connection('easyesale_db')->table('listing_item_link')
+                ->orderBy('id');
+
+            if (env('APP_ENV') === 'local') {
+                $listingItemLinksQ->whereRaw('item_id in (select item_id from oydera_listing_item_link where listing_id = \'1dd2cd15-757d-d9fc-02af-21a1eba741e7\')');
 //            $listingItemLinksQ->whereRaw('item_id in (select id from oydera_listing_item where store_product_id in (select id from oydera_store_product where product_id in (select id from oydera_product where oem_generic = 2)))');
-        }
+            }
 
-        $listingItemLinksQ->chunk(1000, function ($listingItemLinks) {
+            $listingItemLinksQ->chunk(1000, function ($listingItemLinks) {
                 foreach ($listingItemLinks as $listingItemLink) {
                     $this->createListingItemLink($listingItemLink);
                 }
             });
+        }catch (\Throwable $e) {
+
+            CriticalErrorService::report('Listing Item Link Sync Job Failed', [
+                'marketplace' => 'N/A',
+                'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
+            ]);
+        }
     }
 
     private function createListingItemLink(mixed $listingItemLink)

@@ -7,6 +7,7 @@ use App\Models\Store;
 use App\Models\StoreCategory;
 use App\Models\StoreType;
 use App\Models\StoreTypeCategory;
+use App\Services\CriticalErrorService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Log;
@@ -38,8 +39,18 @@ class StoreCategorySyncJob implements ShouldQueue
         $this->updateTrackingRecord(['tags' => 'Store Category']);
 
         Log::info("Store Category Sync Job Started");
-        $this->getVariables();
-        $this->syncCategories();
+
+        try {
+            $this->getVariables();
+            $this->syncCategories();
+        }catch (\Throwable $e) {
+
+            CriticalErrorService::report('Store Category Sync Job Failed', [
+                'marketplace' => 'N/A',
+                'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
+            ],['storeId' => $this->storeID]);
+        }
     }
 
     private function getVariables()

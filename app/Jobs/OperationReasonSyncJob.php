@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Models\OrderOperationReason;
+use App\Services\CriticalErrorService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\DB;
@@ -29,12 +30,22 @@ class OperationReasonSyncJob implements ShouldQueue
     public function handle(): void
     {
         $this->updateTrackingRecord(['tags' => 'Operation Reason']);
-        DB::connection('easyesale_db')->table('order_operation_reason')->orderBy('id')
-            ->chunk(1000, function ($operationReasons) {
-                foreach ($operationReasons as $operationReason) {
-                    $this->createSyncOperationReason($operationReason);
-                }
-            });
+
+        try {
+            DB::connection('easyesale_db')->table('order_operation_reason')->orderBy('id')
+                ->chunk(1000, function ($operationReasons) {
+                    foreach ($operationReasons as $operationReason) {
+                        $this->createSyncOperationReason($operationReason);
+                    }
+                });
+        }catch (\Throwable $e) {
+
+            CriticalErrorService::report('Operation Reason Sync Job Failed', [
+                'marketplace' => 'N/A',
+                'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
+            ]);
+        }
     }
 
     private function createSyncOperationReason(mixed $operationReason)

@@ -6,6 +6,7 @@ use App\Helpers\Common;
 use App\Jobs\Concerns\TrackableJob;
 use App\Models\Store;
 use App\Services\Marketplace\Service\EbayService;
+use App\Services\CriticalErrorService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Log;
@@ -34,39 +35,40 @@ class FetchEbayOrders implements ShouldQueue
     {
         $this->updateTrackingRecord(['tags' => 'eBay Orders']);
 
-        /* get active store jobs*/
-        $store_ids = Common::getActiveStoreJobs('FetchEbayOrders','ebay');
-        /* get active store jobs*/
+        try {
+            /* get active store jobs*/
+            $store_ids = Common::getActiveStoreJobs('FetchEbayOrders', 'ebay');
+            /* get active store jobs*/
 
-        /* get ebay stores*/
-        $query = Store::select('store.*','store_type.name as storeTypeName')->join('store_type', 'store_type.id', '=', 'store.store_type_id')->where('store_type.code','ebay')->where('store.store_status','<>',0);
-        if(!empty($store_ids)){
-            $query->whereIn('store.id',$store_ids);
-        }
-        $stores = $query->get();
+            /* get ebay stores*/
+            $query = Store::select('store.*', 'store_type.name as storeTypeName')->join('store_type', 'store_type.id', '=', 'store.store_type_id')->where('store_type.code', 'ebay')->where('store.store_status', '<>', 0);
+            if (!empty($store_ids)) {
+                $query->whereIn('store.id', $store_ids);
+            }
+            $stores = $query->get();
 
-        //$stores = Store::select('store.*','store_type.name as storeTypeName')->join('store_type', 'store_type.id', '=', 'store.store_type_id')->where('store_type.code','ebay')->where('store.store_status','<>',0)->whereIn('store.id',$store_ids)->get();
+            //$stores = Store::select('store.*','store_type.name as storeTypeName')->join('store_type', 'store_type.id', '=', 'store.store_type_id')->where('store_type.code','ebay')->where('store.store_status','<>',0)->whereIn('store.id',$store_ids)->get();
 
-        if(count($stores ?? []) > 0) {
+            if (count($stores ?? []) > 0) {
 
-            foreach ($stores as $store) {
+                foreach ($stores as $store) {
 
-                if (env('APP_ENV') === 'local' && $store->name != 'phonil') {
-                    continue;
-                }
-                Log::info('Store : ' . $store->name);
+                    if (env('APP_ENV') === 'local' && $store->name != 'phonil') {
+                        continue;
+                    }
+                    Log::info('Store : ' . $store->name);
 
-                try {
+                    try {
 
-                    $this->updateTrackingRecord(['tags' => $store->storeTypeName.' Orders']);
-                    $ebayService = new EbayService();
-                    $orders = $ebayService->getOrders($store);
-                } catch (\Throwable $e) {
+                        $this->updateTrackingRecord(['tags' => $store->storeTypeName . ' Orders']);
+                        $ebayService = new EbayService();
+                        $orders = $ebayService->getOrders($store);
+                    } catch (\Throwable $e) {
 
-                    \App\Helpers\ErrorLogger::log($e, __METHOD__);
+                        \App\Helpers\ErrorLogger::log($e, __METHOD__);
 
-                    Log::info('Error : ' . $e->getMessage());
-                }
+                        Log::info('Error : ' . $e->getMessage());
+                    }
 
 //                $ordersyncDetail = OrderSynchronization::where('store_id',$store->id)->orderBy('filter_end_date','desc')->first();
 //
@@ -197,7 +199,18 @@ class FetchEbayOrders implements ShouldQueue
 //                        break;
 //                    }
 //                }
+                }
             }
+        }catch (\Throwable $e) {
+
+            CriticalErrorService::report('Fetch eBay Order Job Failed', [
+                'marketplace' => 'eBay',
+                'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
+            ]);
+
+            Log::error('Error: ' . $e->getMessage());
+
         }
     }
 }

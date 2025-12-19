@@ -9,6 +9,7 @@ use App\Models\DeviceInterface;
 use App\Models\Store;
 use App\Models\StoreNavigationPage;
 use App\Services\Auth\ShopifyAuthService;
+use App\Services\CriticalErrorService;
 use App\Utils\FileUtility;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -24,7 +25,7 @@ class ShopifyCollectionDeviceSyncJob implements ShouldQueue
 
     public $timeout = 3000;
 
-    private mixed $storeID;
+    private $storeID;
     private $store;
     private mixed $publications;
     private ShopifyAuthService $shopifyAuthService;
@@ -45,13 +46,25 @@ class ShopifyCollectionDeviceSyncJob implements ShouldQueue
     {
         $this->updateTrackingRecord(['tags' => 'Shopify Collection Device']);
 
-        $this->setVariables();
-        $this->getPuplications();
-        Device::where('status', 'active')->orderBy('id')->chunk(100, function ($devices) {
-            foreach ($devices as $device) {
-                $this->syncShopifyCollection($device);
-            }
-        });
+        try {
+            $this->setVariables();
+            $this->getPuplications();
+            Device::where('status', 'active')->orderBy('id')->chunk(100, function ($devices) {
+                foreach ($devices as $device) {
+                    $this->syncShopifyCollection($device);
+                }
+            });
+        }catch (\Throwable $e) {
+
+            CriticalErrorService::report('Shopify Collection Device Sync Job Failed', [
+                'marketplace' => 'Shopify',
+                'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
+            ],['storeId' => $this->storeID]);
+
+            Log::error('Error: ' . $e->getMessage());
+
+        }
     }
 
     private function syncShopifyCollection(mixed $device)

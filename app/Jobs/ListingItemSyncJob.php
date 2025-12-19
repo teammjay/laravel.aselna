@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Models\ListingItem;
+use App\Services\CriticalErrorService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\DB;
@@ -33,25 +34,34 @@ class ListingItemSyncJob implements ShouldQueue
     {
         $this->updateTrackingRecord(['tags' => 'Listing Item']);
 
-        $listingItemsQ = DB::connection('easyesale_db')
-            ->table('listing_item')
-            // only on local
-            ->orderBy('id');
+        try {
+            $listingItemsQ = DB::connection('easyesale_db')
+                ->table('listing_item')
+                // only on local
+                ->orderBy('id');
 
-        if (env('APP_ENV') == 'local') {
-            Log::info("Came tHEre");
-            $listingItemsQ->whereRaw('id in (select item_id from oydera_listing_item_link where listing_id = \'1dd2cd15-757d-d9fc-02af-21a1eba741e7\')');
+            if (env('APP_ENV') == 'local') {
+                Log::info("Came tHEre");
+                $listingItemsQ->whereRaw('id in (select item_id from oydera_listing_item_link where listing_id = \'1dd2cd15-757d-d9fc-02af-21a1eba741e7\')');
 //            $listingItemsQ->whereRaw('store_product_id in (select id from oydera_store_product where product_id in (select id from oydera_product where oem_generic = 2))');
-        } else {
-            // get Last 2 years only
+            } else {
+                // get Last 2 years only
 //            $listingItemsQ->where('create_ts', '>=', now()->subYears(2));
-        }
-
-        $listingItemsQ->chunk(1000, function ($listingItems) {
-            foreach ($listingItems as $listingItem) {
-                $this->createListingItem($listingItem);
             }
-        });
+
+            $listingItemsQ->chunk(1000, function ($listingItems) {
+                foreach ($listingItems as $listingItem) {
+                    $this->createListingItem($listingItem);
+                }
+            });
+        }catch (\Throwable $e) {
+
+            CriticalErrorService::report('Listing Item Sync Job Failed', [
+                'marketplace' => 'N/A',
+                'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
+            ]);
+        }
     }
 
     private function createListingItem(mixed $listingItem)

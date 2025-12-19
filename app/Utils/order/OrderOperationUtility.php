@@ -349,6 +349,7 @@ class OrderOperationUtility
             CriticalErrorService::report('Error processing check transaction credit', [
                 'marketplace' => '',
                 'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
             ],['order_operation' => $orderOperation]);
 
             Log::error('Error processing check transaction credit: ' . $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine());
@@ -974,6 +975,7 @@ class OrderOperationUtility
                     CriticalErrorService::report('Error processing check transaction credit', [
                         'marketplace' => '',
                         'reason' => $e->getMessage() ?? 'Unknown',
+                        'method' => __METHOD__
                     ],['order_operation' => $orderOperation]);
 
                     throw new \Exception($errors);

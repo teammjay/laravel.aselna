@@ -68,6 +68,7 @@ class EbayAuthService
             CriticalErrorService::report('Ebay Get Accesstoken failed', [
                 'marketplace' => 'eBay',
                 'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
             ]);
 
             Log::error('Error: ' . $e->getMessage());
@@ -111,6 +112,7 @@ class EbayAuthService
             CriticalErrorService::report('Ebay Refresh token failed', [
                 'marketplace' => 'eBay',
                 'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
             ]);
 
             Log::error('Error: ' . $e->getMessage());
@@ -187,6 +189,7 @@ class EbayAuthService
             CriticalErrorService::report('Ebay create task failed', [
                 'marketplace' => 'eBay',
                 'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
             ],['listing_info' => $listingInfo]);
 
             if ($e->hasResponse()) {
@@ -235,6 +238,7 @@ class EbayAuthService
             CriticalErrorService::report('Ebay get result feed failed', [
                 'marketplace' => 'eBay',
                 'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
             ],['listing_id' => $listingId, 'task_id' => $taskId]);
 
             if ($e->hasResponse()) {
@@ -275,6 +279,7 @@ class EbayAuthService
             CriticalErrorService::report('Ebay download feed failed', [
                 'marketplace' => 'eBay',
                 'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
             ],['listing_id' => $listingId, 'task_id' => $taskId]);
 
             if ($e->hasResponse()) {
@@ -309,6 +314,7 @@ class EbayAuthService
             CriticalErrorService::report('Ebay get task detail failed', [
                 'marketplace' => 'eBay',
                 'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
             ],['task_id' => $taskId]);
 
             if ($e->hasResponse()) {
@@ -373,6 +379,7 @@ class EbayAuthService
             CriticalErrorService::report('Ebay upload images to EPS failed', [
                 'marketplace' => 'eBay',
                 'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
             ],['image_url' => $imageUrl]);
 
             if ($e->hasResponse()) {
@@ -416,6 +423,7 @@ class EbayAuthService
             CriticalErrorService::report('Ebay upload file failed', [
                 'marketplace' => 'eBay',
                 'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
             ],['file_name' => $fileName, 'task_id' => $taskId]);
 
             if ($e->hasResponse()) {
@@ -469,6 +477,7 @@ class EbayAuthService
             CriticalErrorService::report('Ebay order sync failed', [
                 'marketplace' => 'eBay',
                 'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
             ]);
 
             if ($e->hasResponse()) {
@@ -607,6 +616,7 @@ class EbayAuthService
             CriticalErrorService::report('Ebay create shipping fulfillment failed', [
                 'marketplace' => 'eBay',
                 'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
             ],['order_id' => $orderId, 'data' => $data]);
 
             if ($e->hasResponse()) {
@@ -640,6 +650,7 @@ class EbayAuthService
             CriticalErrorService::report('Ebay cancel order failed', [
                 'marketplace' => 'eBay',
                 'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
             ],['data' => $data]);
 
 
@@ -674,6 +685,7 @@ class EbayAuthService
             CriticalErrorService::report('Ebay fetch listing info by sku failed', [
                 'marketplace' => 'eBay',
                 'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
             ],['sku' => $sku]);
 
             if ($e->hasResponse()) {
@@ -751,6 +763,7 @@ class EbayAuthService
             CriticalErrorService::report('Ebay fetch listing item status sync failed', [
                 'marketplace' => 'eBay',
                 'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
             ],['sku_list' => $skuList]);
 
             if ($e->hasResponse()) {
@@ -787,6 +800,7 @@ class EbayAuthService
             CriticalErrorService::report('Ebay get order detail api failed', [
                 'marketplace' => 'eBay',
                 'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
             ],['order_id' => $orderID]);
 
             if ($e->hasResponse()) {
@@ -825,6 +839,7 @@ class EbayAuthService
             CriticalErrorService::report('Ebay issue refund failed', [
                 'marketplace' => 'eBay',
                 'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
             ],['order_id' => $orderId, 'data' => $data]);
 
             if ($e->hasResponse()) {
@@ -858,6 +873,7 @@ class EbayAuthService
             CriticalErrorService::report('Ebay check cancellation failed', [
                 'marketplace' => 'eBay',
                 'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
             ],['order_id' => $order_id]);
 
             if ($e->hasResponse()) {
@@ -890,6 +906,7 @@ class EbayAuthService
             CriticalErrorService::report('Ebay approve cancellation failed', [
                 'marketplace' => 'eBay',
                 'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
             ],['cancel_id' => $cancelId]);
 
             if ($e->hasResponse()) {

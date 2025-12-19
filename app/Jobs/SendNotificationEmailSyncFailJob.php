@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Models\UserAccount;
 use App\Utils\EmailMessageUtility;
 use App\Utils\FastEmailService;
+use App\Services\CriticalErrorService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Log;
@@ -135,6 +136,12 @@ class SendNotificationEmailSyncFailJob implements ShouldQueue
                 ];
 
                 \App\Helpers\ErrorLogger::log($e, __METHOD__, $extraInfo);
+
+                CriticalErrorService::report('Send Notification Email Sync Failed', [
+                    'marketplace' => 'N/A',
+                    'reason' => $e->getMessage() ?? 'Unknown',
+                    'method' => __METHOD__
+                ]);
 
                 Log::error('Error processing store account ID ' . $maccount->id . ': ' . $e->getMessage());
             }

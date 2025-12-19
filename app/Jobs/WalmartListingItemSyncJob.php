@@ -185,6 +185,7 @@ class WalmartListingItemSyncJob implements ShouldQueue
             CriticalErrorService::report('Error syncing Walmart listing item', [
                 'marketplace' => ucfirst($store->name),
                 'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
             ],['store_name' => $store->name]);
         }
     }

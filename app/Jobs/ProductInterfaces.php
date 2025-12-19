@@ -6,6 +6,7 @@ use App\Models\Catalog;
 use App\Models\Device;
 use App\Models\Interfaces;
 use App\Models\ProductInterface;
+use App\Services\CriticalErrorService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\DB;
@@ -33,9 +34,19 @@ class ProductInterfaces implements ShouldQueue
     public function handle(): void
     {
         $this->updateTrackingRecord(['tags' => 'Product Interface']);
-        $productAttributes = DB::connection('easyesale_db')->table('product_cea_interface_link')->cursor();
-        foreach ($productAttributes as $productAttribute) {
-            $this->createProductInterfaces($productAttribute);
+
+        try {
+            $productAttributes = DB::connection('easyesale_db')->table('product_cea_interface_link')->cursor();
+            foreach ($productAttributes as $productAttribute) {
+                $this->createProductInterfaces($productAttribute);
+            }
+        }catch (\Throwable $e) {
+
+            CriticalErrorService::report('Product Interface Sync Job Failed', [
+                'marketplace' => 'N/A',
+                'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
+            ]);
         }
     }
 
