@@ -132,7 +132,7 @@ class SubmitShopifyProductsJob implements ShouldQueue
                     //->where('product_sku', 'E74')
                     ->whereIn('product_id', $AlreadyCreatedIds)
                     ->orderBy('created_at', 'desc')
-                    ->limit(500)
+                    ->limit(200)
                     ->get();
 
                 foreach ($products as $product) {
