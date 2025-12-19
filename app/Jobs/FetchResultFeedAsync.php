@@ -1,10 +1,11 @@
-<?php
+    <?php
 
 namespace App\Jobs;
 
 use App\Models\ListingFeed;
 use App\Models\ScheduledJob;
 use App\Services\Marketplace\MarketplaceServiceFactory;
+use App\Services\CriticalErrorService;
 use Google\Service\Classroom\Feed;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -80,6 +81,12 @@ class FetchResultFeedAsync implements ShouldQueue
             ];
 
             \App\Helpers\ErrorLogger::log($e, __METHOD__, $extraInfo);
+
+            CriticalErrorService::report('Fetch Result Feed Job Failed', [
+                'marketplace' => 'N/A',
+                'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
+            ],$extraInfo);
 
             Log::error('Error fetching result feed: ' . $e->getMessage());
             $feed->status = FeedStatus::FAILED;

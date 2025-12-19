@@ -17,6 +17,7 @@ use App\Models\Store;
 use App\Models\StoreCategory;
 use App\Models\StoreTypeListing;
 use App\Services\Auth\MagentoAuthService;
+use App\Services\CriticalErrorService;
 use App\Services\Marketplace\Service\MagentoService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -46,46 +47,57 @@ class MagentoProductsSyncJob implements ShouldQueue
 
     public function handle(): void
     {
-        if (env('APP_ENV') === 'local') {
-            $this->limit = 10;
-        }
 
-        $this->updateTrackingRecord(['tags' => 'Magento Products']);
+        try {
+            if (env('APP_ENV') === 'local') {
+                $this->limit = 10;
+            }
 
-        /* get active store jobs*/
-        $store_ids = Common::getActiveStoreJobs('MagentoProductsSyncJob','magento');
-        /* get active store jobs*/
+            $this->updateTrackingRecord(['tags' => 'Magento Products']);
 
-        $query = Store::select('store.*')->with('fileSystem', 'storeType')->join('store_type', 'store_type.id', '=', 'store.store_type_id')->where('store_type.code', 'magento')->where('store.store_status','<>',0);
-        if(!empty($store_ids)){
-            $query->whereIn('store.id',$store_ids);
-        }
-        $stores = $query->get();
+            /* get active store jobs*/
+            $store_ids = Common::getActiveStoreJobs('MagentoProductsSyncJob', 'magento');
+            /* get active store jobs*/
 
-        $this->magentoService = new MagentoService();
-        //$stores = Store::select('store.*')->with('fileSystem', 'storeType')->join('store_type', 'store_type.id', '=', 'store.store_type_id')->where('store_type.code', 'magento')->where('store.store_status','<>',0)->whereIn('store.id',$store_ids)->get();
+            $query = Store::select('store.*')->with('fileSystem', 'storeType')->join('store_type', 'store_type.id', '=', 'store.store_type_id')->where('store_type.code', 'magento')->where('store.store_status', '<>', 0);
+            if (!empty($store_ids)) {
+                $query->whereIn('store.id', $store_ids);
+            }
+            $stores = $query->get();
 
-        Log::info('Magento Simple Products Sync Job Started');
-        if (count($stores ?? []) > 0) {
-            foreach ($stores as $store) {
-                Log::info('Store : ' . $store->name);
+            $this->magentoService = new MagentoService();
+            //$stores = Store::select('store.*')->with('fileSystem', 'storeType')->join('store_type', 'store_type.id', '=', 'store.store_type_id')->where('store_type.code', 'magento')->where('store.store_status','<>',0)->whereIn('store.id',$store_ids)->get();
 
-                $AlreadyCreatedIds = ManageMarketplaceProduct::select('product_id')->where('upload_status', 'success')->where('store_id', $store->id)->get();
-                $productTypes = ProductType::select('id')->where('code', 'ceabundle')->get()->toArray();
+            Log::info('Magento Simple Products Sync Job Started');
+            if (count($stores ?? []) > 0) {
+                foreach ($stores as $store) {
+                    Log::info('Store : ' . $store->name);
 
-                $products = Catalog::select('*')->with('productType', 'productKeyFeatures', 'productColor')
-                    ->whereNotIn('product_type', $productTypes)
-                    ->whereNotIn('product_id', $AlreadyCreatedIds)
-                    ->where('product_status', '!=', 'discontinued')
-                    ->orderBy('created_at', 'desc')
-                    ->whereNull('parent_id')
-                    ->limit($this->limit)
-                    ->get();
+                    $AlreadyCreatedIds = ManageMarketplaceProduct::select('product_id')->where('upload_status', 'success')->where('store_id', $store->id)->get();
+                    $productTypes = ProductType::select('id')->where('code', 'ceabundle')->get()->toArray();
 
-                foreach ($products as $product) {
-                    $this->submitFeed($product, $store);
+                    $products = Catalog::select('*')->with('productType', 'productKeyFeatures', 'productColor')
+                        ->whereNotIn('product_type', $productTypes)
+                        ->whereNotIn('product_id', $AlreadyCreatedIds)
+                        ->where('product_status', '!=', 'discontinued')
+                        ->orderBy('created_at', 'desc')
+                        ->whereNull('parent_id')
+                        ->limit($this->limit)
+                        ->get();
+
+                    foreach ($products as $product) {
+                        $this->submitFeed($product, $store);
+                    }
                 }
             }
+        }catch (\Throwable $e) {
+
+            CriticalErrorService::report('Magento Products Sync Job Failed', [
+                'marketplace' => 'Magento',
+                'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
+            ]);
+
         }
 
     }

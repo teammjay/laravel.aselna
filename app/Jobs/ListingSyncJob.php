@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Models\Listing;
+use App\Services\CriticalErrorService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\DB;
@@ -31,15 +32,26 @@ class ListingSyncJob implements ShouldQueue
     public function handle(): void
     {
         $this->updateTrackingRecord(['tags' => 'Listings']);
-        $listings = DB::connection('easyesale_db')
-            ->table('listing')
+
+        try {
+            $listings = DB::connection('easyesale_db')
+                ->table('listing')
 //            ->where('create_ts', '>=', now()->subYears(2))
-            ->orderBy('id')
-            ->chunk(1000, function ($listings) {
-                foreach ($listings as $listing) {
-                    $this->createListing($listing);
-                }
-            });
+                ->orderBy('id')
+                ->chunk(1000, function ($listings) {
+                    foreach ($listings as $listing) {
+                        $this->createListing($listing);
+                    }
+                });
+        }catch (\Throwable $e) {
+
+            CriticalErrorService::report('Listing Sync Job Failed', [
+                'marketplace' => 'N/A',
+                'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
+            ]);
+
+        }
     }
 
     private function createListing(mixed $listing)

@@ -6,6 +6,7 @@ use App\Helpers\Common;
 use App\Jobs\Concerns\TrackableJob;
 use App\Models\Store;
 use App\Services\Marketplace\Service\TemuService;
+use App\Services\CriticalErrorService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Log;
@@ -67,6 +68,12 @@ class FetchTemuOrders implements ShouldQueue
                     ];
 
                     \App\Helpers\ErrorLogger::log($e, __METHOD__, $extraInfo);
+
+                    CriticalErrorService::report('Fetch Temu Orders Job Failed', [
+                        'marketplace' => 'Temu',
+                        'reason' => $e->getMessage() ?? 'Unknown',
+                        'method' => __METHOD__
+                    ],$extraInfo);
 
                     Log::info('Error : ' . $e->getMessage());
                 }

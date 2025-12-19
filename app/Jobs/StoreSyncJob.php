@@ -5,6 +5,7 @@ namespace App\Jobs;
 use App\Models\Store;
 use App\Models\StoreLogisticCenter;
 use App\Models\StoreType;
+use App\Services\CriticalErrorService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\DB;
@@ -34,23 +35,35 @@ class StoreSyncJob implements ShouldQueue
     {
         $this->updateTrackingRecord(['tags' => 'Stores']);
 
-        $stores = DB::connection('fonus_db')->table('tbl_seller')->get();
-        foreach ($stores as $store) {
+        try {
+            $stores = DB::connection('fonus_db')->table('tbl_seller')->get();
+            foreach ($stores as $store) {
 //            $this->createStore($store);
-        }
-
-        //check if connection exists or not
-        if (DB::connection('easyesale_db')->getDatabaseName()) {
-
-            $allStores = DB::connection('easyesale_db')->table('store')->cursor();
-            foreach ($allStores as $store) {
-                $this->createStoreFromEasyEsale($store);
             }
 
-            $storeLogistics = DB::connection('easyesale_db')->table('store_logistic_center')->cursor();
-            foreach ($storeLogistics as $storeLogistic) {
-                $this->createStoreLogistics($storeLogistic);
+            //check if connection exists or not
+            if (DB::connection('easyesale_db')->getDatabaseName()) {
+
+                $allStores = DB::connection('easyesale_db')->table('store')->cursor();
+                foreach ($allStores as $store) {
+                    $this->createStoreFromEasyEsale($store);
+                }
+
+                $storeLogistics = DB::connection('easyesale_db')->table('store_logistic_center')->cursor();
+                foreach ($storeLogistics as $storeLogistic) {
+                    $this->createStoreLogistics($storeLogistic);
+                }
             }
+        }catch (\Throwable $e) {
+
+            CriticalErrorService::report('Stores Sync Job Failed', [
+                'marketplace' => 'N/A',
+                'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
+            ]);
+
+            Log::error('Error: ' . $e->getMessage());
+
         }
     }
 

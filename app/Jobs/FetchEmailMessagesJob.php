@@ -16,6 +16,7 @@ use App\Models\Sequence;
 use App\Models\Store;
 use App\Models\StoreMessageAccount;
 use App\Utils\EmailMessageUtility;
+use App\Services\CriticalErrorService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Bus;
@@ -88,6 +89,12 @@ class   FetchEmailMessagesJob implements ShouldQueue
         } catch (\Throwable $e) {
 
             \App\Helpers\ErrorLogger::log($e, __METHOD__);
+
+            CriticalErrorService::report('Fetch Email Message Job Failed', [
+                'marketplace' => 'N/A',
+                'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
+            ]);
 
             Log::error('Error in FetchEmailMessagesJob: ' . $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine());
         }

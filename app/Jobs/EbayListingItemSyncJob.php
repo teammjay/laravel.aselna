@@ -11,6 +11,7 @@ use App\Models\ListingItem;
 use App\Models\ListingItemLink;
 use App\Models\Store;
 use App\Services\Auth\EbayAuthService;
+use App\Services\CriticalErrorService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Log;
@@ -40,61 +41,73 @@ class EbayListingItemSyncJob implements ShouldQueue
         Log::info('EbayListingItemSyncJob started');
         $this->updateTrackingRecord(['tags' => 'eBay Listing Item']);
 
-        /* get active store jobs*/
-        $store_ids = Common::getActiveStoreJobs('EbayListingItemSyncJob','ebay');
-        /* get active store jobs*/
+        try {
+            /* get active store jobs*/
+            $store_ids = Common::getActiveStoreJobs('EbayListingItemSyncJob', 'ebay');
+            /* get active store jobs*/
 
-        $query = Store::where('store_type_id', function ($subquery) {
-            return $subquery->select('id')
-                ->from('store_type')
-                ->where('code', 'ebay');
-        })->where('store_status','<>',0);
+            $query = Store::where('store_type_id', function ($subquery) {
+                return $subquery->select('id')
+                    ->from('store_type')
+                    ->where('code', 'ebay');
+            })->where('store_status', '<>', 0);
 
-        if(!empty($store_ids)) {
-            $query->whereIn('id', $store_ids);
-        }
+            if (!empty($store_ids)) {
+                $query->whereIn('id', $store_ids);
+            }
 
-        $ebay_store_ids = $query->pluck('id');
+            $ebay_store_ids = $query->pluck('id');
 
-        Log::info('Ebay store ids: ' . json_encode($ebay_store_ids));
+            Log::info('Ebay store ids: ' . json_encode($ebay_store_ids));
 
-        if (env('APP_ENV') === 'local') {
+            if (env('APP_ENV') === 'local') {
 //            $ebay_store_ids = ['1968772b-cc55-d4e9-a126-7e81019be976'];
-        }
+            }
 
-        foreach ($ebay_store_ids as $storeId) {
-            $store = Store::find($storeId);
+            foreach ($ebay_store_ids as $storeId) {
+                $store = Store::find($storeId);
 
-            if (!isset($store->user_id)) continue;
-            if (env('APP_ENV') === 'local' && $store->name == 'nismobile') continue;
+                if (!isset($store->user_id)) continue;
+                if (env('APP_ENV') === 'local' && $store->name == 'nismobile') continue;
 
-            $listingItemLinks = ListingItemLink::query()
-                ->join('listing_item', 'listing_item_link.item_id', '=', 'listing_item.id')
-                ->join('listing', 'listing_item_link.listing_id', '=', 'listing.id')
-                ->whereIn('listing.store_id', [$storeId])
-                ->where(function ($query) {
-                    return $query->whereNull('listing_item.store_sku')
-                        ->orWhere('listing_item.store_sku', '');
-                })
-                ->whereIn('listing_item.status', [1, 2])
+                $listingItemLinks = ListingItemLink::query()
+                    ->join('listing_item', 'listing_item_link.item_id', '=', 'listing_item.id')
+                    ->join('listing', 'listing_item_link.listing_id', '=', 'listing.id')
+                    ->whereIn('listing.store_id', [$storeId])
+                    ->where(function ($query) {
+                        return $query->whereNull('listing_item.store_sku')
+                            ->orWhere('listing_item.store_sku', '');
+                    })
+                    ->whereIn('listing_item.status', [1, 2])
 //                ->where(function ($query) {
 //                    return $query
 //                        ->where('listing_item.creation_retry_count', '<', 5)->orWhereNull('listing_item.creation_retry_count');
 //                })
-                ->whereNotIn('listing_item.sync_status', [
-                    ListingSyncStatus::CreationError,
-                    ListingSyncStatus::Synchronizing,
-                ])
-                ->orderBy('listing_item.created_at', 'asc')
-                ->limit(100)
-                ->get();
+                    ->whereNotIn('listing_item.sync_status', [
+                        ListingSyncStatus::CreationError,
+                        ListingSyncStatus::Synchronizing,
+                    ])
+                    ->orderBy('listing_item.created_at', 'asc')
+                    ->limit(100)
+                    ->get();
 
 //            Log::info("Sql Query: " . $listingItemLinks->toSql());
 
 //            Log::info("Listing Item Links Query: " . $listingItemLinks);
 //            continue;
 
-            $this->syncListingItem($listingItemLinks, $store);
+                $this->syncListingItem($listingItemLinks, $store);
+            }
+        }catch (\Throwable $e) {
+
+            CriticalErrorService::report('Ebay Listing Item Sync Job Failed', [
+                'marketplace' => 'eBay',
+                'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
+            ]);
+
+            Log::error('Error: ' . $e->getMessage());
+
         }
 
     }
@@ -223,6 +236,12 @@ class EbayListingItemSyncJob implements ShouldQueue
         } catch (\Throwable $e) {
 
             \App\Helpers\ErrorLogger::log($e, __METHOD__);
+
+            CriticalErrorService::report('Ebay Listing Item Sync Job Failed', [
+                'marketplace' => 'eBay',
+                'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
+            ],['store_id' => $store->id]);
 
             Log::error('Error syncing Ebay listing item: ' . $e->getMessage(), [
                 'store_id' => $store->id,

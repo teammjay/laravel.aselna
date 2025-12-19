@@ -65,7 +65,7 @@ class ProcessFeedGenerationJob implements ShouldQueue
      * @var false|resource
      */
     private $fileHandle;
-    private int $max_file_size;
+    private $max_file_size;
     private $category_store_type_detail;
 
     /**

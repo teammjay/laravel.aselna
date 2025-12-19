@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Jobs\Concerns\TrackableJob;
+use App\Services\CriticalErrorService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -40,8 +41,17 @@ class InsertListingItemDetailJob implements ShouldQueue
      */
     public function handle(): void
     {
-        DB::disableQueryLog(); // reduce memory
-        Log::info('Item detail chunk execute');
-        DB::table('listing_item_detail')->insert($this->chunk);
+        try {
+            DB::disableQueryLog(); // reduce memory
+            Log::info('Item detail chunk execute');
+            DB::table('listing_item_detail')->insert($this->chunk);
+        }catch (\Throwable $e) {
+
+            CriticalErrorService::report('Insert Listing Item Detail Job Failed', [
+                'marketplace' => 'N/A',
+                'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
+            ]);
+        }
     }
 }

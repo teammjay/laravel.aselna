@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Models\StoreType;
 use App\Models\StoreTypeListing;
+use App\Services\CriticalErrorService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\DB;
@@ -33,14 +34,23 @@ class StoreTypeListingSyncJob implements ShouldQueue
     {
         $this->updateTrackingRecord(['tags' => 'Store Type Listing']);
 
-        $allStoreListingQ = DB::connection('easyesale_db')->table('channel_listing')
-            ->orderBy('id');
+        try {
+            $allStoreListingQ = DB::connection('easyesale_db')->table('channel_listing')
+                ->orderBy('id');
 
-        $allStoreListingQ->chunk(1000, function ($allStoreListing) {
-            foreach ($allStoreListing as $storeListing) {
-                $this->createStoreListing($storeListing);
-            }
-        });
+            $allStoreListingQ->chunk(1000, function ($allStoreListing) {
+                foreach ($allStoreListing as $storeListing) {
+                    $this->createStoreListing($storeListing);
+                }
+            });
+        }catch (\Throwable $e) {
+
+            CriticalErrorService::report('Store Type Listing Sync Job Failed', [
+                'marketplace' => 'N/A',
+                'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
+            ]);
+        }
     }
 
     private function createStoreListing($storeListing)

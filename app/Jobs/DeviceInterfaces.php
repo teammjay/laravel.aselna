@@ -6,6 +6,7 @@ use App\Jobs\Concerns\TrackableJob;
 use App\Models\Device;
 use App\Models\DeviceInterface;
 use App\Models\Interfaces;
+use App\Services\CriticalErrorService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\DB;
@@ -36,16 +37,26 @@ class DeviceInterfaces implements ShouldQueue
     {
         $this->updateTrackingRecord(['tags' => 'Device Interface']);
 
-        DB::connection('easyesale_db')->table('cea_device_interface')->orderBy('id')
-            ->chunk(1000, function ($deviceInterfaces) {
-                foreach ($deviceInterfaces as $deviceInterface) {
-                    $this->createDeviceInetrface($deviceInterface);
-                }
-            });
+        try {
+            DB::connection('easyesale_db')->table('cea_device_interface')->orderBy('id')
+                ->chunk(1000, function ($deviceInterfaces) {
+                    foreach ($deviceInterfaces as $deviceInterface) {
+                        $this->createDeviceInetrface($deviceInterface);
+                    }
+                });
 
-        DeviceInterface::orderBy('id')->chunk(1000, function ($deviceInterfaces) {
-            $this->checkAndDelete($deviceInterfaces);
-        });
+            DeviceInterface::orderBy('id')->chunk(1000, function ($deviceInterfaces) {
+                $this->checkAndDelete($deviceInterfaces);
+            });
+        }catch (\Throwable $e) {
+
+            CriticalErrorService::report('Device Interface Sync Job Failed', [
+                'marketplace' => 'N/A',
+                'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
+            ]);
+
+        }
 
 //        $deviceAttributes = DB::connection('fonus_db')->table('tbl_device_attributes')->cursor();
 //        foreach ($deviceAttributes as $deviceAttribute) {
@@ -127,6 +138,12 @@ class DeviceInterfaces implements ShouldQueue
         } catch (\Throwable $e) {
 
             \App\Helpers\ErrorLogger::log($e, __METHOD__);
+
+            CriticalErrorService::report('Create Device Interface Failed', [
+                'marketplace' => 'N/A',
+                'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
+            ]);
 
             Log::error('Error syncing device interface ID ' . $deviceInterface->id . ': ' . $e->getMessage());
         }

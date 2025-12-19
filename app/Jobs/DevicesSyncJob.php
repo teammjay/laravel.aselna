@@ -7,6 +7,7 @@ use App\Models\Brand;
 use App\Models\Device;
 use App\Models\DeviceInterface;
 use App\Models\DeviceTypes;
+use App\Services\CriticalErrorService;
 use Exception;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -39,23 +40,34 @@ class DevicesSyncJob implements ShouldQueue
     {
         Log::info('Devices Sync Job Start');
         $this->updateTrackingRecord(['tags' => 'Devices']);
-        DB::connection('easyesale_db')->table('cea_device')
-            ->orderBy('id')
-            ->chunk(1000, function ($syncDevices) {
-                foreach ($syncDevices as $device) {
-                    $this->createSyncDevice($device);
+
+        try {
+            DB::connection('easyesale_db')->table('cea_device')
+                ->orderBy('id')
+                ->chunk(1000, function ($syncDevices) {
+                    foreach ($syncDevices as $device) {
+                        $this->createSyncDevice($device);
+                    }
+                });
+            Log::info('Devices Sync Job End');
+
+            Log::info('Devices Delete Job Start');
+            Device::orderBy('id')->chunk(1000, function ($devices) {
+                Log::info('Processing chunk of ' . count($devices) . ' devices for deletion check.');
+                foreach ($devices as $device) {
+                    $this->checkAndDelete($device);
                 }
             });
-        Log::info('Devices Sync Job End');
+            Log::info('Devices Delete Job End');
 
-        Log::info('Devices Delete Job Start');
-        Device::orderBy('id')->chunk(1000, function ($devices) {
-            Log::info('Processing chunk of ' . count($devices) . ' devices for deletion check.');
-            foreach ($devices as $device) {
-                $this->checkAndDelete($device);
-            }
-        });
-        Log::info('Devices Delete Job End');
+        }catch (\Throwable $e) {
+
+            CriticalErrorService::report('Device Sync Job Failed', [
+                'marketplace' => 'N/A',
+                'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
+            ]);
+        }
 
 //        DB::connection('fonus_db')->table('tbl_device')
 //            ->orderBy('device_id')
@@ -82,6 +94,13 @@ class DevicesSyncJob implements ShouldQueue
                     file_put_contents(storage_path('app/public/device_images/' . $device->picture1), $image);
                 }
             } catch (Exception $e) {
+
+                CriticalErrorService::report('Device Image Sync Failed', [
+                    'marketplace' => 'N/A',
+                    'reason' => $e->getMessage() ?? 'Unknown',
+                    'method' => __METHOD__
+                ]);
+
                 Log::error('Error in Image Sync: ' . $e->getMessage());
             }
 
@@ -90,6 +109,12 @@ class DevicesSyncJob implements ShouldQueue
                     $image = file_get_contents('https://fonusaccessory.com/inv/inv_images/device_images/' . $device->thumbnail_picture1);
                     file_put_contents(storage_path('app/public/device_images/' . $device->thumbnail_picture1), $image);
                 } catch (Exception $e) {
+
+                    CriticalErrorService::report('Device Thumbnail Sync Failed', [
+                        'marketplace' => 'N/A',
+                        'reason' => $e->getMessage() ?? 'Unknown',
+                        'method' => __METHOD__
+                    ]);
                     Log::error('Error in Thumbnail Sync: ' . $e->getMessage());
                 }
             }
@@ -159,6 +184,13 @@ class DevicesSyncJob implements ShouldQueue
             file_put_contents(storage_path('app/public/device_images/' . $image_name), $image);
             $deviceData['image'] = $image_name;
         } catch (Exception $e) {
+
+            CriticalErrorService::report('Device Image Sync Failed', [
+                'marketplace' => 'N/A',
+                'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
+            ]);
+
             Log::error('Error in Image Sync: ' . $e->getMessage());
         }
 
@@ -168,6 +200,13 @@ class DevicesSyncJob implements ShouldQueue
             file_put_contents(storage_path('app/public/device_images/' . $thumbnail_name), $thumbnail);
             $deviceData['thumbnail_image'] = $thumbnail_name;
         } catch (Exception $e) {
+
+            CriticalErrorService::report('Device Thumbnail Sync Failed', [
+                'marketplace' => 'N/A',
+                'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
+            ]);
+
             Log::error('Error in Thumbnail Sync: ' . $e->getMessage());
         }
 

@@ -5,6 +5,7 @@ namespace App\Jobs;
 use App\Models\Catalog;
 use App\Models\Store;
 use App\Models\StoreProduct;
+use App\Services\CriticalErrorService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\DB;
@@ -34,19 +35,28 @@ class ShopifyStoreProductsSyncJob implements ShouldQueue
     {
         $this->updateTrackingRecord(['tags' => 'Shopify Store Products']);
 
-        $storeIds = Store::join('store_type', 'store_type.id', '=', 'store.store_type_id')
-            ->where('store_type.code', 'shopify')
-            ->whereIn('store.name',['OdeMobile'])
-            ->pluck('store.id');
+        try {
+            $storeIds = Store::join('store_type', 'store_type.id', '=', 'store.store_type_id')
+                ->where('store_type.code', 'shopify')
+                ->whereIn('store.name', ['OdeMobile'])
+                ->pluck('store.id');
 
-        DB::connection('easyesale_db')->table('store_product')
-            ->whereIn('store_id', $storeIds)
-            ->orderBy('id')
-            ->chunk(100, function ($products) {
-                foreach ($products as $product) {
-                    $this->syncStoreProduct($product);
-                }
-            });
+            DB::connection('easyesale_db')->table('store_product')
+                ->whereIn('store_id', $storeIds)
+                ->orderBy('id')
+                ->chunk(100, function ($products) {
+                    foreach ($products as $product) {
+                        $this->syncStoreProduct($product);
+                    }
+                });
+        }catch (\Throwable $e) {
+
+            CriticalErrorService::report('Shopify Store Products Sync Job Failed', [
+                'marketplace' => 'Shopify',
+                'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
+            ]);
+        }
     }
 
     private function syncStoreProduct(mixed $storeProduct)

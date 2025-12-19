@@ -6,6 +6,7 @@ use App\Models\Order;
 use App\Models\Store;
 use App\Models\User;
 use App\Models\UserAccount;
+use App\Services\CriticalErrorService;
 use App\Services\Marketplace\Service\EbayService;
 use App\Services\Marketplace\Service\ShopifyService;
 use App\Services\Marketplace\Service\WalmartService;
@@ -41,78 +42,95 @@ class SendNotificationOrderSyncFailJob implements ShouldQueue
 
         $this->updateTrackingRecord(['tags' => 'Send Notification Order Sync Fail']);
 
-        $stores = Store::with('storeType')->where('store_status','>',0)->get();
+        try {
 
-        if(count($stores ?? []) > 0) {
-            foreach ($stores as $store) {
+            $stores = Store::with('storeType')->where('store_status', '>', 0)->get();
 
-                Log::info("Store: : {$store->name} - {$store->storeType->name}");
-                Log::info("Store ID: ".$store->id);
+            if (count($stores ?? []) > 0) {
+                foreach ($stores as $store) {
 
-                $latest_system_order = Order::where('store_id',$store->id)->orderBy('order_date','desc')->first();
-                $latest_order_id = '';
-                $latest_order_date = '';
-                switch (strtolower($store->storeType->name)) {
-                    case 'shopify':
+                    Log::info("Store: : {$store->name} - {$store->storeType->name}");
+                    Log::info("Store ID: " . $store->id);
 
-                        //$filterStartDateFormatted = date('Y-m-d\TH:i:s\Z', strtotime('-2 days'));
+                    $latest_system_order = Order::where('store_id', $store->id)->orderBy('order_date', 'desc')->first();
+                    $latest_order_id = '';
+                    $latest_order_date = '';
+                    switch (strtolower($store->storeType->name)) {
+                        case 'shopify':
 
-                        Log::info('System Shopify Latest Order: '.json_encode($latest_system_order));
+                            //$filterStartDateFormatted = date('Y-m-d\TH:i:s\Z', strtotime('-2 days'));
 
-                        $shopifyService = new ShopifyService();
-                        $orders = $shopifyService->getLatestOrders($store);
+                            Log::info('System Shopify Latest Order: ' . json_encode($latest_system_order));
 
-                        if (isset($orders) && !empty($orders)) {
-                            foreach ($orders as $key=>$value) {
-                                $order = $value['node'];
-                                $gid = $order['id'];
-                                $parts = explode('/', $gid);
-                                $latest_order_id = end($parts);
-                                $latest_order_date = date('Y-m-d H:i:s', strtotime($order['createdAt']));
-                                if($key > 0){break;}
+                            $shopifyService = new ShopifyService();
+                            $orders = $shopifyService->getLatestOrders($store);
+
+                            if (isset($orders) && !empty($orders)) {
+                                foreach ($orders as $key => $value) {
+                                    $order = $value['node'];
+                                    $gid = $order['id'];
+                                    $parts = explode('/', $gid);
+                                    $latest_order_id = end($parts);
+                                    $latest_order_date = date('Y-m-d H:i:s', strtotime($order['createdAt']));
+                                    if ($key > 0) {
+                                        break;
+                                    }
+                                }
                             }
-                        }
 
-                        break;
-                    case 'walmart':
+                            break;
+                        case 'walmart':
 
-                        Log::info('System Walmart Latest Order: '.json_encode($latest_system_order));
+                            Log::info('System Walmart Latest Order: ' . json_encode($latest_system_order));
 
-                        $walmartService = new WalmartService();
-                        $latest_order_detail = $walmartService->getLatestOrder($store);
-                        if($latest_order_detail){
-                            $latest_order_id = $latest_order_detail['order_id'];
-                            $latest_order_date = $latest_order_detail['order_date'];
-                        }
-                        break;
-                    case 'ebay':
-
-                        Log::info('System eBay Latest Order: '.json_encode($latest_system_order));
-                        $ebayService = new EbayService();
-                        $orders = $ebayService->getLatestOrders($store);
-                        if (isset($orders['total']) && $orders['total'] > 0) {
-                            foreach ($orders['orders'] as $key=>$order) {
-                                $latest_order_id = $order['orderId'];
-                                $latest_order_date = date('Y-m-d H:i:s', strtotime($order['creationDate']));
-                                if($key > 0){break;}
+                            $walmartService = new WalmartService();
+                            $latest_order_detail = $walmartService->getLatestOrder($store);
+                            if ($latest_order_detail) {
+                                $latest_order_id = $latest_order_detail['order_id'];
+                                $latest_order_date = $latest_order_detail['order_date'];
                             }
+                            break;
+                        case 'ebay':
+
+                            Log::info('System eBay Latest Order: ' . json_encode($latest_system_order));
+                            $ebayService = new EbayService();
+                            $orders = $ebayService->getLatestOrders($store);
+                            if (isset($orders['total']) && $orders['total'] > 0) {
+                                foreach ($orders['orders'] as $key => $order) {
+                                    $latest_order_id = $order['orderId'];
+                                    $latest_order_date = date('Y-m-d H:i:s', strtotime($order['creationDate']));
+                                    if ($key > 0) {
+                                        break;
+                                    }
+                                }
+                            }
+                            break;
+                    }
+
+                    if ($latest_system_order && $latest_order_id) {
+                        if ($latest_system_order->order_id != $latest_order_id) {
+                            $content = "Order Sync issue detected for store: {$store->name} - {$store->storeType->name}. \n Last sync at {$latest_system_order->order_date}\n";
+                            $content .= "System order id: {$latest_system_order->order_id} , Order date : {$latest_system_order->order_date} \n";
+                            $content .= "Store order id: {$latest_order_id} , Order date : {$latest_order_date} \n";
+
+                            Log::info('Message content send: ' . $content);
+
+                            $this->sendMail($store, $content);
+
                         }
-                        break;
-                }
-
-                if($latest_system_order && $latest_order_id){
-                    if($latest_system_order->order_id != $latest_order_id){
-                        $content = "Order Sync issue detected for store: {$store->name} - {$store->storeType->name}. \n Last sync at {$latest_system_order->order_date}\n";
-                        $content .= "System order id: {$latest_system_order->order_id} , Order date : {$latest_system_order->order_date} \n";
-                        $content .= "Store order id: {$latest_order_id} , Order date : {$latest_order_date} \n";
-
-                        Log::info('Message content send: '.$content);
-
-                        $this->sendMail($store, $content);
-
                     }
                 }
             }
+        }catch (\Throwable $e) {
+
+            CriticalErrorService::report('Send Notification Order Sync Job Failed', [
+                'marketplace' => 'N/A',
+                'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
+            ]);
+
+            Log::error('Error: ' . $e->getMessage());
+
         }
     }
 

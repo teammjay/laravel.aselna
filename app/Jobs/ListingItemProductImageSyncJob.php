@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Models\ListingItemProductImage;
+use App\Services\CriticalErrorService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\DB;
@@ -31,9 +32,19 @@ class ListingItemProductImageSyncJob implements ShouldQueue
      */
     public function handle(): void
     {
+        try {
 //        $this->ListingItemImagesAll();
 
-        $this->listingItemImagesByStore('6c7009ce-eac1-a995-a986-27d5df0103ac');
+            $this->listingItemImagesByStore('6c7009ce-eac1-a995-a986-27d5df0103ac');
+        }catch (\Throwable $e) {
+
+            CriticalErrorService::report('Listing Item Product Images Sync Job Failed', [
+                'marketplace' => 'N/A',
+                'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
+            ]);
+
+        }
     }
 
     private function createListingItemImage(mixed $listingItemLink)

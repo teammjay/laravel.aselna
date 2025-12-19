@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Models\MessagingAccount;
+use App\Services\CriticalErrorService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\DB;
@@ -30,12 +31,21 @@ class MessagingAccountSyncJob implements ShouldQueue
     {
         $this->updateTrackingRecord(['tags' => 'Messaging Account']);
 
-        DB::connection('easyesale_db')->table('messaging_account')->orderBy('id')
-            ->chunk(100, function ($messagingAccounts) {
-                foreach ($messagingAccounts as $messagingAccount) {
-                    $this->createSyncMessagingAccount($messagingAccount);
-                }
-            });
+        try {
+            DB::connection('easyesale_db')->table('messaging_account')->orderBy('id')
+                ->chunk(100, function ($messagingAccounts) {
+                    foreach ($messagingAccounts as $messagingAccount) {
+                        $this->createSyncMessagingAccount($messagingAccount);
+                    }
+                });
+        }catch (\Throwable $e) {
+
+            CriticalErrorService::report('Messaging Account Sync Job Failed', [
+                'marketplace' => 'N/A',
+                'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
+            ]);
+        }
     }
 
     private function createSyncMessagingAccount(mixed $messagingAccount)

@@ -7,6 +7,7 @@ use App\Models\ProductSpecifcationUniqueInfo;
 use App\Models\ProductSpecification;
 use App\Models\ProductSpecificationValue;
 use App\Models\StoreType;
+use App\Services\CriticalErrorService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\DB;
@@ -37,15 +38,25 @@ class ProductSpecificationSyncJob implements ShouldQueue
     {
         $this->updateTrackingRecord(['tags' => 'Product Specification']);
         Log::info('Product Specification Sync Job started.');
-        DB::connection('easyesale_db')
-            ->table('product_specification')
-            ->orderBy('id')
-            ->chunk(1000, function ($productSpecifications) {
-                foreach ($productSpecifications as $productSpecification) {
-                    $this->createProductSpecification($productSpecification);
-                }
-            });
-        Log::info('Product Specification Sync Job completed.');
+
+        try {
+            DB::connection('easyesale_db')
+                ->table('product_specification')
+                ->orderBy('id')
+                ->chunk(1000, function ($productSpecifications) {
+                    foreach ($productSpecifications as $productSpecification) {
+                        $this->createProductSpecification($productSpecification);
+                    }
+                });
+            Log::info('Product Specification Sync Job completed.');
+        }catch (\Throwable $e) {
+
+            CriticalErrorService::report('Product Specification Sync Job Failed', [
+                'marketplace' => 'N/A',
+                'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
+            ]);
+        }
     }
 
     private function createProductSpecification(mixed $productSpecification)

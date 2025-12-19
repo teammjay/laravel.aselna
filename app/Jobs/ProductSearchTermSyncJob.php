@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Models\Catalog;
+use App\Services\CriticalErrorService;
 use App\Models\ProductSearchTerm;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -31,14 +32,23 @@ class ProductSearchTermSyncJob implements ShouldQueue
     {
         $this->updateTrackingRecord(['tags' => 'Product Search Terms']);
 
-        $productSearchTermQ = DB::connection('easyesale_db')->table('product_search_term')
-            ->orderBy('id');
+        try {
+            $productSearchTermQ = DB::connection('easyesale_db')->table('product_search_term')
+                ->orderBy('id');
 
-        $productSearchTermQ->chunk(1000, function ($productSearchTerms) {
-            foreach ($productSearchTerms as $productSearchTerm) {
-                $this->createProductSearchTerm($productSearchTerm);
-            }
-        });
+            $productSearchTermQ->chunk(1000, function ($productSearchTerms) {
+                foreach ($productSearchTerms as $productSearchTerm) {
+                    $this->createProductSearchTerm($productSearchTerm);
+                }
+            });
+        }catch (\Throwable $e) {
+
+            CriticalErrorService::report('Product Search Terms Sync Job Failed', [
+                'marketplace' => 'N/A',
+                'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
+            ]);
+        }
     }
 
     private function createProductSearchTerm(mixed $productSearchTerm)

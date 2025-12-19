@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Models\ListingTemplate;
+use App\Services\CriticalErrorService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\DB;
@@ -29,12 +30,22 @@ class ListingTemplateSyncJob implements ShouldQueue
     public function handle(): void
     {
         $this->updateTrackingRecord(['tags' => 'Listing Template']);
-        DB::connection('easyesale_db')->table('listing_template')->orderBy('id')
-            ->chunk(1000, function ($listingTemplates) {
-                foreach ($listingTemplates as $listingTemplate) {
-                    $this->createListingTemplate($listingTemplate);
-                }
-            });
+
+        try {
+            DB::connection('easyesale_db')->table('listing_template')->orderBy('id')
+                ->chunk(1000, function ($listingTemplates) {
+                    foreach ($listingTemplates as $listingTemplate) {
+                        $this->createListingTemplate($listingTemplate);
+                    }
+                });
+        }catch (\Throwable $e) {
+
+            CriticalErrorService::report('Listing Template Sync Job Failed', [
+                'marketplace' => 'N/A',
+                'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
+            ]);
+        }
     }
 
     private function createListingTemplate(mixed $listingTemplate)

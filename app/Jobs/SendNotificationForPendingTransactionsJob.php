@@ -6,6 +6,7 @@ use App\Mail\PendingTrackingNumbersMail;
 use App\Models\AccountTransaction;
 use App\Models\UserAccount;
 use App\Models\User;
+use App\Services\CriticalErrorService;
 use Carbon\Carbon;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -88,7 +89,7 @@ class SendNotificationForPendingTransactionsJob implements ShouldQueue
 
                     $mail = Mail::to($cc_emails);
 
-                    if (!empty($cc_emails)) {
+                    if(!empty($cc_emails)) {
                         //$mail->cc($cc_emails);
                     }
                     $mail->send(new PendingTrackingNumbersMail($tracking_numbers,$userDetail));
@@ -104,6 +105,12 @@ class SendNotificationForPendingTransactionsJob implements ShouldQueue
         } catch (\Throwable $e) {
 
             \App\Helpers\ErrorLogger::log($e, __METHOD__);
+
+            CriticalErrorService::report('Send Notification Pending Transaction Job Failed', [
+                'marketplace' => 'N/A',
+                'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
+            ]);
 
             Log::error('Mail sending failed', [
                 'error' => $e->getMessage(),

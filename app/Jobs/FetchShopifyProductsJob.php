@@ -9,6 +9,7 @@ use App\Models\ListingItem;
 use App\Models\ListingItemProductImage;
 use App\Models\ManageMarketplaceProduct;
 use App\Services\Auth\ShopifyAuthService;
+use App\Services\CriticalErrorService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use App\Models\Store;
@@ -103,6 +104,12 @@ class FetchShopifyProductsJob implements ShouldQueue
                         ];
 
                         \App\Helpers\ErrorLogger::log($e, __METHOD__, $extraInfo);
+
+                        CriticalErrorService::report('Fetch Shopify Product Job Failed', [
+                            'marketplace' => 'Shopify',
+                            'reason' => $e->getMessage() ?? 'Unknown',
+                            'method' => __METHOD__
+                        ],$extraInfo);
 
                         Log::error('Error fetching products for store: ' . $store->name . ' - ' . $e->getMessage());
                         // Optionally, you can break the loop or continue based on your error handling strategy

@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Models\HdMessageTemplate;
+use App\Services\CriticalErrorService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\DB;
@@ -30,12 +31,21 @@ class SyncMessageTemplateJob implements ShouldQueue
     {
         $this->updateTrackingRecord(['tags' => 'Message Templates']);
 
-        DB::connection('easyesale_db')->table('hd_message_template')->orderBy('id')
-            ->chunk(100, function ($messageTemplates) {
-                foreach ($messageTemplates as $messageTemplate) {
-                    $this->createSyncMessageTemplate($messageTemplate);
-                }
-            });
+        try {
+            DB::connection('easyesale_db')->table('hd_message_template')->orderBy('id')
+                ->chunk(100, function ($messageTemplates) {
+                    foreach ($messageTemplates as $messageTemplate) {
+                        $this->createSyncMessageTemplate($messageTemplate);
+                    }
+                });
+        }catch (\Throwable $e) {
+
+            CriticalErrorService::report('Message Templates Sync Job Failed', [
+                'marketplace' => 'N/A',
+                'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
+            ]);
+        }
     }
 
     private function createSyncMessageTemplate(mixed $messageTemplate)

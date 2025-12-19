@@ -11,6 +11,7 @@ use App\Models\ListingItem;
 use App\Models\ListingItemLink;
 use App\Models\Store;
 use App\Services\Auth\AmazonAuthService;
+use App\Services\CriticalErrorService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Log;
@@ -38,65 +39,77 @@ class AmazonListingItemSyncJob implements ShouldQueue
      */
     public function handle(): void
     {
-        Log::info('AmazonListingItemSyncJob started');
-        $this->updateTrackingRecord(['tags' => 'Amazon ListingItem']);
+        try {
+            Log::info('AmazonListingItemSyncJob started');
+            $this->updateTrackingRecord(['tags' => 'Amazon ListingItem']);
 
-        /* get active store jobs*/
-        $store_ids = Common::getActiveStoreJobs('AmazonListingItemSyncJob','amazon');
-        /* get active store jobs*/
+            /* get active store jobs*/
+            $store_ids = Common::getActiveStoreJobs('AmazonListingItemSyncJob', 'amazon');
+            /* get active store jobs*/
 
-        $query = Store::where('store_type_id', function ($subquery) {
-            return $subquery->select('id')
-                ->from('store_type')
-                ->where('code', 'amazon');
-        })->where('store_status','<>',0);
+            $query = Store::where('store_type_id', function ($subquery) {
+                return $subquery->select('id')
+                    ->from('store_type')
+                    ->where('code', 'amazon');
+            })->where('store_status', '<>', 0);
 
-        if(!empty($store_ids)) {
-            $query->whereIn('id', $store_ids);
+            if (!empty($store_ids)) {
+                $query->whereIn('id', $store_ids);
+            }
+
+            $amazon_store_ids = $query->pluck('id');
+            Log::info('Amazon store ids: ' . json_encode($amazon_store_ids));
+
+            //join listing_item_link and listing_item and listing
+            ListingItemLink::query()
+                ->with(['listing', 'listingItem'])
+                ->join('listing_item', 'listing_item_link.item_id', '=', 'listing_item.id')
+                ->join('listing', 'listing_item_link.listing_id', '=', 'listing.id')
+                ->whereIn('listing.store_id', $amazon_store_ids)
+                ->whereRaw("COALESCE(listing_item.store_sku, '') = ''")
+                ->whereIn('listing_item.status', [1, 2])
+                ->whereRaw('(listing_item.creation_retry_count < 5 OR listing_item.creation_retry_count IS NULL)')
+                ->whereIn('listing_item.sync_status', [
+                    ListingSyncStatus::CreationError,
+                    ListingSyncStatus::Synchronizing,
+                    ListingSyncStatus::Unsynchronize,
+                ])
+                /*->whereNotExists(function ($subquery) use ($amazon_store_ids) {
+                    $subquery->selectRaw(1)
+                        ->from('listing_feeds')
+                        ->whereColumn('listing_feeds.listing_id', 'listing.id')
+                        ->whereIn('store_id', $amazon_store_ids);
+                        //->where('status', FeedStatus::PROCESSING);
+                })*/
+                ->orderBy('listing_item.created_at', 'desc')
+                ->chunk(20, function ($listingItemLinks) {
+                    $itemSkus = [];
+                    foreach ($listingItemLinks as $listingItemLink) {
+                        Log::info('Syncing Amazon listing item: ' . $listingItemLink->item_id);
+                        //$this->syncListingItem($listingItemLink);
+                        $store = $listingItemLink->listing->store;
+                        $store_id = $store->id;
+                        $itemDetail = $listingItemLink->listingItem;
+                        if ($itemDetail->store_sku != null) return;
+
+                        Log::info("Listing Item Sku " . $itemDetail->sku);
+                        $itemSkus[$store_id][] = trim($itemDetail->sku);
+
+                    }
+                    Log::info("Listing Item Sku list " . json_encode($itemSkus));
+                    $this->syncListingItems($itemSkus);
+                });
+        }catch (\Throwable $e) {
+
+            CriticalErrorService::report('Amazon Listing Item Sync Job Failed', [
+                'marketplace' => 'Amazon',
+                'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
+            ]);
+
+            Log::error('Error: ' . $e->getMessage());
+
         }
-
-        $amazon_store_ids = $query->pluck('id');
-        Log::info('Amazon store ids: ' . json_encode($amazon_store_ids));
-
-        //join listing_item_link and listing_item and listing
-        ListingItemLink::query()
-            ->with(['listing','listingItem'])
-            ->join('listing_item', 'listing_item_link.item_id', '=', 'listing_item.id')
-            ->join('listing', 'listing_item_link.listing_id', '=', 'listing.id')
-            ->whereIn('listing.store_id', $amazon_store_ids)
-            ->whereRaw("COALESCE(listing_item.store_sku, '') = ''")
-            ->whereIn('listing_item.status', [1,2])
-            ->whereRaw('(listing_item.creation_retry_count < 5 OR listing_item.creation_retry_count IS NULL)')
-            ->whereIn('listing_item.sync_status', [
-                ListingSyncStatus::CreationError,
-                ListingSyncStatus::Synchronizing,
-                ListingSyncStatus::Unsynchronize,
-            ])
-            /*->whereNotExists(function ($subquery) use ($amazon_store_ids) {
-                $subquery->selectRaw(1)
-                    ->from('listing_feeds')
-                    ->whereColumn('listing_feeds.listing_id', 'listing.id')
-                    ->whereIn('store_id', $amazon_store_ids);
-                    //->where('status', FeedStatus::PROCESSING);
-            })*/
-            ->orderBy('listing_item.created_at','desc')
-            ->chunk(20, function ($listingItemLinks) {
-                $itemSkus = [];
-                foreach ($listingItemLinks as $listingItemLink) {
-                    Log::info('Syncing Amazon listing item: ' . $listingItemLink->item_id);
-                    //$this->syncListingItem($listingItemLink);
-                    $store = $listingItemLink->listing->store;
-                    $store_id = $store->id;
-                    $itemDetail = $listingItemLink->listingItem;
-                    if($itemDetail->store_sku != null) return;
-
-                    Log::info("Listing Item Sku " . $itemDetail->sku);
-                    $itemSkus[$store_id][] = trim($itemDetail->sku);
-
-                }
-                Log::info("Listing Item Sku list " . json_encode($itemSkus));
-                $this->syncListingItems($itemSkus);
-            });
     }
 
     private function syncListingItems($itemSkus)
@@ -171,6 +184,12 @@ class AmazonListingItemSyncJob implements ShouldQueue
         } catch (\Throwable $e) {
 
             \App\Helpers\ErrorLogger::log($e, __METHOD__);
+
+            CriticalErrorService::report('Amazon Listing Item Sync Job Failed', [
+                'marketplace' => 'Amazon',
+                'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
+            ],['itemSkus' => $itemSkus]);
 
             Log::error('Error syncing Amazon listing item: ' . $e->getMessage(), [
                 'skus' => $itemSkus,

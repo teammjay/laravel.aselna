@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Models\HdTicketLabel;
+use App\Services\CriticalErrorService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\DB;
@@ -30,12 +31,21 @@ class SyncTicketLabelJob implements ShouldQueue
     {
         $this->updateTrackingRecord(['tags' => 'Ticket Labels']);
 
-        DB::connection('easyesale_db')->table('hd_ticket_label')->orderBy('id')
-            ->chunk(100, function ($ticketLabels) {
-                foreach ($ticketLabels as $ticketLabel) {
-                    $this->createSyncTicketLabel($ticketLabel);
-                }
-            });
+        try {
+            DB::connection('easyesale_db')->table('hd_ticket_label')->orderBy('id')
+                ->chunk(100, function ($ticketLabels) {
+                    foreach ($ticketLabels as $ticketLabel) {
+                        $this->createSyncTicketLabel($ticketLabel);
+                    }
+                });
+        }catch (\Throwable $e) {
+
+            CriticalErrorService::report('Ticket Labels Sync Job Failed', [
+                'marketplace' => 'N/A',
+                'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
+            ]);
+        }
     }
 
     private function createSyncTicketLabel(mixed $ticketLabel)

@@ -65,7 +65,7 @@ class ShopifyAuthService
                 'marketplace' => 'Shopify',
                 'reason' => $e->getMessage() ?? 'Unknown',
                 'method' => __METHOD__
-            ], ['variables' => $variables]);
+            ], ['request_body' => $bodyArray]);
 
             return null;
         }

@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Models\Manufacturer;
+use App\Services\CriticalErrorService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\DB;
@@ -33,10 +34,19 @@ class ManufacturerSyncJob implements ShouldQueue
     {
         $this->updateTrackingRecord(['tags' => 'Manufaturer']);
 
-        $manufaturer = DB::connection('easyesale_db')->table('manufacturer')->cursor();
+        try {
+            $manufaturer = DB::connection('easyesale_db')->table('manufacturer')->cursor();
 
-        foreach ($manufaturer as $manufacture) {
-            $this->createManufacturer($manufacture);
+            foreach ($manufaturer as $manufacture) {
+                $this->createManufacturer($manufacture);
+            }
+        }catch (\Throwable $e) {
+
+            CriticalErrorService::report('Manufacturer Sync Job Failed', [
+                'marketplace' => 'N/A',
+                'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
+            ]);
         }
     }
 

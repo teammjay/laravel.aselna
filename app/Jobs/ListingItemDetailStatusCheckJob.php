@@ -5,6 +5,7 @@ namespace App\Jobs;
 use App\Constants\ListingStatus;
 use App\Models\ListingItem;
 use App\Models\ListingItemDetail;
+use App\Services\CriticalErrorService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Log;
@@ -46,6 +47,12 @@ class ListingItemDetailStatusCheckJob implements ShouldQueue
         }catch (\Throwable $e) {
 
             \App\Helpers\ErrorLogger::log($e, __METHOD__);
+
+            CriticalErrorService::report('Listing Item Detail Status Check Job Failed', [
+                'marketplace' => 'N/A',
+                'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
+            ]);
 
             Log::error("Error Listing Item Detail Status Check : " . $e->getMessage());
         }
