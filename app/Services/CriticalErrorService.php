@@ -32,6 +32,7 @@ class CriticalErrorService
 
     public static function report($message, $context = null, $extra = [])
     {
+
         $errorData = [
             'error_id' => uniqid('critical_', true),
             'timestamp' => now()->toDateTimeString(),
@@ -98,13 +99,34 @@ class CriticalErrorService
             Log::info('User Email : '.$sendTo);
             Log::info('Email Content : '.json_encode($errorData['context']));
 
-            Mail::mailer('custom_smtp')->raw(json_encode($errorData['context']),
+            /*Mail::mailer('custom_smtp')->row(json_encode($errorData['context']),
                 function ($message) use ($errorData, $sendTo, $cc_emails) {
                     $message->to($sendTo)
                         //->cc($cc_emails)
                         ->subject("Critical Alert : {$errorData['message']}");
                 }
+            );*/
+
+            Mail::mailer('log')->send(
+                'emails.critical-alert',
+                [
+                    'marketplace' => $errorData['context']['marketplace'] ?? 'N/A',
+                    'jobName'     => $errorData['context']['method'] ?? 'N/A',
+                    'status'      => 'Failed',
+                    'severity'    => 'Critical',
+                    'reason'      => $errorData['context']['reason'] ?? 'Unknown error',
+                    'timestamp'   => now()
+                ],
+                function ($message) use ($sendTo, $cc_emails, $errorData) {
+                    $message->to($sendTo)
+                        ->subject("🚨 Critical Alert: {$errorData['message']}");
+
+                    if (!empty($cc_emails)) {
+                        $message->cc($cc_emails);
+                    }
+                }
             );
+
 
             Log::info('Critical Alert Mail Sent Successfully', [
                 'recipient' => $sendTo,
@@ -112,4 +134,5 @@ class CriticalErrorService
             ]);
         }
     }
+
 }

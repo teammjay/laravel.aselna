@@ -197,6 +197,7 @@ class TransactionStatusCheckJob implements ShouldQueue
             CriticalErrorService::report('Error in transaction status check', [
                 'marketplace' => 'Transaction Status',
                 'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
             ]);
         }
     }

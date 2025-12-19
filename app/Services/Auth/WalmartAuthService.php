@@ -148,6 +148,7 @@ class WalmartAuthService
             CriticalErrorService::report('Walmart Order Sync failed', [
                 'marketplace' => 'Walmart',
                 'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
             ],['start_date' => $last_order_time]);
 
             return response()->json([
@@ -194,6 +195,7 @@ class WalmartAuthService
             CriticalErrorService::report('Walmart Order Detail failed', [
                 'marketplace' => 'Walmart',
                 'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
             ],['order_id' => $orderID]);
 
             return response()->json([
@@ -236,6 +238,7 @@ class WalmartAuthService
                 CriticalErrorService::report('Walmart Ship Order API Error', [
                     'marketplace' => 'Walmart',
                     'reason' => $body ?? 'Unknown',
+                    'method' => __METHOD__
                 ],['status' => $status]);
 
                 Log::error("Walmart API error ({$status}): " . $body);
@@ -248,6 +251,7 @@ class WalmartAuthService
             CriticalErrorService::report('Walmart Ship Order failed', [
                 'marketplace' => 'Walmart',
                 'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
             ],['purchase_order_id' => $purchaseOrderId]);
 
             Log::error('Error shipping order: ' . $e->getMessage());
@@ -286,6 +290,7 @@ class WalmartAuthService
                 CriticalErrorService::report('Walmart Cancel Order API Error', [
                     'marketplace' => 'Walmart',
                     'reason' => $body ?? 'Unknown',
+                    'method' => __METHOD__
                 ],['status' => $status]);
             } else {
                 Log::error('Request error (no response): ' . $e->getMessage());
@@ -297,6 +302,7 @@ class WalmartAuthService
             CriticalErrorService::report('Walmart Cancel Order failed', [
                 'marketplace' => 'Walmart',
                 'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
             ],['purchase_order_id' => $purchaseOrderId]);
         }
         return null;
@@ -333,6 +339,7 @@ class WalmartAuthService
                 CriticalErrorService::report('Walmart Refund Order API Error', [
                     'marketplace' => 'Walmart',
                     'reason' => $body ?? 'Unknown',
+                    'method' => __METHOD__
                 ],['status' => $status]);
 
                 Log::error("Walmart API error ({$status}): " . $body);
@@ -346,6 +353,7 @@ class WalmartAuthService
             CriticalErrorService::report('Walmart Refund Order failed', [
                 'marketplace' => 'Walmart',
                 'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
             ],['purchase_order_id' => $purchaseOrderId]);
         }
         return null;
@@ -389,6 +397,7 @@ class WalmartAuthService
             CriticalErrorService::report('Walmart Item Search by upc failed', [
                 'marketplace' => 'Walmart',
                 'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
             ],['upc' => $upc]);
 
             return $error = [
