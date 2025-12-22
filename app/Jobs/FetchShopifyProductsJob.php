@@ -24,7 +24,7 @@ class FetchShopifyProductsJob implements ShouldQueue
         Queueable::withChain as queueableWithChain;
     }
 
-    public $timeout = 1800;
+    public $timeout = 18000;
 
     /**
      * Create a new job instance.
@@ -173,7 +173,9 @@ class FetchShopifyProductsJob implements ShouldQueue
                             }
 
                             $oldImages = $shopifyAuthService->getProductImages($product['id']);
-                            $this->handleMediaImages($oldImages['data']['product'], $listingItem);
+                            if (isset($oldImages['data']['product'])) {
+                                $this->handleMediaImages($oldImages['data']['product'], $listingItem);
+                            }
                         }
                     }
                      else {
