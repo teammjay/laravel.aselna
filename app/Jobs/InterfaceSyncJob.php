@@ -8,6 +8,7 @@ use App\Models\DeviceInterface;
 use App\Models\Interfaces;
 use App\Models\ProductInterface;
 use App\Models\ProductType;
+use App\Services\CriticalErrorService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\DB;
@@ -40,18 +41,29 @@ class InterfaceSyncJob implements ShouldQueue
         Log::info('Interface Sync Job Start');
         $this->updateTrackingRecord(['tags' => 'Interface']);
 
-        $attributes = DB::connection('easyesale_db')->table('cea_interface')->cursor();
-        foreach ($attributes as $attribute) {
-            $this->createInterfaces($attribute);
-        }
-        Log::info('Interface Sync Job End');
+        try {
+            $attributes = DB::connection('easyesale_db')->table('cea_interface')->cursor();
+            foreach ($attributes as $attribute) {
+                $this->createInterfaces($attribute);
+            }
+            Log::info('Interface Sync Job End');
 
-        Log::info('Interface Delete Job Start');
-        Interfaces::orderBy('id')->chunk(1000, function ($attributes) {
-            Log::info('Processing chunk of ' . count($attributes) . ' interfaces for deletion check.');
-            $this->checkAndDelete($attributes);
-        });
-        Log::info('Interface Delete Job End');
+            Log::info('Interface Delete Job Start');
+            Interfaces::orderBy('id')->chunk(1000, function ($attributes) {
+                Log::info('Processing chunk of ' . count($attributes) . ' interfaces for deletion check.');
+                $this->checkAndDelete($attributes);
+            });
+            Log::info('Interface Delete Job End');
+
+        }catch (\Throwable $e) {
+
+            CriticalErrorService::report('Interface Sync Job Failed', [
+                'marketplace' => 'N/A',
+                'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
+            ]);
+
+        }
 
     }
 

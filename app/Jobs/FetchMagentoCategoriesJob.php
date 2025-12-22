@@ -7,6 +7,7 @@ use App\Models\Store;
 use App\Models\StoreCategory;
 use App\Services\Auth\MagentoAuthService;
 use App\Services\Marketplace\Service\MagentoService;
+use App\Services\CriticalErrorService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Log;
@@ -35,18 +36,30 @@ class FetchMagentoCategoriesJob implements ShouldQueue
     {
         $this->updateTrackingRecord(['tags' => 'Magento Categories']);
 
-        $stores = Store::select('store.*')->with('fileSystem', 'storeType')->join('store_type', 'store_type.id', '=', 'store.store_type_id')->where('store_type.code', 'magento')->get();
+        try {
+            $stores = Store::select('store.*')->with('fileSystem', 'storeType')->join('store_type', 'store_type.id', '=', 'store.store_type_id')->where('store_type.code', 'magento')->get();
 
-        if (count($stores ?? []) > 0) {
-            foreach ($stores as $store) {
-                Log::info('Store : ' . $store->name);
-                $magentoAuthService = new MagentoAuthService($store->seller_id, $store->secret_key,$store->service_url);
-                $categoryResponse = $magentoAuthService->getAllCategories();
+            if (count($stores ?? []) > 0) {
+                foreach ($stores as $store) {
+                    Log::info('Store : ' . $store->name);
+                    $magentoAuthService = new MagentoAuthService($store->seller_id, $store->secret_key, $store->service_url);
+                    $categoryResponse = $magentoAuthService->getAllCategories();
 
-                Log::info('Category Response: ' . json_encode($categoryResponse));
+                    Log::info('Category Response: ' . json_encode($categoryResponse));
 
-                $this->syncCategories($categoryResponse['children_data'], $store);
+                    $this->syncCategories($categoryResponse['children_data'], $store);
+                }
             }
+        }catch (\Throwable $e) {
+
+            CriticalErrorService::report('Fetch Magento Categories Job Failed', [
+                'marketplace' => 'Magento',
+                'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
+            ]);
+
+            Log::error('Error: ' . $e->getMessage());
+
         }
     }
 

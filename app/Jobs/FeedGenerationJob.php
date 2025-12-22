@@ -7,6 +7,7 @@ use App\Models\Listing;
 use App\Models\ListingFeed;
 use App\Models\ListingItemLink;
 use App\Services\Marketplace\MarketplaceServiceFactory;
+use App\Services\CriticalErrorService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Log;
@@ -41,45 +42,57 @@ class FeedGenerationJob implements ShouldQueue
         $listingInfo = Listing::where('id', $this->listingId)->first();
         Log::info('Listing : ' . $listingInfo);
 
-        // get StoreType froms store that is inside listingfeed
-        $store = $listingInfo->store;
-        $storeType = $listingInfo->store->storeType->name;
-        $storeName = $listingInfo->store->name;
-        Log::info('Store Type: ' . $storeType);
+        try {
+            // get StoreType froms store that is inside listingfeed
+            $store = $listingInfo->store;
+            $storeType = $listingInfo->store->storeType->name;
+            $storeName = $listingInfo->store->name;
+            Log::info('Store Type: ' . $storeType);
 
-        $this->updateTrackingRecord(['tags' => $storeName . ' ' . $storeType . ' Feed Generation']);
+            $this->updateTrackingRecord(['tags' => $storeName . ' ' . $storeType . ' Feed Generation']);
 
-        $marketplaceService = MarketplaceServiceFactory::create($storeType);
-        Log::info('Marketplace Service Created');
+            $marketplaceService = MarketplaceServiceFactory::create($storeType);
+            Log::info('Marketplace Service Created');
 
-        Log::info('Generating Feed Starts');
-        $created_by = auth()->user()->name ?? 'admin';
-        $feedData = array(
-            'listing_id' => $this->listingId,
-            'status' => 0,
-            'feed_type' => $listingInfo->feed_type,
-            'store_id' => $listingInfo->store_id,
-            'created_by' => $created_by
-        );
-        $feedInfo = ListingFeed::updateOrCreate([
-            'listing_id' => $this->listingId,
-            'feed_type' => $listingInfo->feed_type
-        ], $feedData);
-        Log::info("get_current_user() : " . get_current_user());
-        Log::info('Feed Data Updated' . json_encode($feedInfo));
+            Log::info('Generating Feed Starts');
+            $created_by = auth()->user()->name ?? 'admin';
+            $feedData = array(
+                'listing_id' => $this->listingId,
+                'status' => 0,
+                'feed_type' => $listingInfo->feed_type,
+                'store_id' => $listingInfo->store_id,
+                'created_by' => $created_by
+            );
+            $feedInfo = ListingFeed::updateOrCreate([
+                'listing_id' => $this->listingId,
+                'feed_type' => $listingInfo->feed_type
+            ], $feedData);
+            Log::info("get_current_user() : " . get_current_user());
+            Log::info('Feed Data Updated' . json_encode($feedInfo));
 
-        $marketplaceService->generateFeed($this->listingId, $feedInfo->id);
-        Log::info('Feed Generated');
-        $itemCount = ListingItemLink::where('listing_id', $this->listingId)->count();
+            $marketplaceService->generateFeed($this->listingId, $feedInfo->id);
+            Log::info('Feed Generated');
+            $itemCount = ListingItemLink::where('listing_id', $this->listingId)->count();
 
-        ListingFeed::where(['listing_id' => $this->listingId])->update(['number_of_items' => $itemCount]);
-        ListingItemLink::where('listing_id', $this->listingId)->update(['feed_id' => $feedInfo->id]);
+            ListingFeed::where(['listing_id' => $this->listingId])->update(['number_of_items' => $itemCount]);
+            ListingItemLink::where('listing_id', $this->listingId)->update(['feed_id' => $feedInfo->id]);
 
-        if (isset($store->auto_submit_listing) && $store->auto_submit_listing == 1) {
-            $marketplaceService->submitFeed($feedInfo->id, $this->listingId);
-            Log::info('Feed Submitted');
-        } else {
-            Log::info('Auto Submit Listing is Disabled. Skipping Feed Submission.');
+            if (isset($store->auto_submit_listing) && $store->auto_submit_listing == 1) {
+                $marketplaceService->submitFeed($feedInfo->id, $this->listingId);
+                Log::info('Feed Submitted');
+            } else {
+                Log::info('Auto Submit Listing is Disabled. Skipping Feed Submission.');
+            }
+        }catch (\Throwable $e) {
+
+            CriticalErrorService::report('Feed Generation Failed', [
+                'marketplace' => $listingInfo->store->storeType->name.' - '.$listingInfo->store->name,
+                'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
+            ]);
+
+            Log::error('Error: ' . $e->getMessage());
+
         }
 //        $marketplaceService->getResultFeed($this->listingId);
     }

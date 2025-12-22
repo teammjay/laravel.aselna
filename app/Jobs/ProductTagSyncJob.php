@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Models\Catalog;
 use App\Models\ProductTags;
+use App\Services\CriticalErrorService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\DB;
@@ -31,14 +32,23 @@ class ProductTagSyncJob implements ShouldQueue
     {
         $this->updateTrackingRecord(['tags' => 'Product Tags']);
 
-        $productTypeKeywordQ = DB::connection('easyesale_db')->table('product_tag')
-            ->orderBy('id');
+        try {
+            $productTypeKeywordQ = DB::connection('easyesale_db')->table('product_tag')
+                ->orderBy('id');
 
-        $productTypeKeywordQ->chunk(1000, function ($productTags) {
-            foreach ($productTags as $productTag) {
-                $this->createProductTag($productTag);
-            }
-        });
+            $productTypeKeywordQ->chunk(1000, function ($productTags) {
+                foreach ($productTags as $productTag) {
+                    $this->createProductTag($productTag);
+                }
+            });
+        }catch (\Throwable $e) {
+
+            CriticalErrorService::report('Product Tags Sync Job Failed', [
+                'marketplace' => 'N/A',
+                'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
+            ]);
+        }
     }
 
     private function createProductTag(mixed $productTag)

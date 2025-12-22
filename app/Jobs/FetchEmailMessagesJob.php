@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Constants\HdTicketStatus;
 use App\Constants\HdTicketTypeCode;
+use App\Helpers\Common;
 use App\Models\Customer;
 use App\Models\CustomerEmail;
 use App\Models\HDMessage;
@@ -15,6 +16,7 @@ use App\Models\Sequence;
 use App\Models\Store;
 use App\Models\StoreMessageAccount;
 use App\Utils\EmailMessageUtility;
+use App\Services\CriticalErrorService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Bus;
@@ -48,8 +50,16 @@ class   FetchEmailMessagesJob implements ShouldQueue
 
             $this->updateTrackingRecord(['tags' => 'Email Messages']);
 
+            /* get active store jobs*/
+            $store_ids = Common::getActiveStoreJobs('FetchEmailMessagesJob');
+            /* get active store jobs*/
+
             /* get shopify stores*/
-            $stores = Store::with('storeType')->where('store_status','<>',0)->get();
+            $query = Store::with('storeType')->where('store_status','<>',0);
+            if(!empty($store_ids)){
+                $query->whereIn('id',$store_ids);
+            }
+            $stores = $query->get();
 
             if (count($stores ?? []) > 0) {
                 foreach ($stores as $store) {
@@ -76,7 +86,16 @@ class   FetchEmailMessagesJob implements ShouldQueue
                     }
                 }
             }
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
+
+            \App\Helpers\ErrorLogger::log($e, __METHOD__);
+
+            CriticalErrorService::report('Fetch Email Message Job Failed', [
+                'marketplace' => 'N/A',
+                'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
+            ]);
+
             Log::error('Error in FetchEmailMessagesJob: ' . $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine());
         }
     }

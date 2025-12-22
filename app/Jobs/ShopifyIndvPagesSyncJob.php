@@ -6,6 +6,7 @@ use App\Constants\WebStorePageType;
 use App\Models\Store;
 use App\Models\StoreNavigationPage;
 use App\Services\Auth\ShopifyAuthService;
+use App\Services\CriticalErrorService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Log;
@@ -37,25 +38,38 @@ class ShopifyIndvPagesSyncJob implements ShouldQueue
     {
         $this->updateTrackingRecord(['tags' => 'Shopify Individual Pages']);
 
-        $this->setVariables();
-        $pagetTypes = [];
-        if ($this->pageType) {
-            $pagetTypes[] = $this->pageType;
-        } else {
-            $pagetTypes = [WebStorePageType::ALL_BRANDS, WebStorePageType::BRAND_DEVICES,
-                WebStorePageType::PRODUCT_TYPE_BRANDS, WebStorePageType::BRAND_DEVICE_PRODUCT_TYPES];
-        }
-        $StoreNavigationPages = StoreNavigationPage::where('store_id', $this->storeID)
-            ->whereIn('page_type', $pagetTypes)
-            ->get();
-
-        foreach ($StoreNavigationPages as $StoreNavigationPage) {
-            try {
-                Log::info('Syncing page: ' . $StoreNavigationPage->page_name . ' for store: ' . $this->store->name);
-                $this->shopifyAuthService->syncIndividualPage($StoreNavigationPage);
-            } catch (\Exception $e) {
-                Log::error('Error in ShopifyIndvPagesSyncJob: ' . $e->getMessage());
+        try {
+            $this->setVariables();
+            $pagetTypes = [];
+            if ($this->pageType) {
+                $pagetTypes[] = $this->pageType;
+            } else {
+                $pagetTypes = [WebStorePageType::ALL_BRANDS, WebStorePageType::BRAND_DEVICES,
+                    WebStorePageType::PRODUCT_TYPE_BRANDS, WebStorePageType::BRAND_DEVICE_PRODUCT_TYPES];
             }
+            $StoreNavigationPages = StoreNavigationPage::where('store_id', $this->storeID)
+                ->whereIn('page_type', $pagetTypes)
+                ->get();
+
+            foreach ($StoreNavigationPages as $StoreNavigationPage) {
+                try {
+                    Log::info('Syncing page: ' . $StoreNavigationPage->page_name . ' for store: ' . $this->store->name);
+                    $this->shopifyAuthService->syncIndividualPage($StoreNavigationPage);
+                } catch (\Throwable $e) {
+
+                    \App\Helpers\ErrorLogger::log($e, __METHOD__);
+
+                    Log::error('Error in ShopifyIndvPagesSyncJob: ' . $e->getMessage());
+                }
+            }
+        }catch (\Throwable $e) {
+
+            CriticalErrorService::report('Shopify Indevidual Pages Sync Job Failed', [
+                'marketplace' => 'Shopify',
+                'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
+            ]);
+
         }
     }
 

@@ -11,6 +11,7 @@ use App\Services\Auth\EbayAuthService;
 use App\Services\Auth\ShopifyAuthService;
 use App\Services\Auth\TemuAuthService;
 use App\Services\Auth\WalmartAuthService;
+use App\Services\CriticalErrorService;
 use Exception;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -44,33 +45,42 @@ class SyncAllOrderStatusJob implements ShouldQueue
     {
         $this->updateTrackingRecord(['tags' => 'All Orders Status']);
 
-        $orderOperations = OrderOperation::with(['order', 'store'])
-            ->where(function ($query) {
-                $query->whereNull('tracking_number')
-                    ->orWhere('tracking_number', '')
-                    ->orWhere('status', OrderOperationStatus::Created);
-            })
-            ->whereNotIn('status', [
-                OrderOperationStatus::MarkAsShipped,
-                OrderOperationStatus::Delivered,
-                OrderOperationStatus::Canceled,
-                OrderOperationStatus::CanceledRequested
-            ])
-            ->when($this->orderId, function ($query) {
-                $query->where('order_id', $this->orderId);
-            })
-            ->orderByDesc('ship_date')
-            ->get();
-        //Log::info('Order Operations:'.json_encode($orderOperations));
-        if (count($orderOperations ?? []) > 0) {
-            foreach ($orderOperations as $operation) {
-                try {
-                    $this->checkOrderStatus($operation);
-                } catch (Exception $exception) {
-                    Log::error('Error syncing order status for OrderOperation ID ' . $operation->id . ': ' . $exception->getMessage());
-                    continue;
+        try {
+            $orderOperations = OrderOperation::with(['order', 'store'])
+                ->where(function ($query) {
+                    $query->whereNull('tracking_number')
+                        ->orWhere('tracking_number', '')
+                        ->orWhere('status', OrderOperationStatus::Created);
+                })
+                ->whereNotIn('status', [
+                    OrderOperationStatus::MarkAsShipped,
+                    OrderOperationStatus::Delivered,
+                    OrderOperationStatus::Canceled,
+                    OrderOperationStatus::CanceledRequested
+                ])
+                ->when($this->orderId, function ($query) {
+                    $query->where('order_id', $this->orderId);
+                })
+                ->orderByDesc('ship_date')
+                ->get();
+            //Log::info('Order Operations:'.json_encode($orderOperations));
+            if (count($orderOperations ?? []) > 0) {
+                foreach ($orderOperations as $operation) {
+                    try {
+                        $this->checkOrderStatus($operation);
+                    } catch (Exception $exception) {
+                        Log::error('Error syncing order status for OrderOperation ID ' . $operation->id . ': ' . $exception->getMessage());
+                        continue;
+                    }
                 }
             }
+        }catch (\Throwable $e) {
+
+            CriticalErrorService::report('All Orders Status Sync Job Failed', [
+                'marketplace' => 'N/A',
+                'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
+            ]);
         }
     }
 

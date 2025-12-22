@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Models\StoreType;
+use App\Services\CriticalErrorService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\DB;
@@ -31,9 +32,18 @@ class StoreTypeSyncJob implements ShouldQueue
     {
         $this->updateTrackingRecord(['tags' => 'Store Type']);
 
-        $storeTypes = DB::connection('easyesale_db')->table('store_type')->cursor();
-        foreach ($storeTypes as $storeType) {
-            $this->createStoreType($storeType);
+        try {
+            $storeTypes = DB::connection('easyesale_db')->table('store_type')->cursor();
+            foreach ($storeTypes as $storeType) {
+                $this->createStoreType($storeType);
+            }
+        }catch (\Throwable $e) {
+
+            CriticalErrorService::report('Store Type Sync Job Failed', [
+                'marketplace' => 'N/A',
+                'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
+            ]);
         }
     }
 

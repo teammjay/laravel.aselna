@@ -77,6 +77,7 @@ use App\Jobs\SubmitShopifyProductsJob;
 use App\Jobs\SyncAllOrderStatusJob;
 use App\Jobs\synccategorytospecification;
 use App\Jobs\SystemPrinterSyncJob;
+use App\Jobs\TransactionStatusCheckJob;
 use App\Jobs\UPCGenerateJob;
 use App\Jobs\UPCSyncJob;
 use App\Models\DeviceSeries;
@@ -151,7 +152,7 @@ class SyncAllTables extends Command
 //            ListingItemSyncJob::dispatch(),
 //            ListingItemDataSyncJob::dispatch(),
 //            ListingItemLinkSyncJob::dispatch(),
-//            ListingItemProductImageSyncJob::dispatch(),
+            ListingItemProductImageSyncJob::dispatch();
 //            StoreTypeListingSyncJob::dispatch(),
 //            ListingFeedSyncJob::dispatch(),
 //            UPCSyncJob::dispatch(),
@@ -213,6 +214,7 @@ class SyncAllTables extends Command
 //        FetchEmailMessagesJob::dispatch();
 //        EbayListingItemSyncJob::dispatch();
 //        AmazonListingItemSyncJob::dispatch();
+//        TransactionStatusCheckJob::dispatch();
 
         $transactionIds = [
 ////            '9400150105798006163885',

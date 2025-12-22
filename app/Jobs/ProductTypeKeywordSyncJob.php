@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Models\ProductTypeKeyword;
+use App\Services\CriticalErrorService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\DB;
@@ -31,14 +32,23 @@ class ProductTypeKeywordSyncJob implements ShouldQueue
 
         $this->updateTrackingRecord(['tags' => 'Product Type Keywords']);
 
-        $productTypeKeywordQ = DB::connection('easyesale_db')->table('product_type_keyword')
-            ->orderBy('id');
+        try {
+            $productTypeKeywordQ = DB::connection('easyesale_db')->table('product_type_keyword')
+                ->orderBy('id');
 
-        $productTypeKeywordQ->chunk(1000, function ($productKeywords) {
-            foreach ($productKeywords as $productKeyword) {
-                $this->createProductKeyword($productKeyword);
-            }
-        });
+            $productTypeKeywordQ->chunk(1000, function ($productKeywords) {
+                foreach ($productKeywords as $productKeyword) {
+                    $this->createProductKeyword($productKeyword);
+                }
+            });
+        }catch (\Throwable $e) {
+
+            CriticalErrorService::report('Product Type Keywords Sync Job Failed', [
+                'marketplace' => 'N/A',
+                'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
+            ]);
+        }
     }
 
     private function createProductKeyword(mixed $productKeyword)

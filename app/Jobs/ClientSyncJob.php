@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Jobs\Concerns\TrackableJob;
 use App\Models\Client;
+use App\Services\CriticalErrorService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\DB;
@@ -30,13 +31,23 @@ class ClientSyncJob implements ShouldQueue
     {
         $this->updateTrackingRecord(['tags' => 'Client']);
 
-        DB::connection('easyesale_db')->table('client')
-            ->orderBy('create_ts', 'desc')
-            ->chunk(100, function ($clients) {
-                foreach ($clients as $client) {
-                    $this->createSyncClient($client);
-                }
-            });
+        try {
+            DB::connection('easyesale_db')->table('client')
+                ->orderBy('create_ts', 'desc')
+                ->chunk(100, function ($clients) {
+                    foreach ($clients as $client) {
+                        $this->createSyncClient($client);
+                    }
+                });
+        }catch (\Throwable $e) {
+
+            CriticalErrorService::report('Client Sync Job Failed', [
+                'marketplace' => 'N/A',
+                'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
+            ]);
+
+        }
     }
 
     private function createSyncClient(mixed $client)

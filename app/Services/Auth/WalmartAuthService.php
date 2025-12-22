@@ -27,34 +27,46 @@ class WalmartAuthService
 
     public function authenticate()
     {
-        Log::info('Authenticating Walmart');
-        Log::info('Client ID: ' . $this->clientId);
-        Log::info('Client Secret: ' . $this->clientSecret);
-        Log::info('Endpoint: ' . $this->endpoint);
-        $headers = [
-            'Content-Type' => 'application/x-www-form-urlencoded',
-            'Accept' => 'application/json',
-            'WM_SVC.NAME' => 'Walmart Marketplace',
-            'WM_QOS.CORRELATION_ID' => uniqid(),
-            'Authorization' => 'Basic ' . base64_encode("{$this->clientId}:{$this->clientSecret}"),
-        ];
-        $options = [
-            //'verify' => false,
-            'form_params' => [
-                'grant_type' => 'client_credentials',
-            ],
-        ];
+        try {
+            Log::info('Authenticating Walmart');
+            Log::info('Client ID: ' . $this->clientId);
+            Log::info('Client Secret: ' . $this->clientSecret);
+            Log::info('Endpoint: ' . $this->endpoint);
+            $headers = [
+                'Content-Type' => 'application/x-www-form-urlencoded',
+                'Accept' => 'application/json',
+                'WM_SVC.NAME' => 'Walmart Marketplace',
+                'WM_QOS.CORRELATION_ID' => uniqid(),
+                'Authorization' => 'Basic ' . base64_encode("{$this->clientId}:{$this->clientSecret}"),
+            ];
+            $options = [
+                //'verify' => false,
+                'form_params' => [
+                    'grant_type' => 'client_credentials',
+                ],
+            ];
 
-        //Log::info("Headers: " . json_encode($headers));
-        //Log::info("Options: " . json_encode($options));
+            //Log::info("Headers: " . json_encode($headers));
+            //Log::info("Options: " . json_encode($options));
 
-        $request = new Request('POST', $this->endpoint . '/token', $headers);
-        $res = $this->client->sendAsync($request, $options)->wait();
-        Log::info('Response: ' . $res->getBody());
+            $request = new Request('POST', $this->endpoint . '/token', $headers);
+            $res = $this->client->sendAsync($request, $options)->wait();
+            Log::info('Response: ' . $res->getBody());
 
-        $data = json_decode($res->getBody(), true);
+            $data = json_decode($res->getBody(), true);
 
-        return $data['access_token'];
+            return $data['access_token'];
+        }catch (\Throwable $e) {
+
+            CriticalErrorService::report('Walmart Authentication Failed', [
+                'marketplace' => 'Walmart',
+                'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
+            ],['endpoint'=>$this->endpoint]);
+
+            Log::error('Error: ' . $e->getMessage());
+
+        }
     }
 
     public function submitFeed($fileName, $feedType)
@@ -143,11 +155,12 @@ class WalmartAuthService
             ]);
 
             return json_decode($response->getBody(), true);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
 
             CriticalErrorService::report('Walmart Order Sync failed', [
                 'marketplace' => 'Walmart',
                 'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
             ],['start_date' => $last_order_time]);
 
             return response()->json([
@@ -189,11 +202,12 @@ class WalmartAuthService
             ]);
 
             return json_decode($response->getBody(), true);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
 
             CriticalErrorService::report('Walmart Order Detail failed', [
                 'marketplace' => 'Walmart',
                 'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
             ],['order_id' => $orderID]);
 
             return response()->json([
@@ -236,6 +250,7 @@ class WalmartAuthService
                 CriticalErrorService::report('Walmart Ship Order API Error', [
                     'marketplace' => 'Walmart',
                     'reason' => $body ?? 'Unknown',
+                    'method' => __METHOD__
                 ],['status' => $status]);
 
                 Log::error("Walmart API error ({$status}): " . $body);
@@ -243,11 +258,12 @@ class WalmartAuthService
                 Log::error('Request error (no response): ' . $e->getMessage());
             }
 
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
 
             CriticalErrorService::report('Walmart Ship Order failed', [
                 'marketplace' => 'Walmart',
                 'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
             ],['purchase_order_id' => $purchaseOrderId]);
 
             Log::error('Error shipping order: ' . $e->getMessage());
@@ -286,17 +302,19 @@ class WalmartAuthService
                 CriticalErrorService::report('Walmart Cancel Order API Error', [
                     'marketplace' => 'Walmart',
                     'reason' => $body ?? 'Unknown',
+                    'method' => __METHOD__
                 ],['status' => $status]);
             } else {
                 Log::error('Request error (no response): ' . $e->getMessage());
             }
 
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             Log::error('Error cancel order: ' . $e->getMessage());
 
             CriticalErrorService::report('Walmart Cancel Order failed', [
                 'marketplace' => 'Walmart',
                 'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
             ],['purchase_order_id' => $purchaseOrderId]);
         }
         return null;
@@ -333,6 +351,7 @@ class WalmartAuthService
                 CriticalErrorService::report('Walmart Refund Order API Error', [
                     'marketplace' => 'Walmart',
                     'reason' => $body ?? 'Unknown',
+                    'method' => __METHOD__
                 ],['status' => $status]);
 
                 Log::error("Walmart API error ({$status}): " . $body);
@@ -340,12 +359,13 @@ class WalmartAuthService
                 Log::error('Request error (no response): ' . $e->getMessage());
             }
 
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             Log::error('Error refund order: ' . $e->getMessage());
 
             CriticalErrorService::report('Walmart Refund Order failed', [
                 'marketplace' => 'Walmart',
                 'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
             ],['purchase_order_id' => $purchaseOrderId]);
         }
         return null;
@@ -384,11 +404,12 @@ class WalmartAuthService
             Log::info("getItemSearch Response: " . $response->getBody());
 
             return json_decode($response->getBody(), true);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
 
             CriticalErrorService::report('Walmart Item Search by upc failed', [
                 'marketplace' => 'Walmart',
                 'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
             ],['upc' => $upc]);
 
             return $error = [

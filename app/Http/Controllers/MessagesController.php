@@ -1240,6 +1240,7 @@ class MessagesController extends Controller
                         'shipping_carrier_service_id' => NULL,
                         'shipping_account_transaction_id' => NULL,
                         'hd_ticket_id' => $ticket_id,
+                        'return_label_set_from_address' => $request->return_label_from_address,
                     ];
 
                     $newOrderOperation = OrderOperation::create($clonedOrderOperation);

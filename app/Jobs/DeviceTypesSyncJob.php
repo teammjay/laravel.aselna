@@ -5,6 +5,7 @@ namespace App\Jobs;
 use App\Jobs\Concerns\TrackableJob;
 use App\Models\DeviceSubTypes;
 use App\Models\DeviceTypes;
+use App\Services\CriticalErrorService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Foundation\Queue\Queueable;
@@ -39,14 +40,23 @@ class DeviceTypesSyncJob implements ShouldQueue
     {
         $this->updateTrackingRecord(['tags' => 'Device Type']);
 
-        $deviceTypes = DB::connection('easyesale_db')->table('cea_device_type')->cursor();
-        foreach ($deviceTypes as $deviceType) {
-            $this->createSyncDeviceType($deviceType);
-        }
+        try {
+            $deviceTypes = DB::connection('easyesale_db')->table('cea_device_type')->cursor();
+            foreach ($deviceTypes as $deviceType) {
+                $this->createSyncDeviceType($deviceType);
+            }
 
-        $deviceSubTypes = DB::connection('easyesale_db')->table('cea_device_sub_type')->cursor();
-        foreach ($deviceSubTypes as $deviceSubType) {
-            $this->createSyncDeviceSubType($deviceSubType);
+            $deviceSubTypes = DB::connection('easyesale_db')->table('cea_device_sub_type')->cursor();
+            foreach ($deviceSubTypes as $deviceSubType) {
+                $this->createSyncDeviceSubType($deviceSubType);
+            }
+        }catch (\Throwable $e) {
+
+            CriticalErrorService::report('Device Types Sync Job Failed', [
+                'marketplace' => 'N/A',
+                'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
+            ]);
         }
 
 //        $data = DB::connection('fonus_db')->table('tbl_device_type')->cursor();

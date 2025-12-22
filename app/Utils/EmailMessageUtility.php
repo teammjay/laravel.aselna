@@ -103,7 +103,16 @@ class EmailMessageUtility
             }
             Log::info("Email sent successfully to {$toEmail}.");
             return true;
-        } catch (Exception $e) {
+        } catch (\Throwable $e) {
+
+            \App\Helpers\ErrorLogger::log($e, __METHOD__);
+
+            CriticalErrorService::report('Email message send fail', [
+                'marketplace' => '',
+                'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
+            ],['toemail' => $toEmail]);
+
             Log::info("Failed to send email: " . $e->getMessage());
             return false;
         }
@@ -168,6 +177,9 @@ class EmailMessageUtility
 
             return $messageData;
         } catch (Exception $e) {
+
+            \App\Helpers\ErrorLogger::log($e, __METHOD__);
+
             Log::error("Failed to fetch today's emails: " . $e->getMessage());
             return [];
         }
@@ -365,11 +377,14 @@ class EmailMessageUtility
 
             Log::info("Successfully processed " . count($emails) . " emails");
             return $emails;
-        } catch (Exception $e) {
+        } catch (\Throwable $e) {
+
+            \App\Helpers\ErrorLogger::log($e, __METHOD__);
 
             CriticalErrorService::report('Fetch emails failed:'.$storeName.'-'.$store_type, [
                 'marketplace' => ucfirst($store_type),
                 'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
             ],['store_type' => $store_type,'store_name' => $storeName]);
 
             Log::error("Failed to fetch emails: " . $e->getMessage());

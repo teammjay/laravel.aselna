@@ -7,6 +7,7 @@ use App\Constants\OrderOperationType;
 use App\Constants\OrderStatus;
 use App\Constants\ShippingLabelCreationType;
 use App\Constants\WeightUnit;
+use App\Jobs\SyncFailedMarketplaceShipmentJob;
 use App\Models\AccountTransaction;
 use App\Models\Order;
 use App\Models\OrderItem;
@@ -16,6 +17,7 @@ use App\Services\Auth\EbayAuthService;
 use App\Services\Auth\ShopifyAuthService;
 use App\Services\Auth\TemuAuthService;
 use App\Services\Auth\WalmartAuthService;
+use App\Services\CriticalErrorService;
 use App\Services\Marketplace\Service\AmazonService;
 use App\Services\Marketplace\Service\ShopifyService;
 use App\Services\Marketplace\Service\TemuService;
@@ -343,7 +345,14 @@ class OrderOperationUtility
             } else {
                 Log::error('Shipping account not found for purchase auto credit');
             }
-        }catch (\Exception $e) {
+        }catch (\Throwable $e) {
+
+            CriticalErrorService::report('Error processing check transaction credit', [
+                'marketplace' => '',
+                'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
+            ],['order_operation' => $orderOperation]);
+
             Log::error('Error processing check transaction credit: ' . $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine());
         }
     }
@@ -952,7 +961,7 @@ class OrderOperationUtility
         return false;
     }
 
-    private static function createShipment($orderOperation): array
+    public static function createShipment($orderOperation): array
     {
         // Start database transaction
         DB::beginTransaction();
@@ -963,6 +972,13 @@ class OrderOperationUtility
                 $errors = self::createLabel($orderOperation);
                 if (isset($errors) && !empty($errors)) {
                     //DB::rollBack();
+
+                    CriticalErrorService::report('Error creating/priting label', [
+                        'marketplace' => '',
+                        'reason' => json_encode($errors) ?? 'Unknown',
+                        'method' => __METHOD__
+                    ],['order_operation' => $orderOperation]);
+
                     throw new \Exception($errors);
                 }
             }
@@ -1162,12 +1178,24 @@ class OrderOperationUtility
             } else {
                 // If there was an API error but no exception, still rollback
                 DB::commit();
+                $order_operation = OrderOperation::with('store')->select('id','tracking_number','status')->where('id',$orderOperation->id)->first();
+                if(isset($order_operation->store->auto_resubmit_shipment) && $order_operation->store->auto_resubmit_shipment == 1) {
+                    if ($order_operation->tracking_number && $order_operation->status == OrderOperationStatus::LabelPrinted) {
+                        dispatch(new SyncFailedMarketplaceShipmentJob($order_operation->id))->delay(now()->addMinutes(15));
+                    }
+                }
                 return ['success' => false, 'message' => $message];
             }
         } catch (\Exception $e) {
             // If anything went wrong, rollback the transaction
             DB::commit();
             Log::error('Error in createShipment: ' . $e->getMessage());
+            $order_operation = OrderOperation::with('store')->select('id','tracking_number','status')->where('id',$orderOperation->id)->first();
+            if(isset($order_operation->store->auto_resubmit_shipment) && $order_operation->store->auto_resubmit_shipment == 1) {
+                if ($order_operation->tracking_number && $order_operation->status == OrderOperationStatus::LabelPrinted) {
+                    dispatch(new SyncFailedMarketplaceShipmentJob($order_operation->id))->delay(now()->addMinutes(15));
+                }
+            }
             return ['success' => false, 'message' => $e->getMessage()];
         }
     }

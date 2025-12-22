@@ -37,6 +37,12 @@ class QueryFilters
                 case 'is_set':
                     $query->whereNotNull($field);
                     break;
+                case '>=':
+                    $query->whereDate($field,'>=',$value);
+                    break;
+                case '>':
+                    $query->whereDate($field,'>',$value);
+                    break;
             }
         }
     }

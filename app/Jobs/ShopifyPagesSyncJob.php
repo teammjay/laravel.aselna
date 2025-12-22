@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Models\Store;
+use App\Services\CriticalErrorService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Log;
@@ -49,7 +50,16 @@ class ShopifyPagesSyncJob implements ShouldQueue
                 }
             }
 
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
+
+            \App\Helpers\ErrorLogger::log($e, __METHOD__);
+
+            CriticalErrorService::report('Shopify Pages Job Failed', [
+                'marketplace' => 'Shopify',
+                'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
+            ]);
+
             // Log the error or handle it as needed
             Log::error('Error in ShopifyCollectionSyncJob: ' . $e->getMessage());
         }

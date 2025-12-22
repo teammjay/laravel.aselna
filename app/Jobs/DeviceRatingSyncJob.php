@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Jobs\Concerns\TrackableJob;
 use App\Models\DeviceRating;
+use App\Services\CriticalErrorService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\DB;
@@ -32,14 +33,24 @@ class DeviceRatingSyncJob implements ShouldQueue
     {
         $this->updateTrackingRecord(['tags' => 'Device Rating']);
 
-        DB::connection('easyesale_db')
-            ->table('cea_device_rating')
-            ->orderBy('id')
-            ->chunk(1000, function ($deviceRatings) {
-                foreach ($deviceRatings as $deviceRating) {
-                    $this->syncDeviceRating($deviceRating);
-                }
-            });
+        try {
+            DB::connection('easyesale_db')
+                ->table('cea_device_rating')
+                ->orderBy('id')
+                ->chunk(1000, function ($deviceRatings) {
+                    foreach ($deviceRatings as $deviceRating) {
+                        $this->syncDeviceRating($deviceRating);
+                    }
+                });
+        }catch (\Throwable $e) {
+
+            CriticalErrorService::report('Device Rating Sync Job Failed', [
+                'marketplace' => 'N/A',
+                'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
+            ]);
+
+        }
     }
 
     private function syncDeviceRating(mixed $deviceRating)

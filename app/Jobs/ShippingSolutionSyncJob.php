@@ -6,6 +6,7 @@ use App\Models\ShippingSettingCarrierAccount;
 use App\Models\ShippingSolution;
 use App\Models\ShippingSolutionCarrierPackage;
 use App\Models\ShippingSolutionCarrierService;
+use App\Services\CriticalErrorService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\DB;
@@ -35,37 +36,46 @@ class ShippingSolutionSyncJob implements ShouldQueue
     {
         $this->updateTrackingRecord(['tags' => 'Shipping Solutions']);
 
-        DB::connection('easyesale_db')->table('shipping_solution')
-            ->orderBy('id', 'desc')
-            ->chunk(100, function ($shippingSolutions) {
-                foreach ($shippingSolutions as $shippingSolution) {
-                    $this->createSyncShippingSolution($shippingSolution);
-                }
-            });
+        try {
+            DB::connection('easyesale_db')->table('shipping_solution')
+                ->orderBy('id', 'desc')
+                ->chunk(100, function ($shippingSolutions) {
+                    foreach ($shippingSolutions as $shippingSolution) {
+                        $this->createSyncShippingSolution($shippingSolution);
+                    }
+                });
 
-        DB::connection('easyesale_db')->table('shipping_solution_carrier_package')
-            ->orderBy('id', 'desc')
-            ->chunk(100, function ($shippingSolutionCarrierPackages) {
-                foreach ($shippingSolutionCarrierPackages as $shippingSolutionCarrierPackage) {
-                    $this->createSyncShippingSolutionCarrierPackage($shippingSolutionCarrierPackage);
-                }
-            });
+            DB::connection('easyesale_db')->table('shipping_solution_carrier_package')
+                ->orderBy('id', 'desc')
+                ->chunk(100, function ($shippingSolutionCarrierPackages) {
+                    foreach ($shippingSolutionCarrierPackages as $shippingSolutionCarrierPackage) {
+                        $this->createSyncShippingSolutionCarrierPackage($shippingSolutionCarrierPackage);
+                    }
+                });
 
-        DB::connection('easyesale_db')->table('shipping_solution_carrier_service')
-            ->orderBy('id', 'desc')
-            ->chunk(100, function ($shippingSolutionCarrierServices) {
-                foreach ($shippingSolutionCarrierServices as $shippingSolutionCarrierService) {
-                    $this->createSyncShippingSolutionCarrierService($shippingSolutionCarrierService);
-                }
-            });
+            DB::connection('easyesale_db')->table('shipping_solution_carrier_service')
+                ->orderBy('id', 'desc')
+                ->chunk(100, function ($shippingSolutionCarrierServices) {
+                    foreach ($shippingSolutionCarrierServices as $shippingSolutionCarrierService) {
+                        $this->createSyncShippingSolutionCarrierService($shippingSolutionCarrierService);
+                    }
+                });
 
-        DB::connection('easyesale_db')->table('shipping_setting_carrier_account')
-            ->orderBy('id', 'desc')
-            ->chunk(100, function ($shippingSettingCarrierAccounts) {
-                foreach ($shippingSettingCarrierAccounts as $shippingSettingCarrierAccount) {
-                    $this->createSyncShippingSettingCarrierAccount($shippingSettingCarrierAccount);
-                }
-            });
+            DB::connection('easyesale_db')->table('shipping_setting_carrier_account')
+                ->orderBy('id', 'desc')
+                ->chunk(100, function ($shippingSettingCarrierAccounts) {
+                    foreach ($shippingSettingCarrierAccounts as $shippingSettingCarrierAccount) {
+                        $this->createSyncShippingSettingCarrierAccount($shippingSettingCarrierAccount);
+                    }
+                });
+        }catch (\Throwable $e) {
+
+            CriticalErrorService::report('Shipping Solution Sync Job Failed', [
+                'marketplace' => 'N/A',
+                'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
+            ]);
+        }
     }
 
     private function createSyncShippingSolution(mixed $shippingSolution)

@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Jobs\Concerns\TrackableJob;
 use App\Models\Carrier;
+use App\Services\CriticalErrorService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\DB;
@@ -30,12 +31,22 @@ class CarrierSyncJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $this->updateTrackingRecord(['tags' => 'Carrier']);
+        try{
+            $this->updateTrackingRecord(['tags' => 'Carrier']);
 
-        $carriers = DB::connection('easyesale_db')->table('cea_carrier')->cursor();
+            $carriers = DB::connection('easyesale_db')->table('cea_carrier')->cursor();
 
-        foreach ($carriers as $carrier) {
-            $this->createCarrier($carrier);
+            foreach ($carriers as $carrier) {
+                $this->createCarrier($carrier);
+            }
+        }catch (\Throwable $e) {
+
+            CriticalErrorService::report('Carrier Sync Job Failed', [
+                'marketplace' => 'N/A',
+                'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
+            ]);
+
         }
     }
 

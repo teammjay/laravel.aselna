@@ -12,6 +12,7 @@ use App\Models\ProductSize;
 use App\Models\ProductTitleKeyword;
 use App\Models\Store;
 use App\Models\StoreProduct;
+use App\Services\CriticalErrorService;
 use Exception;
 use Google\Service\ShoppingContent\ProductStatus;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -45,6 +46,7 @@ class ProductSyncJob implements ShouldQueue
     {
         $this->updateTrackingRecord(['tags' => 'Products']);
 
+
         $producttypes = DB::connection('easyesale_db')->table('product_type')
             ->select('id')->where('code', 'ceabundle')->get()->toArray();
         Log::info('Product Types to Exclude :: ' . json_encode($producttypes));
@@ -70,10 +72,15 @@ class ProductSyncJob implements ShouldQueue
 
                         $this->createProductTitleKeywords($product);
 
-                        $fonusProduct = DB::connection('fonus_db')->table('tbl_product')->where('custom_label', $product->code)->first();
-                        $this->createProductFeatures($fonusProduct, $product->id);
+//                        $fonusProduct = DB::connection('fonus_db')->table('tbl_product')->where('custom_label', $product->code)->first();
+//                        $this->createProductFeatures($fonusProduct, $product->id);
                     } catch (Exception $e) {
-                        Log::error($e->getMessage());
+
+                        CriticalErrorService::report('Products Sync Job Failed', [
+                            'marketplace' => 'N/A',
+                            'reason' => $e->getMessage() ?? 'Unknown',
+                            'method' => __METHOD__
+                        ]);
                     }
                 }
             });

@@ -5,11 +5,13 @@ namespace App\Jobs;
 use App\Constants\FeedStatus;
 use App\Constants\ListingStatus;
 use App\Constants\ListingSyncStatus;
+use App\Helpers\Common;
 use App\Models\ListingFeed;
 use App\Models\ListingItem;
 use App\Models\ListingItemLink;
 use App\Models\Store;
 use App\Services\Auth\WalmartAuthService;
+use App\Services\CriticalErrorService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Log;
@@ -38,11 +40,22 @@ class WalmartListingItemSyncJob implements ShouldQueue
     public function handle(): void
     {
         Log::info('WalmartListingItemSyncJob started');
-        $walmart_store_ids = Store::where('store_type_id', function ($subquery) {
+
+        /* get active store jobs*/
+        $store_ids = Common::getActiveStoreJobs('WalmartListingItemSyncJob','walmart');
+        /* get active store jobs*/
+
+        $query = Store::where('store_type_id', function ($subquery) {
             return $subquery->select('id')
                 ->from('store_type')
                 ->where('code', 'walmart');
-        })->where('store_status','<>',0)->pluck('id');
+        })->where('store_status','<>',0);
+
+        if(!empty($store_ids)) {
+            $query->whereIn('id', $store_ids);
+        }
+        $walmart_store_ids = $query->pluck('id');
+
         Log::info('Walmart store ids: ' . json_encode($walmart_store_ids));
 
         $this->updateTrackingRecord(['tags' => 'Walmart']);
@@ -149,15 +162,31 @@ class WalmartListingItemSyncJob implements ShouldQueue
                 }
             }
 
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
+
+            $extraInfo = [
+                'listing_item_id' => $itemDetail->id,
+                'store_id' => $store->id,
+                'upc' => $itemDetail->upc,
+            ];
+
+            \App\Helpers\ErrorLogger::log($e, __METHOD__, $extraInfo);
+
             $itemDetail->update([
                 'sync_status' => ListingSyncStatus::CreationError,
             ]);
+
             Log::error('Error syncing Walmart listing item: ' . $e->getMessage(), [
                 'listing_item_id' => $itemDetail->id,
                 'store_id' => $store->id,
                 'upc' => $itemDetail->upc,
             ]);
+
+            CriticalErrorService::report('Error syncing Walmart listing item', [
+                'marketplace' => ucfirst($store->name),
+                'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
+            ],['store_name' => $store->name]);
         }
     }
 

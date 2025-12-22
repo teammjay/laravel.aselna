@@ -8,6 +8,7 @@ use App\Models\ShippingCarrierService;
 use App\Models\ShippingCarrierServiceChannelDetail;
 use App\Models\ShippingPackage;
 use App\Models\ShippingPackageShippingCarrierPackageLink;
+use App\Services\CriticalErrorService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\DB;
@@ -37,34 +38,44 @@ class ShippingCarrierJob implements ShouldQueue
     {
         $this->updateTrackingRecord(['tags' => 'Shipping Carriers']);
 
-        $shippingPackage = DB::connection('easyesale_db')->table('shipping_package')->get();
-        foreach ($shippingPackage as $shippingCarrierPackage) {
-            $this->createShippingPackage($shippingCarrierPackage);
-        }
+        try {
+            $shippingPackage = DB::connection('easyesale_db')->table('shipping_package')->get();
+            foreach ($shippingPackage as $shippingCarrierPackage) {
+                $this->createShippingPackage($shippingCarrierPackage);
+            }
 
-        $shippingCarriers = DB::connection('easyesale_db')->table('shipping_carrier')->cursor();
-        foreach ($shippingCarriers as $shippingCarrier) {
-            $this->createShippingCarrier($shippingCarrier);
-        }
+            $shippingCarriers = DB::connection('easyesale_db')->table('shipping_carrier')->cursor();
+            foreach ($shippingCarriers as $shippingCarrier) {
+                $this->createShippingCarrier($shippingCarrier);
+            }
 
-        $shippingCarrierServices = DB::connection('easyesale_db')->table('shipping_carrier_service')->cursor();
-        foreach ($shippingCarrierServices as $shippingCarrierService) {
-            $this->createShippingCarrierService($shippingCarrierService);
-        }
+            $shippingCarrierServices = DB::connection('easyesale_db')->table('shipping_carrier_service')->cursor();
+            foreach ($shippingCarrierServices as $shippingCarrierService) {
+                $this->createShippingCarrierService($shippingCarrierService);
+            }
 
-        $shippingCarrierPackages = DB::connection('easyesale_db')->table('shipping_carrier_package')->cursor();
-        foreach ($shippingCarrierPackages as $shippingCarrierPackage) {
-            $this->createShippingCarrierPackage($shippingCarrierPackage);
-        }
+            $shippingCarrierPackages = DB::connection('easyesale_db')->table('shipping_carrier_package')->cursor();
+            foreach ($shippingCarrierPackages as $shippingCarrierPackage) {
+                $this->createShippingCarrierPackage($shippingCarrierPackage);
+            }
 
-        $shippingCarrierServiceChannelDetails = DB::connection('easyesale_db')->table('shipping_carrier_service_channel_detail')->get();
-        foreach ($shippingCarrierServiceChannelDetails as $shippingCarrierServiceChannelDetail) {
-            $this->createShippingCarrierServiceChannelDetail($shippingCarrierServiceChannelDetail);
-        }
+            $shippingCarrierServiceChannelDetails = DB::connection('easyesale_db')->table('shipping_carrier_service_channel_detail')->get();
+            foreach ($shippingCarrierServiceChannelDetails as $shippingCarrierServiceChannelDetail) {
+                $this->createShippingCarrierServiceChannelDetail($shippingCarrierServiceChannelDetail);
+            }
 
-        $shippingPackageLinks = DB::connection('easyesale_db')->table('shipping_package_shipping_carrier_package_link')->get();
-        foreach ($shippingPackageLinks as $shippingPackageLink) {
-            $this->createShippingPackageShippingCarrierPackageLink($shippingPackageLink);
+            $shippingPackageLinks = DB::connection('easyesale_db')->table('shipping_package_shipping_carrier_package_link')->get();
+            foreach ($shippingPackageLinks as $shippingPackageLink) {
+                $this->createShippingPackageShippingCarrierPackageLink($shippingPackageLink);
+            }
+        }catch (\Throwable $e) {
+
+            CriticalErrorService::report('Shipping Carrier Sync Job Failed', [
+                'marketplace' => 'N/A',
+                'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
+            ]);
+
         }
     }
 

@@ -569,6 +569,19 @@
                                             </div>
 
                                         </div>
+
+                                        <div>
+                                            <div class="form-group">
+                                                <label>Title Replace Search Text:</label>
+                                                <input type="text" class="form-control" name="series_search_text" id="series_search_text" placeholder="Search">
+                                            </div>
+                                            <div class="form-group mt-3">
+                                                <label>Title Replace Value Text:</label>
+                                                <input type="text" class="form-control" name="series_replace_value" id="series_replace_value" placeholder="Replace">
+                                            </div>
+
+                                        </div>
+
                                     </div>
                                     <div class="d-flex" style="gap:10px;">
                                         <div class="form-group mb-1 mt-3">
@@ -808,7 +821,8 @@
                         $('input[name="products[]"]:checked').each(function () {
                             selected_product.push($(this).val())
                         });
-                        if (selected_product.length === 0 && $('#selected_product').is(':checked')) {
+
+                        if (selected_product.length === 0 || (selected_product.length === 0 && $('#selected_product').is(':checked'))) {
                             alert('Please select product to proceed.');
                         }else{
                             apply_price_count = 0
@@ -832,7 +846,7 @@
                             }
                         });
                         $('.no_of_errors').each(function () {
-                            console.log($(this).data('error'));
+                            //console.log($(this).data('error'));
                             if($(this).data('error') != '0'){
                                 product_errors = true;
                             }
@@ -970,6 +984,8 @@
                                 carrier_combo:carrier_combo,
                                 brand_combo:brand_combo,
                                 manufacturer_id:$('#use-store-brand').val(),
+                                series_search_text:$('#series_search_text').val(),
+                                series_replace_value:$('#series_replace_value').val(),
                             },
                             /* processData: false,
                              contentType: false,*/
@@ -1021,7 +1037,7 @@
                                 flag = true;
                             }
                         });
-                        console.log(flag);
+                        //console.log(flag);
                         if(flag){
                             alert('The title length is greater than maximum length so product can not generated');
                             return false;
@@ -1179,6 +1195,7 @@
                         'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                     },
                     success: function (response) {
+                        var alert = false;
                         if(response.success){
                             $('#alertModal').find('.modal-header').removeClass('bg-danger').removeClass('bg-info');
                             if(response.upc_cnt == 0 || response.upc_cnt < 1000){
@@ -1194,11 +1211,18 @@
                             }
 
                             if(!response.filesystem){
+                                alert = true;
                                 $('#alertModal').find('.modal-header').addClass('bg-danger');
                                 $('#alertModalLabel').html('Alert');
                                 $('#alertModal').find('.modal-body').append('<p class="text-red"> - File system host is not set for this store. Please set it before create listing.</p>')
 
                                 $('#alertModal').modal('show');
+                            }
+
+                            if(alert){
+                                $('#nextBtn').attr('disabled',true);
+                            }else{
+                                $('#nextBtn').attr('disabled',false);
                             }
 
 
@@ -1373,7 +1397,7 @@
                 if($(this).data('bs-dismiss') === 'modal') {
                     var $modal = $(this).closest('.modal');
                     var modalId = $modal.attr('id');
-                    console.log(modalId);
+                    //console.log(modalId);
                     $('#' + modalId).modal('hide');
                 }
             })
@@ -2756,7 +2780,7 @@
                     'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                 },
                 success: function (response) {
-                    console.log(response);
+                    //console.log(response);
                     if (response.html) {
                         $('#productsTable2_wrapper').html(response.html);
                         generateKeywords();
@@ -2857,6 +2881,108 @@
                 }
             });
 
+            let deviceSeries = [];
+            $('input[name="device_series[]"]').each(function()
+            {
+                deviceSeries.push($(this).val())
+            });
+
+            if(deviceSeries.length){
+                $.ajax({
+                    url: "{{ route('listing.getdeviceseries') }}",
+                    type: 'POST',
+                    data: {
+                        deviceSeries:deviceSeries,
+                    },
+                    headers: {
+                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                    },
+                    success: function (response) {
+                        if (response.success) {
+
+                            let vdata = response.vdata;
+                            let data = response.data;
+                            if(response.option != "") {
+                                $('#series_search_text').val(response.option);
+
+                                $('#series_search_text').autocomplete({
+                                    disabled: false,
+                                    source: function (request, response) {
+                                        actemp = data.details;
+                                        response(data.display);
+                                    },
+                                    minLength: 0,
+                                    select: function (event, ui) {
+                                        $('#series_search_text').val(ui.item.label);
+                                        selectedIndex = data.display.findIndex(
+                                            item => item.label === ui.item.label
+                                        );
+
+                                        if (selectedIndex === null) return;
+
+                                        let source = vdata.display;
+
+                                        if (source[selectedIndex]) {
+                                            $('#series_replace_value').val(source[selectedIndex].label);
+                                        }
+
+                                        return false;
+                                    }
+                                }).focus(function () {
+                                    $('#series_search_text').keydown();
+                                });
+                            }else{
+                                $('#series_search_text').val('');
+                                if ($('#series_search_text').length && $('#series_search_text').data('ui-autocomplete')) {
+                                    $("#series_search_text").autocomplete('destroy');
+                                }
+                            }
+
+                            if(response.voption != ""){
+
+                                $('#series_replace_value').val(response.voption);
+
+                                $('#series_replace_value').autocomplete({
+                                    disabled: false,
+                                    source: function (request, response) {
+                                        actemp = vdata.details;
+                                        response(vdata.display);
+                                    },
+                                    minLength: 0,
+                                    select: function (event, ui) {
+                                        $('#series_replace_value').val(ui.item.label);
+                                        return false;
+                                    }
+                                }).focus(function () {
+                                    $('#series_replace_value').keydown();
+                                });
+                            }else{
+                                $('#series_replace_value').val('');
+                                if ($('#series_replace_value').length && $('#series_replace_value').data('ui-autocomplete')) {
+                                    $("#series_replace_value").autocomplete('destroy');
+                                }
+                            }
+                        }
+                    },
+                    error: function (xhr) {
+                        /*if (xhr.responseJSON?.error) {
+                            $('#responseMessage').html('<p style="color:red;">' + xhr.responseJSON.error.image[0] + '</p>');
+                        }*/
+                    },
+                    complete: function () {
+                        $("#ajax-preloader").hide();
+                    }
+                });
+            }else{
+                $('#series_search_text').val('');
+                $("#series_search_text").autocomplete({
+                    disabled: true
+                });
+                $('#series_replace_value').val('');
+                $("#series_replace_value").autocomplete({
+                    disabled: true
+                });
+            }
 
         }
 
@@ -3120,10 +3246,10 @@
         function bindRefreshButtons() {
             $(document).off('click', '.refreshErrorsBtn'); // Prevent duplicate binding
             $(document).on('click', '.refreshErrorsBtn', function () {
-                console.log("Listener working!");
+                //console.log("Listener working!");
 
                 var productId = $(this).data('pid');
-                console.log('stc-' + productId);
+                //console.log('stc-' + productId);
                 $('.stc-' + productId).trigger('change');
             });
 
@@ -3144,7 +3270,7 @@
 
         function updateSpecification(product_ids, category_ids){
 
-            console.log(product_ids);
+            //console.log(product_ids);
 
             var $openModal = $('.modal.show');
             var modalID = $openModal.attr('id');

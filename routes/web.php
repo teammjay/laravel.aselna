@@ -35,6 +35,7 @@ use App\Http\Controllers\ProductConditionController;
 use App\Http\Controllers\InterfaceController;
 use App\Http\Controllers\ListingGenerationTypeController;
 use App\Http\Controllers\ListingGenerationTypeTemplateController;
+use App\Http\Controllers\ErrorlogDashboardController;
 
 //use App\Http\Controllers\StoreTypeCategoryController;
 use App\Http\Controllers\ProductTargetAudienceController;
@@ -170,6 +171,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/listing/relist', 'reList')->name('listing.relist');
         Route::post('/listing/checkupcexist', 'checkUpcExist')->name('listing.checkupcexist');
         Route::post('/listing/getstoremanufacturer', 'getStoreManufacturer')->name('listing.getstoremanufacturer');
+        Route::post('/listing/getdeviceseries', 'getDeviceSeries')->name('listing.getdeviceseries');
     });
 
     Route::controller(ListingGenerationTypeController::class)->group(function () {
@@ -736,6 +738,14 @@ Route::middleware('auth')->group(function () {
         Route::get('/scheduled_jobs/edit/{id}', 'edit')->name('scheduled_jobs.edit');
         Route::post('/scheduled_jobs/edit/{id}', 'update')->name('scheduled_jobs.update');
         Route::get('/scheduled_jobs/delete/{id}', 'destroy')->name('scheduled_jobs.delete');
+        Route::post('/scheduled_jobs/{job}/run', 'run')->name('scheduled_jobs.run');
+        Route::post('/scheduled_jobs/getstore', 'getStore')->name('scheduled_jobs.getstore');
+    });
+
+    Route::controller(ErrorlogDashboardController::class)->group(function () {
+        Route::get('/error_logs', 'index')->name('error_logs.index');
+        Route::post('/error_logs/filter', 'filter')->name('error_logs.filter');
+        Route::post('/error_logs/purge', 'purgeRecords')->name('error_logs.purge');
     });
 
     Route::get('/queue_jobs', [QueueJobsController::class, 'index'])->name('queue.list');

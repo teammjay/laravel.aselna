@@ -23,6 +23,19 @@ class Kernel extends ConsoleKernel
 //        $schedule->job(new ListingSyncJob())->daily();
 //        $schedule->job(new LogisticCentreSyncJob())->daily();
 
+        $jobs = \App\Models\ScheduledJobs::where('is_active', true)->get();
+
+        foreach ($jobs as $job) {
+            $class = $job->job->class_name;
+
+            if (!class_exists($class)) continue;
+
+            $params = json_decode($job->parameters, true) ?? [];
+
+            $schedule->job(new $class(...array_values($params)))
+                ->cron($job->cron_expression)
+                ->name("{$job->name}");
+        }
 
         /*$jobs = \App\Models\ScheduledJobs::where('is_active', 1)->get();
 

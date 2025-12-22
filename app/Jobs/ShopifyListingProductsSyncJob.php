@@ -5,6 +5,7 @@ namespace App\Jobs;
 use App\Models\ListingItem;
 use App\Models\ListingItemDetail;
 use App\Models\Store;
+use App\Services\CriticalErrorService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\DB;
@@ -35,23 +36,32 @@ class ShopifyListingProductsSyncJob implements ShouldQueue
     {
         $this->updateTrackingRecord(['tags' => 'Shopify Listing Products']);
 
-        $storeIds = Store::join('store_type', 'store_type.id', '=', 'store.store_type_id')
-            ->where('store_type.code', 'walmart')
-            ->whereIn('store.name',['OdeMobile','AWAccessory'])
-            ->pluck('store.id');
+        try {
+            $storeIds = Store::join('store_type', 'store_type.id', '=', 'store.store_type_id')
+                ->where('store_type.code', 'shopify')
+                ->whereIn('store.name', ['OdeMobile'])
+                ->pluck('store.id');
 
-        DB::connection('easyesale_db')->table('listing_item')
-            ->whereIn('store_product_id', function ($query) use ($storeIds) {
-                $query->select('store_product.id')
-                    ->from('store_product')
-                    ->whereIn('store_id',$storeIds);
-            })
-            ->orderBy('id')
-            ->chunk(100, function ($items) {
-                foreach ($items as $item) {
-                    $this->syncListingItem($item);
-                }
-            });
+            DB::connection('easyesale_db')->table('listing_item')
+                ->whereIn('store_product_id', function ($query) use ($storeIds) {
+                    $query->select('store_product.id')
+                        ->from('store_product')
+                        ->whereIn('store_id', $storeIds);
+                })
+                ->orderBy('id')
+                ->chunk(100, function ($items) {
+                    foreach ($items as $item) {
+                        $this->syncListingItem($item);
+                    }
+                });
+        }catch (\Throwable $e) {
+
+            CriticalErrorService::report('Shopify Listing Products Sync Job Failed', [
+                'marketplace' => 'Shopify',
+                'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
+            ]);
+        }
     }
 
     private function syncListingItem(mixed $item)
@@ -118,6 +128,9 @@ class ShopifyListingProductsSyncJob implements ShouldQueue
 
     private function createListingItemData(mixed $listingItemData)
     {
+        if (ListingItemDetail::where('id', $listingItemData->id)->exists()) {
+            return;
+        }
         ListingItemDetail::updateOrCreate([
             'id' => $listingItemData->id
         ], [

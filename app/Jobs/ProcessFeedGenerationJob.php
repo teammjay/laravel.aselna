@@ -17,13 +17,17 @@ use App\Models\ProductKeyFeatures;
 use App\Models\ProductSpecification;
 use App\Models\ProductTitleKeyword;
 use App\Models\ProductType;
+use App\Models\ProductTypeStoreTypeCATLink;
 use App\Models\Store;
+use App\Models\StoreCategory;
 use App\Models\StoreDeviceType;
 use App\Models\StoreNavigationPage;
 use App\Models\StoreProduct;
 use App\Models\StoreType;
 use App\Models\StoreTypeListing;
+use App\Models\StoreTypeManufaturerLink;
 use App\Models\UPCCodes;
+use App\Services\CriticalErrorService;
 use App\Utils\FileUtility;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -46,22 +50,23 @@ class ProcessFeedGenerationJob implements ShouldQueue
     protected $data;
     protected $store_id;
     protected $compatibleDeviceTypes;
-    private ?Store $storeDetail;
+    private $storeDetail;
     private $store_type_detail;
-    private int $current_file_index;
-    private array $feedPart;
-    private string $directory;
+    private $current_file_index;
+    private $feedPart;
+    private $directory;
     private $fileNameBase;
     private $fileExtension;
     /**
      * @var array|string[]
      */
-    private array $columns;
+    private $columns;
     /**
      * @var false|resource
      */
     private $fileHandle;
-    private int $max_file_size;
+    private $max_file_size;
+    private $category_store_type_detail;
 
     /**
      * Create a new job instance.
@@ -86,6 +91,7 @@ class ProcessFeedGenerationJob implements ShouldQueue
             $this->storeDetail = Store::with('storeType')->where('id', $store_id)->first();
             $fileSystem = $this->storeDetail->fileSystem;
             $this->store_type_detail = StoreType::getStoreTypeDetailById($store_id);
+            $this->category_store_type_detail = StoreType::where('code', 'googleShopping')->first();
 
             $this->max_file_size = 200 * 1024 * 1024;
 
@@ -197,7 +203,16 @@ class ProcessFeedGenerationJob implements ShouldQueue
                 'status' => 1,
             ]);
 
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
+
+            \App\Helpers\ErrorLogger::log($e, __METHOD__);
+
+            CriticalErrorService::report('Error processing feed generation', [
+                'marketplace' => $this->storeDetail->storeType->name ?? '',
+                'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
+            ], ['store_id' => $this->store_id]);
+
             Log::error('Error processing feed generation: ' . $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine());
         }
     }
@@ -274,7 +289,7 @@ class ProcessFeedGenerationJob implements ShouldQueue
     private function generateProductDetail($product_id, $store_type_id)
     {
 
-        $productSpecification = ProductSpecification::where('product_id', $product_id)->where('store_type_id', $store_type_id)->get();
+        $productSpecification = ProductSpecification::where('product_id', $product_id)->where('store_type_id', $store_type_id)->orderBy('name', 'asc')->get();
         $section = 'General';
         $kvSep = ':';
         $pairSep = ',';
@@ -283,7 +298,12 @@ class ProcessFeedGenerationJob implements ShouldQueue
 
             $section = trim((string)$section);
             $key = trim((string)$specification->name);
-            $value = trim((string)$specification->calculated_value());
+            $value = ucfirst(trim((string)$specification->calculated_value()));
+
+            // if value contains , replace with -
+            if (strpos($value, ',') !== false) {
+                $value = str_replace(',', ' - ', $value);
+            }
 
             if ($section === '' || $key === '' || $value === '') {
                 continue;
@@ -298,8 +318,8 @@ class ProcessFeedGenerationJob implements ShouldQueue
 
     private function getCompatibleDevices($product_id, $devices, $deviceSeries)
     {
-        $excludedRating = DeviceRating::whereIn('value',[8])->pluck('id')->toArray();
-        $includedRatings = DeviceRating::whereIn('value',[1,2,9,10])->pluck('id')->toArray();
+        $excludedRating = DeviceRating::whereIn('value', [8])->pluck('id')->toArray();
+        $includedRatings = DeviceRating::whereIn('value', [1, 2, 9, 10])->pluck('id')->toArray();
         Log::info('Excluded Device Ratings: ' . json_encode($excludedRating));
         $query = Device::select('device.*', 'product_interface.product_id')->with('brand', 'rating')->with('deviceType', 'deviceSeries');
         $query->leftJoin('device_interface', 'device_interface.device_id', '=', 'device.id');
@@ -433,7 +453,8 @@ class ProcessFeedGenerationJob implements ShouldQueue
         }
     }
 
-     public function getFilePath ($index) {
+    public function getFilePath($index)
+    {
         return $this->directory . '/' . $this->fileNameBase . "_part{$index}." . $this->fileExtension;
     }
 
@@ -458,6 +479,8 @@ class ProcessFeedGenerationJob implements ShouldQueue
         foreach ($products as $itemDetail) {
 
             $images = array();
+            $manufacturer = null;
+            $manufacturer_name = '';
             Log::info('Processing product ID: ' . $itemDetail->id);
 
             $product_description = '';
@@ -465,24 +488,31 @@ class ProcessFeedGenerationJob implements ShouldQueue
                 ->orderBy('sort_order', 'asc')
                 ->chunk(100, function ($keyFeatures) use (&$product_description) {
                     foreach ($keyFeatures as $feature) {
-                        if (isset($feature->value)) {
-                            $product_description .= trim((string)$feature->value) . '. ';
+                        if (isset($feature->value) && !empty($feature->value)) {
+                            $product_description .= ((string)$feature->value) . ' ';
                         }
                     }
                 });
 
             if (isset($itemDetail->product->product_description)) {
                 $cleanDescription = str_replace(["\r", "\n"], ' ', $itemDetail->product->product_description);
-                $product_description .= ' ' . trim($cleanDescription);
+                $product_description .= $cleanDescription;
             }
-            $product_description = trim($product_description);
+            $product_description = str_replace(["\r", "\n"], ' ', $product_description);
+//            $product_description = str_replace([";"], '.', $product_description);
 
-            $ptype_id = (isset($itemDetail->StoreTypeCategory) && !empty($itemDetail->StoreTypeCategory)) ? $itemDetail->StoreTypeCategory->store_type_code : '';
+            //$ptype_id = (isset($itemDetail->StoreTypeCategory) && !empty($itemDetail->StoreTypeCategory)) ? $itemDetail->StoreTypeCategory->store_type_code : '';
+
             $product_type = '';
             if (isset($itemDetail->product)) {
                 $product_code = $itemDetail->product->product_sku;
-                $keywords = ProductTitleKeyword::select('product_id', 'keyword')->where('product_id', $itemDetail->product_id)->orderBy('priority', 'asc')->limit(5)->get();
+                $ptype_id = $this->getProductCategoryCode($itemDetail->product->product_type);
+                if (!isset($ptype_id)) $ptype_id = 264;
+
+                $keywords = ProductTitleKeyword::select('product_id', 'keyword')->where('product_id', $itemDetail->product_id)->orderBy('priority', 'asc')->limit(6)->get();
                 $title = '';
+                $itemProductTitle = NULL;
+                $product_price = '';
                 $title_keyword = [];
                 if (!empty($keywords)) {
                     foreach ($keywords as $key => $val) {
@@ -490,6 +520,35 @@ class ProcessFeedGenerationJob implements ShouldQueue
                     }
                     $title = implode(' ', $title_keyword);
                 }
+
+                if (isset($itemDetail->title)) {
+                    $itemProductTitle = $title = $itemDetail->title;
+                } else  {
+                    $title = $title . '  - ' . $this->storeDetail->short_code . $itemDetail->product->product_sku;
+                }
+
+                if (isset($itemDetail->product->Manufacturer)) {
+                    $manufacturer = $itemDetail->product->Manufacturer;
+                }
+
+                if (isset($itemDetail->Manufacturer)) {
+                    $manufacturer = $itemDetail->Manufacturer;
+                }
+
+                if (isset($itemDetail->product)) {
+                    $product_price = $itemDetail->product->product_price;
+                }
+
+                if (isset($itemDetail->price) && isset($itemDetail->overwrite_price) && $itemDetail->overwrite_price == 1) {
+                    $product_price = $itemDetail->price;
+                }
+
+                $custom_label_3_prefix = '';
+                $singular_name = $itemDetail->product->productType->singular_name ?? '';
+                if (isset($singular_name) && $singular_name != '') {
+                    $custom_label_3_prefix = $singular_name . ' for ';
+                }
+
 
                 $prodDetail = $this->generateProductDetail($itemDetail->product_id, $this->store_type_detail->id);
 
@@ -528,6 +587,16 @@ class ProcessFeedGenerationJob implements ShouldQueue
                                 $images[] = $image->path;
                             }
                         }
+
+                        if (isset($listitem->manufacturer)) {
+                            $manufacturer = $listitem->manufacturer;
+                        }
+                        $manufacturer_name = $this->getManufacturerName($manufacturer);
+
+                        if (isset($listitem->price) && isset($listitem->overwrite_price) && $listitem->overwrite_price == 1) {
+                            $product_price = $listitem->price;
+                        }
+
                         Log::info('Main image for listing item ID ' . $listitem->id . ': ' . $mainImage);
                         Log::info('Additional images for listing item ID ' . $listitem->id . ': ' . json_encode($images));
 
@@ -540,30 +609,88 @@ class ProcessFeedGenerationJob implements ShouldQueue
                                 $item_detail = ListingItemDetail::where('listing_item_id', $listitem->id)
                                     ->where('device_id', $device->id)->first();
 
+                                $productTitle = $itemProductTitle;
+
+                                $custom_label_3 = '';
+
                                 if (strtolower($device->brand->name) == 'apple') {
-                                    $productTitle = $device->name . ' - ' . $title;
+                                    $custom_label_3 = $custom_label_3_prefix . $device->name;
                                 } else {
-                                    $productTitle = $device->brand->name . ' ' . $device->name . ' - ' . $title;
+                                    $custom_label_3 = $custom_label_3_prefix . $device->brand->name . ' ' . $device->name;
                                 }
 
-                                $final_description = $device->brand->name . ' ' . $device->name . ' - ' . $title . ' for ' . $device->name . '. ' . $product_description;
+                                if ($productTitle == NULL) {
+                                    $productTitle = $title;
+                                }
+
+                                $deviceType = $device->deviceType;
+                                $descriptionTitle = '';
+                                if ($deviceType->code != 1 && $deviceType->code != 2) {
+                                    $descriptionTitle = $device->brand->name . ' ' . $device->name . ' Compatible ' . $title;
+                                } else {
+                                    $descriptionTitle = $device->brand->name . ' ' . $device->name . ' - ' . $title;
+                                }
+
+                                $final_description = $descriptionTitle . ' for ' . $device->name . '. ' . $product_description;
+
+                                if ($this->can_add_device_to_title($productTitle, $device)) {
+                                    if (strpos($productTitle, ' ') !== false &&
+                                        (str_contains(strtolower($this->storeDetail->store_url), 'accessorychoice') || str_contains(strtolower($this->storeDetail->store_url), 'accessorywiz')
+                                            || str_contains(strtolower($this->storeDetail->store_url), 'aselna') || str_contains(strtolower($this->storeDetail->store_url), 'neva'))) {
+                                        $productTitle = str_replace(',', ' for ' . $device->brand->name . ' ' . $device->name . ' -', $productTitle);
+                                    } else {
+
+                                        if ($deviceType->code != 1 && $deviceType->code != 2) {
+                                            // Smartphone or Tablet
+                                            $productTitle = $device->brand->name . ' ' . $device->name . ' Compatible ' . $productTitle;
+                                        } else {
+                                            $productTitle = $device->brand->name . ' ' . $device->name . ' - ' . $productTitle;
+                                        }
+                                    }
+                                }
+
+                                $productTitle = str_replace('Apple ', '', $productTitle);
+                                $productTitle = str_replace('apple', '', $productTitle);
+                                $productTitle = trim($productTitle);
+                                $productTitle = preg_replace('/ +/', ' ', $productTitle);
+
 
                                 if (!$item_detail) {
                                     Log::info('Inserting new listing item detail for listing item ID: ' . $listitem->id . ' and device ID: ' . $device->id);
                                     $item_detail = $this->insertListingItemDetail($product_code, $listitem, $device);
                                 }
 
+                                $collection_url = '';
+
                                 $devicePage = StoreNavigationPage::where('store_id', $this->store_id)
                                     ->where('page_type', WebStorePageType::DEVICE)
                                     ->where('device_id', $device->id)
                                     ->first();
 
+                                if ($item_detail->url) {
+                                    $collection_url = $item_detail->url;
+                                }
+
+                                if (!isset($collection_url)) {
+                                    $collection_url = $devicePage->url_path ?? '';
+                                }
+
                                 if ($store_sku != '') {
-                                    $product_url = \App\Utils\ListingUtility::generateItemUrl($store_type, $store_sku, $site_url, $store_url, $devicePage->url_path ?? '');
+                                    $product_url = \App\Utils\ListingUtility::generateItemUrl($store_type, $store_sku, $site_url, $store_url, $collection_url);
+                                }
+
+                                $custom_label_1 = '';
+                                $custom_label_2 = '';
+
+                                if ($deviceType->code != 1 && $deviceType->code != 2) {
+                                    $custom_label_2 = (isset($item_detail->device->name)) ? $item_detail->device->name : '';
+                                } else {
+                                    $custom_label_1 = (isset($item_detail->device->name)) ? $item_detail->device->name : '';
                                 }
 
                                 // item group id logic
-                                $itemGroupId = $item_detail->sku . '-' . $device->code;
+                                //$itemGroupId = $item_detail->sku . '-' . $device->code;
+                                $itemGroupId = $listitem->sku . '-' . $device->code;
 
                                 fputcsv($this->fileHandle, [
                                     $item_detail->sku,
@@ -573,25 +700,25 @@ class ProcessFeedGenerationJob implements ShouldQueue
                                     $product_type,
                                     $product_url,
                                     (isset($mainImage)) ? $mainImage : '',
-                                    (isset($itemDetail->product->condition)) ? $itemDetail->product->condition->name : '',
+                                    (isset($itemDetail->product->condition)) ? strtolower($itemDetail->product->condition->name) : '',
                                     'in stock',
-                                    (($itemDetail->product->product_marketplace_price != '') ? $itemDetail->product->product_marketplace_price : $itemDetail->product->product_price) . ' USD',
+                                    $product_price . ' USD',
                                     (isset($item_detail->upc)) ? $item_detail->upc : '',
-                                    (isset($itemDetail->product->Manufacturer)) ? $itemDetail->product->Manufacturer->name : '',
+                                    $manufacturer_name,
                                     $item_detail->sku,
                                     (isset($device) ? $itemGroupId : ''),
                                     '',
                                     '',
                                     (isset($itemDetail->product->color->name)) ? $itemDetail->product->color->name : '',
                                     (isset($itemDetail->product->size->value)) ? $itemDetail->product->size->value . ' ' . $itemDetail->product->size->value_unit : '',
-                                    'US::Standard:3.99 USD',
+                                    'US::Standard:4.99 USD',
                                     (isset($images) && count($images) > 0) ? implode(',', $images) : '',
-                                    (isset($listitem->qunatity)) ? $listitem->qunatity : 500,
+                                    (isset($listitem->qunatity)) ? $listitem->qunatity : 1000,
                                     'return_policy_days: "30"',
                                     (isset($item_detail->device->brand->name)) ? $item_detail->device->brand->name : '',
-                                    (isset($item_detail->device->name)) ? $item_detail->device->name : '',
-                                    '',
-                                    ($itemDetail->overwrite_title) ? $itemDetail->title : $itemDetail->product->product_title,
+                                    $custom_label_1,
+                                    $custom_label_2,
+                                    $custom_label_3,
                                     (isset($itemDetail->product->product_sku)) ? $itemDetail->product->product_sku : '',
                                     $prodDetail
                                 ]);
@@ -619,6 +746,63 @@ class ProcessFeedGenerationJob implements ShouldQueue
                         }
                     }
                 }
+            }
+        }
+    }
+
+    public function getProductCategoryCode($id)
+    {
+        $category = ProductType::where('id', $id)->first();
+        while (isset($category) && $category->parent_id != null) {
+            $parentCategory = ProductType::where('id', $category->parent_id)->first();
+
+            $categorycode = ProductTypeStoreTypeCATLink::join('store_type_category', 'store_type_category.id', '=', 'product_type_store_type_category_link.channel_category_id')
+                ->where('store_type_category.store_type_id', $this->category_store_type_detail->id)
+                ->where('product_type_id', $category->id)
+                ->orderBy('product_type_store_type_category_link.id', 'desc')
+                ->select('store_type_category.code')
+                ->first();
+
+            if (isset($categorycode)) {
+                return $categorycode->code;
+            }
+            $category = $parentCategory;
+        }
+
+        return $categorycode ? $categorycode->code : '';
+    }
+
+    private function can_add_device_to_title($productTitle, mixed $device)
+    {
+        if ($productTitle == null) {
+            return true;
+        }
+        if (stripos(mb_strtolower($productTitle), mb_strtolower($device->name)) === false) {
+            return true;
+        }
+        return false;
+    }
+
+    private function getManufacturerName($manufacturer)
+    {
+        if ($manufacturer == null) {
+            return '';
+        }
+        $manufacturerLink = StoreTypeManufaturerLink::where('store_type_id', $this->store_type_detail->id)
+            ->where('manufacturer_id', $manufacturer->id)
+            ->first();
+
+        if (isset($manufacturerLink)) {
+            if (strtolower($manufacturerLink->manufacturer_name) == 'hco') {
+                return $this->storeDetail->name;
+            } else {
+                return $manufacturerLink->manufacturer_name;
+            }
+        } else {
+            if ($manufacturer->name == 'Use store as Brand' || strtolower($manufacturer->name) == 'hco') {
+                return $this->storeDetail->name;
+            } else {
+                return $manufacturer->name;
             }
         }
     }

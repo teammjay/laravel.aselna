@@ -6,6 +6,7 @@ use App\Jobs\Concerns\TrackableJob;
 use App\Models\Carrier;
 use App\Models\Device;
 use App\Models\DeviceCarrier;
+use App\Services\CriticalErrorService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\DB;
@@ -34,12 +35,21 @@ class DeviceCarrierSyncJob implements ShouldQueue
     {
         $this->updateTrackingRecord(['tags' => 'Device Carrier']);
 
-        DB::connection('easyesale_db')->table('cea_device_carrier')->orderBy('id')
-        ->chunk(100, function ($deviceCarriers) {
-            foreach ($deviceCarriers as $deviceCarrier) {
-                $this->createDeviceCarrier($deviceCarrier);
-            }
-        });
+        try {
+            DB::connection('easyesale_db')->table('cea_device_carrier')->orderBy('id')
+                ->chunk(100, function ($deviceCarriers) {
+                    foreach ($deviceCarriers as $deviceCarrier) {
+                        $this->createDeviceCarrier($deviceCarrier);
+                    }
+                });
+        }catch (\Throwable $e) {
+
+            CriticalErrorService::report('Device Carrier Sync Job Failed', [
+                'marketplace' => 'N/A',
+                'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
+            ]);
+        }
     }
 
     private function createDeviceCarrier(mixed $deviceCarrier)

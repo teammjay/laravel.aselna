@@ -254,6 +254,14 @@
                                 </div>
                                 <div class="row mt-3 g-3 align-items-center">
                                     <div class="col-md-5">
+                                        <label for="auto_generate_listings">Auto Re-submit Shipment</label>
+                                    </div>
+                                    <div class="col-md-7">
+                                        <input type="checkbox" id="auto_resubmit_shipment" name="auto_resubmit_shipment" {{ ($store->auto_resubmit_shipment == 1) ? 'checked' : '' }}>
+                                    </div>
+                                </div>
+                                <div class="row mt-3 g-3 align-items-center">
+                                    <div class="col-md-5">
                                         <label for="max_listing_inventory_quantity">Max listing inventory quantity</label>
                                     </div>
                                     <div class="col-md-7">

@@ -10,6 +10,7 @@ use App\Models\ProductImageAlternative;
 use App\Models\ProductImages;
 use App\Models\SysFile;
 use App\Services\Auth\EbayAuthService;
+use App\Services\CriticalErrorService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Log;
@@ -42,13 +43,22 @@ class ListingItemImageCreate implements ShouldQueue
     {
         $this->updateTrackingRecord(['tags' => 'Listing Item Image Create']);
 
-        $listingInfo = Listing::find($this->listigId);
-        //Log::info('Listing :: ' . json_encode($listingInfo));
-        ListingItemLink::where('listing_id', $this->listigId)->chunk(100, function ($listingItemLinks) use ($listingInfo) {
-            foreach ($listingItemLinks as $listingItemLink) {
-                $this->createListingItemImage($listingItemLink, $listingInfo);
-            }
-        });
+        try {
+            $listingInfo = Listing::find($this->listigId);
+            //Log::info('Listing :: ' . json_encode($listingInfo));
+            ListingItemLink::where('listing_id', $this->listigId)->chunk(100, function ($listingItemLinks) use ($listingInfo) {
+                foreach ($listingItemLinks as $listingItemLink) {
+                    $this->createListingItemImage($listingItemLink, $listingInfo);
+                }
+            });
+        }catch (\Throwable $e) {
+
+            CriticalErrorService::report('Listing Item Image Create Job Failed', [
+                'marketplace' => 'N/A',
+                'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
+            ]);
+        }
     }
 
     private function createListingItemImage(mixed $listingItemLink, $listingInfo)

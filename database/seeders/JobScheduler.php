@@ -397,6 +397,12 @@ class JobScheduler extends Seeder
                 'name' => 'Amazon listing item status check',
                 'description' => 'Amazon Listing Item Status Check',
                 'class_name' => 'App\Jobs\AmazonListingItemSyncJob',
+            ],
+            [
+                //ProductKeyFeaturesSyncJob
+                'name' => 'Product Key Features Sync',
+                'description' => 'Sync all product key features',
+                'class_name' => 'App\Jobs\ProductKeyFeaturesSyncJob',
             ]
         ];
 

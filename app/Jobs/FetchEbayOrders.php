@@ -2,9 +2,11 @@
 
 namespace App\Jobs;
 
+use App\Helpers\Common;
 use App\Jobs\Concerns\TrackableJob;
 use App\Models\Store;
 use App\Services\Marketplace\Service\EbayService;
+use App\Services\CriticalErrorService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Log;
@@ -31,26 +33,42 @@ class FetchEbayOrders implements ShouldQueue
      */
     public function handle(): void
     {
-        /* get amazon stores*/
-        $stores = Store::select('store.*','store_type.name as storeTypeName')->join('store_type', 'store_type.id', '=', 'store.store_type_id')->where('store_type.code','ebay')->where('store.store_status','<>',0)->get();
+        $this->updateTrackingRecord(['tags' => 'eBay Orders']);
 
-        if(count($stores ?? []) > 0) {
+        try {
+            /* get active store jobs*/
+            $store_ids = Common::getActiveStoreJobs('FetchEbayOrders', 'ebay');
+            /* get active store jobs*/
 
-            foreach ($stores as $store) {
+            /* get ebay stores*/
+            $query = Store::select('store.*', 'store_type.name as storeTypeName')->join('store_type', 'store_type.id', '=', 'store.store_type_id')->where('store_type.code', 'ebay')->where('store.store_status', '<>', 0);
+            if (!empty($store_ids)) {
+                $query->whereIn('store.id', $store_ids);
+            }
+            $stores = $query->get();
 
-                if (env('APP_ENV') === 'local' && $store->name != 'phonil') {
-                    continue;
-                }
-                Log::info('Store : ' . $store->name);
+            //$stores = Store::select('store.*','store_type.name as storeTypeName')->join('store_type', 'store_type.id', '=', 'store.store_type_id')->where('store_type.code','ebay')->where('store.store_status','<>',0)->whereIn('store.id',$store_ids)->get();
 
-                try {
+            if (count($stores ?? []) > 0) {
 
-                    $this->updateTrackingRecord(['tags' => $store->storeTypeName.' Orders']);
-                    $ebayService = new EbayService();
-                    $orders = $ebayService->getOrders($store);
-                } catch (\Exception $e) {
-                    Log::info('Error : ' . $e->getMessage());
-                }
+                foreach ($stores as $store) {
+
+                    if (env('APP_ENV') === 'local' && $store->name != 'phonil') {
+                        continue;
+                    }
+                    Log::info('Store : ' . $store->name);
+
+                    try {
+
+                        $this->updateTrackingRecord(['tags' => $store->storeTypeName . ' Orders']);
+                        $ebayService = new EbayService();
+                        $orders = $ebayService->getOrders($store);
+                    } catch (\Throwable $e) {
+
+                        \App\Helpers\ErrorLogger::log($e, __METHOD__);
+
+                        Log::info('Error : ' . $e->getMessage());
+                    }
 
 //                $ordersyncDetail = OrderSynchronization::where('store_id',$store->id)->orderBy('filter_end_date','desc')->first();
 //
@@ -181,7 +199,18 @@ class FetchEbayOrders implements ShouldQueue
 //                        break;
 //                    }
 //                }
+                }
             }
+        }catch (\Throwable $e) {
+
+            CriticalErrorService::report('Fetch eBay Order Job Failed', [
+                'marketplace' => 'eBay',
+                'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
+            ]);
+
+            Log::error('Error: ' . $e->getMessage());
+
         }
     }
 }
