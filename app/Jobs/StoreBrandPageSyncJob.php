@@ -122,7 +122,9 @@ class StoreBrandPageSyncJob implements ShouldQueue
 
                         if (isset($storePage)) {
                             $handle = $storePage->url_path;
-                        } else {
+                        }
+
+                        if (!isset($handle)) {
                             $handle = $this->generateShopifyHandle($title);
                         }
 
@@ -204,7 +206,9 @@ class StoreBrandPageSyncJob implements ShouldQueue
 
                             if (isset($storePage)) {
                                 $handle = $storePage->url_path;
-                            } else {
+                            }
+
+                            if (!isset($handle)) {
                                 $handle = $this->generateShopifyHandle($brand->name . ' ' . $device->name);
                             }
 
