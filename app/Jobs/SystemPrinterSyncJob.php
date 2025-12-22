@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Models\Printer;
+use App\Services\CriticalErrorService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\DB;
@@ -31,13 +32,22 @@ class SystemPrinterSyncJob implements ShouldQueue
     {
         $this->updateTrackingRecord(['tags' => 'System Printers']);
 
-        DB::connection('aselna_printer_db')->table('Printers')
-            ->orderBy('id')
-            ->chunk(100, function ($printers) {
-                foreach ($printers as $printer) {
-                    $this->syncPrinter($printer);
-                }
-            });
+        try {
+            DB::connection('aselna_printer_db')->table('Printers')
+                ->orderBy('id')
+                ->chunk(100, function ($printers) {
+                    foreach ($printers as $printer) {
+                        $this->syncPrinter($printer);
+                    }
+                });
+        }catch (\Throwable $e) {
+
+            CriticalErrorService::report('System Printers Sync Job Failed', [
+                'marketplace' => 'N/A',
+                'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
+            ]);
+        }
     }
 
     /**

@@ -19,6 +19,7 @@ use App\Models\OrderItem;
 use App\Models\OrderSynchronization;
 use App\Models\ProductSpecification;
 use App\Services\Auth\WalmartAuthService;
+use App\Services\CriticalErrorService;
 use App\Services\Marketplace\Contracts\MarketplaceServiceInterface;
 use App\Utils\FileUtility;
 use App\Utils\order\OrderUtility;
@@ -63,31 +64,43 @@ class WalmartService implements MarketplaceServiceInterface
 
     public function submitFeed($feedId, $listingId)
     {
-        $listingInfo = Listing::where('id', $listingId)->first();
-        $feedInfo = ListingFeed::where('id', $feedId)->first();
-        $store = $listingInfo->store;
+        try {
+            $listingInfo = Listing::where('id', $listingId)->first();
+            $feedInfo = ListingFeed::where('id', $feedId)->first();
+            $store = $listingInfo->store;
 
-        $feedType = $this->getfeedType($feedInfo->feed_type);
+            $feedType = $this->getfeedType($feedInfo->feed_type);
 
-        $authService = new WalmartAuthService($store->seller_id, $store->secret_key);
-        $file = public_path('feeds/walmart/' . $listingId . '.json');
+            $authService = new WalmartAuthService($store->seller_id, $store->secret_key);
+            $file = public_path('feeds/walmart/' . $listingId . '.json');
 
-        $response = $authService->submitFeed($file, $feedType);
-        //Log::info('Response ::' . json_encode($response));
+            $response = $authService->submitFeed($file, $feedType);
+            //Log::info('Response ::' . json_encode($response));
 
-        $resultFeedId = $response['feedId'];
+            $resultFeedId = $response['feedId'];
 
-        $feedInfo = ListingFeed::where('id', $feedId)->first();
+            $feedInfo = ListingFeed::where('id', $feedId)->first();
 
-        if ($feedInfo) {
-            $feedInfo->feed_id = $resultFeedId;
-            $feedInfo->submit_ts = now();
-            $feedInfo->number_of_attempts = $feedInfo->number_of_attempts ?? 0 + 1;
-            $feedInfo->save();
-            Log::info("Feed ID updated successfully.");
+            if ($feedInfo) {
+                $feedInfo->feed_id = $resultFeedId;
+                $feedInfo->submit_ts = now();
+                $feedInfo->number_of_attempts = $feedInfo->number_of_attempts ?? 0 + 1;
+                $feedInfo->save();
+                Log::info("Feed ID updated successfully.");
 
-        } else {
-            Log::error("No ListingFeed found for listing_id: " . $listingId);
+            } else {
+                Log::error("No ListingFeed found for listing_id: " . $listingId);
+            }
+        }catch (\Throwable $e) {
+
+            CriticalErrorService::report('Walmart Submit Feed Failed', [
+                'marketplace' => 'Walmart',
+                'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
+            ],['feedId'=>$feedId, 'listingId'=>$listingId]);
+
+            Log::error('Error: ' . $e->getMessage());
+
         }
     }
 
@@ -193,13 +206,17 @@ class WalmartService implements MarketplaceServiceInterface
                     $listingItem->update([
                         'sync_status' => ListingSyncStatus::Synchronized
                     ]);
-//                    $successCnt++;
+                    $successCnt++;
                 } else {
                     $listingItem->update([
                         'sync_status' => ListingSyncStatus::Unsynchronize
                     ]);
-//                    $failCnt++;
+                    $failCnt++;
                 }
+            }
+
+            if($failCnt > 0){
+                $this->resubmitFailedItems($listingId);
             }
 //            $feedInfo->update([
 //                'success_count' => $successCnt,
@@ -211,156 +228,177 @@ class WalmartService implements MarketplaceServiceInterface
         return 'result-feeds/walmart/' . $feedInfo->id . '.json';
     }
 
-    private function generateCreateFeed($listingInfo, $listingId)
+    private function generateCreateFeed($listingInfo, $listingId, $skuFilter = [])
     {
-        $listingItems = ListingItemLink::where('listing_id', $listingId)->cursor();
-        $fileSystem = $listingInfo->store->fileSystem;
-        $store = $listingInfo->store;
+        try {
+            $listingItems = ListingItemLink::where('listing_id', $listingId)->cursor();
+            $fileSystem = $listingInfo->store->fileSystem;
+            $store = $listingInfo->store;
 
-        $jsonFeed = [
-            'MPItemFeedHeader' => [
+            $jsonFeed = [
+                'MPItemFeedHeader' => [
 //                'subset' => 'EXTERNAL',
-                'locale' => 'en',
+                    'locale' => 'en',
 //                'sellingChannel' => 'marketplace',
 //                'processMode' => 'REPLACE',
-                'version' => '5.0.20250828-17_32_59-api',
-                'businessUnit' => 'WALMART_US',
+                    'version' => '5.0.20250828-17_32_59-api',
+                    'businessUnit' => 'WALMART_US',
 //                'subCategory' => 'electronics_other',
 //                'requestId' => $listingId,
 //                'requestBatchId' => $listingId . '_1',
-            ]
-        ];
-
-        foreach ($listingItems as $listingItem) {
-            $item = $listingItem->item;
-            $storeTypeCategory = $item->storeProduct->storeTypeCategory;
-            $productObj = $item->storeProduct->product;
-            $productColor = $productObj->productColor;
-            $price = $item->price;
-            if (!isset($price)) {
-                $price = $item->storeProduct->price;
-            }
-            if (!isset($price)) {
-                $price = $productObj->product_marketplace_price;
-            }
-
-
-            $product = [
-                'Orderable' => [
-                    'sku' => $item->sku,
-                    'ShippingWeight' => floatval($productObj->product_weight),
-                    'fulfillmentLagTime' => 1,
-                    'productIdentifiers' => [
-                        'productId' => $item->upc,
-                        'productIdType' => 'UPC'
-                    ],
-                    'price' => $price,
-                    'endDate' => '2060-01-01T08:00:00Z',
-                    'electronicsIndicator' => 'Yes',
-                    'shipsInOriginalPackaging' => 'Yes',
-                    'startDate' => '2019-01-01T08:00:00Z',
-                    'MustShipAlone' => 'No',
-                    'country_of_origin_substantial_transformation' => 'China'
                 ]
             ];
 
-            $compatibleDevices = [];
-            $compatibleBrands = [];
-            foreach ($item->devices as $device) {
-                if (isset($device->device->brand) && (strtolower($device->device->brand->name) == 'apple' || strtolower($device->device->brand->name) == 'unlocked')) {
-                    $compatibleDevices[] = $device->device->name;
-                } else {
-                    $compatibleDevices[] = $device->device->brand->name . ' ' . $device->device->name;
+            foreach ($listingItems as $listingItem) {
+                $item = $listingItem->item;
+
+                if (!$item) {
+                    continue;
                 }
-                if (in_array($device->device->brand->name, $compatibleBrands) == false && strtolower($device->device->brand->name) == 'apple') {
-                    $compatibleBrands[] = $listingInfo->store->name;
-                } elseif (in_array($device->device->brand->name, $compatibleBrands) == false) {
-                    $compatibleBrands[] = $device->device->brand->name;
+
+                if (!empty($skuFilter) && !in_array($item->sku, $skuFilter, true)) {
+                    continue;
                 }
-            }
 
-            $keyFeatures = [];
-            foreach ($productObj->productKeyFeatures as $feature) {
-                if ($feature->value == '' || !isset($feature->value)) continue;
-                $keyFeatures[] = $feature->value;
-            }
-
-            $images = ListingItemProductImage::where('listing_item_id', $item->id)->get();
-            Log::info('Images: ' . json_encode($images));
-            Log::info('File System: ' . json_encode($fileSystem));
-            $imagesPath = [];
-            $mainImagePath = [];
-            foreach ($images as $image) {
-                if ($image->productImage && $image->main_image == 0) {
-                    $imagesPath[] = $fileSystem->url_base_path . $image->path;
-                } else {
-                    $mainImagePath = $fileSystem->url_base_path . $image->path;
+                $storeTypeCategory = $item->storeProduct->storeTypeCategory;
+                $productObj = $item->storeProduct->product;
+                $productColor = $productObj->productColor;
+                $price = $item->price;
+                if (!isset($price)) {
+                    $price = $item->storeProduct->price;
                 }
-            }
+                if (!isset($price)) {
+                    $price = $productObj->product_marketplace_price;
+                }
 
-            $requiredAttributes = $this->getVisibleAttributes($storeTypeCategory->name, $store);
 
-            // skip only the first one for the secondary image
-            $visibleAttributes = [
-                'productName' => $item->title,
-                'brand' => $listingInfo->store->name,
-                'shortDescription' => $item->description,
-                'keyFeatures' => $keyFeatures,
-                'mainImageUrl' => $mainImagePath,
-                'productSecondaryImageURL' => $imagesPath,
-                'manufacturerPartNumber' => '' . $item->sku,
-                'modelNumber' => $item->sku,
+                $product = [
+                    'Orderable' => [
+                        'sku' => $item->sku,
+                        'ShippingWeight' => floatval($productObj->product_weight),
+                        'fulfillmentLagTime' => 1,
+                        'productIdentifiers' => [
+                            'productId' => $item->upc,
+                            'productIdType' => 'UPC'
+                        ],
+                        'price' => $price,
+                        'endDate' => '2060-01-01T08:00:00Z',
+                        'electronicsIndicator' => 'Yes',
+                        'shipsInOriginalPackaging' => 'Yes',
+                        'startDate' => '2019-01-01T08:00:00Z',
+                        'MustShipAlone' => 'No',
+                        'country_of_origin_substantial_transformation' => 'China'
+                    ]
+                ];
+
+                $compatibleDevices = [];
+                $compatibleBrands = [];
+                foreach ($item->devices as $device) {
+                    if (isset($device->device->brand) && (strtolower($device->device->brand->name) == 'apple' || strtolower($device->device->brand->name) == 'unlocked')) {
+                        $compatibleDevices[] = $device->device->name;
+                    } else {
+                        $compatibleDevices[] = $device->device->brand->name . ' ' . $device->device->name;
+                    }
+                    if (in_array($device->device->brand->name, $compatibleBrands) == false && strtolower($device->device->brand->name) == 'apple') {
+                        $compatibleBrands[] = $listingInfo->store->name;
+                    } elseif (in_array($device->device->brand->name, $compatibleBrands) == false) {
+                        $compatibleBrands[] = $device->device->brand->name;
+                    }
+                }
+
+                $keyFeatures = [];
+                foreach ($productObj->productKeyFeatures as $feature) {
+                    if ($feature->value == '' || !isset($feature->value)) continue;
+                    $keyFeatures[] = $feature->value;
+                }
+
+                $images = ListingItemProductImage::where('listing_item_id', $item->id)->get();
+                Log::info('Images: ' . json_encode($images));
+                Log::info('File System: ' . json_encode($fileSystem));
+                $imagesPath = [];
+                $mainImagePath = [];
+                foreach ($images as $image) {
+                    if ($image->productImage && $image->main_image == 0) {
+                        $imagesPath[] = $fileSystem->url_base_path . $image->path;
+                    } else {
+                        $mainImagePath = $fileSystem->url_base_path . $image->path;
+                    }
+                }
+
+                $requiredAttributes = $this->getVisibleAttributes($storeTypeCategory->name, $store);
+
+                // skip only the first one for the secondary image
+                $visibleAttributes = [
+                    'productName' => $item->title,
+                    'brand' => $listingInfo->store->name,
+                    'shortDescription' => $item->description,
+                    'keyFeatures' => $keyFeatures,
+                    'mainImageUrl' => $mainImagePath,
+                    'productSecondaryImageURL' => $imagesPath,
+                    'manufacturerPartNumber' => '' . $item->sku,
+                    'modelNumber' => $item->sku,
 //                'msrp' => floatval($productObj->product_mrsp),
-                'color' => $productColor->name ?? '',
-            ];
+                    'color' => $productColor->name ?? '',
+                ];
 
-            $specifications = $this->getProductSpecifications($listingItem);
+                $specifications = $this->getProductSpecifications($listingItem);
 
-            if (in_array('compatibleModels', $requiredAttributes)) $visibleAttributes['compatibleModels'] = $compatibleDevices;
-            if (in_array('has_written_warranty', $requiredAttributes)) $visibleAttributes['has_written_warranty'] = $specifications['has_written_warranty'] ?? 'No';
-            if (in_array('has_nrtl_listing_certification', $requiredAttributes)) $visibleAttributes['has_nrtl_listing_certification'] = $specifications['has_nrtl_listing_certification'] ?? 'No';
-            if (in_array('condition', $requiredAttributes)) $visibleAttributes['condition'] = $specifications['condition'] ?? 'New';
-            if (in_array('isProp65WarningRequired', $requiredAttributes)) $visibleAttributes['isProp65WarningRequired'] = $specifications['isProp65WarningRequired'] ?? 'No';
-            if (in_array('smallPartsWarnings', $requiredAttributes))
-                $visibleAttributes['smallPartsWarnings'] = [
-                    $specifications['smallPartsWarnings'] ?? '0 - No warning applicable'
-                ];
-            if (in_array('netContent', $requiredAttributes))
-                $visibleAttributes['netContent'] = [
-                    'productNetContentUnit' => 'Each',
-                    'productNetContentMeasure' => 1,
-                ];
-            if (in_array('assembledProductWidth', $requiredAttributes))
-                $visibleAttributes['assembledProductWidth'] = [
-                    'unit' => 'in',
-                    'measure' => $productObj->package_dimensions_width ?? 0,
-                ];
-            if (in_array('assembledProductHeight', $requiredAttributes))
-                $visibleAttributes['assembledProductHeight'] = [
-                    'unit' => 'in',
-                    'measure' => $productObj->package_dimensions_height ?? 0,
-                ];
-            if (in_array('assembledProductLength', $requiredAttributes))
-                $visibleAttributes['assembledProductLength'] = [
-                    'unit' => 'in',
-                    'measure' => $productObj->package_dimensions_length ?? 0,
-                ];
-            if (in_array('compatibleBrands', $requiredAttributes)) $visibleAttributes['compatibleBrands'] = $compatibleBrands;
-            if (in_array('cell_phone_case_type', $requiredAttributes))
-                $visibleAttributes['cell_phone_case_type'] = $specifications['cell_phone_case_type'] ?? 'Holster';
-            if (in_array('msrp', $requiredAttributes)) $visibleAttributes['msrp'] = floatval($productObj->product_mrsp);
-            foreach ($requiredAttributes as $attribute) {
-                if (!isset($visibleAttributes[$attribute]) && isset($specifications[$attribute])) {
-                    $visibleAttributes[$attribute] = $specifications[$attribute] ?? '';
+                if (in_array('compatibleModels', $requiredAttributes)) $visibleAttributes['compatibleModels'] = $compatibleDevices;
+                if (in_array('has_written_warranty', $requiredAttributes)) $visibleAttributes['has_written_warranty'] = $specifications['has_written_warranty'] ?? 'No';
+                if (in_array('has_nrtl_listing_certification', $requiredAttributes)) $visibleAttributes['has_nrtl_listing_certification'] = $specifications['has_nrtl_listing_certification'] ?? 'No';
+                if (in_array('condition', $requiredAttributes)) $visibleAttributes['condition'] = $specifications['condition'] ?? 'New';
+                if (in_array('isProp65WarningRequired', $requiredAttributes)) $visibleAttributes['isProp65WarningRequired'] = $specifications['isProp65WarningRequired'] ?? 'No';
+                if (in_array('smallPartsWarnings', $requiredAttributes))
+                    $visibleAttributes['smallPartsWarnings'] = [
+                        $specifications['smallPartsWarnings'] ?? '0 - No warning applicable'
+                    ];
+                if (in_array('netContent', $requiredAttributes))
+                    $visibleAttributes['netContent'] = [
+                        'productNetContentUnit' => 'Each',
+                        'productNetContentMeasure' => 1,
+                    ];
+                if (in_array('assembledProductWidth', $requiredAttributes))
+                    $visibleAttributes['assembledProductWidth'] = [
+                        'unit' => 'in',
+                        'measure' => $productObj->package_dimensions_width ?? 0,
+                    ];
+                if (in_array('assembledProductHeight', $requiredAttributes))
+                    $visibleAttributes['assembledProductHeight'] = [
+                        'unit' => 'in',
+                        'measure' => $productObj->package_dimensions_height ?? 0,
+                    ];
+                if (in_array('assembledProductLength', $requiredAttributes))
+                    $visibleAttributes['assembledProductLength'] = [
+                        'unit' => 'in',
+                        'measure' => $productObj->package_dimensions_length ?? 0,
+                    ];
+                if (in_array('compatibleBrands', $requiredAttributes)) $visibleAttributes['compatibleBrands'] = $compatibleBrands;
+                if (in_array('cell_phone_case_type', $requiredAttributes))
+                    $visibleAttributes['cell_phone_case_type'] = $specifications['cell_phone_case_type'] ?? 'Holster';
+                if (in_array('msrp', $requiredAttributes)) $visibleAttributes['msrp'] = floatval($productObj->product_mrsp);
+                foreach ($requiredAttributes as $attribute) {
+                    if (!isset($visibleAttributes[$attribute]) && isset($specifications[$attribute])) {
+                        $visibleAttributes[$attribute] = $specifications[$attribute] ?? '';
+                    }
                 }
+
+                $product['Visible'][$storeTypeCategory->name] = $visibleAttributes;
+
+                $jsonFeed['MPItem'][] = $product;
             }
 
-            $product['Visible'][$storeTypeCategory->name] = $visibleAttributes;
+            FileUtility::saveToFile(public_path('feeds/walmart/' . $listingId . '.json'), json_encode($jsonFeed));
+        }catch (\Throwable $e) {
 
-            $jsonFeed['MPItem'][] = $product;
+            CriticalErrorService::report('Walmart Create Feed Failed', [
+                'marketplace' => 'Walmart',
+                'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
+            ],['listingId'=>$listingId]);
+
+            Log::error('Error: ' . $e->getMessage());
+
         }
-
-        FileUtility::saveToFile(public_path('feeds/walmart/' . $listingId . '.json'), json_encode($jsonFeed));
     }
 
     private function generateImageUpdateFeed($listingInfo, $listingId)
@@ -369,56 +407,80 @@ class WalmartService implements MarketplaceServiceInterface
 
     private function generateDeleteFeed($listingInfo, $listingId)
     {
-        $listingItems = ListingItemLink::where('listing_id', $listingId)->cursor();
+        try {
+            $listingItems = ListingItemLink::where('listing_id', $listingId)->cursor();
 
-        $jsonFeed = [
-            'RetireItemHeader' => [
-                'version' => '1.0'
-            ],
-            'RetireItem' => []
-        ];
-
-        foreach ($listingItems as $listingItem) {
-            $item = $listingItem->item;
-
-            $product = [
-                'sku' => $item->sku
+            $jsonFeed = [
+                'RetireItemHeader' => [
+                    'version' => '1.0'
+                ],
+                'RetireItem' => []
             ];
-            $jsonFeed['RetireItem'][] = $product;
-        }
 
-        FileUtility::saveToFile(public_path('feeds/walmart/' . $listingId . '.json'), json_encode($jsonFeed));
+            foreach ($listingItems as $listingItem) {
+                $item = $listingItem->item;
+
+                $product = [
+                    'sku' => $item->sku
+                ];
+                $jsonFeed['RetireItem'][] = $product;
+            }
+
+            FileUtility::saveToFile(public_path('feeds/walmart/' . $listingId . '.json'), json_encode($jsonFeed));
+        }catch (\Throwable $e) {
+
+            CriticalErrorService::report('Walmart Generate Delete Feed Failed', [
+                'marketplace' => 'Walmart',
+                'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
+            ],['listingId'=> $listingId]);
+
+            Log::error('Error: ' . $e->getMessage());
+
+        }
     }
 
     private function generateInventoryFeed($listingInfo, $listingId, $feedInfo)
     {
-        //create afeed like this {"InventoryHeader":{"version":"1.4"},"Inventory":[{"sku":"Z41-LARWJD","quantity":{"unit":"EACH","amount":500}}]}
-        $listingItems = ListingItemLink::where('listing_id', $listingId)->cursor();
+        try {
+            //create afeed like this {"InventoryHeader":{"version":"1.4"},"Inventory":[{"sku":"Z41-LARWJD","quantity":{"unit":"EACH","amount":500}}]}
+            $listingItems = ListingItemLink::where('listing_id', $listingId)->cursor();
 
-        $jsonFeed = [
-            'InventoryHeader' => [
-                'version' => '1.4'
-            ],
-            'Inventory' => []
-        ];
-
-        foreach ($listingItems as $listingItem) {
-            $item = $listingItem->item;
-            $product = [
-                'sku' => $item->sku,
-                'quantity' => [
-                    'unit' => 'EACH',
-                    'amount' => $item->quantity
-                ]
+            $jsonFeed = [
+                'InventoryHeader' => [
+                    'version' => '1.4'
+                ],
+                'Inventory' => []
             ];
-            $jsonFeed['Inventory'][] = $product;
-        }
 
-        Log::info('Listing Feed Type: ' . $feedInfo->feed_type);
-        if ($feedInfo->feed_type == FeedTypes::CREATE) {
-            FileUtility::saveToFile(public_path('feeds/walmart/I_' . $listingId . '.json'), json_encode($jsonFeed));
-        } else {
-            FileUtility::saveToFile(public_path('feeds/walmart/' . $listingId . '.json'), json_encode($jsonFeed));
+            foreach ($listingItems as $listingItem) {
+                $item = $listingItem->item;
+                $product = [
+                    'sku' => $item->sku,
+                    'quantity' => [
+                        'unit' => 'EACH',
+                        'amount' => $item->quantity
+                    ]
+                ];
+                $jsonFeed['Inventory'][] = $product;
+            }
+
+            Log::info('Listing Feed Type: ' . $feedInfo->feed_type);
+            if ($feedInfo->feed_type == FeedTypes::CREATE) {
+                FileUtility::saveToFile(public_path('feeds/walmart/I_' . $listingId . '.json'), json_encode($jsonFeed));
+            } else {
+                FileUtility::saveToFile(public_path('feeds/walmart/' . $listingId . '.json'), json_encode($jsonFeed));
+            }
+        }catch (\Throwable $e) {
+
+            CriticalErrorService::report('Walmart Generate Inventory Feed Failed', [
+                'marketplace' => 'Walmart',
+                'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
+            ],['listingId'=>$listingId]);
+
+            Log::error('Error: ' . $e->getMessage());
+
         }
     }
 
@@ -426,33 +488,45 @@ class WalmartService implements MarketplaceServiceInterface
     {
         // create a feed like this {"PriceHeader":{"version":"1.7"},"Price":[{"sku":"D93-JNRVJY","pricing":[{"currentPrice":{"currency":"USD","amount":11.99},"currentPriceType":"BASE"}]}]}
 
-        $listingItems = ListingItemLink::where('listing_id', $listingId)->cursor();
+        try {
+            $listingItems = ListingItemLink::where('listing_id', $listingId)->cursor();
 
-        $jsonFeed = [
-            'PriceHeader' => [
-                'version' => '1.7'
-            ],
-            'Price' => []
-        ];
-
-        foreach ($listingItems as $listingItem) {
-            $item = $listingItem->item;
-            $product = [
-                'sku' => $item->sku,
-                'pricing' => [
-                    [
-                        'currentPrice' => [
-                            'currency' => 'USD',
-                            'amount' => $item->price
-                        ],
-                        'currentPriceType' => 'BASE'
-                    ]
-                ]
+            $jsonFeed = [
+                'PriceHeader' => [
+                    'version' => '1.7'
+                ],
+                'Price' => []
             ];
-            $jsonFeed['Price'][] = $product;
-        }
 
-        FileUtility::saveToFile(public_path('feeds/walmart/' . $listingId . '.json'), json_encode($jsonFeed));
+            foreach ($listingItems as $listingItem) {
+                $item = $listingItem->item;
+                $product = [
+                    'sku' => $item->sku,
+                    'pricing' => [
+                        [
+                            'currentPrice' => [
+                                'currency' => 'USD',
+                                'amount' => $item->price
+                            ],
+                            'currentPriceType' => 'BASE'
+                        ]
+                    ]
+                ];
+                $jsonFeed['Price'][] = $product;
+            }
+
+            FileUtility::saveToFile(public_path('feeds/walmart/' . $listingId . '.json'), json_encode($jsonFeed));
+        }catch (\Throwable $e) {
+
+            CriticalErrorService::report('Walmart Generate Price Feed Failed', [
+                'marketplace' => 'Walmart',
+                'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
+            ],['listingId'=>$listingId]);
+
+            Log::error('Error: ' . $e->getMessage());
+
+        }
     }
 
     public function getOrders($store)
@@ -542,6 +616,18 @@ class WalmartService implements MarketplaceServiceInterface
 
             return $response;
         } catch (\Exception $e) {
+
+            $extraInfo = [
+                'store_id' => $store->id
+            ];
+            \App\Helpers\ErrorLogger::log($e, __METHOD__, $extraInfo);
+
+            CriticalErrorService::report('Error in Walmart Get Orders', [
+                'marketplace' => 'Walmart',
+                'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
+            ],$extraInfo);
+
             Log::error("Error in Walmart Orders: " . $e->getMessage());
             return null;
         }
@@ -648,72 +734,81 @@ class WalmartService implements MarketplaceServiceInterface
 
     public function shipmentUpdate($mainOrderOperation, $orderOperation, $store)
     {
-        $finalData = [];
-        $count = 1;
-        foreach ($orderOperation->order->orderItem as $item) {
-            Log::info('Itema data for the operation :: ' . json_encode($item));
-            $orderLine = [
-                'lineNumber' => $count,
-                'orderLineStatuses' => [
-                    'orderLineStatus' => [
-                        [
-                            'status' => 'Shipped',
-                            'statusQuantity' => [
-                                'unitOfMeasurement' => 'EACH',
-                                'amount' => $item->quantity
-                            ],
-                            'trackingInfo' => [
-                                "shipDateTime" => date('Y-m-d\TH:i:sP'),
-                                "carrierName" => [
-                                    "carrier" => $mainOrderOperation->carrier->name,
+        try {
+            $finalData = [];
+            $count = 1;
+            foreach ($orderOperation->order->orderItem as $item) {
+                Log::info('Itema data for the operation :: ' . json_encode($item));
+                $orderLine = [
+                    'lineNumber' => $count,
+                    'orderLineStatuses' => [
+                        'orderLineStatus' => [
+                            [
+                                'status' => 'Shipped',
+                                'statusQuantity' => [
+                                    'unitOfMeasurement' => 'EACH',
+                                    'amount' => $item->quantity
                                 ],
-                                "methodCode" => 'Standard',
-                                "trackingNumber" => $mainOrderOperation->tracking_number,
+                                'trackingInfo' => [
+                                    "shipDateTime" => date('Y-m-d\TH:i:sP'),
+                                    "carrierName" => [
+                                        "carrier" => $mainOrderOperation->carrier->name,
+                                    ],
+                                    "methodCode" => 'Standard',
+                                    "trackingNumber" => $mainOrderOperation->tracking_number,
+                                ]
                             ]
                         ]
                     ]
-                ]
-            ];
+                ];
 
-            $finalData['orderShipment']['orderLines']['orderLine'][] = $orderLine;
-            $count++;
-        }
+                $finalData['orderShipment']['orderLines']['orderLine'][] = $orderLine;
+                $count++;
+            }
 
-        Log::info('Final data for the operation change :: ' . json_encode($finalData));
+            Log::info('Final data for the operation change :: ' . json_encode($finalData));
 
-        $authService = new WalmartAuthService($store->seller_id, $store->secret_key);
-        $response = $authService->shipOrder($orderOperation->order->purchase_order_id, $finalData);
+            $authService = new WalmartAuthService($store->seller_id, $store->secret_key);
+            $response = $authService->shipOrder($orderOperation->order->purchase_order_id, $finalData);
 
-        Log::info('Walmart ship order response: ' . json_encode($response));
+            Log::info('Walmart ship order response: ' . json_encode($response));
 
-        if (isset($response)) {
-            $orderResp = $response['order'];
-            Log::info('Walmart Ship order response: ' . json_encode($orderResp));
-            if (isset($orderResp) && isset($orderResp['purchaseOrderId']) && $orderResp['purchaseOrderId'] == $orderOperation->order->purchase_order_id) {
-                Log::info('Walmart ship order successful: ' . json_encode($orderResp));
-                $orderOperation->update(['status' => OrderOperationStatus::MarkAsShipped, 'ship_date' => now()]);
-                if (isset($orderOperation->order_id)) {
-                    $order = Order::findOrFail($orderOperation->order_id);
-                    $order->update(['order_status' => OrderStatus::Shipped]);
-                }
-
-                if (isset($orderOperation->order->orderItem)) {
-                    foreach ($orderOperation->order->orderItem as $o_item) {
-                        $item_qty = $o_item->quantity;
-                        $orderItem = OrderItem::findOrFail($o_item->id);
-                        $orderItem->update(['shipped_quantity' => $item_qty]);
+            if (isset($response)) {
+                $orderResp = $response['order'];
+                Log::info('Walmart Ship order response: ' . json_encode($orderResp));
+                if (isset($orderResp) && isset($orderResp['purchaseOrderId']) && $orderResp['purchaseOrderId'] == $orderOperation->order->purchase_order_id) {
+                    Log::info('Walmart ship order successful: ' . json_encode($orderResp));
+                    $orderOperation->update(['status' => OrderOperationStatus::MarkAsShipped, 'ship_date' => now()]);
+                    if (isset($orderOperation->order_id)) {
+                        $order = Order::findOrFail($orderOperation->order_id);
+                        $order->update(['order_status' => OrderStatus::Shipped]);
                     }
+
+                    if (isset($orderOperation->order->orderItem)) {
+                        foreach ($orderOperation->order->orderItem as $o_item) {
+                            $item_qty = $o_item->quantity;
+                            $orderItem = OrderItem::findOrFail($o_item->id);
+                            $orderItem->update(['shipped_quantity' => $item_qty]);
+                        }
+                    }
+                    $success = true;
+                } else {
+                    Log::info('Walmart ship order error: ' . json_encode($response));
+                    $success = false;
                 }
-                $success = true;
             } else {
-                Log::info('Walmart ship order error: ' . json_encode($response));
+                Log::info('Walmart ship order error: No response received');
                 $success = false;
             }
-        } else {
-            Log::info('Walmart ship order error: No response received');
-            $success = false;
+            return $success;
+        }catch (\Throwable $e){
+
+            CriticalErrorService::report('Walmart Shipment Update Failed', [
+                'marketplace' => 'Walmart',
+                'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
+            ],['store_name'=>$store->name]);
         }
-        return $success;
     }
 
     private function getVisibleAttributes($categoryName, $store)
@@ -757,5 +852,68 @@ class WalmartService implements MarketplaceServiceInterface
         $productData['Compatible Model'] = $compatibleModels;
 
         return $productData;
+    }
+
+    public function resubmitFailedItems($listingId, $maxRetry = 3)
+    {
+        try {
+            // 1. Get failed SKUs from the feed, within retry limit
+            $failedItems = ListingItemLink::select('listing_item.id', 'listing_item.sku')->leftJoin('listing_item', 'listing_item.id', '=', 'listing_item_link.item_id')->where('listing_item_link.listing_id', $listingId)->where('listing_item.sync_status', ListingSyncStatus::Unsynchronize)->where('listing_item.submit_count', '<=', $maxRetry)->get();
+
+            if ($failedItems->isEmpty()) {
+                return null;
+            }
+
+            $skuFilter = $failedItems->pluck('sku')->unique()->values()->all();
+
+            return DB::transaction(function () use ($listingId, $skuFilter, $failedItems) {
+
+                $listingInfo = Listing::with('store')->where('id', $listingId)->first();
+                $store = $listingInfo->store;
+
+                $feedInfo = ListingFeed::where('listing_id', $listingId)->first();
+
+                // 2. Create a new ListingFeed row for this resubmit
+                $created_by = auth()->user()->name ?? 'admin';
+
+                $feedData = array(
+                    'listing_id' => $listingId,
+                    'status' => 0,
+                    'feed_type' => FeedTypes::RESUBMIT,
+                    'store_id' => $listingInfo->store_id,
+                    'number_of_items' => count($skuFilter),
+                    'created_by' => $created_by
+                );
+
+                $newFeed = ListingFeed::updateOrCreate([
+                    'listing_id' => $listingId,
+                    'feed_type' => FeedTypes::RESUBMIT
+                ], $feedData);
+
+                $xmlContent = $this->generateCreateFeed($listingInfo, $listingId, $skuFilter);
+
+                if (isset($store->auto_submit_listing) && $store->auto_submit_listing == 1) {
+                    $this->submitFeed($newFeed->id, $listingId);
+
+                    // 5. Increase submit_count for items we just resubmitted
+                    ListingItem::whereIn('id', $failedItems->pluck('id'))
+                        ->update([
+                            'submit_count' => DB::raw('submit_count + 1'),
+                        ]);
+                }
+
+                return $newFeed;
+            });
+        }catch (\Throwable $e) {
+
+            CriticalErrorService::report('Walmart resubmitFailedItems Failed', [
+                'marketplace' => 'Walmart',
+                'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
+            ]);
+
+            Log::error('Error: ' . $e->getMessage());
+
+        }
     }
 }

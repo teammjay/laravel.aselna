@@ -7,6 +7,7 @@ use App\Models\PageType;
 use App\Models\StoreNavigationPage;
 use App\Models\StorePage;
 use App\Models\StorePageTemplate;
+use App\Services\CriticalErrorService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\DB;
@@ -36,19 +37,33 @@ class StorePagesJobSync implements ShouldQueue
     {
         $this->updateTrackingRecord(['tags' => 'Store Pages']);
 
-        DB::connection('easyesale_db')->table('store_page')->orderBy('id')
-            ->chunk(1000, function ($storePages) {
-                foreach ($storePages as $storePage) {
-                    $this->createStorePage($storePage);
-                }
-            });
+        try {
 
-        DB::connection('easyesale_db')->table('store_navigation_page')->orderBy('id')
-            ->chunk(1000, function ($storeNavigationPages) {
-                foreach ($storeNavigationPages as $storeNavigationPage) {
-                    $this->createStoreNavigationPage($storeNavigationPage);
-                }
-            });
+//        DB::connection('easyesale_db')->table('store_page')->orderBy('id')
+//            ->chunk(1000, function ($storePages) {
+//                foreach ($storePages as $storePage) {
+//                    $this->createStorePage($storePage);
+//                }
+//            });
+
+            DB::connection('easyesale_db')->table('store_navigation_page')->orderBy('id')
+                ->chunk(1000, function ($storeNavigationPages) {
+                    foreach ($storeNavigationPages as $storeNavigationPage) {
+                        $this->createStoreNavigationPage($storeNavigationPage);
+                    }
+                });
+
+        }catch (\Throwable $e) {
+
+            CriticalErrorService::report('Store Pages Sync Job Failed', [
+                'marketplace' => 'N/A',
+                'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
+            ]);
+
+            Log::error('Error: ' . $e->getMessage());
+
+        }
 
 //        DB::connection('easyesale_db')->table('web_store_page_template')->orderBy('id')
 //            ->chunk(1000,function ($storePageTemplates) {

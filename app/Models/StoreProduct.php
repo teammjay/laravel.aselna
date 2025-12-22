@@ -77,4 +77,9 @@ class StoreProduct extends Model
         return $this->hasMany(ProductImages::class, 'product_id','product_id');
     }
 
+    public function Manufacturer()
+    {
+        return $this->belongsTo(Manufacturer::class, 'manufacturer_id');
+    }
+
 }

@@ -7,6 +7,7 @@ use App\Models\ManageMarketplaceProduct;
 use App\Models\MarketplaceAttributeMapping;
 use App\Models\Store;
 use App\Services\Auth\MagentoAuthService;
+use App\Services\CriticalErrorService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Log;
@@ -94,7 +95,20 @@ class FetchMagentoProductsJob implements ShouldQueue
                     $currentPage++;
                 }
             }
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
+
+            $extraInfo = [
+                'store_name' => $store->name
+            ];
+
+            \App\Helpers\ErrorLogger::log($e, __METHOD__, $extraInfo);
+
+            CriticalErrorService::report('Fetch Magento Products Job Failed', [
+                'marketplace' => 'Magento',
+                'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
+            ],$extraInfo);
+
             Log::error('Error fetching products from store: ' . $store->name . ', Error: ' . $e->getMessage());
         }
     }
@@ -106,7 +120,16 @@ class FetchMagentoProductsJob implements ShouldQueue
     {
         try {
             return $authService->getProducts($pageSize, $currentPage);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
+
+            \App\Helpers\ErrorLogger::log($e, __METHOD__);
+
+            CriticalErrorService::report('Error getting products from Magento', [
+                'marketplace' => 'Magento',
+                'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
+            ]);
+
             Log::error('Error getting products from Magento: ' . $e->getMessage());
             return ['items' => []];
         }
@@ -179,7 +202,16 @@ class FetchMagentoProductsJob implements ShouldQueue
                     'upload_attempts' => 1
                 ]
             );
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
+
+            \App\Helpers\ErrorLogger::log($e, __METHOD__);
+
+            CriticalErrorService::report('Error saving magento product to database', [
+                'marketplace' => 'Magento',
+                'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
+            ]);
+
             Log::error('Error saving product to database: ' . $e->getMessage());
             Log::error('Product data: ' . json_encode($product));
         }

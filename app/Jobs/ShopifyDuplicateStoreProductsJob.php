@@ -5,7 +5,9 @@ namespace App\Jobs;
 use App\Models\ListingItem;
 use App\Models\ListingItemDetail;
 use App\Models\Store;
+use App\Models\StoreNavigationPage;
 use App\Models\StoreProduct;
+use App\Services\CriticalErrorService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Log;
@@ -18,7 +20,7 @@ class ShopifyDuplicateStoreProductsJob implements ShouldQueue
         Queueable::withChain as queueableWithChain;
     }
 
-    public $timeout = 2400;
+    public $timeout = 600000;
 
     protected $fromStoreId;
     protected $toStoreId;
@@ -42,11 +44,26 @@ class ShopifyDuplicateStoreProductsJob implements ShouldQueue
     {
         $this->updateTrackingRecord(['tags' => 'Shopify Duplicate Store Products']);
 
-        $this->setVariables();
+        try {
+            $this->setVariables();
+
+        }catch (\Throwable $e) {
+
+            CriticalErrorService::report('Shopify Duplicate Store Products Job Failed', [
+                'marketplace' => 'Shopify',
+                'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
+            ]);
+
+            Log::error('Error: ' . $e->getMessage());
+
+        }
 
 //        $this->duplicateStoreProducts();
 
-        $this->duplicateListingDetails();
+//        $this->duplicateListingDetails();
+
+//        $this->dublicateStoreNavigationPages();
     }
 
     private function setVariables()
@@ -129,6 +146,27 @@ class ShopifyDuplicateStoreProductsJob implements ShouldQueue
                             }
                         }
                     }
+                }
+            });
+    }
+
+    private function dublicateStoreNavigationPages()
+    {
+        StoreNavigationPage::where('store_id', $this->fromStoreId)
+            ->orderBy('id')
+            ->chunk(100, function ($pages) {
+                foreach ($pages as $page) {
+                    if (StoreNavigationPage::where('store_id', $this->toStoreId)->where('page_type',$page->page_type)->where('url_path',$page->url_path)->exists()) {
+                        Log::info("Store Navigation Page with Page Type: " . $page->page_type . " and Page ID: " . $page->page_id . " already exists in Store ID: " . $this->toStoreId . ". Skipping duplication.");
+                        continue;
+                    }
+                    Log::info("Processing Store Navigation Page ID: " . $page->id . " for Store ID: " . $this->fromStoreId);
+                    $newPage = $page->replicate();
+                    $newPage->store_id = $this->toStoreId;
+                    $newPage->created_at = now();
+                    $newPage->updated_at = now();
+                    $newPage->save();
+                    Log::info("New Store Navigation Page ID: " . $newPage->id . " for Store ID: " . $this->toStoreId);
                 }
             });
     }

@@ -734,6 +734,11 @@ return [
                     'text' => 'Jobs Queue',
                     'url' => '/queue_jobs',
                     'icon' => 'far fa fa-list'
+                ],
+                [
+                    'text' => 'Error Logs',
+                    'url' => '/error_logs',
+                    'icon' => 'fa fa-exclamation-triangle'
                 ]
             ]
         ]

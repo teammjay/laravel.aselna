@@ -5,6 +5,7 @@ namespace App\Utils;
 use App\Constants\OrderOperationType;
 use App\Models\AccountTransaction;
 use App\Models\OrderOperation;
+use App\Services\CriticalErrorService;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
 use Illuminate\Support\Facades\DB;
@@ -46,11 +47,18 @@ class EndicialabelService
             $body = $response->getBody()->getContents();
             Log::info('Endicia Label Response XML: ' . $body);
             return $this->parseSoapResponse($body, $request, $orderOperationId);
-        } catch (Exception $e) {
+        } catch (\Throwable $e) {
             // Handle SOAP request errors
             if ($e instanceof RequestException && $e->hasResponse()) {
                 Log::error('SOAP Error Response: ' . $e->getResponse()->getBody()->getContents());
             }
+
+            CriticalErrorService::report('Endicia create label failed', [
+                'marketplace' => '',
+                'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
+            ],['operation_id' => $orderOperationId]);
+
             throw new Exception('Error creating label: ' . $e->getMessage());
         }
     }
@@ -69,6 +77,13 @@ class EndicialabelService
         if($errorNode = $xml->xpath('//ns:ErrorMessage')){
             $errorMessage = (string)$errorNode[0];
             Log::error('Endicia Label Error Message: ' . $errorMessage);
+
+            CriticalErrorService::report('Endicia Label Error Message', [
+                'marketplace' => '',
+                'reason' => $errorMessage ?? 'Unknown',
+                'method' => __METHOD__
+            ],['operation_id' => $orderOperationId,'shippingDetail' => $shippingDetail]);
+
             return ['error' => $errorMessage];
         }
 
@@ -141,8 +156,15 @@ class EndicialabelService
             }
 
 
-        } catch (Exception $e) {
+        } catch (\Throwable $e) {
             Log::error('Error saving label image: ' . $e->getMessage());
+
+            CriticalErrorService::report('Error saving label image', [
+                'marketplace' => '',
+                'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
+            ],['operation_id' => $orderOperationId,'shippingDetail' => $shippingDetail]);
+
             return ['error' => 'Failed to save label image'];
         }
 
@@ -160,6 +182,13 @@ class EndicialabelService
         // get the text from filePAth and add text one second last line
         try {
             if ($fileContent === false) {
+
+                CriticalErrorService::report('Failed to read file content', [
+                    'marketplace' => '',
+                    'reason' => 'Failed to read file content',
+                    'method' => __METHOD__
+                ],['file_path' => $filePath]);
+
                 throw new Exception('Failed to read file content');
             }
 
@@ -184,7 +213,14 @@ class EndicialabelService
 
 //            Log::info('Added text directly to label image: ' . $filePath);
             return $filePath;
-        } catch (Exception $e) {
+        } catch (\Throwable $e) {
+
+            CriticalErrorService::report('Error editing label image', [
+                'marketplace' => '',
+                'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
+            ],['file_path' => $filePath]);
+
             Log::error('Error editing label image: ' . $e->getMessage());
             throw $e;
         }
@@ -214,6 +250,12 @@ class EndicialabelService
             // Load the original image
             //$image = imagecreatefrompng($imagePath);
             if (!$image) {
+                CriticalErrorService::report('Failed to load stamp image', [
+                    'marketplace' => '',
+                    'reason' => 'Failed to load image',
+                    'method' => __METHOD__
+                ],['image_path' => $imagePath]);
+
                 throw new ExcepgenerateStampImagetion('Failed to load image');
             }
 
@@ -256,7 +298,14 @@ class EndicialabelService
 
             Log::info('Added text directly to label image: ' . $imagePath);
             return $imagePath;
-        } catch (Exception $e) {
+        } catch (\Throwable $e) {
+
+            CriticalErrorService::report('Error editing label image', [
+                'marketplace' => '',
+                'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
+            ],['image_path' => $imagePath]);
+
             Log::error('Error editing label image: ' . $e->getMessage());
             throw $e;
         }
@@ -422,15 +471,24 @@ class EndicialabelService
 
             return $returnData;
 
-        } catch (Exception $e) {
+        } catch (\Throwable $e) {
             // Handle SOAP request errors
             if ($e instanceof RequestException && $e->hasResponse()) {
+
+                CriticalErrorService::report('Cancel label soap error', [
+                    'marketplace' => '',
+                    'reason' => $e->getResponse()->getBody()->getContents() ?? 'Unknown',
+                    'method' => __METHOD__
+                ]);
+
                 Log::error('SOAP Error Response: ' . $e->getResponse()->getBody()->getContents());
             }
 //            throw new Exception('Error creating label: ' . $e->getMessage());
 
             Log::info('Return Data Error: ' . json_encode($e->getMessage()));
         }
+
+        return false;
     }
 
     private function buildCancelXmlRequest(array $labelDetails)
@@ -515,15 +573,23 @@ class EndicialabelService
 
             return $returnData;
 
-        } catch (Exception $e) {
+        } catch (\Throwable $e) {
             // Handle SOAP request errors
             if ($e instanceof RequestException && $e->hasResponse()) {
                 Log::error('SOAP Error Response: ' . $e->getResponse()->getBody()->getContents());
             }
 //            throw new Exception('Error creating label: ' . $e->getMessage());
 
+            CriticalErrorService::report('Endicia credit limit api error', [
+                'marketplace' => '',
+                'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
+            ]);
+
             Log::info('Return Data Error: ' . json_encode($e->getMessage()));
         }
+
+        return false;
     }
 
     public function purchaseCredit(array $request)
@@ -570,15 +636,22 @@ class EndicialabelService
 
             return $returnData;
 
-        } catch (Exception $e) {
+        } catch (\Throwable $e) {
             // Handle SOAP request errors
             if ($e instanceof RequestException && $e->hasResponse()) {
                 Log::error('SOAP Error Response: ' . $e->getResponse()->getBody()->getContents());
             }
 //            throw new Exception('Error creating label: ' . $e->getMessage());
 
+            CriticalErrorService::report('Endicia purchase credit limit api error', [
+                'marketplace' => '',
+                'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
+            ]);
+
             Log::info('Return Data Error: ' . json_encode($e->getMessage()));
         }
+
     }
 
     private function buildPurchaseCreditXmlRequest(array $labelDetails)
@@ -646,12 +719,18 @@ class EndicialabelService
 
             return $returnData;
 
-        } catch (Exception $e) {
+        } catch (\Throwable $e) {
             // Handle SOAP request errors
             if ($e instanceof RequestException && $e->hasResponse()) {
                 Log::error('SOAP Error Response: ' . $e->getResponse()->getBody()->getContents());
             }
 //            throw new Exception('Error creating label: ' . $e->getMessage());
+
+            CriticalErrorService::report('Endicia fetch transaction list api error', [
+                'marketplace' => '',
+                'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
+            ]);
 
             Log::info('Return Data Error: ' . json_encode($e->getMessage()));
         }

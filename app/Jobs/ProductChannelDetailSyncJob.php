@@ -5,6 +5,7 @@ namespace App\Jobs;
 use App\Jobs\Concerns\TrackableJob;
 use App\Models\Catalog;
 use App\Models\ProductChannelDetail;
+use App\Services\CriticalErrorService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\DB;
@@ -31,14 +32,24 @@ class ProductChannelDetailSyncJob implements ShouldQueue
     {
         $this->updateTrackingRecord(['tags' => 'Product Channel Detail']);
 
-        DB::connection('easyesale_db')
-            ->table('product_channel_detail')
-            ->orderBy('id')
-            ->chunk(1000, function ($productChannelDetails) {
-                foreach ($productChannelDetails as $productChannelDetail) {
-                    $this->createProductChannelDetail($productChannelDetail);
-                }
-            });
+        try {
+            DB::connection('easyesale_db')
+                ->table('product_channel_detail')
+                ->orderBy('id')
+                ->chunk(1000, function ($productChannelDetails) {
+                    foreach ($productChannelDetails as $productChannelDetail) {
+                        $this->createProductChannelDetail($productChannelDetail);
+                    }
+                });
+
+        }catch (\Throwable $e) {
+
+            CriticalErrorService::report('Product Channel Detail Sync Job Failed', [
+                'marketplace' => 'N/A',
+                'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
+            ]);
+        }
     }
 
     private function createProductChannelDetail(mixed $productChannelDetail)

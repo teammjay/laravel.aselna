@@ -358,7 +358,14 @@ class ProcessStoreMessageAccountJob implements ShouldQueue
                                                     }
                                                 }
 
-                                            } catch (\Exception $e) {
+                                            } catch (\Throwable $e) {
+
+                                                $extraInfo = [
+                                                    'message_id' => $hd_message->id
+                                                ];
+
+                                                \App\Helpers\ErrorLogger::log($e, __METHOD__, $extraInfo);
+
                                                 echo "Error saving attachment: " . $e->getMessage();
                                                 Log::error('Error saving attachment: ' . $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine());
                                             }
@@ -383,11 +390,18 @@ class ProcessStoreMessageAccountJob implements ShouldQueue
                     }
                 }
             }
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
+
+            $extraInfo = [
+                'store_id' => $this->store->id
+            ];
+
+            \App\Helpers\ErrorLogger::log($e, __METHOD__, $extraInfo);
 
             CriticalErrorService::report('Store message account job failed:'.$this->store_name.'-'.$this->store_type, [
                 'marketplace' => ucfirst($this->store_type),
                 'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
             ],['store_type' => $this->store_type, 'store_name' => $this->store_name,'store_message_account' => $this->storeMessageAccount]);
 
             Log::error('Error processing store message account: ' . $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine());

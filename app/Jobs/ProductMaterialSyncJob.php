@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Models\ProductMaterial;
+use App\Services\CriticalErrorService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\DB;
@@ -30,12 +31,21 @@ class ProductMaterialSyncJob implements ShouldQueue
     {
         $this->updateTrackingRecord(['tags' => 'Product Materials']);
 
-        DB::connection('easyesale_db')->table('product_material')->orderBy('id')
-            ->chunk(1000, function ($productMaterials) {
-                foreach ($productMaterials as $productMaterial) {
-                    $this->createProductMaterial($productMaterial);
-                }
-            });
+        try {
+            DB::connection('easyesale_db')->table('product_material')->orderBy('id')
+                ->chunk(1000, function ($productMaterials) {
+                    foreach ($productMaterials as $productMaterial) {
+                        $this->createProductMaterial($productMaterial);
+                    }
+                });
+        }catch (\Throwable $e) {
+
+            CriticalErrorService::report('Product Materials Sync Job Failed', [
+                'marketplace' => 'N/A',
+                'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
+            ]);
+        }
     }
 
     private function createProductMaterial($productMaterial)

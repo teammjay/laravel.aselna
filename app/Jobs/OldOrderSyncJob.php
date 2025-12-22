@@ -6,6 +6,7 @@ use App\Models\Customer;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\OrderOperation;
+use App\Services\CriticalErrorService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\DB;
@@ -34,14 +35,23 @@ class OldOrderSyncJob implements ShouldQueue
     {
         $this->updateTrackingRecord(['tags' => 'Old Orders']);
         // Order Syncing
-        DB::connection('easyesale_db')->table('order')
-            ->where('create_ts', '>', now()->subDays(180))
-            ->orderBy('id')
-            ->chunk(100, function ($orders) {
-                foreach ($orders as $order) {
-                    $this->syncOldOrder($order);
-                }
-            });
+        try {
+            DB::connection('easyesale_db')->table('order')
+                ->where('create_ts', '>', now()->subDays(180))
+                ->orderBy('id')
+                ->chunk(100, function ($orders) {
+                    foreach ($orders as $order) {
+                        $this->syncOldOrder($order);
+                    }
+                });
+        }catch (\Throwable $e) {
+
+            CriticalErrorService::report('Old Orders Sync Job Failed', [
+                'marketplace' => 'N/A',
+                'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
+            ]);
+        }
     }
 
     private function syncOldOrder(mixed $order)

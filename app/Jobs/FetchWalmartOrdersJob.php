@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Constants\OrderStatus;
+use App\Helpers\Common;
 use App\Models\Customer;
 use App\Models\ListingItem;
 use App\Models\Order;
@@ -11,6 +12,7 @@ use App\Models\OrderOperation;
 use App\Models\OrderOperationItem;
 use App\Models\OrderSynchronization;
 use App\Models\Store;
+use App\Services\CriticalErrorService;
 use App\Services\Marketplace\Service\WalmartService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -39,24 +41,47 @@ class FetchWalmartOrdersJob implements ShouldQueue
     {
         Log::info("Testing");
         $this->updateTrackingRecord(['tags' => 'Walmart Orders']);
-        $stores = Store::select('store.*','store_type.name as storeTypeName')->join('store_type', 'store_type.id', '=', 'store.store_type_id')->where('store_type.code', 'walmart')->where('store.store_status','<>',0)->get();
 
-        if (count($stores ?? []) > 0) {
-            $tags = [];
-            foreach ($stores as $store) {
+        try {
+            /* get active store jobs*/
+            $store_ids = Common::getActiveStoreJobs('FetchWalmartOrdersJob', 'walmart');
+            /* get active store jobs*/
 
-                if (env('APP_ENV') === 'local' && $store->name != 'Accessorychoice') {
-                    continue;
+            $query = Store::select('store.*', 'store_type.name as storeTypeName')->join('store_type', 'store_type.id', '=', 'store.store_type_id')->where('store_type.code', 'walmart')->where('store.store_status', '<>', 0);
+            if (!empty($store_ids)) {
+                $query->whereIn('store.id', $store_ids);
+            }
+            $stores = $query->get();
+
+            //$stores = Store::select('store.*','store_type.name as storeTypeName')->join('store_type', 'store_type.id', '=', 'store.store_type_id')->where('store_type.code', 'walmart')->where('store.store_status','<>',0)->whereIn('store.id',$store_ids)->get();
+
+            if (count($stores ?? []) > 0) {
+                $tags = [];
+                foreach ($stores as $store) {
+
+                    if (env('APP_ENV') === 'local' && $store->name != 'Accessorychoice') {
+                        continue;
+                    }
+
+                    $tags[] = $store->name;
+
+                    $walmartService = new WalmartService();
+                    $walmartService->getOrders($store);
+
                 }
 
-                $tags[] = $store->name;
-
-                $walmartService = new WalmartService();
-                $walmartService->getOrders($store);
-
+                $this->updateTrackingRecord(['tags' => implode(' ', $tags) . ' Walmart Orders']);
             }
+        }catch (\Throwable $e) {
 
-            $this->updateTrackingRecord(['tags' => implode(' ',$tags) .' Walmart Orders']);
+            CriticalErrorService::report('Fetch Walmart Orders Job Failed', [
+                'marketplace' => 'Walmart',
+                'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
+            ]);
+
+            Log::error('Error: ' . $e->getMessage());
+
         }
     }
 }

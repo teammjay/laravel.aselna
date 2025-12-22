@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Models\ProductColor;
+use App\Services\CriticalErrorService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\DB;
@@ -29,13 +30,23 @@ class ProductColorSync implements ShouldQueue
     public function handle(): void
     {
         $this->updateTrackingRecord(['tags' => 'Product Color']);
-        DB::connection('easyesale_db')->table('product_color')
-            ->orderBy('id')
-            ->chunk(1000, function ($syncProductColors) {
-                foreach ($syncProductColors as $productColor) {
-                    $this->createSyncProductColor($productColor);
-                }
-            });
+
+        try {
+            DB::connection('easyesale_db')->table('product_color')
+                ->orderBy('id')
+                ->chunk(1000, function ($syncProductColors) {
+                    foreach ($syncProductColors as $productColor) {
+                        $this->createSyncProductColor($productColor);
+                    }
+                });
+        }catch (\Throwable $e) {
+
+            CriticalErrorService::report('Product Color Sync Job Failed', [
+                'marketplace' => 'N/A',
+                'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
+            ]);
+        }
     }
 
     private function createSyncProductColor(mixed $productColor)

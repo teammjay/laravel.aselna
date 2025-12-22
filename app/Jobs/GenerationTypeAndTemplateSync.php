@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Models\ListingGenerationType;
 use App\Models\ListingGenerationTypeTemplate;
+use App\Services\CriticalErrorService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\DB;
@@ -32,14 +33,23 @@ class GenerationTypeAndTemplateSync implements ShouldQueue
     {
         $this->updateTrackingRecord(['tags' => 'Generation Type Template']);
 
-        $listingGenerationType = DB::connection('easyesale_db')->table('cea_listing_generation_type')->cursor();
-        foreach ($listingGenerationType as $generationType) {
-            $this->createGenerationType($generationType);
-        }
+        try {
+            $listingGenerationType = DB::connection('easyesale_db')->table('cea_listing_generation_type')->cursor();
+            foreach ($listingGenerationType as $generationType) {
+                $this->createGenerationType($generationType);
+            }
 
-        $listingGenerationTypeTemplate = DB::connection('easyesale_db')->table('cea_listing_generation_type_template')->cursor();
-        foreach ($listingGenerationTypeTemplate as $generationTypeTemplate) {
-            $this->createGenerationTypeTemplate($generationTypeTemplate);
+            $listingGenerationTypeTemplate = DB::connection('easyesale_db')->table('cea_listing_generation_type_template')->cursor();
+            foreach ($listingGenerationTypeTemplate as $generationTypeTemplate) {
+                $this->createGenerationTypeTemplate($generationTypeTemplate);
+            }
+        }catch (\Throwable $e) {
+
+            CriticalErrorService::report('Generation Type Template Sync Job Failed', [
+                'marketplace' => 'N/A',
+                'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
+            ]);
         }
     }
 

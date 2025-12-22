@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Models\ProductSize;
+use App\Services\CriticalErrorService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\DB;
@@ -30,12 +31,21 @@ class ProductSizeSyncJob implements ShouldQueue
     {
         $this->updateTrackingRecord(['tags' => 'Product Size']);
 
-        DB::connection('easyesale_db')->table('product_size')->orderBy('id')
-            ->chunk(1000, function ($productSizes) {
-                foreach ($productSizes as $productSize) {
-                    $this->createProductSize($productSize);
-                }
-            });
+        try {
+            DB::connection('easyesale_db')->table('product_size')->orderBy('id')
+                ->chunk(1000, function ($productSizes) {
+                    foreach ($productSizes as $productSize) {
+                        $this->createProductSize($productSize);
+                    }
+                });
+        }catch (\Throwable $e) {
+
+            CriticalErrorService::report('Product Size Sync Job Failed', [
+                'marketplace' => 'N/A',
+                'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
+            ]);
+        }
     }
 
     private function createProductSize(mixed $productSize)

@@ -5,6 +5,7 @@ namespace App\Jobs;
 use App\Models\AccountTransaction;
 use App\Models\ShippingAccount;
 use App\Models\ShippingAccountPurchase;
+use App\Services\CriticalErrorService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\DB;
@@ -34,21 +35,30 @@ class ShippingAccountsSyncJob implements ShouldQueue
     {
         $this->updateTrackingRecord(['tags' => 'Shipping Accounts']);
 
-        DB::connection('easyesale_db')->table('shipping_account')
-            ->orderBy('create_ts', 'desc')
-            ->chunk(100, function ($shippingAccounts) {
-                foreach ($shippingAccounts as $shippingAccount) {
-                    $this->createSyncShippingAccount($shippingAccount);
-                }
-            });
+        try {
+            DB::connection('easyesale_db')->table('shipping_account')
+                ->orderBy('create_ts', 'desc')
+                ->chunk(100, function ($shippingAccounts) {
+                    foreach ($shippingAccounts as $shippingAccount) {
+                        $this->createSyncShippingAccount($shippingAccount);
+                    }
+                });
 
-        DB::connection('easyesale_db')->table('shipping_account_purhcase')
-            ->orderBy('create_ts', 'desc')
-            ->chunk(100, function ($shippingAccountPurchases) {
-                foreach ($shippingAccountPurchases as $shippingAccountPurchase) {
-                    $this->createSyncShippingAccountPurchase($shippingAccountPurchase);
-                }
-            });
+            DB::connection('easyesale_db')->table('shipping_account_purhcase')
+                ->orderBy('create_ts', 'desc')
+                ->chunk(100, function ($shippingAccountPurchases) {
+                    foreach ($shippingAccountPurchases as $shippingAccountPurchase) {
+                        $this->createSyncShippingAccountPurchase($shippingAccountPurchase);
+                    }
+                });
+        }catch (\Throwable $e) {
+
+            CriticalErrorService::report('Shipping Account Sync Job Failed', [
+                'marketplace' => 'N/A',
+                'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
+            ]);
+        }
 
 //        DB::connection('easyesale_db')->table('shipping_account_transaction')
 //            ->orderBy('create_ts', 'desc')

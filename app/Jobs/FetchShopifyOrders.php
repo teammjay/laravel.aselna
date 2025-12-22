@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Helpers\Common;
 use App\Jobs\Concerns\TrackableJob;
 use App\Constants\OrderOperationStatus;
 use App\Constants\OrderOperationType;
@@ -20,6 +21,7 @@ use App\Models\OrderSynchronization;
 use App\Models\ShippingPackage;
 use App\Models\ShippingServiceRule;
 use App\Models\Store;
+use App\Services\CriticalErrorService;
 use App\Services\Marketplace\Service\ShopifyService;
 use App\Utils\order\OrderUtility;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -53,7 +55,17 @@ class FetchShopifyOrders implements ShouldQueue
             /* get shopify stores*/
             $this->updateTrackingRecord(['tags' => 'Shopify Orders']);
 
-            $stores = Store::select('store.*','store_type.name as storeTypeName')->join('store_type', 'store_type.id', '=', 'store.store_type_id')->where('store_type.code', 'shopify')->where('store.store_status','<>',0)->get();
+            /* get active store jobs*/
+            $store_ids = Common::getActiveStoreJobs('FetchShopifyOrders','shopify');
+            /* get active store jobs*/
+
+            $query = Store::select('store.*','store_type.name as storeTypeName')->join('store_type', 'store_type.id', '=', 'store.store_type_id')->where('store_type.code', 'shopify')->where('store.store_status','<>',0);
+            if(!empty($store_ids)){
+                $query->whereIn('store.id',$store_ids);
+            }
+            $stores = $query->get();
+
+            //$stores = Store::select('store.*','store_type.name as storeTypeName')->join('store_type', 'store_type.id', '=', 'store.store_type_id')->where('store_type.code', 'shopify')->where('store.store_status','<>',0)->whereIn('store.id',$store_ids)->get();
 
             if (count($stores ?? []) > 0) {
                 $tags = [];
@@ -384,7 +396,16 @@ class FetchShopifyOrders implements ShouldQueue
 
                 $this->updateTrackingRecord(['tags' => implode(' ',$tags).' Shopify Orders']);
             }
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
+
+            \App\Helpers\ErrorLogger::log($e, __METHOD__);
+
+            CriticalErrorService::report('Fetch Shopify Orders Sync Job Failed', [
+                'marketplace' => 'Shopify',
+                'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
+            ]);
+
             Log::error('Error: ' . $e->getMessage());
         }
     }

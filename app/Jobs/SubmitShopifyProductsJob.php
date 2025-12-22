@@ -20,8 +20,10 @@ use App\Models\StoreProduct;
 use App\Models\StoreTypeListing;
 use App\Models\UPCCodes;
 use App\Services\Auth\ShopifyAuthService;
+use App\Services\CriticalErrorService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use phpseclib3\File\ASN1\Element;
 use App\Jobs\Concerns\TrackableJob;
@@ -49,116 +51,127 @@ class SubmitShopifyProductsJob implements ShouldQueue
      */
     public function handle(): void
     {
+        try {
+            /* shopify stores*/
+            $stores = Store::select('store.*')->with('fileSystem', 'storeType')->join('store_type', 'store_type.id', '=', 'store.store_type_id')->where('store_type.code', 'shopify')->where('store.store_status', '<>', 0)->get();
 
-        /* shopify stores*/
-        $stores = Store::select('store.*')->with('fileSystem', 'storeType')->join('store_type', 'store_type.id', '=', 'store.store_type_id')->where('store_type.code', 'shopify')->where('store.store_status', '<>', 0)->get();
+            if (count($stores ?? []) > 0) {
+                $tags = [];
+                foreach ($stores as $store) {
+                    Log::info('Store : ' . $store->name);
+                    if (env('APP_ENV') == 'local' && trim(strtolower($store->name)) != strtolower('GetAccessory')) {
+                        continue;
+                    }
+                    if (($store->auto_generate_listings ?? 0) == 0) {
+                        Log::info('Auto Generate Listings is disabled for store: ' . $store->name);
+                        continue;
+                    }
 
-        if (count($stores ?? []) > 0) {
-            $tags = [];
-            foreach ($stores as $store) {
-                Log::info('Store : ' . $store->name);
-                if (env('APP_ENV') == 'local' && trim(strtolower($store->name)) != strtolower('GetAccessory')) {
-                    continue;
-                }
-                if (($store->auto_generate_listings ?? 0) == 0) {
-                    Log::info('Auto Generate Listings is disabled for store: ' . $store->name);
-                    continue;
-                }
+                    $tags[] = $store->name;
 
-                $tags[] = $store->name;
+                    $shopifyAuthService = new ShopifyAuthService($store->secret_key, $store->service_url);
+                    $publications = $shopifyAuthService->getPublications();
 
-                $shopifyAuthService = new ShopifyAuthService($store->secret_key, $store->service_url);
-                $publications = $shopifyAuthService->getPublications();
+                    $publicationIds = [];
+                    foreach ($publications['data']['publications']['edges'] as $publication) {
+                        $publicationIds[]['publicationId'] = $publication['node']['id'];
+                    }
+                    $this->publications = $publicationIds;
 
-                $publicationIds = [];
-                foreach ($publications['data']['publications']['edges'] as $publication) {
-                    $publicationIds[]['publicationId'] = $publication['node']['id'];
-                }
-                $this->publications = $publicationIds;
+                    // Handle Created Products
+                    // get all te children and their children of cea products
+                    // Get product types with parent code 'cea' and all their descendants recursively
+                    $ceaProductTypes = [];
+                    $ceaParentTypes = ProductType::select('id')->where('code', 'cea')->get()->pluck('id')->toArray();
 
-                // Handle Created Products
-                // get all te children and their children of cea products
-                // Get product types with parent code 'cea' and all their descendants recursively
-                $ceaProductTypes = [];
-                $ceaParentTypes = ProductType::select('id')->where('code', 'cea')->get()->pluck('id')->toArray();
+                    // Get immediate children
+                    $ceaChildrenTypes = ProductType::select('id')->whereIn('parent_id', $ceaParentTypes)->get()->pluck('id')->toArray();
+                    $ceaProductTypes = array_merge($ceaProductTypes, $ceaParentTypes, $ceaChildrenTypes);
 
-                // Get immediate children
-                $ceaChildrenTypes = ProductType::select('id')->whereIn('parent_id', $ceaParentTypes)->get()->pluck('id')->toArray();
-                $ceaProductTypes = array_merge($ceaProductTypes, $ceaParentTypes, $ceaChildrenTypes);
+                    // Get descendants recursively
+                    $nextLevelParents = $ceaChildrenTypes;
+                    foreach ($nextLevelParents as $parentId) {
+                        $children = ProductType::select('id')->where('parent_id', $parentId)->get()->pluck('id')->toArray();
+                        if (!empty($children)) {
+                            $ceaProductTypes = array_merge($ceaProductTypes, $children);
+                        }
+                    }
 
-                // Get descendants recursively
-                $nextLevelParents = $ceaChildrenTypes;
-                foreach ($nextLevelParents as $parentId) {
-                    $children = ProductType::select('id')->where('parent_id', $parentId)->get()->pluck('id')->toArray();
-                    if (!empty($children)) {
-                        $ceaProductTypes = array_merge($ceaProductTypes, $children);
+                    Log::info('CEA Product Types and descendants: ' . count($ceaProductTypes));
+
+                    $AlreadyCreatedIds = ManageMarketplaceProduct::select('product_id')->where('upload_status', 'success')->where('store_id', $store->id)->get();
+                    $productTypes = ProductType::select('id')->where('code', 'ceabundle')->get()->toArray();
+                    $products = Catalog::select('*')->with('productType', 'productKeyFeatures', 'productColor')
+                        ->whereNotIn('product_type', $productTypes)
+                        ->whereIn('product_type', $ceaProductTypes)
+                        ->whereNull('parent_id')
+                        ->where('product_status', '=', 'active')
+                        //->where('product_sku', 'E74')
+                        ->whereNotIn('product_id', $AlreadyCreatedIds)
+                        ->orderBy('created_at', 'desc')
+                        ->limit(100)
+                        ->get();
+                    foreach ($products as $product) {
+                        $this->createProduct($product, $store);
+                        if (env('APP_ENV') == 'local') {
+                            break;
+                        }
+                    }
+
+                    // Handle Updated Products
+                    $AlreadyCreatedIds = ManageMarketplaceProduct::select('product_id')
+                        ->where('upload_status', 'success')->where('store_id', $store->id)
+                        ->orderBy('updated_at', 'asc')
+                        ->limit(1000)
+                        ->get();
+
+                    $products = Catalog::select('*')->with('productType', 'productKeyFeatures', 'productColor')
+                        ->whereNotIn('product_type', $productTypes)
+                        ->whereIn('product_type', $ceaProductTypes)
+                        ->whereNull('parent_id')
+                        ->where('product_status', '=', 'active')
+                        //->where('product_sku', 'E74')
+                        ->whereIn('product_id', $AlreadyCreatedIds)
+                        ->orderBy('created_at', 'desc')
+                        ->limit(200)
+                        ->get();
+
+                    foreach ($products as $product) {
+                        $this->updateProduct($product, $store);
+                        if (env('APP_ENV') == 'local') {
+                            break;
+                        }
+                    }
+
+                    // Handle Discontinued Products
+                    $discontinuedProducts = Catalog::select('*')->with('productType', 'productKeyFeatures', 'productColor')
+                        ->whereNotIn('product_type', $productTypes)
+                        ->whereIn('product_type', $ceaProductTypes)
+                        ->whereNull('parent_id')
+                        ->whereIn('product_status', ['discontinued', 'temporaryDisabled', 'draft'])
+                        ->orderBy('created_at', 'desc')
+                        ->limit(100)
+                        ->get();
+                    foreach ($discontinuedProducts as $product) {
+                        $this->discontinueProduct($product, $store);
+                        if (env('APP_ENV') == 'local') {
+                            break;
+                        }
                     }
                 }
 
-                Log::info('CEA Product Types and descendants: ' . count($ceaProductTypes));
-
-                $AlreadyCreatedIds = ManageMarketplaceProduct::select('product_id')->where('upload_status', 'success')->where('store_id', $store->id)->get();
-                $productTypes = ProductType::select('id')->where('code', 'ceabundle')->get()->toArray();
-                $products = Catalog::select('*')->with('productType', 'productKeyFeatures', 'productColor')
-                    ->whereNotIn('product_type', $productTypes)
-                    ->whereIn('product_type', $ceaProductTypes)
-                    ->whereNull('parent_id')
-                    ->where('product_status', '=', 'active')
-                    //->where('product_sku', 'E74')
-                    ->whereNotIn('product_id', $AlreadyCreatedIds)
-                    ->orderBy('created_at', 'desc')
-                    ->limit(100)
-                    ->get();
-                foreach ($products as $product) {
-                    $this->createProduct($product, $store);
-                    if (env('APP_ENV') == 'local') {
-                        break;
-                    }
-                }
-
-                // Handle Updated Products
-                $AlreadyCreatedIds = ManageMarketplaceProduct::select('product_id')
-                    ->where('upload_status', 'success')->where('store_id', $store->id)
-                    ->orderBy('updated_at', 'asc')
-                    ->limit(1000)
-                    ->get();
-
-                $products = Catalog::select('*')->with('productType', 'productKeyFeatures', 'productColor')
-                    ->whereNotIn('product_type', $productTypes)
-                    ->whereIn('product_type', $ceaProductTypes)
-                    ->whereNull('parent_id')
-                    ->where('product_status', '=', 'active')
-                    //->where('product_sku', 'E74')
-                    ->whereIn('product_id', $AlreadyCreatedIds)
-                    ->orderBy('created_at', 'desc')
-                    ->limit(500)
-                    ->get();
-
-                foreach ($products as $product) {
-                    $this->updateProduct($product, $store);
-                    if (env('APP_ENV') == 'local') {
-                        break;
-                    }
-                }
-
-                // Handle Discontinued Products
-                $discontinuedProducts = Catalog::select('*')->with('productType', 'productKeyFeatures', 'productColor')
-                    ->whereNotIn('product_type', $productTypes)
-                    ->whereIn('product_type', $ceaProductTypes)
-                    ->whereNull('parent_id')
-                    ->whereIn('product_status', ['discontinued', 'temporaryDisabled', 'draft'])
-                    ->orderBy('created_at', 'desc')
-                    ->limit(100)
-                    ->get();
-                foreach ($discontinuedProducts as $product) {
-                    $this->discontinueProduct($product, $store);
-                    if (env('APP_ENV') == 'local') {
-                        break;
-                    }
-                }
+                $this->updateTrackingRecord(['tags' => implode(' ', $tags) . ' Submit Shopify Products']);
             }
+        }catch (\Throwable $e) {
 
-            $this->updateTrackingRecord(['tags' => implode(' ', $tags) . ' Submit Shopify Products']);
+            CriticalErrorService::report('Submit Shopify Products Sync Job Failed', [
+                'marketplace' => 'Shopify',
+                'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
+            ]);
+
+            Log::error('Error: ' . $e->getMessage());
+
         }
     }
 
@@ -309,6 +322,7 @@ class SubmitShopifyProductsJob implements ShouldQueue
         $fileSystem = $store->fileSystem;
         $shopifyAuthService = new ShopifyAuthService($store->secret_key, $store->service_url);
         $product_id = $sku = $upcCode = NULL;
+        $createdHandle = NULL;
 
         $listingItem = $this->addListingItem($productData, $store);
 
@@ -319,6 +333,7 @@ class SubmitShopifyProductsJob implements ShouldQueue
 
         if (isset($listingItem->sku)) {
             $sku = $listingItem->sku;
+            $createdHandle = $listingItem->store_url;
         } else {
             $sku = StoreTypeListing::generateUniqueAlphabeticSku($productData->product_sku, 6);
             $listingItem->update(['sku' => $sku]);
@@ -388,6 +403,7 @@ class SubmitShopifyProductsJob implements ShouldQueue
                 'vendor' => $store->name,
                 'productType' => $productData->productType->name,
                 'tags' => $tagsString,
+                'handle' => $createdHandle,
                 'productOptions' => $productOptions,
                 'files' => $files,
                 'variants' => [
@@ -511,9 +527,7 @@ class SubmitShopifyProductsJob implements ShouldQueue
         $productUpdateData = [
             'product' => [
                 'id' => $proDetail->marketplace_product_id,
-                'tags' => $tags['addTags'],
-                'title' => $productTitle,
-                'descriptionHtml' => $descriptionHtml,
+                'tags' => $tags['addTags']
             ],
         ];
 
@@ -522,7 +536,6 @@ class SubmitShopifyProductsJob implements ShouldQueue
             'variant' => [$variantData],
         ];
 
-        $this->deleteOldProductImages($shopifyAuthService, $proDetail->marketplace_product_id);
         $this->handleOldImages($shopifyAuthService, $proDetail->marketplace_product_id, $listingItem);
 
         $this->generateProductImages($productData, $store);
@@ -616,10 +629,10 @@ class SubmitShopifyProductsJob implements ShouldQueue
         if (!isset($product_exist)) {
             $sPr = [
                 'product_id' => $productData->product_id,
-                'title' => $productData->product_title,
                 'store_type_category_id' => $productData->product_type,
                 'price' => $productData->product_marketplace_price,
                 'msrp' => $productData->product_msrp,
+                'active' => 1,
                 'description' => $productData->product_description,
                 'store_id' => $store->id,
                 'created_by' => 'system',
@@ -637,7 +650,6 @@ class SubmitShopifyProductsJob implements ShouldQueue
                 ],
                 [
                     'store_product_id' => $product_exist->id,
-                    'title' => $productData->product_title,
                     'description' => $productData->product_description ?? '',
                     'price' => $productData->product_marketplace_price,
                     'quantity' => ($store->default_listing_quantity) ?: 10,
@@ -673,7 +685,7 @@ class SubmitShopifyProductsJob implements ShouldQueue
         return trim($title) . ' - ' . $store->short_code . $productData->product_sku;
     }
 
-    private function handleMediaImages($product, $listingItem)
+    private function handleMediaImages($product, $listingItem,$AlreadyImages = null)
     {
         $media = $product['media']['nodes'];
         Log::info('No of Media Items: ' . json_encode($media));
@@ -687,35 +699,43 @@ class SubmitShopifyProductsJob implements ShouldQueue
                 if (ListingItemProductImage::where('listing_item_id', $listingItem->id)->where('path', $imageUrl)->exists()) {
                     continue;
                 }
-                $altText = $mediaItem['alt'] ?? '';
-                Log::info('Image URL: ' . $imageUrl);
-                $generatedImage = GenerateProductImage::where('product_image_id', $altText)
-                    ->first();
-                if (isset($generatedImage)) {
-                    ListingItemProductImage::updateOrCreate([
-                        'listing_item_id' => $listingItem->id,
-                        'path' => $imageUrl,
-                    ], [
-                        'listing_item_id' => $listingItem->id,
-                        'product_image_id' => $generatedImage->product_image_id,
-                        'main_image' => $generatedImage->main_image,
-                        'image_file_system_id' => $generatedImage->image_file_system_id,
-                        'reference_id' => $generatedImage->reference_id,
-                        'path' => $imageUrl,
-                    ]);
+                if(isset($AlreadyImages) && array_key_exists($imageUrl,$AlreadyImages)){
+
+                } else {
+                    $altText = $mediaItem['alt'] ?? '';
+                    Log::info('Image URL: ' . $imageUrl);
+                    $generatedImage = GenerateProductImage::where('product_image_id', $altText)
+                        ->first();
+                    if (isset($generatedImage)) {
+                        ListingItemProductImage::updateOrCreate([
+                            'listing_item_id' => $listingItem->id,
+                            'path' => $imageUrl,
+                        ], [
+                            'listing_item_id' => $listingItem->id,
+                            'product_image_id' => $generatedImage->product_image_id,
+                            'main_image' => $generatedImage->main_image,
+                            'image_file_system_id' => $generatedImage->image_file_system_id,
+                            'reference_id' => $generatedImage->reference_id,
+                            'path' => $imageUrl,
+                        ]);
+                    }
                 }
             }
         }
     }
 
-    private function deleteOldProductImages(ShopifyAuthService $shopifyAuthService, $marketplace_product_id)
+    private function deleteOldProductImages(ShopifyAuthService $shopifyAuthService, $marketplace_product_id,$AlreadyImages)
     {
         $oldImages = $shopifyAuthService->getProductImages($marketplace_product_id);
         Log::info('Old Images: ' . json_encode($oldImages));
         $Images = $oldImages['data']['product']['media']['nodes'];
         $mediaIds = [];
         foreach ($Images as $image) {
+            $imageUrl = $image['preview']['image']['url'] ?? '';
             Log::info('Image :: ' . json_encode($image));
+            if (isset($AlreadyImages) && array_key_exists($imageUrl, $AlreadyImages)) {
+                continue;
+            }
             $mediaId = $image['id'];
             $altText = $image['alt'];
             if ($altText == null || $altText == '') {
@@ -732,7 +752,25 @@ class SubmitShopifyProductsJob implements ShouldQueue
     {
         ListingItemProductImage::where('listing_item_id', $listingItem->id)->whereNull('product_image_id')->delete();
 
+        $query = DB::connection('easyesale_db')->table('listing_item_product_image')
+            ->join('product_image', 'product_image.id', '=', 'listing_item_product_image.product_image_id')
+            ->where('product_id', 'd75692a5-d38c-4599-9cc0-25d526a63686')->whereNotNull('reference_id');
+
+
+        $listingImages = $query->get();
+        $AlreadyImages = [];
+        foreach ($listingImages as $listingImage) {
+            $AlreadyImages[$listingImage->path] = [
+                'path' => $listingImage->path,
+                'main_image' => $listingImage->main_image,
+                'listing_item_id' => $listingImage->listing_item_id,
+                'sort_order' => $listingImage->sort_order,
+                'code' => $listingImage->code
+            ];
+        }
         $oldImages = $shopifyAuthService->getProductImages($marketplace_product_id);
-        $this->handleMediaImages($oldImages['data']['product'], $listingItem);
+        $this->handleMediaImages($oldImages['data']['product'], $listingItem,$AlreadyImages);
+
+        $this->deleteOldProductImages($shopifyAuthService, $marketplace_product_id,$AlreadyImages);
     }
 }

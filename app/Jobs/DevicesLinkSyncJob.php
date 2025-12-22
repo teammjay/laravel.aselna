@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Jobs\Concerns\TrackableJob;
 use App\Models\DevicesLinkedDevice;
+use App\Services\CriticalErrorService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\DB;
@@ -32,10 +33,19 @@ class DevicesLinkSyncJob implements ShouldQueue
     {
         $this->updateTrackingRecord(['tags' => 'Device Link']);
 
-        $syncDevices = DB::connection('easyesale_db')->table('cea_device_cea_device_series_link')->get();
+        try {
+            $syncDevices = DB::connection('easyesale_db')->table('cea_device_cea_device_series_link')->get();
 
-        foreach ($syncDevices as $device) {
-            $this->createSyncDevice($device);
+            foreach ($syncDevices as $device) {
+                $this->createSyncDevice($device);
+            }
+        }catch (\Throwable $e) {
+
+            CriticalErrorService::report('Device Link Sync Job Failed', [
+                'marketplace' => 'N/A',
+                'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
+            ]);
         }
     }
 

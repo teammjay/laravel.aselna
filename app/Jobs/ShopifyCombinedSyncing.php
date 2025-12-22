@@ -5,6 +5,7 @@ namespace App\Jobs;
 use App\Constants\WebStorePageType;
 use App\Models\Store;
 use App\Models\StorePageTemplate;
+use App\Services\CriticalErrorService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Bus;
@@ -35,114 +36,116 @@ class ShopifyCombinedSyncing implements ShouldQueue
     {
         $this->updateTrackingRecord(['tags' => 'Shopify Combined']);
 
-        $chain = [
-            new ProductSyncJob(),
-            new InterfaceSyncJob(),
+        try {
+            $chain = [
+                new ProductSyncJob(),
+                new ProductKeyFeaturesSyncJob(),
+                new InterfaceSyncJob(),
 //            new DeviceSeriesSyncJob(),
-            new CategorySyncJob(),
-            new BrandSyncJob(),
-            new DevicesSyncJob(),
-            new DeviceCarrierSyncJob(),
-            new DeviceInterfaces(),
-            new ProductInterfaces(),
-            new ProductSpecificationSyncJob(),
-            new ProductImagesSyncJob(),
-            new SubmitShopifyProductsJob(),
-            new SubmitShopifyProductsJob(),
-            new SubmitShopifyProductsJob()
-        ];
+                new CategorySyncJob(),
+                new BrandSyncJob(),
+                new DevicesSyncJob(),
+                new DeviceCarrierSyncJob(),
+                new DeviceInterfaces(),
+                new ProductInterfaces(),
+                new ProductSpecificationSyncJob(),
+                new ProductImagesSyncJob(),
+                new SubmitShopifyProductsJob(),
+                new SubmitShopifyProductsJob(),
+                new SubmitShopifyProductsJob()
+            ];
 
-        // Set chainId for all initial jobs
-        foreach ($chain as $job) {
-            if (method_exists($job, 'setChainId')) {
-                $job->setChainId($this->chainId);
-            }
-        }
-
-        $stores = Store::select('store.*')->join('store_type', 'store_type.id', '=', 'store.store_type_id')->where('store_type.code', 'shopify')->get();
-
-        if (count($stores ?? []) > 0) {
-            foreach ($stores as $store) {
-
-                if (($store->auto_generate_listings ?? 0) == 0) {
-                    Log::info('Auto Generate Listings is disabled for store: ' . $store->name);
-                    continue;
+            // Set chainId for all initial jobs
+            foreach ($chain as $job) {
+                if (method_exists($job, 'setChainId')) {
+                    $job->setChainId($this->chainId);
                 }
+            }
 
-                $allBrandTemplate = StorePageTemplate::where('name', 'All Brands')->first();
-                $brandTemplate = StorePageTemplate::where('name', 'Brand')->first();
-                $brandDeviceProductTemplate = StorePageTemplate::where('name', 'Brand Device Product Types')->first();
-                $productTypeBrands = StorePageTemplate::where('name', 'Product types brands')->first();
-                $brandDevicesTemplate = StorePageTemplate::where('name', 'Brand Devices')->first();
+            $stores = Store::select('store.*')->join('store_type', 'store_type.id', '=', 'store.store_type_id')->where('store_type.code', 'shopify')->get();
 
-                $storeBrandJob1 = new StoreBrandPageSyncJob(
-                    $store->id,
-                    WebStorePageType::BRAND,
-                    $brandTemplate->id
-                );
-                $storeBrandJob1->setChainId($this->chainId);
-                $chain[] = $storeBrandJob1;
+            if (count($stores ?? []) > 0) {
+                foreach ($stores as $store) {
 
-                $storeBrandJob2 = new StoreBrandPageSyncJob(
-                    $store->id,
-                    WebStorePageType::PRODUCT_TYPE,
-                    $brandTemplate->id
-                );
-                $storeBrandJob2->setChainId($this->chainId);
-                $chain[] = $storeBrandJob2;
+                    if (($store->auto_generate_listings ?? 0) == 0) {
+                        Log::info('Auto Generate Listings is disabled for store: ' . $store->name);
+                        continue;
+                    }
 
-                $storeBrandJob3 = new StoreBrandPageSyncJob(
-                    $store->id,
-                    WebStorePageType::DEVICE,
-                    $brandTemplate->id
-                );
-                $storeBrandJob3->setChainId($this->chainId);
-                $chain[] = $storeBrandJob3;
+                    $allBrandTemplate = StorePageTemplate::where('name', 'All Brands')->first();
+                    $brandTemplate = StorePageTemplate::where('name', 'Brand')->first();
+                    $brandDeviceProductTemplate = StorePageTemplate::where('name', 'Brand Device Product Types')->first();
+                    $productTypeBrands = StorePageTemplate::where('name', 'Product types brands')->first();
+                    $brandDevicesTemplate = StorePageTemplate::where('name', 'Brand Devices')->first();
 
-                $storeBrandJob4 = new StoreBrandPageSyncJob(
-                    $store->id,
-                    WebStorePageType::BRAND_DEVICE_PRODUCT_TYPES,
-                    $brandDeviceProductTemplate->id
-                );
-                $storeBrandJob4->setChainId($this->chainId);
-                $chain[] = $storeBrandJob4;
+                    $storeBrandJob1 = new StoreBrandPageSyncJob(
+                        $store->id,
+                        WebStorePageType::BRAND,
+                        $brandTemplate->id
+                    );
+                    $storeBrandJob1->setChainId($this->chainId);
+                    $chain[] = $storeBrandJob1;
 
-                $shopifyIndvJob1 = new ShopifyIndvPagesSyncJob(
-                    $store->id,
-                    WebStorePageType::BRAND_DEVICE_PRODUCT_TYPES
-                );
-                $shopifyIndvJob1->setChainId($this->chainId);
-                $chain[] = $shopifyIndvJob1;
+                    $storeBrandJob2 = new StoreBrandPageSyncJob(
+                        $store->id,
+                        WebStorePageType::PRODUCT_TYPE,
+                        $brandTemplate->id
+                    );
+                    $storeBrandJob2->setChainId($this->chainId);
+                    $chain[] = $storeBrandJob2;
 
-                $storeBrandJob5 = new StoreBrandPageSyncJob(
-                    $store->id,
-                    WebStorePageType::PRODUCT_TYPE_BRANDS,
-                    $productTypeBrands->id
-                );
-                $storeBrandJob5->setChainId($this->chainId);
-                $chain[] = $storeBrandJob5;
+                    $storeBrandJob3 = new StoreBrandPageSyncJob(
+                        $store->id,
+                        WebStorePageType::DEVICE,
+                        $brandTemplate->id
+                    );
+                    $storeBrandJob3->setChainId($this->chainId);
+                    $chain[] = $storeBrandJob3;
 
-                $shopifyIndvJob2 = new ShopifyIndvPagesSyncJob(
-                    $store->id,
-                    WebStorePageType::PRODUCT_TYPE_BRANDS
-                );
-                $shopifyIndvJob2->setChainId($this->chainId);
-                $chain[] = $shopifyIndvJob2;
+                    $storeBrandJob4 = new StoreBrandPageSyncJob(
+                        $store->id,
+                        WebStorePageType::BRAND_DEVICE_PRODUCT_TYPES,
+                        $brandDeviceProductTemplate->id
+                    );
+                    $storeBrandJob4->setChainId($this->chainId);
+                    $chain[] = $storeBrandJob4;
 
-                $storeBrandJob6 = new StoreBrandPageSyncJob(
-                    $store->id,
-                    WebStorePageType::BRAND_DEVICES,
-                    $brandDevicesTemplate->id
-                );
-                $storeBrandJob6->setChainId($this->chainId);
-                $chain[] = $storeBrandJob6;
+                    $shopifyIndvJob1 = new ShopifyIndvPagesSyncJob(
+                        $store->id,
+                        WebStorePageType::BRAND_DEVICE_PRODUCT_TYPES
+                    );
+                    $shopifyIndvJob1->setChainId($this->chainId);
+                    $chain[] = $shopifyIndvJob1;
 
-                $shopifyIndvJob3 = new ShopifyIndvPagesSyncJob(
-                    $store->id,
-                    WebStorePageType::BRAND_DEVICES
-                );
-                $shopifyIndvJob3->setChainId($this->chainId);
-                $chain[] = $shopifyIndvJob3;
+                    $storeBrandJob5 = new StoreBrandPageSyncJob(
+                        $store->id,
+                        WebStorePageType::PRODUCT_TYPE_BRANDS,
+                        $productTypeBrands->id
+                    );
+                    $storeBrandJob5->setChainId($this->chainId);
+                    $chain[] = $storeBrandJob5;
+
+                    $shopifyIndvJob2 = new ShopifyIndvPagesSyncJob(
+                        $store->id,
+                        WebStorePageType::PRODUCT_TYPE_BRANDS
+                    );
+                    $shopifyIndvJob2->setChainId($this->chainId);
+                    $chain[] = $shopifyIndvJob2;
+
+                    $storeBrandJob6 = new StoreBrandPageSyncJob(
+                        $store->id,
+                        WebStorePageType::BRAND_DEVICES,
+                        $brandDevicesTemplate->id
+                    );
+                    $storeBrandJob6->setChainId($this->chainId);
+                    $chain[] = $storeBrandJob6;
+
+                    $shopifyIndvJob3 = new ShopifyIndvPagesSyncJob(
+                        $store->id,
+                        WebStorePageType::BRAND_DEVICES
+                    );
+                    $shopifyIndvJob3->setChainId($this->chainId);
+                    $chain[] = $shopifyIndvJob3;
 
 //                $chain[] = new StoreBrandPageSyncJob(
 //                    $store->id,
@@ -154,10 +157,21 @@ class ShopifyCombinedSyncing implements ShouldQueue
 //                    $store->id,
 //                    WebStorePageType::ALL_BRANDS
 //                );
-            }
+                }
 
 //            self::queueableWithChain($chain)->dispatch();
-            Bus::chain($chain)->dispatch();
+                Bus::chain($chain)->dispatch();
+            }
+        }catch (\Throwable $e) {
+
+            CriticalErrorService::report('Shopify Combined Sync Failed', [
+                'marketplace' => 'Shopify',
+                'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
+            ]);
+
+            Log::error('Error: ' . $e->getMessage());
+
         }
     }
 }

@@ -26,6 +26,7 @@
             <th>Job Name</th>
             <th>Class Name</th>
             <th>cron_expression</th>
+            <th>Store Type</th>
             <th>Is active?</th>
             <th>Actions</th>
         </tr>
@@ -36,11 +37,21 @@
                 <td>{{ $job->name }}</td>
                 <td>{{ $job->class_name }}</td>
                 <td>{{ $job->cron_expression }}</td>
+                <td>{{ $job->store_type }}</td>
                 <td>{{ ($job->is_active == 1) ? 'Yes' : 'No' }}</td>
                 <td class="d-flex">
                     <a href="{{ route('scheduled_jobs.edit', $job) }}" class="btn btn-warning btn-sm">
                         Edit
                     </a>
+                    <a href="{{ route('scheduled_jobs.delete', $job->id) }}" class="btn btn-danger" title="Remove">
+                        <i class="fas fa-fw fa-trash"></i>
+                    </a>
+                    <form method="POST" action="{{ route('scheduled_jobs.run', $job->id) }}">
+                        @csrf
+                        <button class="btn btn-primary px-3 ml-1">
+                            Run Now
+                        </button>
+                    </form>
                 </td>
             </tr>
         @endforeach

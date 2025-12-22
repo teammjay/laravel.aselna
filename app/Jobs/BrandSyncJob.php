@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Jobs\Concerns\TrackableJob;
 use App\Models\Brand;
+use App\Services\CriticalErrorService;
 use App\Models\SysFile;
 use App\Utils\FileUtility;
 use Exception;
@@ -35,17 +36,26 @@ class BrandSyncJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $this->updateTrackingRecord(['tags' => 'Brand']);
+        try {
+            $this->updateTrackingRecord(['tags' => 'Brand']);
 
-        $esaleBrands = DB::connection('easyesale_db')->table('cea_brand')->cursor();
-        foreach ($esaleBrands as $brand) {
-            $this->createSyncBrand($brand);
-        }
+            $esaleBrands = DB::connection('easyesale_db')->table('cea_brand')->cursor();
+            foreach ($esaleBrands as $brand) {
+                $this->createSyncBrand($brand);
+            }
 
 //        $brands = DB::connection('fonus_db')->table('tbl_brand')->cursor();
 //        foreach ($brands as $brand) {
 //            $this->createBrand($brand);
 //        }
+        }catch (\Throwable $e){
+
+            CriticalErrorService::report('Brand Sync Job Failed', [
+                'marketplace' => 'N/A',
+                'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
+            ]);
+        }
     }
 
     private function createBrand(mixed $brand)
@@ -84,6 +94,13 @@ class BrandSyncJob implements ShouldQueue
                 }
             }
         } catch (Exception $e) {
+
+            CriticalErrorService::report('Error in Image Sync (Brand Sync)', [
+                'marketplace' => 'N/A',
+                'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
+            ]);
+
             Log::error('Error in Image Sync: ' . $e->getMessage());
         }
 
@@ -98,6 +115,12 @@ class BrandSyncJob implements ShouldQueue
                 }
             }
         } catch (Exception $e) {
+
+            CriticalErrorService::report('Error in Image Sync (Brand Sync)', [
+                'marketplace' => 'N/A',
+                'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
+            ]);
             Log::error('Error in Image Sync: ' . $e->getMessage());
         }
 

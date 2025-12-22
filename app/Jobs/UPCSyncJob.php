@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Models\UpcGenerate;
+use App\Services\CriticalErrorService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\DB;
@@ -30,9 +31,18 @@ class UPCSyncJob implements ShouldQueue
     {
         $this->updateTrackingRecord(['tags' => 'UPC']);
 
-        $upcSequence = DB::connection('easyesale_db')->table('upc_creation')->cursor();
-        foreach ($upcSequence as $upc) {
-            $this->createUPCSequence($upc);
+        try {
+            $upcSequence = DB::connection('easyesale_db')->table('upc_creation')->cursor();
+            foreach ($upcSequence as $upc) {
+                $this->createUPCSequence($upc);
+            }
+        }catch (\Throwable $e) {
+
+            CriticalErrorService::report('UPC Sync Job Failed', [
+                'marketplace' => 'N/A',
+                'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
+            ]);
         }
     }
 
