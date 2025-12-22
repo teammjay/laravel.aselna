@@ -18,6 +18,7 @@ use App\Models\OrderItemAttribute;
 use App\Models\OrderOperation;
 use App\Models\OrderOperationItem;
 use App\Models\OrderSynchronization;
+use App\Models\ShippingCarrierService;
 use App\Models\ShippingPackage;
 use App\Models\ShippingServiceRule;
 use App\Models\Store;
@@ -285,11 +286,23 @@ class FetchShopifyOrders implements ShouldQueue
                                     if(isset($rulesDetails->package_type_filter_id)){
                                         $orderOperationData['shipping_package_id'] = $rulesDetails->package_type_filter_id;
                                     }
+                                    $shipping_carrier = $rulesDetails->ShippingCarrierService->ShippingCarrier->id;
+                                    $shipping_carrier_service = $rulesDetails->shipping_carrier_service_id;
+                                    if (isset($order_detail->requested_shipment_service)) {
+                                        // check if requested shipment service starts with Priority Mail
+                                        if (stripos($order_detail->requested_shipment_service, 'Priority Mail') === 0) {
+                                            $shipping_carrier_service = ShippingCarrierService::where('name','Priority')->first()->id;
+                                        }
+                                        // check if requested shipment service starts with USPS First Class
+                                        if (stripos($order_detail->requested_shipment_service, 'USPS First Class') === 0) {
+                                            $shipping_carrier_service = ShippingCarrierService::where('name','First Class')->first()->id;
+                                        }
+                                    }
                                     if(isset($rulesDetails->shipping_carrier_service_id)){
-                                        $orderOperationData['shipping_carrier_service_id'] = $rulesDetails->shipping_carrier_service_id;
+                                        $orderOperationData['shipping_carrier_service_id'] = $shipping_carrier_service;
                                     }
                                     if(isset($rulesDetails->ShippingCarrierService->ShippingCarrier)){
-                                        $orderOperationData['shipping_carrier_id'] = $rulesDetails->ShippingCarrierService->ShippingCarrier->id;
+                                        $orderOperationData['shipping_carrier_id'] = $shipping_carrier;
                                     }
                                 }
 
