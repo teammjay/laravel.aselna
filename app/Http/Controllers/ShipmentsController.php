@@ -73,7 +73,7 @@ class ShipmentsController extends Controller
             'shippingPackage:id,name',
         ])->select('order_operation.*', 'order_operation.id as oid');
 
-        $query->whereIn('order_operation.status', [OrderOperationStatus::Created, OrderOperationStatus::CanceledRequested]);
+        $query->whereIn('order_operation.status', [OrderOperationStatus::Created, OrderOperationStatus::CanceledRequested, OrderOperationStatus::LabelPrinted]);
         $query->where('order_operation.is_merged', '=', false);
 
         // Filter by store
@@ -221,6 +221,10 @@ class ShipmentsController extends Controller
                     $status = 2;
                     $status_message = 'Customer Requested Cancellation for this order';
                 }
+                if ($order->status == OrderOperationStatus::LabelPrinted) {
+                    $status = 3;
+                    $status_message = 'Label Printed. Remain to mark as shipped in marketplace.';
+                }
                 $packageName = isset($order->shippingPackage) ? $order->shippingPackage->name : '';
                 if($package_id){
                     $packageDetail = ShippingPackage::findOrFail($package_id);
@@ -247,6 +251,7 @@ class ShipmentsController extends Controller
                     "state" => (isset($order->order->customerAddress) && !empty($order->order->customerAddress)) ? $order->order->customerAddress->state : '',
                     'product_ids' => $product_ids,
                     'total_qty' => $total_qty,
+                    'op_status' => $order->status,
                 );
             }
         }
