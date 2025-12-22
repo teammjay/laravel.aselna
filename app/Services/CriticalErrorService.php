@@ -115,6 +115,7 @@ class CriticalErrorService
                     'status'      => 'Failed',
                     'severity'    => 'Critical',
                     'reason'      => $errorData['context']['reason'] ?? 'Unknown error',
+                    'extraInfo'   => $errorData['extra'] ?? [],
                     'timestamp'   => now()
                 ],
                 function ($message) use ($sendTo, $cc_emails, $errorData) {

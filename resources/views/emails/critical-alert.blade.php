@@ -62,6 +62,32 @@
                             {{ $reason }}
                         </div>
 
+
+                        @if(!empty($extraInfo))
+                            <h3 style="border-bottom:1px solid #e0e0e0;padding-bottom:6px;margin-top:24px;">
+                                Additional Context
+                            </h3>
+
+                            <table width="100%" cellpadding="6" cellspacing="0"
+                                   style="font-size:14px;border:1px solid #e0e0e0;border-collapse:collapse;">
+                                @foreach($extraInfo as $key => $value)
+                                    <tr>
+                                        <td width="40%"
+                                            style="border:1px solid #e0e0e0;background:#f9fafb;">
+                                            <strong>{{ ucwords(str_replace('_', ' ', $key)) }}</strong>
+                                        </td>
+                                        <td style="border:1px solid #e0e0e0;">
+                                            @if(is_array($value))
+                                                <pre style="margin:0;font-size:12px;">{{ json_encode($value, JSON_PRETTY_PRINT) }}</pre>
+                                            @else
+                                                {{ $value }}
+                                            @endif
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </table>
+                        @endif
+
                         <h3 style="border-bottom:1px solid #e0e0e0;padding-bottom:6px;margin-top:24px;">
                             Recommended Actions
                         </h3>

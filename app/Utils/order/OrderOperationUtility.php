@@ -7,6 +7,7 @@ use App\Constants\OrderOperationType;
 use App\Constants\OrderStatus;
 use App\Constants\ShippingLabelCreationType;
 use App\Constants\WeightUnit;
+use App\Jobs\SyncFailedMarketplaceShipmentJob;
 use App\Models\AccountTransaction;
 use App\Models\Order;
 use App\Models\OrderItem;
@@ -960,7 +961,7 @@ class OrderOperationUtility
         return false;
     }
 
-    private static function createShipment($orderOperation): array
+    public static function createShipment($orderOperation): array
     {
         // Start database transaction
         DB::beginTransaction();
@@ -972,9 +973,9 @@ class OrderOperationUtility
                 if (isset($errors) && !empty($errors)) {
                     //DB::rollBack();
 
-                    CriticalErrorService::report('Error processing check transaction credit', [
+                    CriticalErrorService::report('Error creating/priting label', [
                         'marketplace' => '',
-                        'reason' => $e->getMessage() ?? 'Unknown',
+                        'reason' => json_encode($errors) ?? 'Unknown',
                         'method' => __METHOD__
                     ],['order_operation' => $orderOperation]);
 
@@ -1177,12 +1178,24 @@ class OrderOperationUtility
             } else {
                 // If there was an API error but no exception, still rollback
                 DB::commit();
+                $order_operation = OrderOperation::with('store')->select('id','tracking_number','status')->where('id',$orderOperation->id)->first();
+                if(isset($order_operation->store->auto_resubmit_shipment) && $order_operation->store->auto_resubmit_shipment == 1) {
+                    if ($order_operation->tracking_number && $order_operation->status == OrderOperationStatus::LabelPrinted) {
+                        dispatch(new SyncFailedMarketplaceShipmentJob($order_operation->id))->delay(now()->addMinutes(15));
+                    }
+                }
                 return ['success' => false, 'message' => $message];
             }
         } catch (\Exception $e) {
             // If anything went wrong, rollback the transaction
             DB::commit();
             Log::error('Error in createShipment: ' . $e->getMessage());
+            $order_operation = OrderOperation::with('store')->select('id','tracking_number','status')->where('id',$orderOperation->id)->first();
+            if(isset($order_operation->store->auto_resubmit_shipment) && $order_operation->store->auto_resubmit_shipment == 1) {
+                if ($order_operation->tracking_number && $order_operation->status == OrderOperationStatus::LabelPrinted) {
+                    dispatch(new SyncFailedMarketplaceShipmentJob($order_operation->id))->delay(now()->addMinutes(15));
+                }
+            }
             return ['success' => false, 'message' => $e->getMessage()];
         }
     }
