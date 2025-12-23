@@ -756,7 +756,7 @@ class EndicialabelService
         $options = $labelRequest->addChild('RequestOptions');
         $options->addAttribute('StartDateTime', date('m/d/Y H:i:s A',strtotime($startTime)));
         $options->addAttribute('EndDateTime', date('m/d/Y H:i:s A',strtotime($endTime)));
-        $options->addAttribute('TransactionType', 'ALL');
+        $options->addAttribute('TransactionType', 'PRINTS');
         /*$picNum = $labelRequest->addChild('TransactionIDs');
 
         if(isset($transDetails['transactions']) && !empty($transDetails['transactions'])){

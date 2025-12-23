@@ -36,7 +36,7 @@
             @elseif($shipment['status'] == 2)
                 <td>{!! ($shipment['status'] == 2) ? '<i class="fa fa-exclamation-triangle" style="font-size:24px" title="'.$shipment['status_message'].'"></i>' : '' !!}</td>
             @elseif($shipment['status'] == 3)
-                <td>{!! ($shipment['status'] == 3) ? '<i class="fa fa-exclamation-triangle" style="font-size:24px" title="'.$shipment['status_message'].'"></i>' : '' !!}</td>
+                <td>{!! ($shipment['status'] == 3) ? '<i class="fa fa-exclamation-triangle" style="font-size:24px" title="'.$shipment['status_message'].'"></i><button class="btn bg-white btn-circle" title="Resubmit Count">'.$shipment['operation_retry_count'].'</button>' : '' !!}</td>
             @else
                 <td></td>
             @endif
