@@ -104,7 +104,7 @@ class Navigationutility
                         ->where('page_type', WebStorePageType::BRAND)
                         ->where('device_brand_id', $link->device_brand_id)
                         ->first();
-                    if ($link->brand->sort_order <= 10) {
+                    if ($link->brand->order_no <= 10) {
                         $finalLinkArray['popular_link'][] = [
                             'id' => $link->id,
                             'title' => $link->brand->name,
