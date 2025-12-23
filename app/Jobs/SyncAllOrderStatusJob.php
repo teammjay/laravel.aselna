@@ -55,8 +55,7 @@ class SyncAllOrderStatusJob implements ShouldQueue
                 ->whereNotIn('status', [
                     OrderOperationStatus::MarkAsShipped,
                     OrderOperationStatus::Delivered,
-                    OrderOperationStatus::Canceled,
-                    OrderOperationStatus::CanceledRequested
+                    OrderOperationStatus::Canceled
                 ])
                 ->when($this->orderId, function ($query) {
                     $query->where('order_id', $this->orderId);
@@ -75,6 +74,7 @@ class SyncAllOrderStatusJob implements ShouldQueue
                 }
             }
         }catch (\Throwable $e) {
+            Log::info('Error syncing order status for OrderOperation ID ' . $operation->id . ': ' . $e->getMessage());
 
             CriticalErrorService::report('All Orders Status Sync Job Failed', [
                 'marketplace' => 'N/A',
