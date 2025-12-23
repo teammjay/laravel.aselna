@@ -75,6 +75,13 @@
             display:none;
         }
         .dropdown-toggle{font-size:18px;}
+        button.btn.bg-white.btn-circle {
+            border-radius: 50%;
+            padding: 2px 9px;
+            font-weight: bold;
+            margin-left: 5px;
+            vertical-align: text-bottom;
+        }
     </style>
 @stop
 
