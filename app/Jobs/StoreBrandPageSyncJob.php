@@ -37,7 +37,7 @@ class StoreBrandPageSyncJob implements ShouldQueue
     protected $page_type;
     protected $template_id;
     private $store;
-    private $shopifyAuthService;
+    private ShopifyAuthService $shopifyAuthService;
     private $publications;
 
     /**
@@ -111,6 +111,7 @@ class StoreBrandPageSyncJob implements ShouldQueue
                     $brands = Brand::where('status', 'active')->orderBy('order_no')->get();
                     foreach ($brands as $brand) {
                         $title = $brand->name;
+                        $handle = null;
 
                         $collectionData['collection'] = [
                             'title' => $title,
@@ -194,6 +195,7 @@ class StoreBrandPageSyncJob implements ShouldQueue
                     $this->getPuplications();
                     Device::where('status', 'active')->whereIn('device_type_id', $compatibleDeviceTypes)->orderBy('id')->chunk(100, function ($devices) use ($page_type, $template, $request) {
                         foreach ($devices as $device) {
+                            $handle = null;
                             $brand = $device->brand;
                             $title = $brand->name . ' ' . $device->name . ' Accessories';
 
@@ -336,11 +338,13 @@ class StoreBrandPageSyncJob implements ShouldQueue
                         $subquery->select('id')->from('product_type')->where('code', 'cea');
                     })->whereNotNull('sort_order')->orderBy('sort_order', 'asc')->get();
 
+                    Log::info("Product Types Count :: " . count($productTypes));
                     foreach ($productTypes as $productType) {
                         $title = $productType->name;
                         $collectionData['collection'] = [
                             'title' => $title,
                         ];
+                        $handle = null;
                         $collectionData['collection']['ruleSet']['appliedDisjunctively'] = true;
 
                         $storePage = StoreNavigationPage::where('store_id', $this->store_id)
@@ -350,7 +354,9 @@ class StoreBrandPageSyncJob implements ShouldQueue
 
                         if (isset($storePage)) {
                             $handle = $storePage->url_path;
-                        } else {
+                        }
+
+                        if (!isset($handle)) {
                             $handle = $this->generateShopifyHandle($title);
                         }
 
@@ -361,6 +367,7 @@ class StoreBrandPageSyncJob implements ShouldQueue
                         ];
 
                         $collection = null;
+                        Log::info('Collection Name :: ' . $title . ' Handle :: ' . $handle);
 
                         if ($alreadyCollection = $this->shopifyAuthService->getCollectionByHandle($handle)) {
                             Log::info('Collection already exists, updating collection', ['handle' => $handle]);
