@@ -252,6 +252,7 @@ class ShipmentsController extends Controller
                     'product_ids' => $product_ids,
                     'total_qty' => $total_qty,
                     'op_status' => $order->status,
+                    'operation_retry_count' => $order->operation_retry_count,
                 );
             }
         }
