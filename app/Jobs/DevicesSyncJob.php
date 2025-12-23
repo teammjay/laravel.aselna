@@ -95,12 +95,6 @@ class DevicesSyncJob implements ShouldQueue
                 }
             } catch (Exception $e) {
 
-                CriticalErrorService::report('Device Image Sync Failed', [
-                    'marketplace' => 'N/A',
-                    'reason' => $e->getMessage() ?? 'Unknown',
-                    'method' => __METHOD__
-                ]);
-
                 Log::error('Error in Image Sync: ' . $e->getMessage());
             }
 
@@ -110,11 +104,6 @@ class DevicesSyncJob implements ShouldQueue
                     file_put_contents(storage_path('app/public/device_images/' . $device->thumbnail_picture1), $image);
                 } catch (Exception $e) {
 
-                    CriticalErrorService::report('Device Thumbnail Sync Failed', [
-                        'marketplace' => 'N/A',
-                        'reason' => $e->getMessage() ?? 'Unknown',
-                        'method' => __METHOD__
-                    ]);
                     Log::error('Error in Thumbnail Sync: ' . $e->getMessage());
                 }
             }
@@ -185,12 +174,6 @@ class DevicesSyncJob implements ShouldQueue
             $deviceData['image'] = $image_name;
         } catch (Exception $e) {
 
-            CriticalErrorService::report('Device Image Sync Failed', [
-                'marketplace' => 'N/A',
-                'reason' => $e->getMessage() ?? 'Unknown',
-                'method' => __METHOD__
-            ]);
-
             Log::error('Error in Image Sync: ' . $e->getMessage());
         }
 
@@ -200,12 +183,6 @@ class DevicesSyncJob implements ShouldQueue
             file_put_contents(storage_path('app/public/device_images/' . $thumbnail_name), $thumbnail);
             $deviceData['thumbnail_image'] = $thumbnail_name;
         } catch (Exception $e) {
-
-            CriticalErrorService::report('Device Thumbnail Sync Failed', [
-                'marketplace' => 'N/A',
-                'reason' => $e->getMessage() ?? 'Unknown',
-                'method' => __METHOD__
-            ]);
 
             Log::error('Error in Thumbnail Sync: ' . $e->getMessage());
         }
