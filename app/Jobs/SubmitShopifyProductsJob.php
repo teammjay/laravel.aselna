@@ -322,6 +322,7 @@ class SubmitShopifyProductsJob implements ShouldQueue
         $fileSystem = $store->fileSystem;
         $shopifyAuthService = new ShopifyAuthService($store->secret_key, $store->service_url);
         $product_id = $sku = $upcCode = NULL;
+        $storeProduct = StoreProduct::where('product_id', $productData->product_id)->where('store_id', $store->id)->first();
         $createdHandle = NULL;
 
         $listingItem = $this->addListingItem($productData, $store);
@@ -375,6 +376,12 @@ class SubmitShopifyProductsJob implements ShouldQueue
         Log::info('Tags: ' . json_encode($tags));
         $tagsString = implode(',', $tags['addTags']);
 
+        $productPrice = $productData->product_price;
+
+        if (isset($storeProduct->price) && isset($storeProduct->overwrite_price) && $storeProduct->overwrite_price == 1) {
+            $productPrice = $storeProduct->price;
+        }
+
         $productOptions[] = [
             'name' => 'Title',
             'values' => [
@@ -408,7 +415,7 @@ class SubmitShopifyProductsJob implements ShouldQueue
                 'files' => $files,
                 'variants' => [
                     [
-                        'price' => $productData->product_price,
+                        'price' => $productPrice,
                         'sku' => $sku,
 //                        'barcode' => $upcCode,
                         'optionValues' => [
@@ -486,6 +493,7 @@ class SubmitShopifyProductsJob implements ShouldQueue
     private function updateProduct(mixed $productData, mixed $store)
     {
         $fileSystem = $store->fileSystem;
+        $storeProduct = StoreProduct::where('product_id', $productData->product_id)->where('store_id', $store->id)->first();
 
         $shopifyAuthService = new ShopifyAuthService($store->secret_key, $store->service_url);
         Log::info("Syncing Product SKU :: " . $productData->product_sku);
@@ -519,9 +527,15 @@ class SubmitShopifyProductsJob implements ShouldQueue
         $tags = $this->getAllTags($productData, []);
         $finalTagsString = implode(', ', $tags['addTags']);
 
+        $productPrice = $productData->product_price;
+
+        if (isset($storeProduct->price) && isset($storeProduct->overwrite_price) && $storeProduct->overwrite_price == 1) {
+            $productPrice = $storeProduct->price;
+        }
+
         $variantData = [
             'id' => $proDetail->marketplace_variant_id,
-            'price' => $productData->product_price,
+            'price' => $productPrice,
         ];
 
         $productUpdateData = [
