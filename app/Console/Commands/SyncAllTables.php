@@ -12,6 +12,7 @@ use App\Jobs\DataPatch;
 use App\Jobs\DeviceCarrierSyncJob;
 use App\Jobs\DeviceInterfaces;
 use App\Jobs\DeviceRatingSyncJob;
+use App\Jobs\Devices\PopularDevicesSyncJob;
 use App\Jobs\DeviceSeriesSyncJob;
 use App\Jobs\DevicesLinkSyncJob;
 use App\Jobs\DevicesSyncJob;
@@ -217,6 +218,8 @@ class SyncAllTables extends Command
 //        AmazonListingItemSyncJob::dispatch();
 //        TransactionStatusCheckJob::dispatch();
 //        ProductKeyFeaturesSyncJob::dispatch();
+//        ShopifyCombinedSyncing::dispatch();
+        PopularDevicesSyncJob::dispatch();
 
         $transactionIds = [
 ////            '9400150105798006163885',
