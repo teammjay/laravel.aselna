@@ -583,7 +583,7 @@ class SubmitShopifyProductsJob implements ShouldQueue
 
         $metafields = $this->getMetafieldsData($productData);
         if (count($metafields) > 0) {
-            $productUpdateData['metafields'] = $metafields;
+            $productUpdateData['product']['metafields'] = $metafields;
         }
 
         Log::info('Product Update Data: ' . json_encode($productUpdateData));
@@ -843,8 +843,6 @@ class SubmitShopifyProductsJob implements ShouldQueue
                 'type' => 'single_line_text_field'
             ];
         }
-
-
 
         return $metafields;
     }
