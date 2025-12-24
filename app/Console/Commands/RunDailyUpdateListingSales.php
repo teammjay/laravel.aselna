@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use Database\Seeders\UpdateListingItemSalesSeeder;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Artisan;
 
@@ -26,9 +27,7 @@ class RunDailyUpdateListingSales extends Command
      */
     public function handle()
     {
-        Artisan::call('db:seed', [
-            '--class' => 'UpdateListingItemSalesSeeder',
-        ]);
+        (new UpdateListingItemSalesSeeder())->run();
 
         $this->info('UpdateListingItemSalesSeeder executed.');
     }
