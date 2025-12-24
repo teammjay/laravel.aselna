@@ -403,6 +403,12 @@ class JobScheduler extends Seeder
                 'name' => 'Product Key Features Sync',
                 'description' => 'Sync all product key features',
                 'class_name' => 'App\Jobs\ProductKeyFeaturesSyncJob',
+            ],
+            [
+                //PopularDevicesSyncJob
+                'name' => 'Popular Devices Sync',
+                'description' => 'Sync all popular devices',
+                'class_name' => 'App\Jobs\Devices\PopularDevicesSyncJob',
             ]
         ];
 
