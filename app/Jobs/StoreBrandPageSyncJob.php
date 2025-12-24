@@ -525,10 +525,16 @@ class StoreBrandPageSyncJob implements ShouldQueue
             'type' => 'single_line_text_field'
         ];
 
+        $device_name = $device->brand->name . ' ' . $device->name;
+        // replace Apple from the device name
+        $device_name = str_replace('Apple ', '', $device_name);
+        $device_name = str_replace('apple ', '', $device_name);
+
+
         $metafields[] = [
             'namespace' => 'global',
             'key' => 'device_name',
-            'value' => $device->brand->name . ' ' . $device->name,
+            'value' => $device_name,
             'type' => 'single_line_text_field'
         ];
 
