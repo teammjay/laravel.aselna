@@ -435,6 +435,11 @@ class SubmitShopifyProductsJob implements ShouldQueue
             }),
         ];
 
+        $metafields = $this->getMetafieldsData($productData);
+        if (count($metafields) > 0) {
+            $productNewData['productSet']['metafields'] = $metafields;
+        }
+
         Log::info('Product Data: ' . json_encode($productNewData));
 
         $shopifyAuthService = new ShopifyAuthService($store->secret_key, $store->service_url);
@@ -574,6 +579,11 @@ class SubmitShopifyProductsJob implements ShouldQueue
 
         if (count($media) > 0) {
             $productUpdateData['media'] = $media;
+        }
+
+        $metafields = $this->getMetafieldsData($productData);
+        if (count($metafields) > 0) {
+            $productUpdateData['metafields'] = $metafields;
         }
 
         Log::info('Product Update Data: ' . json_encode($productUpdateData));
@@ -786,5 +796,56 @@ class SubmitShopifyProductsJob implements ShouldQueue
         $this->handleMediaImages($oldImages['data']['product'], $listingItem,$AlreadyImages);
 
         $this->deleteOldProductImages($shopifyAuthService, $marketplace_product_id,$AlreadyImages);
+    }
+
+    private function getMetafieldsData(mixed $productData)
+    {
+        $product_type = ProductType::where('id', $productData->product_type)->first();
+        $parent_product_type = ProductType::where('id', $product_type->parent_id)->first();
+        $productInterface = ProductInterface::where('product_id', $productData->product_id)->first();
+
+        $metafields = [];
+        $metafields[] = [
+            'namespace' => 'global',
+            'key' => 'category_name',
+            'value' => $product_type->name,
+            'type' => 'single_line_text_field'
+        ];
+
+        //change the name from Wired Earphones to wired-earphones
+        $metafields[] = [
+            'namespace' => 'global',
+            'key' => 'category',
+            'value' => strtolower(str_replace(' ', '-', $product_type->name)),
+            'type' => 'single_line_text_field'
+        ];
+
+        $metafields[] = [
+            'namespace' => 'global',
+            'key' => 'sub_category_name',
+            'value' => $parent_product_type->name,
+            'type' => 'single_line_text_field'
+        ];
+
+        //change the name from Wired Earphones to wired-earphones
+        $metafields[] = [
+            'namespace' => 'global',
+            'key' => 'sub_category',
+            'value' => strtolower(str_replace(' ', '-', $parent_product_type->name)),
+            'type' => 'single_line_text_field'
+        ];
+
+        if (isset($productInterface)) {
+            $metafields[] = [
+                'namespace' => 'global',
+                'key' => 'interface',
+                'value' => $productInterface->interface_id,
+                'type' => 'single_line_text_field'
+            ];
+        }
+
+
+
+        return $metafields;
     }
 }
