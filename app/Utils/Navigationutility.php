@@ -140,20 +140,21 @@ class Navigationutility
             case WebStorePageType::BRAND_DEVICES:
                 $brand = Brand::where('id', $request->device_brand_id)->firstOrFail();
                 $popularLinks = StoreNavigationPage::join('device', 'store_navigation_page.device_id', '=', 'device.id')
+                    ->join('popular_devices','store_navigation_page.device_id', '=', 'popular_devices.device_id')
                     ->where('store_id', $store_id)
                     ->where('page_type', $skipDevicePages ? WebStorePageType::DEVICE : WebStorePageType::BRAND_DEVICE_PRODUCT_TYPES)
                     ->where('device_brand_id', $brand->id)
-                    ->where('device.order', '<=', 10)
                     ->orderBy('device.device_type_id', 'asc')
                     ->orderBy('device.release_date', 'desc')
                     ->get();
 
+                // I want join here to get all devices which are not in popular devices
                 $otherLinks = StoreNavigationPage::join('device', 'store_navigation_page.device_id', '=', 'device.id')
+                    ->leftJoin('popular_devices','store_navigation_page.device_id', '=', 'popular_devices.device_id')
+                    ->whereNull('popular_devices.device_id')
                     ->where('store_id', $store_id)
                     ->where('page_type', $skipDevicePages ? WebStorePageType::DEVICE : WebStorePageType::BRAND_DEVICE_PRODUCT_TYPES)
                     ->where('device_brand_id', $brand->id)
-                    ->where('device.order', '>', 10)
-                    ->where('device.order', '<=', 30)
                     ->orderBy('device.name', 'asc')
                     ->get();
 
