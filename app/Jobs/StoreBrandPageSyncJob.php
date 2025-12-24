@@ -246,6 +246,10 @@ class StoreBrandPageSyncJob implements ShouldQueue
                                 ];
                             }
 
+                            $metafields = $this->getDeviceMetafields($device);
+
+                            $collectionData['collection']['metafields'] = $metafields;
+
                             if ($alreadyCollection = $this->shopifyAuthService->getCollectionByHandle($handle)) {
                                 Log::info('Collection already exists, updating collection', ['handle' => $handle]);
                                 $collectionData['collection']['id'] = $alreadyCollection['id'];
@@ -502,5 +506,48 @@ class StoreBrandPageSyncJob implements ShouldQueue
             $publicationIds[] = $publication['node']['id'];
         }
         $this->publications = $publicationIds;
+    }
+
+    private function getDeviceMetafields(mixed $device)
+    {
+        $metafields = [];
+        $metafields[] = [
+            'namespace' => 'global',
+            'key' => 'device_model_name',
+            'value' => $device->name,
+            'type' => 'single_line_text_field'
+        ];
+
+        $metafields[] = [
+            'namespace' => 'global',
+            'key' => 'device_brand_name',
+            'value' => $device->brand->name,
+            'type' => 'single_line_text_field'
+        ];
+
+        $device_name = $device->brand->name . ' ' . $device->name;
+        // replace Apple from the device name
+        $device_name = str_replace('Apple ', '', $device_name);
+        $device_name = str_replace('apple ', '', $device_name);
+
+
+        $metafields[] = [
+            'namespace' => 'global',
+            'key' => 'device_name',
+            'value' => $device_name,
+            'type' => 'single_line_text_field'
+        ];
+
+        //device_id
+        $metafields[] = [
+            'namespace' => 'global',
+            'key' => 'device_id',
+            'value' => (string)$device->id,
+            'type' => 'single_line_text_field'
+        ];
+
+        // remainging device_type,device_code,device_sub_type, description_tag,title_tag,device_image_url,device_categories_json,interfaces.
+
+        return $metafields;
     }
 }

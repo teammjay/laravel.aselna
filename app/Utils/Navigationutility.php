@@ -93,34 +93,47 @@ class Navigationutility
 
             case WebStorePageType::ALL_BRANDS:
                 // join device table with device_brand_id
-                $links = StoreNavigationPage::join('brands', 'store_navigation_page.device_brand_id', '=', 'brands.id')
+                $popularLinks = StoreNavigationPage::join('brands', 'store_navigation_page.device_brand_id', '=', 'brands.id')
                     ->where('store_id', $store_id)
                     ->where('page_type', WebStorePageType::BRAND_DEVICES)
+                    ->where('brands.order_no', '<=', 10)
                     ->orderBy('brands.order_no', 'asc')
                     ->get();
+
+                $otherLinks = StoreNavigationPage::join('brands', 'store_navigation_page.device_brand_id', '=', 'brands.id')
+                    ->where('store_id', $store_id)
+                    ->where('page_type', WebStorePageType::BRAND_DEVICES)
+                    ->where('brands.order_no', '>', 10)
+                    ->orderBy('brands.name', 'asc')
+                    ->get();
+
                 $finalLinkArray['final_title'] = 'Shop By Brand';
-                foreach ($links as $link) {
+                foreach ($popularLinks as $link) {
                     $brandPage = StoreNavigationPage::where('store_id', $store_id)
                         ->where('page_type', WebStorePageType::BRAND)
                         ->where('device_brand_id', $link->device_brand_id)
                         ->first();
-                    if ($link->brand->sort_order <= 10) {
-                        $finalLinkArray['popular_link'][] = [
-                            'id' => $link->id,
-                            'title' => $link->brand->name,
-                            'imageUrl' => $brandPage->store_image_url,
-                            'url' => "/pages/" . $link->url_path,
-                            'popular' => true
-                        ];
-                    } else {
-                        $finalLinkArray['other_link'][] = [
-                            'id' => $link->id,
-                            'title' => $link->brand->name,
-                            'imageUrl' => $brandPage->store_image_url,
-                            'url' => "/pages/" . $link->url_path,
-                            'popular' => false
-                        ];
-                    }
+                    $finalLinkArray['popular_link'][] = [
+                        'id' => $link->id,
+                        'title' => $link->brand->name,
+                        'imageUrl' => $brandPage->store_image_url,
+                        'url' => "/pages/" . $link->url_path,
+                        'popular' => true
+                    ];
+                }
+
+                foreach ($otherLinks as $link) {
+                    $brandPage = StoreNavigationPage::where('store_id', $store_id)
+                        ->where('page_type', WebStorePageType::BRAND)
+                        ->where('device_brand_id', $link->device_brand_id)
+                        ->first();
+                    $finalLinkArray['other_link'][] = [
+                        'id' => $link->id,
+                        'title' => $link->brand->name,
+                        'imageUrl' => $brandPage->store_image_url,
+                        'url' => "/pages/" . $link->url_path,
+                        'popular' => false
+                    ];
                 }
                 break;
 

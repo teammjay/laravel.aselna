@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Models\UserAccount;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Auth;
 use Throwable;
 
 class CriticalErrorService
@@ -59,9 +60,12 @@ class CriticalErrorService
 
     private static function sendNotificationEmail($errorData){
 
-        $userId = 1;
+        $userId = Auth::id();
         Log::info('User ID : '.$userId);
-        $userDetail = User::findOrFail($userId);
+        $userDetail = User::where('id',$userId)->first();
+        if(!$userDetail){
+            return false;
+        }
         $sendTo = $userDetail->send_to_email;
         $cc_emails = '';
         if($userDetail->cc_email != ''){
