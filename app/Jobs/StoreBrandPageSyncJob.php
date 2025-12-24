@@ -450,6 +450,26 @@ class StoreBrandPageSyncJob implements ShouldQueue
                             'product_type_id' => $productType->id,
                         ], $request->all());
                     }
+                case WebStorePageType::ALL_BRANDS:
+                    $links = Navigationutility::getLinks($this->store_id, $this->page_type, $request);
+
+                    $data = [
+                        'description' => $request->description ?? '',
+                        'title' => $request->title ?? $links['final_title'],
+                        'name' => $request->name ?? '',
+                        'popularLinks' => $links['popular_link'] ?? [],
+                        'otherLinks' => $links['other_link'] ?? [],
+                        'alphabeticallySortedPopularLinks' => [],
+                        'alphabeticallySortedOtherLinks' => [],
+                    ];
+
+                    $request['generated_body'] = Navigationutility::fillTemplateWithData($template->template_code, $data);
+
+                    StoreNavigationPage::updateOrCreate([
+                        'store_id' => $this->store_id,
+                        'page_type' => $page_type
+                    ], $request->all());
+                    break;
             }
         }catch (\Throwable $e) {
 
