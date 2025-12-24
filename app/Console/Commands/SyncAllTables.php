@@ -49,6 +49,7 @@ use App\Jobs\ProductColorSync;
 use App\Jobs\ProductConditionJob;
 use App\Jobs\ProductImagesSyncJob;
 use App\Jobs\ProductInterfaces;
+use App\Jobs\ProductKeyFeaturesSyncJob;
 use App\Jobs\ProductMaterialSyncJob;
 use App\Jobs\ProductSearchTermSyncJob;
 use App\Jobs\ProductSizeSyncJob;
@@ -152,7 +153,7 @@ class SyncAllTables extends Command
 //            ListingItemSyncJob::dispatch(),
 //            ListingItemDataSyncJob::dispatch(),
 //            ListingItemLinkSyncJob::dispatch(),
-            ListingItemProductImageSyncJob::dispatch();
+//            ListingItemProductImageSyncJob::dispatch();
 //            StoreTypeListingSyncJob::dispatch(),
 //            ListingFeedSyncJob::dispatch(),
 //            UPCSyncJob::dispatch(),
@@ -215,6 +216,7 @@ class SyncAllTables extends Command
 //        EbayListingItemSyncJob::dispatch();
 //        AmazonListingItemSyncJob::dispatch();
 //        TransactionStatusCheckJob::dispatch();
+//        ProductKeyFeaturesSyncJob::dispatch();
 
         $transactionIds = [
 ////            '9400150105798006163885',

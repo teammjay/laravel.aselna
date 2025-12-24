@@ -741,6 +741,11 @@ class AmazonUtility
                 return [['value' => $itemDetail->sku, 'language_tag' => 'en_US']];
             case 'batteries_required':
                 return [['value' => 'false']];
+            case 'unit_count':
+                if ($value) {
+                    return [['value' => (int)$value->calculated_value(), 'type' => ['value' => 'Count', 'language_tag' => 'en_US']]];
+                }
+                break;
             default:
                 if ($value) {
                     return [['value' => $value->calculated_value(), 'language_tag' => 'en_US']];
