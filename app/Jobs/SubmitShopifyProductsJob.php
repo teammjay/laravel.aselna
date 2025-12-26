@@ -607,7 +607,7 @@ class SubmitShopifyProductsJob implements ShouldQueue
             $this->handleMediaImages($response['data']['productUpdate']['product'], $listingItem);
             $firstImage = ListingItemProductImage::where('listing_item_id', $listingItem->id)->where('main_image', 1)->first();
 
-            if (isset($firstImage) && isset($firstImage->reference_id)) {
+            if (isset($firstImage) && isset($firstImage->reference_id) && !empty($firstImage->reference_id)) {
                 if (isset($featuredImageId)) {
                     Log::info('Featured Image Id: ' . $featuredImageId);
                     $featuredImageIdReplaced = str_replace('gid://shopify/MediaImage/', '', $featuredImageId);
