@@ -150,8 +150,10 @@ class Navigationutility
 
                 // I want join here to get all devices which are not in popular devices
                 $otherLinks = StoreNavigationPage::join('device', 'store_navigation_page.device_id', '=', 'device.id')
-                    ->leftJoin('popular_devices','store_navigation_page.device_id', '=', 'popular_devices.device_id')
-                    ->whereNull('popular_devices.device_id')
+                    ->whereNotIn('store_navigation_page.device_id', function ($query) use ($store_id, $brand) {
+                        $query->select('device_id')
+                            ->from('popular_devices');
+                    })
                     ->where('store_id', $store_id)
                     ->where('page_type', $skipDevicePages ? WebStorePageType::DEVICE : WebStorePageType::BRAND_DEVICE_PRODUCT_TYPES)
                     ->where('device_brand_id', $brand->id)

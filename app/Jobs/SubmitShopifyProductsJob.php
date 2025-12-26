@@ -150,8 +150,8 @@ class SubmitShopifyProductsJob implements ShouldQueue
                         ->whereNull('parent_id')
                         ->whereIn('product_status', ['discontinued', 'temporaryDisabled', 'draft'])
                         ->orderBy('created_at', 'desc')
-                        ->limit(100)
                         ->get();
+
                     foreach ($discontinuedProducts as $product) {
                         $this->discontinueProduct($product, $store);
                         if (env('APP_ENV') == 'local') {
