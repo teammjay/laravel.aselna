@@ -587,9 +587,11 @@ class SubmitShopifyProductsJob implements ShouldQueue
         Log::info('Product Update Data: ' . json_encode($productUpdateData));
 
         $response = $shopifyAuthService->updateProduct($productUpdateData);
+
         $priceResponse = $shopifyAuthService->updatePrice($priceUpdatesData);
         $shopifyAuthService->removeTags($proDetail->marketplace_product_id, $tags['removeTags']);
         $shopifyAuthService->addTags($proDetail->marketplace_product_id, $tags['addTags']);
+
         $shopifyAuthService->productPublish($proDetail->marketplace_product_id, $this->publications);
 
 
@@ -599,9 +601,24 @@ class SubmitShopifyProductsJob implements ShouldQueue
             $productIdReplaced = str_replace('gid://shopify/Product/', '', $productId);
             $handle = $response['data']['productUpdate']['product']['handle'];
             $variantId = $response['data']['productUpdate']['product']['variants']['nodes'][0]['id'];
+            $featuredImageId = $response['data']['productUpdate']['product']['featuredMedia']['id'] ?? null;
             $variantIdReplaced = str_replace('gid://shopify/ProductVariant/', '', $variantId);
 
             $this->handleMediaImages($response['data']['productUpdate']['product'], $listingItem);
+            $firstImage = ListingItemProductImage::where('listing_item_id', $listingItem->id)->where('main_image', 1)->first();
+
+            if (isset($firstImage) && isset($firstImage->reference_id)) {
+                if (isset($featuredImageId)) {
+                    Log::info('Featured Image Id: ' . $featuredImageId);
+                    $featuredImageIdReplaced = str_replace('gid://shopify/MediaImage/', '', $featuredImageId);
+                    if ($featuredImageIdReplaced != $firstImage->reference_id) {
+                        Log::info('Updating Featured Image to Id: ' . $firstImage->reference_id);
+                        $shopifyAuthService->setFeaturedImage($proDetail->marketplace_product_id, $firstImage->reference_id);
+                    }
+                } else {
+                    $shopifyAuthService->setFeaturedImage($proDetail->marketplace_product_id, $firstImage->reference_id);
+                }
+            }
 
             $listingItem->update([
                 'store_url' => $handle,

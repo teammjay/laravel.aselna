@@ -612,4 +612,21 @@ class ShopifyAuthService
 
         return $response;
     }
+
+    public function setFeaturedImage($marketplace_product_id, $reference_id)
+    {
+        $variables = [
+            "id" => $marketplace_product_id,
+            "moves" => [
+                [
+                    "id" => "gid://shopify/MediaImage/".$reference_id,
+                    "newPosition" => "0"
+                ]
+            ]
+        ];
+
+        $response = $this->makeGraphQLRequest(ShopifyQueries::$productReorderMedia, $variables);
+        Log::info('Set Featured Image Response: ' . json_encode($response));
+        return $response;
+    }
 }
