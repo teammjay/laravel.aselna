@@ -649,7 +649,7 @@ class MessagesController extends Controller
         $returnAddress = $imageName = $imageUrl = $imagesPath = "";
         $orderDetail = [];
         if(isset($order_id) && $order_id != ''){
-            $orderDetail = Order::where('order_id',$order_id)->first();
+            $orderDetail = Order::where('order_id',$order_id)->orWhere('purchase_order_id',$order_id)->first();
             if($orderDetail !=NULL){
                 $orderOperation = OrderOperation::where('order_id',$orderDetail->id)->orderBy('created_at','desc')->first();
                 $operation_id = $orderOperation->id;
