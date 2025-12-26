@@ -48,6 +48,9 @@ GQL;
                     id
                 }
             }
+            featuredMedia {
+                id
+            }
           media(first: 249) {
             nodes {
               alt
@@ -797,4 +800,14 @@ GQL;
           }
         }
 GQL;
+    public static $productReorderMedia = <<<GQL
+mutation GetProducts (\$id : ID!,\$moves : [MoveInput!]!) {
+    productReorderMedia(id : \$id,moves: \$moves) {
+        job {
+            id
+        }
+    }
+}
+GQL;
+
 }
