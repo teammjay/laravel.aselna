@@ -26,6 +26,7 @@ use Illuminate\Support\Facades\Schedule;
 
 
 Schedule::command('logs:rotate')->everyFourHours();
+Schedule::command('app:run-daily-update-listing-sales')->everyFourHours();
 
 
 // Listing sync Job

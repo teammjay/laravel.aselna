@@ -35,6 +35,7 @@ class UpdateListingItemSalesSeeder extends Seeder
             ->orderBy('sku')
             ->chunk(1000, function ($salesChunk) use (&$totalUpdated) {
                 foreach ($salesChunk as $row) {
+                    Log::info('Processing SKU: '.$row->sku);
                     $sku  = $row->sku;
                     $count = $row->saleCount ?? 0;
                     $date  = $row->lastSaleDate;

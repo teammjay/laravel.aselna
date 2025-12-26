@@ -147,16 +147,16 @@ class ShopifyCombinedSyncing implements ShouldQueue
                     $shopifyIndvJob3->setChainId($this->chainId);
                     $chain[] = $shopifyIndvJob3;
 
-//                $chain[] = new StoreBrandPageSyncJob(
-//                    $store->id,
-//                    WebStorePageType::ALL_BRANDS,
-//                    $allBrandTemplate->id
-//                );
+                $chain[] = new StoreBrandPageSyncJob(
+                    $store->id,
+                    WebStorePageType::ALL_BRANDS,
+                    $allBrandTemplate->id
+                );
 //
-//                $chain[] = new ShopifyIndvPagesSyncJob(
-//                    $store->id,
-//                    WebStorePageType::ALL_BRANDS
-//                );
+                $chain[] = new ShopifyIndvPagesSyncJob(
+                    $store->id,
+                    WebStorePageType::ALL_BRANDS
+                );
                 }
 
 //            self::queueableWithChain($chain)->dispatch();

@@ -150,8 +150,8 @@ class SubmitShopifyProductsJob implements ShouldQueue
                         ->whereNull('parent_id')
                         ->whereIn('product_status', ['discontinued', 'temporaryDisabled', 'draft'])
                         ->orderBy('created_at', 'desc')
-                        ->limit(100)
                         ->get();
+
                     foreach ($discontinuedProducts as $product) {
                         $this->discontinueProduct($product, $store);
                         if (env('APP_ENV') == 'local') {
@@ -356,20 +356,20 @@ class SubmitShopifyProductsJob implements ShouldQueue
 
         $productOptions = [];
 
-        $descriptionHtml = '';
-        if (isset($productData->productKeyFeatures)) {
-            $descriptionHtml .= '<ul>';
-            foreach ($productData->productKeyFeatures as $feature) {
-                $safeText = htmlspecialchars($feature->value, ENT_QUOTES | ENT_XML1, 'UTF-8'); // Escapes special characters
-                if (!empty(trim($safeText))) {
-                    $descriptionHtml .= '<li>' . $safeText . '</li>';
-                }
-            }
-
-            $descriptionHtml .= '</ul>';
-        }
-        $descriptionHtml .= '<h2>Product Description</h2>';
-        $descriptionHtml .= '<p>' . $productData->product_description . '</p>';
+        $descriptionHtml = $this->getDescriptionHtml($productData,$store);
+//        if (isset($productData->productKeyFeatures)) {
+//            $descriptionHtml .= '<ul>';
+//            foreach ($productData->productKeyFeatures as $feature) {
+//                $safeText = htmlspecialchars($feature->value, ENT_QUOTES | ENT_XML1, 'UTF-8'); // Escapes special characters
+//                if (!empty(trim($safeText))) {
+//                    $descriptionHtml .= '<li>' . $safeText . '</li>';
+//                }
+//            }
+//
+//            $descriptionHtml .= '</ul>';
+//        }
+//        $descriptionHtml .= '<h2>Product Description</h2>';
+//        $descriptionHtml .= '<p>' . $productData->product_description . '</p>';
 
         $tags = [];
         $tags = $this->getAllTags($productData, $tags);
@@ -514,20 +514,20 @@ class SubmitShopifyProductsJob implements ShouldQueue
 
         $productTitle = $this->generateProductTitle($productData, $store);
 
-        $descriptionHtml = '';
-        if (isset($productData->productKeyFeatures)) {
-            $descriptionHtml .= '<ul>';
-            foreach ($productData->productKeyFeatures as $feature) {
-                $safeText = htmlspecialchars($feature->value, ENT_QUOTES | ENT_XML1, 'UTF-8'); // Escapes special characters
-                if (!empty(trim($safeText))) {
-                    $descriptionHtml .= '<li>' . $safeText . '</li>';
-                }
-            }
-
-            $descriptionHtml .= '</ul>';
-        }
-        $descriptionHtml .= '<h2>Product Description</h2>';
-        $descriptionHtml .= '<p>' . $productData->product_description . '</p>';
+        $descriptionHtml = $this->getDescriptionHtml($productData,$store);
+//        if (isset($productData->productKeyFeatures)) {
+//            $descriptionHtml .= '<ul>';
+//            foreach ($productData->productKeyFeatures as $feature) {
+//                $safeText = htmlspecialchars($feature->value, ENT_QUOTES | ENT_XML1, 'UTF-8'); // Escapes special characters
+//                if (!empty(trim($safeText))) {
+//                    $descriptionHtml .= '<li>' . $safeText . '</li>';
+//                }
+//            }
+//
+//            $descriptionHtml .= '</ul>';
+//        }
+//        $descriptionHtml .= '<h2>Product Description</h2>';
+//        $descriptionHtml .= '<p>' . $productData->product_description . '</p>';
 
         $tags = $this->getAllTags($productData, []);
         $finalTagsString = implode(', ', $tags['addTags']);
@@ -583,7 +583,7 @@ class SubmitShopifyProductsJob implements ShouldQueue
 
         $metafields = $this->getMetafieldsData($productData);
         if (count($metafields) > 0) {
-            $productUpdateData['metafields'] = $metafields;
+            $productUpdateData['product']['metafields'] = $metafields;
         }
 
         Log::info('Product Update Data: ' . json_encode($productUpdateData));
@@ -844,8 +844,36 @@ class SubmitShopifyProductsJob implements ShouldQueue
             ];
         }
 
-
-
         return $metafields;
+    }
+
+    private function getDescriptionHtml( $productData,$store)
+    {
+        $descriptionHtml = '<div class="product-key-features">';
+        if (isset($productData->productKeyFeatures)) {
+            $descriptionHtml .= '<ul>';
+            foreach ($productData->productKeyFeatures as $feature) {
+                $safeText = htmlspecialchars($feature->value, ENT_QUOTES | ENT_XML1, 'UTF-8'); // Escapes special characters
+                if (!empty(trim($safeText))) {
+                    $descriptionHtml .= '<li>' . $safeText . '</li>';
+                }
+            }
+
+            $descriptionHtml .= '</ul>';
+        }
+        $descriptionHtml .= '</div>';
+
+        if (isset($productData->productDescription)) {
+            $descriptionHtml .= '<div class="product-desc">';
+            $descriptionHtml .= '<h2>Product Description</h2>';
+            $descriptionHtml .= '<p>' . $productData->product_description . '</p>';
+            $descriptionHtml .= '</div>';
+        }
+
+        if (strtolower($store->name) == 'odemobile') {
+
+        }
+
+        return $descriptionHtml;
     }
 }
