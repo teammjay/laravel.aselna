@@ -119,18 +119,22 @@ class SubmitShopifyProductsJob implements ShouldQueue
                     }
 
                     // Handle Updated Products
-                    $AlreadyCreatedIds = ManageMarketplaceProduct::select('product_id')
-                        ->where('upload_status', 'success')->where('store_id', $store->id)
-                        ->orderBy('updated_at', 'asc')
-                        ->get();
+//                    $AlreadyCreatedIds = ManageMarketplaceProduct::select('product_id')
+//                        ->where('upload_status', 'success')->where('store_id', $store->id)
+//                        ->orderBy('updated_at', 'asc')
+//                        ->get();
 
                     $products = Catalog::select('*')->with('productType', 'productKeyFeatures', 'productColor')
-                        ->whereNotIn('product_type', $productTypes)
-                        ->whereIn('product_type', $ceaProductTypes)
-                        ->whereNull('parent_id')
-                        ->where('product_status', '=', 'active')
-                        //->where('product_sku', 'E74')
-                        ->whereIn('product_id', $AlreadyCreatedIds)
+                        ->join('manage_marketplace_product', function($join) use ($store) {
+                            $join->on('catalog.product_id', '=', 'manage_marketplace_product.product_id')
+                                ->where('manage_marketplace_product.upload_status', 'success')
+                                ->where('manage_marketplace_product.store_id', $store->id);
+                        })
+                        ->whereNotIn('catalog.product_type', $productTypes)
+                        ->whereIn('catalog.product_type', $ceaProductTypes)
+                        ->whereNull('catalog.parent_id')
+                        ->where('catalog.product_status', '=', 'active')
+                        ->orderBy('manage_marketplace_product.updated_at', 'asc')
                         ->limit(200)
                         ->get();
 
