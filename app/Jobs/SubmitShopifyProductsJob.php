@@ -122,7 +122,6 @@ class SubmitShopifyProductsJob implements ShouldQueue
                     $AlreadyCreatedIds = ManageMarketplaceProduct::select('product_id')
                         ->where('upload_status', 'success')->where('store_id', $store->id)
                         ->orderBy('updated_at', 'asc')
-                        ->limit(1000)
                         ->get();
 
                     $products = Catalog::select('*')->with('productType', 'productKeyFeatures', 'productColor')
@@ -132,7 +131,6 @@ class SubmitShopifyProductsJob implements ShouldQueue
                         ->where('product_status', '=', 'active')
                         //->where('product_sku', 'E74')
                         ->whereIn('product_id', $AlreadyCreatedIds)
-                        ->orderBy('created_at', 'desc')
                         ->limit(200)
                         ->get();
 
@@ -561,7 +559,7 @@ class SubmitShopifyProductsJob implements ShouldQueue
 
         $images = GenerateProductImage::where('product_id', $productData->product_id)->orderBy('main_image', 'desc')->get();
         $media = [];
-        foreach ($images as $image) {
+        foreach ($images as $key => $image) {
             // check if image exists in shopify already
             $isExists = ListingItemProductImage::where('listing_item_id', $listingItem->id)
                 ->where('product_image_id', $image->product_image_id)
