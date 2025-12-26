@@ -58,8 +58,10 @@ class ProductChannelDetailSyncJob implements ShouldQueue
             return;
         }
         ProductChannelDetail::updateOrCreate([
-            'id' => $productChannelDetail->id
+            'store_type_id' => $productChannelDetail->channel_id,
+            'product_id' => $productChannelDetail->product_id,
         ], [
+            'id' => $productChannelDetail->id,
             'store_type_id' => $productChannelDetail->channel_id,
             'product_id' => $productChannelDetail->product_id,
             'status' => $productChannelDetail->product_status,
