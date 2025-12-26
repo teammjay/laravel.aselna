@@ -125,16 +125,16 @@ class SubmitShopifyProductsJob implements ShouldQueue
 //                        ->get();
 
                     $products = Catalog::select('*')->with('productType', 'productKeyFeatures', 'productColor')
-                        ->join('manage_marketplace_product', function($join) use ($store) {
-                            $join->on('catalog.product_id', '=', 'manage_marketplace_product.product_id')
-                                ->where('manage_marketplace_product.upload_status', 'success')
-                                ->where('manage_marketplace_product.store_id', $store->id);
+                        ->join('manage_marketplace_products', function($join) use ($store) {
+                            $join->on('catalog.product_id', '=', 'manage_marketplace_products.product_id')
+                                ->where('manage_marketplace_products.upload_status', 'success')
+                                ->where('manage_marketplace_products.store_id', $store->id);
                         })
                         ->whereNotIn('catalog.product_type', $productTypes)
                         ->whereIn('catalog.product_type', $ceaProductTypes)
                         ->whereNull('catalog.parent_id')
                         ->where('catalog.product_status', '=', 'active')
-                        ->orderBy('manage_marketplace_product.updated_at', 'asc')
+                        ->orderBy('manage_marketplace_products.updated_at', 'asc')
                         ->limit(200)
                         ->get();
 
