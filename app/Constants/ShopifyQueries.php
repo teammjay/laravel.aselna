@@ -53,6 +53,7 @@ GQL;
             }
           media(first: 249) {
             nodes {
+              id
               alt
               mediaContentType
               preview {
