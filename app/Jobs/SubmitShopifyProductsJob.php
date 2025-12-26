@@ -733,6 +733,8 @@ class SubmitShopifyProductsJob implements ShouldQueue
                 if (!isset($mediaItem['preview']['image']['url'])) {
                     continue;
                 }
+                $ImageId = $mediaItem['id'];
+                $imageIdReplaced = str_replace('gid://shopify/MediaImage/', '', $ImageId);
                 Log::info('Media Image: ' . json_encode($mediaItem));
                 $imageUrl = $mediaItem['preview']['image']['url'];
                 if (ListingItemProductImage::where('listing_item_id', $listingItem->id)->where('path', $imageUrl)->exists()) {
@@ -754,7 +756,7 @@ class SubmitShopifyProductsJob implements ShouldQueue
                             'product_image_id' => $generatedImage->product_image_id,
                             'main_image' => $generatedImage->main_image,
                             'image_file_system_id' => $generatedImage->image_file_system_id,
-                            'reference_id' => $generatedImage->reference_id,
+                            'reference_id' => $imageIdReplaced,
                             'path' => $imageUrl,
                         ]);
                     }
