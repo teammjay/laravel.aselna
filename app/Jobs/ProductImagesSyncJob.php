@@ -95,9 +95,10 @@ class ProductImagesSyncJob implements ShouldQueue
         $SystemProductImage = ProductImages::where('product_id', $product->product_id)->where('sort_order', $productImage->picture_id)->first();
 
         Log::info('Product Image Date ' . $productImage->date_updated);
-        if (isset($SystemProductImage) && $SystemProductImage->updated_at >= ($productImage->date_updated ?? now())) {
-            return;
-        }
+        // TODO Need to remove on 1 Jan 2026
+//        if (isset($SystemProductImage) && $SystemProductImage->updated_at >= ($productImage->date_updated ?? now())) {
+//            return;
+//        }
 
         //check if file exists in storage
         try {
@@ -141,7 +142,8 @@ class ProductImagesSyncJob implements ShouldQueue
                 'main_image' => $productImage->picture_id === 1 ? true : false,
                 'image' => $mainImageDetail ? $mainImageDetail->id : '',
                 'thumbnail_image' => $thumbnailImageDetail ? $thumbnailImageDetail->id : null,
-                'sort_order' => $productImage->picture_id
+                'sort_order' => $productImage->picture_id,
+                'code' => $productImage->product_id . '-' . $productImage->picture_id
             ]);
         } catch (Exception $e) {
 
