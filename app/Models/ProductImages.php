@@ -25,7 +25,7 @@ class ProductImages extends Model
         });
     }
 
-    protected $fillable = ['id', 'product_id', 'main_image', 'image', 'thumbnail_image', 'sort_order', 'created_by', 'updated_by', 'created_at', 'updated_at'];
+    protected $fillable = ['id', 'product_id', 'main_image','code', 'image', 'thumbnail_image', 'sort_order', 'created_by', 'updated_by', 'created_at', 'updated_at'];
 
     public function products()
     {
