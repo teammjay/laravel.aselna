@@ -741,9 +741,9 @@ class SubmitShopifyProductsJob implements ShouldQueue
                 $imageIdReplaced = str_replace('gid://shopify/MediaImage/', '', $ImageId);
                 Log::info('Media Image: ' . json_encode($mediaItem));
                 $imageUrl = $mediaItem['preview']['image']['url'];
-                if (ListingItemProductImage::where('listing_item_id', $listingItem->id)->where('path', $imageUrl)->exists()) {
-                    continue;
-                }
+//                if (ListingItemProductImage::where('listing_item_id', $listingItem->id)->where('path', $imageUrl)->exists()) {
+//                    continue;
+//                }
                 if(isset($AlreadyImages) && array_key_exists($imageUrl,$AlreadyImages)){
 
                 } else {

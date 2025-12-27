@@ -5,6 +5,7 @@ namespace App\Utils;
 use App\Constants\WebStorePageType;
 use App\Models\Brand;
 use App\Models\Device;
+use App\Models\DeviceInterface;
 use App\Models\ProductType;
 use App\Models\Store;
 use App\Models\StoreNavigationPage;
@@ -210,10 +211,30 @@ class Navigationutility
                     ->where('device_id', $request->device_id)
                     ->first();
 
+                $productTypeMapQuery = DeviceInterface::join('product_interface', 'device_interface.interface_id', '=', 'product_interface.interface_id')
+                    ->join('products', 'products.product_id', '=', 'product_interface.product_id')
+                    ->join('product_type', 'product_type.id', '=', 'products.product_type')
+                    ->join('device', 'device_interface.device_id', '=', 'device.id')
+                    ->where('device.status', 'active')
+                    ->where('products.product_status', 'active')
+                    ->where('device_interface.device_id', $request->device_id)
+                    ->groupBy('product_type.parent_id')
+                    ->select('product_type.parent_id','count(products.product_id) as product_count')
+                    ->get();
+
+                $productTypeMap = [];
+                foreach ($productTypeMapQuery as $ptm) {
+                    $productTypeMap[$ptm->parent_id] = $ptm->product_count;
+                }
+
                 $device = Device::where('id', $request->device_id)->firstOrFail();
 
                 $finalLinkArray['final_title'] = $device->brand->name . ' ' . $device->name . ' Accessories';
                 foreach ($links as $link) {
+                    // skip product types which do not have products for this device
+                    if (!array_key_exists($link->product_type_id, $productTypeMap)) {
+                        continue;
+                    }
                     $finalLinkArray['popular_link'][] = [
                         'id' => $link->id,
                         'title' => $link->productType->name,
