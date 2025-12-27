@@ -219,7 +219,7 @@ class Navigationutility
                     ->where('products.product_status', 'active')
                     ->where('device_interface.device_id', $request->device_id)
                     ->groupBy('product_type.parent_id')
-                    ->select('product_type.parent_id','count(products.product_id) as product_count')
+                    ->select('product_type.parent_id', \DB::raw('count(products.product_id) as product_count'))
                     ->get();
 
                 $productTypeMap = [];
