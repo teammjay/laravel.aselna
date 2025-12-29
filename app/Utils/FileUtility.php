@@ -30,6 +30,8 @@ class FileUtility
         try {
             Log::info('FileImageSave: ' . $imagePath);
             $storagePath = storage_path('app/public/' . $localPath . '/' . $fileName);
+            // create folder if not exists
+            File::ensureDirectoryExists(dirname($storagePath));
             $image = file_get_contents($imagePath);
             if ($image !== false) {
                 file_put_contents($storagePath, $image);

@@ -25,7 +25,12 @@ class ProductType extends Model
         });
     }
 
-    protected $fillable = ['id', 'code', 'name', 'parent_id', 'singular_name', 'simple_name', 'sort_order', 'created_by', 'updated_by', 'created_at', 'updated_at'];
+    protected $fillable = ['id', 'code', 'name', 'parent_id', 'singular_name', 'simple_name', 'sort_order', 'image_id','created_by', 'updated_by', 'created_at', 'updated_at'];
+
+    public function image()
+    {
+        return $this->belongsTo(SysFile::class, 'image_id');
+    }
 
     // Define the parent relationship (belongsTo)
     public function parent()
