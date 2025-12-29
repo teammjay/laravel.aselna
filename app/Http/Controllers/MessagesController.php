@@ -1769,6 +1769,7 @@ class MessagesController extends Controller
 
                 $order_detail = Order::updateOrCreate([
                     'order_id' => $new_order_id,
+                    'store_id' => $orderOperation->store_id,
                 ], $orderData);
 
                 $orderOperationData = [
@@ -1789,6 +1790,7 @@ class MessagesController extends Controller
 
                 $order_operation_detail = OrderOperation::updateOrCreate([
                     'order_id' => $order_detail->id,
+                    'operation_type' => OrderOperationType::OrderShipment,
                 ], $orderOperationData);
 
                 /* get order items*/
