@@ -691,7 +691,7 @@ class ProcessFeedGenerationJob implements ShouldQueue
                                 // item group id logic
                                 //$itemGroupId = $item_detail->sku . '-' . $device->code;
                                 $itemGroupId = $listitem->sku . '-' . $device->code;
-                                $mainImage .= '?'.$item_detail->id;
+                                $finalMainImage = $mainImage . '?' .$item_detail->id;
 
                                 fputcsv($this->fileHandle, [
                                     $item_detail->sku,
@@ -700,7 +700,7 @@ class ProcessFeedGenerationJob implements ShouldQueue
                                     $ptype_id,
                                     $product_type,
                                     $product_url,
-                                    (isset($mainImage)) ? $mainImage : '',
+                                    (isset($finalMainImage)) ? $finalMainImage : '',
                                     (isset($itemDetail->product->condition)) ? strtolower($itemDetail->product->condition->name) : '',
                                     'in stock',
                                     $product_price . ' USD',
