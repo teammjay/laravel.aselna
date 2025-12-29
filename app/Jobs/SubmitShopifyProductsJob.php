@@ -119,20 +119,22 @@ class SubmitShopifyProductsJob implements ShouldQueue
                     }
 
                     // Handle Updated Products
-                    $AlreadyCreatedIds = ManageMarketplaceProduct::select('product_id')
-                        ->where('upload_status', 'success')->where('store_id', $store->id)
-                        ->orderBy('updated_at', 'asc')
-                        ->limit(1000)
-                        ->get();
+//                    $AlreadyCreatedIds = ManageMarketplaceProduct::select('product_id')
+//                        ->where('upload_status', 'success')->where('store_id', $store->id)
+//                        ->orderBy('updated_at', 'asc')
+//                        ->get();
 
                     $products = Catalog::select('*')->with('productType', 'productKeyFeatures', 'productColor')
-                        ->whereNotIn('product_type', $productTypes)
-                        ->whereIn('product_type', $ceaProductTypes)
-                        ->whereNull('parent_id')
-                        ->where('product_status', '=', 'active')
-                        //->where('product_sku', 'E74')
-                        ->whereIn('product_id', $AlreadyCreatedIds)
-                        ->orderBy('created_at', 'desc')
+                        ->join('manage_marketplace_products', function($join) use ($store) {
+                            $join->on('products.product_id', '=', 'manage_marketplace_products.product_id')
+                                ->where('manage_marketplace_products.upload_status', 'success')
+                                ->where('manage_marketplace_products.store_id', $store->id);
+                        })
+                        ->whereNotIn('products.product_type', $productTypes)
+                        ->whereIn('products.product_type', $ceaProductTypes)
+                        ->whereNull('products.parent_id')
+                        ->where('products.product_status', '=', 'active')
+                        ->orderBy('manage_marketplace_products.updated_at', 'asc')
                         ->limit(200)
                         ->get();
 
@@ -561,7 +563,7 @@ class SubmitShopifyProductsJob implements ShouldQueue
 
         $images = GenerateProductImage::where('product_id', $productData->product_id)->orderBy('main_image', 'desc')->get();
         $media = [];
-        foreach ($images as $image) {
+        foreach ($images as $key => $image) {
             // check if image exists in shopify already
             $isExists = ListingItemProductImage::where('listing_item_id', $listingItem->id)
                 ->where('product_image_id', $image->product_image_id)
@@ -589,9 +591,11 @@ class SubmitShopifyProductsJob implements ShouldQueue
         Log::info('Product Update Data: ' . json_encode($productUpdateData));
 
         $response = $shopifyAuthService->updateProduct($productUpdateData);
+
         $priceResponse = $shopifyAuthService->updatePrice($priceUpdatesData);
         $shopifyAuthService->removeTags($proDetail->marketplace_product_id, $tags['removeTags']);
         $shopifyAuthService->addTags($proDetail->marketplace_product_id, $tags['addTags']);
+
         $shopifyAuthService->productPublish($proDetail->marketplace_product_id, $this->publications);
 
 
@@ -601,9 +605,24 @@ class SubmitShopifyProductsJob implements ShouldQueue
             $productIdReplaced = str_replace('gid://shopify/Product/', '', $productId);
             $handle = $response['data']['productUpdate']['product']['handle'];
             $variantId = $response['data']['productUpdate']['product']['variants']['nodes'][0]['id'];
+            $featuredImageId = $response['data']['productUpdate']['product']['featuredMedia']['id'] ?? null;
             $variantIdReplaced = str_replace('gid://shopify/ProductVariant/', '', $variantId);
 
             $this->handleMediaImages($response['data']['productUpdate']['product'], $listingItem);
+            $firstImage = ListingItemProductImage::where('listing_item_id', $listingItem->id)->where('main_image', 1)->first();
+
+            if (isset($firstImage) && isset($firstImage->reference_id) && !empty($firstImage->reference_id)) {
+                if (isset($featuredImageId)) {
+                    Log::info('Featured Image Id: ' . $featuredImageId);
+                    $featuredImageIdReplaced = str_replace('gid://shopify/MediaImage/', '', $featuredImageId);
+                    if ($featuredImageIdReplaced != $firstImage->reference_id) {
+                        Log::info('Updating Featured Image to Id: ' . $firstImage->reference_id);
+                        $shopifyAuthService->setFeaturedImage($proDetail->marketplace_product_id, $firstImage->reference_id);
+                    }
+                } else {
+                    $shopifyAuthService->setFeaturedImage($proDetail->marketplace_product_id, $firstImage->reference_id);
+                }
+            }
 
             $listingItem->update([
                 'store_url' => $handle,
@@ -718,11 +737,13 @@ class SubmitShopifyProductsJob implements ShouldQueue
                 if (!isset($mediaItem['preview']['image']['url'])) {
                     continue;
                 }
+                $ImageId = $mediaItem['id'];
+                $imageIdReplaced = str_replace('gid://shopify/MediaImage/', '', $ImageId);
                 Log::info('Media Image: ' . json_encode($mediaItem));
                 $imageUrl = $mediaItem['preview']['image']['url'];
-                if (ListingItemProductImage::where('listing_item_id', $listingItem->id)->where('path', $imageUrl)->exists()) {
-                    continue;
-                }
+//                if (ListingItemProductImage::where('listing_item_id', $listingItem->id)->where('path', $imageUrl)->exists()) {
+//                    continue;
+//                }
                 if(isset($AlreadyImages) && array_key_exists($imageUrl,$AlreadyImages)){
 
                 } else {
@@ -739,7 +760,7 @@ class SubmitShopifyProductsJob implements ShouldQueue
                             'product_image_id' => $generatedImage->product_image_id,
                             'main_image' => $generatedImage->main_image,
                             'image_file_system_id' => $generatedImage->image_file_system_id,
-                            'reference_id' => $generatedImage->reference_id,
+                            'reference_id' => $imageIdReplaced,
                             'path' => $imageUrl,
                         ]);
                     }

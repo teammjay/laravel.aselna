@@ -577,7 +577,7 @@ class ProcessFeedGenerationJob implements ShouldQueue
                         $typeDetail = ProductType::with('parent')->where('id', $itemDetail->product->product_type)->first();
                         $product_type = $this->getCategoryPath($typeDetail);
 
-                        $listingItemImages = ListingItemProductImage::where('listing_item_id', $listitem->id)->get();
+                        $listingItemImages = ListingItemProductImage::where('listing_item_id', $listitem->id)->limit(5)->get();
                         $mainImage = null;
 
                         foreach ($listingItemImages as $image) {
@@ -691,6 +691,7 @@ class ProcessFeedGenerationJob implements ShouldQueue
                                 // item group id logic
                                 //$itemGroupId = $item_detail->sku . '-' . $device->code;
                                 $itemGroupId = $listitem->sku . '-' . $device->code;
+                                $finalMainImage = $mainImage . '?' .$item_detail->id;
 
                                 fputcsv($this->fileHandle, [
                                     $item_detail->sku,
@@ -699,7 +700,7 @@ class ProcessFeedGenerationJob implements ShouldQueue
                                     $ptype_id,
                                     $product_type,
                                     $product_url,
-                                    (isset($mainImage)) ? $mainImage : '',
+                                    (isset($finalMainImage)) ? $finalMainImage : '',
                                     (isset($itemDetail->product->condition)) ? strtolower($itemDetail->product->condition->name) : '',
                                     'in stock',
                                     $product_price . ' USD',
