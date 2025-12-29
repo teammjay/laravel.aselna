@@ -1803,6 +1803,46 @@
             $(document).on('click', '.remove-feature', function() {
                 $(this).parents('tr.field-group').remove();
             });
+
+            $(document).on('click','#auto_generate_listings',function () {
+                if($(this).is(':checked')){
+                    if(confirm("Are you sure you want to enable auto generate listing for this store?")){
+                        $(this).prop('checked',true);
+                    }else{
+                        $(this).prop('checked',false);
+                    }
+                }
+            });
+
+            $(document).on('click','#re_submit_listing',function () {
+                if($(this).is(':checked')){
+                    if(confirm("Are you sure you want to enable re-submit listing for this store?")){
+                        $(this).prop('checked',true);
+                    }else{
+                        $(this).prop('checked',false);
+                    }
+                }
+            });
+
+            $(document).on('click','#auto_submit_listing',function () {
+                if($(this).is(':checked')){
+                    if(confirm("Are you sure you want to enable auto submit listing for this store?")){
+                        $(this).prop('checked',true);
+                    }else{
+                        $(this).prop('checked',false);
+                    }
+                }
+            });
+
+            $(document).on('click','#auto_resubmit_shipment',function () {
+                if($(this).is(':checked')){
+                    if(confirm("Are you sure you want to enable auto re-submit shipment for this store?")){
+                        $(this).prop('checked',true);
+                    }else{
+                        $(this).prop('checked',false);
+                    }
+                }
+            });
         });
     </script>
 @stop
