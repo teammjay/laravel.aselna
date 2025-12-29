@@ -219,7 +219,10 @@ class SyncAllTables extends Command
 //        TransactionStatusCheckJob::dispatch();
 //        ProductKeyFeaturesSyncJob::dispatch();
 //        ShopifyCombinedSyncing::dispatch();
-        PopularDevicesSyncJob::dispatch();
+//        PopularDevicesSyncJob::dispatch();
+//        ProductImagesSyncJob::dispatch();
+//        ListingItemProductImageSyncJob::dispatch();
+//        CategorySyncJob::dispatch();
 
         $transactionIds = [
 ////            '9400150105798006163885',
