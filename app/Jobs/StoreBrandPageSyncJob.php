@@ -369,6 +369,24 @@ class StoreBrandPageSyncJob implements ShouldQueue
                             'relation' => 'EQUALS',
                             'condition' => $productType->id,
                         ];
+                        $imagePath = null;
+
+                        try {
+                            $path = '/store-images/' . $this->store->id . '/collections/' . $handle . '.jpg';
+                            $imagePath = $productType->image->getFileUrl();
+                            Log::info('Image :: ' . $imagePath);
+
+                            $imagePath = FileUtility::uploadImage($this->store, 'app/public/' . $imagePath, $path);
+                        } catch (\Exception $e) {
+                            $imagePath = '';
+                        }
+                        Log::info('Image path for device', ['image_path' => $imagePath]);
+
+                        if ($imagePath) {
+                            $collectionData['collection']['image'] = [
+                                'src' => $imagePath,
+                            ];
+                        }
 
                         $collection = null;
                         Log::info('Collection Name :: ' . $title . ' Handle :: ' . $handle);
