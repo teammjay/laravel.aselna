@@ -9,8 +9,10 @@ use App\Models\StoreType;
 use App\Models\StoreTypeCategories;
 use App\Models\StoreTypeCategory;
 use App\Models\SubCategory;
+use App\Utils\FileUtility;
 use App\Utils\Queue;
 use App\Services\CriticalErrorService;
+use Exception;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\DB;
@@ -99,18 +101,40 @@ class CategorySyncJob implements ShouldQueue
 
     private function createProductType(mixed $category)
     {
-        $category = ProductType::updateOrCreate(
+
+        $fonusCategory = DB::connection('fonus_db')->table('tbl_category')->where('category_id',$category->code)->first();
+        if (isset($fonusCategory)) {
+            $imageName = $fonusCategory->picture1;
+            $imageDetail = null;
+
+            try {
+                if(!isset($imageDetail)) {
+                    Log::info('CategoryImagesSync: ' . $imageName);
+                    $imagePath = 'https://fonusaccessory.com/inv/inv_images/category_images/' . $imageName;
+                    $imageDetail = FileUtility::saveImage($imagePath, 'category_images', $imageName);
+                }
+            } catch (Exception $e) {
+
+                \App\Helpers\ErrorLogger::log($e, __METHOD__);
+
+                Log::error('ProductImagesSyncJob: ' . $e->getMessage());
+            }
+        }
+
+        $createdCategory = ProductType::updateOrCreate(
             ['id' => $category->id],
             [
                 'id' => $category->id,
                 'name' => $category->name,
                 'code' => $category->code,
+                'image_id' => $imageDetail->id ?? null,
                 'parent_id' => $category->parent_id ?? null,
                 'singular_name' => $category->singular_name,
                 'sort_order' => $category->sort_order,
             ]
         );
-        Log::info('Category Created :: ' . $category);
+
+        Log::info('Category Created :: ' . $createdCategory);
     }
 
     private function createStoreTypeCategories(mixed $storeTypeCategory)
