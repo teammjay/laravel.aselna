@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Constants\ListingStatus;
 use App\Models\ListingItem;
 use App\Models\ListingItemDetail;
 use App\Models\Store;
@@ -38,7 +39,7 @@ class ShopifyListingProductsSyncJob implements ShouldQueue
 
         try {
             $storeIds = Store::join('store_type', 'store_type.id', '=', 'store.store_type_id')
-                ->where('store_type.code', 'shopify')
+                ->where('store_type.code', 'walmart')
                 ->whereIn('store.name', ['OdeMobile'])
                 ->pluck('store.id');
 
@@ -81,7 +82,7 @@ class ShopifyListingProductsSyncJob implements ShouldQueue
                 'sync_status' => $item->sync_status,
                 'quantity' => $item->quantity,
                 'store_product_id' => $item->store_product_id,
-                'status' => $item->sync_status,
+                'status' => $this->getStatus($item->status),
                 'store_url' => $item->store_url,
                 'created_at' => $item->create_ts,
                 'parent_id' => $item->parent_id,
@@ -117,13 +118,13 @@ class ShopifyListingProductsSyncJob implements ShouldQueue
             ]
         );
 
-        $listingItemDataQ = DB::connection('easyesale_db')->table('cea_listing_item_detail')
-            ->where('listing_item_id', $item->id)
-            ->orderBy('id');
-
-        foreach ($listingItemDataQ->cursor() as $listingItemData) {
-            $this->createListingItemData($listingItemData);
-        }
+//        $listingItemDataQ = DB::connection('easyesale_db')->table('cea_listing_item_detail')
+//            ->where('listing_item_id', $item->id)
+//            ->orderBy('id');
+//
+//        foreach ($listingItemDataQ->cursor() as $listingItemData) {
+//            $this->createListingItemData($listingItemData);
+//        }
     }
 
     private function createListingItemData(mixed $listingItemData)
@@ -151,5 +152,19 @@ class ShopifyListingProductsSyncJob implements ShouldQueue
             'created_at' => now(),
             'updated_at' => now(),
         ]);
+    }
+
+    private function getStatus($status)
+    {
+        switch ($status) {
+            case 0:
+                return ListingStatus::Active;
+            case 1:
+                return ListingStatus::Suspended;
+            case 2:
+                return ListingStatus::Deleted;
+            default:
+                return ListingStatus::Deleted;
+        }
     }
 }
