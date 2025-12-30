@@ -50,7 +50,8 @@ class SyncAllOrderStatusJob implements ShouldQueue
                 ->where(function ($query) {
                     $query->whereNull('tracking_number')
                         ->orWhere('tracking_number', '')
-                        ->orWhere('status', OrderOperationStatus::Created);
+                        ->orWhere('status', OrderOperationStatus::Created)
+                        ->orWhere('status', OrderOperationStatus::LabelPrinted);
                 })
                 ->whereNotIn('status', [
                     OrderOperationStatus::MarkAsShipped,
