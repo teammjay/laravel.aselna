@@ -131,110 +131,24 @@ class ListingController extends Controller
             'device.deviceType:id,name',
             'generationType:id,name',
             'manufacturer:id,name'
-        ]);//->addSelect([
-//            'saleCount' => OrderItem::selectRaw('SUM(
-//                COALESCE(shipped_quantity, 0)
-//              - COALESCE(canceled_quantity, 0)
-//              - COALESCE(refund_quantity, 0)
-//            )')->whereColumn('order_item.sku', 'listing_item.sku')->limit(1)
-//        ])
-        /*->withSum(['orderItems as saleCount' => function ($query) {
-        $query->whereNotNull('shipped_quantity')->where(function ($q) {
-            $q->whereNull('canceled_quantity')
-                ->orWhere('canceled_quantity', 0);
-        })->where(function ($q) {
-            $q->whereNull('refund_quantity')
-                ->orWhere('refund_quantity', 0);
-        });
-    }], 'quantity')*/
-//        ->addSelect([
-//            'lastSaleDate' => OrderItem::selectRaw('MAX(created_at)')
-//                ->whereColumn('order_item.sku', 'listing_item.sku')
-//                ->whereNotNull('shipped_quantity')
-//                ->where(function($q){
-//                    $q->whereNull('canceled_quantity')->orWhere('canceled_quantity', 0);
-//                })
-//                ->where(function($q){
-//                    $q->whereNull('refund_quantity')->orWhere('refund_quantity', 0);
-//                })
-//                ->limit(1)
-//        ]);
-        /*->withMax(['orderItems as lastSaleDate' => function ($query) {
-            $query->whereNotNull('shipped_quantity')->whereNull('canceled_quantity')->orWhere('canceled_quantity', 0)->whereNull('refund_quantity')->orWhere('refund_quantity', 0);
-        }], 'created_at');*/
-
-        /*$query->leftJoin(DB::raw('(
-                    SELECT oi.sku,
-                           SUM(COALESCE(oi.shipped_quantity, 0) - COALESCE(oi.canceled_quantity, 0) - COALESCE(oi.refund_quantity, 0)) AS saleCount,
-                           MAX(CASE
-                                    WHEN oi.shipped_quantity IS NOT NULL
-                                         AND (oi.canceled_quantity IS NULL OR oi.canceled_quantity = 0)
-                                         AND (oi.refund_quantity IS NULL OR oi.refund_quantity = 0)
-                                    THEN oi.created_at
-                                    ELSE NULL
-                               END) AS lastSaleDate
-                    FROM order_item oi
-                    GROUP BY oi.sku
-                ) AS oi'), 'oi.sku', '=', 'listing_item.sku');*/
-        //$query->leftJoin('listing_item_detail', 'listing_item_detail.listing_item_id', '=', 'listing_item.id');
-
-        /*$combinedSku = DB::raw('(
-            SELECT sku, id AS listing_item_id
-            FROM listing_item
-            UNION
-            SELECT sku, listing_item_id
-            FROM listing_item_detail
-        ) AS items');
-
-        $query->leftJoin($combinedSku, 'items.listing_item_id', '=', 'listing_item.id');
-
-        $query->leftJoin(DB::raw('(
-                SELECT oi.sku,
-                       SUM(COALESCE(oi.shipped_quantity, 0) - COALESCE(oi.canceled_quantity, 0) - COALESCE(oi.refund_quantity, 0)) AS saleCount,
-                       MAX(CASE
-                                WHEN oi.shipped_quantity IS NOT NULL
-                                     AND (oi.canceled_quantity IS NULL OR oi.canceled_quantity = 0)
-                                     AND (oi.refund_quantity IS NULL OR oi.refund_quantity = 0)
-                                THEN oi.created_at
-                                ELSE NULL
-                           END) AS lastSaleDate
-                FROM order_item oi
-                GROUP BY oi.sku
-            ) AS oi'), 'oi.sku', '=', 'items.sku');*/
+        ]);
 
         if ($request->has('store_id') && $request->store_id != '') {
-
-//            $query->join('store_product', 'store_product.id', '=', 'listing_item.store_product_id')
-//                ->where('store_product.store_id', $request->store_id);
-
             $query->whereRelation('storeProduct', 'store_id', $request->store_id);
-            /*$query->whereHas('storeProduct', function ($q) use ($request) {
-                $q->where('store_id', $request->store_id);
-            });*/
         }
 
         if ($request->has('product_status') && $request->product_status != '') {
             $query->whereRelation('storeProduct.product', 'product_status', $request->product_status);
-            /*$query->whereHas('storeProduct.product', function ($q) use ($request) {
-                $q->where('product_status', $request->product_status);
-            });*/
         }
 
         // Filter by product type
         if ($request->has('product_type') && $request->product_type != '') {
             $query->whereRelation('storeProduct.product', 'product_type', $request->product_type);
-            /*$query->whereHas('storeProduct.product', function ($q) use ($request) {
-                $q->where('product_type', $request->product_type);
-            });*/
         }
 
         // Filter by device type
         if ($request->has('device_type') && $request->device_type != '') {
             $query->whereRelation('device.deviceType', 'id', $request->device_type);
-            /* $query->whereHas('device.deviceType', function ($q) use ($request) {
-                 $q->where('id', $request->device_type);
-             });*/
-
         }
 
         // Filter by product code
@@ -304,7 +218,6 @@ class ListingController extends Controller
             $query->where('listing_item.status', $request->listing_status);
         }
 
-        //        $query->groupBy('id','title','sku','store_sku','price','sales_count','last_sale_date','products.product_sku', 'products.dimensions_width', 'products.product_color', 'store.name', 'store.marketplace_name');
 
         if ($columnName != '') {
             switch (strtolower($columnName)) {
@@ -313,35 +226,26 @@ class ListingController extends Controller
                     $query->join('store_product', 'store_product.id', '=', 'listing_item.store_product_id')
                         ->join('products', 'products.product_id', '=', 'store_product.product_id')
                         ->orderBy('products.product_sku', $columnSortOrder);
-
-                    /* $query->orderByRaw('(SELECT product_sku FROM products LEFT JOIN store_product ON(store_product.product_id = products.product_id) WHERE store_product.id = listing_item.store_product_id) '.$columnSortOrder);*/
                     break;
                 case 'product_size':
 
                     $query->join('store_product', 'store_product.id', '=', 'listing_item.store_product_id')
                         ->join('products', 'products.product_id', '=', 'store_product.product_id')
                         ->orderBy('products.dimensions_width', $columnSortOrder);
-
-                    /*$query->orderByRaw('(SELECT dimensions_width FROM products LEFT JOIN store_product ON(store_product.product_id = products.product_id) WHERE store_product.id = listing_item.store_product_id) '.$columnSortOrder);*/
                     break;
                 case 'product_color':
                     $query->join('store_product', 'store_product.id', '=', 'listing_item.store_product_id')
                         ->join('products', 'products.product_id', '=', 'store_product.product_id')
                         ->orderBy('products.product_color', $columnSortOrder);
-
-                    /*$query->orderByRaw('(SELECT product_color FROM products LEFT JOIN store_product ON(store_product.product_id = products.product_id) WHERE store_product.id = listing_item.store_product_id) '.$columnSortOrder);*/
                     break;
                 case 'store_name':
                     $query->join('store_product', 'store_product.id', '=', 'listing_item.store_product_id')
                         ->join('store', 'store_product.store_id', '=', 'store.id')
                         ->orderBy('store.name', $columnSortOrder);
-
-                    /*$query->orderByRaw('(SELECT name FROM store LEFT JOIN store_product ON(store_product.store_id = store.id) LEFT JOIN listing_item ON(listing_item.store_product_id = store_product.store_id) WHERE store_product.id = listing_item.store_product_id) '.$columnSortOrder);*/
                     break;
                 case 'generation_type_name':
                     $query->join('listing_generation_type', 'listing_generation_type.code', '=', 'listing_item.generation_type_id')
                         ->orderBy('listing_generation_type.name', $columnSortOrder);
-                    /*$query->orderByRaw('(SELECT name FROM listing_generation_type WHERE listing_item.generation_type_id = listing_generation_type.code) '.$columnSortOrder);*/
                     break;
             }
 
@@ -393,28 +297,6 @@ class ListingController extends Controller
                 } else {
                     $productcode = '';
                 };
-
-                /*$query = DB::table('order_item')
-                    ->selectRaw('
-                        SUM(COALESCE(shipped_quantity, 0)
-                            - COALESCE(canceled_quantity, 0)
-                            - COALESCE(refund_quantity, 0)) AS saleCount,
-                        MAX(CASE
-                            WHEN shipped_quantity IS NOT NULL
-                                 AND (canceled_quantity IS NULL OR canceled_quantity = 0)
-                                 AND (refund_quantity IS NULL OR refund_quantity = 0)
-                            THEN created_at
-                        END) AS lastSaleDate
-                    ')
-                    ->where('sku', $product->sku);
-                $sales = $query->first();
-                $saleCount = 0;
-                $lastSaleDate = '';
-
-                if ($sales) {
-                    $saleCount = $sales->saleCount ?? 0;
-                    $lastSaleDate = $sales->lastSaleDate ?? '';
-                }*/
 
                 $data[] = array(
                     "sku" => $product->sku . '<input type="checkbox" class="proList" name="listing_item[]" data-sku="' . $product->sku . '" data-code="' . $productcode . '" value="' . $product->id . '" style="visibility:hidden;">',
