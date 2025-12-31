@@ -50,7 +50,8 @@ class SyncAllOrderStatusJob implements ShouldQueue
                 ->where(function ($query) {
                     $query->whereNull('tracking_number')
                         ->orWhere('tracking_number', '')
-                        ->orWhere('status', OrderOperationStatus::Created);
+                        ->orWhere('status', OrderOperationStatus::Created)
+                        ->orWhere('status', OrderOperationStatus::LabelPrinted);
                 })
                 ->whereNotIn('status', [
                     OrderOperationStatus::MarkAsShipped,
@@ -327,20 +328,25 @@ class SyncAllOrderStatusJob implements ShouldQueue
                     if (isset($temuOrder['parentOrderMap']) && $temuOrder['parentOrderMap']['parentOrderSn'] == $order->order_id) {
                         if (isset($temuOrder['parentOrderMap']['parentOrderStatus'])) {
                             switch (strtolower($temuOrder['parentOrderMap']['parentOrderStatus'])) {
-                                case 'shipped';
+                                case 4;
                                     $order->order_status = OrderStatus::Shipped;
                                     $operation->status = OrderOperationStatus::MarkAsShipped;
                                     break;
-                                case 'canceled';
+                                case 3;
                                     $order->order_status = OrderStatus::Canceled;
                                     $operation->status = OrderOperationStatus::Canceled;
                                     break;
-                                case 'pending';
-                                case 'un_shipping';
+                                case 1;
+                                case 2;
                                     $order->order_status = OrderStatus::Pending;
                                     break;
-                                case 'partially_shipped';
+                                case 41;
                                     $order->order_status = OrderStatus::PartiallyShipped;
+                                    break;
+                                case 51:
+                                case 5:
+                                    $order->order_status = OrderStatus::Shipped;
+                                    $operation->status = OrderOperationStatus::Delivered;
                                     break;
                             }
                         }
