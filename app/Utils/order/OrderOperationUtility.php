@@ -1239,7 +1239,7 @@ class OrderOperationUtility
             'address2' => $orderOperation->order->customerAddress->address_line_2 ?? '',
             'address3' => $orderOperation->order->customerAddress->address_line_3 ?? '',
             'city' => $orderOperation->order->customerAddress->city,
-            'state' => $orderOperation->order->customerAddress->state,
+            'state' => $orderOperation->order->customerAddress->state_code ?? $orderOperation->order->customerAddress->state,
             'postalCode' => explode('-', $orderOperation->order->customerAddress->zip ?? '')[0],
             'country' => $orderOperation->order->customerAddress->country,
             'phone' => $orderOperation->order->customerAddress->phone,
