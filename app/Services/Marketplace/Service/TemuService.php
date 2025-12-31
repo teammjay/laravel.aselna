@@ -18,6 +18,7 @@ use App\Models\ProductSpecification;
 use App\Models\ProductSpecificationInfo;
 use App\Models\ProductSpecificationValue;
 use App\Services\Auth\TemuAuthService;
+use App\Services\CriticalErrorService;
 use App\Services\Marketplace\Contracts\MarketplaceServiceInterface;
 use App\Utils\FileUtility;
 use App\Utils\order\OrderUtility;
@@ -165,168 +166,180 @@ class TemuService implements MarketplaceServiceInterface
 
     private function generateCreateFeed($listingInfo, $listingId)
     {
-        $temuAuthService = new TemuAuthService();
-        $listingItems = ListingItemLink::where('listing_id', $listingId)->cursor();
-        $fileSystem = $listingInfo->store->fileSystem;
+        try {
+            $temuAuthService = new TemuAuthService();
+            $listingItems = ListingItemLink::where('listing_id', $listingId)->cursor();
+            $fileSystem = $listingInfo->store->fileSystem;
 
-        $jsonFeed = [];
+            $jsonFeed = [];
 
-        foreach ($listingItems as $listingItem) {
-            $item = $listingItem->item;
-            $storeTypeCategory = $item->storeProduct->storeTypeCategory;
-            $productObj = $item->storeProduct->product;
-            $productColor = $productObj->productColor;
+            foreach ($listingItems as $listingItem) {
+                $item = $listingItem->item;
+                $storeTypeCategory = $item->storeProduct->storeTypeCategory;
+                $productObj = $item->storeProduct->product;
+                $productColor = $productObj->productColor;
 
-            $price = $item->price;
-            if (!isset($price)) {
-                $price = $item->storeProduct->price;
-            }
-            if (!isset($price)) {
-                $price = $productObj->product_marketplace_price;
-            }
+                $price = $item->price;
+                if (!isset($price)) {
+                    $price = $item->storeProduct->price;
+                }
+                if (!isset($price)) {
+                    $price = $productObj->product_marketplace_price;
+                }
 
-            $keyFeatures = [];
-            foreach ($productObj->productKeyFeatures as $feature) {
-                if ($feature->value == '' || !isset($feature->value)) continue;
-                $keyFeatures[] = $feature->value;
-            }
+                $keyFeatures = [];
+                foreach ($productObj->productKeyFeatures as $feature) {
+                    if ($feature->value == '' || !isset($feature->value)) continue;
+                    $keyFeatures[] = $feature->value;
+                }
 
-            $template = $temuAuthService->getTemplate($storeTypeCategory->code);
-            Log::info('Template for Category ' . $storeTypeCategory->code . ': ' . json_encode($template));
+                $template = $temuAuthService->getTemplate($storeTypeCategory->code);
+                Log::info('Template for Category ' . $storeTypeCategory->code . ': ' . json_encode($template));
 
-            $productData = $this->getProductData($listingItem);
-            $properties = [];
+                $productData = $this->getProductData($listingItem);
+                $properties = [];
 
-            Log::info('Product data :: ' . json_encode($productData));
+                Log::info('Product data :: ' . json_encode($productData));
 
-            $TemplateProperties = $template['result']['templateInfo']['goodsProperties'] ?? [];
-            $specProperties = $this->buildGoodsPropertiesPayload($TemplateProperties, $productData);
-            $properties = array_merge($properties, $specProperties['properties']);
-            Log::info('Properties completed');
+                $TemplateProperties = $template['result']['templateInfo']['goodsProperties'] ?? [];
+                $specProperties = $this->buildGoodsPropertiesPayload($TemplateProperties, $productData);
+                $properties = array_merge($properties, $specProperties['properties']);
+                Log::info('Properties completed');
 
-            $TemplateSpecProperties = $template['result']['templateInfo']['goodsSpecProperties'] ?? [];
-            $specDetails = $this->getSpecDetails($TemplateSpecProperties, $productData);
-            $properties = array_merge($properties, $specDetails['properties']);
+                $TemplateSpecProperties = $template['result']['templateInfo']['goodsSpecProperties'] ?? [];
+                $specDetails = $this->getSpecDetails($TemplateSpecProperties, $productData);
+                $properties = array_merge($properties, $specDetails['properties']);
 
-            $specIdList = array_merge($specDetails['specIdList'], $specProperties['specIdList']);
-            Log::info('Properties :: ' . json_encode($properties));
+                $specIdList = array_merge($specDetails['specIdList'], $specProperties['specIdList']);
+                Log::info('Properties :: ' . json_encode($properties));
 
-            if (empty($specIdList)) {
-                $userInputParentSpecList = $template['result']['userInputParentSpecList'];
-                foreach ($userInputParentSpecList as $spec) {
-                    switch ($spec['parentSpecName']) {
-                        case 'Color':
-                            if (isset($productColor)) {
-                                $specOption = $temuAuthService->createSpecOption($storeTypeCategory->code, $spec['parentSpecId'], $productColor->name);
-                                if (isset($specOption) && isset($specOption['result']['specId'])) {
-                                    $specIdList[] = $specOption['result']['specId'];
+                if (empty($specIdList)) {
+                    $userInputParentSpecList = $template['result']['userInputParentSpecList'];
+                    foreach ($userInputParentSpecList as $spec) {
+                        switch ($spec['parentSpecName']) {
+                            case 'Color':
+                                if (isset($productColor)) {
+                                    $specOption = $temuAuthService->createSpecOption($storeTypeCategory->code, $spec['parentSpecId'], $productColor->name);
+                                    if (isset($specOption) && isset($specOption['result']['specId'])) {
+                                        $specIdList[] = $specOption['result']['specId'];
+                                    }
                                 }
-                            }
-                            break;
-                        case 'Material':
-                            $material = $productObj->material ?? null;
-                            if (isset($material)) {
-                                $specOption = $temuAuthService->createSpecOption($storeTypeCategory->code, $spec['parentSpecId'], $material->name);
-                                if (isset($specOption) && isset($specOption['result']['specId'])) {
-                                    $specIdList[] = $specOption['result']['specId'];
+                                break;
+                            case 'Material':
+                                $material = $productObj->material ?? null;
+                                if (isset($material)) {
+                                    $specOption = $temuAuthService->createSpecOption($storeTypeCategory->code, $spec['parentSpecId'], $material->name);
+                                    if (isset($specOption) && isset($specOption['result']['specId'])) {
+                                        $specIdList[] = $specOption['result']['specId'];
+                                    }
                                 }
-                            }
+                                break;
+                            default:
+                                break;
+                        }
+                        if (count($specIdList) >= 1) {
                             break;
-                        default:
-                            break;
-                    }
-                    if (count($specIdList) >= 1) {
-                        break;
+                        }
                     }
                 }
-            }
-            Log::info('Spec ID List :: ' . json_encode($specIdList));
+                Log::info('Spec ID List :: ' . json_encode($specIdList));
 
 
-            $ShippingTemplates = $temuAuthService->geShippingTemplate();
-            Log::info('Shipping Templates: ' . json_encode($ShippingTemplates));
+                $ShippingTemplates = $temuAuthService->geShippingTemplate();
+                Log::info('Shipping Templates: ' . json_encode($ShippingTemplates));
 
-            $templateID = $ShippingTemplates['result']['templateList'][0]['templateId'] ?? 'LFT-15741247532810352765';
+                $templateID = $ShippingTemplates['result']['templateList'][0]['templateId'] ?? 'LFT-15741247532810352765';
 
-            $images = ListingItemProductImage::leftJoin('product_images', 'product_images.id', '=', 'listing_item_product_images.product_image_id')
-                ->where('listing_item_product_images.listing_item_id', $item->id)->orderBy('listing_item_product_images.main_image', 'desc')
-                ->get();
+                $images = ListingItemProductImage::leftJoin('product_images', 'product_images.id', '=', 'listing_item_product_images.product_image_id')
+                    ->where('listing_item_product_images.listing_item_id', $item->id)->orderBy('listing_item_product_images.main_image', 'desc')
+                    ->get();
 
-            Log::info('Images: ' . json_encode($images));
-            Log::info('File System: ' . json_encode($fileSystem));
-            $imagesPath = [];
-            foreach ($images as $image) {
-                $imagesUrl = $fileSystem->url_base_path . $image->path;
-                [$width, $height] = getimagesize($imagesUrl);
+                Log::info('Images: ' . json_encode($images));
+                Log::info('File System: ' . json_encode($fileSystem));
+                $imagesPath = [];
+                foreach ($images as $image) {
+                    $imagesUrl = $fileSystem->url_base_path . $image->path;
+                    [$width, $height] = getimagesize($imagesUrl);
 
-                // Skip if aspect ratio is not 1:1
-                if ($width !== $height || $width < 800 || $height < 800) {
-                    Log::info('Skipping image due to aspect ratio: ' . $imagesUrl);
-                    continue;
+                    // Skip if aspect ratio is not 1:1
+                    if ($width !== $height || $width < 800 || $height < 800) {
+                        Log::info('Skipping image due to aspect ratio: ' . $imagesUrl);
+                        continue;
+                    }
+
+                    $ImageResponse = $temuAuthService->uploadImage($imagesUrl);
+                    Log::info('Response Image :: ' . json_encode($ImageResponse));
+                    if (isset($ImageResponse['result']['url'])) {
+                        $imagesPath[] = $ImageResponse['result']['url'];
+                    }
                 }
 
-                $ImageResponse = $temuAuthService->uploadImage($imagesUrl);
-                Log::info('Response Image :: ' . json_encode($ImageResponse));
-                if (isset($ImageResponse['result']['url'])) {
-                    $imagesPath[] = $ImageResponse['result']['url'];
-                }
-            }
-
-            $feedItem = [
-                'goodsBasic' => [
-                    'goodsName' => $item->title,
-                    'catId' => (int)$storeTypeCategory->store_type_code,
-                    'importDesignation' => 'Imported',
-                ],
-                'goodsDesc' => $item->description,
-                'goodsServicePromise' => [
-                    'costTemplateId' => $templateID,
-                    'fulfillmentType' => 1,
-                    'shipmentLimitDay' => 2
-                ],
-                'goodsOriginInfo' => [
-                    'originRegion1' => 'Mainland China',
-                    'originRegion2' => 'Guangdong'
-                ],
-                'goodsProperty' => [
-                    'goodsProperties' => $properties
-                ],
-                'bulletPoints' => $keyFeatures,
-            ];
-
-            $feedItem['skuList'] = [
-                [
-                    'height' => '' . $productObj->package_dimensions_height,
-                    'images' => $imagesPath,
-                    'length' => '' . $productObj->package_dimensions_length,
-                    'price' => [
-                        'basePrice' => [
-                            'amount' => '' . floatval($price),
-                            'currency' => 'USD'
-                        ],
-                        'listPrice' => [
-                            'amount' => '' . floatval($price),
-                            'currency' => 'USD'
-                        ],
-                        'listPriceType' => 0
+                $feedItem = [
+                    'goodsBasic' => [
+                        'goodsName' => $item->title,
+                        'catId' => (int)$storeTypeCategory->store_type_code,
+                        'importDesignation' => 'Imported',
                     ],
-                    'quantity' => $item->quantity,
-                    'specIdList' => $specIdList,
-                    'outSkuSn' => $item->sku,
-                    'volumeUnit' => 'in',
-                    'weight' => '' . number_format(WeightUnit::convert($productObj->product_weight_unit ?? WeightUnit::OZ, WeightUnit::LB, $productObj->product_weight), 2, '.', ''),
-                    'weightUnit' => 'lb',
-                    'width' => '' . $productObj->package_dimensions_width,
-                ]
-            ];
+                    'goodsDesc' => $item->description,
+                    'goodsServicePromise' => [
+                        'costTemplateId' => $templateID,
+                        'fulfillmentType' => 1,
+                        'shipmentLimitDay' => 2
+                    ],
+                    'goodsOriginInfo' => [
+                        'originRegion1' => 'Mainland China',
+                        'originRegion2' => 'Guangdong'
+                    ],
+                    'goodsProperty' => [
+                        'goodsProperties' => $properties
+                    ],
+                    'bulletPoints' => $keyFeatures,
+                ];
+
+                $feedItem['skuList'] = [
+                    [
+                        'height' => '' . $productObj->package_dimensions_height,
+                        'images' => $imagesPath,
+                        'length' => '' . $productObj->package_dimensions_length,
+                        'price' => [
+                            'basePrice' => [
+                                'amount' => '' . floatval($price),
+                                'currency' => 'USD'
+                            ],
+                            'listPrice' => [
+                                'amount' => '' . floatval($price),
+                                'currency' => 'USD'
+                            ],
+                            'listPriceType' => 0
+                        ],
+                        'quantity' => $item->quantity,
+                        'specIdList' => $specIdList,
+                        'outSkuSn' => $item->sku,
+                        'volumeUnit' => 'in',
+                        'weight' => '' . number_format(WeightUnit::convert($productObj->product_weight_unit ?? WeightUnit::OZ, WeightUnit::LB, $productObj->product_weight), 2, '.', ''),
+                        'weightUnit' => 'lb',
+                        'width' => '' . $productObj->package_dimensions_width,
+                    ]
+                ];
 
 
-            $jsonFeed[] = $feedItem;
+                $jsonFeed[] = $feedItem;
+            }
+
+            Log::info('Json Feed :: ' . json_encode($jsonFeed));
+
+            FileUtility::saveToFile(public_path('feeds/temu/' . $listingId . '.json'), json_encode($jsonFeed));
+
+        }catch (\Throwable $e){
+
+            CriticalErrorService::report('Temu Generate Create Feed Error', [
+                'marketplace' => 'Temu',
+                'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
+            ],['listingId'=> $listingId]);
+
+            Log::info('Temu Generate Create Feed Error : ' . $e->getMessage());
         }
-
-        Log::info('Json Feed :: ' . json_encode($jsonFeed));
-
-        FileUtility::saveToFile(public_path('feeds/temu/' . $listingId . '.json'), json_encode($jsonFeed));
     }
 
     public function buildGoodsPropertiesPayload(array $templateAttributes, array $productData): array
@@ -576,7 +589,14 @@ class TemuService implements MarketplaceServiceInterface
                 $last_order_update_date = date('Y-m-d H:i:s', strtotime($last_synchronization->last_order_update_date));
             }
             $order_synchronization->update(['number_of_items' => $noOfOrder, 'last_order_update_date' => $last_order_update_date]);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
+
+            CriticalErrorService::report('Temu Get Order Error', [
+                'marketplace' => 'Temu',
+                'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
+            ],['store_name'=>$store->name]);
+
             Log::info('Ebay order error : ' . $e->getMessage());
         }
     }
@@ -635,7 +655,15 @@ class TemuService implements MarketplaceServiceInterface
             }
 
             return  false;
-        } catch (\Exception $e) {
+
+        } catch (\Throwable $e) {
+
+            CriticalErrorService::report('Temu Create Shipment Error', [
+                'marketplace' => 'Temu',
+                'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
+            ],['order_id'=>$orderOperation->order->order_id,'tracking_number'=>$mainOrderOperation->tracking_number]);
+
             Log::info('Temu shipment error : ' . $e->getMessage());
         }
 
@@ -666,7 +694,14 @@ class TemuService implements MarketplaceServiceInterface
             }
 
             return false;
-        }catch (\Exception $e) {
+        }catch (\Throwable $e) {
+
+            CriticalErrorService::report('Temu Refund Order Error', [
+                'marketplace' => 'Temu',
+                'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
+            ],['parentOrderSn'=>$parentOrderSn]);
+
             Log::info('Temu refund error : ' . $e->getMessage());
             return false;
         }
