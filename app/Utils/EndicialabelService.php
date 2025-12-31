@@ -47,7 +47,7 @@ class EndicialabelService
 
             $body = $response->getBody()->getContents();
             Log::info('Endicia Label Response XML: ' . $body);
-            die;
+
             return $this->parseSoapResponse($body, $request, $orderOperationId);
         } catch (\Throwable $e) {
             // Handle SOAP request errors
