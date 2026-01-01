@@ -14,7 +14,7 @@ class ErrorLogger
      * @param \Throwable $e
      * @param int $errorSource
      */
-    public static function log(\Throwable $e, $operation = null, $extraInfo = [], $errorSource = 50)
+    public static function log(\Throwable $e, $operation = null, $extraInfo = [], $errorLevel='20', $errorSource = 50)
     {
         $trace = $e->getTrace();
 //        $originClass = $trace[0]['class'] ?? null;
@@ -48,7 +48,7 @@ class ErrorLogger
                     'update_at' => now(),
                     'create_at' => now(),
                     'store_id' => $extraInfo['store_id'] ?? NULL,
-                    'error_level' => 20, // 20 = Error, customize as needed
+                    'error_level' => $errorLevel, // 20 = Error, customize as needed
                     'error_source' => $errorSource, // 50 = System, 51 = Marketplace, etc.
                     'operation' => $operation,
                     'status' => 0,
