@@ -130,6 +130,21 @@
                         </div>
                     </div>
 
+                    <div class="col-md-4">
+                        <div class="row">
+                            <div class="col-6 text-right">
+                                Error Level
+                            </div>
+                            <div class="col-6">
+                                <select class="custom-select" id="error_level" name="error_level">
+                                    <option value="">- All Errors-</option>
+                                    <option value="20">Error</option>
+                                    <option value="10">Critical Error</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
                 </div>
 
                 <div class="row">

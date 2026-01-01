@@ -2,12 +2,15 @@
 
 namespace App\Services;
 
+use App\Helpers\ErrorLogger;
 use Illuminate\Support\Facades\Log;
 use App\Models\User;
 use App\Models\UserAccount;
+use App\Models\ErrorLog;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 use Throwable;
 
 class CriticalErrorService
@@ -52,7 +55,29 @@ class CriticalErrorService
         Log::channel('critical')->error('Critical Error - '.$errorData['message'], $errorData);
 
         //  storOptionallye to DB
-        // \App\Models\CriticalError::create($errorData);
+        $hash = hash('sha256', $errorData['message'] . $errorData['context']['method']);
+
+        $existing = ErrorLog::where('hash_string', $hash)->first();
+        if ($existing) {
+            $existing->increment('error_count');
+            $existing->update(['updated_at' => now()]);
+        } else {
+
+            ErrorLog::create([
+                'id' => Str::uuid()->toString(),
+                'update_at' => now(),
+                'create_at' => now(),
+                'store_id' => NULL,
+                'error_level' => 10, // 20 = Error, customize as needed
+                'error_source' => 50, // 50 = System, 51 = Marketplace, etc.
+                'operation' => $errorData['context']['method'],
+                'status' => 0,
+                'message' => $errorData['message'],
+                'stack_trace' => json_encode($errorData) ?? NULL,
+                'hash_string' => $hash,
+                'error_count' => 1,
+            ]);
+        }
 
         /* Notification*/
         self::sendNotificationEmail($errorData);
