@@ -14,7 +14,7 @@ class UpdateListingItemSalesSeeder extends Seeder
         $totalUpdated = 0;
 
         DB::table('order_item as oi')
-            ->join('orders as o', 'o.id', '=', 'oi.order_id')
+            ->join('order as o', 'o.id', '=', 'oi.order_id')
             ->select(
                 'oi.sku',
                 DB::raw('
