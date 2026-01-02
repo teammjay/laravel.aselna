@@ -59,8 +59,9 @@ class CriticalErrorService
 
         $existing = ErrorLog::where('hash_string', $hash)->first();
         if ($existing) {
+            $stack_trace = json_encode($errorData) ?? NULL;
             $existing->increment('error_count');
-            $existing->update(['updated_at' => now()]);
+            $existing->update(['updated_at' => now(),'stack_trace' => $stack_trace]);
         } else {
 
             ErrorLog::create([
