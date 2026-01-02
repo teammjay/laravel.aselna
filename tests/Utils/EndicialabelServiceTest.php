@@ -2,12 +2,32 @@
 
 namespace Tests\Utils;
 
+use App\Constants\OrderOperationType;
+use App\Models\AccountTransaction;
 use App\Models\OrderOperation;
+use App\Services\CriticalErrorService;
 use App\Utils\EndicialabelService;
+use GuzzleHttp\Client;
+use GuzzleHttp\Exception\RequestException;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Tests\TestCase;
 
 class EndicialabelServiceTest extends TestCase
 {
+    protected $client;
+    protected $accountId;
+    protected $passphrase;
+
+    public function callBefore()
+    {
+        $this->accountId = env('ENDICIA_ACCOUNT_ID');
+        $this->passphrase = env('ENDICIA_PASSPHRASE');
+
+        $this->client = new Client();
+    }
+
     public function testSoapResponse()
     {
         $service = new EndicialabelService();
@@ -29,4 +49,71 @@ class EndicialabelServiceTest extends TestCase
         ];
         $service->parseSoapResponse($stringResponse, $shippingDetail, '4e846c8d-ee64-4f64-a11a-669a0c62cacc');
     }
+
+    public function testCreateLabel()
+    {
+        $this->callBefore();
+        $xmlString = '<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"><soap:Body><GetPostageLabel xmlns="www.envmgr.com/LabelService"><LabelRequest ImageFormat="ZPLII" LabelSize="4x6" ImageResolution="203" ImageRotation="Rotate180"><RequesterID>Iweb</RequesterID><AccountID>1257538</AccountID><PassPhrase>Ag7ycm1274r2!a8hser2m</PassPhrase><MailClass>GroundAdvantage</MailClass><MailpieceShape>Flat</MailpieceShape><WeightOz>1</WeightOz><PartnerTransactionID>200014037327910</PartnerTransactionID><Machinable>TRUE</Machinable><MailpieceDimensions><Length>12</Length><Width>4</Width><Height>0.5</Height></MailpieceDimensions><FromName/><FromCompany>Fulfillment Center</FromCompany><FromAddress1>222 Universal Dr</FromAddress1><FromAddress2>Bldg 3</FromAddress2><FromCity>North Haven</FromCity><FromState>CT</FromState><FromPostalCode>06473</FromPostalCode><ToCompany>SAM SETTON</ToCompany><ToAddress1>1604 EAST 7TH ST .</ToAddress1><ToCity>Brooklyn</ToCity><ToState>NY</ToState><ToPostalCode>11230</ToPostalCode><ReturnName/><ReturnCompany>Fulfillment Center</ReturnCompany><ReturnAddress1>222 Universal Dr</ReturnAddress1><ReturnAddress2>Bldg 3</ReturnAddress2><ReturnToCity>North Haven</ReturnToCity><ReturnToState>CT</ReturnToState><ReturnToPostalCode>06473</ReturnToPostalCode><RubberStamp1>AW-Wmt 200014037327910</RubberStamp1></LabelRequest></GetPostageLabel></soap:Body></soap:Envelope>';
+
+
+        try {
+            $response = $this->client->post('https://LabelServer.Endicia.com/LabelService/EwsLabelService.asmx', [
+                'headers' => [
+                    'Content-Type' => 'text/xml; charset=utf-8',
+                    'SOAPAction' => '"www.envmgr.com/LabelService/GetPostageLabel"',
+                ],
+                'body' => $xmlString,
+                'verify' => false,
+            ]);
+
+            $body = $response->getBody()->getContents();
+            Log::info('Endicia Label Response XML: ' . $body);
+            $this->parseSoapResponse($body);
+        } catch (\Throwable $e) {
+            Log::error('Endicia Label Request Error: ' . $e->getMessage());
+        }
+
+    }
+
+    public function parseSoapResponse($response)
+    {
+        libxml_use_internal_errors(true);
+        $xml = simplexml_load_string($response);
+
+        if ($xml === false) {
+            return ['error' => 'Failed to parse XML'];
+        }
+
+        $xml->registerXPathNamespace('ns', 'www.envmgr.com/LabelService');
+        if($errorNode = $xml->xpath('//ns:ErrorMessage')){
+            $errorMessage = (string)$errorNode[0];
+            Log::error('Endicia Label Error Message: ' . $errorMessage);
+            return ['error' => $errorMessage];
+        }
+
+        $base64Image = (string)$xml->xpath('//ns:Base64LabelImage')[0];
+        $trackingNumber = (string)$xml->xpath('//ns:TrackingNumber')[0];
+
+
+        try {
+            $imageData = base64_decode($base64Image);
+            $imagePath = storage_path('app/public/labels/' . $trackingNumber . '.txt');
+            file_put_contents($imagePath, $imageData);
+
+        } catch (\Throwable $e) {
+            Log::error('Error saving label image: ' . $e->getMessage());
+            return ['error' => 'Failed to save label image'];
+        }
+
+        Log::info('Label image saved to: ' . json_encode($xml->xpath('//ns:LabelType')));
+
+        return [
+            'trackingNumber' => $trackingNumber,
+            // 'labelType' => (string)$xml->xpath('//ns:LabelType')[0] ?? null,
+            'error' => null,
+        ];
+    }
+
+
+
 }
