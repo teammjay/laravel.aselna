@@ -322,6 +322,9 @@ class EndicialabelService
         $labelRequest = $request->addChild('LabelRequest');
 
 //        $labelRequest->addChild('Test', 'YES');
+        if($shipmentDetails['MailpieceShape'] == 'Letter') {
+            $labelRequest->addAttribute('LabelType', 'DestinationConfirm');
+        }
         $labelRequest->addAttribute('ImageFormat', $shipmentDetails['labelFormat']);
         $labelRequest->addAttribute('LabelSize', $shipmentDetails['label_size']);
         $labelRequest->addAttribute('ImageResolution', $shipmentDetails['image_resolution'] ?? '203');
@@ -358,7 +361,7 @@ class EndicialabelService
 
         //if ($shipmentDetails['dimensions'] && ($shipmentDetails['MailpieceShape'] == 'Flat' || $shipmentDetails['MailpieceShape'] == 'Parcel')) {
         //}
-        if ($shipmentDetails['dimensions']) {
+        if ($shipmentDetails['dimensions'] && ($shipmentDetails['MailpieceShape'] != 'Letter')) {
             $dimensions = $labelRequest->addChild('MailpieceDimensions');
             $dimensions->addChild('Length', $shipmentDetails['dimensions']['length']);
             $dimensions->addChild('Width', $shipmentDetails['dimensions']['width']);
