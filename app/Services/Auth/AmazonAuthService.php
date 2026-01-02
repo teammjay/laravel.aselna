@@ -424,6 +424,34 @@ class AmazonAuthService
         return json_decode($response->getBody(), true);
     }
 
+
+    public function validateListingInfoBySku($sku, $listingData, $userIdentifier)
+    {
+        $marketPlaceID = $this->getMarketplaceIDs();
+        $accessToken = $this->getAccessToken();
+        Log::info('Access Token Created ' . $accessToken);
+
+
+        $response = $this->client->put(
+            '/listings/2021-08-01/items/' . $userIdentifier . '/' . $sku,
+            [
+                'headers' => [
+                    'x-amz-access-token' => "{$accessToken}",
+                    'Content-Type' => 'application/json',
+                ],
+                'query' => [
+                    'marketplaceIds' => implode(',', $marketPlaceID),
+                    'includedData' => 'issues',
+                    'mode' => 'VALIDATION_PREVIEW',
+                ],
+                'body' => json_encode($listingData),
+            ]
+        );
+
+        Log::info('Listing Validation Response: ' . $response->getBody());
+        return json_decode($response->getBody(), true);
+    }
+
     public function fetchListingItems($userIdentifier, $skus)
     {
         $marketPlaceID = $this->getMarketplaceIDs();
