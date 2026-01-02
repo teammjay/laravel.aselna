@@ -2367,7 +2367,7 @@ class ListingController extends Controller
             if($groupModels){
 
                 if(is_array($groupModels)) {
-                    $finalModel = implode($deviceSeparator, $groupModels);
+                    $finalModel = implode($device_seperator, $groupModels);
                 }else{
                     $finalModel = $groupModels;
                 }
