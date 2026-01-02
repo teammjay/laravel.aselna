@@ -50,6 +50,7 @@ use App\Services\Auth\ShopifyAuthService;
 use App\Services\Auth\WalmartAuthService;
 use App\Services\DataTable\DataTableService;
 use App\Services\Marketplace\MarketplaceServiceFactory;
+use App\Services\Marketplace\Service\AmazonService;
 use App\Services\Marketplace\Service\EbayService;
 use App\Services\Marketplace\Service\GoogleShoppingService;
 use App\Services\Marketplace\Service\MagentoService;
@@ -1106,6 +1107,36 @@ On Fri, 29 Aug 2025 at 23:36, phonil <phonil.ebay@gmail.com> wrote:
             $marketplaceService = MarketplaceServiceFactory::create($storeType);
 
             $marketplaceService->submitFeed($feedId, $listingId);
+
+            $feedInfo->update([
+                'status' => FeedStatus::PROCESSING,
+            ]);
+
+            // $marketplaceService->getResultFeed($listingId);
+            return response()->json(['success' => true]);
+        } catch (Exception $e) {
+            Log::info('Error: ' . $e->getMessage());
+            return response()->json(['success' => false, 'error' => $e->getMessage()]);
+        }
+    }
+
+    public function validateFeedFile(Request $request)
+    {
+        try {
+            $request->validate([
+                'listing_id' => 'required',
+            ]);
+
+            $listingId = $request->listing_id;
+            $feedId = $request->feed_id;
+            $listingInfo = Listing::where('id', $listingId)->first();
+            $feedInfo = ListingFeed::where('id', $feedId)->first();
+
+            $storeType = $listingInfo->store->storeType->name;
+
+            $marketplaceService = new AmazonService();
+
+            $marketplaceService->validateFeed($feedId, $listingId);
 
             $feedInfo->update([
                 'status' => FeedStatus::PROCESSING,

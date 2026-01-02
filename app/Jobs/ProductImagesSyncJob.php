@@ -96,9 +96,9 @@ class ProductImagesSyncJob implements ShouldQueue
 
         Log::info('Product Image Date ' . $productImage->date_updated);
         // TODO Need to remove on 1 Jan 2026
-//        if (isset($SystemProductImage) && $SystemProductImage->updated_at >= ($productImage->date_updated ?? now())) {
-//            return;
-//        }
+        if (isset($SystemProductImage) && $SystemProductImage->updated_at >= ($productImage->date_updated ?? now())) {
+            return;
+        }
 
         //check if file exists in storage
         try {

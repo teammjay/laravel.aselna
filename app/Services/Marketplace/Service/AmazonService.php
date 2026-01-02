@@ -293,6 +293,35 @@ class AmazonService implements MarketplaceServiceInterface
         }
     }
 
+    public function validateFeed($feedId, $listingId)
+    {
+        Log::info("Started :: ");
+        $directory = public_path('feeds/amazon/');
+        Log::info('Directory: ' . $directory);
+        if (is_dir($directory)) {
+            Log::info('Directory exists');
+            foreach (scandir($directory, SCANDIR_SORT_DESCENDING) as $file) {
+                Log::info('File: ' . $file);
+                if (strpos($file, $listingId) === 0 && preg_match('/\.(json|xml)$/', $file)) {
+                    $files[] = 'feeds/amazon/' . $file;
+                }
+            }
+        }
+        $filePath = public_path($files[0]);
+
+        $content = file_get_contents($filePath);
+        Log::info("Content :: " . $content);
+        $contentData = json_decode($content, true);
+
+        $listingInfo = Listing::where('id', $listingId)->first();
+        $store = $listingInfo->store;
+        $this->authService = new AmazonAuthService($store->seller_id, $store->secret_key,$store->api_key);
+
+        foreach ($contentData['messages'] as $item) {
+            $validationResponse = $this->authService->validateListingInfoBySku($item['sku'],$item,$store->user_id);
+        }
+    }
+
     public function getResultFeed(mixed $listingId, $feedId = null)
     {
         $listingInfo = Listing::where('id', $listingId)->first();

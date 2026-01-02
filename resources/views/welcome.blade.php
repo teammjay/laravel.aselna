@@ -35,6 +35,10 @@
         table th, table td, .column-no-whitespace {
             white-space: nowrap;
         }
+
+        .debug-display {
+            display: none;
+        }
     </style>
 @stop
 
@@ -250,6 +254,7 @@
                                 '<button class="btn btn-primary generate-feed-file" data-listing="' + data.listing_id + '" data-feed="' + data.id + '">Download Feed File</button>' +
                                 '<button class="btn btn-primary generate-result-feed-file" data-listing="' + data.listing_id + '" data-feed="' + data.id + '">Download Result Feed File</button>' +
                                 '<button class="btn btn-primary submit-feed-file" data-listing="' + data.listing_id + '" data-feed="' + data.id + '">Submit Feed</button>' +
+                                '<button class="btn btn-primary validate-feed-file debug-display" data-listing="' + data.listing_id + '" data-feed="' + data.id + '">Validate Feed</button>' +
                                 '</div>';
                         }
                     }
@@ -351,6 +356,32 @@
             var feedId = $(this).data('feed');
             $.ajax({
                 url: "<?= route('submit-feed') ?>",
+                type: 'POST',
+                data: {
+                    _token: "<?= csrf_token() ?>",
+                    listing_id: listingId,
+                    feed_id: feedId
+                },
+                success: function (response) {
+                    // download the file url php code is  return response()->download($filetPath);
+
+                    if (response.success) {
+                        alert("Feed Submitted Successfully");
+                        console.log(response);
+                        table.ajax.reload();
+                    } else {
+                        alert("An Error Occurred which submitting the feed");
+                    }
+                }
+            });
+        });
+
+        $(document).on('click', '.validate-feed-file', function () {
+            console.log("Submit Clicked");
+            var listingId = $(this).data('listing');
+            var feedId = $(this).data('feed');
+            $.ajax({
+                url: "<?= route('validate-feed') ?>",
                 type: 'POST',
                 data: {
                     _token: "<?= csrf_token() ?>",
