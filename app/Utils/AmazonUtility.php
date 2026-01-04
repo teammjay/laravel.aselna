@@ -736,6 +736,11 @@ class AmazonUtility
                     return [['value' => $value->calculated_value(), 'unit' => 'volts']];
                 }
                 break;
+            case 'output_current':
+                if ($value) {
+                    return [['value' => $value->calculated_value(), 'unit' => 'amps']];
+                }
+                break;
             case 'model_name':
             case 'model_number':
                 return [['value' => $itemDetail->sku, 'language_tag' => 'en_US']];

@@ -61,6 +61,7 @@ use App\Jobs\ProductTypeKeywordSyncJob;
 use App\Jobs\SendNotificationEmailSyncFailJob;
 use App\Jobs\SendNotificationOrderSyncFailJob;
 use App\Jobs\ShippingCarrierJob;
+use App\Jobs\Shopify\SyncShopifyItems;
 use App\Jobs\ShopifyCollectionDeviceSyncJob;
 use App\Jobs\ShopifyCollectionSyncJob;
 use App\Jobs\ShopifyCombinedSyncing;
@@ -223,6 +224,7 @@ class SyncAllTables extends Command
 //        ProductImagesSyncJob::dispatch();
 //        ListingItemProductImageSyncJob::dispatch();
 //        CategorySyncJob::dispatch();
+        SyncShopifyItems::dispatch();
 
         $transactionIds = [
 ////            '9400150105798006163885',
