@@ -23,6 +23,8 @@ class SyncShopifyItems implements ShouldQueue
         Queueable::withChain as queueableWithChain;
     }
 
+    public $timeout = 300000;
+
     /**
      * Create a new job instance.
      */
@@ -44,7 +46,7 @@ class SyncShopifyItems implements ShouldQueue
                 ->whereIn('store.name',['NevaWireless'])
                 ->pluck('store.id');
             // store products sync
-//            $this->syncStoreProducts($storeIds);
+            $this->syncStoreProducts($storeIds);
             // listing Item sync
 //            $this->syncListingItems($storeIds);
             // listing Item data
@@ -64,7 +66,7 @@ class SyncShopifyItems implements ShouldQueue
 
     private function syncStoreProducts($storeIds)
     {
-        $storeProductsQ = DB::connection('easyesale_db')->table('store_product')->orderBy('id');
+        $storeProductsQ = DB::connection('easyesale_db')->table('store_product')->whereIn('store_id', $storeIds)->orderBy('id');
         $storeProductsQ->chunk(1000, function ($storeProducts) {
             foreach ($storeProducts as $storeProduct) {
                 if (Catalog::where('product_id', $storeProduct->product_id)->doesntExist()) {
@@ -111,6 +113,8 @@ class SyncShopifyItems implements ShouldQueue
                     'synch_item' => $storeProduct->synch_item,
                     'synch_price' => $storeProduct->synch_price,
                     'title' => $storeProduct->title,
+                    'created_by' => 'system',
+                    'updated_by' => 'system',
                     'updated_at' => now(),
                 ]);
             }
