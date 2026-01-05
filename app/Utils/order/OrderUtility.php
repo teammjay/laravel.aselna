@@ -810,7 +810,7 @@ class OrderUtility
                             'product_id' => $catalog->product_id ?? null,
                             'client_id' => null,
                             'sku' => $productSku,
-                            'store_sku' =>  $item['orderSn'] ?? '',
+                            'store_sku' =>  $item['skuId'] ?? '',
                             'quantity' => $item['quantity'],
                             'id1' => '',
 //                            'item_price' => $item['unitPrice']['value'] ?? 0,
