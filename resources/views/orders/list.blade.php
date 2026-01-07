@@ -335,10 +335,9 @@
                     if ($(this).is(':checked')) {
                         flag = false;
                         let selectedId = $(this).val();
-                        location.href = "{{ url('messages/create') }}/" + selectedId;
+                        location.href = "{{ url('orders/create_message') }}/" + selectedId;
                     }
                 });
-
             });
 
 

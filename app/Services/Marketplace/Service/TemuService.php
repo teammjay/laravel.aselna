@@ -597,7 +597,7 @@ class TemuService implements MarketplaceServiceInterface
                 'method' => __METHOD__
             ],['store_name'=>$store->name]);
 
-            Log::info('Ebay order error : ' . $e->getMessage());
+            Log::info('Temu order error : ' . $e->getMessage());
         }
     }
 
