@@ -61,6 +61,7 @@ class ProductSyncJob implements ShouldQueue
 
         if (env('APP_ENV') === 'local') {
             Log::info('Local Environment');
+//            $easyesaleProductsQ->where('oem_generic', '=', '2');
             $easyesaleProductsQ->where('oem_generic', '=', '2');
         }
 
@@ -183,7 +184,7 @@ class ProductSyncJob implements ShouldQueue
             //     return;
             // }
             $alreadyExists = Catalog::where('product_id', $product->id)->first();
-            if (isset($alreadyExists) && $alreadyExists->updated_at >= $product->update_ts) {
+            if (isset($alreadyExists) && $alreadyExists->updated_at >= $product->last_update_date_time) {
                 Log::info("Product Skipped :: " . $product->code);
                 return;
             }
@@ -231,7 +232,7 @@ class ProductSyncJob implements ShouldQueue
                 'created_by' => 'system',
                 'updated_by' => 'system',
                 'created_at' => $product->create_ts,
-                'updated_at' => now(),
+                'updated_at' => $product->last_update_date_time,
             ]);
         } catch (Exception $e) {
             Log::info('Test Error ::' . $e->getMessage());
