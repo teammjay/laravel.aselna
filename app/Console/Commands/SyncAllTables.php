@@ -199,6 +199,7 @@ class SyncAllTables extends Command
 //        ShopifyStoreProductsSyncJob::dispatch();
 //        ProcessFeedGenerationJob::dispatch(json_decode('{"store_id":"3fab8878-e036-58c7-db30-addd3058875c","feed_type":"Google","fileType":"csv","product_code":["J14"],"device":null,"interface":null,"device_series":null,"fileName":"google_shopping_feed_2025-08-26-09-15-19.csv","filePath":"feeds\/google-shopping\/google_shopping_feed_2025-08-26-09-15-19.csv"}',true), 'fd066ad3-7059-4a87-a6e7-a18e5823f016');
 //        ShopifyDuplicateStoreProductsJob::dispatch('6c7009ce-eac1-a995-a986-27d5df0103ac', '47338682-e00d-4ab2-9db6-76343bb96162');
+//        ShopifyDuplicateStoreProductsJob::dispatch('c2c8131f-c8a2-e082-9f89-3e8bf96b1049', 'd51981a2-bb52-4b8c-bd17-3836d65d2bb4');
 //        UPCGenerateJob::dispatch(
 //            [
 //                'store' => '6f535170-ecf1-7fda-9b5e-c9045278bb47',
@@ -224,7 +225,7 @@ class SyncAllTables extends Command
 //        ProductImagesSyncJob::dispatch();
 //        ListingItemProductImageSyncJob::dispatch();
 //        CategorySyncJob::dispatch();
-        SyncShopifyItems::dispatch();
+//        SyncShopifyItems::dispatch();
 
         $transactionIds = [
 ////            '9400150105798006163885',
