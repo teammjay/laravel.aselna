@@ -218,6 +218,16 @@
                             </div>
                         </div>
                     </div>
+                    <div class="col-md-3">
+                        <div class="row">
+                            <div class="col-4 text-right">
+                                Customer Email
+                            </div>
+                            <div class="col-8">
+                                <input type="text" name="customer_email" id="customer_email" class="form-control">
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="row pt-3">
