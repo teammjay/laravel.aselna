@@ -293,7 +293,7 @@
                             </div>
                         @endif
 
-                        @if($orderOperation->tracking_number != '' && $orderOperation->tracking_number != null)
+                        @if(isset($orderOperation->tracking_number) && ($orderOperation->tracking_number != '' || $orderOperation->tracking_number != null) && $orderOperation->operation_type == \App\Constants\OrderOperationType::OrderShipment)
                             <div class="card">
                                 <div class="card-body">
                                     <div class="row">
