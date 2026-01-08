@@ -225,6 +225,9 @@ class ProcessStoreMessageAccountJob implements ShouldQueue
                             if (isset($email['in_reply_to']) && $email['in_reply_to'] != '') {
                                 $query->orWhere('message_id', trim($email['in_reply_to']));
                             }
+                            if (isset($email['reply_to']) && $email['reply_to'] != '') {
+                                $query->orWhere('ticket_email', trim($email['reply_to']));
+                            }
                             Log::info(' Message Query: ' . $query->toSql());
                             $ticketDetail = $query->first();
 
