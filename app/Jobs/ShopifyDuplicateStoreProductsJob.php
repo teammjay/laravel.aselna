@@ -61,7 +61,7 @@ class ShopifyDuplicateStoreProductsJob implements ShouldQueue
 
 //        $this->duplicateStoreProducts();
 
-//        $this->duplicateListingDetails();
+        $this->duplicateListingDetails();
 
 //        $this->dublicateStoreNavigationPages();
     }

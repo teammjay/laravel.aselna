@@ -534,7 +534,7 @@ class AmazonService implements MarketplaceServiceInterface
             'carrierName' => '',
             'carrierCode' => $mainOrderOperation->carrier->name,
             'shippingMethod' => $shippingMethod,
-            'packageReferenceId' => 1,
+            'packageReferenceId' => "123",
         ];
         $finalData['marketplaceId'] = $orderDetail['payload']['MarketplaceId'];
 
