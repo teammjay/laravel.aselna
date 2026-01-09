@@ -212,7 +212,7 @@ class EmailMessageUtility
             $batchSize = 10;
 
             $filteredMessages = collect();
-            $page = 0;
+            $page = 1;
 
             do {
                 Log::info('Page ::' . $page . ' :: Fetching batch of size ' . $batchSize);
@@ -221,11 +221,16 @@ class EmailMessageUtility
                     ->before($toDateCriteria)
                     ->limit($batchSize, $page)
                     ->setFetchOptions(\Webklex\PHPIMAP\IMAP::FT_UID | \Webklex\PHPIMAP\IMAP::FT_PEEK)
+                    //->setFetchOptions(\Webklex\PHPIMAP\IMAP::FT_UID)
                     ->setFetchBody(false)
                     ->setFetchFlags(false);
 
                 $tempMessages = $query->get();
                 Log::info("Fetched batch {$page} with " . $tempMessages->count() . " messages");
+
+                if ($tempMessages->count() === 0) {
+                    break;
+                }
 
                 // Filter messages by exact time within the loop
                 $filteredBatch = $tempMessages->filter(function ($message) use ($filterDateObj) {
@@ -260,7 +265,8 @@ class EmailMessageUtility
                 sleep(1); // prevent server throttling
                 Log::info('Temp Messages Count :: ' . $tempMessages->count());
                 $query = null;
-            } while ($tempMessages->count() > 0 && !($tempMessages->count() < $batchSize) && $filteredMessages->count() <= $limit);
+            //} while ($tempMessages->count() > 0 && !($tempMessages->count() < $batchSize) && $filteredMessages->count() <= $limit);
+            } while ($tempMessages->count() === $batchSize && $filteredMessages->count() < $limit);
 
             $filteredMessages = $filteredMessages->values();
 
@@ -389,7 +395,8 @@ class EmailMessageUtility
 
             Log::error("Failed to fetch emails: " . $e->getMessage());
             Log::error("Failed to fetch emails: " . $e->getTraceAsString());
-            return ['error' => 'Failed to fetch emails: ' . $e->getMessage()];
+            //return ['error' => 'Failed to fetch emails: ' . $e->getMessage()];
+            return [];
         }
     }
 

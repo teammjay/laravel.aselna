@@ -85,6 +85,9 @@ class ProcessStoreMessageAccountJob implements ShouldQueue
                         foreach ($receiveEmails as $email) {
 
                             /*if(!is_array($email)){ continue;}*/
+                            if(isset($email['error'])){
+                                continue;
+                            }
 
                             Log::info(' Date : ' . $email['date']);
                             // get as max date for next filter
