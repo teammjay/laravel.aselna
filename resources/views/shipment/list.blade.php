@@ -82,6 +82,9 @@
             margin-left: 5px;
             vertical-align: text-bottom;
         }
+        .bg-gray.bg-blue {
+            background-color: #007bff!important;
+        }
     </style>
 @stop
 
