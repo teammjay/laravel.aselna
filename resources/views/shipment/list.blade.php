@@ -239,7 +239,7 @@
                                 Mark As Shipped (Without Feed)
                             </button>
 
-                            <span id="total_selected">( 0 selected )</span>
+
                         </div>
                     </div>
                     <div class="row">
@@ -247,6 +247,10 @@
                         <div class="col-md-3">
                             <input type="checkbox" id="select_deselect_shipment"> <label for="selected_product">Select/Deselect All</label>
                         </div>
+                        <div class="col-md-3">
+                            <span id="total_selected">( 0 selected )</span>
+                        </div>
+                        <div class="col-md-3" data-toggle="modal" data-target="#actionInfoModal" style="cursor: pointer;"><i class="fa fa-exclamation-circle"></i> What do these buttons do?</div>
                     </div>
                     <div class="table-responsive pb-5" style="max-height: 75vh; overflow: auto;">
                         <table id="shipmentTable" class="table table-bordered table-striped">
@@ -288,6 +292,49 @@
         </div>
     </div>
     <div id="ajax-gallery" style="display: none;"></div>
+
+    <div class="modal fade" id="actionInfoModal">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 class="modal-title" id="actionInfoModalLabel">Info</h3>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <ul class="list-group">
+                        <li class="list-group-item">
+                            <strong>Ship All</strong><br>
+                            Ships all available orders regardless of selection with label printing(default) and sends feed updates.
+                        </li>
+                        <li class="list-group-item">
+                            <strong>Ship Selected</strong><br>
+                            Ships only the orders you have selected with label printing(default) and sends feed updates.
+                        </li>
+                        <li class="list-group-item">
+                            <strong>Mark As Shipped</strong><br>
+                            Marks orders as shipped and sends feed updates.(Option to choose label printing)
+                        </li>
+                        <li class="list-group-item">
+                            <strong>Cancel Selected</strong><br>
+                            Cancels only the selected orders.
+                        </li>
+                        <li class="list-group-item">
+                            <strong>Mark As Canceled</strong><br>
+                            Marks selected orders as canceled in the system.
+                        </li>
+                        <li class="list-group-item">
+                            <strong>Mark As Shipped (Without Feed)</strong><br>
+                            Marks orders as shipped without sending feed updates.(No label Print)
+                        </li>
+                    </ul>
+                </div>
+                {{--<div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancle</button>
+                    <button type="button" class="btn btn-primary" id="updateShipment"><i class="fa fa-sticky-note"></i> Update </button>
+                </div>--}}
+            </div>
+        </div>
+    </div>
 
     <!-- Shipping Detail modal -->
     <div class="modal fade" id="shippingDetailModal">
@@ -556,47 +603,51 @@
         });
 
         $(document).on('click','#mark_as_shipped',function () {
-            if($('input[name="shipment_id[]"]:checked').length > 1){
-                alert('Please select one shipment to make "Mark as Shipped"');
-                $('input[name="shipment_id[]"]').prop('checked',false);
-                $('input[name="shipment_id[]"]').parents('tr').removeClass('bg-blue');
-                return false;
-            }
-            var shipment_id = $('input[name="shipment_id[]"]:checked').val();
-            if(shipment_id != '' && shipment_id != null){
-                $.ajax({
-                    url: "{{ route('shipment.getshippingdetail') }}",
-                    type: 'POST',
-                    data: {
-                        operation_id: shipment_id,
-                        mark_as_ship:1,
-                        "_token": '{{ csrf_token() }}'
-                    },
-                    success: function (response) {
-                        // If success, remove the user row from the table
-                        if (response.success) {
-                            $('#markAsShippedModal').find('.modal-body').html(response.html);
-                            $('#date').datetimepicker({
-                                format:'Y-m-d H:i',
-                                /* minDate: 'now', */
-                                step:10,
-                                onSelectTime: function(dp,$input) {
-                                    var sel_date = $input.val();
-                                    $('#date').val(sel_date);
-                                }
-                            });
-                            $('#markAsShippedModal').modal('show');
 
-                            getShippingCarrierService($('#carrier_name_ms'));
+            var confirm = window.confirm('You click Mark As Shipped, are you sure you want to perform this action?');
+            if(confirm) {
+                if ($('input[name="shipment_id[]"]:checked').length > 1) {
+                    alert('Please select one shipment to make "Mark as Shipped"');
+                    $('input[name="shipment_id[]"]').prop('checked', false);
+                    $('input[name="shipment_id[]"]').parents('tr').removeClass('bg-blue');
+                    return false;
+                }
+                var shipment_id = $('input[name="shipment_id[]"]:checked').val();
+                if (shipment_id != '' && shipment_id != null) {
+                    $.ajax({
+                        url: "{{ route('shipment.getshippingdetail') }}",
+                        type: 'POST',
+                        data: {
+                            operation_id: shipment_id,
+                            mark_as_ship: 1,
+                            "_token": '{{ csrf_token() }}'
+                        },
+                        success: function (response) {
+                            // If success, remove the user row from the table
+                            if (response.success) {
+                                $('#markAsShippedModal').find('.modal-body').html(response.html);
+                                $('#date').datetimepicker({
+                                    format: 'Y-m-d H:i',
+                                    /* minDate: 'now', */
+                                    step: 10,
+                                    onSelectTime: function (dp, $input) {
+                                        var sel_date = $input.val();
+                                        $('#date').val(sel_date);
+                                    }
+                                });
+                                $('#markAsShippedModal').modal('show');
+
+                                getShippingCarrierService($('#carrier_name_ms'));
+                            }
+                        },
+                        error: function (xhr) {
+                            // Handle error response
+                            alert('Error: ' + xhr.responseJSON.error);
                         }
-                    },
-                    error: function (xhr) {
-                        // Handle error response
-                        alert('Error: ' + xhr.responseJSON.error);
-                    }
-                });
-            }else{
-                alert('Please select shipment first');
+                    });
+                } else {
+                    alert('Please select shipment first');
+                }
             }
         });
 
@@ -633,44 +684,48 @@
         });
 
         $(document).on('click','#cancel_selected',function () {
-            var shipment_id = $('input[name="shipment_id[]"]:checked').val();
-            if(shipment_id != '' && shipment_id != null){
-                $.ajax({
-                    url: "{{ route('shipment.getcancelshipmentdetail') }}",
-                    type: 'POST',
-                    data: {
-                        operation_id: shipment_id,
-                        "_token": '{{ csrf_token() }}'
-                    },
-                    success: function (response) {
-                        // If success, remove the user row from the table
-                        if (response.success) {
-                            $('#cancelShipmentModal').find('.modal-body').html(response.html);
-                            $('#canceldate').datetimepicker({
-                                format:'Y-m-d H:i',
-                                /* minDate: 'now', */
-                                step:10,
-                                onSelectTime: function(dp,$input) {
-                                    var sel_date = $input.val();
-                                    $('#canceldate').val(sel_date);
-                                }
-                            });
-                            $('#cancelShipmentModal').modal('show');
+            var confirm = window.confirm('You click the Cancel Selected, are you sure you want to perform this action?');
+
+            if(confirm) {
+                var shipment_id = $('input[name="shipment_id[]"]:checked').val();
+                if (shipment_id != '' && shipment_id != null) {
+                    $.ajax({
+                        url: "{{ route('shipment.getcancelshipmentdetail') }}",
+                        type: 'POST',
+                        data: {
+                            operation_id: shipment_id,
+                            "_token": '{{ csrf_token() }}'
+                        },
+                        success: function (response) {
+                            // If success, remove the user row from the table
+                            if (response.success) {
+                                $('#cancelShipmentModal').find('.modal-body').html(response.html);
+                                $('#canceldate').datetimepicker({
+                                    format: 'Y-m-d H:i',
+                                    /* minDate: 'now', */
+                                    step: 10,
+                                    onSelectTime: function (dp, $input) {
+                                        var sel_date = $input.val();
+                                        $('#canceldate').val(sel_date);
+                                    }
+                                });
+                                $('#cancelShipmentModal').modal('show');
+                            }
+                        },
+                        error: function (xhr) {
+                            // Handle error response
+                            alert('Error: ' + xhr.responseJSON.error);
                         }
-                    },
-                    error: function (xhr) {
-                        // Handle error response
-                        alert('Error: ' + xhr.responseJSON.error);
-                    }
-                });
-            }else{
-                alert('Please select shipment first');
+                    });
+                } else {
+                    alert('Please select shipment first');
+                }
             }
         });
 
         $(document).on('click','.change_shipment_status',function () {
 
-            let confirmation = confirm("are you sure want to update this shipments?");
+            let confirmation = confirm("are you sure you want to update this shipments?");
             let status = $(this).data('status');
             let orderstatus = $(this).data('ostatus');
 
@@ -1002,27 +1057,29 @@
         let shipment_details = [];
 
         $(document).on('click','#ship_all',function () {
-            let shipment_ids = [];
-            isProcessingCancelled = false;
-            $('input[name="shipment_id[]"]').each(function () {
-                const status = $(this).data('status');
+            var confirm = window.confirm('You click Ship All button, Are you sure you want to perform this action?');
+            if(confirm) {
+                let shipment_ids = [];
+                isProcessingCancelled = false;
+                $('input[name="shipment_id[]"]').each(function () {
+                    const status = $(this).data('status');
 
-                if(status === 1 || status === 2){
-                    return;
+                    if (status === 1 || status === 2) {
+                        return;
+                    }
+                    shipment_ids.push($(this).val());
+                });
+
+                shipment_details = [];
+
+                if (shipment_ids.length === 0) {
+                    alert('Please select shipment first.');
+                    return false;
                 }
-                shipment_ids.push($(this).val());
-            });
 
-            shipment_details = [];
-
-            if(shipment_ids.length === 0){
-                alert('Please select shipment first.');
-                return false;
-            }
-
-            // Create a modal for progress display
-            if (!$('#progressModal').length) {
-                $('body').append(`
+                // Create a modal for progress display
+                if (!$('#progressModal').length) {
+                    $('body').append(`
                     <div class="modal fade" id="progressModal" data-backdrop="static" data-keyboard="false">
                         <div class="modal-dialog modal-lg">
                             <div class="modal-content">
@@ -1061,73 +1118,78 @@
                         </div>
                     </div>
                 `);
-            }
-
-            // Reset and show modal
-            $('#progressModal .progress-bar').css('width', '0%').attr('aria-valuenow', 0).text('0%');
-            $('#progress-status').text('Preparing to process shipments...');
-            $('#progress-items-body').empty();
-            $('#progressModal .modal-footer #btn-complete').hide();
-            $('#progressModal').modal('show');
-
-            // Start the processing by making the initial request
-            $.ajax({
-                url: "{{ route('shipment.shipselected') }}",
-                type: 'POST',
-                data: {
-                    shipment_ids: shipment_ids,
-                    "_token": '{{ csrf_token() }}'
-                },
-                global: false,
-                success: function (response) {
-                    if (response.success) {
-                        const process_id = response.process_id;
-                        const total_count = response.total_count;
-                        const shipment_ids = response.shipment_ids;
-                        shipment_details = response.shipment_details;
-
-                        $('#progress-status').text(`Processing 0/${total_count} shipments`);
-
-                        // Process each shipment sequentially
-                        processShipmentsSequentially(process_id, shipment_ids, total_count, 0);
-                    } else {
-                        $('#progressModal').modal('hide');
-                        alert(response.message || 'Failed to process shipments');
-                    }
-                },
-                error: function (xhr) {
-                    $('#progressModal').modal('hide');
-                    const response = xhr.responseJSON;
-                    if (response && response.errors) {
-                        alert(response.message);
-                    } else {
-                        alert('Error: ' + (xhr.responseJSON?.message || 'Unknown error'));
-                    }
                 }
-            });
+
+                // Reset and show modal
+                $('#progressModal .progress-bar').css('width', '0%').attr('aria-valuenow', 0).text('0%');
+                $('#progress-status').text('Preparing to process shipments...');
+                $('#progress-items-body').empty();
+                $('#progressModal .modal-footer #btn-complete').hide();
+                $('#progressModal').modal('show');
+
+                // Start the processing by making the initial request
+                $.ajax({
+                    url: "{{ route('shipment.shipselected') }}",
+                    type: 'POST',
+                    data: {
+                        shipment_ids: shipment_ids,
+                        "_token": '{{ csrf_token() }}'
+                    },
+                    global: false,
+                    success: function (response) {
+                        if (response.success) {
+                            const process_id = response.process_id;
+                            const total_count = response.total_count;
+                            const shipment_ids = response.shipment_ids;
+                            shipment_details = response.shipment_details;
+
+                            $('#progress-status').text(`Processing 0/${total_count} shipments`);
+
+                            // Process each shipment sequentially
+                            processShipmentsSequentially(process_id, shipment_ids, total_count, 0);
+                        } else {
+                            $('#progressModal').modal('hide');
+                            alert(response.message || 'Failed to process shipments');
+                        }
+                    },
+                    error: function (xhr) {
+                        $('#progressModal').modal('hide');
+                        const response = xhr.responseJSON;
+                        if (response && response.errors) {
+                            alert(response.message);
+                        } else {
+                            alert('Error: ' + (xhr.responseJSON?.message || 'Unknown error'));
+                        }
+                    }
+                });
+            }
         });
 
         $(document).on('click','#ship_selected',function () {
-            let shipment_ids = [];
-            isProcessingCancelled = false;
-            $('input[name="shipment_id[]"]:checked').each(function () {
-                const status = $(this).data('status');
-                if(status === 1 || status === 2){
-                    return;
+
+            var confirm = window.confirm('You click Ship Selected button, Are you sure you want to perform this action?');
+
+            if(confirm) {
+                let shipment_ids = [];
+                isProcessingCancelled = false;
+                $('input[name="shipment_id[]"]:checked').each(function () {
+                    const status = $(this).data('status');
+                    if (status === 1 || status === 2) {
+                        return;
+                    }
+                    shipment_ids.push($(this).val());
+                });
+
+                shipment_details = [];
+
+                if (shipment_ids.length === 0) {
+                    alert('Please select shipment first.');
+                    return false;
                 }
-                shipment_ids.push($(this).val());
-            });
 
-            shipment_details = [];
-
-            if(shipment_ids.length === 0){
-                alert('Please select shipment first.');
-                return false;
-            }
-
-            // Create a modal for progress display
-            if (!$('#progressModal').length) {
-                $('body').append(`
+                // Create a modal for progress display
+                if (!$('#progressModal').length) {
+                    $('body').append(`
                     <div class="modal fade" id="progressModal" data-backdrop="static" data-keyboard="false">
                         <div class="modal-dialog modal-lg">
                             <div class="modal-content">
@@ -1166,50 +1228,51 @@
                         </div>
                     </div>
                 `);
-            }
-
-            // Reset and show modal
-            $('#progressModal .progress-bar').css('width', '0%').attr('aria-valuenow', 0).text('0%');
-            $('#progress-status').text('Preparing to process shipments...');
-            $('#progress-items-body').empty();
-            $('#progressModal .modal-footer #btn-complete').hide();
-            $('#progressModal').modal('show');
-
-            // Start the processing by making the initial request
-            $.ajax({
-                url: "{{ route('shipment.shipselected') }}",
-                type: 'POST',
-                data: {
-                    shipment_ids: shipment_ids,
-                    "_token": '{{ csrf_token() }}'
-                },
-                global: false,
-                success: function (response) {
-                    if (response.success) {
-                        const process_id = response.process_id;
-                        const total_count = response.total_count;
-                        const shipment_ids = response.shipment_ids;
-                        shipment_details = response.shipment_details;
-
-                        $('#progress-status').text(`Processing 0/${total_count} shipments`);
-
-                        // Process each shipment sequentially
-                        processShipmentsSequentially(process_id, shipment_ids, total_count, 0);
-                    } else {
-                        $('#progressModal').modal('hide');
-                        alert(response.message || 'Failed to process shipments');
-                    }
-                },
-                error: function (xhr) {
-                    $('#progressModal').modal('hide');
-                    const response = xhr.responseJSON;
-                    if (response && response.errors) {
-                        alert(response.message);
-                    } else {
-                        alert('Error: ' + (xhr.responseJSON?.message || 'Unknown error'));
-                    }
                 }
-            });
+
+                // Reset and show modal
+                $('#progressModal .progress-bar').css('width', '0%').attr('aria-valuenow', 0).text('0%');
+                $('#progress-status').text('Preparing to process shipments...');
+                $('#progress-items-body').empty();
+                $('#progressModal .modal-footer #btn-complete').hide();
+                $('#progressModal').modal('show');
+
+                // Start the processing by making the initial request
+                $.ajax({
+                    url: "{{ route('shipment.shipselected') }}",
+                    type: 'POST',
+                    data: {
+                        shipment_ids: shipment_ids,
+                        "_token": '{{ csrf_token() }}'
+                    },
+                    global: false,
+                    success: function (response) {
+                        if (response.success) {
+                            const process_id = response.process_id;
+                            const total_count = response.total_count;
+                            const shipment_ids = response.shipment_ids;
+                            shipment_details = response.shipment_details;
+
+                            $('#progress-status').text(`Processing 0/${total_count} shipments`);
+
+                            // Process each shipment sequentially
+                            processShipmentsSequentially(process_id, shipment_ids, total_count, 0);
+                        } else {
+                            $('#progressModal').modal('hide');
+                            alert(response.message || 'Failed to process shipments');
+                        }
+                    },
+                    error: function (xhr) {
+                        $('#progressModal').modal('hide');
+                        const response = xhr.responseJSON;
+                        if (response && response.errors) {
+                            alert(response.message);
+                        } else {
+                            alert('Error: ' + (xhr.responseJSON?.message || 'Unknown error'));
+                        }
+                    }
+                });
+            }
         });
 
         let maxRetries = 1;
