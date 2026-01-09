@@ -69,6 +69,10 @@ class   FetchEmailMessagesJob implements ShouldQueue
                     if (env('APP_ENV') === 'local' && $store->storeType->name != 'Ebay') {
                         continue;
                     }*/
+
+                    /*if (env('APP_ENV') === 'local' && strtolower($store->name) != 'odemobile' && strtolower($store->storeType->name) != 'shopify') {
+                        continue;
+                    }*/
                     Log::info('Processing store: ' . $store->name);
                     $storeMessageAccounts = StoreMessageAccount::with('incomingAccount', 'outgoingAccount')
                         ->where('store_id', $store->id)
