@@ -128,6 +128,15 @@ class Navigationutility
                         ->where('page_type', WebStorePageType::BRAND)
                         ->where('device_brand_id', $link->device_brand_id)
                         ->first();
+                    $count = StoreNavigationPage::where('store_id', $store_id)
+                        ->where('device_brand_id', $link->device_brand_id)
+                        ->where('page_type', $skipDevicePages ? WebStorePageType::DEVICE : WebStorePageType::BRAND_DEVICE_PRODUCT_TYPES)
+                        ->count();
+
+                    if ($count <= 0) {
+                        continue; // skip brands with no devices
+                    }
+
                     $finalLinkArray['other_link'][] = [
                         'id' => $link->id,
                         'title' => $link->brand->name,
