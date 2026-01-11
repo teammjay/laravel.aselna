@@ -181,8 +181,8 @@ class FetchShopifyOrders implements ShouldQueue
                                 /* start - add customer shipping address*/
                                 $customer_address_data = [
                                     'customer_id' => $customer_detail->id,
-                                    'first_name' => isset($order['shippingAddress']['firstName']) ? $order['shippingAddress']['firstName'] : NULL,
-                                    'last_name' => isset($order['shippingAddress']['lastName']) ? $order['shippingAddress']['lastName'] : NULL,
+                                    'first_name' => isset($order['shippingAddress']['firstName']) ? $order['shippingAddress']['firstName'] : ' ',
+                                    'last_name' => isset($order['shippingAddress']['lastName']) ? $order['shippingAddress']['lastName'] : ' ',
                                     'address_line_1' => $order['shippingAddress']['address1'],
                                     'address_line_2' => $order['shippingAddress']['address2'],
                                     'city' => $order['shippingAddress']['city'],
@@ -237,8 +237,8 @@ class FetchShopifyOrders implements ShouldQueue
                                     //'order_status' => OrderStatus::getOrderStatusId($order['displayFulfillmentStatus']),
                                     'order_status' => $orderstatus,
                                     'order_total' => $order['totalPrice'],
-                                    'buyer_first_name' => isset($order['customer']) ? $order['customer']['firstName'] : NULL,
-                                    'buyer_last_name' => isset($order['customer']) ? $order['customer']['lastName'] : NULL,
+                                    'buyer_first_name' => isset($order['customer']) ? $order['customer']['firstName'] : ' ',
+                                    'buyer_last_name' => isset($order['customer']) ? $order['customer']['lastName'] : ' ',
                                     'buyer_email' => $order['email'],
                                     'customer_id' => $customer_detail->id,
                                     'purchase_order_id' => isset($order['name']) ? str_replace('#','',$order['name']) : NULL,
