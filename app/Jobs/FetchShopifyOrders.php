@@ -167,9 +167,9 @@ class FetchShopifyOrders implements ShouldQueue
                                 /* create customer*/
 
                                 $customerData = [
-                                    'first_name' => isset($order['customer']) ? $order['customer']['firstName'] : '',
-                                    'last_name' => isset($order['customer']) ? $order['customer']['lastName'] : '',
-                                    'full_name' => isset($order['customer']) ? $order['customer']['displayName'] : '',
+                                    'first_name' => isset($order['customer']['firstName']) ? $order['customer']['firstName'] : ' ',
+                                    'last_name' => isset($order['customer']['lastName']) ? $order['customer']['lastName'] : ' ',
+                                    'full_name' => isset($order['customer']['displayName']) ? $order['customer']['displayName'] : ' ',
                                     'email' => $order['email'],
                                     'marketplace_customer_id' => isset($order['customer']) ? $order['customer']['id'] : '',
                                 ];
