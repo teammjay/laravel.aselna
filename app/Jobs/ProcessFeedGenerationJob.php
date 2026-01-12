@@ -49,6 +49,8 @@ class ProcessFeedGenerationJob implements ShouldQueue
     protected $feed_id;
     protected $data;
     protected $store_id;
+
+    private $file_name = 'feed.csv';
     protected $compatibleDeviceTypes;
     private $storeDetail;
     private $store_type_detail;
@@ -94,6 +96,10 @@ class ProcessFeedGenerationJob implements ShouldQueue
             $this->category_store_type_detail = StoreType::where('code', 'googleShopping')->first();
 
             $this->max_file_size = 200 * 1024 * 1024;
+
+            if (env('APP_ENV') == 'local' || env('APP_ENV') == 'development') {
+                $this->max_file_size = 1 * 1024 * 1024; // 1 MB for local testing
+            }
 
             $this->compatibleDeviceTypes = StoreDeviceType::where('store_id', $store_id)
                 ->where('purpose', 'feed')->pluck('device_type_id')->toArray();
@@ -173,9 +179,11 @@ class ProcessFeedGenerationJob implements ShouldQueue
             }
 
             $this->current_file_index = 1;
-            $this->directory = public_path('feeds/google-shopping/');
-            $this->fileNameBase = pathinfo($this->data['fileName'], PATHINFO_FILENAME);
-            $this->fileExtension = pathinfo($this->data['fileName'], PATHINFO_EXTENSION);
+            $this->directory = public_path('feeds/google-shopping/'. $this->store_id);
+            // ensure directory exists
+            FileUtility::createDirectoryIfNotExists($this->directory);
+            $this->fileNameBase = pathinfo($this->file_name, PATHINFO_FILENAME);
+            $this->fileExtension = pathinfo($this->file_name, PATHINFO_EXTENSION);
 
             $this->fileHandle = fopen($this->getFilePath($this->current_file_index), 'w');
             fputcsv($this->fileHandle, $this->columns);
@@ -185,6 +193,11 @@ class ProcessFeedGenerationJob implements ShouldQueue
                 'file_name' => $this->getPartFilename($this->current_file_index),
                 'path' => $this->getPartPath($this->current_file_index)
             ];
+
+            if (env('APP_ENV') == 'local' || env('APP_ENV') == 'development') {
+                Log::info('Feed generation query: ' . $query->toRawSql());
+                $query->limit(10);
+            }
 
             $query->chunk(10, function ($products) use ($feed_type, $feedDetail) {
                 Log::info('Processing chunk of products, count: ' . $products->count());
@@ -455,17 +468,17 @@ class ProcessFeedGenerationJob implements ShouldQueue
 
     public function getFilePath($index)
     {
-        return $this->directory . '/' . $this->fileNameBase . "_part{$index}." . $this->fileExtension;
+        return $this->directory . '/' . $this->fileNameBase . "_{$index}." . $this->fileExtension;
     }
 
     private function getPartFilename($index)
     {
-        return $this->fileNameBase . "_part{$index}." . $this->fileExtension;
+        return $this->fileNameBase . "_{$index}." . $this->fileExtension;
     }
 
     private function getPartPath($index)
     {
-        return 'feeds/google-shopping/' . $this->fileNameBase . "_part{$index}." . $this->fileExtension;
+        return 'feeds/google-shopping/'. $this->store_id . '/' . $this->fileNameBase . "_{$index}." . $this->fileExtension;
     }
 
     /**
