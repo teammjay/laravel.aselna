@@ -60,6 +60,7 @@ class AmazonListingItemSyncJob implements ShouldQueue
             $amazon_store_ids = $query->pluck('id');
             Log::info('Amazon store ids: ' . json_encode($amazon_store_ids));
 
+            $itemSkus = [];
             //join listing_item_link and listing_item and listing
             ListingItemLink::query()
                 ->with(['listing', 'listingItem'])
@@ -83,7 +84,7 @@ class AmazonListingItemSyncJob implements ShouldQueue
                 })*/
                 ->orderBy('listing_item.created_at', 'desc')
                 ->chunk(20, function ($listingItemLinks) {
-                    $itemSkus = [];
+
                     foreach ($listingItemLinks as $listingItemLink) {
                         Log::info('Syncing Amazon listing item: ' . $listingItemLink->item_id);
                         //$this->syncListingItem($listingItemLink);
@@ -97,8 +98,16 @@ class AmazonListingItemSyncJob implements ShouldQueue
 
                     }
                     Log::info("Listing Item Sku list " . json_encode($itemSkus));
-                    $this->syncListingItems($itemSkus);
+                    //$this->syncListingItems($itemSkus);
                 });
+
+                if($itemSkus) {
+                    foreach ($itemSkus as $storeId => $skus) {
+                        foreach (array_chunk($skus, 10) as $chunk) {
+                            $this->syncListingItems($storeId, $chunk);
+                        }
+                    }
+                }
         }catch (\Throwable $e) {
 
             CriticalErrorService::report('Amazon Listing Item Sync Job Failed', [
@@ -112,7 +121,88 @@ class AmazonListingItemSyncJob implements ShouldQueue
         }
     }
 
-    private function syncListingItems($itemSkus)
+    private function syncListingItems($store_id, $items)
+    {
+        try {
+
+                $store = Store::findOrFail($store_id);
+                if($items){
+                    $amazonAuthService = new AmazonAuthService($store->seller_id, $store->secret_key,$store->api_key);
+                    $resultItems = $amazonAuthService->fetchListingItems($store->user_id,$items);
+                    Log::info("Result Items :: " . json_encode($resultItems));
+
+                    $itemFetch = [];
+                    if($resultItems){
+                        foreach($resultItems as $item){
+                            if(isset($item['sku']) && $item['sku'] != ''){
+                                $itemFetch[] = $item['sku'];
+                                $itemDetail = ListingItem::where('sku',$item['sku'])->first();
+                                if($itemDetail){
+                                    if(isset($item['summaries'])) {
+                                        $summary = $item['summaries'][0];
+                                        Log::info("Listing Item Updated :" . $item['sku'].'->'.$summary['asin']);
+                                        $itemDetail->update([
+                                            'store_sku' => $summary['asin'],
+                                            'sync_status' => ListingSyncStatus::Synchronized,
+                                        ]);
+                                    }else{
+                                        $date = \Carbon\Carbon::parse($itemDetail->created_at);
+                                        if ($date->diffInDays(now()) >= 5) {
+                                            Log::info("Listing item older than 5 days - ".$itemDetail->sku);
+                                            $itemDetail->update([
+                                                'status' =>ListingStatus::Deleted,
+                                            ]);
+                                        }else{
+                                            $retry_count = $itemDetail->creation_retry_count ?? 0;
+                                            $itemDetail->update([
+                                                'creation_retry_count' => $retry_count + 1,
+                                            ]);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    if($itemFetch) {
+                        foreach ($items as $item) {
+                            if (!in_array($item, $itemFetch)) {
+                                $itemDetail = ListingItem::where('sku', $item)->first();
+
+                                $date = \Carbon\Carbon::parse($itemDetail->created_at);
+                                if ($date->diffInDays(now()) >= 5) {
+                                    Log::info("Listing item older than 5 days - ".$itemDetail->sku);
+                                    $itemDetail->update([
+                                        'status' =>ListingStatus::Deleted,
+                                    ]);
+                                }else{
+                                    $retry_count = $itemDetail->creation_retry_count ?? 0;
+                                    $itemDetail->update([
+                                        'creation_retry_count' => $retry_count + 1,
+                                    ]);
+                                }
+                            }
+                        }
+                    }
+                }
+
+        } catch (\Throwable $e) {
+
+            \App\Helpers\ErrorLogger::log($e, __METHOD__);
+
+            CriticalErrorService::report('Amazon Listing Item Sync Job Failed', [
+                'marketplace' => 'Amazon',
+                'reason' => $e->getMessage() ?? 'Unknown',
+                'method' => __METHOD__
+            ],['itemSkus' => $items]);
+
+            Log::error('Error syncing Amazon listing item: ' . $e->getMessage(), [
+                'skus' => $items,
+            ]);
+        }
+    }
+
+    private function syncListingItemsOld($itemSkus)
     {
         try {
 
