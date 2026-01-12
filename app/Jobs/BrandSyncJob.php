@@ -95,12 +95,6 @@ class BrandSyncJob implements ShouldQueue
             }
         } catch (Exception $e) {
 
-            CriticalErrorService::report('Error in Image Sync (Brand Sync)', [
-                'marketplace' => 'N/A',
-                'reason' => $e->getMessage() ?? 'Unknown',
-                'method' => __METHOD__
-            ]);
-
             Log::error('Error in Image Sync: ' . $e->getMessage());
         }
 
@@ -116,11 +110,6 @@ class BrandSyncJob implements ShouldQueue
             }
         } catch (Exception $e) {
 
-            CriticalErrorService::report('Error in Image Sync (Brand Sync)', [
-                'marketplace' => 'N/A',
-                'reason' => $e->getMessage() ?? 'Unknown',
-                'method' => __METHOD__
-            ]);
             Log::error('Error in Image Sync: ' . $e->getMessage());
         }
 
