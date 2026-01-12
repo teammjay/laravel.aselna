@@ -253,6 +253,16 @@ class ProcessStoreMessageAccountJob implements ShouldQueue
                                 $msg = mb_convert_encoding($email['body'], 'UTF-8', 'UTF-8');
                                 $msg = preg_replace('/[^\x00-\x7F]+/', ' ', $msg);
 
+                                $threadId = null;
+
+                                if (!empty($email['references'])) {
+                                    $threadId = $email['references'][0];
+                                } elseif (isset($email['in_reply_to']) && $email['in_reply_to'] != '') {
+                                    $threadId = $email['in_reply_to'];
+                                } else {
+                                    $threadId = $email['message_id'];
+                                }
+
                                 $hdMessageData = [
                                     'ticket_id' => $hd_ticket->id,
                                     'subject' => preg_replace('/[\x00-\x1F\x7F-\xFF]/', '', trim(mb_convert_encoding(htmlspecialchars_decode($email['subject']), 'UTF-8', 'UTF-8'))),
@@ -269,6 +279,8 @@ class ProcessStoreMessageAccountJob implements ShouldQueue
                                     'draft' => 0,
                                     'reply_to_name' => $email['reply_to_name'],
                                     'reply_to_email' => $email['reply_to'],
+                                    'thread_id' => $threadId ?? NULL,
+                                    'references' => $email['references'] ?? NULL,
                                 ];
 
                                 $hd_message = HDMessage::updateOrCreate([

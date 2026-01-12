@@ -65,7 +65,7 @@ class EmailMessageUtility
         ]);
     }
 
-    public function sendEmail($toEmail, $subject = '', $message = '', $message_id = '', $attachment = '')
+    public function sendEmail($toEmail, $subject = '', $message = '', $message_id = '', $attachment = '', $referencesHeader = '')
     {
         try {
 
@@ -86,14 +86,16 @@ class EmailMessageUtility
 
                 Log::info("Email New Content" . $message);
 
-                Mail::send([], [], function ($m) use ($toEmail, $subject, $message_id, $attachment, $message) {
+                Mail::send([], [], function ($m) use ($toEmail, $subject, $message_id, $attachment, $message, $referencesHeader) {
                     $m->to($toEmail)
                         ->subject('Re: ' . $subject)
                         ->html($message);
 
                     if (!empty($message_id)) {
                         $m->getHeaders()->addTextHeader('In-Reply-To', '<' . $message_id . '>');
-                        $m->getHeaders()->addTextHeader('References', '<' . $message_id . '>');
+                        if($referencesHeader != '') {
+                            $m->getHeaders()->addTextHeader('References', $referencesHeader);
+                        }
                     }
 
                     if (!empty($attachment) && file_exists($attachment)) {

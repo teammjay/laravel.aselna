@@ -852,7 +852,7 @@ class MessagesController extends Controller
                 $previousMessage = HDMessage::where('ticket_id', $ticket_id)->orderBy('created_at', 'desc')->first();
                 //echo $ticketDetail->store->storeType->name;die;
                 //print_r($previousMessage);die;
-                $prev_content = '';
+                $prev_content = $referencesHeader = '';
                 if ($previousMessage) {
                     /*if (isset($previousMessage->parts)) {
                         $prev_content = $previousMessage->parts->content;
@@ -870,6 +870,14 @@ class MessagesController extends Controller
                                                 " . $previousMessage->message. "
                                             </div>";
                     }
+
+                    $references = $previousMessage->references ?? [];
+
+                    if (!in_array($ticketDetail->message_id, $references)) {
+                        $references[] = $ticketDetail->message_id;
+                    }
+
+                    $referencesHeader = implode(' ', array_map(fn($id) => "<$id>", $references));
 
                 }
 
@@ -921,7 +929,7 @@ class MessagesController extends Controller
                     }
 
                     $connector = new EmailMessageUtility($smtpConfig, $imapConfig);
-                    $response = $connector->sendEmail($email, $ticketDetail->subject, $newMessageBody, $ticketDetail->message_id, $filepath);
+                    $response = $connector->sendEmail($email, $ticketDetail->subject, $newMessageBody, $ticketDetail->message_id, $filepath, $referencesHeader);
                     //$response = $connector->sendEmail('jayesh@mjailab.com', $ticketDetail->subject, $newMessageBody, $ticketDetail->message_id, $filepath);
                     /*$response = $connector->sendEmail('jayesh@mjailab.com','Test Mail',$message_to_send, 'CAB3DxwfKHcaot+XFxHBW6Teiq38dDaHs2UU2UqipkfbHnYr+sg@mail.gmail.com', $filepath);*/
 
