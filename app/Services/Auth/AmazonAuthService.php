@@ -457,16 +457,17 @@ class AmazonAuthService
         return json_decode($response->getBody(), true);
     }
 
-    public function fetchListingItems($userIdentifier, $skus)
+    public function fetchListingItems($userIdentifier, $skus, $marketPlaceID)
     {
-        $marketPlaceID = $this->getMarketplaceIDs();
+        //$marketPlaceID = $this->getMarketplaceIDs();
         $accessToken = $this->getAccessToken();
         Log::info('Access Token Created ' . $accessToken);
         $pageToken = null;
         $items = [];
         try {
             do {
-                $response = $this->client->get(
+                //$response = $this->client->get(
+                $response = $this->throttledGet(
                     '/listings/2021-08-01/items/' . $userIdentifier,
                     [
                         'headers' => [
@@ -530,11 +531,17 @@ class AmazonAuthService
                     $attempt++;
                     continue;
                 }
-                throw $e;
+                //throw $e;
+
+                CriticalErrorService::report('Amazon throttled after multiple attempts', [
+                    'marketplace' => 'Amazon',
+                    'reason' => $e->getMessage() ?? 'Unknown',
+                    'method' => __METHOD__
+                ],['options'=>$options]);
             }
         }
 
-        throw new \Exception("Amazon throttled after multiple attempts");
+        //throw new \Exception("Amazon throttled after multiple attempts");
     }
 
     public function getOrderInfo($orderId)
