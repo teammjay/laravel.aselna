@@ -58,7 +58,7 @@ class StoreBrandPageSyncJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $this->updateTrackingRecord(['tags' => 'Store Brand Pages']);
+        $this->updateTrackingRecord(['tags' => 'Store Brand Pages ']);
 
         try {
             $this->setVariables();
