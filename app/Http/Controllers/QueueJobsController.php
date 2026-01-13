@@ -65,7 +65,7 @@ class QueueJobsController extends Controller
         }
 
         $totalRecords = (clone $query)->toBase()->getCountForPagination();
-        $query->orderBy($columnName, $columnSortOrder);
+        $query->orderBy('created_at', 'desc');
 
         $jobs = $query->distinct()->select('chain_id', 'created_at')->paginate($perPage, ['*'], 'page', floor($start/$perPage)+1);
         $totalRecordwithFilter = $totalRecords;
