@@ -35,7 +35,7 @@ class AmazonAuthService
 
     public function getAccessToken()
     {
-        return Cache::remember('amazon_access_token_' . $this->client_id, now()->addMinutes(50), function () {
+        //return Cache::remember('amazon_access_token_' . $this->client_id, now()->addMinutes(50), function () {
             try {
                 if (isset($this->accessToken) && $this->expireTime > time()) {
                     return $this->accessToken;
@@ -80,7 +80,7 @@ class AmazonAuthService
                 Log::error('Error: ' . $e->getMessage());
                 return null;
             }
-        });
+        //});
     }
 
     public function uploadProductFeed($feedContent)
@@ -220,10 +220,10 @@ class AmazonAuthService
 
     public function getMarketplaceIDs()
     {
-        return Cache::remember('amazon_marketplace_ids_' . $this->client_id, now()->addDays(7), function () {
-            /*if (isset($this->marketplaceIDs)) {
+        //return Cache::remember('amazon_marketplace_ids_' . $this->client_id, now()->addDays(7), function () {
+            if (isset($this->marketplaceIDs)) {
                 return $this->marketplaceIDs;
-            }*/
+            }
             $accessToken = $this->getAccessToken();
 
             $response = $this->client->get('/sellers/v1/marketplaceParticipations', [
@@ -243,7 +243,7 @@ class AmazonAuthService
                 }
             }
             return $this->marketplaceIDs = $marketplaceIDs;
-        });
+        //});
     }
 
     private function getFeedType($listingId)
