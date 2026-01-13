@@ -62,6 +62,13 @@ class FileUtility
 
     }
 
+    public static function createDirectoryIfNotExists(string $directory)
+    {
+        if (!File::exists($directory)) {
+            File::makeDirectory($directory, 0755, true);
+        }
+    }
+
     private static function saveImageToLocal($imagePath, $localPath, $fileName)
     {
         Log::info('FileImageSave: ' . $imagePath);
