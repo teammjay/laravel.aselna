@@ -52,11 +52,11 @@ class FileUtility
             }
         }catch (\Throwable $e) {
 
-            CriticalErrorService::report('Save Image Failed (System File)', [
+            /*CriticalErrorService::report('Save Image Failed (System File)', [
                 'marketplace' => 'N/A',
                 'reason' => $e->getMessage() ?? 'Unknown',
                 'method' => __METHOD__
-            ]);
+            ]);*/
         }
         return null;
 
@@ -128,11 +128,11 @@ class FileUtility
             ftp_close($ftpConn);
         }catch (\Throwable $e) {
 
-            CriticalErrorService::report('Upload Image Failed (System File)', [
+            /*CriticalErrorService::report('Upload Image Failed (System File)', [
                 'marketplace' => 'N/A',
                 'reason' => $e->getMessage() ?? 'Unknown',
                 'method' => __METHOD__
-            ]);
+            ]);*/
 
             Log::error('Error: ' . $e->getMessage());
 

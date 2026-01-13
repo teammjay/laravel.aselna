@@ -46,6 +46,14 @@ class AmazonListingItemSyncJob implements ShouldQueue
             /* get active store jobs*/
             $store_ids = Common::getActiveStoreJobs('AmazonListingItemSyncJob', 'amazon');
             /* get active store jobs*/
+            $marketPlaceId = [];
+            if($store_ids){
+                foreach($store_ids as $store_id) {
+                    $store = Store::findOrFail($store_id);
+                    $amazonAuthService = new AmazonAuthService($store->seller_id, $store->secret_key, $store->api_key);
+                    $marketPlaceId[$store_id] = $amazonAuthService->getMarketplaceIDs();
+                }
+            }
 
             $query = Store::where('store_type_id', function ($subquery) {
                 return $subquery->select('id')
@@ -104,7 +112,7 @@ class AmazonListingItemSyncJob implements ShouldQueue
                 if($itemSkus) {
                     foreach ($itemSkus as $storeId => $skus) {
                         foreach (array_chunk($skus, 10) as $chunk) {
-                            $this->syncListingItems($storeId, $chunk);
+                            $this->syncListingItems($storeId, $chunk, $marketPlaceId);
                         }
                     }
                 }
@@ -121,14 +129,20 @@ class AmazonListingItemSyncJob implements ShouldQueue
         }
     }
 
-    private function syncListingItems($store_id, $items)
+    private function syncListingItems($store_id, $items, $marketPlaceId)
     {
         try {
 
                 $store = Store::findOrFail($store_id);
                 if($items){
                     $amazonAuthService = new AmazonAuthService($store->seller_id, $store->secret_key,$store->api_key);
-                    $resultItems = $amazonAuthService->fetchListingItems($store->user_id,$items);
+                    if(!isset($marketPlaceId[$store_id])){
+                        return false;
+                    }
+
+                    Log::info("Amazon marketplace ids :: " . json_encode($marketPlaceId[$store_id]));
+                    $marketplaceIds = $marketPlaceId[$store_id];
+                    $resultItems = $amazonAuthService->fetchListingItems($store->user_id,$items,$marketplaceIds);
                     Log::info("Result Items :: " . json_encode($resultItems));
 
                     $itemFetch = [];
