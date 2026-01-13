@@ -1,26 +1,18 @@
 <?php
 
 use App\Jobs\AmazonListingItemSyncJob;
-use App\Jobs\FetchTemuOrders;
-use App\Jobs\SendNotificationEmailSyncFailJob;
-use App\Jobs\SendNotificationOrderSyncFailJob;
-use App\Jobs\ShopifyCombinedSyncing;
-use App\Jobs\WalmartListingItemSyncJob;
-use App\Jobs\BrandSyncJob;
-use App\Jobs\CategorySyncJob;
-use App\Jobs\DeviceCarrierSyncJob;
-use App\Jobs\DeviceInterfaces;
-use App\Jobs\DeviceSeriesSyncJob;
-use App\Jobs\DevicesSyncJob;
 use App\Jobs\EbayListingItemSyncJob;
 use App\Jobs\FetchEbayOrders;
 use App\Jobs\FetchEmailMessagesJob;
 use App\Jobs\FetchResultFeedAsync;
 use App\Jobs\FetchShopifyOrders;
+use App\Jobs\FetchTemuOrders;
 use App\Jobs\FetchWalmartOrdersJob;
-use App\Jobs\SyncAllOrderStatusJob;
 use App\Jobs\SubmitShopifyProductsJob;
+use App\Jobs\Sync\ShopifyCombinedSyncing;
+use App\Jobs\SyncAllOrderStatusJob;
 use App\Jobs\TransactionStatusCheckJob;
+use App\Jobs\WalmartListingItemSyncJob;
 use App\Models\OrderSynchronization;
 use Illuminate\Support\Facades\Schedule;
 
