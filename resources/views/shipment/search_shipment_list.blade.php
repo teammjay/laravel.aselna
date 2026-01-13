@@ -10,7 +10,7 @@
                 }
             }
         @endphp
-        <tr data-id="{{ $shipment['oid'] }}" data-status="{{ $shipment['status'] }}" class="shipment-row {{ ($moreQty > 0 || $shipment['status'] == 1) ? 'bg-red' : '' }} {{ ($shipment['status'] == 2) ? 'bg-warning' : '' }}">
+        <tr data-id="{{ $shipment['oid'] }}" data-status="{{ $shipment['status'] }}" class="shipment-row {{ ($moreQty > 0 || $shipment['status'] == 1) ? 'bg-red' : '' }} {{ ($shipment['status'] == 2) ? 'bg-warning' : '' }} {{ ($shipment['op_status'] == 3) ? 'bg-gray' : '' }}">
 
             {{--<td>
                 <button type="button" class="btn btn-warning show-detail" data-id="{{ $shipment['oid'] }}">Show Detail</button><input type="checkbox" class="pro-id" name="shipment_id[]" value="{{ $shipment['oid'] }}" style="visibility:hidden;">
@@ -35,6 +35,8 @@
                 <td>{!! ($shipment['status'] == 1) ? '<i class="fa fa-exclamation-triangle" style="font-size:24px" title="'.$shipment['status_message'].'"></i>' : '' !!}</td>
             @elseif($shipment['status'] == 2)
                 <td>{!! ($shipment['status'] == 2) ? '<i class="fa fa-exclamation-triangle" style="font-size:24px" title="'.$shipment['status_message'].'"></i>' : '' !!}</td>
+            @elseif($shipment['status'] == 3)
+                <td>{!! ($shipment['status'] == 3) ? '<i class="fa fa-exclamation-triangle" style="font-size:24px" title="'.$shipment['status_message'].'"></i><button class="btn bg-white btn-circle" title="Resubmit Count">'.$shipment['operation_retry_count'].'</button>' : '' !!}</td>
             @else
                 <td></td>
             @endif

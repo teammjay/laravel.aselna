@@ -85,6 +85,9 @@ class ProcessStoreMessageAccountJob implements ShouldQueue
                         foreach ($receiveEmails as $email) {
 
                             /*if(!is_array($email)){ continue;}*/
+                            if(isset($email['error'])){
+                                continue;
+                            }
 
                             Log::info(' Date : ' . $email['date']);
                             // get as max date for next filter
@@ -225,6 +228,9 @@ class ProcessStoreMessageAccountJob implements ShouldQueue
                             if (isset($email['in_reply_to']) && $email['in_reply_to'] != '') {
                                 $query->orWhere('message_id', trim($email['in_reply_to']));
                             }
+                            /*if (isset($email['reply_to']) && $email['reply_to'] != '') {
+                                $query->orWhere('ticket_email', trim($email['reply_to']));
+                            }*/
                             Log::info(' Message Query: ' . $query->toSql());
                             $ticketDetail = $query->first();
 
@@ -247,6 +253,16 @@ class ProcessStoreMessageAccountJob implements ShouldQueue
                                 $msg = mb_convert_encoding($email['body'], 'UTF-8', 'UTF-8');
                                 $msg = preg_replace('/[^\x00-\x7F]+/', ' ', $msg);
 
+                                $threadId = null;
+
+                                if (!empty($email['references'])) {
+                                    $threadId = $email['references'][0];
+                                } elseif (isset($email['in_reply_to']) && $email['in_reply_to'] != '') {
+                                    $threadId = $email['in_reply_to'];
+                                } else {
+                                    $threadId = $email['message_id'];
+                                }
+
                                 $hdMessageData = [
                                     'ticket_id' => $hd_ticket->id,
                                     'subject' => preg_replace('/[\x00-\x1F\x7F-\xFF]/', '', trim(mb_convert_encoding(htmlspecialchars_decode($email['subject']), 'UTF-8', 'UTF-8'))),
@@ -263,6 +279,8 @@ class ProcessStoreMessageAccountJob implements ShouldQueue
                                     'draft' => 0,
                                     'reply_to_name' => $email['reply_to_name'],
                                     'reply_to_email' => $email['reply_to'],
+                                    'thread_id' => $threadId ?? NULL,
+                                    'references' => $email['references'] ?? NULL,
                                 ];
 
                                 $hd_message = HDMessage::updateOrCreate([

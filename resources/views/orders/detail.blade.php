@@ -268,7 +268,7 @@
                 <div class="card-body">
                     @foreach($orderOperations as $orderOperation)
 
-                        @if(isset($orderOperation->rma_number) && ($orderOperation->rma_number != '' || $orderOperation->rma_number != null))
+                        @if(isset($orderOperation->rma_number) && ($orderOperation->rma_number != '' || $orderOperation->rma_number != null) && $orderOperation->label_creation_type == 0)
                             <div class="card">
                                 <div class="card-body">
                                     <div class="row align-items-center">
@@ -293,7 +293,7 @@
                             </div>
                         @endif
 
-                        @if($orderOperation->tracking_number != '' && $orderOperation->tracking_number != null)
+                        @if(isset($orderOperation->tracking_number) && ($orderOperation->tracking_number != '' || $orderOperation->tracking_number != null) && $orderOperation->operation_type == \App\Constants\OrderOperationType::OrderShipment)
                             <div class="card">
                                 <div class="card-body">
                                     <div class="row">

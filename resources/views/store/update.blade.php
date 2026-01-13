@@ -254,6 +254,14 @@
                                 </div>
                                 <div class="row mt-3 g-3 align-items-center">
                                     <div class="col-md-5">
+                                        <label for="auto_generate_listings">Auto Re-submit Shipment</label>
+                                    </div>
+                                    <div class="col-md-7">
+                                        <input type="checkbox" id="auto_resubmit_shipment" name="auto_resubmit_shipment" {{ ($store->auto_resubmit_shipment == 1) ? 'checked' : '' }}>
+                                    </div>
+                                </div>
+                                <div class="row mt-3 g-3 align-items-center">
+                                    <div class="col-md-5">
                                         <label for="max_listing_inventory_quantity">Max listing inventory quantity</label>
                                     </div>
                                     <div class="col-md-7">
@@ -1794,6 +1802,46 @@
             // Remove field group
             $(document).on('click', '.remove-feature', function() {
                 $(this).parents('tr.field-group').remove();
+            });
+
+            $(document).on('click','#auto_generate_listings',function () {
+                if($(this).is(':checked')){
+                    if(confirm("Are you sure you want to enable auto generate listing for this store?")){
+                        $(this).prop('checked',true);
+                    }else{
+                        $(this).prop('checked',false);
+                    }
+                }
+            });
+
+            $(document).on('click','#re_submit_listing',function () {
+                if($(this).is(':checked')){
+                    if(confirm("Are you sure you want to enable re-submit listing for this store?")){
+                        $(this).prop('checked',true);
+                    }else{
+                        $(this).prop('checked',false);
+                    }
+                }
+            });
+
+            $(document).on('click','#auto_submit_listing',function () {
+                if($(this).is(':checked')){
+                    if(confirm("Are you sure you want to enable auto submit listing for this store?")){
+                        $(this).prop('checked',true);
+                    }else{
+                        $(this).prop('checked',false);
+                    }
+                }
+            });
+
+            $(document).on('click','#auto_resubmit_shipment',function () {
+                if($(this).is(':checked')){
+                    if(confirm("Are you sure you want to enable auto re-submit shipment for this store?")){
+                        $(this).prop('checked',true);
+                    }else{
+                        $(this).prop('checked',false);
+                    }
+                }
             });
         });
     </script>

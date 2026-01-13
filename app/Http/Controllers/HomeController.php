@@ -82,6 +82,13 @@ class HomeController extends Controller
 
     public function testfunction(){
 
+        /*$order = OrderOperation::with('order', 'order.orderItem', 'order.customer', 'order.customerAddress', 'store', 'store.storeType', 'carrier', 'shipFrom', 'shipFrom.returnAddress', 'shipFrom.fromAddress', 'operationItem', 'operationItem.orderItem')->where('id', '972b4b02-659f-4a59-8b95-996e45490090')->first();
+
+        $utility = new OrderOperationUtility();
+        $utility->createLabel($order);
+
+        die;*/
+
         /*$listingId = '595a7800-8451-4e69-a430-dd519f5b1f3f';
         $failedItems = ListingItemLink::select('listing_item.id,listing_item.sku')->leftJoin('listing_item', 'listing_item.id', '=', 'listing_item_link.item_id')->where('listing_item_link.listing_id', $listingId)->where('sync_status', ListingSyncStatus::Unsynchronize)->where('creation_retry_count', '<', 3);
 

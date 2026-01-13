@@ -178,6 +178,17 @@
                                     @endif
                                 </div>
                             </div>
+
+                            <div class="row mt-3 g-3 align-items-center">
+                                <div class="col-md-4">
+                                    <label for="shipping_address">Set Label From Address</label>
+                                </div>
+                                <div class="col-md-8">
+                                    <input type="radio" name="return_label_from_address" value="1" checked> Customer Address
+                                    <input type="radio" name="return_label_from_address" value="2"> Logistic Center Address
+                                </div>
+                            </div>
+
                             <div class="row mt-3 g-3 align-items-center">
                                 <div class="col-md-4">
                                     <label>Signature</label>

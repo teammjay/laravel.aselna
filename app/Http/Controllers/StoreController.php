@@ -204,6 +204,7 @@ class StoreController extends Controller
             $request['skip_device_pages'] = $request->has('skip_device_pages') ? 1 : 0;
             $request['auto_submit_listing'] = $request->has('auto_submit_listing') ? 1 : 0;
             $request['re_submit_listing'] = $request->has('re_submit_listing') ? 1 : 0;
+            $request['auto_resubmit_shipment'] = $request->has('auto_resubmit_shipment') ? 1 : 0;
 
             $validator = Validator::make(request()->all(), [
                 'name' => 'required',

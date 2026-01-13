@@ -13,26 +13,27 @@ class UpdateListingItemSalesSeeder extends Seeder
     {
         $totalUpdated = 0;
 
-        DB::table('order_item')
+        DB::table('order_item as oi')
+            ->join('order as o', 'o.id', '=', 'oi.order_id')
             ->select(
-                'sku',
+                'oi.sku',
                 DB::raw('
-                    SUM(COALESCE(shipped_quantity, 0)
-                        - COALESCE(canceled_quantity, 0)
-                        - COALESCE(refund_quantity, 0)) AS saleCount
+                    SUM(COALESCE(oi.shipped_quantity, 0)
+                        - COALESCE(oi.canceled_quantity, 0)
+                        - COALESCE(oi.refund_quantity, 0)) AS saleCount
                 '),
                 DB::raw('
                     MAX(CASE
-                        WHEN shipped_quantity IS NOT NULL
-                             AND (canceled_quantity IS NULL OR canceled_quantity = 0)
-                             AND (refund_quantity IS NULL OR refund_quantity = 0)
-                        THEN created_at
+                        WHEN oi.shipped_quantity IS NOT NULL
+                             AND (oi.canceled_quantity IS NULL OR oi.canceled_quantity = 0)
+                             AND (oi.refund_quantity IS NULL OR oi.refund_quantity = 0)
+                        THEN o.order_date
                     END) AS lastSaleDate
                 ')
             )
-            ->whereNotNull('sku')
-            ->groupBy('sku')
-            ->orderBy('sku')
+            ->whereNotNull('oi.sku')
+            ->groupBy('oi.sku')
+            ->orderBy('oi.sku')
             ->chunk(1000, function ($salesChunk) use (&$totalUpdated) {
                 foreach ($salesChunk as $row) {
                     Log::info('Processing SKU: '.$row->sku);

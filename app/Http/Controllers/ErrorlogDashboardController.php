@@ -62,6 +62,10 @@ class ErrorlogDashboardController extends Controller
             $query->where('store_id', $request->store_id);
         }
 
+        if ($request->has('error_level') && $request->error_level != '') {
+            $query->where('error_level', $request->error_level);
+        }
+
 
         $totalRecords = (clone $query)->toBase()->getCountForPagination();
         $query->orderBy($columnName, $columnSortOrder);
@@ -84,16 +88,22 @@ class ErrorlogDashboardController extends Controller
                 $store = $error->store->name ?? '';
                 $storeType = $error->store->storeType->name ?? '';
 
+                if($error->error_level == 10){
+                    $content = str_replace('"', '',$error->stack_trace);
+                }else{
+                    $content = addslashes(str_replace('"', '',$error->stack_trace));
+                }
+
                 $data[] = array(
                     "store" => $store.'-'.$storeType  ?? '',
                     "created_at" => date('Y-m-d H:i:s',strtotime($error->created_at)),
                     "updated_at" => date('Y-m-d H:i:s',strtotime($error->updated_at)),
                     "error_count" => $error->error_count,
-                    "error_level" => 'Error',
+                    "error_level" => ($error->error_level == 10) ? 'Critical Error' : 'Error',
                     "operation" => $name,
                     "message" => $error->message,
                     "status" => 'Created',
-                    "stack_trace" => ($error->stack_trace) ? '<i class="fa fa-exclamation-triangle show-error" style="font-size:24px" data-content="'.addslashes(str_replace('"', '',$error->stack_trace)).'"></i>' : "",
+                    "stack_trace" => ($error->stack_trace ) ? '<i class="fa fa-exclamation-triangle show-error" style="font-size:24px" data-content="'.$content.'"></i>' : "",
                 );
             }
         }

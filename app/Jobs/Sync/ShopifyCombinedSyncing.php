@@ -1,23 +1,9 @@
 <?php
 
-namespace App\Jobs\Sync;
+namespace App\Jobs;
 
 use App\Constants\WebStorePageType;
-use App\Jobs\BrandSyncJob;
-use App\Jobs\CategorySyncJob;
-use App\Jobs\Concerns\TrackableJob;
-use App\Jobs\DeviceCarrierSyncJob;
-use App\Jobs\DeviceInterfaces;
-use App\Jobs\DevicesSyncJob;
-use App\Jobs\InterfaceSyncJob;
-use App\Jobs\ProductImagesSyncJob;
-use App\Jobs\ProductInterfaces;
-use App\Jobs\ProductKeyFeaturesSyncJob;
-use App\Jobs\ProductSpecificationSyncJob;
-use App\Jobs\ProductSyncJob;
-use App\Jobs\ShopifyIndvPagesSyncJob;
-use App\Jobs\StoreBrandPageSyncJob;
-use App\Jobs\SubmitShopifyProductsJob;
+use App\Jobs\Devices\PopularDevicesSyncJob;
 use App\Models\Store;
 use App\Models\StorePageTemplate;
 use App\Services\CriticalErrorService;
@@ -25,6 +11,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Log;
+use App\Jobs\Concerns\TrackableJob;
 use Illuminate\Support\Str;
 
 class ShopifyCombinedSyncing implements ShouldQueue
@@ -161,20 +148,16 @@ class ShopifyCombinedSyncing implements ShouldQueue
                     $shopifyIndvJob3->setChainId($this->chainId);
                     $chain[] = $shopifyIndvJob3;
 
-                    $chain[] = $storeBrandJob7 = new StoreBrandPageSyncJob(
-                        $store->id,
-                        WebStorePageType::ALL_BRANDS,
-                        $allBrandTemplate->id
-                    );
-
-                    $storeBrandJob7->setChainId($this->chainId);
+                $chain[] = new StoreBrandPageSyncJob(
+                    $store->id,
+                    WebStorePageType::ALL_BRANDS,
+                    $allBrandTemplate->id
+                );
 //
-                    $chain[] = $shopifyIndvJob4 = new ShopifyIndvPagesSyncJob(
-                        $store->id,
-                        WebStorePageType::ALL_BRANDS
-                    );
-                    $shopifyIndvJob4->setChainId($this->chainId);
-
+                $chain[] = new ShopifyIndvPagesSyncJob(
+                    $store->id,
+                    WebStorePageType::ALL_BRANDS
+                );
                 }
 
 //            self::queueableWithChain($chain)->dispatch();

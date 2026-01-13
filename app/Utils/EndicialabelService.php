@@ -33,7 +33,8 @@ class EndicialabelService
         Log::info('Creating Endicia label with request: ' . json_encode($request));
         $xmlString = $this->buildXmlRequest($request,$orderOperationId);
         Log::info('Endicia Label Request XML: ' . $xmlString);
-
+        //echo $xmlString;die;
+        //return false;
         try {
             $response = $this->client->post('https://LabelServer.Endicia.com/LabelService/EwsLabelService.asmx', [
                 'headers' => [
@@ -46,6 +47,7 @@ class EndicialabelService
 
             $body = $response->getBody()->getContents();
             Log::info('Endicia Label Response XML: ' . $body);
+
             return $this->parseSoapResponse($body, $request, $orderOperationId);
         } catch (\Throwable $e) {
             // Handle SOAP request errors
@@ -320,6 +322,9 @@ class EndicialabelService
         $labelRequest = $request->addChild('LabelRequest');
 
 //        $labelRequest->addChild('Test', 'YES');
+        if($shipmentDetails['MailpieceShape'] == 'Letter') {
+            $labelRequest->addAttribute('LabelType', 'DestinationConfirm');
+        }
         $labelRequest->addAttribute('ImageFormat', $shipmentDetails['labelFormat']);
         $labelRequest->addAttribute('LabelSize', $shipmentDetails['label_size']);
         $labelRequest->addAttribute('ImageResolution', $shipmentDetails['image_resolution'] ?? '203');
@@ -327,6 +332,10 @@ class EndicialabelService
         if (isset($shipmentDetails['label_type'])) {
             $labelRequest->addAttribute('LabelType', $shipmentDetails['label_type']);
         }
+
+        /*if($shipmentDetails['labelFormat'] == 'ZPLII'){
+            $shipmentDetails['MailpieceShape'] = 'Parcel';
+        }*/
 
         $labelRequest->addChild('RequesterID', $shipmentDetails['requesterId']);
         $labelRequest->addChild('AccountID', $shipmentDetails['accountId']);
@@ -336,13 +345,23 @@ class EndicialabelService
         $labelRequest->addChild('MailpieceShape', $shipmentDetails['MailpieceShape'] ?? 'Package');
         $labelRequest->addChild('WeightOz', $shipmentDetails['weight']['value']);
 
+        /*if($shipmentDetails['MailpieceShape'] == 'Letter'){
+            $shipmentDetails['non_machinable'] = 0;
+        }else if($shipmentDetails['MailpieceShape'] == 'Flat'){
+            $shipmentDetails['non_machinable'] = 1;
+        }*/
+
 //        $labelRequest->addChild('MailpieceShape','');
 
         $labelRequest->addChild('PartnerTransactionID', $shipmentDetails['transactionId']);
 
+        //if($shipmentDetails['MailpieceShape'] != 'Parcel') {
         $labelRequest->addChild('Machinable', $shipmentDetails['non_machinable'] == 0 ? 'TRUE' : 'FALSE');
+        //}
 
-        if ($shipmentDetails['dimensions']) {
+        //if ($shipmentDetails['dimensions'] && ($shipmentDetails['MailpieceShape'] == 'Flat' || $shipmentDetails['MailpieceShape'] == 'Parcel')) {
+        //}
+        if ($shipmentDetails['dimensions'] && ($shipmentDetails['MailpieceShape'] != 'Letter')) {
             $dimensions = $labelRequest->addChild('MailpieceDimensions');
             $dimensions->addChild('Length', $shipmentDetails['dimensions']['length']);
             $dimensions->addChild('Width', $shipmentDetails['dimensions']['width']);
@@ -756,7 +775,7 @@ class EndicialabelService
         $options = $labelRequest->addChild('RequestOptions');
         $options->addAttribute('StartDateTime', date('m/d/Y H:i:s A',strtotime($startTime)));
         $options->addAttribute('EndDateTime', date('m/d/Y H:i:s A',strtotime($endTime)));
-        $options->addAttribute('TransactionType', 'ALL');
+        $options->addAttribute('TransactionType', 'PRINTS');
         /*$picNum = $labelRequest->addChild('TransactionIDs');
 
         if(isset($transDetails['transactions']) && !empty($transDetails['transactions'])){

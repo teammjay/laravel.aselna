@@ -2,14 +2,19 @@
 
 namespace App\Http\Controllers;
 
+use App\Constants\HdTicketStatus;
+use App\Constants\HdTicketTypeCode;
 use App\Constants\OrderOperationStatus;
 use App\Constants\OrderOperationType;
 use App\Constants\OrderStatus;
+use App\Jobs\ProcessStoreMessageAccountJob;
 use App\Models\Catalog;
 use App\Models\Customer;
 use App\Models\CustomerAddress;
 use App\Models\CustomerPhone;
+use App\Models\HdTicketType;
 use App\Models\ListingItem;
+use App\Models\Message;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\OrderItemAttribute;
@@ -112,6 +117,14 @@ class OrdersController extends Controller
             $query->where(function ($q) use ($request) {
                 $q->whereRelation('customer', 'user_id', 'like', '%'.$request->buyer_username.'%')
                     ->orWhere('buyer_username', 'like', '%'.$request->buyer_username.'%');
+            });
+
+        }
+
+        if ($request->has('customer_email') && $request->customer_email != '') {
+
+            $query->where(function ($q) use ($request) {
+                $q->whereRelation('customer', 'email', $request->customer_email);
             });
 
         }
@@ -228,11 +241,47 @@ class OrdersController extends Controller
 
     public function create_message(string $id)
     {
-        $orderDetail = Order::with('orderItem','orderItem.product','store','store.storeType','customerAddress')->findOrFail($id);
+        $orderDetail = Order::with('customer','orderItem','orderItem.product','store','store.storeType','customerAddress')->findOrFail($id);
+
+        $customer_id = isset($orderDetail->customer) ? $orderDetail->customer->id : NULL;
+        $customer_detail = Customer::where('id', $customer_id)->first();
+
+        $ticket_exist = Message::where('related_order_id',$id)->first();
+
+        if($ticket_exist){
+            $ticket_id = $ticket_exist->id;
+            //echo $ticket_id;die;
+            return redirect()->route('message.detail',$ticket_id);
+        }
+
+        $ticket_code = $orderDetail->store->short_code . '-' . ProcessStoreMessageAccountJob::getNextTicketNumberForStore($orderDetail->store_id);
+
+        $ticketTypeDetail = HdTicketType::where('code', HdTicketTypeCode::ORDER_INFORMATION)->first();
+        $ticketData = [
+            'ticket_email' => $customer_detail->email,
+            'ticket_type_id' => $ticketTypeDetail->id,
+            'status' => HdTicketStatus::NEEDS_ACTION,
+            'related_order_id' => $orderDetail->id,
+            'subject' => 'RMA',
+            'customer_id' => $customer_id,
+            'order_id' => trim($orderDetail->order_id),
+            'store_id' => $orderDetail->store_id,
+            'ticket_date' => date('Y-m-d H:i:s'),
+            'ticket_code' => $ticket_code,
+            'message_read' => 1,
+            'replies' => 0,
+            'important' => 0,
+            'customer_merge_status' => 0,
+            'ticket_user_id' => $customer_id,
+        ];
+
+        $hd_ticket = Message::create($ticketData);
+        $ticket_id = $hd_ticket->id;
         /*echo '<pre>';
         print_r($orderDetail);
         echo '</pre>';die;*/
-        return view('orders.create_message',compact('orderDetail'));
+        return redirect()->route('message.detail',$ticket_id);
+        //return view('orders.create_message',compact('orderDetail'));
     }
 
     public function importCsv(){

@@ -34,7 +34,7 @@
             </td>
             <td>{{ $oitem->sku }}</td>
             <td>{{ $oitem->quantity }}</td>
-            <td>{{ $oitem->product->product_title ?? '' }}</td>
+            <td style="white-space: break-spaces;">{{ $oitem->product->product_title ?? '' }}</td>
         </tr>
     @endforeach
     </tbody>

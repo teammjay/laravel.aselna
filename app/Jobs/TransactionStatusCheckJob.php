@@ -55,13 +55,13 @@ class TransactionStatusCheckJob implements ShouldQueue
                 if ($startTime > date('Y-m-d H:i:s')) {
                     $startTime = date('Y-m-d H:i:s');
                 }
-                $endTime = date('Y-m-d H:i:s', strtotime('+25 day', strtotime($startTime)));
+                $endTime = date('Y-m-d H:i:s', strtotime('+20 day', strtotime($startTime)));
                 if ($endTime > date('Y-m-d H:i:s')) {
                     $endTime = date('Y-m-d H:i:s');
                 }
             } else {
                 $endTime = date('Y-m-d H:i:s', strtotime('-3 months'));
-                $startTime = date('Y-m-d H:i:s', strtotime('-25 days', strtotime($endTime)));
+                $startTime = date('Y-m-d H:i:s', strtotime('-20 days', strtotime($endTime)));
             }
 
             if (strtotime($startTime) == strtotime($endTime)) {
@@ -111,6 +111,7 @@ class TransactionStatusCheckJob implements ShouldQueue
                         $status_event = isset($tres->Status->StatusEvent[0]) ? (string)trim($tres->Status->StatusEvent[0]) : '';
                         $status_desription = isset($tres->Status->StatusDescription[0]) ? (string)trim($tres->Status->StatusDescription[0]) : '';
                         $status = 'Pending';
+                        Log::info('Tracking Number:' . $trackingNumber.'- Status:'.$status_event);
                         if ($status_event != '') {
                             Log::info('Status Event:' . $status_event);
                             switch (trim($status_event)) {

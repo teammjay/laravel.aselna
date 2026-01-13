@@ -1,4 +1,7 @@
-@php use App\Constants\FilterCodes;use App\Constants\OrderStatus; @endphp
+@php
+    use App\Constants\FilterCodes;
+    use App\Constants\OrderStatus;
+@endphp
 @extends('adminlte::page')
 
 @section('title', 'Message Detail')
@@ -179,10 +182,10 @@
                                         {{--<iframe srcdoc="{!! htmlspecialchars($message->message) !!}"></iframe>--}}
                                         <div class="mb-3">
                                             @if(stripos($message->message, '<table') !== false)
-                                                {!! (html_entity_decode($message->message)) !!}
+                                                {!! (html_entity_decode(\Mews\Purifier\Facades\Purifier::clean($message->message))) !!}
                                                 
                                             @else
-                                                {!! nl2br(html_entity_decode($message->message)) !!}
+                                                {!! nl2br(html_entity_decode(\Mews\Purifier\Facades\Purifier::clean($message->message))) !!}
                                             @endif
                                         </div>
                                         @if(isset($message->attachments))
