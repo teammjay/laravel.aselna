@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Constants\WebStorePageType;
+use App\Jobs\Devices\PopularDevicesSyncJob;
 use App\Models\Store;
 use App\Models\StorePageTemplate;
 use App\Services\CriticalErrorService;
@@ -45,6 +46,7 @@ class ShopifyCombinedSyncing implements ShouldQueue
                 new CategorySyncJob(),
                 new BrandSyncJob(),
                 new DevicesSyncJob(),
+                new PopularDevicesSyncJob(),
                 new DeviceCarrierSyncJob(),
                 new DeviceInterfaces(),
                 new ProductInterfaces(),
@@ -52,7 +54,7 @@ class ShopifyCombinedSyncing implements ShouldQueue
                 new ProductImagesSyncJob(),
                 new SubmitShopifyProductsJob(),
                 new SubmitShopifyProductsJob(),
-                new SubmitShopifyProductsJob()
+                new SubmitShopifyProductsJob(),
             ];
 
             // Set chainId for all initial jobs
