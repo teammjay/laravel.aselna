@@ -54,7 +54,7 @@ class ShopifyCombinedSyncing implements ShouldQueue
                 new ProductImagesSyncJob(),
                 new SubmitShopifyProductsJob(),
                 new SubmitShopifyProductsJob(),
-                new SubmitShopifyProductsJob(),
+                new SubmitShopifyProductsJob()
             ];
 
             // Set chainId for all initial jobs
