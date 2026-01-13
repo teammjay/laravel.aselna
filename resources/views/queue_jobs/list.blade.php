@@ -606,9 +606,9 @@
                         $(row).addClass('parent-row');
                     }
 
-                    if (data.show_children) {
-                        $(row).addClass('bg-secondary');
-                    }
+                    // if (data.show_children) {
+                    //     $(row).addClass('bg-secondary');
+                    // }
                 },
                 stateSaveCallback: function(settings, data) {
                     sessionStorage.setItem(
