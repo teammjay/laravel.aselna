@@ -1,9 +1,23 @@
 <?php
 
-namespace App\Jobs;
+namespace App\Jobs\Sync;
 
 use App\Constants\WebStorePageType;
+use App\Jobs\BrandSyncJob;
+use App\Jobs\CategorySyncJob;
+use App\Jobs\DeviceCarrierSyncJob;
+use App\Jobs\DeviceInterfaces;
 use App\Jobs\Devices\PopularDevicesSyncJob;
+use App\Jobs\DevicesSyncJob;
+use App\Jobs\InterfaceSyncJob;
+use App\Jobs\ProductImagesSyncJob;
+use App\Jobs\ProductInterfaces;
+use App\Jobs\ProductKeyFeaturesSyncJob;
+use App\Jobs\ProductSpecificationSyncJob;
+use App\Jobs\ProductSyncJob;
+use App\Jobs\ShopifyIndvPagesSyncJob;
+use App\Jobs\StoreBrandPageSyncJob;
+use App\Jobs\SubmitShopifyProductsJob;
 use App\Models\Store;
 use App\Models\StorePageTemplate;
 use App\Services\CriticalErrorService;
