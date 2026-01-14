@@ -52,14 +52,21 @@ class FileUtility
             }
         }catch (\Throwable $e) {
 
-            CriticalErrorService::report('Save Image Failed (System File)', [
+            /*CriticalErrorService::report('Save Image Failed (System File)', [
                 'marketplace' => 'N/A',
                 'reason' => $e->getMessage() ?? 'Unknown',
                 'method' => __METHOD__
-            ]);
+            ]);*/
         }
         return null;
 
+    }
+
+    public static function createDirectoryIfNotExists(string $directory)
+    {
+        if (!File::exists($directory)) {
+            File::makeDirectory($directory, 0755, true);
+        }
     }
 
     private static function saveImageToLocal($imagePath, $localPath, $fileName)
@@ -128,11 +135,11 @@ class FileUtility
             ftp_close($ftpConn);
         }catch (\Throwable $e) {
 
-            CriticalErrorService::report('Upload Image Failed (System File)', [
+            /*CriticalErrorService::report('Upload Image Failed (System File)', [
                 'marketplace' => 'N/A',
                 'reason' => $e->getMessage() ?? 'Unknown',
                 'method' => __METHOD__
-            ]);
+            ]);*/
 
             Log::error('Error: ' . $e->getMessage());
 

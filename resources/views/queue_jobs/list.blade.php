@@ -220,7 +220,7 @@
     </div>
 
     <div class="table-responsive">
-        <table id="queueJobsTable" class="table table-bordered table-striped">
+        <table id="queueJobsTable" class="table table-bordered">
             <thead>
             <tr>
                 {{--<th>Chain ID</th>--}}
@@ -418,6 +418,41 @@
 
             });
 
+           $(document).on('click', '.toggle-chain', function() {
+               var $row = $(this).closest('tr');
+               var chainIndex = $row.data('chain-index');
+               var isExpanded = $row.data('expanded');
+
+               if (!chainIndex && chainIndex !== 0) {
+                   chainIndex = table.row($row).data().chain_index;
+               }
+
+               $row.data('expanded', !isExpanded);
+
+               // Save expanded state to sessionStorage
+               let expandedChains = JSON.parse(sessionStorage.getItem('expandedChains')) || [];
+               if (!isExpanded) {
+                   if (!expandedChains.includes(chainIndex)) {
+                       expandedChains.push(chainIndex);
+                   }
+               } else {
+                   expandedChains = expandedChains.filter(idx => idx !== chainIndex);
+               }
+               sessionStorage.setItem('expandedChains', JSON.stringify(expandedChains));
+
+               if (isExpanded) {
+                   $(this).text('▶');
+                   table.$('tr').filter(function() {
+                       return table.row(this).data() && table.row(this).data().chain_index === chainIndex && !table.row(this).data().is_parent;
+                   }).hide();
+               } else {
+                   $(this).text('▼');
+                   table.$('tr').filter(function() {
+                       return table.row(this).data() && table.row(this).data().chain_index === chainIndex && !table.row(this).data().is_parent;
+                   }).show();
+               }
+           });
+
             document.getElementById("resetForm").addEventListener("click", function () {
                 sessionStorage.removeItem("queue_jobs_filters");
             });
@@ -441,7 +476,26 @@
             }
         });
 
+        function restoreExpandedChains() {
+            let expandedChains = JSON.parse(sessionStorage.getItem('expandedChains')) || [];
+            expandedChains.forEach(function(chainIndex) {
+                let parentRow = table.$('tr').filter(function() {
+                    return table.row(this).data() && table.row(this).data().chain_index === chainIndex && table.row(this).data().is_parent;
+                });
+                console.log(parentRow);
+
+                if (parentRow.length) {
+                    parentRow.find('.toggle-chain').text('▼');
+                    table.$('tr').filter(function() {
+                        return table.row(this).data() && table.row(this).data().chain_index === chainIndex && !table.row(this).data().is_parent;
+                    }).show();
+                    parentRow.data('expanded', true);
+                }
+            });
+        }
+
         function loadDatatables(){
+            sessionStorage.setItem('expandedChains', JSON.stringify([]));
 
             $("#queueJobsTable").dataTable().fnDestroy();
 
@@ -453,7 +507,7 @@
                 "autoWidth": false,
                 "processing": true,
                 "serverSide": true,
-                "searching": true,
+                "searching": false,
                 "stateSave": true,
                 "aLengthMenu": [10, 20, 25, 50, 100],
                 'ajax': {
@@ -484,11 +538,37 @@
                         // Add to the request payload
                         d.columnValues = columnValues;
                     },
+                    dataSrc: function(response) {
+                        // Transform grouped data into flat array for DataTable display
+                        var flatData = [];
+                        if (response.aaData && response.aaData.length > 0) {
+                            response.aaData.forEach(function(item,idx) {
+                                item.parent_job.chain_index = idx;
+                                item.parent_job.is_parent = true;
+                                item.parent_job.show_children = item.is_chain === true;
+                                flatData.push(item.parent_job);
+                                if (item.child_job && item.child_job.length > 0) {
+                                    item.child_job.forEach(function(child) {
+                                        child.chain_index = idx;
+                                        child.is_parent = false;
+                                        flatData.push(child);
+                                    });
+                                }
+                            });
+                        }
+                        return flatData;
+                    }
                     //processData: false,
                     //contentType: false
                 },
-                "order": [[ 10, "desc" ]],
+                "order": [[ 11, "desc" ]],
                 'columns': [
+                    {
+                        className: 'dt-control', // Built-in class for expansion icons
+                        orderable: false,
+                        data: null,
+                        defaultContent: ''
+                    },
                     { data: 'job_id'},
                     { data: 'chain_id' },
                     { data: 'name' },
@@ -503,21 +583,46 @@
                 ],
                 columnDefs: [
                     {
-                        targets: [0,1,7], // Index of the column you want to disable sorting for
+                        targets: 0,
+                        render: function(data, type, row) {
+                            if (row.show_children) {
+                                if (row.is_parent) {
+                                    return '<span class="toggle-chain" style="cursor:pointer; margin-right:10px;">▶</span>';
+                                }
+                                return '<span style="margin-left:30px;">▼</span>';
+                            }
+                            return '';
+                        }
+                    },
+                    {
+                        targets: '_all', // Index of the column you want to disable sorting for
                         orderable: false // Disable sorting
                     }
                 ],
+                rowCallback: function(row, data) {
+                    if (!data.is_parent) {
+                        $(row).addClass('child-row').css('display', 'none');
+                    } else {
+                        $(row).addClass('parent-row');
+                    }
+
+                    // if (data.show_children) {
+                    //     $(row).addClass('bg-secondary');
+                    // }
+                },
                 stateSaveCallback: function(settings, data) {
                     sessionStorage.setItem(
                         'DataTables_' + settings.sInstance,
                         JSON.stringify(data)
                     );
                 },
-
                 stateLoadCallback: function(settings) {
                     return JSON.parse(
                         sessionStorage.getItem('DataTables_' + settings.sInstance)
                     );
+                },
+                drawCallback: function(settings) {
+                    restoreExpandedChains();
                 }
             });
 

@@ -8,6 +8,7 @@ use App\Services\CriticalErrorService;
 use App\Utils\FileUtility;
 use Exception;
 use GuzzleHttp\Client;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
 class AmazonAuthService
@@ -34,50 +35,52 @@ class AmazonAuthService
 
     public function getAccessToken()
     {
-        try {
-            if (isset($this->accessToken) && $this->expireTime > time()) {
-                return $this->accessToken;
+        //return Cache::remember('amazon_access_token_' . $this->client_id, now()->addMinutes(50), function () {
+            try {
+                if (isset($this->accessToken) && $this->expireTime > time()) {
+                    return $this->accessToken;
+                }
+
+                $client = new Client([
+                    'base_uri' => 'https://api.amazon.com',
+                ]);
+
+                /*$response = $client->post('/auth/o2/token', [
+                    'form_params' => [
+                        'grant_type' => 'refresh_token',
+                        'refresh_token' => env('AMAZON_REFRESH_TOKEN'),
+                        'client_id' => env('AMAZON_CLIENT_ID'),
+                        'client_secret' => env('AMAZON_CLIENT_SECRET'),
+                    ]
+                ]);*/
+
+                Log::info('Client Id :: ' . $this->client_id . ' :: ' . $this->client_secret);
+
+                $response = $client->post('/auth/o2/token', [
+                    'form_params' => [
+                        'grant_type' => 'refresh_token',
+                        'refresh_token' => $this->refresh_token,
+                        'client_id' => $this->client_id,
+                        'client_secret' => $this->client_secret,
+                    ]
+                ]);
+
+                $responseBody = json_decode($response->getBody(), true);
+                $this->expireTime = time() + $responseBody['expires_in'];
+
+                return $this->accessToken = $responseBody['access_token'];
+            } catch (\Throwable $e) {
+
+                CriticalErrorService::report('Amazon Accesstoken failed', [
+                    'marketplace' => 'Amazon',
+                    'reason' => $e->getMessage() ?? 'Unknown',
+                    'method' => __METHOD__
+                ]);
+
+                Log::error('Error: ' . $e->getMessage());
+                return null;
             }
-
-            $client = new Client([
-                'base_uri' => 'https://api.amazon.com',
-            ]);
-
-            /*$response = $client->post('/auth/o2/token', [
-                'form_params' => [
-                    'grant_type' => 'refresh_token',
-                    'refresh_token' => env('AMAZON_REFRESH_TOKEN'),
-                    'client_id' => env('AMAZON_CLIENT_ID'),
-                    'client_secret' => env('AMAZON_CLIENT_SECRET'),
-                ]
-            ]);*/
-
-            Log::info('Client Id :: ' . $this->client_id . ' :: ' . $this->client_secret);
-
-            $response = $client->post('/auth/o2/token', [
-                'form_params' => [
-                    'grant_type' => 'refresh_token',
-                    'refresh_token' => $this->refresh_token,
-                    'client_id' => $this->client_id,
-                    'client_secret' => $this->client_secret,
-                ]
-            ]);
-
-            $responseBody = json_decode($response->getBody(), true);
-            $this->expireTime = time() + $responseBody['expires_in'];
-
-            return $this->accessToken = $responseBody['access_token'];
-        } catch (\Throwable $e) {
-
-            CriticalErrorService::report('Amazon Accesstoken failed', [
-                'marketplace' => 'Amazon',
-                'reason' => $e->getMessage() ?? 'Unknown',
-                'method' => __METHOD__
-            ]);
-
-            Log::error('Error: ' . $e->getMessage());
-            return null;
-        }
+        //});
     }
 
     public function uploadProductFeed($feedContent)
@@ -217,28 +220,30 @@ class AmazonAuthService
 
     public function getMarketplaceIDs()
     {
-        if (isset($this->marketplaceIDs)) {
-            return $this->marketplaceIDs;
-        }
-        $accessToken = $this->getAccessToken();
-
-        $response = $this->client->get('/sellers/v1/marketplaceParticipations', [
-            'headers' => [
-                'Accept' => 'application/json',
-                'x-amz-access-token' => "{$accessToken}",
-            ]
-        ]);
-
-        $marketplaces = json_decode($response->getBody()->getContents(), true);
-        Log::info('Marketplaces: ' . json_encode($marketplaces));
-
-        $marketplaceIDs = [];
-        foreach ($marketplaces['payload'] as $marketplace) {
-            if ($marketplace['marketplace']['domainName'] == 'www.amazon.com') {
-                $marketplaceIDs[] = $marketplace['marketplace']['id'];
+        //return Cache::remember('amazon_marketplace_ids_' . $this->client_id, now()->addDays(7), function () {
+            if (isset($this->marketplaceIDs)) {
+                return $this->marketplaceIDs;
             }
-        }
-        return $this->marketplaceIDs = $marketplaceIDs;
+            $accessToken = $this->getAccessToken();
+
+            $response = $this->client->get('/sellers/v1/marketplaceParticipations', [
+                'headers' => [
+                    'Accept' => 'application/json',
+                    'x-amz-access-token' => "{$accessToken}",
+                ]
+            ]);
+
+            $marketplaces = json_decode($response->getBody()->getContents(), true);
+            Log::info('Marketplaces: ' . json_encode($marketplaces));
+
+            $marketplaceIDs = [];
+            foreach ($marketplaces['payload'] as $marketplace) {
+                if ($marketplace['marketplace']['domainName'] == 'www.amazon.com') {
+                    $marketplaceIDs[] = $marketplace['marketplace']['id'];
+                }
+            }
+            return $this->marketplaceIDs = $marketplaceIDs;
+        //});
     }
 
     private function getFeedType($listingId)
@@ -452,16 +457,17 @@ class AmazonAuthService
         return json_decode($response->getBody(), true);
     }
 
-    public function fetchListingItems($userIdentifier, $skus)
+    public function fetchListingItems($userIdentifier, $skus, $marketPlaceID)
     {
-        $marketPlaceID = $this->getMarketplaceIDs();
+        //$marketPlaceID = $this->getMarketplaceIDs();
         $accessToken = $this->getAccessToken();
         Log::info('Access Token Created ' . $accessToken);
         $pageToken = null;
         $items = [];
         try {
             do {
-                $response = $this->client->get(
+                //$response = $this->client->get(
+                $response = $this->throttledGet(
                     '/listings/2021-08-01/items/' . $userIdentifier,
                     [
                         'headers' => [
@@ -506,6 +512,36 @@ class AmazonAuthService
             Log::error("Amazon fetchAllListings failed: " . $e->getMessage());
             return [];
         }
+    }
+
+    private function throttledGet($uri, $options)
+    {
+        $attempt = 0;
+        $max = 8;
+        $wait = 1;
+
+        while ($attempt < $max) {
+            try {
+                return $this->client->get($uri, $options);
+            } catch (\GuzzleHttp\Exception\ClientException $e) {
+                if ($e->getResponse()->getStatusCode() == 429) {
+                    $retryAfter = $e->getResponse()->getHeader('Retry-After')[0] ?? null;
+                    sleep($retryAfter ? (int)$retryAfter : $wait);
+                    $wait *= 2;
+                    $attempt++;
+                    continue;
+                }
+                //throw $e;
+
+                CriticalErrorService::report('Amazon throttled after multiple attempts', [
+                    'marketplace' => 'Amazon',
+                    'reason' => $e->getMessage() ?? 'Unknown',
+                    'method' => __METHOD__
+                ],['options'=>$options]);
+            }
+        }
+
+        //throw new \Exception("Amazon throttled after multiple attempts");
     }
 
     public function getOrderInfo($orderId)

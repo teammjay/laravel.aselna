@@ -2,8 +2,6 @@
 
 namespace Database\Seeders;
 
-use App\Jobs\FetchWalmartOrdersJob;
-use App\Jobs\MagnetoAttributesSyncJob;
 use App\Models\ScheduledJob;
 use Illuminate\Database\Seeder;
 
@@ -368,7 +366,7 @@ class JobScheduler extends Seeder
                 //ShopifyCombinedSyncing
                 'name' => 'Shopify Combined Syncing',
                 'description' => 'Shopify Combined Syncing',
-                'class_name' => 'App\Jobs\ShopifyCombinedSyncing',
+                'class_name' => 'App\Jobs\Sync\ShopifyCombinedSyncing',
             ],
             [
                 'name' => 'Ebay Listing Item Status Check',
@@ -409,8 +407,35 @@ class JobScheduler extends Seeder
                 'name' => 'Popular Devices Sync',
                 'description' => 'Sync all popular devices',
                 'class_name' => 'App\Jobs\Devices\PopularDevicesSyncJob',
+            ],
+            [
+                //CombinedDevicesSyncJob
+                'name' => 'Combined Devices Sync',
+                'description' => 'Combined Devices Sync',
+                'class_name' => 'App\Jobs\Sync\CombinedDevicesSyncJob',
+            ],
+            [
+                //CombinedProductsSyncJob
+                'name' => 'Combined Products Sync',
+                'description' => 'Combined Products Sync',
+                'class_name' => 'App\Jobs\Sync\CombinedProductsSyncJob',
+            ],
+            [
+                //CombinedSyncJob
+                'name' => 'Combined DB Sync',
+                'description' => 'Only Combined DB Sync',
+                'class_name' => 'App\Jobs\Sync\CombinedSyncJob',
+            ],
+            [
+                //ExistingListingItemSyncJob
+                'name' => 'Walmart Existing Listing Item Sync',
+                'description' => 'Walmart Existing Listing Item Sync',
+                'class_name' => 'App\Jobs\Walmart\ExistingListingItemSyncJob'
             ]
         ];
+
+        // delete all existing scheduled jobs which we can be delete without foreign key issues
+        ScheduledJob::whereNotIn('class_name', array_map(fn($job) => $job['class_name'], $jobs))->delete();
 
         foreach ($jobs as $job) {
             ScheduledJob::updateOrCreate([

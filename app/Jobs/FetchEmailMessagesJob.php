@@ -23,6 +23,7 @@ use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Jobs\Concerns\TrackableJob;
+use Illuminate\Support\Str;
 
 class   FetchEmailMessagesJob implements ShouldQueue
 {
@@ -38,7 +39,7 @@ class   FetchEmailMessagesJob implements ShouldQueue
      */
     public function __construct()
     {
-        //
+        $this->chainId = (string) Str::uuid();
     }
 
     /**
@@ -69,6 +70,13 @@ class   FetchEmailMessagesJob implements ShouldQueue
                     if (env('APP_ENV') === 'local' && $store->storeType->name != 'Ebay') {
                         continue;
                     }*/
+
+                    /*if (env('APP_ENV') === 'local' && strtolower($store->name) != 'odemobile' && strtolower($store->storeType->name) != 'walmart') {
+                        continue;
+                    }
+                    if( $store->id != 'f5ebde6c-2bcc-03f5-4d62-ef4692f87314'){
+                        continue;
+                    }*/
                     Log::info('Processing store: ' . $store->name);
                     $storeMessageAccounts = StoreMessageAccount::with('incomingAccount', 'outgoingAccount')
                         ->where('store_id', $store->id)
@@ -76,13 +84,25 @@ class   FetchEmailMessagesJob implements ShouldQueue
                         ->where('api_account', 0)
                         ->get();
 
+                    $chain = [];
+
                     if (count($storeMessageAccounts ?? []) > 0) {
                         foreach ($storeMessageAccounts as $maccount) {
                             // Dispatch a new job for each store message account
                             Log::info('Processing store 2: ' . $store->name);
                             //Bus::chain([])->dispatch(new ProcessStoreMessageAccountJob($maccount, $store, $store->storeType->name));
-                            ProcessStoreMessageAccountJob::dispatch($maccount, $store, $store->storeType->name);
+//                            ProcessStoreMessageAccountJob::dispatch($maccount, $store, $store->storeType->name);
+                            $chain[] = new ProcessStoreMessageAccountJob($maccount, $store, $store->storeType->name);
                         }
+                    }
+                    if (count($chain) > 0) {
+                        // Set chainId for all initial jobs
+                        foreach ($chain as $job) {
+                            if (method_exists($job, 'setChainId')) {
+                                $job->setChainId($this->chainId);
+                            }
+                        }
+                        Bus::chain($chain)->dispatch();
                     }
                 }
             }
