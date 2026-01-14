@@ -425,6 +425,12 @@ class JobScheduler extends Seeder
                 'name' => 'Combined DB Sync',
                 'description' => 'Only Combined DB Sync',
                 'class_name' => 'App\Jobs\Sync\CombinedSyncJob',
+            ],
+            [
+                //ExistingListingItemSyncJob
+                'name' => 'Walmart Existing Listing Item Sync',
+                'description' => 'Walmart Existing Listing Item Sync',
+                'class_name' => 'App\Jobs\Walmart\ExistingListingItemSyncJob'
             ]
         ];
 
