@@ -80,18 +80,9 @@ class ExistingListingItemSyncJob implements ShouldQueue
             $response = $authService->getItemSearch($itemDetail->upc);
 
             if (!isset($response['items'][0])){
-                $date = \Carbon\Carbon::parse($itemDetail->created_at);
-                if ($date->diffInDays(now()) >= 5) {
-                    Log::info("Listing item older than 5 days - ".$itemDetail->upc);
-                    $itemDetail->update([
-                        'status' =>ListingStatus::Deleted,
-                    ]);
-                }else{
-                    $retry_count = $itemDetail->creation_retry_count ?? 0;
-                    $itemDetail->update([
-                        'creation_retry_count' => $retry_count + 1,
-                    ]);
-                }
+                $itemDetail->update([
+                    'status' =>ListingStatus::Deleted,
+                ]);
             }
 
         } catch (\Throwable $e) {
