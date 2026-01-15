@@ -543,7 +543,7 @@ class SubmitShopifyProductsJob implements ShouldQueue
             $productUpdateData['product']['descriptionHtml'] = $descriptionHtml;
         }
 
-        if (isset($storeProduct->$productTitle) && $storeProduct->$productTitle == 1) {
+        if (isset($storeProduct->update_title) && $storeProduct->update_title == 1) {
             $productUpdateData['product']['title'] = $productTitle;
         }
 
