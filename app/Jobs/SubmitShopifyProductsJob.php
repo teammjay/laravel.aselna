@@ -707,9 +707,18 @@ class SubmitShopifyProductsJob implements ShouldQueue
 
     private function generateProductTitle($productData, $store)
     {
+        $limit = $store->random_title_keyword_level;
+        $reverse = true;
+        if (!isset($limit)) {
+            $limit = 6;
+            $reverse = false;
+        } else {
+            $limit++;
+        }
+
         $keywords = ProductTitleKeyword::select('product_id', 'keyword')
             ->where('product_id', $productData->product_id)
-            ->orderBy('priority', 'asc')->limit(5)->get()->toArray();
+            ->orderBy('priority', 'asc')->limit($limit)->get()->toArray();
 
         Log::info('Keywords: ' . json_encode($keywords));
         // take the first one and reverse the remaining array
@@ -718,7 +727,11 @@ class SubmitShopifyProductsJob implements ShouldQueue
         if (count($keywords) > 0) {
             $firstKeyword = array_shift($keywords);
             $title .= $firstKeyword['keyword'] . ', ';
-            $reversedKeywords = array_reverse($keywords);
+            if ($reverse) {
+                $reversedKeywords = array_reverse($keywords);
+            } else {
+                $reversedKeywords = $keywords;
+            }
             foreach ($reversedKeywords as $keyword) {
                 $title .= trim($keyword['keyword']) . ' ';
             }
