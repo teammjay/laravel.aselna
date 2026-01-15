@@ -1724,7 +1724,7 @@
                         if (response.success) {
                             //alert(response.message);
                             //console.log(response.data);
-                            if(response.data.title){
+                            if(response.data){
                                 $('#store_product_title').val(response.data.title);
                                 $('#store_product_description').val(response.data.description);
                                 $('#store_product_price').val(response.data.price);
