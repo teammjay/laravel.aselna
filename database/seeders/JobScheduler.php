@@ -431,6 +431,18 @@ class JobScheduler extends Seeder
                 'name' => 'Walmart Existing Listing Item Sync',
                 'description' => 'Walmart Existing Listing Item Sync',
                 'class_name' => 'App\Jobs\Walmart\ExistingListingItemSyncJob'
+            ],
+            [
+                //ExistingListingItemSyncJob
+                'name' => 'eBay Existing Listing Item Sync',
+                'description' => 'eBay Existing Listing Item Sync',
+                'class_name' => 'App\Jobs\Ebay\ExistingListingItemSyncJob'
+            ],
+            [
+                //ExistingListingItemSyncJob
+                'name' => 'Amazon Existing Listing Item Sync',
+                'description' => 'Amazon Existing Listing Item Sync',
+                'class_name' => 'App\Jobs\Amazon\ExistingListingItemSyncJob'
             ]
         ];
 

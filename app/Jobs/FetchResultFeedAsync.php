@@ -84,7 +84,7 @@ class FetchResultFeedAsync implements ShouldQueue
 
             CriticalErrorService::report('Fetch Result Feed Job Failed', [
                 'marketplace' => 'N/A',
-                'reason' => $e->getMessage() ?? 'Unknown',
+                'reason' => $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine() ?? 'Unknown',
                 'method' => __METHOD__
             ],$extraInfo);
 

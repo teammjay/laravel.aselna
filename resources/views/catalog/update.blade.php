@@ -898,10 +898,26 @@
                                             </div>
                                             <div class="row mt-3 g-3 align-items-center">
                                                 <div class="col-md-3">
+                                                    <label class="update_title">Update Title</label>
+                                                </div>
+                                                <div class="col-md-9 d-flex justify-between">
+                                                    <input type="checkbox" id="update_title" name="update_title">
+                                                </div>
+                                            </div>
+                                            <div class="row mt-3 g-3 align-items-center">
+                                                <div class="col-md-3">
                                                     <label class="col-form-label">Description</label>
                                                 </div>
                                                 <div class="col-md-9 d-flex justify-between">
                                                     <input type="checkbox" id="overwrite_description" name="overwrite_description" class="mr-1"> <textarea class="form-control" name="description" id="store_product_description" placeholder="Description" rows="8" readonly>{{ old('product_description',$product->product_description) }}</textarea>
+                                                </div>
+                                            </div>
+                                            <div class="row mt-3 g-3 align-items-center">
+                                                <div class="col-md-3">
+                                                    <label class="update_description">Update Description</label>
+                                                </div>
+                                                <div class="col-md-9 d-flex justify-between">
+                                                    <input type="checkbox" id="update_description" name="update_description">
                                                 </div>
                                             </div>
                                             <div class="row mt-3 g-3 align-items-center">
@@ -1708,7 +1724,7 @@
                         if (response.success) {
                             //alert(response.message);
                             //console.log(response.data);
-                            if(response.data.title){
+                            if(response.data){
                                 $('#store_product_title').val(response.data.title);
                                 $('#store_product_description').val(response.data.description);
                                 $('#store_product_price').val(response.data.price);
@@ -1750,9 +1766,15 @@
                                     $('#overwrite_title').prop('checked', true);
                                     $('#store_product_title').removeAttr('readonly');
                                 }
+                                if(response.data.update_title == 1) {
+                                    $('#update_title').prop('checked', true);
+                                }
                                 if(response.data.overwrite_description == 1) {
                                     $('#overwrite_description').prop('checked', true);
                                     $('#store_product_description').removeAttr('readonly');
+                                }
+                                if(response.data.update_description == 1) {
+                                    $('#update_description').prop('checked', true);
                                 }
                                 if(response.data.overwrite_price == 1) {
                                     $('#overwrite_price').prop('checked', true);

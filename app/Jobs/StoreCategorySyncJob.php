@@ -47,7 +47,7 @@ class StoreCategorySyncJob implements ShouldQueue
 
             CriticalErrorService::report('Store Category Sync Job Failed', [
                 'marketplace' => 'N/A',
-                'reason' => $e->getMessage() ?? 'Unknown',
+                'reason' => $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine() ?? 'Unknown',
                 'method' => __METHOD__
             ],['storeId' => $this->storeID]);
         }

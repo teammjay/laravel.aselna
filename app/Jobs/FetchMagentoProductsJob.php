@@ -105,7 +105,7 @@ class FetchMagentoProductsJob implements ShouldQueue
 
             CriticalErrorService::report('Fetch Magento Products Job Failed', [
                 'marketplace' => 'Magento',
-                'reason' => $e->getMessage() ?? 'Unknown',
+                'reason' => $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine() ?? 'Unknown',
                 'method' => __METHOD__
             ],$extraInfo);
 
@@ -126,7 +126,7 @@ class FetchMagentoProductsJob implements ShouldQueue
 
             CriticalErrorService::report('Error getting products from Magento', [
                 'marketplace' => 'Magento',
-                'reason' => $e->getMessage() ?? 'Unknown',
+                'reason' => $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine() ?? 'Unknown',
                 'method' => __METHOD__
             ]);
 
@@ -208,7 +208,7 @@ class FetchMagentoProductsJob implements ShouldQueue
 
             CriticalErrorService::report('Error saving magento product to database', [
                 'marketplace' => 'Magento',
-                'reason' => $e->getMessage() ?? 'Unknown',
+                'reason' => $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine() ?? 'Unknown',
                 'method' => __METHOD__
             ]);
 

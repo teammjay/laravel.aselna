@@ -57,7 +57,7 @@ class EndicialabelService
 
             CriticalErrorService::report('Endicia create label failed', [
                 'marketplace' => '',
-                'reason' => $e->getMessage() ?? 'Unknown',
+                'reason' => $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine() ?? 'Unknown',
                 'method' => __METHOD__
             ],['operation_id' => $orderOperationId]);
 
@@ -163,7 +163,7 @@ class EndicialabelService
 
             CriticalErrorService::report('Error saving label image', [
                 'marketplace' => '',
-                'reason' => $e->getMessage() ?? 'Unknown',
+                'reason' => $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine() ?? 'Unknown',
                 'method' => __METHOD__
             ],['operation_id' => $orderOperationId,'shippingDetail' => $shippingDetail]);
 
@@ -219,7 +219,7 @@ class EndicialabelService
 
             CriticalErrorService::report('Error editing label image', [
                 'marketplace' => '',
-                'reason' => $e->getMessage() ?? 'Unknown',
+                'reason' => $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine() ?? 'Unknown',
                 'method' => __METHOD__
             ],['file_path' => $filePath]);
 
@@ -304,7 +304,7 @@ class EndicialabelService
 
             CriticalErrorService::report('Error editing label image', [
                 'marketplace' => '',
-                'reason' => $e->getMessage() ?? 'Unknown',
+                'reason' => $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine() ?? 'Unknown',
                 'method' => __METHOD__
             ],['image_path' => $imagePath]);
 
@@ -601,7 +601,7 @@ class EndicialabelService
 
             CriticalErrorService::report('Endicia credit limit api error', [
                 'marketplace' => '',
-                'reason' => $e->getMessage() ?? 'Unknown',
+                'reason' => $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine() ?? 'Unknown',
                 'method' => __METHOD__
             ]);
 
@@ -664,7 +664,7 @@ class EndicialabelService
 
             CriticalErrorService::report('Endicia purchase credit limit api error', [
                 'marketplace' => '',
-                'reason' => $e->getMessage() ?? 'Unknown',
+                'reason' => $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine() ?? 'Unknown',
                 'method' => __METHOD__
             ]);
 
@@ -747,7 +747,7 @@ class EndicialabelService
 
             CriticalErrorService::report('Endicia fetch transaction list api error', [
                 'marketplace' => '',
-                'reason' => $e->getMessage() ?? 'Unknown',
+                'reason' => $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine() ?? 'Unknown',
                 'method' => __METHOD__
             ]);
 

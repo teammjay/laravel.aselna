@@ -125,7 +125,7 @@ class SendNotificationOrderSyncFailJob implements ShouldQueue
 
             CriticalErrorService::report('Send Notification Order Sync Job Failed', [
                 'marketplace' => 'N/A',
-                'reason' => $e->getMessage() ?? 'Unknown',
+                'reason' => $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine() ?? 'Unknown',
                 'method' => __METHOD__
             ]);
 

@@ -74,7 +74,7 @@ class DataPatch implements ShouldQueue
 
             CriticalErrorService::report('Store Product Data Patch Failed', [
                 'marketplace' => 'N/A',
-                'reason' => $e->getMessage() ?? 'Unknown',
+                'reason' => $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine() ?? 'Unknown',
                 'method' => __METHOD__
             ]);
         }

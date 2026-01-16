@@ -94,7 +94,7 @@ class MagentoProductsSyncJob implements ShouldQueue
 
             CriticalErrorService::report('Magento Products Sync Job Failed', [
                 'marketplace' => 'Magento',
-                'reason' => $e->getMessage() ?? 'Unknown',
+                'reason' => $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine() ?? 'Unknown',
                 'method' => __METHOD__
             ]);
 

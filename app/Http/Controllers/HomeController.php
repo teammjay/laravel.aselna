@@ -45,6 +45,7 @@ use App\Models\AccountTransactionSynchronization;
 use App\Models\Store;
 use App\Models\StoreMessageAccount;
 use App\Models\SysFile;
+use App\Services\Auth\EbayAuthService;
 use App\Services\Auth\GoogleShoppingAuthService;
 use App\Services\Auth\ShopifyAuthService;
 use App\Services\Auth\WalmartAuthService;
@@ -81,6 +82,30 @@ class HomeController extends Controller
     }
 
     public function testfunction(){
+
+       /* if (env('APP_ENV') === 'local') {
+            $storeId = '1968772b-cc55-d4e9-a126-7e81019be976';
+            $minDate = '2025-11-12 00:00:00';
+            $skuArray = ['S91-12BITO','G60-LR81EX'];
+//            $skuArray = ['A16-5GLVBQ','Z96-P8XA0U','V65-DNWS7X'];
+//            $skuArray = ['K11-N3MQS4','C49-VIVTG9','K34-RREHUR','B90-RHZAJ9','E56-XAGDPL','C10-IOXWOQ'];
+        }
+
+        Log::info("Calling Service");
+
+        $clientId = env('EBAY_CLIENT_ID');
+        $clientSecret = env('EBAY_CLIENT_SECRET');
+        $redirectUri = env('EBAY_REDIRECT_URI');
+
+        $store = Store::findOrFail($storeId);
+
+        $ebayAuthService = new EbayAuthService($clientId, $clientSecret, $redirectUri, $store->user_id);
+        $response = $ebayAuthService->getListingItems($skuArray, $minDate);
+        echo '<pre>';
+        print_r($response);
+        echo '</pre>';
+        Log::info("Ebay getListingItems response: " . json_encode($response));
+        die;*/
 
         /*$order = OrderOperation::with('order', 'order.orderItem', 'order.customer', 'order.customerAddress', 'store', 'store.storeType', 'carrier', 'shipFrom', 'shipFrom.returnAddress', 'shipFrom.fromAddress', 'operationItem', 'operationItem.orderItem')->where('id', '972b4b02-659f-4a59-8b95-996e45490090')->first();
 

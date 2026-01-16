@@ -349,7 +349,7 @@ class OrderOperationUtility
 
             CriticalErrorService::report('Error processing check transaction credit', [
                 'marketplace' => '',
-                'reason' => $e->getMessage() ?? 'Unknown',
+                'reason' => $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine() ?? 'Unknown',
                 'method' => __METHOD__
             ],['order_operation' => $orderOperation]);
 

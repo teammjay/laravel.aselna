@@ -168,7 +168,7 @@ class SubmitShopifyProductsJob implements ShouldQueue
 
             CriticalErrorService::report('Submit Shopify Products Sync Job Failed', [
                 'marketplace' => 'Shopify',
-                'reason' => $e->getMessage() ?? 'Unknown',
+                'reason' => $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine() ?? 'Unknown',
                 'method' => __METHOD__
             ]);
 
@@ -517,19 +517,6 @@ class SubmitShopifyProductsJob implements ShouldQueue
         $productTitle = $this->generateProductTitle($productData, $store);
 
         $descriptionHtml = $this->getDescriptionHtml($productData,$store);
-//        if (isset($productData->productKeyFeatures)) {
-//            $descriptionHtml .= '<ul>';
-//            foreach ($productData->productKeyFeatures as $feature) {
-//                $safeText = htmlspecialchars($feature->value, ENT_QUOTES | ENT_XML1, 'UTF-8'); // Escapes special characters
-//                if (!empty(trim($safeText))) {
-//                    $descriptionHtml .= '<li>' . $safeText . '</li>';
-//                }
-//            }
-//
-//            $descriptionHtml .= '</ul>';
-//        }
-//        $descriptionHtml .= '<h2>Product Description</h2>';
-//        $descriptionHtml .= '<p>' . $productData->product_description . '</p>';
 
         $tags = $this->getAllTags($productData, []);
         $finalTagsString = implode(', ', $tags['addTags']);
@@ -551,6 +538,14 @@ class SubmitShopifyProductsJob implements ShouldQueue
                 'tags' => $tags['addTags']
             ],
         ];
+
+        if (isset($storeProduct->update_description) && $storeProduct->update_description == 1) {
+            $productUpdateData['product']['descriptionHtml'] = $descriptionHtml;
+        }
+
+        if (isset($storeProduct->update_title) && $storeProduct->update_title == 1) {
+            $productUpdateData['product']['title'] = $productTitle;
+        }
 
         $priceUpdatesData = [
             'productId' => $proDetail->marketplace_product_id,
@@ -707,9 +702,18 @@ class SubmitShopifyProductsJob implements ShouldQueue
 
     private function generateProductTitle($productData, $store)
     {
+        $limit = $store->random_title_keyword_level;
+        $reverse = true;
+        if (!isset($limit)) {
+            $limit = 6;
+            $reverse = false;
+        } else {
+            $limit++;
+        }
+
         $keywords = ProductTitleKeyword::select('product_id', 'keyword')
             ->where('product_id', $productData->product_id)
-            ->orderBy('priority', 'asc')->limit(5)->get()->toArray();
+            ->orderBy('priority', 'asc')->limit($limit)->get()->toArray();
 
         Log::info('Keywords: ' . json_encode($keywords));
         // take the first one and reverse the remaining array
@@ -717,8 +721,14 @@ class SubmitShopifyProductsJob implements ShouldQueue
         $title = '';
         if (count($keywords) > 0) {
             $firstKeyword = array_shift($keywords);
-            $title .= $firstKeyword['keyword'] . ', ';
-            $reversedKeywords = array_reverse($keywords);
+            $title .= $firstKeyword['keyword'];
+            if ($reverse) {
+                $reversedKeywords = array_reverse($keywords);
+                $title .= ', ';
+            } else {
+                $title .= ' ';
+                $reversedKeywords = $keywords;
+            }
             foreach ($reversedKeywords as $keyword) {
                 $title .= trim($keyword['keyword']) . ' ';
             }

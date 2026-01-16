@@ -625,7 +625,9 @@ class CatalogController extends Controller
         } elseif ($tabId == 9) {
             unset($request['tab']);
             $request['overwrite_title'] = $request->has('overwrite_title') ? 1 : 0;
+            $request['update_title'] = $request->has('update_title') ? 1 : 0;
             $request['overwrite_description'] = $request->has('overwrite_description') ? 1 : 0;
+            $request['update_description'] = $request->has('update_description') ? 1 : 0;
             $request['overwrite_price'] = $request->has('overwrite_price') ? 1 : 0;
             $request['overwrite_compare_at_price'] = $request->has('overwrite_compare_at_price') ? 1 : 0;
             $request['overwrite_fulfillment_by_channel_price'] = $request->has('overwrite_fulfillment_by_channel_price') ? 1 : 0;

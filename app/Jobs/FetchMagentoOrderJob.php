@@ -172,7 +172,7 @@ class FetchMagentoOrderJob implements ShouldQueue
 
             CriticalErrorService::report('Fetch Magento Order Job Failed', [
                 'marketplace' => 'Magento',
-                'reason' => $e->getMessage() ?? 'Unknown',
+                'reason' => $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine() ?? 'Unknown',
                 'method' => __METHOD__
             ]);
 

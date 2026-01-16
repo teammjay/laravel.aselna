@@ -79,6 +79,7 @@ use App\Jobs\StoreTypeSyncJob;
 use App\Jobs\SubmitShopifyProductsJob;
 use App\Jobs\SyncAllOrderStatusJob;
 use App\Jobs\synccategorytospecification;
+use App\Jobs\SyncFailedMarketplaceShipmentJob;
 use App\Jobs\SystemPrinterSyncJob;
 use App\Jobs\TransactionStatusCheckJob;
 use App\Jobs\UPCGenerateJob;
@@ -114,6 +115,7 @@ class SyncAllTables extends Command
      */
     public function handle()
     {
+//        SyncFailedMarketplaceShipmentJob::dispatch( 'c431af0e-a0df-4072-afd3-f9258705a9ba');
 //         Bus::chain([
 //            new FileSystemSyncJob(),
 //            new StoreTypeSyncJob(),
