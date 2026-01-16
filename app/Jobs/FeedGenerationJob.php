@@ -87,7 +87,7 @@ class FeedGenerationJob implements ShouldQueue
 
             CriticalErrorService::report('Feed Generation Failed', [
                 'marketplace' => $listingInfo->store->storeType->name.' - '.$listingInfo->store->name,
-                'reason' => $e->getMessage() ?? 'Unknown',
+                'reason' => $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine() ?? 'Unknown',
                 'method' => __METHOD__
             ]);
 

@@ -108,7 +108,7 @@ class FetchShopifyProductsJob implements ShouldQueue
 
                         CriticalErrorService::report('Fetch Shopify Product Job Failed', [
                             'marketplace' => 'Shopify',
-                            'reason' => $e->getMessage() ?? 'Unknown',
+                            'reason' => $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine() ?? 'Unknown',
                             'method' => __METHOD__
                         ],$extraInfo);
 

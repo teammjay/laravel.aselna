@@ -95,7 +95,7 @@ class WalmartService implements MarketplaceServiceInterface
 
             CriticalErrorService::report('Walmart Submit Feed Failed', [
                 'marketplace' => 'Walmart',
-                'reason' => $e->getMessage() ?? 'Unknown',
+                'reason' => $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine() ?? 'Unknown',
                 'method' => __METHOD__
             ],['feedId'=>$feedId, 'listingId'=>$listingId]);
 
@@ -392,7 +392,7 @@ class WalmartService implements MarketplaceServiceInterface
 
             CriticalErrorService::report('Walmart Create Feed Failed', [
                 'marketplace' => 'Walmart',
-                'reason' => $e->getMessage() ?? 'Unknown',
+                'reason' => $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine() ?? 'Unknown',
                 'method' => __METHOD__
             ],['listingId'=>$listingId]);
 
@@ -431,7 +431,7 @@ class WalmartService implements MarketplaceServiceInterface
 
             CriticalErrorService::report('Walmart Generate Delete Feed Failed', [
                 'marketplace' => 'Walmart',
-                'reason' => $e->getMessage() ?? 'Unknown',
+                'reason' => $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine() ?? 'Unknown',
                 'method' => __METHOD__
             ],['listingId'=> $listingId]);
 
@@ -475,7 +475,7 @@ class WalmartService implements MarketplaceServiceInterface
 
             CriticalErrorService::report('Walmart Generate Inventory Feed Failed', [
                 'marketplace' => 'Walmart',
-                'reason' => $e->getMessage() ?? 'Unknown',
+                'reason' => $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine() ?? 'Unknown',
                 'method' => __METHOD__
             ],['listingId'=>$listingId]);
 
@@ -520,7 +520,7 @@ class WalmartService implements MarketplaceServiceInterface
 
             CriticalErrorService::report('Walmart Generate Price Feed Failed', [
                 'marketplace' => 'Walmart',
-                'reason' => $e->getMessage() ?? 'Unknown',
+                'reason' => $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine() ?? 'Unknown',
                 'method' => __METHOD__
             ],['listingId'=>$listingId]);
 
@@ -624,7 +624,7 @@ class WalmartService implements MarketplaceServiceInterface
 
             CriticalErrorService::report('Error in Walmart Get Orders', [
                 'marketplace' => 'Walmart',
-                'reason' => $e->getMessage() ?? 'Unknown',
+                'reason' => $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine() ?? 'Unknown',
                 'method' => __METHOD__
             ],$extraInfo);
 
@@ -805,7 +805,7 @@ class WalmartService implements MarketplaceServiceInterface
 
             CriticalErrorService::report('Walmart Shipment Update Failed', [
                 'marketplace' => 'Walmart',
-                'reason' => $e->getMessage() ?? 'Unknown',
+                'reason' => $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine() ?? 'Unknown',
                 'method' => __METHOD__
             ],['store_name'=>$store->name]);
         }
@@ -908,7 +908,7 @@ class WalmartService implements MarketplaceServiceInterface
 
             CriticalErrorService::report('Walmart resubmitFailedItems Failed', [
                 'marketplace' => 'Walmart',
-                'reason' => $e->getMessage() ?? 'Unknown',
+                'reason' => $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine() ?? 'Unknown',
                 'method' => __METHOD__
             ]);
 

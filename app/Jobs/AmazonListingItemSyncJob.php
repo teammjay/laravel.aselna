@@ -55,6 +55,8 @@ class AmazonListingItemSyncJob implements ShouldQueue
                 }
             }
 
+            Log::info('Amazon marketplace ids: ' . json_encode($marketPlaceId));
+
             $query = Store::where('store_type_id', function ($subquery) {
                 return $subquery->select('id')
                     ->from('store_type')
@@ -68,7 +70,6 @@ class AmazonListingItemSyncJob implements ShouldQueue
             $amazon_store_ids = $query->pluck('id');
             Log::info('Amazon store ids: ' . json_encode($amazon_store_ids));
 
-            $itemSkus = [];
             //join listing_item_link and listing_item and listing
             ListingItemLink::query()
                 ->with(['listing', 'listingItem'])
@@ -91,8 +92,8 @@ class AmazonListingItemSyncJob implements ShouldQueue
                         //->where('status', FeedStatus::PROCESSING);
                 })*/
                 ->orderBy('listing_item.created_at', 'desc')
-                ->chunk(20, function ($listingItemLinks) {
-
+                ->chunk(20, function ($listingItemLinks) use($marketPlaceId) {
+                    $itemSkus = [];
                     foreach ($listingItemLinks as $listingItemLink) {
                         Log::info('Syncing Amazon listing item: ' . $listingItemLink->item_id);
                         //$this->syncListingItem($listingItemLink);
@@ -107,20 +108,22 @@ class AmazonListingItemSyncJob implements ShouldQueue
                     }
                     Log::info("Listing Item Sku list " . json_encode($itemSkus));
                     //$this->syncListingItems($itemSkus);
-                });
 
-                if($itemSkus) {
-                    foreach ($itemSkus as $storeId => $skus) {
-                        foreach (array_chunk($skus, 10) as $chunk) {
-                            $this->syncListingItems($storeId, $chunk, $marketPlaceId);
+                    if($itemSkus) {
+                        foreach ($itemSkus as $storeId => $skus) {
+                            foreach (array_chunk($skus, 10) as $chunk) {
+                                $this->syncListingItems($storeId, $chunk, $marketPlaceId);
+                            }
                         }
                     }
-                }
+                });
+
+
         }catch (\Throwable $e) {
 
             CriticalErrorService::report('Amazon Listing Item Sync Job Failed', [
                 'marketplace' => 'Amazon',
-                'reason' => $e->getMessage() ?? 'Unknown',
+                'reason' => $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine() ?? 'Unknown',
                 'method' => __METHOD__
             ]);
 
@@ -206,7 +209,7 @@ class AmazonListingItemSyncJob implements ShouldQueue
 
             CriticalErrorService::report('Amazon Listing Item Sync Job Failed', [
                 'marketplace' => 'Amazon',
-                'reason' => $e->getMessage() ?? 'Unknown',
+                'reason' => $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine() ?? 'Unknown',
                 'method' => __METHOD__
             ],['itemSkus' => $items]);
 
@@ -291,7 +294,7 @@ class AmazonListingItemSyncJob implements ShouldQueue
 
             CriticalErrorService::report('Amazon Listing Item Sync Job Failed', [
                 'marketplace' => 'Amazon',
-                'reason' => $e->getMessage() ?? 'Unknown',
+                'reason' => $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine() ?? 'Unknown',
                 'method' => __METHOD__
             ],['itemSkus' => $itemSkus]);
 

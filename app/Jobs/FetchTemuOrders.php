@@ -71,7 +71,7 @@ class FetchTemuOrders implements ShouldQueue
 
                     CriticalErrorService::report('Fetch Temu Orders Job Failed', [
                         'marketplace' => 'Temu',
-                        'reason' => $e->getMessage() ?? 'Unknown',
+                        'reason' => $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine() ?? 'Unknown',
                         'method' => __METHOD__
                     ],$extraInfo);
 

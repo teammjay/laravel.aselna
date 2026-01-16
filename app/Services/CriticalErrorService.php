@@ -55,7 +55,7 @@ class CriticalErrorService
         Log::channel('critical')->error('Critical Error - '.$errorData['message'], $errorData);
 
         //  storOptionallye to DB
-        $hash = hash('sha256', $errorData['message'] . json_encode($errorData['extra']). $errorData['context']['method']);
+        $hash = hash('sha256', $errorData['message'] . $errorData['context']['reason']. $errorData['context']['method']);
 
         $existing = ErrorLog::where('hash_string', $hash)->first();
         if ($existing) {

@@ -334,7 +334,7 @@ class TemuService implements MarketplaceServiceInterface
 
             CriticalErrorService::report('Temu Generate Create Feed Error', [
                 'marketplace' => 'Temu',
-                'reason' => $e->getMessage() ?? 'Unknown',
+                'reason' => $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine() ?? 'Unknown',
                 'method' => __METHOD__
             ],['listingId'=> $listingId]);
 
@@ -593,7 +593,7 @@ class TemuService implements MarketplaceServiceInterface
 
             CriticalErrorService::report('Temu Get Order Error', [
                 'marketplace' => 'Temu',
-                'reason' => $e->getMessage() ?? 'Unknown',
+                'reason' => $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine() ?? 'Unknown',
                 'method' => __METHOD__
             ],['store_name'=>$store->name]);
 
@@ -660,7 +660,7 @@ class TemuService implements MarketplaceServiceInterface
 
             CriticalErrorService::report('Temu Create Shipment Error', [
                 'marketplace' => 'Temu',
-                'reason' => $e->getMessage() ?? 'Unknown',
+                'reason' => $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine() ?? 'Unknown',
                 'method' => __METHOD__
             ],['order_id'=>$orderOperation->order->order_id,'tracking_number'=>$mainOrderOperation->tracking_number]);
 
@@ -698,7 +698,7 @@ class TemuService implements MarketplaceServiceInterface
 
             CriticalErrorService::report('Temu Refund Order Error', [
                 'marketplace' => 'Temu',
-                'reason' => $e->getMessage() ?? 'Unknown',
+                'reason' => $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine() ?? 'Unknown',
                 'method' => __METHOD__
             ],['parentOrderSn'=>$parentOrderSn]);
 

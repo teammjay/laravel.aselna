@@ -102,7 +102,7 @@ class EbayListingItemSyncJob implements ShouldQueue
 
             CriticalErrorService::report('Ebay Listing Item Sync Job Failed', [
                 'marketplace' => 'eBay',
-                'reason' => $e->getMessage() ?? 'Unknown',
+                'reason' => $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine() ?? 'Unknown',
                 'method' => __METHOD__
             ]);
 
@@ -239,7 +239,7 @@ class EbayListingItemSyncJob implements ShouldQueue
 
             CriticalErrorService::report('Ebay Listing Item Sync Job Failed', [
                 'marketplace' => 'eBay',
-                'reason' => $e->getMessage() ?? 'Unknown',
+                'reason' => $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine() ?? 'Unknown',
                 'method' => __METHOD__
             ],['store_id' => $store->id]);
 

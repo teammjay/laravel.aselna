@@ -205,7 +205,7 @@ class FetchEbayOrders implements ShouldQueue
 
             CriticalErrorService::report('Fetch eBay Order Job Failed', [
                 'marketplace' => 'eBay',
-                'reason' => $e->getMessage() ?? 'Unknown',
+                'reason' => $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine() ?? 'Unknown',
                 'method' => __METHOD__
             ]);
 

@@ -56,7 +56,7 @@ class ShopifyPagesSyncJob implements ShouldQueue
 
             CriticalErrorService::report('Shopify Pages Job Failed', [
                 'marketplace' => 'Shopify',
-                'reason' => $e->getMessage() ?? 'Unknown',
+                'reason' => $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine() ?? 'Unknown',
                 'method' => __METHOD__
             ]);
 

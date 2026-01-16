@@ -40,7 +40,7 @@ class ProductConditionJob implements ShouldQueue
 
             CriticalErrorService::report('Product Condition Sync Job Failed', [
                 'marketplace' => 'N/A',
-                'reason' => $e->getMessage() ?? 'Unknown',
+                'reason' => $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine() ?? 'Unknown',
                 'method' => __METHOD__
             ]);
         }
