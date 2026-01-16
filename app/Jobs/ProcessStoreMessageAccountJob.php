@@ -263,6 +263,7 @@ class ProcessStoreMessageAccountJob implements ShouldQueue
                                 }
                                 $ticketDetail->ticket_date = $email['date'];
                                 $ticketDetail->message_read = 0;
+                                $ticketDetail->status = HdTicketStatus::NEEDS_ACTION;
                                 $ticketDetail->save();
 
                                 $hd_ticket = $ticketDetail;
