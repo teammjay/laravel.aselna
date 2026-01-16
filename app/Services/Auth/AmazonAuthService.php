@@ -481,10 +481,8 @@ class AmazonAuthService
                             'identifiersType' => 'SKU',
                             'identifiers' => implode(',',$skus),
                             'includedData' => 'summaries',
-                            'createdAfter' => now()->subMonth()->toIso8601String(),
                             'sortBy' => 'lastUpdatedDate',
                             'sortOrder' => 'DESC',
-                            'pageToken' => $pageToken,
 
                         ]
                     ]

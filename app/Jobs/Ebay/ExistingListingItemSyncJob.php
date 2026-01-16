@@ -58,6 +58,7 @@ class ExistingListingItemSyncJob implements ShouldQueue
             ->join('listing_item', 'listing_item_link.item_id', '=', 'listing_item.id')
             ->join('listing', 'listing_item_link.listing_id', '=', 'listing.id')
             ->whereIn('listing.store_id', $ebay_store_ids)
+            ->whereNot('listing_item.status', ListingStatus::Deleted)
             ->whereNotNull('listing_item.store_sku')
             ->orderBy('listing_item.created_at','asc')
             ->chunk(100, function ($listingItemLinks) {
@@ -69,7 +70,6 @@ class ExistingListingItemSyncJob implements ShouldQueue
 
                     $store = $listingItemLink->listing->store;
                     $itemDetail = $listingItemLink->listingItem;
-                    if ($itemDetail->store_sku != null) continue;
 
                     if ($itemDetail->created_at){
                         $minDate = $minDate == null ? $itemDetail->created_at : ($itemDetail->created_at < $minDate ? $itemDetail->created_at : $minDate);
@@ -128,15 +128,7 @@ class ExistingListingItemSyncJob implements ShouldQueue
                                 ->Where('store_sku','!=', '');
                         })->first();
                         if ($itemDetail) {
-                            if (!isset($item['ItemID'])) {
-                                $date = \Carbon\Carbon::parse($itemDetail->created_at);
-                                if ($date->diffInDays(now()) >= 5) {
-                                    Log::info("Listing item older than 5 days - " . $itemDetail->sku);
-                                    $itemDetail->update([
-                                        'status' => ListingStatus::Deleted,
-                                    ]);
-                                }
-                            }else{
+                            if (isset($item['ItemID'])) {
                                 $itemSkuArray[] = $item['SKU'];
                                 Log::info("SKU Active: " . $item['SKU']);
                             }
@@ -152,13 +144,9 @@ class ExistingListingItemSyncJob implements ShouldQueue
                             $itemDetails = ListingItem::where('sku', $sku)->get();
                             foreach ($itemDetails as $item) {
                                 Log::info("Item with SKU: " . $sku . " not found in eBay response, marking as Deleted.");
-                                $date = \Carbon\Carbon::parse($item->created_at);
-                                if ($date->diffInDays(now()) >= 5) {
-                                    Log::info("Listing item older than 5 days and not synced - " . $item->sku);
-                                    $item->update([
-                                        'status' => ListingStatus::Deleted,
-                                    ]);
-                                }
+                                $item->update([
+                                    'status' => ListingStatus::Deleted,
+                                ]);
                             }
                         }
                     }

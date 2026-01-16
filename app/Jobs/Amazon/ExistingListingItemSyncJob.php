@@ -53,6 +53,7 @@ class ExistingListingItemSyncJob implements ShouldQueue
         $marketPlaceId = [];
         if($amazon_store_ids){
             foreach($amazon_store_ids as $store_id) {
+                Log::info('Fetching marketplace ids for store id: ' . $store_id);
                 $store = Store::findOrFail($store_id);
                 $amazonAuthService = new AmazonAuthService($store->seller_id, $store->secret_key, $store->api_key);
                 $marketPlaceId[$store_id] = $amazonAuthService->getMarketplaceIDs();
@@ -77,13 +78,13 @@ class ExistingListingItemSyncJob implements ShouldQueue
                     $store = $listingItemLink->listing->store;
                     $store_id = $store->id;
                     $itemDetail = $listingItemLink->listingItem;
-                    if ($itemDetail->store_sku != null) return;
 
                     Log::info("Existing Amazon Listing Item Sku " . $itemDetail->sku);
                     $itemSkus[$store_id][] = trim($itemDetail->sku);
                 }
 
                 if($itemSkus) {
+                    Log::info("Syncing Existing Amazon Listing Items for stores :: ");
                     foreach ($itemSkus as $storeId => $skus) {
                         foreach (array_chunk($skus, 10) as $chunk) {
                             $this->syncListingItems($storeId, $chunk, $marketPlaceId);
@@ -106,6 +107,7 @@ class ExistingListingItemSyncJob implements ShouldQueue
 
                 Log::info("Amazon marketplace ids :: " . json_encode($marketPlaceId[$store_id]));
                 $marketplaceIds = $marketPlaceId[$store_id];
+                Log::info('Skus to be synced :: ' . json_encode($items));
                 $resultItems = $amazonAuthService->fetchListingItems($store->user_id,$items,$marketplaceIds);
                 Log::info("Result Items :: " . json_encode($resultItems));
 
@@ -120,42 +122,21 @@ class ExistingListingItemSyncJob implements ShouldQueue
                                     if(isset($summary['asin'])) {
                                         $itemFetch[] = $item['sku'];
                                     }
-                                }else{
-                                    $date = \Carbon\Carbon::parse($itemDetail->created_at);
-                                    if ($date->diffInDays(now()) >= 5) {
-                                        Log::info("Listing item older than 5 days - ".$itemDetail->sku);
-                                        $itemDetail->update([
-                                            'status' =>ListingStatus::Deleted,
-                                        ]);
-                                    }else{
-                                        $retry_count = $itemDetail->creation_retry_count ?? 0;
-                                        $itemDetail->update([
-                                            'creation_retry_count' => $retry_count + 1,
-                                        ]);
-                                    }
                                 }
                             }
                         }
                     }
                 }
+                Log::info('Fetched Item SKUs :: ' . json_encode($itemFetch));
 
                 if($itemFetch) {
                     foreach ($items as $item) {
                         if (!in_array($item, $itemFetch)) {
                             $itemDetail = ListingItem::where('sku', $item)->first();
 
-                            $date = \Carbon\Carbon::parse($itemDetail->created_at);
-                            if ($date->diffInDays(now()) >= 5) {
-                                Log::info("Listing item older than 5 days - ".$itemDetail->sku);
-                                $itemDetail->update([
-                                    'status' =>ListingStatus::Deleted,
-                                ]);
-                            }else{
-                                $retry_count = $itemDetail->creation_retry_count ?? 0;
-                                $itemDetail->update([
-                                    'creation_retry_count' => $retry_count + 1,
-                                ]);
-                            }
+                            $itemDetail->update([
+                                'status' =>ListingStatus::Deleted,
+                            ]);
                         }
                     }
                 }
