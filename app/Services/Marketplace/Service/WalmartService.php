@@ -739,8 +739,9 @@ class WalmartService implements MarketplaceServiceInterface
             $count = 1;
             foreach ($orderOperation->order->orderItem as $item) {
                 Log::info('Itema data for the operation :: ' . json_encode($item));
+                $Id1 = $item->id1;
                 $orderLine = [
-                    'lineNumber' => $count,
+                    'lineNumber' => $Id1,
                     'orderLineStatuses' => [
                         'orderLineStatus' => [
                             [
