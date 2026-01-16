@@ -49,7 +49,7 @@ class InsertListingItemDetailJob implements ShouldQueue
 
             CriticalErrorService::report('Insert Listing Item Detail Job Failed', [
                 'marketplace' => 'N/A',
-                'reason' => $e->getMessage() ?? 'Unknown',
+                'reason' => $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine() ?? 'Unknown',
                 'method' => __METHOD__
             ]);
         }

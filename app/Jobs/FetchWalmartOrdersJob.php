@@ -76,7 +76,7 @@ class FetchWalmartOrdersJob implements ShouldQueue
 
             CriticalErrorService::report('Fetch Walmart Orders Job Failed', [
                 'marketplace' => 'Walmart',
-                'reason' => $e->getMessage() ?? 'Unknown',
+                'reason' => $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine() ?? 'Unknown',
                 'method' => __METHOD__
             ]);
 

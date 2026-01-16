@@ -221,8 +221,6 @@ class ProcessStoreMessageAccountJob implements ShouldQueue
                             if (isset($email['references']) && $email['references'] != '') {
                                 if(is_array($email['references'])){
                                     $query->orWhereIn('message_id', $email['references']);
-                                }else {
-                                    $query->orWhere('message_id', trim($email['references']));
                                 }
                             }
                             if (isset($email['in_reply_to']) && $email['in_reply_to'] != '') {
@@ -233,6 +231,30 @@ class ProcessStoreMessageAccountJob implements ShouldQueue
                             }*/
                             Log::info(' Message Query: ' . $query->toSql());
                             $ticketDetail = $query->first();
+
+                            if (!$ticketDetail) {
+
+                                $hdQuery = HdMessage::select('ticket_id')
+                                    ->where('message_id', trim($email['message_id']));
+
+                                if (!empty($email['references'])) {
+                                    if (is_array($email['references'])) {
+                                        $hdQuery->orWhereIn('message_id', $email['references']);
+                                    }
+                                }
+
+                                if (!empty($email['in_reply_to'])) {
+                                    $hdQuery->orWhere('message_id', trim($email['in_reply_to']));
+                                }
+
+                                $hdQuery->orderBy('created_at', 'desc');
+
+                                $hdMessage = $hdQuery->first();
+
+                                if ($hdMessage) {
+                                    $ticketDetail = Message::find($hdMessage->ticket_id);
+                                }
+                            }
 
                             if ($ticketDetail) {
                                 if ($order_id) {
@@ -418,7 +440,7 @@ class ProcessStoreMessageAccountJob implements ShouldQueue
 
             CriticalErrorService::report('Store message account job failed:'.$this->store_name.'-'.$this->store_type, [
                 'marketplace' => ucfirst($this->store_type),
-                'reason' => $e->getMessage() ?? 'Unknown',
+                'reason' => $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine() ?? 'Unknown',
                 'method' => __METHOD__
             ],['store_type' => $this->store_type, 'store_name' => $this->store_name,'store_message_account' => $this->storeMessageAccount]);
 

@@ -102,7 +102,7 @@ class ResubmitLabelPrintedShipmentJob implements ShouldQueue
 
             CriticalErrorService::report('Resubmit Label Printed Shipment Job Failed', [
                 'marketplace' => 'N/A',
-                'reason' => $e->getMessage() ?? 'Unknown',
+                'reason' => $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine() ?? 'Unknown',
                 'method' => __METHOD__
             ]);
         }

@@ -493,7 +493,7 @@ class StoreBrandPageSyncJob implements ShouldQueue
 
             CriticalErrorService::report('Store Brand Pages Sync Job Failed', [
                 'marketplace' => 'N/A',
-                'reason' => $e->getMessage() ?? 'Unknown',
+                'reason' => $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine() ?? 'Unknown',
                 'method' => __METHOD__
             ],['store_id' => $this->store_id, 'page_type' => $this->page_type, 'template_id' => $this->template_id]);
         }
