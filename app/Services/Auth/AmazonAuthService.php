@@ -222,6 +222,7 @@ class AmazonAuthService
     {
         //return Cache::remember('amazon_marketplace_ids_' . $this->client_id, now()->addDays(7), function () {
             if (isset($this->marketplaceIDs)) {
+                Log::info('Exist Marketplaces: ' . json_encode($this->marketplaceIDs));
                 return $this->marketplaceIDs;
             }
             $accessToken = $this->getAccessToken();
