@@ -46,7 +46,7 @@ class LogisticCentreSyncJob implements ShouldQueue
 
             CriticalErrorService::report('Logistic Center Sync Job Failed', [
                 'marketplace' => 'N/A',
-                'reason' => $e->getMessage() ?? 'Unknown',
+                'reason' => $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine() ?? 'Unknown',
                 'method' => __METHOD__
             ]);
         }

@@ -15,6 +15,9 @@
         .status-failed { color: red; font-weight: 600; }
         .show-error{cursor: pointer; color:#e71717;}
         .hide{display: none;}
+        .child-row td {
+            background: #e2e7f1;
+        }
     </style>
 @stop
 
@@ -35,7 +38,7 @@
                                 Job
                             </div>
                             <div class="col-3">
-                                <select class="custom-select" id="" name="job_type_operator">
+                                <select class="custom-select" id="job_type_operator" name="job_type_operator">
                                     <option value="{{FilterCodes::CONTAINS}}">contains</option>
                                     <option value="{{FilterCodes::STARTS_WITH}}">starts with</option>
                                     <option value="{{FilterCodes::ENDS_WITH}}">ends with</option>
@@ -57,7 +60,7 @@
                                 Status
                             </div>
                             <div class="col-3">
-                                <select class="custom-select" id="" name="status_operator">
+                                <select class="custom-select" id="status_operator" name="status_operator">
                                     <option value="{{FilterCodes::CONTAINS}}">contains</option>
                                     <option value="{{FilterCodes::STARTS_WITH}}">starts with</option>
                                     <option value="{{FilterCodes::ENDS_WITH}}">ends with</option>
@@ -120,7 +123,7 @@
                                 Tags
                             </div>
                             <div class="col-3">
-                                <select class="custom-select" id="" name="tags_operator">
+                                <select class="custom-select" id="tags_operator" name="tags_operator">
                                     <option value="{{FilterCodes::CONTAINS}}">contains</option>
                                     <option value="{{FilterCodes::STARTS_WITH}}">starts with</option>
                                     <option value="{{FilterCodes::ENDS_WITH}}">ends with</option>
@@ -145,7 +148,7 @@
                                 Store Types
                             </div>
                             <div class="col-3">
-                                <select class="custom-select" id="" name="tags_operator">
+                                <select class="custom-select" id="store_type_operator" name="store_type_operator">
                                     <option value="{{FilterCodes::CONTAINS}}">contains</option>
                                     <option value="{{FilterCodes::STARTS_WITH}}">starts with</option>
                                     <option value="{{FilterCodes::ENDS_WITH}}">ends with</option>
@@ -174,7 +177,7 @@
                                 Chain ID
                             </div>
                             <div class="col-3">
-                                <select class="custom-select" id="" name="chain_id_operator">
+                                <select class="custom-select" id="chain_id_operator" name="chain_id_operator">
                                     <option value="{{FilterCodes::CONTAINS}}">contains</option>
                                     <option value="{{FilterCodes::STARTS_WITH}}">starts with</option>
                                     <option value="{{FilterCodes::ENDS_WITH}}">ends with</option>
@@ -202,7 +205,7 @@
                     <div class="col-md-2">
                         <div class="form-group">
                             <label>&nbsp;</label>
-                            <button type="reset" class="form-control btn  btn-reset btn-secondary">Reset</button>
+                            <button type="reset" id="resetForm" class="form-control btn  btn-reset btn-secondary">Reset</button>
                         </div>
                     </div>
                 </div>
@@ -224,6 +227,7 @@
             <thead>
             <tr>
                 {{--<th>Chain ID</th>--}}
+                <th></th>
                 <th>Job ID</th>
                 <th>Chain ID</th>
                 <th>Name</th>

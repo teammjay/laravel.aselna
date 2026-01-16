@@ -60,7 +60,7 @@ class WalmartAuthService
 
             CriticalErrorService::report('Walmart Authentication Failed', [
                 'marketplace' => 'Walmart',
-                'reason' => $e->getMessage() ?? 'Unknown',
+                'reason' => $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine() ?? 'Unknown',
                 'method' => __METHOD__
             ],['endpoint'=>$this->endpoint]);
 
@@ -159,7 +159,7 @@ class WalmartAuthService
 
             CriticalErrorService::report('Walmart Order Sync failed', [
                 'marketplace' => 'Walmart',
-                'reason' => $e->getMessage() ?? 'Unknown',
+                'reason' => $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine() ?? 'Unknown',
                 'method' => __METHOD__
             ],['start_date' => $last_order_time]);
 
@@ -206,7 +206,7 @@ class WalmartAuthService
 
             CriticalErrorService::report('Walmart Order Detail failed', [
                 'marketplace' => 'Walmart',
-                'reason' => $e->getMessage() ?? 'Unknown',
+                'reason' => $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine() ?? 'Unknown',
                 'method' => __METHOD__
             ],['order_id' => $orderID]);
 
@@ -262,7 +262,7 @@ class WalmartAuthService
 
             CriticalErrorService::report('Walmart Ship Order failed', [
                 'marketplace' => 'Walmart',
-                'reason' => $e->getMessage() ?? 'Unknown',
+                'reason' => $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine() ?? 'Unknown',
                 'method' => __METHOD__
             ],['purchase_order_id' => $purchaseOrderId]);
 
@@ -313,7 +313,7 @@ class WalmartAuthService
 
             CriticalErrorService::report('Walmart Cancel Order failed', [
                 'marketplace' => 'Walmart',
-                'reason' => $e->getMessage() ?? 'Unknown',
+                'reason' => $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine() ?? 'Unknown',
                 'method' => __METHOD__
             ],['purchase_order_id' => $purchaseOrderId]);
         }
@@ -364,7 +364,7 @@ class WalmartAuthService
 
             CriticalErrorService::report('Walmart Refund Order failed', [
                 'marketplace' => 'Walmart',
-                'reason' => $e->getMessage() ?? 'Unknown',
+                'reason' => $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine() ?? 'Unknown',
                 'method' => __METHOD__
             ],['purchase_order_id' => $purchaseOrderId]);
         }
@@ -408,7 +408,7 @@ class WalmartAuthService
 
             CriticalErrorService::report('Walmart Item Search by upc failed', [
                 'marketplace' => 'Walmart',
-                'reason' => $e->getMessage() ?? 'Unknown',
+                'reason' => $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine() ?? 'Unknown',
                 'method' => __METHOD__
             ],['upc' => $upc]);
 

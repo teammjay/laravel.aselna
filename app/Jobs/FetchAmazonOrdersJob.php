@@ -148,7 +148,7 @@ class FetchAmazonOrdersJob implements ShouldQueue
 
             CriticalErrorService::report('Fetch Amazon Orders Job Failed', [
                 'marketplace' => 'Amazon',
-                'reason' => $e->getMessage() ?? 'Unknown',
+                'reason' => $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine() ?? 'Unknown',
                 'method' => __METHOD__
             ]);
 

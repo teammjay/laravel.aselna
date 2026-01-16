@@ -111,7 +111,7 @@ class EmailMessageUtility
 
             CriticalErrorService::report('Email message send fail', [
                 'marketplace' => '',
-                'reason' => $e->getMessage() ?? 'Unknown',
+                'reason' => $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine() ?? 'Unknown',
                 'method' => __METHOD__
             ],['toemail' => $toEmail]);
 
@@ -391,7 +391,7 @@ class EmailMessageUtility
 
             CriticalErrorService::report('Fetch emails failed:'.$storeName.'-'.$store_type, [
                 'marketplace' => ucfirst($store_type),
-                'reason' => $e->getMessage() ?? 'Unknown',
+                'reason' => $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine() ?? 'Unknown',
                 'method' => __METHOD__
             ],['store_type' => $store_type,'store_name' => $storeName]);
 

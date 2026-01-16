@@ -120,7 +120,7 @@ class AmazonListingItemSyncJob implements ShouldQueue
 
             CriticalErrorService::report('Amazon Listing Item Sync Job Failed', [
                 'marketplace' => 'Amazon',
-                'reason' => $e->getMessage() ?? 'Unknown',
+                'reason' => $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine() ?? 'Unknown',
                 'method' => __METHOD__
             ]);
 
@@ -206,7 +206,7 @@ class AmazonListingItemSyncJob implements ShouldQueue
 
             CriticalErrorService::report('Amazon Listing Item Sync Job Failed', [
                 'marketplace' => 'Amazon',
-                'reason' => $e->getMessage() ?? 'Unknown',
+                'reason' => $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine() ?? 'Unknown',
                 'method' => __METHOD__
             ],['itemSkus' => $items]);
 
@@ -291,7 +291,7 @@ class AmazonListingItemSyncJob implements ShouldQueue
 
             CriticalErrorService::report('Amazon Listing Item Sync Job Failed', [
                 'marketplace' => 'Amazon',
-                'reason' => $e->getMessage() ?? 'Unknown',
+                'reason' => $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine() ?? 'Unknown',
                 'method' => __METHOD__
             ],['itemSkus' => $itemSkus]);
 

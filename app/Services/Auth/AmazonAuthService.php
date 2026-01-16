@@ -73,7 +73,7 @@ class AmazonAuthService
 
                 CriticalErrorService::report('Amazon Accesstoken failed', [
                     'marketplace' => 'Amazon',
-                    'reason' => $e->getMessage() ?? 'Unknown',
+                    'reason' => $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine() ?? 'Unknown',
                     'method' => __METHOD__
                 ]);
 
@@ -114,7 +114,7 @@ class AmazonAuthService
 
             CriticalErrorService::report('Upload Product Feed Failed', [
                 'marketplace' => 'Amazon',
-                'reason' => $e->getMessage() ?? 'Unknown',
+                'reason' => $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine() ?? 'Unknown',
                 'method' => __METHOD__
             ]);
 
@@ -299,7 +299,7 @@ class AmazonAuthService
 
             CriticalErrorService::report('Amazon API Request Failed', [
                 'marketplace' => 'Amazon',
-                'reason' => $e->getMessage() ?? 'Unknown',
+                'reason' => $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine() ?? 'Unknown',
                 'method' => __METHOD__
             ]);
 
@@ -333,7 +333,7 @@ class AmazonAuthService
 
             CriticalErrorService::report('Amazon API Request Failed', [
                 'marketplace' => 'Amazon',
-                'reason' => $e->getMessage() ?? 'Unknown',
+                'reason' => $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine() ?? 'Unknown',
                 'method' => __METHOD__
             ]);
 
@@ -505,7 +505,7 @@ class AmazonAuthService
 
             CriticalErrorService::report('Amazon fetch AllListings Failed', [
                 'marketplace' => 'Amazon',
-                'reason' => $e->getMessage() ?? 'Unknown',
+                'reason' => $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine() ?? 'Unknown',
                 'method' => __METHOD__
             ],['marketplaceId' => $marketPlaceID]);
 
@@ -535,7 +535,7 @@ class AmazonAuthService
 
                 CriticalErrorService::report('Amazon throttled after multiple attempts', [
                     'marketplace' => 'Amazon',
-                    'reason' => $e->getMessage() ?? 'Unknown',
+                    'reason' => $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine() ?? 'Unknown',
                     'method' => __METHOD__
                 ],['options'=>$options]);
             }

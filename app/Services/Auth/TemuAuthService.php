@@ -57,7 +57,7 @@ class TemuAuthService
 
             CriticalErrorService::report('Temu Category API Failed', [
                 'marketplace' => 'Temu',
-                'reason' => $e->getMessage() ?? 'Unknown',
+                'reason' => $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine() ?? 'Unknown',
                 'method' => __METHOD__
             ],['endpoint'=>$this->endpoint]);
 
@@ -119,7 +119,7 @@ class TemuAuthService
 
             CriticalErrorService::report('Temu Submit Feed Failed', [
                 'marketplace' => 'Temu',
-                'reason' => $e->getMessage() ?? 'Unknown',
+                'reason' => $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine() ?? 'Unknown',
                 'method' => __METHOD__
             ],['data'=> $data]);
 
@@ -162,7 +162,7 @@ class TemuAuthService
 
             CriticalErrorService::report('Temu Get Template Error', [
                 'marketplace' => 'Temu',
-                'reason' => $e->getMessage() ?? 'Unknown',
+                'reason' => $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine() ?? 'Unknown',
                 'method' => __METHOD__
             ],['parent_id'=> $parentId]);
 
@@ -208,7 +208,7 @@ class TemuAuthService
 
             CriticalErrorService::report('Temu Get Shipping Template Error', [
                 'marketplace' => 'Temu',
-                'reason' => $e->getMessage() ?? 'Unknown',
+                'reason' => $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine() ?? 'Unknown',
                 'method' => __METHOD__
             ]);
 
@@ -253,7 +253,7 @@ class TemuAuthService
 
             CriticalErrorService::report('Temu Get Order Failed', [
                 'marketplace' => 'Temu',
-                'reason' => $e->getMessage() ?? 'Unknown',
+                'reason' => $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine() ?? 'Unknown',
                 'method' => __METHOD__
             ],['start_date'=> $filterStartDateFormatted,'cursor'=>$cursor]);
 
@@ -296,7 +296,7 @@ class TemuAuthService
 
             CriticalErrorService::report('Temu Get Order Info Failed', [
                 'marketplace' => 'Temu',
-                'reason' => $e->getMessage() ?? 'Unknown',
+                'reason' => $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine() ?? 'Unknown',
                 'method' => __METHOD__
             ],['parentOrdersn'=> $parentOrderSn]);
 
@@ -339,7 +339,7 @@ class TemuAuthService
 
             CriticalErrorService::report('Temu Upload Image Failed', [
                 'marketplace' => 'Temu',
-                'reason' => $e->getMessage() ?? 'Unknown',
+                'reason' => $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine() ?? 'Unknown',
                 'method' => __METHOD__
             ],['image_url'=> $imagesUrl]);
 
@@ -382,7 +382,7 @@ class TemuAuthService
 
             CriticalErrorService::report('Temu Get Result Feed Failed', [
                 'marketplace' => 'Temu',
-                'reason' => $e->getMessage() ?? 'Unknown',
+                'reason' => $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine() ?? 'Unknown',
                 'method' => __METHOD__
             ],['outSkunList'=> $outSkunList]);
 
@@ -425,7 +425,7 @@ class TemuAuthService
 
             CriticalErrorService::report('Temu Goods Info API Failed', [
                 'marketplace' => 'Temu',
-                'reason' => $e->getMessage() ?? 'Unknown',
+                'reason' => $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine() ?? 'Unknown',
                 'method' => __METHOD__
             ],['GoodsId'=> $GoodsId]);
 
@@ -470,7 +470,7 @@ class TemuAuthService
 
             CriticalErrorService::report('Temu Specs Option API Failed', [
                 'marketplace' => 'Temu',
-                'reason' => $e->getMessage() ?? 'Unknown',
+                'reason' => $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine() ?? 'Unknown',
                 'method' => __METHOD__
             ],['category'=> $category,'parentSpecId'=>$parentSpecId, 'value'=>$value]);
 
@@ -512,7 +512,7 @@ class TemuAuthService
 
             CriticalErrorService::report('Temu Shipping Info API Failed', [
                 'marketplace' => 'Temu',
-                'reason' => $e->getMessage() ?? 'Unknown',
+                'reason' => $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine() ?? 'Unknown',
                 'method' => __METHOD__
             ],['parentOrderSn'=> $parentOrderSn]);
 
@@ -555,7 +555,7 @@ class TemuAuthService
 
             CriticalErrorService::report('Temu Logistic Info API Failed', [
                 'marketplace' => 'Temu',
-                'reason' => $e->getMessage() ?? 'Unknown',
+                'reason' => $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine() ?? 'Unknown',
                 'method' => __METHOD__
             ],['regionId'=> $regionId]);
 
@@ -591,7 +591,7 @@ class TemuAuthService
 
             CriticalErrorService::report('Temu Order Shipment Failed', [
                 'marketplace' => 'Temu',
-                'reason' => $e->getMessage() ?? 'Unknown',
+                'reason' => $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine() ?? 'Unknown',
                 'method' => __METHOD__
             ],['data'=> $data]);
 
@@ -635,7 +635,7 @@ class TemuAuthService
 
             CriticalErrorService::report('Temu Shipment Info API Failed', [
                 'marketplace' => 'Temu',
-                'reason' => $e->getMessage() ?? 'Unknown',
+                'reason' => $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine() ?? 'Unknown',
                 'method' => __METHOD__
             ],['parentOrderSn'=> $parentOrderSn,'orderSn'=>$orderSn]);
 
@@ -678,7 +678,7 @@ class TemuAuthService
 
             CriticalErrorService::report('Temu Carrier Info API Failed', [
                 'marketplace' => 'Temu',
-                'reason' => $e->getMessage() ?? 'Unknown',
+                'reason' => $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine() ?? 'Unknown',
                 'method' => __METHOD__
             ],['regionId'=> $regionId]);
 
@@ -720,7 +720,7 @@ class TemuAuthService
 
             CriticalErrorService::report('Temu Warehouse Info API Failed', [
                 'marketplace' => 'Temu',
-                'reason' => $e->getMessage() ?? 'Unknown',
+                'reason' => $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine() ?? 'Unknown',
                 'method' => __METHOD__
             ]);
 
@@ -764,7 +764,7 @@ class TemuAuthService
 
             CriticalErrorService::report('Temu Refund API Failed', [
                 'marketplace' => 'Temu',
-                'reason' => $e->getMessage() ?? 'Unknown',
+                'reason' => $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine() ?? 'Unknown',
                 'method' => __METHOD__
             ],['parentAfterSalesSn'=> $parentAfterSalesSn,'parentOrderSn'=>$parentOrderSn]);
 
@@ -809,7 +809,7 @@ class TemuAuthService
 
             CriticalErrorService::report('Temu Get After Sales List Failed', [
                 'marketplace' => 'Temu',
-                'reason' => $e->getMessage() ?? 'Unknown',
+                'reason' => $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine() ?? 'Unknown',
                 'method' => __METHOD__
             ],['parentOrderSn'=> $parentOrderSn]);
 
@@ -858,7 +858,7 @@ class TemuAuthService
 
             CriticalErrorService::report('Temu Cancel Order Failed', [
                 'marketplace' => 'Temu',
-                'reason' => $e->getMessage() ?? 'Unknown',
+                'reason' => $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine() ?? 'Unknown',
                 'method' => __METHOD__
             ],['parentOrderSn'=> $parentOrderSn,'reason'=>$reason]);
 
