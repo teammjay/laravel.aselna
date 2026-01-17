@@ -850,183 +850,187 @@
                         <form method="POST" id="frmtab9">
                             <div class="row">
                                 <div class="col-md-6">
-                                    <table class="table table-bordered">
-                                        <thead>
-                                            <th>Store</th>
-                                            <th>Active</th>
-                                            <th>Store Products, Store Category</th>
-                                        </thead>
-                                        <tbody>
-                                            @if(count($store_details ?? []) > 0)
-                                                @foreach($store_details as $key=>$store)
-                                                    <tr class="store_row" id="store_{{ $store['store_detail']->id }}" data-id="{{ $store['store_detail']->id }}">
-                                                        <td>{{ $store['store_detail']->name }} {{ (!empty($store['store_detail']->storeType)) ? ' - '.$store['store_detail']->storeType->name : ''}}</td>
-                                                        <td align="center">
-                                                            <input type="checkbox" name="active" {{ ((isset($store['store_product']) && $store['store_product']->active == 1) || $pageAt != 'Edit') ? 'checked' : '' }} />
-                                                            <input type="hidden" name="store_id" value="{{ $store['store_detail']->id }}">
-                                                        </td>
-                                                        <td>
-                                                            <select class="form-control" name="store_type_category_id">
-                                                                <option value=""></option>
-                                                                @if(count($store['store_category'] ?? []) > 0)
-                                                                    @foreach($store['store_category'] as $key2=>$sCat)
-                                                                        <option value="{{ $sCat->id }}" {{ (isset($productStore[$sCat->id]) && $productStore[$sCat->id] == $store['store_detail']->id ) ? 'selected' : '' }}>{{ $sCat->name }}</option>
-                                                                    @endforeach
-                                                                @endif
-                                                            </select>
-                                                        </td>
-                                                    </tr>
-                                                @endforeach
-                                            @endif
+                                    <div style="max-height: 80vh; overflow-y: auto">
+                                        <table class="table table-bordered">
+                                            <thead>
+                                                <th>Store</th>
+                                                <th>Active</th>
+                                                <th>Store Products, Store Category</th>
+                                            </thead>
+                                            <tbody>
+                                                @if(count($store_details ?? []) > 0)
+                                                    @foreach($store_details as $key=>$store)
+                                                        <tr class="store_row" id="store_{{ $store['store_detail']->id }}" data-id="{{ $store['store_detail']->id }}">
+                                                            <td>{{ $store['store_detail']->name }} {{ (!empty($store['store_detail']->storeType)) ? ' - '.$store['store_detail']->storeType->name : ''}}</td>
+                                                            <td align="center">
+                                                                <input type="checkbox" name="active" {{ ((isset($store['store_product']) && $store['store_product']->active == 1) || $pageAt != 'Edit') ? 'checked' : '' }} />
+                                                                <input type="hidden" name="store_id" value="{{ $store['store_detail']->id }}">
+                                                            </td>
+                                                            <td>
+                                                                <select class="form-control" name="store_type_category_id">
+                                                                    <option value=""></option>
+                                                                    @if(count($store['store_category'] ?? []) > 0)
+                                                                        @foreach($store['store_category'] as $key2=>$sCat)
+                                                                            <option value="{{ $sCat->id }}" {{ (isset($productStore[$sCat->id]) && $productStore[$sCat->id] == $store['store_detail']->id ) ? 'selected' : '' }}>{{ $sCat->name }}</option>
+                                                                        @endforeach
+                                                                    @endif
+                                                                </select>
+                                                            </td>
+                                                        </tr>
+                                                    @endforeach
+                                                @endif
 
-                                        </tbody>
-                                    </table>
+                                            </tbody>
+                                        </table>
+                                    </div>
                                 </div>
                                 <div class="col-md-6">
-                                    <div class="card">
-                                        <div class="card-header">
-                                            Store Detail
-                                        </div>
-                                        <div class="card-body" id="store_product_detail">
-                                            <div class="row mt-3 g-3 align-items-center">
-                                                <div class="col-md-3">
-                                                    <label class="col-form-label">Title</label>
-                                                </div>
-                                                <div class="col-md-9 d-flex justify-between">
-                                                    <input type="checkbox" name="overwrite_title" id="overwrite_title" class="mr-1"> <textarea class="form-control" name="title" id="store_product_title" placeholder="Store Name/ Title" readonly>{{ old('product_title',$product->product_title) }}</textarea>
-                                                </div>
+                                    <div style="max-height: 80vh; overflow-y: auto">
+                                        <div class="card">
+                                            <div class="card-header">
+                                                Store Detail
                                             </div>
-                                            <div class="row mt-3 g-3 align-items-center">
-                                                <div class="col-md-3">
-                                                    <label class="update_title">Update Title</label>
+                                            <div class="card-body" id="store_product_detail">
+                                                <div class="row mt-3 g-3 align-items-center">
+                                                    <div class="col-md-3">
+                                                        <label class="col-form-label">Title</label>
+                                                    </div>
+                                                    <div class="col-md-9 d-flex justify-between">
+                                                        <input type="checkbox" name="overwrite_title" id="overwrite_title" class="mr-1"> <textarea class="form-control" name="title" id="store_product_title" placeholder="Store Name/ Title" readonly>{{ old('product_title',$product->product_title) }}</textarea>
+                                                    </div>
                                                 </div>
-                                                <div class="col-md-9 d-flex justify-between">
-                                                    <input type="checkbox" id="update_title" name="update_title">
+                                                <div class="row mt-3 g-3 align-items-center">
+                                                    <div class="col-md-3">
+                                                        <label class="update_title">Update Title</label>
+                                                    </div>
+                                                    <div class="col-md-9 d-flex justify-between">
+                                                        <input type="checkbox" id="update_title" name="update_title">
+                                                    </div>
                                                 </div>
-                                            </div>
-                                            <div class="row mt-3 g-3 align-items-center">
-                                                <div class="col-md-3">
-                                                    <label class="col-form-label">Description</label>
+                                                <div class="row mt-3 g-3 align-items-center">
+                                                    <div class="col-md-3">
+                                                        <label class="col-form-label">Description</label>
+                                                    </div>
+                                                    <div class="col-md-9 d-flex justify-between">
+                                                        <input type="checkbox" id="overwrite_description" name="overwrite_description" class="mr-1"> <textarea class="form-control" name="description" id="store_product_description" placeholder="Description" rows="8" readonly>{{ old('product_description',$product->product_description) }}</textarea>
+                                                    </div>
                                                 </div>
-                                                <div class="col-md-9 d-flex justify-between">
-                                                    <input type="checkbox" id="overwrite_description" name="overwrite_description" class="mr-1"> <textarea class="form-control" name="description" id="store_product_description" placeholder="Description" rows="8" readonly>{{ old('product_description',$product->product_description) }}</textarea>
+                                                <div class="row mt-3 g-3 align-items-center">
+                                                    <div class="col-md-3">
+                                                        <label class="update_description">Update Description</label>
+                                                    </div>
+                                                    <div class="col-md-9 d-flex justify-between">
+                                                        <input type="checkbox" id="update_description" name="update_description">
+                                                    </div>
                                                 </div>
-                                            </div>
-                                            <div class="row mt-3 g-3 align-items-center">
-                                                <div class="col-md-3">
-                                                    <label class="update_description">Update Description</label>
+                                                <div class="row mt-3 g-3 align-items-center">
+                                                    <div class="col-md-3">
+                                                        <label class="col-form-label">Price</label>
+                                                    </div>
+                                                    <div class="col-md-9 d-flex justify-between">
+                                                        <input type="checkbox" id="overwrite_price" name="overwrite_price" class="mr-1"> <input type="text" class="form-control" name="price" id="store_product_price" placeholder="00.00" value="{{ old('product_price',$product->product_price) }}" readonly>
+                                                    </div>
                                                 </div>
-                                                <div class="col-md-9 d-flex justify-between">
-                                                    <input type="checkbox" id="update_description" name="update_description">
+                                                <div class="row mt-3 g-3 align-items-center">
+                                                    <div class="col-md-3">
+                                                        <label class="col-form-label">Compare at Price</label>
+                                                    </div>
+                                                    <div class="col-md-9 d-flex justify-between">
+                                                        <input type="checkbox" id="overwrite_compare_at_price" name="overwrite_compare_at_price" class="mr-1"> <input type="text" class="form-control" name="compare_at_price" id="store_product_compare_at_price" value="{{ old('product_marketplace_price',$product->product_marketplace_price) }}" placeholder="00.00" readonly>
+                                                    </div>
                                                 </div>
-                                            </div>
-                                            <div class="row mt-3 g-3 align-items-center">
-                                                <div class="col-md-3">
-                                                    <label class="col-form-label">Price</label>
+                                                <div class="row mt-3 g-3 align-items-center">
+                                                    <div class="col-md-3">
+                                                        <label class="col-form-label">Fbc Price</label>
+                                                    </div>
+                                                    <div class="col-md-9 d-flex justify-between">
+                                                        <input type="checkbox" id="overwrite_fulfillment_by_channel_price" name="overwrite_fulfillment_by_channel_price" class="mr-1"> <input type="text" class="form-control" name="fulfillment_by_channel_price" id="store_product_fbc_price" placeholder="00.00" readonly>
+                                                    </div>
                                                 </div>
-                                                <div class="col-md-9 d-flex justify-between">
-                                                    <input type="checkbox" id="overwrite_price" name="overwrite_price" class="mr-1"> <input type="text" class="form-control" name="price" id="store_product_price" placeholder="00.00" value="{{ old('product_price',$product->product_price) }}" readonly>
+                                                <div class="row mt-3 g-3 align-items-center">
+                                                    <div class="col-md-3">
+                                                        <label class="col-form-label">Wholesale Price</label>
+                                                    </div>
+                                                    <div class="col-md-9 d-flex justify-between">
+                                                        <input type="checkbox" id="overwrite_wholesale_price" name="overwrite_wholesale_price" class="mr-1"> <input type="text" class="form-control" name="wholesale_price" id="store_wholesale_price" value="{{ old('product_wholesale_price',$product->product_wholesale_price) }}" placeholder="00.00" readonly>
+                                                    </div>
                                                 </div>
-                                            </div>
-                                            <div class="row mt-3 g-3 align-items-center">
-                                                <div class="col-md-3">
-                                                    <label class="col-form-label">Compare at Price</label>
+                                                <div class="row mt-3 g-3 align-items-center">
+                                                    <div class="col-md-3">
+                                                        <label class="col-form-label">Msrp</label>
+                                                    </div>
+                                                    <div class="col-md-9 d-flex justify-between">
+                                                        <input type="checkbox" id="overwrite_msrp" name="overwrite_msrp" class="mr-1"> <input type="text" class="form-control" name="msrp" id="store_product_msrp" value="{{ old('product_mrsp',$product->product_mrsp) }}" placeholder="00.00" readonly>
+                                                    </div>
                                                 </div>
-                                                <div class="col-md-9 d-flex justify-between">
-                                                    <input type="checkbox" id="overwrite_compare_at_price" name="overwrite_compare_at_price" class="mr-1"> <input type="text" class="form-control" name="compare_at_price" id="store_product_compare_at_price" value="{{ old('product_marketplace_price',$product->product_marketplace_price) }}" placeholder="00.00" readonly>
+                                                <div class="row mt-3 g-3 align-items-center">
+                                                    <div class="col-md-3">
+                                                        <label class="col-form-label">Sales Count</label>
+                                                    </div>
+                                                    <div class="col-md-9 d-flex justify-between">
+                                                        <input type="text" class="form-control" name="sales_count" id="store_product_sales_count" placeholder="0" readonly>
+                                                    </div>
                                                 </div>
-                                            </div>
-                                            <div class="row mt-3 g-3 align-items-center">
-                                                <div class="col-md-3">
-                                                    <label class="col-form-label">Fbc Price</label>
+                                                <input type="hidden" name="manufacturer_id" value="{{ $product->manufacturer_id }}">
+                                                <div class="row mt-3 g-3 align-items-center">
+                                                    <div class="col-md-3">
+                                                        <label class="col-form-label">Last Sale Date</label>
+                                                    </div>
+                                                    <div class="col-md-9 d-flex justify-between">
+                                                        <input type="text" class="form-control w-75 mr-1" name="last_sale_date" id="last_sale_date" readonly>
+                                                        <input type="text" class="form-control w-25" name="last_sale_time" id="last_sale_time" readonly>
+                                                    </div>
                                                 </div>
-                                                <div class="col-md-9 d-flex justify-between">
-                                                    <input type="checkbox" id="overwrite_fulfillment_by_channel_price" name="overwrite_fulfillment_by_channel_price" class="mr-1"> <input type="text" class="form-control" name="fulfillment_by_channel_price" id="store_product_fbc_price" placeholder="00.00" readonly>
-                                                </div>
-                                            </div>
-                                            <div class="row mt-3 g-3 align-items-center">
-                                                <div class="col-md-3">
-                                                    <label class="col-form-label">Wholesale Price</label>
-                                                </div>
-                                                <div class="col-md-9 d-flex justify-between">
-                                                    <input type="checkbox" id="overwrite_wholesale_price" name="overwrite_wholesale_price" class="mr-1"> <input type="text" class="form-control" name="wholesale_price" id="store_wholesale_price" value="{{ old('product_wholesale_price',$product->product_wholesale_price) }}" placeholder="00.00" readonly>
-                                                </div>
-                                            </div>
-                                            <div class="row mt-3 g-3 align-items-center">
-                                                <div class="col-md-3">
-                                                    <label class="col-form-label">Msrp</label>
-                                                </div>
-                                                <div class="col-md-9 d-flex justify-between">
-                                                    <input type="checkbox" id="overwrite_msrp" name="overwrite_msrp" class="mr-1"> <input type="text" class="form-control" name="msrp" id="store_product_msrp" value="{{ old('product_mrsp',$product->product_mrsp) }}" placeholder="00.00" readonly>
-                                                </div>
-                                            </div>
-                                            <div class="row mt-3 g-3 align-items-center">
-                                                <div class="col-md-3">
-                                                    <label class="col-form-label">Sales Count</label>
-                                                </div>
-                                                <div class="col-md-9 d-flex justify-between">
-                                                    <input type="text" class="form-control" name="sales_count" id="store_product_sales_count" placeholder="0" readonly>
-                                                </div>
-                                            </div>
-                                            <input type="hidden" name="manufacturer_id" value="{{ $product->manufacturer_id }}">
-                                            <div class="row mt-3 g-3 align-items-center">
-                                                <div class="col-md-3">
-                                                    <label class="col-form-label">Last Sale Date</label>
-                                                </div>
-                                                <div class="col-md-9 d-flex justify-between">
-                                                    <input type="text" class="form-control w-75 mr-1" name="last_sale_date" id="last_sale_date" readonly>
-                                                    <input type="text" class="form-control w-25" name="last_sale_time" id="last_sale_time" readonly>
-                                                </div>
-                                            </div>
 
-                                            <div class="row mt-3 g-3 align-items-center">
-                                                <div class="col-md-3">
-                                                    <label class="col-form-label">Last Synch</label>
+                                                <div class="row mt-3 g-3 align-items-center">
+                                                    <div class="col-md-3">
+                                                        <label class="col-form-label">Last Synch</label>
+                                                    </div>
+                                                    <div class="col-md-9 d-flex justify-between">
+                                                        <input type="text" class="form-control w-75 mr-1" name="last_synch_date" id="last_synch_date" readonly>
+                                                        <input type="text" class="form-control w-25" name="last_synch_time" id="last_synch_time" readonly>
+                                                    </div>
                                                 </div>
-                                                <div class="col-md-9 d-flex justify-between">
-                                                    <input type="text" class="form-control w-75 mr-1" name="last_synch_date" id="last_synch_date" readonly>
-                                                    <input type="text" class="form-control w-25" name="last_synch_time" id="last_synch_time" readonly>
-                                                </div>
-                                            </div>
 
-                                            <div class="row mt-3 g-3 align-items-center">
-                                                <div class="col-md-3">
-                                                    <label class="fulfillment_type">Fullfillment Type</label>
+                                                <div class="row mt-3 g-3 align-items-center">
+                                                    <div class="col-md-3">
+                                                        <label class="fulfillment_type">Fullfillment Type</label>
+                                                    </div>
+                                                    <div class="col-md-9">
+                                                        <select class="form-control" name="fulfillment_type" id="fulfillment_type">
+                                                            <option value="10">Merchant</option>
+                                                        </select>
+                                                    </div>
                                                 </div>
-                                                <div class="col-md-9">
-                                                    <select class="form-control" name="fulfillment_type" id="fulfillment_type">
-                                                        <option value="10">Merchant</option>
-                                                    </select>
-                                                </div>
-                                            </div>
 
-                                            <div class="row mt-3 g-3 align-items-center">
-                                                <div class="col-md-3">
-                                                    <label class="synch_price">Synch Price</label>
+                                                <div class="row mt-3 g-3 align-items-center">
+                                                    <div class="col-md-3">
+                                                        <label class="synch_price">Synch Price</label>
+                                                    </div>
+                                                    <div class="col-md-9 d-flex justify-between">
+                                                        <input type="checkbox" id="synch_price" name="synch_price">
+                                                    </div>
                                                 </div>
-                                                <div class="col-md-9 d-flex justify-between">
-                                                    <input type="checkbox" id="synch_price" name="synch_price">
-                                                </div>
-                                            </div>
 
-                                            <div class="row mt-3 g-3 align-items-center">
-                                                <div class="col-md-3">
-                                                    <label class="synch_inventory">Synch Inventory</label>
+                                                <div class="row mt-3 g-3 align-items-center">
+                                                    <div class="col-md-3">
+                                                        <label class="synch_inventory">Synch Inventory</label>
+                                                    </div>
+                                                    <div class="col-md-9 d-flex justify-between">
+                                                        <input type="checkbox" id="synch_inventory" name="synch_inventory">
+                                                    </div>
                                                 </div>
-                                                <div class="col-md-9 d-flex justify-between">
-                                                    <input type="checkbox" id="synch_inventory" name="synch_inventory">
-                                                </div>
-                                            </div>
 
-                                            <div class="row mt-3 g-3 align-items-center">
-                                                <div class="col-md-3">
-                                                    <label class="synch_item">Synch Item</label>
+                                                <div class="row mt-3 g-3 align-items-center">
+                                                    <div class="col-md-3">
+                                                        <label class="synch_item">Synch Item</label>
+                                                    </div>
+                                                    <div class="col-md-9 d-flex justify-between">
+                                                        <input type="checkbox" id="synch_item" name="synch_item">
+                                                    </div>
                                                 </div>
-                                                <div class="col-md-9 d-flex justify-between">
-                                                    <input type="checkbox" id="synch_item" name="synch_item">
-                                                </div>
-                                            </div>
 
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -1679,7 +1683,7 @@
                 $(this).parents('tr.field-group').remove();
             });
 
-            $(document).on('click', 'input[name="active"]', function() {
+            /*$(document).on('click', 'input[name="active"]', function() {
                 if($(this).is(':checked')){
                     $(this).prop('checked',false);
                     $('.store_row').removeClass('active bg-blue');
@@ -1688,25 +1692,25 @@
                     $(this).prop('checked',true);
                     $(this).parents('.store_row').removeClass('active bg-blue');
                 }
-            });
+            });*/
 
 
 
             // change sort order for image of prodcut
             $(document).on('click', '.store_row', function(e) {
 
-                if ($(e.target).is('checkbox, a, select')) {
+                if ($(e.target).is('input, a, select')) {
                     return;
                 }
 
                 $('.store_row').removeClass('active bg-blue');
                 $(this).addClass('active bg-blue');
 
-                if($(this).find('input[name="active"]').is(':checked')){
+                /*if($(this).find('input[name="active"]').is(':checked')){
                     $(this).find('input[name="active"]').prop('checked',false);
                 }else{
                     $(this).find('input[name="active"]').prop('checked',true);
-                }
+                }*/
 
 
                 var store_id = $(this).data('id');
@@ -1725,13 +1729,37 @@
                             //alert(response.message);
                             //console.log(response.data);
                             if(response.data){
-                                $('#store_product_title').val(response.data.title);
-                                $('#store_product_description').val(response.data.description);
-                                $('#store_product_price').val(response.data.price);
+                                if(response.data.title) {
+                                    $('#store_product_title').val(response.data.title);
+                                }else if(response.data.product_title){
+                                    $('#store_product_title').val(response.data.product_title);
+                                }
+
+                                if(response.data.description) {
+                                    $('#store_product_description').val(response.data.description);
+                                }else if(response.data.product_description){
+                                    $('#store_product_description').val(response.data.product_description);
+                                }
+                                if(response.data.price) {
+                                    $('#store_product_price').val(response.data.price);
+                                }else if(response.data.product_price){
+                                    $('#store_product_price').val(response.data.product_price);
+                                }
                                 $('#store_product_compare_at_price').val(response.data.compare_at_price);
                                 $('#store_product_fbc_price').val(response.data.fulfillment_by_channel_price);
-                                $('#store_wholesale_price').val(response.data.wholesale_price);
-                                $('#store_product_msrp').val(response.data.msrp);
+
+                                if(response.data.wholesale_price) {
+                                    $('#store_wholesale_price').val(response.data.wholesale_price);
+                                }else if(response.data.product_price){
+                                    $('#store_wholesale_price').val(response.data.product_wholesale_price);
+                                }
+
+                                if(response.data.msrp) {
+                                    $('#store_product_msrp').val(response.data.msrp);
+                                }else if(response.data.product_price){
+                                    $('#store_product_msrp').val(response.data.product_msrp);
+                                }
+
                                 $('#store_product_sales_count').val(response.data.sales_count);
                                 $('#store_manufacturer_id').val(response.data.manufacturer_id);
                                 if(response.data.last_sale_date){
@@ -1749,6 +1777,14 @@
                                     $('#last_synch_date').val(date);
                                     $('#last_synch_time').val(time);
                                 }
+
+                                $('#overwrite_title').prop('checked', false);
+                                $('#overwrite_description').prop('checked', false);
+                                $('#overwrite_price').prop('checked', false);
+                                $('#overwrite_compare_at_price').prop('checked', false);
+                                $('#overwrite_fulfillment_by_channel_price').prop('checked', false);
+                                $('#overwrite_wholesale_price').prop('checked', false);
+                                $('#overwrite_msrp').prop('checked', false);
 
                                 if(response.data.synch_price == 1) {
                                     $('#synch_price').prop('checked', true);
