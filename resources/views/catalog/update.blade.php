@@ -891,6 +891,13 @@
                                                 Store Detail
                                             </div>
                                             <div class="card-body" id="store_product_detail">
+                                                <div class="row">
+                                                    <div class="col-md-8"></div>
+                                                    <div class="col-md-4 text-right">
+                                                        <input type="hidden" id="active_store">
+                                                        <button type="button" class="btn btn-primary" id="update_marketplace" disabled>Update Marketplace</button>
+                                                    </div>
+                                                </div>
                                                 <div class="row mt-3 g-3 align-items-center">
                                                     <div class="col-md-3">
                                                         <label class="col-form-label">Title</label>
@@ -1714,6 +1721,8 @@
 
 
                 var store_id = $(this).data('id');
+                $('#active_store').val(store_id);
+                $('#update_marketplace').removeAttr('disabled');
                 $.ajax({
                     url: "{{ route('catalog.getstoredetail') }}",
                     type: 'POST',
@@ -2222,6 +2231,19 @@
                         element.parents('tr').find('.field_option').html(htmloption);
                     }
                 });
+            });
+
+            $(document).on('click','#update_marketplace',function () {
+                var activeStore = $('#active_store').val();
+                // var overwrite_title = $('#overwrite_title').val();
+                // var overwrite_description = $('#overwrite_description').val();
+                // var overwrite_price = $('#overwrite_price').val();
+
+                if($('#overwrite_title').is(':checked') || $('#overwrite_description').is(':checked') || $('#overwrite_price').is(':checked')){
+
+                }else{
+                    alert('Overwrite option not enable');
+                }
             });
 
             var hash = window.location.hash;
