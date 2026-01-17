@@ -897,16 +897,56 @@ class CatalogController extends Controller
         $product_id = $request->input('product_id');
         if ($store_id) {
 
-            $storeProductDetail = StoreProduct::where(['store_id' => $store_id, 'product_id' => $product_id])->first();
+            $storeDetail = Store::with('storeType')->where('id', $store_id)->first();
+
+            $storeProductDetail = StoreProduct::with('store','store.storeType')->where(['store_id' => $store_id, 'product_id' => $product_id])->first();
+
+            if($storeProductDetail){
+                if(!$storeProductDetail->title && (isset($storeDetail->storeType->code) && $storeDetail->storeType->code == 'shopify')){
+                    $product_title = $this->generateProductTitle($storeProductDetail,$storeDetail);
+                    $storeProductDetail->title = $product_title;
+                }
+            }
 
             if (!$storeProductDetail) {
                 $storeProductDetail = Catalog::where(['product_id' => $product_id])->first();
+
+                if((isset($storeDetail->storeType->code) && $storeDetail->storeType->code == 'shopify')){
+                    $product_title = $this->generateProductTitle($storeProductDetail,$storeDetail);
+                    $storeProductDetail->title = $product_title;
+                }
             }
+
             //print_r($storeProductDetail);die;
             return response()->json(['success' => true, 'data' => $storeProductDetail]);
         } else {
             return response()->json(['success' => false]);
         }
+    }
+
+    private function generateProductTitle($productDetail,$store){
+
+        $keywords = ProductTitleKeyword::select('product_id', 'keyword')->where('product_id', $productDetail->product_id)->orderBy('priority', 'asc')->limit(6)->get();
+
+        $title = '';
+        $itemProductTitle = NULL;
+        $title_keyword = [];
+        if (!empty($keywords)) {
+            foreach ($keywords as $key => $val) {
+                $title_keyword[] = trim($val['keyword']);
+            }
+            $title = implode(' ', $title_keyword);
+        }
+
+        if (isset($productDetail->title)) {
+            $title = $productDetail->title;
+        } else if(isset($productDetail->product->product_sku))  {
+            $title = $title . '  - ' . $store->short_code . $productDetail->product->product_sku;
+        }else {
+            $title = $title . '  - ' . $store->short_code . $productDetail->product_sku;
+        }
+
+        return $title;
     }
 
     public function getProductChannel(Request $request)
