@@ -927,27 +927,40 @@ class CatalogController extends Controller
 
     private function generateProductTitle($productDetail,$store){
 
-        $keywords = ProductTitleKeyword::select('product_id', 'keyword')->where('product_id', $productDetail->product_id)->orderBy('priority', 'asc')->limit(6)->get();
+        $limit = $store->random_title_keyword_level;
+        $reverse = true;
+        if (!isset($limit)) {
+            $limit = 6;
+            $reverse = false;
+        } else {
+            $limit++;
+        }
+
+        $keywords = ProductTitleKeyword::select('product_id', 'keyword')
+            ->where('product_id', $productDetail->product_id)
+            ->orderBy('priority', 'asc')->limit($limit)->get()->toArray();
+
+        Log::info('Keywords: ' . json_encode($keywords));
+        // take the first one and reverse the remaining array
 
         $title = '';
-        $itemProductTitle = NULL;
-        $title_keyword = [];
-        if (!empty($keywords)) {
-            foreach ($keywords as $key => $val) {
-                $title_keyword[] = trim($val['keyword']);
+        if (count($keywords) > 0) {
+            $firstKeyword = array_shift($keywords);
+            $title .= $firstKeyword['keyword'];
+            if ($reverse) {
+                $reversedKeywords = array_reverse($keywords);
+                $title .= ', ';
+            } else {
+                $title .= ' ';
+                $reversedKeywords = $keywords;
             }
-            $title = implode(' ', $title_keyword);
+            foreach ($reversedKeywords as $keyword) {
+                $title .= trim($keyword['keyword']) . ' ';
+            }
+        } else {
+            $title = $productDetail->product_title;
         }
-
-        if (isset($productDetail->title)) {
-            $title = $productDetail->title;
-        } else if(isset($productDetail->product->product_sku))  {
-            $title = $title . '  - ' . $store->short_code . $productDetail->product->product_sku;
-        }else {
-            $title = $title . '  - ' . $store->short_code . $productDetail->product_sku;
-        }
-
-        return $title;
+        return trim($title) . ' - ' . $store->short_code . $productDetail->product_sku;
     }
 
     public function getProductChannel(Request $request)
