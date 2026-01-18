@@ -2240,7 +2240,24 @@
                 // var overwrite_price = $('#overwrite_price').val();
 
                 if($('#overwrite_title').is(':checked') || $('#overwrite_description').is(':checked') || $('#overwrite_price').is(':checked')){
-
+                    if(confirm('Are you sure to update marketplace data?')) {
+                        $.ajax({
+                            url: "{{ route('catalog.updateMarketPlace') }}",
+                            type: 'POST',
+                            data: {
+                                store_id: activeStore,
+                                product_id: product_id,
+                            },
+                            headers: {
+                                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                            },
+                            success: function (response) {
+                                if (response.success) {
+                                    alert("Updating In progress");
+                                }
+                            }
+                        });
+                    }
                 }else{
                     alert('Overwrite option not enable');
                 }

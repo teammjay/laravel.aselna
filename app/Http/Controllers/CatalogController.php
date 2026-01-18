@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Helpers\QueryFilters;
+use App\Jobs\SubmitShopifyProductsJob;
 use App\Models\Catalog;
 use App\Models\Device;
 use App\Models\Interfaces;
@@ -1535,5 +1536,19 @@ class CatalogController extends Controller
             // Handle the exception and show an error message
             return response()->json(['errors' => $e->getMessage()]);
         }
+    }
+
+    public function updateMarketPlace(Request $request)
+    {
+        // store_id , $product_id
+        $store_id = $request->input('store_id');
+        $product_id = $request->input('product_id');
+
+        $productData = Catalog::select('*')->with('productType', 'productKeyFeatures', 'productColor')->where('product_id', $product_id)->first();
+        $storeData = Store::with('storeType')->where('id', $store_id)->first();
+        $submitJob = new SubmitShopifyProductsJob();
+        $submitJob->getPublications($storeData);
+        $submitJob->updateProduct($productData, $storeData);
+        return response()->json(['success' => true]);
     }
 }

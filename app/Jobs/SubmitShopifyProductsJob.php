@@ -69,14 +69,7 @@ class SubmitShopifyProductsJob implements ShouldQueue
 
                     $tags[] = $store->name;
 
-                    $shopifyAuthService = new ShopifyAuthService($store->secret_key, $store->service_url);
-                    $publications = $shopifyAuthService->getPublications();
-
-                    $publicationIds = [];
-                    foreach ($publications['data']['publications']['edges'] as $publication) {
-                        $publicationIds[]['publicationId'] = $publication['node']['id'];
-                    }
-                    $this->publications = $publicationIds;
+                    $this->getPublications($store);
 
                     // Handle Created Products
                     // get all te children and their children of cea products
@@ -319,7 +312,7 @@ class SubmitShopifyProductsJob implements ShouldQueue
         }
     }
 
-    private function createProduct($productData, $store)
+    public function createProduct($productData, $store)
     {
         $fileSystem = $store->fileSystem;
         $shopifyAuthService = new ShopifyAuthService($store->secret_key, $store->service_url);
@@ -497,7 +490,7 @@ class SubmitShopifyProductsJob implements ShouldQueue
         }
     }
 
-    private function updateProduct(mixed $productData, mixed $store)
+    public function updateProduct(mixed $productData, mixed $store)
     {
         $fileSystem = $store->fileSystem;
         $storeProduct = StoreProduct::where('product_id', $productData->product_id)->where('store_id', $store->id)->first();
@@ -906,5 +899,17 @@ class SubmitShopifyProductsJob implements ShouldQueue
         }
 
         return $descriptionHtml;
+    }
+
+    public function getPublications(mixed $store): void
+    {
+        $shopifyAuthService = new ShopifyAuthService($store->secret_key, $store->service_url);
+        $publications = $shopifyAuthService->getPublications();
+
+        $publicationIds = [];
+        foreach ($publications['data']['publications']['edges'] as $publication) {
+            $publicationIds[]['publicationId'] = $publication['node']['id'];
+        }
+        $this->publications = $publicationIds;
     }
 }
