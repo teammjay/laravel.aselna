@@ -509,6 +509,10 @@ class SubmitShopifyProductsJob implements ShouldQueue
 
         $productTitle = $this->generateProductTitle($productData, $store);
 
+        if (isset($storeProduct->title) && isset($storeProduct->overwrite_title) && $storeProduct->overwrite_title == 1) {
+            $productTitle = $storeProduct->title;
+        }
+
         $descriptionHtml = $this->getDescriptionHtml($productData,$store);
 
         $tags = $this->getAllTags($productData, []);
