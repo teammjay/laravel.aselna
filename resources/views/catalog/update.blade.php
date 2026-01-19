@@ -849,9 +849,39 @@
                     <div class="tab-pane fade" id="tab9" role="tabpanel" aria-labelledby="stores-tab">
                         <form method="POST" id="frmtab9">
                             <div class="row">
-                                <div class="col-md-6">
-                                    <div style="max-height: 80vh; overflow-y: auto">
-                                        <table class="table table-bordered">
+                                <div class="col-md-6 border">
+                                    <div class="mt-2">
+                                        <div class="row">
+                                            <div class="col-md-5">
+                                                <div class="form-group">
+                                                    <label for="name">Name:</label>
+                                                    <input type="text" name="store_name" id="store_name" class="form-control">
+                                                </div>
+                                            </div>
+                                            <div class="col-md-5">
+                                                <div class="form-group">
+                                                    <label for="store_type">Store Type:</label>
+                                                    <select class="form-control" name="store_type" id="store_type">
+                                                        <option value=""> -- </option>
+                                                        @if(count($storeTypes ?? []) > 0)
+                                                            @foreach($storeTypes as $stype)
+                                                                <option value="{{ $stype->id }}">{{ $stype->name }}</option>
+                                                            @endforeach
+                                                        @endif
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-2">
+                                                <div class="form-group">
+                                                    <label>&nbsp;</label>
+                                                    <button type="button" id="searchStore" class="form-control btn btn-primary">Filter</button>
+                                                </div>
+
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div style="max-height: 80vh; overflow-y: auto;">
+                                        <table class="table table-bordered" id="product_store_list">
                                             <thead>
                                                 <th>Store</th>
                                                 <th>Active</th>
@@ -886,7 +916,7 @@
                                 </div>
                                 <div class="col-md-6">
                                     <div style="max-height: 80vh; overflow-y: auto">
-                                        <div class="card">
+                                        <div class="card border">
                                             <div class="card-header">
                                                 Store Detail
                                             </div>
@@ -906,14 +936,14 @@
                                                         <input type="checkbox" name="overwrite_title" id="overwrite_title" class="mr-1"> <textarea class="form-control" name="title" id="store_product_title" placeholder="Store Name/ Title" readonly>{{ old('product_title',$product->product_title) }}</textarea>
                                                     </div>
                                                 </div>
-                                                <div class="row mt-3 g-3 align-items-center">
+                                                {{--<div class="row mt-3 g-3 align-items-center">
                                                     <div class="col-md-3">
                                                         <label class="update_title">Update Title</label>
                                                     </div>
                                                     <div class="col-md-9 d-flex justify-between">
                                                         <input type="checkbox" id="update_title" name="update_title">
                                                     </div>
-                                                </div>
+                                                </div>--}}
                                                 <div class="row mt-3 g-3 align-items-center">
                                                     <div class="col-md-3">
                                                         <label class="col-form-label">Description</label>
@@ -922,14 +952,14 @@
                                                         <input type="checkbox" id="overwrite_description" name="overwrite_description" class="mr-1"> <textarea class="form-control" name="description" id="store_product_description" placeholder="Description" rows="8" readonly>{{ old('product_description',$product->product_description) }}</textarea>
                                                     </div>
                                                 </div>
-                                                <div class="row mt-3 g-3 align-items-center">
+                                                {{--<div class="row mt-3 g-3 align-items-center">
                                                     <div class="col-md-3">
                                                         <label class="update_description">Update Description</label>
                                                     </div>
                                                     <div class="col-md-9 d-flex justify-between">
                                                         <input type="checkbox" id="update_description" name="update_description">
                                                     </div>
-                                                </div>
+                                                </div>--}}
                                                 <div class="row mt-3 g-3 align-items-center">
                                                     <div class="col-md-3">
                                                         <label class="col-form-label">Price</label>
@@ -991,7 +1021,17 @@
 
                                                 <div class="row mt-3 g-3 align-items-center">
                                                     <div class="col-md-3">
-                                                        <label class="col-form-label">Last Synch</label>
+                                                        <label class="col-form-label">Last Updated Date</label>
+                                                    </div>
+                                                    <div class="col-md-9 d-flex justify-between">
+                                                        <input type="text" class="form-control w-75 mr-1" name="last_updated_date" id="last_updated_date" readonly>
+                                                        <input type="text" class="form-control w-25" name="last_updated_time" id="last_updated_time" readonly>
+                                                    </div>
+                                                </div>
+
+                                                <div class="row mt-3 g-3 align-items-center">
+                                                    <div class="col-md-3">
+                                                        <label class="col-form-label">Last Sync</label>
                                                     </div>
                                                     <div class="col-md-9 d-flex justify-between">
                                                         <input type="text" class="form-control w-75 mr-1" name="last_synch_date" id="last_synch_date" readonly>
@@ -1012,7 +1052,7 @@
 
                                                 <div class="row mt-3 g-3 align-items-center">
                                                     <div class="col-md-3">
-                                                        <label class="synch_price">Synch Price</label>
+                                                        <label class="synch_price">Sync Price</label>
                                                     </div>
                                                     <div class="col-md-9 d-flex justify-between">
                                                         <input type="checkbox" id="synch_price" name="synch_price">
@@ -1021,7 +1061,7 @@
 
                                                 <div class="row mt-3 g-3 align-items-center">
                                                     <div class="col-md-3">
-                                                        <label class="synch_inventory">Synch Inventory</label>
+                                                        <label class="synch_inventory">Sync Inventory</label>
                                                     </div>
                                                     <div class="col-md-9 d-flex justify-between">
                                                         <input type="checkbox" id="synch_inventory" name="synch_inventory">
@@ -1030,7 +1070,7 @@
 
                                                 <div class="row mt-3 g-3 align-items-center">
                                                     <div class="col-md-3">
-                                                        <label class="synch_item">Synch Item</label>
+                                                        <label class="synch_item">Sync Item</label>
                                                     </div>
                                                     <div class="col-md-9 d-flex justify-between">
                                                         <input type="checkbox" id="synch_item" name="synch_item">
@@ -1779,12 +1819,20 @@
                                     $('#last_sale_time').val(time);
                                 }
 
-                                if(response.data.last_synch_date){
-                                    var parts = response.data.last_synch_date.split(" ");
+                                if(response.data.last_synch_date_time){
+                                    var parts = response.data.last_synch_date_time.split(" ");
                                     var date = parts[0]; // "2024-12-10"
                                     var time = parts[1]; // "14:30:00"
                                     $('#last_synch_date').val(date);
                                     $('#last_synch_time').val(time);
+                                }
+
+                                if(response.data.last_update_date_time){
+                                    var parts = response.data.last_update_date_time.split(" ");
+                                    var date = parts[0]; // "2024-12-10"
+                                    var time = parts[1]; // "14:30:00"
+                                    $('#last_updated_date').val(date);
+                                    $('#last_updated_time').val(time);
                                 }
 
                                 $('#overwrite_title').prop('checked', false);
@@ -2262,6 +2310,33 @@
                     alert('Overwrite option not enable');
                 }
             });
+
+            $(document).on('click','#searchStore',function () {
+
+                var store_name = $('#store_name').val();
+                var store_type = $('#store_type').val();
+
+                $.ajax({
+                    url: "{{ route('catalog.searchstore') }}",
+                    type: 'POST',
+                    data: {
+                        store_name: store_name,
+                        store_type: store_type,
+                        product_id: product_id,
+                    },
+                    headers: {
+                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                    },
+                    success: function (response) {
+                        if (response.success) {
+                            if(response.content != '') {
+                                $('#product_store_list').find('tbody').html(response.content);
+                            }
+                        }
+                    }
+                });
+
+            })
 
             var hash = window.location.hash;
 
