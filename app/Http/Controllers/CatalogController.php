@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Helpers\QueryFilters;
+use App\Jobs\SubmitShopifyProductsJob;
 use App\Models\Catalog;
 use App\Models\Device;
 use App\Models\Interfaces;
@@ -360,7 +361,7 @@ class CatalogController extends Controller
         $productImages = ProductImages::where('product_id', $pro_id)->get();
         $productAltImages = ProductImageAlternative::where('product_id', $pro_id)->get();
         $productTags = ProductTags::pluck('name')->values()->all();
-        $stores = Store::with('storeType')->get();
+        $stores = Store::with('storeType')->where('store_status','<>',0)->get();
 
         $store_details = [];
         if (count($stores ?? []) > 0) {
@@ -467,7 +468,7 @@ class CatalogController extends Controller
         $productImages = ProductImages::where('product_id', $id)->orderBy('sort_order', 'asc')->get();
         $productAltImages = ProductImageAlternative::where('product_id', $id)->orderBy('sort_order', 'asc')->get();
         $productTags = ProductTags::pluck('name')->values()->all();
-        $stores = Store::with('storeType')->get();
+        $stores = Store::with('storeType')->where('store_status','<>',0)->get();
 
         $store_details = [];
         if (count($stores ?? []) > 0) {
@@ -625,14 +626,15 @@ class CatalogController extends Controller
         } elseif ($tabId == 9) {
             unset($request['tab']);
             $request['overwrite_title'] = $request->has('overwrite_title') ? 1 : 0;
-            $request['update_title'] = $request->has('update_title') ? 1 : 0;
+            //$request['update_title'] = $request->has('update_title') ? 1 : 0;
             $request['overwrite_description'] = $request->has('overwrite_description') ? 1 : 0;
-            $request['update_description'] = $request->has('update_description') ? 1 : 0;
+            //$request['update_description'] = $request->has('update_description') ? 1 : 0;
             $request['overwrite_price'] = $request->has('overwrite_price') ? 1 : 0;
             $request['overwrite_compare_at_price'] = $request->has('overwrite_compare_at_price') ? 1 : 0;
             $request['overwrite_fulfillment_by_channel_price'] = $request->has('overwrite_fulfillment_by_channel_price') ? 1 : 0;
             $request['overwrite_wholesale_price'] = $request->has('overwrite_wholesale_price') ? 1 : 0;
             $request['overwrite_msrp'] = $request->has('overwrite_msrp') ? 1 : 0;
+            $request['last_update_date_time'] = date('Y-m-d H:i:s');
 
             $created_by = auth()->user()->name ?? 'admin';
             $request->merge(['created_by' => $created_by, 'updated_by' => $created_by]);
@@ -897,16 +899,101 @@ class CatalogController extends Controller
         $product_id = $request->input('product_id');
         if ($store_id) {
 
-            $storeProductDetail = StoreProduct::where(['store_id' => $store_id, 'product_id' => $product_id])->first();
+            $storeDetail = Store::with('storeType')->where('id', $store_id)->first();
+
+            $storeProductDetail = StoreProduct::with('store','store.storeType')->where(['store_id' => $store_id, 'product_id' => $product_id])->first();
+
+            $productDetail = Catalog::with('productType', 'productKeyFeatures', 'productColor')->where(['product_id' => $product_id])->first();
+
+            if($storeProductDetail){
+                if(!$storeProductDetail->title && (isset($storeDetail->storeType->code) && $storeDetail->storeType->code == 'shopify')){
+                    $product_title = SubmitShopifyProductsJob::generateProductTitle($productDetail,$storeDetail);
+                    $storeProductDetail->title = $product_title;
+                }
+
+                if(!$storeProductDetail->description && (isset($storeDetail->storeType->code) && $storeDetail->storeType->code == 'shopify')){
+                    $product_description = $this->generateProductDescription($productDetail);
+                    $storeProductDetail->description = $product_description;
+                }
+            }
 
             if (!$storeProductDetail) {
-                $storeProductDetail = Catalog::where(['product_id' => $product_id])->first();
+                if((isset($storeDetail->storeType->code) && $storeDetail->storeType->code == 'shopify')){
+                    $product_title = SubmitShopifyProductsJob::generateProductTitle($productDetail,$storeDetail);
+                    $storeProductDetail->title = $product_title;
+                }
+                if((isset($storeDetail->storeType->code) && $storeDetail->storeType->code == 'shopify')){
+                    $product_description = $this->generateProductDescription($productDetail);
+                    $storeProductDetail->description = $product_description;
+                }
+                $storeProductDetail = $productDetail;
             }
+
             //print_r($storeProductDetail);die;
             return response()->json(['success' => true, 'data' => $storeProductDetail]);
         } else {
             return response()->json(['success' => false]);
         }
+    }
+
+    private function generateProductDescription($productDetail){
+
+        $product_description = '';
+        ProductKeyFeatures::where('product_id', $productDetail->product_id)
+            ->orderBy('sort_order', 'asc')
+            ->chunk(100, function ($keyFeatures) use (&$product_description) {
+                foreach ($keyFeatures as $feature) {
+                    if (isset($feature->value) && !empty($feature->value)) {
+                        $product_description .= ((string)$feature->value) . ' ';
+                    }
+                }
+            });
+
+        if (isset($productDetail->product->product_description)) {
+            $cleanDescription = str_replace(["\r", "\n"], ' ', $productDetail->product->product_description);
+            $product_description .= $cleanDescription;
+        }
+        $product_description = str_replace(["\r", "\n"], ' ', $product_description);
+
+        return trim($product_description);
+    }
+
+    private function generateProductTitle($productDetail,$store){
+
+        $limit = $store->random_title_keyword_level;
+        $reverse = true;
+        if (!isset($limit)) {
+            $limit = 6;
+            $reverse = false;
+        } else {
+            $limit++;
+        }
+
+        $keywords = ProductTitleKeyword::select('product_id', 'keyword')
+            ->where('product_id', $productDetail->product_id)
+            ->orderBy('priority', 'asc')->limit($limit)->get()->toArray();
+
+        Log::info('Keywords: ' . json_encode($keywords));
+        // take the first one and reverse the remaining array
+
+        $title = '';
+        if (count($keywords) > 0) {
+            $firstKeyword = array_shift($keywords);
+            $title .= $firstKeyword['keyword'];
+            if ($reverse) {
+                $reversedKeywords = array_reverse($keywords);
+                $title .= ', ';
+            } else {
+                $title .= ' ';
+                $reversedKeywords = $keywords;
+            }
+            foreach ($reversedKeywords as $keyword) {
+                $title .= trim($keyword['keyword']) . ' ';
+            }
+        } else {
+            $title = $productDetail->product_title;
+        }
+        return trim($title) . ' - ' . $store->short_code . $productDetail->product_sku;
     }
 
     public function getProductChannel(Request $request)
@@ -1495,5 +1582,60 @@ class CatalogController extends Controller
             // Handle the exception and show an error message
             return response()->json(['errors' => $e->getMessage()]);
         }
+    }
+
+    public function updateMarketPlace(Request $request)
+    {
+        // store_id , $product_id
+        $store_id = $request->input('store_id');
+        $product_id = $request->input('product_id');
+
+        $productData = Catalog::select('*')->with('productType', 'productKeyFeatures', 'productColor')->where('product_id', $product_id)->first();
+        $storeData = Store::with('storeType')->where('id', $store_id)->first();
+        $submitJob = new SubmitShopifyProductsJob();
+        $submitJob->getPublications($storeData);
+        $submitJob->updateProduct($productData, $storeData);
+        return response()->json(['success' => true]);
+    }
+
+    public function searchStore(Request $request){
+
+        $store_name = $request->input('store_name');
+        $store_type = $request->input('store_type');
+        $id = $request->input('product_id');
+
+        $query = Store::with('storeType');
+        $query->where('store_status','<>',0);
+        if($store_name != ''){
+            $query->whereLike('name','%'.$store_name.'%');
+        }
+
+        if($store_type != ''){
+            $query->where('store_type_id', $store_type);
+        }
+
+
+        $stores = $query->get();
+
+        $store_details = [];
+        if (count($stores ?? []) > 0) {
+            foreach ($stores as $key => $store) {
+                Log::info('store_type_id: ' . $store->store_type_id);
+                $store_details[$key]['store_detail'] = $store;
+                $store_details[$key]['store_product'] = StoreProduct::where('product_id', $id)->where('store_id', $store->id)->first();
+                $storeCategories = StoreTypeCategory::select('store_type_category.*')
+                    ->leftJoin('store_type', 'store_type.id', '=', 'store_type_category.store_type_id')
+                    ->where('store_type.id', $store->store_type_id)
+                    ->get();
+                $store_details[$key]['store_category'] = $storeCategories;
+            }
+        }
+
+        $storeProducts = StoreProduct::where('product_id', $id)->get();
+        $productStore = $storeProducts->pluck('store_id', 'store_type_category_id')->all();
+
+        $searchlist = view('catalog.store_search_list', ['store_details' => $store_details,'productStore'=>$productStore])->render();
+
+        return response()->json(['success' => true,'content'=>$searchlist]);
     }
 }

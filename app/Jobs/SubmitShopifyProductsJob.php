@@ -69,14 +69,7 @@ class SubmitShopifyProductsJob implements ShouldQueue
 
                     $tags[] = $store->name;
 
-                    $shopifyAuthService = new ShopifyAuthService($store->secret_key, $store->service_url);
-                    $publications = $shopifyAuthService->getPublications();
-
-                    $publicationIds = [];
-                    foreach ($publications['data']['publications']['edges'] as $publication) {
-                        $publicationIds[]['publicationId'] = $publication['node']['id'];
-                    }
-                    $this->publications = $publicationIds;
+                    $this->getPublications($store);
 
                     // Handle Created Products
                     // get all te children and their children of cea products
@@ -319,7 +312,7 @@ class SubmitShopifyProductsJob implements ShouldQueue
         }
     }
 
-    private function createProduct($productData, $store)
+    public function createProduct($productData, $store)
     {
         $fileSystem = $store->fileSystem;
         $shopifyAuthService = new ShopifyAuthService($store->secret_key, $store->service_url);
@@ -497,7 +490,7 @@ class SubmitShopifyProductsJob implements ShouldQueue
         }
     }
 
-    private function updateProduct(mixed $productData, mixed $store)
+    public function updateProduct(mixed $productData, mixed $store)
     {
         $fileSystem = $store->fileSystem;
         $storeProduct = StoreProduct::where('product_id', $productData->product_id)->where('store_id', $store->id)->first();
@@ -515,6 +508,10 @@ class SubmitShopifyProductsJob implements ShouldQueue
         }
 
         $productTitle = $this->generateProductTitle($productData, $store);
+
+        if (isset($storeProduct->title) && isset($storeProduct->overwrite_title) && $storeProduct->overwrite_title == 1) {
+            $productTitle = $storeProduct->title;
+        }
 
         $descriptionHtml = $this->getDescriptionHtml($productData,$store);
 
@@ -539,11 +536,11 @@ class SubmitShopifyProductsJob implements ShouldQueue
             ],
         ];
 
-        if (isset($storeProduct->update_description) && $storeProduct->update_description == 1) {
+        if (isset($storeProduct->overwrite_description) && $storeProduct->overwrite_description == 1) {
             $productUpdateData['product']['descriptionHtml'] = $descriptionHtml;
         }
 
-        if (isset($storeProduct->update_title) && $storeProduct->update_title == 1) {
+        if (isset($storeProduct->overwrite_title) && $storeProduct->overwrite_title == 1) {
             $productUpdateData['product']['title'] = $productTitle;
         }
 
@@ -618,6 +615,10 @@ class SubmitShopifyProductsJob implements ShouldQueue
                     $shopifyAuthService->setFeaturedImage($proDetail->marketplace_product_id, $firstImage->reference_id);
                 }
             }
+
+            $storeProduct->update([
+                'last_synch_date_time' => date('Y-m-d H:i:s')
+            ]);
 
             $listingItem->update([
                 'store_url' => $handle,
@@ -700,7 +701,7 @@ class SubmitShopifyProductsJob implements ShouldQueue
         return $listingItem;
     }
 
-    private function generateProductTitle($productData, $store)
+    public static function generateProductTitle($productData, $store)
     {
         $limit = $store->random_title_keyword_level;
         $reverse = true;
@@ -878,7 +879,7 @@ class SubmitShopifyProductsJob implements ShouldQueue
         return $metafields;
     }
 
-    private function getDescriptionHtml( $productData,$store)
+    public static function getDescriptionHtml( $productData,$store)
     {
         $descriptionHtml = '<div class="product-key-features">';
         if (isset($productData->productKeyFeatures)) {
@@ -906,5 +907,17 @@ class SubmitShopifyProductsJob implements ShouldQueue
         }
 
         return $descriptionHtml;
+    }
+
+    public function getPublications(mixed $store): void
+    {
+        $shopifyAuthService = new ShopifyAuthService($store->secret_key, $store->service_url);
+        $publications = $shopifyAuthService->getPublications();
+
+        $publicationIds = [];
+        foreach ($publications['data']['publications']['edges'] as $publication) {
+            $publicationIds[]['publicationId'] = $publication['node']['id'];
+        }
+        $this->publications = $publicationIds;
     }
 }
