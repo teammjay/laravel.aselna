@@ -468,7 +468,7 @@ class CatalogController extends Controller
         $productImages = ProductImages::where('product_id', $id)->orderBy('sort_order', 'asc')->get();
         $productAltImages = ProductImageAlternative::where('product_id', $id)->orderBy('sort_order', 'asc')->get();
         $productTags = ProductTags::pluck('name')->values()->all();
-        $stores = Store::with('storeType')->get();
+        $stores = Store::with('storeType')->where('store_status','<>',0)->get();
 
         $store_details = [];
         if (count($stores ?? []) > 0) {
