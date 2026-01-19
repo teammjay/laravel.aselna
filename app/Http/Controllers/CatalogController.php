@@ -1605,6 +1605,7 @@ class CatalogController extends Controller
         $id = $request->input('product_id');
 
         $query = Store::with('storeType');
+        $query->where('store_status','<>',0);
         if($store_name != ''){
             $query->whereLike('name','%'.$store_name.'%');
         }
@@ -1612,6 +1613,8 @@ class CatalogController extends Controller
         if($store_type != ''){
             $query->where('store_type_id', $store_type);
         }
+
+
         $stores = $query->get();
 
         $store_details = [];
