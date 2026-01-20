@@ -10,6 +10,7 @@ use App\Jobs\FetchTemuOrders;
 use App\Jobs\FetchWalmartOrdersJob;
 use App\Jobs\SubmitShopifyProductsJob;
 use App\Jobs\Sync\ShopifyCombinedSyncing;
+use App\Jobs\Sync\ShopifyOnlySyncJob;
 use App\Jobs\SyncAllOrderStatusJob;
 use App\Jobs\TransactionStatusCheckJob;
 use App\Jobs\Walmart\ExistingListingItemSyncJob;
@@ -48,6 +49,7 @@ Schedule::job(FetchEmailMessagesJob::class)->everyTenMinutes();
 
 // Products Syncing
 Schedule::job(new SubmitShopifyProductsJob())->cron('*/5 * * * *');
+Schedule::job(new ShopifyOnlySyncJob())->cron('* */2 * * *');
 
 Schedule::job(new ShopifyCombinedSyncing())->dailyAt('12:30');
 
