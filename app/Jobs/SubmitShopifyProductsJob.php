@@ -145,10 +145,15 @@ class SubmitShopifyProductsJob implements ShouldQueue
 
                     // Handle Discontinued Products
                     $discontinuedProducts = Catalog::select('*')->with('productType', 'productKeyFeatures', 'productColor')
+                        ->join('store_product', function($join) use ($store) {
+                            $join->on('products.product_id', '=', 'store_product.product_id')
+                                ->where('store_product.store_id', $store->id);
+                        })
                         ->whereNotIn('product_type', $productTypes)
                         ->whereIn('product_type', $ceaProductTypes)
                         ->whereNull('parent_id')
                         ->whereIn('product_status', ['discontinued', 'temporaryDisabled', 'draft'])
+                        ->where('store_product.last_synch_date_time', '<', 'product.updated_at')
                         ->orderBy('created_at', 'desc')
                         ->get();
 
@@ -645,6 +650,8 @@ class SubmitShopifyProductsJob implements ShouldQueue
     private function discontinueProduct(mixed $productData, mixed $store)
     {
         $proDetail = ManageMarketplaceProduct::where('product_id', $productData->product_id)->where('store_id', $store->id)->where('upload_status', 'success')->first();
+        $storeProduct = StoreProduct::where('product_id', $productData->product_id)->where('store_id', $store->id)->first();
+
 
         if (isset($proDetail)) {
             $shopifyAuthService = new ShopifyAuthService($store->secret_key, $store->service_url);
@@ -663,6 +670,11 @@ class SubmitShopifyProductsJob implements ShouldQueue
                 $proDetail->update([
                     'updated_at' => now()
                 ]);
+                if ($storeProduct) {
+                    $storeProduct->update([
+                        'last_synch_date_time' => date('Y-m-d H:i:s')
+                    ]);
+                }
             }
         }
     }
