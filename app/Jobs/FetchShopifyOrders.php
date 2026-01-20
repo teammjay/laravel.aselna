@@ -342,6 +342,7 @@ class FetchShopifyOrders implements ShouldQueue
 
                                             $order_item = OrderItem::updateOrCreate([
                                                 'order_id' => $order_detail->id,
+                                                'id1' => $item['id'],
                                                 'sku' => $item['sku'],
                                             ], $orderItemData);
 
