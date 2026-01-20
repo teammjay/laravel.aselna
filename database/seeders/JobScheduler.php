@@ -443,6 +443,12 @@ class JobScheduler extends Seeder
                 'name' => 'Amazon Existing Listing Item Sync',
                 'description' => 'Amazon Existing Listing Item Sync',
                 'class_name' => 'App\Jobs\Amazon\ExistingListingItemSyncJob'
+            ],
+            [
+                //ShopifyOnlySyncJob
+                'name' => 'Shopify Only Sync Job',
+                'description' => 'Shopify Only Sync Job',
+                'class_name' => 'App\Jobs\Sync\ShopifyOnlySyncJob',
             ]
         ];
 
