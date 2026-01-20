@@ -133,9 +133,8 @@ class SubmitShopifyProductsJob implements ShouldQueue
                         ->where('products.product_status', '=', 'active')
                         ->whereColumn('store_product.last_synch_date_time', '<', 'store_product.updated_at')
                         ->orderBy('manage_marketplace_products.updated_at', 'asc')
-                        ->limit(200);
-
-                    Log::info('Raw SQL ' . $products->toRawSql());
+                        ->limit(200)
+                        ->get();
 
                     foreach ($products as $product) {
                         $this->updateProduct($product, $store);
