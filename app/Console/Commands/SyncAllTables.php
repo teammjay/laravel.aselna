@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Constants\WebStorePageType;
+use App\Jobs\Ebay\ExistingListingItemSyncJob;
 use App\Jobs\AmazonListingItemSyncJob;
 use App\Jobs\AmazonProductTypeSyncJob;
 use App\Jobs\BrandSyncJob;
@@ -228,11 +229,13 @@ class SyncAllTables extends Command
 //        ListingItemProductImageSyncJob::dispatch();
 //        CategorySyncJob::dispatch();
 //        SyncShopifyItems::dispatch();
+//        ExistingListingItemSyncJob::dispatch();
 
         $transactionIds = [
 ////            '9400150105798006163885',
 ////            '9400150105799006167927',
 //            '9400150105497028574135',
+        '0004010549653258533685041800821'
         ];
 
         foreach ($transactionIds as $transactionId) {
