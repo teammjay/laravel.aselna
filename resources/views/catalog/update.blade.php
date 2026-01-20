@@ -1777,7 +1777,7 @@
             });
 
             function getStoreDetail(store_id){
-
+                var overwriteflag = false;
                 $.ajax({
                     url: "{{ route('catalog.getstoredetail') }}",
                     type: 'POST',
@@ -1857,6 +1857,11 @@
                                 $('#overwrite_fulfillment_by_channel_price').prop('checked', false);
                                 $('#overwrite_wholesale_price').prop('checked', false);
                                 $('#overwrite_msrp').prop('checked', false);
+                                $('#store_product_detail').find('input[type="text"]').attr('readonly',true);
+                                $('#store_product_detail').find('textarea').attr('readonly',true);
+                                $('#update_marketplace').attr('disabled',true);
+                                $('#reset_title').attr('disabled',true);
+                                $('#regenerate_title').attr('disabled',true);
 
                                 if(response.data.synch_price == 1) {
                                     $('#synch_price').prop('checked', true);
@@ -1873,20 +1878,23 @@
                                 if(response.data.overwrite_title == 1) {
                                     $('#overwrite_title').prop('checked', true);
                                     $('#store_product_title').removeAttr('readonly');
+                                    overwriteflag = true;
                                 }
-                                if(response.data.update_title == 1) {
+                                /*if(response.data.update_title == 1) {
                                     $('#update_title').prop('checked', true);
-                                }
+                                }*/
                                 if(response.data.overwrite_description == 1) {
                                     $('#overwrite_description').prop('checked', true);
                                     $('#store_product_description').removeAttr('readonly');
+                                    overwriteflag = true;
                                 }
-                                if(response.data.update_description == 1) {
+                                /*if(response.data.update_description == 1) {
                                     $('#update_description').prop('checked', true);
-                                }
+                                }*/
                                 if(response.data.overwrite_price == 1) {
                                     $('#overwrite_price').prop('checked', true);
                                     $('#store_product_price').removeAttr('readonly');
+                                    overwriteflag = true;
                                 }
                                 if(response.data.overwrite_compare_at_price == 1) {
                                     $('#overwrite_compare_at_price').prop('checked', true);
@@ -1903,6 +1911,12 @@
                                 if(response.data.overwrite_msrp == 1) {
                                     $('#overwrite_msrp').prop('checked', true);
                                     $('#store_product_msrp').removeAttr('readonly');
+                                }
+
+                                if(overwriteflag){
+                                    $('#update_marketplace').removeAttr('disabled');
+                                    $('#reset_title').removeAttr('disabled');
+                                    $('#regenerate_title').removeAttr('disabled');
                                 }
                             }else{
                                 $('#store_product_title').val(response.data.product_title);
@@ -1922,6 +1936,7 @@
                                 $('#overwrite_wholesale_price').prop('checked', false);
                                 $('#overwrite_msrp').prop('checked', false);
                                 $('#store_product_detail').find('input[type="text"]').attr('readonly',true);
+                                $('#store_product_detail').find('textarea').attr('readonly',true);
                             }
                         }
                     },
@@ -1941,6 +1956,22 @@
                     nextSibling.removeAttr('readonly');
                 }else{
                     nextSibling.attr('readonly','true');
+                }
+
+                let overwrite = false;
+                $('#store_product_detail [type="checkbox"]').each(function () {
+                    if($(this).prop('checked')){
+                        overwrite = true;
+                    }
+                });
+                if(overwrite){
+                    $('#update_marketplace').removeAttr('disabled');
+                    $('#reset_title').removeAttr('disabled');
+                    $('#regenerate_title').removeAttr('disabled');
+                }else{
+                    $('#update_marketplace').attr('disabled',true);
+                    $('#reset_title').attr('disabled',true);
+                    $('#regenerate_title').attr('disabled',true);
                 }
             });
 
